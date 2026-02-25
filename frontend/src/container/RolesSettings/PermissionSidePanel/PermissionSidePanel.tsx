@@ -8,7 +8,12 @@ import {
 } from '@signozhq/radio-group';
 import { Select, Skeleton } from 'antd';
 
-import { buildConfig, configsEqual, DEFAULT_RESOURCE_CONFIG } from '../utils';
+import {
+	buildConfig,
+	configsEqual,
+	DEFAULT_RESOURCE_CONFIG,
+	isResourceConfigEqual,
+} from '../utils';
 import type {
 	PermissionConfig,
 	PermissionSidePanelProps,
@@ -92,6 +97,7 @@ function ResourceRow({
 
 					{config.scope === PermissionScope.ONLY_SELECTED && (
 						<div className="psp-resource__select-wrapper">
+							{/* TODO: right now made to only accept user input, we need to give it proper resource based value fetching from APIs */}
 							<Select
 								mode="tags"
 								value={config.selectedIds}
@@ -148,18 +154,9 @@ function PermissionSidePanel({
 		if (configsEqual(config, savedConfig)) {
 			return 0;
 		}
-		return Object.keys(config).filter((id) => {
-			const a = config[id];
-			const b = savedConfig[id];
-			if (!b) {
-				return true;
-			}
-			return (
-				a.scope !== b.scope ||
-				JSON.stringify([...a.selectedIds].sort()) !==
-					JSON.stringify([...b.selectedIds].sort())
-			);
-		}).length;
+		return Object.keys(config).filter(
+			(id) => !isResourceConfigEqual(config[id], savedConfig[id]),
+		).length;
 	}, [config, savedConfig]);
 
 	const updateResource = useCallback(

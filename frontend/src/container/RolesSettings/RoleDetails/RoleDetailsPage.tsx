@@ -2,8 +2,7 @@ import { useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
-import { ChevronRight, Search, Table2, Trash2, Users } from '@signozhq/icons';
+import { Table2, Trash2, Users } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Skeleton } from 'antd';
@@ -20,7 +19,7 @@ import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { RoleType } from 'types/roles';
-import { toAPIError } from 'utils/errorUtils';
+import { handleApiError, toAPIError } from 'utils/errorUtils';
 
 import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
@@ -30,175 +29,15 @@ import {
 	buildPatchPayload,
 	derivePermissionTypes,
 	deriveResourcesForRelation,
-	handleApiError,
 	objectsToPermissionConfig,
-	PermissionType,
-	TimestampBadge,
 } from '../utils';
+import MembersTab from './components/MembersTab';
+import OverviewTab from './components/OverviewTab';
 import { ROLE_ID_REGEX } from './constants';
 
 import './RoleDetailsPage.styles.scss';
 
 type TabKey = 'overview' | 'members';
-
-interface PermissionItemProps {
-	permissionType: PermissionType;
-	isManaged: boolean;
-	onPermissionClick: (key: string) => void;
-}
-
-function PermissionItem({
-	permissionType,
-	isManaged,
-	onPermissionClick,
-}: PermissionItemProps): JSX.Element {
-	const { key, label, icon } = permissionType;
-
-	if (isManaged) {
-		return (
-			<div
-				key={key}
-				className="role-details-permission-item role-details-permission-item--readonly"
-			>
-				<div className="role-details-permission-item-left">
-					{icon}
-					<span className="role-details-permission-item-label">{label}</span>
-				</div>
-			</div>
-		);
-	}
-
-	return (
-		<div
-			key={key}
-			className="role-details-permission-item"
-			role="button"
-			tabIndex={0}
-			onClick={(): void => onPermissionClick(key)}
-			onKeyDown={(e): void => {
-				if (e.key === 'Enter' || e.key === ' ') {
-					onPermissionClick(key);
-				}
-			}}
-		>
-			<div className="role-details-permission-item-left">
-				{icon}
-				<span className="role-details-permission-item-label">{label}</span>
-			</div>
-			<ChevronRight size={14} color="var(--foreground)" />
-		</div>
-	);
-}
-
-interface OverviewTabProps {
-	role: {
-		description?: string;
-		createdAt?: Date | string;
-		updatedAt?: Date | string;
-	} | null;
-	isManaged: boolean;
-	permissionTypes: PermissionType[];
-	onPermissionClick: (relationKey: string) => void;
-}
-
-function OverviewTab({
-	role,
-	isManaged,
-	permissionTypes,
-	onPermissionClick,
-}: OverviewTabProps): JSX.Element {
-	return (
-		<div className="role-details-overview">
-			{isManaged && (
-				<Callout
-					type="warning"
-					showIcon
-					message="This is a managed role. Permissions and settings are view-only and cannot be modified."
-				/>
-			)}
-
-			<div className="role-details-meta">
-				<div>
-					<p className="role-details-section-label">Description</p>
-					<p className="role-details-description-text">{role?.description || '—'}</p>
-				</div>
-
-				<div className="role-details-info-row">
-					<div className="role-details-info-col">
-						<p className="role-details-section-label">Created At</p>
-						<div className="role-details-info-value">
-							<TimestampBadge date={role?.createdAt} />
-						</div>
-					</div>
-					<div className="role-details-info-col">
-						<p className="role-details-section-label">Last Modified At</p>
-						<div className="role-details-info-value">
-							<TimestampBadge date={role?.updatedAt} />
-						</div>
-					</div>
-				</div>
-			</div>
-
-			<div className="role-details-permissions">
-				<div className="role-details-permissions-header">
-					<span className="role-details-section-label">Permissions</span>
-					<hr className="role-details-permissions-divider" />
-				</div>
-
-				<div className="role-details-permission-list">
-					{permissionTypes.map((permissionType) => (
-						<PermissionItem
-							key={permissionType.key}
-							permissionType={permissionType}
-							isManaged={isManaged}
-							onPermissionClick={onPermissionClick}
-						/>
-					))}
-				</div>
-			</div>
-		</div>
-	);
-}
-
-function MembersTab(): JSX.Element {
-	const [searchQuery, setSearchQuery] = useState('');
-
-	return (
-		<div className="role-details-members">
-			<div className="role-details-members-search">
-				<Search size={12} className="role-details-members-search-icon" />
-				<input
-					type="text"
-					className="role-details-members-search-input"
-					placeholder="Search and add members..."
-					value={searchQuery}
-					onChange={(e): void => setSearchQuery(e.target.value)}
-				/>
-			</div>
-
-			{/* Todo: Right now we are only adding the empty state in this cut */}
-			<div className="role-details-members-content">
-				<div className="role-details-members-empty-state">
-					<span
-						className="role-details-members-empty-emoji"
-						role="img"
-						aria-label="monocle face"
-					>
-						🧐
-					</span>
-					<p className="role-details-members-empty-text">
-						<span className="role-details-members-empty-text--bold">
-							No members added.
-						</span>{' '}
-						<span className="role-details-members-empty-text--muted">
-							Start adding members to this role.
-						</span>
-					</p>
-				</div>
-			</div>
-		</div>
-	);
-}
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function RoleDetailsPage(): JSX.Element {
@@ -284,7 +123,7 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (isLoading || isTransitioning) {
+	if (isLoading || isTransitioning || !role) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -327,7 +166,7 @@ function RoleDetailsPage(): JSX.Element {
 	return (
 		<div className="role-details-page">
 			<div className="role-details-header">
-				<h2 className="role-details-title">Role — {role?.name}</h2>
+				<h2 className="role-details-title">Role — {role.name}</h2>
 			</div>
 
 			<div className="role-details-nav">
@@ -356,7 +195,7 @@ function RoleDetailsPage(): JSX.Element {
 					<div className="role-details-actions">
 						<Button
 							variant="ghost"
-							color="secondary"
+							color="destructive"
 							className="role-details-delete-action-btn"
 							onClick={(): void => setIsDeleteModalOpen(true)}
 							aria-label="Delete role"
@@ -403,8 +242,8 @@ function RoleDetailsPage(): JSX.Element {
 						onClose={(): void => setIsEditModalOpen(false)}
 						initialData={{
 							id: roleId,
-							name: role?.name || '',
-							description: role?.description || '',
+							name: role.name || '',
+							description: role.description || '',
 						}}
 					/>
 				</>
@@ -412,7 +251,7 @@ function RoleDetailsPage(): JSX.Element {
 
 			<DeleteRoleModal
 				isOpen={isDeleteModalOpen}
-				roleName={role?.name || ''}
+				roleName={role.name || ''}
 				isDeleting={isDeleting}
 				onCancel={(): void => setIsDeleteModalOpen(false)}
 				onConfirm={(): void => deleteRole({ pathParams: { id: roleId } })}

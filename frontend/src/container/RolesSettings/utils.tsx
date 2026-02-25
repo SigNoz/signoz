@@ -1,16 +1,12 @@
 import React from 'react';
 import { Badge } from '@signozhq/badge';
-import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	AuthtypesGettableObjectsDTO,
 	AuthtypesGettableResourcesDTO,
-	RenderErrorResponseDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import APIError from 'types/api/error';
 
 import type {
 	PermissionConfig,
@@ -185,17 +181,6 @@ export function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
 	return <Badge color="vanilla">{formatted}</Badge>;
 }
 
-export function handleApiError(
-	err: ErrorType<RenderErrorResponseDTO>,
-	showErrorModal: (error: APIError) => void,
-): void {
-	try {
-		ErrorResponseHandlerForGeneratedAPIs(err);
-	} catch (apiError) {
-		showErrorModal(apiError as APIError);
-	}
-}
-
 export const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
 	scope: PermissionScope.ONLY_SELECTED,
 	selectedIds: [],
@@ -212,20 +197,30 @@ export function buildConfig(
 	return config;
 }
 
+export function isResourceConfigEqual(
+	ac: ResourceConfig,
+	bc?: ResourceConfig,
+): boolean {
+	if (!bc) {
+		return false;
+	}
+	return (
+		ac.scope === bc.scope &&
+		JSON.stringify([...ac.selectedIds].sort()) ===
+			JSON.stringify([...bc.selectedIds].sort())
+	);
+}
+
 export function configsEqual(
 	a: PermissionConfig,
 	b: PermissionConfig,
 ): boolean {
-	return Object.keys(a).every((id) => {
-		const ac = a[id];
-		const bc = b[id];
-		if (!bc) {
-			return false;
-		}
-		return (
-			ac.scope === bc.scope &&
-			JSON.stringify([...ac.selectedIds].sort()) ===
-				JSON.stringify([...bc.selectedIds].sort())
-		);
-	});
+	const keysA = Object.keys(a);
+	const keysB = Object.keys(b);
+
+	if (keysA.length !== keysB.length) {
+		return false;
+	}
+
+	return keysA.every((id) => isResourceConfigEqual(a[id], b[id]));
 }

@@ -283,28 +283,24 @@
 }
 
 .role-details-delete-action-btn {
-	display: flex !important;
-	align-items: center !important;
-	justify-content: center !important;
-	width: 32px !important;
-	height: 32px !important;
-	min-width: 32px !important;
-	border: none !important;
-	border-radius: 2px !important;
-	background: transparent !important;
-	color: var(--destructive) !important;
-	opacity: 0.6 !important;
-	padding: 0 !important;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	border: none;
+	border-radius: 2px;
+	background: transparent;
+	color: var(--destructive);
+	opacity: 0.6;
+	padding: 0;
 	transition: background-color 0.2s, opacity 0.2s;
-	box-shadow: none !important;
-
-	svg {
-		color: var(--destructive) !important;
-	}
+	box-shadow: none;
 
 	&:hover {
-		background: rgba(229, 72, 77, 0.1) !important;
-		opacity: 0.9 !important;
+		background: rgba(229, 72, 77, 0.1);
+		opacity: 0.9;
 	}
 }
 

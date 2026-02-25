@@ -207,6 +207,7 @@
 	&__select {
 		width: 100%;
 
+		// todo: https://github.com/SigNoz/components/issues/116
 		.ant-select-selector {
 			background: var(--l2-background) !important;
 			border: 1px solid var(--border) !important;
