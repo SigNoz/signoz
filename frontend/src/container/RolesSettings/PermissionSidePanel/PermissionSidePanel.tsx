@@ -1,14 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { X } from '@signozhq/icons';
-import { ChevronDown, ChevronRight } from '@signozhq/icons';
+import { ChevronDown, ChevronRight, X } from '@signozhq/icons';
 import {
 	RadioGroup,
 	RadioGroupItem,
 	RadioGroupLabel,
 } from '@signozhq/radio-group';
 import { Switch } from '@signozhq/switch';
-import { Select } from 'antd';
+import { Select, Skeleton } from 'antd';
 
 import type {
 	PermissionConfig,
@@ -167,6 +166,8 @@ function PermissionSidePanel({
 	permissionLabel,
 	resources,
 	initialConfig,
+	isLoading = false,
+	isSaving = false,
 	onSave,
 }: PermissionSidePanelProps): JSX.Element | null {
 	const [config, setConfig] = useState<PermissionConfig>(() =>
@@ -250,8 +251,7 @@ function PermissionSidePanel({
 
 	const handleSave = useCallback((): void => {
 		onSave(config);
-		onClose();
-	}, [config, onSave, onClose]);
+	}, [config, onSave]);
 
 	const handleDiscard = useCallback((): void => {
 		setConfig(buildConfig(resources, initialConfig));
@@ -287,20 +287,24 @@ function PermissionSidePanel({
 				</div>
 
 				<div className="permission-side-panel__content">
-					<div className="permission-side-panel__resource-list">
-						{resources.map((resource) => (
-							<ResourceRow
-								key={resource.id}
-								resource={resource}
-								config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
-								isExpanded={expandedIds.has(resource.id)}
-								onToggle={handleToggle}
-								onToggleExpand={handleToggleExpand}
-								onScopeChange={handleScopeChange}
-								onSelectedIdsChange={handleSelectedIdsChange}
-							/>
-						))}
-					</div>
+					{isLoading ? (
+						<Skeleton active paragraph={{ rows: 6 }} />
+					) : (
+						<div className="permission-side-panel__resource-list">
+							{resources.map((resource) => (
+								<ResourceRow
+									key={resource.id}
+									resource={resource}
+									config={config[resource.id] ?? DEFAULT_RESOURCE_CONFIG}
+									isExpanded={expandedIds.has(resource.id)}
+									onToggle={handleToggle}
+									onToggleExpand={handleToggleExpand}
+									onScopeChange={handleScopeChange}
+									onSelectedIdsChange={handleSelectedIdsChange}
+								/>
+							))}
+						</div>
+					)}
 				</div>
 
 				<div className="permission-side-panel__footer">
@@ -319,10 +323,18 @@ function PermissionSidePanel({
 							prefixIcon={<X size={14} />}
 							onClick={unsavedCount > 0 ? handleDiscard : onClose}
 							size="sm"
+							disabled={isSaving}
 						>
 							{unsavedCount > 0 ? 'Discard' : 'Cancel'}
 						</Button>
-						<Button variant="solid" color="primary" size="sm" onClick={handleSave}>
+						<Button
+							variant="solid"
+							color="primary"
+							size="sm"
+							onClick={handleSave}
+							loading={isSaving}
+							disabled={isLoading}
+						>
 							Save Changes
 						</Button>
 					</div>

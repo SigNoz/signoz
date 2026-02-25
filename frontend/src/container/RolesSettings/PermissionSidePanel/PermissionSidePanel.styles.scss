@@ -204,7 +204,6 @@
 		flex-shrink: 0;
 	}
 
-	// Expanded body
 	&__body {
 		display: flex;
 		flex-direction: column;
@@ -225,7 +224,6 @@
 		gap: 8px;
 		padding: 6px 0;
 
-		// RadioGroupLabel style
 		label {
 			font-family: Inter;
 			font-size: 14px;

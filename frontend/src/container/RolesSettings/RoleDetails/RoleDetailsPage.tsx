@@ -1,53 +1,55 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
-import { X } from '@signozhq/icons';
-import {
-	BadgePlus,
-	ChevronRight,
-	Eye,
-	LayoutList,
-	PencilRuler,
-	Search,
-	Table2,
-	Trash2,
-	Users,
-} from '@signozhq/icons';
+import { ChevronRight, Search, Table2, Trash2, Users } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
-import { Modal, Skeleton } from 'antd';
+import { Skeleton } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { useDeleteRole, useGetRole } from 'api/generated/services/role';
-import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	invalidateGetObjects,
+	useDeleteRole,
+	useGetObjects,
+	useGetRole,
+	usePatchObjects,
+} from 'api/generated/services/role';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
-import type {
-	PermissionConfig,
-	ResourceDefinition,
-} from '../PermissionSidePanel';
+import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
+import { ROLE_ID_REGEX } from './constants';
+import DeleteRoleModal from './DeleteRoleModal';
+import {
+	buildPatchPayload,
+	capitalise,
+	derivePermissionTypes,
+	deriveResourcesForRelation,
+	objectsToPermissionConfig,
+} from './utils';
 
 import './RoleDetailsPage.styles.scss';
 
-// Placeholder resources — replace with API-driven data when integrating
-const PERMISSION_RESOURCES: ResourceDefinition[] = [
-	{ id: 'dashboards', label: 'Dashboards' },
-	{ id: 'alerts', label: 'Alerts' },
-	{ id: 'logs_pipelines', label: 'Logs: Pipelines' },
-	{ id: 'logs_views', label: 'Logs: Views' },
-	{ id: 'traces_funnels', label: 'Traces: Funnels' },
-	{ id: 'traces_views', label: 'Traces: Views' },
-	{ id: 'integrations', label: 'Integrations' },
-	{ id: 'exceptions', label: 'Exceptions' },
-];
+function handleApiError(
+	err: ErrorType<RenderErrorResponseDTO>,
+	showErrorModal: (error: APIError) => void,
+): void {
+	try {
+		ErrorResponseHandlerForGeneratedAPIs(err);
+	} catch (apiError) {
+		showErrorModal(apiError as APIError);
+	}
+}
 
 type TabKey = 'overview' | 'members';
 
@@ -57,21 +59,11 @@ interface PermissionType {
 	icon: JSX.Element;
 }
 
-const PERMISSION_TYPES: PermissionType[] = [
-	{ key: 'create', label: 'Create', icon: <BadgePlus size={14} /> },
-	{ key: 'list', label: 'List', icon: <LayoutList size={14} /> },
-	{ key: 'read', label: 'Read', icon: <Eye size={14} /> },
-	{ key: 'update', label: 'Update', icon: <PencilRuler size={14} /> },
-	{ key: 'delete', label: 'Delete', icon: <Trash2 size={14} /> },
-];
-
-interface OverviewTabProps {
-	role: RoletypesRoleDTO;
-	isManaged: boolean;
-	onPermissionClick: (permissionLabel: string) => void;
+interface TimestampBadgeProps {
+	date?: Date | string;
 }
 
-function TimestampBadge({ date }: { date?: Date | string }): JSX.Element {
+function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	if (!date) {
@@ -91,9 +83,92 @@ function TimestampBadge({ date }: { date?: Date | string }): JSX.Element {
 	return <span className="role-details-badge">{formatted}</span>;
 }
 
+interface TabButtonProps {
+	isActive: boolean;
+	onClick: () => void;
+	children: React.ReactNode;
+}
+
+function TabButton({
+	isActive,
+	onClick,
+	children,
+}: TabButtonProps): JSX.Element {
+	return (
+		<button
+			type="button"
+			className={`role-details-tab${isActive ? ' role-details-tab--active' : ''}`}
+			onClick={onClick}
+		>
+			{children}
+		</button>
+	);
+}
+
+interface PermissionItemProps {
+	permissionType: PermissionType;
+	isManaged: boolean;
+	onPermissionClick: (key: string) => void;
+}
+
+function PermissionItem({
+	permissionType,
+	isManaged,
+	onPermissionClick,
+}: PermissionItemProps): JSX.Element {
+	const { key, label, icon } = permissionType;
+
+	if (isManaged) {
+		return (
+			<div
+				key={key}
+				className="role-details-permission-item role-details-permission-item--readonly"
+			>
+				<div className="role-details-permission-item-left">
+					{icon}
+					<span className="role-details-permission-item-label">{label}</span>
+				</div>
+			</div>
+		);
+	}
+
+	return (
+		<div
+			key={key}
+			className="role-details-permission-item"
+			role="button"
+			tabIndex={0}
+			onClick={(): void => onPermissionClick(key)}
+			onKeyDown={(e): void => {
+				if (e.key === 'Enter' || e.key === ' ') {
+					onPermissionClick(key);
+				}
+			}}
+		>
+			<div className="role-details-permission-item-left">
+				{icon}
+				<span className="role-details-permission-item-label">{label}</span>
+			</div>
+			<ChevronRight size={14} color="var(--foreground)" />
+		</div>
+	);
+}
+
+interface OverviewTabProps {
+	role: {
+		description?: string;
+		createdAt?: Date | string;
+		updatedAt?: Date | string;
+	};
+	isManaged: boolean;
+	permissionTypes: PermissionType[];
+	onPermissionClick: (relationKey: string) => void;
+}
+
 function OverviewTab({
 	role,
 	isManaged,
+	permissionTypes,
 	onPermissionClick,
 }: OverviewTabProps): JSX.Element {
 	return (
@@ -135,38 +210,14 @@ function OverviewTab({
 				</div>
 
 				<div className="role-details-permission-list">
-					{PERMISSION_TYPES.map(({ key, label, icon }) =>
-						isManaged ? (
-							<div
-								key={key}
-								className="role-details-permission-item role-details-permission-item--readonly"
-							>
-								<div className="role-details-permission-item-left">
-									{icon}
-									<span className="role-details-permission-item-label">{label}</span>
-								</div>
-							</div>
-						) : (
-							<div
-								key={key}
-								className="role-details-permission-item"
-								role="button"
-								tabIndex={0}
-								onClick={(): void => onPermissionClick(label)}
-								onKeyDown={(e): void => {
-									if (e.key === 'Enter' || e.key === ' ') {
-										onPermissionClick(label);
-									}
-								}}
-							>
-								<div className="role-details-permission-item-left">
-									{icon}
-									<span className="role-details-permission-item-label">{label}</span>
-								</div>
-								<ChevronRight size={14} color="var(--foreground)" />
-							</div>
-						),
-					)}
+					{permissionTypes.map((permissionType) => (
+						<PermissionItem
+							key={permissionType.key}
+							permissionType={permissionType}
+							isManaged={isManaged}
+							onPermissionClick={onPermissionClick}
+						/>
+					))}
 				</div>
 			</div>
 		</div>
@@ -212,22 +263,21 @@ function MembersTab(): JSX.Element {
 	);
 }
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function RoleDetailsPage(): JSX.Element {
 	const { pathname } = useLocation();
 	const history = useHistory();
+	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
+	const { authzResources } = useAppContext();
 
-	// Extract roleId from pathname — useParams doesn't work inside nested RouteTab routing
-	const roleIdMatch = pathname.match(/\/settings\/roles\/([^/]+)/);
+	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
 
 	const [activeTab, setActiveTab] = useState<TabKey>('overview');
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activePermission, setActivePermission] = useState<string | null>(null);
-	const [permissionConfigs, setPermissionConfigs] = useState<
-		Record<string, PermissionConfig>
-	>({});
 
 	const { data, isLoading, isFetching, isError, error } = useGetRole({
 		id: roleId,
@@ -236,25 +286,61 @@ function RoleDetailsPage(): JSX.Element {
 	const isTransitioning = isFetching && role?.id !== roleId;
 	const isManaged = role?.type === 'managed';
 
+	const permissionTypes = useMemo(
+		() => derivePermissionTypes(authzResources?.relations ?? null),
+		[authzResources],
+	);
+
+	const resourcesForActivePermission = useMemo(
+		() =>
+			activePermission
+				? deriveResourcesForRelation(authzResources ?? null, activePermission)
+				: [],
+		[authzResources, activePermission],
+	);
+
+	const { data: objectsData, isLoading: isLoadingObjects } = useGetObjects(
+		{ id: roleId, relation: activePermission ?? '' },
+		{ query: { enabled: !!activePermission && !!roleId && !isManaged } },
+	);
+
+	const initialConfig = useMemo(() => {
+		if (!objectsData?.data || !activePermission) {
+			return undefined;
+		}
+		return objectsToPermissionConfig(
+			objectsData.data,
+			resourcesForActivePermission,
+		);
+	}, [objectsData, activePermission, resourcesForActivePermission]);
+
+	const handleSaveSuccess = (): void => {
+		toast.success('Permissions saved successfully');
+		if (activePermission) {
+			invalidateGetObjects(queryClient, {
+				id: roleId,
+				relation: activePermission,
+			});
+		}
+		setActivePermission(null);
+	};
+
+	const { mutate: patchObjects, isLoading: isSaving } = usePatchObjects({
+		mutation: {
+			onSuccess: handleSaveSuccess,
+			onError: (err) => handleApiError(err, showErrorModal),
+		},
+	});
+
 	const { mutate: deleteRole, isLoading: isDeleting } = useDeleteRole({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success('Role deleted successfully');
 				history.push(ROUTES.ROLES_SETTINGS);
 			},
-			onError: (err): void => {
-				try {
-					ErrorResponseHandlerForGeneratedAPIs(err);
-				} catch (apiError) {
-					showErrorModal(apiError as APIError);
-				}
-			},
+			onError: (err) => handleApiError(err, showErrorModal),
 		},
 	});
-
-	const openEditModal = (): void => {
-		setIsEditModalOpen(true);
-	};
 
 	if (isLoading || isTransitioning) {
 		return (
@@ -281,6 +367,21 @@ function RoleDetailsPage(): JSX.Element {
 		);
 	}
 
+	const handleSave = (config: PermissionConfig): void => {
+		if (!activePermission || !authzResources) {
+			return;
+		}
+		patchObjects({
+			pathParams: { id: roleId, relation: activePermission },
+			data: buildPatchPayload({
+				newConfig: config,
+				currentObjects: objectsData?.data ?? [],
+				resources: resourcesForActivePermission,
+				authzRes: authzResources,
+			}),
+		});
+	};
+
 	return (
 		<div className="role-details-page">
 			<div className="role-details-header">
@@ -289,27 +390,21 @@ function RoleDetailsPage(): JSX.Element {
 
 			<div className="role-details-nav">
 				<div className="role-details-tabs">
-					<button
-						type="button"
-						className={`role-details-tab${
-							activeTab === 'overview' ? ' role-details-tab--active' : ''
-						}`}
+					<TabButton
+						isActive={activeTab === 'overview'}
 						onClick={(): void => setActiveTab('overview')}
 					>
 						<Table2 size={14} />
 						Overview
-					</button>
-					<button
-						type="button"
-						className={`role-details-tab${
-							activeTab === 'members' ? ' role-details-tab--active' : ''
-						}`}
+					</TabButton>
+					<TabButton
+						isActive={activeTab === 'members'}
 						onClick={(): void => setActiveTab('members')}
 					>
 						<Users size={14} />
 						Members
 						<span className="role-details-tab-count">0</span>
-					</button>
+					</TabButton>
 				</div>
 
 				{!isManaged && (
@@ -327,7 +422,7 @@ function RoleDetailsPage(): JSX.Element {
 							variant="solid"
 							color="secondary"
 							size="sm"
-							onClick={openEditModal}
+							onClick={(): void => setIsEditModalOpen(true)}
 						>
 							Edit Role Details
 						</Button>
@@ -335,12 +430,12 @@ function RoleDetailsPage(): JSX.Element {
 				)}
 			</div>
 
-			{/* Content */}
 			{activeTab === 'overview' && (
 				<OverviewTab
 					role={role}
 					isManaged={isManaged}
-					onPermissionClick={(label): void => setActivePermission(label)}
+					permissionTypes={permissionTypes}
+					onPermissionClick={(key): void => setActivePermission(key)}
 				/>
 			)}
 			{activeTab === 'members' && <MembersTab />}
@@ -350,20 +445,14 @@ function RoleDetailsPage(): JSX.Element {
 					<PermissionSidePanel
 						open={activePermission !== null}
 						onClose={(): void => setActivePermission(null)}
-						permissionLabel={activePermission ?? ''}
-						resources={PERMISSION_RESOURCES}
-						initialConfig={
-							activePermission ? permissionConfigs[activePermission] : undefined
-						}
-						onSave={(config): void => {
-							if (activePermission) {
-								setPermissionConfigs((prev) => ({
-									...prev,
-									[activePermission]: config,
-								}));
-							}
-						}}
+						permissionLabel={activePermission ? capitalise(activePermission) : ''}
+						resources={resourcesForActivePermission}
+						initialConfig={initialConfig}
+						isLoading={isLoadingObjects}
+						isSaving={isSaving}
+						onSave={handleSave}
 					/>
+
 					<CreateRoleModal
 						isOpen={isEditModalOpen}
 						onClose={(): void => setIsEditModalOpen(false)}
@@ -376,40 +465,13 @@ function RoleDetailsPage(): JSX.Element {
 				</>
 			)}
 
-			<Modal
-				open={isDeleteModalOpen}
+			<DeleteRoleModal
+				isOpen={isDeleteModalOpen}
+				roleName={role.name || ''}
+				isDeleting={isDeleting}
 				onCancel={(): void => setIsDeleteModalOpen(false)}
-				title={<span className="title">Delete Role</span>}
-				closable
-				footer={[
-					<Button
-						key="cancel"
-						className="cancel-btn"
-						prefixIcon={<X size={16} />}
-						onClick={(): void => setIsDeleteModalOpen(false)}
-						size="sm"
-					>
-						Cancel
-					</Button>,
-					<Button
-						key="delete"
-						className="delete-btn"
-						prefixIcon={<Trash2 size={16} />}
-						onClick={(): void => deleteRole({ pathParams: { id: roleId } })}
-						loading={isDeleting}
-						size="sm"
-					>
-						Delete Role
-					</Button>,
-				]}
-				destroyOnClose
-				className="role-details-delete-modal"
-			>
-				<p className="delete-text">
-					Are you sure you want to delete the role <strong>{role.name}</strong>? This
-					action cannot be undone.
-				</p>
-			</Modal>
+				onConfirm={(): void => deleteRole({ pathParams: { id: roleId } })}
+			/>
 		</div>
 	);
 }
