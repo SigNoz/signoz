@@ -169,6 +169,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
 		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
 	)
 }
 
@@ -253,6 +254,8 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.Fields,
 			handlers.AuthzHandler,
 			handlers.RawDataExport,
+			handlers.ZeusHandler,
+			handlers.QuerierHandler,
 		),
 	)
 }

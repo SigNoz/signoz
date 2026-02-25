@@ -1,6 +1,6 @@
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import uPlot, { Cursor, Options, Series } from 'uplot';
+import uPlot, { Series } from 'uplot';
 
 import { ThresholdsDrawHookOptions } from '../hooks/types';
 
@@ -39,6 +39,7 @@ export interface ConfigBuilderProps {
 	tzDate?: uPlot.LocalDateFromUnix;
 	selectionPreferencesSource?: SelectionPreferencesSource;
 	shouldSaveSelectionPreference?: boolean;
+	stepInterval?: number;
 }
 
 /**
@@ -186,47 +187,3 @@ export interface LegendItem {
 	color: uPlot.Series['stroke'];
 	show: boolean;
 }
-
-export const DEFAULT_PLOT_CONFIG: Partial<Options> = {
-	focus: {
-		alpha: 0.3,
-	},
-	cursor: {
-		focus: {
-			prox: 30,
-		},
-	},
-	legend: {
-		show: false,
-	},
-	padding: [16, 16, 8, 8],
-	series: [],
-	hooks: {},
-};
-
-const POINTS_FILL_COLOR = '#FFFFFF';
-
-export const DEFAULT_CURSOR_CONFIG: Cursor = {
-	drag: { setScale: true },
-	points: {
-		one: true,
-		size: (u, seriesIdx) => (u.series[seriesIdx]?.points?.size ?? 0) * 3,
-		width: (_u, _seriesIdx, size) => size / 4,
-		stroke: (u, seriesIdx): string => {
-			const points = u.series[seriesIdx]?.points;
-			const strokeFn =
-				typeof points?.stroke === 'function' ? points.stroke : undefined;
-			const strokeValue =
-				strokeFn !== undefined
-					? strokeFn(u, seriesIdx)
-					: typeof points?.stroke === 'string'
-					? points.stroke
-					: '';
-			return `${strokeValue}90`;
-		},
-		fill: (): string => POINTS_FILL_COLOR,
-	},
-	focus: {
-		prox: 30,
-	},
-};

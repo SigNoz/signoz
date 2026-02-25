@@ -9,6 +9,7 @@ import {
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
+import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
 	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
@@ -31,8 +32,14 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
+	const dashboardId = useDashboardVariablesSelector(
+		(state) => state.dashboardId,
+	);
 	const sortedVariablesArray = useDashboardVariablesSelector(
 		(state) => state.sortedVariablesArray,
+	);
+	const dynamicVariableOrder = useDashboardVariablesSelector(
+		(state) => state.dynamicVariableOrder,
 	);
 	const dependencyData = useDashboardVariablesSelector(
 		(state) => state.dependencyData,
@@ -52,10 +59,11 @@ function DashboardVariableSelection(): JSX.Element | null {
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	// Memoize the order key to avoid unnecessary triggers
-	const dependencyOrderKey = useMemo(
-		() => dependencyData?.order?.join(',') ?? '',
-		[dependencyData?.order],
-	);
+	const variableOrderKey = useMemo(() => {
+		const queryVariableOrderKey = dependencyData?.order?.join(',') ?? '';
+		const dynamicVariableOrderKey = dynamicVariableOrder?.join(',') ?? '';
+		return `${queryVariableOrderKey}|${dynamicVariableOrderKey}`;
+	}, [dependencyData?.order, dynamicVariableOrder]);
 
 	// Initialize fetch store then start a new fetch cycle.
 	// Runs on dependency order changes, and time range changes.
@@ -66,7 +74,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		initializeVariableFetchStore(allVariableNames);
 		enqueueFetchOfAllVariables();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dependencyOrderKey, minTime, maxTime]);
+	}, [variableOrderKey, minTime, maxTime]);
 
 	// Performance optimization: For dynamic variables with allSelected=true, we don't store
 	// individual values in localStorage since we can always derive them from available options.
@@ -91,6 +99,28 @@ function DashboardVariableSelection(): JSX.Element | null {
 			} else {
 				updateUrlVariable(name || id, value);
 			}
+
+			// Synchronously update the external store with the new variable value so that
+			// child variables see the updated parent value when they refetch, rather than
+			// waiting for setSelectedDashboard → useEffect → updateDashboardVariablesStore.
+			const updatedVariables = { ...dashboardVariables };
+			if (updatedVariables[id]) {
+				updatedVariables[id] = {
+					...updatedVariables[id],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			if (updatedVariables[name]) {
+				updatedVariables[name] = {
+					...updatedVariables[name],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			updateDashboardVariablesStore({ dashboardId, variables: updatedVariables });
 
 			setSelectedDashboard((prev) => {
 				if (prev) {
@@ -126,10 +156,12 @@ function DashboardVariableSelection(): JSX.Element | null {
 				return prev;
 			});
 
-			// Cascade: enqueue query-type descendants for refetching
+			// Cascade: enqueue query-type descendants for refetching.
+			// Safe to call synchronously now that the store already has the updated value.
 			enqueueDescendantsOfVariable(name);
 		},
 		[
+			dashboardId,
 			dashboardVariables,
 			updateLocalStorageDashboardVariables,
 			updateUrlVariable,

@@ -81,7 +81,7 @@ export interface AuthtypesGettableAuthDomainDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -108,6 +108,33 @@ export interface AuthtypesGettableAuthDomainDTO {
 	updatedAt?: Date;
 }
 
+export interface AuthtypesGettableObjectsDTO {
+	resource: AuthtypesResourceDTO;
+	/**
+	 * @type array
+	 */
+	selectors: string[];
+}
+
+/**
+ * @nullable
+ */
+export type AuthtypesGettableResourcesDTORelations = {
+	[key: string]: string[];
+} | null;
+
+export interface AuthtypesGettableResourcesDTO {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	relations: AuthtypesGettableResourcesDTORelations;
+	/**
+	 * @type array
+	 */
+	resources: AuthtypesResourceDTO[];
+}
+
 export interface AuthtypesGettableTokenDTO {
 	/**
 	 * @type string
@@ -125,6 +152,18 @@ export interface AuthtypesGettableTokenDTO {
 	 * @type string
 	 */
 	tokenType?: string;
+}
+
+export interface AuthtypesGettableTransactionDTO {
+	/**
+	 * @type boolean
+	 */
+	authorized: boolean;
+	object: AuthtypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
 }
 
 export type AuthtypesGoogleConfigDTODomainToAdminEmail = {
@@ -198,6 +237,14 @@ export interface AuthtypesOIDCConfigDTO {
 	issuerAlias?: string;
 }
 
+export interface AuthtypesObjectDTO {
+	resource: AuthtypesResourceDTO;
+	/**
+	 * @type string
+	 */
+	selector: string;
+}
+
 export interface AuthtypesOrgSessionContextDTO {
 	authNSupport?: AuthtypesAuthNSupportDTO;
 	/**
@@ -216,6 +263,19 @@ export interface AuthtypesPasswordAuthNSupportDTO {
 	 * @type string
 	 */
 	provider?: string;
+}
+
+export interface AuthtypesPatchableObjectsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	additions: AuthtypesGettableObjectsDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
 export interface AuthtypesPostableAuthDomainDTO {
@@ -246,6 +306,17 @@ export interface AuthtypesPostableRotateTokenDTO {
 	 * @type string
 	 */
 	refreshToken?: string;
+}
+
+export interface AuthtypesResourceDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	type: string;
 }
 
 /**
@@ -301,6 +372,14 @@ export interface AuthtypesSessionContextDTO {
 	 * @nullable true
 	 */
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
+}
+
+export interface AuthtypesTransactionDTO {
+	object: AuthtypesObjectDTO;
+	/**
+	 * @type string
+	 */
+	relation: string;
 }
 
 export interface AuthtypesUpdateableAuthDomainDTO {
@@ -391,7 +470,7 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type string
 	 */
-	code?: string;
+	code: string;
 	/**
 	 * @type array
 	 */
@@ -399,7 +478,7 @@ export interface ErrorsJSONDTO {
 	/**
 	 * @type string
 	 */
-	message?: string;
+	message: string;
 	/**
 	 * @type string
 	 */
@@ -453,18 +532,18 @@ export interface GatewaytypesGettableCreatedIngestionKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
-	value?: string;
+	value: string;
 }
 
 export interface GatewaytypesGettableCreatedIngestionKeyLimitDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 }
 
 export interface GatewaytypesGettableIngestionKeysDTO {
@@ -578,14 +657,14 @@ export interface GatewaytypesLimitMetricValueDTO {
 export interface GatewaytypesLimitValueDTO {
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	count?: number;
+	count?: number | null;
 	/**
 	 * @type integer
-	 * @format int64
+	 * @nullable true
 	 */
-	size?: number;
+	size?: number | null;
 }
 
 export interface GatewaytypesPaginationDTO {
@@ -616,7 +695,7 @@ export interface GatewaytypesPostableIngestionKeyDTO {
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type array
 	 * @nullable true
@@ -638,12 +717,41 @@ export interface GatewaytypesPostableIngestionKeyLimitDTO {
 }
 
 export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
-	config?: GatewaytypesLimitConfigDTO;
+	config: GatewaytypesLimitConfigDTO;
 	/**
 	 * @type array
 	 * @nullable true
 	 */
 	tags?: string[] | null;
+}
+
+export interface MetricsexplorertypesListMetricDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type boolean
+	 */
+	isMonotonic: boolean;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	temporality: MetrictypesTemporalityDTO;
+	type: MetrictypesTypeDTO;
+	/**
+	 * @type string
+	 */
+	unit: string;
+}
+
+export interface MetricsexplorertypesListMetricsResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	metrics: MetricsexplorertypesListMetricDTO[] | null;
 }
 
 export interface MetricsexplorertypesMetricAlertDTO {
@@ -680,23 +788,6 @@ export interface MetricsexplorertypesMetricAttributeDTO {
 	 * @nullable true
 	 */
 	values: string[] | null;
-}
-
-export interface MetricsexplorertypesMetricAttributesRequestDTO {
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	end?: number | null;
-	/**
-	 * @type string
-	 */
-	metricName: string;
-	/**
-	 * @type integer
-	 * @nullable true
-	 */
-	start?: number | null;
 }
 
 export interface MetricsexplorertypesMetricAttributesResponseDTO {
@@ -1928,11 +2019,29 @@ export enum Querybuildertypesv5VariableTypeDTO {
 	text = 'text',
 }
 export interface RenderErrorResponseDTO {
-	error?: ErrorsJSONDTO;
+	error: ErrorsJSONDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
+}
+
+export interface RoletypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
+export interface RoletypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
 }
 
 export interface RoletypesRoleDTO {
@@ -1944,23 +2053,23 @@ export interface RoletypesRoleDTO {
 	/**
 	 * @type string
 	 */
-	description?: string;
+	description: string;
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type string
 	 */
-	orgId?: string;
+	orgId: string;
 	/**
 	 * @type string
 	 */
-	type?: string;
+	type: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2089,7 +2198,7 @@ export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @format int64
@@ -2142,7 +2251,7 @@ export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 }
 
 export interface TypesInviteDTO {
@@ -2158,7 +2267,7 @@ export interface TypesInviteDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2203,7 +2312,7 @@ export interface TypesOrganizationDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type integer
 	 * @minimum 0
@@ -2309,7 +2418,7 @@ export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2333,7 +2442,7 @@ export interface TypesStorableAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type string
 	 */
@@ -2382,7 +2491,7 @@ export interface TypesUserDTO {
 	/**
 	 * @type string
 	 */
-	id?: string;
+	id: string;
 	/**
 	 * @type boolean
 	 */
@@ -2402,23 +2511,127 @@ export interface TypesUserDTO {
 	updatedAt?: Date;
 }
 
+export interface ZeustypesGettableHostDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	hosts: ZeustypesHostDTO[] | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	state: string;
+	/**
+	 * @type string
+	 */
+	tier: string;
+}
+
+export interface ZeustypesHostDTO {
+	/**
+	 * @type boolean
+	 */
+	is_default: boolean;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	url: string;
+}
+
+export interface ZeustypesPostableHostDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ZeustypesPostableProfileDTO {
+	/**
+	 * @type string
+	 */
+	existing_observability_tool: string;
+	/**
+	 * @type boolean
+	 */
+	has_existing_observability_tool: boolean;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	logs_scale_per_day_in_gb: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	number_of_hosts: number;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	number_of_services: number;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	reasons_for_interest_in_signoz: string[] | null;
+	/**
+	 * @type string
+	 */
+	timeline_for_migrating_to_signoz: string;
+	/**
+	 * @type boolean
+	 */
+	uses_otel: boolean;
+	/**
+	 * @type string
+	 */
+	where_did_you_discover_signoz: string;
+}
+
+export type AuthzCheck200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesGettableTransactionDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type AuthzResources200 = {
+	data: AuthtypesGettableResourcesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ChangePasswordPathParameters = {
 	id: string;
 };
 export type CreateSessionByGoogleCallback303 = {
-	data?: AuthtypesGettableTokenDTO;
+	data: AuthtypesGettableTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateSessionByOIDCCallback303 = {
-	data?: AuthtypesGettableTokenDTO;
+	data: AuthtypesGettableTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateSessionBySAMLCallbackParams = {
@@ -2446,11 +2659,11 @@ export type CreateSessionBySAMLCallbackBody = {
 };
 
 export type CreateSessionBySAMLCallback303 = {
-	data?: AuthtypesGettableTokenDTO;
+	data: AuthtypesGettableTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeletePublicDashboardPathParameters = {
@@ -2460,22 +2673,22 @@ export type GetPublicDashboardPathParameters = {
 	id: string;
 };
 export type GetPublicDashboard200 = {
-	data?: DashboardtypesGettablePublicDasbhboardDTO;
+	data: DashboardtypesGettablePublicDasbhboardDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreatePublicDashboardPathParameters = {
 	id: string;
 };
 export type CreatePublicDashboard201 = {
-	data?: TypesIdentifiableDTO;
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type UpdatePublicDashboardPathParameters = {
@@ -2485,19 +2698,19 @@ export type ListAuthDomains200 = {
 	/**
 	 * @type array
 	 */
-	data?: AuthtypesGettableAuthDomainDTO[];
+	data: AuthtypesGettableAuthDomainDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateAuthDomain200 = {
-	data?: AuthtypesGettableAuthDomainDTO;
+	data: AuthtypesGettableAuthDomainDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteAuthDomainPathParameters = {
@@ -2553,11 +2766,11 @@ export type GetFieldsKeysParams = {
 };
 
 export type GetFieldsKeys200 = {
-	data?: TelemetrytypesGettableFieldKeysDTO;
+	data: TelemetrytypesGettableFieldKeysDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetFieldsValuesParams = {
@@ -2617,49 +2830,49 @@ export type GetFieldsValuesParams = {
 };
 
 export type GetFieldsValues200 = {
-	data?: TelemetrytypesGettableFieldValuesDTO;
+	data: TelemetrytypesGettableFieldValuesDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetResetPasswordTokenPathParameters = {
 	id: string;
 };
 export type GetResetPasswordToken200 = {
-	data?: TypesResetPasswordTokenDTO;
+	data: TypesResetPasswordTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetGlobalConfig200 = {
-	data?: TypesGettableGlobalConfigDTO;
+	data: TypesGettableGlobalConfigDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type ListInvite200 = {
 	/**
 	 * @type array
 	 */
-	data?: TypesInviteDTO[];
+	data: TypesInviteDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateInvite201 = {
-	data?: TypesInviteDTO;
+	data: TypesInviteDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteInvitePathParameters = {
@@ -2669,19 +2882,19 @@ export type GetInvitePathParameters = {
 	token: string;
 };
 export type GetInvite200 = {
-	data?: TypesInviteDTO;
+	data: TypesInviteDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type AcceptInvite201 = {
-	data?: TypesUserDTO;
+	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type ListPromotedAndIndexedPaths200 = {
@@ -2689,33 +2902,33 @@ export type ListPromotedAndIndexedPaths200 = {
 	 * @type array
 	 * @nullable true
 	 */
-	data?: PromotetypesPromotePathDTO[] | null;
+	data: PromotetypesPromotePathDTO[] | null;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type ListOrgPreferences200 = {
 	/**
 	 * @type array
 	 */
-	data?: PreferencetypesPreferenceDTO[];
+	data: PreferencetypesPreferenceDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetOrgPreferencePathParameters = {
 	name: string;
 };
 export type GetOrgPreference200 = {
-	data?: PreferencetypesPreferenceDTO;
+	data: PreferencetypesPreferenceDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type UpdateOrgPreferencePathParameters = {
@@ -2725,19 +2938,19 @@ export type ListAPIKeys200 = {
 	/**
 	 * @type array
 	 */
-	data?: TypesGettableAPIKeyDTO[];
+	data: TypesGettableAPIKeyDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateAPIKey201 = {
-	data?: TypesGettableAPIKeyDTO;
+	data: TypesGettableAPIKeyDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type RevokeAPIKeyPathParameters = {
@@ -2750,11 +2963,11 @@ export type GetPublicDashboardDataPathParameters = {
 	id: string;
 };
 export type GetPublicDashboardData200 = {
-	data?: DashboardtypesGettablePublicDashboardDataDTO;
+	data: DashboardtypesGettablePublicDashboardDataDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetPublicDashboardWidgetQueryRangePathParameters = {
@@ -2762,30 +2975,30 @@ export type GetPublicDashboardWidgetQueryRangePathParameters = {
 	idx: string;
 };
 export type GetPublicDashboardWidgetQueryRange200 = {
-	data?: Querybuildertypesv5QueryRangeResponseDTO;
+	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data?: RoletypesRoleDTO[];
+	data: RoletypesRoleDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateRole201 = {
-	data?: TypesIdentifiableDTO;
+	data: TypesIdentifiableDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteRolePathParameters = {
@@ -2795,25 +3008,44 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data?: RoletypesRoleDTO;
+	data: RoletypesRoleDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type PatchRolePathParameters = {
 	id: string;
 };
+export type GetObjectsPathParameters = {
+	id: string;
+	relation: string;
+};
+export type GetObjects200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesGettableObjectsDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type PatchObjectsPathParameters = {
+	id: string;
+	relation: string;
+};
 export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data?: TypesUserDTO[];
+	data: TypesUserDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteUserPathParameters = {
@@ -2823,52 +3055,52 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data?: TypesUserDTO;
+	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type UpdateUserPathParameters = {
 	id: string;
 };
 export type UpdateUser200 = {
-	data?: TypesUserDTO;
+	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetMyUser200 = {
-	data?: TypesUserDTO;
+	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type ListUserPreferences200 = {
 	/**
 	 * @type array
 	 */
-	data?: PreferencetypesPreferenceDTO[];
+	data: PreferencetypesPreferenceDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetUserPreferencePathParameters = {
 	name: string;
 };
 export type GetUserPreference200 = {
-	data?: PreferencetypesPreferenceDTO;
+	data: PreferencetypesPreferenceDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type UpdateUserPreferencePathParameters = {
@@ -2878,11 +3110,11 @@ export type GetFeatures200 = {
 	/**
 	 * @type array
 	 */
-	data?: FeaturetypesGettableFeatureDTO[];
+	data: FeaturetypesGettableFeatureDTO[];
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetIngestionKeysParams = {
@@ -2899,19 +3131,19 @@ export type GetIngestionKeysParams = {
 };
 
 export type GetIngestionKeys200 = {
-	data?: GatewaytypesGettableIngestionKeysDTO;
+	data: GatewaytypesGettableIngestionKeysDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
-export type CreateIngestionKey200 = {
-	data?: GatewaytypesGettableCreatedIngestionKeyDTO;
+export type CreateIngestionKey201 = {
+	data: GatewaytypesGettableCreatedIngestionKeyDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteIngestionKeyPathParameters = {
@@ -2924,11 +3156,11 @@ export type CreateIngestionKeyLimitPathParameters = {
 	keyId: string;
 };
 export type CreateIngestionKeyLimit201 = {
-	data?: GatewaytypesGettableCreatedIngestionKeyLimitDTO;
+	data: GatewaytypesGettableCreatedIngestionKeyLimitDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type DeleteIngestionKeyLimitPathParameters = {
@@ -2942,7 +3174,7 @@ export type SearchIngestionKeysParams = {
 	 * @type string
 	 * @description undefined
 	 */
-	name?: string;
+	name: string;
 	/**
 	 * @type integer
 	 * @description undefined
@@ -2956,140 +3188,187 @@ export type SearchIngestionKeysParams = {
 };
 
 export type SearchIngestionKeys200 = {
-	data?: GatewaytypesGettableIngestionKeysDTO;
+	data: GatewaytypesGettableIngestionKeysDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
-export type GetMetricAlertsParams = {
+export type ListMetricsParams = {
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	start?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	end?: number | null;
+	/**
+	 * @type integer
+	 * @description undefined
+	 */
+	limit?: number;
 	/**
 	 * @type string
 	 * @description undefined
 	 */
-	metricName: string;
+	searchText?: string;
 };
 
+export type ListMetrics200 = {
+	data: MetricsexplorertypesListMetricsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricAlertsPathParameters = {
+	metricName: string;
+};
 export type GetMetricAlerts200 = {
-	data?: MetricsexplorertypesMetricAlertsResponseDTO;
+	data: MetricsexplorertypesMetricAlertsResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
-export type GetMetricDashboardsParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
+export type GetMetricAttributesPathParameters = {
 	metricName: string;
 };
+export type GetMetricAttributesParams = {
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	start?: number | null;
+	/**
+	 * @type integer
+	 * @nullable true
+	 * @description undefined
+	 */
+	end?: number | null;
+};
 
+export type GetMetricAttributes200 = {
+	data: MetricsexplorertypesMetricAttributesResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricDashboardsPathParameters = {
+	metricName: string;
+};
 export type GetMetricDashboards200 = {
-	data?: MetricsexplorertypesMetricDashboardsResponseDTO;
+	data: MetricsexplorertypesMetricDashboardsResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
-export type GetMetricHighlightsParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
+export type GetMetricHighlightsPathParameters = {
 	metricName: string;
 };
-
 export type GetMetricHighlights200 = {
-	data?: MetricsexplorertypesMetricHighlightsResponseDTO;
+	data: MetricsexplorertypesMetricHighlightsResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
+};
+
+export type GetMetricMetadataPathParameters = {
+	metricName: string;
+};
+export type GetMetricMetadata200 = {
+	data: MetricsexplorertypesMetricMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
 };
 
 export type UpdateMetricMetadataPathParameters = {
 	metricName: string;
 };
-export type GetMetricAttributes200 = {
-	data?: MetricsexplorertypesMetricAttributesResponseDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
-export type GetMetricMetadataParams = {
-	/**
-	 * @type string
-	 * @description undefined
-	 */
-	metricName: string;
-};
-
-export type GetMetricMetadata200 = {
-	data?: MetricsexplorertypesMetricMetadataDTO;
-	/**
-	 * @type string
-	 */
-	status?: string;
-};
-
 export type GetMetricsStats200 = {
-	data?: MetricsexplorertypesStatsResponseDTO;
+	data: MetricsexplorertypesStatsResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetMetricsTreemap200 = {
-	data?: MetricsexplorertypesTreemapResponseDTO;
+	data: MetricsexplorertypesTreemapResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetMyOrganization200 = {
-	data?: TypesOrganizationDTO;
+	data: TypesOrganizationDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type GetSessionContext200 = {
-	data?: AuthtypesSessionContextDTO;
+	data: AuthtypesSessionContextDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type CreateSessionByEmailPassword200 = {
-	data?: AuthtypesGettableTokenDTO;
+	data: AuthtypesGettableTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
 };
 
 export type RotateSession200 = {
-	data?: AuthtypesGettableTokenDTO;
+	data: AuthtypesGettableTokenDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
+};
+
+export type GetHosts200 = {
+	data: ZeustypesGettableHostDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
 };
 
 export type QueryRangeV5200 = {
-	data?: Querybuildertypesv5QueryRangeResponseDTO;
+	data: Querybuildertypesv5QueryRangeResponseDTO;
 	/**
 	 * @type string
 	 */
-	status?: string;
+	status: string;
+};
+
+export type ReplaceVariables200 = {
+	data: Querybuildertypesv5QueryRangeRequestDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
 };

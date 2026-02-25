@@ -318,4 +318,5 @@ user:
     # The password of the root user. Must meet password requirements.
     password: ""
     # The name of the organization to create or look up for the root user.
-    org_name: default
+    org:
+      name: default
