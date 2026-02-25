@@ -1673,6 +1673,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 		"metric_name",
 		"temporality",
 		"any(type) AS type",
+		"any(is_monotonic) as is_monotonic",
 	).
 		From(t.metricsDBName + "." + tsTableName)
 
@@ -1697,31 +1698,18 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 
 	// Process results
 	for rows.Next() {
-		var metricName, temporalityStr, metricTypeStr string
-		if err := rows.Scan(&metricName, &temporalityStr, &metricTypeStr); err != nil {
-			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
-		}
-
-		// Convert string to Temporality type
+		var metricName string
 		var temporality metrictypes.Temporality
-		switch temporalityStr {
-		case "Delta":
-			temporality = metrictypes.Delta
-		case "Cumulative":
-			temporality = metrictypes.Cumulative
-		case "Unspecified":
-			temporality = metrictypes.Unspecified
-		default:
-			// Unknown or empty temporality
-			temporality = metrictypes.Unknown
+		var metricType metrictypes.Type
+		var isMonotonic bool
+		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
+			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
 		if temporality != metrictypes.Unknown {
 			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
-		var metricType metrictypes.Type
-		err = metricType.Scan(metricTypeStr)
-		if err != nil {
-			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metric-type result")
+		if metricType == metrictypes.SumType && !isMonotonic {
+			metricType = metrictypes.GaugeType
 		}
 		types[metricName] = metricType
 	}
@@ -1760,31 +1748,17 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 
 	// Process results
 	for rows.Next() {
-		var metricName, temporalityStr, meterMetricTypeStr string
-		if err := rows.Scan(&metricName, &temporalityStr, &meterMetricTypeStr); err != nil {
+		var metricName string
+		var temporality metrictypes.Temporality
+		var metricType metrictypes.Type
+		var isMonotonic bool
+		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
 			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-
-		// Convert string to Temporality type
-		var temporality metrictypes.Temporality
-		switch temporalityStr {
-		case "Delta":
-			temporality = metrictypes.Delta
-		case "Cumulative":
-			temporality = metrictypes.Cumulative
-		case "Unspecified":
-			temporality = metrictypes.Unspecified
-		default:
-			// Unknown or empty temporality
-			temporality = metrictypes.Unknown
+		if metricType == metrictypes.SumType && !isMonotonic {
+			metricType = metrictypes.GaugeType
 		}
-
 		temporalities[metricName] = temporality
-		var metricType metrictypes.Type
-		err = metricType.Scan(meterMetricTypeStr)
-		if err != nil {
-			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan metric-type result")
-		}
 		types[metricName] = metricType
 	}
 
