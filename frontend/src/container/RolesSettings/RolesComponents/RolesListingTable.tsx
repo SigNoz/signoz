@@ -9,6 +9,7 @@ import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
+import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
 import '../RolesSettings.styles.scss';
@@ -69,11 +70,15 @@ function RolesListingTable({
 	}, [roles, searchQuery]);
 
 	const managedRoles = useMemo(
-		() => filteredRoles.filter((role) => role.type?.toLowerCase() === 'managed'),
+		() =>
+			filteredRoles.filter(
+				(role) => role.type?.toLowerCase() === RoleType.MANAGED,
+			),
 		[filteredRoles],
 	);
 	const customRoles = useMemo(
-		() => filteredRoles.filter((role) => role.type?.toLowerCase() === 'custom'),
+		() =>
+			filteredRoles.filter((role) => role.type?.toLowerCase() === RoleType.CUSTOM),
 		[filteredRoles],
 	);
 

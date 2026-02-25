@@ -7,7 +7,6 @@ import { ChevronRight, Search, Table2, Trash2, Users } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Skeleton } from 'antd';
-import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetObjectsQueryKey,
 	useDeleteRole,
@@ -15,41 +14,29 @@ import {
 	useGetRole,
 	usePatchObjects,
 } from 'api/generated/services/role';
-import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { ErrorType } from 'api/generatedAPIInstance';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
+import { capitalize } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import APIError from 'types/api/error';
+import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
 import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
-import { ROLE_ID_REGEX } from './constants';
-import DeleteRoleModal from './DeleteRoleModal';
 import {
 	buildPatchPayload,
-	capitalise,
 	derivePermissionTypes,
 	deriveResourcesForRelation,
+	handleApiError,
 	objectsToPermissionConfig,
 	TimestampBadge,
-} from './utils';
+} from '../utils';
+import { ROLE_ID_REGEX } from './constants';
+import DeleteRoleModal from './DeleteRoleModal';
 
 import './RoleDetailsPage.styles.scss';
-
-function handleApiError(
-	err: ErrorType<RenderErrorResponseDTO>,
-	showErrorModal: (error: APIError) => void,
-): void {
-	try {
-		ErrorResponseHandlerForGeneratedAPIs(err);
-	} catch (apiError) {
-		showErrorModal(apiError as APIError);
-	}
-}
 
 type TabKey = 'overview' | 'members';
 
@@ -194,6 +181,7 @@ function MembersTab(): JSX.Element {
 				/>
 			</div>
 
+			{/* Todo: Right now we are only adding the empty state in this cut */}
 			<div className="role-details-members-content">
 				<div className="role-details-members-empty-state">
 					<span
@@ -239,7 +227,7 @@ function RoleDetailsPage(): JSX.Element {
 	);
 	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
-	const isManaged = role?.type === 'managed';
+	const isManaged = role?.type === RoleType.MANAGED;
 
 	const permissionTypes = useMemo(
 		() => derivePermissionTypes(authzResources?.relations ?? null),
@@ -402,7 +390,7 @@ function RoleDetailsPage(): JSX.Element {
 					<PermissionSidePanel
 						open={activePermission !== null}
 						onClose={(): void => setActivePermission(null)}
-						permissionLabel={activePermission ? capitalise(activePermission) : ''}
+						permissionLabel={activePermission ? capitalize(activePermission) : ''}
 						resources={resourcesForActivePermission}
 						initialConfig={initialConfig}
 						isLoading={isLoadingObjects}

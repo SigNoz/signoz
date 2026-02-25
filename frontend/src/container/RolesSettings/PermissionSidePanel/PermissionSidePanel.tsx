@@ -9,6 +9,7 @@ import {
 import { Switch } from '@signozhq/switch';
 import { Select, Skeleton } from 'antd';
 
+import { buildConfig, configsEqual, DEFAULT_RESOURCE_CONFIG } from '../utils';
 import type {
 	PermissionConfig,
 	PermissionSidePanelProps,
@@ -16,41 +17,9 @@ import type {
 	ResourceDefinition,
 	ScopeType,
 } from './PermissionSidePanel.types';
+import { PermissionScope } from './PermissionSidePanel.types';
 
 import './PermissionSidePanel.styles.scss';
-
-const DEFAULT_RESOURCE_CONFIG: ResourceConfig = {
-	enabled: false,
-	scope: 'all',
-	selectedIds: [],
-};
-
-function buildConfig(
-	resources: ResourceDefinition[],
-	initial?: PermissionConfig,
-): PermissionConfig {
-	const config: PermissionConfig = {};
-	resources.forEach((r) => {
-		config[r.id] = initial?.[r.id] ?? { ...DEFAULT_RESOURCE_CONFIG };
-	});
-	return config;
-}
-
-function configsEqual(a: PermissionConfig, b: PermissionConfig): boolean {
-	return Object.keys(a).every((id) => {
-		const ac = a[id];
-		const bc = b[id];
-		if (!bc) {
-			return false;
-		}
-		return (
-			ac.enabled === bc.enabled &&
-			ac.scope === bc.scope &&
-			JSON.stringify([...ac.selectedIds].sort()) ===
-				JSON.stringify([...bc.selectedIds].sort())
-		);
-	});
-}
 
 interface ResourceRowProps {
 	resource: ResourceDefinition;
@@ -133,7 +102,7 @@ function ResourceRow({
 						</div>
 					</RadioGroup>
 
-					{config.scope === 'only_selected' && (
+					{config.scope === PermissionScope.ONLY_SELECTED && (
 						<div className="psp-resource__select-wrapper">
 							<Select
 								mode="tags"

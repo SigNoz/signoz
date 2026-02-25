@@ -7,3 +7,4 @@ export type {
 	ResourceOption,
 	ScopeType,
 } from './PermissionSidePanel.types';
+export { PermissionScope } from './PermissionSidePanel.types';

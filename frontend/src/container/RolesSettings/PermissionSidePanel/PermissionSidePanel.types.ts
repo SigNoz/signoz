@@ -9,7 +9,12 @@ export interface ResourceDefinition {
 	options?: ResourceOption[];
 }
 
-export type ScopeType = 'all' | 'only_selected';
+export enum PermissionScope {
+	ALL = 'all',
+	ONLY_SELECTED = 'only_selected',
+}
+
+export type ScopeType = PermissionScope;
 
 export interface ResourceConfig {
 	enabled: boolean;
