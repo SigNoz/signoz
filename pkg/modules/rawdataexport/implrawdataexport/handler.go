@@ -43,12 +43,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 		format = params.Format
-		var err error
-		queryRangeRequest, err = buildQueryRangeRequest(&params)
-		if err != nil {
-			render.Error(rw, err)
-			return
-		}
+		queryRangeRequest = buildQueryRangeRequest(&params)
 	} else {
 		var formatParam exporttypes.ExportRawDataFormatQueryParam
 		if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
@@ -133,7 +128,7 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 }
 
 // buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
-func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) (qbtypes.QueryRangeRequest, error) {
+func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) qbtypes.QueryRangeRequest {
 	orderBy := parseExportQueryOrderBy(params.OrderBy)
 
 	columns := parseExportQueryColumns(params.Columns)
@@ -176,7 +171,7 @@ func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) (qbtyp
 		CompositeQuery: qbtypes.CompositeQuery{
 			Queries: []qbtypes.QueryEnvelope{query},
 		},
-	}, nil
+	}
 }
 
 // setExportResponseHeaders sets common HTTP headers for export responses.
