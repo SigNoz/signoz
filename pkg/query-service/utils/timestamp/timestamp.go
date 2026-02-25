@@ -11,3 +11,7 @@ func FromTime(t time.Time) int64 {
 func Time(ts int64) time.Time {
 	return time.Unix(ts/1000, (ts%1000)*int64(time.Millisecond))
 }
+
+func MilliToNano(milliTS uint64) uint64 {
+	return milliTS * 1000_000
+}

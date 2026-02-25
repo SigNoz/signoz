@@ -18,6 +18,7 @@ import (
 	"github.com/uptrace/bun"
 
 	"github.com/SigNoz/signoz/pkg/prometheus"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -1257,7 +1258,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			}
 		}
 
-		selectedSpans = tracedetail.GetSelectedSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
+		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
 		traceCache := model.GetFlamegraphSpansForTraceCache{
 			StartTime:     startTime,
 			EndTime:       endTime,
@@ -1278,7 +1279,8 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	limit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
 	totalSpanCount := tracedetail.GetTotalSpanCount(selectedSpans)
 	if totalSpanCount > uint64(limit) {
-		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, startTime, endTime)
+		boundaryStart, boundaryEnd := timestamp.MilliToNano(req.BoundaryStartTS), timestamp.MilliToNano(req.BoundaryEndTS)
+		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
 	r.logger.Info("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID)
 
