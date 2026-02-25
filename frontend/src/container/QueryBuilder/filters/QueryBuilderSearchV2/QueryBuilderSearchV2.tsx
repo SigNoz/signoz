@@ -973,6 +973,7 @@ function QueryBuilderSearchV2(
 	return (
 		<div className="query-builder-search-v2">
 			<Select
+				data-testid={'qb-search-select'}
 				ref={selectRef}
 				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}

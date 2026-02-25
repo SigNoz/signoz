@@ -2,6 +2,7 @@ import { useCallback, useState } from 'react';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import type { UseActiveLog } from 'hooks/logs/types';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useIsTextSelected } from 'hooks/useIsTextSelected';
 import { ILog } from 'types/api/logs/log';
 
 type SelectedTab = typeof VIEW_TYPES[keyof typeof VIEW_TYPES] | undefined;
@@ -28,9 +29,13 @@ function useLogDetailHandlers({
 		onAddToQuery,
 	} = useActiveLog();
 	const [selectedTab, setSelectedTab] = useState<SelectedTab>(defaultTab);
+	const isTextSelected = useIsTextSelected();
 
 	const handleSetActiveLog = useCallback(
 		(log: ILog, nextTab: SelectedTab = defaultTab): void => {
+			if (isTextSelected()) {
+				return;
+			}
 			if (activeLog?.id === log.id) {
 				onClearActiveLog();
 				setSelectedTab(undefined);
@@ -39,7 +44,7 @@ function useLogDetailHandlers({
 			onSetActiveLog(log);
 			setSelectedTab(nextTab ?? defaultTab);
 		},
-		[activeLog?.id, defaultTab, onClearActiveLog, onSetActiveLog],
+		[activeLog?.id, defaultTab, onClearActiveLog, onSetActiveLog, isTextSelected],
 	);
 
 	const handleCloseLogDetail = useCallback((): void => {
