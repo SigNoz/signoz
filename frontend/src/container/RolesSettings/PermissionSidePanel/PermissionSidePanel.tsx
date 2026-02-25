@@ -136,7 +136,7 @@ function ResourceRow({
 					{config.scope === 'only_selected' && (
 						<div className="psp-resource__select-wrapper">
 							<Select
-								mode="multiple"
+								mode="tags"
 								value={config.selectedIds}
 								onChange={(vals: string[]): void =>
 									onSelectedIdsChange(resource.id, vals)
@@ -333,7 +333,7 @@ function PermissionSidePanel({
 							size="sm"
 							onClick={handleSave}
 							loading={isSaving}
-							disabled={isLoading}
+							disabled={isLoading || unsavedCount === 0}
 						>
 							Save Changes
 						</Button>

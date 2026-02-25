@@ -5,10 +5,11 @@ import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { ChevronRight, Search, Table2, Trash2, Users } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Skeleton } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	invalidateGetObjects,
+	getGetObjectsQueryKey,
 	useDeleteRole,
 	useGetObjects,
 	useGetRole,
@@ -17,11 +18,9 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -36,6 +35,7 @@ import {
 	derivePermissionTypes,
 	deriveResourcesForRelation,
 	objectsToPermissionConfig,
+	TimestampBadge,
 } from './utils';
 
 import './RoleDetailsPage.styles.scss';
@@ -57,52 +57,6 @@ interface PermissionType {
 	key: string;
 	label: string;
 	icon: JSX.Element;
-}
-
-interface TimestampBadgeProps {
-	date?: Date | string;
-}
-
-function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-
-	if (!date) {
-		return <span className="role-details-badge">—</span>;
-	}
-
-	const d = new Date(date);
-	if (Number.isNaN(d.getTime())) {
-		return <span className="role-details-badge">—</span>;
-	}
-
-	const formatted = formatTimezoneAdjustedTimestamp(
-		date,
-		DATE_TIME_FORMATS.DASH_DATETIME,
-	);
-
-	return <span className="role-details-badge">{formatted}</span>;
-}
-
-interface TabButtonProps {
-	isActive: boolean;
-	onClick: () => void;
-	children: React.ReactNode;
-}
-
-function TabButton({
-	isActive,
-	onClick,
-	children,
-}: TabButtonProps): JSX.Element {
-	return (
-		<button
-			type="button"
-			className={`role-details-tab${isActive ? ' role-details-tab--active' : ''}`}
-			onClick={onClick}
-		>
-			{children}
-		</button>
-	);
 }
 
 interface PermissionItemProps {
@@ -159,7 +113,7 @@ interface OverviewTabProps {
 		description?: string;
 		createdAt?: Date | string;
 		updatedAt?: Date | string;
-	};
+	} | null;
 	isManaged: boolean;
 	permissionTypes: PermissionType[];
 	onPermissionClick: (relationKey: string) => void;
@@ -184,20 +138,20 @@ function OverviewTab({
 			<div className="role-details-meta">
 				<div>
 					<p className="role-details-section-label">Description</p>
-					<p className="role-details-description-text">{role.description || '—'}</p>
+					<p className="role-details-description-text">{role?.description || '—'}</p>
 				</div>
 
 				<div className="role-details-info-row">
 					<div className="role-details-info-col">
 						<p className="role-details-section-label">Created At</p>
 						<div className="role-details-info-value">
-							<TimestampBadge date={role.createdAt} />
+							<TimestampBadge date={role?.createdAt} />
 						</div>
 					</div>
 					<div className="role-details-info-col">
 						<p className="role-details-section-label">Last Modified At</p>
 						<div className="role-details-info-value">
-							<TimestampBadge date={role.updatedAt} />
+							<TimestampBadge date={role?.updatedAt} />
 						</div>
 					</div>
 				</div>
@@ -279,9 +233,10 @@ function RoleDetailsPage(): JSX.Element {
 	const [isDeleteModalOpen, setIsDeleteModalOpen] = useState(false);
 	const [activePermission, setActivePermission] = useState<string | null>(null);
 
-	const { data, isLoading, isFetching, isError, error } = useGetRole({
-		id: roleId,
-	});
+	const { data, isLoading, isFetching, isError, error } = useGetRole(
+		{ id: roleId },
+		{ query: { enabled: !!roleId } },
+	);
 	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
 	const isManaged = role?.type === 'managed';
@@ -317,10 +272,9 @@ function RoleDetailsPage(): JSX.Element {
 	const handleSaveSuccess = (): void => {
 		toast.success('Permissions saved successfully');
 		if (activePermission) {
-			invalidateGetObjects(queryClient, {
-				id: roleId,
-				relation: activePermission,
-			});
+			queryClient.removeQueries(
+				getGetObjectsQueryKey({ id: roleId, relation: activePermission }),
+			);
 		}
 		setActivePermission(null);
 	};
@@ -354,7 +308,7 @@ function RoleDetailsPage(): JSX.Element {
 		);
 	}
 
-	if (isError || !role) {
+	if (isError) {
 		return (
 			<div className="role-details-page">
 				<ErrorInPlace
@@ -385,27 +339,30 @@ function RoleDetailsPage(): JSX.Element {
 	return (
 		<div className="role-details-page">
 			<div className="role-details-header">
-				<h2 className="role-details-title">Role — {role.name}</h2>
+				<h2 className="role-details-title">Role — {role?.name}</h2>
 			</div>
 
 			<div className="role-details-nav">
-				<div className="role-details-tabs">
-					<TabButton
-						isActive={activeTab === 'overview'}
-						onClick={(): void => setActiveTab('overview')}
-					>
+				<ToggleGroup
+					type="single"
+					value={activeTab}
+					onValueChange={(val): void => {
+						if (val) {
+							setActiveTab(val as TabKey);
+						}
+					}}
+					className="role-details-tabs"
+				>
+					<ToggleGroupItem value="overview" className="role-details-tab">
 						<Table2 size={14} />
 						Overview
-					</TabButton>
-					<TabButton
-						isActive={activeTab === 'members'}
-						onClick={(): void => setActiveTab('members')}
-					>
+					</ToggleGroupItem>
+					<ToggleGroupItem value="members" className="role-details-tab">
 						<Users size={14} />
 						Members
 						<span className="role-details-tab-count">0</span>
-					</TabButton>
-				</div>
+					</ToggleGroupItem>
+				</ToggleGroup>
 
 				{!isManaged && (
 					<div className="role-details-actions">
@@ -432,7 +389,7 @@ function RoleDetailsPage(): JSX.Element {
 
 			{activeTab === 'overview' && (
 				<OverviewTab
-					role={role}
+					role={role || null}
 					isManaged={isManaged}
 					permissionTypes={permissionTypes}
 					onPermissionClick={(key): void => setActivePermission(key)}
@@ -458,8 +415,8 @@ function RoleDetailsPage(): JSX.Element {
 						onClose={(): void => setIsEditModalOpen(false)}
 						initialData={{
 							id: roleId,
-							name: role.name || '',
-							description: role.description || '',
+							name: role?.name || '',
+							description: role?.description || '',
 						}}
 					/>
 				</>
@@ -467,7 +424,7 @@ function RoleDetailsPage(): JSX.Element {
 
 			<DeleteRoleModal
 				isOpen={isDeleteModalOpen}
-				roleName={role.name || ''}
+				roleName={role?.name || ''}
 				isDeleting={isDeleting}
 				onCancel={(): void => setIsDeleteModalOpen(false)}
 				onConfirm={(): void => deleteRole({ pathParams: { id: roleId } })}

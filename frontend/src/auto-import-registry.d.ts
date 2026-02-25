@@ -26,4 +26,5 @@ import '@signozhq/resizable';
 import '@signozhq/sonner';
 import '@signozhq/switch';
 import '@signozhq/table';
+import '@signozhq/toggle-group';
 import '@signozhq/tooltip';

@@ -1,5 +1,6 @@
-import { useCallback, useEffect } from 'react';
+import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { X } from '@signozhq/icons';
 import { Input, inputVariants } from '@signozhq/input';
@@ -14,6 +15,7 @@ import {
 } from 'api/generated/services/role';
 import type { RoletypesPostableRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import ROUTES from 'constants/routes';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
@@ -44,12 +46,14 @@ function CreateRoleModal({
 }: CreateRoleModalProps): JSX.Element {
 	const [form] = Form.useForm<CreateRoleFormValues>();
 	const queryClient = useQueryClient();
+	const history = useHistory();
 	const { showErrorModal } = useErrorModal();
 
 	const isEditMode = !!initialData?.id;
+	const prevIsOpen = useRef(isOpen);
 
 	useEffect(() => {
-		if (isOpen) {
+		if (isOpen && !prevIsOpen.current) {
 			if (isEditMode && initialData) {
 				form.setFieldsValue({
 					name: initialData.name,
@@ -59,9 +63,13 @@ function CreateRoleModal({
 				form.resetFields();
 			}
 		}
+		prevIsOpen.current = isOpen;
 	}, [isOpen, isEditMode, initialData, form]);
 
-	const handleSuccess = async (message: string): Promise<void> => {
+	const handleSuccess = async (
+		message: string,
+		redirectPath?: string,
+	): Promise<void> => {
 		await invalidateListRoles(queryClient);
 		if (isEditMode && initialData?.id) {
 			await invalidateGetRole(queryClient, { id: initialData.id });
@@ -69,6 +77,9 @@ function CreateRoleModal({
 		toast.success(message);
 		form.resetFields();
 		onClose();
+		if (redirectPath) {
+			history.push(redirectPath);
+		}
 	};
 
 	const handleError = (error: unknown): void => {
@@ -81,7 +92,11 @@ function CreateRoleModal({
 
 	const { mutate: createRole, isLoading: isCreating } = useCreateRole({
 		mutation: {
-			onSuccess: () => handleSuccess('Role created successfully'),
+			onSuccess: (res) =>
+				handleSuccess(
+					'Role created successfully',
+					`${ROUTES.ROLES_SETTINGS}/${res.data.id}`,
+				),
 			onError: handleError,
 		},
 	});

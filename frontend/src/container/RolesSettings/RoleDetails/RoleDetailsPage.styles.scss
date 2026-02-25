@@ -35,36 +35,26 @@
 	}
 
 	.role-details-tabs {
-		display: flex;
-		align-items: center;
 		background: var(--bg-ink-400);
 		border: 1px solid var(--bg-slate-400);
 		border-radius: 2px;
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		height: 32px;
 		overflow: hidden;
+		gap: 0;
 	}
 
 	.role-details-tab {
-		display: flex;
-		align-items: center;
 		gap: 4px;
 		padding: 0 16px;
 		height: 32px;
-		cursor: pointer;
-		font-family: Inter;
+		border-radius: 0;
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.06px;
-		color: var(--foreground);
-		background: transparent;
-		border: none;
-		white-space: nowrap;
 
-		&--active {
-			background: var(--bg-slate-400);
-			color: var(--text-base-white);
+		&[data-state='on'] {
 			border-radius: 2px 0 0 2px;
 		}
 	}
@@ -477,7 +467,7 @@
 			border-color: var(--bg-vanilla-300);
 		}
 
-		.role-details-tab--active {
+		.role-details-tab[data-state='on'] {
 			background: var(--bg-vanilla-300);
 			color: var(--text-base-black);
 		}

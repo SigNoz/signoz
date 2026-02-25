@@ -3,12 +3,16 @@ import type {
 	AuthtypesGettableObjectsDTO,
 	AuthtypesGettableResourcesDTO,
 } from 'api/generated/services/sigNoz.schemas';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { useTimezone } from 'providers/Timezone';
 
 import type {
 	PermissionConfig,
 	ResourceDefinition,
 } from '../PermissionSidePanel';
 import { FALLBACK_PERMISSION_ICON, PERMISSION_ICON_MAP } from './constants';
+
+import './RoleDetailsPage.styles.scss';
 
 export interface PermissionType {
 	key: string;
@@ -118,4 +122,28 @@ export function buildPatchPayload({
 		additions: additions.length > 0 ? additions : null,
 		deletions,
 	};
+}
+
+interface TimestampBadgeProps {
+	date?: Date | string;
+}
+
+export function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+
+	if (!date) {
+		return <span className="role-details-badge">—</span>;
+	}
+
+	const d = new Date(date);
+	if (Number.isNaN(d.getTime())) {
+		return <span className="role-details-badge">—</span>;
+	}
+
+	const formatted = formatTimezoneAdjustedTimestamp(
+		date,
+		DATE_TIME_FORMATS.DASH_DATETIME,
+	);
+
+	return <span className="role-details-badge">{formatted}</span>;
 }
