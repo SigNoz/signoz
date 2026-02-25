@@ -96,6 +96,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 				updateUrlVariable(name || id, value);
 			}
 
+			// eslint-disable-next-line no-console
+			console.log(value);
 			setSelectedDashboard((prev) => {
 				if (prev) {
 					const oldVariables = { ...prev?.data.variables };
@@ -117,6 +119,8 @@ function DashboardVariableSelection(): JSX.Element | null {
 							haveCustomValuesSelected,
 						};
 					}
+					// eslint-disable-next-line no-console
+					console.log(value);
 					return {
 						...prev,
 						data: {
@@ -130,8 +134,10 @@ function DashboardVariableSelection(): JSX.Element | null {
 				return prev;
 			});
 
-			// Cascade: enqueue query-type descendants for refetching
-			enqueueDescendantsOfVariable(name);
+			setTimeout(() => {
+				// Cascade: enqueue query-type descendants for refetching
+				enqueueDescendantsOfVariable(name);
+			}, 500);
 		},
 		[
 			dashboardVariables,
