@@ -144,6 +144,7 @@ func (m *module) UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *
 
 		var existing pipelinetypes.StoreablePipeline
 		if err := db.NewSelect().
+			Column("order_id", "enabled").
 			Model(&existing).
 			Where("id = ?", id).
 			Where("org_id = ?", orgID.StringValue()).
@@ -179,6 +180,13 @@ func (m *module) UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *
 			return err
 		}
 
+		// Apply pipelines if the enabled state has changed
+		if existing.Enabled != storeable.Enabled {
+			if err := m.applyPipelinesInTx(ctx, orgID, claims, db); err != nil {
+				return err
+			}
+		}
+
 		return nil
 	}); err != nil {
 		return nil, err
@@ -189,6 +197,36 @@ func (m *module) UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *
 		Filter:            pipeline.Filter,
 		Config:            pipeline.Config,
 	}, nil
+}
+
+func (m *module) applyPipelinesInTx(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims, tx bun.IDB) error {
+	// Get ids pipelines for the given org
+	var pipelines []pipelinetypes.StoreablePipeline
+	if err := tx.NewSelect().
+		Column("id").
+		Model(&pipelines).
+		Where("org_id = ?", orgID.StringValue()).
+		Scan(ctx); err != nil {
+		return m.sqlstore.WrapNotFoundErrf(
+			err,
+			errors.CodeNotFound,
+			"no pipelines found for org %s",
+			orgID.StringValue(),
+		)
+	}
+
+	// prepare config elements
+	elements := make([]string, len(pipelines))
+	for i, p := range pipelines {
+		elements[i] = p.ID.StringValue()
+	}
+
+	cfg, err := agentConf.StartNewVersion(ctx, orgID, valuer.MustNewUUID(claims.UserID), opamptypes.ElementTypeLogPipelines, elements)
+	if err != nil || cfg == nil {
+		return errors.WithAdditionalf(err, "failed to start new version for org %s", orgID.StringValue())
+	}
+
+	return nil
 }
 
 // reorderPipelinesInTx updates order_id of other pipelines in a transaction-aware way.
@@ -225,6 +263,60 @@ func reorderPipelinesInTx(ctx context.Context, tx bun.IDB, orgID string, oldOrde
 	}
 }
 
-func (m *module) DeletePipeline(ctx context.Context, orgID valuer.UUID, id string) error {
+func (m *module) DeletePipeline(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims, pipeline *pipelinetypes.PostablePipeline) error {
+	if err := pipeline.IsValid(); err != nil {
+		return err
+	}
+
+	if err := m.sqlstore.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		db := m.sqlstore.BunDBCtx(ctx)
+
+		// Fetch existing pipeline to determine its current order_id.
+		var existing pipelinetypes.StoreablePipeline
+		if err := db.NewSelect().
+			Model(&existing).
+			Column("order_id", "enabled").
+			Where("id = ?", pipeline.ID).
+			Where("org_id = ?", orgID.StringValue()).
+			Scan(ctx); err != nil {
+			return m.sqlstore.WrapNotFoundErrf(
+				err,
+				errors.CodeNotFound,
+				"pipeline with id %s does not exist in org %s",
+				pipeline.ID,
+				orgID.StringValue(),
+			)
+		}
+
+		if _, err := db.NewDelete().
+			Model((*pipelinetypes.StoreablePipeline)(nil)).
+			Where("id = ?", pipeline.ID).
+			Where("org_id = ?", orgID.StringValue()).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// Set order_ids of other pipelines by collapsing the gap left by the deleted pipeline.
+		if _, err := db.NewUpdate().
+			Model((*pipelinetypes.StoreablePipeline)(nil)).
+			Set("order_id = order_id - 1").
+			Where("org_id = ?", orgID.StringValue()).
+			Where("order_id > ?", existing.OrderID).
+			Exec(ctx); err != nil {
+			return err
+		}
+
+		// Apply pipelines if the deleted pipeline was enabled
+		if existing.Enabled {
+			if err := m.applyPipelinesInTx(ctx, orgID, claims, db); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	}); err != nil {
+		return err
+	}
+
 	return nil
 }
