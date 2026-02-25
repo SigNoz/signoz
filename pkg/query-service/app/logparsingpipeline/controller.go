@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -58,7 +59,7 @@ type PipelinesResponse struct {
 func (ic *LogParsingPipelineController) ApplyPipelines(
 	ctx context.Context,
 	orgID valuer.UUID,
-	userID valuer.UUID,
+	claims *authtypes.Claims,
 	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, error) {
 	var pipelines []pipelinetypes.GettablePipeline
@@ -89,7 +90,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		elements[i] = p.ID.StringValue()
 	}
 
-	cfg, err := agentConf.StartNewVersion(ctx, orgID, userID, opamptypes.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, ic.sqlStore.BunDBCtx(ctx), orgID, claims, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(fmt.Errorf("failed to start new version: %w", err))
 	}

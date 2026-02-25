@@ -182,7 +182,7 @@ func (m *module) UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *
 
 		// Apply pipelines if the enabled state has changed
 		if existing.Enabled != storeable.Enabled {
-			if err := m.applyPipelinesInTx(ctx, orgID, claims, db); err != nil {
+			if err := m.applyPipelinesInTx(ctx, db, orgID, claims); err != nil {
 				return err
 			}
 		}
@@ -199,7 +199,7 @@ func (m *module) UpdatePipeline(ctx context.Context, orgID valuer.UUID, claims *
 	}, nil
 }
 
-func (m *module) applyPipelinesInTx(ctx context.Context, orgID valuer.UUID, claims *authtypes.Claims, tx bun.IDB) error {
+func (m *module) applyPipelinesInTx(ctx context.Context, tx bun.IDB, orgID valuer.UUID, claims *authtypes.Claims) error {
 	// Get ids pipelines for the given org
 	var pipelines []pipelinetypes.StoreablePipeline
 	if err := tx.NewSelect().
@@ -221,7 +221,7 @@ func (m *module) applyPipelinesInTx(ctx context.Context, orgID valuer.UUID, clai
 		elements[i] = p.ID.StringValue()
 	}
 
-	cfg, err := agentConf.StartNewVersion(ctx, orgID, valuer.MustNewUUID(claims.UserID), opamptypes.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, tx, orgID, claims, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return errors.WithAdditionalf(err, "failed to start new version for org %s", orgID.StringValue())
 	}
@@ -308,7 +308,7 @@ func (m *module) DeletePipeline(ctx context.Context, orgID valuer.UUID, claims *
 
 		// Apply pipelines if the deleted pipeline was enabled
 		if existing.Enabled {
-			if err := m.applyPipelinesInTx(ctx, orgID, claims, db); err != nil {
+			if err := m.applyPipelinesInTx(ctx, db, orgID, claims); err != nil {
 				return err
 			}
 		}

@@ -4162,11 +4162,6 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		render.Error(w, errv2)
 		return
 	}
-	userID, errv2 := valuer.NewUUID(claims.UserID)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
 
 	req := pipelinetypes.PostablePipelines{}
 
@@ -4188,7 +4183,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, err
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, &claims, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)

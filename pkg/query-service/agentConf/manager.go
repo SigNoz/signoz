@@ -14,9 +14,11 @@ import (
 	tsp "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/tailsampler"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	yaml "gopkg.in/yaml.v3"
 )
@@ -181,7 +183,7 @@ func (m *Manager) ReportConfigDeploymentStatus(
 func GetLatestVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, error) {
-	return m.GetLatestVersion(ctx, orgId, elementType)
+	return m.GetLatestVersion(ctx, m.store.BunDBCtx(ctx), orgId, elementType)
 }
 
 func GetConfigVersion(
@@ -198,14 +200,14 @@ func GetConfigHistory(
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, eleType opamptypes.ElementType, elementIds []string,
+	ctx context.Context, tx bun.IDB, orgId valuer.UUID, claims *authtypes.Claims, eleType opamptypes.ElementType, elementIds []string,
 ) (*opamptypes.AgentConfigVersion, error) {
 
 	// create a new version
-	cfg := opamptypes.NewAgentConfigVersion(orgId, userId, eleType)
+	cfg := opamptypes.NewAgentConfigVersion(orgId, claims, eleType)
 
 	// insert new config and elements into database
-	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)
+	err := m.insertConfigInTx(ctx, tx, orgId, cfg, elementIds)
 	if err != nil {
 		return nil, err
 	}

@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -98,13 +99,13 @@ type AgentConfigVersion struct {
 	Config         string       `json:"config" bun:"config,type:text"`
 }
 
-func NewAgentConfigVersion(orgId valuer.UUID, userId valuer.UUID, elementType ElementType) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId valuer.UUID, claims *authtypes.Claims, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		UserAuditable: types.UserAuditable{CreatedBy: userId.String(), UpdatedBy: userId.String()},
+		UserAuditable: types.UserAuditable{CreatedBy: claims.Email, UpdatedBy: claims.Email},
 		OrgID:         orgId,
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		ElementType:   elementType,

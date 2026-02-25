@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/uptrace/bun"
 	"go.uber.org/zap"
 	"golang.org/x/exp/slices"
 )
@@ -88,10 +89,10 @@ func (r *Repo) GetConfigVersion(
 }
 
 func (r *Repo) GetLatestVersion(
-	ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType,
+	ctx context.Context, tx bun.IDB, orgId valuer.UUID, typ opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, error) {
 	var c opamptypes.AgentConfigVersion
-	err := r.store.BunDB().NewSelect().
+	err := tx.NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
 		ColumnExpr("COALESCE(created_by, '') as created_by").
@@ -111,8 +112,8 @@ func (r *Repo) GetLatestVersion(
 	return &c, nil
 }
 
-func (r *Repo) insertConfig(
-	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
+func (r *Repo) insertConfigInTx(
+	ctx context.Context, tx bun.IDB, orgId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
 ) error {
 
 	if c.ElementType.StringValue() == "" {
@@ -121,7 +122,6 @@ func (r *Repo) insertConfig(
 
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != opamptypes.ElementTypeLogPipelines {
-		zap.L().Error("insert config called with no elements ", zap.String("ElementType", c.ElementType.StringValue()))
 		return errors.NewInvalidInputf(CodeConfigElementsRequired, "config must have atleast one element")
 	}
 
@@ -129,13 +129,11 @@ func (r *Repo) insertConfig(
 		// the version can not be set by the user, we want to auto-assign the versions
 		// in a monotonically increasing order starting with 1. hence, we reject insert
 		// requests with version anything other than 0. here, 0 indicates un-assigned
-		zap.L().Error("invalid version assignment while inserting agent config", zap.Int("version", c.Version), zap.String("ElementType", c.ElementType.StringValue()))
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "user defined versions are not supported in the agent config")
 	}
 
-	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
+	configVersion, err := r.GetLatestVersion(ctx, tx, orgId, c.ElementType)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		zap.L().Error("failed to fetch latest config version", zap.Error(err))
 		return err
 	}
 
@@ -146,31 +144,10 @@ func (r *Repo) insertConfig(
 		c.Version = 1
 	}
 
-	// Track whether we've successfully finished the insert operation
-	success := false
-
-	defer func() {
-		if !success {
-			// remove all the damage (invalid rows from db)
-			// Delete elements first, then version (to respect potential foreign key constraints)
-			_, delErr := r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
-			if delErr != nil {
-				zap.L().Error("failed to delete config elements during cleanup", zap.Error(delErr), zap.String("version_id", c.ID.String()))
-			}
-			_, delErr = r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
-			if delErr != nil {
-				zap.L().Error("failed to delete config version during cleanup", zap.Error(delErr), zap.String("version_id", c.ID.String()))
-			}
-		}
-	}()
-
-	_, dbErr := r.store.
-		BunDB().
-		NewInsert().
+	_, dbErr := tx.NewInsert().
 		Model(c).
 		Exec(ctx)
 	if dbErr != nil {
-		zap.L().Error("error in inserting config version: ", zap.Error(dbErr))
 		return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
 	}
 
@@ -185,13 +162,12 @@ func (r *Repo) insertConfig(
 			ElementType: c.ElementType.StringValue(),
 			ElementID:   e,
 		}
-		_, dbErr = r.store.BunDB().NewInsert().Model(agentConfigElement).Exec(ctx)
+		_, dbErr = tx.NewInsert().Model(agentConfigElement).Exec(ctx)
 		if dbErr != nil {
 			return errors.WrapInternalf(dbErr, CodeConfigElementInsertFailed, "failed to insert config element")
 		}
 	}
 
-	success = true
 	return nil
 }
 
