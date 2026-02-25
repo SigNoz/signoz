@@ -92,8 +92,7 @@ func (s *service) reconcileWithOrgID(ctx context.Context) error {
 			return err // something really went wrong
 		}
 
-		// org was not found using id
-		// check if we can find an org using name
+		// org was not found using id check if we can find an org using name
 
 		existingOrgByName, nameErr := s.orgGetter.GetByName(ctx, s.config.Org.Name)
 		if nameErr != nil && !errors.Ast(nameErr, errors.TypeNotFound) {
@@ -102,12 +101,8 @@ func (s *service) reconcileWithOrgID(ctx context.Context) error {
 
 		// we found an org using name
 		if existingOrgByName != nil {
-			// the existing org has the same name as config but org id is different
-			// inform user with actionable message
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
-				"organization with name %q already exists with a different ID %s (expected %s)",
-				s.config.Org.Name, existingOrgByName.ID.StringValue(), s.config.Org.ID.StringValue(),
-			)
+			// the existing org has the same name as config but org id is different inform user with actionable message
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "organization with name %q already exists with a different ID %s (expected %s)", s.config.Org.Name, existingOrgByName.ID.StringValue(), s.config.Org.ID.StringValue())
 		}
 
 		// default - we did not found any org using id and name both - create a new org
