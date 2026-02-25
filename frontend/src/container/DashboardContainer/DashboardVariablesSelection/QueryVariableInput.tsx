@@ -55,7 +55,6 @@ function QueryVariableInput({
 		onDropdownVisibleChange,
 		handleClear,
 		getDefaultValue,
-		// applyDefaultIfNeeded,
 	} = useDashboardVariableSelectHelper({
 		variableData,
 		optionsData,
@@ -149,8 +148,6 @@ function QueryVariableInput({
 					onValueUpdate(variableData.name, variableData.id, value, allSelected);
 				} else {
 					const defaultValue = getDefaultValue(sortedNewOptions);
-					// eslint-disable-next-line no-console
-					console.log(defaultValue);
 					if (defaultValue !== undefined) {
 						onValueUpdate(
 							variableData.name,
@@ -160,9 +157,6 @@ function QueryVariableInput({
 						);
 					}
 				}
-
-				// Apply default if no value is selected (e.g., new variable, first load)
-				// applyDefaultIfNeeded(sortedNewOptions);
 			} catch (e) {
 				console.error(e);
 			}
@@ -176,9 +170,6 @@ function QueryVariableInput({
 			getDefaultValue,
 		],
 	);
-
-	// eslint-disable-next-line no-console
-	console.log(existingVariables);
 
 	const { isLoading, refetch } = useQuery(
 		[
