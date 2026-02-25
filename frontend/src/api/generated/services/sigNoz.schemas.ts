@@ -2719,6 +2719,76 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type HandleExportRawDataGETParams = {
+	/**
+	 * @enum csv,jsonl
+	 * @type string
+	 * @description undefined
+	 */
+	format?: HandleExportRawDataGETFormat;
+	/**
+	 * @enum logs,traces
+	 * @type string
+	 * @description undefined
+	 */
+	source?: HandleExportRawDataGETSource;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description undefined
+	 */
+	start?: number;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 * @description undefined
+	 */
+	end?: number;
+	/**
+	 * @type integer
+	 * @maximum 50000
+	 * @minimum 1
+	 * @description undefined
+	 */
+	limit?: number;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	filter?: string;
+	/**
+	 * @type array
+	 * @description undefined
+	 */
+	columns?: string[];
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	order_by?: string;
+};
+
+export enum HandleExportRawDataGETFormat {
+	csv = 'csv',
+	jsonl = 'jsonl',
+}
+export enum HandleExportRawDataGETSource {
+	logs = 'logs',
+	traces = 'traces',
+}
+export type HandleExportRawDataPOSTParams = {
+	/**
+	 * @enum csv,jsonl
+	 * @type string
+	 * @description undefined
+	 */
+	format?: HandleExportRawDataPOSTFormat;
+};
+
+export enum HandleExportRawDataPOSTFormat {
+	csv = 'csv',
+	jsonl = 'jsonl',
+}
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined
