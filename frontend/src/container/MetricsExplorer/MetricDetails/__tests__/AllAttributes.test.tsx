@@ -7,7 +7,7 @@ import { userEvent } from 'tests/test-utils';
 
 import ROUTES from '../../../../constants/routes';
 import AllAttributes, { AllAttributesValue } from '../AllAttributes';
-import { getMockMetricAttributesData } from './testUtlls';
+import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -21,9 +21,6 @@ jest
 	.mockReturnValue({
 		handleExplorerTabChange: mockHandleExplorerTabChange,
 	});
-
-const mockMetricName = 'test-metric';
-const mockMetricType = MetrictypesTypeDTO.gauge;
 
 const mockUseCopyToClipboard = jest.fn();
 jest
@@ -44,7 +41,10 @@ describe('AllAttributes', () => {
 
 	it('renders attributes section with title', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
@@ -52,7 +52,10 @@ describe('AllAttributes', () => {
 
 	it('renders all attribute keys and values', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 
 		// Check attribute keys are rendered
@@ -67,7 +70,10 @@ describe('AllAttributes', () => {
 
 	it('renders value counts correctly', () => {
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 
 		expect(screen.getByText('2')).toBeInTheDocument(); // For attribute1
@@ -84,7 +90,10 @@ describe('AllAttributes', () => {
 			}),
 		});
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 
 		expect(screen.getByText('All Attributes')).toBeInTheDocument();
@@ -93,7 +102,10 @@ describe('AllAttributes', () => {
 
 	it('clicking on an attribute key opens the explorer with the attribute filter applied', async () => {
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 		await userEvent.click(screen.getByText('attribute1'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
@@ -101,7 +113,10 @@ describe('AllAttributes', () => {
 
 	it('filters attributes based on search input', async () => {
 		render(
-			<AllAttributes metricName={mockMetricName} metricType={mockMetricType} />,
+			<AllAttributes
+				metricName={MOCK_METRIC_NAME}
+				metricType={MetrictypesTypeDTO.gauge}
+			/>,
 		);
 		await userEvent.type(screen.getByPlaceholderText('Search'), 'value1');
 

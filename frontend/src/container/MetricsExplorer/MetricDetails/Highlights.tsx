@@ -1,4 +1,3 @@
-import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Skeleton, Tooltip, Typography } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
@@ -19,7 +18,7 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		refetch: refetchMetricHighlights,
 	} = useGetMetricHighlights(
 		{
-			metricName: metricName ?? '',
+			metricName,
 		},
 		{
 			query: {
@@ -28,62 +27,24 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 		},
 	);
 
-	const metricHighlights = metricHighlightsData?.data ?? null;
+	const metricHighlights = metricHighlightsData?.data;
 
-	const dataPoints = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
-		return (
-			<Typography.Text className="metric-details-grid-value">
-				<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
-					{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
-				</Tooltip>
-			</Typography.Text>
-		);
-	}, [metricHighlights]);
-
-	const timeSeries = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
-		const timeSeriesActive = formatNumberToCompactFormat(
-			metricHighlights.activeTimeSeries,
-		);
-		const timeSeriesTotal = formatNumberToCompactFormat(
-			metricHighlights.totalTimeSeries,
-		);
-
-		return (
-			<Typography.Text className="metric-details-grid-value">
-				<Tooltip
-					title="Active time series are those that have received data points in the last 1
-					hour."
-					placement="top"
-				>
-					<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
-				</Tooltip>
-			</Typography.Text>
-		);
-	}, [metricHighlights]);
-
-	const lastReceived = useMemo(() => {
-		if (!metricHighlights) {
-			return null;
-		}
-		const displayText = formatTimestampToReadableDate(
-			metricHighlights.lastReceived,
-		);
-		return (
-			<Typography.Text className="metric-details-grid-value">
-				<Tooltip title={displayText}>{displayText}</Tooltip>
-			</Typography.Text>
-		);
-	}, [metricHighlights]);
+	const timeSeriesActive = formatNumberToCompactFormat(
+		metricHighlights?.activeTimeSeries,
+	);
+	const timeSeriesTotal = formatNumberToCompactFormat(
+		metricHighlights?.totalTimeSeries,
+	);
+	const lastReceivedText = formatTimestampToReadableDate(
+		metricHighlights?.lastReceived,
+	);
 
 	if (isLoadingMetricHighlights) {
 		return (
-			<div className="metric-details-content-grid">
+			<div
+				className="metric-details-content-grid"
+				data-testid="metric-highlights-loading-state"
+			>
 				<Skeleton title={false} paragraph={{ rows: 2 }} active />
 			</div>
 		);
@@ -92,7 +53,10 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	if (isErrorMetricHighlights) {
 		return (
 			<div className="metric-details-content-grid">
-				<div className="metric-highlights-error-state">
+				<div
+					className="metric-highlights-error-state"
+					data-testid="metric-highlights-error-state"
+				>
 					<InfoIcon size={16} color={Color.BG_CHERRY_500} />
 					<Typography.Text>
 						Something went wrong while fetching metric highlights
@@ -125,9 +89,32 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Typography.Text>
 			</div>
 			<div className="values-row">
-				{dataPoints}
-				{timeSeries}
-				{lastReceived}
+				<Typography.Text
+					className="metric-details-grid-value"
+					data-testid="metric-highlights-data-points"
+				>
+					<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
+						{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
+					</Tooltip>
+				</Typography.Text>
+				<Typography.Text
+					className="metric-details-grid-value"
+					data-testid="metric-highlights-time-series-total"
+				>
+					<Tooltip
+						title="Active time series are those that have received data points in the last 1
+					hour."
+						placement="top"
+					>
+						<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
+					</Tooltip>
+				</Typography.Text>
+				<Typography.Text
+					className="metric-details-grid-value"
+					data-testid="metric-highlights-last-received"
+				>
+					<Tooltip title={lastReceivedText}>{lastReceivedText}</Tooltip>
+				</Typography.Text>
 			</div>
 		</div>
 	);

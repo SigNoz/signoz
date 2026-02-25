@@ -32,7 +32,7 @@ import {
 	METRIC_METADATA_UPDATE_ERROR_MESSAGE,
 } from './constants';
 import MetricDetailsErrorState from './MetricDetailsErrorState';
-import { MetadataProps, MetricMetadataState, TableFields } from './types';
+import { MetadataProps, MetricMetadataFormState, TableFields } from './types';
 import { transformUpdateMetricMetadataRequest } from './utils';
 
 function Metadata({
@@ -47,7 +47,7 @@ function Metadata({
 	const [
 		metricMetadataState,
 		setMetricMetadataState,
-	] = useState<MetricMetadataState>({
+	] = useState<MetricMetadataFormState>({
 		type: MetrictypesTypeDTO.sum,
 		description: '',
 		temporality: MetrictypesTemporalityDTO.unspecified,
@@ -93,7 +93,7 @@ function Metadata({
 
 	// Render un-editable field value
 	const renderUneditableField = useCallback(
-		(key: keyof MetricMetadataState, value: string) => {
+		(key: keyof MetricMetadataFormState, value: string) => {
 			if (isErrorMetricMetadata) {
 				return <FieldRenderer field="-" />;
 			}
@@ -119,7 +119,10 @@ function Metadata({
 	);
 
 	const renderColumnValue = useCallback(
-		(field: { value: string; key: keyof MetricMetadataState }): JSX.Element => {
+		(field: {
+			value: string;
+			key: keyof MetricMetadataFormState;
+		}): JSX.Element => {
 			if (!isEditing) {
 				return renderUneditableField(field.key, field.value);
 			}
@@ -237,7 +240,7 @@ function Metadata({
 		updateMetricMetadata(
 			{
 				pathParams: {
-					metricName: metricName ?? '',
+					metricName,
 				},
 				data: transformUpdateMetricMetadataRequest(metricName, metricMetadataState),
 			},

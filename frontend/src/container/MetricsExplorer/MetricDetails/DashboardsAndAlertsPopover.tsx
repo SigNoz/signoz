@@ -29,7 +29,7 @@ function DashboardsAndAlertsPopover({
 		isError: isErrorAlerts,
 	} = useGetMetricAlerts(
 		{
-			metricName: metricName ?? '',
+			metricName,
 		},
 		{
 			query: {
@@ -44,7 +44,7 @@ function DashboardsAndAlertsPopover({
 		isError: isErrorDashboards,
 	} = useGetMetricDashboards(
 		{
-			metricName: metricName ?? '',
+			metricName,
 		},
 		{
 			query: {

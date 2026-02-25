@@ -181,17 +181,23 @@ export function MetricTypeViewRenderer({
 		}
 	}, [type]);
 
+	const metricTypeRendererStyle = useMemo(
+		() => ({
+			backgroundColor: `${color}33`,
+			border: `1px solid ${color}`,
+			color,
+		}),
+		[color],
+	);
+
+	const metricTypeRendererTextStyle = useMemo(() => ({ color, fontSize: 12 }), [
+		color,
+	]);
+
 	return (
-		<div
-			className="metric-type-renderer"
-			style={{
-				backgroundColor: `${color}33`,
-				border: `1px solid ${color}`,
-				color,
-			}}
-		>
+		<div className="metric-type-renderer" style={metricTypeRendererStyle}>
 			{icon}
-			<Typography.Text style={{ color, fontSize: 12 }}>
+			<Typography.Text style={metricTypeRendererTextStyle}>
 				{METRIC_TYPE_VIEW_LABEL_MAP[type]}
 			</Typography.Text>
 		</div>

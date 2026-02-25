@@ -324,7 +324,7 @@ function Summary(): JSX.Element {
 					</>
 				)}
 			</div>
-			{isMetricDetailsOpen && (
+			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					isOpen={isMetricDetailsOpen}
 					onClose={closeMetricDetails}

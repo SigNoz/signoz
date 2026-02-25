@@ -18,7 +18,7 @@ import { SelectOption } from 'types/common/select';
 import Metadata from '../Metadata';
 import { MetricMetadata } from '../types';
 import { transformMetricMetadata } from '../utils';
-import { getMockMetricMetadataData } from './testUtlls';
+import { getMockMetricMetadataData, MOCK_METRIC_NAME } from './testUtlls';
 
 // Mock antd select for testing
 jest.mock('antd', () => ({
@@ -102,7 +102,6 @@ jest.spyOn(useNotificationsHooks, 'useNotifications').mockReturnValue({
 	},
 } as any);
 
-const mockMetricName = 'test_metric';
 const mockRefetchMetricMetadata = jest.fn();
 
 describe('Metadata', () => {
@@ -115,7 +114,7 @@ describe('Metadata', () => {
 	it('should render the metadata properly', () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -136,7 +135,7 @@ describe('Metadata', () => {
 	it('editing the metadata should show the form inputs', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -156,7 +155,7 @@ describe('Metadata', () => {
 	it('should update the metadata when the form is submitted', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={{
 					...mockMetricMetadata,
 					unit: '',
@@ -201,7 +200,7 @@ describe('Metadata', () => {
 					isMonotonic: true,
 				}),
 				pathParams: {
-					metricName: mockMetricName,
+					metricName: MOCK_METRIC_NAME,
 				},
 			}),
 			expect.objectContaining({
@@ -214,7 +213,7 @@ describe('Metadata', () => {
 	it('should show success notification when metadata is updated successfully', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -244,7 +243,7 @@ describe('Metadata', () => {
 	it('should show error notification when metadata update fails with non-200 response', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -274,7 +273,7 @@ describe('Metadata', () => {
 	it('should show error notification when metadata update fails', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -306,7 +305,7 @@ describe('Metadata', () => {
 	it('cancel button should cancel the edit mode', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}
@@ -329,7 +328,7 @@ describe('Metadata', () => {
 	it('should not allow editing of unit if it is already set', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
 				isErrorMetricMetadata={false}
 				isLoadingMetricMetadata={false}

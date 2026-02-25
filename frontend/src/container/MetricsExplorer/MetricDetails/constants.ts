@@ -11,7 +11,10 @@ export const METRIC_METADATA_KEYS = {
 	isMonotonic: 'Monotonic',
 };
 
-export const METRIC_METADATA_TEMPORALITY_OPTIONS = [
+export const METRIC_METADATA_TEMPORALITY_OPTIONS: Array<{
+	value: MetrictypesTemporalityDTO;
+	label: string;
+}> = [
 	{
 		value: MetrictypesTemporalityDTO.delta,
 		label: 'Delta',
@@ -22,7 +25,10 @@ export const METRIC_METADATA_TEMPORALITY_OPTIONS = [
 	},
 ];
 
-export const METRIC_METADATA_TYPE_OPTIONS = [
+export const METRIC_METADATA_TYPE_OPTIONS: Array<{
+	value: MetrictypesTypeDTO;
+	label: string;
+}> = [
 	{
 		value: MetrictypesTypeDTO.sum,
 		label: 'Sum',

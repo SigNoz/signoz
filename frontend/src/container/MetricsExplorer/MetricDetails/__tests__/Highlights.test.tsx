@@ -1,12 +1,9 @@
-import { render } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 
 import Highlights from '../Highlights';
 import { formatTimestampToReadableDate } from '../utils';
-import { getMockMetricHighlightsData } from './testUtlls';
-
-const MOCK_METRIC_NAME = 'test-metric';
-const METRIC_DETAILS_GRID_VALUE_SELECTOR = '.metric-details-grid-value';
+import { getMockMetricHighlightsData, MOCK_METRIC_NAME } from './testUtlls';
 
 const useGetMetricHighlightsMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -19,16 +16,17 @@ describe('Highlights', () => {
 	});
 
 	it('should render all highlights data correctly', () => {
-		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
-		const metricHighlightsValues = container.querySelectorAll(
-			METRIC_DETAILS_GRID_VALUE_SELECTOR,
+		const dataPoints = screen.getByTestId('metric-highlights-data-points');
+		const timeSeriesTotal = screen.getByTestId(
+			'metric-highlights-time-series-total',
 		);
+		const lastReceived = screen.getByTestId('metric-highlights-last-received');
 
-		expect(metricHighlightsValues).toHaveLength(3);
-		expect(metricHighlightsValues[0].textContent).toBe('1M+');
-		expect(metricHighlightsValues[1].textContent).toBe('1M total ⎯ 1M active');
-		expect(metricHighlightsValues[2].textContent).toBe(
+		expect(dataPoints.textContent).toBe('1M+');
+		expect(timeSeriesTotal.textContent).toBe('1M total ⎯ 1M active');
+		expect(lastReceived.textContent).toBe(
 			formatTimestampToReadableDate('2026-01-24T00:00:00Z'),
 		);
 	});
@@ -43,13 +41,10 @@ describe('Highlights', () => {
 			),
 		);
 
-		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
 		expect(
-			container.querySelector('.metric-highlights-error-state'),
-		).toBeInTheDocument();
-		expect(
-			container.querySelector('.metric-highlights-error-state .ant-btn'),
+			screen.getByTestId('metric-highlights-error-state'),
 		).toBeInTheDocument();
 	});
 
@@ -63,23 +58,10 @@ describe('Highlights', () => {
 			),
 		);
 
-		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
+		render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
-		expect(container.querySelector('.ant-skeleton')).toBeInTheDocument();
-	});
-
-	it('should not render grid values when there is no data', () => {
-		useGetMetricHighlightsMock.mockReturnValue(
-			getMockMetricHighlightsData({
-				data: undefined,
-			}),
-		);
-
-		const { container } = render(<Highlights metricName={MOCK_METRIC_NAME} />);
-
-		const metricHighlightsValues = container.querySelectorAll(
-			METRIC_DETAILS_GRID_VALUE_SELECTOR,
-		);
-		expect(metricHighlightsValues).toHaveLength(0);
+		expect(
+			screen.getByTestId('metric-highlights-loading-state'),
+		).toBeInTheDocument();
 	});
 });

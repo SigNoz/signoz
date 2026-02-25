@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Drawer, Empty, Typography } from 'antd';
+import { Button, Divider, Drawer, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -37,7 +37,7 @@ function MetricDetails({
 		refetch: refetchMetricMetadata,
 	} = useGetMetricMetadata(
 		{
-			metricName: metricName ?? '',
+			metricName,
 		},
 		{
 			query: {
@@ -68,7 +68,7 @@ function MetricDetails({
 	}, [metricMetadataResponse]);
 
 	const showInspectFeature = useMemo(() => isInspectEnabled(metadata?.type), [
-		metadata,
+		metadata?.type,
 	]);
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
@@ -99,10 +99,6 @@ function MetricDetails({
 
 	const isActionButtonDisabled =
 		!metricName || isLoadingMetricMetadata || isErrorMetricMetadata;
-
-	if (!metricName) {
-		return <Empty description="Metric not found" />;
-	}
 
 	return (
 		<Drawer

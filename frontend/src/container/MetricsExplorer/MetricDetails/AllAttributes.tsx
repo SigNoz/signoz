@@ -22,10 +22,31 @@ import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetailsErrorState from './MetricDetailsErrorState';
-import { AllAttributesProps, AllAttributesValueProps } from './types';
+import {
+	AllAttributesEmptyTextProps,
+	AllAttributesProps,
+	AllAttributesValueProps,
+} from './types';
 import { getMetricDetailsQuery } from './utils';
 
 const ALL_ATTRIBUTES_KEY = 'all-attributes';
+
+function AllAttributesEmptyText({
+	isErrorAttributes,
+	refetchAttributes,
+}: AllAttributesEmptyTextProps): JSX.Element {
+	if (isErrorAttributes) {
+		return (
+			<div className="all-attributes-error-state">
+				<MetricDetailsErrorState
+					refetch={refetchAttributes}
+					errorMessage="Something went wrong while fetching attributes"
+				/>
+			</div>
+		);
+	}
+	return <Typography.Text>No attributes found</Typography.Text>;
+}
 
 export function AllAttributesValue({
 	filterKey,
@@ -274,20 +295,6 @@ function AllAttributes({
 		],
 	);
 
-	const emptyText = useMemo(() => {
-		if (isErrorAttributes) {
-			return (
-				<div className="all-attributes-error-state">
-					<MetricDetailsErrorState
-						refetch={refetchAttributes}
-						errorMessage="Something went wrong while fetching attributes"
-					/>
-				</div>
-			);
-		}
-		return 'No attributes found';
-	}, [isErrorAttributes, refetchAttributes]);
-
 	const items = useMemo(
 		() => [
 			{
@@ -322,7 +329,12 @@ function AllAttributes({
 						className="metrics-accordion-content all-attributes-content"
 						scroll={{ y: 600 }}
 						locale={{
-							emptyText,
+							emptyText: (
+								<AllAttributesEmptyText
+									isErrorAttributes={isErrorAttributes}
+									refetchAttributes={refetchAttributes}
+								/>
+							),
 						}}
 					/>
 				),
@@ -334,7 +346,7 @@ function AllAttributes({
 			isErrorAttributes,
 			columns,
 			tableData,
-			emptyText,
+			refetchAttributes,
 		],
 	);
 

@@ -9,6 +9,8 @@ import {
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+export const MOCK_METRIC_NAME = 'test-metric';
+
 export function getMockMetricHighlightsData(
 	overrides?: Partial<GetMetricHighlights200>,
 	{

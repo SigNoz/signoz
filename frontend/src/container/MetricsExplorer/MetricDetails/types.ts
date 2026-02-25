@@ -11,7 +11,7 @@ import {
 export interface MetricDetailsProps {
 	onClose: () => void;
 	isOpen: boolean;
-	metricName: string | null;
+	metricName: string;
 	isModalTimeSelection: boolean;
 	openInspectModal?: (metricName: string) => void;
 }
@@ -42,6 +42,11 @@ export interface AllAttributesValueProps {
 	goToMetricsExploreWithAppliedAttribute: (key: string, value: string) => void;
 }
 
+export interface AllAttributesEmptyTextProps {
+	isErrorAttributes: boolean;
+	refetchAttributes: () => void;
+}
+
 export type MetricHighlight = MetricsexplorertypesMetricHighlightsResponseDTO;
 
 export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
@@ -49,7 +54,7 @@ export type MetricAlert = MetricsexplorertypesMetricAlertDTO;
 export type MetricDashboard = MetricsexplorertypesMetricDashboardDTO;
 
 export type MetricMetadata = MetricsexplorertypesMetricMetadataDTO;
-export interface MetricMetadataState {
+export interface MetricMetadataFormState {
 	type: MetrictypesTypeDTO;
 	description: string;
 	temporality?: MetrictypesTemporalityDTO;

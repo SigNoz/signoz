@@ -10,7 +10,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
-import { MetricMetadata, MetricMetadataState } from './types';
+import { MetricMetadata, MetricMetadataFormState } from './types';
 
 export function formatTimestampToReadableDate(
 	timestamp: number | string | undefined,
@@ -197,7 +197,7 @@ export function transformMetricMetadata(
 
 export function transformUpdateMetricMetadataRequest(
 	metricName: string,
-	metricMetadata: MetricMetadataState,
+	metricMetadata: MetricMetadataFormState,
 ): UpdateMetricMetadataMutationBody {
 	return {
 		metricName: metricName,

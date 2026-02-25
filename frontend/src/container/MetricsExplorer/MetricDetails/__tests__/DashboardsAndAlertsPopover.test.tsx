@@ -11,6 +11,7 @@ import {
 	MOCK_ALERT_2,
 	MOCK_DASHBOARD_1,
 	MOCK_DASHBOARD_2,
+	MOCK_METRIC_NAME,
 } from './testUtlls';
 
 const mockSafeNavigate = jest.fn();
@@ -28,8 +29,6 @@ jest.mock('hooks/useUrlQuery', () => ({
 	__esModule: true,
 	default: jest.fn(() => mockUrlQuery),
 }));
-
-const MOCK_METRIC_NAME = 'test-metric';
 
 const useGetMetricAlertsMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -72,7 +71,6 @@ describe('DashboardsAndAlertsPopover', () => {
 		const { container } = render(
 			<DashboardsAndAlertsPopover metricName={MOCK_METRIC_NAME} />,
 		);
-
 		expect(
 			container.querySelector('dashboards-and-alerts-popover-container'),
 		).toBeNull();
