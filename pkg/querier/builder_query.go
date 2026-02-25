@@ -80,11 +80,16 @@ func (q *builderQuery[T]) Fingerprint() string {
 			case qbtypes.LogAggregation:
 				aggParts = append(aggParts, a.Expression)
 			case qbtypes.MetricAggregation:
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s",
+				var spaceAggParamStr string
+				if a.ComparisonSpaceAggregationParam != nil {
+					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
+				}
+				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
+					spaceAggParamStr,
 				))
 			}
 		}

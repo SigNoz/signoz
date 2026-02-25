@@ -16,7 +16,8 @@ type MockMetadataStore struct {
 	RelatedValuesMap   map[string][]string
 	AllValuesMap       map[string]*telemetrytypes.TelemetryFieldValues
 	TemporalityMap     map[string]metrictypes.Temporality
-	PromotedPathsMap   map[string]struct{}
+	TypeMap            map[string]metrictypes.Type
+	PromotedPathsMap   map[string]bool
 	LogsJSONIndexesMap map[string][]schemamigrator.Index
 	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 }
@@ -28,7 +29,8 @@ func NewMockMetadataStore() *MockMetadataStore {
 		RelatedValuesMap:   make(map[string][]string),
 		AllValuesMap:       make(map[string]*telemetrytypes.TelemetryFieldValues),
 		TemporalityMap:     make(map[string]metrictypes.Temporality),
-		PromotedPathsMap:   make(map[string]struct{}),
+		TypeMap:            make(map[string]metrictypes.Type),
+		PromotedPathsMap:   make(map[string]bool),
 		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
 		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
@@ -287,6 +289,27 @@ func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTime
 	return result, nil
 }
 
+// FetchTemporalityMulti fetches the temporality for multiple metrics
+func (m *MockMetadataStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	temporalities := make(map[string]metrictypes.Temporality)
+	types := make(map[string]metrictypes.Type)
+
+	for _, metricName := range metricNames {
+		if temporality, exists := m.TemporalityMap[metricName]; exists {
+			temporalities[metricName] = temporality
+		} else {
+			temporalities[metricName] = metrictypes.Unknown
+		}
+		if metricType, exists := m.TypeMap[metricName]; exists {
+			types[metricName] = metricType
+		} else {
+			types[metricName] = metrictypes.UnspecifiedType
+		}
+	}
+
+	return temporalities, types, nil
+}
+
 // SetTemporality sets the temporality for a metric in the mock store
 func (m *MockMetadataStore) SetTemporality(metricName string, temporality metrictypes.Temporality) {
 	m.TemporalityMap[metricName] = temporality
@@ -295,13 +318,13 @@ func (m *MockMetadataStore) SetTemporality(metricName string, temporality metric
 // PromotePaths promotes the paths.
 func (m *MockMetadataStore) PromotePaths(ctx context.Context, paths ...string) error {
 	for _, path := range paths {
-		m.PromotedPathsMap[path] = struct{}{}
+		m.PromotedPathsMap[path] = true
 	}
 	return nil
 }
 
-// ListPromotedPaths lists the promoted paths.
-func (m *MockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
+// GetPromotedPaths returns the promoted paths.
+func (m *MockMetadataStore) GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error) {
 	return m.PromotedPathsMap, nil
 }
 
