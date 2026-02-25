@@ -30,7 +30,7 @@ export interface MetricsSearchProps {
 }
 
 export interface MetricsTreemapProps {
-	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
+	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
 	viewType: MetricsexplorertypesTreemapModeDTO;
@@ -41,7 +41,7 @@ export interface MetricsTreemapProps {
 export interface TreemapContentProps {
 	isLoading: boolean;
 	isError: boolean;
-	data: MetricsexplorertypesTreemapResponseDTO | null | undefined;
+	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 }

@@ -101,9 +101,9 @@ function Summary(): JSX.Element {
 	}, []);
 
 	const queryFilterExpression = useMemo(() => {
-		const filters = query?.filters || { items: [], op: 'AND' };
+		const filters = query.filters || { items: [], op: 'AND' };
 		return convertFiltersToExpression(filters);
-	}, [query?.filters]);
+	}, [query.filters]);
 
 	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(() => {
 		return {

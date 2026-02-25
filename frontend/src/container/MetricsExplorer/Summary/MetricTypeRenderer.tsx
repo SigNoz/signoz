@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Typography } from 'antd';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
@@ -46,27 +46,27 @@ function MetricTypeRenderer({ type }: { type: MetricType }): JSX.Element {
 		}
 	}, [type]);
 
-	const metricTypeRendererStyle = useCallback(
-		(color: string) => ({
+	const metricTypeRendererStyle = useMemo(
+		() => ({
 			backgroundColor: `${color}33`,
 			border: `1px solid ${color}`,
 			color,
 		}),
-		[],
+		[color],
 	);
 
-	const metricTypeRendererTextStyle = useCallback(
-		(color: string) => ({
+	const metricTypeRendererTextStyle = useMemo(
+		() => ({
 			color,
 			fontSize: 12,
 		}),
-		[],
+		[color],
 	);
 
 	return (
-		<div className="metric-type-renderer" style={metricTypeRendererStyle(color)}>
+		<div className="metric-type-renderer" style={metricTypeRendererStyle}>
 			{icon}
-			<Typography.Text style={metricTypeRendererTextStyle(color)}>
+			<Typography.Text style={metricTypeRendererTextStyle}>
 				{METRIC_TYPE_LABEL_MAP[type]}
 			</Typography.Text>
 		</div>
