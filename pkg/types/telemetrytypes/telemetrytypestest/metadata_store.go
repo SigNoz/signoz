@@ -2,6 +2,7 @@ package telemetrytypestest
 
 import (
 	"context"
+	"slices"
 	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
@@ -176,8 +177,9 @@ func matchesKey(selector *telemetrytypes.FieldKeySelector, key *telemetrytypes.T
 		return true
 	}
 
+	matchNameExceptions := []string{"body"}
 	// Check name (already checked in matchesName, but double-check here)
-	if selector.Name != "" && !matchesName(selector, key.Name) {
+	if selector.Name != "" && !matchesName(selector, key.Name) && slices.Contains(matchNameExceptions, key.Name) {
 		return false
 	}
 

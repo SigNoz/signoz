@@ -35,7 +35,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled {
 		valueType, value := InferDataType(value, operator, key)
 		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {
@@ -108,7 +108,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -176,9 +175,16 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(tblFieldName), nil
-			} else {
+			switch key.FieldDataType {
+			case telemetrytypes.FieldDataTypeJSON:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), false), nil
+				}
+				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), true), nil
+			default:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(tblFieldName), nil
+				}
 				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:

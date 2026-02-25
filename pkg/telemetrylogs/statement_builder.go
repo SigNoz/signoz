@@ -203,7 +203,6 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 }
 
 func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemetrytypes.TelemetryFieldKey) []string {
-
 	// First check if it matches with any intrinsic fields
 	var intrinsicOrCalculatedField telemetrytypes.TelemetryFieldKey
 	if _, ok := IntrinsicFields[key.Name]; ok {
@@ -212,7 +211,6 @@ func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldK
 	}
 
 	return querybuilder.AdjustKey(key, keys, nil)
-
 }
 
 // buildListQuery builds a query for list panel type
@@ -249,11 +247,7 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(LogsV2SeverityNumberColumn)
 		sb.SelectMore(LogsV2ScopeNameColumn)
 		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(LogsV2BodyColumn)
-		if querybuilder.BodyJSONQueryEnabled {
-			sb.SelectMore(LogsV2BodyJSONColumn)
-			sb.SelectMore(LogsV2BodyPromotedColumn)
-		}
+		sb.SelectMore(bodyAliasExpression())
 		sb.SelectMore(LogsV2AttributesStringColumn)
 		sb.SelectMore(LogsV2AttributesNumberColumn)
 		sb.SelectMore(LogsV2AttributesBoolColumn)

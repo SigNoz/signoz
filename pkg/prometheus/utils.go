@@ -2,6 +2,7 @@ package prometheus
 
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 )
 
@@ -15,30 +16,24 @@ func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 		toRemove[l] = struct{}{}
 	}
 
+	dropLabels := func(metric labels.Labels) labels.Labels {
+		b := labels.NewBuilder(metric)
+		for name := range toRemove {
+			b.Del(name)
+		}
+		return b.Labels()
+	}
+
 	switch res.Value.(type) {
 	case promql.Vector:
 		value := res.Value.(promql.Vector)
 		for i := range value {
-			series := &(value)[i]
-			dst := series.Metric[:0]
-			for _, lbl := range series.Metric {
-				if _, drop := toRemove[lbl.Name]; !drop {
-					dst = append(dst, lbl)
-				}
-			}
-			series.Metric = dst
+			(value)[i].Metric = dropLabels((value)[i].Metric)
 		}
 	case promql.Matrix:
 		value := res.Value.(promql.Matrix)
 		for i := range value {
-			series := &(value)[i]
-			dst := series.Metric[:0]
-			for _, lbl := range series.Metric {
-				if _, drop := toRemove[lbl.Name]; !drop {
-					dst = append(dst, lbl)
-				}
-			}
-			series.Metric = dst
+			(value)[i].Metric = dropLabels((value)[i].Metric)
 		}
 	case promql.Scalar:
 		return nil

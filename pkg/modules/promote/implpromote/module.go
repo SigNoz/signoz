@@ -76,7 +76,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 
 	// add the paths that are not promoted but have indexes
 	for path, indexes := range aggr {
-		path := strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
+		path := strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
 		path = telemetrytypes.BodyJSONStringSearchPrefix + path
 		response = append(response, promotetypes.PromotePath{
 			Path:    path,
@@ -156,7 +156,7 @@ func (m *module) PromoteAndIndexPaths(
 			}
 		}
 		if len(it.Indexes) > 0 {
-			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
+			parentColumn := telemetrylogs.LogsV2BodyV2Column
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
 				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn

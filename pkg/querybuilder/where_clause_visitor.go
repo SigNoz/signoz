@@ -313,37 +313,31 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			return ""
 		}
 		child := ctx.GetChild(0)
+		var searchText string
 		if keyCtx, ok := child.(*grammar.KeyContext); ok {
 			// create a full text search condition on the body field
-
-			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-				return ""
-			}
-			return cond
+			searchText = keyCtx.GetText()
 		} else if valCtx, ok := child.(*grammar.ValueContext); ok {
-			var text string
 			if valCtx.QUOTED_TEXT() != nil {
-				text = trimQuotes(valCtx.QUOTED_TEXT().GetText())
+				searchText = trimQuotes(valCtx.QUOTED_TEXT().GetText())
 			} else if valCtx.NUMBER() != nil {
-				text = valCtx.NUMBER().GetText()
+				searchText = valCtx.NUMBER().GetText()
 			} else if valCtx.BOOL() != nil {
-				text = valCtx.BOOL().GetText()
+				searchText = valCtx.BOOL().GetText()
 			} else if valCtx.KEY() != nil {
-				text = valCtx.KEY().GetText()
+				searchText = valCtx.KEY().GetText()
 			} else {
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
-			if err != nil {
-				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-				return ""
-			}
-			return cond
 		}
+		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder, v.startNs, v.endNs)
+		if err != nil {
+			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
+			return ""
+		}
+		v.warnings = append(v.warnings, v.fullTextColumn.Warnings...)
+		return cond
 	}
 
 	return "" // Should not happen with valid input
@@ -383,9 +377,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
 			if err != nil {
+				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
 			}
 			conds = append(conds, condition)
+			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
@@ -458,6 +454,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
+			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -506,6 +503,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
+			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -592,6 +590,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
+			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -648,7 +647,6 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 
 // VisitFullText handles standalone quoted strings for full-text search
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
-
 	if v.skipFullTextFilter {
 		return ""
 	}
@@ -670,6 +668,8 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
 	}
+	v.warnings = append(v.warnings, v.fullTextColumn.Warnings...)
+
 	return cond
 }
 

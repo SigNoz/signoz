@@ -254,7 +254,7 @@ func buildListLogsJSONIndexesQuery(cluster string, filters ...string) (string, [
 	sb.Where(sb.Equal("database", telemetrylogs.DBName))
 	sb.Where(sb.Equal("table", telemetrylogs.LogsV2LocalTableName))
 	sb.Where(sb.Or(
-		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix))),
+		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix))),
 		sb.ILike("expr", fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix))),
 	))
 
@@ -338,7 +338,7 @@ func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, li
 	if promoted {
 		path = telemetrylogs.BodyPromotedColumnPrefix + path
 	} else {
-		path = telemetrylogs.BodyJSONColumnPrefix + path
+		path = telemetrylogs.BodyV2ColumnPrefix + path
 	}
 
 	from := fmt.Sprintf("%s.%s", telemetrylogs.DBName, telemetrylogs.LogsV2TableName)
@@ -529,7 +529,7 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 // TODO(Piyush): Remove this function
 func CleanPathPrefixes(path string) string {
 	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
-	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
+	path = strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
 	return path
 }
