@@ -12,6 +12,8 @@ import { useTimezone } from 'providers/Timezone';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
 
+import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from '../config';
+
 import '../RolesSettings.styles.scss';
 
 const PAGE_SIZE = 20;
@@ -188,16 +190,22 @@ function RolesListingTable({
 	const renderRow = (role: RoletypesRoleDTO): JSX.Element => (
 		<div
 			key={role.id}
-			className="roles-table-row roles-table-row--clickable"
+			className={`roles-table-row ${
+				IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 'roles-table-row--clickable' : ''
+			}`}
 			role="button"
-			tabIndex={0}
+			tabIndex={IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 0 : -1}
 			onClick={(): void => {
-				if (role.id) {
+				if (IS_ROLE_DETAILS_AND_CRUD_ENABLED && role.id) {
 					navigateToRole(role.id);
 				}
 			}}
 			onKeyDown={(e): void => {
-				if ((e.key === 'Enter' || e.key === ' ') && role.id) {
+				if (
+					IS_ROLE_DETAILS_AND_CRUD_ENABLED &&
+					(e.key === 'Enter' || e.key === ' ') &&
+					role.id
+				) {
 					navigateToRole(role.id);
 				}
 			}}

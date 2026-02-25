@@ -3,6 +3,7 @@ import { Button } from '@signozhq/button';
 import { Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 
+import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from './config';
 import CreateRoleModal from './RolesComponents/CreateRoleModal';
 import RolesListingTable from './RolesComponents/RolesListingTable';
 
@@ -30,15 +31,17 @@ function RolesSettings(): JSX.Element {
 							onChange={(e): void => setSearchQuery(e.target.value)}
 						/>
 					</div>
-					<Button
-						variant="solid"
-						color="primary"
-						className="role-settings-toolbar-button"
-						onClick={(): void => setIsCreateModalOpen(true)}
-					>
-						<Plus size={14} />
-						Custom role
-					</Button>
+					{IS_ROLE_DETAILS_AND_CRUD_ENABLED && (
+						<Button
+							variant="solid"
+							color="primary"
+							className="role-settings-toolbar-button"
+							onClick={(): void => setIsCreateModalOpen(true)}
+						>
+							<Plus size={14} />
+							Custom role
+						</Button>
+					)}
 				</div>
 				<RolesListingTable searchQuery={searchQuery} />
 			</div>

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
@@ -21,6 +21,7 @@ import { useErrorModal } from 'providers/ErrorModalProvider';
 import { RoleType } from 'types/roles';
 import { handleApiError, toAPIError } from 'utils/errorUtils';
 
+import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from '../config';
 import type { PermissionConfig } from '../PermissionSidePanel';
 import PermissionSidePanel from '../PermissionSidePanel';
 import CreateRoleModal from '../RolesComponents/CreateRoleModal';
@@ -43,6 +44,13 @@ type TabKey = 'overview' | 'members';
 function RoleDetailsPage(): JSX.Element {
 	const { pathname } = useLocation();
 	const history = useHistory();
+
+	useEffect(() => {
+		if (!IS_ROLE_DETAILS_AND_CRUD_ENABLED) {
+			history.push(ROUTES.ROLES_SETTINGS);
+		}
+	}, [history]);
+
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
 
@@ -123,7 +131,12 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (isLoading || isTransitioning || !role) {
+	if (
+		!IS_ROLE_DETAILS_AND_CRUD_ENABLED ||
+		isLoading ||
+		isTransitioning ||
+		!role
+	) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
