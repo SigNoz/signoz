@@ -29,12 +29,7 @@ function CopyClipboardHOC({
 	}, [setCopy, textToCopy]);
 
 	return (
-		<span
-			onClick={onClick}
-			role="presentation"
-			tabIndex={-1}
-			data-log-detail-ignore="true"
-		>
+		<span onClick={onClick} role="presentation" tabIndex={-1}>
 			<Popover
 				placement="top"
 				overlayClassName="drawer-popover"

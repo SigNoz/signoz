@@ -213,10 +213,7 @@ function TableView({
 				}
 
 				return (
-					<div
-						className="log-attribute-pin value-field"
-						data-log-detail-ignore="true"
-					>
+					<div className="log-attribute-pin value-field">
 						<div
 							className={cx(
 								'pin-attribute-icon',
