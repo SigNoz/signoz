@@ -1,10 +1,13 @@
-import { CategoryNames } from 'container/NewWidget/RightContainer/types';
+import { YAxisCategoryNames } from 'components/YAxisUnitSelector/constants';
 
-export const categoryToSupport = [
-	CategoryNames.Data,
-	CategoryNames.DataRate,
-	CategoryNames.Time,
-	CategoryNames.Throughput,
-	CategoryNames.Miscellaneous,
-	CategoryNames.Boolean,
+export const categoryToSupport: YAxisCategoryNames[] = [
+	YAxisCategoryNames.None,
+	YAxisCategoryNames.Data,
+	YAxisCategoryNames.DataRate,
+	YAxisCategoryNames.Time,
+	YAxisCategoryNames.Count,
+	YAxisCategoryNames.Operations,
+	YAxisCategoryNames.Percentage,
+	YAxisCategoryNames.Miscellaneous,
+	YAxisCategoryNames.Boolean,
 ];
