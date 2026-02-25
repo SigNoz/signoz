@@ -117,7 +117,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
-	const { latestVersion } = useSelector<AppState, AppReducer>(
+	const { currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
@@ -213,9 +213,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		},
 		{
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(latestVersion, changelogForTenant),
-			queryKey: ['getChangelogByVersion', latestVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(latestVersion),
+				getChangelogByVersion(currentVersion, changelogForTenant),
+			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
+			enabled: isLoggedIn && Boolean(currentVersion),
 		},
 	]);
 
@@ -226,7 +226,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			!changelog &&
 			!getChangelogByVersionResponse.isLoading &&
 			isLoggedIn &&
-			Boolean(latestVersion)
+			Boolean(currentVersion)
 		) {
 			getChangelogByVersionResponse.refetch();
 		}
@@ -237,9 +237,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		let timer: ReturnType<typeof setTimeout>;
 		if (
 			isCloudUserVal &&
-			Boolean(latestVersion) &&
+			Boolean(currentVersion) &&
 			seenChangelogVersion != null &&
-			latestVersion !== seenChangelogVersion &&
+			currentVersion !== seenChangelogVersion &&
 			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
 			!isWorkspaceAccessRestricted
 		) {
@@ -255,7 +255,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isCloudUserVal,
-		latestVersion,
+		currentVersion,
 		seenChangelogVersion,
 		toggleChangelogModal,
 		isWorkspaceAccessRestricted,
