@@ -20,18 +20,17 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
+	AuthtypesPatchableObjectsDTO,
 	CreateRole201,
 	DeleteRolePathParameters,
 	GetObjects200,
 	GetObjectsPathParameters,
-	GetResources200,
 	GetRole200,
 	GetRolePathParameters,
 	ListRoles200,
 	PatchObjectsPathParameters,
 	PatchRolePathParameters,
 	RenderErrorResponseDTO,
-	RoletypesPatchableObjectsDTO,
 	RoletypesPatchableRoleDTO,
 	RoletypesPostableRoleDTO,
 } from '../sigNoz.schemas';
@@ -575,13 +574,13 @@ export const invalidateGetObjects = async (
  */
 export const patchObjects = (
 	{ id, relation }: PatchObjectsPathParameters,
-	roletypesPatchableObjectsDTO: BodyType<RoletypesPatchableObjectsDTO>,
+	authtypesPatchableObjectsDTO: BodyType<AuthtypesPatchableObjectsDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
 		url: `/api/v1/roles/${id}/relation/${relation}/objects`,
 		method: 'PATCH',
 		headers: { 'Content-Type': 'application/json' },
-		data: roletypesPatchableObjectsDTO,
+		data: authtypesPatchableObjectsDTO,
 	});
 };
 
@@ -594,7 +593,7 @@ export const getPatchObjectsMutationOptions = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<RoletypesPatchableObjectsDTO>;
+			data: BodyType<AuthtypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -603,7 +602,7 @@ export const getPatchObjectsMutationOptions = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<RoletypesPatchableObjectsDTO>;
+		data: BodyType<AuthtypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
@@ -620,7 +619,7 @@ export const getPatchObjectsMutationOptions = <
 		Awaited<ReturnType<typeof patchObjects>>,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<RoletypesPatchableObjectsDTO>;
+			data: BodyType<AuthtypesPatchableObjectsDTO>;
 		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
@@ -634,7 +633,7 @@ export const getPatchObjectsMutationOptions = <
 export type PatchObjectsMutationResult = NonNullable<
 	Awaited<ReturnType<typeof patchObjects>>
 >;
-export type PatchObjectsMutationBody = BodyType<RoletypesPatchableObjectsDTO>;
+export type PatchObjectsMutationBody = BodyType<AuthtypesPatchableObjectsDTO>;
 export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -649,7 +648,7 @@ export const usePatchObjects = <
 		TError,
 		{
 			pathParams: PatchObjectsPathParameters;
-			data: BodyType<RoletypesPatchableObjectsDTO>;
+			data: BodyType<AuthtypesPatchableObjectsDTO>;
 		},
 		TContext
 	>;
@@ -658,96 +657,11 @@ export const usePatchObjects = <
 	TError,
 	{
 		pathParams: PatchObjectsPathParameters;
-		data: BodyType<RoletypesPatchableObjectsDTO>;
+		data: BodyType<AuthtypesPatchableObjectsDTO>;
 	},
 	TContext
 > => {
 	const mutationOptions = getPatchObjectsMutationOptions(options);
 
 	return useMutation(mutationOptions);
-};
-/**
- * Gets all the available resources for role assignment
- * @summary Get resources
- */
-export const getResources = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<GetResources200>({
-		url: `/api/v1/roles/resources`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetResourcesQueryKey = () => {
-	return [`/api/v1/roles/resources`] as const;
-};
-
-export const getGetResourcesQueryOptions = <
-	TData = Awaited<ReturnType<typeof getResources>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getResources>>,
-		TError,
-		TData
-	>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getGetResourcesQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getResources>>> = ({
-		signal,
-	}) => getResources(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getResources>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type GetResourcesQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getResources>>
->;
-export type GetResourcesQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get resources
- */
-
-export function useGetResources<
-	TData = Awaited<ReturnType<typeof getResources>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getResources>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetResourcesQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary Get resources
- */
-export const invalidateGetResources = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetResourcesQueryKey() },
-		options,
-	);
-
-	return queryClient;
 };

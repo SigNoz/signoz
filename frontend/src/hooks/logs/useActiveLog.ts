@@ -1,15 +1,17 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
 import { AppState } from 'store/reducers';
@@ -53,6 +55,20 @@ export const useActiveLog = (): UseActiveLog => {
 	]);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
+
+	// Close drawer/clear active log when query in URL changes
+	const urlQuery = useUrlQuery();
+	const compositeQuery = urlQuery.get(QueryParams.compositeQuery) ?? '';
+	const prevQueryRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (
+			prevQueryRef.current !== null &&
+			prevQueryRef.current !== compositeQuery
+		) {
+			setActiveLog(null);
+		}
+		prevQueryRef.current = compositeQuery;
+	}, [compositeQuery]);
 
 	const onSetDetailedLogData = useCallback(
 		(logData: ILog) => {

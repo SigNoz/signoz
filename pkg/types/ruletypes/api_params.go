@@ -355,6 +355,10 @@ func (r *PostableRule) validate() error {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
 	}
 
+	if r.Version != "v5" {
+		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "only version v5 is supported, got %q", r.Version))
+	}
+
 	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
 		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
 	}
