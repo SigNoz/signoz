@@ -11,6 +11,7 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { pipelineApiResponseMockData } from '../mocks/pipeline';
 import PipelineListsView from '../PipelineListsView';
@@ -335,28 +336,28 @@ describe('PipelinePage container test', () => {
 							attributes: [
 								{
 									key: 'otelServiceName',
-									dataType: 'string',
+									dataType: DataTypes.String,
 									type: 'tag',
 									isColumn: false,
 									isJSON: false,
 								},
 								{
 									key: 'service.name',
-									dataType: 'string',
+									dataType: DataTypes.String,
 									type: 'resource',
 									isColumn: false,
 									isJSON: false,
 								},
 								{
 									key: 'service.instance.id',
-									dataType: 'string',
+									dataType: DataTypes.String,
 									type: 'resource',
 									isColumn: false,
 									isJSON: false,
 								},
 								{
 									key: 'service.name',
-									dataType: 'string',
+									dataType: DataTypes.String,
 									type: 'tag',
 									isColumn: false,
 									isJSON: false,
