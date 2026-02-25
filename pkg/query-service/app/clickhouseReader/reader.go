@@ -1212,7 +1212,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			}
 		}
 
-		selectedSpans = tracedetail.GetSelectedSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
+		selectedSpans = tracedetail.GetAllSpansForFlamegraph(traceRoots, spanIdToSpanNodeMap)
 		traceCache := model.GetFlamegraphSpansForTraceCache{
 			StartTime:     startTime,
 			EndTime:       endTime,
@@ -1233,7 +1233,8 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	limit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
 	totalSpanCount := tracedetail.GetTotalSpanCount(selectedSpans)
 	if totalSpanCount > uint64(limit) {
-		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, startTime, endTime)
+		boundaryStart, boundaryEnd := utils.MilliToNano(req.BoundaryStartTS), utils.MilliToNano(req.BoundaryEndTS)
+		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
 	zap.L().Info("getFlamegraphSpansForTrace: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID),
 		zap.Uint64("totalSpanCount", totalSpanCount))
