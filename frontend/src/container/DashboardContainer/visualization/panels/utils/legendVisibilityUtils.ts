@@ -1,10 +1,6 @@
 import { LOCALSTORAGE } from 'constants/localStorage';
 
-import {
-	GraphVisibilityState,
-	SeriesVisibilityItem,
-	SeriesVisibilityState,
-} from '../types';
+import { GraphVisibilityState, SeriesVisibilityItem } from '../types';
 
 /**
  * Retrieves the stored series visibility for a specific widget from localStorage by index.
@@ -14,7 +10,7 @@ import {
  */
 export function getStoredSeriesVisibility(
 	widgetId: string,
-): SeriesVisibilityState | null {
+): SeriesVisibilityItem[] | null {
 	try {
 		const storedData = localStorage.getItem(LOCALSTORAGE.GRAPH_VISIBILITY_STATES);
 
@@ -29,10 +25,7 @@ export function getStoredSeriesVisibility(
 			return null;
 		}
 
-		return {
-			labels: widgetState.dataIndex.map((item) => item.label),
-			visibility: widgetState.dataIndex.map((item) => item.show),
-		};
+		return widgetState.dataIndex;
 	} catch (error) {
 		if (error instanceof SyntaxError) {
 			// If the stored data is malformed, remove it

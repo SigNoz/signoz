@@ -260,21 +260,17 @@ type MetricHighlightsResponse struct {
 	ActiveTimeSeries uint64 `json:"activeTimeSeries" required:"true"`
 }
 
-// MetricAttributesRequest represents the payload for the metric attributes endpoint.
+// MetricAttributesRequest represents the query parameters for the metric attributes endpoint.
 type MetricAttributesRequest struct {
-	MetricName string `json:"metricName" required:"true"`
-	Start      *int64 `json:"start,omitempty"`
-	End        *int64 `json:"end,omitempty"`
+	MetricName string `json:"-"`
+	Start      *int64 `query:"start"`
+	End        *int64 `query:"end"`
 }
 
 // Validate ensures MetricAttributesRequest contains acceptable values.
 func (req *MetricAttributesRequest) Validate() error {
 	if req == nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
-	}
-
-	if req.MetricName == "" {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metric_name is required")
 	}
 
 	if req.Start != nil && req.End != nil {
@@ -284,17 +280,6 @@ func (req *MetricAttributesRequest) Validate() error {
 	}
 
 	return nil
-}
-
-// UnmarshalJSON validates input immediately after decoding.
-func (req *MetricAttributesRequest) UnmarshalJSON(data []byte) error {
-	type raw MetricAttributesRequest
-	var decoded raw
-	if err := json.Unmarshal(data, &decoded); err != nil {
-		return err
-	}
-	*req = MetricAttributesRequest(decoded)
-	return req.Validate()
 }
 
 // MetricAttribute represents a single attribute with its values and count.
@@ -310,6 +295,48 @@ type MetricAttributesResponse struct {
 	TotalKeys  int64             `json:"totalKeys" required:"true"`
 }
 
-type MetricNameParams struct {
-	MetricName string `query:"metricName" required:"true"`
+// ListMetricsParams represents the query parameters for the list metrics endpoint.
+type ListMetricsParams struct {
+	Start  *int64 `query:"start"`
+	End    *int64 `query:"end"`
+	Limit  int    `query:"limit"`
+	Search string `query:"searchText"`
+}
+
+// Validate ensures ListMetricsParams contains acceptable values.
+func (p *ListMetricsParams) Validate() error {
+	if p.Start != nil && *p.Start <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be greater than 0")
+	}
+	if p.End != nil && *p.End <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "end must be greater than 0")
+	}
+	if p.Start != nil && p.End != nil && *p.Start >= *p.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start (%d) must be less than end (%d)", *p.Start, *p.End)
+	}
+	if p.Limit < 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be negative")
+	}
+	if p.Limit == 0 {
+		p.Limit = 100
+	}
+	if p.Limit > 5000 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must not exceed 5000")
+	}
+	return nil
+}
+
+// ListMetric represents a single metric with its metadata in the list metrics response.
+type ListMetric struct {
+	MetricName  string                  `json:"metricName" required:"true"`
+	Description string                  `json:"description" required:"true"`
+	MetricType  metrictypes.Type        `json:"type" required:"true"`
+	MetricUnit  string                  `json:"unit" required:"true"`
+	Temporality metrictypes.Temporality `json:"temporality" required:"true"`
+	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
+}
+
+// ListMetricsResponse represents the response for the list metrics endpoint.
+type ListMetricsResponse struct {
+	Metrics []ListMetric `json:"metrics" required:"true" nullable:"true"`
 }

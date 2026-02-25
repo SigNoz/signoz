@@ -46,6 +46,9 @@ interface UseDashboardVariableSelectHelperReturn {
 	applyDefaultIfNeeded: (
 		overrideOptions?: (string | number | boolean)[],
 	) => void;
+	getDefaultValue: (
+		overrideOptions?: (string | number | boolean)[],
+	) => string | string[] | undefined;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -248,5 +251,6 @@ export function useDashboardVariableSelectHelper({
 		defaultValue,
 		onChange,
 		applyDefaultIfNeeded,
+		getDefaultValue,
 	};
 }

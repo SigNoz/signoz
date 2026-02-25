@@ -2,24 +2,40 @@ package impluser
 
 import (
 	"context"
+	"slices"
 
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type getter struct {
-	store types.UserStore
+	store   types.UserStore
+	flagger flagger.Flagger
 }
 
-func NewGetter(store types.UserStore) user.Getter {
-	return &getter{store: store}
+func NewGetter(store types.UserStore, flagger flagger.Flagger) user.Getter {
+	return &getter{store: store, flagger: flagger}
+}
+
+func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
+	return module.store.GetRootUserByOrgID(ctx, orgID)
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
+	}
+
+	// filter root users if feature flag `hide_root_users` is true
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
+
+	if hideRootUsers {
+		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
 	}
 
 	return users, nil

@@ -2,6 +2,7 @@ package querier
 
 import (
 	"context"
+	"net/http"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -19,4 +20,10 @@ type BucketCache interface {
 	GetMissRanges(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step) (cached *qbtypes.Result, missing []*qbtypes.TimeRange)
 	// store fresh buckets for future hits
 	Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result)
+}
+
+type Handler interface {
+	QueryRange(rw http.ResponseWriter, req *http.Request)
+	QueryRawStream(rw http.ResponseWriter, req *http.Request)
+	ReplaceVariables(rw http.ResponseWriter, req *http.Request)
 }

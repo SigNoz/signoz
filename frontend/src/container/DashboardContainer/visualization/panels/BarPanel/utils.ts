@@ -1,3 +1,4 @@
+import { ExecStats } from 'api/v5/v5';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getInitialStackedBands } from 'container/DashboardContainer/visualization/charts/utils/stackSeriesUtils';
@@ -11,6 +12,7 @@ import {
 	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -53,6 +55,13 @@ export function prepareBarPanelConfig({
 	minTimeScale?: number;
 	maxTimeScale?: number;
 }): UPlotConfigBuilder {
+	const stepIntervals: ExecStats['stepIntervals'] = get(
+		apiResponse,
+		'data.newResult.meta.stepIntervals',
+		{},
+	);
+	const minStepInterval = Math.min(...Object.values(stepIntervals));
+
 	const builder = buildBaseConfig({
 		widget,
 		isDarkMode,
@@ -64,12 +73,7 @@ export function prepareBarPanelConfig({
 		panelType: PANEL_TYPES.BAR,
 		minTimeScale,
 		maxTimeScale,
-	});
-
-	builder.setCursor({
-		focus: {
-			prox: 1e3,
-		},
+		stepInterval: minStepInterval,
 	});
 
 	if (widget.stackedBarChart) {
@@ -89,6 +93,8 @@ export function prepareBarPanelConfig({
 			? getLegend(series, currentQuery, baseLabelName)
 			: baseLabelName;
 
+		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+
 		builder.addSeries({
 			scaleKey: 'y',
 			drawStyle: DrawStyle.Bar,
@@ -101,6 +107,7 @@ export function prepareBarPanelConfig({
 			showPoints: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
+			stepInterval: currentStepInterval,
 		});
 	});
 

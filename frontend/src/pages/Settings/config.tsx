@@ -12,6 +12,7 @@ import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
 import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSettings';
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
+import RolesSettings from 'container/RolesSettings';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
@@ -24,6 +25,7 @@ import {
 	KeySquare,
 	Pencil,
 	Plus,
+	Shield,
 	User,
 } from 'lucide-react';
 import ChannelsEdit from 'pages/ChannelsEdit';
@@ -145,6 +147,19 @@ export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.BILLING,
 		key: ROUTES.BILLING,
+	},
+];
+
+export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: RolesSettings,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:roles').toString()}
+			</div>
+		),
+		route: ROUTES.ROLES_SETTINGS,
+		key: ROUTES.ROLES_SETTINGS,
 	},
 ];
 
