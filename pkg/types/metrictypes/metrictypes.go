@@ -259,10 +259,10 @@ type MetricValueFilter struct {
 }
 
 type ComparisonSpaceAggregationParam struct {
-	Operater  string  `json:"operator"`
-	Threshold float64 `json:"threshold"`
+	Operater  string  `json:"operator" required:"true"`
+	Threshold float64 `json:"threshold" required:"true"`
 }
 
 func (param ComparisonSpaceAggregationParam) StringValue() string {
-	return fmt.Sprintf("{\"operator\": \"%s\", \"limit\": \"%f\"}", param.Operater, param.Threshold)
+	return fmt.Sprintf("operator=%s:threshold=%f", param.Operater, param.Threshold)
 }
