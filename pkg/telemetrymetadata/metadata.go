@@ -1644,7 +1644,6 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 			}
 		} else if temporality, exists := meterMetricsTemporality[metricName]; exists {
 			temporalities[metricName] = temporality
-			continue
 		} else {
 			temporalities[metricName] = metrictypes.Unknown
 		}
