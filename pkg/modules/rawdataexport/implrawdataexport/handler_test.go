@@ -5,21 +5,20 @@ import (
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/http/binding"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestExportRawDataQueryParams_BindingDefaults(t *testing.T) {
-	var params types.ExportRawDataQueryParams
+	var params exporttypes.ExportRawDataQueryParams
 	err := binding.Query.BindQuery(url.Values{}, &params)
 	assert.NoError(t, err)
 	assert.Equal(t, "logs", params.Source)
 	assert.Equal(t, "csv", params.Format)
 	assert.Equal(t, DefaultExportRowCountLimit, params.Limit)
 }
-
 
 func logQuery(limit int) qbtypes.QueryEnvelope {
 	return qbtypes.QueryEnvelope{
@@ -98,15 +97,6 @@ func TestValidateAndApplyExportLimits(t *testing.T) {
 			name:          "multiple queries without trace operator",
 			req:           makeRequest(logQuery(0), traceQuery(0)),
 			expectedError: true,
-		},
-		{
-			name: "trace operator with other queries — non-operator disabled",
-			req:  makeRequest(logQuery(500), traceOperatorQuery(1000)),
-			checkQueries: func(t *testing.T, q []qbtypes.QueryEnvelope) {
-				assert.True(t, q[0].IsDisabled(), "log query should be disabled")
-				assert.False(t, q[1].IsDisabled(), "trace operator should stay enabled")
-				assert.Equal(t, 1000, q[1].GetLimit())
-			},
 		},
 		{
 			name: "trace operator alone, zero limit gets default",

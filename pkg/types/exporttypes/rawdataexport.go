@@ -1,4 +1,4 @@
-package types
+package exporttypes
 
 // ExportRawDataQueryParams represents the query parameters for the export raw data endpoint
 type ExportRawDataQueryParams struct {

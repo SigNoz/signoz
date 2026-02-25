@@ -2588,12 +2588,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
       summary: Export raw data
       tags:
       - logs
@@ -2616,31 +2633,7 @@ paths:
         content:
           application/json:
             schema:
-              description: Request body for the v5 query range endpoint. Supports
-                builder queries (traces, logs, metrics), formulas, joins, trace operators,
-                PromQL, and ClickHouse SQL queries.
-              properties:
-                compositeQuery:
-                  $ref: '#/components/schemas/Querybuildertypesv5CompositeQuery'
-                end:
-                  minimum: 0
-                  type: integer
-                formatOptions:
-                  $ref: '#/components/schemas/Querybuildertypesv5FormatOptions'
-                noCache:
-                  type: boolean
-                requestType:
-                  $ref: '#/components/schemas/Querybuildertypesv5RequestType'
-                schemaVersion:
-                  type: string
-                start:
-                  minimum: 0
-                  type: integer
-                variables:
-                  additionalProperties:
-                    $ref: '#/components/schemas/Querybuildertypesv5VariableItem'
-                  type: object
-              type: object
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
       responses:
         "200":
           content:
@@ -2654,12 +2647,29 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
       summary: Export raw data
       tags:
       - logs

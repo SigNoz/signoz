@@ -17,8 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -32,67 +32,12 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 	return &handler{module: module}
 }
 
-// ExportRawData handles data export requests.
-//
-// API Documentation:
-// Endpoint: GET /api/v1/export_raw_data - logs and traces only (simple queries via query params)
-// Endpoint: POST /api/v1/export_raw_data - logs, traces, and trace operator (full QueryRangeRequest in JSON body)
-//
-// GET: Converts query params to QueryRangeRequest and delegates to common export logic. No composite_query/trace operator.
-//
-// GET Query Parameters:
-//
-//   - source (optional): ["logs" (default) or "traces"] - metrics not supported
-//   - format (optional): Output format ["csv" (default), "jsonl"]
-//   - start (required): Start time (Unix timestamp in nanoseconds)
-//   - end (required): End time (Unix timestamp in nanoseconds)
-//   - limit (optional): Max rows to export (cannot exceed MAX_EXPORT_ROW_COUNT_LIMIT)
-//   - filter (optional): Filter expression
-//   - columns (optional): Columns to include
-//   - order_by (optional): Sorting ["column:direction"]
-//
-// POST Request Body (QueryRangeRequest):
-//
-//   - Accepts a full QueryRangeRequest JSON body with composite_query containing QueryEnvelope array
-//   - Supports builder_query and builder_trace_operator types
-//   - format query param still controls output format
-//
-// Response Headers:
-//   - Content-Type: "text/csv" or "application/x-ndjson"
-//   - Content-Encoding: "gzip" (handled by HTTP middleware)
-//   - Content-Disposition: "attachment; filename=\"data_exported.[format]\""
-//   - Cache-Control: "no-cache"
-//   - Vary: "Accept-Encoding"
-//   - Transfer-Encoding: "chunked"
-//   - Trailers: X-Response-Complete
-//
-// Response Format:
-//
-//	CSV: Headers in first row, data in subsequent rows
-//	JSONL: One JSON object per line
-//
-// Example Usage:
-//
-//	Basic CSV export:
-//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
-//
-//	Export with columns and format:
-//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000&format=jsonl
-//	      &columns=timestamp&columns=severity&columns=message
-//
-//	Export with filter and ordering:
-//	  GET /api/v1/export_raw_data?start=1693612800000000000&end=1693699199000000000
-//	      &filter=severity="error"&order_by=timestamp:desc&limit=1000
-//
-//	Export with composite query (POST only):
-//	  POST /api/v1/export_raw_data?format=csv
-//	  Body: {"start":1693612800000000000,"end":1693699199000000000,"composite_query":{"queries":[...]}}
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	var format string
 
 	if r.Method == http.MethodGet {
-		var params types.ExportRawDataQueryParams
+		var params exporttypes.ExportRawDataQueryParams
 		if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
 			render.Error(rw, err)
 			return
@@ -105,7 +50,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 	} else {
-		var formatParam types.ExportRawDataFormatQueryParam
+		var formatParam exporttypes.ExportRawDataFormatQueryParam
 		if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
 			render.Error(rw, err)
 			return
@@ -188,7 +133,7 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 }
 
 // buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
-func buildQueryRangeRequest(params *types.ExportRawDataQueryParams) (qbtypes.QueryRangeRequest, error) {
+func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) (qbtypes.QueryRangeRequest, error) {
 	orderBy, err := parseExportQueryOrderBy(params.OrderBy)
 	if err != nil {
 		return qbtypes.QueryRangeRequest{}, err

@@ -2,7 +2,7 @@ package querybuildertypesv5
 
 import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 
-// GetExpression returns the expression string. Panics for Join, PromQuery and ClickHouseQuery.
+// GetExpression returns the expression string.
 func (q *QueryEnvelope) GetExpression() string {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -10,19 +10,19 @@ func (q *QueryEnvelope) GetExpression() string {
 	case QueryBuilderFormula:
 		return spec.Expression
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
-// GetReturnSpansFrom returns the return-spans-from value. Panics for all types except TraceOperator.
+// GetReturnSpansFrom returns the return-spans-from value.
 func (q *QueryEnvelope) GetReturnSpansFrom() string {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
 		return spec.ReturnSpansFrom
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
-// GetSignal returns the signal. Panics for all types except Query[T].
+// GetSignal returns the signal.
 func (q *QueryEnvelope) GetSignal() telemetrytypes.Signal {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderQuery[TraceAggregation]:
@@ -32,10 +32,10 @@ func (q *QueryEnvelope) GetSignal() telemetrytypes.Signal {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Signal
 	}
-	panic("unsupported spec type")
+	return telemetrytypes.SignalUnspecified
 }
 
-// GetSource returns the source. Panics for all types except Query[T].
+// GetSource returns the source.
 func (q *QueryEnvelope) GetSource() telemetrytypes.Source {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderQuery[TraceAggregation]:
@@ -45,10 +45,10 @@ func (q *QueryEnvelope) GetSource() telemetrytypes.Source {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Source
 	}
-	panic("unsupported spec type")
+	return telemetrytypes.SourceUnspecified
 }
 
-// GetQuery returns the raw query string. Panics for all types except PromQuery and ClickHouseQuery.
+// GetQuery returns the raw query string.
 func (q *QueryEnvelope) GetQuery() string {
 	switch spec := q.Spec.(type) {
 	case PromQuery:
@@ -56,61 +56,61 @@ func (q *QueryEnvelope) GetQuery() string {
 	case ClickHouseQuery:
 		return spec.Query
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
-// GetStep returns the PromQL step size. Panics for all types except PromQuery.
+// GetStep returns the PromQL step size.
 func (q *QueryEnvelope) GetStep() Step {
 	switch spec := q.Spec.(type) {
 	case PromQuery:
 		return spec.Step
 	}
-	panic("unsupported spec type")
+	return Step{}
 }
 
-// GetStats returns the PromQL stats flag. Panics for all types except PromQuery.
+// GetStats returns the PromQL stats flag.
 func (q *QueryEnvelope) GetStats() bool {
 	switch spec := q.Spec.(type) {
 	case PromQuery:
 		return spec.Stats
 	}
-	panic("unsupported spec type")
+	return false
 }
 
-// GetLeft returns the left query reference of a join. Panics for all types except QueryBuilderJoin.
+// GetLeft returns the left query reference of a join.
 func (q *QueryEnvelope) GetLeft() QueryRef {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderJoin:
 		return spec.Left
 	}
-	panic("unsupported spec type")
+	return QueryRef{}
 }
 
-// GetRight returns the right query reference of a join. Panics for all types except QueryBuilderJoin.
+// GetRight returns the right query reference of a join.
 func (q *QueryEnvelope) GetRight() QueryRef {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderJoin:
 		return spec.Right
 	}
-	panic("unsupported spec type")
+	return QueryRef{}
 }
 
-// GetJoinType returns the join type. Panics for all types except QueryBuilderJoin.
+// GetJoinType returns the join type.
 func (q *QueryEnvelope) GetJoinType() JoinType {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderJoin:
 		return spec.Type
 	}
-	panic("unsupported spec type")
+	return JoinType{}
 }
 
-// GetOn returns the join ON condition. Panics for all types except QueryBuilderJoin.
+// GetOn returns the join ON condition.
 func (q *QueryEnvelope) GetOn() string {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderJoin:
 		return spec.On
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
 // GetQueryName returns the name of the spec.
@@ -133,7 +133,7 @@ func (q *QueryEnvelope) GetQueryName() string {
 	case ClickHouseQuery:
 		return spec.Name
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
 // IsDisabled returns whether the spec is disabled.
@@ -156,10 +156,10 @@ func (q *QueryEnvelope) IsDisabled() bool {
 	case ClickHouseQuery:
 		return spec.Disabled
 	}
-	panic("unsupported spec type")
+	return false
 }
 
-// GetLimit returns the row limit. Panics for PromQuery and ClickHouseQuery.
+// GetLimit returns the row limit.
 func (q *QueryEnvelope) GetLimit() int {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -175,10 +175,10 @@ func (q *QueryEnvelope) GetLimit() int {
 	case QueryBuilderJoin:
 		return spec.Limit
 	}
-	panic("unsupported spec type")
+	return 0
 }
 
-// GetOffset returns the row offset. Panics for Formula, Join, PromQuery and ClickHouseQuery.
+// GetOffset returns the row offset.
 func (q *QueryEnvelope) GetOffset() int {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -190,7 +190,7 @@ func (q *QueryEnvelope) GetOffset() int {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Offset
 	}
-	panic("unsupported spec type")
+	return 0
 }
 
 // GetType returns the QueryType of the envelope.
@@ -198,7 +198,7 @@ func (q *QueryEnvelope) GetType() QueryType {
 	return q.Type
 }
 
-// GetOrder returns the order-by clauses. Panics for PromQuery and ClickHouseQuery.
+// GetOrder returns the order-by clauses.
 func (q *QueryEnvelope) GetOrder() []OrderBy {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -214,10 +214,10 @@ func (q *QueryEnvelope) GetOrder() []OrderBy {
 	case QueryBuilderJoin:
 		return spec.Order
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetGroupBy returns the group-by keys. Panics for Formula, PromQuery and ClickHouseQuery.
+// GetGroupBy returns the group-by keys.
 func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -231,10 +231,10 @@ func (q *QueryEnvelope) GetGroupBy() []GroupByKey {
 	case QueryBuilderJoin:
 		return spec.GroupBy
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetFilter returns the filter. Panics for Formula, PromQuery and ClickHouseQuery.
+// GetFilter returns the filter.
 func (q *QueryEnvelope) GetFilter() *Filter {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -248,10 +248,10 @@ func (q *QueryEnvelope) GetFilter() *Filter {
 	case QueryBuilderJoin:
 		return spec.Filter
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetHaving returns the having clause. Panics for PromQuery and ClickHouseQuery.
+// GetHaving returns the having clause.
 func (q *QueryEnvelope) GetHaving() *Having {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -267,10 +267,10 @@ func (q *QueryEnvelope) GetHaving() *Having {
 	case QueryBuilderJoin:
 		return spec.Having
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetFunctions returns the post-processing functions. Panics for PromQuery and ClickHouseQuery.
+// GetFunctions returns the post-processing functions.
 func (q *QueryEnvelope) GetFunctions() []Function {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -286,10 +286,10 @@ func (q *QueryEnvelope) GetFunctions() []Function {
 	case QueryBuilderJoin:
 		return spec.Functions
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetSelectFields returns the selected fields. Panics for Formula, PromQuery and ClickHouseQuery.
+// GetSelectFields returns the selected fields.
 func (q *QueryEnvelope) GetSelectFields() []telemetrytypes.TelemetryFieldKey {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -303,10 +303,10 @@ func (q *QueryEnvelope) GetSelectFields() []telemetrytypes.TelemetryFieldKey {
 	case QueryBuilderJoin:
 		return spec.SelectFields
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetLegend returns the legend label. Panics for QueryBuilderJoin.
+// GetLegend returns the legend label.
 func (q *QueryEnvelope) GetLegend() string {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -324,10 +324,10 @@ func (q *QueryEnvelope) GetLegend() string {
 	case ClickHouseQuery:
 		return spec.Legend
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
-// GetCursor returns the pagination cursor. Panics for Formula, Join, PromQuery and ClickHouseQuery.
+// GetCursor returns the pagination cursor.
 func (q *QueryEnvelope) GetCursor() string {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -339,10 +339,10 @@ func (q *QueryEnvelope) GetCursor() string {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.Cursor
 	}
-	panic("unsupported spec type")
+	return ""
 }
 
-// GetStepInterval returns the step interval. Panics for Formula, Join, PromQuery and ClickHouseQuery.
+// GetStepInterval returns the step interval.
 func (q *QueryEnvelope) GetStepInterval() Step {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderTraceOperator:
@@ -354,10 +354,10 @@ func (q *QueryEnvelope) GetStepInterval() Step {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.StepInterval
 	}
-	panic("unsupported spec type")
+	return Step{}
 }
 
-// GetSecondaryAggregations returns the secondary aggregations. Panics for TraceOperator, Formula, PromQuery and ClickHouseQuery.
+// GetSecondaryAggregations returns the secondary aggregations.
 func (q *QueryEnvelope) GetSecondaryAggregations() []SecondaryAggregation {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderQuery[TraceAggregation]:
@@ -369,10 +369,10 @@ func (q *QueryEnvelope) GetSecondaryAggregations() []SecondaryAggregation {
 	case QueryBuilderJoin:
 		return spec.SecondaryAggregations
 	}
-	panic("unsupported spec type")
+	return nil
 }
 
-// GetLimitBy returns the limit-by configuration. Panics for TraceOperator, Formula, Join, PromQuery and ClickHouseQuery.
+// GetLimitBy returns the limit-by configuration.
 func (q *QueryEnvelope) GetLimitBy() *LimitBy {
 	switch spec := q.Spec.(type) {
 	case QueryBuilderQuery[TraceAggregation]:
@@ -382,5 +382,5 @@ func (q *QueryEnvelope) GetLimitBy() *LimitBy {
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.LimitBy
 	}
-	panic("unsupported spec type")
+	return nil
 }
