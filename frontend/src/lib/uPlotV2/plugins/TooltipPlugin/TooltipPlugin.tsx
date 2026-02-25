@@ -371,6 +371,7 @@ export default function TooltipPlugin({
 			aria-atomic="true"
 			aria-hidden={!isHovering}
 			ref={containerRef}
+			data-testid="tooltip-plugin-container"
 		>
 			{isHovering ? contents : null}
 		</div>,
