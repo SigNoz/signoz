@@ -19,9 +19,9 @@ orExpression
     : andExpression ( OR andExpression )*
     ;
 
-// AND expressions
+// AND expressions + optional chaining with implicit AND if no OR is present
 andExpression
-    : primary ( AND primary )*
+    : primary ( AND primary | primary )*
     ;
 
 // Primary: an optionally negated parenthesized expression, or a comparison.
@@ -164,12 +164,6 @@ fragment SIGN : [+-] ;
 NUMBER
     : SIGN? DIGIT+ ('.' DIGIT*)? ([eE] SIGN? DIGIT+)?
     | SIGN? '.' DIGIT+ ([eE] SIGN? DIGIT+)?
-    ;
-
-// Quoted string literals (double or single-quoted, with escape support)
-QUOTED_TEXT
-    : '"' ( ~["\\] | '\\' . )* '"'
-    | '\'' ( ~['\\] | '\\' . )* '\''
     ;
 
 // Identifiers: start with a letter or underscore, followed by alphanumeric/underscores.

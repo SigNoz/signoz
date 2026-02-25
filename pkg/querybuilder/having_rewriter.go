@@ -126,6 +126,8 @@ func (r *HavingExpressionRewriter) buildMetricColumnMap(aggregations []qbtypes.M
 }
 
 func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
+	expression = normalizeImplicitAND(expression)
+
 	quotedStrings := make(map[string]string)
 	quotePattern := regexp.MustCompile(`'[^']*'|"[^"]*"`)
 	quotedIdx := 0

@@ -70,7 +70,15 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 > 100",
 		},
-		// --- Happy path: boolean logic (AND, OR, NOT, parentheses) ---
+		// --- Happy path: boolean logic (AND, OR, NOT, parentheses, implicit AND) ---
+		{
+			name:       "two comparisons without boolean connector",
+			expression: "total > 100 count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 > 100 AND __result_0 < 500",
+		},
 		{
 			name:       "complex boolean with parentheses",
 			expression: "(total > 100 AND avg_duration < 500) OR total > 10000",
@@ -261,7 +269,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:20 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
+			wantAdditional: []string{"line 1:20 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF"},
 		},
 		{
 			name:       "dangling OR at start",
@@ -271,7 +279,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'OR'"},
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'"},
 		},
 		// --- Error: dangling or malformed boolean operators (AND, OR) ---
 		{
@@ -282,7 +290,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:21 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'AND'"},
+			wantAdditional: []string{"line 1:21 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'AND'"},
 		},
 		// --- Error: invalid operand types (string literals, boolean literal) ---
 		{
@@ -365,18 +373,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:4 expecting one of {(, )} but got 'count'; line 1:10 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'; line 1:12 mismatched input '>' expecting <EOF>"},
-		},
-		// --- Error: malformed comparison (missing operand, operator, or connector) ---
-		{
-			name:       "two comparisons without boolean connector",
-			expression: "total > 100 count() < 500",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:12 mismatched input 'count' expecting <EOF>"},
+			wantAdditional: []string{"line 1:4 expecting one of {(, )} but got 'count'; line 1:10 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got ')'; line 1:12 mismatched input '>' expecting <EOF>"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -397,7 +394,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {(, ), IDENTIFIER, number, quoted text} but got 'true'"},
+			wantAdditional: []string{"line 1:10 expecting one of {(, ), IDENTIFIER, number} but got 'true'"},
 		},
 		{
 			name:       "double NOT without valid grouping",
@@ -428,7 +425,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
+			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF"},
 		},
 		{
 			name:       "only closing parenthesis",
@@ -438,7 +435,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'"},
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got ')'"},
 		},
 		{
 			name:       "empty parentheses",
@@ -448,7 +445,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got ')'"},
+			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got ')'"},
 		},
 		// --- Error: missing comparison operands or operator ---
 		{
@@ -459,7 +456,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got '>'; line 1:5 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got '>'; line 1:5 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
 		},
 		{
 			name:       "missing right operand",
@@ -469,7 +466,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:9 expecting one of {(, ), IDENTIFIER, number, quoted text} but got EOF"},
+			wantAdditional: []string{"line 1:9 expecting one of {(, ), IDENTIFIER, number} but got EOF"},
 		},
 		{
 			name:       "missing operator",
@@ -489,7 +486,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:14 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got EOF"},
+			wantAdditional: []string{"line 1:14 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF"},
 		},
 		{
 			name:       "AND OR without second operand",
@@ -499,7 +496,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:16 expecting one of {(, ), AND, IDENTIFIER, NOT, number, quoted text} but got 'OR'"},
+			wantAdditional: []string{"line 1:16 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'"},
 		},
 		{
 			name:       "NOT without parentheses on alias",

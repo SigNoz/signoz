@@ -85,6 +85,65 @@ func (v *havingExpressionSemanticValidator) visitIdentifier(ctx *grammar.Identif
 	}
 }
 
+// normalizeImplicitAND parses expression with ANTLR and reconstructs it with explicit AND
+// inserted between any adjacent primaries that had no connector (implicit AND).
+// If parsing fails, the original expression is returned unchanged.
+func normalizeImplicitAND(expression string) string {
+	input := antlr.NewInputStream(expression)
+	lexer := grammar.NewHavingExpressionLexer(input)
+	errListener := NewErrorListener()
+	lexer.RemoveErrorListeners()
+	lexer.AddErrorListener(errListener)
+
+	tokens := antlr.NewCommonTokenStream(lexer, antlr.TokenDefaultChannel)
+	p := grammar.NewHavingExpressionParser(tokens)
+	p.RemoveErrorListeners()
+	p.AddErrorListener(errListener)
+
+	tree := p.Query()
+	if len(errListener.SyntaxErrors) > 0 || tree.Expression() == nil {
+		return expression
+	}
+
+	return normalizeExpression(expression, tree.Expression())
+}
+
+func normalizeExpression(original string, ctx grammar.IExpressionContext) string {
+	return normalizeOrExpression(original, ctx.OrExpression())
+}
+
+func normalizeOrExpression(original string, ctx grammar.IOrExpressionContext) string {
+	andExprs := ctx.AllAndExpression()
+	parts := make([]string, len(andExprs))
+	for i, ae := range andExprs {
+		parts[i] = normalizeAndExpression(original, ae)
+	}
+	return strings.Join(parts, " OR ")
+}
+
+func normalizeAndExpression(original string, ctx grammar.IAndExpressionContext) string {
+	primaries := ctx.AllPrimary()
+	parts := make([]string, len(primaries))
+	for i, p := range primaries {
+		parts[i] = normalizePrimary(original, p)
+	}
+	return strings.Join(parts, " AND ")
+}
+
+func normalizePrimary(original string, ctx grammar.IPrimaryContext) string {
+	if ctx.OrExpression() != nil {
+		inner := normalizeOrExpression(original, ctx.OrExpression())
+		if ctx.NOT() != nil {
+			return "NOT (" + inner + ")"
+		}
+		return "(" + inner + ")"
+	}
+	// Plain comparison: extract original text verbatim
+	start := ctx.GetStart().GetStart()
+	stop := ctx.GetStop().GetStop()
+	return original[start : stop+1]
+}
+
 // syntaxErrorMessages parses expression with ANTLR and returns any syntax error strings.
 func syntaxErrorMessages(expression string) []string {
 	input := antlr.NewInputStream(expression)
