@@ -139,8 +139,7 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					{tableColumns
 						.filter((column) => column.key)
 						.map((column) => {
-							const isDragColumn =
-								column.key !== 'expand' && column.key !== 'state-indicator';
+							const isDragColumn = column.key !== 'expand';
 
 							return (
 								<TableHeaderCellStyled
