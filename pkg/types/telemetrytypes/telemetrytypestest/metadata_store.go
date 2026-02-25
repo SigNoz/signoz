@@ -17,7 +17,7 @@ type MockMetadataStore struct {
 	AllValuesMap       map[string]*telemetrytypes.TelemetryFieldValues
 	TemporalityMap     map[string]metrictypes.Temporality
 	TypeMap            map[string]metrictypes.Type
-	PromotedPathsMap   map[string]struct{}
+	PromotedPathsMap   map[string]bool
 	LogsJSONIndexesMap map[string][]schemamigrator.Index
 	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 }
@@ -30,7 +30,7 @@ func NewMockMetadataStore() *MockMetadataStore {
 		AllValuesMap:       make(map[string]*telemetrytypes.TelemetryFieldValues),
 		TemporalityMap:     make(map[string]metrictypes.Temporality),
 		TypeMap:            make(map[string]metrictypes.Type),
-		PromotedPathsMap:   make(map[string]struct{}),
+		PromotedPathsMap:   make(map[string]bool),
 		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
 		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
 	}
@@ -318,13 +318,13 @@ func (m *MockMetadataStore) SetTemporality(metricName string, temporality metric
 // PromotePaths promotes the paths.
 func (m *MockMetadataStore) PromotePaths(ctx context.Context, paths ...string) error {
 	for _, path := range paths {
-		m.PromotedPathsMap[path] = struct{}{}
+		m.PromotedPathsMap[path] = true
 	}
 	return nil
 }
 
-// ListPromotedPaths lists the promoted paths.
-func (m *MockMetadataStore) ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error) {
+// GetPromotedPaths returns the promoted paths.
+func (m *MockMetadataStore) GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error) {
 	return m.PromotedPathsMap, nil
 }
 
