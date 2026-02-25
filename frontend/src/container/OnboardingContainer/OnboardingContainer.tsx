@@ -1,6 +1,6 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
-import { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
@@ -17,6 +17,7 @@ import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingIn
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { navigateToPage } from 'utils/navigation';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -252,9 +253,13 @@ export default function Onboarding(): JSX.Element {
 		}
 	};
 
-	const handleNext = (): void => {
+	const handleNext = (e?: React.MouseEvent): void => {
 		if (activeStep <= 3) {
-			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
+			navigateToPage(
+				moduleRouteMap[selectedModule.id as ModulesMap],
+				history.push,
+				e,
+			);
 		}
 	};
 
@@ -317,9 +322,9 @@ export default function Onboarding(): JSX.Element {
 			{activeStep === 1 && (
 				<div className="onboarding-page">
 					<div
-						onClick={(): void => {
+						onClick={(e): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push(ROUTES.APPLICATION);
+							navigateToPage(ROUTES.APPLICATION, history.push, e);
 						}}
 						className="skip-to-console"
 					>
@@ -355,7 +360,11 @@ export default function Onboarding(): JSX.Element {
 						</div>
 					</div>
 					<div className="continue-to-next-step">
-						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
+						<Button
+							type="primary"
+							icon={<ArrowRightOutlined />}
+							onClick={(e): void => handleNext(e)}
+						>
 							{t('get_started')}
 						</Button>
 					</div>
@@ -386,17 +395,16 @@ export default function Onboarding(): JSX.Element {
 			{activeStep > 1 && (
 				<div className="stepsContainer">
 					<ModuleStepsContainer
-						onReselectModule={(): void => {
+						onReselectModule={(e?: React.MouseEvent): void => {
 							setCurrent(current - 1);
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
 
-							if (isOnboardingV3Enabled) {
-								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-							} else {
-								history.push(ROUTES.GET_STARTED);
-							}
+							const path = isOnboardingV3Enabled
+								? ROUTES.GET_STARTED_WITH_CLOUD
+								: ROUTES.GET_STARTED;
+							navigateToPage(path, history.push, e);
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}

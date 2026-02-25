@@ -30,6 +30,7 @@ import {
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
@@ -80,7 +81,12 @@ export function getColumns(
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
-									history.push(`/services/${encodeURIComponent(text)}`);
+									const path = `/services/${encodeURIComponent(text)}`;
+									if (isModifierKeyPressed(e)) {
+										openInNewTab(path);
+									} else {
+										history.push(path);
+									}
 								}}
 							>
 								{text}

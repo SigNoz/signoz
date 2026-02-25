@@ -16,6 +16,7 @@ import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';
@@ -111,14 +112,19 @@ function ErrorDetails(props: ErrorDetailsProps): JSX.Element {
 			value: errorDetail[key as keyof GetByErrorTypeAndServicePayload],
 		}));
 
-	const onClickTraceHandler = (): void => {
+	const onClickTraceHandler = (event: React.MouseEvent): void => {
 		logEvent('Exception: Navigate to trace detail page', {
 			groupId: errorDetail?.groupID,
 			spanId: errorDetail.spanID,
 			traceId: errorDetail.traceID,
 			exceptionId: errorDetail?.errorId,
 		});
-		history.push(`/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`);
+		const path = `/trace/${errorDetail.traceID}?spanId=${errorDetail.spanID}`;
+		if (isModifierKeyPressed(event)) {
+			openInNewTab(path);
+		} else {
+			history.push(path);
+		}
 	};
 
 	const logEventCalledRef = useRef(false);

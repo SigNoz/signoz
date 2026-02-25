@@ -7,6 +7,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
 
 import {
 	MessagingQueuesViewType,
@@ -64,8 +65,14 @@ function MQDetailPage(): JSX.Element {
 		selectedView !== MessagingQueuesViewType.dropRate.value &&
 		selectedView !== MessagingQueuesViewType.metricPage.value;
 
-	const handleBackClick = (): void => {
-		history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+	const handleBackClick = (
+		event?: React.MouseEvent | React.KeyboardEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event as React.MouseEvent)) {
+			openInNewTab(ROUTES.MESSAGING_QUEUES_KAFKA);
+		} else {
+			history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+		}
 	};
 
 	return (
@@ -77,7 +84,7 @@ function MQDetailPage(): JSX.Element {
 						className="message-queue-text"
 						onKeyDown={(e): void => {
 							if (e.key === 'Enter' || e.key === ' ') {
-								handleBackClick();
+								handleBackClick(e);
 							}
 						}}
 						role="button"

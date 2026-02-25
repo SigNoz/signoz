@@ -118,6 +118,7 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Should navigate to the dashboard
 		expect(mockSafeNavigate).toHaveBeenCalledWith(
 			`/dashboard/${mockDashboard1.dashboard_id}`,
+			expect.objectContaining({ event: expect.any(Object) }),
 		);
 	});
 
