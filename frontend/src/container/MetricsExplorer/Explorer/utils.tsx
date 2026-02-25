@@ -104,10 +104,10 @@ export function buildUpdateMetricYAxisUnitPayload(
 ): UpdateMetricMetadataMutationBody {
 	return {
 		metricName,
-		type: metric?.type,
-		description: metric?.description,
+		type: metric.type,
+		description: metric.description,
 		unit: yAxisUnit || '',
-		temporality: metric?.temporality,
+		temporality: metric.temporality,
 		isMonotonic: determineIsMonotonic(metric?.type, metric?.temporality),
 	};
 }

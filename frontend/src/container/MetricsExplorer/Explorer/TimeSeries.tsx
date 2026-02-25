@@ -155,7 +155,7 @@ function TimeSeries({
 	const showSaveUnitButton = useMemo(
 		() =>
 			metricUnits.length === 1 &&
-			Boolean(metrics?.[0]) &&
+			Boolean(metrics[0]) &&
 			!metricUnits[0] &&
 			yAxisUnit,
 		[metricUnits, metrics, yAxisUnit],
@@ -167,7 +167,7 @@ function TimeSeries({
 	} = useUpdateMetricMetadata();
 
 	const handleSaveUnit = (): void => {
-		if (metrics?.[0]) {
+		if (metrics[0]) {
 			updateMetricMetadata(
 				{
 					pathParams: {

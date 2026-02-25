@@ -1,11 +1,6 @@
 import { UseQueryResult } from 'react-query';
 import { renderHook } from '@testing-library/react';
-import {
-	GetMetricMetadata200,
-	MetricsexplorertypesMetricMetadataDTO,
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
+import { GetMetricMetadata200 } from 'api/generated/services/sigNoz.schemas';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useGetMultipleMetricsHook from 'hooks/metricsExplorer/useGetMultipleMetrics';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -21,6 +16,7 @@ import {
 	splitQueryIntoOneChartPerQuery,
 	useGetMetrics,
 } from '../utils';
+import { MOCK_METRIC_METADATA } from './testUtils';
 
 const MOCK_QUERY_DATA_1: IBuilderQuery = {
 	...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
@@ -89,14 +85,6 @@ describe('splitQueryIntoOneChartPerQuery', () => {
 		expect(result[3].unit).toBe('');
 	});
 });
-
-const MOCK_METRIC_METADATA: MetricsexplorertypesMetricMetadataDTO = {
-	description: 'Metric 1 description',
-	unit: 'unit1',
-	type: MetrictypesTypeDTO.gauge,
-	temporality: MetrictypesTemporalityDTO.delta,
-	isMonotonic: true,
-};
 
 describe('useGetMetrics', () => {
 	beforeEach(() => {

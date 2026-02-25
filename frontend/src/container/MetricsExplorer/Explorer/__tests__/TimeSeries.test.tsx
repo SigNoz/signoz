@@ -1,14 +1,10 @@
 import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
-import {
-	MetricsexplorertypesMetricMetadataDTO,
-	MetrictypesTemporalityDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
 
 import TimeSeries from '../TimeSeries';
 import { TimeSeriesProps } from '../types';
+import { MOCK_METRIC_METADATA } from './testUtils';
 
 const mockUpdateMetricMetadata = jest.fn();
 const updateMetricMetadataSpy = jest.spyOn(
@@ -53,14 +49,6 @@ jest.mock('react-redux', () => ({
 		},
 	}),
 }));
-
-const mockMetric: MetricsexplorertypesMetricMetadataDTO = {
-	type: MetrictypesTypeDTO.sum,
-	description: 'metric1 description',
-	unit: 'metric1 unit',
-	temporality: MetrictypesTemporalityDTO.cumulative,
-	isMonotonic: true,
-};
 
 const mockSetWarning = jest.fn();
 const mockSetIsMetricDetailsOpen = jest.fn();
@@ -119,7 +107,7 @@ describe('TimeSeries', () => {
 		const { container } = renderTimeSeries({
 			metricUnits: ['', 'count'],
 			metricNames: ['metric1', 'metric2'],
-			metrics: [mockMetric, mockMetric],
+			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
 			yAxisUnit: 'seconds',
 		});
 
@@ -138,7 +126,7 @@ describe('TimeSeries', () => {
 		const { findByText, getByRole } = renderTimeSeries({
 			metricUnits: [undefined],
 			metricNames: ['metric1'],
-			metrics: [mockMetric],
+			metrics: [MOCK_METRIC_METADATA],
 			yAxisUnit: 'seconds',
 			showYAxisUnitSelector: true,
 		});
@@ -157,7 +145,7 @@ describe('TimeSeries', () => {
 		const { getByRole } = renderTimeSeries({
 			metricUnits: [''],
 			metricNames: ['metric1'],
-			metrics: [mockMetric],
+			metrics: [MOCK_METRIC_METADATA],
 			yAxisUnit: 'seconds',
 			showYAxisUnitSelector: true,
 		});

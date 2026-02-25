@@ -87,7 +87,7 @@ function Explorer(): JSX.Element {
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
-	const firstUnit = useMemo(() => units?.[0], [units]);
+	const firstUnit = useMemo(() => units[0], [units]);
 
 	useEffect(() => {
 		// Set the y axis unit to the first metric unit if
