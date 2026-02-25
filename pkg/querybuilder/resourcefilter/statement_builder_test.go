@@ -477,7 +477,23 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 				Args:  []any{"prod", "%env%", "%env\":\"prod%", "fnscrapers", "%k8s.deployment.name%", "%k8s.deployment.name\":\"fnscrapers%", uint64(1769974378), uint64(1770062578)},
 			},
 		},
-				{
+		{
+			name: "NOT with value",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{
+					// using not with full text search
+					Expression: "NOT 'error'",
+				},
+			},
+			start: testStartNs,
+			end:   testEndNs,
+			expected: qbtypes.Statement{
+				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
+				Args:  []any{expectedBucketStart, expectedBucketEnd},
+			},
+		},
+		{
 			name: "NOT with unknown key should not generate not()",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalTraces,
@@ -536,6 +552,23 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
 					Expression: "not(http.request.method = 'POST' and http.request.method = 'GET')",
+				},
+			},
+			start: testStartNs,
+			end:   testEndNs,
+			expected: qbtypes.Statement{
+				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
+				Args:  []any{expectedBucketStart, expectedBucketEnd},
+			},
+		},
+		{
+			name: "NOT with multiple attribute fields and values should not generate NOT (true and true)",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalTraces,
+				Filter: &qbtypes.Filter{
+					// http.request.method is an attribute field, not a resource field
+					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					Expression: "not(http.request.method = 'POST' and (not 'error' and http.request.method = 'GET'))",
 				},
 			},
 			start: testStartNs,
