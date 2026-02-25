@@ -849,6 +849,9 @@ components:
         threshold:
           format: double
           type: number
+      required:
+      - operator
+      - threshold
       type: object
     MetrictypesSpaceAggregation:
       enum:

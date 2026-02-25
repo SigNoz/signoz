@@ -1010,12 +1010,12 @@ export interface MetrictypesComparisonSpaceAggregationParamDTO {
 	/**
 	 * @type string
 	 */
-	operator?: string;
+	operator: string;
 	/**
 	 * @type number
 	 * @format double
 	 */
-	threshold?: number;
+	threshold: number;
 }
 
 export enum MetrictypesSpaceAggregationDTO {
