@@ -7,6 +7,7 @@ import { ChevronRight, Search, Table2, Trash2, Users } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Skeleton } from 'antd';
+import { useAuthzResources } from 'api/generated/services/authz';
 import {
 	getGetObjectsQueryKey,
 	useDeleteRole,
@@ -17,7 +18,6 @@ import {
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ROUTES from 'constants/routes';
 import { capitalize } from 'lodash-es';
-import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
@@ -211,7 +211,11 @@ function RoleDetailsPage(): JSX.Element {
 	const history = useHistory();
 	const queryClient = useQueryClient();
 	const { showErrorModal } = useErrorModal();
-	const { authzResources } = useAppContext();
+
+	const { data: authzResourcesResponse } = useAuthzResources({
+		query: { enabled: true },
+	});
+	const authzResources = authzResourcesResponse?.data ?? null;
 
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';

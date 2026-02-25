@@ -120,9 +120,6 @@ export function getAppContextMockState(
 		toggleChangelogModal: jest.fn(),
 		versionData: null,
 		hasEditPermission: false,
-		authzResources: null,
-		authzResourcesFetchError: null,
-		isFetchingAuthzResources: false,
 	};
 }
 

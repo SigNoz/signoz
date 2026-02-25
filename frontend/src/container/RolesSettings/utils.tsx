@@ -109,6 +109,9 @@ export function buildPatchPayload({
 	additions: AuthtypesGettableObjectsDTO[] | null;
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 } {
+	if (!authzRes) {
+		return { additions: null, deletions: null };
+	}
 	const additions: AuthtypesGettableObjectsDTO[] = [];
 	const deletions: AuthtypesGettableObjectsDTO[] = [];
 

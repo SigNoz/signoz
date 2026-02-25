@@ -1,4 +1,3 @@
-import { AuthtypesGettableResourcesDTO } from 'api/generated/services/sigNoz.schemas';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
 import APIError from 'types/api/error';
 import { FeatureFlagProps as FeatureFlags } from 'types/api/features/getFeaturesFlags';
@@ -18,19 +17,16 @@ export interface IAppContext {
 	featureFlags: FeatureFlags[] | null;
 	orgPreferences: OrgPreference[] | null;
 	userPreferences: UserPreference[] | null;
-	authzResources: AuthtypesGettableResourcesDTO | null;
 	isLoggedIn: boolean;
 	org: Organization[] | null;
 	isFetchingUser: boolean;
 	isFetchingActiveLicense: boolean;
 	isFetchingFeatureFlags: boolean;
 	isFetchingOrgPreferences: boolean;
-	isFetchingAuthzResources: boolean;
 	userFetchError: unknown;
 	activeLicenseFetchError: APIError | null;
 	featureFlagsFetchError: unknown;
 	orgPreferencesFetchError: unknown;
-	authzResourcesFetchError: unknown;
 	changelog: ChangelogSchema | null;
 	showChangelogModal: boolean;
 	activeLicenseRefetch: () => void;
