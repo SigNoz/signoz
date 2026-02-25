@@ -23,7 +23,6 @@ import {
 	MetricInspectionAction,
 } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
-import { useMetricName } from './utils';
 
 import './Inspect.styles.scss';
 
@@ -33,12 +32,12 @@ function Inspect({
 	onClose,
 }: InspectProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const {
-		currentMetricName,
-		setCurrentMetricName,
-		appliedMetricName,
-		setAppliedMetricName,
-	} = useMetricName(defaultMetricName);
+	const [currentMetricName, setCurrentMetricName] = useState<string>(
+		defaultMetricName,
+	);
+	const [appliedMetricName, setAppliedMetricName] = useState<string>(
+		defaultMetricName,
+	);
 	const [
 		popoverOptions,
 		setPopoverOptions,

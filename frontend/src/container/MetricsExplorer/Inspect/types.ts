@@ -7,7 +7,7 @@ import {
 import { AlignedData } from 'uplot';
 
 export type InspectProps = {
-	metricName: string | null;
+	metricName: string;
 	isOpen: boolean;
 	onClose: () => void;
 };

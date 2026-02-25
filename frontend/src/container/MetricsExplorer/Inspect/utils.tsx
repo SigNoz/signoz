@@ -824,26 +824,3 @@ export function onGraphHover(
 		timeSeries: series,
 	});
 }
-
-export function useMetricName(
-	metricName: string | null,
-): {
-	currentMetricName: string | null;
-	setCurrentMetricName: (metricName: string | null) => void;
-	appliedMetricName: string | null;
-	setAppliedMetricName: (metricName: string | null) => void;
-} {
-	const [currentMetricName, setCurrentMetricName] = useState<string | null>(
-		metricName,
-	);
-	const [appliedMetricName, setAppliedMetricName] = useState<string | null>(
-		metricName,
-	);
-
-	return {
-		currentMetricName,
-		setCurrentMetricName,
-		appliedMetricName,
-		setAppliedMetricName,
-	};
-}
