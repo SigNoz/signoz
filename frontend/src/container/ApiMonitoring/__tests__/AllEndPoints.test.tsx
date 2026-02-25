@@ -25,7 +25,7 @@ jest.mock('container/GridCardLayout/GridCard', () => ({
 				type="button"
 				data-testid="row-click-button"
 				onClick={(): void =>
-					customOnRowClick({ [SPAN_ATTRIBUTES.URL_PATH]: '/api/test' })
+					customOnRowClick({ [SPAN_ATTRIBUTES.HTTP_URL]: '/api/test' })
 				}
 			>
 				Click Row

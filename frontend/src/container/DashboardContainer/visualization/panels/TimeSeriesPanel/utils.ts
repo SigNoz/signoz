@@ -15,10 +15,12 @@ import {
 	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
+import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
 import get from 'lodash-es/get';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { QueryData } from 'types/api/widgets/getQuery';
 
 import { PanelMode } from '../types';
 import { buildBaseConfig } from '../utils/baseConfigBuilder';
@@ -32,6 +34,22 @@ export const prepareChartData = (
 
 	return [timestampArr, ...yAxisValuesArr];
 };
+
+function hasSingleVisiblePointForSeries(series: QueryData): boolean {
+	const rawValues = series.values ?? [];
+	let validPointCount = 0;
+
+	for (const [, rawValue] of rawValues) {
+		if (!isInvalidPlotValue(rawValue)) {
+			validPointCount += 1;
+			if (validPointCount > 1) {
+				return false;
+			}
+		}
+	}
+
+	return true;
+}
 
 export const prepareUPlotConfig = ({
 	widget,
@@ -77,9 +95,8 @@ export const prepareUPlotConfig = ({
 		stepInterval: minStepInterval,
 	});
 
-	const seriesList = apiResponse.data?.result || [];
-
-	seriesList.forEach((series) => {
+	apiResponse.data?.result?.forEach((series) => {
+		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
@@ -92,13 +109,15 @@ export const prepareUPlotConfig = ({
 
 		builder.addSeries({
 			scaleKey: 'y',
-			drawStyle: DrawStyle.Line,
+			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: true,
 			lineStyle: LineStyle.Solid,
 			lineInterpolation: LineInterpolation.Spline,
-			showPoints: VisibilityMode.Never,
+			showPoints: hasSingleValidPoint
+				? VisibilityMode.Always
+				: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
 			panelType: PANEL_TYPES.TIME_SERIES,

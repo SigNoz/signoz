@@ -191,7 +191,7 @@ describe('EndPointsDropDown Component', () => {
 
 	it('formats data using the utility function', () => {
 		const mockRows = [
-			{ data: { [SPAN_ATTRIBUTES.URL_PATH]: '/api/test', A: 10 } },
+			{ data: { [SPAN_ATTRIBUTES.HTTP_URL]: '/api/test', A: 10 } },
 		];
 
 		const dataProps = {

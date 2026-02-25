@@ -55,6 +55,7 @@ const ROUTES = {
 	LOGS_INDEX_FIELDS: '/logs-explorer/index-fields',
 	TRACE_EXPLORER: '/trace-explorer',
 	BILLING: '/settings/billing',
+	ROLES_SETTINGS: '/settings/roles',
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',

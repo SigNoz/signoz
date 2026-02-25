@@ -3,6 +3,7 @@ package httpzeus
 import (
 	"bytes"
 	"context"
+	"encoding/json"
 	"io"
 	"net/http"
 	"net/url"
@@ -10,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/client"
+	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/tidwall/gjson"
 )
@@ -119,8 +121,13 @@ func (provider *Provider) PutMeters(ctx context.Context, key string, data []byte
 	return err
 }
 
-func (provider *Provider) PutProfile(ctx context.Context, key string, body []byte) error {
-	_, err := provider.do(
+func (provider *Provider) PutProfile(ctx context.Context, key string, profile *zeustypes.PostableProfile) error {
+	body, err := json.Marshal(profile)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
 		provider.config.URL.JoinPath("/v2/profiles/me"),
 		http.MethodPut,
@@ -131,10 +138,15 @@ func (provider *Provider) PutProfile(ctx context.Context, key string, body []byt
 	return err
 }
 
-func (provider *Provider) PutHost(ctx context.Context, key string, body []byte) error {
-	_, err := provider.do(
+func (provider *Provider) PutHost(ctx context.Context, key string, host *zeustypes.PostableHost) error {
+	body, err := json.Marshal(host)
+	if err != nil {
+		return err
+	}
+
+	_, err = provider.do(
 		ctx,
-		provider.config.URL.JoinPath("/v2/deployments/me/hosts"),
+		provider.config.URL.JoinPath("/v2/deployments/me/host"),
 		http.MethodPut,
 		key,
 		body,
@@ -169,21 +181,28 @@ func (provider *Provider) do(ctx context.Context, url *url.URL, method string, k
 		return body, nil
 	}
 
-	return nil, provider.errFromStatusCode(response.StatusCode)
+	errorMessage := gjson.GetBytes(body, "error").String()
+	if errorMessage == "" {
+		errorMessage = "an unknown error occurred"
+	}
+
+	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
 }
 
 // This can be taken down to the client package
-func (provider *Provider) errFromStatusCode(statusCode int) error {
+func (provider *Provider) errFromStatusCode(statusCode int, errorMessage string) error {
 	switch statusCode {
 	case http.StatusBadRequest:
-		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "bad request")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, errorMessage)
 	case http.StatusUnauthorized:
-		return errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+		return errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, errorMessage)
 	case http.StatusForbidden:
-		return errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "forbidden")
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, errorMessage)
 	case http.StatusNotFound:
-		return errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "not found")
+		return errors.New(errors.TypeNotFound, errors.CodeNotFound, errorMessage)
+	case http.StatusConflict:
+		return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, errorMessage)
 	}
 
-	return errors.Newf(errors.TypeInternal, errors.CodeInternal, "internal")
+	return errors.New(errors.TypeInternal, errors.CodeInternal, errorMessage)
 }
