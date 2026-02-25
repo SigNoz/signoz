@@ -69,7 +69,7 @@ export const getRoutes = (
 	}
 
 	if (isAdmin) {
-		settings.push(...rolesSettings(t));
+		settings.push(...rolesSettings(t), ...roleDetails(t));
 	}
 
 	settings.push(
@@ -77,7 +77,6 @@ export const getRoutes = (
 		...createAlertChannels(t),
 		...editAlertChannels(t),
 		...keyboardShortcuts(t),
-		...roleDetails(),
 	);
 
 	return settings;

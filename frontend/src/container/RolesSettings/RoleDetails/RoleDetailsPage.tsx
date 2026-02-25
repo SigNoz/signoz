@@ -4,15 +4,6 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
-import { Modal, Skeleton } from 'antd';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { useDeleteRole, useGetRole } from 'api/generated/services/role';
-import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
-import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import ROUTES from 'constants/routes';
 import {
 	BadgePlus,
 	ChevronRight,
@@ -23,10 +14,17 @@ import {
 	Table2,
 	Trash2,
 	Users,
-} from 'lucide-react';
+} from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
+import { Modal, Skeleton } from 'antd';
+import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useDeleteRole, useGetRole } from 'api/generated/services/role';
+import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import ROUTES from 'constants/routes';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
-import { ErrorV2Resp } from 'types/api';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -219,7 +217,7 @@ function RoleDetailsPage(): JSX.Element {
 	const history = useHistory();
 	const { showErrorModal } = useErrorModal();
 
-	// Extract roleId from pathname — useParams doesn't work inside nested RouteTab (antd Tabs) routing
+	// Extract roleId from pathname — useParams doesn't work inside nested RouteTab routing
 	const roleIdMatch = pathname.match(/\/settings\/roles\/([^/]+)/);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
 
@@ -234,7 +232,7 @@ function RoleDetailsPage(): JSX.Element {
 	const { data, isLoading, isFetching, isError, error } = useGetRole({
 		id: roleId,
 	});
-	const role = data?.data?.data;
+	const role = data?.data;
 	const isTransitioning = isFetching && role?.id !== roleId;
 	const isManaged = role?.type === 'managed';
 
@@ -246,7 +244,7 @@ function RoleDetailsPage(): JSX.Element {
 			},
 			onError: (err): void => {
 				try {
-					ErrorResponseHandlerV2(err as AxiosError<ErrorV2Resp>);
+					ErrorResponseHandlerForGeneratedAPIs(err);
 				} catch (apiError) {
 					showErrorModal(apiError as APIError);
 				}
@@ -378,7 +376,6 @@ function RoleDetailsPage(): JSX.Element {
 				</>
 			)}
 
-			{/* Delete Role Confirmation Modal */}
 			<Modal
 				open={isDeleteModalOpen}
 				onCancel={(): void => setIsDeleteModalOpen(false)}

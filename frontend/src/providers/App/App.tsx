@@ -12,6 +12,8 @@ import {
 import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
+import { useAuthzResources } from 'api/generated/services/authz';
+import { AuthtypesGettableResourcesDTO } from 'api/generated/services/sigNoz.schemas';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import get from 'api/v1/user/me/get';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -56,6 +58,10 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	const [userPreferences, setUserPreferences] = useState<
 		UserPreference[] | null
 	>(null);
+	const [
+		authzResources,
+		setAuthzResources,
+	] = useState<AuthtypesGettableResourcesDTO | null>(null);
 
 	const [isLoggedIn, setIsLoggedIn] = useState<boolean>(
 		(): boolean => getLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN) === 'true',
@@ -182,6 +188,26 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		}
 	}, [orgPreferencesData, isFetchingOrgPreferences]);
 
+	const {
+		data: authzResourcesData,
+		isFetching: isFetchingAuthzResources,
+		error: authzResourcesFetchError,
+	} = useAuthzResources({
+		query: {
+			enabled: !!isLoggedIn && !!user.email,
+		},
+	});
+
+	useEffect(() => {
+		if (
+			authzResourcesData &&
+			authzResourcesData.data &&
+			!isFetchingAuthzResources
+		) {
+			setAuthzResources(authzResourcesData.data);
+		}
+	}, [authzResourcesData, isFetchingAuthzResources, isLoggedIn]);
+
 	// now since org preferences data is dependent on user being loaded as well so we added extra safety net for user.email to be set as well
 	const {
 		data: userPreferencesData,
@@ -290,6 +316,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		setTrialInfo(null);
 		setFeatureFlags(null);
 		setOrgPreferences(null);
+		setAuthzResources(null);
 		setOrg(null);
 	});
 
@@ -301,16 +328,19 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			featureFlags,
 			trialInfo,
 			orgPreferences,
+			authzResources,
 			isLoggedIn,
 			org,
 			isFetchingUser,
 			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
+			isFetchingAuthzResources,
 			userFetchError,
 			activeLicenseFetchError,
 			featureFlagsFetchError,
 			orgPreferencesFetchError,
+			authzResourcesFetchError,
 			activeLicense,
 			changelog,
 			showChangelogModal,
@@ -335,12 +365,15 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			isFetchingActiveLicense,
 			isFetchingFeatureFlags,
 			isFetchingOrgPreferences,
+			isFetchingAuthzResources,
 			isFetchingUser,
 			isLoggedIn,
 			org,
 			orgPreferences,
 			activeLicenseRefetch,
 			orgPreferencesFetchError,
+			authzResourcesFetchError,
+			authzResources,
 			changelog,
 			showChangelogModal,
 			updateUserPreferenceInContext,

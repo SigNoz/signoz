@@ -164,10 +164,14 @@ export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
 	},
 ];
 
-export const roleDetails = (): RouteTabProps['routes'] => [
+export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: RoleDetailsPage,
-		name: <div className="periscope-tab">Role Details</div>,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_details').toString()}
+			</div>
+		),
 		route: ROUTES.ROLE_DETAILS,
 		key: ROUTES.ROLE_DETAILS,
 	},
