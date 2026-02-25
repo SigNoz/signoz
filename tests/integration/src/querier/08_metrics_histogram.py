@@ -50,7 +50,7 @@ def test_histogram_count_for_one_endpoint(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_bucket"
+    metric_name = "test_one_endpoint_bucket"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -109,7 +109,7 @@ def test_histogram_count_for_one_service(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_bucket"
+    metric_name = "test_one_service_bucket"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -169,7 +169,7 @@ def test_histogram_count_for_delta_service(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_bucket"
+    metric_name = "test_delta_service_bucket"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -230,7 +230,7 @@ def test_histogram_count_for_all_services(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_bucket"
+    metric_name = "test_all_services_bucket"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -271,7 +271,7 @@ def test_histogram_count_no_param(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_bucket"
+    metric_name = "test_count_no_param_bucket"
 
     metrics = Metrics.load_from_file(
         FILE,

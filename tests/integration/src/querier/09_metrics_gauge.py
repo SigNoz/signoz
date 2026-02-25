@@ -55,7 +55,7 @@ def test_for_one_service(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_memory_usage"
+    metric_name = f"test_memory_{time_agg}_{space_agg}_{service}_usage"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -111,7 +111,7 @@ def test_for_multiple_aggregations(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_memory_usage"
+    metric_name = f"test_memory_{time_agg}_{space_agg}_usage"
 
     metrics = Metrics.load_from_file(
         FILE,
