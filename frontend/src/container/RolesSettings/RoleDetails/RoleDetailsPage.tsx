@@ -32,6 +32,7 @@ import {
 	deriveResourcesForRelation,
 	handleApiError,
 	objectsToPermissionConfig,
+	PermissionType,
 	TimestampBadge,
 } from '../utils';
 import { ROLE_ID_REGEX } from './constants';
@@ -39,12 +40,6 @@ import { ROLE_ID_REGEX } from './constants';
 import './RoleDetailsPage.styles.scss';
 
 type TabKey = 'overview' | 'members';
-
-interface PermissionType {
-	key: string;
-	label: string;
-	icon: JSX.Element;
-}
 
 interface PermissionItemProps {
 	permissionType: PermissionType;
@@ -217,6 +212,7 @@ function RoleDetailsPage(): JSX.Element {
 	});
 	const authzResources = authzResourcesResponse?.data ?? null;
 
+	// Extract channelId from URL pathname since useParams doesn't work in nested routing
 	const roleIdMatch = pathname.match(ROLE_ID_REGEX);
 	const roleId = roleIdMatch ? roleIdMatch[1] : '';
 

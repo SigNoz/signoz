@@ -78,7 +78,6 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.BILLING ||
 							item.key === ROUTES.ROLES_SETTINGS ||
-							item.key === ROUTES.ROLE_DETAILS ||
 							item.key === ROUTES.INTEGRATIONS ||
 							item.key === ROUTES.CUSTOM_DOMAIN_SETTINGS ||
 							item.key === ROUTES.API_KEYS ||
@@ -233,9 +232,8 @@ function SettingsPage(): JSX.Element {
 		}
 
 		if (
-			(pathname.startsWith(ROUTES.ROLES_SETTINGS) &&
-				key === ROUTES.ROLES_SETTINGS) ||
-			(pathname.startsWith(ROUTES.ROLE_DETAILS) && key === ROUTES.ROLE_DETAILS)
+			pathname.startsWith(ROUTES.ROLES_SETTINGS) &&
+			key === ROUTES.ROLES_SETTINGS
 		) {
 			return true;
 		}

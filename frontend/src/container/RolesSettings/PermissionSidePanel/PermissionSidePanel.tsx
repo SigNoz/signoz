@@ -70,13 +70,17 @@ function ResourceRow({
 						className="psp-resource__radio-group"
 					>
 						<div className="psp-resource__radio-item">
-							<RadioGroupItem value="all" id={`${resource.id}-all`} color="robin" />
+							<RadioGroupItem
+								value={PermissionScope.ALL}
+								id={`${resource.id}-all`}
+								color="robin"
+							/>
 							<RadioGroupLabel htmlFor={`${resource.id}-all`}>All</RadioGroupLabel>
 						</div>
 
 						<div className="psp-resource__radio-item">
 							<RadioGroupItem
-								value="only_selected"
+								value={PermissionScope.ONLY_SELECTED}
 								id={`${resource.id}-only-selected`}
 								color="robin"
 							/>

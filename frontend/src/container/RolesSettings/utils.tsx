@@ -23,8 +23,6 @@ import {
 	PERMISSION_ICON_MAP,
 } from './RoleDetails/constants';
 
-import './RoleDetails/RoleDetailsPage.styles.scss';
-
 export interface PermissionType {
 	key: string;
 	label: string;

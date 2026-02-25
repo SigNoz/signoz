@@ -15,7 +15,7 @@
 	display: flex;
 	flex-direction: column;
 	background: var(--l2-background);
-	border-left: 1px solid var(--secondary);
+	border-left: 1px solid var(--l2-border);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 	&__header {
@@ -26,7 +26,7 @@
 		height: 48px;
 		padding: 0 16px;
 		background: var(--l2-background);
-		border-bottom: 1px solid var(--secondary);
+		border-bottom: 1px solid var(--l2-border);
 	}
 
 	&__close {
@@ -45,7 +45,7 @@
 		display: block;
 		width: 1px;
 		height: 16px;
-		background: var(--secondary);
+		background: var(--l2-border);
 		flex-shrink: 0;
 	}
 
@@ -67,7 +67,7 @@
 	&__resource-list {
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--secondary);
+		border: 1px solid var(--l2-border);
 		border-radius: 4px;
 		overflow: hidden;
 	}
@@ -81,7 +81,7 @@
 		padding: 0 16px;
 		gap: 12px;
 		background: var(--l2-background);
-		border-top: 1px solid var(--secondary);
+		border-top: 1px solid var(--l2-border);
 	}
 
 	&__unsaved {
@@ -120,7 +120,7 @@
 .psp-resource {
 	display: flex;
 	flex-direction: column;
-	border-bottom: 1px solid var(--secondary);
+	border-bottom: 1px solid var(--l2-border);
 
 	&:last-child {
 		border-bottom: none;

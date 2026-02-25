@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useRef } from 'react';
 import { useQueryClient } from 'react-query';
-import { useHistory } from 'react-router-dom';
+import { generatePath, useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { X } from '@signozhq/icons';
 import { Input, inputVariants } from '@signozhq/input';
@@ -95,7 +95,7 @@ function CreateRoleModal({
 			onSuccess: (res) =>
 				handleSuccess(
 					'Role created successfully',
-					`${ROUTES.ROLES_SETTINGS}/${res.data.id}`,
+					generatePath(ROUTES.ROLE_DETAILS, { roleId: res.data.id }),
 				),
 			onError: handleError,
 		},
