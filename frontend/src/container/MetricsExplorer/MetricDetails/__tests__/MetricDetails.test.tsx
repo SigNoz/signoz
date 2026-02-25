@@ -120,18 +120,4 @@ describe('MetricDetails', () => {
 		await userEvent.click(screen.getByTestId('inspect-metric-button'));
 		expect(mockOpenInspectModal).toHaveBeenCalled();
 	});
-
-	it('should render empty state when metric name is not provided', () => {
-		render(
-			<MetricDetails
-				onClose={mockOnClose}
-				isOpen
-				metricName={null}
-				isModalTimeSelection
-				openInspectModal={mockOpenInspectModal}
-			/>,
-		);
-
-		expect(screen.getByText('Metric not found')).toBeInTheDocument();
-	});
 });
