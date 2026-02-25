@@ -202,13 +202,11 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 		name          string
 		input         string
 		expectedOrder []qbtypes.OrderBy
-		expectedError bool
 	}{
 		{
 			name:          "empty string returns empty slice",
 			input:         "",
 			expectedOrder: []qbtypes.OrderBy{},
-			expectedError: false,
 		},
 		{
 			name:  "simple column asc",
@@ -221,7 +219,6 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
 		},
 		{
 			name:  "simple column desc",
@@ -234,7 +231,6 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
 		},
 		{
 			name:  "column with context and type qualifier",
@@ -251,7 +247,6 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
 		},
 		{
 			name:  "column with context, dot-notation name",
@@ -267,7 +262,6 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
 		},
 		{
 			name:  "resource with context and type",
@@ -284,21 +278,15 @@ func TestParseExportQueryOrderBy(t *testing.T) {
 					},
 				},
 			},
-			expectedError: false,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			order, err := parseExportQueryOrderBy(tt.input)
-			if tt.expectedError {
-				assert.Error(t, err)
-			} else {
-				assert.NoError(t, err)
-				assert.Equal(t, len(tt.expectedOrder), len(order))
-				for i, expected := range tt.expectedOrder {
-					assert.Equal(t, expected, order[i])
-				}
+			order := parseExportQueryOrderBy(tt.input)
+			assert.Equal(t, len(tt.expectedOrder), len(order))
+			for i, expected := range tt.expectedOrder {
+				assert.Equal(t, expected, order[i])
 			}
 		})
 	}

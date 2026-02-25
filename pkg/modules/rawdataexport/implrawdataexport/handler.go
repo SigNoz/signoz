@@ -134,10 +134,7 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 
 // buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
 func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) (qbtypes.QueryRangeRequest, error) {
-	orderBy, err := parseExportQueryOrderBy(params.OrderBy)
-	if err != nil {
-		return qbtypes.QueryRangeRequest{}, err
-	}
+	orderBy := parseExportQueryOrderBy(params.OrderBy)
 
 	columns := parseExportQueryColumns(params.Columns)
 
@@ -387,10 +384,10 @@ func getsizeOfStringSlice(slice []string) uint64 {
 
 // parseExportQueryOrderBy converts a bound order_by string to an OrderBy slice.
 // The string should be in the format "column:direction" and is assumed already validated.
-func parseExportQueryOrderBy(orderByParam string) ([]qbtypes.OrderBy, error) {
+func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
-		return []qbtypes.OrderBy{}, nil
+		return []qbtypes.OrderBy{}
 	}
 
 	parts := strings.Split(orderByParam, ":")
@@ -404,5 +401,5 @@ func parseExportQueryOrderBy(orderByParam string) ([]qbtypes.OrderBy, error) {
 			},
 			Direction: qbtypes.OrderDirectionMap[direction],
 		},
-	}, nil
+	}
 }
