@@ -30,6 +30,8 @@ function DeleteRoleModal({
 					prefixIcon={<X size={16} />}
 					onClick={onCancel}
 					size="sm"
+					variant="solid"
+					color="secondary"
 				>
 					Cancel
 				</Button>,
@@ -40,6 +42,8 @@ function DeleteRoleModal({
 					onClick={onConfirm}
 					loading={isDeleting}
 					size="sm"
+					variant="solid"
+					color="destructive"
 				>
 					Delete Role
 				</Button>,

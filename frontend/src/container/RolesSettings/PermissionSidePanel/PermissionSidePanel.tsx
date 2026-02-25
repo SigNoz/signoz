@@ -217,14 +217,15 @@ function PermissionSidePanel({
 
 			<div className="permission-side-panel">
 				<div className="permission-side-panel__header">
-					<button
-						type="button"
+					<Button
+						variant="ghost"
+						size="icon"
 						className="permission-side-panel__close"
 						onClick={onClose}
 						aria-label="Close panel"
 					>
 						<X size={16} />
-					</button>
+					</Button>
 					<span className="permission-side-panel__header-divider" />
 					<span className="permission-side-panel__title">
 						Edit {permissionLabel} Permissions
@@ -263,7 +264,8 @@ function PermissionSidePanel({
 
 					<div className="permission-side-panel__footer-actions">
 						<Button
-							className="permission-side-panel__cancel-btn"
+							variant="solid"
+							color="secondary"
 							prefixIcon={<X size={14} />}
 							onClick={unsavedCount > 0 ? handleDiscard : onClose}
 							size="sm"

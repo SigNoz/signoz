@@ -1,4 +1,5 @@
 import React from 'react';
+import { Badge } from '@signozhq/badge';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type {
 	AuthtypesGettableObjectsDTO,
@@ -170,12 +171,12 @@ export function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
 	if (!date) {
-		return <span className="role-details-badge">—</span>;
+		return <Badge color="vanilla">—</Badge>;
 	}
 
 	const d = new Date(date);
 	if (Number.isNaN(d.getTime())) {
-		return <span className="role-details-badge">—</span>;
+		return <Badge color="vanilla">—</Badge>;
 	}
 
 	const formatted = formatTimezoneAdjustedTimestamp(
@@ -183,7 +184,7 @@ export function TimestampBadge({ date }: TimestampBadgeProps): JSX.Element {
 		DATE_TIME_FORMATS.DASH_DATETIME,
 	);
 
-	return <span className="role-details-badge">{formatted}</span>;
+	return <Badge color="vanilla">{formatted}</Badge>;
 }
 
 export function handleApiError(

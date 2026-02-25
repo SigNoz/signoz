@@ -34,22 +34,13 @@
 		justify-content: space-between;
 	}
 
-	.role-details-tabs {
-		background: var(--bg-ink-400);
-		border: 1px solid var(--bg-slate-400);
-		border-radius: 2px;
-		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
-		height: 32px;
-		overflow: hidden;
-		gap: 0;
-	}
-
 	.role-details-tab {
 		gap: 4px;
 		padding: 0 16px;
 		height: 32px;
 		border-radius: 0;
 		font-size: 12px;
+		overflow: hidden;
 		font-weight: 400;
 		line-height: 18px;
 		letter-spacing: -0.06px;
@@ -66,7 +57,7 @@
 		min-width: 20px;
 		padding: 0 6px;
 		border-radius: 50px;
-		background: var(--bg-slate-400);
+		background: var(--secondary);
 		font-size: 12px;
 		font-weight: 400;
 		line-height: 20px;
@@ -158,8 +149,8 @@
 	.role-details-permissions-divider {
 		flex: 1;
 		border: none;
-		border-top: 2px dotted var(--bg-slate-300);
-		border-bottom: 2px dotted var(--bg-slate-300);
+		border-top: 2px dotted var(--border);
+		border-bottom: 2px dotted var(--border);
 		height: 7px;
 		margin: 0;
 	}
@@ -177,7 +168,7 @@
 		height: 44px;
 		padding: 0 12px;
 		background: rgba(171, 189, 255, 0.08);
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--secondary);
 		border-radius: 4px;
 		cursor: pointer;
 		transition: background 0.15s ease;
@@ -202,21 +193,6 @@
 		color: var(--text-base-white);
 	}
 
-	.role-details-badge {
-		display: inline-flex;
-		align-items: center;
-		padding: 4px 8px;
-		border-radius: 999px;
-		background: var(--bg-slate-400);
-		font-family: Inter;
-		font-size: 11px;
-		font-weight: 500;
-		line-height: 1;
-		letter-spacing: 0.44px;
-		text-transform: uppercase;
-		color: var(--foreground);
-	}
-
 	.role-details-members {
 		display: flex;
 		flex-direction: column;
@@ -229,8 +205,8 @@
 		gap: 6px;
 		height: 32px;
 		padding: 6px 6px 6px 8px;
-		background: var(--bg-ink-300);
-		border: 1px solid var(--bg-slate-400);
+		background: var(--l2-background);
+		border: 1px solid var(--secondary);
 		border-radius: 2px;
 
 		.role-details-members-search-icon {
@@ -263,7 +239,7 @@
 		display: flex;
 		flex-direction: column;
 		min-height: 420px;
-		border: 1px dashed var(--bg-slate-500);
+		border: 1px dashed var(--secondary);
 		border-radius: 3px;
 		margin-top: -1px;
 	}
@@ -316,14 +292,14 @@
 	border: none !important;
 	border-radius: 2px !important;
 	background: transparent !important;
-	color: var(--bg-cherry-500) !important;
+	color: var(--destructive) !important;
 	opacity: 0.6 !important;
 	padding: 0 !important;
 	transition: background-color 0.2s, opacity 0.2s;
 	box-shadow: none !important;
 
 	svg {
-		color: var(--bg-cherry-500) !important;
+		color: var(--destructive) !important;
 	}
 
 	&:hover {
@@ -339,13 +315,13 @@
 	.ant-modal-content {
 		padding: 0;
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-500);
-		background: var(--bg-ink-400);
+		border: 1px solid var(--secondary);
+		background: var(--l2-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 
 		.ant-modal-header {
 			padding: 16px;
-			background: var(--bg-ink-400);
+			background: var(--l2-background);
 			margin-bottom: 0;
 		}
 
@@ -364,7 +340,6 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-slate-500);
 			}
 
 			.delete-btn {
@@ -372,19 +347,13 @@
 				align-items: center;
 				border: none;
 				border-radius: 2px;
-				background: var(--bg-cherry-500);
 				margin-left: 12px;
-
-				&:hover {
-					color: var(--bg-vanilla-100);
-					background: var(--bg-cherry-600);
-				}
 			}
 		}
 	}
 
 	.title {
-		color: var(--bg-vanilla-100);
+		color: var(--text-base-white);
 		font-family: Inter;
 		font-size: 13px;
 		font-weight: 400;
@@ -393,7 +362,7 @@
 	}
 
 	.delete-text {
-		color: var(--bg-vanilla-400);
+		color: var(--foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-weight: 400;
@@ -402,7 +371,7 @@
 
 		strong {
 			font-weight: 600;
-			color: var(--bg-vanilla-100);
+			color: var(--text-base-white);
 		}
 	}
 }
@@ -410,50 +379,25 @@
 .lightMode {
 	.role-details-delete-modal {
 		.ant-modal-content {
-			border-color: var(--bg-vanilla-200);
-			background: var(--bg-vanilla-100);
-
 			.ant-modal-header {
-				background: var(--bg-vanilla-100);
-
 				.title {
-					color: var(--bg-ink-500);
+					color: var(--text-base-black);
 				}
 			}
 
 			.ant-modal-body {
 				.delete-text {
-					color: var(--bg-ink-500);
-
 					strong {
-						color: var(--bg-ink-400);
+						color: var(--text-base-black);
 					}
-				}
-			}
-
-			.ant-modal-footer {
-				.cancel-btn {
-					background: var(--bg-vanilla-300);
-					color: var(--bg-ink-400);
 				}
 			}
 		}
 	}
-}
 
-.lightMode {
 	.role-details-page {
 		.role-details-title {
 			color: var(--text-base-black);
-		}
-
-		.role-details-members-search {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-300);
-		}
-
-		.role-details-members-content {
-			border-color: var(--bg-vanilla-300);
 		}
 
 		.role-details-members-empty-state {
@@ -462,23 +406,8 @@
 			}
 		}
 
-		.role-details-tabs {
-			background: var(--bg-vanilla-100);
-			border-color: var(--bg-vanilla-300);
-		}
-
-		.role-details-tab[data-state='on'] {
-			background: var(--bg-vanilla-300);
-			color: var(--text-base-black);
-		}
-
-		.role-details-tab-count {
-			background: var(--bg-vanilla-300);
-		}
-
 		.role-details-permission-item {
 			background: rgba(0, 0, 0, 0.04);
-			border-color: var(--bg-vanilla-300);
 
 			&:hover {
 				background: rgba(0, 0, 0, 0.07);
@@ -487,10 +416,6 @@
 
 		.role-details-permission-item-label {
 			color: var(--text-base-black);
-		}
-
-		.role-details-badge {
-			background: var(--bg-vanilla-300);
 		}
 	}
 }
