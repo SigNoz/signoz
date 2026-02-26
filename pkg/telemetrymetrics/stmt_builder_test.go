@@ -122,7 +122,7 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "test_histogram_percentile",
+			name:        "test_histogram_percentile1",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -132,6 +132,7 @@ func TestStatementBuilder(t *testing.T) {
 						MetricName:       "signoz_latency",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
 					},
 				},
@@ -187,7 +188,7 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "test_histogram_percentile",
+			name:        "test_histogram_percentile2",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -197,6 +198,7 @@ func TestStatementBuilder(t *testing.T) {
 						MetricName:       "http_server_duration_bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
 					},
 				},
