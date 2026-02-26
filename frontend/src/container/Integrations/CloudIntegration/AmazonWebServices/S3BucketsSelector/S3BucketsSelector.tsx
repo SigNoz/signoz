@@ -1,9 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-import { Form, Select, Skeleton, Typography } from 'antd';
+import { Form, Select, Skeleton } from 'antd';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-const { Title } = Typography;
+import './S3BucketsSelector.styles.scss';
 
 interface S3BucketsSelectorProps {
 	onChange?: (bucketsByRegion: Record<string, string[]>) => void;
@@ -81,38 +81,39 @@ function S3BucketsSelector({
 
 	return (
 		<div className="s3-buckets-selector">
-			<Title level={5}>Select S3 Buckets by Region</Title>
+			<div className="s3-buckets-selector-title">Select S3 Buckets by Region</div>
+			<div className="s3-buckets-selector-content">
+				{allRegions.map((region) => {
+					const disabled = isRegionDisabled(region);
 
-			{allRegions.map((region) => {
-				const disabled = isRegionDisabled(region);
-
-				return (
-					<Form.Item
-						key={region}
-						label={region}
-						// eslint-disable-next-line react/jsx-props-no-spreading
-						{...(disabled && {
-							help:
-								'Region disabled in account settings; S3 buckets here will not be synced.',
-							validateStatus: 'warning',
-						})}
-					>
-						<Select
-							mode="tags"
-							placeholder={`Enter S3 bucket names for ${region}`}
-							value={bucketsByRegion[region] || []}
-							onChange={(value): void => handleRegionBucketsChange(region, value)}
-							tokenSeparators={[',']}
-							allowClear
-							disabled={disabled}
-							suffixIcon={null}
-							notFoundContent={null}
-							filterOption={false}
-							showSearch
-						/>
-					</Form.Item>
-				);
-			})}
+					return (
+						<Form.Item
+							key={region}
+							label={region}
+							// eslint-disable-next-line react/jsx-props-no-spreading
+							{...(disabled && {
+								help:
+									'Region disabled in account settings; S3 buckets here will not be synced.',
+								validateStatus: 'warning',
+							})}
+						>
+							<Select
+								mode="tags"
+								placeholder={`Enter S3 bucket names for ${region}`}
+								value={bucketsByRegion[region] || []}
+								onChange={(value): void => handleRegionBucketsChange(region, value)}
+								tokenSeparators={[',']}
+								allowClear
+								disabled={disabled}
+								suffixIcon={null}
+								notFoundContent={null}
+								filterOption={false}
+								showSearch
+							/>
+						</Form.Item>
+					);
+				})}
+			</div>
 		</div>
 	);
 }

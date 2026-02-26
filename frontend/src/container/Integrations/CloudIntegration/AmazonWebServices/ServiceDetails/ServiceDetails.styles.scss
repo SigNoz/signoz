@@ -84,6 +84,11 @@
 					}
 				}
 
+				.aws-service-details-overview-configuration-s3-buckets {
+					padding: 12px;
+					background: var(--l1-background);
+				}
+
 				.aws-service-details-overview-configuration-content {
 					display: flex;
 					flex-direction: column;

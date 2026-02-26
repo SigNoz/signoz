@@ -18,6 +18,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { CheckCircle, Save, TriangleAlert, X } from 'lucide-react';
 
 import { ConfigConnectionStatus } from '../../ConfigConnectionStatus/ConfigConnectionStatus';
+import S3BucketsSelector from '../S3BucketsSelector/S3BucketsSelector';
 
 import './ServiceDetails.styles.scss';
 
@@ -28,6 +29,9 @@ function ServiceDetails(): JSX.Element | null {
 
 	const [logsEnabled, setLogsEnabled] = useState(false);
 	const [metricsEnabled, setMetricsEnabled] = useState(false);
+	const [s3BucketsByRegion, setS3BucketsByRegion] = useState<
+		Record<string, string[]>
+	>({});
 
 	const {
 		data: serviceDetailsData,
@@ -39,10 +43,15 @@ function ServiceDetails(): JSX.Element | null {
 
 	const awsConfig = config as AWSServiceConfig | undefined;
 
-	useEffect(() => {
+	const setToInitialState = useCallback((): void => {
 		setLogsEnabled(awsConfig?.logs?.enabled || false);
 		setMetricsEnabled(awsConfig?.metrics?.enabled || false);
+		setS3BucketsByRegion(awsConfig?.logs?.s3_buckets || {});
 	}, [awsConfig]);
+
+	useEffect(() => {
+		setToInitialState();
+	}, [awsConfig, setToInitialState]);
 
 	// log telemetry event on visiting details of a service.
 	useEffect(() => {
@@ -62,9 +71,8 @@ function ServiceDetails(): JSX.Element | null {
 	const queryClient = useQueryClient();
 
 	const handleDiscard = useCallback((): void => {
-		setLogsEnabled(awsConfig?.logs?.enabled || false);
-		setMetricsEnabled(awsConfig?.metrics?.enabled || false);
-	}, [awsConfig]);
+		setToInitialState();
+	}, [setToInitialState]);
 
 	const handleSubmit = useCallback(async (): Promise<void> => {
 		try {
@@ -80,7 +88,7 @@ function ServiceDetails(): JSX.Element | null {
 						config: {
 							logs: {
 								enabled: logsEnabled,
-								s3_buckets: awsConfig?.logs?.s3_buckets || {},
+								s3_buckets: s3BucketsByRegion,
 							},
 							metrics: {
 								enabled: metricsEnabled,
@@ -119,9 +127,9 @@ function ServiceDetails(): JSX.Element | null {
 		cloudAccountId,
 		updateServiceConfig,
 		logsEnabled,
-		awsConfig?.logs?.s3_buckets,
 		metricsEnabled,
 		queryClient,
+		s3BucketsByRegion,
 	]);
 
 	if (isServiceDetailsLoading) {
@@ -136,6 +144,12 @@ function ServiceDetails(): JSX.Element | null {
 	if (!serviceDetailsData) {
 		return null;
 	}
+
+	const handleS3BucketsChange = (
+		bucketsByRegion: Record<string, string[]>,
+	): void => {
+		setS3BucketsByRegion(bucketsByRegion);
+	};
 
 	const renderOverview = (): JSX.Element => {
 		const isLogsSupported = serviceDetailsData?.supported_signals?.logs || false;
@@ -190,6 +204,15 @@ function ServiceDetails(): JSX.Element | null {
 										/>
 									</div>
 								</div>
+
+								{logsEnabled && serviceId === 's3sync' && (
+									<div className="aws-service-details-overview-configuration-s3-buckets">
+										<S3BucketsSelector
+											initialBucketsByRegion={s3BucketsByRegion}
+											onChange={handleS3BucketsChange}
+										/>
+									</div>
+								)}
 							</div>
 						)}
 
