@@ -1,9 +1,16 @@
 /* eslint-disable sonarjs/no-identical-functions */
 import { MemoryRouter, useLocation } from 'react-router-dom';
-import { getNonIntegrationDashboardById } from 'mocks-server/__mockdata__/dashboards';
+import {
+	getDashboardById,
+	getNonIntegrationDashboardById,
+} from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
+import {
+	DashboardContext,
+	DashboardProvider,
+} from 'providers/Dashboard/Dashboard';
+import { IDashboardContext } from 'providers/Dashboard/types';
 import {
 	fireEvent,
 	render,
@@ -11,6 +18,7 @@ import {
 	userEvent,
 	waitFor,
 } from 'tests/test-utils';
+import { Dashboard } from 'types/api/dashboard/getAll';
 
 import DashboardDescription from '..';
 
@@ -179,9 +187,35 @@ describe('Dashboard landing page actions header tests', () => {
 
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 
+		const mockContextValue: IDashboardContext = {
+			isDashboardSliderOpen: false,
+			isDashboardLocked: false,
+			handleToggleDashboardSlider: jest.fn(),
+			handleDashboardLockToggle: jest.fn(),
+			dashboardResponse: {} as IDashboardContext['dashboardResponse'],
+			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,
+			dashboardId: '4',
+			layouts: [],
+			panelMap: {},
+			setPanelMap: jest.fn(),
+			setLayouts: jest.fn(),
+			setSelectedDashboard: jest.fn(),
+			updatedTimeRef: { current: null },
+			toScrollWidgetId: '',
+			setToScrollWidgetId: jest.fn(),
+			updateLocalStorageDashboardVariables: jest.fn(),
+			dashboardQueryRangeCalled: false,
+			setDashboardQueryRangeCalled: jest.fn(),
+			selectedRowWidgetId: null,
+			setSelectedRowWidgetId: jest.fn(),
+			isDashboardFetching: false,
+			columnWidths: {},
+			setColumnWidths: jest.fn(),
+		};
+
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardContext.Provider value={mockContextValue}>
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -190,7 +224,7 @@ describe('Dashboard landing page actions header tests', () => {
 							node: { current: null },
 						}}
 					/>
-				</DashboardProvider>
+				</DashboardContext.Provider>
 			</MemoryRouter>,
 		);
 

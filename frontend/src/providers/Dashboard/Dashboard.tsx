@@ -51,7 +51,7 @@ import {
 import { IDashboardContext, WidgetColumnWidths } from './types';
 import { sortLayout } from './util';
 
-const DashboardContext = createContext<IDashboardContext>({
+export const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
 	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
