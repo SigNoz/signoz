@@ -5,7 +5,7 @@ import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { Search } from 'lucide-react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { METRIC_TYPE_LABEL_MAP_V2 } from './constants';
+import { METRIC_TYPE_VIEW_VALUES_MAP } from './constants';
 
 function MetricTypeSearch({
 	queryFilters,
@@ -22,9 +22,9 @@ function MetricTypeSearch({
 				key: 'all',
 				value: 'All',
 			},
-			...Object.keys(METRIC_TYPE_LABEL_MAP_V2).map((key) => ({
-				key: METRIC_TYPE_LABEL_MAP_V2[key as MetrictypesTypeDTO],
-				value: METRIC_TYPE_LABEL_MAP_V2[key as MetrictypesTypeDTO],
+			...Object.keys(METRIC_TYPE_VIEW_VALUES_MAP).map((key) => ({
+				key: METRIC_TYPE_VIEW_VALUES_MAP[key as MetrictypesTypeDTO],
+				value: METRIC_TYPE_VIEW_VALUES_MAP[key as MetrictypesTypeDTO],
 			})),
 		],
 		[],

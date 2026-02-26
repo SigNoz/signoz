@@ -11,7 +11,7 @@ import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
 import MetricNameSearch from './MetricNameSearch';
-import MetricTypeRendererV2 from './MetricTypeRendererV2';
+import MetricTypeViewRenderer from './MetricTypeViewRenderer';
 import { MetricsListItemRowData, TreemapTile } from './types';
 
 export const getMetricsTableColumns = (
@@ -143,7 +143,7 @@ export const formatDataForMetricsTable = (
 				</Tooltip>
 			</ValidateRowValueWrapper>
 		),
-		metric_type: <MetricTypeRendererV2 type={metric.type} />,
+		metric_type: <MetricTypeViewRenderer type={metric.type} />,
 		unit: (
 			<ValidateRowValueWrapper value={getUniversalNameFromMetricUnit(metric.unit)}>
 				{getUniversalNameFromMetricUnit(metric.unit)}

@@ -24,7 +24,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import MetricTypeRendererV2 from '../Summary/MetricTypeRendererV2';
+import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
 import {
 	METRIC_METADATA_KEYS,
 	METRIC_METADATA_TEMPORALITY_OPTIONS,

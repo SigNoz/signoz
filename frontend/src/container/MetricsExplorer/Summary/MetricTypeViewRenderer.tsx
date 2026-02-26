@@ -10,9 +10,9 @@ import {
 	Gauge,
 } from 'lucide-react';
 
-import { METRIC_TYPE_LABEL_MAP_V2 } from './constants';
+import { METRIC_TYPE_VIEW_VALUES_MAP } from './constants';
 
-export function MetricTypeRendererV2({
+export function MetricTypeViewRenderer({
 	type,
 }: {
 	type: MetrictypesTypeDTO;
@@ -70,10 +70,10 @@ export function MetricTypeRendererV2({
 		<div className="metric-type-renderer" style={metricTypeRendererStyle}>
 			{icon}
 			<Typography.Text style={metricTypeRendererTextStyle}>
-				{METRIC_TYPE_LABEL_MAP_V2[type]}
+				{METRIC_TYPE_VIEW_VALUES_MAP[type]}
 			</Typography.Text>
 		</div>
 	);
 }
 
-export default MetricTypeRendererV2;
+export default MetricTypeViewRenderer;
