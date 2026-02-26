@@ -180,3 +180,8 @@ export interface TableViewDataItem {
 	values: JSX.Element;
 	key: number;
 }
+
+export interface TimeSeriesLabelProps {
+	timeSeries: InspectMetricsSeries | undefined;
+	textColor: string | undefined;
+}

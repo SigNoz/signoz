@@ -13,9 +13,10 @@ import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import { formatNumberIntoHumanReadableFormat } from '../Summary/utils';
 import { METRIC_TYPE_TO_COLOR_MAP, METRIC_TYPE_TO_ICON_MAP } from './constants';
 import GraphPopover from './GraphPopover';
+import HoverPopover from './HoverPopover';
 import TableView from './TableView';
 import { GraphPopoverOptions, GraphViewProps } from './types';
-import { HoverPopover, onGraphClick, onGraphHover } from './utils';
+import { onGraphClick, onGraphHover } from './utils';
 
 function GraphView({
 	inspectMetricsTimeSeries,

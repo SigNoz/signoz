@@ -3,13 +3,11 @@ import { Button, Card } from 'antd';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import { Atom } from 'lucide-react';
 
+import MetricFilters from './MetricFilters';
+import MetricNameSearch from './MetricNameSearch';
+import MetricSpaceAggregation from './MetricSpaceAggregation';
+import MetricTimeAggregation from './MetricTimeAggregation';
 import { QueryBuilderProps } from './types';
-import {
-	MetricFilters,
-	MetricNameSearch,
-	MetricSpaceAggregation,
-	MetricTimeAggregation,
-} from './utils';
 
 function QueryBuilder({
 	currentMetricName,
