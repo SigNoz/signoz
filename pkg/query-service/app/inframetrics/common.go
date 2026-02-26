@@ -10,6 +10,7 @@ import (
 )
 
 var dotMetricMap = map[string]string{
+	"system_filesystem_usage":               "system.filesystem.usage",
 	"system_cpu_time":                       "system.cpu.time",
 	"system_memory_usage":                   "system.memory.usage",
 	"system_cpu_load_average_15m":           "system.cpu.load_average.15m",
