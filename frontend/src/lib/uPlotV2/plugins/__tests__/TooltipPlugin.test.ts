@@ -187,9 +187,7 @@ describe('TooltipPlugin', () => {
 				canPinTooltip: true,
 			});
 
-			const container = document.querySelector(
-				'.tooltip-plugin-container',
-			) as HTMLElement;
+			const container = screen.getByTestId('tooltip-plugin-container');
 			expect(container.classList.contains('pinned')).toBe(false);
 
 			act(() => {
@@ -197,11 +195,9 @@ describe('TooltipPlugin', () => {
 			});
 
 			return waitFor(() => {
-				const updated = document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement | null;
-				expect(updated).not.toBeNull();
-				expect(updated?.classList.contains('pinned')).toBe(true);
+				const updated = screen.getByTestId('tooltip-plugin-container');
+				expect(updated).toBeInTheDocument();
+				expect(updated.classList.contains('pinned')).toBe(true);
 			});
 		});
 
@@ -249,7 +245,13 @@ describe('TooltipPlugin', () => {
 			await user.click(button);
 
 			await waitFor(() => {
-				expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+				const container = screen.getByTestId('tooltip-plugin-container');
+
+				expect(container).toBeInTheDocument();
+				expect(container.getAttribute('aria-hidden')).toBe('true');
+				expect(container.classList.contains('visible')).toBe(false);
+				expect(container.classList.contains('pinned')).toBe(false);
+				expect(container.textContent).toBe('');
 			});
 		});
 
@@ -292,12 +294,16 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+			const container = screen.getByTestId('tooltip-plugin-container');
+			expect(container).toBeInTheDocument();
+			expect(container.getAttribute('aria-hidden')).toBe('true');
+			expect(container.classList.contains('visible')).toBe(false);
+			expect(container.classList.contains('pinned')).toBe(false);
 
 			jest.useRealTimers();
 		});
 
-		it('unpins the tooltip on outside mousedown', () => {
+		it('unpins the tooltip on outside mousedown', async () => {
 			jest.useFakeTimers();
 			const config = createConfigMock();
 
@@ -335,12 +341,19 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+			await waitFor(() => {
+				const container = screen.getByTestId('tooltip-plugin-container');
+
+				expect(container).toBeInTheDocument();
+				expect(container.getAttribute('aria-hidden')).toBe('true');
+				expect(container.classList.contains('visible')).toBe(false);
+				expect(container.classList.contains('pinned')).toBe(false);
+			});
 
 			jest.useRealTimers();
 		});
 
-		it('unpins the tooltip on outside keydown', () => {
+		it('unpins the tooltip on outside keydown', async () => {
 			jest.useFakeTimers();
 			const config = createConfigMock();
 
@@ -380,7 +393,13 @@ describe('TooltipPlugin', () => {
 				jest.runAllTimers();
 			});
 
-			expect(document.querySelector('.tooltip-plugin-container')).toBeNull();
+			await waitFor(() => {
+				const container = screen.getByTestId('tooltip-plugin-container');
+				expect(container).toBeInTheDocument();
+				expect(container.getAttribute('aria-hidden')).toBe('true');
+				expect(container.classList.contains('visible')).toBe(false);
+				expect(container.classList.contains('pinned')).toBe(false);
+			});
 
 			jest.useRealTimers();
 		});
