@@ -41,6 +41,16 @@ function DataSourceInfo({
 		activeHost,
 	]);
 
+	const handleConnect = (): void => {
+		logEvent('Homepage: Connect dataSource clicked', {});
+
+		if (activeLicense && activeLicense.platform === LicensePlatform.CLOUD) {
+			history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+		} else {
+			window?.open(DOCS_LINKS.ADD_DATA_SOURCE, '_blank', 'noopener noreferrer');
+		}
+	};
+
 	const renderNotSendingData = (): JSX.Element => (
 		<>
 			<h2 className="welcome-title">
@@ -68,20 +78,12 @@ function DataSourceInfo({
 								size="sm"
 								className="periscope-btn primary"
 								prefixIcon={<img src="/Icons/container-plus.svg" alt="plus" />}
-								onClick={(): void => {
-									logEvent('Homepage: Connect dataSource clicked', {});
-
-									if (
-										activeLicense &&
-										activeLicense.platform === LicensePlatform.CLOUD
-									) {
-										history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-									} else {
-										window?.open(
-											DOCS_LINKS.ADD_DATA_SOURCE,
-											'_blank',
-											'noopener noreferrer',
-										);
+								onClick={handleConnect}
+								role="button"
+								tabIndex={0}
+								onKeyDown={(e): void => {
+									if (e.key === 'Enter') {
+										handleConnect();
 									}
 								}}
 							>

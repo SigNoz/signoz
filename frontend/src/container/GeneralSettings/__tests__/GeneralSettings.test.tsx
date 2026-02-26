@@ -1,4 +1,5 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import {
 	fireEvent,
 	render,
@@ -35,23 +36,20 @@ jest.mock('hooks/useComponentPermission', () => ({
 }));
 
 jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: (): {
-		isCloudUser: boolean;
-		isEnterpriseSelfHostedUser: boolean;
-	} => ({
+	useGetTenantLicense: jest.fn(() => ({
 		isCloudUser: false,
 		isEnterpriseSelfHostedUser: false,
-	}),
+	})),
 }));
 
 jest.mock('container/GeneralSettingsCloud', () => ({
 	__esModule: true,
-	default: (): null => null,
+	default: (): JSX.Element => <div data-testid="general-settings-cloud" />,
 }));
 
 jest.mock('container/CustomDomainSettings', () => ({
 	__esModule: true,
-	default: (): null => null,
+	default: (): JSX.Element => <div data-testid="custom-domain-settings" />,
 }));
 
 // Mock data
@@ -384,6 +382,64 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await waitFor(() => {
 				expect(saveButton).toBeDisabled();
 			});
+		});
+	});
+
+	describe('Cloud User Rendering', () => {
+		beforeEach(() => {
+			(useGetTenantLicense as jest.Mock).mockReturnValue({
+				isCloudUser: true,
+				isEnterpriseSelfHostedUser: false,
+			});
+		});
+
+		it('should render CustomDomainSettings and GeneralSettingsCloud for cloud admin', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(screen.getByTestId('custom-domain-settings')).toBeInTheDocument();
+			expect(screen.getByTestId('general-settings-cloud')).toBeInTheDocument();
+		});
+	});
+
+	describe('Enterprise Self-Hosted User Rendering', () => {
+		beforeEach(() => {
+			(useGetTenantLicense as jest.Mock).mockReturnValue({
+				isCloudUser: false,
+				isEnterpriseSelfHostedUser: true,
+			});
+		});
+
+		it('should render CustomDomainSettings but not GeneralSettingsCloud', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(screen.getByTestId('custom-domain-settings')).toBeInTheDocument();
+			expect(
+				screen.queryByTestId('general-settings-cloud'),
+			).not.toBeInTheDocument();
+
+			// Save buttons should be visible for self-hosted
+			const saveButtons = screen.getAllByRole('button', { name: /save/i });
+			expect(saveButtons.length).toBeGreaterThan(0);
 		});
 	});
 });
