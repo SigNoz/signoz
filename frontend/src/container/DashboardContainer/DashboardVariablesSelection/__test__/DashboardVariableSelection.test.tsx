@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/no-duplicate-string */
 import { act, render } from '@testing-library/react';
+import * as dashboardVariablesStoreModule from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
 	dashboardVariablesStore,
 	setDashboardVariablesStore,
@@ -10,12 +11,24 @@ import {
 	IDashboardVariablesStoreState,
 } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import {
+	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
 	initializeVariableFetchStore,
 } from 'providers/Dashboard/store/variableFetchStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DashboardVariableSelection from '../DashboardVariableSelection';
+
+// Mutable container to capture the onValueUpdate callback from VariableItem
+const mockVariableItemCallbacks: {
+	onValueUpdate?: (
+		name: string,
+		id: string,
+		value: IDashboardVariable['selectedValue'],
+		allSelected: boolean,
+		haveCustomValuesSelected?: boolean,
+	) => void;
+} = {};
 
 // Mock providers/Dashboard/Dashboard
 const mockSetSelectedDashboard = jest.fn();
@@ -56,10 +69,14 @@ jest.mock('react-redux', () => ({
 	useSelector: jest.fn().mockReturnValue({ minTime: 1000, maxTime: 2000 }),
 }));
 
-// Mock VariableItem to avoid rendering complexity
+// VariableItem mock captures the onValueUpdate prop for use in onValueUpdate tests
 jest.mock('../VariableItem', () => ({
 	__esModule: true,
-	default: (): JSX.Element => <div data-testid="variable-item" />,
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
+	default: (props: any): JSX.Element => {
+		mockVariableItemCallbacks.onValueUpdate = props.onValueUpdate;
+		return <div data-testid="variable-item" />;
+	},
 }));
 
 function createVariable(
@@ -199,5 +216,163 @@ describe('DashboardVariableSelection', () => {
 
 		expect(initializeVariableFetchStore).not.toHaveBeenCalled();
 		expect(enqueueFetchOfAllVariables).not.toHaveBeenCalled();
+	});
+
+	describe('onValueUpdate', () => {
+		let updateStoreSpy: jest.SpyInstance;
+
+		beforeEach(() => {
+			resetStore();
+			jest.clearAllMocks();
+			// Real implementation pass-through — we just want to observe calls
+			updateStoreSpy = jest.spyOn(
+				dashboardVariablesStoreModule,
+				'updateDashboardVariablesStore',
+			);
+		});
+
+		afterEach(() => {
+			updateStoreSpy.mockRestore();
+		});
+
+		it('updates dashboardVariablesStore synchronously before enqueueDescendantsOfVariable', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({ name: 'env', id: 'env-id', order: 0 }),
+				},
+			});
+
+			render(<DashboardVariableSelection />);
+
+			const callOrder: string[] = [];
+			updateStoreSpy.mockImplementation(() => {
+				callOrder.push('updateDashboardVariablesStore');
+			});
+			(enqueueDescendantsOfVariable as jest.Mock).mockImplementation(() => {
+				callOrder.push('enqueueDescendantsOfVariable');
+			});
+
+			act(() => {
+				mockVariableItemCallbacks.onValueUpdate?.(
+					'env',
+					'env-id',
+					'production',
+					false,
+				);
+			});
+
+			expect(callOrder).toEqual([
+				'updateDashboardVariablesStore',
+				'enqueueDescendantsOfVariable',
+			]);
+		});
+
+		it('passes updated variable value to dashboardVariablesStore', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({
+						name: 'env',
+						id: 'env-id',
+						order: 0,
+						selectedValue: 'staging',
+					}),
+				},
+			});
+
+			render(<DashboardVariableSelection />);
+
+			// Clear spy calls that happened during setup/render
+			updateStoreSpy.mockClear();
+
+			act(() => {
+				mockVariableItemCallbacks.onValueUpdate?.(
+					'env',
+					'env-id',
+					'production',
+					false,
+				);
+			});
+
+			expect(updateStoreSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					dashboardId: 'dash-1',
+					variables: expect.objectContaining({
+						env: expect.objectContaining({
+							selectedValue: 'production',
+							allSelected: false,
+						}),
+					}),
+				}),
+			);
+		});
+
+		it('calls enqueueDescendantsOfVariable synchronously without a timer', () => {
+			jest.useFakeTimers();
+
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({ name: 'env', id: 'env-id', order: 0 }),
+				},
+			});
+
+			render(<DashboardVariableSelection />);
+
+			act(() => {
+				mockVariableItemCallbacks.onValueUpdate?.(
+					'env',
+					'env-id',
+					'production',
+					false,
+				);
+			});
+
+			// Must be called immediately — no timer advancement needed
+			expect(enqueueDescendantsOfVariable).toHaveBeenCalledWith('env');
+
+			jest.useRealTimers();
+		});
+
+		it('propagates allSelected and haveCustomValuesSelected to the store', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({
+						name: 'env',
+						id: 'env-id',
+						order: 0,
+						multiSelect: true,
+						showALLOption: true,
+					}),
+				},
+			});
+
+			render(<DashboardVariableSelection />);
+			updateStoreSpy.mockClear();
+
+			act(() => {
+				mockVariableItemCallbacks.onValueUpdate?.(
+					'env',
+					'env-id',
+					['production', 'staging'],
+					true,
+					false,
+				);
+			});
+
+			expect(updateStoreSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					variables: expect.objectContaining({
+						env: expect.objectContaining({
+							selectedValue: ['production', 'staging'],
+							allSelected: true,
+							haveCustomValuesSelected: false,
+						}),
+					}),
+				}),
+			);
+		});
 	});
 });

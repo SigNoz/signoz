@@ -32,11 +32,13 @@ type MetadataStore interface {
 	// FetchTemporalityMulti fetches the temporality for multiple metrics
 	FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error)
 
+	FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error)
+
 	// ListLogsJSONIndexes lists the JSON indexes for the logs table.
 	ListLogsJSONIndexes(ctx context.Context, filters ...string) (map[string][]schemamigrator.Index, error)
 
 	// ListPromotedPaths lists the promoted paths.
-	ListPromotedPaths(ctx context.Context, paths ...string) (map[string]struct{}, error)
+	GetPromotedPaths(ctx context.Context, paths ...string) (map[string]bool, error)
 
 	// PromotePaths promotes the paths.
 	PromotePaths(ctx context.Context, paths ...string) error

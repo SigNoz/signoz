@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import { ColumnType } from 'antd/es/table';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	MetricsListItemData,
 	MetricsListPayload,
@@ -21,7 +22,7 @@ import {
 } from 'lucide-react';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { METRIC_TYPE_LABEL_MAP } from './constants';
+import { METRIC_TYPE_LABEL_MAP, METRIC_TYPE_VIEW_LABEL_MAP } from './constants';
 import MetricNameSearch from './MetricNameSearch';
 import MetricTypeSearch from './MetricTypeSearch';
 import { MetricsListItemRowData, TreemapTile, TreemapViewType } from './types';
@@ -143,6 +144,66 @@ export function MetricTypeRenderer({
 	);
 }
 
+export function MetricTypeViewRenderer({
+	type,
+}: {
+	type: MetrictypesTypeDTO;
+}): JSX.Element {
+	const [icon, color] = useMemo(() => {
+		switch (type) {
+			case MetrictypesTypeDTO.sum:
+				return [
+					<Diff key={type} size={12} color={Color.BG_ROBIN_500} />,
+					Color.BG_ROBIN_500,
+				];
+			case MetrictypesTypeDTO.gauge:
+				return [
+					<Gauge key={type} size={12} color={Color.BG_SAKURA_500} />,
+					Color.BG_SAKURA_500,
+				];
+			case MetrictypesTypeDTO.histogram:
+				return [
+					<BarChart2 key={type} size={12} color={Color.BG_SIENNA_500} />,
+					Color.BG_SIENNA_500,
+				];
+			case MetrictypesTypeDTO.summary:
+				return [
+					<BarChartHorizontal key={type} size={12} color={Color.BG_FOREST_500} />,
+					Color.BG_FOREST_500,
+				];
+			case MetrictypesTypeDTO.exponentialhistogram:
+				return [
+					<BarChart key={type} size={12} color={Color.BG_AQUA_500} />,
+					Color.BG_AQUA_500,
+				];
+			default:
+				return [null, ''];
+		}
+	}, [type]);
+
+	const metricTypeRendererStyle = useMemo(
+		() => ({
+			backgroundColor: `${color}33`,
+			border: `1px solid ${color}`,
+			color,
+		}),
+		[color],
+	);
+
+	const metricTypeRendererTextStyle = useMemo(() => ({ color, fontSize: 12 }), [
+		color,
+	]);
+
+	return (
+		<div className="metric-type-renderer" style={metricTypeRendererStyle}>
+			{icon}
+			<Typography.Text style={metricTypeRendererTextStyle}>
+				{METRIC_TYPE_VIEW_LABEL_MAP[type]}
+			</Typography.Text>
+		</div>
+	);
+}
+
 function ValidateRowValueWrapper({
 	value,
 	children,
@@ -160,6 +221,9 @@ export const formatNumberIntoHumanReadableFormat = (
 	num: number,
 	addPlusSign = true,
 ): string => {
+	if (!num) {
+		return '-';
+	}
 	function format(num: number, divisor: number, suffix: string): string {
 		const value = num / divisor;
 		return value % 1 === 0
