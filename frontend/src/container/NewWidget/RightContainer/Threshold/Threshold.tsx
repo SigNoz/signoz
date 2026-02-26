@@ -334,7 +334,7 @@ function Threshold({
 							placeholder="Select unit"
 							source={YAxisSource.DASHBOARDS}
 							initialValue={unit}
-							categories={unitSelectCategories}
+							categoriesOverride={unitSelectCategories}
 							containerClassName="unit-selection"
 						/>
 					) : (

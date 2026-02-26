@@ -22,7 +22,7 @@ function YAxisUnitSelector({
 	'data-testid': dataTestId,
 	source,
 	initialValue,
-	categories,
+	categoriesOverride,
 	containerClassName,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
@@ -69,8 +69,8 @@ function YAxisUnitSelector({
 	};
 
 	const categoriesToRender = useMemo(() => {
-		return categories || getYAxisCategories(source);
-	}, [categories, source]);
+		return categoriesOverride || getYAxisCategories(source);
+	}, [categoriesOverride, source]);
 
 	return (
 		<div

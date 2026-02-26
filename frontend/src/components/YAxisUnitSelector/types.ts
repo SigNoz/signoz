@@ -9,7 +9,7 @@ export interface YAxisUnitSelectorProps {
 	'data-testid'?: string;
 	source: YAxisSource;
 	initialValue?: string;
-	categories?: YAxisCategory[];
+	categoriesOverride?: YAxisCategory[];
 	containerClassName?: string;
 }
 
