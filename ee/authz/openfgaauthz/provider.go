@@ -98,6 +98,10 @@ func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.
 	return provider.pkgAuthzService.ListByOrgIDAndNames(ctx, orgID, names)
 }
 
+func (provider *provider) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*roletypes.Role, error) {
+	return provider.pkgAuthzService.ListByOrgIDAndIDs(ctx, orgID, ids)
+}
+
 func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
 	return provider.pkgAuthzService.Grant(ctx, orgID, names, subject)
 }

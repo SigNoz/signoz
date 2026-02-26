@@ -2,11 +2,11 @@ package serviceaccounttypes
 
 import (
 	"encoding/json"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -49,10 +49,9 @@ type PostableServiceAccount struct {
 }
 
 type UpdatableServiceAccount struct {
-	Name   string        `json:"name" required:"true"`
-	Email  valuer.Email  `json:"email" required:"true"`
-	Roles  []string      `json:"roles" required:"true" nullable:"false"`
-	Status valuer.String `json:"status" required:"true"`
+	Name  string       `json:"name" required:"true"`
+	Email valuer.Email `json:"email" required:"true"`
+	Roles []string     `json:"roles" required:"true" nullable:"false"`
 }
 
 func NewServiceAccount(name string, email valuer.Email, roles []string, status valuer.String, orgID valuer.UUID) *ServiceAccount {
@@ -72,12 +71,7 @@ func NewServiceAccount(name string, email valuer.Email, roles []string, status v
 	}
 }
 
-func NewServiceAccountFromStorables(storableServiceAccount *StorableServiceAccount, storableServiceAccountRoles []*StorableServiceAccountRole) *ServiceAccount {
-	roles := make([]string, len(storableServiceAccountRoles))
-	for idx, storable := range storableServiceAccountRoles {
-		roles[idx] = storable.RoleID
-	}
-
+func NewServiceAccountFromStorables(storableServiceAccount *StorableServiceAccount, roles []string) *ServiceAccount {
 	return &ServiceAccount{
 		Identifiable:  storableServiceAccount.Identifiable,
 		TimeAuditable: storableServiceAccount.TimeAuditable,
@@ -87,6 +81,31 @@ func NewServiceAccountFromStorables(storableServiceAccount *StorableServiceAccou
 		Status:        storableServiceAccount.Status,
 		OrgID:         valuer.MustNewUUID(storableServiceAccount.OrgID),
 	}
+}
+
+func NewServiceAccountsFromRoles(storableServiceAccounts []*StorableServiceAccount, roles []*roletypes.Role, serviceAccountIDToRoleIDsMap map[string][]valuer.UUID) []*ServiceAccount {
+	serviceAccounts := make([]*ServiceAccount, 0, len(storableServiceAccounts))
+
+	roleIDToRole := make(map[string]*roletypes.Role, len(roles))
+	for _, role := range roles {
+		roleIDToRole[role.ID.String()] = role
+	}
+
+	for _, sa := range storableServiceAccounts {
+		roleIDs := serviceAccountIDToRoleIDsMap[sa.ID.String()]
+
+		roleNames := make([]string, len(roleIDs))
+		for _, rid := range roleIDs {
+			if role, ok := roleIDToRole[rid.String()]; ok {
+				roleNames = append(roleNames, role.Name)
+			}
+		}
+
+		account := NewServiceAccountFromStorables(sa, roleNames)
+		serviceAccounts = append(serviceAccounts, account)
+	}
+
+	return serviceAccounts
 }
 
 func NewStorableServiceAccount(serviceAccount *ServiceAccount) *StorableServiceAccount {
@@ -100,12 +119,41 @@ func NewStorableServiceAccount(serviceAccount *ServiceAccount) *StorableServiceA
 	}
 }
 
-func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string, status valuer.String) {
+func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string) {
 	sa.Name = name
 	sa.Email = email
-	sa.Status = status
 	sa.Roles = roles
 	sa.UpdatedAt = time.Now()
+}
+
+func (sa *ServiceAccount) PatchRoles(input *ServiceAccount) ([]string, []string) {
+	currentRolesSet := make(map[string]struct{}, len(sa.Roles))
+	inputRolesSet := make(map[string]struct{}, len(input.Roles))
+
+	for _, role := range sa.Roles {
+		currentRolesSet[role] = struct{}{}
+	}
+	for _, role := range input.Roles {
+		inputRolesSet[role] = struct{}{}
+	}
+
+	// additions: roles present in input but not in current
+	additions := []string{}
+	for _, role := range input.Roles {
+		if _, exists := currentRolesSet[role]; !exists {
+			additions = append(additions, role)
+		}
+	}
+
+	// deletions: roles present in current but not in input
+	deletions := []string{}
+	for _, role := range sa.Roles {
+		if _, exists := inputRolesSet[role]; !exists {
+			deletions = append(deletions, role)
+		}
+	}
+
+	return additions, deletions
 }
 
 func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
@@ -134,10 +182,6 @@ func (sa *UpdatableServiceAccount) UnmarshalJSON(data []byte) error {
 
 	if temp.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name cannot be empty")
-	}
-
-	if !slices.Contains(ValidStatus, temp.Status) {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "invalid status")
 	}
 
 	*sa = UpdatableServiceAccount(temp)

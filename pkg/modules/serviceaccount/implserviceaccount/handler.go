@@ -111,7 +111,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount.Update(req.Name, req.Email, req.Roles, req.Status)
+	serviceAccount.Update(req.Name, req.Email, req.Roles)
 	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
@@ -144,10 +144,108 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
-func (handler *handler) CreateFactorAPIKey(http.ResponseWriter, *http.Request) {}
+func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (handler *handler) ListFactorAPIKey(http.ResponseWriter, *http.Request) {}
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (handler *handler) UpdateFactorAPIKey(http.ResponseWriter, *http.Request) {}
+	req := new(serviceaccounttypes.PostableFactorAPIKey)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
 
-func (handler *handler) RevokeFactorAPIKey(http.ResponseWriter, *http.Request) {}
+	factorAPIKey := serviceaccounttypes.NewFactorAPIKey(req.Name, req.ExpiresAt, id)
+	err = handler.module.CreateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), factorAPIKey)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusCreated, types.Identifiable{ID: factorAPIKey.ID})
+}
+
+func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKeys, err := handler.module.ListFactorAPIKey(ctx, id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, factorAPIKeys)
+}
+
+func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(serviceaccounttypes.UpdatableFactorAPIKey)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKey, err := handler.module.GetFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKey.Update(req.Name, req.ExpiresAt)
+	err = handler.module.UpdateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), factorAPIKey)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
+func (handler *handler) RevokeFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.RevokeFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}

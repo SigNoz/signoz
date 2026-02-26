@@ -114,6 +114,20 @@ func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.
 	return roles, nil
 }
 
+func (provider *provider) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*roletypes.Role, error) {
+	storableRoles, err := provider.store.ListByOrgIDAndIDs(ctx, orgID, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]*roletypes.Role, len(storableRoles))
+	for idx, storable := range storableRoles {
+		roles[idx] = roletypes.NewRoleFromStorableRole(storable)
+	}
+
+	return roles, nil
+}
+
 func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
 	selectors := make([]authtypes.Selector, len(names))
 	for idx, name := range names {

@@ -62,6 +62,9 @@ type AuthZ interface {
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*roletypes.Role, error)
 
+	//  Lists all the roles for the organization filtered by ids
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*roletypes.Role, error)
+
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, []string, string) error
 

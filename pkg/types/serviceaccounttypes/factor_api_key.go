@@ -13,6 +13,7 @@ type StorableFactorAPIKey struct {
 
 	types.Identifiable
 	types.TimeAuditable
+	Name             string     `bun:"name"`
 	Key              string     `bun:"key"`
 	ExpiresAt        *time.Time `bun:"created_at"`
 	LastUsed         *time.Time `bun:"last_used"`
@@ -22,23 +23,24 @@ type StorableFactorAPIKey struct {
 type FactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
-	Key              string      `bun:"key"`
-	ExpiresAt        *time.Time  `bun:"created_at"`
-	LastUsed         *time.Time  `bun:"last_used"`
-	ServiceAccountID valuer.UUID `bun:"service_account_id"`
+	Name             string      `json:"name" requrired:"true"`
+	Key              string      `json:"key" required:"true"`
+	ExpiresAt        *time.Time  `json:"created_at" required:"true"`
+	LastUsed         *time.Time  `json:"last_used" required:"true"`
+	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
 
 type PostableFactorAPIKey struct {
-	Name      string  `json:"name" required:"true"`
-	ExpiresAt *string `json:"expires_at"`
+	Name      string     `json:"name" required:"true"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
 
 type UpdatableFactorAPIKey struct {
-	Name      string  `json:"name" required:"true"`
-	ExpiresAt *string `json:"expires_at"`
+	Name      string     `json:"name" required:"true"`
+	ExpiresAt *time.Time `json:"expires_at"`
 }
 
-func NewFactorAPIKey(expiresAt *time.Time, serviceAccountID valuer.UUID) *FactorAPIKey {
+func NewFactorAPIKey(name string, expiresAt *time.Time, serviceAccountID valuer.UUID) *FactorAPIKey {
 	return &FactorAPIKey{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -48,6 +50,7 @@ func NewFactorAPIKey(expiresAt *time.Time, serviceAccountID valuer.UUID) *Factor
 			UpdatedAt: time.Now(),
 		},
 		//todo[@vikrantgupta25] figure out the best way to generate this key
+		Name:             name,
 		Key:              valuer.GenerateUUID().String(),
 		ExpiresAt:        expiresAt,
 		LastUsed:         nil,
@@ -59,9 +62,16 @@ func NewStorableFactorAPIKey(factorAPIKey *FactorAPIKey) *StorableFactorAPIKey {
 	return &StorableFactorAPIKey{
 		Identifiable:     factorAPIKey.Identifiable,
 		TimeAuditable:    factorAPIKey.TimeAuditable,
+		Name:             factorAPIKey.Name,
 		Key:              factorAPIKey.Key,
 		ExpiresAt:        factorAPIKey.ExpiresAt,
 		LastUsed:         factorAPIKey.LastUsed,
 		ServiceAccountID: factorAPIKey.ServiceAccountID.String(),
 	}
+}
+
+func (apiKey *FactorAPIKey) Update(name string, expiresAt *time.Time) {
+	apiKey.Name = name
+	apiKey.ExpiresAt = expiresAt
+	apiKey.UpdatedAt = time.Now()
 }

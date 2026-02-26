@@ -47,6 +47,9 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
 
 	return nil
 }
@@ -57,29 +60,137 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 		return nil, err
 	}
 
+	// did the orchestration on application layer instead of DB as the ORM also does it anyways for many to many tables.
 	storableServiceAccountRoles, err := module.store.GetServiceAccountRoles(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	serviceAccount := serviceaccounttypes.NewServiceAccountFromStorables(storableServiceAccount, storableServiceAccountRoles)
+	roleIDs := make([]valuer.UUID, len(storableServiceAccountRoles))
+	for idx, sar := range storableServiceAccountRoles {
+		roleIDs[idx] = valuer.MustNewUUID(sar.RoleID)
+	}
+
+	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	rolesNames, err := serviceaccounttypes.NewRolesFromStorableServiceAccountRoles(storableServiceAccountRoles, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceAccount := serviceaccounttypes.NewServiceAccountFromStorables(storableServiceAccount, rolesNames)
 	return serviceAccount, nil
 }
 
-func (module *module) List(context.Context, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
-	return nil, nil
+func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
+	storableServiceAccounts, err := module.store.List(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	storableServiceAccountRoles, err := module.store.ListServiceAccountRolesByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// convert the service account roles to structured data
+	saIDToRoleIDs, roleIDs := serviceaccounttypes.GetUniqueRolesAndServiceAccountMapping(storableServiceAccountRoles)
+	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	// fill in the role fetched data back to service account
+	serviceAccounts := serviceaccounttypes.NewServiceAccountsFromRoles(storableServiceAccounts, roles, saIDToRoleIDs)
+	return serviceAccounts, nil
 }
 
-func (module *module) Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error {
+func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	serviceAccount, err := module.Get(ctx, orgID, input.ID)
+	if err != nil {
+		return err
+	}
+
+	roles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, input.Roles)
+	if err != nil {
+		return err
+	}
+
+	// gets the role diff if any to modify grants.
+	grants, revokes := serviceAccount.PatchRoles(input)
+	err = module.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, &authtypes.RelationAssignee))
+	if err != nil {
+		return err
+	}
+
+	storableServiceAccountRoles := serviceaccounttypes.NewStorableServiceAccountRoles(serviceAccount.ID, roles)
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.store.Update(ctx, orgID, serviceaccounttypes.NewStorableServiceAccount(input))
+		if err != nil {
+			return err
+		}
+
+		// delete all the service account roles and create new rather than diff here.
+		err = module.store.DeleteServiceAccountRoles(ctx, input.ID)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.CreateServiceAccountRoles(ctx, storableServiceAccountRoles)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (module *module) Delete(context.Context, valuer.UUID, valuer.UUID) error {
+func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	serviceAccount, err := module.Get(ctx, orgID, id)
+	if err != nil {
+		return err
+	}
+
+	// revoke from authz first as this cannot run in sql transaction
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, &authtypes.RelationAssignee))
+	if err != nil {
+		return err
+	}
+
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err := module.store.DeleteServiceAccountRoles(ctx, serviceAccount.ID)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.Delete(ctx, serviceAccount.OrgID, serviceAccount.ID)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func (module *module) CreateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error {
 	return nil
+}
+
+func (module *module) GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error) {
+	return nil, nil
 }
 
 func (module *module) ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error) {

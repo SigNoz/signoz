@@ -21,11 +21,16 @@ type Module interface {
 	// Updates an existing service account
 	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
+	// TODO[@vikrantgupta25]: implement the disable/activate interface as well.
+
 	// Deletes an existing service account by id
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Creates a new API key for a service account
 	CreateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
+
+	// Gets a factor API key by id
+	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error)
 
 	// Lists all the API keys for a service account
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
