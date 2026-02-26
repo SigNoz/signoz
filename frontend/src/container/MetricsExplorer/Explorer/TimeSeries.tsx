@@ -167,7 +167,7 @@ function TimeSeries({
 	} = useUpdateMetricMetadata();
 
 	const handleSaveUnit = (): void => {
-		if (metrics[0]) {
+		if (metrics[0] && yAxisUnit) {
 			updateMetricMetadata(
 				{
 					pathParams: {

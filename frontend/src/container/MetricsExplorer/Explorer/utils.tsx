@@ -100,7 +100,7 @@ export function getMetricUnits(
 export function buildUpdateMetricYAxisUnitPayload(
 	metricName: string,
 	metric: MetricsexplorertypesMetricMetadataDTO,
-	yAxisUnit: string | undefined,
+	yAxisUnit: string,
 ): UpdateMetricMetadataMutationBody {
 	return {
 		metricName,
