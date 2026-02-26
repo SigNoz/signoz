@@ -60,6 +60,7 @@ function AzureServices(): JSX.Element {
 	}, [initialAccount]);
 
 	const cloudAccountId = initialAccount?.cloud_account_id;
+
 	const {
 		data: azureServices = [],
 		isLoading: isLoadingAzureServices,

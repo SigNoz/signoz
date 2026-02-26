@@ -1,8 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
-import { Button, Tabs, TabsProps } from 'antd';
+import { Button, Skeleton, Tabs, TabsProps } from 'antd';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
-import Spinner from 'components/Spinner';
 import ServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards';
 import { AWSServiceConfig } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { IServiceStatus } from 'container/Integrations/types';
@@ -128,7 +127,12 @@ function ServiceDetails(): JSX.Element | null {
 	}, [cloudAccountId, serviceId]);
 
 	if (isLoading) {
-		return <Spinner size="large" height="50vh" />;
+		return (
+			<div className="service-details-loading">
+				<Skeleton active />
+				<Skeleton active />
+			</div>
+		);
 	}
 
 	if (!serviceDetailsData) {
