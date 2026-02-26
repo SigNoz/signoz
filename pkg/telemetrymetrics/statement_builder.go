@@ -159,6 +159,23 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 			query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
 		}
 		query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
+
+		// check for origTimeAgg's and origSpaceAgg's validity
+		if origTimeAgg.IsZero() || !origTimeAgg.IsValid() {
+			return nil, errors.Newf(
+				errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"invalid time aggregation, should be one of the following: [`rate`, `increase`]",
+			)
+		}
+
+		if origSpaceAgg.IsZero() || !origSpaceAgg.IsValid() {
+			return nil, errors.Newf(
+				errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"invalid space aggregation, should be one of the following: [`count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+			)
+		}
 	}
 
 	var timeSeriesCTE string
