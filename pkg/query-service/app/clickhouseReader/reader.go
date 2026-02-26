@@ -1276,18 +1276,21 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 
 	processingPostCache := time.Now()
 	selectedSpansForRequest := selectedSpans
-	limit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
+	clientLimit := min(req.Limit, tracedetail.MaxLimitWithoutSampling)
 	totalSpanCount := tracedetail.GetTotalSpanCount(selectedSpans)
-	if totalSpanCount > uint64(limit) {
-		boundaryStart, boundaryEnd := timestamp.MilliToNano(req.BoundaryStartTS), timestamp.MilliToNano(req.BoundaryEndTS)
+	if totalSpanCount > uint64(clientLimit) {
+		// using trace start and end time if boundary ts are set to zero (or not set)
+		boundaryStart := max(timestamp.MilliToNano(req.BoundaryStartTS), startTime)
+		boundaryEnd := max(timestamp.MilliToNano(req.BoundaryEndTS), endTime)
+
 		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
-	r.logger.Info("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID)
+	r.logger.Info("getFlamegraphSpansForTrace: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID, "totalSpans", totalSpanCount, "limit", clientLimit)
 
 	trace.Spans = selectedSpansForRequest
 	trace.StartTimestampMillis = startTime / 1000000
 	trace.EndTimestampMillis = endTime / 1000000
-	trace.HasMore = totalSpanCount > uint64(limit)
+	trace.HasMore = totalSpanCount > uint64(clientLimit)
 	return trace, nil
 }
 
