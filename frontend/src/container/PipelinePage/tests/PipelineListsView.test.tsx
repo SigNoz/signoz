@@ -86,7 +86,7 @@ jest.mock('providers/preferences/sync/usePreferenceSync', () => ({
 }));
 
 const BASE_URL = ENVIRONMENT.baseURL;
-const attributeKeysURL = `${BASE_URL}/api/v3/autocomplete/attribute_keys`;
+const attributeKeysURL = `${BASE_URL}/api/v3/filter_suggestions`;
 
 describe('PipelinePage container test', () => {
 	beforeAll(() => {
@@ -333,26 +333,34 @@ describe('PipelinePage container test', () => {
 					ctx.json({
 						status: 'success',
 						data: {
-							attributeKeys: [
+							attributes: [
 								{
 									key: 'otelServiceName',
 									dataType: DataTypes.String,
 									type: 'tag',
+									isColumn: false,
+									isJSON: false,
+								},
+								{
+									key: 'service.name',
+									dataType: DataTypes.String,
+									type: 'resource',
+									isColumn: false,
+									isJSON: false,
 								},
 								{
 									key: 'service.instance.id',
 									dataType: DataTypes.String,
 									type: 'resource',
-								},
-								{
-									key: 'service.name',
-									dataType: DataTypes.String,
-									type: 'resource',
+									isColumn: false,
+									isJSON: false,
 								},
 								{
 									key: 'service.name',
 									dataType: DataTypes.String,
 									type: 'tag',
+									isColumn: false,
+									isJSON: false,
 								},
 							],
 						},

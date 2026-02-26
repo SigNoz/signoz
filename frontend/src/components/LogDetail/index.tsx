@@ -86,8 +86,13 @@ function LogDetailInner({
 		const handleClickOutside = (e: MouseEvent): void => {
 			const target = e.target as HTMLElement;
 
-			// Don't close if clicking on explicitly ignored regions
-			if (target.closest('[data-log-detail-ignore="true"]')) {
+			// Don't close if clicking on drawer content, overlays, or portal elements
+			if (
+				target.closest('[data-log-detail-ignore="true"]') ||
+				target.closest('.cm-tooltip-autocomplete') ||
+				target.closest('.drawer-popover') ||
+				target.closest('.query-status-popover')
+			) {
 				return;
 			}
 
@@ -400,7 +405,11 @@ function LogDetailInner({
 			<div className="log-detail-drawer__content" data-log-detail-ignore="true">
 				<div className="log-detail-drawer__log">
 					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-					<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
+					<Tooltip
+						title={removeEscapeCharacters(log?.body)}
+						placement="left"
+						mouseLeaveDelay={0}
+					>
 						<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 					</Tooltip>
 
@@ -466,6 +475,7 @@ function LogDetailInner({
 								title="Show Filters"
 								placement="topLeft"
 								aria-label="Show Filters"
+								mouseLeaveDelay={0}
 							>
 								<Button
 									className="action-btn"
@@ -481,6 +491,7 @@ function LogDetailInner({
 							aria-label={
 								selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
 							}
+							mouseLeaveDelay={0}
 						>
 							<Button
 								className="action-btn"

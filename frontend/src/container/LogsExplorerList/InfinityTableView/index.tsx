@@ -111,23 +111,19 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		const itemContent = useCallback(
-			(index: number, log: Record<string, unknown>): JSX.Element => {
-				return (
-					<div key={log.id as string}>
-						<TableRow
-							tableColumns={tableColumns}
-							index={index}
-							log={log}
-							logs={tableViewProps.logs}
-							hasActions
-							fontSize={tableViewProps.fontSize}
-							onShowLogDetails={onSetActiveLog}
-							isActiveLog={activeLog?.id === log.id}
-							onClearActiveLog={onCloseActiveLog}
-						/>
-					</div>
-				);
-			},
+			(index: number, log: Record<string, unknown>): JSX.Element => (
+				<TableRow
+					tableColumns={tableColumns}
+					index={index}
+					log={log}
+					logs={tableViewProps.logs}
+					hasActions
+					fontSize={tableViewProps.fontSize}
+					onShowLogDetails={onSetActiveLog}
+					isActiveLog={activeLog?.id === log.id}
+					onClearActiveLog={onCloseActiveLog}
+				/>
+			),
 			[
 				tableColumns,
 				onSetActiveLog,

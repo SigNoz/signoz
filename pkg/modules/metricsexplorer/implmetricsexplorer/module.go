@@ -513,7 +513,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 		"metric_name",
 		"anyLast(description) AS description",
 		"anyLast(type) AS metric_type",
-		"anyLast(unit) AS metric_unit",
+		"argMax(unit, unix_milli) AS metric_unit",
 		"anyLast(temporality) AS temporality",
 		"anyLast(is_monotonic) AS is_monotonic",
 	)

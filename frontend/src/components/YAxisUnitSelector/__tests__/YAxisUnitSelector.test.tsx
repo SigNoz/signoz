@@ -1,6 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 
-import { YAxisSource } from '../types';
+import { YAxisCategoryNames } from '../constants';
+import { UniversalYAxisUnit, YAxisSource } from '../types';
 import YAxisUnitSelector from '../YAxisUnitSelector';
 
 describe('YAxisUnitSelector', () => {
@@ -122,5 +123,35 @@ describe('YAxisUnitSelector', () => {
 		);
 		const warningIcon = screen.queryByLabelText('warning');
 		expect(warningIcon).not.toBeInTheDocument();
+	});
+
+	it('uses categories override to render custom units', () => {
+		const customCategories = [
+			{
+				name: YAxisCategoryNames.Data,
+				units: [
+					{
+						id: UniversalYAxisUnit.BYTES,
+						name: 'Custom Bytes (B)',
+					},
+				],
+			},
+		];
+
+		render(
+			<YAxisUnitSelector
+				value=""
+				onChange={mockOnChange}
+				source={YAxisSource.ALERTS}
+				categoriesOverride={customCategories}
+			/>,
+		);
+
+		const select = screen.getByRole('combobox');
+
+		fireEvent.mouseDown(select);
+
+		expect(screen.getByText('Custom Bytes (B)')).toBeInTheDocument();
+		expect(screen.queryByText('Bytes (B)')).not.toBeInTheDocument();
 	});
 });
