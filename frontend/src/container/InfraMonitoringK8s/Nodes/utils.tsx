@@ -152,7 +152,7 @@ export const getK8sNodesListColumns = (
 	return columnsConfig as ColumnType<K8sNodesRowData>[];
 };
 
-const dotToUnder: Record<string, keyof K8sNodesData['meta']> = {
+const attributeToMetaKey: Record<string, keyof K8sNodesData['meta']> = {
 	'k8s.node.name': 'k8s_node_name',
 	'k8s.cluster.name': 'k8s_cluster_name',
 	'k8s.node.uid': 'k8s_node_uid',
@@ -168,7 +168,8 @@ const getGroupByEle = (
 		const rawKey = group.key as string;
 
 		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof node.meta;
+		const metaKey = (attributeToMetaKey[rawKey] ??
+			rawKey) as keyof typeof node.meta;
 
 		const value = node.meta[metaKey];
 

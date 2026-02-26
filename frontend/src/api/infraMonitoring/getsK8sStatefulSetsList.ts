@@ -5,7 +5,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
+import { AttributeKeyMap } from '../utils';
 
 export interface K8sStatefulSetsListPayload {
 	filters: TagFilter;
@@ -69,39 +69,37 @@ export const getK8sStatefulSetsList = async (
 	props: K8sStatefulSetsListPayload,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
-	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse> => {
 	try {
 		// Prepare filters
-		const requestProps =
-			dotMetricsEnabled && Array.isArray(props.filters?.items)
-				? {
-						...props,
-						filters: {
-							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
-								(acc, item) => {
-									if (item.value === undefined) {
-										return acc;
-									}
-									if (
-										item.key &&
-										typeof item.key === 'object' &&
-										'key' in item.key &&
-										typeof item.key.key === 'string'
-									) {
-										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-										acc.push({ ...item, key: { ...item.key, key: mappedKey } });
-									} else {
-										acc.push(item);
-									}
+		const requestProps = Array.isArray(props.filters?.items)
+			? {
+					...props,
+					filters: {
+						...props.filters,
+						items: props.filters.items.reduce<typeof props.filters.items>(
+							(acc, item) => {
+								if (item.value === undefined) {
 									return acc;
-								},
-								[] as typeof props.filters.items,
-							),
-						},
-				  }
-				: props;
+								}
+								if (
+									item.key &&
+									typeof item.key === 'object' &&
+									'key' in item.key &&
+									typeof item.key.key === 'string'
+								) {
+									const mappedKey = AttributeKeyMap[item.key.key] ?? item.key.key;
+									acc.push({ ...item, key: { ...item.key, key: mappedKey } });
+								} else {
+									acc.push(item);
+								}
+								return acc;
+							},
+							[] as typeof props.filters.items,
+						),
+					},
+			  }
+			: props;
 
 		const response = await axios.post('/statefulsets/list', requestProps, {
 			signal,

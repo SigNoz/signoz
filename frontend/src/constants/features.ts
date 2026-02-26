@@ -8,5 +8,4 @@ export enum FeatureKeys {
 	PREMIUM_SUPPORT = 'premium_support',
 	ANOMALY_DETECTION = 'anomaly_detection',
 	ONBOARDING_V3 = 'onboarding_v3',
-	DOT_METRICS_ENABLED = 'dot_metrics_enabled',
 }

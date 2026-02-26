@@ -2165,10 +2165,6 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		},
 	}
 
-	validateMetricNameColumns := []cmock.ColumnType{
-		{Name: "metric_name", Type: "String"},
-		{Name: "toUInt8(__normalized)", Type: "UInt8"},
-	}
 	dataColumns := []cmock.ColumnType{
 		{Name: "value", Type: "Float64"},
 		{Name: "attr", Type: "String"},
@@ -2182,11 +2178,6 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 		for idx, c := range cases {
 			logger := instrumentationtest.New().Logger()
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
-			if version == "v4" {
-				telemetryStore.Mock().
-					ExpectQuery("SELECT metric_name, toUInt8(__normalized) .*").
-					WillReturnRows(cmock.NewRows(validateMetricNameColumns, [][]any{{"signoz_calls_total", 1}}))
-			}
 			telemetryStore.Mock().
 				ExpectQuery("SELECT any").
 				WillReturnRows(cmock.NewRows(dataColumns, c.values))

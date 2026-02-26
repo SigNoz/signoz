@@ -16,8 +16,6 @@ import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceTraceTable from './ServiceTracesTable';
 
@@ -39,11 +37,6 @@ function ServiceTraces(): JSX.Element {
 		selectedTags,
 	});
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	useErrorNotification(error);
 
 	const services = data || [];
@@ -61,7 +54,7 @@ function ServiceTraces(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current && !isUndefined(data)) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
+				(val) => val.tagKey === getResourceDeploymentKeys(),
 			)?.tagValue;
 
 			const rps = data.reduce((total, service) => total + service.callRate, 0);

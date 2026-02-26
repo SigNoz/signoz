@@ -79,21 +79,15 @@ export function getWidgetQuery(
 	};
 }
 
-export const getRequestTimesWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getRequestTimesWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						// choose key based on flag
-						key: dotMetricsEnabled
-							? 'kafka.request.time.avg'
-							: 'kafka_request_time_avg',
-						// mirror into the id as well
-						id: 'kafka_request_time_avg--float64--Gauge--true',
+						key: 'kafka.request.time.avg',
+						id: 'kafka.request.time.avg--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -123,15 +117,15 @@ export const getRequestTimesWidgetData = (
 		}),
 	);
 
-export const getBrokerCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
+export const getBrokerCountWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled ? 'kafka.brokers' : 'kafka_brokers',
-						id: 'kafka_brokers--float64--Gauge--true',
+						key: 'kafka.brokers',
+						id: 'kafka.brokers--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -157,20 +151,15 @@ export const getBrokerCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 		}),
 	);
 
-export const getProducerFetchRequestPurgatoryWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getProducerFetchRequestPurgatoryWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						// inline ternary based on dotMetricsEnabled
-						key: dotMetricsEnabled ? 'kafka.purgatory.size' : 'kafka_purgatory_size',
-						id: `${
-							dotMetricsEnabled ? 'kafka.purgatory.size' : 'kafka_purgatory_size'
-						}--float64--Gauge--true`,
+						key: 'kafka.purgatory.size',
+						id: 'kafka.purgatory.size--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -197,24 +186,17 @@ export const getProducerFetchRequestPurgatoryWidgetData = (
 		}),
 	);
 
-export const getBrokerNetworkThroughputWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getBrokerNetworkThroughputWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						// inline ternary based on dotMetricsEnabled
-						key: dotMetricsEnabled
-							? 'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate'
-							: 'kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate'
-								: 'kafka_server_brokertopicmetrics_bytesoutpersec_oneminuterate'
-						}--float64--Gauge--true`,
+						key:
+							'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate',
+						id:
+							'kafka_server_brokertopicmetrics_total_replicationbytesinpersec_oneminuterate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -241,22 +223,15 @@ export const getBrokerNetworkThroughputWidgetData = (
 		}),
 	);
 
-export const getIoWaitTimeWidgetData = (dotMetricsEnabled: boolean): Widgets =>
+export const getIoWaitTimeWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						// inline ternary based on dotMetricsEnabled
-						key: dotMetricsEnabled
-							? 'kafka.producer.io_waittime_total'
-							: 'kafka_producer_io_waittime_total',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.producer.io_waittime_total'
-								: 'kafka_producer_io_waittime_total'
-						}--float64--Sum--true`,
+						key: 'kafka.producer.io_waittime_total',
+						id: 'kafka.producer.io_waittime_total--float64--Sum--true',
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -283,23 +258,15 @@ export const getIoWaitTimeWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 		}),
 	);
 
-export const getRequestResponseWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getRequestResponseWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.producer.request_rate'
-							: 'kafka_producer_request_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.producer.request_rate'
-								: 'kafka_producer_request_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.producer.request_rate',
+						id: 'kafka.producer.request_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -322,14 +289,8 @@ export const getRequestResponseWidgetData = (
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.producer.response_rate'
-							: 'kafka_producer_response_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.producer.response_rate'
-								: 'kafka_producer_response_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.producer.response_rate',
+						id: 'kafka.producer.response_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -356,23 +317,15 @@ export const getRequestResponseWidgetData = (
 		}),
 	);
 
-export const getAverageRequestLatencyWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getAverageRequestLatencyWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.producer.request_latency_avg'
-							: 'kafka_producer_request_latency_avg',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.producer.request_latency_avg'
-								: 'kafka_producer_request_latency_avg'
-						}--float64--Gauge--true`,
+						key: 'kafka.producer.request_latency_avg',
+						id: 'kafka.producer.request_latency_avg--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -399,23 +352,15 @@ export const getAverageRequestLatencyWidgetData = (
 		}),
 	);
 
-export const getKafkaProducerByteRateWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getKafkaProducerByteRateWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.producer.byte_rate'
-							: 'kafka_producer_byte_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.producer.byte_rate'
-								: 'kafka_producer_byte_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.producer.byte_rate',
+						id: 'kafka.producer.byte_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -443,31 +388,21 @@ export const getKafkaProducerByteRateWidgetData = (
 					timeAggregation: 'avg',
 				},
 			],
-			title: dotMetricsEnabled
-				? 'kafka.producer.byte_rate'
-				: 'kafka_producer_byte_rate',
+			title: 'kafka.producer.byte_rate',
 			description:
 				'Helps measure the data output rate from the producer, indicating the load a producer is placing on Kafka brokers.',
 		}),
 	);
 
-export const getBytesConsumedWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getBytesConsumedWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer.bytes_consumed_rate'
-							: 'kafka_consumer_bytes_consumed_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer.bytes_consumed_rate'
-								: 'kafka_consumer_bytes_consumed_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer.bytes_consumed_rate',
+						id: 'kafka.consumer.bytes_consumed_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -495,23 +430,15 @@ export const getBytesConsumedWidgetData = (
 		}),
 	);
 
-export const getConsumerOffsetWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getConsumerOffsetWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer_group.offset'
-							: 'kafka_consumer_group_offset',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer_group.offset'
-								: 'kafka_consumer_group_offset'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer_group.offset',
+						id: 'kafka.consumer_group.offset--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -557,23 +484,15 @@ export const getConsumerOffsetWidgetData = (
 		}),
 	);
 
-export const getConsumerGroupMemberWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getConsumerGroupMemberWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer_group.members'
-							: 'kafka_consumer_group_members',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer_group.members'
-								: 'kafka_consumer_group_members'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer_group.members',
+						id: 'kafka.consumer_group.members--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -606,23 +525,15 @@ export const getConsumerGroupMemberWidgetData = (
 		}),
 	);
 
-export const getConsumerLagByGroupWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getConsumerLagByGroupWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer_group.lag'
-							: 'kafka_consumer_group_lag',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer_group.lag'
-								: 'kafka_consumer_group_lag'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer_group.lag',
+						id: 'kafka.consumer_group.lag--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -668,23 +579,15 @@ export const getConsumerLagByGroupWidgetData = (
 		}),
 	);
 
-export const getConsumerFetchRateWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getConsumerFetchRateWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer.fetch_rate'
-							: 'kafka_consumer_fetch_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer.fetch_rate'
-								: 'kafka_consumer_fetch_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer.fetch_rate',
+						id: 'kafka.consumer.fetch_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -697,7 +600,7 @@ export const getConsumerFetchRateWidgetData = (
 						{
 							dataType: DataTypes.String,
 							id: 'service_name--string--tag--false',
-							key: dotMetricsEnabled ? 'service.name' : 'service_name',
+							key: 'service.name',
 							type: 'tag',
 						},
 					],
@@ -718,23 +621,15 @@ export const getConsumerFetchRateWidgetData = (
 		}),
 	);
 
-export const getMessagesConsumedWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getMessagesConsumedWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.consumer.records_consumed_rate'
-							: 'kafka_consumer_records_consumed_rate',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.consumer.records_consumed_rate'
-								: 'kafka_consumer_records_consumed_rate'
-						}--float64--Gauge--true`,
+						key: 'kafka.consumer.records_consumed_rate',
+						id: 'kafka.consumer.records_consumed_rate--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -761,21 +656,15 @@ export const getMessagesConsumedWidgetData = (
 		}),
 	);
 
-export const getJvmGCCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
+export const getJvmGCCountWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'jvm.gc.collections.count'
-							: 'jvm_gc_collections_count',
-						id: `${
-							dotMetricsEnabled
-								? 'jvm.gc.collections.count'
-								: 'jvm_gc_collections_count'
-						}--float64--Sum--true`,
+						key: 'jvm.gc.collections.count',
+						id: 'jvm.gc.collections.count--float64--Sum--true',
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -802,23 +691,15 @@ export const getJvmGCCountWidgetData = (dotMetricsEnabled: boolean): Widgets =>
 		}),
 	);
 
-export const getJvmGcCollectionsElapsedWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getJvmGcCollectionsElapsedWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'jvm.gc.collections.elapsed'
-							: 'jvm_gc_collections_elapsed',
-						id: `${
-							dotMetricsEnabled
-								? 'jvm.gc.collections.elapsed'
-								: 'jvm_gc_collections_elapsed'
-						}--float64--Sum--true`,
+						key: 'jvm.gc.collections.elapsed',
+						id: 'jvm.gc.collections.elapsed--float64--Sum--true',
 						type: 'Sum',
 					},
 					aggregateOperator: 'rate',
@@ -839,31 +720,21 @@ export const getJvmGcCollectionsElapsedWidgetData = (
 					timeAggregation: 'rate',
 				},
 			],
-			title: dotMetricsEnabled
-				? 'jvm.gc.collections.elapsed'
-				: 'jvm_gc_collections_elapsed',
+			title: 'jvm.gc.collections.elapsed',
 			description:
 				'Measures the total time (usually in milliseconds) spent on garbage collection (GC) events in the Java Virtual Machine (JVM).',
 		}),
 	);
 
-export const getCpuRecentUtilizationWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getCpuRecentUtilizationWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'jvm.cpu.recent_utilization'
-							: 'jvm_cpu_recent_utilization',
-						id: `${
-							dotMetricsEnabled
-								? 'jvm.cpu.recent_utilization'
-								: 'jvm_cpu_recent_utilization'
-						}--float64--Gauge--true`,
+						key: 'jvm.cpu.recent_utilization',
+						id: 'jvm.cpu.recent_utilization--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -890,19 +761,15 @@ export const getCpuRecentUtilizationWidgetData = (
 		}),
 	);
 
-export const getJvmMemoryHeapWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getJvmMemoryHeapWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled ? 'jvm.memory.heap.max' : 'jvm_memory_heap_max',
-						id: `${
-							dotMetricsEnabled ? 'jvm.memory.heap.max' : 'jvm_memory_heap_max'
-						}--float64--Gauge--true`,
+						key: 'jvm.memory.heap.max',
+						id: 'jvm.memory.heap.max--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -929,21 +796,15 @@ export const getJvmMemoryHeapWidgetData = (
 		}),
 	);
 
-export const getPartitionCountPerTopicWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getPartitionCountPerTopicWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.topic.partitions'
-							: 'kafka_topic_partitions',
-						id: `${
-							dotMetricsEnabled ? 'kafka.topic.partitions' : 'kafka_topic_partitions'
-						}--float64--Gauge--true`,
+						key: 'kafka.topic.partitions',
+						id: 'kafka.topic.partitions--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'sum',
@@ -976,23 +837,15 @@ export const getPartitionCountPerTopicWidgetData = (
 		}),
 	);
 
-export const getCurrentOffsetPartitionWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getCurrentOffsetPartitionWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.partition.current_offset'
-							: 'kafka_partition_current_offset',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.partition.current_offset'
-								: 'kafka_partition_current_offset'
-						}--float64--Gauge--true`,
+						key: 'kafka.partition.current_offset',
+						id: 'kafka.partition.current_offset--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -1032,23 +885,15 @@ export const getCurrentOffsetPartitionWidgetData = (
 		}),
 	);
 
-export const getOldestOffsetWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getOldestOffsetWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.partition.oldest_offset'
-							: 'kafka_partition_oldest_offset',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.partition.oldest_offset'
-								: 'kafka_partition_oldest_offset'
-						}--float64--Gauge--true`,
+						key: 'kafka.partition.oldest_offset',
+						id: 'kafka.partition.oldest_offset--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',
@@ -1088,23 +933,15 @@ export const getOldestOffsetWidgetData = (
 		}),
 	);
 
-export const getInsyncReplicasWidgetData = (
-	dotMetricsEnabled: boolean,
-): Widgets =>
+export const getInsyncReplicasWidgetData = (): Widgets =>
 	getWidgetQueryBuilder(
 		getWidgetQuery({
 			queryData: [
 				{
 					aggregateAttribute: {
 						dataType: DataTypes.Float64,
-						key: dotMetricsEnabled
-							? 'kafka.partition.replicas_in_sync'
-							: 'kafka_partition_replicas_in_sync',
-						id: `${
-							dotMetricsEnabled
-								? 'kafka.partition.replicas_in_sync'
-								: 'kafka_partition_replicas_in_sync'
-						}--float64--Gauge--true`,
+						key: 'kafka.partition.replicas_in_sync',
+						id: 'kafka.partition.replicas_in_sync--float64--Gauge--true',
 						type: 'Gauge',
 					},
 					aggregateOperator: 'avg',

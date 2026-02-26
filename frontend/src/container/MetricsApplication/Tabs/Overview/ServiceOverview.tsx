@@ -56,10 +56,6 @@ function ServiceOverview({
 		[isSpanMetricEnable, queries],
 	);
 
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const latencyWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -71,7 +67,6 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
-						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -81,13 +76,7 @@ function ServiceOverview({
 				yAxisUnit: 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
-		[
-			isSpanMetricEnable,
-			servicename,
-			tagFilterItems,
-			topLevelOperationsRoute,
-			dotMetricsEnabled,
-		],
+		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
 	);
 
 	const isQueryEnabled =

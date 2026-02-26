@@ -23,8 +23,6 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import HostsListControls from './HostsListControls';
 import HostsListTable from './HostsListTable';
 import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
@@ -146,11 +144,6 @@ function HostsList(): JSX.Element {
 		entityVersion: '',
 	});
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			const isNewFilterAdded = value?.items?.length !== filters?.items?.length;
@@ -221,7 +214,7 @@ function HostsList(): JSX.Element {
 						</div>
 						<QuickFilters
 							source={QuickFiltersSource.INFRA_MONITORING}
-							config={GetHostsQuickFiltersConfig(dotMetricsEnabled)}
+							config={GetHostsQuickFiltersConfig()}
 							handleFilterVisibilityChange={handleFilterVisibilityChange}
 							onFilterChange={handleQuickFiltersChange}
 						/>

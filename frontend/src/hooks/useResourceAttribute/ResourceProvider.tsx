@@ -7,8 +7,6 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { encode } from 'js-base64';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import { whilelistedKeys } from './config';
 import { ResourceContext } from './context';
 import { ResourceAttributesFilterMachine } from './machine';
@@ -56,11 +54,6 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		}
 	};
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const dispatchQueries = useCallback(
 		(queries: IResourceAttribute[]): void => {
 			urlQuery.set(
@@ -78,7 +71,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 		actions: {
 			onSelectTagKey: () => {
 				handleLoading(true);
-				GetTagKeys(dotMetricsEnabled)
+				GetTagKeys()
 					.then((tagKeys) => {
 						const options = mappingWithRoutesAndKeys(pathname, tagKeys);
 
@@ -149,10 +142,10 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 	const handleEnvironmentChange = useCallback(
 		(environments: string[]): void => {
-			const staging = [getResourceDeploymentKeys(dotMetricsEnabled), 'IN'];
+			const staging = [getResourceDeploymentKeys(), 'IN'];
 
 			const queriesCopy = queries.filter(
-				(query) => query.tagKey !== getResourceDeploymentKeys(dotMetricsEnabled),
+				(query) => query.tagKey !== getResourceDeploymentKeys(),
 			);
 
 			if (environments && Array.isArray(environments) && environments.length > 0) {
@@ -167,7 +160,7 @@ function ResourceProvider({ children }: Props): JSX.Element {
 
 			send('RESET');
 		},
-		[dispatchQueries, dotMetricsEnabled, queries, send],
+		[dispatchQueries, queries, send],
 	);
 
 	const handleClose = useCallback(

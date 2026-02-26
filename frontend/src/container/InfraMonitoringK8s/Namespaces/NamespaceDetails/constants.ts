@@ -54,95 +54,35 @@ export const getNamespaceMetricsQueryPayload = (
 	namespace: K8sNamespacesData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.usage',
-		'k8s_pod_cpu_usage',
-	);
-	const k8sContainerCpuRequestKey = getKey(
-		'k8s.container.cpu_request',
-		'k8s_container_cpu_request',
-	);
-	const k8sPodMemoryUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
-	const k8sContainerMemoryRequestKey = getKey(
-		'k8s.container.memory_request',
-		'k8s_container_memory_request',
-	);
-	const k8sPodMemoryWorkingSetKey = getKey(
-		'k8s.pod.memory.working_set',
-		'k8s_pod_memory_working_set',
-	);
-	const k8sPodMemoryRssKey = getKey('k8s.pod.memory.rss', 'k8s_pod_memory_rss');
-	const k8sPodNetworkIoKey = getKey('k8s.pod.network.io', 'k8s_pod_network_io');
-	const k8sPodNetworkErrorsKey = getKey(
-		'k8s.pod.network.errors',
-		'k8s_pod_network_errors',
-	);
-	const k8sStatefulsetCurrentPodsKey = getKey(
-		'k8s.statefulset.current_pods',
-		'k8s_statefulset_current_pods',
-	);
-	const k8sStatefulsetDesiredPodsKey = getKey(
-		'k8s.statefulset.desired_pods',
-		'k8s_statefulset_desired_pods',
-	);
-	const k8sStatefulsetUpdatedPodsKey = getKey(
-		'k8s.statefulset.updated_pods',
-		'k8s_statefulset_updated_pods',
-	);
-	const k8sReplicasetDesiredKey = getKey(
-		'k8s.replicaset.desired',
-		'k8s_replicaset_desired',
-	);
-	const k8sReplicasetAvailableKey = getKey(
-		'k8s.replicaset.available',
-		'k8s_replicaset_available',
-	);
-	const k8sDaemonsetDesiredScheduledNamespacesKey = getKey(
-		'k8s.daemonset.desired.scheduled.namespaces',
-		'k8s_daemonset_desired_scheduled_namespaces',
-	);
-	const k8sDaemonsetCurrentScheduledNamespacesKey = getKey(
-		'k8s.daemonset.current.scheduled.namespaces',
-		'k8s_daemonset_current_scheduled_namespaces',
-	);
-	const k8sDaemonsetReadyNamespacesKey = getKey(
-		'k8s.daemonset.ready.namespaces',
-		'k8s_daemonset_ready_namespaces',
-	);
-	const k8sDaemonsetMisscheduledNamespacesKey = getKey(
-		'k8s.daemonset.misscheduled.namespaces',
-		'k8s_daemonset_misscheduled_namespaces',
-	);
-	const k8sDeploymentDesiredKey = getKey(
-		'k8s.deployment.desired',
-		'k8s_deployment_desired',
-	);
-	const k8sDeploymentAvailableKey = getKey(
-		'k8s.deployment.available',
-		'k8s_deployment_available',
-	);
-	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
-	const k8sStatefulsetNameKey = getKey(
-		'k8s.statefulset.name',
-		'k8s_statefulset_name',
-	);
-	const k8sReplicasetNameKey = getKey(
-		'k8s.replicaset.name',
-		'k8s_replicaset_name',
-	);
-	const k8sDaemonsetNameKey = getKey('k8s.daemonset.name', 'k8s_daemonset_name');
-	const k8sDeploymentNameKey = getKey(
-		'k8s.deployment.name',
-		'k8s_deployment_name',
-	);
+	const k8sPodCpuUtilizationKey = 'k8s.pod.cpu.usage';
+	const k8sContainerCpuRequestKey = 'k8s.container.cpu_request';
+	const k8sPodMemoryUsageKey = 'k8s.pod.memory.usage';
+	const k8sContainerMemoryRequestKey = 'k8s.container.memory_request';
+	const k8sPodMemoryWorkingSetKey = 'k8s.pod.memory.working_set';
+	const k8sPodMemoryRssKey = 'k8s.pod.memory.rss';
+	const k8sPodNetworkIoKey = 'k8s.pod.network.io';
+	const k8sPodNetworkErrorsKey = 'k8s.pod.network.errors';
+	const k8sStatefulsetCurrentPodsKey = 'k8s.statefulset.current_pods';
+	const k8sStatefulsetDesiredPodsKey = 'k8s.statefulset.desired_pods';
+	const k8sStatefulsetUpdatedPodsKey = 'k8s.statefulset.updated_pods';
+	const k8sReplicasetDesiredKey = 'k8s.replicaset.desired';
+	const k8sReplicasetAvailableKey = 'k8s.replicaset.available';
+	const k8sDaemonsetDesiredScheduledNamespacesKey =
+		'k8s.daemonset.desired.scheduled.namespaces';
+	const k8sDaemonsetCurrentScheduledNamespacesKey =
+		'k8s.daemonset.current.scheduled.namespaces';
+	const k8sDaemonsetReadyNamespacesKey = 'k8s.daemonset.ready.namespaces';
+	const k8sDaemonsetMisscheduledNamespacesKey =
+		'k8s.daemonset.misscheduled.namespaces';
+	const k8sDeploymentDesiredKey = 'k8s.deployment.desired';
+	const k8sDeploymentAvailableKey = 'k8s.deployment.available';
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
+	const k8sPodNameKey = 'k8s.pod.name';
+	const k8sStatefulsetNameKey = 'k8s.statefulset.name';
+	const k8sReplicasetNameKey = 'k8s.replicaset.name';
+	const k8sDaemonsetNameKey = 'k8s.daemonset.name';
+	const k8sDeploymentNameKey = 'k8s.deployment.name';
 
 	return [
 		{

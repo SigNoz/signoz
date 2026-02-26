@@ -32,5 +32,4 @@ export interface DatabaseCallsRPSProps extends DatabaseCallProps {
 export interface DatabaseCallProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
-	dotMetricsEnabled: boolean;
 }

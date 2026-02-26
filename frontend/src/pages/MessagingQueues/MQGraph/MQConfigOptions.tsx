@@ -11,8 +11,6 @@ import useDebouncedFn from 'hooks/useDebouncedFunction';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Check, Share2 } from 'lucide-react';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import { useGetAllConfigOptions } from './useGetAllConfigOptions';
 
 import './MQConfigOptions.styles.scss';
@@ -40,19 +38,11 @@ const useConfigOptions = (
 	isFetching: boolean;
 	options: DefaultOptionType[];
 } => {
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const [searchText, setSearchText] = useState<string>('');
-	const { isFetching, options } = useGetAllConfigOptions(
-		{
-			attributeKey: type,
-			searchText,
-		},
-		dotMetricsEnabled,
-	);
+	const { isFetching, options } = useGetAllConfigOptions({
+		attributeKey: type,
+		searchText,
+	});
 	const handleDebouncedSearch = useDebouncedFn((searchText): void => {
 		setSearchText(searchText as string);
 	}, 500);

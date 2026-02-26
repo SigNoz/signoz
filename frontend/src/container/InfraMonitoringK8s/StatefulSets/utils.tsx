@@ -236,7 +236,7 @@ export const getK8sStatefulSetsListColumns = (
 	return columnsConfig as ColumnType<K8sStatefulSetsRowData>[];
 };
 
-const dotToUnder: Record<string, keyof K8sStatefulSetsData['meta']> = {
+const attributeToMetaKey: Record<string, keyof K8sStatefulSetsData['meta']> = {
 	'k8s.namespace.name': 'k8s_namespace_name',
 	'k8s.statefulset.name': 'k8s_statefulset_name',
 };
@@ -251,7 +251,7 @@ const getGroupByEle = (
 		const rawKey = group.key as string;
 
 		// Choose mapped key if present, otherwise use rawKey
-		const metaKey = (dotToUnder[rawKey] ??
+		const metaKey = (attributeToMetaKey[rawKey] ??
 			rawKey) as keyof typeof statefulSet.meta;
 		const value = statefulSet.meta[metaKey];
 

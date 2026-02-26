@@ -66,116 +66,56 @@ export const getPodMetricsQueryPayload = (
 	pod: K8sPodsData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sContainerNameKey = getKey('k8s.container.name', 'k8s_container_name');
+	const k8sContainerNameKey = 'k8s.container.name';
 
-	const k8sPodCpuUtilKey = getKey('k8s.pod.cpu.usage', 'k8s_pod_cpu_usage');
+	const k8sPodCpuUtilKey = 'k8s.pod.cpu.usage';
 
-	const k8sPodCpuReqUtilKey = getKey(
-		'k8s.pod.cpu_request_utilization',
-		'k8s_pod_cpu_request_utilization',
-	);
+	const k8sPodCpuReqUtilKey = 'k8s.pod.cpu_request_utilization';
 
-	const k8sPodCpuLimitUtilKey = getKey(
-		'k8s.pod.cpu_limit_utilization',
-		'k8s_pod_cpu_limit_utilization',
-	);
+	const k8sPodCpuLimitUtilKey = 'k8s.pod.cpu_limit_utilization';
 
-	const k8sPodMemUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
+	const k8sPodMemUsageKey = 'k8s.pod.memory.usage';
 
-	const k8sPodMemReqUtilKey = getKey(
-		'k8s.pod.memory_request_utilization',
-		'k8s_pod_memory_request_utilization',
-	);
+	const k8sPodMemReqUtilKey = 'k8s.pod.memory_request_utilization';
 
-	const k8sPodMemLimitUtilKey = getKey(
-		'k8s.pod.memory_limit_utilization',
-		'k8s_pod_memory_limit_utilization',
-	);
+	const k8sPodMemLimitUtilKey = 'k8s.pod.memory_limit_utilization';
 
-	const k8sPodMemRssKey = getKey('k8s.pod.memory.rss', 'k8s_pod_memory_rss');
+	const k8sPodMemRssKey = 'k8s.pod.memory.rss';
 
-	const k8sPodMemWorkingSetKey = getKey(
-		'k8s.pod.memory.working_set',
-		'k8s_pod_memory_working_set',
-	);
+	const k8sPodMemWorkingSetKey = 'k8s.pod.memory.working_set';
 
-	const k8sPodMemMajorPFKey = getKey(
-		'k8s.pod.memory.major_page_faults',
-		'k8s_pod_memory_major_page_faults',
-	);
+	const k8sPodMemMajorPFKey = 'k8s.pod.memory.major_page_faults';
 
-	const containerCpuUtilKey = getKey(
-		'container.cpu.usage',
-		'container_cpu_usage',
-	);
+	const containerCpuUtilKey = 'container.cpu.usage';
 
-	const k8sContainerCpuRequestKey = getKey(
-		'k8s.container.cpu_request',
-		'k8s_container_cpu_request',
-	);
+	const k8sContainerCpuRequestKey = 'k8s.container.cpu_request';
 
-	const k8sContainerCpuLimitKey = getKey(
-		'k8s.container.cpu_limit',
-		'k8s_container_cpu_limit',
-	);
+	const k8sContainerCpuLimitKey = 'k8s.container.cpu_limit';
 
-	const k8sContainerMemoryLimitKey = getKey(
-		'k8s.container.memory_limit',
-		'k8s_container_memory_limit',
-	);
+	const k8sContainerMemoryLimitKey = 'k8s.container.memory_limit';
 
-	const k8sContainerMemoryRequestKey = getKey(
-		'k8s.container.memory_request',
-		'k8s_container_memory_request',
-	);
+	const k8sContainerMemoryRequestKey = 'k8s.container.memory_request';
 
-	const containerMemUsageKey = getKey(
-		'container.memory.usage',
-		'container_memory_usage',
-	);
+	const containerMemUsageKey = 'container.memory.usage';
 
-	const containerMemWorkingSetKey = getKey(
-		'container.memory.working_set',
-		'container_memory_working_set',
-	);
+	const containerMemWorkingSetKey = 'container.memory.working_set';
 
-	const containerMemRssKey = getKey(
-		'container.memory.rss',
-		'container_memory_rss',
-	);
+	const containerMemRssKey = 'container.memory.rss';
 
-	const k8sPodNetworkIoKey = getKey('k8s.pod.network.io', 'k8s_pod_network_io');
+	const k8sPodNetworkIoKey = 'k8s.pod.network.io';
 
-	const k8sPodNetworkErrorsKey = getKey(
-		'k8s.pod.network.errors',
-		'k8s_pod_network_errors',
-	);
+	const k8sPodNetworkErrorsKey = 'k8s.pod.network.errors';
 
-	const k8sPodFilesystemCapacityKey = getKey(
-		'k8s.pod.filesystem.capacity',
-		'k8s_pod_filesystem_capacity',
-	);
+	const k8sPodFilesystemCapacityKey = 'k8s.pod.filesystem.capacity';
 
-	const k8sPodFilesystemAvailableKey = getKey(
-		'k8s.pod.filesystem.available',
-		'k8s_pod_filesystem_available',
-	);
+	const k8sPodFilesystemAvailableKey = 'k8s.pod.filesystem.available';
 
-	const k8sPodFilesystemUsageKey = getKey(
-		'k8s.pod.filesystem.usage',
-		'k8s_pod_filesystem_usage',
-	);
+	const k8sPodFilesystemUsageKey = 'k8s.pod.filesystem.usage';
 
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
+	const k8sPodNameKey = 'k8s.pod.name';
 
-	const k8sNamespaceNameKey = getKey('k8s.namespace.name', 'k8s_namespace_name');
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
 	return [
 		{
 			selectedTime: 'GLOBAL_TIME',

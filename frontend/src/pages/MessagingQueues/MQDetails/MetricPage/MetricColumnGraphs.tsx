@@ -4,8 +4,6 @@ import { CardContainer } from 'container/GridCardLayout/styles';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Widgets } from 'types/api/dashboard/getAll';
 
-import { FeatureKeys } from '../../../../constants/features';
-import { useAppContext } from '../../../../providers/App/App';
 import MetricPageGridGraph from './MetricPageGraph';
 import {
 	getAverageRequestLatencyWidgetData,
@@ -73,20 +71,15 @@ function MetricColumnGraphs({
 }): JSX.Element {
 	const { t } = useTranslation('messagingQueues');
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const metricsData = [
 		{
 			title: t('metricGraphCategory.brokerMetrics.title'),
 			description: t('metricGraphCategory.brokerMetrics.description'),
 			graphCount: [
-				getBrokerCountWidgetData(dotMetricsEnabled),
-				getRequestTimesWidgetData(dotMetricsEnabled),
-				getProducerFetchRequestPurgatoryWidgetData(dotMetricsEnabled),
-				getBrokerNetworkThroughputWidgetData(dotMetricsEnabled),
+				getBrokerCountWidgetData(),
+				getRequestTimesWidgetData(),
+				getProducerFetchRequestPurgatoryWidgetData(),
+				getBrokerNetworkThroughputWidgetData(),
 			],
 			id: 'broker-metrics',
 		},
@@ -94,11 +87,11 @@ function MetricColumnGraphs({
 			title: t('metricGraphCategory.producerMetrics.title'),
 			description: t('metricGraphCategory.producerMetrics.description'),
 			graphCount: [
-				getIoWaitTimeWidgetData(dotMetricsEnabled),
-				getRequestResponseWidgetData(dotMetricsEnabled),
-				getAverageRequestLatencyWidgetData(dotMetricsEnabled),
-				getKafkaProducerByteRateWidgetData(dotMetricsEnabled),
-				getBytesConsumedWidgetData(dotMetricsEnabled),
+				getIoWaitTimeWidgetData(),
+				getRequestResponseWidgetData(),
+				getAverageRequestLatencyWidgetData(),
+				getKafkaProducerByteRateWidgetData(),
+				getBytesConsumedWidgetData(),
 			],
 			id: 'producer-metrics',
 		},
@@ -106,11 +99,11 @@ function MetricColumnGraphs({
 			title: t('metricGraphCategory.consumerMetrics.title'),
 			description: t('metricGraphCategory.consumerMetrics.description'),
 			graphCount: [
-				getConsumerOffsetWidgetData(dotMetricsEnabled),
-				getConsumerGroupMemberWidgetData(dotMetricsEnabled),
-				getConsumerLagByGroupWidgetData(dotMetricsEnabled),
-				getConsumerFetchRateWidgetData(dotMetricsEnabled),
-				getMessagesConsumedWidgetData(dotMetricsEnabled),
+				getConsumerOffsetWidgetData(),
+				getConsumerGroupMemberWidgetData(),
+				getConsumerLagByGroupWidgetData(),
+				getConsumerFetchRateWidgetData(),
+				getMessagesConsumedWidgetData(),
 			],
 			id: 'consumer-metrics',
 		},

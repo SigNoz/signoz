@@ -25,8 +25,6 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
@@ -132,11 +130,6 @@ function K8sNodesList({
 		}
 	}, [quickFiltersLastUpdated]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sNodesRowData,
 		groupBy: IBuilderQuery['groupBy'],
@@ -220,15 +213,10 @@ function K8sNodesList({
 		isLoading: isLoadingGroupedByRowData,
 		isError: isErrorGroupedByRowData,
 		refetch: fetchGroupedByRowData,
-	} = useGetK8sNodesList(
-		fetchGroupedByRowDataQuery as K8sNodesListPayload,
-		{
-			queryKey: groupedByRowDataQueryKey,
-			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
-		},
-		undefined,
-		dotMetricsEnabled,
-	);
+	} = useGetK8sNodesList(fetchGroupedByRowDataQuery as K8sNodesListPayload, {
+		queryKey: groupedByRowDataQueryKey,
+		enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
+	});
 
 	const {
 		data: groupByFiltersData,
@@ -236,10 +224,7 @@ function K8sNodesList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.NODES,
-				dotMetricsEnabled,
-			),
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(K8sCategory.NODES),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -320,8 +305,6 @@ function K8sNodesList({
 			enabled: !!query,
 			keepPreviousData: true,
 		},
-		undefined,
-		dotMetricsEnabled,
 	);
 
 	const nodesData = useMemo(() => data?.payload?.data?.records || [], [data]);

@@ -17,7 +17,6 @@ type UseGetK8sJobsList = (
 	>,
 
 	headers?: Record<string, string>,
-	dotMetricsEnabled?: boolean,
 ) => UseQueryResult<
 	SuccessResponse<K8sJobsListResponse> | ErrorResponse,
 	Error
@@ -29,7 +28,6 @@ export const useGetK8sJobsList: UseGetK8sJobsList = (
 	options,
 
 	headers,
-	dotMetricsEnabled,
 ) => {
 	const queryKey = useMemo(() => {
 		if (options?.queryKey && Array.isArray(options.queryKey)) {
@@ -44,8 +42,7 @@ export const useGetK8sJobsList: UseGetK8sJobsList = (
 	}, [options?.queryKey, requestData]);
 
 	return useQuery<SuccessResponse<K8sJobsListResponse> | ErrorResponse, Error>({
-		queryFn: ({ signal }) =>
-			getK8sJobsList(requestData, signal, headers, dotMetricsEnabled),
+		queryFn: ({ signal }) => getK8sJobsList(requestData, signal, headers),
 
 		...options,
 

@@ -25,8 +25,6 @@ import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
 import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
@@ -138,11 +136,6 @@ function K8sNamespacesList({
 		}
 	}, [quickFiltersLastUpdated]);
 
-	const { featureFlags } = useAppContext();
-	const dotMetricsEnabled =
-		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
-			?.active || false;
-
 	const createFiltersForSelectedRowData = (
 		selectedRowData: K8sNamespacesRowData,
 		groupBy: IBuilderQuery['groupBy'],
@@ -232,8 +225,6 @@ function K8sNamespacesList({
 			queryKey: groupedByRowDataQueryKey,
 			enabled: !!fetchGroupedByRowDataQuery && !!selectedRowData,
 		},
-		undefined,
-		dotMetricsEnabled,
 	);
 
 	const {
@@ -242,10 +233,7 @@ function K8sNamespacesList({
 	} = useGetAggregateKeys(
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.NAMESPACES,
-				dotMetricsEnabled,
-			),
+			aggregateAttribute: GetK8sEntityToAggregateAttribute(K8sCategory.NAMESPACES),
 			aggregateOperator: 'noop',
 			searchText: '',
 			tagType: '',
@@ -319,8 +307,6 @@ function K8sNamespacesList({
 			enabled: !!query,
 			keepPreviousData: true,
 		},
-		undefined,
-		dotMetricsEnabled,
 	);
 
 	const namespacesData = useMemo(() => data?.payload?.data?.records || [], [

@@ -54,88 +54,40 @@ export const getNodeMetricsQueryPayload = (
 	node: K8sNodesData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const getKey = (dotKey: string, underscoreKey: string): string =>
-		dotMetricsEnabled ? dotKey : underscoreKey;
-	const k8sNodeCpuUtilizationKey = getKey(
-		'k8s.node.cpu.usage',
-		'k8s_node_cpu_usage',
-	);
+	const k8sNodeCpuUtilizationKey = 'k8s.node.cpu.usage';
 
-	const k8sNodeAllocatableCpuKey = getKey(
-		'k8s.node.allocatable_cpu',
-		'k8s_node_allocatable_cpu',
-	);
+	const k8sNodeAllocatableCpuKey = 'k8s.node.allocatable_cpu';
 
-	const k8sContainerCpuRequestKey = getKey(
-		'k8s.container.cpu_request',
-		'k8s_container_cpu_request',
-	);
+	const k8sContainerCpuRequestKey = 'k8s.container.cpu_request';
 
-	const k8sNodeMemoryUsageKey = getKey(
-		'k8s.node.memory.usage',
-		'k8s_node_memory_usage',
-	);
+	const k8sNodeMemoryUsageKey = 'k8s.node.memory.usage';
 
-	const k8sNodeAllocatableMemoryKey = getKey(
-		'k8s.node.allocatable_memory',
-		'k8s_node_allocatable_memory',
-	);
+	const k8sNodeAllocatableMemoryKey = 'k8s.node.allocatable_memory';
 
-	const k8sContainerMemoryRequestKey = getKey(
-		'k8s.container.memory_request',
-		'k8s_container_memory_request',
-	);
+	const k8sContainerMemoryRequestKey = 'k8s.container.memory_request';
 
-	const k8sNodeMemoryWorkingSetKey = getKey(
-		'k8s.node.memory.working_set',
-		'k8s_node_memory_working_set',
-	);
+	const k8sNodeMemoryWorkingSetKey = 'k8s.node.memory.working_set';
 
-	const k8sNodeMemoryRssKey = getKey(
-		'k8s.node.memory.rss',
-		'k8s_node_memory_rss',
-	);
+	const k8sNodeMemoryRssKey = 'k8s.node.memory.rss';
 
-	const k8sPodCpuUtilizationKey = getKey(
-		'k8s.pod.cpu.usage',
-		'k8s_pod_cpu_usage',
-	);
+	const k8sPodCpuUtilizationKey = 'k8s.pod.cpu.usage';
 
-	const k8sPodMemoryUsageKey = getKey(
-		'k8s.pod.memory.usage',
-		'k8s_pod_memory_usage',
-	);
+	const k8sPodMemoryUsageKey = 'k8s.pod.memory.usage';
 
-	const k8sNodeNetworkErrorsKey = getKey(
-		'k8s.node.network.errors',
-		'k8s_node_network_errors',
-	);
+	const k8sNodeNetworkErrorsKey = 'k8s.node.network.errors';
 
-	const k8sNodeNetworkIoKey = getKey(
-		'k8s.node.network.io',
-		'k8s_node_network_io',
-	);
+	const k8sNodeNetworkIoKey = 'k8s.node.network.io';
 
-	const k8sNodeFilesystemUsageKey = getKey(
-		'k8s.node.filesystem.usage',
-		'k8s_node_filesystem_usage',
-	);
+	const k8sNodeFilesystemUsageKey = 'k8s.node.filesystem.usage';
 
-	const k8sNodeFilesystemCapacityKey = getKey(
-		'k8s.node.filesystem.capacity',
-		'k8s_node_filesystem_capacity',
-	);
+	const k8sNodeFilesystemCapacityKey = 'k8s.node.filesystem.capacity';
 
-	const k8sNodeFilesystemAvailableKey = getKey(
-		'k8s.node.filesystem.available',
-		'k8s_node_filesystem_available',
-	);
+	const k8sNodeFilesystemAvailableKey = 'k8s.node.filesystem.available';
 
-	const k8sNodeNameKey = getKey('k8s.node.name', 'k8s_node_name');
+	const k8sNodeNameKey = 'k8s.node.name';
 
-	const k8sPodNameKey = getKey('k8s.pod.name', 'k8s_pod_name');
+	const k8sPodNameKey = 'k8s.pod.name';
 
 	return [
 		{

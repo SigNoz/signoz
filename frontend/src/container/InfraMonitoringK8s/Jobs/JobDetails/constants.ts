@@ -30,24 +30,13 @@ export const getJobMetricsQueryPayload = (
 	job: K8sJobsData,
 	start: number,
 	end: number,
-	dotMetricsEnabled: boolean,
 ): GetQueryResultsProps[] => {
-	const k8sPodCpuUtilizationKey = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const k8sPodMemoryUsageKey = dotMetricsEnabled
-		? 'k8s.pod.memory.usage'
-		: 'k8s_pod_memory_usage';
-	const k8sPodNetworkIoKey = dotMetricsEnabled
-		? 'k8s.pod.network.io'
-		: 'k8s_pod_network_io';
-	const k8sPodNetworkErrorsKey = dotMetricsEnabled
-		? 'k8s.pod.network.errors'
-		: 'k8s_pod_network_errors';
-	const k8sJobNameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-	const k8sNamespaceNameKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
+	const k8sPodCpuUtilizationKey = 'k8s.pod.cpu.usage';
+	const k8sPodMemoryUsageKey = 'k8s.pod.memory.usage';
+	const k8sPodNetworkIoKey = 'k8s.pod.network.io';
+	const k8sPodNetworkErrorsKey = 'k8s.pod.network.errors';
+	const k8sJobNameKey = 'k8s.job.name';
+	const k8sNamespaceNameKey = 'k8s.namespace.name';
 
 	return [
 		{

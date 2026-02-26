@@ -36,21 +36,7 @@ export const K8sCategories = {
 	VOLUMES: 'volumes',
 };
 
-export const underscoreMap = {
-	[K8sCategory.HOSTS]: 'system_cpu_load_average_15m',
-	[K8sCategory.PODS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.NODES]: 'k8s_node_cpu_usage',
-	[K8sCategory.NAMESPACES]: 'k8s_pod_cpu_usage',
-	[K8sCategory.CLUSTERS]: 'k8s_node_cpu_usage',
-	[K8sCategory.DEPLOYMENTS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.STATEFULSETS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.DAEMONSETS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.CONTAINERS]: 'k8s_pod_cpu_usage',
-	[K8sCategory.JOBS]: 'k8s_job_desired_successful_pods',
-	[K8sCategory.VOLUMES]: 'k8s_volume_capacity',
-};
-
-export const dotMap = {
+export const K8sEntityToAggregateAttributeMap = {
 	[K8sCategory.HOSTS]: 'system.cpu.load_average.15m',
 	[K8sCategory.PODS]: 'k8s.pod.cpu.usage',
 	[K8sCategory.NODES]: 'k8s.node.cpu.usage',
@@ -66,51 +52,23 @@ export const dotMap = {
 
 export function GetK8sEntityToAggregateAttribute(
 	category: K8sCategory,
-	dotMetricsEnabled: boolean,
 ): string {
-	return dotMetricsEnabled ? dotMap[category] : underscoreMap[category];
+	return K8sEntityToAggregateAttributeMap[category];
 }
 
-export function GetPodsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const podKey = dotMetricsEnabled ? 'k8s.pod.name' : 'k8s_pod_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const nodeKey = dotMetricsEnabled ? 'k8s.node.name' : 'k8s_node_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const deploymentKey = dotMetricsEnabled
-		? 'k8s.deployment.name'
-		: 'k8s_deployment_name';
-	const statefulsetKey = dotMetricsEnabled
-		? 'k8s.statefulset.name'
-		: 'k8s_statefulset_name';
-	const daemonsetKey = dotMetricsEnabled
-		? 'k8s.daemonset.name'
-		: 'k8s_daemonset_name';
-	const jobKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
-	// Define aggregate attribute (metric) name
-	const cpuUtilizationMetric = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-
+export function GetPodsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Pod',
 			attributeKey: {
-				key: podKey,
+				key: 'k8s.pod.name',
 				dataType: DataTypes.String,
 				type: 'tag',
-				id: `${podKey}--string--tag--true`,
+				id: 'k8s.pod.name--string--tag--true',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -118,13 +76,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${namespaceKey}--string--resource--false`,
+				id: 'k8s.namespace.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -132,13 +90,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Node',
 			attributeKey: {
-				key: nodeKey,
+				key: 'k8s.node.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${nodeKey}--string--resource--false`,
+				id: 'k8s.node.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -146,13 +104,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource--false`,
+				id: 'k8s.cluster.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -160,13 +118,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Deployment',
 			attributeKey: {
-				key: deploymentKey,
+				key: 'k8s.deployment.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${deploymentKey}--string--resource--false`,
+				id: 'k8s.deployment.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -174,13 +132,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Statefulset',
 			attributeKey: {
-				key: statefulsetKey,
+				key: 'k8s.statefulset.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${statefulsetKey}--string--resource--false`,
+				id: 'k8s.statefulset.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -188,13 +146,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'DaemonSet',
 			attributeKey: {
-				key: daemonsetKey,
+				key: 'k8s.daemonset.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${daemonsetKey}--string--resource--false`,
+				id: 'k8s.daemonset.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -202,13 +160,13 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Job',
 			attributeKey: {
-				key: jobKey,
+				key: 'k8s.job.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${jobKey}--string--resource--false`,
+				id: 'k8s.job.name--string--resource--false',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilizationMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: false,
 		},
@@ -216,7 +174,7 @@ export function GetPodsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -225,33 +183,19 @@ export function GetPodsQuickFiltersConfig(
 	];
 }
 
-export function GetNodesQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	// Define attribute keys
-	const nodeKey = dotMetricsEnabled ? 'k8s.node.name' : 'k8s_node_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-
-	// Define aggregate metric name for node CPU utilization
-	const cpuUtilMetric = dotMetricsEnabled
-		? 'k8s.node.cpu.usage'
-		: 'k8s_node_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetNodesQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Node Name',
 			attributeKey: {
-				key: nodeKey,
+				key: 'k8s.node.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${nodeKey}--string--resource--true`,
+				id: 'k8s.node.name--string--resource--true',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilMetric,
+			aggregateAttribute: 'k8s.node.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -259,13 +203,13 @@ export function GetNodesQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource--true`,
+				id: 'k8s.cluster.name--string--resource--true',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilMetric,
+			aggregateAttribute: 'k8s.node.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -273,7 +217,7 @@ export function GetNodesQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -282,32 +226,19 @@ export function GetNodesQuickFiltersConfig(
 	];
 }
 
-export function GetNamespaceQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const cpuUtilMetric = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetNamespaceQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${namespaceKey}--string--resource`,
+				id: 'k8s.namespace.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -315,13 +246,13 @@ export function GetNamespaceQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource`,
+				id: 'k8s.cluster.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilMetric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -329,7 +260,7 @@ export function GetNamespaceQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -338,29 +269,19 @@ export function GetNamespaceQuickFiltersConfig(
 	];
 }
 
-export function GetClustersQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const cpuUtilMetric = dotMetricsEnabled
-		? 'k8s.node.cpu.usage'
-		: 'k8s_node_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetClustersQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource`,
+				id: 'k8s.cluster.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: cpuUtilMetric,
+			aggregateAttribute: 'k8s.node.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -368,7 +289,7 @@ export function GetClustersQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -377,25 +298,16 @@ export function GetClustersQuickFiltersConfig(
 	];
 }
 
-export function GetContainersQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const containerKey = dotMetricsEnabled
-		? 'k8s.container.name'
-		: 'k8s_container_name';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetContainersQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Container',
 			attributeKey: {
-				key: containerKey,
+				key: 'k8s.container.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${containerKey}--string--resource`,
+				id: 'k8s.container.name--string--resource',
 			},
 			defaultOpen: true,
 		},
@@ -403,7 +315,7 @@ export function GetContainersQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -412,35 +324,19 @@ export function GetContainersQuickFiltersConfig(
 	];
 }
 
-export function GetVolumesQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const pvcKey = dotMetricsEnabled
-		? 'k8s.persistentvolumeclaim.name'
-		: 'k8s_persistentvolumeclaim_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const volumeMetric = dotMetricsEnabled
-		? 'k8s.volume.capacity'
-		: 'k8s_volume_capacity';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetVolumesQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'PVC Volume Claim Name',
 			attributeKey: {
-				key: pvcKey,
+				key: 'k8s.persistentvolumeclaim.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${pvcKey}--string--resource`,
+				id: 'k8s.persistentvolumeclaim.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: volumeMetric,
+			aggregateAttribute: 'k8s.volume.capacity',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -448,13 +344,13 @@ export function GetVolumesQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${namespaceKey}--string--resource`,
+				id: 'k8s.namespace.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: volumeMetric,
+			aggregateAttribute: 'k8s.volume.capacity',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -462,13 +358,13 @@ export function GetVolumesQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource`,
+				id: 'k8s.cluster.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: volumeMetric,
+			aggregateAttribute: 'k8s.volume.capacity',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -476,7 +372,7 @@ export function GetVolumesQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -485,33 +381,19 @@ export function GetVolumesQuickFiltersConfig(
 	];
 }
 
-export function GetDeploymentsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const deployKey = dotMetricsEnabled
-		? 'k8s.deployment.name'
-		: 'k8s_deployment_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const metric = dotMetricsEnabled ? 'k8s.pod.cpu.usage' : 'k8s_pod_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetDeploymentsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Deployment Name',
 			attributeKey: {
-				key: deployKey,
+				key: 'k8s.deployment.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${deployKey}--string--resource`,
+				id: 'k8s.deployment.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -519,13 +401,13 @@ export function GetDeploymentsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${namespaceKey}--string--resource`,
+				id: 'k8s.namespace.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -533,13 +415,13 @@ export function GetDeploymentsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource`,
+				id: 'k8s.cluster.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -547,7 +429,7 @@ export function GetDeploymentsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -556,33 +438,19 @@ export function GetDeploymentsQuickFiltersConfig(
 	];
 }
 
-export function GetStatefulsetsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const ssKey = dotMetricsEnabled
-		? 'k8s.statefulset.name'
-		: 'k8s_statefulset_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const metric = dotMetricsEnabled ? 'k8s.pod.cpu.usage' : 'k8s_pod_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetStatefulsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Statefulset Name',
 			attributeKey: {
-				key: ssKey,
+				key: 'k8s.statefulset.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${ssKey}--string--resource`,
+				id: 'k8s.statefulset.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -590,13 +458,13 @@ export function GetStatefulsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${namespaceKey}--string--resource`,
+				id: 'k8s.namespace.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -604,13 +472,13 @@ export function GetStatefulsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${clusterKey}--string--resource`,
+				id: 'k8s.cluster.name--string--resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metric,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -618,7 +486,7 @@ export function GetStatefulsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -627,35 +495,19 @@ export function GetStatefulsetsQuickFiltersConfig(
 	];
 }
 
-export function GetDaemonsetsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const nameKey = dotMetricsEnabled
-		? 'k8s.daemonset.name'
-		: 'k8s_daemonset_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const metricName = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetDaemonsetsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'DaemonSet Name',
 			attributeKey: {
-				key: nameKey,
+				key: 'k8s.daemonset.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${nameKey}--string--resource--true`,
+				id: 'k8s.daemonset.name--string--resource--true',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -663,12 +515,12 @@ export function GetDaemonsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -676,12 +528,12 @@ export function GetDaemonsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -689,7 +541,7 @@ export function GetDaemonsetsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
@@ -698,33 +550,19 @@ export function GetDaemonsetsQuickFiltersConfig(
 	];
 }
 
-export function GetJobsQuickFiltersConfig(
-	dotMetricsEnabled: boolean,
-): IQuickFiltersConfig[] {
-	const nameKey = dotMetricsEnabled ? 'k8s.job.name' : 'k8s_job_name';
-	const namespaceKey = dotMetricsEnabled
-		? 'k8s.namespace.name'
-		: 'k8s_namespace_name';
-	const clusterKey = dotMetricsEnabled ? 'k8s.cluster.name' : 'k8s_cluster_name';
-	const metricName = dotMetricsEnabled
-		? 'k8s.pod.cpu.usage'
-		: 'k8s_pod_cpu_usage';
-	const environmentKey = dotMetricsEnabled
-		? 'deployment.environment'
-		: 'deployment_environment';
-
+export function GetJobsQuickFiltersConfig(): IQuickFiltersConfig[] {
 	return [
 		{
 			type: FiltersType.CHECKBOX,
 			title: 'Job Name',
 			attributeKey: {
-				key: nameKey,
+				key: 'k8s.job.name',
 				dataType: DataTypes.String,
 				type: 'resource',
-				id: `${nameKey}--string--resource--true`,
+				id: 'k8s.job.name--string--resource--true',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -732,12 +570,12 @@ export function GetJobsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Namespace Name',
 			attributeKey: {
-				key: namespaceKey,
+				key: 'k8s.namespace.name',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -745,12 +583,12 @@ export function GetJobsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Cluster Name',
 			attributeKey: {
-				key: clusterKey,
+				key: 'k8s.cluster.name',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},
 			aggregateOperator: 'noop',
-			aggregateAttribute: metricName,
+			aggregateAttribute: 'k8s.pod.cpu.usage',
 			dataSource: DataSource.METRICS,
 			defaultOpen: true,
 		},
@@ -758,7 +596,7 @@ export function GetJobsQuickFiltersConfig(
 			type: FiltersType.CHECKBOX,
 			title: 'Environment',
 			attributeKey: {
-				key: environmentKey,
+				key: 'deployment.environment',
 				dataType: DataTypes.String,
 				type: 'resource',
 			},

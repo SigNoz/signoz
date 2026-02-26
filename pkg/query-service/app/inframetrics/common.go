@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
-var dotMetricMap = map[string]string{
+var metricKeyMap = map[string]string{
 	"system_cpu_time":                       "system.cpu.time",
 	"system_memory_usage":                   "system.memory.usage",
 	"system_cpu_load_average_15m":           "system.cpu.load_average.15m",
@@ -57,8 +57,6 @@ var dotMetricMap = map[string]string{
 	"k8s_volume_capacity":                   "k8s.volume.capacity",
 	"k8s_volume_inodes":                     "k8s.volume.inodes",
 	"k8s_volume_inodes_free":                "k8s.volume.inodes.free",
-	// add additional mappings as needed
-
 	"k8s_pod_uid":              "k8s.pod.uid",
 	"k8s_pod_name":             "k8s.pod.name",
 	"k8s_container_name":       "k8s.container.name",
@@ -206,39 +204,39 @@ WHERE metric_name IN (%s)
 var (
 	// TODO(srikanthccv): import metadata yaml from receivers and use generated files to check the metrics
 	podMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_pod_cpu_usage"),
-		GetDotMetrics("k8s_pod_memory_working_set"),
-		GetDotMetrics("k8s_pod_cpu_request_utilization"),
-		GetDotMetrics("k8s_pod_memory_request_utilization"),
-		GetDotMetrics("k8s_pod_cpu_limit_utilization"),
-		GetDotMetrics("k8s_pod_memory_limit_utilization"),
-		GetDotMetrics("k8s_container_restarts"),
-		GetDotMetrics("k8s_pod_phase"),
+		MetricKey("k8s_pod_cpu_usage"),
+		MetricKey("k8s_pod_memory_working_set"),
+		MetricKey("k8s_pod_cpu_request_utilization"),
+		MetricKey("k8s_pod_memory_request_utilization"),
+		MetricKey("k8s_pod_cpu_limit_utilization"),
+		MetricKey("k8s_pod_memory_limit_utilization"),
+		MetricKey("k8s_container_restarts"),
+		MetricKey("k8s_pod_phase"),
 	}
 	nodeMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_node_cpu_usage"),
-		GetDotMetrics("k8s_node_allocatable_cpu"),
-		GetDotMetrics("k8s_node_memory_working_set"),
-		GetDotMetrics("k8s_node_allocatable_memory"),
-		GetDotMetrics("k8s_node_condition_ready"),
+		MetricKey("k8s_node_cpu_usage"),
+		MetricKey("k8s_node_allocatable_cpu"),
+		MetricKey("k8s_node_memory_working_set"),
+		MetricKey("k8s_node_allocatable_memory"),
+		MetricKey("k8s_node_condition_ready"),
 	}
 	clusterMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_daemonset_desired_scheduled_nodes"),
-		GetDotMetrics("k8s_daemonset_current_scheduled_nodes"),
-		GetDotMetrics("k8s_deployment_desired"),
-		GetDotMetrics("k8s_deployment_available"),
-		GetDotMetrics("k8s_job_desired_successful_pods"),
-		GetDotMetrics("k8s_job_active_pods"),
-		GetDotMetrics("k8s_job_failed_pods"),
-		GetDotMetrics("k8s_job_successful_pods"),
-		GetDotMetrics("k8s_statefulset_desired_pods"),
-		GetDotMetrics("k8s_statefulset_current_pods"),
+		MetricKey("k8s_daemonset_desired_scheduled_nodes"),
+		MetricKey("k8s_daemonset_current_scheduled_nodes"),
+		MetricKey("k8s_deployment_desired"),
+		MetricKey("k8s_deployment_available"),
+		MetricKey("k8s_job_desired_successful_pods"),
+		MetricKey("k8s_job_active_pods"),
+		MetricKey("k8s_job_failed_pods"),
+		MetricKey("k8s_job_successful_pods"),
+		MetricKey("k8s_statefulset_desired_pods"),
+		MetricKey("k8s_statefulset_current_pods"),
 	}
 	optionalPodMetricNamesToCheck = []string{
-		GetDotMetrics("k8s_pod_cpu_request_utilization"),
-		GetDotMetrics("k8s_pod_memory_request_utilization"),
-		GetDotMetrics("k8s_pod_cpu_limit_utilization"),
-		GetDotMetrics("k8s_pod_memory_limit_utilization"),
+		MetricKey("k8s_pod_cpu_request_utilization"),
+		MetricKey("k8s_pod_memory_request_utilization"),
+		MetricKey("k8s_pod_cpu_limit_utilization"),
+		MetricKey("k8s_pod_memory_limit_utilization"),
 	}
 
 	// did they ever send _any_ pod metrics?
@@ -276,15 +274,15 @@ SELECT
     any(JSONExtractString(labels, '%s')) as k8s_job_name,
     JSONExtractString(labels, '%s')       as k8s_pod_name
 `,
-		GetDotMetrics("k8s_cluster_name"),
-		GetDotMetrics("k8s_node_name"),
-		GetDotMetrics("k8s_namespace_name"),
-		GetDotMetrics("k8s_deployment_name"),
-		GetDotMetrics("k8s_statefulset_name"),
-		GetDotMetrics("k8s_daemonset_name"),
-		GetDotMetrics("k8s_cronjob_name"),
-		GetDotMetrics("k8s_job_name"),
-		GetDotMetrics("k8s_pod_name"),
+		MetricKey("k8s_cluster_name"),
+		MetricKey("k8s_node_name"),
+		MetricKey("k8s_namespace_name"),
+		MetricKey("k8s_deployment_name"),
+		MetricKey("k8s_statefulset_name"),
+		MetricKey("k8s_daemonset_name"),
+		MetricKey("k8s_cronjob_name"),
+		MetricKey("k8s_job_name"),
+		MetricKey("k8s_pod_name"),
 	)
 
 	filterGroupQuery = fmt.Sprintf(`
@@ -293,7 +291,7 @@ AND JSONExtractString(labels, '%s')
 GROUP BY k8s_pod_name
 LIMIT 1 BY k8s_cluster_name, k8s_node_name, k8s_namespace_name
 `,
-		GetDotMetrics("k8s_namespace_name"),
+		MetricKey("k8s_namespace_name"),
 	)
 
 	isSendingRequiredMetadataQuery = selectQuery + fromWhereQuery + filterGroupQuery
@@ -395,11 +393,9 @@ func localQueryToDistributedQuery(query string) string {
 	return strings.Replace(query, ".time_series_v4", ".distributed_time_series_v4", 1)
 }
 
-func GetDotMetrics(key string) string {
-	if constants.IsDotMetricsEnabled {
-		if _, ok := dotMetricMap[key]; ok {
-			return dotMetricMap[key]
-		}
+func MetricKey(key string) string {
+	if v, ok := metricKeyMap[key]; ok {
+		return v
 	}
 	return key
 }
