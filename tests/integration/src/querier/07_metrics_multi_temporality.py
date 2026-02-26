@@ -353,7 +353,7 @@ def test_for_week_long_time_range(
 
     metrics = Metrics.load_from_file(
         MULTI_TEMPORALITY_FILE_10h,
-        base_time=now - timedelta(minutes=600),
+        base_time=now - timedelta(minutes=1441),
         metric_name_override=metric_name,
     )
     insert_metrics(metrics)
