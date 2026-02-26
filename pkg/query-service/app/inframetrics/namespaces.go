@@ -196,6 +196,14 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, orgID valuer
 	return topNamespaceGroups, allNamespaceGroups, nil
 }
 
+func (p *NamespacesRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForPods {
+		names = append(names, metricName)
+	}
+	return p.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, orgID valuer.UUID, req model.NamespaceListRequest) (model.NamespaceListResponse, error) {
 	resp := model.NamespaceListResponse{}
 
@@ -212,6 +220,22 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, orgID valuer.UUID
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := p.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.NamespaceListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.NamespaceListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))

@@ -42,8 +42,8 @@ export interface K8sStatefulSetsListResponse {
 		records: K8sStatefulSetsData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

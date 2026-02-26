@@ -43,8 +43,8 @@ export interface K8sDeploymentsListResponse {
 		records: K8sDeploymentsData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

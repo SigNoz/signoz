@@ -202,6 +202,14 @@ func (p *ClustersRepo) getTopClusterGroups(ctx context.Context, orgID valuer.UUI
 	return topClusterGroups, allClusterGroups, nil
 }
 
+func (p *ClustersRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForNodes {
+		names = append(names, metricName)
+	}
+	return p.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (p *ClustersRepo) GetClusterList(ctx context.Context, orgID valuer.UUID, req model.ClusterListRequest) (model.ClusterListResponse, error) {
 	resp := model.ClusterListResponse{}
 
@@ -218,6 +226,22 @@ func (p *ClustersRepo) GetClusterList(ctx context.Context, orgID valuer.UUID, re
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := p.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.ClusterListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.ClusterListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))

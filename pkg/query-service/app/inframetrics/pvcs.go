@@ -229,6 +229,14 @@ func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, orgID valuer.UUID, re
 	return topVolumeGroups, allVolumeGroups, nil
 }
 
+func (p *PvcsRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForVolumes {
+		names = append(names, metricName)
+	}
+	return p.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (p *PvcsRepo) GetPvcList(ctx context.Context, orgID valuer.UUID, req model.VolumeListRequest) (model.VolumeListResponse, error) {
 	resp := model.VolumeListResponse{}
 
@@ -245,6 +253,22 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, orgID valuer.UUID, req model.
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := p.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.VolumeListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.VolumeListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))

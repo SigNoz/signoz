@@ -371,6 +371,14 @@ func (p *PodsRepo) getTopPodGroups(ctx context.Context, orgID valuer.UUID, req m
 	return topPodGroups, allPodGroups, nil
 }
 
+func (p *PodsRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForPods {
+		names = append(names, metricName)
+	}
+	return p.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (p *PodsRepo) GetPodList(ctx context.Context, orgID valuer.UUID, req model.PodListRequest) (model.PodListResponse, error) {
 	resp := model.PodListResponse{}
 
@@ -387,6 +395,22 @@ func (p *PodsRepo) GetPodList(ctx context.Context, orgID valuer.UUID, req model.
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := p.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.PodListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.PodListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
