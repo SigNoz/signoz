@@ -22,7 +22,8 @@ type RootConfig struct {
 }
 
 type OrgConfig struct {
-	Name string `mapstructure:"name"`
+	ID   valuer.UUID `mapstructure:"id"`
+	Name string      `mapstructure:"name"`
 }
 
 type PasswordConfig struct {
