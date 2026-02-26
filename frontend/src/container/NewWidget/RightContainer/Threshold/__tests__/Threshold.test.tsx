@@ -16,20 +16,25 @@ jest.mock('lib/query/createTableColumnsFromQuery', () => ({
 	),
 }));
 
-// Mock the unitOptions function
+// Mock the unitOptions function to return YAxisCategory-shaped data
 jest.mock('container/NewWidget/utils', () => ({
 	unitOptions: jest.fn(() => [
 		{
-			value: UniversalYAxisUnit.NONE,
-			label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NONE],
-		},
-		{
-			value: UniversalYAxisUnit.PERCENT,
-			label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT],
-		},
-		{
-			value: UniversalYAxisUnit.MILLISECONDS,
-			label: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MILLISECONDS],
+			name: 'Mock Category',
+			units: [
+				{
+					id: UniversalYAxisUnit.NONE,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NONE],
+				},
+				{
+					id: UniversalYAxisUnit.PERCENT,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT],
+				},
+				{
+					id: UniversalYAxisUnit.MILLISECONDS,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MILLISECONDS],
+				},
+			],
 		},
 	]),
 }));
