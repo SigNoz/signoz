@@ -3,6 +3,7 @@ package metrictypes
 import (
 	"database/sql/driver"
 	"fmt"
+	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -216,6 +217,10 @@ func (SpaceAggregation) Enum() []any {
 		SpaceAggregationPercentile95,
 		SpaceAggregationPercentile99,
 	}
+}
+
+func (s SpaceAggregation) IsValid() bool {
+	return slices.ContainsFunc(s.Enum(), func(v any) bool { return v == s })
 }
 
 func (s SpaceAggregation) IsPercentile() bool {

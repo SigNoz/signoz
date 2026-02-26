@@ -523,7 +523,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
-	if query.Aggregations[0].SpaceAggregation.IsZero() {
+	if query.Aggregations[0].SpaceAggregation.IsZero() || !query.Aggregations[0].SpaceAggregation.IsValid() {
 		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
