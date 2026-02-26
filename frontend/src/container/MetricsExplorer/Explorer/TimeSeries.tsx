@@ -1,8 +1,13 @@
 import { useMemo } from 'react';
-import { useQueries } from 'react-query';
+import { useQueries, useQueryClient } from 'react-query';
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { toast } from '@signozhq/sonner';
+import { Button, Tooltip, Typography } from 'antd';
+import {
+	invalidateGetMetricMetadata,
+	useUpdateMetricMetadata,
+} from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
@@ -23,7 +28,10 @@ import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { TimeSeriesProps } from './types';
-import { splitQueryIntoOneChartPerQuery } from './utils';
+import {
+	buildUpdateMetricYAxisUnitPayload,
+	splitQueryIntoOneChartPerQuery,
+} from './utils';
 
 function TimeSeries({
 	showOneChartPerQuery,
@@ -35,6 +43,7 @@ function TimeSeries({
 	yAxisUnit,
 	setYAxisUnit,
 	showYAxisUnitSelector,
+	metrics,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
@@ -42,6 +51,7 @@ function TimeSeries({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const queryClient = useQueryClient();
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -138,54 +148,51 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
-	// TODO: Enable once we have resolved all related metrics v2 api issues
 	// Show the save unit button if
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
 	// 3. The user has selected a unit
-	// const showSaveUnitButton = useMemo(
-	// 	() =>
-	// 		metricUnits.length === 1 &&
-	// 		Boolean(metrics?.[0]) &&
-	// 		!metricUnits[0] &&
-	// 		yAxisUnit,
-	// 	[metricUnits, metrics, yAxisUnit],
-	// );
+	const showSaveUnitButton = useMemo(
+		() =>
+			metricUnits.length === 1 &&
+			Boolean(metrics[0]) &&
+			!metricUnits[0] &&
+			yAxisUnit,
+		[metricUnits, metrics, yAxisUnit],
+	);
 
-	// const {
-	// 	mutate: updateMetricMetadata,
-	// 	isLoading: isUpdatingMetricMetadata,
-	// } = useUpdateMetricMetadata();
+	const {
+		mutate: updateMetricMetadata,
+		isLoading: isUpdatingMetricMetadata,
+	} = useUpdateMetricMetadata();
 
-	// const handleSaveUnit = (): void => {
-	// 	updateMetricMetadata(
-	// 		{
-	// 			metricName: metricNames[0],
-	// 			payload: {
-	// 				unit: yAxisUnit,
-	// 				description: metrics[0]?.description ?? '',
-	// 				metricType: metrics[0]?.type as MetricType,
-	// 				temporality: metrics[0]?.temporality,
-	// 			},
-	// 		},
-	// 		{
-	// 			onSuccess: () => {
-	// 				notifications.success({
-	// 					message: 'Unit saved successfully',
-	// 				});
-	// 				queryClient.invalidateQueries([
-	// 					REACT_QUERY_KEY.GET_METRIC_DETAILS,
-	// 					metricNames[0],
-	// 				]);
-	// 			},
-	// 			onError: () => {
-	// 				notifications.error({
-	// 					message: 'Failed to save unit',
-	// 				});
-	// 			},
-	// 		},
-	// 	);
-	// };
+	const handleSaveUnit = (): void => {
+		if (metrics[0] && yAxisUnit) {
+			updateMetricMetadata(
+				{
+					pathParams: {
+						metricName: metricNames[0],
+					},
+					data: buildUpdateMetricYAxisUnitPayload(
+						metricNames[0],
+						metrics[0],
+						yAxisUnit,
+					),
+				},
+				{
+					onSuccess: () => {
+						toast.success('Unit saved successfully');
+						invalidateGetMetricMetadata(queryClient, {
+							metricName: metricNames[0],
+						});
+					},
+					onError: () => {
+						toast.error('Failed to save unit');
+					},
+				},
+			);
+		}
+	};
 
 	return (
 		<>
@@ -198,8 +205,7 @@ function TimeSeries({
 							source={YAxisSource.EXPLORER}
 							data-testid="y-axis-unit-selector"
 						/>
-						{/* TODO: Enable once we have resolved all related metrics v2 api issues */}
-						{/* {showSaveUnitButton && (
+						{showSaveUnitButton && (
 							<div className="save-unit-container">
 								<Typography.Text>
 									Save the selected unit for this metric?
@@ -213,7 +219,7 @@ function TimeSeries({
 									<Typography.Paragraph>Yes</Typography.Paragraph>
 								</Button>
 							</div>
-						)} */}
+						)}
 					</>
 				)}
 			</div>
