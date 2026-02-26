@@ -13,7 +13,7 @@ function FieldRenderer({ field }: FieldRendererProps): JSX.Element {
 		<span className="field-renderer-container">
 			{dataType && newField && logType ? (
 				<>
-					<Tooltip placement="left" title={newField}>
+					<Tooltip placement="left" title={newField} mouseLeaveDelay={0}>
 						<Typography.Text ellipsis className="label">
 							{newField}{' '}
 						</Typography.Text>

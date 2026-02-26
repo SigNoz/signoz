@@ -9,6 +9,7 @@ import {
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
+import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
 	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
@@ -31,6 +32,9 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
+	const dashboardId = useDashboardVariablesSelector(
+		(state) => state.dashboardId,
+	);
 	const sortedVariablesArray = useDashboardVariablesSelector(
 		(state) => state.sortedVariablesArray,
 	);
@@ -96,6 +100,28 @@ function DashboardVariableSelection(): JSX.Element | null {
 				updateUrlVariable(name || id, value);
 			}
 
+			// Synchronously update the external store with the new variable value so that
+			// child variables see the updated parent value when they refetch, rather than
+			// waiting for setSelectedDashboard → useEffect → updateDashboardVariablesStore.
+			const updatedVariables = { ...dashboardVariables };
+			if (updatedVariables[id]) {
+				updatedVariables[id] = {
+					...updatedVariables[id],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			if (updatedVariables[name]) {
+				updatedVariables[name] = {
+					...updatedVariables[name],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			updateDashboardVariablesStore({ dashboardId, variables: updatedVariables });
+
 			setSelectedDashboard((prev) => {
 				if (prev) {
 					const oldVariables = { ...prev?.data.variables };
@@ -130,10 +156,12 @@ function DashboardVariableSelection(): JSX.Element | null {
 				return prev;
 			});
 
-			// Cascade: enqueue query-type descendants for refetching
+			// Cascade: enqueue query-type descendants for refetching.
+			// Safe to call synchronously now that the store already has the updated value.
 			enqueueDescendantsOfVariable(name);
 		},
 		[
+			dashboardId,
 			dashboardVariables,
 			updateLocalStorageDashboardVariables,
 			updateUrlVariable,

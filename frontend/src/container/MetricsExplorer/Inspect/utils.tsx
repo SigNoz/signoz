@@ -2,8 +2,8 @@
 import { useMemo, useState } from 'react';
 import { Card, Input, Select, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import classNames from 'classnames';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { AggregatorFilter } from 'container/QueryBuilder/filters';
@@ -40,8 +40,10 @@ import {
  * returns true if the feature flag is enabled, false otherwise
  * Show the inspect button in  metrics explorer if the feature flag is enabled
  */
-export function isInspectEnabled(metricType: MetricType | undefined): boolean {
-	return metricType === MetricType.GAUGE;
+export function isInspectEnabled(
+	metricType: MetrictypesTypeDTO | undefined,
+): boolean {
+	return metricType === MetrictypesTypeDTO.gauge;
 }
 
 export function getAllTimestampsOfMetrics(
