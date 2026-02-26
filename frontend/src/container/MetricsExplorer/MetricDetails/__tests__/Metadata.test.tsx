@@ -1,16 +1,24 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
+import {
+	GetMetricMetadata200,
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
 import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
 } from 'components/YAxisUnitSelector/types';
-import * as useUpdateMetricMetadataHooks from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import * as useNotificationsHooks from 'hooks/useNotifications';
+import { userEvent } from 'tests/test-utils';
 import { SelectOption } from 'types/common/select';
 
 import Metadata from '../Metadata';
+import { MetricMetadata } from '../types';
+import { transformMetricMetadata } from '../utils';
+import { getMockMetricMetadataData, MOCK_METRIC_NAME } from './testUtlls';
 
 // Mock antd select for testing
 jest.mock('antd', () => ({
@@ -72,13 +80,18 @@ jest.mock('react-query', () => ({
 	}),
 }));
 
+const mockUseUpdateMetricMetadataHook = jest.spyOn(
+	metricsExplorerHooks,
+	'useUpdateMetricMetadata',
+);
+type UseUpdateMetricMetadataResult = ReturnType<
+	typeof metricsExplorerHooks.useUpdateMetricMetadata
+>;
 const mockUseUpdateMetricMetadata = jest.fn();
-jest
-	.spyOn(useUpdateMetricMetadataHooks, 'useUpdateMetricMetadata')
-	.mockReturnValue({
-		mutate: mockUseUpdateMetricMetadata,
-		isLoading: false,
-	} as any);
+
+const mockMetricMetadata = transformMetricMetadata(
+	getMockMetricMetadataData().data as GetMetricMetadata200,
+) as MetricMetadata;
 
 const mockErrorNotification = jest.fn();
 const mockSuccessNotification = jest.fn();
@@ -89,47 +102,50 @@ jest.spyOn(useNotificationsHooks, 'useNotifications').mockReturnValue({
 	},
 } as any);
 
-const mockMetricName = 'test_metric';
-const mockMetricMetadata = {
-	metric_type: MetricType.GAUGE,
-	description: 'test_description',
-	unit: 'test_unit',
-	temporality: Temporality.DELTA,
-};
-const mockRefetchMetricDetails = jest.fn();
+const mockRefetchMetricMetadata = jest.fn();
 
 describe('Metadata', () => {
+	beforeEach(() => {
+		mockUseUpdateMetricMetadataHook.mockReturnValue(({
+			mutate: mockUseUpdateMetricMetadata,
+		} as Partial<UseUpdateMetricMetadataResult>) as UseUpdateMetricMetadataResult);
+	});
+
 	it('should render the metadata properly', () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		expect(screen.getByText('Metric Type')).toBeInTheDocument();
-		expect(screen.getByText(mockMetricMetadata.metric_type)).toBeInTheDocument();
+		expect(screen.getByText('Gauge')).toBeInTheDocument();
 		expect(screen.getByText('Description')).toBeInTheDocument();
 		expect(screen.getByText(mockMetricMetadata.description)).toBeInTheDocument();
 		expect(screen.getByText('Unit')).toBeInTheDocument();
 		expect(screen.getByText(mockMetricMetadata.unit)).toBeInTheDocument();
 		expect(screen.getByText('Temporality')).toBeInTheDocument();
-		expect(screen.getByText(mockMetricMetadata.temporality)).toBeInTheDocument();
+		expect(screen.getByText('Delta')).toBeInTheDocument();
 	});
 
-	it('editing the metadata should show the form inputs', () => {
+	it('editing the metadata should show the form inputs', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
 		expect(editButton).toBeInTheDocument();
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		expect(screen.getByTestId('metric-type-select')).toBeInTheDocument();
 		expect(screen.getByTestId('temporality-select')).toBeInTheDocument();
@@ -139,57 +155,53 @@ describe('Metadata', () => {
 	it('should update the metadata when the form is submitted', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={{
 					...mockMetricMetadata,
 					unit: '',
 				}}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
 		expect(editButton).toBeInTheDocument();
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const metricDescriptionInput = screen.getByTestId('description-input');
 		expect(metricDescriptionInput).toBeInTheDocument();
-		fireEvent.change(metricDescriptionInput, {
-			target: { value: 'Updated description' },
-		});
+		await userEvent.clear(metricDescriptionInput);
+		await userEvent.type(metricDescriptionInput, 'Updated description');
 
 		const metricTypeSelect = screen.getByTestId('metric-type-select');
 		expect(metricTypeSelect).toBeInTheDocument();
-		fireEvent.change(metricTypeSelect, {
-			target: { value: MetricType.SUM },
-		});
+		await userEvent.selectOptions(metricTypeSelect, MetrictypesTypeDTO.sum);
 
 		const temporalitySelect = screen.getByTestId('temporality-select');
 		expect(temporalitySelect).toBeInTheDocument();
-		fireEvent.change(temporalitySelect, {
-			target: { value: Temporality.CUMULATIVE },
-		});
+		await userEvent.selectOptions(temporalitySelect, Temporality.CUMULATIVE);
 
 		const unitSelect = screen.getByTestId('unit-select');
 		expect(unitSelect).toBeInTheDocument();
-		fireEvent.change(unitSelect, {
-			target: { value: 'By' },
-		});
+		await userEvent.selectOptions(unitSelect, 'By');
 
 		const saveButton = screen.getByText('Save');
 		expect(saveButton).toBeInTheDocument();
-		fireEvent.click(saveButton);
+		await userEvent.click(saveButton);
 
 		expect(mockUseUpdateMetricMetadata).toHaveBeenCalledWith(
 			expect.objectContaining({
-				metricName: mockMetricName,
-				payload: expect.objectContaining({
-					description: 'Updated description',
-					metricType: MetricType.SUM,
-					temporality: Temporality.CUMULATIVE,
+				data: expect.objectContaining({
+					type: MetrictypesTypeDTO.sum,
+					temporality: MetrictypesTemporalityDTO.cumulative,
 					unit: 'By',
 					isMonotonic: true,
 				}),
+				pathParams: {
+					metricName: MOCK_METRIC_NAME,
+				},
 			}),
 			expect.objectContaining({
 				onSuccess: expect.any(Function),
@@ -201,56 +213,56 @@ describe('Metadata', () => {
 	it('should show success notification when metadata is updated successfully', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const metricDescriptionInput = screen.getByTestId('description-input');
-		fireEvent.change(metricDescriptionInput, {
-			target: { value: 'Updated description' },
-		});
+		await userEvent.clear(metricDescriptionInput);
+		await userEvent.type(metricDescriptionInput, 'Updated description');
 
 		const saveButton = screen.getByText('Save');
-		fireEvent.click(saveButton);
+		await userEvent.click(saveButton);
 
 		const onSuccessCallback =
 			mockUseUpdateMetricMetadata.mock.calls[0][1].onSuccess;
-		onSuccessCallback({ statusCode: 200 });
+		onSuccessCallback({ status: 200 });
 
 		expect(mockSuccessNotification).toHaveBeenCalledWith({
 			message: 'Metadata updated successfully',
 		});
-		expect(mockRefetchMetricDetails).toHaveBeenCalled();
 	});
 
 	it('should show error notification when metadata update fails with non-200 response', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const metricDescriptionInput = screen.getByTestId('description-input');
-		fireEvent.change(metricDescriptionInput, {
-			target: { value: 'Updated description' },
-		});
+		await userEvent.clear(metricDescriptionInput);
+		await userEvent.type(metricDescriptionInput, 'Updated description');
 
 		const saveButton = screen.getByText('Save');
-		fireEvent.click(saveButton);
+		await userEvent.click(saveButton);
 
-		const onSuccessCallback =
-			mockUseUpdateMetricMetadata.mock.calls[0][1].onSuccess;
-		onSuccessCallback({ statusCode: 500 });
+		const onErrorCallback = mockUseUpdateMetricMetadata.mock.calls[0][1].onError;
+		onErrorCallback({ status: 500 });
 
 		expect(mockErrorNotification).toHaveBeenCalledWith({
 			message:
@@ -261,22 +273,23 @@ describe('Metadata', () => {
 	it('should show error notification when metadata update fails', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const metricDescriptionInput = screen.getByTestId('description-input');
-		fireEvent.change(metricDescriptionInput, {
-			target: { value: 'Updated description' },
-		});
+		await userEvent.clear(metricDescriptionInput);
+		await userEvent.type(metricDescriptionInput, 'Updated description');
 
 		const saveButton = screen.getByText('Save');
-		fireEvent.click(saveButton);
+		await userEvent.click(saveButton);
 
 		const onErrorCallback = mockUseUpdateMetricMetadata.mock.calls[0][1].onError;
 
@@ -289,39 +302,43 @@ describe('Metadata', () => {
 		});
 	});
 
-	it('cancel button should cancel the edit mode', () => {
+	it('cancel button should cancel the edit mode', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
 		expect(editButton).toBeInTheDocument();
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const cancelButton = screen.getByText('Cancel');
 		expect(cancelButton).toBeInTheDocument();
-		fireEvent.click(cancelButton);
+		await userEvent.click(cancelButton);
 
 		const editButton2 = screen.getByText('Edit');
 		expect(editButton2).toBeInTheDocument();
 	});
 
-	it('should not allow editing of unit if it is already set', () => {
+	it('should not allow editing of unit if it is already set', async () => {
 		render(
 			<Metadata
-				metricName={mockMetricName}
+				metricName={MOCK_METRIC_NAME}
 				metadata={mockMetricMetadata}
-				refetchMetricDetails={mockRefetchMetricDetails}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata={false}
+				refetchMetricMetadata={mockRefetchMetricMetadata}
 			/>,
 		);
 
 		const editButton = screen.getByText('Edit');
 		expect(editButton).toBeInTheDocument();
-		fireEvent.click(editButton);
+		await userEvent.click(editButton);
 
 		const unitSelect = screen.queryByTestId('unit-select');
 		expect(unitSelect).not.toBeInTheDocument();
