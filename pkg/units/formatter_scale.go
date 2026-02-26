@@ -1,4 +1,4 @@
-package formatter
+package units
 
 import (
 	"fmt"
@@ -14,36 +14,36 @@ type IntervalsInSecondsType map[Interval]int
 type Interval string
 
 const (
-	Year        Interval = "year"
-	Month       Interval = "month"
-	Week        Interval = "week"
-	Day         Interval = "day"
-	Hour        Interval = "hour"
-	Minute      Interval = "minute"
-	Second      Interval = "second"
-	Millisecond Interval = "millisecond"
+	IntervalYear        Interval = "year"
+	IntervalMonth       Interval = "month"
+	IntervalWeek        Interval = "week"
+	IntervalDay         Interval = "day"
+	IntervalHour        Interval = "hour"
+	IntervalMinute      Interval = "minute"
+	IntervalSecond      Interval = "second"
+	IntervalMillisecond Interval = "millisecond"
 )
 
 var Units = []Interval{
-	Year,
-	Month,
-	Week,
-	Day,
-	Hour,
-	Minute,
-	Second,
-	Millisecond,
+	IntervalYear,
+	IntervalMonth,
+	IntervalWeek,
+	IntervalDay,
+	IntervalHour,
+	IntervalMinute,
+	IntervalSecond,
+	IntervalMillisecond,
 }
 
 var IntervalsInSeconds = IntervalsInSecondsType{
-	Year:        31536000,
-	Month:       2592000,
-	Week:        604800,
-	Day:         86400,
-	Hour:        3600,
-	Minute:      60,
-	Second:      1,
-	Millisecond: 1,
+	IntervalYear:        31536000,
+	IntervalMonth:       2592000,
+	IntervalWeek:        604800,
+	IntervalDay:         86400,
+	IntervalHour:        3600,
+	IntervalMinute:      60,
+	IntervalSecond:      1,
+	IntervalMillisecond: 1,
 }
 
 type DecimalCount *int

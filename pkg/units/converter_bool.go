@@ -1,4 +1,4 @@
-package converter
+package units
 
 // boolConverter is a Converter implementation for bool
 type boolConverter struct{}
