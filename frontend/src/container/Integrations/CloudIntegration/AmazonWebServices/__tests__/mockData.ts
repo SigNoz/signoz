@@ -1,3 +1,5 @@
+import { ServiceDetailsResponse } from '../types';
+
 const CLOUD_ACCOUNT_ID = '123456789012';
 
 const initialBuckets = { 'us-east-2': ['first-bucket', 'second-bucket'] };
@@ -22,4 +24,31 @@ const accountsResponse = {
 	},
 };
 
-export { accountsResponse, CLOUD_ACCOUNT_ID, initialBuckets };
+/** Response shape for GET /cloud-integrations/aws/services/:serviceId (used by ServiceDetails). */
+const buildServiceDetailsResponse = (
+	serviceId: string,
+	initialConfigLogsS3Buckets: Record<string, string[]> = {},
+): ServiceDetailsResponse => ({
+	status: 'success',
+	data: {
+		id: serviceId,
+		title: serviceId === 's3sync' ? 'S3 Sync' : serviceId,
+		icon: '',
+		overview: '',
+		supported_signals: { logs: serviceId === 's3sync', metrics: false },
+		assets: { dashboards: [] },
+		data_collected: { logs: [], metrics: [] },
+		config: {
+			logs: { enabled: true, s3_buckets: initialConfigLogsS3Buckets },
+			metrics: { enabled: false },
+		},
+		status: { logs: null, metrics: null },
+	},
+});
+
+export {
+	accountsResponse,
+	buildServiceDetailsResponse,
+	CLOUD_ACCOUNT_ID,
+	initialBuckets,
+};
