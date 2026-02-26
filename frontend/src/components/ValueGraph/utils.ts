@@ -44,6 +44,17 @@ function getHighestPrecedenceThreshold(
 	return highestPrecedenceThreshold;
 }
 
+function extractNumbersFromString(inputString: string): number[] {
+	const regex = /[+-]?\d+(\.\d+)?/g;
+	const matches = inputString.match(regex);
+
+	if (matches) {
+		return matches.map(Number);
+	}
+
+	return [];
+}
+
 export function getBackgroundColorAndThresholdCheck(
 	thresholds: ThresholdProps[],
 	rawValue: number,
@@ -52,9 +63,13 @@ export function getBackgroundColorAndThresholdCheck(
 	threshold: ThresholdProps;
 	isConflictingThresholds: boolean;
 } {
-	const matchingThresholds = thresholds.filter((threshold) =>
-		doesValueSatisfyThreshold(rawValue, threshold, yAxisUnit),
-	);
+	const matchingThresholds = thresholds.filter((threshold) => {
+		const numbers = extractNumbersFromString(rawValue.toString());
+		if (numbers.length === 0) {
+			return false;
+		}
+		return doesValueSatisfyThreshold(numbers[0], threshold, yAxisUnit);
+	});
 
 	if (matchingThresholds.length === 0) {
 		return {
