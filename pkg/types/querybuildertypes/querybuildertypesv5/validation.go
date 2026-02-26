@@ -43,50 +43,115 @@ const (
 	MaxQueryLimit = 10000
 )
 
-// Validate performs preliminary validation on QueryBuilderQuery
-func (q *QueryBuilderQuery[T]) Validate(requestType RequestType) error {
-	// Validate signal
+// ValidationOption is a functional option for configuring validation behaviour.
+type ValidationOption func(*validationConfig)
+
+type validationConfig struct {
+	skipLimitValidation       bool
+	skipAggregationValidation bool
+	skipHavingValidation      bool
+	skipAggregationOrderBy    bool
+	skipSelectFieldValidation bool
+	skipGroupByValidation     bool
+}
+
+func applyValidationOptions(opts []ValidationOption) validationConfig {
+	cfg := validationConfig{}
+	for _, opt := range opts {
+		opt(&cfg)
+	}
+	return cfg
+}
+
+// SkipLimitValidation returns a ValidationOption that skips the limit range check.
+// Use this when the caller has already validated limits with different constraints.
+func WithSkipLimitValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipLimitValidation = true
+	}
+}
+
+// SkipAggregationValidation skips aggregation validation.
+// Used for raw/trace request types where aggregations are not required.
+func WithSkipAggregationValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipAggregationValidation = true
+	}
+}
+
+// SkipHavingValidation skips having-clause validation.
+// Used for raw/trace request types where having clauses do not apply.
+func WithSkipHavingValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipHavingValidation = true
+	}
+}
+
+// SkipAggregationOrderBy skips the aggregation-specific order-by key validation.
+// Used for raw/trace request types where order-by keys are not restricted to group-by or aggregation keys.
+func WithSkipAggregationOrderBy() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipAggregationOrderBy = true
+	}
+}
+
+// SkipSelectFieldValidation skips select-field validation.
+// Used for aggregation request types where select fields do not apply.
+func WithSkipSelectFieldValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipSelectFieldValidation = true
+	}
+}
+
+// SkipGroupByValidation skips group-by validation.
+// Used for raw/trace request types where group-by does not apply.
+func WithSkipGroupByValidation() ValidationOption {
+	return func(cfg *validationConfig) {
+		cfg.skipGroupByValidation = true
+	}
+}
+
+// Validate performs preliminary validation on QueryBuilderQuery.
+func (q *QueryBuilderQuery[T]) Validate(opts ...ValidationOption) error {
+	cfg := applyValidationOptions(opts)
+
 	if err := q.validateSignal(); err != nil {
 		return err
 	}
 
-	if err := q.validateAggregations(requestType); err != nil {
+	if err := q.validateAggregations(cfg); err != nil {
 		return err
 	}
 
-	if err := q.validateGroupBy(requestType); err != nil {
+	if err := q.validateGroupBy(cfg); err != nil {
 		return err
 	}
 
-	// Validate limit and pagination
-	if err := q.validateLimitAndPagination(); err != nil {
+	if err := q.validateLimitAndPagination(cfg); err != nil {
 		return err
 	}
 
-	// Validate functions
 	if err := q.validateFunctions(); err != nil {
 		return err
 	}
 
-	// Validate secondary aggregations
 	if err := q.validateSecondaryAggregations(); err != nil {
 		return err
 	}
 
-	if err := q.validateOrderBy(requestType); err != nil {
+	if err := q.validateOrderBy(cfg); err != nil {
 		return err
 	}
 
-	if err := q.validateSelectFields(requestType); err != nil {
+	if err := q.validateSelectFields(cfg); err != nil {
 		return err
 	}
 
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateSelectFields(requestType RequestType) error {
-	// selectFields don't apply to aggregation queries, skip validation
-	if requestType.IsAggregation() {
+func (q *QueryBuilderQuery[T]) validateSelectFields(cfg validationConfig) error {
+	if cfg.skipSelectFieldValidation {
 		return nil
 	}
 
@@ -102,9 +167,8 @@ func (q *QueryBuilderQuery[T]) validateSelectFields(requestType RequestType) err
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateGroupBy(requestType RequestType) error {
-	// groupBy doesn't apply to non-aggregation queries, skip validation
-	if !requestType.IsAggregation() {
+func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
+	if cfg.skipGroupByValidation {
 		return nil
 	}
 	for idx, item := range q.GroupBy {
@@ -137,9 +201,8 @@ func (q *QueryBuilderQuery[T]) validateSignal() error {
 	}
 }
 
-func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) error {
-	// aggregations don't apply to non-aggregation queries, skip validation
-	if !requestType.IsAggregation() {
+func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error {
+	if cfg.skipAggregationValidation {
 		return nil
 	}
 
@@ -219,24 +282,25 @@ func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) err
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateLimitAndPagination() error {
-	// Validate limit
-	if q.Limit < 0 {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"limit must be non-negative, got %d",
-			q.Limit,
-		)
-	}
+func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) error {
+	if !cfg.skipLimitValidation {
+		if q.Limit < 0 {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"limit must be non-negative, got %d",
+				q.Limit,
+			)
+		}
 
-	if q.Limit > MaxQueryLimit {
-		return errors.NewInvalidInputf(
-			errors.CodeInvalidInput,
-			"limit exceeds maximum allowed value of %d",
-			MaxQueryLimit,
-		).WithAdditional(
-			fmt.Sprintf("Provided limit: %d", q.Limit),
-		)
+		if q.Limit > MaxQueryLimit {
+			return errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"limit exceeds maximum allowed value of %d",
+				MaxQueryLimit,
+			).WithAdditional(
+				fmt.Sprintf("Provided limit: %d", q.Limit),
+			)
+		}
 	}
 
 	// Validate offset
@@ -283,7 +347,7 @@ func (q *QueryBuilderQuery[T]) validateSecondaryAggregations() error {
 	return nil
 }
 
-func (q *QueryBuilderQuery[T]) validateOrderBy(requestType RequestType) error {
+func (q *QueryBuilderQuery[T]) validateOrderBy(cfg validationConfig) error {
 	for i, order := range q.Order {
 		// Direction validation is handled by the OrderDirection type
 		if order.Direction != OrderDirectionAsc && order.Direction != OrderDirectionDesc {
@@ -302,8 +366,7 @@ func (q *QueryBuilderQuery[T]) validateOrderBy(requestType RequestType) error {
 		}
 	}
 
-	// aggregation-specific order key validation only applies to aggregation queries
-	if requestType.IsAggregation() {
+	if !cfg.skipAggregationOrderBy {
 		return q.validateOrderByForAggregation()
 	}
 
@@ -385,8 +448,8 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	return nil
 }
 
-// ValidateQueryRangeRequest validates the entire query range request
-func (r *QueryRangeRequest) Validate() error {
+// Validate validates the entire query range request.
+func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	// Validate time range
 	if r.RequestType != RequestTypeRawStream && r.Start >= r.End {
 		return errors.NewInvalidInputf(
@@ -397,8 +460,10 @@ func (r *QueryRangeRequest) Validate() error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTimeSeries, RequestTypeScalar, RequestTypeTrace:
-		// Valid request types
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+		opts = append(opts, getValidationOptions(false)...)
+	case RequestTypeTimeSeries, RequestTypeScalar:
+		opts = append(opts, getValidationOptions(true)...)
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -410,7 +475,7 @@ func (r *QueryRangeRequest) Validate() error {
 	}
 
 	// Validate composite query
-	if err := r.validateCompositeQuery(); err != nil {
+	if err := r.CompositeQuery.Validate(opts...); err != nil {
 		return err
 	}
 
@@ -436,12 +501,8 @@ func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	)
 }
 
-func (r *QueryRangeRequest) validateCompositeQuery() error {
-	return r.CompositeQuery.Validate(r.RequestType)
-}
-
 // Validate performs validation on CompositeQuery
-func (c *CompositeQuery) Validate(requestType RequestType) error {
+func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 	if len(c.Queries) == 0 {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -453,7 +514,7 @@ func (c *CompositeQuery) Validate(requestType RequestType) error {
 	queryNames := make(map[string]bool)
 
 	for i, envelope := range c.Queries {
-		if err := validateQueryEnvelope(envelope, requestType); err != nil {
+		if err := validateQueryEnvelope(envelope, opts...); err != nil {
 			queryId := getQueryIdentifier(envelope, i)
 			return wrapValidationError(err, queryId, "invalid %s: %s")
 		}
@@ -477,16 +538,16 @@ func (c *CompositeQuery) Validate(requestType RequestType) error {
 	return nil
 }
 
-func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) error {
+func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) error {
 	switch envelope.Type {
 	case QueryTypeBuilder, QueryTypeSubQuery:
 		switch spec := envelope.Spec.(type) {
 		case QueryBuilderQuery[TraceAggregation]:
-			return spec.Validate(requestType)
+			return spec.Validate(opts...)
 		case QueryBuilderQuery[LogAggregation]:
-			return spec.Validate(requestType)
+			return spec.Validate(opts...)
 		case QueryBuilderQuery[MetricAggregation]:
-			return spec.Validate(requestType)
+			return spec.Validate(opts...)
 		default:
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
@@ -571,4 +632,12 @@ func validateQueryEnvelope(envelope QueryEnvelope, requestType RequestType) erro
 			"Valid query types are: builder_query, builder_sub_query, builder_formula, builder_join, promql, clickhouse_sql, trace_operator",
 		)
 	}
+}
+
+func getValidationOptions(isAggregationQuery bool) []ValidationOption {
+	if isAggregationQuery {
+		return []ValidationOption{WithSkipSelectFieldValidation()}
+	}
+	return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
+
 }

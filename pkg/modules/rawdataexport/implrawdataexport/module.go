@@ -23,20 +23,12 @@ func NewModule(querier querier.Querier) rawdataexport.Module {
 
 func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, doneChan chan any) (chan *qbtypes.RawRow, chan error) {
 
-	isTraceOperatorQueryPresent := false
-	traceOperatorQueryIndex := -1
+	traceOperatorQueryIndex := rangeRequest.TraceOperatorQueryIndex()
 
 	queries := rangeRequest.CompositeQuery.Queries
-	for idx := range len(queries) {
-		if _, ok := queries[idx].Spec.(qbtypes.QueryBuilderTraceOperator); ok {
-			isTraceOperatorQueryPresent = true
-			traceOperatorQueryIndex = idx
-			break
-		}
-	}
 
 	// If the trace operator query is present, mark the queries other than trace operator as disabled
-	if isTraceOperatorQueryPresent {
+	if traceOperatorQueryIndex > -1 {
 		for idx := range len(queries) {
 			if idx != traceOperatorQueryIndex {
 				queries[idx].SetDisabled(true)
@@ -56,7 +48,7 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 		defer close(errChan)
 		defer close(rowChan)
 
-		if isTraceOperatorQueryPresent {
+		if traceOperatorQueryIndex > -1 {
 			// If the trace operator query is present, we need to export the data for the trace operator query only
 			exportRawDataForSingleQuery(m.querier, contextWithTimeout, orgID, rangeRequest, rowChan, errChan, doneChan, traceOperatorQueryIndex)
 		} else {
@@ -71,14 +63,14 @@ func (m *Module) ExportRawData(ctx context.Context, orgID valuer.UUID, rangeRequ
 
 func exportRawDataForSingleQuery(querier querier.Querier, ctx context.Context, orgID valuer.UUID, rangeRequest *qbtypes.QueryRangeRequest, rowChan chan *qbtypes.RawRow, errChan chan error, doneChan chan any, queryIndex int) {
 
-	query := rangeRequest.CompositeQuery.Queries[queryIndex]
-	rowCountLimit := query.GetLimit()
+	queries := rangeRequest.CompositeQuery.Queries
+	rowCountLimit := queries[queryIndex].GetLimit()
 	rowCount := 0
 
 	for rowCount < rowCountLimit {
 		chunkSize := min(ChunkSize, rowCountLimit-rowCount)
-		query.SetLimit(chunkSize)
-		query.SetOffset(rowCount)
+		queries[queryIndex].SetLimit(chunkSize)
+		queries[queryIndex].SetOffset(rowCount)
 
 		response, err := querier.QueryRange(ctx, orgID, rangeRequest)
 		if err != nil {

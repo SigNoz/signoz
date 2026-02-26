@@ -6,9 +6,8 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"slices"
 	"strconv"
-	"strings"
-	"sync"
 	"time"
 	"unicode"
 	"unicode/utf8"
@@ -36,15 +35,21 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	var queryRangeRequest qbtypes.QueryRangeRequest
 	var format string
 
-	if r.Method == http.MethodGet {
+	switch r.Method {
+	case http.MethodGet:
 		var params exporttypes.ExportRawDataQueryParams
 		if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
 			render.Error(rw, err)
 			return
 		}
+		params.Normalize()
+		if err := params.Validate(); err != nil {
+			render.Error(rw, err)
+			return
+		}
 		format = params.Format
 		queryRangeRequest = buildQueryRangeRequest(&params)
-	} else {
+	case http.MethodPost:
 		var formatParam exporttypes.ExportRawDataFormatQueryParam
 		if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
 			render.Error(rw, err)
@@ -55,12 +60,23 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request body: %v", err))
 			return
 		}
+	default:
+		render.Error(rw, errors.Newf(errors.TypeMethodNotAllowed, errors.CodeMethodNotAllowed, "method not allowed, only GET/POST supported"))
+		return
 	}
 
-	if err := validateAndApplyExportLimits(&queryRangeRequest); err != nil {
+	if err := validateSpecForExport(&queryRangeRequest); err != nil {
 		render.Error(rw, err)
 		return
 	}
+
+	if err := validateAndApplyDefaultExportLimits(queryRangeRequest.CompositeQuery.Queries); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	// Use default OrderBy if not specified
+	queryRangeRequest.UseDefaultOrderBy()
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
 	if err != nil {
@@ -88,21 +104,13 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("X-Response-Complete", strconv.FormatBool(isComplete))
 }
 
-// validateAndApplyExportLimits validates query types and applies default/max limits to all queries.
-func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
-	isTraceOperatorQueryPresent := false
+// validateSpecForExport validates query specs
+func validateSpecForExport(req *qbtypes.QueryRangeRequest) error {
 
-	// Check if the trace operator query is present
 	queries := req.CompositeQuery.Queries
-	for idx := range len(queries) {
-		if _, ok := queries[idx].Spec.(qbtypes.QueryBuilderTraceOperator); ok {
-			isTraceOperatorQueryPresent = true
-			break
-		}
-	}
 
 	// If the trace operator query is not present, and there are multiple queries, return an error
-	if !isTraceOperatorQueryPresent && len(queries) > 1 {
+	if req.TraceOperatorQueryIndex() == -1 && len(queries) > 1 {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "multiple queries not allowed without a trace operator query")
 	}
 
@@ -111,57 +119,57 @@ func validateAndApplyExportLimits(req *qbtypes.QueryRangeRequest) error {
 		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation],
 			qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
 			qbtypes.QueryBuilderTraceOperator:
-			limit := queries[idx].GetLimit()
-			if limit == 0 {
-				limit = DefaultExportRowCountLimit
-			} else if limit < 0 {
-				return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
-			} else if limit > MaxExportRowCountLimit {
-				return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
-			}
-			queries[idx].SetLimit(limit)
+			// Supported spec types
 		default:
-			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query type: %T", spec)
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported query at index %d type: %T", idx, spec)
 		}
+	}
+
+	err := req.Validate(qbtypes.WithSkipLimitValidation())
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error {
+	for idx := range queries {
+		limit := queries[idx].GetLimit()
+		if limit == 0 {
+			limit = DefaultExportRowCountLimit
+		} else if limit < 0 {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit must be positive")
+		} else if limit > MaxExportRowCountLimit {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "limit cannot be more than %d", MaxExportRowCountLimit)
+		}
+		queries[idx].SetLimit(limit)
 	}
 	return nil
 }
 
+// buildQueryEnvelope creates a QueryEnvelope with a QueryBuilderQuery for the given aggregation type.
+func buildQueryEnvelope[T any](signal telemetrytypes.Signal, filter *qbtypes.Filter, limit int, order []qbtypes.OrderBy, selectFields []telemetrytypes.TelemetryFieldKey) qbtypes.QueryEnvelope {
+	return qbtypes.QueryEnvelope{
+		Type: qbtypes.QueryTypeBuilder,
+		Spec: qbtypes.QueryBuilderQuery[T]{
+			Signal:       signal,
+			Filter:       filter,
+			Limit:        limit,
+			Order:        order,
+			SelectFields: selectFields,
+		},
+	}
+}
+
 // buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
 func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) qbtypes.QueryRangeRequest {
-	orderBy := parseExportQueryOrderBy(params.OrderBy)
-
-	columns := parseExportQueryColumns(params.Columns)
-
-	var filter *qbtypes.Filter
-	if params.Filter != "" {
-		filter = &qbtypes.Filter{Expression: params.Filter}
-	}
-
 	var query qbtypes.QueryEnvelope
-	switch params.Source {
-	case "logs":
-		query = qbtypes.QueryEnvelope{
-			Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal:       telemetrytypes.SignalLogs,
-				Filter:       filter,
-				Limit:        params.Limit,
-				Order:        orderBy,
-				SelectFields: columns,
-			},
-		}
-	case "traces":
-		query = qbtypes.QueryEnvelope{
-			Type: qbtypes.QueryTypeBuilder,
-			Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
-				Signal:       telemetrytypes.SignalTraces,
-				Filter:       filter,
-				Limit:        params.Limit,
-				Order:        orderBy,
-				SelectFields: columns,
-			},
-		}
+	switch params.Signal {
+	case telemetrytypes.SignalLogs:
+		query = buildQueryEnvelope[qbtypes.LogAggregation](params.Signal, &params.Filter, params.Limit, params.Order, params.SelectFields)
+	case telemetrytypes.SignalTraces:
+		query = buildQueryEnvelope[qbtypes.TraceAggregation](params.Signal, &params.Filter, params.Limit, params.Order, params.SelectFields)
 	}
 
 	return qbtypes.QueryRangeRequest{
@@ -208,8 +216,8 @@ func (handler *handler) executeExport(rowChan <-chan *qbtypes.RawRow, errChan <-
 // exportRawDataCSV is a generic CSV export function that works with any raw data (logs, traces, etc.)
 func (handler *handler) exportRawDataCSV(rowChan <-chan *qbtypes.RawRow, errChan <-chan error, csvWriter *csv.Writer) (bool, error) {
 
+	var header []string
 	headerToIndexMapping := make(map[string]int)
-	var once sync.Once
 
 	totalBytes := uint64(0)
 	for {
@@ -218,14 +226,18 @@ func (handler *handler) exportRawDataCSV(rowChan <-chan *qbtypes.RawRow, errChan
 			if !ok {
 				return true, nil
 			}
-			once.Do(func() {
-				header := constructCSVHeaderFromQueryResponse(row.Data)
-				_ = csvWriter.Write(header)
-				// We ignore the error here, as it will get caught in the next iteration
+			if header == nil {
+				// Initialize and write header for CSV
+				header = constructCSVHeaderFromQueryResponse(row.Data)
+
+				if err := csvWriter.Write(header); err != nil {
+					return false, err
+				}
+
 				for i, col := range header {
 					headerToIndexMapping[col] = i
 				}
-			})
+			}
 			record := constructCSVRecordFromQueryResponse(row.Data, headerToIndexMapping)
 			if err := csvWriter.Write(record); err != nil {
 				return false, err
@@ -276,11 +288,33 @@ func (handler *handler) exportRawDataJSONL(rowChan <-chan *qbtypes.RawRow, errCh
 	}
 }
 
+// priorityColumns defines the columns that should appear first in the CSV output, in order.
+var priorityColumns = []string{"timestamp", "id"}
+
 func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 	header := make([]string, 0, len(data))
 	for key := range data {
 		header = append(header, key)
 	}
+	// This is to ensure CSV output is consistent across multiple queries
+	slices.SortFunc(header, func(a, b string) int {
+		ai, bi := slices.Index(priorityColumns, a), slices.Index(priorityColumns, b)
+		switch {
+		case ai != -1 && bi != -1:
+			return ai - bi
+		case ai != -1:
+			return -1
+		case bi != -1:
+			return 1
+		default:
+			if a < b {
+				return -1
+			} else if a > b {
+				return 1
+			}
+			return 0
+		}
+	})
 	return header
 }
 
@@ -355,46 +389,10 @@ func constructCSVRecordFromQueryResponse(data map[string]any, headerToIndexMappi
 	return record
 }
 
-// parseExportQueryColumns converts bound column strings to TelemetryFieldKey structs.
-// Each column should be in the format "context.field:type" or "context.field" or "field"
-func parseExportQueryColumns(columnParams []string) []telemetrytypes.TelemetryFieldKey {
-	columns := make([]telemetrytypes.TelemetryFieldKey, 0, len(columnParams))
-	for _, columnStr := range columnParams {
-		columnStr = strings.TrimSpace(columnStr)
-		if columnStr == "" {
-			continue
-		}
-		columns = append(columns, telemetrytypes.GetFieldKeyFromKeyText(columnStr))
-	}
-	return columns
-}
-
 func getsizeOfStringSlice(slice []string) uint64 {
 	var totalBytes uint64
 	for _, str := range slice {
 		totalBytes += uint64(len(str))
 	}
 	return totalBytes
-}
-
-// parseExportQueryOrderBy converts a bound order_by string to an OrderBy slice.
-// The string should be in the format "column:direction" and is assumed already validated.
-func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
-	orderByParam = strings.TrimSpace(orderByParam)
-	if orderByParam == "" {
-		return []qbtypes.OrderBy{}
-	}
-
-	parts := strings.Split(orderByParam, ":")
-	column := strings.Join(parts[:len(parts)-1], ":")
-	direction := parts[len(parts)-1]
-
-	return []qbtypes.OrderBy{
-		{
-			Key: qbtypes.OrderByKey{
-				TelemetryFieldKey: telemetrytypes.GetFieldKeyFromKeyText(column),
-			},
-			Direction: qbtypes.OrderDirectionMap[direction],
-		},
-	}
 }

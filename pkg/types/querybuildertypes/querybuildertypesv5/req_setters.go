@@ -65,15 +65,6 @@ func (q *QueryEnvelope) SetQuery(query string) {
 	}
 }
 
-// SetStep sets the PromQL step size, if applicable.
-func (q *QueryEnvelope) SetStep(step Step) {
-	switch spec := q.Spec.(type) {
-	case PromQuery:
-		spec.Step = step
-		q.Spec = spec
-	}
-}
-
 // SetStats sets the PromQL stats flag, if applicable.
 func (q *QueryEnvelope) SetStats(stats bool) {
 	switch spec := q.Spec.(type) {
@@ -420,6 +411,9 @@ func (q *QueryEnvelope) SetStepInterval(step Step) {
 		q.Spec = spec
 	case QueryBuilderQuery[MetricAggregation]:
 		spec.StepInterval = step
+		q.Spec = spec
+	case PromQuery:
+		spec.Step = step
 		q.Spec = spec
 	}
 }

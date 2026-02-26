@@ -2874,12 +2874,15 @@ paths:
           - jsonl
           type: string
       - in: query
+        name: signal
+        required: true
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - deprecated: true
+        in: query
         name: source
         schema:
-          default: logs
-          enum:
-          - logs
-          - traces
+          deprecated: true
           type: string
       - in: query
         name: start
@@ -2898,20 +2901,44 @@ paths:
           maximum: 50000
           minimum: 1
           type: integer
-      - in: query
+      - deprecated: true
+        in: query
         name: filter
         schema:
+          deprecated: true
           type: string
-      - in: query
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        in: query
+        name: filterExpression
+      - deprecated: true
+        in: query
         name: columns
         schema:
+          deprecated: true
           items:
             type: string
           type: array
       - in: query
+        name: selectFields
+        schema:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      - deprecated: true
+        in: query
         name: order_by
         schema:
+          deprecated: true
           type: string
+      - in: query
+        name: order
+        schema:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
       responses:
         "200":
           content:

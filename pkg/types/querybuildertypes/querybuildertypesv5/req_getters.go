@@ -59,15 +59,6 @@ func (q *QueryEnvelope) GetQuery() string {
 	return ""
 }
 
-// GetStep returns the PromQL step size.
-func (q *QueryEnvelope) GetStep() Step {
-	switch spec := q.Spec.(type) {
-	case PromQuery:
-		return spec.Step
-	}
-	return Step{}
-}
-
 // GetStats returns the PromQL stats flag.
 func (q *QueryEnvelope) GetStats() bool {
 	switch spec := q.Spec.(type) {
@@ -353,6 +344,8 @@ func (q *QueryEnvelope) GetStepInterval() Step {
 		return spec.StepInterval
 	case QueryBuilderQuery[MetricAggregation]:
 		return spec.StepInterval
+	case PromQuery:
+		return spec.Step
 	}
 	return Step{}
 }

@@ -393,6 +393,59 @@ func (r *QueryRangeRequest) HasOrderSpecified() bool {
 	return false
 }
 
+// UseDefaultOrderBy applies a default order unless query has an explicit order provided.
+func (r *QueryRangeRequest) UseDefaultOrderBy() {
+	queries := r.CompositeQuery.Queries
+	for idx := range queries {
+		switch queries[idx].Spec.(type) {
+		case QueryBuilderQuery[TraceAggregation],
+			QueryBuilderTraceOperator:
+			if len(queries[idx].GetOrder()) == 0 {
+				queries[idx].SetOrder(
+					[]OrderBy{
+						{
+							Key: OrderByKey{
+								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+									Name:          "timestamp",
+									Signal:        telemetrytypes.SignalTraces,
+									FieldContext:  telemetrytypes.FieldContextSpan,
+									FieldDataType: telemetrytypes.FieldDataTypeNumber,
+								},
+							},
+							Direction: OrderDirectionDesc,
+						},
+					},
+				)
+			}
+		case QueryBuilderQuery[LogAggregation]:
+			if len(queries[idx].GetOrder()) == 0 {
+				queries[idx].SetOrder(
+					[]OrderBy{
+						{
+							Key: OrderByKey{
+								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp",
+									Signal:        telemetrytypes.SignalLogs,
+									FieldContext:  telemetrytypes.FieldContextLog,
+									FieldDataType: telemetrytypes.FieldDataTypeNumber},
+							},
+							Direction: OrderDirectionDesc,
+						},
+						{
+							Key: OrderByKey{
+								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "id",
+									Signal:        telemetrytypes.SignalLogs,
+									FieldContext:  telemetrytypes.FieldContextLog,
+									FieldDataType: telemetrytypes.FieldDataTypeString},
+							},
+							Direction: OrderDirectionDesc,
+						},
+					},
+				)
+			}
+		}
+	}
+}
+
 func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {
 	funcs := []Function{}
 	for _, query := range r.CompositeQuery.Queries {
@@ -435,6 +488,16 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 	}
 
 	return &q, hasAnomaly
+}
+
+func (r *QueryRangeRequest) TraceOperatorQueryIndex() int {
+	for idx, query := range r.CompositeQuery.Queries {
+		switch query.Spec.(type) {
+		case TraceOperatorType:
+			return idx
+		}
+	}
+	return -1
 }
 
 // We do not support fill gaps for these queries. Maybe support in future?
