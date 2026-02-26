@@ -524,10 +524,25 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
 	if query.Aggregations[0].SpaceAggregation.IsZero() || !query.Aggregations[0].SpaceAggregation.IsValid() {
+		if query.Aggregations[0].Type.IsPercentileSpaceAggregationAllowed() {
+			return "", nil, errors.Newf(
+				errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+			)
+		} else {
+			return "", nil, errors.Newf(
+				errors.TypeInvalidInput,
+				errors.CodeInvalidInput,
+				"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`]",
+			)
+		}
+	}
+	if query.Aggregations[0].SpaceAggregation.IsPercentile() && !query.Aggregations[0].Type.IsPercentileSpaceAggregationAllowed() {
 		return "", nil, errors.Newf(
 			errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
-			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+			"percentile based aggregations are invalid for this metric, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`]",
 		)
 	}
 	sb := sqlbuilder.NewSelectBuilder()
