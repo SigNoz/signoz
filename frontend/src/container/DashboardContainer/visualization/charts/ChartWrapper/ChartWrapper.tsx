@@ -23,6 +23,7 @@ export default function ChartWrapper({
 	width: containerWidth,
 	height: containerHeight,
 	showTooltip = true,
+	showLegend = true,
 	canPinTooltip = false,
 	syncMode,
 	syncKey,
@@ -36,6 +37,9 @@ export default function ChartWrapper({
 
 	const legendComponent = useCallback(
 		(averageLegendWidth: number): React.ReactNode => {
+			if (!showLegend) {
+				return null;
+			}
 			return (
 				<Legend
 					config={config}
@@ -44,7 +48,7 @@ export default function ChartWrapper({
 				/>
 			);
 		},
-		[config, legendConfig.position],
+		[config, legendConfig.position, showLegend],
 	);
 
 	const renderTooltipCallback = useCallback(
@@ -60,6 +64,7 @@ export default function ChartWrapper({
 	return (
 		<PlotContextProvider>
 			<ChartLayout
+				showLegend={showLegend}
 				config={config}
 				containerWidth={containerWidth}
 				containerHeight={containerHeight}

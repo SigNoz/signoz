@@ -1,8 +1,11 @@
 
 node_modules
 
+# editor
 .vscode
 !.vscode/settings.json
+.zed
+.idea
 
 deploy/docker/environment_tiny/common_test
 frontend/node_modules
@@ -30,8 +33,6 @@ frontend/npm-debug.log*
 frontend/yarn-debug.log*
 frontend/yarn-error.log*
 frontend/src/constants/env.ts
-
-.idea
 
 **/build
 **/storage
@@ -229,5 +230,3 @@ cython_debug/
 pyrightconfig.json
 
 
-# cursor files
-frontend/.cursor/

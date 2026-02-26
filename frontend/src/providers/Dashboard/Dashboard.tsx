@@ -84,8 +84,6 @@ const DashboardContext = createContext<IDashboardContext>({
 	toScrollWidgetId: '',
 	setToScrollWidgetId: () => {},
 	updateLocalStorageDashboardVariables: () => {},
-	variablesToGetUpdated: [],
-	setVariablesToGetUpdated: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
 	selectedRowWidgetId: '',
@@ -182,10 +180,6 @@ export function DashboardProvider({
 		path: ROUTES.DASHBOARD_WIDGET,
 		exact: true,
 	});
-
-	const [variablesToGetUpdated, setVariablesToGetUpdated] = useState<string[]>(
-		[],
-	);
 
 	const [layouts, setLayouts] = useState<Layout[]>([]);
 
@@ -517,8 +511,6 @@ export function DashboardProvider({
 			updatedTimeRef,
 			setToScrollWidgetId,
 			updateLocalStorageDashboardVariables,
-			variablesToGetUpdated,
-			setVariablesToGetUpdated,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,
@@ -541,8 +533,6 @@ export function DashboardProvider({
 			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			currentDashboard,
-			variablesToGetUpdated,
-			setVariablesToGetUpdated,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
 			selectedRowWidgetId,

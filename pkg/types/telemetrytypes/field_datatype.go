@@ -93,6 +93,14 @@ var (
 		FieldDataTypeArrayFloat64: "Array(Float64)",
 		FieldDataTypeArrayBool:    "Array(Bool)",
 	}
+
+	ScalerFieldTypeToArrayFieldType = map[FieldDataType]FieldDataType{
+		FieldDataTypeString:  FieldDataTypeArrayString,
+		FieldDataTypeBool:    FieldDataTypeArrayBool,
+		FieldDataTypeNumber:  FieldDataTypeArrayNumber,
+		FieldDataTypeInt64:   FieldDataTypeArrayInt64,
+		FieldDataTypeFloat64: FieldDataTypeArrayFloat64,
+	}
 )
 
 func (f FieldDataType) CHDataType() string {
@@ -167,5 +175,21 @@ func (f FieldDataType) TagDataType() string {
 		return "float64"
 	default:
 		return "string"
+	}
+}
+
+// Enum returns the acceptable values for FieldDataType.
+func (FieldDataType) Enum() []any {
+	return []any{
+		FieldDataTypeString,
+		FieldDataTypeBool,
+		FieldDataTypeFloat64,
+		FieldDataTypeInt64,
+		FieldDataTypeNumber,
+		// FieldDataTypeArrayString,
+		// FieldDataTypeArrayFloat64,
+		// FieldDataTypeArrayBool,
+		// FieldDataTypeArrayInt64,
+		// FieldDataTypeArrayNumber,
 	}
 }

@@ -3,9 +3,9 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics       = featuretypes.MustNewName("use_span_metrics")
-	FeatureInterpolationEnabled = featuretypes.MustNewName("interpolation_enabled")
-	FeatureKafkaSpanEval        = featuretypes.MustNewName("kafka_span_eval")
+	FeatureUseSpanMetrics = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval  = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser   = featuretypes.MustNewName("hide_root_user")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -19,18 +19,18 @@ func MustNewRegistry() featuretypes.Registry {
 			Variants:       featuretypes.NewBooleanVariants(),
 		},
 		&featuretypes.Feature{
-			Name:           FeatureInterpolationEnabled,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageExperimental,
-			Description:    "Controls whether to enable interpolation",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
 			Name:           FeatureKafkaSpanEval,
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageExperimental,
 			Description:    "Controls whether to enable kafka span eval",
+			DefaultVariant: featuretypes.MustNewName("disabled"),
+			Variants:       featuretypes.NewBooleanVariants(),
+		},
+		&featuretypes.Feature{
+			Name:           FeatureHideRootUser,
+			Kind:           featuretypes.KindBoolean,
+			Stage:          featuretypes.StageStable,
+			Description:    "Controls whether root admin user is hidden or not",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

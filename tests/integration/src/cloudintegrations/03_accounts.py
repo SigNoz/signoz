@@ -1,17 +1,13 @@
+import uuid
 from http import HTTPStatus
 from typing import Callable
-import uuid
 
-import pytest
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.logger import setup_logger
-from fixtures.cloudintegrations import (
-    create_cloud_integration_account,
-)
 from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
@@ -40,8 +36,9 @@ def test_list_connected_accounts_empty(
     data = response_data.get("data", response_data)
     assert "accounts" in data, "Response should contain 'accounts' field"
     assert isinstance(data["accounts"], list), "Accounts should be a list"
-    assert len(data["accounts"]) == 0, "Accounts list should be empty when no accounts are connected"
-
+    assert (
+        len(data["accounts"]) == 0
+    ), "Accounts list should be empty when no accounts are connected"
 
 
 def test_list_connected_accounts_with_account(
@@ -60,7 +57,9 @@ def test_list_connected_accounts_with_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # List accounts
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -85,7 +84,6 @@ def test_list_connected_accounts_with_account(
     assert account["id"] == account_id, "Account ID should match"
     assert "config" in account, "Account should have config field"
     assert "status" in account, "Account should have status field"
-
 
 
 def test_get_account_status(
@@ -163,16 +161,16 @@ def test_update_account_config(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Update account configuration
     endpoint = (
         f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/config"
     )
 
-    updated_config = {
-        "config": {"regions": ["us-east-1", "us-west-2", "eu-west-1"]}
-    }
+    updated_config = {"config": {"regions": ["us-east-1", "us-west-2", "eu-west-1"]}}
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
@@ -198,7 +196,6 @@ def test_update_account_config(
         timeout=10,
     )
 
-
     list_response_data = list_response.json()
     list_data = list_response_data.get("data", list_response_data)
     account = next((a for a in list_data["accounts"] if a["id"] == account_id), None)
@@ -211,7 +208,6 @@ def test_update_account_config(
         "us-west-2",
         "eu-west-1",
     }, "Regions should match updated config"
-
 
 
 def test_disconnect_account(
@@ -230,7 +226,9 @@ def test_disconnect_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(signoz, admin_token, cloud_provider, account_id, cloud_account_id)
+    simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    )
 
     # Disconnect the account
     endpoint = (
@@ -262,8 +260,9 @@ def test_disconnect_account(
     disconnected_account = next(
         (a for a in list_data["accounts"] if a["id"] == account_id), None
     )
-    assert disconnected_account is None, f"Account {account_id} should be removed from connected accounts"
-
+    assert (
+        disconnected_account is None
+    ), f"Account {account_id} should be removed from connected accounts"
 
 
 def test_disconnect_account_not_found(
@@ -277,9 +276,7 @@ def test_disconnect_account_not_found(
     cloud_provider = "aws"
     fake_account_id = "00000000-0000-0000-0000-000000000000"
 
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{fake_account_id}/disconnect"
-    )
+    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{fake_account_id}/disconnect"
 
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
@@ -290,7 +287,6 @@ def test_disconnect_account_not_found(
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
     ), f"Expected 404, got {response.status_code}"
-
 
 
 def test_list_accounts_unsupported_provider(

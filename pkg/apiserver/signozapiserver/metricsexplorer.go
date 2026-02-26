@@ -10,6 +10,26 @@ import (
 )
 
 func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v2/metrics", handler.New(
+		provider.authZ.ViewAccess(provider.metricsExplorerHandler.ListMetrics),
+		handler.OpenAPIDef{
+			ID:                  "ListMetrics",
+			Tags:                []string{"metrics"},
+			Summary:             "List metric names",
+			Description:         "This endpoint returns a list of distinct metric names within the specified time range",
+			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.ListMetricsParams),
+			RequestContentType:  "",
+			Response:            new(metricsexplorertypes.ListMetricsResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v2/metrics/stats", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetStats),
 		handler.OpenAPIDef{
@@ -48,26 +68,27 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/attributes", handler.New(
+	if err := router.Handle("/api/v2/metrics/{metric_name}/attributes", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetMetricAttributes),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAttributes",
 			Tags:                []string{"metrics"},
 			Summary:             "Get metric attributes",
 			Description:         "This endpoint returns attribute keys and their unique values for a specified metric",
-			Request:             new(metricsexplorertypes.MetricAttributesRequest),
-			RequestContentType:  "application/json",
+			Request:             nil,
+			RequestQuery:        new(metricsexplorertypes.MetricAttributesRequest),
+			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricAttributesResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
-		})).Methods(http.MethodPost).GetError(); err != nil {
+		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metrics/metadata", handler.New(
+	if err := router.Handle("/api/v2/metrics/{metric_name}/metadata", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetMetricMetadata),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricMetadata",
@@ -75,7 +96,6 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric metadata",
 			Description:         "This endpoint returns metadata information like metric description, unit, type, temporality, monotonicity for a specified metric",
 			Request:             nil,
-			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricMetadata),
 			ResponseContentType: "application/json",
@@ -106,7 +126,7 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metric/highlights", handler.New(
+	if err := router.Handle("/api/v2/metrics/{metric_name}/highlights", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetMetricHighlights),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricHighlights",
@@ -114,19 +134,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric highlights",
 			Description:         "This endpoint returns highlights like number of datapoints, totaltimeseries, active time series, last received time for a specified metric",
 			Request:             nil,
-			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricHighlightsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metric/alerts", handler.New(
+	if err := router.Handle("/api/v2/metrics/{metric_name}/alerts", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetMetricAlerts),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricAlerts",
@@ -134,19 +153,18 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric alerts",
 			Description:         "This endpoint returns associated alerts for a specified metric",
 			Request:             nil,
-			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricAlertsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/metric/dashboards", handler.New(
+	if err := router.Handle("/api/v2/metrics/{metric_name}/dashboards", handler.New(
 		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetMetricDashboards),
 		handler.OpenAPIDef{
 			ID:                  "GetMetricDashboards",
@@ -154,12 +172,11 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 			Summary:             "Get metric dashboards",
 			Description:         "This endpoint returns associated dashboards for a specified metric",
 			Request:             nil,
-			RequestQuery:        new(metricsexplorertypes.MetricNameParams),
 			RequestContentType:  "",
 			Response:            new(metricsexplorertypes.MetricDashboardsResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
-			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusNotFound, http.StatusInternalServerError},
 			Deprecated:          false,
 			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
 		})).Methods(http.MethodGet).GetError(); err != nil {

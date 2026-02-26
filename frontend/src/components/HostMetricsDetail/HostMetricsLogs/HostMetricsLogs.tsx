@@ -1,8 +1,9 @@
 /* eslint-disable no-nested-ternary */
-import { useCallback, useEffect, useMemo } from 'react';
+import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from 'react-query';
-import { Virtuoso } from 'react-virtuoso';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
+import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
@@ -10,6 +11,8 @@ import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
 import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { ILog } from 'types/api/logs/log';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -28,6 +31,15 @@ interface Props {
 }
 
 function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
+	const virtuosoRef = useRef<VirtuosoHandle>(null);
+	const {
+		activeLog,
+		onAddToQuery,
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers();
+
 	const basePayload = getHostLogsQueryPayload(
 		timeRange.startTime,
 		timeRange.endTime,
@@ -72,29 +84,40 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 		setIsPaginating(false);
 	}, [data, setIsPaginating]);
 
+	const handleScrollToLog = useScrollToLog({
+		logs,
+		virtuosoRef,
+	});
+
 	const getItemContent = useCallback(
-		(_: number, logToRender: ILog): JSX.Element => (
-			<RawLogView
-				isTextOverflowEllipsisDisabled
-				key={logToRender.id}
-				data={logToRender}
-				linesPerRow={5}
-				fontSize={FontSize.MEDIUM}
-				selectedFields={[
-					{
-						dataType: 'string',
-						type: '',
-						name: 'body',
-					},
-					{
-						dataType: 'string',
-						type: '',
-						name: 'timestamp',
-					},
-				]}
-			/>
-		),
-		[],
+		(_: number, logToRender: ILog): JSX.Element => {
+			return (
+				<div key={logToRender.id}>
+					<RawLogView
+						isTextOverflowEllipsisDisabled
+						data={logToRender}
+						linesPerRow={5}
+						fontSize={FontSize.MEDIUM}
+						selectedFields={[
+							{
+								dataType: 'string',
+								type: '',
+								name: 'body',
+							},
+							{
+								dataType: 'string',
+								type: '',
+								name: 'timestamp',
+							},
+						]}
+						onSetActiveLog={handleSetActiveLog}
+						onClearActiveLog={handleCloseLogDetail}
+						isActiveLog={activeLog?.id === logToRender.id}
+					/>
+				</div>
+			);
+		},
+		[activeLog, handleSetActiveLog, handleCloseLogDetail],
 	);
 
 	const renderFooter = useCallback(
@@ -118,6 +141,7 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 					<Virtuoso
 						className="host-metrics-logs-virtuoso"
 						key="host-metrics-logs-virtuoso"
+						ref={virtuosoRef}
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -139,7 +163,24 @@ function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="host-metrics-logs-list-container">{renderContent}</div>
+				<div
+					className="host-metrics-logs-list-container"
+					data-log-detail-ignore="true"
+				>
+					{renderContent}
+				</div>
+			)}
+			{selectedTab && activeLog && (
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+					selectedTab={selectedTab}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+					onScrollToLog={handleScrollToLog}
+				/>
 			)}
 		</div>
 	);
