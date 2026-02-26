@@ -49,6 +49,10 @@
 				border: 1px solid var(--l3-background);
 				background: var(--l1-background);
 
+				.azure-service-details-overview-configuration-metrics {
+					border-top: 1px solid var(--l3-background);
+				}
+
 				.azure-service-details-overview-configuration-title {
 					display: flex;
 					flex-direction: row;

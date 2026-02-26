@@ -8,47 +8,13 @@ import logEvent from 'api/common/logEvent';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { Check, ChevronDown } from 'lucide-react';
+import { ChevronDown, PencilLine, Plug, Plus } from 'lucide-react';
 
 import { CloudAccount } from '../../types';
 import AccountSettingsModal from './AccountSettingsModal';
 import CloudAccountSetupModal from './CloudAccountSetupModal';
 
 import './AccountActions.style.scss';
-
-interface AccountOptionItemProps {
-	label: React.ReactNode;
-	isSelected: boolean;
-}
-
-function AccountOptionItem({
-	label,
-	isSelected,
-}: AccountOptionItemProps): JSX.Element {
-	return (
-		<div className="account-option-item">
-			{label}
-			{isSelected && (
-				<div className="account-option-item__selected">
-					<Check size={12} color={Color.BG_VANILLA_100} />
-				</div>
-			)}
-		</div>
-	);
-}
-
-function renderOption(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
-	option: any,
-	activeAccountId: string | undefined,
-): JSX.Element {
-	return (
-		<AccountOptionItem
-			label={option.label}
-			isSelected={option.value === activeAccountId}
-		/>
-	);
-}
 
 function AccountActionsRenderer({
 	accounts,
@@ -74,37 +40,56 @@ function AccountActionsRenderer({
 			</div>
 		);
 	}
+
 	if (accounts?.length) {
 		return (
 			<div className="hero-section__actions-with-account">
-				<Select
-					value={`Account: ${activeAccount?.cloud_account_id}`}
-					options={selectOptions}
-					rootClassName="cloud-account-selector"
-					placeholder="Select AWS Account"
-					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
-					optionRender={(option): JSX.Element =>
-						renderOption(option, activeAccount?.cloud_account_id)
-					}
-					onChange={onAccountChange}
-				/>
+				<div className="hero-section__actions-with-account-selector-container">
+					<div className="account-selector-label">Account:</div>
+
+					<span className="account-selector">
+						<Select
+							value={activeAccount?.cloud_account_id}
+							options={selectOptions}
+							rootClassName="cloud-account-selector"
+							placeholder="Select AWS Account"
+							suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
+							onChange={onAccountChange}
+						/>
+					</span>
+				</div>
 				<div className="hero-section__action-buttons">
-					<Button variant="solid" color="primary" onClick={onIntegrationModalOpen}>
-						Add New AWS Account
-					</Button>
 					<Button
-						variant="solid"
-						color="primary"
+						variant="link"
+						size="sm"
+						color="secondary"
+						prefixIcon={<PencilLine size={14} />}
 						onClick={onAccountSettingsModalOpen}
 					>
-						Account Settings
+						Edit Account
+					</Button>
+
+					<Button
+						variant="link"
+						size="sm"
+						color="secondary"
+						onClick={onIntegrationModalOpen}
+						prefixIcon={<Plus size={14} />}
+					>
+						Add New Account
 					</Button>
 				</div>
 			</div>
 		);
 	}
 	return (
-		<Button variant="solid" color="primary" onClick={onIntegrationModalOpen}>
+		<Button
+			variant="solid"
+			color="primary"
+			prefixIcon={<Plug size={14} />}
+			onClick={onIntegrationModalOpen}
+			size="sm"
+		>
 			Integrate Now
 		</Button>
 	);

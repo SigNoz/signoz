@@ -1,7 +1,10 @@
 .hero-section {
-	padding: 26px 16px;
+	padding: 16px;
+
 	display: flex;
-	gap: 24px;
+	flex-direction: column;
+	gap: 16px;
+
 	position: relative;
 	overflow: hidden;
 	background-position: right;
@@ -9,35 +12,37 @@
 	background-repeat: no-repeat;
 	border-bottom: 1px solid var(--bg-slate-500);
 
-	&__icon {
-		height: fit-content;
-		background-color: var(--bg-ink-400);
-		padding: 12px;
-		border: 1px solid var(--bg-ink-300);
-		border-radius: 6px;
-		width: 60px;
-		height: 60px;
-		display: flex;
-		align-items: center;
-		img {
-			width: 100%;
-		}
-	}
-
 	&__details {
 		display: flex;
 		flex-direction: column;
 		gap: 12px;
 
-		.title {
-			color: var(--bg-vanilla-100);
-			font-size: 24px;
-			font-weight: 500;
-			line-height: 20px;
-			letter-spacing: -0.12px;
+		&-header {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			gap: 16px;
+
+			&__icon {
+				height: fit-content;
+				background-color: var(--bg-ink-400);
+				padding: 12px;
+				border: 1px solid var(--bg-ink-300);
+				border-radius: 6px;
+				width: 60px;
+				height: 60px;
+			}
+
+			&__title {
+				color: var(--bg-vanilla-100);
+				font-size: 24px;
+				font-weight: 500;
+				line-height: 20px;
+				letter-spacing: -0.12px;
+			}
 		}
 
-		.description {
+		&__description {
 			color: var(--bg-vanilla-400);
 			font-size: 12px;
 			font-weight: 400;

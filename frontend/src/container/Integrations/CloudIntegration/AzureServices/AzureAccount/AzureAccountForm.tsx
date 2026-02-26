@@ -16,6 +16,7 @@ import {
 } from 'container/Integrations/types';
 import { CornerDownRight, Unlink } from 'lucide-react';
 import { ConnectionParams } from 'types/api/integrations/types';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 interface AzureAccountFormProps {
 	mode?: 'add' | 'edit';
@@ -129,6 +130,7 @@ export const AzureAccountForm = ({
 								false
 							}
 							notFoundContent={null}
+							getPopupContainer={popupContainer}
 						/>
 					</Form.Item>
 				</div>
@@ -156,6 +158,7 @@ export const AzureAccountForm = ({
 							notFoundContent={null}
 							filterOption={false}
 							showSearch={false}
+							getPopupContainer={popupContainer}
 						/>
 					</Form.Item>
 				</div>

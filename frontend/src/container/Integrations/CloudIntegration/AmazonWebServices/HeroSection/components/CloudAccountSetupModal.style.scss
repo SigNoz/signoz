@@ -1,4 +1,26 @@
 .cloud-account-setup-modal {
+	> div {
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
+	}
+
+	&__content {
+		flex: 1;
+		overflow-y: auto;
+		min-height: 0;
+		scrollbar-width: thin;
+
+		&::-webkit-scrollbar {
+			width: 2px;
+		}
+	}
+
+	&__footer {
+		padding: 16px;
+		margin-bottom: 16px;
+	}
+
 	.account-setup-modal-footer {
 		&__confirm-button {
 			background: var(--bg-robin-500);
@@ -20,6 +42,8 @@
 	}
 
 	.cloud-account-setup-form {
+		padding: 16px;
+
 		.disabled {
 			opacity: 0.4;
 		}

@@ -1,5 +1,6 @@
 .select-all {
-	margin-bottom: 20px;
+	margin-top: 16px;
+	margin-bottom: 16px;
 }
 
 .regions-grid {
@@ -18,4 +19,12 @@
 	display: flex;
 	gap: 10px;
 	align-items: center;
+}
+
+.region-selector-footer {
+	margin-top: 36px;
+
+	display: flex;
+	justify-content: flex-end;
+	gap: 8px;
 }

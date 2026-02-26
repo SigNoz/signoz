@@ -1,17 +1,19 @@
+import { Dispatch, SetStateAction } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Form, Select, Switch } from 'antd';
+import { Form, Select } from 'antd';
 import { ChevronDown } from 'lucide-react';
 import { Region } from 'utils/regions';
+import { popupContainer } from 'utils/selectPopupContainer';
+
+import { RegionSelector } from './RegionSelector';
 
 // Form section components
 function RegionDeploymentSection({
 	regions,
-	selectedDeploymentRegion,
 	handleRegionChange,
 	isFormDisabled,
 }: {
 	regions: Region[];
-	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
 	isFormDisabled: boolean;
 }): JSX.Element {
@@ -33,8 +35,8 @@ function RegionDeploymentSection({
 					suffixIcon={<ChevronDown size={16} color={Color.BG_VANILLA_400} />}
 					className="cloud-account-setup-form__select integrations-select"
 					onChange={handleRegionChange}
-					value={selectedDeploymentRegion}
 					disabled={isFormDisabled}
+					getPopupContainer={popupContainer}
 				>
 					{regions.flatMap((region) =>
 						region.subRegions.map((subRegion) => (
@@ -50,19 +52,13 @@ function RegionDeploymentSection({
 }
 
 function MonitoringRegionsSection({
-	includeAllRegions,
 	selectedRegions,
-	onIncludeAllRegionsChange,
-	getRegionPreviewText,
-	onRegionSelect,
-	isFormDisabled,
+	setSelectedRegions,
+	setIncludeAllRegions,
 }: {
-	includeAllRegions: boolean;
 	selectedRegions: string[];
-	onIncludeAllRegionsChange: (checked: boolean) => void;
-	getRegionPreviewText: (regions: string[]) => string[];
-	onRegionSelect: () => void;
-	isFormDisabled: boolean;
+	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
+	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
 }): JSX.Element {
 	return (
 		<div className="cloud-account-setup-form__form-group">
@@ -73,51 +69,12 @@ function MonitoringRegionsSection({
 				Choose only the regions you want SigNoz to monitor. You can enable all at
 				once, or pick specific ones:
 			</div>
-			<Form.Item
-				name="monitorRegions"
-				rules={[
-					{
-						validator: async (): Promise<void> => {
-							if (selectedRegions.length === 0) {
-								return Promise.reject();
-							}
-							return Promise.resolve();
-						},
-						message: 'Please select at least one region to monitor',
-					},
-				]}
-				className="cloud-account-setup-form__form-item"
-			>
-				<div className="cloud-account-setup-form__include-all-regions-switch">
-					<Switch
-						size="small"
-						checked={includeAllRegions}
-						onChange={onIncludeAllRegionsChange}
-						disabled={isFormDisabled}
-					/>
-					<button
-						className="cloud-account-setup-form__include-all-regions-switch-label"
-						type="button"
-						onClick={(): void =>
-							!isFormDisabled
-								? onIncludeAllRegionsChange(!includeAllRegions)
-								: undefined
-						}
-					>
-						Include all regions
-					</button>
-				</div>
-				<Select
-					suffixIcon={null}
-					placeholder="Select Region(s)"
-					className="cloud-account-setup-form__select integrations-select"
-					onClick={!isFormDisabled ? onRegionSelect : undefined}
-					mode="multiple"
-					maxTagCount={3}
-					value={getRegionPreviewText(selectedRegions)}
-					open={false}
-				/>
-			</Form.Item>
+
+			<RegionSelector
+				selectedRegions={selectedRegions}
+				setSelectedRegions={setSelectedRegions}
+				setIncludeAllRegions={setIncludeAllRegions}
+			/>
 		</div>
 	);
 }

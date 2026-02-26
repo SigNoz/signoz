@@ -3,7 +3,7 @@ import { Button, Tabs, TabsProps } from 'antd';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import Spinner from 'components/Spinner';
-import CloudServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/CloudServiceDashboards';
+import ServiceDashboards from 'container/Integrations/CloudIntegration/AmazonWebServices/ServiceDashboards/ServiceDashboards';
 import { AWSServiceConfig } from 'container/Integrations/CloudIntegration/AmazonWebServices/types';
 import { IServiceStatus } from 'container/Integrations/types';
 import dayjs from 'dayjs';
@@ -61,7 +61,7 @@ function getTabItems(serviceDetailsData: any): TabsProps['items'] {
 		items.push({
 			key: 'dashboards',
 			label: `Dashboards (${dashboards.length})`,
-			children: <CloudServiceDashboards service={serviceDetailsData} />,
+			children: <ServiceDashboards service={serviceDetailsData} />,
 		});
 	}
 

@@ -20,14 +20,14 @@ export interface RegionFormProps {
 	setModalState: Dispatch<SetStateAction<ModalStateEnum>>;
 	selectedRegions: string[];
 	includeAllRegions: boolean;
-	onIncludeAllRegionsChange: (checked: boolean) => void;
 	onRegionSelect: () => void;
 	onSubmit: () => Promise<void>;
 	accountId?: string;
-	selectedDeploymentRegion: string | undefined;
 	handleRegionChange: (value: string) => void;
 	connectionParams?: ConnectionParams;
 	isConnectionParamsLoading?: boolean;
+	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
+	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
 }
 
 export interface IntegrationModalProps {

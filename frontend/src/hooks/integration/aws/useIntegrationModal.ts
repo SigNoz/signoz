@@ -39,7 +39,6 @@ interface UseIntegrationModal {
 	isGeneratingUrl: boolean;
 	setSelectedRegions: Dispatch<SetStateAction<string[]>>;
 	setIncludeAllRegions: Dispatch<SetStateAction<boolean>>;
-	handleIncludeAllRegionsChange: (checked: boolean) => void;
 	handleRegionSelect: () => void;
 	handleSubmit: () => Promise<void>;
 	handleClose: () => void;
@@ -81,15 +80,6 @@ export function useIntegrationModal({
 	const handleRegionChange = (value: string): void => {
 		setSelectedDeploymentRegion(value);
 	};
-
-	const handleIncludeAllRegionsChange = useCallback((checked: boolean): void => {
-		setIncludeAllRegions(checked);
-		if (checked) {
-			setSelectedRegions(['all']);
-		} else {
-			setSelectedRegions([]);
-		}
-	}, []);
 
 	const handleRegionSelect = useCallback((): void => {
 		setActiveView(ActiveViewEnum.SELECT_REGIONS);
@@ -175,7 +165,6 @@ export function useIntegrationModal({
 		isGeneratingUrl,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		handleIncludeAllRegionsChange,
 		handleRegionSelect,
 		handleSubmit,
 		handleClose,

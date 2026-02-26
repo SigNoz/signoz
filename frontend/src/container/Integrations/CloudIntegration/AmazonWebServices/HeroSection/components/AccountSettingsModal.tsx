@@ -1,14 +1,13 @@
 import { Dispatch, SetStateAction, useCallback } from 'react';
 import { useQueryClient } from 'react-query';
-import { Form, Select, Switch } from 'antd';
-import SignozModal from 'components/SignozModal/SignozModal';
+import { Button } from '@signozhq/button';
+import { DrawerWrapper } from '@signozhq/drawer';
+import { Form } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import {
-	getRegionPreviewText,
-	useAccountSettingsModal,
-} from 'hooks/integration/aws/useAccountSettingsModal';
+import { useAccountSettingsModal } from 'hooks/integration/aws/useAccountSettingsModal';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
+import { Save } from 'lucide-react';
 
 import logEvent from '../../../../../../api/common/logEvent';
 import { CloudAccount } from '../../types';
@@ -33,12 +32,9 @@ function AccountSettingsModal({
 		isLoading,
 		selectedRegions,
 		includeAllRegions,
-		isRegionSelectOpen,
 		isSaveDisabled,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		setIsRegionSelectOpen,
-		handleIncludeAllRegionsChange,
 		handleSubmit,
 		handleClose,
 	} = useAccountSettingsModal({ onClose, account, setActiveAccount });
@@ -46,7 +42,7 @@ function AccountSettingsModal({
 	const queryClient = useQueryClient();
 	const urlQuery = useUrlQuery();
 
-	const handleRemoveIntegrationAccountSuccess = (): void => {
+	const handleRemoveIntegrationAccountSuccess = useCallback((): void => {
 		queryClient.invalidateQueries([REACT_QUERY_KEY.AWS_ACCOUNTS]);
 		urlQuery.delete('cloudAccountId');
 		handleClose();
@@ -56,121 +52,16 @@ function AccountSettingsModal({
 			id: account?.id,
 			cloudAccountId: account?.cloud_account_id,
 		});
-	};
-
-	const handleRegionDeselect = useCallback(
-		(item: string): void => {
-			if (selectedRegions.includes(item)) {
-				setSelectedRegions(selectedRegions.filter((region) => region !== item));
-				if (includeAllRegions) {
-					setIncludeAllRegions(false);
-				}
-			}
-		},
-		[
-			selectedRegions,
-			includeAllRegions,
-			setSelectedRegions,
-			setIncludeAllRegions,
-		],
-	);
-
-	const renderRegionSelector = useCallback(() => {
-		if (isRegionSelectOpen) {
-			return (
-				<RegionSelector
-					selectedRegions={selectedRegions}
-					setSelectedRegions={setSelectedRegions}
-					setIncludeAllRegions={setIncludeAllRegions}
-				/>
-			);
-		}
-
-		return (
-			<>
-				<div className="account-settings-modal__body-regions-switch-switch ">
-					<Switch
-						checked={includeAllRegions}
-						onChange={handleIncludeAllRegionsChange}
-					/>
-					<button
-						className="account-settings-modal__body-regions-switch-switch-label"
-						type="button"
-						onClick={(): void => handleIncludeAllRegionsChange(!includeAllRegions)}
-					>
-						Include all regions
-					</button>
-				</div>
-				<Select
-					suffixIcon={null}
-					placeholder="Select Region(s)"
-					className="cloud-account-setup-form__select account-settings-modal__body-regions-select integrations-select"
-					onClick={(): void => setIsRegionSelectOpen(true)}
-					mode="multiple"
-					maxTagCount={3}
-					value={getRegionPreviewText(selectedRegions)}
-					open={false}
-					onDeselect={handleRegionDeselect}
-				/>
-			</>
-		);
 	}, [
-		isRegionSelectOpen,
-		includeAllRegions,
-		handleIncludeAllRegionsChange,
-		selectedRegions,
-		handleRegionDeselect,
-		setSelectedRegions,
-		setIncludeAllRegions,
-		setIsRegionSelectOpen,
+		queryClient,
+		urlQuery,
+		handleClose,
+		account?.id,
+		account?.cloud_account_id,
 	]);
 
-	const renderAccountDetails = useCallback(
-		() => (
-			<div className="account-settings-modal__body-account-info">
-				<div className="account-settings-modal__body-account-info-connected-account-details">
-					<div className="account-settings-modal__body-account-info-connected-account-details-title">
-						Connected Account details
-					</div>
-					<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
-						AWS Account:{' '}
-						<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
-							{account?.id}
-						</span>
-					</div>
-				</div>
-			</div>
-		),
-		[account?.id],
-	);
-
-	const modalTitle = (
-		<div className="account-settings-modal__title">
-			Account settings for{' '}
-			<span className="account-settings-modal__title-account-id">
-				{account?.id}
-			</span>
-		</div>
-	);
-
-	return (
-		<SignozModal
-			open
-			title={modalTitle}
-			onCancel={handleClose}
-			onOk={handleSubmit}
-			okText="Save"
-			okButtonProps={{
-				disabled: isSaveDisabled,
-				className: 'account-settings-modal__footer-save-button',
-				loading: isLoading,
-			}}
-			cancelButtonProps={{
-				className: 'account-settings-modal__footer-close-button',
-			}}
-			width={672}
-			rootClassName="account-settings-modal"
-		>
+	const renderAccountDetails = useCallback(() => {
+		return (
 			<Form
 				form={form}
 				layout="vertical"
@@ -180,33 +71,101 @@ function AccountSettingsModal({
 				}}
 			>
 				<div className="account-settings-modal__body">
-					{renderAccountDetails()}
+					<div className="account-settings-modal__body-account-info">
+						<div className="account-settings-modal__body-account-info-connected-account-details">
+							<div className="account-settings-modal__body-account-info-connected-account-details-title">
+								Connected Account details
+							</div>
+							<div className="account-settings-modal__body-account-info-connected-account-details-account-id">
+								AWS Account:{' '}
+								<span className="account-settings-modal__body-account-info-connected-account-details-account-id-account-id">
+									{account?.id}
+								</span>
+							</div>
+						</div>
+					</div>
 
-					<Form.Item
-						name="selectedRegions"
-						rules={[
-							{
-								validator: async (): Promise<void> => {
-									if (selectedRegions.length === 0) {
-										throw new Error('Please select at least one region to monitor');
-									}
-								},
-								message: 'Please select at least one region to monitor',
-							},
-						]}
-					>
-						{renderRegionSelector()}
-					</Form.Item>
+					<div className="account-settings-modal__body-region-selector">
+						<div className="account-settings-modal__body-region-selector-title">
+							Which regions do you want to monitor?
+						</div>
+						<div className="account-settings-modal__body-region-selector-description">
+							Choose only the regions you want SigNoz to monitor.
+						</div>
 
-					<div className="integration-detail-content">
-						<RemoveIntegrationAccount
-							accountId={account?.id}
-							onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+						<RegionSelector
+							selectedRegions={selectedRegions}
+							setSelectedRegions={setSelectedRegions}
+							setIncludeAllRegions={setIncludeAllRegions}
 						/>
 					</div>
 				</div>
+
+				<div className="account-settings-modal__footer">
+					<RemoveIntegrationAccount
+						accountId={account?.id}
+						onRemoveIntegrationAccountSuccess={handleRemoveIntegrationAccountSuccess}
+					/>
+
+					<Button
+						variant="solid"
+						color="secondary"
+						disabled={isSaveDisabled}
+						onClick={handleSubmit}
+						loading={isLoading}
+						prefixIcon={<Save size={14} />}
+					>
+						Update Changes
+					</Button>
+				</div>
 			</Form>
-		</SignozModal>
+		);
+	}, [
+		form,
+		selectedRegions,
+		includeAllRegions,
+		account?.id,
+		handleRemoveIntegrationAccountSuccess,
+		isSaveDisabled,
+		handleSubmit,
+		isLoading,
+		setSelectedRegions,
+		setIncludeAllRegions,
+	]);
+
+	const handleDrawerOpenChange = useCallback(
+		(open: boolean): void => {
+			if (!open) {
+				handleClose();
+			}
+		},
+		[handleClose],
+	);
+
+	return (
+		<DrawerWrapper
+			open={true}
+			type="panel"
+			className="account-settings-modal"
+			header={{
+				title: 'Account Settings',
+			}}
+			// onCancel={handleClose}
+			// onOk={handleSubmit}
+			// okText="Save"
+			// okButtonProps={{
+			// 	disabled: isSaveDisabled,
+			// 	className: 'account-settings-modal__footer-save-button',
+			// 	loading: isLoading,
+			// }}
+			// cancelButtonProps={{
+			// 	className: 'account-settings-modal__footer-close-button',
+			// }}
+			direction="right"
+			showCloseButton
+			content={renderAccountDetails()}
+			onOpenChange={handleDrawerOpenChange}
+		/>
 	);
 }
 

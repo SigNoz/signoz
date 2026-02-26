@@ -1,7 +1,8 @@
 import { useCallback } from 'react';
 import { useQueryClient } from 'react-query';
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import SignozModal from 'components/SignozModal/SignozModal';
+import { DrawerWrapper } from '@signozhq/drawer';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useIntegrationModal } from 'hooks/integration/aws/useIntegrationModal';
 import { SquareArrowOutUpRight } from 'lucide-react';
@@ -12,7 +13,6 @@ import {
 	ModalStateEnum,
 } from '../types';
 import { RegionForm } from './RegionForm';
-import { RegionSelector } from './RegionSelector';
 import { SuccessView } from './SuccessView';
 
 import './CloudAccountSetupModal.style.scss';
@@ -32,14 +32,12 @@ function CloudAccountSetupModal({
 		isGeneratingUrl,
 		setSelectedRegions,
 		setIncludeAllRegions,
-		handleIncludeAllRegionsChange,
 		handleRegionSelect,
 		handleSubmit,
 		handleClose,
 		setActiveView,
 		allRegions,
 		accountId,
-		selectedDeploymentRegion,
 		handleRegionChange,
 		connectionParams,
 		isConnectionParamsLoading,
@@ -50,45 +48,47 @@ function CloudAccountSetupModal({
 			return <SuccessView />;
 		}
 
-		if (activeView === ActiveViewEnum.SELECT_REGIONS) {
-			return (
-				<RegionSelector
+		return (
+			<div className="cloud-account-setup-modal__content">
+				<RegionForm
+					form={form}
+					modalState={modalState}
+					setModalState={setModalState}
 					selectedRegions={selectedRegions}
+					includeAllRegions={includeAllRegions}
+					onRegionSelect={handleRegionSelect}
+					onSubmit={handleSubmit}
+					accountId={accountId}
+					handleRegionChange={handleRegionChange}
+					connectionParams={connectionParams}
+					isConnectionParamsLoading={isConnectionParamsLoading}
 					setSelectedRegions={setSelectedRegions}
 					setIncludeAllRegions={setIncludeAllRegions}
 				/>
-			);
-		}
 
-		return (
-			<RegionForm
-				form={form}
-				modalState={modalState}
-				setModalState={setModalState}
-				selectedRegions={selectedRegions}
-				includeAllRegions={includeAllRegions}
-				onIncludeAllRegionsChange={handleIncludeAllRegionsChange}
-				onRegionSelect={handleRegionSelect}
-				onSubmit={handleSubmit}
-				accountId={accountId}
-				selectedDeploymentRegion={selectedDeploymentRegion}
-				handleRegionChange={handleRegionChange}
-				connectionParams={connectionParams}
-				isConnectionParamsLoading={isConnectionParamsLoading}
-			/>
+				<div className="cloud-account-setup-modal__footer">
+					<Button
+						variant="solid"
+						color="primary"
+						prefixIcon={
+							<SquareArrowOutUpRight size={17} color={Color.BG_VANILLA_100} />
+						}
+						onClick={handleSubmit}
+					>
+						Launch Cloud Formation Template
+					</Button>
+				</div>
+			</div>
 		);
 	}, [
 		modalState,
-		activeView,
 		form,
 		setModalState,
 		selectedRegions,
 		includeAllRegions,
-		handleIncludeAllRegionsChange,
 		handleRegionSelect,
 		handleSubmit,
 		accountId,
-		selectedDeploymentRegion,
 		handleRegionChange,
 		connectionParams,
 		isConnectionParamsLoading,
@@ -162,28 +162,39 @@ function CloudAccountSetupModal({
 
 	const modalConfig = getModalConfig();
 
+	const handleDrawerOpenChange = (open: boolean): void => {
+		if (!open) {
+			handleClose();
+		}
+	};
+
 	return (
-		<SignozModal
-			open
+		<DrawerWrapper
+			open={true}
+			type="panel"
 			className="cloud-account-setup-modal"
-			title={modalConfig.title}
-			onCancel={handleClose}
-			onOk={modalConfig.onOk}
-			okText={modalConfig.okText}
-			okButtonProps={{
-				loading: isLoading,
-				disabled: selectedRegions.length === 0 || modalConfig.disabled,
-				className:
-					activeView === ActiveViewEnum.FORM
-						? 'cloud-account-setup-form__submit-button'
-						: 'account-setup-modal-footer__confirm-button',
-				block: activeView === ActiveViewEnum.FORM,
+			// allowOutsideClick={false}
+			content={renderContent()}
+			onOpenChange={handleDrawerOpenChange}
+			direction="right"
+			showCloseButton
+			header={{
+				title: modalConfig.title,
 			}}
-			cancelButtonProps={modalConfig.cancelButtonProps}
-			width={672}
-		>
-			{renderContent()}
-		</SignozModal>
+			// onCancel={handleClose}
+			// onOk={modalConfig.onOk}
+			// okText={modalConfig.okText}
+			// okButtonProps={{
+			// 	loading: isLoading,
+			// 	disabled: selectedRegions.length === 0 || modalConfig.disabled,
+			// 	className:
+			// 		activeView === ActiveViewEnum.FORM
+			// 			? 'cloud-account-setup-form__submit-button'
+			// 			: 'account-setup-modal-footer__confirm-button',
+			// 	block: activeView === ActiveViewEnum.FORM,
+			// }}
+			// cancelButtonProps={modalConfig.cancelButtonProps}
+		/>
 	);
 }
 

@@ -1,12 +1,13 @@
 import { useState } from 'react';
 import { useMutation } from 'react-query';
-import { Button, Modal } from 'antd';
+import { Button } from '@signozhq/button';
+import { Modal } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import removeAwsIntegrationAccount from 'api/integration/aws/removeAwsIntegrationAccount';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { INTEGRATION_TELEMETRY_EVENTS } from 'container/Integrations/constants';
 import { useNotifications } from 'hooks/useNotifications';
-import { X } from 'lucide-react';
+import { Unlink } from 'lucide-react';
 
 import './RemoveIntegrationAccount.scss';
 
@@ -20,7 +21,7 @@ function RemoveIntegrationAccount({
 	const { notifications } = useNotifications();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const showModal = (): void => {
+	const handleDisconnect = (): void => {
 		setIsModalOpen(true);
 	};
 
@@ -50,42 +51,37 @@ function RemoveIntegrationAccount({
 	};
 
 	return (
-		<div className="remove-integration-account">
-			<div className="remove-integration-account__header">
-				<div className="remove-integration-account__title">Remove Integration</div>
-				<div className="remove-integration-account__subtitle">
-					Removing this integration won&apos;t delete any existing data but will stop
-					collecting new data from AWS.
-				</div>
-			</div>
+		<div className="remove-integration-account-container">
 			<Button
-				className="remove-integration-account__button"
-				icon={<X size={14} />}
-				onClick={(): void => showModal()}
+				variant="solid"
+				color="destructive"
+				prefixIcon={<Unlink size={14} />}
+				size="sm"
+				onClick={handleDisconnect}
+				disabled={isRemoveIntegrationLoading}
 			>
-				Remove
+				Disconnect
 			</Button>
+
 			<Modal
-				className="remove-integration-modal"
+				className="remove-integration-account-modal"
 				open={isModalOpen}
 				title="Remove integration"
 				onOk={handleOk}
 				onCancel={handleCancel}
-				okText="Remove Integration"
+				okText="Remove Account"
 				okButtonProps={{
 					danger: true,
-					disabled: isRemoveIntegrationLoading,
+					loading: isRemoveIntegrationLoading,
 				}}
 			>
-				<div className="remove-integration-modal__text">
-					Removing this account will remove all components created for sending
-					telemetry to SigNoz in your AWS account within the next ~15 minutes
-					(cloudformation stacks named signoz-integration-telemetry-collection in
-					enabled regions). <br />
-					<br />
-					After that, you can delete the cloudformation stack that was created
-					manually when connecting this account.
-				</div>
+				Removing this account will remove all components created for sending
+				telemetry to SigNoz in your AWS account within the next ~15 minutes
+				(cloudformation stacks named signoz-integration-telemetry-collection in
+				enabled regions). <br />
+				<br />
+				After that, you can delete the cloudformation stack that was created
+				manually when connecting this account.
 			</Modal>
 		</div>
 	);

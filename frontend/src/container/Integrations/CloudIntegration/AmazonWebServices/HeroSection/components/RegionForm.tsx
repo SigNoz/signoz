@@ -16,30 +16,18 @@ import {
 } from './IntegrateNowFormSections';
 import RenderConnectionFields from './RenderConnectionParams';
 
-const allRegions = (): string[] =>
-	regions.flatMap((r) => r.subRegions.map((sr) => sr.name));
-
-const getRegionPreviewText = (regions: string[]): string[] => {
-	if (regions.includes('all')) {
-		return allRegions();
-	}
-	return regions;
-};
-
 export function RegionForm({
 	form,
 	modalState,
 	setModalState,
 	selectedRegions,
-	includeAllRegions,
-	onIncludeAllRegionsChange,
-	onRegionSelect,
 	onSubmit,
 	accountId,
-	selectedDeploymentRegion,
 	handleRegionChange,
 	connectionParams,
 	isConnectionParamsLoading,
+	setSelectedRegions,
+	setIncludeAllRegions,
 }: RegionFormProps): JSX.Element {
 	const startTimeRef = useRef(Date.now());
 	const refetchInterval = 10 * 1000;
@@ -92,15 +80,11 @@ export function RegionForm({
 					regions={regions}
 					handleRegionChange={handleRegionChange}
 					isFormDisabled={isFormDisabled}
-					selectedDeploymentRegion={selectedDeploymentRegion}
 				/>
 				<MonitoringRegionsSection
-					includeAllRegions={includeAllRegions}
 					selectedRegions={selectedRegions}
-					onIncludeAllRegionsChange={onIncludeAllRegionsChange}
-					getRegionPreviewText={getRegionPreviewText}
-					onRegionSelect={onRegionSelect}
-					isFormDisabled={isFormDisabled}
+					setSelectedRegions={setSelectedRegions}
+					setIncludeAllRegions={setIncludeAllRegions}
 				/>
 				<ComplianceNote />
 				<RenderConnectionFields
