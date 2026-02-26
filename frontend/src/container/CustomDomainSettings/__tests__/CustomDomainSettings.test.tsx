@@ -4,6 +4,14 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 
+const mockToastCustom = jest.fn();
+jest.mock('@signozhq/sonner', () => ({
+	toast: {
+		custom: (...args: unknown[]): unknown => mockToastCustom(...args),
+		dismiss: jest.fn(),
+	},
+}));
+
 const ZEUS_HOSTS_ENDPOINT = '*/api/v2/zeus/hosts';
 
 const mockHostsResponse: GetHosts200 = {
@@ -28,9 +36,12 @@ const mockHostsResponse: GetHosts200 = {
 };
 
 describe('CustomDomainSettings', () => {
-	afterEach(() => server.resetHandlers());
+	afterEach(() => {
+		server.resetHandlers();
+		mockToastCustom.mockClear();
+	});
 
-	it('renders host URLs with protocol stripped and marks the default host', async () => {
+	it('renders active host URL in the trigger button', async () => {
 		server.use(
 			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockHostsResponse)),
@@ -39,12 +50,11 @@ describe('CustomDomainSettings', () => {
 
 		render(<CustomDomainSettings />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		// The active host is the non-default one (custom-host)
 		await screen.findByText(/custom-host\.test\.cloud/i);
-		expect(screen.getByText('Default')).toBeInTheDocument();
 	});
 
-	it('opens edit modal with DNS suffix derived from the default host', async () => {
+	it('opens edit modal when clicking the edit button', async () => {
 		server.use(
 			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockHostsResponse)),
@@ -54,14 +64,14 @@ describe('CustomDomainSettings', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 
 		await user.click(
-			screen.getByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /edit workspace link/i }),
 		);
 
 		expect(
-			screen.getByRole('dialog', { name: /customize your team['’]s url/i }),
+			screen.getByRole('dialog', { name: /edit workspace link/i }),
 		).toBeInTheDocument();
 		// DNS suffix is the part of the default host URL after the name prefix
 		expect(screen.getByText('test.cloud')).toBeInTheDocument();
@@ -83,12 +93,13 @@ describe('CustomDomainSettings', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 		await user.click(
-			screen.getByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /edit workspace link/i }),
 		);
 
-		const input = screen.getByPlaceholderText(/enter domain/i);
+		// The input is inside the modal — find it by its role
+		const input = screen.getByRole('textbox');
 		await user.clear(input);
 		await user.type(input, 'myteam');
 		await user.click(screen.getByRole('button', { name: /apply changes/i }));
@@ -114,15 +125,111 @@ describe('CustomDomainSettings', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		render(<CustomDomainSettings />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 		await user.click(
-			screen.getByRole('button', { name: /customize team['’]s url/i }),
+			screen.getByRole('button', { name: /edit workspace link/i }),
 		);
-		await user.type(screen.getByPlaceholderText(/enter domain/i), 'myteam');
+
+		const input = screen.getByRole('textbox');
+		await user.clear(input);
+		await user.type(input, 'myteam');
 		await user.click(screen.getByRole('button', { name: /apply changes/i }));
 
 		expect(
 			await screen.findByRole('button', { name: /contact support/i }),
 		).toBeInTheDocument();
+	});
+
+	it('shows validation error when subdomain is less than 3 characters', async () => {
+		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CustomDomainSettings />);
+
+		await screen.findByText(/custom-host\.test\.cloud/i);
+		await user.click(
+			screen.getByRole('button', { name: /edit workspace link/i }),
+		);
+
+		const input = screen.getByRole('textbox');
+		await user.clear(input);
+		await user.type(input, 'ab');
+		await user.click(screen.getByRole('button', { name: /apply changes/i }));
+
+		expect(
+			screen.getByText(/minimum 3 characters required/i),
+		).toBeInTheDocument();
+	});
+
+	it('shows all workspace URLs as links in the dropdown', async () => {
+		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CustomDomainSettings />);
+
+		await screen.findByText(/custom-host\.test\.cloud/i);
+
+		// Open the URL dropdown
+		await user.click(
+			screen.getByRole('button', { name: /custom-host\.test\.cloud/i }),
+		);
+
+		// Both host URLs should appear as links in the dropdown
+		const links = await screen.findAllByRole('link');
+		const hostLinks = links.filter(
+			(link) =>
+				link.getAttribute('href')?.includes('test.cloud') &&
+				link.getAttribute('target') === '_blank',
+		);
+		expect(hostLinks).toHaveLength(2);
+
+		// Verify the URLs
+		const hrefs = hostLinks.map((link) => link.getAttribute('href'));
+		expect(hrefs).toContain('https://accepted-starfish.test.cloud');
+		expect(hrefs).toContain('https://custom-host.test.cloud');
+	});
+
+	it('calls toast.custom with new URL after successful domain update', async () => {
+		server.use(
+			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockHostsResponse)),
+			),
+			rest.put(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({})),
+			),
+		);
+
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		render(<CustomDomainSettings />);
+
+		await screen.findByText(/custom-host\.test\.cloud/i);
+		await user.click(
+			screen.getByRole('button', { name: /edit workspace link/i }),
+		);
+
+		const input = screen.getByRole('textbox');
+		await user.clear(input);
+		await user.type(input, 'myteam');
+		await user.click(screen.getByRole('button', { name: /apply changes/i }));
+
+		// Verify toast.custom was called
+		await waitFor(() => {
+			expect(mockToastCustom).toHaveBeenCalledTimes(1);
+		});
+
+		// Render the toast element to verify its content
+		const toastRenderer = mockToastCustom.mock.calls[0][0] as (
+			id: string,
+		) => JSX.Element;
+		const { container } = render(toastRenderer('test-id'));
+		expect(container).toHaveTextContent(/myteam\.test\.cloud/i);
 	});
 });
