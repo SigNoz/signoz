@@ -5,6 +5,7 @@ import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
 import { initialQueriesMap } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
@@ -128,7 +129,7 @@ function Summary(): JSX.Element {
 	} = useGetMetricsList(metricsListQuery, {
 		enabled: !!metricsListQuery && !isInspectModalOpen,
 		queryKey: [
-			'metricsList',
+			REACT_QUERY_KEY.GET_METRICS_LIST,
 			queryFiltersWithoutId,
 			orderBy,
 			pageSize,
@@ -323,7 +324,7 @@ function Summary(): JSX.Element {
 					</>
 				)}
 			</div>
-			{isMetricDetailsOpen && (
+			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					isOpen={isMetricDetailsOpen}
 					onClose={closeMetricDetails}
