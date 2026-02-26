@@ -8,7 +8,7 @@ import logEvent from 'api/common/logEvent';
 import { getAccountById } from 'container/Integrations/CloudIntegration/utils';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { ChevronDown, PencilLine, Plug, Plus } from 'lucide-react';
+import { ChevronDown, Dot, PencilLine, Plug, Plus } from 'lucide-react';
 
 import { CloudAccount } from '../../types';
 import AccountSettingsModal from './AccountSettingsModal';
@@ -45,6 +45,10 @@ function AccountActionsRenderer({
 		return (
 			<div className="hero-section__actions-with-account">
 				<div className="hero-section__actions-with-account-selector-container">
+					<div className="selected-cloud-integration-account-status">
+						<Dot size={24} color={Color.BG_FOREST_500} />
+					</div>
+
 					<div className="account-selector-label">Account:</div>
 
 					<span className="account-selector">

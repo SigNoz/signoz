@@ -1,7 +1,7 @@
 import useUrlQuery from 'hooks/useUrlQuery';
 
 import HeroSection from './HeroSection/HeroSection';
-import ServiceDetails from './ServiceDetails';
+import ServiceDetails from './ServiceDetails/ServiceDetails';
 import ServicesList from './ServicesList';
 
 import './ServicesTabs.style.scss';

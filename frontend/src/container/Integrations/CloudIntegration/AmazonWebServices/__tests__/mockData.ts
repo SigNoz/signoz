@@ -1,5 +1,3 @@
-import { IConfigureServiceModalProps } from '../ConfigureServiceModal';
-
 const CLOUD_ACCOUNT_ID = '123456789012';
 
 const initialBuckets = { 'us-east-2': ['first-bucket', 'second-bucket'] };
@@ -24,21 +22,4 @@ const accountsResponse = {
 	},
 };
 
-const defaultModalProps: Omit<IConfigureServiceModalProps, 'initialConfig'> = {
-	isOpen: true,
-	onClose: jest.fn(),
-	serviceName: 'S3 Sync',
-	serviceId: 's3sync',
-	cloudAccountId: CLOUD_ACCOUNT_ID,
-	supportedSignals: {
-		logs: true,
-		metrics: false,
-	},
-};
-
-export {
-	accountsResponse,
-	CLOUD_ACCOUNT_ID,
-	defaultModalProps,
-	initialBuckets,
-};
+export { accountsResponse, CLOUD_ACCOUNT_ID, initialBuckets };

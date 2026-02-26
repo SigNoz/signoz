@@ -25,14 +25,16 @@ export interface AzureConfig {
 	enabled: boolean;
 }
 
-interface DataStatus {
+export interface IConfigConnectionStatus {
+	category: string;
+	category_display_name: string;
 	last_received_ts_ms: number;
 	last_received_from: string;
 }
 
 export interface IServiceStatus {
-	logs: DataStatus | null;
-	metrics: DataStatus | null;
+	logs: IConfigConnectionStatus[] | null;
+	metrics: IConfigConnectionStatus[] | null;
 }
 
 export interface AzureServicesConfig {

@@ -71,18 +71,6 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [enabledServices, notEnabledServices]);
 
-	// const filteredServices = useMemo(() => {
-	// 	if (filter === 'all_services') {
-	// 		return services;
-	// 	}
-
-	// 	return services.filter((service) => {
-	// 		const isEnabled =
-	// 			service?.config?.logs?.enabled || service?.config?.metrics?.enabled;
-	// 		return filter === 'enabled' ? isEnabled : !isEnabled;
-	// 	});
-	// }, [services, filter]);
-
 	useEffect(() => {
 		if (activeService || !awsServices?.length) {
 			return;
@@ -103,19 +91,6 @@ function ServicesList({ cloudAccountId }: ServicesListProps): JSX.Element {
 	if (!awsServices?.length) {
 		return <div>No services found</div>;
 	}
-
-	// return (
-	// 	<div className="services-list">
-	// 		{filteredServices.map((service) => (
-	// 			<ServiceItem
-	// 				key={service.id}
-	// 				service={service}
-	// 				onClick={handleActiveService}
-	// 				isActive={service.id === activeService}
-	// 			/>
-	// 		))}
-	// 	</div>
-	// );
 
 	const isEnabledServicesEmpty = enabledServices.length === 0;
 	const isNotEnabledServicesEmpty = notEnabledServices.length === 0;

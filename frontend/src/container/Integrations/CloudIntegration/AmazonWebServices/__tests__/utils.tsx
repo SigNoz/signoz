@@ -1,32 +1,6 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
-import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
+import { screen, waitFor } from '@testing-library/react';
 
-import ConfigureServiceModal from '../ConfigureServiceModal';
-import { accountsResponse, defaultModalProps } from './mockData';
-
-/**
- * Renders the ConfigureServiceModal with specified S3 bucket initial configurations.
- */
-const renderModal = (
-	initialConfigLogsS3Buckets: Record<string, string[]> = {},
-	serviceId = 's3sync',
-): RenderResult => {
-	const initialConfig = {
-		logs: { enabled: true, s3_buckets: initialConfigLogsS3Buckets },
-		metrics: { enabled: false },
-	};
-
-	return render(
-		<MockQueryClientProvider>
-			<ConfigureServiceModal
-				// eslint-disable-next-line react/jsx-props-no-spreading
-				{...defaultModalProps}
-				serviceId={serviceId}
-				initialConfig={initialConfig}
-			/>
-		</MockQueryClientProvider>,
-	);
-};
+import { accountsResponse } from './mockData';
 
 /**
  * Asserts that generic UI elements of the modal are present.
@@ -72,8 +46,4 @@ const assertS3SyncSpecificElements = async (
 	});
 };
 
-export {
-	assertGenericModalElements,
-	assertS3SyncSpecificElements,
-	renderModal,
-};
+export { assertGenericModalElements, assertS3SyncSpecificElements };

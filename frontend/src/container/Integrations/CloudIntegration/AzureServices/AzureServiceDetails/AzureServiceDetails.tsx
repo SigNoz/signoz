@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
+import { Color } from '@signozhq/design-tokens';
 import Tabs from '@signozhq/tabs';
-import { Checkbox, Skeleton } from 'antd';
+import { Checkbox, Popover, Skeleton } from 'antd';
 import CloudServiceDataCollected from 'components/CloudIntegrations/CloudServiceDataCollected/CloudServiceDataCollected';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -12,7 +13,9 @@ import { useGetCloudIntegrationServiceDetails } from 'hooks/integration/useServi
 import { useUpdateServiceConfig } from 'hooks/integration/useUpdateServiceConfig';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEqual } from 'lodash-es';
-import { Save, X } from 'lucide-react';
+import { CheckCircle, Save, TriangleAlert, X } from 'lucide-react';
+
+import { ConfigConnectionStatus } from '../../ConfigConnectionStatus/ConfigConnectionStatus';
 
 import './AzureServiceDetails.styles.scss';
 
@@ -208,8 +211,20 @@ export default function AzureServiceDetails({
 		}
 	}, [metricsConfigs]);
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const renderOverview = (): JSX.Element => {
 		const dashboards = serviceDetailsData?.assets?.dashboards || [];
+
+		const logsStatus = serviceDetailsData?.status?.logs || null;
+		const metricsStatus = serviceDetailsData?.status?.metrics || null;
+
+		// connected if all config items are connected
+		const logsConnectionStatus = logsStatus?.every(
+			(log) => log.last_received_ts_ms > 0,
+		);
+		const metricsConnectionStatus = metricsStatus?.every(
+			(metric) => metric.last_received_ts_ms > 0,
+		);
 
 		if (isLoading) {
 			return (
@@ -226,6 +241,22 @@ export default function AzureServiceDetails({
 						<div className="azure-service-details-overview-configuration-logs">
 							<div className="azure-service-details-overview-configuration-title">
 								<div className="azure-service-details-overview-configuration-title-text">
+									{logsStatus && (
+										<Popover
+											content={<ConfigConnectionStatus status={logsStatus} />}
+											trigger="hover"
+											placement="right"
+											overlayClassName="config-connection-status-popover"
+										>
+											<div className="aws-service-details-overview-configuration-title-text-icon">
+												{logsConnectionStatus ? (
+													<CheckCircle size={16} color={Color.BG_FOREST_500} />
+												) : (
+													<TriangleAlert size={16} color={Color.BG_AMBER_500} />
+												)}
+											</div>
+										</Popover>
+									)}
 									Azure Logs
 								</div>
 								<div className="configuration-action">
@@ -273,6 +304,22 @@ export default function AzureServiceDetails({
 						<div className="azure-service-details-overview-configuration-metrics">
 							<div className="azure-service-details-overview-configuration-title">
 								<div className="azure-service-details-overview-configuration-title-text">
+									{metricsStatus && (
+										<Popover
+											content={<ConfigConnectionStatus status={metricsStatus} />}
+											trigger="hover"
+											placement="right"
+											overlayClassName="config-connection-status-popover"
+										>
+											<div className="aws-service-details-overview-configuration-title-text-icon">
+												{metricsConnectionStatus ? (
+													<CheckCircle size={16} color={Color.BG_FOREST_500} />
+												) : (
+													<TriangleAlert size={16} color={Color.BG_AMBER_500} />
+												)}
+											</div>
+										</Popover>
+									)}
 									Azure Metrics
 								</div>
 								<div className="configuration-action">

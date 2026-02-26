@@ -1,9 +1,9 @@
-.azure-service-details-container {
+.aws-service-details-container {
 	display: flex;
 	flex-direction: column;
 	width: 100%;
 
-	.azure-service-details-tabs {
+	.aws-service-details-tabs {
 		margin-top: 8px;
 
 		// remove the padding left from the first div of the tabs component
@@ -12,13 +12,13 @@
 			padding-left: 0;
 		}
 
-		.azure-service-details-data-collected-content-logs,
-		.azure-service-details-data-collected-content-metrics {
+		.aws-service-details-data-collected-content-logs,
+		.aws-service-details-data-collected-content-metrics {
 			display: flex;
 			flex-direction: row;
 			gap: 8px;
 
-			.azure-service-details-data-collected-content-title {
+			.aws-service-details-data-collected-content-title {
 				display: flex;
 				flex-direction: row;
 				align-items: center;
@@ -36,12 +36,12 @@
 			}
 		}
 
-		.azure-service-details-overview {
+		.aws-service-details-overview {
 			display: flex;
 			flex-direction: column;
 			gap: 16px;
 
-			.azure-service-details-overview-configuration {
+			.aws-service-details-overview-configuration {
 				display: flex;
 				flex-direction: column;
 
@@ -49,11 +49,7 @@
 				border: 1px solid var(--l3-background);
 				background: var(--l1-background);
 
-				.azure-service-details-overview-configuration-metrics {
-					border-top: 1px solid var(--l3-background);
-				}
-
-				.azure-service-details-overview-configuration-title {
+				.aws-service-details-overview-configuration-title {
 					display: flex;
 					flex-direction: row;
 					align-items: center;
@@ -62,16 +58,10 @@
 					width: 100%;
 
 					border-radius: 4px 4px 0 0;
-					border-bottom: 1px solid var(--l3-background);
 
 					padding: 8px 12px;
 
-					.azure-service-details-overview-configuration-title-text {
-						display: flex;
-						flex-direction: row;
-						align-items: center;
-						gap: 8px;
-
+					.aws-service-details-overview-configuration-title-text {
 						color: var(--l1-foreground);
 						font-family: Inter;
 						font-size: 13px;
@@ -79,6 +69,11 @@
 						font-weight: 400;
 						line-height: 22px; /* 157.143% */
 						letter-spacing: -0.07px;
+
+						display: flex;
+						flex-direction: row;
+						align-items: center;
+						gap: 8px;
 					}
 
 					.configuration-action {
@@ -89,7 +84,7 @@
 					}
 				}
 
-				.azure-service-details-overview-configuration-content {
+				.aws-service-details-overview-configuration-content {
 					display: flex;
 					flex-direction: column;
 					gap: 16px;
@@ -97,7 +92,7 @@
 					padding: 12px;
 					background: var(--l1-background);
 
-					.azure-service-details-overview-configuration-content-item {
+					.aws-service-details-overview-configuration-content-item {
 						display: flex;
 						flex-direction: row;
 						align-items: center;
@@ -106,7 +101,7 @@
 					}
 				}
 
-				.azure-service-details-overview-configuration-actions {
+				.aws-service-details-overview-configuration-actions {
 					display: flex;
 					flex-direction: row;
 					justify-content: flex-end;
@@ -117,7 +112,7 @@
 					background: var(--l1-background);
 				}
 
-				.azure-service-details-overview-configuration-title-text-select-all {
+				.aws-service-details-overview-configuration-title-text-select-all {
 					color: var(--l2-foreground);
 					font-family: Inter;
 					font-size: 12px;
@@ -127,19 +122,19 @@
 				}
 			}
 
-			.azure-service-details-actions {
+			.aws-service-details-actions {
 				display: flex;
 				flex-direction: row;
 				gap: 8px;
 				padding: 12px 0;
 			}
 
-			.azure-service-dashboards {
+			.aws-service-dashboards {
 				border-radius: 6px;
 				border: 1px solid var(--l3-background);
 				background: var(--l1-background);
 
-				.azure-service-dashboards-title {
+				.aws-service-dashboards-title {
 					display: flex;
 					flex-direction: row;
 					align-items: center;
@@ -157,25 +152,25 @@
 					border-bottom: 1px solid var(--l3-background);
 				}
 
-				.azure-service-dashboards-items {
+				.aws-service-dashboards-items {
 					display: flex;
 					flex-direction: column;
 					gap: 16px;
 
-					.azure-service-dashboard-item {
+					.aws-service-dashboard-item {
 						display: flex;
 						flex-direction: column;
 						gap: 8px;
 						padding: 12px 16px 12px 16px;
 
-						&.azure-service-dashboard-item-clickable {
+						&.aws-service-dashboard-item-clickable {
 							cursor: pointer;
 							&:hover {
 								background-color: var(--l1-background);
 							}
 						}
 
-						.azure-service-dashboard-item-title {
+						.aws-service-dashboard-item-title {
 							color: var(--l1-foreground);
 							font-family: Inter;
 							font-size: 13px;
@@ -185,7 +180,7 @@
 							letter-spacing: -0.07px;
 						}
 
-						.azure-service-dashboard-item-description {
+						.aws-service-dashboard-item-description {
 							color: var(--l2-foreground);
 							font-family: Inter;
 							font-size: 12px;

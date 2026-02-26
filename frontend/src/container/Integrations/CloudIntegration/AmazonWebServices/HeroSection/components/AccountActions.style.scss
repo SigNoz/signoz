@@ -13,6 +13,15 @@
 			border: 1px solid var(--l3-background);
 			background: var(--l1-background);
 
+			.selected-cloud-integration-account-status {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				border-right: 1px solid var(--l3-background);
+				border-radius: none;
+				width: 32px;
+			}
+
 			&-selector-container {
 				display: flex;
 				flex-direction: row;
