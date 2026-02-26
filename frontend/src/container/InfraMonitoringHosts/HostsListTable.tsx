@@ -1,4 +1,4 @@
-import { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -14,11 +14,92 @@ import { InfraMonitoringEvents } from 'constants/events';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {
+	EmptyOrLoadingViewProps,
 	formatDataForTable,
 	getHostsListColumns,
 	HostRowData,
 	HostsListTableProps,
 } from './utils';
+
+function EmptyOrLoadingView(
+	viewState: EmptyOrLoadingViewProps,
+): React.ReactNode {
+	const { isError, errorMessage } = viewState;
+	if (isError) {
+		return <Typography>{errorMessage || 'Something went wrong'}</Typography>;
+	}
+	if (viewState.showHostsEmptyState) {
+		return (
+			<HostsEmptyOrIncorrectMetrics
+				noData={!viewState.sentAnyHostMetricsData}
+				incorrectData={viewState.isSendingIncorrectK8SAgentMetrics}
+			/>
+		);
+	}
+	if (viewState.showEndTimeBeforeRetentionMessage) {
+		return (
+			<div className="hosts-empty-state-container">
+				<div className="hosts-empty-state-container-content">
+					<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
+					<div className="no-hosts-message">
+						<Typography.Title level={5} className="no-hosts-message-title">
+							Queried time range is before earliest host metrics
+						</Typography.Title>
+						<Typography.Text className="no-hosts-message-text">
+							Your requested end time is earlier than the earliest detected time of
+							host metrics data, please adjust your end time.
+						</Typography.Text>
+					</div>
+				</div>
+			</div>
+		);
+	}
+	if (viewState.showNoRecordsInSelectedTimeRangeMessage) {
+		return (
+			<div className="no-filtered-hosts-message-container">
+				<div className="no-filtered-hosts-message-content">
+					<img
+						src="/Icons/emptyState.svg"
+						alt="thinking-emoji"
+						className="empty-state-svg"
+					/>
+					<Typography.Title level={5} className="no-filtered-hosts-title">
+						No host metrics found
+					</Typography.Title>
+					<Typography.Text className="no-filtered-hosts-message">
+						No host metrics in the selected time range and filters. Please adjust your
+						time range or filters.
+					</Typography.Text>
+				</div>
+			</div>
+		);
+	}
+	if (viewState.showTableLoadingState) {
+		return (
+			<div className="hosts-list-loading-state">
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+			</div>
+		);
+	}
+	return null;
+}
 
 export default function HostsListTable({
 	isLoading,
@@ -43,6 +124,11 @@ export default function HostsListTable({
 
 	const isSendingIncorrectK8SAgentMetrics = useMemo(
 		() => data?.payload?.data?.isSendingK8SAgentMetrics || false,
+		[data],
+	);
+
+	const endTimeBeforeRetention = useMemo(
+		() => data?.payload?.data?.endTimeBeforeRetention || false,
 		[data],
 	);
 
@@ -84,12 +170,6 @@ export default function HostsListTable({
 		});
 	};
 
-	const showNoFilteredHostsMessage =
-		!isFetching &&
-		!isLoading &&
-		formattedHostMetricsData.length === 0 &&
-		filters.items.length > 0;
-
 	const showHostsEmptyState =
 		!isFetching &&
 		!isLoading &&
@@ -97,63 +177,36 @@ export default function HostsListTable({
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
 		!filters.items.length;
 
+	const showEndTimeBeforeRetentionMessage =
+		!isFetching &&
+		!isLoading &&
+		formattedHostMetricsData.length === 0 &&
+		endTimeBeforeRetention &&
+		!filters.items.length;
+
+	const showNoRecordsInSelectedTimeRangeMessage =
+		!isFetching &&
+		!isLoading &&
+		formattedHostMetricsData.length === 0 &&
+		!showEndTimeBeforeRetentionMessage &&
+		!showHostsEmptyState;
+
 	const showTableLoadingState =
 		(isLoading || isFetching) && formattedHostMetricsData.length === 0;
 
-	if (isError) {
-		return <Typography>{data?.error || 'Something went wrong'}</Typography>;
-	}
+	const emptyOrLoadingView = EmptyOrLoadingView({
+		isError,
+		errorMessage: data?.error ?? '',
+		showHostsEmptyState,
+		sentAnyHostMetricsData,
+		isSendingIncorrectK8SAgentMetrics,
+		showEndTimeBeforeRetentionMessage,
+		showNoRecordsInSelectedTimeRangeMessage,
+		showTableLoadingState,
+	});
 
-	if (showHostsEmptyState) {
-		return (
-			<HostsEmptyOrIncorrectMetrics
-				noData={!sentAnyHostMetricsData}
-				incorrectData={isSendingIncorrectK8SAgentMetrics}
-			/>
-		);
-	}
-
-	if (showNoFilteredHostsMessage) {
-		return (
-			<div className="no-filtered-hosts-message-container">
-				<div className="no-filtered-hosts-message-content">
-					<img
-						src="/Icons/emptyState.svg"
-						alt="thinking-emoji"
-						className="empty-state-svg"
-					/>
-
-					<Typography.Text className="no-filtered-hosts-message">
-						This query had no results. Edit your query and try again!
-					</Typography.Text>
-				</div>
-			</div>
-		);
-	}
-
-	if (showTableLoadingState) {
-		return (
-			<div className="hosts-list-loading-state">
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-			</div>
-		);
+	if (emptyOrLoadingView) {
+		return <>{emptyOrLoadingView}</>;
 	}
 
 	return (

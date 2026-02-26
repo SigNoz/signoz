@@ -245,7 +245,7 @@ function TableView({
 							<Typography.Text>{renderedField}</Typography.Text>
 
 							{traceId && (
-								<Tooltip title="Inspect in Trace">
+								<Tooltip title="Inspect in Trace" mouseLeaveDelay={0}>
 									<Button
 										className="periscope-btn"
 										onClick={(

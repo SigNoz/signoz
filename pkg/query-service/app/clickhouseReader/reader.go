@@ -4308,6 +4308,28 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 }
 
+// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
+// from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
+func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
+	if len(metricNames) == 0 {
+		return 0, 0, nil
+	}
+
+	query := fmt.Sprintf(
+		`SELECT count(*) AS cnt, min(first_reported_unix_milli) AS min_first_reported
+		FROM %s.%s
+		WHERE metric_name IN @metric_names`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_METADATA_TABLENAME)
+
+	var count, minFirstReported uint64
+	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
+	if err != nil {
+		zap.L().Error("error getting host metrics existence and earliest time", zap.Error(err))
+		return 0, 0, err
+	}
+	return count, minFirstReported, nil
+}
+
 func getPersonalisedError(err error) error {
 	if err == nil {
 		return nil
@@ -5419,7 +5441,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS metric_type,
-		    ANY_VALUE(t.unit) AS metric_unit,
+		    argMax(t.unit, unix_milli) AS metric_unit,
 		    uniq(t.fingerprint) AS timeseries,
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t

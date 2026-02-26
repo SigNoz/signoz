@@ -38,13 +38,30 @@
 		flex-direction: column;
 		gap: 12px;
 
+		.metrics-metadata-error {
+			padding: 16px !important;
+		}
+
 		.metric-details-content-grid {
+			height: 50px;
 			.labels-row,
 			.values-row {
 				display: grid;
 				grid-template-columns: 1fr 1fr 2fr;
 				gap: 30px;
 				align-items: center;
+			}
+
+			.metric-highlights-error-state {
+				display: flex;
+				gap: 8px;
+				height: 100%;
+				width: 100%;
+				align-items: center;
+
+				.ant-btn {
+					padding: 2px 4px;
+				}
 			}
 
 			.labels-row {
@@ -72,6 +89,7 @@
 		.dashboards-and-alerts-popover-container {
 			display: flex;
 			gap: 16px;
+			height: 32px;
 
 			.dashboards-and-alerts-popover {
 				border-radius: 20px;
@@ -102,7 +120,19 @@
 			}
 		}
 
+		.metrics-metadata-skeleton-container {
+			height: 330px;
+		}
+
+		.all-attributes-skeleton-container {
+			height: 600px;
+		}
+
 		.metrics-accordion {
+			.all-attributes-error-state {
+				height: 300px;
+			}
+
 			.ant-table-body {
 				&::-webkit-scrollbar {
 					width: 2px;
@@ -148,7 +178,6 @@
 
 				.all-attributes-search-input {
 					width: 300px;
-					border: 1px solid var(--bg-slate-300);
 				}
 			}
 
@@ -161,6 +190,7 @@
 							.ant-typography:first-child {
 								font-family: 'Geist Mono';
 								color: var(--bg-robin-400);
+								background-color: transparent;
 							}
 						}
 						.all-attributes-contribution {
@@ -217,6 +247,10 @@
 
 			.ant-collapse-content-box {
 				padding: 0;
+
+				.metric-metadata-error-state {
+					height: 267px;
+				}
 			}
 
 			.ant-collapse-header {
@@ -237,6 +271,7 @@
 			}
 
 			.metric-metadata-value {
+				height: 67px;
 				background: rgba(22, 25, 34, 0.4);
 				overflow-x: scroll;
 				.field-renderer-container {
@@ -330,18 +365,26 @@
 	.metric-details-content {
 		.metrics-accordion {
 			.metrics-accordion-header {
-				.action-button {
-					.ant-typography {
-						color: var(--bg-slate-400);
+				.action-menu {
+					.action-button {
+						.ant-typography {
+							color: var(--bg-slate-400);
+						}
 					}
 				}
 			}
 
 			.metrics-accordion-content {
 				.metric-metadata-key {
+					.field-renderer-container {
+						.label {
+							color: var(--bg-slate-300);
+						}
+					}
+
 					.all-attributes-key {
 						.ant-typography:last-child {
-							color: var(--bg-slate-400);
+							color: var(--bg-vanilla-200);
 							background-color: var(--bg-robin-300);
 						}
 					}
@@ -394,4 +437,14 @@
 			width: auto !important;
 		}
 	}
+}
+
+.metric-details-error-state {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	align-items: center;
+	justify-content: center;
+	height: 100%;
+	width: 100%;
 }
