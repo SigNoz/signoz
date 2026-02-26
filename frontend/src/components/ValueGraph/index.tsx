@@ -40,6 +40,7 @@ function ValueGraph({
 	value,
 	rawValue,
 	thresholds,
+	yAxisUnit,
 }: ValueGraphProps): JSX.Element {
 	const { t } = useTranslation(['valueGraph']);
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -87,7 +88,7 @@ function ValueGraph({
 	const {
 		threshold,
 		isConflictingThresholds,
-	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue);
+	} = getBackgroundColorAndThresholdCheck(thresholds, rawValue, yAxisUnit);
 
 	return (
 		<div
@@ -155,6 +156,7 @@ interface ValueGraphProps {
 	value: string;
 	rawValue: number;
 	thresholds: ThresholdProps[];
+	yAxisUnit?: string;
 }
 
 export default ValueGraph;
