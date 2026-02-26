@@ -1,6 +1,8 @@
 /* eslint-disable react/jsx-props-no-spreading */
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
+import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
+import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { render, screen } from 'tests/test-utils';
 
@@ -14,12 +16,26 @@ jest.mock('lib/query/createTableColumnsFromQuery', () => ({
 	),
 }));
 
-// Mock the unitOptions function
+// Mock the unitOptions function to return YAxisCategory-shaped data
 jest.mock('container/NewWidget/utils', () => ({
 	unitOptions: jest.fn(() => [
-		{ value: 'none', label: 'None' },
-		{ value: '%', label: 'Percent (0 - 100)' },
-		{ value: 'ms', label: 'Milliseconds (ms)' },
+		{
+			name: 'Mock Category',
+			units: [
+				{
+					id: UniversalYAxisUnit.NONE,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.NONE],
+				},
+				{
+					id: UniversalYAxisUnit.PERCENT,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.PERCENT],
+				},
+				{
+					id: UniversalYAxisUnit.MILLISECONDS,
+					name: Y_AXIS_UNIT_NAMES[UniversalYAxisUnit.MILLISECONDS],
+				},
+			],
+		},
 	]),
 }));
 
@@ -28,7 +44,7 @@ const defaultProps = {
 	keyIndex: 0,
 	thresholdOperator: '>' as const,
 	thresholdValue: 50,
-	thresholdUnit: 'none',
+	thresholdUnit: UniversalYAxisUnit.NONE,
 	thresholdColor: 'Red',
 	thresholdFormat: 'Text' as const,
 	isEditEnabled: true,
@@ -38,8 +54,11 @@ const defaultProps = {
 		{ value: 'memory_usage', label: 'Memory Usage' },
 	],
 	thresholdTableOptions: 'cpu_usage',
-	columnUnits: { cpu_usage: 'percent', memory_usage: 'bytes' },
-	yAxisUnit: '%',
+	columnUnits: {
+		cpu_usage: UniversalYAxisUnit.PERCENT,
+		memory_usage: UniversalYAxisUnit.BYTES,
+	},
+	yAxisUnit: UniversalYAxisUnit.PERCENT,
 	moveThreshold: jest.fn(),
 };
 
@@ -68,28 +87,27 @@ describe('Threshold Component Unit Validation', () => {
 	it('should show validation error when threshold unit is not "none" and units are incompatible', () => {
 		// Act - Render component with incompatible units (ms vs percent)
 		renderThreshold({
-			thresholdUnit: 'ms',
+			thresholdUnit: UniversalYAxisUnit.MILLISECONDS,
 			thresholdValue: 50,
 		});
 
+		const errorMessage = screen.getByTestId('invalid-unit-comparison');
 		// Assert - Validation error should be displayed
-		expect(
-			screen.getByText(
-				/Threshold unit \(ms\) is not valid in comparison with the column unit \(percent\)/i,
-			),
-		).toBeInTheDocument();
+		expect(errorMessage.textContent).toBe(
+			`Threshold unit (${UniversalYAxisUnit.MILLISECONDS}) is not valid in comparison with the column unit (${UniversalYAxisUnit.PERCENT})`,
+		);
 	});
 
 	it('should not show validation error when threshold unit matches column unit', () => {
 		// Act - Render component with matching units
 		renderThreshold({
-			thresholdUnit: 'percent',
+			thresholdUnit: UniversalYAxisUnit.PERCENT,
 			thresholdValue: 50,
 		});
 
 		// Assert - No validation error should be displayed
 		expect(
-			screen.queryByText(/Threshold unit.*is not valid in comparison/i),
+			screen.queryByTestId('invalid-unit-comparison'),
 		).not.toBeInTheDocument();
 	});
 
@@ -97,17 +115,16 @@ describe('Threshold Component Unit Validation', () => {
 		// Act - Render component for time series with incompatible units
 		renderThreshold({
 			selectedGraph: PANEL_TYPES.TIME_SERIES,
-			thresholdUnit: 'ms',
+			thresholdUnit: UniversalYAxisUnit.MILLISECONDS,
 			thresholdValue: 100,
-			yAxisUnit: 'percent',
+			yAxisUnit: UniversalYAxisUnit.PERCENT,
 		});
 
+		const errorMessage = screen.getByTestId('invalid-unit-comparison');
 		// Assert - Validation error should be displayed
-		expect(
-			screen.getByText(
-				/Threshold unit \(ms\) is not valid in comparison with the y-axis unit \(percent\)/i,
-			),
-		).toBeInTheDocument();
+		expect(errorMessage.textContent).toBe(
+			`Threshold unit (${UniversalYAxisUnit.MILLISECONDS}) is not valid in comparison with the y-axis unit (${UniversalYAxisUnit.PERCENT})`,
+		);
 	});
 
 	it('should not show validation error for time series graph when threshold unit is "none"', () => {
@@ -116,43 +133,39 @@ describe('Threshold Component Unit Validation', () => {
 			selectedGraph: PANEL_TYPES.TIME_SERIES,
 			thresholdUnit: 'none',
 			thresholdValue: 100,
-			yAxisUnit: 'percent',
+			yAxisUnit: UniversalYAxisUnit.PERCENT,
 		});
-
-		// Assert - No validation error should be displayed
 		expect(
-			screen.queryByText(/Threshold unit.*is not valid in comparison/i),
+			screen.queryByTestId('invalid-unit-comparison'),
 		).not.toBeInTheDocument();
 	});
 
 	it('should not show validation error when threshold unit is compatible with column unit', () => {
 		// Act - Render component with compatible units (both in same category - Time)
 		renderThreshold({
-			thresholdUnit: 's',
+			thresholdUnit: UniversalYAxisUnit.SECONDS,
 			thresholdValue: 100,
-			columnUnits: { cpu_usage: 'ms' },
+			columnUnits: { cpu_usage: UniversalYAxisUnit.MILLISECONDS },
 			thresholdTableOptions: 'cpu_usage',
 		});
-
 		// Assert - No validation error should be displayed
 		expect(
-			screen.queryByText(/Threshold unit.*is not valid in comparison/i),
+			screen.queryByTestId('invalid-unit-comparison'),
 		).not.toBeInTheDocument();
 	});
 
 	it('should show validation error when threshold unit is in different category than column unit', () => {
 		// Act - Render component with units from different categories
 		renderThreshold({
-			thresholdUnit: 'bytes',
+			thresholdUnit: UniversalYAxisUnit.BYTES,
 			thresholdValue: 100,
-			yAxisUnit: 'percent',
+			yAxisUnit: UniversalYAxisUnit.PERCENT,
 		});
 
+		const errorMessage = screen.getByTestId('invalid-unit-comparison');
 		// Assert - Validation error should be displayed
-		expect(
-			screen.getByText(
-				/Threshold unit \(bytes\) is not valid in comparison with the column unit \(percent\)/i,
-			),
-		).toBeInTheDocument();
+		expect(errorMessage.textContent).toBe(
+			`Threshold unit (${UniversalYAxisUnit.BYTES}) is not valid in comparison with the column unit (${UniversalYAxisUnit.PERCENT})`,
+		);
 	});
 });
