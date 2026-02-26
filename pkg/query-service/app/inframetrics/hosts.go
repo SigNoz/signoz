@@ -325,7 +325,7 @@ func (h *HostsRepo) GetHostMetricsExistenceAndEarliestTime(ctx context.Context, 
 		names = append(names, metricName)
 	}
 
-	return h.reader.GetHostMetricsExistenceAndEarliestTime(ctx, names)
+	return h.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
 }
 
 func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
