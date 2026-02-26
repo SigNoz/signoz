@@ -9,6 +9,8 @@ export interface YAxisUnitSelectorProps {
 	'data-testid'?: string;
 	source: YAxisSource;
 	initialValue?: string;
+	categories?: YAxisCategory[];
+	containerClassName?: string;
 }
 
 export enum UniversalYAxisUnit {
