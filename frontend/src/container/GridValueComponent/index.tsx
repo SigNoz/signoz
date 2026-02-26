@@ -99,6 +99,7 @@ function GridValueComponent({
 				<ValueGraph
 					thresholds={thresholds || []}
 					rawValue={value}
+					yAxisUnit={yAxisUnit}
 					value={
 						yAxisUnit
 							? getYAxisFormattedValue(
