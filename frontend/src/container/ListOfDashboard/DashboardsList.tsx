@@ -71,6 +71,7 @@ import {
 	RotateCw,
 	Search,
 	SquareArrowOutUpRight,
+	Star,     // added star icon for pinning
 } from 'lucide-react';
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
@@ -143,7 +144,19 @@ function DashboardsList(): JSX.Element {
 	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
 		false,
 	);
+	
+	// Add pinned dashboards state here (NEW CODE)
+	const [pinnedDashboardIds, setPinnedDashboardIds] = useState<string[]>(() => {
+    		const stored = localStorage.getItem('pinnedDashboards');
+    		return stored ? JSON.parse(stored) : [];
+	});
 
+	// Add useEffect to persist to localStorage (NEW CODE)
+	useEffect(() => {
+    		localStorage.setItem('pinnedDashboards', JSON.stringify(pinnedDashboardIds));
+	}, [pinnedDashboardIds]);
+
+	
 	const getLocalStorageDynamicColumns = (): DashboardDynamicColumns => {
 		const dashboardDynamicColumnsString = localStorage.getItem('dashboard');
 		let dashboardDynamicColumns: DashboardDynamicColumns = {
@@ -188,6 +201,15 @@ function DashboardsList(): JSX.Element {
 	}
 
 	const [dashboards, setDashboards] = useState<Dashboard[]>();
+
+	// new togglePinDashboard function
+	const togglePinDashboard = (dashboardId: string): void => {
+	setPinnedDashboardIds(prev =>
+		prev.includes(dashboardId)
+			? prev.filter(id => id !== dashboardId)
+			: [...prev, dashboardId]
+	);
+	};
 
 	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
 		const sortedDashboards = dashboards.sort(
@@ -266,7 +288,16 @@ function DashboardsList(): JSX.Element {
 	const { showErrorModal } = useErrorModal();
 
 	const data: Data[] =
-		dashboards?.map((e) => ({
+	dashboards
+		?.sort((a, b) => {
+			const aIsPinned = pinnedDashboardIds.includes(a.id);
+			const bIsPinned = pinnedDashboardIds.includes(b.id);
+			
+			if (aIsPinned && !bIsPinned) return -1;
+			if (!aIsPinned && bIsPinned) return 1;
+			return 0;
+		})
+		?.map((e) => ({
 			createdAt: e.createdAt,
 			description: e.data.description || '',
 			id: e.id,
@@ -284,6 +315,7 @@ function DashboardsList(): JSX.Element {
 			panelMap: e.data.panelMap,
 			version: e.data.version,
 			refetchDashboardList,
+			isPinned: pinnedDashboardIds.includes(e.id),  // <-- This is the new line
 		})) || [];
 
 	const onNewDashboardHandler = useCallback(async () => {
@@ -440,6 +472,21 @@ function DashboardsList(): JSX.Element {
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
 							<div className="dashboard-title">
+								<Button
+									type="text"
+									size="small"
+									className="pin-button"
+									icon={
+										pinnedDashboardIds.includes(dashboard.id)
+											? <Star size={16} style={{ fill: '#FFD700', color: '#FFD700' }} />
+											: <Star size={16} />
+									}
+									onClick={(e): void => {
+										e.stopPropagation();
+										togglePinDashboard(dashboard.id);
+									}}
+									title={pinnedDashboardIds.includes(dashboard.id) ? "Unpin dashboard" : "Pin dashboard"}
+								/>
 								<Tooltip
 									title={dashboard?.name?.length > 50 ? dashboard?.name : ''}
 									placement="left"
@@ -1113,6 +1160,7 @@ export interface Data {
 	panelMap?: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	variables: Record<string, IDashboardVariable>;
 	version?: string;
+	isPinned?: boolean;
 }
 
 export default DashboardsList;
