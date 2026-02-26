@@ -349,7 +349,7 @@ function Explorer(): JSX.Element {
 				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
 			/>
-			{isMetricDetailsOpen && (
+			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}
 					isOpen={isMetricDetailsOpen}

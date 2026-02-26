@@ -1,8 +1,17 @@
 import { useCallback, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Button, Collapse, Input, Menu, Popover, Typography } from 'antd';
+import {
+	Button,
+	Collapse,
+	Input,
+	Menu,
+	Popover,
+	Skeleton,
+	Typography,
+} from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
+import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
@@ -12,8 +21,32 @@ import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
 import { useHandleExplorerTabChange } from '../../../hooks/useHandleExplorerTabChange';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import { AllAttributesProps, AllAttributesValueProps } from './types';
+import MetricDetailsErrorState from './MetricDetailsErrorState';
+import {
+	AllAttributesEmptyTextProps,
+	AllAttributesProps,
+	AllAttributesValueProps,
+} from './types';
 import { getMetricDetailsQuery } from './utils';
+
+const ALL_ATTRIBUTES_KEY = 'all-attributes';
+
+function AllAttributesEmptyText({
+	isErrorAttributes,
+	refetchAttributes,
+}: AllAttributesEmptyTextProps): JSX.Element {
+	if (isErrorAttributes) {
+		return (
+			<div className="all-attributes-error-state">
+				<MetricDetailsErrorState
+					refetch={refetchAttributes}
+					errorMessage="Something went wrong while fetching attributes"
+				/>
+			</div>
+		);
+	}
+	return <Typography.Text>No attributes found</Typography.Text>;
+}
 
 export function AllAttributesValue({
 	filterKey,
@@ -110,13 +143,23 @@ export function AllAttributesValue({
 
 function AllAttributes({
 	metricName,
-	attributes,
 	metricType,
 }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
-	const [activeKey, setActiveKey] = useState<string | string[]>(
-		'all-attributes',
-	);
+	const [activeKey, setActiveKey] = useState<string[]>([ALL_ATTRIBUTES_KEY]);
+
+	const {
+		data: attributesData,
+		isLoading: isLoadingAttributes,
+		isError: isErrorAttributes,
+		refetch: refetchAttributes,
+	} = useGetMetricAttributes({
+		metricName,
+	});
+
+	const attributes = useMemo(() => attributesData?.data.attributes ?? [], [
+		attributesData,
+	]);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -178,7 +221,7 @@ function AllAttributes({
 			attributes.filter(
 				(attribute) =>
 					attribute.key.toLowerCase().includes(searchString.toLowerCase()) ||
-					attribute.value.some((value) =>
+					attribute.values?.some((value) =>
 						value.toLowerCase().includes(searchString.toLowerCase()),
 					),
 			),
@@ -195,7 +238,7 @@ function AllAttributes({
 						},
 						value: {
 							key: attribute.key,
-							value: attribute.value,
+							value: attribute.values,
 						},
 				  }))
 				: [],
@@ -270,6 +313,7 @@ function AllAttributes({
 							onClick={(e): void => {
 								e.stopPropagation();
 							}}
+							disabled={isLoadingAttributes || isErrorAttributes}
 						/>
 					</div>
 				),
@@ -277,25 +321,49 @@ function AllAttributes({
 				children: (
 					<ResizeTable
 						columns={columns}
+						loading={isLoadingAttributes}
 						tableLayout="fixed"
 						dataSource={tableData}
 						pagination={false}
 						showHeader={false}
 						className="metrics-accordion-content all-attributes-content"
 						scroll={{ y: 600 }}
+						locale={{
+							emptyText: (
+								<AllAttributesEmptyText
+									isErrorAttributes={isErrorAttributes}
+									refetchAttributes={refetchAttributes}
+								/>
+							),
+						}}
 					/>
 				),
 			},
 		],
-		[columns, tableData, searchString],
+		[
+			searchString,
+			isLoadingAttributes,
+			isErrorAttributes,
+			columns,
+			tableData,
+			refetchAttributes,
+		],
 	);
+
+	if (isLoadingAttributes) {
+		return (
+			<div className="all-attributes-skeleton-container">
+				<Skeleton active paragraph={{ rows: 8 }} />
+			</div>
+		);
+	}
 
 	return (
 		<Collapse
 			bordered
-			className="metrics-accordion metrics-metadata-accordion"
+			className="metrics-accordion"
 			activeKey={activeKey}
-			onChange={(keys): void => setActiveKey(keys)}
+			onChange={(keys): void => setActiveKey(keys as string[])}
 			items={items}
 		/>
 	);
