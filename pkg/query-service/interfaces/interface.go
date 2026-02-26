@@ -100,7 +100,7 @@ type Reader interface {
 
 	GetCountOfThings(ctx context.Context, query string) (uint64, error)
 
-	GetHostMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error)
+	GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error)
 
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)

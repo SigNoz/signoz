@@ -4310,7 +4310,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 
 // GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
 // from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
-func (r *ClickHouseReader) GetHostMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
+func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
 	if len(metricNames) == 0 {
 		return 0, 0, nil
 	}
