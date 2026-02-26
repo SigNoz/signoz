@@ -45,6 +45,7 @@ import {
 } from 'container/DashboardContainer/DashboardDescription/utils';
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
+import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -76,7 +77,6 @@ import {
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -94,7 +94,7 @@ import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
 	DynamicColumns,
-	filterDashboard,
+	filterDashboards,
 } from './utils';
 
 import './DashboardList.styles.scss';
@@ -104,7 +104,7 @@ function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
-		isRefetching: isDashboardListRefetching,
+		isFetching: isDashboardListFetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
@@ -112,14 +112,14 @@ function DashboardsList(): JSX.Element {
 	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const {
-		listSortOrder: sortOrder,
-		setListSortOrder: setSortOrder,
-	} = useDashboard();
+		dashboardsListQueryParams,
+		updateDashboardsListQueryParams,
+	} = useDashboardsListQueryParams();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [searchString, setSearchString] = useState<string>(
-		sortOrder.search || '',
+		dashboardsListQueryParams.search || '',
 	);
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
@@ -139,7 +139,6 @@ function DashboardsList(): JSX.Element {
 	] = useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isFilteringDashboards, setIsFilteringDashboards] = useState(false);
 	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
 		false,
 	);
@@ -187,75 +186,41 @@ function DashboardsList(): JSX.Element {
 		}
 	}
 
-	const [dashboards, setDashboards] = useState<Dashboard[]>();
-
-	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
-		const sortedDashboards = dashboards.sort(
-			(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
-		);
-		setDashboards(sortedDashboards);
-	};
-
-	const sortDashboardsByUpdatedAt = (dashboards: Dashboard[]): void => {
-		const sortedDashboards = dashboards.sort(
-			(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
-		);
-		setDashboards(sortedDashboards);
-	};
-
-	const sortHandle = (key: string): void => {
-		if (!dashboards) {
-			return;
-		}
-		if (key === 'createdAt') {
-			sortDashboardsByCreatedAt(dashboards);
-			setSortOrder({
-				columnKey: 'createdAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-		} else if (key === 'updatedAt') {
-			sortDashboardsByUpdatedAt(dashboards);
-			setSortOrder({
-				columnKey: 'updatedAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-		}
-	};
-
-	function handlePageSizeUpdate(page: number): void {
-		setSortOrder({ ...sortOrder, pagination: String(page) });
-	}
-
-	useEffect(() => {
-		const filteredDashboards = filterDashboard(
+	const dashboards = useMemo((): Dashboard[] => {
+		const filteredDashboards = filterDashboards(
 			searchString,
 			dashboardListResponse?.data || [],
 		);
-		if (sortOrder.columnKey === 'updatedAt') {
-			sortDashboardsByUpdatedAt(filteredDashboards || []);
-		} else if (sortOrder.columnKey === 'createdAt') {
-			sortDashboardsByCreatedAt(filteredDashboards || []);
-		} else if (sortOrder.columnKey === 'null') {
-			setSortOrder({
-				columnKey: 'updatedAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-			sortDashboardsByUpdatedAt(filteredDashboards || []);
+
+		if (dashboardsListQueryParams.columnKey === 'createdAt') {
+			return filteredDashboards.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+			);
 		}
+		return filteredDashboards.sort(
+			(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
+		);
 	}, [
-		dashboardListResponse,
+		dashboardListResponse?.data,
 		searchString,
-		setSortOrder,
-		sortOrder.columnKey,
-		sortOrder.pagination,
-		sortOrder.search,
+		dashboardsListQueryParams.columnKey,
 	]);
+
+	const sortHandle = (key: string): void => {
+		updateDashboardsListQueryParams({
+			columnKey: key,
+			order: 'descend',
+			page: dashboardsListQueryParams.page || '1',
+			search: dashboardsListQueryParams.search || '',
+		});
+	};
+
+	function handlePageSizeUpdate(page: number): void {
+		updateDashboardsListQueryParams({
+			...dashboardsListQueryParams,
+			page: String(page),
+		});
+	}
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -265,26 +230,25 @@ function DashboardsList(): JSX.Element {
 
 	const { showErrorModal } = useErrorModal();
 
-	const data: Data[] =
-		dashboards?.map((e) => ({
-			createdAt: e.createdAt,
-			description: e.data.description || '',
-			id: e.id,
-			lastUpdatedTime: e.updatedAt,
-			name: e.data.title,
-			tags: e.data.tags || [],
-			key: e.id,
-			createdBy: e.createdBy,
-			isLocked: !!e.locked || false,
-			lastUpdatedBy: e.updatedBy,
-			image: e.data.image || Base64Icons[0],
-			variables: e.data.variables,
-			widgets: e.data.widgets,
-			layout: e.data.layout,
-			panelMap: e.data.panelMap,
-			version: e.data.version,
-			refetchDashboardList,
-		})) || [];
+	const data: Data[] = dashboards.map((e) => ({
+		createdAt: e.createdAt,
+		description: e.data.description || '',
+		id: e.id,
+		lastUpdatedTime: e.updatedAt,
+		name: e.data.title,
+		tags: e.data.tags || [],
+		key: e.id,
+		createdBy: e.createdBy,
+		isLocked: !!e.locked || false,
+		lastUpdatedBy: e.updatedBy,
+		image: e.data.image || Base64Icons[0],
+		variables: e.data.variables,
+		widgets: e.data.widgets,
+		layout: e.data.layout,
+		panelMap: e.data.panelMap,
+		version: e.data.version,
+		refetchDashboardList,
+	}));
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -324,16 +288,12 @@ function DashboardsList(): JSX.Element {
 	};
 
 	const handleSearch = (event: ChangeEvent<HTMLInputElement>): void => {
-		setIsFilteringDashboards(true);
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
-		const filteredDashboards = filterDashboard(
-			searchText,
-			dashboardListResponse?.data || [],
-		);
-		setDashboards(filteredDashboards);
-		setIsFilteringDashboards(false);
 		setSearchString(searchText);
-		setSortOrder({ ...sortOrder, search: searchText });
+		updateDashboardsListQueryParams({
+			...dashboardsListQueryParams,
+			search: searchText,
+		});
 	};
 
 	const [state, setCopy] = useCopyToClipboard();
@@ -671,8 +631,8 @@ function DashboardsList(): JSX.Element {
 		showTotal: showPaginationItem,
 		showSizeChanger: false,
 		onChange: (page: any): void => handlePageSizeUpdate(page),
-		current: Number(sortOrder.pagination),
-		defaultCurrent: Number(sortOrder.pagination) || 1,
+		current: Number(dashboardsListQueryParams.page),
+		defaultCurrent: Number(dashboardsListQueryParams.page) || 1,
 		hideOnSinglePage: true,
 	};
 
@@ -710,9 +670,7 @@ function DashboardsList(): JSX.Element {
 					)}
 				</div>
 
-				{isDashboardListLoading ||
-				isFilteringDashboards ||
-				isDashboardListRefetching ? (
+				{isDashboardListFetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -749,7 +707,7 @@ function DashboardsList(): JSX.Element {
 							<ArrowUpRight size={16} className="learn-more-arrow" />
 						</section>
 					</div>
-				) : dashboards?.length === 0 && !searchString ? (
+				) : dashboards.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
 						<img
 							src="/Icons/dashboards.svg"
@@ -831,7 +789,7 @@ function DashboardsList(): JSX.Element {
 							)}
 						</div>
 
-						{dashboards?.length === 0 ? (
+						{dashboards.length === 0 ? (
 							<div className="no-search">
 								<img src="/Icons/emptyState.svg" alt="img" className="img" />
 								<Typography.Text className="text">
@@ -860,7 +818,9 @@ function DashboardsList(): JSX.Element {
 															data-testid="sort-by-last-created"
 														>
 															Last created
-															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
+															{dashboardsListQueryParams.columnKey === 'createdAt' && (
+																<Check size={14} />
+															)}
 														</Button>
 														<Button
 															type="text"
@@ -869,7 +829,9 @@ function DashboardsList(): JSX.Element {
 															data-testid="sort-by-last-updated"
 														>
 															Last updated
-															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+															{dashboardsListQueryParams.columnKey === 'updatedAt' && (
+																<Check size={14} />
+															)}
 														</Button>
 													</div>
 												}
@@ -911,11 +873,7 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={
-										isDashboardListLoading ||
-										isFilteringDashboards ||
-										isDashboardListRefetching
-									}
+									loading={isDashboardListFetching}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
@@ -964,12 +922,12 @@ function DashboardsList(): JSX.Element {
 						<div className="configure-preview">
 							<section className="header">
 								<img
-									src={dashboards?.[0]?.data?.image || Base64Icons[0]}
+									src={dashboards[0]?.data?.image || Base64Icons[0]}
 									alt="dashboard-image"
 									style={{ height: '14px', width: '14px' }}
 								/>
 								<Typography.Text className="title">
-									{dashboards?.[0]?.data?.title}
+									{dashboards[0]?.data?.title}
 								</Typography.Text>
 							</section>
 							<section className="details">
@@ -977,16 +935,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.createdAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{getFormattedTime(dashboards?.[0] as Dashboard, 'created_at')}
+											{getFormattedTime(dashboards[0] as Dashboard, 'created_at')}
 										</Typography.Text>
 									)}
 									{visibleColumns.createdBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.createdBy?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.createdBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.createdBy}
+												{dashboards[0]?.createdBy}
 											</Typography.Text>
 										</div>
 									)}
@@ -995,16 +953,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{onLastUpdated(dashboards?.[0]?.updatedAt || '')}
+											{onLastUpdated(dashboards[0]?.updatedAt || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.updatedBy?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.updatedBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.updatedBy}
+												{dashboards[0]?.updatedBy}
 											</Typography.Text>
 										</div>
 									)}

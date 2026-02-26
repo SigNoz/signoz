@@ -4,7 +4,13 @@ import { getNonIntegrationDashboardById } from 'mocks-server/__mockdata__/dashbo
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import DashboardDescription from '..';
 
@@ -45,6 +51,7 @@ jest.mock('hooks/useSafeNavigate', () => ({
 describe('Dashboard landing page actions header tests', () => {
 	beforeEach(() => {
 		mockSafeNavigate.mockClear();
+		sessionStorage.clear();
 	});
 
 	it('unlock dashboard should be disabled for integrations created dashboards', async () => {
@@ -124,17 +131,17 @@ describe('Dashboard landing page actions header tests', () => {
 		await waitFor(() => expect(lockUnlockButton).not.toBeDisabled());
 	});
 
-	it('should navigate to dashboard list with correct params and exclude variables', async () => {
-		const dashboardUrlWithVariables = `${DASHBOARD_PATH}?variables=%7B%22var1%22%3A%22value1%22%7D&otherParam=test`;
+	it('should navigate to base dashboard list URL when no saved params exist', async () => {
+		const user = userEvent.setup();
 		const mockLocation = {
 			pathname: DASHBOARD_PATH,
-			search: '?variables=%7B%22var1%22%3A%22value1%22%7D&otherParam=test',
+			search: '',
 		};
 
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 
 		const { getByText } = render(
-			<MemoryRouter initialEntries={[dashboardUrlWithVariables]}>
+			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
 				<DashboardProvider>
 					<DashboardDescription
 						handle={{
@@ -154,27 +161,51 @@ describe('Dashboard landing page actions header tests', () => {
 			),
 		);
 
-		// Click the dashboard breadcrumb to navigate back to list
 		const dashboardButton = getByText('Dashboard /');
-		fireEvent.click(dashboardButton);
+		await user.click(dashboardButton);
 
-		// Verify navigation was called with correct URL
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			'/dashboard?columnKey=updatedAt&order=descend&page=1&search=',
+		expect(mockSafeNavigate).toHaveBeenCalledWith('/dashboard');
+	});
+
+	it('should navigate to dashboard list with saved query params when present', async () => {
+		const user = userEvent.setup();
+		const savedParams = 'columnKey=createdAt&order=ascend&page=2&search=foo';
+		sessionStorage.setItem('dashboardsListQueryParams', savedParams);
+
+		const mockLocation = {
+			pathname: DASHBOARD_PATH,
+			search: '',
+		};
+
+		(useLocation as jest.Mock).mockReturnValue(mockLocation);
+
+		const { getByText } = render(
+			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
+				<DashboardProvider>
+					<DashboardDescription
+						handle={{
+							active: false,
+							enter: (): Promise<void> => Promise.resolve(),
+							exit: (): Promise<void> => Promise.resolve(),
+							node: { current: null },
+						}}
+					/>
+				</DashboardProvider>
+			</MemoryRouter>,
 		);
 
-		// Ensure the URL contains only essential dashboard list params
-		const calledUrl = mockSafeNavigate.mock.calls[0][0] as string;
-		const urlParams = new URLSearchParams(calledUrl.split('?')[1]);
+		await waitFor(() =>
+			expect(screen.getByTestId(DASHBOARD_TEST_ID)).toHaveTextContent(
+				DASHBOARD_TITLE_TEXT,
+			),
+		);
 
-		// Should have essential dashboard list params
-		expect(urlParams.get('columnKey')).toBe('updatedAt');
-		expect(urlParams.get('order')).toBe('descend');
-		expect(urlParams.get('page')).toBe('1');
-		expect(urlParams.get('search')).toBe('');
+		const dashboardButton = getByText('Dashboard /');
+		await user.click(dashboardButton);
 
-		// Should NOT have variables or other dashboard-specific params
-		expect(urlParams.has('variables')).toBeFalsy();
-		expect(urlParams.has('relativeTime')).toBeFalsy();
+		expect(mockSafeNavigate).toHaveBeenCalledWith({
+			pathname: '/dashboard',
+			search: `?${savedParams}`,
+		});
 	});
 });
