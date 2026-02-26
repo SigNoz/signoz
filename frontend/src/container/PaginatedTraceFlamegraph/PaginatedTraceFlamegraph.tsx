@@ -52,7 +52,7 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
 		selectedSpanId: firstSpanAtFetchLevel,
-		limit: 10001,
+		limit: 100001,
 		// boundaryStartTsMilli: 0,
 		// boundarEndTsMilli: 10000,
 	});
