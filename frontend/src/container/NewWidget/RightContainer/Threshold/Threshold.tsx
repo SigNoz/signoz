@@ -2,6 +2,9 @@
 import { useMemo, useRef, useState } from 'react';
 import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -204,6 +207,18 @@ function Threshold({
 		return unit !== 'none' && convertUnit(value, unit, toUnitId) === null;
 	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits, unit, value]);
 
+	const unitSelectCategories = useMemo(() => {
+		return unitOptions(
+			selectedGraph === PANEL_TYPES.TABLE
+				? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
+				: yAxisUnit || '',
+		);
+	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits]);
+
+	const unitLabel = useMemo(() => {
+		return Y_AXIS_UNIT_NAMES[unit as keyof typeof Y_AXIS_UNIT_NAMES];
+	}, [unit]);
+
 	return (
 		<div
 			ref={allowDragAndDrop ? ref : null}
@@ -313,19 +328,17 @@ function Threshold({
 						<ShowCaseValue value={value} className="unit-input" />
 					)}
 					{isEditMode ? (
-						<Select
-							defaultValue={unit}
-							options={unitOptions(
-								selectedGraph === PANEL_TYPES.TABLE
-									? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
-									: yAxisUnit || '',
-							)}
+						<YAxisUnitSelector
+							value={unit}
 							onChange={handleUnitChange}
-							showSearch
-							className="unit-selection"
+							placeholder="Select unit"
+							source={YAxisSource.DASHBOARDS}
+							initialValue={unit}
+							categoriesOverride={unitSelectCategories}
+							containerClassName="unit-selection"
 						/>
 					) : (
-						<ShowCaseValue value={unit} className="unit-selection-prev" />
+						<ShowCaseValue value={unitLabel} className="unit-selection-prev" />
 					)}
 				</div>
 				<div className="thresholds-color-selector">
@@ -356,7 +369,10 @@ function Threshold({
 					)}
 				</div>
 				{isInvalidUnitComparison && (
-					<Typography.Text className="invalid-unit">
+					<Typography.Text
+						className="invalid-unit"
+						data-testid="invalid-unit-comparison"
+					>
 						Threshold unit ({unit}) is not valid in comparison with the{' '}
 						{selectedGraph === PANEL_TYPES.TABLE ? 'column' : 'y-axis'} unit (
 						{selectedGraph === PANEL_TYPES.TABLE
