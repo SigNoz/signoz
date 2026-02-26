@@ -21,7 +21,7 @@
 		width: 6px;
 		height: 6px;
 		border-radius: 50%;
-		background: var(--bg-robin-500);
+		background: var(--primary);
 	}
 }
 
@@ -145,7 +145,6 @@
 	}
 }
 
-// ── URL trigger button ────────────────────────────────────────────────────────
 .workspace-url-trigger {
 	display: inline-flex;
 	align-items: center;
@@ -170,7 +169,6 @@
 	}
 }
 
-// ── Dropdown overlay ──────────────────────────────────────────────────────────
 .workspace-url-dropdown {
 	border-radius: 4px;
 	border: 1px solid var(--l1-border);
@@ -202,11 +200,32 @@
 	justify-content: space-between;
 	gap: 8px;
 	padding: 5px 12px;
-	cursor: default;
+	cursor: pointer;
+	text-decoration: none;
+	transition: background 0.15s ease;
+
+	&:hover {
+		background: var(--l1-background-hover);
+
+		.workspace-url-dropdown-item-label {
+			text-decoration: underline;
+		}
+
+		.workspace-url-dropdown-item-external {
+			opacity: 1;
+		}
+	}
 
 	&--active {
 		background: var(--l1-background-hover);
 	}
+}
+
+.workspace-url-dropdown-item-external {
+	color: var(--l2-foreground);
+	flex-shrink: 0;
+	opacity: 0.5;
+	transition: opacity 0.15s ease;
 }
 
 .workspace-url-dropdown-item-label {
@@ -225,7 +244,6 @@
 	flex-shrink: 0;
 }
 
-// ── Edit workspace modal ──────────────────────────────────────────────────────
 .edit-workspace-modal {
 	.ant-modal-content {
 		padding: 0;
@@ -272,6 +290,14 @@
 	letter-spacing: -0.07px;
 }
 
+.edit-modal-link {
+	color: var(--primary);
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
 // Input field group
 .edit-modal-field {
 	display: flex;
@@ -286,7 +312,7 @@
 	line-height: 20px;
 
 	&--error {
-		color: var(--bg-cherry-500);
+		color: var(--destructive);
 	}
 }
 
@@ -294,33 +320,41 @@
 	display: flex;
 	align-items: stretch;
 
-	.ant-input-affix-wrapper {
+	.edit-modal-input-field {
 		flex: 1;
+		display: flex;
+		align-items: center;
+		gap: 6px;
 		height: 44px;
+		padding: 6px 12px;
 		background: var(--l1-background);
-		border-color: var(--l1-border);
+		border: 1px solid var(--l1-border);
 		border-right: none;
 		border-radius: 2px 0 0 2px;
-		padding: 6px 12px;
-		box-shadow: none;
 
-		&:hover,
-		&:focus-within {
-			border-color: var(--l1-border);
-			box-shadow: none;
+		svg {
+			flex-shrink: 0;
 		}
 
-		.ant-input {
+		input {
+			flex: 1;
+			width: 100%;
+			height: auto;
 			background: transparent;
+			border: none;
+			border-radius: 0;
+			outline: none;
+			box-shadow: none;
 			color: var(--l1-foreground);
 			font-size: 13px;
 			line-height: 20px;
-		}
+			padding: 0;
 
-		.ant-input-prefix {
-			margin-inline-end: 6px;
-			display: flex;
-			align-items: center;
+			&:focus,
+			&:focus-visible {
+				outline: none;
+				box-shadow: none;
+			}
 		}
 	}
 }
@@ -345,7 +379,7 @@
 	line-height: 20px;
 
 	&--error {
-		color: var(--bg-cherry-500);
+		color: var(--destructive);
 	}
 }
 
@@ -353,7 +387,6 @@
 	color: var(--l2-foreground);
 }
 
-// Note banner
 .edit-modal-note {
 	display: flex;
 	gap: 12px;
@@ -377,7 +410,6 @@
 	letter-spacing: -0.07px;
 }
 
-// Footer
 .edit-modal-footer {
 	.facing-issue-button {
 		width: 100%;
@@ -385,7 +417,7 @@
 		.periscope-btn {
 			width: 100%;
 			border-radius: 2px;
-			background: var(--bg-robin-500);
+			background: var(--primary);
 			border: none;
 			color: var(--bg-vanilla-100);
 			font-size: 13px;
@@ -398,7 +430,7 @@
 			}
 
 			&:hover {
-				background: var(--bg-robin-500) !important;
+				background: var(--primary) !important;
 				border: none !important;
 				color: var(--bg-vanilla-100) !important;
 			}
@@ -408,26 +440,57 @@
 
 .edit-modal-apply-btn {
 	width: 100%;
-	padding: 8px 16px;
-	border: none;
-	border-radius: 2px;
-	background: var(--bg-robin-500);
-	color: #fff;
-	font-size: 13px;
-	font-weight: 500;
-	line-height: 20px;
-	cursor: pointer;
+}
+
+.custom-domain-toast {
 	display: flex;
 	align-items: center;
-	justify-content: center;
-	gap: 8px;
+	justify-content: space-between;
+	gap: 16px;
+	padding: 0 16px;
+	height: 40px;
+	width: min(942px, calc(100vw - 32px));
+	border-radius: 4px;
+	background: var(--primary);
+	box-shadow: 0 4px 16px rgba(0, 0, 0, 0.3);
+	color: var(--bg-base-white);
 
-	&:disabled {
-		opacity: 0.7;
-		cursor: not-allowed;
+	&-message {
+		font-size: 13px;
+		line-height: 20px;
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		flex: 1;
 	}
 
-	&:hover:not(:disabled) {
-		background: var(--bg-robin-400);
+	&-actions {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		flex-shrink: 0;
+	}
+
+	&-visit-btn {
+		color: inherit;
+		text-decoration: none;
+		background: rgba(255, 255, 255, 0.15);
+		border: 1px solid rgba(255, 255, 255, 0.25);
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.25);
+			color: inherit;
+		}
+	}
+
+	&-dismiss-btn {
+		color: rgba(255, 255, 255, 0.7);
+		height: 24px;
+		width: 24px;
+
+		&:hover {
+			background: rgba(255, 255, 255, 0.15);
+			color: inherit;
+		}
 	}
 }

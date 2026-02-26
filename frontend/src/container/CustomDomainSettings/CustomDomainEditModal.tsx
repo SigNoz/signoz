@@ -1,6 +1,8 @@
 import { useEffect, useState } from 'react';
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Input, Modal, Typography } from 'antd';
+import { Input } from '@signozhq/input';
+import { Modal } from 'antd';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -49,6 +51,12 @@ export default function CustomDomainEditModal({
 		onClearError();
 	};
 
+	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
+		if (e.key === 'Enter') {
+			handleSubmit();
+		}
+	};
+
 	const handleSubmit = (): void => {
 		if (!value) {
 			setValidationError('This field is required');
@@ -94,13 +102,14 @@ export default function CustomDomainEditModal({
 			<p className="edit-modal-description">
 				Enter your preferred subdomain to create a unique URL for your team. Need
 				help?{' '}
-				<Typography.Link
+				<a
 					href="https://signoz.io/support"
 					target="_blank"
 					rel="noreferrer"
+					className="edit-modal-link"
 				>
 					Contact support.
-				</Typography.Link>
+				</a>
 			</p>
 
 			<div className="edit-modal-field">
@@ -117,13 +126,15 @@ export default function CustomDomainEditModal({
 						isError ? ' edit-modal-input-wrapper--error' : ''
 					}`}
 				>
-					<Input
-						prefix={statusIcon}
-						value={value}
-						onChange={handleChange}
-						onPressEnter={handleSubmit}
-						autoFocus
-					/>
+					<div className="edit-modal-input-field">
+						{statusIcon}
+						<Input
+							value={value}
+							onChange={handleChange}
+							onKeyDown={handleKeyDown}
+							autoFocus
+						/>
+					</div>
 					<div className="edit-modal-input-suffix">{dnsSuffix}</div>
 				</div>
 
@@ -140,10 +151,10 @@ export default function CustomDomainEditModal({
 
 			<div className="edit-modal-note">
 				<span className="edit-modal-note-emoji">🚧</span>
-				<Typography.Text className="edit-modal-note-text">
+				<span className="edit-modal-note-text">
 					Note that your previous URL still remains accessible. Your access
 					credentials for the new URL remains the same.
-				</Typography.Text>
+				</span>
 			</div>
 
 			<div className="edit-modal-footer">
@@ -155,18 +166,17 @@ export default function CustomDomainEditModal({
 						buttonText="Contact Support"
 					/>
 				) : (
-					<button
-						type="button"
+					<Button
+						variant="solid"
+						size="md"
+						color="primary"
 						className="edit-modal-apply-btn"
 						onClick={handleSubmit}
 						disabled={isLoading}
+						loading={isLoading}
 					>
-						{isLoading ? (
-							<Loader2 size={14} className="animate-spin" />
-						) : (
-							'Apply Changes'
-						)}
-					</button>
+						Apply Changes
+					</Button>
 				)}
 			</div>
 		</Modal>

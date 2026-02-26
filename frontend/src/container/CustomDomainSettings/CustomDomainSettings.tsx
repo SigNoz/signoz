@@ -5,10 +5,13 @@ import {
 	Check,
 	ChevronDown,
 	Clock,
+	ExternalLink,
 	FilePenLine,
 	Link2,
 	SolidAlertCircle,
+	X,
 } from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
 import { Dropdown, Skeleton } from 'antd';
 import {
 	RenderErrorResponseDTO,
@@ -22,6 +25,48 @@ import { useTimezone } from 'providers/Timezone';
 import CustomDomainEditModal from './CustomDomainEditModal';
 
 import './CustomDomainSettings.styles.scss';
+
+function DomainUpdateToast({
+	toastId,
+	url,
+}: {
+	toastId: string | number;
+	url: string;
+}): JSX.Element {
+	const displayUrl = url?.split('://')[1] ?? url;
+
+	return (
+		<div className="custom-domain-toast">
+			<span className="custom-domain-toast-message">
+				Your workspace URL is being updated to <strong>{displayUrl}</strong>. This
+				may take a few minutes.
+			</span>
+			<div className="custom-domain-toast-actions">
+				<Button
+					variant="ghost"
+					size="xs"
+					className="custom-domain-toast-visit-btn"
+					suffixIcon={<ExternalLink size={12} />}
+					onClick={(): void => {
+						window.open(url, '_blank', 'noopener,noreferrer');
+					}}
+				>
+					Visit new URL
+				</Button>
+				<Button
+					variant="ghost"
+					size="icon"
+					className="custom-domain-toast-dismiss-btn"
+					onClick={(): void => {
+						toast.dismiss(toastId);
+					}}
+					aria-label="Dismiss"
+					prefixIcon={<X size={14} />}
+				/>
+			</div>
+		</div>
+	);
+}
 
 export default function CustomDomainSettings(): JSX.Element {
 	const { org, activeLicense } = useAppContext();
@@ -96,6 +141,11 @@ export default function CustomDomainSettings(): JSX.Element {
 					refetchHosts();
 					setIsEditModalOpen(false);
 					setCustomDomainSubdomain(subdomain);
+					const newUrl = `https://${subdomain}.${dnsSuffix}`;
+					toast.custom(
+						(toastId) => <DomainUpdateToast toastId={toastId} url={newUrl} />,
+						{ duration: 5000, position: 'bottom-right' }, // this 5 sec is as per design
+					);
 				},
 				onError: (error: AxiosError<RenderErrorResponseDTO>) => {
 					setUpdateDomainError(error as AxiosError<RenderErrorResponseDTO>);
@@ -163,8 +213,11 @@ export default function CustomDomainSettings(): JSX.Element {
 										{sortedHosts.map((host) => {
 											const isActive = host.name === activeHost?.name;
 											return (
-												<div
+												<a
 													key={host.name}
+													href={host.url}
+													target="_blank"
+													rel="noopener noreferrer"
 													className={`workspace-url-dropdown-item${
 														isActive ? ' workspace-url-dropdown-item--active' : ''
 													}`}
@@ -172,10 +225,15 @@ export default function CustomDomainSettings(): JSX.Element {
 													<span className="workspace-url-dropdown-item-label">
 														{stripProtocol(host.url ?? '')}
 													</span>
-													{isActive && (
+													{isActive ? (
 														<Check size={14} className="workspace-url-dropdown-item-check" />
+													) : (
+														<ExternalLink
+															size={12}
+															className="workspace-url-dropdown-item-external"
+														/>
 													)}
-												</div>
+												</a>
 											);
 										})}
 									</div>

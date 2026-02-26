@@ -3,7 +3,9 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 import { useInterval } from 'react-use';
 import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Modal, Spin, Typography } from 'antd';
+import { Button } from '@signozhq/button';
+import { Compass, ScrollText } from '@signozhq/icons';
+import { Modal, Spin } from 'antd';
 import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
@@ -14,7 +16,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { StatusCodes } from 'http-status-codes';
 import find from 'lodash-es/find';
-import { BarChart2, Compass, ScrollText } from 'lucide-react';
+import { BarChart2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import {
 	ErrorResponse,
@@ -623,8 +625,9 @@ function GeneralSettings({
 							))}
 							{!isCloudUserVal && (
 								<Button
-									type="primary"
-									size="small"
+									variant="solid"
+									size="sm"
+									color="primary"
 									onClick={category.save.modalOpen}
 									disabled={category.save.isDisabled}
 								>
@@ -655,11 +658,11 @@ function GeneralSettings({
 							open={category.save.modal}
 							confirmLoading={category.save.apiLoading}
 						>
-							<Typography>
+							<p className="retention-modal-description">
 								{t('retention_confirmation_description', {
 									name: category.name.toLowerCase(),
 								})}
-							</Typography>
+							</p>
 						</Modal>
 					)}
 				</Fragment>

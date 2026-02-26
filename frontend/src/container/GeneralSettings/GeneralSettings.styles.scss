@@ -93,6 +93,7 @@
 	align-items: flex-start;
 	gap: -1px;
 
+	// todo: https://github.com/SigNoz/components/issues/116
 	input[type='number'] {
 		display: flex;
 		width: 120px;
@@ -140,6 +141,13 @@
 
 .retention-error-text {
 	font-size: 12px;
-	color: var(--bg-amber-500, #e89a3c);
+	color: var(--accent-amber);
 	font-style: italic;
+}
+
+.retention-modal-description {
+	margin: 0;
+	color: var(--l1-foreground);
+	font-size: 14px;
+	line-height: 22px;
 }
