@@ -121,7 +121,14 @@ func (p *NodesRepo) getMetadataAttributes(ctx context.Context, req model.NodeLis
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherNodeMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForNodes {
+		if metric != metricToUseForNodes {
+			otherNodeMetricsForMetadata = append(otherNodeMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherNodeMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

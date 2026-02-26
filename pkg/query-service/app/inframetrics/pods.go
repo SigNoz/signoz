@@ -21,6 +21,17 @@ import (
 var (
 	metricToUseForPods = GetDotMetrics("k8s_pod_cpu_usage")
 
+	metricNamesForPods = map[string]string{
+		"cpu":            GetDotMetrics("k8s_pod_cpu_usage"),
+		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
+		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
+		"memory":         GetDotMetrics("k8s_pod_memory_working_set"),
+		"memory_request": GetDotMetrics("k8s_pod_memory_request_utilization"),
+		"memory_limit":   GetDotMetrics("k8s_pod_memory_limit_utilization"),
+		"restarts":       GetDotMetrics("k8s_container_restarts"),
+		"pod_phase":      GetDotMetrics("k8s_pod_phase"),
+	}
+
 	podAttrsToEnrich = []string{
 		GetDotMetrics("k8s_pod_uid"),
 		GetDotMetrics("k8s_pod_name"),
@@ -47,17 +58,6 @@ var (
 		"pod_phase":      {"H", "I", "J", "K"},
 	}
 	podQueryNames = []string{"A", "B", "C", "D", "E", "F", "G", "H", "I", "J", "K"}
-
-	metricNamesForPods = map[string]string{
-		"cpu":            GetDotMetrics("k8s_pod_cpu_usage"),
-		"cpu_request":    GetDotMetrics("k8s_pod_cpu_request_utilization"),
-		"cpu_limit":      GetDotMetrics("k8s_pod_cpu_limit_utilization"),
-		"memory":         GetDotMetrics("k8s_pod_memory_working_set"),
-		"memory_request": GetDotMetrics("k8s_pod_memory_request_utilization"),
-		"memory_limit":   GetDotMetrics("k8s_pod_memory_limit_utilization"),
-		"restarts":       GetDotMetrics("k8s_container_restarts"),
-		"pod_phase":      GetDotMetrics("k8s_pod_phase"),
-	}
 )
 
 type PodsRepo struct {
@@ -266,7 +266,14 @@ func (p *PodsRepo) getMetadataAttributes(ctx context.Context, req model.PodListR
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherPodMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForPods {
+		if metric != metricToUseForPods {
+			otherPodMetricsForMetadata = append(otherPodMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherPodMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

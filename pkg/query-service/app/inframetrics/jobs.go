@@ -208,7 +208,19 @@ func (d *JobsRepo) getMetadataAttributes(ctx context.Context, req model.JobListR
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherJobMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForWorkloads {
+		if metric != metricToUseForJobs {
+			otherJobMetricsForMetadata = append(otherJobMetricsForMetadata, metric)
+		}
+	}
+	for _, metric := range metricNamesForJobs {
+		if metric != metricToUseForJobs {
+			otherJobMetricsForMetadata = append(otherJobMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherJobMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

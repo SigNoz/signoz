@@ -347,6 +347,105 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 }
 
 // PrepareTimeseriesFilterQuery builds the sub-query to be used for filtering timeseries based on the search criteria
+func PrepareTimeseriesFilterQueryWithMultipleMetrics(start, end int64, mq *v3.BuilderQuery, metricNames []string) (string, error) {
+	var conditions []string
+	var fs *v3.FilterSet = mq.Filters
+	var groupTags []v3.AttributeKey = mq.GroupBy
+
+	if mq.AggregateAttribute.Key != "" {
+		metricNames = append(metricNames, mq.AggregateAttribute.Key)
+	}
+
+	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(metricNames)))
+	if constants.IsDotMetricsEnabled {
+		conditions = append(conditions, "__normalized = false")
+	} else {
+		conditions = append(conditions, "__normalized = true")
+	}
+
+	start, end, tableName := whichTSTableToUse(start, end, mq)
+
+	conditions = append(conditions, fmt.Sprintf("unix_milli >= %d AND unix_milli < %d", start, end))
+
+	if fs != nil && len(fs.Items) != 0 {
+		for _, item := range fs.Items {
+			if item.Key.Key == "__value" {
+				continue
+			}
+
+			toFormat := item.Value
+			op := v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
+			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
+				toFormat = fmt.Sprintf("%%%s%%", toFormat)
+			}
+			var fmtVal string
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				fmtVal = utils.ClickHouseFormattedValue(toFormat)
+			}
+			switch op {
+			case v3.FilterOperatorEqual:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotEqual:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') != %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorIn:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') IN %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotIn:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') NOT IN %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLike:
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotLike:
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorRegex:
+				conditions = append(conditions, fmt.Sprintf("match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotRegex:
+				conditions = append(conditions, fmt.Sprintf("not match(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorGreaterThan:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') > %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorGreaterThanOrEq:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') >= %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLessThan:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') < %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorLessThanOrEq:
+				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') <= %s", item.Key.Key, fmtVal))
+			case v3.FilterOperatorContains:
+				conditions = append(conditions, fmt.Sprintf("like(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotContains:
+				conditions = append(conditions, fmt.Sprintf("notLike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorExists:
+				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			case v3.FilterOperatorNotExists:
+				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			case v3.FilterOperatorILike:
+				conditions = append(conditions, fmt.Sprintf("ilike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotILike:
+				conditions = append(conditions, fmt.Sprintf("notILike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			default:
+				return "", fmt.Errorf("unsupported filter operator")
+			}
+		}
+	}
+	whereClause := strings.Join(conditions, " AND ")
+
+	var selectLabels string
+	for _, tag := range groupTags {
+		selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, utils.AddBackTickToFormatTag(tag.Key))
+	}
+
+	// The table JOIN key always exists
+	selectLabels += "fingerprint"
+
+	filterSubQuery := fmt.Sprintf(
+		"SELECT DISTINCT %s FROM %s.%s WHERE %s",
+		selectLabels,
+		constants.SIGNOZ_METRIC_DBNAME,
+		tableName,
+		whereClause,
+	)
+
+	return filterSubQuery, nil
+}
+
+// PrepareTimeseriesFilterQuery builds the sub-query to be used for filtering timeseries based on the search criteria
 func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (string, error) {
 	var conditions []string
 	var fs *v3.FilterSet = mq.Filters

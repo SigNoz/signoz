@@ -164,7 +164,19 @@ func (d *DeploymentsRepo) getMetadataAttributes(ctx context.Context, req model.D
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherDeploymentMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForWorkloads {
+		if metric != metricToUseForDeployments {
+			otherDeploymentMetricsForMetadata = append(otherDeploymentMetricsForMetadata, metric)
+		}
+	}
+	for _, metric := range metricNamesForDeployments {
+		if metric != metricToUseForDeployments {
+			otherDeploymentMetricsForMetadata = append(otherDeploymentMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherDeploymentMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}
