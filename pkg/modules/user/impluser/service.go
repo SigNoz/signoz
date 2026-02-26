@@ -78,6 +78,43 @@ func (s *service) Stop(ctx context.Context) error {
 }
 
 func (s *service) reconcile(ctx context.Context) error {
+	if !s.config.Org.ID.IsZero() {
+		return s.reconcileWithOrgID(ctx)
+	}
+
+	return s.reconcileByName(ctx)
+}
+
+func (s *service) reconcileWithOrgID(ctx context.Context) error {
+	org, err := s.orgGetter.Get(ctx, s.config.Org.ID)
+	if err != nil {
+		if !errors.Ast(err, errors.TypeNotFound) {
+			return err // something really went wrong
+		}
+
+		// org was not found using id check if we can find an org using name
+
+		existingOrgByName, nameErr := s.orgGetter.GetByName(ctx, s.config.Org.Name)
+		if nameErr != nil && !errors.Ast(nameErr, errors.TypeNotFound) {
+			return nameErr // something really went wrong
+		}
+
+		// we found an org using name
+		if existingOrgByName != nil {
+			// the existing org has the same name as config but org id is different inform user with actionable message
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "organization with name %q already exists with a different ID %s (expected %s)", s.config.Org.Name, existingOrgByName.ID.StringValue(), s.config.Org.ID.StringValue())
+		}
+
+		// default - we did not found any org using id and name both - create a new org
+		newOrg := types.NewOrganizationWithID(s.config.Org.ID, s.config.Org.Name, s.config.Org.Name)
+		_, err = s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
+		return err
+	}
+
+	return s.reconcileRootUser(ctx, org.ID)
+}
+
+func (s *service) reconcileByName(ctx context.Context) error {
 	org, err := s.orgGetter.GetByName(ctx, s.config.Org.Name)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
