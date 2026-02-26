@@ -53,6 +53,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sNodesRowData {
 	key: string;
 	nodeUID: string;
+	nodeNameRaw: string;
 	nodeName: React.ReactNode;
 	clusterName: string;
 	cpu: React.ReactNode;
@@ -193,6 +194,7 @@ export const formatDataForTable = (
 	data.map((node, index) => ({
 		key: `${node.nodeUID}-${index}`,
 		nodeUID: node.nodeUID || '',
+		nodeNameRaw: node.meta.k8s_node_name || '',
 		nodeName: (
 			<Tooltip title={node.meta.k8s_node_name}>
 				{node.meta.k8s_node_name || ''}

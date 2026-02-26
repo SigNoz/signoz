@@ -94,6 +94,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sJobsRowData {
 	key: string;
 	jobUID: string;
+	jobNameRaw: string;
 	jobName: React.ReactNode;
 	namespaceName: React.ReactNode;
 	successful_pods: React.ReactNode;
@@ -303,6 +304,7 @@ export const formatDataForTable = (
 	data.map((job, index) => ({
 		key: index.toString(),
 		jobUID: job.jobName,
+		jobNameRaw: job.meta.k8s_job_name || '',
 		jobName: (
 			<Tooltip title={job.meta.k8s_job_name}>
 				{job.meta.k8s_job_name || ''}

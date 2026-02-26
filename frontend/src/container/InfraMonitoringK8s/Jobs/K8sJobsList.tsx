@@ -430,6 +430,9 @@ function K8sJobsList({
 
 	const handleRowClick = (record: K8sJobsRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.jobNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedJobUID(record.jobUID);
 			setSearchParams({
@@ -494,9 +497,11 @@ function K8sJobsList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedJobUID(record.jobUID);
+								if (record.jobNameRaw) {
+									setselectedJobUID(record.jobUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.jobNameRaw ? 'expanded-clickable-row' : 'disabled-row',
 						})}
 					/>
 
@@ -686,7 +691,10 @@ function K8sJobsList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.jobNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

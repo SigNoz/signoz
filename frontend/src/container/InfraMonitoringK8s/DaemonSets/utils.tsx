@@ -82,6 +82,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sDaemonSetsRowData {
 	key: string;
 	daemonsetUID: string;
+	daemonsetNameRaw: string;
 	daemonsetName: React.ReactNode;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
@@ -276,6 +277,7 @@ export const formatDataForTable = (
 	data.map((daemonSet, index) => ({
 		key: index.toString(),
 		daemonsetUID: daemonSet.daemonSetName,
+		daemonsetNameRaw: daemonSet.meta.k8s_daemonset_name || '',
 		daemonsetName: (
 			<Tooltip title={daemonSet.meta.k8s_daemonset_name}>
 				{daemonSet.meta.k8s_daemonset_name || ''}

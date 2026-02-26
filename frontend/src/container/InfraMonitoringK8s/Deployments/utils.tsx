@@ -81,6 +81,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sDeploymentsRowData {
 	key: string;
 	deploymentUID: string;
+	deploymentNameRaw: string;
 	deploymentName: React.ReactNode;
 	available_pods: React.ReactNode;
 	desired_pods: React.ReactNode;
@@ -267,6 +268,7 @@ export const formatDataForTable = (
 	data.map((deployment, index) => ({
 		key: index.toString(),
 		deploymentUID: deployment.meta.k8s_deployment_name,
+		deploymentNameRaw: deployment.meta.k8s_deployment_name || '',
 		deploymentName: (
 			<Tooltip title={deployment.meta.k8s_deployment_name}>
 				{deployment.meta.k8s_deployment_name}

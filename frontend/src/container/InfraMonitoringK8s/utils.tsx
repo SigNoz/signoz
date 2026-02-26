@@ -107,6 +107,7 @@ export const defaultAvailableColumns = [
 export interface K8sPodsRowData {
 	key: string;
 	podName: React.ReactNode;
+	podNameRaw: string;
 	podUID: string;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
@@ -350,6 +351,7 @@ export const formatDataForTable = (
 				{pod.meta.k8s_pod_name || ''}
 			</Tooltip>
 		),
+		podNameRaw: pod.meta.k8s_pod_name || '',
 		podUID: pod.podUID || '',
 		cpu_request: (
 			<ValidateColumnValueWrapper

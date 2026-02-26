@@ -461,6 +461,9 @@ function K8sNamespacesList({
 
 	const handleRowClick = (record: K8sNamespacesRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.namespaceNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedNamespaceUID(record.namespaceUID);
 			setSearchParams({
@@ -525,9 +528,13 @@ function K8sNamespacesList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedNamespaceUID(record.namespaceUID);
+								if (record.namespaceNameRaw) {
+									setselectedNamespaceUID(record.namespaceUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.namespaceNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -718,7 +725,10 @@ function K8sNamespacesList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.namespaceNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

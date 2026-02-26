@@ -453,6 +453,9 @@ function K8sClustersList({
 
 	const handleRowClick = (record: K8sClustersRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.clusterNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedClusterName(record.clusterUID);
 			setSearchParams({
@@ -517,9 +520,13 @@ function K8sClustersList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedClusterName(record.clusterUID);
+								if (record.clusterNameRaw) {
+									setselectedClusterName(record.clusterUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.clusterNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -709,7 +716,10 @@ function K8sClustersList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.clusterNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

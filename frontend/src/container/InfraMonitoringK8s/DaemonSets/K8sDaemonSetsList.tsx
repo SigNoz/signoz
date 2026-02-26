@@ -459,6 +459,9 @@ function K8sDaemonSetsList({
 
 	const handleRowClick = (record: K8sDaemonSetsRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.daemonsetNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setSelectedDaemonSetUID(record.daemonsetUID);
 			setSearchParams({
@@ -523,9 +526,13 @@ function K8sDaemonSetsList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setSelectedDaemonSetUID(record.daemonsetUID);
+								if (record.daemonsetNameRaw) {
+									setSelectedDaemonSetUID(record.daemonsetUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.daemonsetNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -717,7 +724,10 @@ function K8sDaemonSetsList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.daemonsetNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

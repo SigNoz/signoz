@@ -41,6 +41,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sNamespacesRowData {
 	key: string;
 	namespaceUID: string;
+	namespaceNameRaw: string;
 	namespaceName: string;
 	clusterName: string;
 	cpu: React.ReactNode;
@@ -161,6 +162,7 @@ export const formatDataForTable = (
 	data.map((namespace, index) => ({
 		key: index.toString(),
 		namespaceUID: namespace.namespaceName,
+		namespaceNameRaw: namespace.namespaceName || '',
 		namespaceName: namespace.namespaceName,
 		clusterName: namespace.meta.k8s_cluster_name,
 		cpu: (

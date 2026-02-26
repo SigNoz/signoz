@@ -82,6 +82,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sStatefulSetsRowData {
 	key: string;
 	statefulsetUID: string;
+	statefulsetNameRaw: string;
 	statefulsetName: React.ReactNode;
 	cpu_request: React.ReactNode;
 	cpu_limit: React.ReactNode;
@@ -276,6 +277,7 @@ export const formatDataForTable = (
 	data.map((statefulSet, index) => ({
 		key: index.toString(),
 		statefulsetUID: statefulSet.statefulSetName,
+		statefulsetNameRaw: statefulSet.meta.k8s_statefulset_name || '',
 		statefulsetName: (
 			<Tooltip title={statefulSet.meta.k8s_statefulset_name}>
 				{statefulSet.meta.k8s_statefulset_name || ''}

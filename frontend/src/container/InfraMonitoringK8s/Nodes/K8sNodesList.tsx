@@ -440,6 +440,9 @@ function K8sNodesList({
 
 	const handleRowClick = (record: K8sNodesRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.nodeNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setSelectedNodeUID(record.nodeUID);
 			setSearchParams({
@@ -505,9 +508,13 @@ function K8sNodesList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setSelectedNodeUID(record.nodeUID);
+								if (record.nodeNameRaw) {
+									setSelectedNodeUID(record.nodeUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.nodeNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -697,7 +704,10 @@ function K8sNodesList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.nodeNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

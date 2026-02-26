@@ -392,6 +392,9 @@ function K8sVolumesList({
 
 	const handleRowClick = (record: K8sVolumesRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.volumeNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedVolumeUID(record.volumeUID);
 			setSearchParams({
@@ -456,9 +459,13 @@ function K8sVolumesList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedVolumeUID(record.volumeUID);
+								if (record.volumeNameRaw) {
+									setselectedVolumeUID(record.volumeUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.volumeNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -643,7 +650,10 @@ function K8sVolumesList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.volumeNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

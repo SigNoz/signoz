@@ -47,6 +47,7 @@ export const defaultAddedColumns: IEntityColumn[] = [
 export interface K8sVolumesRowData {
 	key: string;
 	volumeUID: string;
+	volumeNameRaw: string;
 	pvcName: React.ReactNode;
 	namespaceName: React.ReactNode;
 	capacity: React.ReactNode;
@@ -186,6 +187,7 @@ export const formatDataForTable = (
 	data.map((volume, index) => ({
 		key: index.toString(),
 		volumeUID: volume.persistentVolumeClaimName,
+		volumeNameRaw: volume.persistentVolumeClaimName || '',
 		pvcName: (
 			<Tooltip title={volume.persistentVolumeClaimName}>
 				{volume.persistentVolumeClaimName || ''}

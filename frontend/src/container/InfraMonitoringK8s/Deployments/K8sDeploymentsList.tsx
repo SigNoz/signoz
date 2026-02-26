@@ -465,6 +465,9 @@ function K8sDeploymentsList({
 
 	const handleRowClick = (record: K8sDeploymentsRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.deploymentNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedDeploymentUID(record.deploymentUID);
 			setSearchParams({
@@ -529,9 +532,13 @@ function K8sDeploymentsList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedDeploymentUID(record.deploymentUID);
+								if (record.deploymentNameRaw) {
+									setselectedDeploymentUID(record.deploymentUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.deploymentNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -724,7 +731,10 @@ function K8sDeploymentsList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.deploymentNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

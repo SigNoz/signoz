@@ -497,6 +497,9 @@ function K8sPodsList({
 
 	const handleRowClick = (record: K8sPodsRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.podNameRaw) {
+				return;
+			}
 			setSelectedPodUID(record.podUID);
 			setSearchParams({
 				...Object.fromEntries(searchParams.entries()),
@@ -617,9 +620,11 @@ function K8sPodsList({
 						}}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setSelectedPodUID(record.podUID);
+								if (record.podNameRaw) {
+									setSelectedPodUID(record.podUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.podNameRaw ? 'expanded-clickable-row' : 'disabled-row',
 						})}
 					/>
 
@@ -754,7 +759,10 @@ function K8sPodsList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.podNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

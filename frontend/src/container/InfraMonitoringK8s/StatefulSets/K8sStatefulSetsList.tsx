@@ -462,6 +462,9 @@ function K8sStatefulSetsList({
 
 	const handleRowClick = (record: K8sStatefulSetsRowData): void => {
 		if (groupBy.length === 0) {
+			if (!record.statefulsetNameRaw) {
+				return;
+			}
 			setSelectedRowData(null);
 			setselectedStatefulSetUID(record.statefulsetUID);
 			setSearchParams({
@@ -526,9 +529,13 @@ function K8sStatefulSetsList({
 						showHeader={false}
 						onRow={(record): { onClick: () => void; className: string } => ({
 							onClick: (): void => {
-								setselectedStatefulSetUID(record.statefulsetUID);
+								if (record.statefulsetNameRaw) {
+									setselectedStatefulSetUID(record.statefulsetUID);
+								}
 							},
-							className: 'expanded-clickable-row',
+							className: record.statefulsetNameRaw
+								? 'expanded-clickable-row'
+								: 'disabled-row',
 						})}
 					/>
 
@@ -720,7 +727,10 @@ function K8sStatefulSetsList({
 				onChange={handleTableChange}
 				onRow={(record): { onClick: () => void; className: string } => ({
 					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
+					className:
+						groupBy.length > 0 || record.statefulsetNameRaw
+							? 'clickable-row'
+							: 'disabled-row',
 				})}
 				expandable={{
 					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,

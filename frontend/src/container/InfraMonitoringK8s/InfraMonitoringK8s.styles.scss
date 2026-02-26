@@ -337,6 +337,11 @@
 		cursor: pointer;
 	}
 
+	.disabled-row {
+		cursor: default;
+		opacity: 0.6;
+	}
+
 	.k8s-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
