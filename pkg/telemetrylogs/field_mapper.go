@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"strings"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/utils"
@@ -61,10 +62,15 @@ var (
 	}
 )
 
-type fieldMapper struct {}
+type fieldMapper struct {
+	evolutionMetadataStore qbtypes.KeyEvolutionMetadataStore
+}
 
-func NewFieldMapper() qbtypes.FieldMapper {
-	return &fieldMapper{}
+func NewFieldMapper(evolutionMetadataStore qbtypes.KeyEvolutionMetadataStore) qbtypes.FieldMapper {
+	// this can take evolution metadata as an argument and store it in the field mapper
+	return &fieldMapper{
+		evolutionMetadataStore: evolutionMetadataStore,
+	}
 }
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
 	switch key.FieldContext {
@@ -150,12 +156,17 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
-	case schema.ColumnTypeEnumLowCardinality:
-		switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
-		case schema.ColumnTypeEnumString:
-			return column.Name, nil
-		default:
-			return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for low cardinality column type %s", elementType)
+
+		baseColumn := logsV2Columns["resources_string"]
+		tsStartTime := time.Unix(0, int64(tsStart))
+
+		// Check all evolutions for this key to see if any were released after tsStart.
+		// If so, it means the new column wasn't available yet at tsStart, so we need to check the old column.
+		evolutions := m.evolutionMetadataStore.Get(baseColumn.Name)
+
+		// restricting now to just one entry where we know we changes from map to json
+		if len(evolutions) > 0 && evolutions[0].ReleaseTime.After(tsStartTime) {
+			return fmt.Sprintf("%s.`%s`::String", column.Name, key.Name), nil
 		}
 	case schema.ColumnTypeEnumString,
 		schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:

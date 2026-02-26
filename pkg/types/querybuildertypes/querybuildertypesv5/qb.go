@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"context"
+	"time"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -58,4 +59,17 @@ type StatementBuilder[T any] interface {
 type TraceOperatorStatementBuilder interface {
 	// Build builds the trace operator query.
 	Build(ctx context.Context, start, end uint64, requestType RequestType, query QueryBuilderTraceOperator, compositeQuery *CompositeQuery) (*Statement, error)
+}
+
+type KeyEvolutionMetadataKey struct {
+	BaseColumn     string
+	BaseColumnType string
+	NewColumn      string
+	NewColumnType  string
+	ReleaseTime    time.Time
+}
+
+type KeyEvolutionMetadataStore interface {
+	Get(keyName string) []*KeyEvolutionMetadataKey
+	Add(keyName string, key *KeyEvolutionMetadataKey)
 }
