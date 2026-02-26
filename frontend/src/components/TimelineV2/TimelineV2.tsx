@@ -14,10 +14,16 @@ interface ITimelineV2Props {
 	startTimestamp: number;
 	endTimestamp: number;
 	timelineHeight: number;
+	offsetTimestamp: number;
 }
 
 function TimelineV2(props: ITimelineV2Props): JSX.Element {
-	const { startTimestamp, endTimestamp, timelineHeight } = props;
+	const {
+		startTimestamp,
+		endTimestamp,
+		timelineHeight,
+		offsetTimestamp,
+	} = props;
 	const [intervals, setIntervals] = useState<Interval[]>([]);
 	const [ref, { width }] = useMeasure<HTMLDivElement>();
 	const isDarkMode = useIsDarkMode();
@@ -30,8 +36,10 @@ function TimelineV2(props: ITimelineV2Props): JSX.Element {
 
 		const minIntervals = getMinimumIntervalsBasedOnWidth(width);
 		const intervalisedSpread = (spread / minIntervals) * 1.0;
-		setIntervals(getIntervals(intervalisedSpread, spread));
-	}, [startTimestamp, endTimestamp, width]);
+		const intervals = getIntervals(intervalisedSpread, spread, offsetTimestamp);
+
+		setIntervals(intervals);
+	}, [startTimestamp, endTimestamp, width, offsetTimestamp]);
 
 	if (endTimestamp < startTimestamp) {
 		console.error(
