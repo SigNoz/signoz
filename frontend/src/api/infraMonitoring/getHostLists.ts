@@ -39,6 +39,7 @@ export interface HostData {
 	waitTimeSeries: TimeSeries;
 	load15: number;
 	load15TimeSeries: TimeSeries;
+	filesystem: number;
 }
 
 export interface HostListResponse {
