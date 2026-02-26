@@ -58,6 +58,28 @@ func NewFactorAPIKey(name string, expiresAt *time.Time, serviceAccountID valuer.
 	}
 }
 
+func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
+	return &FactorAPIKey{
+		Identifiable:     storable.Identifiable,
+		TimeAuditable:    storable.TimeAuditable,
+		Name:             storable.Name,
+		Key:              storable.Key,
+		ExpiresAt:        storable.ExpiresAt,
+		LastUsed:         storable.LastUsed,
+		ServiceAccountID: valuer.MustNewUUID(storable.ServiceAccountID),
+	}
+}
+
+func NewFactorAPIKeyFromStorables(storables []*StorableFactorAPIKey) []*FactorAPIKey {
+	factorAPIKeys := make([]*FactorAPIKey, len(storables))
+
+	for idx, storable := range storables {
+		factorAPIKeys[idx] = NewFactorAPIKeyFromStorable(storable)
+	}
+
+	return factorAPIKeys
+}
+
 func NewStorableFactorAPIKey(factorAPIKey *FactorAPIKey) *StorableFactorAPIKey {
 	return &StorableFactorAPIKey{
 		Identifiable:     factorAPIKey.Identifiable,

@@ -21,5 +21,11 @@ type Store interface {
 	DeleteServiceAccountRoles(context.Context, valuer.UUID) error
 
 	// Service Account Factor API Key
+	CreateFactorAPIKey(context.Context, *StorableFactorAPIKey) error
+	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*StorableFactorAPIKey, error)
+	ListFactorAPIKey(context.Context, valuer.UUID) ([]*StorableFactorAPIKey, error)
+	UpdateFactorAPIKey(context.Context, *StorableFactorAPIKey) error
+	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
+
 	RunInTx(context.Context, func(context.Context) error) error
 }

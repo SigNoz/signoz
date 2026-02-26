@@ -27,7 +27,7 @@ type Module interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Creates a new API key for a service account
-	CreateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
+	CreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) error
 
 	// Gets a factor API key by id
 	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error)
@@ -36,7 +36,7 @@ type Module interface {
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
 
 	// Updates an existing API key for a service account
-	UpdateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
+	UpdateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) error
 
 	// Revokes an existing API key for a service account
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error

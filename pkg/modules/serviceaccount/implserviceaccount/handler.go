@@ -146,12 +146,6 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 
 func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
@@ -165,7 +159,7 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	factorAPIKey := serviceaccounttypes.NewFactorAPIKey(req.Name, req.ExpiresAt, id)
-	err = handler.module.CreateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), factorAPIKey)
+	err = handler.module.CreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -218,7 +212,7 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	factorAPIKey.Update(req.Name, req.ExpiresAt)
-	err = handler.module.UpdateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), factorAPIKey)
+	err = handler.module.UpdateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
 		return

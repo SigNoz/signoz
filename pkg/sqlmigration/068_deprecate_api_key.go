@@ -47,6 +47,10 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 
 	// TODO[@vikrantgupta25]: migrate the older keys to the new table
 	deprecatedFactorAPIKey, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("factor_api_key"))
+	if err != nil {
+		return err
+	}
+
 	dropTableSQLS := migration.sqlschema.Operator().DropTable(deprecatedFactorAPIKey)
 	sqls = append(sqls, dropTableSQLS...)
 

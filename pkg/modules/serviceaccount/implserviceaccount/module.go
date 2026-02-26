@@ -185,22 +185,39 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return nil
 }
 
-func (module *module) CreateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error {
+func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+	storableFactorAPIKey := serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey)
+
+	err := module.store.CreateFactorAPIKey(ctx, storableFactorAPIKey)
+	if err != nil {
+		return err
+	}
+
 	return nil
 }
 
-func (module *module) GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error) {
-	return nil, nil
+func (module *module) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error) {
+	storableFactorAPIKey, err := module.store.GetFactorAPIKey(ctx, serviceAccountID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceaccounttypes.NewFactorAPIKeyFromStorable(storableFactorAPIKey), nil
 }
 
-func (module *module) ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error) {
-	return nil, nil
+func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error) {
+	storables, err := module.store.ListFactorAPIKey(ctx, serviceAccountID)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceaccounttypes.NewFactorAPIKeyFromStorables(storables), nil
 }
 
-func (module *module) UpdateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error {
-	return nil
+func (module *module) UpdateFactorAPIKey(ctx context.Context, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+	return module.store.UpdateFactorAPIKey(ctx, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
 }
 
-func (module *module) RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error {
-	return nil
+func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {
+	return module.store.RevokeFactorAPIKey(ctx, serviceAccountID, id)
 }
