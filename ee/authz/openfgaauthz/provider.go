@@ -98,16 +98,16 @@ func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.
 	return provider.pkgAuthzService.ListByOrgIDAndNames(ctx, orgID, names)
 }
 
-func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	return provider.pkgAuthzService.Grant(ctx, orgID, name, subject)
+func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
+	return provider.pkgAuthzService.Grant(ctx, orgID, names, subject)
 }
 
-func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRoleName string, subject string) error {
-	return provider.pkgAuthzService.ModifyGrant(ctx, orgID, existingRoleName, updatedRoleName, subject)
+func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleNames []string, updatedRoleNames []string, subject string) error {
+	return provider.pkgAuthzService.ModifyGrant(ctx, orgID, existingRoleNames, updatedRoleNames, subject)
 }
 
-func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
-	return provider.pkgAuthzService.Revoke(ctx, orgID, name, subject)
+func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
+	return provider.pkgAuthzService.Revoke(ctx, orgID, names, subject)
 }
 
 func (provider *provider) CreateManagedRoles(ctx context.Context, orgID valuer.UUID, managedRoles []*roletypes.Role) error {
