@@ -13,20 +13,24 @@ import {
 	TREEMAP_SQUARE_PADDING,
 	TREEMAP_VIEW_OPTIONS,
 } from './constants';
-import { MetricsTreemapProps, TreemapContentProps, TreemapTile } from './types';
+import {
+	MetricsTreemapInternalProps,
+	MetricsTreemapProps,
+	TreemapTile,
+} from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
 	transformTreemapData,
 } from './utils';
 
-function TreemapContent({
+function MetricsTreemapInternal({
 	isLoading,
 	isError,
 	data,
 	viewType,
 	openMetricDetails,
-}: TreemapContentProps): JSX.Element {
+}: MetricsTreemapInternalProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
 	const treemapWidth = useMemo(
@@ -196,7 +200,7 @@ function MetricsTreemap({
 					disabled={isLoading}
 				/>
 			</div>
-			<TreemapContent
+			<MetricsTreemapInternal
 				isLoading={isLoading}
 				isError={isError}
 				data={data}

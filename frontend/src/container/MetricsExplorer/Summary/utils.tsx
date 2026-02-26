@@ -47,7 +47,6 @@ export const getMetricsTableColumns = (
 		title: (
 			<div className="metric-type-column-header">
 				<span className="metric-type-column-header-text">TYPE</span>
-				{/* TODO: @amlannandy: Re-enable once API supports metric type filtering */}
 				{/* <MetricTypeSearch
 					queryFilters={queryFilters}
 					onFilterChange={onFilterChange}

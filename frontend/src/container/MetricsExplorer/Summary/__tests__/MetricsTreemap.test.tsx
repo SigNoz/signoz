@@ -119,7 +119,7 @@ describe('MetricsTreemap', () => {
 					<MetricsTreemap
 						isLoading={false}
 						isError={false}
-						data={null}
+						data={undefined}
 						openMetricDetails={jest.fn()}
 						viewType={MetricsexplorertypesTreemapModeDTO.samples}
 						setHeatmapView={jest.fn()}

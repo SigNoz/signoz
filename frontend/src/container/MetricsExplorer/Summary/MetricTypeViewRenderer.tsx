@@ -49,27 +49,27 @@ export function MetricTypeViewRenderer({
 		}
 	}, [type]);
 
-	const metricTypeRendererStyle = useMemo(
-		() => ({
-			backgroundColor: `${color}33`,
-			border: `1px solid ${color}`,
-			color,
-		}),
-		[color],
-	);
-
-	const metricTypeRendererTextStyle = useMemo(
-		() => ({
-			color,
-			fontSize: 12,
-		}),
-		[color],
-	);
+	const {
+		metricTypeViewRendererStyle,
+		metricTypeViewRendererTextStyle,
+	} = useMemo(() => {
+		return {
+			metricTypeViewRendererStyle: {
+				backgroundColor: `${color}33`,
+				border: `1px solid ${color}`,
+				color,
+			},
+			metricTypeViewRendererTextStyle: {
+				color,
+				fontSize: 12,
+			},
+		};
+	}, [color]);
 
 	return (
-		<div className="metric-type-renderer" style={metricTypeRendererStyle}>
+		<div className="metric-type-renderer" style={metricTypeViewRendererStyle}>
 			{icon}
-			<Typography.Text style={metricTypeRendererTextStyle}>
+			<Typography.Text style={metricTypeViewRendererTextStyle}>
 				{METRIC_TYPE_VIEW_VALUES_MAP[type]}
 			</Typography.Text>
 		</div>

@@ -38,7 +38,7 @@ export interface MetricsTreemapProps {
 	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
 }
 
-export interface TreemapContentProps {
+export interface MetricsTreemapInternalProps {
 	isLoading: boolean;
 	isError: boolean;
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
