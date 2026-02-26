@@ -91,7 +91,6 @@
 .retention-input-group {
 	display: flex;
 	align-items: flex-start;
-	gap: -1px;
 
 	// todo: https://github.com/SigNoz/components/issues/116
 	input[type='number'] {
@@ -103,7 +102,6 @@
 		border-radius: 2px 0 0 2px;
 		border: 1px solid var(--l2-border);
 		background: transparent;
-		color: var(--l2-foreground);
 		text-align: left;
 		-moz-appearance: textfield;
 		appearance: textfield;
@@ -135,6 +133,7 @@
 			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 			width: 80px;
+			border-left: none;
 		}
 	}
 }

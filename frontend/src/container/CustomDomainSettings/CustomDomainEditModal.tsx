@@ -113,13 +113,14 @@ export default function CustomDomainEditModal({
 			</p>
 
 			<div className="edit-modal-field">
-				<span
+				<label
+					htmlFor="workspace-url-input"
 					className={`edit-modal-label${
 						isError || is409 ? ' edit-modal-label--error' : ''
 					}`}
 				>
 					Workspace URL
-				</span>
+				</label>
 
 				<div
 					className={`edit-modal-input-wrapper${
@@ -129,6 +130,9 @@ export default function CustomDomainEditModal({
 					<div className="edit-modal-input-field">
 						{statusIcon}
 						<Input
+							id="workspace-url-input"
+							aria-describedby="workspace-url-helper"
+							aria-invalid={isError || is409}
 							value={value}
 							onChange={handleChange}
 							onKeyDown={handleKeyDown}
@@ -139,6 +143,7 @@ export default function CustomDomainEditModal({
 				</div>
 
 				<span
+					id="workspace-url-helper"
 					className={`edit-modal-helper${
 						isError || is409 ? ' edit-modal-helper--error' : ''
 					}`}
@@ -153,7 +158,7 @@ export default function CustomDomainEditModal({
 				<span className="edit-modal-note-emoji">🚧</span>
 				<span className="edit-modal-note-text">
 					Note that your previous URL still remains accessible. Your access
-					credentials for the new URL remains the same.
+					credentials for the new URL remain the same.
 				</span>
 			</div>
 

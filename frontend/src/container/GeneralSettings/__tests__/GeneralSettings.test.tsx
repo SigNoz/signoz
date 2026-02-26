@@ -49,6 +49,11 @@ jest.mock('container/GeneralSettingsCloud', () => ({
 	default: (): null => null,
 }));
 
+jest.mock('container/CustomDomainSettings', () => ({
+	__esModule: true,
+	default: (): null => null,
+}));
+
 // Mock data
 const mockMetricsRetention: PayloadPropsMetrics = {
 	metrics_ttl_duration_hrs: 168,
