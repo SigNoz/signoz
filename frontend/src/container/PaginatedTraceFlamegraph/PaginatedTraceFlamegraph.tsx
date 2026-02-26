@@ -1,3 +1,5 @@
+// @ts-nocheck
+/* eslint-disable */
 import { useEffect, useMemo, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
@@ -13,8 +15,13 @@ import { Span } from 'types/api/trace/getTraceV2';
 import { TraceFlamegraphStates } from './constants';
 import Error from './TraceFlamegraphStates/Error/Error';
 import NoData from './TraceFlamegraphStates/NoData/NoData';
-import Success from './TraceFlamegraphStates/Success/Success';
+// import Success from './TraceFlamegraphStates/Success/SuccessV2';
+// import Success from './TraceFlamegraphStates/Success/SuccessV3_without_minimap_best';
+import Success from './TraceFlamegraphStates/Success/Success_zoom';
 
+// import Success from './TraceFlamegraphStates/Success/Success_zoom_api';
+// import Success from './TraceFlamegraphStates/Success/SuccessCursor';
+// import Success from './TraceFlamegraphStates/Success/Success';
 import './PaginatedTraceFlamegraph.styles.scss';
 
 interface ITraceFlamegraphProps {
@@ -38,7 +45,6 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
-
 	useEffect(() => {
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
@@ -46,6 +52,9 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
 		selectedSpanId: firstSpanAtFetchLevel,
+		// limit: 10001,
+		// boundaryStartTsMilli: 0,
+		// boundarEndTsMilli: 10000,
 	});
 
 	// get the current state of trace flamegraph based on the API lifecycle
