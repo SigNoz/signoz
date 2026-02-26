@@ -64,6 +64,71 @@ export const resolveTimeFromInterval = (
 export function getIntervals(
 	intervalSpread: number,
 	baseSpread: number,
+	offsetTimestamp: number, // ms offset from trace start (e.g. viewStart - traceStart)
+): Interval[] {
+	const integerPartString = intervalSpread.toString().split('.')[0];
+	const integerPartLength = integerPartString.length;
+
+	const intervalSpreadNormalized =
+		intervalSpread < 1.0
+			? intervalSpread
+			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
+			  10 ** (integerPartLength - 1);
+
+	let intervalUnit = INTERVAL_UNITS[0];
+	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
+		const standardInterval = INTERVAL_UNITS[idx];
+		if (intervalSpread * standardInterval.multiplier >= 1) {
+			intervalUnit = INTERVAL_UNITS[idx];
+			break;
+		}
+	}
+
+	const intervals: Interval[] = [
+		{
+			// ✅ start label should reflect window start offset (relative to trace start)
+			label: `${toFixed(
+				resolveTimeFromInterval(offsetTimestamp, intervalUnit),
+				2,
+			)}${intervalUnit.name}`,
+			percentage: 0,
+		},
+	];
+
+	let tempBaseSpread = baseSpread;
+	let elapsedIntervals = 0;
+
+	while (tempBaseSpread && intervals.length < 20) {
+		let intervalTime: number;
+
+		if (tempBaseSpread <= 1.5 * intervalSpreadNormalized) {
+			intervalTime = elapsedIntervals + tempBaseSpread;
+			tempBaseSpread = 0;
+		} else {
+			intervalTime = elapsedIntervals + intervalSpreadNormalized;
+			tempBaseSpread -= intervalSpreadNormalized;
+		}
+
+		elapsedIntervals = intervalTime;
+
+		// ✅ label time = window offset + elapsed time inside window
+		const labelTime = offsetTimestamp + intervalTime;
+
+		intervals.push({
+			label: `${toFixed(resolveTimeFromInterval(labelTime, intervalUnit), 2)}${
+				intervalUnit.name
+			}`,
+			percentage: (intervalTime / baseSpread) * 100,
+		});
+	}
+
+	return intervals;
+}
+
+export function getIntervalsOld(
+	intervalSpread: number,
+	baseSpread: number,
+	offsetTimestamp: number,
 ): Interval[] {
 	const integerPartString = intervalSpread.toString().split('.')[0];
 	const integerPartLength = integerPartString.length;
@@ -106,9 +171,10 @@ export function getIntervals(
 		}
 		elapsedIntervals = intervalTime;
 		const interval: Interval = {
-			label: `${toFixed(resolveTimeFromInterval(intervalTime, intervalUnit), 2)}${
-				intervalUnit.name
-			}`,
+			label: `${toFixed(
+				resolveTimeFromInterval(intervalTime + offsetTimestamp, intervalUnit),
+				2,
+			)}${intervalUnit.name}`,
 			percentage: (intervalTime / baseSpread) * 100,
 		};
 		intervals.push(interval);

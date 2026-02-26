@@ -5,6 +5,9 @@ export interface TraceDetailFlamegraphURLProps {
 export interface GetTraceFlamegraphPayloadProps {
 	traceId: string;
 	selectedSpanId: string;
+	limit: number;
+	boundaryStartTsMilli: number;
+	boundarEndTsMilli: number;
 }
 
 export interface Event {
@@ -31,4 +34,6 @@ export interface GetTraceFlamegraphSuccessResponse {
 	spans: FlamegraphSpan[][];
 	startTimestampMillis: number;
 	endTimestampMillis: number;
+	durationNano: number;
+	hasMore: boolean;
 }

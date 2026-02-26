@@ -3,6 +3,11 @@
 	overflow-x: hidden;
 	overflow-y: auto;
 
+	&.trace-flamegraph-canvas {
+		overflow: hidden;
+		position: relative;
+	}
+
 	.trace-flamegraph-virtuoso {
 		overflow-x: hidden;
 
