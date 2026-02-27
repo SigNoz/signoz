@@ -257,10 +257,10 @@ function ServiceDetails(): JSX.Element | null {
 								variant="solid"
 								color="secondary"
 								onClick={handleDiscard}
-								loading={isUpdatingServiceConfig}
 								disabled={isUpdatingServiceConfig}
 								size="xs"
 								prefixIcon={<X size={14} />}
+								className="discard-btn"
 							>
 								Discard
 							</Button>
@@ -268,6 +268,7 @@ function ServiceDetails(): JSX.Element | null {
 								variant="solid"
 								color="primary"
 								size="xs"
+								className="save-btn"
 								prefixIcon={<Save size={14} />}
 								onClick={handleSubmit}
 								loading={isUpdatingServiceConfig}

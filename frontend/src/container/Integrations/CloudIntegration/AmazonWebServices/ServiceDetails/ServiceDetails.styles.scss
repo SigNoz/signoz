@@ -115,6 +115,14 @@
 
 					border-top: 1px solid var(--l3-background);
 					background: var(--l1-background);
+
+					.discard-btn {
+						width: 100px;
+					}
+
+					.save-btn {
+						width: 100px;
+					}
 				}
 
 				.aws-service-details-overview-configuration-title-text-select-all {
