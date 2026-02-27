@@ -15,6 +15,7 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 - [Endpoint](endpoint.md) - HTTP endpoint patterns
 - [Handler](handler.md) - HTTP handler patterns
 - [Provider](provider.md) - Dependency injection and provider patterns
+- [Packages](packages.md) — Naming, layout, and conventions for `pkg/` packages
 - [SQL](sql.md) - Database and SQL patterns
 - [Integration](integration.md) - Integration testing
 - [Flagger](flagger.md) - Feature flag patterns
