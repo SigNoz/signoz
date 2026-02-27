@@ -13,9 +13,9 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 - [Abstractions](abstractions.md) - When to introduce new types and intermediate representations
 - [Errors](errors.md) - Structured error handling
 - [Endpoint](endpoint.md) - HTTP endpoint patterns
+- [Flagger](flagger.md) - Feature flag patterns
 - [Handler](handler.md) - HTTP handler patterns
+- [Integration](integration.md) - Integration testing
 - [Provider](provider.md) - Dependency injection and provider patterns
 - [Packages](packages.md) — Naming, layout, and conventions for `pkg/` packages
 - [SQL](sql.md) - Database and SQL patterns
-- [Integration](integration.md) - Integration testing
-- [Flagger](flagger.md) - Feature flag patterns
