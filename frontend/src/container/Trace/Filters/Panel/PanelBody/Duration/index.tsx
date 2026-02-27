@@ -6,11 +6,13 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { Slider } from 'antd';
 import { SliderRangeProps } from 'antd/lib/slider';
 import getFilters from 'api/trace/getFilters';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';

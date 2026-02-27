@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Divider, Drawer, Tooltip, Typography } from 'antd';

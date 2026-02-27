@@ -1,4 +1,5 @@
 import GetLogsAggregate from 'api/logs/GetLogsAggregate';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import {

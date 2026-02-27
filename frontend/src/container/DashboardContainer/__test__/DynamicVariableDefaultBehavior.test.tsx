@@ -1,5 +1,6 @@
 import React from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import * as ReactRedux from 'react-redux';
 import {
 	act,

@@ -1,6 +1,7 @@
 //@ts-nocheck
 
 import { useEffect, useRef } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { Card } from 'antd';

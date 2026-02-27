@@ -7,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Select } from 'antd';
 import { BaseOptionType } from 'antd/es/select';
