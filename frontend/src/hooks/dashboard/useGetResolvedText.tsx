@@ -20,7 +20,6 @@ interface ResolvedTextResult {
 	truncatedText: string | ReactNode;
 }
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function useGetResolvedText({
 	text,
 	maxLength,

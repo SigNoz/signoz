@@ -10,7 +10,6 @@ import {
 } from '@dnd-kit/core';
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { CSS } from '@dnd-kit/utilities';
 import { Button, Modal, Row, Space, Table, Typography } from 'antd';
 import { RowProps } from 'antd/lib';
@@ -40,7 +39,6 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 		transition,
 		isDragging,
 	} = useSortable({
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		id: props['data-row-key'],
 	});
@@ -53,7 +51,6 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 	};
 
 	return (
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		<tr {...props} ref={setNodeRef} style={style} {...attributes}>
 			{React.Children.map(children, (child) => {
 				const childElement = child as React.ReactElement;
@@ -65,7 +62,6 @@ function TableRow({ children, ...props }: RowProps): JSX.Element {
 								<HolderOutlined
 									ref={setActivatorNodeRef}
 									style={{ touchAction: 'none', cursor: 'move' }}
-									// eslint-disable-next-line react/jsx-props-no-spreading
 									{...listeners}
 								/>
 								{child}
@@ -130,7 +126,6 @@ function VariablesSettings({
 			return;
 		}
 
-		// eslint-disable-next-line no-param-reassign
 		variablesSettingsTabHandle.current = {
 			resetState: onDoneVariableViewMode,
 		};
@@ -145,7 +140,6 @@ function VariablesSettings({
 		const variableOrderArr = [];
 		const variableNamesMap = {};
 
-		// eslint-disable-next-line no-restricted-syntax
 		for (const [key, value] of Object.entries(dashboardVariables)) {
 			const { order, id, name } = value;
 
@@ -157,7 +151,6 @@ function VariablesSettings({
 			});
 
 			if (name) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				variableNamesMap[name] = name;
 			}
@@ -401,7 +394,6 @@ function VariablesSettings({
 				const variableName = updatedVariables[index].name;
 
 				if (variableName) {
-					// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 					// @ts-ignore
 					reArrangedVariables[variableName] = {
 						...updatedVariables[index],

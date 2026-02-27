@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { TraceAggregation } from 'api/v5/v5';

@@ -1,4 +1,3 @@
-/* eslint-disable import/no-extraneous-dependencies */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useCopyToClipboard } from 'react-use';

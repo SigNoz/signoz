@@ -1,6 +1,5 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';

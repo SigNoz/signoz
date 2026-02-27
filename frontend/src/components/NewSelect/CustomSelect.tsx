@@ -1,7 +1,4 @@
-/* eslint-disable no-nested-ternary */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable react/function-component-definition */
 import React, {
 	useCallback,
 	useEffect,

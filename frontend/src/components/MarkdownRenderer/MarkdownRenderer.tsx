@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable react/jsx-props-no-spreading */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import ReactMarkdown from 'react-markdown';
@@ -53,7 +51,6 @@ function Code({
 	const match = /language-(\w+)/.exec(className || '');
 	return !inline && match ? (
 		<SyntaxHighlighter
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			style={a11yDark}
 			language={match[1]}
@@ -116,7 +113,6 @@ function MarkdownRenderer({
 		<ReactMarkdown
 			rehypePlugins={[rehypeRaw as any]}
 			components={{
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				a: Link,
 				pre: ({ children }) =>

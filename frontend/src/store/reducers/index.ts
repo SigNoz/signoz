@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { combineReducers } from 'redux';
 
 import appReducer from './app';

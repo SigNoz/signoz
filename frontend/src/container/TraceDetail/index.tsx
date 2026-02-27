@@ -87,7 +87,6 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 			),
 		};
 		// Note: Handle undefined
-		/*eslint-disable */
 		return getSpanTreeMetadata(sortedTreesData, spanServiceColors);
 		/* eslint-enable */
 	}, [treesData, spanServiceColors]);

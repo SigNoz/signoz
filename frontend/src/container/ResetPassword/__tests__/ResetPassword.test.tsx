@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { Logout } from 'api/utils';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';

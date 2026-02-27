@@ -109,8 +109,8 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({ children }: any) {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function OverlayScrollbar({ children }: any) {
 			return <div data-testid="overlay-scrollbar">{children}</div>;
 		},
 );
@@ -132,7 +132,7 @@ jest.mock('react-virtuoso', () => ({
 jest.mock(
 	'container/LogDetailedView/InfraMetrics/InfraMetrics',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		function MockInfraMetrics({
 			podName,
 			nodeName,
@@ -162,7 +162,7 @@ jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
 }));
 
 describe('SpanDetailsDrawer - Infra Metrics', () => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, sonarjs/no-unused-collection
+	// eslint-disable-next-line sonarjs/no-unused-collection
 	let apiCallHistory: any[] = [];
 
 	beforeEach(() => {
@@ -242,7 +242,6 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 					selectedSpan={mockSpanWithInfraMetadata}
 					traceStartTime={1640995200000} // 2022-01-01 00:00:00
 					traceEndTime={1640995260000} // 2022-01-01 00:01:00
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...props}
 				/>
 			</QueryBuilderContext.Provider>,
@@ -260,24 +259,19 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 
 		// Wait for infra metrics to load
 		await waitFor(() => {
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('infra-metrics')).toBeInTheDocument();
 		});
 
 		// Verify metadata extraction
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		expect(screen.getByTestId('infra-pod-name')).toHaveTextContent(
 			expectedInfraMetadata.podName,
 		);
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		expect(screen.getByTestId('infra-node-name')).toHaveTextContent(
 			expectedInfraMetadata.nodeName,
 		);
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		expect(screen.getByTestId('infra-host-name')).toHaveTextContent(
 			expectedInfraMetadata.hostName,
 		);
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		expect(screen.getByTestId('infra-cluster-name')).toHaveTextContent(
 			expectedInfraMetadata.clusterName,
 		);
@@ -436,7 +430,6 @@ describe('SpanDetailsDrawer - Infra Metrics', () => {
 		fireEvent.click(logsButton);
 
 		await waitFor(() => {
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
 		});
 

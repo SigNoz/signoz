@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Col, Row } from 'antd';
 import logEvent from 'api/common/logEvent';
