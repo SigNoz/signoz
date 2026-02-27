@@ -2,6 +2,7 @@ package querybuildertypesv5
 
 import (
 	"fmt"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -225,4 +226,29 @@ func CanShortCircuitDelta(metricAgg MetricAggregation) bool {
 	}
 
 	return false
+}
+
+func DurationBucket(fromMS, toMS uint64) string {
+	diff := time.Unix(0, int64(toMS)).Sub(time.Unix(0, int64(fromMS)))
+
+	buckets := []struct {
+		d time.Duration
+		l string
+	}{
+		{1 * time.Hour, "<1h"},
+		{6 * time.Hour, "<6h"},
+		{24 * time.Hour, "<24h"},
+		{3 * 24 * time.Hour, "<3D"},
+		{7 * 24 * time.Hour, "<1W"},
+		{14 * 24 * time.Hour, "<2W"},
+		{30 * 24 * time.Hour, "<1M"},
+	}
+
+	for _, b := range buckets {
+		if diff < b.d {
+			return b.l
+		}
+	}
+
+	return ">=1M"
 }

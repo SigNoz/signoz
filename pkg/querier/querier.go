@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"golang.org/x/exp/maps"
@@ -526,6 +527,12 @@ func (q *querier) run(
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
 ) (*qbtypes.QueryRangeResponse, error) {
+
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("panel_type", qbEvent.PanelType)
+	comment.Set("query_type", qbEvent.QueryType)
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+
 	results := make(map[string]any)
 	warnings := make([]string, 0)
 	warningsDocURL := ""

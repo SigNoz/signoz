@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/bytedance/sonic"
@@ -212,6 +213,12 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("signal", q.spec.Signal.StringValue())
+	comment.Set("duration", qbtypes.DurationBucket(q.fromMS, q.toMS))
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)

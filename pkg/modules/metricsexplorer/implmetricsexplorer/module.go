@@ -217,6 +217,12 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 }
 
 func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
+
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("signal", telemetrytypes.SignalMetrics.StringValue())
+	comment.Set("is_metadata_query", "true")
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+
 	if len(metricNames) == 0 {
 		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}

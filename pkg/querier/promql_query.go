@@ -14,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/promql"
@@ -186,6 +188,11 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 }
 
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
+
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("signal", telemetrytypes.SignalMetrics.StringValue())
+	comment.Set("duration", qbtypes.DurationBucket(q.tr.From, q.tr.To))
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))

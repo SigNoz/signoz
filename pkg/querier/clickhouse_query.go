@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -98,6 +99,10 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 }
 
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
+
+	comment := ctxtypes.CommentFromContext(ctx)
+	comment.Set("duration", qbtypes.DurationBucket(q.fromMS, q.toMS))
+	ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
