@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useEffect, useMemo, useState } from 'react';
 import { Button } from 'antd';
 import cx from 'classnames';

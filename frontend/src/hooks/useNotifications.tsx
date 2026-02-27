@@ -1,4 +1,10 @@
-import { createContext, useContext, useMemo } from 'react';
+import {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useMemo,
+} from 'react';
 import { notification } from 'antd';
 import { NotificationInstance } from 'antd/es/notification/interface';
 

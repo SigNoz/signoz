@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { TableProps } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import { PaginationProps } from 'antd/lib';

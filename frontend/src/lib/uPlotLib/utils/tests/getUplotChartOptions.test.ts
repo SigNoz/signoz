@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 

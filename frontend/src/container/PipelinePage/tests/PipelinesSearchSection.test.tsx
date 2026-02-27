@@ -1,4 +1,5 @@
 import { I18nextProvider } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, waitFor } from '@testing-library/react';

@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-loop-func */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';

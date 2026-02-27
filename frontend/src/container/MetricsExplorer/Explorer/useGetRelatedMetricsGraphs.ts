@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';

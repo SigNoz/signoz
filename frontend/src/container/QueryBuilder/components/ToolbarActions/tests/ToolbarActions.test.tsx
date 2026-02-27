@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';

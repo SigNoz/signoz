@@ -5,6 +5,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
@@ -82,7 +83,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 
-		// eslint-disable-next-line consistent-return
 		return (): void => {
 			clearTimeout(timer);
 		};

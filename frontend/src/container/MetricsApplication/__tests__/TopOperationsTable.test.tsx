@@ -1,4 +1,5 @@
 import { QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import {
 	act,

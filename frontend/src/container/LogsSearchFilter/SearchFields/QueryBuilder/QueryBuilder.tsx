@@ -1,4 +1,5 @@
 import { useCallback, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';

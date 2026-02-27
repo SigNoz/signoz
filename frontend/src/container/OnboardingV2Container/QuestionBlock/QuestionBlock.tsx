@@ -31,7 +31,6 @@ function QuestionBlock({
 }: QuestionBlockProps): JSX.Element {
 	const [selectedCategory, setSelectedCategory] = useState<string>('All');
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	const handleCategoryClick = (category: string): void => {
 		setSelectedCategory(category);
 	};
@@ -47,7 +46,6 @@ function QuestionBlock({
 				index <= currentQuestion ? 'setup-flow__question-block--active' : ''
 			}`}
 			ref={(el): void => {
-				// eslint-disable-next-line no-param-reassign
 				questionRefs.current[index] = el;
 			}}
 		>

@@ -1,67 +1,15 @@
-import { fireEvent, render, screen } from '@testing-library/react';
-import { MetricDetails as MetricDetailsType } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
+import { render, screen } from '@testing-library/react';
+import * as metricsExplorerHooks from 'api/generated/services/metrics';
 import ROUTES from 'constants/routes';
-import * as useGetMetricDetails from 'hooks/metricsExplorer/useGetMetricDetails';
-import * as useUpdateMetricMetadata from 'hooks/metricsExplorer/useUpdateMetricMetadata';
 import * as useHandleExplorerTabChange from 'hooks/useHandleExplorerTabChange';
+import { userEvent } from 'tests/test-utils';
 
 import MetricDetails from '../MetricDetails';
+import { getMockMetricMetadataData } from './testUtlls';
 
 const mockMetricName = 'test-metric';
-const mockMetricDescription = 'description for a test metric';
-const mockMetricData: MetricDetailsType = {
-	name: mockMetricName,
-	description: mockMetricDescription,
-	unit: 'count',
-	attributes: [
-		{
-			key: 'test-attribute',
-			value: ['test-value'],
-			valueCount: 1,
-		},
-	],
-	alerts: [],
-	dashboards: [],
-	metadata: {
-		metric_type: MetricType.SUM,
-		description: mockMetricDescription,
-		unit: 'count',
-	},
-	type: '',
-	timeseries: 0,
-	samples: 0,
-	timeSeriesTotal: 0,
-	timeSeriesActive: 0,
-	lastReceived: '',
-};
 const mockOpenInspectModal = jest.fn();
 const mockOnClose = jest.fn();
-
-const mockUseGetMetricDetailsData = {
-	data: {
-		payload: {
-			data: mockMetricData,
-		},
-	},
-	isLoading: false,
-	isFetching: false,
-	isError: false,
-	error: null,
-	refetch: jest.fn(),
-};
-
-jest
-	.spyOn(useGetMetricDetails, 'useGetMetricDetails')
-	.mockReturnValue(mockUseGetMetricDetailsData as any);
-
-jest.spyOn(useUpdateMetricMetadata, 'useUpdateMetricMetadata').mockReturnValue({
-	mutate: jest.fn(),
-	isLoading: false,
-	isError: false,
-	error: null,
-} as any);
 
 const mockHandleExplorerTabChange = jest.fn();
 jest
@@ -88,7 +36,50 @@ jest.mock('react-query', () => ({
 	}),
 }));
 
+jest.mock(
+	'container/MetricsExplorer/MetricDetails/AllAttributes',
+	() =>
+		function MockAllAttributes(): JSX.Element {
+			return <div data-testid="all-attributes">All Attributes</div>;
+		},
+);
+jest.mock(
+	'container/MetricsExplorer/MetricDetails/DashboardsAndAlertsPopover',
+	() =>
+		function MockDashboardsAndAlertsPopover(): JSX.Element {
+			return (
+				<div data-testid="dashboards-and-alerts-popover">
+					Dashboards and Alerts Popover
+				</div>
+			);
+		},
+);
+jest.mock(
+	'container/MetricsExplorer/MetricDetails/Highlights',
+	() =>
+		function MockHighlights(): JSX.Element {
+			return <div data-testid="highlights">Highlights</div>;
+		},
+);
+
+jest.mock(
+	'container/MetricsExplorer/MetricDetails/Metadata',
+	() =>
+		function MockMetadata(): JSX.Element {
+			return <div data-testid="metadata">Metadata</div>;
+		},
+);
+
+const useGetMetricMetadataMock = jest.spyOn(
+	metricsExplorerHooks,
+	'useGetMetricMetadata',
+);
+
 describe('MetricDetails', () => {
+	beforeEach(() => {
+		useGetMetricMetadataMock.mockReturnValue(getMockMetricMetadataData());
+	});
+
 	it('renders metric details correctly', () => {
 		render(
 			<MetricDetails
@@ -101,27 +92,15 @@ describe('MetricDetails', () => {
 		);
 
 		expect(screen.getByText(mockMetricName)).toBeInTheDocument();
-		expect(screen.getByText(mockMetricDescription)).toBeInTheDocument();
+		expect(screen.getByTestId('all-attributes')).toBeInTheDocument();
 		expect(
-			screen.getByText(getUniversalNameFromMetricUnit(mockMetricData.unit)),
+			screen.getByTestId('dashboards-and-alerts-popover'),
 		).toBeInTheDocument();
+		expect(screen.getByTestId('highlights')).toBeInTheDocument();
+		expect(screen.getByTestId('metadata')).toBeInTheDocument();
 	});
 
-	it('renders the "open in explorer" and "inspect" buttons', () => {
-		jest.spyOn(useGetMetricDetails, 'useGetMetricDetails').mockReturnValueOnce({
-			...mockUseGetMetricDetailsData,
-			data: {
-				payload: {
-					data: {
-						...mockMetricData,
-						metadata: {
-							...mockMetricData.metadata,
-							metric_type: MetricType.GAUGE,
-						},
-					},
-				},
-			},
-		} as any);
+	it('renders the "open in explorer" and "inspect" buttons', async () => {
 		render(
 			<MetricDetails
 				onClose={mockOnClose}
@@ -135,93 +114,10 @@ describe('MetricDetails', () => {
 		expect(screen.getByTestId('open-in-explorer-button')).toBeInTheDocument();
 		expect(screen.getByTestId('inspect-metric-button')).toBeInTheDocument();
 
-		fireEvent.click(screen.getByTestId('open-in-explorer-button'));
+		await userEvent.click(screen.getByTestId('open-in-explorer-button'));
 		expect(mockHandleExplorerTabChange).toHaveBeenCalled();
 
-		fireEvent.click(screen.getByTestId('inspect-metric-button'));
+		await userEvent.click(screen.getByTestId('inspect-metric-button'));
 		expect(mockOpenInspectModal).toHaveBeenCalled();
-	});
-
-	it('should render error state when metric details are not found', () => {
-		jest.spyOn(useGetMetricDetails, 'useGetMetricDetails').mockReturnValue({
-			...mockUseGetMetricDetailsData,
-			isError: true,
-			error: {
-				message: 'Error fetching metric details',
-			},
-		} as any);
-
-		render(
-			<MetricDetails
-				onClose={mockOnClose}
-				isOpen
-				metricName={mockMetricName}
-				isModalTimeSelection
-				openInspectModal={mockOpenInspectModal}
-			/>,
-		);
-
-		expect(screen.getByText('Error fetching metric details')).toBeInTheDocument();
-	});
-
-	it('should render loading state when metric details are loading', () => {
-		jest.spyOn(useGetMetricDetails, 'useGetMetricDetails').mockReturnValue({
-			...mockUseGetMetricDetailsData,
-			isLoading: true,
-		} as any);
-
-		render(
-			<MetricDetails
-				onClose={mockOnClose}
-				isOpen
-				metricName={mockMetricName}
-				isModalTimeSelection
-				openInspectModal={mockOpenInspectModal}
-			/>,
-		);
-
-		expect(screen.getByTestId('metric-details-skeleton')).toBeInTheDocument();
-	});
-
-	it('should render all attributes section', () => {
-		jest
-			.spyOn(useGetMetricDetails, 'useGetMetricDetails')
-			.mockReturnValue(mockUseGetMetricDetailsData as any);
-		render(
-			<MetricDetails
-				onClose={mockOnClose}
-				isOpen
-				metricName={mockMetricName}
-				isModalTimeSelection
-				openInspectModal={mockOpenInspectModal}
-			/>,
-		);
-
-		expect(screen.getByText('All Attributes')).toBeInTheDocument();
-	});
-
-	it('should not render all attributes section when relevant data is not present', () => {
-		jest.spyOn(useGetMetricDetails, 'useGetMetricDetails').mockReturnValue({
-			...mockUseGetMetricDetailsData,
-			data: {
-				payload: {
-					data: {
-						...mockMetricData,
-						attributes: null,
-					},
-				},
-			},
-		} as any);
-		render(
-			<MetricDetails
-				onClose={mockOnClose}
-				isOpen
-				metricName={mockMetricName}
-				isModalTimeSelection
-				openInspectModal={mockOpenInspectModal}
-			/>,
-		);
-
-		expect(screen.queryByText('All Attributes')).not.toBeInTheDocument();
 	});
 });

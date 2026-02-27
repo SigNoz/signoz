@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useQuery } from 'react-query';
 import { DefaultOptionType } from 'antd/es/select';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';

@@ -178,7 +178,6 @@ export function QueryTable({
 					widgetId={widgetId}
 					shouldPersistColumnWidths
 					sticky={sticky}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...props}
 				/>
 			</div>

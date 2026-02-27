@@ -14,7 +14,6 @@ function SignozModal({
 			width={width}
 			cancelText="Close"
 			rootClassName={`signoz-modal ${rootClassName}`}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...rest}
 		>
 			{children}
