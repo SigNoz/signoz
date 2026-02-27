@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
@@ -22,16 +23,16 @@ import S3BucketsSelector from '../S3BucketsSelector/S3BucketsSelector';
 
 import './ServiceDetails.styles.scss';
 
+type ServiceConfigFormValues = {
+	logsEnabled: boolean;
+	metricsEnabled: boolean;
+	s3BucketsByRegion: Record<string, string[]>;
+};
+
 function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
-
-	const [logsEnabled, setLogsEnabled] = useState(false);
-	const [metricsEnabled, setMetricsEnabled] = useState(false);
-	const [s3BucketsByRegion, setS3BucketsByRegion] = useState<
-		Record<string, string[]>
-	>({});
 
 	const {
 		data: serviceDetailsData,
@@ -43,15 +44,31 @@ function ServiceDetails(): JSX.Element | null {
 
 	const awsConfig = config as AWSServiceConfig | undefined;
 
-	const setToInitialState = useCallback((): void => {
-		setLogsEnabled(awsConfig?.logs?.enabled || false);
-		setMetricsEnabled(awsConfig?.metrics?.enabled || false);
-		setS3BucketsByRegion(awsConfig?.logs?.s3_buckets || {});
-	}, [awsConfig]);
+	const {
+		control,
+		handleSubmit: handleFormSubmit,
+		reset,
+		watch,
+		formState: { isDirty },
+	} = useForm<ServiceConfigFormValues>({
+		defaultValues: {
+			logsEnabled: awsConfig?.logs?.enabled || false,
+			metricsEnabled: awsConfig?.metrics?.enabled || false,
+			s3BucketsByRegion: awsConfig?.logs?.s3_buckets || {},
+		},
+	});
+
+	const resetToAwsConfig = useCallback((): void => {
+		reset({
+			logsEnabled: awsConfig?.logs?.enabled || false,
+			metricsEnabled: awsConfig?.metrics?.enabled || false,
+			s3BucketsByRegion: awsConfig?.logs?.s3_buckets || {},
+		});
+	}, [awsConfig, reset]);
 
 	useEffect(() => {
-		setToInitialState();
-	}, [awsConfig, setToInitialState]);
+		resetToAwsConfig();
+	}, [resetToAwsConfig]);
 
 	// log telemetry event on visiting details of a service.
 	useEffect(() => {
@@ -71,66 +88,67 @@ function ServiceDetails(): JSX.Element | null {
 	const queryClient = useQueryClient();
 
 	const handleDiscard = useCallback((): void => {
-		setToInitialState();
-	}, [setToInitialState]);
+		resetToAwsConfig();
+	}, [resetToAwsConfig]);
 
-	const handleSubmit = useCallback(async (): Promise<void> => {
-		try {
-			if (!serviceId || !cloudAccountId) {
-				return;
-			}
+	const onSubmit = useCallback(
+		async (values: ServiceConfigFormValues): Promise<void> => {
+			const { logsEnabled, metricsEnabled, s3BucketsByRegion } = values;
 
-			updateServiceConfig(
-				{
-					serviceId,
-					payload: {
-						cloud_account_id: cloudAccountId,
-						config: {
-							logs: {
-								enabled: logsEnabled,
-								s3_buckets: s3BucketsByRegion,
-							},
-							metrics: {
-								enabled: metricsEnabled,
+			try {
+				if (!serviceId || !cloudAccountId) {
+					return;
+				}
+
+				updateServiceConfig(
+					{
+						serviceId,
+						payload: {
+							cloud_account_id: cloudAccountId,
+							config: {
+								logs: {
+									enabled: logsEnabled,
+									s3_buckets: s3BucketsByRegion,
+								},
+								metrics: {
+									enabled: metricsEnabled,
+								},
 							},
 						},
 					},
-				},
-				{
-					onSuccess: () => {
-						queryClient.invalidateQueries([
-							REACT_QUERY_KEY.AWS_SERVICE_DETAILS,
-							serviceId,
-						]);
+					{
+						onSuccess: () => {
+							// Immediately sync form state to remove dirty flag and hide actions,
+							// instead of waiting for the refetch to complete.
+							reset(values);
 
-						logEvent('AWS Integration: Service settings saved', {
-							cloudAccountId,
-							serviceId,
-							logsEnabled,
-							metricsEnabled,
-						});
-					},
-					onError: (error) => {
-						console.error('Failed to update service config:', error);
+							queryClient.invalidateQueries([
+								REACT_QUERY_KEY.AWS_SERVICE_DETAILS,
+								serviceId,
+							]);
 
-						toast.error('Failed to update service config', {
-							description: error?.message,
-						});
+							logEvent('AWS Integration: Service settings saved', {
+								cloudAccountId,
+								serviceId,
+								logsEnabled,
+								metricsEnabled,
+							});
+						},
+						onError: (error) => {
+							console.error('Failed to update service config:', error);
+
+							toast.error('Failed to update service config', {
+								description: error?.message,
+							});
+						},
 					},
-				},
-			);
-		} catch (error) {
-			console.error('Form submission failed:', error);
-		}
-	}, [
-		serviceId,
-		cloudAccountId,
-		updateServiceConfig,
-		logsEnabled,
-		metricsEnabled,
-		queryClient,
-		s3BucketsByRegion,
-	]);
+				);
+			} catch (error) {
+				console.error('Form submission failed:', error);
+			}
+		},
+		[serviceId, cloudAccountId, updateServiceConfig, queryClient, reset],
+	);
 
 	if (isServiceDetailsLoading) {
 		return (
@@ -145,13 +163,12 @@ function ServiceDetails(): JSX.Element | null {
 		return null;
 	}
 
-	const handleS3BucketsChange = (
-		bucketsByRegion: Record<string, string[]>,
-	): void => {
-		setS3BucketsByRegion(bucketsByRegion);
-	};
-
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const renderOverview = (): JSX.Element => {
+		const logsEnabled = watch('logsEnabled');
+		const metricsEnabled = watch('metricsEnabled');
+		const s3BucketsByRegion = watch('s3BucketsByRegion');
+
 		const isLogsSupported = serviceDetailsData?.supported_signals?.logs || false;
 		const isMetricsSupported =
 			serviceDetailsData?.supported_signals?.metrics || false;
@@ -167,10 +184,20 @@ function ServiceDetails(): JSX.Element | null {
 			(metric) => metric.last_received_ts_ms > 0,
 		);
 
+		const hasUnsavedChanges = isDirty;
+
+		const isS3SyncBucketsMissing =
+			serviceId === 's3sync' &&
+			logsEnabled &&
+			(!s3BucketsByRegion || Object.keys(s3BucketsByRegion).length === 0);
+
 		return (
 			<div className="aws-service-details-overview ">
 				{!isServiceDetailsLoading && (
-					<div className="aws-service-details-overview-configuration">
+					<form
+						className="aws-service-details-overview-configuration"
+						onSubmit={handleFormSubmit(onSubmit)}
+					>
 						{isLogsSupported && (
 							<div className="aws-service-details-overview-configuration-logs">
 								<div className="aws-service-details-overview-configuration-title">
@@ -195,21 +222,33 @@ function ServiceDetails(): JSX.Element | null {
 										<span>Log Collection</span>
 									</div>
 									<div className="configuration-action">
-										<Switch
-											checked={logsEnabled}
-											disabled={isUpdatingServiceConfig}
-											onCheckedChange={(checked): void => {
-												setLogsEnabled(checked);
-											}}
+										<Controller<ServiceConfigFormValues, 'logsEnabled'>
+											control={control}
+											name="logsEnabled"
+											render={({ field }): JSX.Element => (
+												<Switch
+													checked={field.value}
+													disabled={isUpdatingServiceConfig}
+													onCheckedChange={(checked): void => {
+														field.onChange(checked);
+													}}
+												/>
+											)}
 										/>
 									</div>
 								</div>
 
 								{logsEnabled && serviceId === 's3sync' && (
 									<div className="aws-service-details-overview-configuration-s3-buckets">
-										<S3BucketsSelector
-											initialBucketsByRegion={s3BucketsByRegion}
-											onChange={handleS3BucketsChange}
+										<Controller<ServiceConfigFormValues, 's3BucketsByRegion'>
+											control={control}
+											name="s3BucketsByRegion"
+											render={({ field }): JSX.Element => (
+												<S3BucketsSelector
+													initialBucketsByRegion={field.value}
+													onChange={field.onChange}
+												/>
+											)}
 										/>
 									</div>
 								)}
@@ -240,43 +279,51 @@ function ServiceDetails(): JSX.Element | null {
 										<span>Metric Collection</span>
 									</div>
 									<div className="configuration-action">
-										<Switch
-											checked={metricsEnabled}
-											disabled={isUpdatingServiceConfig}
-											onCheckedChange={(checked): void => {
-												setMetricsEnabled(checked);
-											}}
+										<Controller<ServiceConfigFormValues, 'metricsEnabled'>
+											control={control}
+											name="metricsEnabled"
+											render={({ field }): JSX.Element => (
+												<Switch
+													checked={field.value}
+													disabled={isUpdatingServiceConfig}
+													onCheckedChange={field.onChange}
+												/>
+											)}
 										/>
 									</div>
 								</div>
 							</div>
 						)}
 
-						<div className="aws-service-details-overview-configuration-actions">
-							<Button
-								variant="solid"
-								color="secondary"
-								onClick={handleDiscard}
-								disabled={isUpdatingServiceConfig}
-								size="xs"
-								prefixIcon={<X size={14} />}
-								className="discard-btn"
-							>
-								Discard
-							</Button>
-							<Button
-								variant="solid"
-								color="primary"
-								size="xs"
-								className="save-btn"
-								prefixIcon={<Save size={14} />}
-								onClick={handleSubmit}
-								loading={isUpdatingServiceConfig}
-							>
-								Save
-							</Button>
-						</div>
-					</div>
+						{hasUnsavedChanges && (
+							<div className="aws-service-details-overview-configuration-actions">
+								<Button
+									variant="solid"
+									color="secondary"
+									onClick={handleDiscard}
+									disabled={isUpdatingServiceConfig}
+									size="xs"
+									prefixIcon={<X size={14} />}
+									className="discard-btn"
+									type="button"
+								>
+									Discard
+								</Button>
+								<Button
+									variant="solid"
+									color="primary"
+									size="xs"
+									className="save-btn"
+									prefixIcon={<Save size={14} />}
+									type="submit"
+									loading={isUpdatingServiceConfig}
+									disabled={isS3SyncBucketsMissing || isUpdatingServiceConfig}
+								>
+									Save
+								</Button>
+							</div>
+						)}
+					</form>
 				)}
 
 				<MarkdownRenderer

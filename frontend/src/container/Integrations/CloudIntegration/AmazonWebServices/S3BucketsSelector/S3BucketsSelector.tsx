@@ -1,5 +1,5 @@
-import { useCallback, useMemo, useState } from 'react';
-import { Form, Select, Skeleton } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Select, Skeleton } from 'antd';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
 
@@ -23,6 +23,10 @@ function S3BucketsSelector({
 	const [bucketsByRegion, setBucketsByRegion] = useState<
 		Record<string, string[]>
 	>(initialBucketsByRegion);
+
+	useEffect(() => {
+		setBucketsByRegion(initialBucketsByRegion);
+	}, [initialBucketsByRegion]);
 
 	// Find the active AWS account based on the URL query parameter
 	const activeAccount = useMemo(
@@ -87,30 +91,32 @@ function S3BucketsSelector({
 					const disabled = isRegionDisabled(region);
 
 					return (
-						<Form.Item
-							key={region}
-							label={region}
-							// eslint-disable-next-line react/jsx-props-no-spreading
-							{...(disabled && {
-								help:
-									'Region disabled in account settings; S3 buckets here will not be synced.',
-								validateStatus: 'warning',
-							})}
-						>
-							<Select
-								mode="tags"
-								placeholder={`Enter S3 bucket names for ${region}`}
-								value={bucketsByRegion[region] || []}
-								onChange={(value): void => handleRegionBucketsChange(region, value)}
-								tokenSeparators={[',']}
-								allowClear
-								disabled={disabled}
-								suffixIcon={null}
-								notFoundContent={null}
-								filterOption={false}
-								showSearch
-							/>
-						</Form.Item>
+						<div key={region} className="s3-buckets-selector-region">
+							<div className="s3-buckets-selector-region-header">
+								<div className="s3-buckets-selector-region-label">{region}</div>
+								{disabled && (
+									<div className="s3-buckets-selector-region-help">
+										Region disabled in account settings; S3 buckets here will not be
+										synced.
+									</div>
+								)}
+							</div>
+							<div className="s3-buckets-selector-region-select">
+								<Select
+									mode="tags"
+									placeholder={`Enter S3 bucket names for ${region}`}
+									value={bucketsByRegion[region] || []}
+									onChange={(value): void => handleRegionBucketsChange(region, value)}
+									tokenSeparators={[',']}
+									allowClear
+									disabled={disabled}
+									suffixIcon={null}
+									notFoundContent={null}
+									filterOption={false}
+									showSearch
+								/>
+							</div>
+						</div>
 					);
 				})}
 			</div>
