@@ -49,7 +49,10 @@ function MetricsSearch({
 					showFilterSuggestionsWithoutMetric
 				/>
 			</div>
-			<RunQueryBtn onStageRunQuery={handleStageAndRunQuery} disabled={isLoading} />
+			<RunQueryBtn
+				onStageRunQuery={handleStageAndRunQuery}
+				isLoadingQueries={isLoading}
+			/>
 			<div className="metrics-search-options">
 				<DateTimeSelectionV2
 					showAutoRefresh={false}
