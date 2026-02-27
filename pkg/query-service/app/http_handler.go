@@ -208,11 +208,14 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
-	cloudIntegrationsRegistry := cloudintegrations.NewCloudProviderRegistry(
+	cloudIntegrationsRegistry, err := cloudintegrations.NewCloudProviderRegistry(
 		opts.Logger,
 		opts.Signoz.SQLStore,
 		opts.Signoz.Querier,
 	)
+	if err != nil {
+		return nil, err
+	}
 
 	aH := &APIHandler{
 		reader:                        opts.Reader,
@@ -1221,10 +1224,7 @@ func (aH *APIHandler) Get(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 
-		integrationDashboard, err := aH.cloudIntegrationsRegistry[cloudProvider].GetDashboard(ctx, &integrationtypes.GettableDashboard{
-			ID:    id,
-			OrgID: orgID,
-		})
+		integrationDashboard, err := aH.cloudIntegrationsRegistry[cloudProvider].GetDashboard(ctx, id, orgID)
 		if err != nil {
 			render.Error(rw, err)
 			return
@@ -3670,6 +3670,11 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter
 		render.Error(w, err)
 		return
 	}
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
 
 	accountId := mux.Vars(r)["accountId"]
 
@@ -3679,18 +3684,13 @@ func (aH *APIHandler) CloudIntegrationsUpdateAccountConfig(w http.ResponseWriter
 		return
 	}
 
-	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateAccountConfig(r.Context(), &integrationtypes.PatchableAccountConfig{
-		OrgID:     claims.OrgID,
-		AccountId: accountId,
-		Data:      reqBody,
-	})
+	resp, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateAccountConfig(r.Context(), orgID, accountId, reqBody)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	render.Success(w, http.StatusOK, resp)
-	return
 }
 
 func (aH *APIHandler) CloudIntegrationsDisconnectAccount(w http.ResponseWriter, r *http.Request) {
@@ -3790,7 +3790,6 @@ func (aH *APIHandler) CloudIntegrationsGetServiceDetails(w http.ResponseWriter, 
 	}
 
 	render.Success(w, http.StatusOK, resp)
-	return
 }
 
 func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter, r *http.Request) {
@@ -3810,6 +3809,12 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter
 		return
 	}
 
+	orgID, err := valuer.NewUUID(claims.OrgID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
 	reqBody, err := io.ReadAll(r.Body)
 	if err != nil {
 		render.Error(w, errors.WrapInternalf(err,
@@ -3819,13 +3824,7 @@ func (aH *APIHandler) CloudIntegrationsUpdateServiceConfig(w http.ResponseWriter
 		return
 	}
 
-	result, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateServiceConfig(
-		r.Context(), &integrationtypes.PatchableServiceConfig{
-			OrgID:     claims.OrgID,
-			ServiceId: serviceId,
-			Config:    reqBody,
-		},
-	)
+	result, err := aH.cloudIntegrationsRegistry[cloudProvider].UpdateServiceConfig(r.Context(), serviceId, orgID, reqBody)
 	if err != nil {
 		render.Error(w, err)
 		return

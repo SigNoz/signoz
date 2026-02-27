@@ -463,7 +463,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(integrationtypes.IntegrationUserEmails, createdByUser.Email) {
+	if slices.Contains(integrationtypes.CloudIntegrationUserEmails, createdByUser.Email) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
@@ -508,7 +508,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(integrationtypes.IntegrationUserEmails, createdByUser.Email) {
+	if slices.Contains(integrationtypes.CloudIntegrationUserEmails, createdByUser.Email) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}

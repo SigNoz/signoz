@@ -280,7 +280,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete root user")
 	}
 
-	if slices.Contains(integrationtypes.IntegrationUserEmails, user.Email) {
+	if slices.Contains(integrationtypes.CloudIntegrationUserEmails, user.Email) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 

@@ -1,0 +1,289 @@
+{
+  "id": "frontdoor",
+  "title": "Front Door",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": true
+  },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "overview",
+        "display_name": "Overview",
+        "checks": [
+          {
+            "key": "placeholder",
+            "attributes": []
+          }
+        ]
+      },
+      {
+        "category": "insights",
+        "display_name": "Blob Storage Insights",
+        "checks": [
+          {
+            "key": "placeholder",
+            "attributes": []
+          }
+        ]
+      }
+
+    ],
+    "logs": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "attributes": [
+              {
+                "name": "placeholder",
+                "operator": "ILIKE",
+                "value": "%/ecs/%"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "placeholder_metric_1",
+        "unit": "Percent",
+        "type": "Gauge",
+        "description": ""
+      }
+    ],
+    "logs": [
+      {
+        "name": "placeholder_log_1",
+        "path": "placeholder.path.value",
+        "type": "string"
+      },
+      {
+        "name": "placeholder_log_1",
+        "path": "placeholder.path.value",
+        "type": "string"
+      },
+      {
+        "name": "placeholder_log_1",
+        "path": "placeholder.path.value",
+        "type": "string"
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "azure_metrics": [
+      {
+        "category_type": "metrics",
+        "name": "Capacity"
+      },
+      {
+        "category_type": "metrics",
+        "name": "Transaction"
+      }
+    ],
+    "azure_logs": [
+      {
+        "category_type": "logs",
+        "name": "StorageRead"
+      },
+      {
+        "category_type": "logs",
+        "name": "StorageWrite"
+      },
+      {
+        "category_type": "logs",
+        "name": "StorageDelete"
+      }
+    ]
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "Front Door Overview",
+        "description": "Overview of Blob Storage",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

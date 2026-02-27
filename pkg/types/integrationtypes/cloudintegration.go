@@ -13,8 +13,15 @@ import (
 	"github.com/uptrace/bun"
 )
 
-// Generic utility functions for JSON serialization/deserialization
+// NOTE:
+// - When Account keyword is used in struct names, it refers cloud integration account. CloudIntegration refers to DB schema.
+// - When Account Config keyword is used in struct names, it refers to configuration for cloud integration accounts
+// - When Service keyword is used in struct names, it refers to cloud integration service. CloudIntegrationService refers to DB schema.
+// 		where `service` is services provided by each cloud provider like AWS S3, Azure BlobStorage etc.
+// - When Service Config keyword is used in struct names, it refers to configuration for cloud integration services
 
+// Generic utility functions for JSON serialization/deserialization
+// this is helpful to return right errors from a common place and avoid repeating the same code in multiple places.
 // UnmarshalJSON is a generic function to unmarshal JSON data into any type
 func UnmarshalJSON[T any](src []byte, target *T) error {
 	err := json.Unmarshal(src, target)
@@ -47,69 +54,45 @@ func MarshalJSON[T any](source *T) ([]byte, error) {
 type CloudProvider interface {
 	GetName() CloudProviderType
 
+	// AgentCheckIn is called by agent to heartbeat and get latest config in response.
 	AgentCheckIn(ctx context.Context, req *PostableAgentCheckInPayload) (any, error)
+	// GenerateConnectionArtifact generates cloud provider specific connection information, client side handles how this information is shown
 	GenerateConnectionArtifact(ctx context.Context, req *PostableConnectionArtifact) (any, error)
+	// GetAccountStatus returns agent connection status for a cloud integration account
 	GetAccountStatus(ctx context.Context, orgID, accountID string) (*GettableAccountStatus, error)
-
-	ListServices(ctx context.Context, orgID string, accountID *string) (any, error) // returns either GettableAWSServices
-	GetServiceDetails(ctx context.Context, req *GetServiceDetailsReq) (any, error)
+	// ListConnectedAccounts lists accounts where agent is connected
 	ListConnectedAccounts(ctx context.Context, orgID string) (*GettableConnectedAccountsList, error)
-	GetDashboard(ctx context.Context, req *GettableDashboard) (*dashboardtypes.Dashboard, error)
+
+	// LIstServices return list of services for a cloud provider attached with the accountID. This just returns a summary
+	ListServices(ctx context.Context, orgID string, accountID *string) (any, error) // returns either GettableAWSServices or GettableAzureServices
+	// GetServiceDetails returns service definition details for a serviceId. This returns config and other details required to show in service details page on client.
+	GetServiceDetails(ctx context.Context, req *GetServiceDetailsReq) (any, error)
+
+	// GetDashboard returns dashboard json for a give cloud integration service dashboard.
+	// this only returns the dashboard when account is connected and service is enabled
+	GetDashboard(ctx context.Context, id string, orgID valuer.UUID) (*dashboardtypes.Dashboard, error)
+	// GetAvailableDashboards returns list of available dashboards across all connected cloud integration accounts in the org.
+	// this list gets added to dashboard list page
 	GetAvailableDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 
-	UpdateAccountConfig(ctx context.Context, req *PatchableAccountConfig) (any, error) // req can be either PatchableAWSAccountConfig
-	UpdateServiceConfig(ctx context.Context, req *PatchableServiceConfig) (any, error)
+	// UpdateAccountConfig updates cloud integration account config
+	UpdateAccountConfig(ctx context.Context, orgId valuer.UUID, accountId string, config []byte) (any, error)
+	// UpdateServiceConfig updates cloud integration service config
+	UpdateServiceConfig(ctx context.Context, serviceId string, orgID valuer.UUID, config []byte) (any, error)
 
+	// DisconnectAccount soft deletes/removes a cloud integration account.
 	DisconnectAccount(ctx context.Context, orgID, accountID string) (*CloudIntegration, error)
 }
 
-type GettableDashboard struct {
-	ID    string
-	OrgID valuer.UUID
-}
-
-type GettableCloudIntegrationConnectionParams struct {
-	IngestionUrl string `json:"ingestion_url,omitempty"`
-	IngestionKey string `json:"ingestion_key,omitempty"`
-	SigNozAPIUrl string `json:"signoz_api_url,omitempty"`
-	SigNozAPIKey string `json:"signoz_api_key,omitempty"`
-}
-
-type GettableIngestionKey struct {
-	Name  string `json:"name"`
-	Value string `json:"value"`
-	// other attributes from gateway response not included here since they are not being used.
-}
-
-type GettableIngestionKeysSearch struct {
-	Status string                 `json:"status"`
-	Data   []GettableIngestionKey `json:"data"`
-	Error  string                 `json:"error"`
-}
-
-type GettableCreateIngestionKey struct {
-	Status string               `json:"status"`
-	Data   GettableIngestionKey `json:"data"`
-	Error  string               `json:"error"`
-}
-
-type GettableDeployment struct {
-	Name        string `json:"name"`
-	ClusterInfo struct {
-		Region struct {
-			DNS string `json:"dns"`
-		} `json:"region"`
-	} `json:"cluster"`
-}
-
+// GettableConnectedAccountsList is the response for listing connected accounts for a cloud provider.
 type GettableConnectedAccountsList struct {
 	Accounts []*Account `json:"accounts"`
 }
 
-// SigNozAWSAgentConfig represents requirements for agent deployment in user's AWS account
-type SigNozAWSAgentConfig struct {
-	// The region in which SigNoz agent should be installed.
-	Region string `json:"region"`
+// SigNozAgentConfig represents parameters required for agent deployment in cloud provider accounts
+// these represent parameters passed during agent deployment, how they are passed might change for each cloud provider but the purpose is same.
+type SigNozAgentConfig struct {
+	Region string `json:"region,omitempty"` // AWS-specific: The region in which SigNoz agent should be installed
 
 	IngestionUrl string `json:"ingestion_url"`
 	IngestionKey string `json:"ingestion_key"`
@@ -119,40 +102,54 @@ type SigNozAWSAgentConfig struct {
 	Version string `json:"version,omitempty"`
 }
 
+// PostableConnectionArtifact represent request body for generating connection artifact API.
+// Data is request body raw bytes since each cloud provider will have have different request body structure and generics hardly help in such cases.
+// Artifact is a generic name for different types of connection methods like connection URL for AWS, connection command for Azure etc.
 type PostableConnectionArtifact struct {
 	OrgID string
-	Data  []byte // either PostableAWSConnectionUrl
+	Data  []byte // either PostableAWSConnectionUrl or PostableAzureConnectionCommand
 }
 
-type PostableConnectionArtifactTyped[AgentConfigT any, AccountConfigT any] struct {
-	AccountId     *string         `json:"account_id,omitempty"` // Optional. To be specified for updates.
-	AgentConfig   *AgentConfigT   `json:"agent_config"`
-	AccountConfig *AccountConfigT `json:"account_config"`
+// PostableAWSConnectionUrl is request body for AWS connection artifact API
+type PostableAWSConnectionUrl struct {
+	AgentConfig   *SigNozAgentConfig `json:"agent_config"`
+	AccountConfig *AWSAccountConfig  `json:"account_config"`
 }
 
-type PostableAWSConnectionUrl = PostableConnectionArtifactTyped[SigNozAWSAgentConfig, AWSAccountConfig]
-
-// GettableConnectionArtifact represents base structure for connection artifacts
-type GettableConnectionArtifact[T any] struct {
-	AccountId string `json:"account_id"`
-	Artifact  T      `json:",inline"`
+// PostableAzureConnectionCommand is request body for Azure connection artifact API
+type PostableAzureConnectionCommand struct {
+	AgentConfig   *SigNozAgentConfig  `json:"agent_config"`
+	AccountConfig *AzureAccountConfig `json:"account_config"`
 }
 
-type GettableAWSConnectionArtifact struct {
-	ConnectionUrl string `json:"connection_url"`
+// GettableAzureConnectionArtifact is Azure specific connection artifact which contains connection commands for agent deployment
+type GettableAzureConnectionArtifact struct {
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
 }
 
+// GettableAWSConnectionUrl is AWS specific connection artifact which contains connection url for agent deployment
 type GettableAWSConnectionUrl struct {
 	AccountId     string `json:"account_id"`
 	ConnectionUrl string `json:"connection_url"`
 }
 
+// GettableAzureConnectionCommand is Azure specific connection artifact which contains connection commands for agent deployment
+type GettableAzureConnectionCommand struct {
+	AccountId                   string `json:"account_id"`
+	AzureShellConnectionCommand string `json:"az_shell_connection_command"`
+	AzureCliConnectionCommand   string `json:"az_cli_connection_command"`
+}
+
+// GettableAccountStatus is cloud integration account status response
 type GettableAccountStatus struct {
 	Id             string        `json:"id"`
 	CloudAccountId *string       `json:"cloud_account_id,omitempty"`
 	Status         AccountStatus `json:"status"`
 }
 
+// PostableAgentCheckInPayload is request body for agent check-in API.
+// This is used by agent to send heartbeat.
 type PostableAgentCheckInPayload struct {
 	ID        string `json:"account_id"`
 	AccountID string `json:"cloud_account_id"`
@@ -161,39 +158,111 @@ type PostableAgentCheckInPayload struct {
 	OrgID string         `json:"-"`
 }
 
+// AWSAgentIntegrationConfig is used by agent for deploying infra to send telemetry to SigNoz
 type AWSAgentIntegrationConfig struct {
 	EnabledRegions              []string               `json:"enabled_regions"`
 	TelemetryCollectionStrategy *AWSCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-type GettableAgentCheckIn[T any] struct {
-	AccountId         string     `json:"account_id"`
-	CloudAccountId    string     `json:"cloud_account_id"`
-	RemovedAt         *time.Time `json:"removed_at"`
-	IntegrationConfig T          `json:"integration_config"`
+// AzureAgentIntegrationConfig is used by agent for deploying infra to send telemetry to SigNoz
+type AzureAgentIntegrationConfig struct {
+	DeploymentRegion      string   `json:"deployment_region"` // will not be changed once set
+	EnabledResourceGroups []string `json:"resource_groups"`
+	// TelemetryCollectionStrategy is map of service to telemetry config
+	TelemetryCollectionStrategy map[string]*AzureCollectionStrategy `json:"telemetry,omitempty"`
 }
 
-type GettableAWSAgentCheckIn = GettableAgentCheckIn[AWSAgentIntegrationConfig]
-
-type PatchableServiceConfig struct {
-	OrgID     string `json:"org_id"`
-	ServiceId string `json:"service_id"`
-	Config    []byte `json:"config"` // json serialized config
+// GettableAgentCheckInRes is generic response from agent check-in API.
+// AWSAgentIntegrationConfig and AzureAgentIntegrationConfig these configs are used by agent to deploy the infra and send telemetry to SigNoz
+type GettableAgentCheckInRes[AgentConfigT any] struct {
+	AccountId         string       `json:"account_id"`
+	CloudAccountId    string       `json:"cloud_account_id"`
+	RemovedAt         *time.Time   `json:"removed_at"`
+	IntegrationConfig AgentConfigT `json:"integration_config"`
 }
 
-type UpdatableCloudServiceConfig[T any] struct {
-	CloudAccountId string `json:"cloud_account_id"`
-	Config         *T     `json:"config"`
+// UpdatableServiceConfig is generic
+type UpdatableServiceConfig[ServiceConfigT any] struct {
+	CloudAccountId string         `json:"cloud_account_id"`
+	Config         ServiceConfigT `json:"config"`
 }
 
-type UpdatableAWSCloudServiceConfig = UpdatableCloudServiceConfig[AWSCloudServiceConfig]
-
-type AWSCloudServiceConfig struct {
-	Logs    *AWSCloudServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics *AWSCloudServiceMetricsConfig `json:"metrics,omitempty"`
+// ServiceConfigTyped is a generic interface for cloud integration service's configuration
+// this is generic interface to define helper functions for CloudIntegrationService.Config field.
+type ServiceConfigTyped[definition Definition] interface {
+	Validate(def definition) error
+	IsMetricsEnabled() bool
+	IsLogsEnabled() bool
 }
 
-func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
+type AWSServiceConfig struct {
+	Logs    *AWSServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics *AWSServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+type AWSServiceLogsConfig struct {
+	Enabled   bool                `json:"enabled"`
+	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
+}
+
+type AWSServiceMetricsConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
+// IsMetricsEnabled returns true if metrics collection is configured and enabled
+func (a *AWSServiceConfig) IsMetricsEnabled() bool {
+	return a.Metrics != nil && a.Metrics.Enabled
+}
+
+// IsLogsEnabled returns true if logs collection is configured and enabled
+func (a *AWSServiceConfig) IsLogsEnabled() bool {
+	return a.Logs != nil && a.Logs.Enabled
+}
+
+type AzureServiceConfig struct {
+	Logs    []*AzureServiceLogsConfig    `json:"logs,omitempty"`
+	Metrics []*AzureServiceMetricsConfig `json:"metrics,omitempty"`
+}
+
+// AzureServiceLogsConfig is Azure specific service config for logs
+type AzureServiceLogsConfig struct {
+	Enabled bool   `json:"enabled"`
+	Name    string `json:"name"`
+}
+
+// AzureServiceMetricsConfig is Azure specific service config for metrics
+type AzureServiceMetricsConfig struct {
+	Enabled bool   `json:"enabled"`
+	Name    string `json:"name"`
+}
+
+// IsMetricsEnabled returns true if any metric is configured and enabled
+func (a *AzureServiceConfig) IsMetricsEnabled() bool {
+	if a.Metrics == nil {
+		return false
+	}
+	for _, m := range a.Metrics {
+		if m.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+// IsLogsEnabled returns true if any log is configured and enabled
+func (a *AzureServiceConfig) IsLogsEnabled() bool {
+	if a.Logs == nil {
+		return false
+	}
+	for _, l := range a.Logs {
+		if l.Enabled {
+			return true
+		}
+	}
+	return false
+}
+
+func (a *AWSServiceConfig) Validate(def *AWSDefinition) error {
 	if def.Id != S3Sync && a.Logs != nil && a.Logs.S3Buckets != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "s3 buckets can only be added to service-type[%s]", S3Sync)
 	} else if def.Id == S3Sync && a.Logs != nil && a.Logs.S3Buckets != nil {
@@ -207,37 +276,169 @@ func (a *AWSCloudServiceConfig) Validate(def *AWSDefinition) error {
 	return nil
 }
 
-type PatchServiceConfigResponse struct {
+func (a *AzureServiceConfig) Validate(def *AzureDefinition) error {
+	logsMap := make(map[string]bool)
+	metricsMap := make(map[string]bool)
+
+	if def.Strategy != nil && def.Strategy.Logs != nil {
+		for _, log := range def.Strategy.Logs {
+			logsMap[log.Name] = true
+		}
+	}
+
+	if def.Strategy != nil && def.Strategy.Metrics != nil {
+		for _, metric := range def.Strategy.Metrics {
+			metricsMap[metric.Name] = true
+		}
+	}
+
+	for _, log := range a.Logs {
+		if _, found := logsMap[log.Name]; !found {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid log name: %s", log.Name)
+		}
+	}
+
+	for _, metric := range a.Metrics {
+		if _, found := metricsMap[metric.Name]; !found {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid metric name: %s", metric.Name)
+		}
+	}
+
+	return nil
+}
+
+// UpdatableServiceConfigRes is response for UpdateServiceConfig API
+// TODO: find a better way to name this
+type UpdatableServiceConfigRes struct {
 	ServiceId string `json:"id"`
 	Config    any    `json:"config"`
 }
 
-type PatchableAccountConfig struct {
-	OrgID     string
-	AccountId string
-	Data      []byte // can be either AWSAccountConfig
+// UpdatableAccountConfigTyped is a generic struct for updating cloud integration account config used in UpdateAccountConfig API
+type UpdatableAccountConfigTyped[AccountConfigT any] struct {
+	Config *AccountConfigT `json:"config"`
 }
 
-type PatchableAccountConfigTyped[T any] struct {
-	Config *T `json:"config"`
-}
+type UpdatableAWSAccountConfig = UpdatableAccountConfigTyped[AWSAccountConfig]
+type UpdatableAzureAccountConfig = UpdatableAccountConfigTyped[AzureAccountConfig]
 
-type PatchableAWSAccountConfig = PatchableAccountConfigTyped[AWSAccountConfig]
-
+// AWSAccountConfig is the configuration for AWS cloud integration account
 type AWSAccountConfig struct {
 	EnabledRegions []string `json:"regions"`
 }
 
-type GettableServices[T any] struct {
-	Services []T `json:"services"`
+// AzureAccountConfig is the configuration for Azure cloud integration account
+type AzureAccountConfig struct {
+	DeploymentRegion      string   `json:"deployment_region,omitempty"`
+	EnabledResourceGroups []string `json:"resource_groups,omitempty"`
+}
+
+// GettableServices is a generic struct for listing services of a cloud integration account used in ListServices API
+type GettableServices[ServiceSummaryT any] struct {
+	Services []ServiceSummaryT `json:"services"`
 }
 
 type GettableAWSServices = GettableServices[AWSServiceSummary]
+type GettableAzureServices = GettableServices[AzureServiceSummary]
 
+// GetServiceDetailsReq is a req struct for getting service definition details
 type GetServiceDetailsReq struct {
 	OrgID          valuer.UUID
 	ServiceId      string
 	CloudAccountID *string
+}
+
+// ServiceSummary is a generic struct for service summary used in ListServices API
+type ServiceSummary[ServiceConfigT any] struct {
+	DefinitionMetadata
+	Config *ServiceConfigT `json:"config"`
+}
+
+type AWSServiceSummary = ServiceSummary[AWSServiceConfig]
+type AzureServiceSummary = ServiceSummary[AzureServiceConfig]
+
+// GettableServiceDetails is a generic struct for service details used in GetServiceDetails API
+type GettableServiceDetails[DefinitionT any, ServiceConfigT any] struct {
+	Definition       DefinitionT              `json:",inline"`
+	Config           ServiceConfigT           `json:"config"`
+	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
+}
+
+type GettableAWSServiceDetails = GettableServiceDetails[AWSDefinition, *AWSServiceConfig]
+type GettableAzureServiceDetails = GettableServiceDetails[AzureDefinition, *AzureServiceConfig]
+
+// Account represents a cloud integration account, this is used for business logic and API responses.
+type Account struct {
+	Id             string        `json:"id"`
+	CloudAccountId string        `json:"cloud_account_id"`
+	Config         any           `json:"config"` // AWSAccountConfig or AzureAccountConfig
+	Status         AccountStatus `json:"status"`
+}
+
+// AccountStatus is generic struct for cloud integration account status
+type AccountStatus struct {
+	Integration AccountIntegrationStatus `json:"integration"`
+}
+
+// AccountIntegrationStatus stores heartbeat information from agent check in
+type AccountIntegrationStatus struct {
+	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
+}
+
+// ServiceConnectionStatus represents integration connection status for a particular service
+// this struct helps to check ingested data and determines connection status by whether data was ingested or not.
+// this is composite struct for both metrics and logs
+type ServiceConnectionStatus struct {
+	Logs    []*SignalConnectionStatus `json:"logs"`
+	Metrics []*SignalConnectionStatus `json:"metrics"`
+}
+
+// SignalConnectionStatus represents connection status for a particular signal type (logs or metrics) for a service
+// this struct is used in API responses for clients to show relevant information about the connection status.
+type SignalConnectionStatus struct {
+	CategoryID           string `json:"category"`
+	CategoryDisplayName  string `json:"category_display_name"`
+	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
+	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
+}
+
+// GettableCloudIntegrationConnectionParams is response for connection params API
+type GettableCloudIntegrationConnectionParams struct {
+	IngestionUrl string `json:"ingestion_url,omitempty"`
+	IngestionKey string `json:"ingestion_key,omitempty"`
+	SigNozAPIUrl string `json:"signoz_api_url,omitempty"`
+	SigNozAPIKey string `json:"signoz_api_key,omitempty"`
+}
+
+// GettableIngestionKey is a struct for ingestion key returned from gateway
+type GettableIngestionKey struct {
+	Name  string `json:"name"`
+	Value string `json:"value"`
+	// other attributes from gateway response not included here since they are not being used.
+}
+
+// GettableIngestionKeysSearch is a struct for response of ingestion keys search API on gateway
+type GettableIngestionKeysSearch struct {
+	Status string                 `json:"status"`
+	Data   []GettableIngestionKey `json:"data"`
+	Error  string                 `json:"error"`
+}
+
+// GettableCreateIngestionKey is a struct for response of create ingestion key API on gateway
+type GettableCreateIngestionKey struct {
+	Status string               `json:"status"`
+	Data   GettableIngestionKey `json:"data"`
+	Error  string               `json:"error"`
+}
+
+// GettableDeployment is response struct for deployment details fetched from Zeus
+type GettableDeployment struct {
+	Name        string `json:"name"`
+	ClusterInfo struct {
+		Region struct {
+			DNS string `json:"dns"`
+		} `json:"region"`
+	} `json:"cluster"`
 }
 
 // --------------------------------------------------------------------------
@@ -289,56 +490,14 @@ func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
 		config := new(AWSAccountConfig)
 		_ = UnmarshalJSON([]byte(a.Config), config)
 		ca.Config = config
+	case CloudProviderAzure:
+		config := new(AzureAccountConfig)
+		_ = UnmarshalJSON([]byte(a.Config), config)
+		ca.Config = config
 	default:
 	}
 
 	return ca
-}
-
-type Account struct {
-	Id             string        `json:"id"`
-	CloudAccountId string        `json:"cloud_account_id"`
-	Config         any           `json:"config"` // AWSAccountConfig
-	Status         AccountStatus `json:"status"`
-}
-
-type AccountStatus struct {
-	Integration AccountIntegrationStatus `json:"integration"`
-}
-
-type AccountIntegrationStatus struct {
-	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
-}
-
-func DefaultAWSAccountConfig() AWSAccountConfig {
-	return AWSAccountConfig{
-		EnabledRegions: []string{},
-	}
-}
-
-type ServiceSummary[T any] struct {
-	DefinitionMetadata
-	Config *T `json:"config"`
-}
-
-type AWSServiceSummary = ServiceSummary[AWSCloudServiceConfig]
-
-type GettableAWSServiceDetails struct {
-	AWSDefinition
-	Config           *AWSCloudServiceConfig   `json:"config"`
-	ConnectionStatus *ServiceConnectionStatus `json:"status,omitempty"`
-}
-
-type ServiceConnectionStatus struct {
-	Logs    []*SignalConnectionStatus `json:"logs"`
-	Metrics []*SignalConnectionStatus `json:"metrics"`
-}
-
-type SignalConnectionStatus struct {
-	CategoryID           string `json:"category"`
-	CategoryDisplayName  string `json:"category_display_name"`
-	LastReceivedTsMillis int64  `json:"last_received_ts_ms"` // epoch milliseconds
-	LastReceivedFrom     string `json:"last_received_from"`  // resource identifier
 }
 
 type AgentReport struct {
@@ -384,13 +543,4 @@ type CloudIntegrationService struct {
 	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	Config             string `bun:"config,type:text"` // json serialized config
 	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
-}
-
-type AWSCloudServiceLogsConfig struct {
-	Enabled   bool                `json:"enabled"`
-	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
-}
-
-type AWSCloudServiceMetricsConfig struct {
-	Enabled bool `json:"enabled"`
 }
