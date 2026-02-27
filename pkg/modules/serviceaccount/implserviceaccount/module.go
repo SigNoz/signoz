@@ -246,7 +246,7 @@ func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serv
 		return err
 	}
 
-	if err := module.emailing.SendHTML(ctx, serviceAccount.Email, "New API Key created for "+serviceAccount.Name, emailtypes.TemplateNameAPIKeyEvent, map[string]any{
+	if err := module.emailing.SendHTML(ctx, serviceAccount.Email, "New API Key created for your SigNoz account", emailtypes.TemplateNameAPIKeyEvent, map[string]any{
 		"Name":         serviceAccount.Name,
 		"KeyName":      factorAPIKey.Name,
 		"KeyID":        factorAPIKey.ID.String(),
@@ -296,7 +296,7 @@ func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID v
 		return err
 	}
 
-	if err := module.emailing.SendHTML(ctx, serviceAccount.Email, "API Key revoked for "+serviceAccount.Name, emailtypes.TemplateNameAPIKeyEvent, map[string]any{
+	if err := module.emailing.SendHTML(ctx, serviceAccount.Email, "API Key revoked for your SigNoz account", emailtypes.TemplateNameAPIKeyEvent, map[string]any{
 		"Name":         serviceAccount.Name,
 		"KeyName":      factorAPIKey.Name,
 		"KeyID":        factorAPIKey.ID.String(),
