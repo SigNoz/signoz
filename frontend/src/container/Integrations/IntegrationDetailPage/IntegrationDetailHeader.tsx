@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useState } from 'react';
 import { useMutation } from 'react-query';
 import { Button, Modal, Skeleton, Tooltip, Typography } from 'antd';
@@ -264,8 +263,7 @@ function IntegrationDetailHeader(
 								<Tooltip
 									title={
 										latestData.last_received_ts_ms
-											? // eslint-disable-next-line sonarjs/no-duplicate-string
-											  dayjs(latestData.last_received_ts_ms).format(
+											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
 											  )
 											: ''

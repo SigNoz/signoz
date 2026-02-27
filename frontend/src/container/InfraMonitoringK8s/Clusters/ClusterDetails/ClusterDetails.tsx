@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -184,7 +183,6 @@ function ClusterDetails({
 				category: InfraMonitoringEvents.Cluster,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [cluster]);
 
 	useEffect(() => {
@@ -533,7 +531,6 @@ function ClusterDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

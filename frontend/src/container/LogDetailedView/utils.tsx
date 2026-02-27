@@ -50,7 +50,6 @@ export const computeDataNode = (
 			parentIsArray={parentIsArray}
 		/>
 	),
-	// eslint-disable-next-line @typescript-eslint/no-use-before-define
 	children: jsonToDataNodes(
 		value as Record<string, unknown>,
 		valueIsArray ? `${nodeKey}[*]` : nodeKey,
@@ -221,7 +220,6 @@ export const aggregateAttributesResourcesToString = (logData: ILog): string => {
 			outputJson.scope = outputJson.scope || {};
 			Object.assign(outputJson.scope, logData[key as keyof ILog]);
 		} else {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			outputJson[key] = logData[key as keyof ILog];
 		}

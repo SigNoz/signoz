@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
@@ -106,7 +105,6 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 		</MemoryRouter>,
 	);
 
-// eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	__esModule: true,
 	default: jest.fn(() => jest.fn()),

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 // https://virtuoso.dev/mocking-in-tests/
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -32,8 +31,8 @@ jest.mock('react-router-dom', () => ({
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function TimeSeriesView() {
 			return <div>Time Series Chart</div>;
 		},
 );
@@ -42,8 +41,8 @@ const frequencyChartContent = 'Frequency chart content';
 jest.mock(
 	'container/LogsExplorerChart',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function LogsExplorerChart() {
 			return <div>{frequencyChartContent}</div>;
 		},
 );

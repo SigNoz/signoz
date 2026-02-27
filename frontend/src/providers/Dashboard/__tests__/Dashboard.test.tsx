@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -338,7 +337,6 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		/* eslint-disable @typescript-eslint/no-explicit-any */
 		mockGetDashboard.mockResolvedValue({
 			httpStatusCode: 200,
 			data: {
@@ -569,7 +567,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetUrlVariables.mockReturnValue({});
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		mockNormalizeUrlValueForVariable.mockImplementation((urlValue) => {
 			if (urlValue === undefined || urlValue === null) {
 				return urlValue;
@@ -582,7 +579,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 		it('should set defaultValue from textboxValue for TEXTBOX variables without defaultValue (BWC)', async () => {
 			// Mock dashboard with TEXTBOX variable that has textboxValue but no defaultValue
 			// This simulates old data format before the migration
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -627,7 +623,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should not override existing defaultValue for TEXTBOX variables', async () => {
 			// Mock dashboard with TEXTBOX variable that already has defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -673,7 +668,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should set empty defaultValue when textboxValue is also empty for TEXTBOX variables', async () => {
 			// Mock dashboard with TEXTBOX variable with empty textboxValue and no defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -717,7 +711,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should not apply BWC logic to non-TEXTBOX variables', async () => {
 			// Mock dashboard with QUERY variable that has no defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {

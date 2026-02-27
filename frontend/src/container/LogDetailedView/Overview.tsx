@@ -1,7 +1,6 @@
-import { ReactNode, useCallback, useEffect, useRef, useState } from 'react';
+import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
-import type { InputRef } from 'antd';
 import {
 	Button,
 	Collapse,
@@ -52,17 +51,6 @@ function Overview({
 		true,
 	);
 	const [fieldSearchInput, setFieldSearchInput] = useState<string>('');
-
-	const focusTimerRef = useRef<ReturnType<typeof setTimeout>>();
-
-	const searchInputRef = useCallback((node: InputRef | null) => {
-		clearTimeout(focusTimerRef.current);
-		if (node) {
-			focusTimerRef.current = setTimeout(() => node.focus(), 100);
-		}
-	}, []);
-
-	useEffect(() => (): void => clearTimeout(focusTimerRef.current), []);
 
 	const isDarkMode = useIsDarkMode();
 
@@ -116,7 +104,6 @@ function Overview({
 		<div className="overview-container">
 			<Collapse
 				defaultActiveKey={['1']}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -144,7 +131,6 @@ function Overview({
 											monaco.editor.remeasureFonts();
 										});
 									}}
-									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
 								<Divider
@@ -173,7 +159,6 @@ function Overview({
 				className="attribute-table"
 				defaultActiveKey={['1']}
 				bordered={false}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -181,7 +166,6 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 							<div
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
@@ -208,7 +192,7 @@ function Overview({
 							<>
 								{isSearchVisible && (
 									<Input
-										ref={searchInputRef}
+										autoFocus
 										placeholder="Search for a field..."
 										className="search-input"
 										value={fieldSearchInput}

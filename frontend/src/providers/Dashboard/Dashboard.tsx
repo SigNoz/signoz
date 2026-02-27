@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
 	createContext,
 	PropsWithChildren,
@@ -22,9 +21,7 @@ import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { defaultTo, isEmpty } from 'lodash-es';
@@ -50,14 +47,10 @@ import {
 	setDashboardVariablesStore,
 	updateDashboardVariablesStore,
 } from './store/dashboardVariables/dashboardVariablesStore';
-import {
-	DashboardSortOrder,
-	IDashboardContext,
-	WidgetColumnWidths,
-} from './types';
+import { IDashboardContext, WidgetColumnWidths } from './types';
 import { sortLayout } from './util';
 
-const DashboardContext = createContext<IDashboardContext>({
+export const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
 	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
@@ -71,13 +64,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
-	listSortOrder: {
-		columnKey: 'createdAt',
-		order: 'descend',
-		pagination: '1',
-		search: '',
-	},
-	setListSortOrder: () => {},
+
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
@@ -101,7 +88,6 @@ interface Props {
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
@@ -122,51 +108,7 @@ export function DashboardProvider({
 		exact: true,
 	});
 
-	const isDashboardListPage = useRouteMatch<Props>({
-		path: ROUTES.ALL_DASHBOARD,
-		exact: true,
-	});
-
 	const { showErrorModal } = useErrorModal();
-
-	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
-	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
-
-	const supportedOrderKeys = ['ascend', 'descend'];
-
-	const params = useUrlQuery();
-	// since the dashboard provider is wrapped at the very top of the application hence it initialises these values from other pages as well.
-	// pick the below params from URL only if the user is on the dashboards list page.
-	const orderColumnParam = isDashboardListPage && params.get('columnKey');
-	const orderQueryParam = isDashboardListPage && params.get('order');
-	const paginationParam = isDashboardListPage && params.get('page');
-	const searchParam = isDashboardListPage && params.get('search');
-
-	const [listSortOrder, setListOrder] = useState({
-		columnKey: orderColumnParam
-			? supportedOrderColumnKeys.includes(orderColumnParam)
-				? orderColumnParam
-				: 'updatedAt'
-			: 'updatedAt',
-		order: orderQueryParam
-			? supportedOrderKeys.includes(orderQueryParam)
-				? orderQueryParam
-				: 'descend'
-			: 'descend',
-		pagination: paginationParam || '1',
-		search: searchParam || '',
-	});
-
-	function setListSortOrder(sortOrder: DashboardSortOrder): void {
-		if (!isEqual(sortOrder, listSortOrder)) {
-			setListOrder(sortOrder);
-		}
-		params.set('columnKey', sortOrder.columnKey as string);
-		params.set('order', sortOrder.order as string);
-		params.set('page', sortOrder.pagination || '1');
-		params.set('search', sortOrder.search || '');
-		safeNavigate({ search: params.toString() });
-	}
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -293,7 +235,6 @@ export function DashboardProvider({
 			const { variables } = clonedDashboardData.data;
 			const existingOrders: Set<number> = new Set();
 
-			// eslint-disable-next-line no-restricted-syntax
 			for (const key in variables) {
 				// eslint-disable-next-line no-prototype-builtins
 				if (variables.hasOwnProperty(key)) {
@@ -502,8 +443,6 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
-			listSortOrder,
-			setListSortOrder,
 			panelMap,
 			setLayouts,
 			setPanelMap,
@@ -527,8 +466,6 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
-			listSortOrder,
-			setListSortOrder,
 			panelMap,
 			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,

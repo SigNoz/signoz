@@ -82,7 +82,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 
-		// eslint-disable-next-line consistent-return
 		return (): void => {
 			clearTimeout(timer);
 		};

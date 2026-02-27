@@ -1616,40 +1616,52 @@ func (t *telemetryMetaStore) FetchTemporality(ctx context.Context, queryTimeRang
 }
 
 func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, error) {
+	temporalities, _, err := t.FetchTemporalityAndTypeMulti(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
+	return temporalities, err
+}
+
+func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
 	if len(metricNames) == 0 {
-		return make(map[string]metrictypes.Temporality), nil
+		return make(map[string]metrictypes.Temporality), make(map[string]metrictypes.Type), nil
 	}
 
-	result := make(map[string]metrictypes.Temporality)
-	metricsTemporality, err := t.fetchMetricsTemporality(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
+	temporalities := make(map[string]metrictypes.Temporality)
+	types := make(map[string]metrictypes.Type)
+	metricsTemporality, metricTypes, err := t.fetchMetricsTemporalityAndType(ctx, queryTimeRangeStartTs, queryTimeRangeEndTs, metricNames...)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	// TODO: return error after table migration are run
-	meterMetricsTemporality, _ := t.fetchMeterSourceMetricsTemporality(ctx, metricNames...)
+	meterMetricsTemporality, meterMetricsTypes, _ := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
 		if temporality, exists := metricsTemporality[metricName]; exists && len(temporality) > 0 {
 			if len(temporality) > 1 {
-				result[metricName] = metrictypes.Multiple
+				temporalities[metricName] = metrictypes.Multiple
 			} else {
-				result[metricName] = temporality[0]
+				temporalities[metricName] = temporality[0]
 			}
-			continue
+		} else if temporality, exists := meterMetricsTemporality[metricName]; exists {
+			temporalities[metricName] = temporality
+		} else {
+			temporalities[metricName] = metrictypes.Unknown
 		}
-		if temporality, exists := meterMetricsTemporality[metricName]; exists {
-			result[metricName] = temporality
-			continue
+		if metricType, exists := metricTypes[metricName]; exists {
+			types[metricName] = metricType
+		} else if meterMetricType, exists := meterMetricsTypes[metricName]; exists {
+			types[metricName] = meterMetricType
+		} else {
+			types[metricName] = metrictypes.UnspecifiedType
 		}
-		result[metricName] = metrictypes.Unknown
 	}
 
-	return result, nil
+	return temporalities, types, nil
 }
 
-func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, error) {
-	result := make(map[string][]metrictypes.Temporality)
+func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	temporalities := make(map[string][]metrictypes.Temporality)
+	types := make(map[string]metrictypes.Type)
 
 	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
 
@@ -1660,6 +1672,8 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 	sb := sqlbuilder.Select(
 		"metric_name",
 		"temporality",
+		"any(type) AS type",
+		"any(is_monotonic) as is_monotonic",
 	).
 		From(t.metricsDBName + "." + tsTableName)
 
@@ -1678,47 +1692,42 @@ func (t *telemetryMetaStore) fetchMetricsTemporality(ctx context.Context, queryT
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric temporality")
+		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric temporality")
 	}
 	defer rows.Close()
 
 	// Process results
 	for rows.Next() {
-		var metricName, temporalityStr string
-		if err := rows.Scan(&metricName, &temporalityStr); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
-		}
-
-		// Convert string to Temporality type
+		var metricName string
 		var temporality metrictypes.Temporality
-		switch temporalityStr {
-		case "Delta":
-			temporality = metrictypes.Delta
-		case "Cumulative":
-			temporality = metrictypes.Cumulative
-		case "Unspecified":
-			temporality = metrictypes.Unspecified
-		default:
-			// Unknown or empty temporality
-			temporality = metrictypes.Unknown
+		var metricType metrictypes.Type
+		var isMonotonic bool
+		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
+			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
 		if temporality != metrictypes.Unknown {
-			result[metricName] = append(result[metricName], temporality)
+			temporalities[metricName] = append(temporalities[metricName], temporality)
 		}
+		if metricType == metrictypes.SumType && !isMonotonic {
+			metricType = metrictypes.GaugeType
+		}
+		types[metricName] = metricType
 	}
 	if err := rows.Err(); err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
+		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
 	}
 
-	return result, nil
+	return temporalities, types, nil
 }
 
-func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, error) {
-	result := make(map[string]metrictypes.Temporality)
+func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	temporalities := make(map[string]metrictypes.Temporality)
+	types := make(map[string]metrictypes.Type)
 
 	sb := sqlbuilder.Select(
 		"metric_name",
 		"argMax(temporality, unix_milli) as temporality",
+		"any(type) AS type",
 	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
@@ -1733,35 +1742,27 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch meter metric temporality")
+		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch meter metric temporality")
 	}
 	defer rows.Close()
 
 	// Process results
 	for rows.Next() {
-		var metricName, temporalityStr string
-		if err := rows.Scan(&metricName, &temporalityStr); err != nil {
-			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
-		}
-
-		// Convert string to Temporality type
+		var metricName string
 		var temporality metrictypes.Temporality
-		switch temporalityStr {
-		case "Delta":
-			temporality = metrictypes.Delta
-		case "Cumulative":
-			temporality = metrictypes.Cumulative
-		case "Unspecified":
-			temporality = metrictypes.Unspecified
-		default:
-			// Unknown or empty temporality
-			temporality = metrictypes.Unknown
+		var metricType metrictypes.Type
+		var isMonotonic bool
+		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
+			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-
-		result[metricName] = temporality
+		if metricType == metrictypes.SumType && !isMonotonic {
+			metricType = metrictypes.GaugeType
+		}
+		temporalities[metricName] = temporality
+		types[metricName] = metricType
 	}
 
-	return result, nil
+	return temporalities, types, nil
 }
 
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.

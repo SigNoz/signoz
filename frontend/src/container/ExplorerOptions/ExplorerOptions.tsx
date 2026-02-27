@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import {
 	CSSProperties,
 	Dispatch,
@@ -693,7 +692,6 @@ function ExplorerOptions({
 			setIsRecentlyUsedSavedViewSelected(false);
 		}
 
-		// eslint-disable-next-line consistent-return
 		return (): void => {
 			clearTimeout(timeoutId);
 		};

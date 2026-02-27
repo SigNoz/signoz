@@ -90,7 +90,6 @@ const getColumnSearchProps = (
 		clearFilters,
 		close,
 	}): JSX.Element => (
-		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
 			<Input
 				ref={searchInput}

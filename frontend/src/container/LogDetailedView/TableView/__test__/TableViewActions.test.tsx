@@ -23,7 +23,6 @@ jest.mock('components/Logs/CopyClipboardHOC', () => ({
 		textToCopy: string;
 		entityKey: string;
 	}): JSX.Element => (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
 		<div
 			className="CopyClipboardHOC"
 			data-testid={`copy-clipboard-${entityKey}`}

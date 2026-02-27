@@ -163,5 +163,4 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default connect(null, mapDispatchToProps)(memo(LogDetailedView as any));

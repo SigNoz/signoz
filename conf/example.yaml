@@ -320,3 +320,4 @@ user:
     # The name of the organization to create or look up for the root user.
     org:
       name: default
+      id: 00000000-0000-0000-0000-000000000000

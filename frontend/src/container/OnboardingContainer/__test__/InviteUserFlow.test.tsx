@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { queryByAttribute, waitFor } from '@testing-library/react';
 import { fireEvent, render, screen, within } from 'tests/test-utils';
 

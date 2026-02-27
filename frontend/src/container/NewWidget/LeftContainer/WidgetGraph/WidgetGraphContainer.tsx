@@ -22,13 +22,11 @@ function WidgetGraphContainer({
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
 		);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 
 	if (queryResponse.data && selectedGraph === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -62,7 +61,6 @@ function VolumeDetails({
 				category: InfraMonitoringEvents.Volume,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [volume]);
 
 	useEffect(() => {
@@ -105,7 +103,6 @@ function VolumeDetails({
 				interval,
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
 

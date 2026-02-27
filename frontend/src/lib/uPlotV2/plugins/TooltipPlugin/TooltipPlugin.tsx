@@ -111,7 +111,6 @@ export default function TooltipPlugin({
 		// subsequent mouse moves do not move the crosshair.
 		function updateCursorLock(): void {
 			if (controller.plot) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore uPlot cursor lock is not working as expected
 				controller.plot.cursor._lock = controller.pinned;
 			}
@@ -339,8 +338,9 @@ export default function TooltipPlugin({
 			return;
 		}
 		const layout = layoutRef.current;
+		layout.observer.disconnect();
+
 		if (containerRef.current) {
-			layout.observer.disconnect();
 			layout.observer.observe(containerRef.current);
 			const { width, height } = containerRef.current.getBoundingClientRect();
 			layout.width = width;
@@ -351,24 +351,28 @@ export default function TooltipPlugin({
 		}
 	}, [isHovering, plot]);
 
-	if (!plot || !isHovering) {
+	if (!plot) {
 		return null;
 	}
 
 	return createPortal(
 		<div
-			className={cx('tooltip-plugin-container', { pinned: isPinned })}
+			className={cx('tooltip-plugin-container', {
+				pinned: isPinned,
+				visible: isHovering,
+			})}
 			style={{
 				...style,
 				maxWidth: `${maxWidth}px`,
 				maxHeight: `${maxHeight}px`,
-				width: '100%',
 			}}
 			aria-live="polite"
 			aria-atomic="true"
+			aria-hidden={!isHovering}
 			ref={containerRef}
+			data-testid="tooltip-plugin-container"
 		>
-			{contents}
+			{isHovering ? contents : null}
 		</div>,
 		portalRoot.current,
 	);

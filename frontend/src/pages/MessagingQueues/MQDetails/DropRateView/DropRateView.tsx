@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useSelector } from 'react-redux';
@@ -222,7 +221,6 @@ function DropRateView(): JSX.Element {
 			setColumns(getColumns(data, visibleCounts, handleShowMore));
 			setTableData(getTableData(data));
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, visibleCounts]);
 
 	useEffect(() => {

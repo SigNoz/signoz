@@ -198,7 +198,6 @@ function DaemonSetDetails({
 				category: InfraMonitoringEvents.DaemonSet,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [daemonSet]);
 
 	useEffect(() => {
@@ -565,7 +564,6 @@ function DaemonSetDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

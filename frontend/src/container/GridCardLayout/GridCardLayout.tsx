@@ -329,7 +329,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		);
 	}, [currentSelectRowId, form, widgets]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
 		if (!selectedDashboard) {
 			return;
@@ -357,7 +356,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
 					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
 						updatedDashboardLayout[j].i
-						// eslint-disable-next-line @typescript-eslint/no-loop-func
 					].widgets.map((w) => ({
 						...w,
 						y: w.y + maxY,
@@ -397,7 +395,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
 					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
 						updatedDashboardLayout[j].i
-						// eslint-disable-next-line @typescript-eslint/no-loop-func
 					].widgets.map((w) => ({
 						...w,
 						y: w.y + maxY,
