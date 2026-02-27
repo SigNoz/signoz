@@ -1,4 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
+import { NEW_ALERT_SCHEMA_VERSION } from 'types/api/alerts/alertTypesV2';
 import { GettableAlert } from 'types/api/alerts/get';
 
 import { filterAlerts } from '../utils';
@@ -127,5 +128,96 @@ describe('filterAlerts', () => {
 		const result = filterAlerts(alertsWithMissingName, 'warning');
 		expect(result).toHaveLength(1);
 		expect(result[0].labels?.severity).toBe('warning');
+	});
+
+	it('should filter v2 alerts by severity from thresholds', () => {
+		const v2Alerts: GettableAlert[] = [
+			({
+				...mockAlertBase,
+				id: '6',
+				alert: 'V2 Alert Critical',
+				alertType: 'metrics',
+				schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+				condition: {
+					thresholds: {
+						kind: 'multi_threshold',
+						spec: [{ name: 'critical', target: 100 }],
+					},
+				},
+				labels: {},
+			} as unknown) as GettableAlert,
+			({
+				...mockAlertBase,
+				id: '7',
+				alert: 'V2 Alert Warning',
+				alertType: 'metrics',
+				schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+				condition: {
+					thresholds: {
+						kind: 'multi_threshold',
+						spec: [{ name: 'warning', target: 50 }],
+					},
+				},
+				labels: {},
+			} as unknown) as GettableAlert,
+		];
+		const result = filterAlerts(v2Alerts, 'critical');
+		expect(result).toHaveLength(1);
+		expect(result[0].alert).toBe('V2 Alert Critical');
+	});
+
+	it('should filter v2 alerts with multiple severities', () => {
+		const v2AlertsMultiple: GettableAlert[] = [
+			({
+				...mockAlertBase,
+				id: '8',
+				alert: 'V2 Alert Multiple Severities',
+				alertType: 'metrics',
+				schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+				condition: {
+					thresholds: {
+						kind: 'multi_threshold',
+						spec: [
+							{ name: 'warning', target: 50 },
+							{ name: 'critical', target: 100 },
+						],
+					},
+				},
+				labels: {},
+			} as unknown) as GettableAlert,
+		];
+		// Should match 'warning' in the multiple thresholds
+		const warningResult = filterAlerts(v2AlertsMultiple, 'warning');
+		expect(warningResult).toHaveLength(1);
+
+		// Should also match 'critical' in the multiple thresholds
+		const criticalResult = filterAlerts(v2AlertsMultiple, 'critical');
+		expect(criticalResult).toHaveLength(1);
+	});
+
+	it('should handle v2 alerts with empty thresholds', () => {
+		const v2AlertsEmpty: GettableAlert[] = [
+			({
+				...mockAlertBase,
+				id: '9',
+				alert: 'V2 Alert No Thresholds',
+				alertType: 'metrics',
+				schemaVersion: NEW_ALERT_SCHEMA_VERSION,
+				condition: {
+					thresholds: {
+						kind: 'multi_threshold',
+						spec: [],
+					},
+				},
+				labels: {},
+			} as unknown) as GettableAlert,
+		];
+		// Should not match any severity
+		const result = filterAlerts(v2AlertsEmpty, 'critical');
+		expect(result).toHaveLength(0);
+
+		// Should match by alert name
+		const nameResult = filterAlerts(v2AlertsEmpty, 'No Thresholds');
+		expect(nameResult).toHaveLength(1);
 	});
 });
