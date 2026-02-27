@@ -1,0 +1,259 @@
+// ─── Table wrapper ────────────────────────────────────────────────────────────
+.members-table-wrapper {
+	display: flex;
+	flex-direction: column;
+	flex: 1;
+	min-height: 0;
+	overflow: hidden;
+	border-radius: 4px;
+}
+
+// ─── Ant Design Table overrides ───────────────────────────────────────────────
+.members-table {
+	// Flatten Ant Design chrome
+	.ant-table {
+		background: transparent;
+		font-size: 14px;
+	}
+
+	.ant-table-container {
+		border-radius: 0 !important;
+		border: none !important;
+	}
+
+	// ── Header ──────────────────────────────────────────────────────────────
+	.ant-table-thead {
+		> tr > th,
+		> tr > td {
+			background: var(--bg-ink-500, #0b0c0e);
+			font-family: Inter, sans-serif;
+			font-size: 11px;
+			font-weight: 600;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+			color: var(--vanilla-400, #c0c1c3);
+			line-height: 18px;
+			padding: 8px 16px;
+			border-bottom: none !important;
+			border-top: none !important;
+
+			// Remove the column divider pseudo-element
+			&::before {
+				display: none !important;
+			}
+
+			// Sorter icon color
+			.ant-table-column-sorter {
+				color: var(--vanilla-400, #c0c1c3);
+				opacity: 0.6;
+			}
+
+			.ant-table-column-sorter-up.active,
+			.ant-table-column-sorter-down.active {
+				color: var(--vanilla-100, #ffffff);
+				opacity: 1;
+			}
+		}
+	}
+
+	// ── Body rows ────────────────────────────────────────────────────────────
+	.ant-table-tbody {
+		> tr > td {
+			border-bottom: none !important;
+			padding: 8px 16px;
+			background: transparent;
+			transition: none;
+		}
+
+		// Even-indexed rows (0, 2, 4 …) get a subtle tint — matches Figma
+		> tr.members-table-row--tinted > td {
+			background: rgba(171, 189, 255, 0.02);
+		}
+
+		// Hover — slightly brighter tint
+		> tr:hover > td {
+			background: rgba(171, 189, 255, 0.04) !important;
+		}
+	}
+
+	// Remove outer table border
+	.ant-table-wrapper,
+	.ant-table-container,
+	.ant-spin-nested-loading,
+	.ant-spin-container {
+		border: none !important;
+		box-shadow: none !important;
+	}
+
+	// ── Status cell — right-align badge and add 4px right padding ─────────
+	.member-status-cell {
+		padding-right: 4px !important;
+	}
+}
+
+// ─── Name / Email cell ────────────────────────────────────────────────────────
+.member-name-email-cell {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	height: 22px;
+	overflow: hidden;
+
+	.member-name {
+		font-size: 14px;
+		font-weight: 500;
+		color: var(--vanilla-400, #c0c1c3);
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		white-space: nowrap;
+		flex-shrink: 0;
+	}
+
+	.member-email {
+		font-size: 14px;
+		font-weight: 400;
+		color: var(--slate-50, #62687c);
+		line-height: 20px;
+		letter-spacing: -0.07px;
+		flex: 1 0 0;
+		min-width: 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+}
+
+// ─── Permissions dash ─────────────────────────────────────────────────────────
+.member-dash {
+	font-size: 14px;
+	color: var(--slate-50, #62687c);
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+// ─── Joined On ────────────────────────────────────────────────────────────────
+.member-joined-date {
+	font-size: 14px;
+	font-weight: 400;
+	color: var(--vanilla-400, #c0c1c3);
+	line-height: 18px;
+	letter-spacing: -0.07px;
+	white-space: nowrap;
+}
+
+.member-joined-dash {
+	font-size: 14px;
+	color: var(--slate-50, #62687c);
+	line-height: 18px;
+	letter-spacing: -0.07px;
+}
+
+// ─── Empty state ─────────────────────────────────────────────────────────────
+.members-empty-state {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	padding: 48px 16px;
+	gap: 8px;
+
+	&__emoji {
+		font-size: 24px;
+		line-height: 1;
+	}
+
+	&__text {
+		font-size: 14px;
+		font-weight: 400;
+		color: var(--vanilla-400, #c0c1c3);
+		margin: 0;
+		line-height: 20px;
+
+		strong {
+			font-weight: 500;
+			color: var(--vanilla-100, #ffffff);
+		}
+	}
+}
+
+// ─── Pagination ───────────────────────────────────────────────────────────────
+.members-table-pagination {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	padding: 8px 16px;
+
+	.ant-pagination-total-text {
+		margin-right: auto;
+	}
+
+	.members-pagination-range {
+		font-family: Inter, sans-serif;
+		font-size: 12px;
+		color: var(--vanilla-400, #c0c1c3);
+	}
+
+	.members-pagination-total {
+		font-family: Inter, sans-serif;
+		font-size: 12px;
+		color: var(--vanilla-400, #c0c1c3);
+		opacity: 0.5;
+	}
+}
+
+// ─── Light mode overrides ─────────────────────────────────────────────────────
+.lightMode {
+	.members-table {
+		.ant-table-thead {
+			> tr > th,
+			> tr > td {
+				background: #f5f5f7;
+				color: #5a5f6e;
+			}
+		}
+
+		.ant-table-tbody {
+			> tr.members-table-row--tinted > td {
+				background: rgba(0, 0, 0, 0.015);
+			}
+
+			> tr:hover > td {
+				background: rgba(0, 0, 0, 0.03) !important;
+			}
+		}
+	}
+
+	.member-name-email-cell {
+		.member-name {
+			color: #1d1f29;
+		}
+
+		.member-email {
+			color: #5a5f6e;
+		}
+	}
+
+	.member-dash,
+	.member-joined-dash {
+		color: #5a5f6e;
+	}
+
+	.member-joined-date {
+		color: #1d1f29;
+	}
+
+	.members-empty-state {
+		&__text {
+			color: #5a5f6e;
+
+			strong {
+				color: #1d1f29;
+			}
+		}
+	}
+
+	.members-pagination-range,
+	.members-pagination-total {
+		color: #5a5f6e;
+	}
+}
