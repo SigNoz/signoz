@@ -21,7 +21,7 @@ function CustomDateTimeModal({
 
 	// Using any type here because antd's DatePicker expects its own internal Dayjs type
 	// which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const disabledDate = (current: any): boolean => {
 		const currentDay = dayjs(current);
 		return currentDay.isAfter(dayjs());

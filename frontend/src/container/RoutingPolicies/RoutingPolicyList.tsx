@@ -32,7 +32,6 @@ function RoutingPolicyList({
 	const showLoading = isRoutingPoliciesLoading || isRoutingPoliciesFetching;
 	const showError = !showLoading && isRoutingPoliciesError;
 
-	/* eslint-disable no-nested-ternary */
 	const localeEmptyState = useMemo(
 		() => (
 			<div className="no-routing-policies-message-container">

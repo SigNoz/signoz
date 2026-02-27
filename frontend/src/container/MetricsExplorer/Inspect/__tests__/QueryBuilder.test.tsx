@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';

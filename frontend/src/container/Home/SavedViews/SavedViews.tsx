@@ -342,10 +342,7 @@ export default function SavedViews({
 							<Button.Group className="views-tabs">
 								<Button
 									value="logs"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'logs' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'logs' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('logs')}
 								>
 									<img src="/Icons/logs.svg" alt="logs-icon" className="logs-icon" />
@@ -353,20 +350,14 @@ export default function SavedViews({
 								</Button>
 								<Button
 									value="traces"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'traces' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'traces' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('traces')}
 								>
 									<DraftingCompass size={14} /> Traces
 								</Button>
 								<Button
 									value="metrics"
-									className={
-										// eslint-disable-next-line sonarjs/no-duplicate-string
-										selectedEntity === 'metrics' ? 'selected tab' : 'tab'
-									}
+									className={selectedEntity === 'metrics' ? 'selected tab' : 'tab'}
 									onClick={(): void => handleTabChange('metrics')}
 								>
 									<BarChart size={14} /> Metrics

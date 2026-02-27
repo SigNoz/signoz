@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
@@ -337,7 +335,6 @@ function MultiIngestionSettings(): JSX.Element {
 	useEffect(() => {
 		setDataSource(ingestionKeys?.data.keys || []);
 		setTotalIngestionKeys(ingestionKeys?.data._pagination?.total || 0);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ingestionKeys?.data]);
 
 	useEffect(() => {

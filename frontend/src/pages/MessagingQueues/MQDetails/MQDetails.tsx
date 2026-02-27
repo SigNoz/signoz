@@ -84,7 +84,6 @@ const checkValidityOfDetailConfigs = (
 	configDetails?: {
 		[key: string]: string;
 	},
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): boolean => {
 	if (selectedView === MessagingQueuesViewType.consumerLag.value) {
 		return !(

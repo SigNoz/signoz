@@ -1,4 +1,3 @@
-/* eslint-disable prefer-destructuring */
 import React, { useState } from 'react';
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
 import cx from 'classnames';

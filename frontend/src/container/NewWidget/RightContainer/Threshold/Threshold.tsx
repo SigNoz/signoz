@@ -176,7 +176,6 @@ function Threshold({
 			}
 
 			moveThreshold(dragIndex, hoverIndex);
-			// eslint-disable-next-line no-param-reassign
 			item.keyIndex = hoverIndex;
 		},
 	});

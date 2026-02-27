@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -569,7 +568,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetUrlVariables.mockReturnValue({});
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		mockNormalizeUrlValueForVariable.mockImplementation((urlValue) => {
 			if (urlValue === undefined || urlValue === null) {
 				return urlValue;

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * V5 Migration Tests for Status Code Bar Chart Queries
  *

@@ -57,7 +57,6 @@ function PanelHeading(props: PanelHeadingProps): JSX.Element {
 
 	const { notifications } = useNotifications();
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onExpandHandler: MouseEventHandler<HTMLDivElement> = async (e) => {
 		try {
 			e.preventDefault();

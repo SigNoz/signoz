@@ -424,7 +424,6 @@ function LogDetailInner({
 					>
 						<Radio.Button
 							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 							}
 							value={VIEW_TYPES.OVERVIEW}
@@ -573,11 +572,9 @@ function LogDetailInner({
 function LogDetail(props: LogDetailProps): JSX.Element {
 	const { log } = props;
 	if (!log) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 

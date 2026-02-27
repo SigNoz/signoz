@@ -13,8 +13,7 @@ function DashboardPage(): JSX.Element {
 	const { isFetching, isError, isLoading } = dashboardResponse;
 
 	const errorMessage = isError
-		? // eslint-disable-next-line @typescript-eslint/ban-ts-comment
-		  // @ts-ignore
+		? // @ts-ignore
 		  (dashboardResponse?.error as AxiosError)?.response?.data?.errorType
 		: 'Something went wrong';
 

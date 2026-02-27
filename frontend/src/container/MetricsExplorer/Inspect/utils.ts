@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -237,7 +236,6 @@ export function applySpaceAggregation(
 						aggregatedValue = Math.max(...values);
 						break;
 					default:
-						// eslint-disable-next-line prefer-destructuring
 						aggregatedValue = values[0];
 				}
 

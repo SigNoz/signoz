@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
@@ -65,7 +64,6 @@ function TestWrapper({ children }: { children: React.ReactNode }): JSX.Element {
 		<Provider store={mockStore}>
 			<QueryClientProvider client={queryClient}>
 				<VirtuosoMockContext.Provider
-					// eslint-disable-next-line react/jsx-no-constructed-context-values
 					value={{ viewportHeight: 300, itemHeight: 40 }}
 				>
 					{children}

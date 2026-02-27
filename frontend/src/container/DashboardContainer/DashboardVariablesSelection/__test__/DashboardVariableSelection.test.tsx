@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { act, render } from '@testing-library/react';
 import * as dashboardVariablesStoreModule from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {

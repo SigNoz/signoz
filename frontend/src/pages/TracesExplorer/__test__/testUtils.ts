@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable no-await-in-loop */
 import {
 	initialQueriesMap,
 	initialQueryBuilderFormValues,

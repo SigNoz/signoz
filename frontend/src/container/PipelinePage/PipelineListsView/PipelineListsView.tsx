@@ -392,7 +392,6 @@ function PipelineListsView({
 		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType, pipelineForm]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import {
 	getDashboardById,

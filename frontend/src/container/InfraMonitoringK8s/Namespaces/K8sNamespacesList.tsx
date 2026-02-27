@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -48,7 +46,6 @@ import {
 import '../InfraMonitoringK8s.styles.scss';
 import './K8sNamespacesList.styles.scss';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sNamespacesList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,

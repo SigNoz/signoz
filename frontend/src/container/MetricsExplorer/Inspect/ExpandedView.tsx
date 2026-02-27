@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Tooltip, Typography } from 'antd';

@@ -1,4 +1,4 @@
-/* eslint-disable sonarjs/no-duplicate-string, simple-import-sort/imports, @typescript-eslint/indent, no-mixed-spaces-and-tabs */
+/* eslint-disable simple-import-sort/imports */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	IBuilderFormula,

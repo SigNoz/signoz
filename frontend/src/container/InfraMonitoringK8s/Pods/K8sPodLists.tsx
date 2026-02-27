@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -51,7 +50,6 @@ import PodDetails from './PodDetails/PodDetails';
 
 import '../InfraMonitoringK8s.styles.scss';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sPodsList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,

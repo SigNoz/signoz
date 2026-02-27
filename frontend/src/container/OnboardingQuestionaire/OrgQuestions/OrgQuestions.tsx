@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Input } from '@signozhq/input';

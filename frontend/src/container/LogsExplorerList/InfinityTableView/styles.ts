@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { themeColors } from 'constants/theme';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';

@@ -135,7 +135,6 @@ describe('SpanDuration', () => {
 			/>,
 		);
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		const spanElement = screen
 			.getByText(SPAN_DURATION_TEXT)
 			.closest(SPAN_DURATION_CLASS);

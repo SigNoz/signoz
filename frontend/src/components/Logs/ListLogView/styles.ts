@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { Card } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';

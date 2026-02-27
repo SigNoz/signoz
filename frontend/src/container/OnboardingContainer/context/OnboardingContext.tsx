@@ -110,7 +110,6 @@ function OnboardingContextProvider({
 		updateActiveStep(null);
 	};
 
-	// eslint-disable-next-line react/jsx-no-constructed-context-values
 	const contextValue: OnboardingContextData = {
 		activeStep,
 		serviceName,

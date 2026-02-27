@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import {
 	createContext,
 	PropsWithChildren,
@@ -236,7 +235,6 @@ export function DashboardProvider({
 			const { variables } = clonedDashboardData.data;
 			const existingOrders: Set<number> = new Set();
 
-			// eslint-disable-next-line no-restricted-syntax
 			for (const key in variables) {
 				// eslint-disable-next-line no-prototype-builtins
 				if (variables.hasOwnProperty(key)) {

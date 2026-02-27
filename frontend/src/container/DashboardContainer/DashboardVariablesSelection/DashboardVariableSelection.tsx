@@ -86,7 +86,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			value: IDashboardVariable['selectedValue'],
 			allSelected: boolean,
 			haveCustomValuesSelected?: boolean,
-			// eslint-disable-next-line sonarjs/cognitive-complexity
 		): void => {
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values

@@ -71,7 +71,6 @@ function renderTimeSeries(
 			yAxisUnit="count"
 			setYAxisUnit={mockSetYAxisUnit}
 			showYAxisUnitSelector={false}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...overrides}
 		/>,
 	);

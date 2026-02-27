@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';

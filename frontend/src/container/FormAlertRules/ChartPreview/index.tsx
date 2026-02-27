@@ -228,7 +228,6 @@ function ChartPreview({
 
 	if (queryResponse.data && graphType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 

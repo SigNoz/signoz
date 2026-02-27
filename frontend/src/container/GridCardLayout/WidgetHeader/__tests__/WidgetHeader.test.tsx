@@ -88,7 +88,6 @@ jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 }));
 
 jest.mock('hooks/dashboard/useGetResolvedText', () => {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
 	return {
 		__esModule: true,

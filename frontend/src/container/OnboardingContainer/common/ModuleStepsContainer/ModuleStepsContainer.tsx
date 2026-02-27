@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/jsx-no-comment-textnodes */
 /* eslint-disable sonarjs/prefer-single-boolean-return */
 import { SetStateAction, useState } from 'react';
 import {

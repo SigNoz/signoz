@@ -118,7 +118,6 @@ function ClickHouseQueryBuilder({
 					fontFamily: 'Space Mono',
 				}}
 				theme={isDarkMode ? 'my-theme' : 'light'}
-				// eslint-disable-next-line react/jsx-no-bind
 				beforeMount={setEditorTheme}
 			/>
 			<Input

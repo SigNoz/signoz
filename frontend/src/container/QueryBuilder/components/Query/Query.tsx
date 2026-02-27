@@ -45,7 +45,6 @@ import { QueryProps } from './Query.interfaces';
 
 import './Query.styles.scss';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({
 	index,
 	queryVariant,

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint no-useless-escape: 0 */
 
 const logqlQueries = [

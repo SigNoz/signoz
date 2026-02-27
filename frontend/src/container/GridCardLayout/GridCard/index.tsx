@@ -282,7 +282,6 @@ function GridCardGraph({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 

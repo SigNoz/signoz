@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
@@ -414,7 +413,6 @@ export default function Home(): JSX.Element {
 											tabIndex={0}
 											className="active-ingestion-card-actions"
 											onClick={(): void => {
-												// eslint-disable-next-line sonarjs/no-duplicate-string
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});

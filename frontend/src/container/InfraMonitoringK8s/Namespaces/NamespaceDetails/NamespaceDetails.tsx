@@ -184,7 +184,6 @@ function NamespaceDetails({
 				category: InfraMonitoringEvents.Namespace,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [namespace]);
 
 	useEffect(() => {
@@ -542,7 +541,6 @@ function NamespaceDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

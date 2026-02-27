@@ -510,7 +510,6 @@ export function convertClickHouseQueriesToV5(
 function reduceQueriesToObject(
 	queryArray: any[], // eslint-disable-line @typescript-eslint/no-explicit-any
 ): { queries: Record<string, any>; legends: Record<string, string> } {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
 	const legends: Record<string, string> = {};
 	const queries = queryArray.reduce((acc, queryItem) => {
 		if (!queryItem.query) {
@@ -589,7 +588,6 @@ export const prepareQueryRangePayloadV5 = ({
 						limit: formulaData.limit ?? undefined,
 						legend: isEmpty(formulaData.legend) ? undefined : formulaData.legend,
 						order: formulaData.orderBy?.map(
-							// eslint-disable-next-line sonarjs/no-identical-functions
 							(order: any): OrderBy => ({
 								key: {
 									name: order.columnName,
