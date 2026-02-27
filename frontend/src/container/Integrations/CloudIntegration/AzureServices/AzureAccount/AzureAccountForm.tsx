@@ -1,8 +1,9 @@
 import { useCallback, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { useMutation, useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { toast } from '@signozhq/sonner';
-import { Form, Select } from 'antd';
+import { Select } from 'antd';
 import { Modal } from 'antd/lib';
 import { removeIntegrationAccount } from 'api/integration';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -16,7 +17,6 @@ import {
 } from 'container/Integrations/types';
 import { CornerDownRight, Unlink } from 'lucide-react';
 import { ConnectionParams } from 'types/api/integrations/types';
-import { popupContainer } from 'utils/selectPopupContainer';
 
 interface AzureAccountFormProps {
 	mode?: 'add' | 'edit';
@@ -32,6 +32,11 @@ interface AzureAccountFormProps {
 	showDisconnectAccountButton?: boolean;
 }
 
+type AzureAccountFormValues = {
+	primaryRegion: string;
+	resourceGroups: string[];
+};
+
 export const AzureAccountForm = ({
 	mode = 'add',
 	selectedAccount,
@@ -42,23 +47,31 @@ export const AzureAccountForm = ({
 	submitButtonText = 'Fetch Deployment Command',
 	showDisconnectAccountButton = false,
 }: AzureAccountFormProps): JSX.Element => {
-	const [azureAccountForm] = Form.useForm();
 	const queryClient = useQueryClient();
 	const [isModalOpen, setIsModalOpen] = useState(false);
 
-	const handleSubmit = useCallback((): void => {
-		azureAccountForm
-			.validateFields()
-			.then((values) => {
-				onSubmit({
-					primaryRegion: values.primaryRegion,
-					resourceGroups: values.resourceGroups,
-				});
-			})
-			.catch((error) => {
-				console.error('Form submission failed:', error);
+	const {
+		control,
+		handleSubmit: handleFormSubmit,
+	} = useForm<AzureAccountFormValues>({
+		defaultValues: {
+			primaryRegion:
+				(selectedAccount?.config as AzureCloudAccountConfig)?.deployment_region ||
+				'',
+			resourceGroups:
+				(selectedAccount?.config as AzureCloudAccountConfig)?.resource_groups || [],
+		},
+	});
+
+	const onFormSubmit = useCallback(
+		(values: AzureAccountFormValues): void => {
+			onSubmit({
+				primaryRegion: values.primaryRegion,
+				resourceGroups: values.resourceGroups,
 			});
-	}, [azureAccountForm, onSubmit]);
+		},
+		[onSubmit],
+	);
 
 	const handleDisconnect = (): void => {
 		setIsModalOpen(true);
@@ -95,44 +108,45 @@ export const AzureAccountForm = ({
 	};
 
 	return (
-		<Form
-			name="azure-account-form"
-			className="azure-account-form"
-			form={azureAccountForm}
-			layout="vertical"
-			autoComplete="off"
-			initialValues={{
-				primaryRegion:
-					(selectedAccount?.config as AzureCloudAccountConfig)?.deployment_region ||
-					undefined,
-				resourceGroups:
-					(selectedAccount?.config as AzureCloudAccountConfig)?.resource_groups ||
-					[],
-			}}
-		>
+		<form className="azure-account-form">
 			<div className="azure-account-configure-agent-step-primary-region">
 				<div className="azure-account-configure-agent-step-primary-region-title">
 					Select primary region
 				</div>
 				<div className="azure-account-configure-agent-step-primary-region-select">
-					<Form.Item
+					<Controller
+						control={control}
 						name="primaryRegion"
-						rules={[{ required: true, message: 'Please select a primary region' }]}
-					>
-						<Select
-							disabled={mode === 'edit'}
-							placeholder="Select primary region"
-							options={AZURE_REGIONS}
-							showSearch
-							filterOption={(input, option): boolean =>
-								option?.label?.toLowerCase().includes(input.toLowerCase()) ||
-								option?.value?.toLowerCase().includes(input.toLowerCase()) ||
-								false
-							}
-							notFoundContent={null}
-							getPopupContainer={popupContainer}
-						/>
-					</Form.Item>
+						rules={{
+							required: 'Please select a primary region',
+						}}
+						render={({ field, fieldState }): JSX.Element => (
+							<div className="azure-account-form-regions-selector">
+								<Select
+									{...field}
+									disabled={mode === 'edit'}
+									placeholder="Select primary region"
+									options={AZURE_REGIONS}
+									showSearch
+									filterOption={(input, option): boolean => {
+										const label = String(option?.label ?? '');
+										const value = String(option?.value ?? '');
+
+										return (
+											label.toLowerCase().includes(input.toLowerCase()) ||
+											value.toLowerCase().includes(input.toLowerCase())
+										);
+									}}
+									notFoundContent={null}
+								/>
+								{fieldState.error && (
+									<div className="azure-account-form-error">
+										{fieldState.error.message}
+									</div>
+								)}
+							</div>
+						)}
+					/>
 				</div>
 			</div>
 
@@ -142,25 +156,35 @@ export const AzureAccountForm = ({
 				</div>
 
 				<div className="azure-account-configure-agent-step-resource-groups-select">
-					<Form.Item
+					<Controller
+						control={control}
 						name="resourceGroups"
-						rules={[
-							{
-								required: true,
-								message: 'Please enter resource groups you want to monitor',
-							},
-						]}
-					>
-						<Select
-							placeholder="Enter resource groups you want to monitor"
-							options={[]}
-							mode="tags"
-							notFoundContent={null}
-							filterOption={false}
-							showSearch={false}
-							getPopupContainer={popupContainer}
-						/>
-					</Form.Item>
+						rules={{
+							required: 'Please enter resource groups you want to monitor',
+							validate: (value: string[] | undefined): boolean | string =>
+								Array.isArray(value) && value.length > 0
+									? true
+									: 'Please enter resource groups you want to monitor',
+						}}
+						render={({ field, fieldState }): JSX.Element => (
+							<div className="azure-account-form-resource-groups-selector">
+								<Select
+									{...field}
+									placeholder="Enter resource groups you want to monitor"
+									options={[]}
+									mode="tags"
+									notFoundContent={null}
+									filterOption={false}
+									showSearch={false}
+								/>
+								{fieldState.error && (
+									<div className="azure-account-form-error">
+										{fieldState.error.message}
+									</div>
+								)}
+							</div>
+						)}
+					/>
 				</div>
 			</div>
 
@@ -183,7 +207,7 @@ export const AzureAccountForm = ({
 				<Button
 					variant="solid"
 					color="primary"
-					onClick={handleSubmit}
+					onClick={handleFormSubmit(onFormSubmit)}
 					size="sm"
 					prefixIcon={<CornerDownRight size={12} />}
 					loading={
@@ -216,6 +240,6 @@ export const AzureAccountForm = ({
 					telemetry to SigNoz in your Azure account within the next ~15 minutes
 				</div>
 			</Modal>
-		</Form>
+		</form>
 	);
 };

@@ -182,6 +182,10 @@
 	}
 
 	.azure-account-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
 		.azure-account-configure-agent-step-primary-region {
 			display: flex;
 			flex-direction: column;
@@ -201,6 +205,24 @@
 				display: flex;
 				flex-direction: column;
 				gap: 8px;
+
+				.azure-account-form-regions-selector {
+					display: flex;
+					flex-direction: column;
+					gap: 8px;
+
+					.ant-select {
+						width: 100%;
+					}
+
+					.azure-account-form-error {
+						color: var(--destructive);
+						font-family: Inter;
+						font-size: 12px;
+						font-style: normal;
+						font-weight: 400;
+					}
+				}
 			}
 		}
 
@@ -219,10 +241,22 @@
 				letter-spacing: -0.06px;
 			}
 
-			.azure-account-configure-agent-step-resource-groups-select {
+			.azure-account-form-resource-groups-selector {
 				display: flex;
 				flex-direction: column;
 				gap: 8px;
+
+				.ant-select {
+					width: 100%;
+				}
+
+				.azure-account-form-error {
+					color: var(--destructive);
+					font-family: Inter;
+					font-size: 12px;
+					font-style: normal;
+					font-weight: 400;
+				}
 			}
 		}
 
