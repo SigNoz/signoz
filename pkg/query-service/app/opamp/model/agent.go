@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"context"
 	"crypto/sha256"
+	"fmt"
 	"log/slog"
 	"sync"
 	"time"
@@ -112,7 +113,7 @@ func ExtractLbFlag(agentDescr *protobufs.AgentDescription) bool {
 	return false
 }
 
-func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (agentDescrChanged bool) {
+func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer, updateConfigDeploymentStatus OnChangeCallback) (agentDescrChanged bool) {
 	prevStatus := agent.Status
 
 	if agent.Status == nil {
@@ -152,10 +153,16 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer) (
 			// for now, the first response will be sent back to the UI
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED {
 				onConfigSuccess(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash))
+
+				// Also report deployment status directly via callback so that
+				// config versions can be marked deployed even if the in-memory
+				// subscription (Coordinator) was lost due to a crash or restart.
+				updateConfigDeploymentStatus(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), nil)
 			}
 
 			if agent.Status.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED {
 				onConfigFailure(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), agent.Status.RemoteConfigStatus.ErrorMessage)
+				updateConfigDeploymentStatus(agent.OrgID, agent.AgentID, string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash), fmt.Errorf("%s", agent.Status.RemoteConfigStatus.ErrorMessage))
 			}
 		}
 	}
@@ -186,14 +193,14 @@ func (agent *Agent) updateRemoteConfigStatus(newStatus *protobufs.AgentToServer)
 	}
 }
 
-func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer) (agentDescrChanged bool) {
+func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer, updateConfigDeploymentStatus OnChangeCallback) (agentDescrChanged bool) {
 	if agent.Status == nil {
 		// First time this Agent reports a status, remember it.
 		agent.Status = newStatus
 		agentDescrChanged = true
 	}
 
-	agentDescrChanged = agent.updateAgentDescription(newStatus) || agentDescrChanged
+	agentDescrChanged = agent.updateAgentDescription(newStatus, updateConfigDeploymentStatus) || agentDescrChanged
 	agent.updateRemoteConfigStatus(newStatus)
 	agent.updateHealth(newStatus)
 	return agentDescrChanged
@@ -238,7 +245,7 @@ func (agent *Agent) processStatusUpdate(
 	// current status is not up-to-date.
 	lostPreviousUpdate := (agent.Status == nil) || (agent.Status != nil && agent.Status.SequenceNum+1 != newStatus.SequenceNum)
 
-	agentDescrChanged := agent.updateStatusField(newStatus)
+	agentDescrChanged := agent.updateStatusField(newStatus, configProvider.ReportConfigDeploymentStatus)
 
 	// Check if any fields were omitted in the status report.
 	effectiveConfigOmitted := newStatus.EffectiveConfig == nil &&
