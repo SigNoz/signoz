@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';

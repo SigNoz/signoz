@@ -1,5 +1,5 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -55,6 +55,7 @@ import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
 import './LogDetails.styles.scss';
 
+/* eslint-disable-next-line sonarjs/cognitive-complexity */
 function LogDetailInner({
 	log,
 	onClose,
@@ -109,6 +110,7 @@ function LogDetailInner({
 
 	// Keyboard navigation - handle up/down arrow keys
 	// Only listen when in OVERVIEW tab
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
 			!logs ||

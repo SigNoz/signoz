@@ -146,6 +146,49 @@ module.exports = {
 
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
+
+		// State management governance
+		// Approved patterns: Zustand, nuqs (URL state), react-query (server state), useState/useRef/useReducer, localStorage/sessionStorage for simple cases
+		'no-restricted-imports': [
+			'error',
+			{
+				paths: [
+					{
+						name: 'redux',
+						message:
+							'[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query.',
+					},
+					{
+						name: 'react-redux',
+						message:
+							'[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query.',
+					},
+					{
+						name: 'xstate',
+						message:
+							'[State mgmt] xstate is deprecated. Migrate to Zustand or react-query.',
+					},
+					{
+						name: '@xstate/react',
+						message:
+							'[State mgmt] @xstate/react is deprecated. Migrate to Zustand or react-query.',
+					},
+					{
+						// Restrict React Context — useState/useRef/useReducer remain allowed
+						name: 'react',
+						importNames: ['createContext', 'useContext'],
+						message:
+							'[State mgmt] React Context is deprecated. Migrate shared state to Zustand.',
+					},
+					{
+						// immer used standalone as a store pattern is deprecated; Zustand bundles it internally
+						name: 'immer',
+						message:
+							'[State mgmt] Direct immer usage is deprecated. Use Zustand (which integrates immer via the immer middleware) instead.',
+					},
+				],
+			},
+		],
 	},
 	overrides: [
 		{

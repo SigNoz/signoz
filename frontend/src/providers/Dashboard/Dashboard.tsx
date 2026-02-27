@@ -1,6 +1,8 @@
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useEffect,
 	useMemo,
@@ -10,6 +12,7 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
@@ -32,6 +35,7 @@ import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
