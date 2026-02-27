@@ -24,7 +24,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import { MetricTypeViewRenderer } from '../Summary/utils';
+import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
 import {
 	METRIC_METADATA_KEYS,
 	METRIC_METADATA_TEMPORALITY_OPTIONS,
@@ -98,7 +98,7 @@ function Metadata({
 				return <FieldRenderer field="-" />;
 			}
 			if (key === TableFields.TYPE) {
-				return <MetricTypeViewRenderer type={value as MetrictypesTypeDTO} />;
+				return <MetricTypeRendererV2 type={value as MetrictypesTypeDTO} />;
 			}
 			if (key === TableFields.IS_MONOTONIC) {
 				return <FieldRenderer field={value ? 'Yes' : 'No'} />;

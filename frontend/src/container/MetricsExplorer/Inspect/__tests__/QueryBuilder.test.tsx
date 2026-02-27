@@ -2,6 +2,7 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
@@ -20,6 +21,27 @@ jest.mock('react-router-dom', () => ({
 	useLocation: (): { pathname: string } => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
+}));
+
+jest.mock('container/QueryBuilder/filters', () => ({
+	AggregatorFilter: ({ onSelect, onChange, defaultValue }: any): JSX.Element => (
+		<div data-testid="mock-aggregator-filter">
+			<input
+				data-testid="metric-name-input"
+				defaultValue={defaultValue}
+				onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
+					onChange({ key: e.target.value })
+				}
+			/>
+			<button
+				type="button"
+				data-testid="select-metric-button"
+				onClick={(): void => onSelect({ key: 'test_metric_2' })}
+			>
+				Select Metric
+			</button>
+		</div>
+	),
 }));
 
 jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
@@ -48,12 +70,16 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 
 const queryClient = new QueryClient();
 
+const mockSetCurrentMetricName = jest.fn();
+const mockSetAppliedMetricName = jest.fn();
+
 describe('QueryBuilder', () => {
 	const defaultProps = {
-		metricName: 'test_metric',
-		setMetricName: jest.fn(),
+		currentMetricName: 'test_metric',
+		setCurrentMetricName: mockSetCurrentMetricName,
+		setAppliedMetricName: mockSetAppliedMetricName,
 		spaceAggregationLabels: ['label1', 'label2'],
-		metricInspectionOptions: {
+		currentMetricInspectionOptions: {
 			timeAggregationInterval: 60,
 			timeAggregationOption: TimeAggregationOptions.AVG,
 			spaceAggregationLabels: [],
@@ -67,19 +93,20 @@ describe('QueryBuilder', () => {
 		metricType: MetricType.SUM,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
-		searchQuery: {
+		currentQuery: {
 			filters: {
 				items: [],
 				op: 'and',
 			},
 		} as any,
+		setCurrentQuery: jest.fn(),
 	};
 
 	beforeEach(() => {
 		jest.clearAllMocks();
 	});
 
-	it('renders query builder header', () => {
+	it('renders query builder with all components', () => {
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -88,42 +115,15 @@ describe('QueryBuilder', () => {
 			</QueryClientProvider>,
 		);
 		expect(screen.getByText('Query Builder')).toBeInTheDocument();
-	});
-
-	it('renders metric name search component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-name-search')).toBeInTheDocument();
-	});
-
-	it('renders metric filters component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-filters')).toBeInTheDocument();
-	});
-
-	it('renders time aggregation component', () => {
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<QueryBuilder {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
 		expect(screen.getByTestId('metric-time-aggregation')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
 	});
 
-	it('renders space aggregation component', () => {
+	it('should call setCurrentMetricName when metric name is selected', async () => {
+		const user = userEvent.setup();
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -131,6 +131,37 @@ describe('QueryBuilder', () => {
 				</Provider>
 			</QueryClientProvider>,
 		);
-		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
+
+		const metricNameSearch = screen.getByTestId('metric-name-search');
+		expect(metricNameSearch).toBeInTheDocument();
+
+		expect(screen.getByText('From')).toBeInTheDocument();
+
+		const selectButton = screen.getByTestId('select-metric-button');
+		await user.click(selectButton);
+
+		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
+	});
+
+	it('should call setAppliedMetricName and apply inspection options when query is applied', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<QueryBuilder {...defaultProps} />
+				</Provider>
+			</QueryClientProvider>,
+		);
+
+		const applyQueryButton = screen.getByText('Run Query');
+		await user.click(applyQueryButton);
+
+		expect(mockSetCurrentMetricName).toHaveBeenCalledTimes(0);
+		expect(mockSetAppliedMetricName).toHaveBeenCalledWith('test_metric');
+
+		expect(defaultProps.dispatchMetricInspectionOptions).toHaveBeenCalledWith({
+			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
+		});
 	});
 });

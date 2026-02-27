@@ -1,109 +1,81 @@
-import { Color } from '@signozhq/design-tokens';
 import { render } from '@testing-library/react';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { TreemapViewType } from '../types';
-import {
-	formatDataForMetricsTable,
-	getMetricsTableColumns,
-	MetricTypeRenderer,
-} from '../utils';
+import { formatDataForMetricsTable, getMetricsTableColumns } from '../utils';
+
+const mockQueryExpression: Filter = {
+	expression: '',
+};
+const mockOnChange = jest.fn();
 
 describe('metricsTableColumns', () => {
-	const mockQueryFilters: TagFilter = {
-		items: [],
-		op: 'AND',
-	};
-
 	it('should have correct column definitions', () => {
-		expect(getMetricsTableColumns(mockQueryFilters)).toHaveLength(6);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange),
+		).toHaveLength(6);
 
 		// Metric Name column
-		expect(getMetricsTableColumns(mockQueryFilters)[0].dataIndex).toBe(
-			'metric_name',
-		);
-		expect(getMetricsTableColumns(mockQueryFilters)[0].width).toBe(400);
-		expect(getMetricsTableColumns(mockQueryFilters)[0].sorter).toBe(false);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[0].dataIndex,
+		).toBe('metric_name');
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[0].width,
+		).toBe(400);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[0].sorter,
+		).toBe(false);
 
 		// Description column
-		expect(getMetricsTableColumns(mockQueryFilters)[1].dataIndex).toBe(
-			'description',
-		);
-		expect(getMetricsTableColumns(mockQueryFilters)[1].width).toBe(400);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[1].dataIndex,
+		).toBe('description');
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[1].width,
+		).toBe(400);
 
 		// Type column
-		expect(getMetricsTableColumns(mockQueryFilters)[2].dataIndex).toBe(
-			'metric_type',
-		);
-		expect(getMetricsTableColumns(mockQueryFilters)[2].width).toBe(150);
-		expect(getMetricsTableColumns(mockQueryFilters)[2].sorter).toBe(false);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[2].dataIndex,
+		).toBe('metric_type');
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[2].width,
+		).toBe(150);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[2].sorter,
+		).toBe(false);
 
 		// Unit column
-		expect(getMetricsTableColumns(mockQueryFilters)[3].dataIndex).toBe('unit');
-		expect(getMetricsTableColumns(mockQueryFilters)[3].width).toBe(150);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[3].dataIndex,
+		).toBe('unit');
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[3].width,
+		).toBe(150);
 
 		// Samples column
-		expect(getMetricsTableColumns(mockQueryFilters)[4].dataIndex).toBe(
-			TreemapViewType.SAMPLES,
-		);
-		expect(getMetricsTableColumns(mockQueryFilters)[4].width).toBe(150);
-		expect(getMetricsTableColumns(mockQueryFilters)[4].sorter).toBe(true);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[4].dataIndex,
+		).toBe(TreemapViewType.SAMPLES);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[4].width,
+		).toBe(150);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[4].sorter,
+		).toBe(true);
 
 		// Time Series column
-		expect(getMetricsTableColumns(mockQueryFilters)[5].dataIndex).toBe(
-			TreemapViewType.TIMESERIES,
-		);
-		expect(getMetricsTableColumns(mockQueryFilters)[5].width).toBe(150);
-		expect(getMetricsTableColumns(mockQueryFilters)[5].sorter).toBe(true);
-	});
-
-	describe('MetricTypeRenderer', () => {
-		it('should render correct icon and color for each metric type', () => {
-			const types = [
-				{
-					type: MetricType.SUM,
-					color: Color.BG_ROBIN_500,
-				},
-				{
-					type: MetricType.GAUGE,
-					color: Color.BG_SAKURA_500,
-				},
-				{
-					type: MetricType.HISTOGRAM,
-					color: Color.BG_SIENNA_500,
-				},
-				{
-					type: MetricType.SUMMARY,
-					color: Color.BG_FOREST_500,
-				},
-				{
-					type: MetricType.EXPONENTIAL_HISTOGRAM,
-					color: Color.BG_AQUA_500,
-				},
-			];
-
-			types.forEach(({ type, color }) => {
-				const { container } = render(<MetricTypeRenderer type={type} />);
-				const rendererDiv = container.firstChild as HTMLElement;
-
-				expect(rendererDiv).toHaveStyle({
-					backgroundColor: `${color}33`,
-					border: `1px solid ${color}`,
-					color,
-				});
-			});
-		});
-
-		it('should return empty icon and color for unknown metric type', () => {
-			const { container } = render(
-				<MetricTypeRenderer type={'UNKNOWN' as MetricType} />,
-			);
-			const rendererDiv = container.firstChild as HTMLElement;
-
-			expect(rendererDiv.querySelector('svg')).toBeNull();
-		});
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[5].dataIndex,
+		).toBe(TreemapViewType.TIMESERIES);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[5].width,
+		).toBe(150);
+		expect(
+			getMetricsTableColumns(mockQueryExpression, mockOnChange)[5].sorter,
+		).toBe(true);
 	});
 });
 
@@ -111,12 +83,12 @@ describe('formatDataForMetricsTable', () => {
 	it('should format metrics data correctly', () => {
 		const mockData = [
 			{
-				metric_name: 'test_metric',
+				metricName: 'test_metric',
 				description: 'Test description',
-				type: MetricType.GAUGE,
+				type: MetrictypesTypeDTO.gauge,
 				unit: 'bytes',
-				[TreemapViewType.SAMPLES]: 1000,
-				[TreemapViewType.TIMESERIES]: 2000,
+				samples: 1000,
+				timeseries: 2000,
 				lastReceived: '2023-01-01T00:00:00Z',
 			},
 		];
@@ -163,12 +135,12 @@ describe('formatDataForMetricsTable', () => {
 	it('should handle empty/null values', () => {
 		const mockData = [
 			{
-				metric_name: '',
+				metricName: '',
 				description: '',
-				type: MetricType.GAUGE,
+				type: MetrictypesTypeDTO.gauge,
 				unit: '',
-				[TreemapViewType.SAMPLES]: 0,
-				[TreemapViewType.TIMESERIES]: 0,
+				samples: 0,
+				timeseries: 0,
 				lastReceived: '2023-01-01T00:00:00Z',
 			},
 		];

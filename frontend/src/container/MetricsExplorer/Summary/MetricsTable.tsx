@@ -9,6 +9,7 @@ import {
 	Typography,
 } from 'antd';
 import { SorterResult } from 'antd/es/table/interface';
+import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import { Info } from 'lucide-react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
@@ -24,7 +25,8 @@ function MetricsTable({
 	setOrderBy,
 	totalCount,
 	openMetricDetails,
-	queryFilters,
+	queryFilterExpression,
+	onFilterChange,
 }: MetricsTableProps): JSX.Element {
 	const handleTableChange: TableProps<MetricsListItemRowData>['onChange'] = useCallback(
 		(
@@ -36,13 +38,20 @@ function MetricsTable({
 		): void => {
 			if ('field' in sorter && sorter.order) {
 				setOrderBy({
-					columnName: sorter.field as string,
-					order: sorter.order === 'ascend' ? 'asc' : 'desc',
+					key: {
+						name: sorter.field as string,
+					},
+					direction:
+						sorter.order === 'ascend'
+							? Querybuildertypesv5OrderDirectionDTO.asc
+							: Querybuildertypesv5OrderDirectionDTO.desc,
 				});
 			} else {
 				setOrderBy({
-					columnName: 'samples',
-					order: 'desc',
+					key: {
+						name: 'samples',
+					},
+					direction: Querybuildertypesv5OrderDirectionDTO.desc,
 				});
 			}
 		},
@@ -51,19 +60,17 @@ function MetricsTable({
 
 	return (
 		<div className="metrics-table-container">
-			{!isError && !isLoading && (
-				<div className="metrics-table-title" data-testid="metrics-table-title">
-					<Typography.Title level={4} className="metrics-table-title">
-						List View
-					</Typography.Title>
-					<Tooltip
-						title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
-						placement="right"
-					>
-						<Info size={16} />
-					</Tooltip>
-				</div>
-			)}
+			<div className="metrics-table-title" data-testid="metrics-table-title">
+				<Typography.Title level={4} className="metrics-table-title">
+					List View
+				</Typography.Title>
+				<Tooltip
+					title="The table displays all metrics in the selected time range. Each row represents a unique metric, and its metric name, and metadata like description, type, unit, and samples/timeseries cardinality observed in the selected time range."
+					placement="right"
+				>
+					<Info size={16} />
+				</Tooltip>
+			</div>
 			<Table
 				loading={{
 					spinning: isLoading,
@@ -75,7 +82,7 @@ function MetricsTable({
 					),
 				}}
 				dataSource={data}
-				columns={getMetricsTableColumns(queryFilters)}
+				columns={getMetricsTableColumns(queryFilterExpression, onFilterChange)}
 				locale={{
 					emptyText: isLoading ? null : (
 						<div
