@@ -1753,9 +1753,8 @@ components:
     ServiceaccounttypesFactorAPIKey:
       properties:
         created_at:
-          format: date-time
-          nullable: true
-          type: string
+          minimum: 0
+          type: integer
         createdAt:
           format: date-time
           type: string
@@ -1765,7 +1764,6 @@ components:
           type: string
         last_used:
           format: date-time
-          nullable: true
           type: string
         name:
           type: string
@@ -1784,13 +1782,13 @@ components:
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
         expires_at:
-          format: date-time
-          nullable: true
-          type: string
+          minimum: 0
+          type: integer
         name:
           type: string
       required:
       - name
+      - expires_at
       type: object
     ServiceaccounttypesPostableServiceAccount:
       properties:
@@ -1840,13 +1838,13 @@ components:
     ServiceaccounttypesUpdatableFactorAPIKey:
       properties:
         expires_at:
-          format: date-time
-          nullable: true
-          type: string
+          minimum: 0
+          type: integer
         name:
           type: string
       required:
       - name
+      - expires_at
       type: object
     ServiceaccounttypesUpdatableServiceAccount:
       properties:

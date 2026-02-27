@@ -2079,11 +2079,10 @@ export interface RoletypesRoleDTO {
 
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
+	 * @type integer
+	 * @minimum 0
 	 */
-	created_at: Date | null;
+	created_at: number;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2100,9 +2099,8 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
-	 * @nullable true
 	 */
-	last_used: Date | null;
+	last_used: Date;
 	/**
 	 * @type string
 	 */
@@ -2120,11 +2118,10 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 
 export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
+	 * @type integer
+	 * @minimum 0
 	 */
-	expires_at?: Date | null;
+	expires_at: number;
 	/**
 	 * @type string
 	 */
@@ -2185,11 +2182,10 @@ export interface ServiceaccounttypesServiceAccountDTO {
 
 export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	/**
-	 * @type string
-	 * @format date-time
-	 * @nullable true
+	 * @type integer
+	 * @minimum 0
 	 */
-	expires_at?: Date | null;
+	expires_at: number;
 	/**
 	 * @type string
 	 */
