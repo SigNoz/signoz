@@ -41,7 +41,6 @@ const renderJsonProcessor = ({
 		setExpandedPipelineData: jest.fn(),
 	};
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return customRender(<AddNewProcessor {...defaultProps} />);
 };
 

@@ -17,7 +17,6 @@ export const optionsUpdateState = (
 	if (Object.keys(lhs)?.length !== Object.keys(rhs)?.length) {
 		return 'create';
 	}
-	// eslint-disable-next-line no-restricted-syntax
 	for (const k of Object.keys(lhs)) {
 		if (!Object.is((lhs as any)[k], (rhs as any)[k])) {
 			state = 'create';

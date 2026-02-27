@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 import { Typography } from 'antd';
 import { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';

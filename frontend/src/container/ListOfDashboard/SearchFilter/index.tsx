@@ -6,6 +6,7 @@ import {
 	useState,
 } from 'react';
 import { CloseCircleFilled } from '@ant-design/icons';
+// eslint-disable-next-line no-restricted-imports
 import { useMachine } from '@xstate/react';
 import { Button, Select } from 'antd';
 import { RefSelectProps } from 'antd/lib/select';

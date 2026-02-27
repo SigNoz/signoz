@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useLocation } from 'react-router-dom';
 import { Button, Col, Tooltip } from 'antd';
 import { noop } from 'antd/lib/_util/warning';

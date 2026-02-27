@@ -404,6 +404,26 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 	}, nil
 }
 
+func (m *module) CheckMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) (bool, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("count(*) > 0 as metricExists")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var exists bool
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+
+	err := db.QueryRow(valueCtx, query, args...).Scan(&exists)
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to check if metric exists")
+	}
+
+	return exists, nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -493,7 +513,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 		"metric_name",
 		"anyLast(description) AS description",
 		"anyLast(type) AS metric_type",
-		"anyLast(unit) AS metric_unit",
+		"argMax(unit, unix_milli) AS metric_unit",
 		"anyLast(temporality) AS temporality",
 		"anyLast(is_monotonic) AS is_monotonic",
 	)

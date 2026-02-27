@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link } from 'react-router-dom';
 import { Button, Select, Skeleton, Table } from 'antd';

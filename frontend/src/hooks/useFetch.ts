@@ -6,7 +6,6 @@ function useFetch<PayloadProps, FunctionParams>(
 		(props: FunctionParams): Promise<
 			SuccessResponse<PayloadProps> | ErrorResponse
 		>;
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		(arg0: any): Promise<SuccessResponse<PayloadProps> | ErrorResponse>;
 	},
 	param?: FunctionParams,

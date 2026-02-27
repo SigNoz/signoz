@@ -171,8 +171,6 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 	for _, register := range provider.registry {
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
-	// role module cannot self register itself!
-	typeables = append(typeables, provider.MustGetTypeables()...)
 
 	resources := make([]*authtypes.Resource, 0)
 	for _, typeable := range typeables {
@@ -259,7 +257,7 @@ func (provider *provider) Delete(ctx context.Context, orgID valuer.UUID, id valu
 	}
 
 	role := roletypes.NewRoleFromStorableRole(storableRole)
-	err = role.CanEditDelete()
+	err = role.ErrIfManaged()
 	if err != nil {
 		return err
 	}

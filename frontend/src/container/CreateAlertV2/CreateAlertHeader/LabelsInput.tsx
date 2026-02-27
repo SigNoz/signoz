@@ -161,7 +161,6 @@ function LabelsInput({
 						onBlur={handleBlur}
 						className="labels-input__input"
 						placeholder={inputState.isKeyInput ? 'Enter key' : 'Enter value'}
-						// eslint-disable-next-line jsx-a11y/no-autofocus
 						autoFocus
 						data-testid="alert-add-label-input"
 					/>

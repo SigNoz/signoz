@@ -5,17 +5,24 @@
  * SigNoz
  */
 import type {
+	InvalidateOptions,
 	MutationFunction,
+	QueryClient,
+	QueryFunction,
+	QueryKey,
 	UseMutationOptions,
 	UseMutationResult,
+	UseQueryOptions,
+	UseQueryResult,
 } from 'react-query';
-import { useMutation } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AuthtypesTransactionDTO,
 	AuthzCheck200,
+	AuthzResources200,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
@@ -105,4 +112,89 @@ export const useAuthzCheck = <
 	const mutationOptions = getAuthzCheckMutationOptions(options);
 
 	return useMutation(mutationOptions);
+};
+/**
+ * Gets all the available resources
+ * @summary Get resources
+ */
+export const authzResources = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<AuthzResources200>({
+		url: `/api/v1/authz/resources`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getAuthzResourcesQueryKey = () => {
+	return [`/api/v1/authz/resources`] as const;
+};
+
+export const getAuthzResourcesQueryOptions = <
+	TData = Awaited<ReturnType<typeof authzResources>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof authzResources>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getAuthzResourcesQueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof authzResources>>> = ({
+		signal,
+	}) => authzResources(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof authzResources>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type AuthzResourcesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof authzResources>>
+>;
+export type AuthzResourcesQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get resources
+ */
+
+export function useAuthzResources<
+	TData = Awaited<ReturnType<typeof authzResources>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof authzResources>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getAuthzResourcesQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get resources
+ */
+export const invalidateAuthzResources = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getAuthzResourcesQueryKey() },
+		options,
+	);
+
+	return queryClient;
 };

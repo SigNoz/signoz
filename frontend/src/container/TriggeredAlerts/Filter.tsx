@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
 import { useCallback, useMemo, useRef } from 'react';
 import type { SelectProps } from 'antd';
 import { Tag, Tooltip } from 'antd';
@@ -20,7 +19,6 @@ function TextOverflowTooltip({
 		<Tooltip
 			placement="left"
 			title={option.value}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...(!isOverflow ? { open: false } : {})}
 		>
 			<div className="ant-select-item-option-content" ref={contentRef}>

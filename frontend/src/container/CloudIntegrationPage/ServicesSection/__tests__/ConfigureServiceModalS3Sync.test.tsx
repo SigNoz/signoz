@@ -102,7 +102,6 @@ describe('ConfigureServiceModal for S3 Sync service', () => {
 		// As before, targeting the first combobox, assumed to be for 'ap-south-1'.
 		const targetCombobox = screen.getAllByRole('combobox')[0];
 
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		act(() => {
 			fireEvent.change(targetCombobox, { target: { value: newBucketName } });
 			fireEvent.keyDown(targetCombobox, {

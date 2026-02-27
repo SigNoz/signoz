@@ -11,13 +11,13 @@ function TableView({
 	setShowExpandedView,
 	setExpandedViewOptions,
 	isInspectMetricsRefetching,
-	metricInspectionOptions,
+	metricInspectionAppliedOptions,
 }: TableViewProps): JSX.Element {
 	const isSpaceAggregatedWithoutLabel = useMemo(
 		() =>
-			!!metricInspectionOptions.spaceAggregationOption &&
-			metricInspectionOptions.spaceAggregationLabels.length === 0,
-		[metricInspectionOptions],
+			!!metricInspectionAppliedOptions.spaceAggregationOption &&
+			metricInspectionAppliedOptions.spaceAggregationLabels.length === 0,
+		[metricInspectionAppliedOptions],
 	);
 	const labelKeys = useMemo(() => {
 		if (isSpaceAggregatedWithoutLabel) {

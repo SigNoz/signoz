@@ -44,7 +44,6 @@ export const ProcessorIndexIcon = styled(Avatar)`
 `;
 
 export const StyledTable: React.FC<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TableProps<any> & { isDarkMode: boolean }
 > = styled(Table)`
 	.ant-table-tbody > tr > td {

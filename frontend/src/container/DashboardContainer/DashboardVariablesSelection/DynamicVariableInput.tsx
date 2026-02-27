@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { getFieldValues } from 'api/dynamicVariables/getFieldValues';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';

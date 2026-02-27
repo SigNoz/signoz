@@ -1,6 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	MouseEvent,
 	useCallback,
@@ -10,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -866,8 +864,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'chat-support':
 					if (window.pylon) {
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						window.Pylon('show');
 					}
 					break;
@@ -954,7 +950,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="brand-company-meta">
 							<div
 								className="brand-logo"
-								// eslint-disable-next-line react/no-unknown-property
 								onClick={(event: MouseEvent): void => {
 									// Current home page
 									onClickHandler(ROUTES.HOME, event);

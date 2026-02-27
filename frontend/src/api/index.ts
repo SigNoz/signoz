@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
