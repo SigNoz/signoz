@@ -46,6 +46,7 @@ import {
 import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
+import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
@@ -60,6 +61,8 @@ import {
 	Ellipsis,
 	EllipsisVertical,
 	Expand,
+	Pin,
+	PinOff,
 	ExternalLink,
 	FileJson,
 	Github,
@@ -117,6 +120,8 @@ function DashboardsList(): JSX.Element {
 	} = useDashboard();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
+
+	const updateDashboardMutation = useUpdateDashboard();
 
 	const [searchString, setSearchString] = useState<string>(
 		sortOrder.search || '',
@@ -265,7 +270,7 @@ function DashboardsList(): JSX.Element {
 
 	const { showErrorModal } = useErrorModal();
 
-	const data: Data[] =
+	const allDashboardData: Data[] =
 		dashboards?.map((e) => ({
 			createdAt: e.createdAt,
 			description: e.data.description || '',
@@ -276,6 +281,7 @@ function DashboardsList(): JSX.Element {
 			key: e.id,
 			createdBy: e.createdBy,
 			isLocked: !!e.locked || false,
+			pinned: e.data.pinned,
 			lastUpdatedBy: e.updatedBy,
 			image: e.data.image || Base64Icons[0],
 			variables: e.data.variables,
@@ -285,6 +291,12 @@ function DashboardsList(): JSX.Element {
 			version: e.data.version,
 			refetchDashboardList,
 		})) || [];
+
+	const data: Data[] =
+		allDashboardData?.filter((e) => e.pinned === undefined || e.pinned === false) || []; // Unpinned Dashboards
+	const pinnedData: Data[] =
+		allDashboardData?.filter((e) => e.pinned === true) || []; // Pinned Dashboards
+
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -299,6 +311,7 @@ function DashboardsList(): JSX.Element {
 				}),
 				uploadedGrafana: false,
 				version: ENTITY_VERSION_V5,
+				pinned: false
 			});
 
 			safeNavigate(
@@ -436,6 +449,41 @@ function DashboardsList(): JSX.Element {
 					);
 				};
 
+				const handlePinDashboard = (event: React.MouseEvent<HTMLElement>): void => {
+					event.stopPropagation();
+					event.preventDefault();
+
+					// Find the selected dashboard data
+					const selectedDashboardData = dashboardListResponse?.data?.find(e => e.id === dashboard.id)?.data;
+
+					if (!selectedDashboardData) return;
+
+					// update pinned property
+					const updatedDashboard: Props = {
+						id: dashboard.id,
+						data: {
+							...selectedDashboardData,
+							pinned: !selectedDashboardData.pinned,
+						},
+					};
+
+					updateDashboardMutation.mutate(updatedDashboard, {
+						onSuccess: (updatedDashboard) => {
+							setDashboards((prevDashboards) => {
+								return prevDashboards.map(d =>
+									d.id === dashboard.id
+										? { ...d, pinned: !dashboard.pinned }
+										: d
+								);
+							});
+							refetchDashboardList(); // Refetch the dashboard list
+						},
+						onError: () => {
+							console.log("Error occured");
+						},
+					});
+				};
+
 				return (
 					<div className="dashboard-list-item" onClick={onClickHandler}>
 						<div className="title-with-action">
@@ -485,6 +533,14 @@ function DashboardsList(): JSX.Element {
 									content={
 										<div className="dashboard-action-content">
 											<section className="section-1">
+												<Button
+													type="text"
+													className="action-btn"
+													icon={dashboard.pinned ? <PinOff size={12} /> : <Pin size={12} />}
+													onClick={handlePinDashboard}
+												>
+													{dashboard.pinned ? "Unpin" : "Pin"}
+												</Button>
 												<Button
 													type="text"
 													className="action-btn"
@@ -711,8 +767,8 @@ function DashboardsList(): JSX.Element {
 				</div>
 
 				{isDashboardListLoading ||
-				isFilteringDashboards ||
-				isDashboardListRefetching ? (
+					isFilteringDashboards ||
+					isDashboardListRefetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -831,15 +887,17 @@ function DashboardsList(): JSX.Element {
 							)}
 						</div>
 
+						{/*---------------------------------- All dashboard / Unpinned dashboard section ------------------------------------- */}
+
 						{dashboards?.length === 0 ? (
-							<div className="no-search">
+							<div className="no-search" style={{ marginBottom: '16px' }}>
 								<img src="/Icons/emptyState.svg" alt="img" className="img" />
 								<Typography.Text className="text">
 									No dashboards found for {searchString}. Create a new dashboard?
 								</Typography.Text>
 							</div>
 						) : (
-							<>
+							<div style={{ marginBottom: '16px' }}>
 								<div className="all-dashboards-header">
 									<Typography.Text className="typography">
 										All Dashboards
@@ -919,8 +977,99 @@ function DashboardsList(): JSX.Element {
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
-							</>
+							</div>
 						)}
+
+						{/*---------------------------------- Pinned dashboard section ------------------------------------- */}
+
+						<div style={{ marginBottom: '16px' }}>
+							<div className="all-dashboards-header">
+								<Typography.Text className="typography">
+									Pinned Dashboards
+								</Typography.Text>
+								<section className="right-actions">
+									<Tooltip title="Sort">
+										<Popover
+											trigger="click"
+											content={
+												<div className="sort-content">
+													<Typography.Text className="sort-heading">
+														Sort By
+													</Typography.Text>
+													<Button
+														type="text"
+														className={cx('sort-btns')}
+														onClick={(): void => sortHandle('createdAt')}
+														data-testid="sort-by-last-created"
+													>
+														Last created
+														{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
+													</Button>
+													<Button
+														type="text"
+														className={cx('sort-btns')}
+														onClick={(): void => sortHandle('updatedAt')}
+														data-testid="sort-by-last-updated"
+													>
+														Last updated
+														{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+													</Button>
+												</div>
+											}
+											rootClassName="sort-dashboards"
+											placement="bottomRight"
+											arrow={false}
+										>
+											<ArrowDownWideNarrow size={14} data-testid="sort-by" />
+										</Popover>
+									</Tooltip>
+									<Popover
+										trigger="click"
+										content={
+											<div className="configure-content">
+												<Button
+													type="text"
+													icon={<HdmiPort size={14} />}
+													className="configure-btn"
+													onClick={(e): void => {
+														e.preventDefault();
+														e.stopPropagation();
+														setIsConfigureMetadata(true);
+													}}
+												>
+													Configure metadata
+												</Button>
+											</div>
+										}
+										rootClassName="configure-group"
+										placement="bottomRight"
+										arrow={false}
+									>
+										<Ellipsis size={14} />
+									</Popover>
+								</section>
+							</div>
+
+							<Table
+								columns={columns}
+								dataSource={pinnedData}
+								locale={{
+									emptyText: <div style={{ textAlign: "left" }}><Typography.Text className="title" style={{ fontWeight: 500, fontSize: "0.875rem" }}>
+										No dashboards in this group yet. <span style={{ color: "#C0C1C3", fontWeight: 400 }}> Add a dashboard or create one.</span>
+									</Typography.Text></div>
+								}}
+								showSorterTooltip
+								loading={
+									isDashboardListLoading ||
+									isFilteringDashboards ||
+									isDashboardListRefetching
+								}
+								showHeader={false}
+								pagination={paginationConfig}
+							/>
+
+						</div>
+
 					</>
 				)}
 				<ImportJSON
@@ -1092,7 +1241,7 @@ function DashboardsList(): JSX.Element {
 					</div>
 				</Modal>
 			</div>
-		</div>
+		</div >
 	);
 }
 
@@ -1106,6 +1255,7 @@ export interface Data {
 	lastUpdatedTime: string;
 	lastUpdatedBy: string;
 	isLocked: boolean;
+	pinned: boolean;
 	id: string;
 	image?: string;
 	widgets?: Array<WidgetRow | Widgets>;
