@@ -12,7 +12,12 @@ import (
 )
 
 var (
-	ErrCodeServiceAccountInvalidInput = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountInvalidInput              = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountAlreadyExists             = errors.MustNewCode("service_account_already_exists")
+	ErrCodeServiceAccountNotFound                  = errors.MustNewCode("service_account_not_found")
+	ErrCodeServiceAccountRoleAlreadyExists         = errors.MustNewCode("service_account_role_already_exists")
+	ErrCodeServiceAccountFactorAPIKeyAlreadyExists = errors.MustNewCode("service_account_factor_api_key_already_exists")
+	ErrCodeServiceAccounFactorAPIKeytNotFound      = errors.MustNewCode("service_account_factor_api_key_not_found")
 )
 
 var (
@@ -22,7 +27,7 @@ var (
 )
 
 type StorableServiceAccount struct {
-	bun.BaseModel `bun:"table:service_account"`
+	bun.BaseModel `bun:"table:service_account alias:service_account_role"`
 
 	types.Identifiable
 	types.TimeAuditable
@@ -37,7 +42,7 @@ type ServiceAccount struct {
 	types.TimeAuditable
 	Name   string        `json:"name" required:"true"`
 	Email  valuer.Email  `json:"email" required:"true"`
-	Roles  []string      `json:"roles" required:"true"`
+	Roles  []string      `json:"roles" required:"true" nullable:"false"`
 	Status valuer.String `json:"status" required:"true"`
 	OrgID  valuer.UUID   `json:"orgID" required:"true"`
 }
@@ -124,6 +129,24 @@ func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string
 	sa.Email = email
 	sa.Roles = roles
 	sa.UpdatedAt = time.Now()
+}
+
+func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt *time.Time) *FactorAPIKey {
+	return &FactorAPIKey{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		//todo[@vikrantgupta25] figure out the best way to generate this key
+		Name:             name,
+		Key:              valuer.GenerateUUID().String(),
+		ExpiresAt:        expiresAt,
+		LastUsed:         nil,
+		ServiceAccountID: sa.ID,
+	}
 }
 
 func (sa *ServiceAccount) PatchRoles(input *ServiceAccount) ([]string, []string) {

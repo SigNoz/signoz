@@ -2077,6 +2077,140 @@ export interface RoletypesRoleDTO {
 	updatedAt?: Date;
 }
 
+export interface ServiceaccounttypesFactorAPIKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	created_at: Date | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	last_used: Date | null;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	service_account_id: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	expires_at?: Date | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ServiceaccounttypesPostableServiceAccountDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+}
+
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgID: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	expires_at?: Date | null;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ServiceaccounttypesUpdatableServiceAccountDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+}
+
 export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
@@ -3037,6 +3171,52 @@ export type PatchObjectsPathParameters = {
 	id: string;
 	relation: string;
 };
+export type ListServiceAccounts200 = {
+	/**
+	 * @type array
+	 */
+	data: ServiceaccounttypesServiceAccountDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccount201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetServiceAccount200 = {
+	data: ServiceaccounttypesServiceAccountDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListServiceAccountKeys200 = {
+	/**
+	 * @type array
+	 */
+	data: ServiceaccounttypesFactorAPIKeyDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccountKey201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUsers200 = {
 	/**
 	 * @type array

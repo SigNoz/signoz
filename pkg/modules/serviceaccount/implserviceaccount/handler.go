@@ -146,6 +146,12 @@ func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 
 func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
@@ -158,7 +164,14 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	factorAPIKey := serviceaccounttypes.NewFactorAPIKey(req.Name, req.ExpiresAt, id)
+	// this takes care of checking the existence of service account and the org constraint.
+	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKey := serviceAccount.NewFactorAPIKey(req.Name, req.ExpiresAt)
 	err = handler.module.CreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
@@ -170,13 +183,25 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 
 func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	id, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	factorAPIKeys, err := handler.module.ListFactorAPIKey(ctx, id)
+	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKeys, err := handler.module.ListFactorAPIKey(ctx, serviceAccount.ID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -199,20 +224,32 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
+	factorAPIKeyID, err := valuer.NewUUID(mux.Vars(r)["fid"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	req := new(serviceaccounttypes.UpdatableFactorAPIKey)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	factorAPIKey, err := handler.module.GetFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	factorAPIKey, err := handler.module.GetFactorAPIKey(ctx, serviceAccount.ID, factorAPIKeyID)
 	if err != nil {
 		render.Error(rw, err)
 		return
 	}
 
 	factorAPIKey.Update(req.Name, req.ExpiresAt)
-	err = handler.module.UpdateFactorAPIKey(ctx, factorAPIKey)
+	err = handler.module.UpdateFactorAPIKey(ctx, serviceAccount.ID, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -235,7 +272,19 @@ func (handler *handler) RevokeFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	err = handler.module.RevokeFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	factorAPIKeyID, err := valuer.NewUUID(mux.Vars(r)["fid"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccount, err := handler.module.GetWithoutRoles(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	err = handler.module.RevokeFactorAPIKey(ctx, serviceAccount.ID, factorAPIKeyID)
 	if err != nil {
 		render.Error(rw, err)
 		return

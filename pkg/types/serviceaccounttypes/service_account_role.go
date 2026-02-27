@@ -11,7 +11,7 @@ import (
 )
 
 type StorableServiceAccountRole struct {
-	bun.BaseModel `bun:"table:service_account_role"`
+	bun.BaseModel `bun:"table:service_account_role alias:service_account_role"`
 
 	types.Identifiable
 	types.TimeAuditable

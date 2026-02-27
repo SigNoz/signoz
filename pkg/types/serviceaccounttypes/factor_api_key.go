@@ -40,24 +40,6 @@ type UpdatableFactorAPIKey struct {
 	ExpiresAt *time.Time `json:"expires_at"`
 }
 
-func NewFactorAPIKey(name string, expiresAt *time.Time, serviceAccountID valuer.UUID) *FactorAPIKey {
-	return &FactorAPIKey{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
-		//todo[@vikrantgupta25] figure out the best way to generate this key
-		Name:             name,
-		Key:              valuer.GenerateUUID().String(),
-		ExpiresAt:        expiresAt,
-		LastUsed:         nil,
-		ServiceAccountID: serviceAccountID,
-	}
-}
-
 func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
 	return &FactorAPIKey{
 		Identifiable:     storable.Identifiable,

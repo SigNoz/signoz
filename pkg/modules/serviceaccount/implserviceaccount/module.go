@@ -85,6 +85,17 @@ func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID
 	return serviceAccount, nil
 }
 
+func (module *module) GetWithoutRoles(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
+	storableServiceAccount, err := module.store.Get(ctx, orgID, id)
+	if err != nil {
+		return nil, err
+	}
+
+	// passing []string{} (not nil to prevent panics) roles as the function isn't supposed to put roles.
+	serviceAccount := serviceaccounttypes.NewServiceAccountFromStorables(storableServiceAccount, []string{})
+	return serviceAccount, nil
+}
+
 func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error) {
 	storableServiceAccounts, err := module.store.List(ctx, orgID)
 	if err != nil {
@@ -214,8 +225,8 @@ func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID val
 	return serviceaccounttypes.NewFactorAPIKeyFromStorables(storables), nil
 }
 
-func (module *module) UpdateFactorAPIKey(ctx context.Context, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
-	return module.store.UpdateFactorAPIKey(ctx, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
+func (module *module) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+	return module.store.UpdateFactorAPIKey(ctx, serviceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
 }
 
 func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {

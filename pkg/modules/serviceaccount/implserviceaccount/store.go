@@ -16,60 +16,218 @@ func NewStore(sqlstore sqlstore.SQLStore) serviceaccounttypes.Store {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(context.Context, *serviceaccounttypes.StorableServiceAccount) error {
-	panic("unimplemented")
+func (store *store) Create(ctx context.Context, storable *serviceaccounttypes.StorableServiceAccount) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(storable).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountAlreadyExists, "service account with id: %s already exists", storable.ID)
+	}
+
+	return nil
 }
 
-func (store *store) Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
-	panic("unimplemented")
+func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
+	storable := new(serviceaccounttypes.StorableServiceAccount)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
+	}
+
+	return storable, nil
 }
 
-func (store *store) List(context.Context, valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccount, error) {
-	panic("unimplemented")
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccount, error) {
+	storables := make([]*serviceaccounttypes.StorableServiceAccount, 0)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&storables).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return storables, nil
 }
 
-func (store *store) Update(context.Context, valuer.UUID, *serviceaccounttypes.StorableServiceAccount) error {
-	panic("unimplemented")
+func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *serviceaccounttypes.StorableServiceAccount) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(storable).
+		WherePK().
+		Where("org_id = ?", orgID).Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (store *store) Delete(context.Context, valuer.UUID, valuer.UUID) error {
-	panic("unimplemented")
+func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.StorableServiceAccount)).
+		Where("id = ?", id).
+		Where("org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (store *store) CreateServiceAccountRoles(context.Context, []*serviceaccounttypes.StorableServiceAccountRole) error {
-	panic("unimplemented")
+func (store *store) CreateServiceAccountRoles(ctx context.Context, storables []*serviceaccounttypes.StorableServiceAccountRole) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(&storables).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountRoleAlreadyExists, "duplicate role assignments for service account")
+	}
+
+	return nil
 }
 
-func (store *store) GetServiceAccountRoles(context.Context, valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
-	panic("unimplemented")
+func (store *store) GetServiceAccountRoles(ctx context.Context, id valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
+	storables := make([]*serviceaccounttypes.StorableServiceAccountRole, 0)
+
+	_, err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storables).Where("service_account_id = ?", id).Exec(ctx)
+	if err != nil {
+		// no need to wrap not found here as this is many to many table
+		return nil, err
+	}
+
+	return storables, nil
 }
 
-func (store *store) ListServiceAccountRolesByOrgID(context.Context, valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
-	panic("unimplemented")
+func (store *store) ListServiceAccountRolesByOrgID(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
+	storables := make([]*serviceaccounttypes.StorableServiceAccountRole, 0)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&storables).
+		Join("JOIN service_account").
+		JoinOn("service_account.id = service_account_role.service_account_id").
+		Where("service_account.org_id = ?", orgID).
+		Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return storables, nil
 }
 
-func (store *store) DeleteServiceAccountRoles(context.Context, valuer.UUID) error {
-	panic("unimplemented")
+func (store *store) DeleteServiceAccountRoles(ctx context.Context, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.StorableServiceAccountRole)).
+		Where("service_account_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (store *store) CreateFactorAPIKey(context.Context, *serviceaccounttypes.StorableFactorAPIKey) error {
-	panic("unimplemented")
+func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceaccounttypes.StorableFactorAPIKey) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(storable).
+		Exec(ctx)
+	if err != nil {
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountFactorAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
+	}
+
+	return nil
 }
 
-func (store *store) GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.StorableFactorAPIKey, error) {
-	panic("unimplemented")
+func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.StorableFactorAPIKey, error) {
+	storable := new(serviceaccounttypes.StorableFactorAPIKey)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("id = ?", id).
+		Where("service_account_id = ?", serviceAccountID).
+		Exec(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccounFactorAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
+	}
+
+	return storable, nil
 }
 
-func (store *store) ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.StorableFactorAPIKey, error) {
-	panic("unimplemented")
+func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.StorableFactorAPIKey, error) {
+	storables := make([]*serviceaccounttypes.StorableFactorAPIKey, 0)
+
+	_, err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storables).Where("service_account_id = ?", serviceAccountID).Exec(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return storables, nil
 }
 
-func (store *store) UpdateFactorAPIKey(context.Context, *serviceaccounttypes.StorableFactorAPIKey) error {
-	panic("unimplemented")
+func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, storable *serviceaccounttypes.StorableFactorAPIKey) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		Model(&storable).
+		Where("service_account_id = ?", serviceAccountID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
-func (store *store) RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error {
-	panic("unimplemented")
+func (store *store) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.StorableFactorAPIKey)).
+		Where("service_account_id = ?", serviceAccountID).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (store *store) RunInTx(ctx context.Context, cb func(context.Context) error) error {
