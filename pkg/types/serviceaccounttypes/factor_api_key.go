@@ -1,11 +1,19 @@
 package serviceaccounttypes
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
+)
+
+var (
+	ErrCodeServiceAccountFactorAPIkeyInvalidInput  = errors.MustNewCode("service_account_factor_api_key_invalid_input")
+	ErrCodeServiceAccountFactorAPIKeyAlreadyExists = errors.MustNewCode("service_account_factor_api_key_already_exists")
+	ErrCodeServiceAccounFactorAPIKeytNotFound      = errors.MustNewCode("service_account_factor_api_key_not_found")
 )
 
 type StorableFactorAPIKey struct {
@@ -13,11 +21,11 @@ type StorableFactorAPIKey struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name             string     `bun:"name"`
-	Key              string     `bun:"key"`
-	ExpiresAt        *time.Time `bun:"created_at"`
-	LastUsed         *time.Time `bun:"last_used"`
-	ServiceAccountID string     `bun:"service_account_id"`
+	Name             string    `bun:"name"`
+	Key              string    `bun:"key"`
+	ExpiresAt        uint64    `bun:"created_at"`
+	LastUsed         time.Time `bun:"last_used"`
+	ServiceAccountID string    `bun:"service_account_id"`
 }
 
 type FactorAPIKey struct {
@@ -25,19 +33,28 @@ type FactorAPIKey struct {
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
 	Key              string      `json:"key" required:"true"`
-	ExpiresAt        *time.Time  `json:"created_at" required:"true"`
-	LastUsed         *time.Time  `json:"last_used" required:"true"`
+	ExpiresAt        uint64      `json:"created_at" required:"true"`
+	LastUsed         time.Time   `json:"last_used" required:"true"`
+	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
+}
+
+type GettableFactorAPIKey struct {
+	types.Identifiable
+	types.TimeAuditable
+	Name             string      `json:"name" requrired:"true"`
+	ExpiresAt        uint64      `json:"created_at" required:"true"`
+	LastUsed         time.Time   `json:"last_used" required:"true"`
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
 
 type PostableFactorAPIKey struct {
-	Name      string     `json:"name" required:"true"`
-	ExpiresAt *time.Time `json:"expires_at"`
+	Name      string `json:"name" required:"true"`
+	ExpiresAt uint64 `json:"expires_at" required:"true"`
 }
 
 type UpdatableFactorAPIKey struct {
-	Name      string     `json:"name" required:"true"`
-	ExpiresAt *time.Time `json:"expires_at"`
+	Name      string `json:"name" required:"true"`
+	ExpiresAt uint64 `json:"expires_at" required:"true"`
 }
 
 func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
@@ -74,8 +91,65 @@ func NewStorableFactorAPIKey(factorAPIKey *FactorAPIKey) *StorableFactorAPIKey {
 	}
 }
 
-func (apiKey *FactorAPIKey) Update(name string, expiresAt *time.Time) {
+func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {
+	gettables := make([]*GettableFactorAPIKey, len(keys))
+
+	for idx, key := range keys {
+		gettables[idx] = &GettableFactorAPIKey{
+			Identifiable:     key.Identifiable,
+			TimeAuditable:    key.TimeAuditable,
+			Name:             key.Name,
+			ExpiresAt:        key.ExpiresAt,
+			LastUsed:         key.LastUsed,
+			ServiceAccountID: key.ServiceAccountID,
+		}
+	}
+
+	return gettables
+}
+
+func (apiKey *FactorAPIKey) Update(name string, expiresAt uint64) {
 	apiKey.Name = name
 	apiKey.ExpiresAt = expiresAt
 	apiKey.UpdatedAt = time.Now()
+}
+
+func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
+	type Alias PostableFactorAPIKey
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Name == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
+	}
+
+	if temp.ExpiresAt == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "expiresAt cannot be zero")
+	}
+
+	*key = PostableFactorAPIKey(temp)
+	return nil
+}
+
+func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableFactorAPIKey
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if temp.Name == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
+	}
+
+	if temp.ExpiresAt == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "expiresAt cannot be zero")
+	}
+
+	*key = UpdatableFactorAPIKey(temp)
+	return nil
 }

@@ -1,6 +1,8 @@
 package serviceaccounttypes
 
 import (
+	"crypto/rand"
+	"encoding/base64"
 	"encoding/json"
 	"slices"
 	"time"
@@ -13,12 +15,10 @@ import (
 )
 
 var (
-	ErrCodeServiceAccountInvalidInput              = errors.MustNewCode("service_account_invalid_input")
-	ErrCodeServiceAccountAlreadyExists             = errors.MustNewCode("service_account_already_exists")
-	ErrCodeServiceAccountNotFound                  = errors.MustNewCode("service_account_not_found")
-	ErrCodeServiceAccountRoleAlreadyExists         = errors.MustNewCode("service_account_role_already_exists")
-	ErrCodeServiceAccountFactorAPIKeyAlreadyExists = errors.MustNewCode("service_account_factor_api_key_already_exists")
-	ErrCodeServiceAccounFactorAPIKeytNotFound      = errors.MustNewCode("service_account_factor_api_key_not_found")
+	ErrCodeServiceAccountInvalidInput      = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountAlreadyExists     = errors.MustNewCode("service_account_already_exists")
+	ErrCodeServiceAccountNotFound          = errors.MustNewCode("service_account_not_found")
+	ErrCodeServiceAccountRoleAlreadyExists = errors.MustNewCode("service_account_role_already_exists")
 )
 
 var (
@@ -142,7 +142,15 @@ func (sa *ServiceAccount) UpdateStatus(status valuer.String) {
 	sa.UpdatedAt = time.Now()
 }
 
-func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt *time.Time) *FactorAPIKey {
+func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*FactorAPIKey, error) {
+	key := make([]byte, 32)
+	_, err := rand.Read(key)
+	if err != nil {
+		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to generate token")
+	}
+	// Encode the token in base64.
+	encodedKey := base64.StdEncoding.EncodeToString(key)
+
 	return &FactorAPIKey{
 		Identifiable: types.Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -151,13 +159,12 @@ func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt *time.Time) *Fa
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		//todo[@vikrantgupta25] figure out the best way to generate this key
 		Name:             name,
-		Key:              valuer.GenerateUUID().String(),
+		Key:              encodedKey,
 		ExpiresAt:        expiresAt,
-		LastUsed:         nil,
+		LastUsed:         time.Now(),
 		ServiceAccountID: sa.ID,
-	}
+	}, nil
 }
 
 func (sa *ServiceAccount) PatchRoles(input *ServiceAccount) ([]string, []string) {

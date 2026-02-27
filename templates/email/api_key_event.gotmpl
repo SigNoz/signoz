@@ -26,40 +26,37 @@
                 Hi there,
               </p>
               <p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6">
-                A password reset was requested for your SigNoz account.
-              </p>
-              <p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6">
-                Click the button below to reset your password:
+                An API key was {{.Event}} for your service account <strong>{{.Name}}</strong>.
               </p>
               <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 16px">
                 <tr>
-                  <td align="center">
-                    <a href="{{.Link}}" target="_blank" style="display:inline-block;padding:16px 48px;font-size:16px;font-weight:600;color:#fff;background:#4E74F8;text-decoration:none;border-radius:4px">
-                      Reset Password
-                    </a>
+                  <td style="padding:20px;background:#f5f5f5;border-radius:6px;border-left:4px solid #4E74F8">
+                    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0">
+                      <tr>
+                        <td style="padding:0 0 8px">
+                          <p style="margin:0;font-size:15px;color:#333;line-height:1.6">
+                            <strong>Key ID:</strong> {{.KeyID}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 0 8px">
+                          <p style="margin:0;font-size:15px;color:#333;line-height:1.6">
+                            <strong>Key Name:</strong> {{.KeyName}}
+                          </p>
+                        </td>
+                      </tr>
+                      <tr>
+                        <td style="padding:0 0 8px">
+                          <p style="margin:0;font-size:15px;color:#333;line-height:1.6">
+                            <strong>Created At:</strong> {{.KeyCreatedAt}}
+                          </p>
+                        </td>
+                      </tr>
+                    </table>
                   </td>
                 </tr>
               </table>
-              <p style="margin:0 0 4px;font-size:13px;color:#666;text-align:center">
-                Button not working? Copy and paste this link into your browser:
-              </p>
-              <p style="margin:0 0 16px;font-size:13px;color:#4E74F8;word-break:break-all;text-align:center">
-                <a href="{{.Link}}" style="color:#4E74F8;text-decoration:none">
-                  {{.Link}}
-                </a>
-              </p>
-              <table role="presentation" width="100%" cellspacing="0" cellpadding="0" border="0" style="margin:0 0 16px">
-                <tr>
-                  <td style="padding:16px;background:#fff4e6;border-radius:6px;border-left:4px solid #ff9800">
-                    <p style="margin:0;font-size:14px;color:#333;line-height:1.6">
-                      <strong>⏱️ This link will expire in {{.Expiry}}.</strong>
-                    </p>
-                  </td>
-                </tr>
-              </table>
-              <p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6">
-                If you didn't request this password reset, please ignore this email. Your password will remain unchanged.
-              </p>
               {{ if .format.Help.Enabled }}
               <p style="margin:0 0 16px;font-size:16px;color:#333;line-height:1.6">
                 Need help? Chat with our team in the SigNoz application or email us at <a href="mailto:{{.format.Help.Email}}" style="color:#4E74F8;text-decoration:none">{{.format.Help.Email}}</a>.

@@ -207,7 +207,12 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	factorAPIKey := serviceAccount.NewFactorAPIKey(req.Name, req.ExpiresAt)
+	factorAPIKey, err := serviceAccount.NewFactorAPIKey(req.Name, req.ExpiresAt)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.module.CreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
@@ -243,7 +248,7 @@ func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request
 		return
 	}
 
-	render.Success(rw, http.StatusOK, factorAPIKeys)
+	render.Success(rw, http.StatusOK, serviceaccounttypes.NewGettableFactorAPIKeys(factorAPIKeys))
 }
 
 func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Request) {

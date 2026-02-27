@@ -27,8 +27,6 @@ type Module interface {
 	// Updates an existing service account status
 	UpdateStatus(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
-	// TODO[@vikrantgupta25]: implement the disable/activate interface as well.
-
 	// Deletes an existing service account by id
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 

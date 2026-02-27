@@ -62,7 +62,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "key", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
-			{Name: "expires_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "expires_at", DataType: sqlschema.DataTypeInteger, Nullable: false},
 			{Name: "last_used", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "service_account_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
@@ -82,7 +82,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_api_key", ColumnNames: []sqlschema.ColumnName{"key"}})
 	sqls = append(sqls, indexSQLs...)
 
-	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_api_key", ColumnNames: []sqlschema.ColumnName{"name"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_api_key", ColumnNames: []sqlschema.ColumnName{"name", "service_account_id"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {
