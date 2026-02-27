@@ -35,6 +35,7 @@ import {
 	Unplug,
 	User,
 	UserPlus,
+	Users,
 } from 'lucide-react';
 
 import {
