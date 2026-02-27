@@ -1,4 +1,4 @@
-package formatter
+package units
 
 type Formatter interface {
 	Format(value float64, unit string) string
@@ -16,7 +16,7 @@ var (
 	ThroughputFormatter = NewThroughputFormatter()
 )
 
-func FromUnit(u string) Formatter {
+func FormatterFromUnit(u string) Formatter {
 	switch u {
 	case "ns", "us", "µs", "ms", "s", "m", "h", "d", "min", "w", "wk":
 		return DurationFormatter
