@@ -123,7 +123,6 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 						columns={columns}
 						bordered
 						title={(): string => 'Top Level Operations'}
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						dataSource={topLevelOperations}
 						loading={isLoading}

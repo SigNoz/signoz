@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useEffect, useMemo, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
@@ -81,14 +79,14 @@ export default function CustomDomainSettings(): JSX.Element {
 	}, [hosts]);
 
 	useEffect(() => {
-		if (isFetchingHosts) {
+		if (isFetchingHosts || !hostsData) {
 			return;
 		}
 
-		if (hostsData?.data?.status === 'success') {
-			setHosts(hostsData?.data?.data?.hosts ?? null);
+		if (hostsData.status === 'success') {
+			setHosts(hostsData.data.hosts ?? null);
 
-			const activeCustomDomain = hostsData?.data?.data?.hosts?.find(
+			const activeCustomDomain = hostsData.data.hosts?.find(
 				(host) => !host.is_default,
 			);
 
@@ -99,13 +97,13 @@ export default function CustomDomainSettings(): JSX.Element {
 			}
 		}
 
-		if (hostsData?.data?.data?.state !== 'HEALTHY' && isPollingEnabled) {
+		if (hostsData.data.state !== 'HEALTHY' && isPollingEnabled) {
 			setTimeout(() => {
 				refetchHosts();
 			}, 3000);
 		}
 
-		if (hostsData?.data?.data?.state === 'HEALTHY') {
+		if (hostsData.data.state === 'HEALTHY') {
 			setIsPollingEnabled(false);
 		}
 	}, [hostsData, refetchHosts, isPollingEnabled, isFetchingHosts]);

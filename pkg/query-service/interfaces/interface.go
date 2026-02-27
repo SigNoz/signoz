@@ -101,6 +101,8 @@ type Reader interface {
 	GetCountOfThings(ctx context.Context, query string) (uint64, error)
 	GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error)
 
+	GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error)
+
 	//trace
 	GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError)
 	UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError

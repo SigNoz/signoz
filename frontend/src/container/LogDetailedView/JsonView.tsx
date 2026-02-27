@@ -74,7 +74,6 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 				onChange={(): void => {}}
 				height="68vh"
 				theme={isDarkMode ? 'my-theme' : 'light'}
-				// eslint-disable-next-line react/jsx-no-bind
 				beforeMount={setEditorTheme}
 			/>
 

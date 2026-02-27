@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useSelector } from 'react-redux';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';

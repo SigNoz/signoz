@@ -87,7 +87,6 @@ function MessagingQueueOverview({
 			start: minTime,
 			end: maxTime,
 			detailType:
-				// eslint-disable-next-line no-nested-ternary
 				selectedView === MessagingQueuesViewType.producerLatency.value
 					? option === ProducerLatencyOptions.Producers
 						? 'producer'

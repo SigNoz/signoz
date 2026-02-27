@@ -198,7 +198,6 @@ function StatefulSetDetails({
 				category: InfraMonitoringEvents.StatefulSet,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [statefulSet]);
 
 	useEffect(() => {
@@ -556,7 +555,6 @@ function StatefulSetDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

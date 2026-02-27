@@ -376,7 +376,6 @@ describe('PublicDashboardSetting', () => {
 			server.use(
 				rest.get(
 					`*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`,
-					// eslint-disable-next-line sonarjs/no-identical-functions
 					(_req, res, ctx) =>
 						res(
 							ctx.status(StatusCodes.NOT_FOUND),
@@ -396,7 +395,6 @@ describe('PublicDashboardSetting', () => {
 		});
 
 		describe('Published dashboard buttons for non-admin users', () => {
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			beforeEach(() => {
 				server.use(
 					rest.get(

@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable sonarjs/no-duplicate-string */
 import * as ReactQuery from 'react-query';
 import * as ReactRedux from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -52,7 +50,6 @@ const mockQueryResult = {
 	fetchPreviousPage: jest.fn(),
 	hasNextPage: false,
 	hasPreviousPage: false,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Sample data for testing

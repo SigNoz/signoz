@@ -7,6 +7,7 @@ import (
 
 var (
 	ErrCodeAuthZInvalidRelation = errors.MustNewCode("authz_invalid_relation")
+	ErrCodeInvalidPatchObject   = errors.MustNewCode("authz_invalid_patch_objects")
 )
 
 var (
@@ -24,6 +25,14 @@ var TypeableRelations = map[Type][]Relation{
 	TypeOrganization:  {RelationRead, RelationUpdate, RelationDelete},
 	TypeMetaResource:  {RelationRead, RelationUpdate, RelationDelete},
 	TypeMetaResources: {RelationCreate, RelationList},
+}
+
+var RelationsTypeable = map[Relation][]Type{
+	RelationCreate: {TypeMetaResources},
+	RelationRead:   {TypeUser, TypeRole, TypeOrganization, TypeMetaResource},
+	RelationList:   {TypeMetaResources},
+	RelationUpdate: {TypeUser, TypeRole, TypeOrganization, TypeMetaResource},
+	RelationDelete: {TypeUser, TypeRole, TypeOrganization, TypeMetaResource},
 }
 
 type Relation struct{ valuer.String }

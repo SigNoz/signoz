@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';

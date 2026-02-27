@@ -124,7 +124,6 @@ const filterAndSortTimezones = (
 export const generateTimezoneData = (
 	includeEtcTimezones = false,
 ): Timezone[] => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	const allTimezones = (Intl as any).supportedValuesOf('timeZone');
 	const timezones: Timezone[] = [];
 

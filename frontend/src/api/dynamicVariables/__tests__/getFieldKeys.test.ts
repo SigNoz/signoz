@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import axios from 'api';
 
 import { getFieldKeys } from '../getFieldKeys';

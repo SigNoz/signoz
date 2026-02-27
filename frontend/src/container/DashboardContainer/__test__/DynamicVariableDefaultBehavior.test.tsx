@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { QueryClient, QueryClientProvider, useQuery } from 'react-query';
 import * as ReactRedux from 'react-redux';

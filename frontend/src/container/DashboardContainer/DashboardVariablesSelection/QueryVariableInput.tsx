@@ -5,7 +5,7 @@ import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQ
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { useVariableFetchState } from 'hooks/dashboard/useVariableFetchState';
 import sortValues from 'lib/dashboardVariables/sortVariableValues';
-import { isArray, isEmpty, isString } from 'lodash-es';
+import { isArray, isEmpty } from 'lodash-es';
 import { AppState } from 'store/reducers';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -54,7 +54,7 @@ function QueryVariableInput({
 		onChange,
 		onDropdownVisibleChange,
 		handleClear,
-		applyDefaultIfNeeded,
+		getDefaultValue,
 	} = useDashboardVariableSelectHelper({
 		variableData,
 		optionsData,
@@ -68,81 +68,93 @@ function QueryVariableInput({
 			try {
 				setErrorMessage(null);
 
+				// This is just a check given the previously undefined typed name prop. Not significant
+				// This will be changed when we change the schema
+				// TODO: @AshwinBhatkal Perses
+				if (!variableData.name) {
+					return;
+				}
+
+				// if the response is not an array, premature return
 				if (
-					variablesRes?.variableValues &&
-					Array.isArray(variablesRes?.variableValues)
+					!variablesRes?.variableValues ||
+					!Array.isArray(variablesRes?.variableValues)
 				) {
-					const newOptionsData = sortValues(
-						variablesRes?.variableValues,
-						variableData.sort,
+					return;
+				}
+
+				const sortedNewOptions = sortValues(
+					variablesRes.variableValues,
+					variableData.sort,
+				);
+				const sortedOldOptions = sortValues(optionsData, variableData.sort);
+
+				// if options are the same as before, no need to update state or check for selected value validity
+				// ! selectedValue needs to be set in the first pass though, as options are initially empty array and we need to apply default if needed
+				// Expecatation is that when oldOptions are not empty, then there is always some selectedValue
+				if (areArraysEqual(sortedNewOptions, sortedOldOptions)) {
+					return;
+				}
+
+				setOptionsData(sortedNewOptions);
+
+				let isSelectedValueMissingInNewOptions = false;
+
+				// Check if currently selected value(s) are present in the new options list
+				if (isArray(variableData.selectedValue)) {
+					isSelectedValueMissingInNewOptions = variableData.selectedValue.some(
+						(val) => !sortedNewOptions.includes(val),
 					);
+				} else if (
+					variableData.selectedValue &&
+					!sortedNewOptions.includes(variableData.selectedValue)
+				) {
+					isSelectedValueMissingInNewOptions = true;
+				}
 
-					const oldOptionsData = sortValues(optionsData, variableData.sort) as never;
+				// If multi-select with ALL option enabled, and ALL is currently selected, we want to maintain that state and select all new options
+				// This block does not depend on selected value because of ALL and also because we would only come here if options are different from the previous
+				if (
+					variableData.multiSelect &&
+					variableData.showALLOption &&
+					variableData.allSelected &&
+					isSelectedValueMissingInNewOptions
+				) {
+					onValueUpdate(variableData.name, variableData.id, sortedNewOptions, true);
 
-					if (!areArraysEqual(newOptionsData, oldOptionsData)) {
-						let valueNotInList = false;
+					// Update tempSelection to maintain ALL state when dropdown is open
+					if (tempSelection !== undefined) {
+						setTempSelection(sortedNewOptions.map((option) => option.toString()));
+					}
+					return;
+				}
 
-						if (isArray(variableData.selectedValue)) {
-							variableData.selectedValue.forEach((val) => {
-								if (!newOptionsData.includes(val)) {
-									valueNotInList = true;
-								}
-							});
-						} else if (
-							isString(variableData.selectedValue) &&
-							!newOptionsData.includes(variableData.selectedValue)
-						) {
-							valueNotInList = true;
-						}
+				const value = variableData.selectedValue;
+				let allSelected = false;
 
-						if (variableData.name && (valueNotInList || variableData.allSelected)) {
-							if (
-								variableData.allSelected &&
-								variableData.multiSelect &&
-								variableData.showALLOption
-							) {
-								if (
-									variableData.name &&
-									variableData.id &&
-									!isEmpty(variableData.selectedValue)
-								) {
-									onValueUpdate(
-										variableData.name,
-										variableData.id,
-										newOptionsData,
-										true,
-									);
-								}
+				if (variableData.multiSelect) {
+					const { selectedValue } = variableData;
+					allSelected =
+						sortedNewOptions.length > 0 &&
+						Array.isArray(selectedValue) &&
+						sortedNewOptions.every((option) => selectedValue.includes(option));
+				}
 
-								// Update tempSelection to maintain ALL state when dropdown is open
-								if (tempSelection !== undefined) {
-									setTempSelection(newOptionsData.map((option) => option.toString()));
-								}
-							} else {
-								const value = variableData.selectedValue;
-								let allSelected = false;
-
-								if (variableData.multiSelect) {
-									const { selectedValue } = variableData;
-									allSelected =
-										newOptionsData.length > 0 &&
-										Array.isArray(selectedValue) &&
-										newOptionsData.every((option) => selectedValue.includes(option));
-								}
-
-								if (
-									variableData.name &&
-									variableData.id &&
-									!isEmpty(variableData.selectedValue)
-								) {
-									onValueUpdate(variableData.name, variableData.id, value, allSelected);
-								}
-							}
-						}
-
-						setOptionsData(newOptionsData);
-						// Apply default if no value is selected (e.g., new variable, first load)
-						applyDefaultIfNeeded(newOptionsData);
+				if (
+					variableData.name &&
+					variableData.id &&
+					!isEmpty(variableData.selectedValue)
+				) {
+					onValueUpdate(variableData.name, variableData.id, value, allSelected);
+				} else {
+					const defaultValue = getDefaultValue(sortedNewOptions);
+					if (defaultValue !== undefined) {
+						onValueUpdate(
+							variableData.name,
+							variableData.id,
+							defaultValue,
+							allSelected,
+						);
 					}
 				}
 			} catch (e) {
@@ -155,7 +167,7 @@ function QueryVariableInput({
 			onValueUpdate,
 			tempSelection,
 			setTempSelection,
-			applyDefaultIfNeeded,
+			getDefaultValue,
 		],
 	);
 

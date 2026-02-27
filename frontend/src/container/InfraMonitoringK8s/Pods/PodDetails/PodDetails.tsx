@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
@@ -64,7 +63,6 @@ import '../../EntityDetailsUtils/entityDetails.styles.scss';
 
 const TimeRangeOffset = 1000000000;
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function PodDetails({
 	pod,
 	onClose,
@@ -199,7 +197,6 @@ function PodDetails({
 				category: InfraMonitoringEvents.Pod,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [pod]);
 
 	useEffect(() => {
@@ -579,7 +576,6 @@ function PodDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

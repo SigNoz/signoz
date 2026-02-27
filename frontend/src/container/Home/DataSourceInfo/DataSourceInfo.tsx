@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { useEffect, useState } from 'react';
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -34,7 +33,7 @@ function DataSourceInfo({
 
 	useEffect(() => {
 		if (hostsData) {
-			const defaultHost = hostsData?.data?.data?.hosts?.find((h) => h.is_default);
+			const defaultHost = hostsData?.data.hosts?.find((h) => h.is_default);
 			if (defaultHost?.url) {
 				const url = defaultHost?.url?.split('://')[1] ?? '';
 				setUrl(url);

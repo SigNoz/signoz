@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-empty */
 import { useEffect, useState } from 'react';
 import { TelemetryFieldKey } from 'api/v5/v5';
 import { has } from 'lodash-es';

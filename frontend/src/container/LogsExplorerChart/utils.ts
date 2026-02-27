@@ -1,6 +1,15 @@
 import { Color } from '@signozhq/design-tokens';
-import { themeColors } from 'constants/theme';
 import { colors } from 'lib/getRandomColor';
+
+// Function to determine if a color is "red-like" based on its RGB values
+export function isRedLike(hex: string): boolean {
+	const r = parseInt(hex.slice(1, 3), 16);
+	const g = parseInt(hex.slice(3, 5), 16);
+	const b = parseInt(hex.slice(5, 7), 16);
+	return r > 180 && r > g * 1.4 && r > b * 1.4;
+}
+
+const SAFE_FALLBACK_COLORS = colors.filter((c) => !isRedLike(c));
 
 const SEVERITY_VARIANT_COLORS: Record<string, string> = {
 	TRACE: Color.BG_FOREST_600,
@@ -67,8 +76,13 @@ export function getColorsForSeverityLabels(
 	label: string,
 	index: number,
 ): string {
-	// Check if we have a direct mapping for this severity variant
-	const variantColor = SEVERITY_VARIANT_COLORS[label.trim()];
+	const trimmed = label.trim();
+
+	if (!trimmed) {
+		return Color.BG_SLATE_300;
+	}
+
+	const variantColor = SEVERITY_VARIANT_COLORS[trimmed];
 	if (variantColor) {
 		return variantColor;
 	}
@@ -103,5 +117,8 @@ export function getColorsForSeverityLabels(
 		return Color.BG_SAKURA_500;
 	}
 
-	return colors[index % colors.length] || themeColors.red;
+	return (
+		SAFE_FALLBACK_COLORS[index % SAFE_FALLBACK_COLORS.length] ||
+		Color.BG_SLATE_400
+	);
 }

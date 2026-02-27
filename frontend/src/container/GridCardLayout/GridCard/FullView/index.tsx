@@ -241,7 +241,6 @@ function FullView({
 
 	if (response.data && selectedPanelType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(response?.data);
-		// eslint-disable-next-line no-param-reassign
 		response.data = transformedData;
 	}
 

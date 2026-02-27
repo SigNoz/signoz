@@ -30,7 +30,6 @@ function PanelWrapper({
 	] as FC<PanelWrapperProps>;
 
 	if (!Component) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 

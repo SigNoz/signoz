@@ -45,23 +45,6 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/roles/resources", handler.New(provider.authZ.AdminAccess(provider.authzHandler.GetResources), handler.OpenAPIDef{
-		ID:                  "GetResources",
-		Tags:                []string{"role"},
-		Summary:             "Get resources",
-		Description:         "Gets all the available resources for role assignment",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(roletypes.GettableResources),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/roles/{id}", handler.New(provider.authZ.AdminAccess(provider.authzHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetRole",
 		Tags:                []string{"role"},
@@ -86,7 +69,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Description:         "Gets all objects connected to the specified role via a given relation type",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*authtypes.Object, 0),
+		Response:            make([]*authtypes.GettableObjects, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusNotImplemented, http.StatusUnavailableForLegalReasons},
@@ -118,7 +101,7 @@ func (provider *provider) addRoleRoutes(router *mux.Router) error {
 		Tags:                []string{"role"},
 		Summary:             "Patch objects for a role by relation",
 		Description:         "Patches the objects connected to the specified role via a given relation type",
-		Request:             new(roletypes.PatchableObjects),
+		Request:             new(authtypes.PatchableObjects),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",

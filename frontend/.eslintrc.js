@@ -78,7 +78,7 @@ module.exports = {
 		// TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
 		'@typescript-eslint/no-empty-function': 'off', // Disallows empty function bodies
 		'@typescript-eslint/no-var-requires': 'error', // Disallows require() in TypeScript (use import instead)
-		'@typescript-eslint/ban-ts-comment': 'off', // Allows @ts-ignore comments (sometimes needed for third-party libs)
+		'@typescript-eslint/ban-ts-comment': 'warn', // Allows @ts-ignore comments (sometimes needed for third-party libs)
 		'no-empty-function': 'off', // Disabled in favor of TypeScript version above
 
 		// React rules

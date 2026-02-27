@@ -30,7 +30,6 @@ import HostsListTable from './HostsListTable';
 import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
 
 import './InfraMonitoring.styles.scss';
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,

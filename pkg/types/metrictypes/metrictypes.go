@@ -2,6 +2,7 @@ package metrictypes
 
 import (
 	"database/sql/driver"
+	"fmt"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -255,4 +256,13 @@ type MetricTableHints struct {
 // This is a workaround for those metrics.
 type MetricValueFilter struct {
 	Value float64
+}
+
+type ComparisonSpaceAggregationParam struct {
+	Operater  string  `json:"operator" required:"true"`
+	Threshold float64 `json:"threshold" required:"true"`
+}
+
+func (param ComparisonSpaceAggregationParam) StringValue() string {
+	return fmt.Sprintf("operator=%s:threshold=%f", param.Operater, param.Threshold)
 }

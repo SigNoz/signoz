@@ -108,6 +108,7 @@ func TestParseIntoRule(t *testing.T) {
 				"ruleType": "threshold_rule",
 				"evalWindow": "5m",
 				"frequency": "1m",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -150,6 +151,7 @@ func TestParseIntoRule(t *testing.T) {
 			content: []byte(`{
 				"alert": "DefaultsRule",
 				"ruleType": "threshold_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -187,6 +189,7 @@ func TestParseIntoRule(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "PromQLRule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "promql",
@@ -256,6 +259,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "SeverityLabelTest",
 				"schemaVersion": "v1",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -344,6 +348,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "NoLabelsTest",
 				"schemaVersion": "v1",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -384,6 +389,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "OverwriteTest",
 				"schemaVersion": "v1",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -474,6 +480,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			content: []byte(`{
 				"alert": "V2Test",
 				"schemaVersion": "v2",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -517,6 +524,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			initRule: PostableRule{},
 			content: []byte(`{
 				"alert": "DefaultSchemaTest",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -569,6 +577,7 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 	content := []byte(`{
 		"alert": "TestThresholds",
+		"version": "v5",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
@@ -639,6 +648,7 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 		"schemaVersion": "v2",
 		"alert": "MultiThresholdAlert",
 		"ruleType": "threshold_rule",
+		"version": "v5",
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
@@ -732,6 +742,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -766,6 +777,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -799,6 +811,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyAboveTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -833,6 +846,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyAboveTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -866,6 +880,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowAllTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -901,6 +916,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyBelowAllTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -935,6 +951,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "AnomalyOutOfBoundsTest",
 				"ruleType": "anomaly_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -969,6 +986,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "ThresholdTest",
 				"ruleType": "threshold_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
@@ -1003,6 +1021,7 @@ func TestAnomalyNegationEval(t *testing.T) {
 			ruleJSON: []byte(`{
 				"alert": "ThresholdTest",
 				"ruleType": "threshold_rule",
+				"version": "v5",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",

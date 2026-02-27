@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExclamationCircleFilled } from '@ant-design/icons';
@@ -131,7 +130,6 @@ function GridTableComponent({
 
 	useEffect(() => {
 		if (tableProcessedDataRef) {
-			// eslint-disable-next-line no-param-reassign
 			tableProcessedDataRef.current = createDataInCorrectFormat(dataSource);
 		}
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
@@ -300,7 +298,6 @@ function GridTableComponent({
 						  })
 						: undefined
 				}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
 		</WrapperStyled>

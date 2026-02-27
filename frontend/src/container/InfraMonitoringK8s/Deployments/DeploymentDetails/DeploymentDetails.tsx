@@ -202,7 +202,6 @@ function DeploymentDetails({
 				category: InfraMonitoringEvents.Deployment,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [deployment]);
 
 	useEffect(() => {
@@ -576,7 +575,6 @@ function DeploymentDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

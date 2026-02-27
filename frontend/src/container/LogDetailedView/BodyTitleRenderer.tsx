@@ -121,9 +121,23 @@ function BodyTitleRenderer({
 	return (
 		<TitleWrapper onClick={handleNodeClick}>
 			{typeof value !== 'object' && (
-				<Dropdown menu={menu} trigger={['click']}>
-					<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
-				</Dropdown>
+				<span
+					onClick={(e): void => {
+						e.stopPropagation();
+						e.preventDefault();
+					}}
+					onMouseDown={(e): void => e.preventDefault()}
+				>
+					<Dropdown
+						menu={menu}
+						trigger={['click']}
+						dropdownRender={(originNode): React.ReactNode => (
+							<div data-log-detail-ignore="true">{originNode}</div>
+						)}
+					>
+						<SettingOutlined style={{ marginRight: 8 }} className="hover-reveal" />
+					</Dropdown>
+				</span>
 			)}
 			{title.toString()}{' '}
 			{!parentIsArray && typeof value !== 'object' && (

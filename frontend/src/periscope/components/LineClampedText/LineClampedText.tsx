@@ -47,10 +47,8 @@ function LineClampedText({
 
 	return isOverflowing ? (
 		<Tooltip
-			// eslint-disable-next-line jsx-a11y/no-static-element-interactions, jsx-a11y/click-events-have-key-events
 			title={<div onClick={(e): void => e.stopPropagation()}>{text}</div>}
 			overlayClassName="line-clamped-wrapper"
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...tooltipProps}
 		>
 			{content}
