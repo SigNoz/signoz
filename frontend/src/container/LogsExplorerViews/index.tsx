@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import {
 	Dispatch,
 	memo,
@@ -10,6 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
@@ -68,9 +68,7 @@ function LogsExplorerViewsContainer({
 	handleChangeSelectedView,
 }: {
 	setIsLoadingQueries: React.Dispatch<React.SetStateAction<boolean>>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	listQueryKeyRef: MutableRefObject<any>;
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	chartQueryKeyRef: MutableRefObject<any>;
 	setWarning: Dispatch<SetStateAction<Warning | undefined>>;
 	showLiveLogs: boolean;

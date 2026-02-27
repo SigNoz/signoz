@@ -1,4 +1,5 @@
 import { useCallback } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { Alert, Typography } from 'antd';

@@ -7,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';

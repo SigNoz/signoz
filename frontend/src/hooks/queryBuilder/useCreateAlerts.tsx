@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { getSubstituteVars } from 'api/dashboard/substitute_vars';

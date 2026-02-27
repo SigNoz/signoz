@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { renderHook, waitFor } from '@testing-library/react';
 import { DataSource } from 'types/common/queryBuilder';
 

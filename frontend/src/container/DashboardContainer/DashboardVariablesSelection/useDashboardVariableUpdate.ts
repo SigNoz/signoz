@@ -175,7 +175,6 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 			// Create tableRowData like Dashboard Settings does
 			const tableRowData = [];
 			const variableOrderArr = [];
-			// eslint-disable-next-line no-restricted-syntax
 			for (const [key, value] of Object.entries(currentVariables)) {
 				const { order, id } = value;
 

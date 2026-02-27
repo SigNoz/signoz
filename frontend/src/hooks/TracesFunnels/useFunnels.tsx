@@ -142,7 +142,6 @@ export const useValidateFunnelSteps = ({
 			funnelId,
 			selectedTime,
 			steps.map((step) => {
-				// eslint-disable-next-line @typescript-eslint/naming-convention
 				const { latency_type: _latency_type, ...rest } = step;
 				return rest;
 			}),

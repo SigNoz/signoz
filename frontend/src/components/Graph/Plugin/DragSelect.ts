@@ -310,7 +310,6 @@ export const createDragSelectPlugin = (): Plugin<
 				const top = chart.chartArea.top - 5;
 				const bottom = chart.chartArea.bottom + 5;
 
-				/* eslint-disable-next-line no-param-reassign */
 				chart.ctx.fillStyle = pluginOptions.color;
 				chart.ctx.fillRect(left, top, right - left, bottom - top);
 			}

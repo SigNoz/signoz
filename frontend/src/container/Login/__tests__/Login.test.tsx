@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { rest, server } from 'mocks-server/server';

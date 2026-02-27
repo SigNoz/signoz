@@ -196,7 +196,6 @@ function PipelineExpandView({
 		logEvent('Logs: Pipelines: Clicked Add New Processor', {
 			source: 'signoz-ui',
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

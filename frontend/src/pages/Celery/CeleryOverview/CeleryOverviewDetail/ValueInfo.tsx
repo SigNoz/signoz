@@ -1,5 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { FileSearchOutlined } from '@ant-design/icons';
 import { Button, Card, Col, Row } from 'antd';

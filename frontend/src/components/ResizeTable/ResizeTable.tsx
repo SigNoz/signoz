@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import {
 	SyntheticEvent,
 	useCallback,

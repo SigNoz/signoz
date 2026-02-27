@@ -1,10 +1,8 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
 import {
-	QueryTypes,
 	ConditionalOperators,
+	QueryTypes,
 	ValidTypeSequence,
 	ValidTypeValue,
 } from 'lib/logql/tokens';
@@ -18,14 +16,22 @@ export function fieldsQueryIsvalid(queryFields: QueryFields[]): boolean {
 	let lastOp: string;
 	let result = true;
 	queryFields.forEach((q, idx) => {
-		if (!q.value || q.value === null || q.value === '') result = false;
+		if (!q.value || q.value === null || q.value === '') {
+			result = false;
+		}
 
-		if (Array.isArray(q.value) && q.value.length === 0) result = false;
+		if (Array.isArray(q.value) && q.value.length === 0) {
+			result = false;
+		}
 
 		const nextOp = idx < queryFields.length ? queryFields[idx + 1] : undefined;
-		if (!ValidTypeSequence(lastOp?.type, q?.type, nextOp?.type)) result = false;
+		if (!ValidTypeSequence(lastOp?.type, q?.type, nextOp?.type)) {
+			result = false;
+		}
 
-		if (!ValidTypeValue(lastOp?.value, q.value)) result = false;
+		if (!ValidTypeValue(lastOp?.value, q.value)) {
+			result = false;
+		}
 		lastOp = q;
 	});
 	return result;
@@ -74,7 +80,9 @@ export const prepareConditionOperator = (
 	};
 };
 
-export const createParsedQueryStructure = (parsedQuery = []) => {
+export const createParsedQueryStructure = (
+	parsedQuery = [],
+): QueryFields[][] => {
 	if (!parsedQuery.length) {
 		return parsedQuery;
 	}
@@ -83,7 +91,7 @@ export const createParsedQueryStructure = (parsedQuery = []) => {
 
 	let cond;
 	let qCtr = -1;
-	parsedQuery.forEach((query, idx) => {
+	parsedQuery.forEach((query) => {
 		if (cond) {
 			structuredArray.push(cond);
 			structuredArray.push(queryKOVPair());
@@ -122,9 +130,7 @@ export const hashCode = (s: string): string => {
 	}
 	return `${Math.abs(
 		s.split('').reduce((a, b) => {
-			// eslint-disable-next-line no-bitwise, no-param-reassign
 			a = (a << 5) - a + b.charCodeAt(0);
-			// eslint-disable-next-line no-bitwise
 			return a & a;
 		}, 0),
 	)}`;

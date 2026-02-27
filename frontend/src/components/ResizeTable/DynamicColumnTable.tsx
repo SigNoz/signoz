@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { memo, useEffect, useState } from 'react';
 import { Button, Dropdown, Flex, MenuProps, Switch } from 'antd';
 import { ColumnGroupType, ColumnType } from 'antd/es/table';

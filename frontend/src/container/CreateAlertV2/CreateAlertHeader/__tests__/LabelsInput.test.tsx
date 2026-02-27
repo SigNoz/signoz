@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { fireEvent, render, screen } from '@testing-library/react';
 
 import LabelsInput from '../LabelsInput';

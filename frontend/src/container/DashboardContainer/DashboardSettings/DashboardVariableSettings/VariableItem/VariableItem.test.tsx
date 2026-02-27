@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
-/* eslint-disable sonarjs/no-duplicate-string */
 import {
 	fireEvent,
 	render,
