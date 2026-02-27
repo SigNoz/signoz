@@ -135,7 +135,7 @@ func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(serviceaccounttypes.UpdatableServiceAccount)
+	req := new(serviceaccounttypes.UpdatableServiceAccountStatus)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
@@ -148,7 +148,7 @@ func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	serviceAccount.UpdateStatus(req.Status)
-	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	err = handler.module.UpdateStatus(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
 		return

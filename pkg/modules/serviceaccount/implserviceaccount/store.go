@@ -33,14 +33,14 @@ func (store *store) Create(ctx context.Context, storable *serviceaccounttypes.St
 func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
 	storable := new(serviceaccounttypes.StorableServiceAccount)
 
-	_, err := store.
+	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
-		Exec(ctx)
+		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist in org: %s", id, orgID)
 	}
@@ -51,13 +51,13 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
 	storable := new(serviceaccounttypes.StorableServiceAccount)
 
-	_, err := store.
+	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("id = ?", id).
-		Exec(ctx)
+		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
 	}
@@ -68,13 +68,13 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccount, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccount, 0)
 
-	_, err := store.
+	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&storables).
 		Where("org_id = ?", orgID).
-		Exec(ctx)
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -89,7 +89,8 @@ func (store *store) Update(ctx context.Context, orgID valuer.UUID, storable *ser
 		NewUpdate().
 		Model(storable).
 		WherePK().
-		Where("org_id = ?", orgID).Exec(ctx)
+		Where("org_id = ?", orgID).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -130,7 +131,13 @@ func (store *store) CreateServiceAccountRoles(ctx context.Context, storables []*
 func (store *store) GetServiceAccountRoles(ctx context.Context, id valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccountRole, 0)
 
-	_, err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storables).Where("service_account_id = ?", id).Exec(ctx)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&storables).
+		Where("service_account_id = ?", id).
+		Scan(ctx)
 	if err != nil {
 		// no need to wrap not found here as this is many to many table
 		return nil, err
@@ -142,7 +149,7 @@ func (store *store) GetServiceAccountRoles(ctx context.Context, id valuer.UUID) 
 func (store *store) ListServiceAccountRolesByOrgID(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccountRole, 0)
 
-	_, err := store.
+	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
@@ -150,7 +157,7 @@ func (store *store) ListServiceAccountRolesByOrgID(ctx context.Context, orgID va
 		Join("JOIN service_account").
 		JoinOn("service_account.id = service_account_role.service_account_id").
 		Where("service_account.org_id = ?", orgID).
-		Exec(ctx)
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -190,14 +197,14 @@ func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceacc
 func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.StorableFactorAPIKey, error) {
 	storable := new(serviceaccounttypes.StorableFactorAPIKey)
 
-	_, err := store.
+	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("id = ?", id).
 		Where("service_account_id = ?", serviceAccountID).
-		Exec(ctx)
+		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccounFactorAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
 	}
@@ -208,7 +215,13 @@ func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer
 func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.StorableFactorAPIKey, error) {
 	storables := make([]*serviceaccounttypes.StorableFactorAPIKey, 0)
 
-	_, err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storables).Where("service_account_id = ?", serviceAccountID).Exec(ctx)
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&storables).
+		Where("service_account_id = ?", serviceAccountID).
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -221,7 +234,7 @@ func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID val
 		sqlstore.
 		BunDBCtx(ctx).
 		NewUpdate().
-		Model(&storable).
+		Model(storable).
 		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {

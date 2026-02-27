@@ -23,7 +23,7 @@ type StorableFactorAPIKey struct {
 	types.TimeAuditable
 	Name             string    `bun:"name"`
 	Key              string    `bun:"key"`
-	ExpiresAt        uint64    `bun:"created_at"`
+	ExpiresAt        uint64    `bun:"expires_at"`
 	LastUsed         time.Time `bun:"last_used"`
 	ServiceAccountID string    `bun:"service_account_id"`
 }
@@ -33,7 +33,7 @@ type FactorAPIKey struct {
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
 	Key              string      `json:"key" required:"true"`
-	ExpiresAt        uint64      `json:"created_at" required:"true"`
+	ExpiresAt        uint64      `json:"expires_at" required:"true"`
 	LastUsed         time.Time   `json:"last_used" required:"true"`
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
@@ -42,7 +42,7 @@ type GettableFactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
-	ExpiresAt        uint64      `json:"created_at" required:"true"`
+	ExpiresAt        uint64      `json:"expires_at" required:"true"`
 	LastUsed         time.Time   `json:"last_used" required:"true"`
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
@@ -126,10 +126,6 @@ func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
 	}
 
-	if temp.ExpiresAt == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "expiresAt cannot be zero")
-	}
-
 	*key = PostableFactorAPIKey(temp)
 	return nil
 }
@@ -144,10 +140,6 @@ func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
 
 	if temp.Name == "" {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
-	}
-
-	if temp.ExpiresAt == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "expiresAt cannot be zero")
 	}
 
 	*key = UpdatableFactorAPIKey(temp)

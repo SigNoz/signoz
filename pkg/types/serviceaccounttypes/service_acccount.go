@@ -28,7 +28,7 @@ var (
 )
 
 type StorableServiceAccount struct {
-	bun.BaseModel `bun:"table:service_account alias:service_account_role"`
+	bun.BaseModel `bun:"table:service_account,alias:service_account"`
 
 	types.Identifiable
 	types.TimeAuditable
@@ -55,10 +55,9 @@ type PostableServiceAccount struct {
 }
 
 type UpdatableServiceAccount struct {
-	Name   string        `json:"name" required:"true"`
-	Email  valuer.Email  `json:"email" required:"true"`
-	Roles  []string      `json:"roles" required:"true" nullable:"false"`
-	Status valuer.String `json:"status" required:"true"`
+	Name  string       `json:"name" required:"true"`
+	Email valuer.Email `json:"email" required:"true"`
+	Roles []string     `json:"roles" required:"true" nullable:"false"`
 }
 
 type UpdatableServiceAccountStatus struct {
@@ -106,9 +105,9 @@ func NewServiceAccountsFromRoles(storableServiceAccounts []*StorableServiceAccou
 		roleIDs := serviceAccountIDToRoleIDsMap[sa.ID.String()]
 
 		roleNames := make([]string, len(roleIDs))
-		for _, rid := range roleIDs {
+		for idx, rid := range roleIDs {
 			if role, ok := roleIDToRole[rid.String()]; ok {
-				roleNames = append(roleNames, role.Name)
+				roleNames[idx] = role.Name
 			}
 		}
 
@@ -209,6 +208,10 @@ func (sa *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name cannot be empty")
 	}
 
+	if len(temp.Roles) == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "roles cannot be empty")
+	}
+
 	*sa = PostableServiceAccount(temp)
 	return nil
 }
@@ -225,8 +228,8 @@ func (sa *UpdatableServiceAccount) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name cannot be empty")
 	}
 
-	if !slices.Contains(ValidStatus, temp.Status) {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "invalid status: %s, allowed status are: %v", temp.Status, ValidStatus)
+	if len(temp.Roles) == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "roles cannot be empty")
 	}
 
 	*sa = UpdatableServiceAccount(temp)

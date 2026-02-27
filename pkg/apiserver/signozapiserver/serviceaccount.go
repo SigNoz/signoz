@@ -44,7 +44,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Get), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Gets a service account",
@@ -61,7 +61,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Update), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account",
@@ -78,7 +78,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id/status", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateStatus), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/status", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateStatus), handler.OpenAPIDef{
 		ID:                  "UpdateServiceAccountStatus",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account status",
@@ -95,7 +95,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Delete), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Deletes a service account",
@@ -112,7 +112,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id/keys", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.CreateFactorAPIKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.CreateFactorAPIKey), handler.OpenAPIDef{
 		ID:                  "CreateServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Create a service account key",
@@ -129,7 +129,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id/keys", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.ListFactorAPIKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.ListFactorAPIKey), handler.OpenAPIDef{
 		ID:                  "ListServiceAccountKeys",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "List service account keys",
@@ -146,7 +146,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id/keys/:fid", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateFactorAPIKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateFactorAPIKey), handler.OpenAPIDef{
 		ID:                  "UpdateServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account key",
@@ -163,7 +163,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/service_accounts/:id/keys/:fid", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.RevokeFactorAPIKey), handler.OpenAPIDef{
+	if err := router.Handle("/api/v1/service_accounts/{id}/keys/{fid}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.RevokeFactorAPIKey), handler.OpenAPIDef{
 		ID:                  "RevokeServiceAccountKey",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Revoke a service account key",
