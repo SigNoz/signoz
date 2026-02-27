@@ -109,8 +109,8 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({ children }: any) {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function OverlayScrollbar({ children }: any) {
 			return <div data-testid="overlay-scrollbar">{children}</div>;
 		},
 );
@@ -162,7 +162,7 @@ jest.mock('providers/preferences/context/PreferenceContextProvider', () => ({
 }));
 
 describe('SpanDetailsDrawer - Infra Metrics', () => {
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any, sonarjs/no-unused-collection
+	// eslint-disable-next-line sonarjs/no-unused-collection
 	let apiCallHistory: any[] = [];
 
 	beforeEach(() => {

@@ -21,7 +21,6 @@ beforeAll(() => {
 
 afterAll(() => {
 	// restore
-	// @ts-ignore
 	delete (HTMLElement.prototype as any).scrollIntoView;
 });
 

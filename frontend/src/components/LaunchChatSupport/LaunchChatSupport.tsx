@@ -112,7 +112,6 @@ function LaunchChatSupport({
 		} else {
 			logEvent(eventName, attributes);
 			if (window.pylon && !chatMessageDisabled) {
-				// @ts-ignore
 				window.Pylon('showNewMessage', defaultTo(message, ''));
 			}
 		}

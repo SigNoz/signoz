@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { Router } from 'react-router-dom';
 import {

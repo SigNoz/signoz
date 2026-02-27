@@ -170,7 +170,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					components={{
 						Table: LogsCustomTable({ isLoading, handleDragEnd }),
 						// TODO: fix it in the future
-						// @ts-ignore
 						TableRow: (props): any =>
 							CustomTableRow({
 								...props,

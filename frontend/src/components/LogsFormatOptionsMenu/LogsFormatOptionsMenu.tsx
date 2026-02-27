@@ -1,4 +1,3 @@
-/* eslint-disable react-hooks/exhaustive-deps */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Input, InputNumber, Popover, Tooltip, Typography } from 'antd';
 import { DefaultOptionType } from 'antd/es/select';

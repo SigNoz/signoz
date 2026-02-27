@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-non-null-assertion */
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';

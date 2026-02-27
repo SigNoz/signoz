@@ -95,7 +95,6 @@ const renderWithContext = (
 				{
 					currentQuery: initialQuery,
 					redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any
 			}
 		>

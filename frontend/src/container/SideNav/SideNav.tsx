@@ -863,7 +863,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 					break;
 				case 'chat-support':
 					if (window.pylon) {
-						// @ts-ignore
 						window.Pylon('show');
 					}
 					break;

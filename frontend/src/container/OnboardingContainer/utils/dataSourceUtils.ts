@@ -372,8 +372,7 @@ export const hasFrameworks = ({
 	const { id: moduleID } = module;
 	const { name: dataSourceName } = dataSource;
 
-	// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-	if (
+	return !(
 		moduleID === ModulesMap.LogsManagement ||
 		moduleID === ModulesMap.InfrastructureMonitoring ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'go') ||
@@ -383,11 +382,7 @@ export const hasFrameworks = ({
 		(moduleID === ModulesMap.APM && dataSourceName === 'elixir') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'swift') ||
 		(moduleID === ModulesMap.APM && dataSourceName === 'php')
-	) {
-		return false;
-	}
-
-	return true;
+	);
 };
 
 export const moduleRouteMap = {

@@ -13,8 +13,8 @@ function DashboardPage(): JSX.Element {
 	const { isFetching, isError, isLoading } = dashboardResponse;
 
 	const errorMessage = isError
-		? // @ts-ignore
-		  (dashboardResponse?.error as AxiosError)?.response?.data?.errorType
+		? (dashboardResponse?.error as AxiosError<{ errorType: string }>)?.response
+				?.data?.errorType
 		: 'Something went wrong';
 
 	useEffect(() => {

@@ -130,8 +130,8 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 jest.mock(
 	'container/SpanDetailsDrawer/Events/components/AttributeWithExpandablePopover',
 	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function AttributeWithExpandablePopover({
 			attributeKey,
 			attributeValue,
 			onExpand,
@@ -175,8 +175,11 @@ jest.mock('api/v1/user/preferences/name/get', () => ({
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
-		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({ children }: { children: React.ReactNode }) {
+		function OverlayScrollbar({
+			children,
+		}: {
+			children: React.ReactNode;
+		}): JSX.Element {
 			return <div data-testid="overlay-scrollbar">{children}</div>;
 		},
 );

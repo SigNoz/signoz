@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';

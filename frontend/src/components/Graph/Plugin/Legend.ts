@@ -55,7 +55,6 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 			  )
 			: null;
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		items?.forEach((item: Record<any, any>, index: number) => {
 			const li = document.createElement('li');
 			li.style.alignItems = 'center';

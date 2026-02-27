@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/prefer-single-boolean-return */
 import { SetStateAction, useState } from 'react';
 import {
 	ArrowLeftOutlined,
@@ -112,31 +111,23 @@ export default function ModuleStepsContainer({
 					dataSource: selectedDataSource,
 				});
 
-				if (
+				return !(
 					doesHaveFrameworks &&
 					(selectedFramework === null || selectedFramework === '')
-				) {
-					return false;
-				}
-
-				return true;
+				);
 			}
 
 			return false;
 		}
 
-		if (
+		return !(
 			(selectedModuleID === useCases.InfrastructureMonitoring.id &&
 				selectedModuleSteps[current].id === dataSourceStep &&
 				!selectedDataSourceName) ||
 			(selectedModuleID === useCases.LogsManagement.id &&
 				selectedModuleSteps[current].id === dataSourceStep &&
 				!selectedDataSourceName)
-		) {
-			return false;
-		}
-
-		return true;
+		);
 	};
 
 	const redirectToModules = (): void => {

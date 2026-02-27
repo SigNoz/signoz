@@ -207,7 +207,6 @@ export const getGraphOptions = (
 			cubicInterpolationMode: 'monotone',
 		},
 		point: {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			hoverBackgroundColor: (ctx: any): string => {
 				if (ctx?.element?.options?.borderColor) {
 					return ctx.element.options.borderColor;

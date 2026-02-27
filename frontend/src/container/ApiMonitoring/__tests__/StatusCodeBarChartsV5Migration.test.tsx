@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 /**
  * V5 Migration Tests for Status Code Bar Chart Queries
  *

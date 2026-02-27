@@ -162,7 +162,6 @@ export default function Support(): JSX.Element {
 			});
 			setIsAddCreditCardModalOpen(true);
 		} else if (window.pylon) {
-			// @ts-ignore
 			window.Pylon('show');
 		}
 	};

@@ -218,10 +218,8 @@ function App(): JSX.Element {
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/')
 		) {
-			// @ts-ignore
 			window.Pylon('hideChatBubble');
 		} else {
-			// @ts-ignore
 			window.Pylon('showChatBubble');
 		}
 	}, [pathname]);

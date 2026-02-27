@@ -50,7 +50,6 @@ const mockQueryResult = {
 	fetchPreviousPage: jest.fn(),
 	hasNextPage: false,
 	hasPreviousPage: false,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Sample data for testing

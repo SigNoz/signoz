@@ -162,7 +162,6 @@ function onClickPlugin(opts: OnClickPluginOpts): uPlot.Plugin {
 					inFocusOrNot: false,
 				};
 
-				// @ts-ignore
 				if (
 					focusedSeriesData &&
 					focusedSeriesData.seriesIndex <= apiResult.length
