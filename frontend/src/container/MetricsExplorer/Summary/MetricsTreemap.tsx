@@ -1,9 +1,10 @@
-import { useMemo } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useWindowSize } from 'react-use';
 import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
-import { stratify, treemapBinary } from 'd3-hierarchy';
+import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
 
 import {
@@ -12,21 +13,24 @@ import {
 	TREEMAP_SQUARE_PADDING,
 	TREEMAP_VIEW_OPTIONS,
 } from './constants';
-import { MetricsTreemapProps, TreemapTile, TreemapViewType } from './types';
+import {
+	MetricsTreemapInternalProps,
+	MetricsTreemapProps,
+	TreemapTile,
+} from './types';
 import {
 	getTreemapTileStyle,
 	getTreemapTileTextStyle,
 	transformTreemapData,
 } from './utils';
 
-function MetricsTreemap({
-	viewType,
-	data,
+function MetricsTreemapInternal({
 	isLoading,
 	isError,
+	data,
+	viewType,
 	openMetricDetails,
-	setHeatmapView,
-}: MetricsTreemapProps): JSX.Element {
+}: MetricsTreemapInternalProps): JSX.Element {
 	const { width: windowWidth } = useWindowSize();
 
 	const treemapWidth = useMemo(
@@ -40,9 +44,9 @@ function MetricsTreemap({
 
 	const treemapData = useMemo(() => {
 		const extracedTreemapData =
-			(viewType === TreemapViewType.TIMESERIES
-				? data?.data?.[TreemapViewType.TIMESERIES]
-				: data?.data?.[TreemapViewType.SAMPLES]) || [];
+			(viewType === MetricsexplorertypesTreemapModeDTO.timeseries
+				? data?.timeseries
+				: data?.samples) || [];
 		return transformTreemapData(extracedTreemapData, viewType);
 	}, [data, viewType]);
 
@@ -54,41 +58,126 @@ function MetricsTreemap({
 	const xMax = treemapWidth - TREEMAP_MARGINS.LEFT - TREEMAP_MARGINS.RIGHT;
 	const yMax = TREEMAP_HEIGHT - TREEMAP_MARGINS.TOP - TREEMAP_MARGINS.BOTTOM;
 
+	const treemapStylesWithoutPadding = useMemo(
+		() => ({
+			width: treemapWidth,
+			height: TREEMAP_HEIGHT,
+		}),
+		[treemapWidth],
+	);
+
+	const treemapStylesWithPadding = useMemo(
+		() => ({
+			width: treemapWidth,
+			height: TREEMAP_HEIGHT,
+			paddingTop: 30,
+		}),
+		[treemapWidth],
+	);
+
+	const treemapTileStyle = useCallback(
+		(node: HierarchyNode<TreemapTile>) => ({
+			...getTreemapTileStyle(node.data),
+			...getTreemapTileTextStyle(),
+		}),
+		[],
+	);
+
 	if (isLoading) {
 		return (
 			<div data-testid="metrics-treemap-loading-state">
-				<Skeleton
-					style={{ width: treemapWidth, height: TREEMAP_HEIGHT + 55 }}
-					active
-				/>
+				<Skeleton style={treemapStylesWithoutPadding} active />
 			</div>
 		);
 	}
 
-	if (
-		!data ||
-		!data.data ||
-		(data?.status === 'success' && !data?.data?.[viewType])
-	) {
-		return (
-			<Empty
-				description="No metrics found"
-				data-testid="metrics-treemap-empty-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
-			/>
-		);
-	}
-
-	if (data?.status === 'error' || isError) {
+	if (isError) {
 		return (
 			<Empty
 				description="Error fetching metrics. If the problem persists, please contact support."
 				data-testid="metrics-treemap-error-state"
-				style={{ width: treemapWidth, height: TREEMAP_HEIGHT, paddingTop: 30 }}
+				style={treemapStylesWithPadding}
 			/>
 		);
 	}
 
+	if (!data || !data?.[viewType]?.length) {
+		return (
+			<Empty
+				description="No metrics found"
+				data-testid="metrics-treemap-empty-state"
+				style={treemapStylesWithPadding}
+			/>
+		);
+	}
+
+	return (
+		<svg width={treemapWidth} height={TREEMAP_HEIGHT} className="metrics-treemap">
+			<rect
+				width={treemapWidth}
+				height={TREEMAP_HEIGHT}
+				rx={14}
+				fill="transparent"
+			/>
+			<Treemap<TreemapTile>
+				top={TREEMAP_MARGINS.TOP}
+				root={transformedTreemapData}
+				size={[xMax, yMax]}
+				tile={treemapBinary}
+				round
+			>
+				{(treemap): JSX.Element => (
+					<Group>
+						{treemap
+							.descendants()
+							.reverse()
+							.map((node, i) => {
+								const nodeWidth = node.x1 - node.x0 - TREEMAP_SQUARE_PADDING;
+								const nodeHeight = node.y1 - node.y0 - TREEMAP_SQUARE_PADDING;
+								if (nodeWidth < 0 || nodeHeight < 0) {
+									return null;
+								}
+								return (
+									<Group
+										// eslint-disable-next-line react/no-array-index-key
+										key={node.data.id || `node-${i}`}
+										top={node.y0 + TREEMAP_MARGINS.TOP}
+										left={node.x0 + TREEMAP_MARGINS.LEFT}
+									>
+										{node.depth > 0 && (
+											<Tooltip
+												title={`${node.data.id}: ${node.data.displayValue}%`}
+												placement="top"
+											>
+												<foreignObject
+													width={nodeWidth}
+													height={nodeHeight}
+													onClick={(): void => openMetricDetails(node.data.id, 'treemap')}
+												>
+													<div style={treemapTileStyle(node)}>
+														{`${node.data.displayValue}%`}
+													</div>
+												</foreignObject>
+											</Tooltip>
+										)}
+									</Group>
+								);
+							})}
+					</Group>
+				)}
+			</Treemap>
+		</svg>
+	);
+}
+
+function MetricsTreemap({
+	viewType,
+	data,
+	isLoading,
+	isError,
+	openMetricDetails,
+	setHeatmapView,
+}: MetricsTreemapProps): JSX.Element {
 	return (
 		<div
 			className="metrics-treemap-container"
@@ -108,72 +197,16 @@ function MetricsTreemap({
 					options={TREEMAP_VIEW_OPTIONS}
 					value={viewType}
 					onChange={setHeatmapView}
+					disabled={isLoading}
 				/>
 			</div>
-			<svg
-				width={treemapWidth}
-				height={TREEMAP_HEIGHT}
-				className="metrics-treemap"
-			>
-				<rect
-					width={treemapWidth}
-					height={TREEMAP_HEIGHT}
-					rx={14}
-					fill="transparent"
-				/>
-				<Treemap<TreemapTile>
-					top={TREEMAP_MARGINS.TOP}
-					root={transformedTreemapData}
-					size={[xMax, yMax]}
-					tile={treemapBinary}
-					round
-				>
-					{(treemap): JSX.Element => (
-						<Group>
-							{treemap
-								.descendants()
-								.reverse()
-								.map((node, i) => {
-									const nodeWidth = node.x1 - node.x0 - TREEMAP_SQUARE_PADDING;
-									const nodeHeight = node.y1 - node.y0 - TREEMAP_SQUARE_PADDING;
-									if (nodeWidth < 0 || nodeHeight < 0) {
-										return null;
-									}
-									return (
-										<Group
-											// eslint-disable-next-line react/no-array-index-key
-											key={node.data.id || `node-${i}`}
-											top={node.y0 + TREEMAP_MARGINS.TOP}
-											left={node.x0 + TREEMAP_MARGINS.LEFT}
-										>
-											{node.depth > 0 && (
-												<Tooltip
-													title={`${node.data.id}: ${node.data.displayValue}%`}
-													placement="top"
-												>
-													<foreignObject
-														width={nodeWidth}
-														height={nodeHeight}
-														onClick={(): void => openMetricDetails(node.data.id, 'treemap')}
-													>
-														<div
-															style={{
-																...getTreemapTileStyle(node.data),
-																...getTreemapTileTextStyle(),
-															}}
-														>
-															{`${node.data.displayValue}%`}
-														</div>
-													</foreignObject>
-												</Tooltip>
-											)}
-										</Group>
-									);
-								})}
-						</Group>
-					)}
-				</Treemap>
-			</svg>
+			<MetricsTreemapInternal
+				isLoading={isLoading}
+				isError={isError}
+				data={data}
+				viewType={viewType}
+				openMetricDetails={openMetricDetails}
+			/>
 		</div>
 	);
 }
