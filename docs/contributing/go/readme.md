@@ -8,4 +8,13 @@ We adhere to three primary style guides as our foundation:
 - [Code Review Comments](https://go.dev/wiki/CodeReviewComments) - For understanding common comments in code reviews
 - [Google Style Guide](https://google.github.io/styleguide/go/) - Additional practices from Google
 
-We **recommend** (almost enforce) reviewing these guides before contributing to the codebase. They provide valuable insights into writing idiomatic Go code and will help you understand our approach to backend development. In addition, we have a few additional rules that make certain areas stricter than the above which can be found in area-specific files in this package.
+We **recommend** (almost enforce) reviewing these guides before contributing to the codebase. They provide valuable insights into writing idiomatic Go code and will help you understand our approach to backend development. In addition, we have a few additional rules that make certain areas stricter than the above which can be found in area-specific files in this package:
+
+- [Packages](packages.md) — Naming, layout, and conventions for `pkg/` packages
+- [Errors](errors.md) — Structured error handling
+- [Handler](handler.md) — Writing HTTP handlers and OpenAPI integration
+- [Endpoint](endpoint.md) — Endpoint conventions
+- [SQL](sql.md) — Database query patterns
+- [Provider](provider.md) — Provider pattern
+- [Integration](integration.md) — Integration conventions
+- [Flagger](flagger.md) — Feature flag conventions
