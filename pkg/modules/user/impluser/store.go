@@ -26,75 +26,75 @@ func NewStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) typ
 }
 
 // CreateBulkInvite implements types.InviteStore.
-func (store *store) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
-	_, err := store.sqlstore.BunDB().NewInsert().
-		Model(&invites).
-		Exec(ctx)
+// func (store *store) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
+// 	_, err := store.sqlstore.BunDB().NewInsert().
+// 		Model(&invites).
+// 		Exec(ctx)
 
-	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrInviteAlreadyExists, "invite with email: %s already exists in org: %s", invites[0].Email, invites[0].OrgID)
-	}
-	return nil
-}
+// 	if err != nil {
+// 		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrInviteAlreadyExists, "invite with email: %s already exists in org: %s", invites[0].Email, invites[0].OrgID)
+// 	}
+// 	return nil
+// }
 
 // Delete implements types.InviteStore.
-func (store *store) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	_, err := store.sqlstore.BunDB().NewDelete().
-		Model(&types.Invite{}).
-		Where("org_id = ?", orgID).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with id: %s does not exist in org: %s", id.StringValue(), orgID)
-	}
-	return nil
-}
+// func (store *store) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
+// 	_, err := store.sqlstore.BunDB().NewDelete().
+// 		Model(&types.Invite{}).
+// 		Where("org_id = ?", orgID).
+// 		Where("id = ?", id).
+// 		Exec(ctx)
+// 	if err != nil {
+// 		return store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with id: %s does not exist in org: %s", id.StringValue(), orgID)
+// 	}
+// 	return nil
+// }
 
-func (store *store) GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.Invite, error) {
-	invite := new(types.Invite)
+// func (store *store) GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.Invite, error) {
+// 	invite := new(types.Invite)
 
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).NewSelect().
-		Model(invite).
-		Where("email = ?", email).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email %s does not exist in org %s", email, orgID)
-	}
+// 	err := store.
+// 		sqlstore.
+// 		BunDBCtx(ctx).NewSelect().
+// 		Model(invite).
+// 		Where("email = ?", email).
+// 		Where("org_id = ?", orgID).
+// 		Scan(ctx)
+// 	if err != nil {
+// 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email %s does not exist in org %s", email, orgID)
+// 	}
 
-	return invite, nil
-}
+// 	return invite, nil
+// }
 
-func (store *store) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
-	invite := new(types.Invite)
+// func (store *store) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
+// 	invite := new(types.Invite)
 
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(invite).
-		Where("token = ?", token).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite does not exist", token)
-	}
+// 	err := store.
+// 		sqlstore.
+// 		BunDBCtx(ctx).
+// 		NewSelect().
+// 		Model(invite).
+// 		Where("token = ?", token).
+// 		Scan(ctx)
+// 	if err != nil {
+// 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite does not exist", token)
+// 	}
 
-	return invite, nil
-}
+// 	return invite, nil
+// }
 
-func (store *store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	invites := new([]*types.Invite)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(invites).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with org id: %s does not exist", orgID)
-	}
-	return *invites, nil
-}
+// func (store *store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
+// 	invites := new([]*types.Invite)
+// 	err := store.sqlstore.BunDB().NewSelect().
+// 		Model(invites).
+// 		Where("org_id = ?", orgID).
+// 		Scan(ctx)
+// 	if err != nil {
+// 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with org id: %s does not exist", orgID)
+// 	}
+// 	return *invites, nil
+// }
 
 func (store *store) CreatePassword(ctx context.Context, password *types.FactorPassword) error {
 	_, err := store.
@@ -202,6 +202,7 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("role = ?", role).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -221,6 +222,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Column("role").
 		Column("is_root").
 		Column("updated_at").
+		Column("status").
 		Where("org_id = ?", orgID).
 		Where("id = ?", user.ID).
 		Exec(ctx)
@@ -239,6 +241,7 @@ func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]
 		NewSelect().
 		Model(&users).
 		Where("org_id = ?", orgID).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -574,6 +577,7 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 		NewSelect().
 		Model(user).
 		Where("org_id = ?", orgID).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Count(ctx)
 	if err != nil {
 		return 0, err
@@ -631,6 +635,24 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 		Model(&users).
 		Where("email = ?", email).
 		Where("org_id IN (?)", bun.In(orgIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (store *store) ListPendingInviteUsers(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
+	users := []*types.User{}
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Where("org_id = ?", orgID).
+		Where("status = ?", types.UserStatusPendingInvite.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

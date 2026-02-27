@@ -23,17 +23,25 @@ var (
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 )
 
+var (
+	UserStatusPendingInvite = valuer.NewString("pending_invite")
+	UserStatusActive        = valuer.NewString("active")
+	UserStatusDeleted       = valuer.NewString("deleted")
+	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
+)
+
 type GettableUser = User
 
 type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	Identifiable
-	DisplayName string       `bun:"display_name" json:"displayName"`
-	Email       valuer.Email `bun:"email" json:"email"`
-	Role        Role         `bun:"role" json:"role"`
-	OrgID       valuer.UUID  `bun:"org_id" json:"orgId"`
-	IsRoot      bool         `bun:"is_root" json:"isRoot"`
+	DisplayName string        `bun:"display_name" json:"displayName"`
+	Email       valuer.Email  `bun:"email" json:"email"`
+	Role        Role          `bun:"role" json:"role"`
+	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
+	IsRoot      bool          `bun:"is_root" json:"isRoot"`
+	Status      valuer.String `bun:"status" json:"status"`
 	TimeAuditable
 }
 
@@ -45,7 +53,7 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -67,6 +75,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		Role:        role,
 		OrgID:       orgID,
 		IsRoot:      false,
+		Status:      status,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -92,6 +101,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 		Role:        RoleAdmin,
 		OrgID:       orgID,
 		IsRoot:      true,
+		Status:      UserStatusActive,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -108,6 +118,11 @@ func (u *User) Update(displayName string, role Role) {
 	if role != "" {
 		u.Role = role
 	}
+	u.UpdatedAt = time.Now()
+}
+
+func (u *User) UpdateStatus(status valuer.String) {
+	u.Status = status
 	u.UpdatedAt = time.Now()
 }
 
@@ -139,6 +154,7 @@ func NewTraitsFromUser(user *User) map[string]any {
 		"role":         user.Role,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
+		"status":       user.Status,
 		"created_at":   user.CreatedAt,
 	}
 }
@@ -161,15 +177,15 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 
 type UserStore interface {
 	// invite
-	CreateBulkInvite(ctx context.Context, invites []*Invite) error
-	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
-	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
+	// CreateBulkInvite(ctx context.Context, invites []*Invite) error
+	// ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
+	// DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
 
 	// Get invite by token.
-	GetInviteByToken(ctx context.Context, token string) (*Invite, error)
+	// GetInviteByToken(ctx context.Context, token string) (*Invite, error)
 
 	// Get invite by email and org.
-	GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*Invite, error)
+	// GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*Invite, error)
 
 	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
@@ -194,6 +210,9 @@ type UserStore interface {
 
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
+
+	// List users in pending invite status
+	ListPendingInviteUsers(ctx context.Context, orgID valuer.UUID) ([]*User, error)
 
 	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error

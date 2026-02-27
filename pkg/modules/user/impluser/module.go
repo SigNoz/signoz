@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
@@ -20,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
@@ -34,10 +36,11 @@ type Module struct {
 	authz     authz.AuthZ
 	analytics analytics.Analytics
 	config    user.Config
+	flagger   flagger.Flagger
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, flagger flagger.Flagger) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -48,57 +51,59 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		analytics: analytics,
 		authz:     authz,
 		config:    config,
+		flagger:   flagger,
 	}
 }
 
-func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
-	invite, err := m.store.GetInviteByToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
+// func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
+// 	invite, err := m.store.GetInviteByToken(ctx, token)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
-	if err != nil {
-		return nil, err
-	}
+// 	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	factorPassword, err := types.NewFactorPassword(password, user.ID.StringValue())
-	if err != nil {
-		return nil, err
-	}
+// 	factorPassword, err := types.NewFactorPassword(password, user.ID.StringValue())
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	err = m.CreateUser(ctx, user, root.WithFactorPassword(factorPassword))
-	if err != nil {
-		return nil, err
-	}
+// 	err = m.CreateUser(ctx, user, root.WithFactorPassword(factorPassword))
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	if err := m.DeleteInvite(ctx, invite.OrgID.String(), invite.ID); err != nil {
-		return nil, err
-	}
+// 	if err := m.DeleteInvite(ctx, invite.OrgID.String(), invite.ID); err != nil {
+// 		return nil, err
+// 	}
 
-	return user, nil
-}
+// 	return user, nil
+// }
 
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
-	invite, err := m.store.GetInviteByToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
+// func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+// 	invite, err := m.store.GetInviteByToken(ctx, token)
+// 	if err != nil {
+// 		return nil, err
+// 	}
 
-	return invite, nil
-}
+// 	return invite, nil
+// }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.User, error) {
+	//! TODO this is an incomplete implementation - will fix this
 	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	invites := make([]*types.Invite, 0, len(bulkInvites.Invites))
+	invitedUsers := make([]*types.User, 0, len(bulkInvites.Invites))
 
 	for _, invite := range bulkInvites.Invites {
-		// check if user exists
+		// check and active user already exists with this email
 		existingUser, err := m.store.GetUserByEmailAndOrgID(ctx, invite.Email, orgID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -106,21 +111,18 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 		if existingUser != nil {
 			if err := existingUser.ErrIfRoot(); err != nil {
-				return nil, errors.WithAdditionalf(err, "cannot send invite to root user")
+				return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
 			}
-		}
 
-		if existingUser != nil {
+			// check if a pending invite already exists
+			if existingUser.Status == types.UserStatusPendingInvite {
+				return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
+			}
+
+			// if user is in soft deleted state, we reinitiate that 
+			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
-		}
-
-		// Check if an invite already exists
-		existingInvite, err := m.store.GetInviteByEmailAndOrgID(ctx, invite.Email, orgID)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
-		if existingInvite != nil {
-			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
 		}
 
 		role, err := types.NewRole(invite.Role.String())
@@ -128,48 +130,72 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			return nil, err
 		}
 
-		newInvite, err := types.NewInvite(invite.Name, role, orgID, invite.Email)
+		// create a new user with pending invite status
+		newUser, err := types.NewUser(invite.Name, invite.Email, role, orgID, types.UserStatusPendingInvite)
 		if err != nil {
 			return nil, err
 		}
 
-		newInvite.InviteLink = fmt.Sprintf("%s/signup?token=%s", invite.FrontendBaseUrl, newInvite.Token)
-		invites = append(invites, newInvite)
+		// generate a temp password
+		password, err := types.GenerateFactorPassword(newUser.ID.StringValue())
+		if err != nil {
+			return nil, err
+		}
+
+		// store the user and password in db
+		err = m.createUserWithoutGrant(ctx, newUser, root.WithFactorPassword(password))
+		if err != nil {
+			return nil, err
+		}
+
+		invitedUsers = append(invitedUsers, newUser)
 	}
 
-	err = m.store.CreateBulkInvite(ctx, invites)
-	if err != nil {
-		return nil, err
-	}
+	// send password reset emails to all the invited users
+	for i, invitedUser := range invitedUsers {
+		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
+			"invitee_email": invitedUser.Email,
+			"invitee_role":  invitedUser.Role,
+		})
 
-	for i := 0; i < len(invites); i++ {
-		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{"invitee_email": invites[i].Email, "invitee_role": invites[i].Role})
-
-		// if the frontend base url is not provided, we don't send the email
-		if bulkInvites.Invites[i].FrontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invites[i].Email)
+		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
+		if frontendBaseUrl == "" {
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
 			continue
 		}
 
-		if err := m.emailing.SendHTML(ctx, invites[i].Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
-			"inviter_email": creator.Email,
-			"link":          fmt.Sprintf("%s/signup?token=%s", bulkInvites.Invites[i].FrontendBaseUrl, invites[i].Token),
-		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
+		// generate reset password token
+		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, invitedUser.ID)
+		if err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+			continue
 		}
 
+		resetLink := m.resetLink(frontendBaseUrl, resetPasswordToken.Token)
+
+		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
+		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
+
+		// TODO! improve invitation email text and add expiry details too
+		if err := m.emailing.SendHTML(ctx, invitedUser.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+			"inviter_email": creator.Email,
+			"link":          resetLink,
+			"Expiry":        humanizedTokenLifetime,
+		}); err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
+		}
 	}
 
-	return invites, nil
+	return invitedUsers, nil
 }
 
-func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	return m.store.ListInvite(ctx, orgID)
-}
+// func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.User, error) {
+// 	return m.store.ListPendingInviteUsers(ctx, orgID)
+// }
 
-func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	return m.store.DeleteInvite(ctx, orgID, id)
-}
+// func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
+// 	return m.store.DeleteInvite(ctx, orgID, id)
+// }
 
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
@@ -300,12 +326,23 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
-		return err
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	softDeleteUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureSoftDeleteUsers, evalCtx)
+
+	if softDeleteUsers {
+		user.UpdateStatus(types.UserStatusDeleted)
+		if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+			return err
+		}
+	} else {
+		if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
+			return err
+		}
 	}
 
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
-		"deleted_by": deletedBy,
+		"deleted_by":     deletedBy,
+		"is_soft_delete": softDeleteUsers,
 	})
 
 	return nil
@@ -393,7 +430,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return err
 	}
 
-	resetLink := fmt.Sprintf("%s/password-reset?token=%s", frontendBaseURL, token.Token)
+	resetLink := module.resetLink(frontendBaseURL, token.Token)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
@@ -441,6 +478,25 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	if err := password.Update(passwd); err != nil {
 		return err
+	}
+
+	// update the status of user if this a newly invited user and also grant authz
+	if user.Status == types.UserStatusPendingInvite {
+		err = module.authz.Grant(
+			ctx,
+			user.OrgID,
+			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+		)
+		if err != nil {
+			return err
+		}
+
+		user.UpdateStatus(types.UserStatusActive)
+		err = module.store.UpdateUser(ctx, user.OrgID, user)
+		if err != nil {
+			return err
+		}
 	}
 
 	return module.store.UpdatePassword(ctx, password)
@@ -597,4 +653,8 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.U
 	module.analytics.TrackUser(ctx, input.OrgID.String(), input.ID.String(), "User Created", traitsOrProperties)
 
 	return nil
+}
+
+func (module *Module) resetLink(frontendBaseUrl string, token string) string {
+	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, token)
 }
