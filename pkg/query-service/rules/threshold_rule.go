@@ -33,7 +33,7 @@ import (
 
 	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/query-service/formatter"
+	"github.com/SigNoz/signoz/pkg/units"
 
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
@@ -571,7 +571,7 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
 
-	valueFormatter := formatter.FromUnit(r.Unit())
+	valueFormatter := units.FormatterFromUnit(r.Unit())
 
 	var res ruletypes.Vector
 	var err error

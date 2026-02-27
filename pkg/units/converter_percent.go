@@ -1,4 +1,4 @@
-package converter
+package units
 
 // percentConverter is a converter for percent unit
 type percentConverter struct{}

@@ -1,4 +1,4 @@
-package converter
+package units
 
 type Duration float64
 

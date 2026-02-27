@@ -1,4 +1,4 @@
-package converter
+package units
 
 // Unit represents a unit of measurement
 type Unit string
@@ -40,8 +40,8 @@ var (
 	NoneConverter       = &noneConverter{}
 )
 
-// FromUnit returns a converter for the given unit
-func FromUnit(u Unit) Converter {
+// ConverterFromUnit returns a converter for the given unit
+func ConverterFromUnit(u Unit) Converter {
 	switch u {
 	case "ns", "us", "µs", "ms", "s", "m", "h", "d", "min", "w", "wk":
 		return DurationConverter
