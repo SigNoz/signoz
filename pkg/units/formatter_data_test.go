@@ -1,4 +1,4 @@
-package formatter
+package units
 
 import (
 	"testing"
@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestData(t *testing.T) {
+func TestFormatterData(t *testing.T) {
 	dataFormatter := NewDataFormatter()
 
 	assert.Equal(t, "1 B", dataFormatter.Format(1, "bytes"))

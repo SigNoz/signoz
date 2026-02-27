@@ -1,4 +1,4 @@
-package converter
+package units
 
 const (
 	// base 10 (SI prefixes)
