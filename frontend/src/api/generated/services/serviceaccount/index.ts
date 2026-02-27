@@ -22,15 +22,23 @@ import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	CreateServiceAccount201,
 	CreateServiceAccountKey201,
+	CreateServiceAccountKeyPathParameters,
+	DeleteServiceAccountPathParameters,
 	GetServiceAccount200,
+	GetServiceAccountPathParameters,
 	ListServiceAccountKeys200,
+	ListServiceAccountKeysPathParameters,
 	ListServiceAccounts200,
 	RenderErrorResponseDTO,
+	RevokeServiceAccountKeyPathParameters,
 	ServiceaccounttypesPostableFactorAPIKeyDTO,
 	ServiceaccounttypesPostableServiceAccountDTO,
 	ServiceaccounttypesUpdatableFactorAPIKeyDTO,
 	ServiceaccounttypesUpdatableServiceAccountDTO,
 	ServiceaccounttypesUpdatableServiceAccountStatusDTO,
+	UpdateServiceAccountKeyPathParameters,
+	UpdateServiceAccountPathParameters,
+	UpdateServiceAccountStatusPathParameters,
 } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -210,9 +218,11 @@ export const useCreateServiceAccount = <
  * This endpoint deletes an existing service account
  * @summary Deletes a service account
  */
-export const deleteServiceAccount = () => {
+export const deleteServiceAccount = ({
+	id,
+}: DeleteServiceAccountPathParameters) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/service_accounts/:id`,
+		url: `/api/v1/service_accounts/${id}`,
 		method: 'DELETE',
 	});
 };
@@ -224,13 +234,13 @@ export const getDeleteServiceAccountMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteServiceAccount>>,
 		TError,
-		void,
+		{ pathParams: DeleteServiceAccountPathParameters },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof deleteServiceAccount>>,
 	TError,
-	void,
+	{ pathParams: DeleteServiceAccountPathParameters },
 	TContext
 > => {
 	const mutationKey = ['deleteServiceAccount'];
@@ -244,9 +254,11 @@ export const getDeleteServiceAccountMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof deleteServiceAccount>>,
-		void
-	> = () => {
-		return deleteServiceAccount();
+		{ pathParams: DeleteServiceAccountPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return deleteServiceAccount(pathParams);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -268,13 +280,13 @@ export const useDeleteServiceAccount = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteServiceAccount>>,
 		TError,
-		void,
+		{ pathParams: DeleteServiceAccountPathParameters },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof deleteServiceAccount>>,
 	TError,
-	void,
+	{ pathParams: DeleteServiceAccountPathParameters },
 	TContext
 > => {
 	const mutationOptions = getDeleteServiceAccountMutationOptions(options);
@@ -285,37 +297,51 @@ export const useDeleteServiceAccount = <
  * This endpoint gets an existing service account
  * @summary Gets a service account
  */
-export const getServiceAccount = (signal?: AbortSignal) => {
+export const getServiceAccount = (
+	{ id }: GetServiceAccountPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<GetServiceAccount200>({
-		url: `/api/v1/service_accounts/:id`,
+		url: `/api/v1/service_accounts/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetServiceAccountQueryKey = () => {
-	return [`/api/v1/service_accounts/:id`] as const;
+export const getGetServiceAccountQueryKey = ({
+	id,
+}: GetServiceAccountPathParameters) => {
+	return [`/api/v1/service_accounts/${id}`] as const;
 };
 
 export const getGetServiceAccountQueryOptions = <
 	TData = Awaited<ReturnType<typeof getServiceAccount>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getServiceAccount>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	{ id }: GetServiceAccountPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getServiceAccount>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetServiceAccountQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getGetServiceAccountQueryKey({ id });
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof getServiceAccount>>
-	> = ({ signal }) => getServiceAccount(signal);
+	> = ({ signal }) => getServiceAccount({ id }, signal);
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
 		Awaited<ReturnType<typeof getServiceAccount>>,
 		TError,
 		TData
@@ -334,14 +360,17 @@ export type GetServiceAccountQueryError = ErrorType<RenderErrorResponseDTO>;
 export function useGetServiceAccount<
 	TData = Awaited<ReturnType<typeof getServiceAccount>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getServiceAccount>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetServiceAccountQueryOptions(options);
+>(
+	{ id }: GetServiceAccountPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getServiceAccount>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetServiceAccountQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -357,10 +386,11 @@ export function useGetServiceAccount<
  */
 export const invalidateGetServiceAccount = async (
 	queryClient: QueryClient,
+	{ id }: GetServiceAccountPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetServiceAccountQueryKey() },
+		{ queryKey: getGetServiceAccountQueryKey({ id }) },
 		options,
 	);
 
@@ -372,10 +402,11 @@ export const invalidateGetServiceAccount = async (
  * @summary Updates a service account
  */
 export const updateServiceAccount = (
+	{ id }: UpdateServiceAccountPathParameters,
 	serviceaccounttypesUpdatableServiceAccountDTO: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/service_accounts/:id`,
+		url: `/api/v1/service_accounts/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: serviceaccounttypesUpdatableServiceAccountDTO,
@@ -389,13 +420,19 @@ export const getUpdateServiceAccountMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccount>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO> },
+		{
+			pathParams: UpdateServiceAccountPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateServiceAccount>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO> },
+	{
+		pathParams: UpdateServiceAccountPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateServiceAccount'];
@@ -409,11 +446,14 @@ export const getUpdateServiceAccountMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateServiceAccount>>,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO> }
+		{
+			pathParams: UpdateServiceAccountPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+		}
 	> = (props) => {
-		const { data } = props ?? {};
+		const { pathParams, data } = props ?? {};
 
-		return updateServiceAccount(data);
+		return updateServiceAccount(pathParams, data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -435,13 +475,19 @@ export const useUpdateServiceAccount = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccount>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO> },
+		{
+			pathParams: UpdateServiceAccountPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateServiceAccount>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO> },
+	{
+		pathParams: UpdateServiceAccountPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateServiceAccountMutationOptions(options);
@@ -452,37 +498,51 @@ export const useUpdateServiceAccount = <
  * This endpoint lists the service account keys
  * @summary List service account keys
  */
-export const listServiceAccountKeys = (signal?: AbortSignal) => {
+export const listServiceAccountKeys = (
+	{ id }: ListServiceAccountKeysPathParameters,
+	signal?: AbortSignal,
+) => {
 	return GeneratedAPIInstance<ListServiceAccountKeys200>({
-		url: `/api/v1/service_accounts/:id/keys`,
+		url: `/api/v1/service_accounts/${id}/keys`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getListServiceAccountKeysQueryKey = () => {
-	return [`/api/v1/service_accounts/:id/keys`] as const;
+export const getListServiceAccountKeysQueryKey = ({
+	id,
+}: ListServiceAccountKeysPathParameters) => {
+	return [`/api/v1/service_accounts/${id}/keys`] as const;
 };
 
 export const getListServiceAccountKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof listServiceAccountKeys>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listServiceAccountKeys>>,
-		TError,
-		TData
-	>;
-}) => {
+>(
+	{ id }: ListServiceAccountKeysPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServiceAccountKeys>>,
+			TError,
+			TData
+		>;
+	},
+) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListServiceAccountKeysQueryKey();
+	const queryKey =
+		queryOptions?.queryKey ?? getListServiceAccountKeysQueryKey({ id });
 
 	const queryFn: QueryFunction<
 		Awaited<ReturnType<typeof listServiceAccountKeys>>
-	> = ({ signal }) => listServiceAccountKeys(signal);
+	> = ({ signal }) => listServiceAccountKeys({ id }, signal);
 
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccountKeys>>,
 		TError,
 		TData
@@ -501,14 +561,17 @@ export type ListServiceAccountKeysQueryError = ErrorType<RenderErrorResponseDTO>
 export function useListServiceAccountKeys<
 	TData = Awaited<ReturnType<typeof listServiceAccountKeys>>,
 	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listServiceAccountKeys>>,
-		TError,
-		TData
-	>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListServiceAccountKeysQueryOptions(options);
+>(
+	{ id }: ListServiceAccountKeysPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof listServiceAccountKeys>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListServiceAccountKeysQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -524,10 +587,11 @@ export function useListServiceAccountKeys<
  */
 export const invalidateListServiceAccountKeys = async (
 	queryClient: QueryClient,
+	{ id }: ListServiceAccountKeysPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListServiceAccountKeysQueryKey() },
+		{ queryKey: getListServiceAccountKeysQueryKey({ id }) },
 		options,
 	);
 
@@ -539,11 +603,12 @@ export const invalidateListServiceAccountKeys = async (
  * @summary Create a service account key
  */
 export const createServiceAccountKey = (
+	{ id }: CreateServiceAccountKeyPathParameters,
 	serviceaccounttypesPostableFactorAPIKeyDTO: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<CreateServiceAccountKey201>({
-		url: `/api/v1/service_accounts/:id/keys`,
+		url: `/api/v1/service_accounts/${id}/keys`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
 		data: serviceaccounttypesPostableFactorAPIKeyDTO,
@@ -558,13 +623,19 @@ export const getCreateServiceAccountKeyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccountKey>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO> },
+		{
+			pathParams: CreateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createServiceAccountKey>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO> },
+	{
+		pathParams: CreateServiceAccountKeyPathParameters;
+		data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['createServiceAccountKey'];
@@ -578,11 +649,14 @@ export const getCreateServiceAccountKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createServiceAccountKey>>,
-		{ data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO> }
+		{
+			pathParams: CreateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+		}
 	> = (props) => {
-		const { data } = props ?? {};
+		const { pathParams, data } = props ?? {};
 
-		return createServiceAccountKey(data);
+		return createServiceAccountKey(pathParams, data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -604,13 +678,19 @@ export const useCreateServiceAccountKey = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccountKey>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO> },
+		{
+			pathParams: CreateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createServiceAccountKey>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO> },
+	{
+		pathParams: CreateServiceAccountKeyPathParameters;
+		data: BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getCreateServiceAccountKeyMutationOptions(options);
@@ -621,9 +701,12 @@ export const useCreateServiceAccountKey = <
  * This endpoint revokes an existing service account key
  * @summary Revoke a service account key
  */
-export const revokeServiceAccountKey = () => {
+export const revokeServiceAccountKey = ({
+	id,
+	fid,
+}: RevokeServiceAccountKeyPathParameters) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/service_accounts/:id/keys/:fid`,
+		url: `/api/v1/service_accounts/${id}/keys/${fid}`,
 		method: 'DELETE',
 	});
 };
@@ -635,13 +718,13 @@ export const getRevokeServiceAccountKeyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeServiceAccountKey>>,
 		TError,
-		void,
+		{ pathParams: RevokeServiceAccountKeyPathParameters },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof revokeServiceAccountKey>>,
 	TError,
-	void,
+	{ pathParams: RevokeServiceAccountKeyPathParameters },
 	TContext
 > => {
 	const mutationKey = ['revokeServiceAccountKey'];
@@ -655,9 +738,11 @@ export const getRevokeServiceAccountKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof revokeServiceAccountKey>>,
-		void
-	> = () => {
-		return revokeServiceAccountKey();
+		{ pathParams: RevokeServiceAccountKeyPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return revokeServiceAccountKey(pathParams);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -679,13 +764,13 @@ export const useRevokeServiceAccountKey = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeServiceAccountKey>>,
 		TError,
-		void,
+		{ pathParams: RevokeServiceAccountKeyPathParameters },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof revokeServiceAccountKey>>,
 	TError,
-	void,
+	{ pathParams: RevokeServiceAccountKeyPathParameters },
 	TContext
 > => {
 	const mutationOptions = getRevokeServiceAccountKeyMutationOptions(options);
@@ -697,10 +782,11 @@ export const useRevokeServiceAccountKey = <
  * @summary Updates a service account key
  */
 export const updateServiceAccountKey = (
+	{ id, fid }: UpdateServiceAccountKeyPathParameters,
 	serviceaccounttypesUpdatableFactorAPIKeyDTO: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/service_accounts/:id/keys/:fid`,
+		url: `/api/v1/service_accounts/${id}/keys/${fid}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: serviceaccounttypesUpdatableFactorAPIKeyDTO,
@@ -714,13 +800,19 @@ export const getUpdateServiceAccountKeyMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountKey>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO> },
+		{
+			pathParams: UpdateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateServiceAccountKey>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO> },
+	{
+		pathParams: UpdateServiceAccountKeyPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateServiceAccountKey'];
@@ -734,11 +826,14 @@ export const getUpdateServiceAccountKeyMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateServiceAccountKey>>,
-		{ data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO> }
+		{
+			pathParams: UpdateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+		}
 	> = (props) => {
-		const { data } = props ?? {};
+		const { pathParams, data } = props ?? {};
 
-		return updateServiceAccountKey(data);
+		return updateServiceAccountKey(pathParams, data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -760,13 +855,19 @@ export const useUpdateServiceAccountKey = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountKey>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO> },
+		{
+			pathParams: UpdateServiceAccountKeyPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateServiceAccountKey>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO> },
+	{
+		pathParams: UpdateServiceAccountKeyPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateServiceAccountKeyMutationOptions(options);
@@ -778,10 +879,11 @@ export const useUpdateServiceAccountKey = <
  * @summary Updates a service account status
  */
 export const updateServiceAccountStatus = (
+	{ id }: UpdateServiceAccountStatusPathParameters,
 	serviceaccounttypesUpdatableServiceAccountStatusDTO: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>,
 ) => {
 	return GeneratedAPIInstance<string>({
-		url: `/api/v1/service_accounts/:id/status`,
+		url: `/api/v1/service_accounts/${id}/status`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
 		data: serviceaccounttypesUpdatableServiceAccountStatusDTO,
@@ -795,13 +897,19 @@ export const getUpdateServiceAccountStatusMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+		{
+			pathParams: UpdateServiceAccountStatusPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateServiceAccountStatus>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+	{
+		pathParams: UpdateServiceAccountStatusPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateServiceAccountStatus'];
@@ -815,11 +923,14 @@ export const getUpdateServiceAccountStatusMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> }
+		{
+			pathParams: UpdateServiceAccountStatusPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+		}
 	> = (props) => {
-		const { data } = props ?? {};
+		const { pathParams, data } = props ?? {};
 
-		return updateServiceAccountStatus(data);
+		return updateServiceAccountStatus(pathParams, data);
 	};
 
 	return { mutationFn, ...mutationOptions };
@@ -841,13 +952,19 @@ export const useUpdateServiceAccountStatus = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
 		TError,
-		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+		{
+			pathParams: UpdateServiceAccountStatusPathParameters;
+			data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateServiceAccountStatus>>,
 	TError,
-	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+	{
+		pathParams: UpdateServiceAccountStatusPathParameters;
+		data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateServiceAccountStatusMutationOptions(options);

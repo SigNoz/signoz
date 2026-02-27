@@ -1752,12 +1752,12 @@ components:
       type: object
     ServiceaccounttypesFactorAPIKey:
       properties:
-        created_at:
-          minimum: 0
-          type: integer
         createdAt:
           format: date-time
           type: string
+        expires_at:
+          minimum: 0
+          type: integer
         id:
           type: string
         key:
@@ -1775,7 +1775,7 @@ components:
       required:
       - id
       - key
-      - created_at
+      - expires_at
       - last_used
       - service_account_id
       type: object
@@ -1856,13 +1856,10 @@ components:
           items:
             type: string
           type: array
-        status:
-          type: string
       required:
       - name
       - email
       - roles
-      - status
       type: object
     ServiceaccounttypesUpdatableServiceAccountStatus:
       properties:
@@ -4755,11 +4752,17 @@ paths:
       summary: Create service account
       tags:
       - serviceaccount
-  /api/v1/service_accounts/:id:
+  /api/v1/service_accounts/{id}:
     delete:
       deprecated: false
       description: This endpoint deletes an existing service account
       operationId: DeleteServiceAccount
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "204":
           content:
@@ -4803,6 +4806,12 @@ paths:
       deprecated: false
       description: This endpoint gets an existing service account
       operationId: GetServiceAccount
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -4854,6 +4863,12 @@ paths:
       deprecated: false
       description: This endpoint updates an existing service account
       operationId: UpdateServiceAccount
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -4904,11 +4919,17 @@ paths:
       summary: Updates a service account
       tags:
       - serviceaccount
-  /api/v1/service_accounts/:id/keys:
+  /api/v1/service_accounts/{id}/keys:
     get:
       deprecated: false
       description: This endpoint lists the service account keys
       operationId: ListServiceAccountKeys
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       responses:
         "200":
           content:
@@ -4956,6 +4977,12 @@ paths:
       deprecated: false
       description: This endpoint creates a service account key
       operationId: CreateServiceAccountKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -5014,11 +5041,22 @@ paths:
       summary: Create a service account key
       tags:
       - serviceaccount
-  /api/v1/service_accounts/:id/keys/:fid:
+  /api/v1/service_accounts/{id}/keys/{fid}:
     delete:
       deprecated: false
       description: This endpoint revokes an existing service account key
       operationId: RevokeServiceAccountKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: fid
+        required: true
+        schema:
+          type: string
       responses:
         "204":
           content:
@@ -5062,6 +5100,17 @@ paths:
       deprecated: false
       description: This endpoint updates an existing service account key
       operationId: UpdateServiceAccountKey
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: fid
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:
@@ -5112,11 +5161,17 @@ paths:
       summary: Updates a service account key
       tags:
       - serviceaccount
-  /api/v1/service_accounts/:id/status:
+  /api/v1/service_accounts/{id}/status:
     put:
       deprecated: false
       description: This endpoint updates an existing service account status
       operationId: UpdateServiceAccountStatus
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
       requestBody:
         content:
           application/json:

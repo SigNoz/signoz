@@ -2079,15 +2079,15 @@ export interface RoletypesRoleDTO {
 
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
-	 * @type integer
-	 * @minimum 0
-	 */
-	created_at: number;
-	/**
 	 * @type string
 	 * @format date-time
 	 */
 	createdAt?: Date;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expires_at: number;
 	/**
 	 * @type string
 	 */
@@ -2205,10 +2205,6 @@ export interface ServiceaccounttypesUpdatableServiceAccountDTO {
 	 * @type array
 	 */
 	roles: string[];
-	/**
-	 * @type string
-	 */
-	status: string;
 }
 
 export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
@@ -3197,6 +3193,12 @@ export type CreateServiceAccount201 = {
 	status: string;
 };
 
+export type DeleteServiceAccountPathParameters = {
+	id: string;
+};
+export type GetServiceAccountPathParameters = {
+	id: string;
+};
 export type GetServiceAccount200 = {
 	data: ServiceaccounttypesServiceAccountDTO;
 	/**
@@ -3205,6 +3207,12 @@ export type GetServiceAccount200 = {
 	status: string;
 };
 
+export type UpdateServiceAccountPathParameters = {
+	id: string;
+};
+export type ListServiceAccountKeysPathParameters = {
+	id: string;
+};
 export type ListServiceAccountKeys200 = {
 	/**
 	 * @type array
@@ -3216,6 +3224,9 @@ export type ListServiceAccountKeys200 = {
 	status: string;
 };
 
+export type CreateServiceAccountKeyPathParameters = {
+	id: string;
+};
 export type CreateServiceAccountKey201 = {
 	data: TypesIdentifiableDTO;
 	/**
@@ -3224,6 +3235,17 @@ export type CreateServiceAccountKey201 = {
 	status: string;
 };
 
+export type RevokeServiceAccountKeyPathParameters = {
+	id: string;
+	fid: string;
+};
+export type UpdateServiceAccountKeyPathParameters = {
+	id: string;
+	fid: string;
+};
+export type UpdateServiceAccountStatusPathParameters = {
+	id: string;
+};
 export type ListUsers200 = {
 	/**
 	 * @type array
