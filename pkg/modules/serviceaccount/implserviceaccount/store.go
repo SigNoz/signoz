@@ -48,6 +48,23 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storable, nil
 }
 
+func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
+	storable := new(serviceaccounttypes.StorableServiceAccount)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with id: %s doesn't exist", id)
+	}
+
+	return storable, nil
+}
+
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccount, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccount, 0)
 
@@ -222,6 +239,21 @@ func (store *store) RevokeFactorAPIKey(ctx context.Context, serviceAccountID val
 		Model(new(serviceaccounttypes.StorableFactorAPIKey)).
 		Where("service_account_id = ?", serviceAccountID).
 		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (store *store) RevokeAllFactorAPIKeys(ctx context.Context, serviceAccountID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.StorableFactorAPIKey)).
+		Where("service_account_id = ?", serviceAccountID).
 		Exec(ctx)
 	if err != nil {
 		return err

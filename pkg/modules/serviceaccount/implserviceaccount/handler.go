@@ -121,6 +121,42 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusNoContent, nil)
 }
 
+func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	id, err := valuer.NewUUID(mux.Vars(r)["id"])
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	req := new(serviceaccounttypes.UpdatableServiceAccount)
+	if err := binding.JSON.BindBody(r.Body, req); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccount, err := handler.module.Get(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	serviceAccount.UpdateStatus(req.Status)
+	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusNoContent, nil)
+}
+
 func (handler *handler) Delete(rw http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	claims, err := authtypes.ClaimsFromContext(ctx)

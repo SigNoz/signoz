@@ -2209,6 +2209,17 @@ export interface ServiceaccounttypesUpdatableServiceAccountDTO {
 	 * @type array
 	 */
 	roles: string[];
+	/**
+	 * @type string
+	 */
+	status: string;
+}
+
+export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
+	/**
+	 * @type string
+	 */
+	status: string;
 }
 
 export enum TelemetrytypesFieldContextDTO {

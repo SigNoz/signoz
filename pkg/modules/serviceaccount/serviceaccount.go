@@ -24,6 +24,9 @@ type Module interface {
 	// Updates an existing service account
 	Update(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
+	// Updates an existing service account status
+	UpdateStatus(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
+
 	// TODO[@vikrantgupta25]: implement the disable/activate interface as well.
 
 	// Deletes an existing service account by id
@@ -53,6 +56,8 @@ type Handler interface {
 	List(http.ResponseWriter, *http.Request)
 
 	Update(http.ResponseWriter, *http.Request)
+
+	UpdateStatus(http.ResponseWriter, *http.Request)
 
 	Delete(http.ResponseWriter, *http.Request)
 

@@ -2,6 +2,7 @@ package serviceaccounttypes
 
 import (
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -54,9 +55,14 @@ type PostableServiceAccount struct {
 }
 
 type UpdatableServiceAccount struct {
-	Name  string       `json:"name" required:"true"`
-	Email valuer.Email `json:"email" required:"true"`
-	Roles []string     `json:"roles" required:"true" nullable:"false"`
+	Name   string        `json:"name" required:"true"`
+	Email  valuer.Email  `json:"email" required:"true"`
+	Roles  []string      `json:"roles" required:"true" nullable:"false"`
+	Status valuer.String `json:"status" required:"true"`
+}
+
+type UpdatableServiceAccountStatus struct {
+	Status valuer.String `json:"status" required:"true"`
 }
 
 func NewServiceAccount(name string, email valuer.Email, roles []string, status valuer.String, orgID valuer.UUID) *ServiceAccount {
@@ -128,6 +134,11 @@ func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string
 	sa.Name = name
 	sa.Email = email
 	sa.Roles = roles
+	sa.UpdatedAt = time.Now()
+}
+
+func (sa *ServiceAccount) UpdateStatus(status valuer.String) {
+	sa.Status = status
 	sa.UpdatedAt = time.Now()
 }
 
@@ -207,6 +218,26 @@ func (sa *UpdatableServiceAccount) UnmarshalJSON(data []byte) error {
 		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name cannot be empty")
 	}
 
+	if !slices.Contains(ValidStatus, temp.Status) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "invalid status: %s, allowed status are: %v", temp.Status, ValidStatus)
+	}
+
 	*sa = UpdatableServiceAccount(temp)
+	return nil
+}
+
+func (sa *UpdatableServiceAccountStatus) UnmarshalJSON(data []byte) error {
+	type Alias UpdatableServiceAccountStatus
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	if !slices.Contains(ValidStatus, temp.Status) {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "invalid status: %s, allowed status are: %v", temp.Status, ValidStatus)
+	}
+
+	*sa = UpdatableServiceAccountStatus(temp)
 	return nil
 }

@@ -82,6 +82,9 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_api_key", ColumnNames: []sqlschema.ColumnName{"key"}})
 	sqls = append(sqls, indexSQLs...)
 
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "factor_api_key", ColumnNames: []sqlschema.ColumnName{"name"}})
+	sqls = append(sqls, indexSQLs...)
+
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err

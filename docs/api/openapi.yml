@@ -1858,10 +1858,20 @@ components:
           items:
             type: string
           type: array
+        status:
+          type: string
       required:
       - name
       - email
       - roles
+      - status
+      type: object
+    ServiceaccounttypesUpdatableServiceAccountStatus:
+      properties:
+        status:
+          type: string
+      required:
+      - status
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -5102,6 +5112,61 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Updates a service account key
+      tags:
+      - serviceaccount
+  /api/v1/service_accounts/:id/status:
+    put:
+      deprecated: false
+      description: This endpoint updates an existing service account status
+      operationId: UpdateServiceAccountStatus
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesUpdatableServiceAccountStatus'
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Updates a service account status
       tags:
       - serviceaccount
   /api/v1/user:

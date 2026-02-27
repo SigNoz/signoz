@@ -18,6 +18,7 @@ var (
 var (
 	TemplateNameInvitationEmail = TemplateName{valuer.NewString("invitation")}
 	TemplateNameResetPassword   = TemplateName{valuer.NewString("reset_password")}
+	TemplateNameNewAPIKey       = TemplateName{valuer.NewString("new_api_key")}
 )
 
 type TemplateName struct{ valuer.String }
@@ -28,6 +29,8 @@ func NewTemplateName(name string) (TemplateName, error) {
 		return TemplateNameInvitationEmail, nil
 	case TemplateNameResetPassword.StringValue():
 		return TemplateNameResetPassword, nil
+	case TemplateNameNewAPIKey.StringValue():
+		return TemplateNameNewAPIKey, nil
 	default:
 		return TemplateName{}, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid template name: %s", name)
 	}

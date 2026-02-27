@@ -10,6 +10,7 @@ type Store interface {
 	// Service Account
 	Create(context.Context, *StorableServiceAccount) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableServiceAccount, error)
+	GetByID(context.Context, valuer.UUID) (*StorableServiceAccount, error)
 	List(context.Context, valuer.UUID) ([]*StorableServiceAccount, error)
 	Update(context.Context, valuer.UUID, *StorableServiceAccount) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -26,6 +27,7 @@ type Store interface {
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*StorableFactorAPIKey, error)
 	UpdateFactorAPIKey(context.Context, valuer.UUID, *StorableFactorAPIKey) error
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
+	RevokeAllFactorAPIKeys(context.Context, valuer.UUID) error
 
 	RunInTx(context.Context, func(context.Context) error) error
 }

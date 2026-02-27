@@ -4,19 +4,25 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type module struct {
-	store serviceaccounttypes.Store
-	authz authz.AuthZ
+	store    serviceaccounttypes.Store
+	authz    authz.AuthZ
+	emailing emailing.Emailing
+	settings factory.ScopedProviderSettings
 }
 
-func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ) serviceaccount.Module {
-	return &module{store: store, authz: authz}
+func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, emailing emailing.Emailing, providerSettings factory.ProviderSettings) serviceaccount.Module {
+	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount")
+	return &module{store: store, authz: authz, emailing: emailing, settings: settings}
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAccount *serviceaccounttypes.ServiceAccount) error {
@@ -164,6 +170,32 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serv
 	return nil
 }
 
+func (module *module) UpdateStatus(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	serviceAccount, err := module.Get(ctx, orgID, input.ID)
+	if err != nil {
+		return err
+	}
+
+	if input.Status == serviceAccount.Status {
+		return nil
+	}
+
+	switch input.Status {
+	case serviceaccounttypes.StatusActive:
+		err := module.activateServiceAccount(ctx, orgID, input)
+		if err != nil {
+			return err
+		}
+	case serviceaccounttypes.StatusDisabled:
+		err := module.disableServiceAccount(ctx, orgID, input)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
+}
+
 func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error {
 	serviceAccount, err := module.Get(ctx, orgID, id)
 	if err != nil {
@@ -178,6 +210,11 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		err := module.store.DeleteServiceAccountRoles(ctx, serviceAccount.ID)
+		if err != nil {
+			return err
+		}
+
+		err = module.store.RevokeAllFactorAPIKeys(ctx, serviceAccount.ID)
 		if err != nil {
 			return err
 		}
@@ -202,6 +239,17 @@ func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serv
 	err := module.store.CreateFactorAPIKey(ctx, storableFactorAPIKey)
 	if err != nil {
 		return err
+	}
+
+	serviceAccount, err := module.store.GetByID(ctx, factorAPIKey.ServiceAccountID)
+	if err != nil {
+		return err
+	}
+
+	if err := module.emailing.SendHTML(ctx, serviceAccount.Email, "New API Key has been added to your service account", emailtypes.TemplateNameNewAPIKey, map[string]any{
+		"name": serviceAccount.Name,
+	}); err != nil {
+		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 	}
 
 	return nil
@@ -231,4 +279,46 @@ func (module *module) UpdateFactorAPIKey(ctx context.Context, serviceAccountID v
 
 func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {
 	return module.store.RevokeFactorAPIKey(ctx, serviceAccountID, id)
+}
+
+func (module *module) disableServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, &authtypes.RelationAssignee))
+	if err != nil {
+		return err
+	}
+
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// revoke all the API keys on disable
+		err := module.store.RevokeAllFactorAPIKeys(ctx, input.ID)
+		if err != nil {
+			return err
+		}
+
+		// update the status but do not delete the role mappings as we will reuse them on activation.
+		err = module.Update(ctx, orgID, input)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (module *module) activateServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	err := module.authz.Grant(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, &authtypes.RelationAssignee))
+	if err != nil {
+		return err
+	}
+
+	err = module.Update(ctx, orgID, input)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

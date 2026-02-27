@@ -30,6 +30,7 @@ import type {
 	ServiceaccounttypesPostableServiceAccountDTO,
 	ServiceaccounttypesUpdatableFactorAPIKeyDTO,
 	ServiceaccounttypesUpdatableServiceAccountDTO,
+	ServiceaccounttypesUpdatableServiceAccountStatusDTO,
 } from '../sigNoz.schemas';
 
 type AwaitedInput<T> = PromiseLike<T> | T;
@@ -769,6 +770,87 @@ export const useUpdateServiceAccountKey = <
 	TContext
 > => {
 	const mutationOptions = getUpdateServiceAccountKeyMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint updates an existing service account status
+ * @summary Updates a service account status
+ */
+export const updateServiceAccountStatus = (
+	serviceaccounttypesUpdatableServiceAccountStatusDTO: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v1/service_accounts/:id/status`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: serviceaccounttypesUpdatableServiceAccountStatusDTO,
+	});
+};
+
+export const getUpdateServiceAccountStatusMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
+		TError,
+		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateServiceAccountStatus>>,
+	TError,
+	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+	TContext
+> => {
+	const mutationKey = ['updateServiceAccountStatus'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
+		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return updateServiceAccountStatus(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateServiceAccountStatusMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateServiceAccountStatus>>
+>;
+export type UpdateServiceAccountStatusMutationBody = BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+export type UpdateServiceAccountStatusMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Updates a service account status
+ */
+export const useUpdateServiceAccountStatus = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
+		TError,
+		{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateServiceAccountStatus>>,
+	TError,
+	{ data: BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO> },
+	TContext
+> => {
+	const mutationOptions = getUpdateServiceAccountStatusMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

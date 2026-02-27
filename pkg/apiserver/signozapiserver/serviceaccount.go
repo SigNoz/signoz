@@ -78,6 +78,23 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/service_accounts/:id/status", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateStatus), handler.OpenAPIDef{
+		ID:                  "UpdateServiceAccountStatus",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Updates a service account status",
+		Description:         "This endpoint updates an existing service account status",
+		Request:             new(serviceaccounttypes.UpdatableServiceAccountStatus),
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/service_accounts/:id", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Delete), handler.OpenAPIDef{
 		ID:                  "DeleteServiceAccount",
 		Tags:                []string{"serviceaccount"},
