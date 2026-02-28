@@ -37,7 +37,6 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	return undefined;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const omitIdFromQuery = (query: Query | null): any => ({
 	...query,
 	builder: {

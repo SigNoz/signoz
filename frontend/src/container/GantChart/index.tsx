@@ -53,7 +53,6 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 					activeSpanPath={activeSpanPath}
 					setActiveHoverId={setActiveHoverId}
 					key={data.id}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...{
 						...data,
 						globalSpread,

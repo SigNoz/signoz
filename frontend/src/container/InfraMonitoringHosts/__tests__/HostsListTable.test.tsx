@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { render, screen } from '@testing-library/react';
 import { HostData, HostListResponse } from 'api/infraMonitoring/getHostLists';
 import { ErrorResponse, SuccessResponse } from 'types/api';

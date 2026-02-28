@@ -407,7 +407,6 @@ function timelinePlugin(opts: any): any {
 					}
 				});
 
-				// eslint-disable-next-line no-param-reassign
 				u.ctx.lineWidth = strokeWidth;
 				drawBoxes(u.ctx);
 
@@ -483,7 +482,6 @@ function timelinePlugin(opts: any): any {
 
 				// force-clear the path cache to cause drawBars() to rebuild new quadtree
 				u.series.forEach((s: any) => {
-					// eslint-disable-next-line no-param-reassign
 					s._paths = null;
 				});
 			},
@@ -552,14 +550,12 @@ function timelinePlugin(opts: any): any {
 								const colWid = u.data[0][1] - u.data[0][0];
 								const scalePad = colWid / 2;
 
-								// eslint-disable-next-line no-param-reassign
 								if (min <= u.data[0][0]) {
 									min = u.data[0][0] - scalePad;
 								}
 
 								const lastIdx = u.data[0].length - 1;
 
-								// eslint-disable-next-line no-param-reassign
 								if (max >= u.data[0][lastIdx]) {
 									max = u.data[0][lastIdx] + scalePad;
 								}

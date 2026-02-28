@@ -1,6 +1,4 @@
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
 import { useEffect, useState } from 'react';
 import {
 	DragDropContext,

@@ -1,4 +1,4 @@
-/* eslint-disable no-nested-ternary */
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Card } from 'antd';
 import Spinner from 'components/Spinner';

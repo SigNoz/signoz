@@ -5441,7 +5441,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS metric_type,
-		    ANY_VALUE(t.unit) AS metric_unit,
+		    argMax(t.unit, unix_milli) AS metric_unit,
 		    uniq(t.fingerprint) AS timeseries,
 			uniq(metric_name) OVER() AS total
 		FROM %s.%s AS t

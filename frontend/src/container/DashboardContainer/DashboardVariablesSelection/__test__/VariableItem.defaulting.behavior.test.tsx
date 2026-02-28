@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import MockQueryClientProvider from 'providers/test/MockQueryClientProvider';
 import { render, screen, waitFor } from 'tests/test-utils';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';

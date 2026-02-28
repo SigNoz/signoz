@@ -1,6 +1,7 @@
 import { NotificationInstance } from 'antd/es/notification/interface';
 import getFiltersApi from 'api/trace/getFilters';
 import xor from 'lodash-es/xor';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch, Store } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

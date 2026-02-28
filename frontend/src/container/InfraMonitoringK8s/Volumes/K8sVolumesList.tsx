@@ -1,6 +1,5 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
@@ -48,7 +47,6 @@ import VolumeDetails from './VolumeDetails';
 
 import '../InfraMonitoringK8s.styles.scss';
 import './K8sVolumesList.styles.scss';
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function K8sVolumesList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,

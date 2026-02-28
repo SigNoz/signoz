@@ -328,7 +328,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -975,9 +974,7 @@ function QueryBuilderSearchV2(
 			<Select
 				data-testid={'qb-search-select'}
 				ref={selectRef}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
@@ -989,7 +986,6 @@ function QueryBuilderSearchV2(
 				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
 					!isUndefined(suffixIcon) ? (
 						suffixIcon
 					) : isOpen ? (
@@ -1019,7 +1015,6 @@ function QueryBuilderSearchV2(
 				notFoundContent={loading ? <Spin size="small" /> : null}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				dropdownRender={(menu): ReactElement => (
 					<QueryBuilderSearchDropdown
 						menu={menu}

@@ -84,7 +84,6 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				// We do not need any title and data index for the log state indicator
 				title: '',
 				dataIndex: '',
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				key: 'state-indicator',
 				accessorKey: 'state-indicator',
 				id: 'state-indicator',

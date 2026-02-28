@@ -101,7 +101,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 		{ text: 'Having', field: 'having' },
 	],
@@ -349,7 +348,6 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_TYPES {
 	TIME_SERIES = 'graph',
 	VALUE = 'value',
@@ -362,12 +360,10 @@ export enum PANEL_TYPES {
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_GROUP_TYPES {
 	ROW = 'row',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ATTRIBUTE_TYPES {
 	SUM = 'Sum',
 	GAUGE = 'Gauge',
