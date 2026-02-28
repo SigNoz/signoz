@@ -1,4 +1,3 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import uPlot from 'uplot';
 
 import {
@@ -43,7 +42,6 @@ describe('UPlotConfigBuilder', () => {
 		label: 'Requests',
 		colorMapping: {},
 		drawStyle: DrawStyle.Line,
-		panelType: PANEL_TYPES.TIME_SERIES,
 		...overrides,
 	});
 

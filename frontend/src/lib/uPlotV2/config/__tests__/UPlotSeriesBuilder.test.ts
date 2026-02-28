@@ -1,4 +1,3 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
@@ -19,7 +18,6 @@ const createBaseProps = (
 	colorMapping: {},
 	drawStyle: DrawStyle.Line,
 	isDarkMode: false,
-	panelType: PANEL_TYPES.TIME_SERIES,
 	...overrides,
 });
 
