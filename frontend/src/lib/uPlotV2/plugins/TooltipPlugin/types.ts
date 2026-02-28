@@ -18,7 +18,8 @@ export enum DashboardCursorSync {
 }
 
 export interface TooltipViewState {
-	plot?: uPlot | null;
+	/** Whether a plot instance exists; plot reference is in controller (WeakRef), not state. */
+	hasPlot?: boolean;
 	style: Partial<CSSProperties>;
 	isHovering: boolean;
 	isPinned: boolean;
@@ -54,7 +55,8 @@ export interface TooltipPluginProps {
  * is explicitly scheduled from the plugin.
  */
 export interface TooltipControllerState {
-	plot: uPlot | null;
+	/** WeakRef allows the plot to be GC'd when destroyed; handlers may outlive the plot. */
+	plot: WeakRef<uPlot> | null;
 	hoverActive: boolean;
 	isAnySeriesActive: boolean;
 	pinned: boolean;
