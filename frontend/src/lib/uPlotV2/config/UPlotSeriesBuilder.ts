@@ -24,6 +24,7 @@ import {
 let builders: PathBuilders | null = null;
 
 const DEFAULT_LINE_WIDTH = 2;
+export const POINT_SIZE_FACTOR = 2.5;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	constructor(props: SeriesProps) {
 		super(props);
@@ -139,7 +140,13 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			showPoints,
 		} = this.props;
 
-		const resolvedPointSize = pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * 3;
+		/**
+		 * If pointSize is not provided, use the lineWidth * POINT_SIZE_FACTOR
+		 * to determine the point size.
+		 * POINT_SIZE_FACTOR is 2, so the point size will be 2x the line width.
+		 */
+		const resolvedPointSize =
+			pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * POINT_SIZE_FACTOR;
 
 		const pointsConfig: Partial<Series.Points> = {
 			stroke: resolvedLineColor,

@@ -8,7 +8,7 @@ import {
 	LineStyle,
 	VisibilityMode,
 } from '../types';
-import { UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
+import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
 	overrides: Partial<SeriesProps> = {},
@@ -147,7 +147,7 @@ describe('UPlotSeriesBuilder', () => {
 		const smallConfig = smallPointsBuilder.getConfig();
 		const largeConfig = largePointsBuilder.getConfig();
 
-		expect(smallConfig.points?.size).toBe(12); // should be lineWidth * 3, when pointSize is not provided
+		expect(smallConfig.points?.size).toBe(4 * POINT_SIZE_FACTOR); // should be lineWidth * POINT_SIZE_FACTOR, when pointSize is not provided
 		expect(largeConfig.points?.size).toBe(4);
 	});
 
