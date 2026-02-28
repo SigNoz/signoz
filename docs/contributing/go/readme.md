@@ -45,3 +45,4 @@ In addition, we have a few additional rules that make certain areas stricter tha
 - [Service](service.md) - Managed service lifecycle with `factory.Service`
 - [SQL](sql.md) - Database and SQL patterns
 - [Testing](testing.md) - Writing tests that catch bugs without becoming a maintenance burden
+- [Types](types.md) - Type placement, naming variants, composition, and constructors

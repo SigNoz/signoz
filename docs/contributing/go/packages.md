@@ -127,9 +127,7 @@ Never introduce circular imports. If package A needs package B and B needs A, ex
 
 ## Where do shared types go?
 
-Most types belong in `pkg/types/` under a domain-specific sub-package (e.g., `pkg/types/ruletypes`, `pkg/types/authtypes`).
-
-Do not put domain logic in `pkg/types/`. Only data structures, constants, and simple methods.
+See [Types](types.md) for full conventions on type placement, naming variants, composition, and constructors.
 
 ## How do I merge or move packages?
 
@@ -144,28 +142,7 @@ When two packages are tightly coupled (one imports the other's constants, they c
 
 ## When should I use valuer types?
 
-The `pkg/valuer` package provides typed wrappers for common domain values: `valuer.String`, `valuer.Email`, `valuer.UUID`, and `valuer.TextDuration`. These types carry validation, normalization, and consistent serialization (JSON, SQL, text) that raw Go primitives do not.
-
-Use a valuer type instead of a raw primitive when the value represents a domain concept with any of:
-
-- **Enums**: All enums in the codebase must be backed by `valuer.String`. Do not use raw `string` constants or `iota`-based `int` enums. A struct embedding `valuer.String` with predefined variables gives you normalization, serialization, and an `Enum()` method for OpenAPI schema generation in one place.
-- **Validation**: emails must match a format, UUIDs must be parseable, durations must be valid.
-- **Normalization**: `valuer.String` lowercases and trims input, so comparisons are consistent throughout the system.
-- **Serialization boundary**: the value is stored in a database, sent over the wire, or bound from an HTTP parameter. Valuer types implement `Scan`, `Value`, `MarshalJSON`, `UnmarshalJSON`, and `UnmarshalParam` consistently.
-
-```go
-// Wrong: raw string constant with no validation or normalization.
-const SignalTraces = "traces"
-
-// Right: valuer-backed type that normalizes and serializes consistently.
-type Signal struct {
-    valuer.String
-}
-
-var SignalTraces = Signal{valuer.NewString("traces")}
-```
-
-Only primitive domain types that serve as shared infrastructure belong in `pkg/valuer`. If you need a new base type (like `Email` or `TextDuration`) that multiple packages will embed for validation and serialization, add it there. Domain-specific types that build on top of a valuer (like `Signal` embedding `valuer.String`) belong in their own domain package, not in `pkg/valuer`.
+See [Types](types.md#typed-domain-values-pkgvaluer) for valuer types, when to use them, and the enum pattern using `valuer.String`.
 
 ## When should I add documentation?
 
@@ -183,7 +160,7 @@ package cache
 - The file matching the package name (e.g., `cache.go`) defines the public interface. Implementation details go elsewhere.
 - Within a file, order declarations: constants, variables, types, constructors, exported functions, unexported functions.
 - Segregate types across files by responsibility. A file with 5 unrelated types is harder to navigate than 5 files with one type each.
-- Use valuer types (`valuer.String`, `valuer.Email`, `valuer.UUID`, `valuer.TextDuration`) for domain values that need validation, normalization, or cross-boundary serialization. Do not use raw string constants where a valuer type exists.
+- Use valuer types (`valuer.String`, `valuer.Email`, `valuer.UUID`, `valuer.TextDuration`) for domain values that need validation, normalization, or cross-boundary serialization. See [Types](types.md#typed-domain-values-pkgvaluer) for details.
 - Avoid `init()` functions. If you need to initialize a variable, use a package-level `var` with a function call or a `sync.Once`. `init()` hides execution order, makes testing harder, and has caused subtle bugs in large codebases.
 - Never introduce circular imports. Extract shared types into `pkg/types/` when needed.
 - Watch for symbol name collisions when merging packages, prefix to disambiguate.
