@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Provider, useSelector } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';

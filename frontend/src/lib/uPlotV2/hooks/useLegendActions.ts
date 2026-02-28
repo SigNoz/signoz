@@ -59,7 +59,6 @@ export function useLegendActions({
 
 			onToggleSeriesVisibility(seriesIndex);
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[onToggleSeriesVisibility, onToggleSeriesOnOff, getLegendItemIdFromEvent],
 	);
 

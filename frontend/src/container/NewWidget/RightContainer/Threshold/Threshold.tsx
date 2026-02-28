@@ -139,7 +139,6 @@ function Threshold({
 	const [{ handlerId }, drop] = useDrop<
 		ThresholdProps,
 		void,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{ handlerId: any }
 	>({
 		accept: 'Threshold',
@@ -176,7 +175,6 @@ function Threshold({
 			}
 
 			moveThreshold(dragIndex, hoverIndex);
-			// eslint-disable-next-line no-param-reassign
 			item.keyIndex = hoverIndex;
 		},
 	});

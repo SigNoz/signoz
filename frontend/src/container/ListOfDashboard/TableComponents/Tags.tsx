@@ -1,4 +1,3 @@
-/* eslint-disable react/destructuring-assignment */
 import { Tag } from 'antd';
 
 import { Data } from '../DashboardsList';

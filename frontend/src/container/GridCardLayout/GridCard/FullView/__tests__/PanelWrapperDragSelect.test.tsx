@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-
 import { MutableRefObject } from 'react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';

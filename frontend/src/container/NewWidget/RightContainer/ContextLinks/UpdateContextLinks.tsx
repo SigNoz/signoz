@@ -243,11 +243,9 @@ function UpdateContextLinks({
 											form.setFieldValue(CONTEXT_LINK_FIELDS.URL, e.target.value);
 										}}
 										onFocus={(): void => setIsOpen(true)}
-										// eslint-disable-next-line sonarjs/no-identical-functions
 										onClick={(e): void =>
 											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
 										}
-										// eslint-disable-next-line sonarjs/no-identical-functions
 										onKeyUp={(e): void =>
 											setCursorPosition((e.target as HTMLInputElement).selectionStart || 0)
 										}
@@ -306,7 +304,6 @@ function UpdateContextLinks({
 														handleParamChange(index, 'value', event.target.value);
 													}}
 													onFocus={(): void => setIsOpen(true)}
-													// eslint-disable-next-line sonarjs/no-identical-functions
 													onClick={(e): void =>
 														setCursorPosition(
 															(e.target as HTMLTextAreaElement).selectionStart || 0,

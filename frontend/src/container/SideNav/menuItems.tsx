@@ -75,7 +75,6 @@ export const helpSupportMenuItem = {
 
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };

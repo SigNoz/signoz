@@ -36,7 +36,6 @@ function AccountOptionItem({
 }
 
 function renderOption(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	option: any,
 	activeAccountId: string | undefined,
 ): JSX.Element {

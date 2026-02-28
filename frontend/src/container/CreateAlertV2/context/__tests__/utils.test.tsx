@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import {

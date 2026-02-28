@@ -3,7 +3,6 @@ import { sortBy } from 'lodash-es';
 const MAX_QUERIES = 20;
 
 function GetFormulaName(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	formulas: { name: string; [key: string]: any }[] = [],
 ): string | null {
 	if (!formulas.length) {
