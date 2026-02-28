@@ -34,15 +34,15 @@
 	overflow: hidden;
 
 	&--loading {
-		padding: 12px;
+		padding: var(--padding-3);
 	}
 
 	.custom-domain-card-top {
 		display: flex;
 		align-items: flex-start;
 		justify-content: space-between;
-		padding: 12px;
-		gap: 12px;
+		padding: var(--padding-3);
+		gap: var(--spacing-6);
 
 		.custom-domain-edit-button {
 			border: 1px solid var(--l3-border);
@@ -57,43 +57,43 @@
 	.custom-domain-card-info {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
+		gap: var(--spacing-6);
 	}
 
 	.custom-domain-card-name-row {
 		display: flex;
 		align-items: center;
-		gap: 10px;
+		gap: var(--spacing-5);
 	}
 
 	.custom-domain-card-org-name {
 		color: var(--l1-foreground);
-		font-size: 13px;
-		font-weight: 500;
-		line-height: 20px;
-		letter-spacing: -0.07px;
+		font-size: var(--paragraph-base-500-font-size);
+		font-weight: var(--paragraph-base-500-font-weight);
+		line-height: var(--paragraph-base-500-line-height);
+		letter-spacing: var(--paragraph-base-500-letter-spacing);
 	}
 
 	.custom-domain-card-meta-row {
 		display: flex;
 		align-items: center;
-		gap: 20px;
+		gap: var(--spacing-10);
 		padding-left: 26px;
 	}
 
 	.custom-domain-card-meta-timezone {
 		display: inline-flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--spacing-3);
 		color: var(--l1-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
 		font-feature-settings: 'dlig' on, 'salt' on;
 		font-family: Inter;
-		font-size: 11px;
+		font-size: var(--paragraph-small-400-font-size);
 		font-style: normal;
-		font-weight: 400;
-		line-height: 16px;
-		letter-spacing: -0.06px;
+		font-weight: var(--paragraph-small-400-font-weight);
+		line-height: var(--paragraph-small-400-line-height);
+		letter-spacing: var(--paragraph-small-400-letter-spacing);
 		text-transform: uppercase;
 
 		svg {
@@ -103,7 +103,7 @@
 	}
 
 	.custom-domain-callout {
-		margin: 0 12px 12px;
+		margin: 0 var(--margin-3) var(--margin-3);
 		font-size: 13px;
 		max-width: 742px;
 		--callout-background: var(--primary);
@@ -121,14 +121,14 @@
 	.custom-domain-card-bottom {
 		display: flex;
 		align-items: center;
-		gap: 10px;
-		padding: 12px;
+		gap: var(--spacing-5);
+		padding: var(--padding-3);
 	}
 
 	.custom-domain-card-license {
 		color: var(--l1-foreground);
 		font-size: 13px;
-		line-height: 20px;
+		line-height: var(--line-height-20);
 		letter-spacing: -0.07px;
 	}
 
@@ -141,21 +141,21 @@
 		color: var(--l2-foreground);
 		font-family: 'SF Mono', 'Fira Code', monospace;
 		font-size: 13px;
-		line-height: 20px;
+		line-height: var(--line-height-20);
 	}
 }
 
 .workspace-url-trigger {
 	display: inline-flex;
 	align-items: center;
-	gap: 6px;
+	gap: var(--spacing-3);
 	background: none;
 	border: none;
 	padding: 0;
 	cursor: pointer;
 	color: var(--l1-foreground);
-	font-size: 12px;
-	line-height: 16px;
+	font-size: var(--font-size-xs);
+	line-height: var(--line-height-18);
 	letter-spacing: -0.06px;
 
 	&:disabled {
@@ -174,7 +174,7 @@
 	border: 1px solid var(--l1-border);
 	background: var(--l1-background);
 	box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
-	padding: 8px 0;
+	padding: var(--padding-2) 0;
 	min-width: 200px;
 	display: flex;
 	flex-direction: column;
@@ -183,23 +183,23 @@
 .workspace-url-dropdown-header {
 	color: var(--l2-foreground);
 	font-size: 13px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
-	padding: 0 12px 8px;
+	padding: 0 var(--padding-3) var(--padding-2);
 }
 
 .workspace-url-dropdown-divider {
 	height: 1px;
 	background: var(--l1-border);
-	margin-bottom: 4px;
+	margin-bottom: var(--margin-1);
 }
 
 .workspace-url-dropdown-item {
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 8px;
-	padding: 5px 12px;
+	gap: var(--spacing-4);
+	padding: 5px var(--padding-3);
 	cursor: pointer;
 	text-decoration: none;
 	transition: background 0.15s ease;
@@ -230,7 +230,7 @@
 
 .workspace-url-dropdown-item-label {
 	font-size: 13px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
 
@@ -244,41 +244,10 @@
 	flex-shrink: 0;
 }
 
-.edit-workspace-modal {
-	.ant-modal-content {
-		padding: 0;
-		border-radius: 4px;
-		border: 1px solid var(--l1-border);
-		background: var(--l1-background);
-		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
-	}
-
-	.ant-modal-header {
-		background: none;
-		border-bottom: 1px solid var(--l1-border);
-		padding: 16px;
-		margin-bottom: 0;
-
-		.ant-modal-title {
-			color: var(--l1-foreground);
-			font-size: 13px;
-			font-weight: 400;
-			line-height: 20px;
-		}
-	}
-
-	.ant-modal-close {
-		top: 14px;
-		inset-inline-end: 14px;
-		color: var(--l2-foreground);
-	}
-
-	.ant-modal-body {
-		display: flex;
-		flex-direction: column;
-		gap: 24px;
-		padding: 16px;
-	}
+.edit-workspace-modal-content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-12);
 }
 
 // Description
@@ -286,7 +255,7 @@
 	margin: 0;
 	color: var(--l1-foreground);
 	font-size: 13px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 }
 
@@ -302,14 +271,14 @@
 .edit-modal-field {
 	display: flex;
 	flex-direction: column;
-	gap: 8px;
+	gap: var(--spacing-4);
 }
 
 .edit-modal-label {
 	color: var(--l2-foreground);
-	font-size: 13px;
-	font-weight: 500;
-	line-height: 20px;
+	font-size: var(--paragraph-base-500-font-size);
+	font-weight: var(--paragraph-base-500-font-weight);
+	line-height: var(--paragraph-base-500-line-height);
 
 	&--error {
 		color: var(--destructive);
@@ -324,9 +293,9 @@
 		flex: 1;
 		display: flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--spacing-3);
 		height: 44px;
-		padding: 6px 12px;
+		padding: 6px var(--padding-3);
 		background: var(--l1-background);
 		border: 1px solid var(--l1-border);
 		border-right: none;
@@ -347,7 +316,7 @@
 			box-shadow: none;
 			color: var(--l1-foreground);
 			font-size: 13px;
-			line-height: 20px;
+			line-height: var(--line-height-20);
 			padding: 0;
 
 			&:focus,
@@ -362,21 +331,21 @@
 .edit-modal-input-suffix {
 	display: flex;
 	align-items: center;
-	padding: 6px 12px;
+	padding: 6px var(--padding-3);
 	background: var(--l2-background);
 	border: 1px solid var(--l1-border);
 	border-left: none;
 	border-radius: 0 2px 2px 0;
 	color: var(--l2-foreground);
 	font-size: 13px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	white-space: nowrap;
 }
 
 .edit-modal-helper {
 	color: var(--l2-foreground);
-	font-size: 12px;
-	line-height: 20px;
+	font-size: var(--font-size-xs);
+	line-height: var(--line-height-20);
 
 	&--error {
 		color: var(--destructive);
@@ -389,16 +358,16 @@
 
 .edit-modal-note {
 	display: flex;
-	gap: 12px;
+	gap: var(--spacing-6);
 	align-items: flex-start;
-	padding: 12px;
+	padding: var(--padding-3);
 	border-radius: 4px;
 	background: var(--l2-background);
 }
 
 .edit-modal-note-emoji {
 	font-size: 16px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	flex-shrink: 0;
 	margin-top: 2px;
 }
@@ -406,7 +375,7 @@
 .edit-modal-note-text {
 	color: var(--l2-foreground);
 	font-size: 13px;
-	line-height: 20px;
+	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 }
 
@@ -420,9 +389,9 @@
 			background: var(--primary);
 			border: none;
 			color: var(--primary-foreground);
-			font-size: 13px;
-			font-weight: 500;
-			line-height: 20px;
+			font-size: var(--paragraph-base-500-font-size);
+			font-weight: var(--paragraph-base-500-font-weight);
+			line-height: var(--paragraph-base-500-line-height);
 			height: 36px;
 
 			.ant-btn-icon {
@@ -454,23 +423,23 @@
 	background: var(--primary-background);
 	color: var(--bg-base-white);
 
-	&-message {
+	.custom-domain-toast-message {
 		font-size: 13px;
-		line-height: 20px;
+		line-height: var(--line-height-20);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		flex: 1;
 	}
 
-	&-actions {
+	.custom-domain-toast-actions {
 		display: flex;
 		align-items: center;
-		gap: 8px;
+		gap: var(--spacing-4);
 		flex-shrink: 0;
 	}
 
-	&-visit-btn {
+	.custom-domain-toast-visit-btn {
 		text-decoration: none;
 		background: var(--bg-robin-600);
 
@@ -479,7 +448,7 @@
 		}
 	}
 
-	&-dismiss-btn {
+	.custom-domain-toast-dismiss-btn {
 		color: var(--callout-primary-icon);
 		height: 24px;
 		width: 24px;

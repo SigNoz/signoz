@@ -177,7 +177,7 @@ export default function CustomDomainSettings(): JSX.Element {
 
 	const planName = activeLicense?.plan?.name;
 
-	if (isLoadingHosts || isFetchingHosts) {
+	if (isLoadingHosts) {
 		return (
 			<div className="custom-domain-card custom-domain-card--loading">
 				<Skeleton
@@ -239,15 +239,16 @@ export default function CustomDomainSettings(): JSX.Element {
 									</div>
 								)}
 							>
-								<button
+								<Button
 									type="button"
+									size="xs"
 									className="workspace-url-trigger"
 									disabled={isFetchingHosts}
 								>
 									<Link2 size={12} />
 									<span>{stripProtocol(activeHost?.url ?? '')}</span>
 									<ChevronDown size={12} />
-								</button>
+								</Button>
 							</Dropdown>
 							<span className="custom-domain-card-meta-timezone">
 								<Clock size={11} />

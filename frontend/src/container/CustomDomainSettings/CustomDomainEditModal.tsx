@@ -1,8 +1,8 @@
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
+import { DialogWrapper } from '@signozhq/dialog';
 import { Input } from '@signozhq/input';
-import { Modal } from 'antd';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
@@ -70,120 +70,131 @@ export default function CustomDomainEditModal({
 	};
 
 	const is409 = updateDomainError?.status === 409;
-	const apiErrorMessage = (updateDomainError?.response
-		?.data as RenderErrorResponseDTO)?.error?.message;
-	const isError = !!(validationError || (updateDomainError && !is409));
-	const errorMessage =
-		validationError ||
-		(is409
-			? apiErrorMessage ||
-			  "You've already updated the custom domain once today. Please contact support."
-			: apiErrorMessage) ||
-		null;
 
-	const statusIcon = isLoading ? (
-		<Loader2 size={16} className="animate-spin edit-modal-status-icon" />
-	) : isError || is409 ? (
-		<AlertCircle size={16} color={Color.BG_CHERRY_500} />
-	) : (
-		<CheckCircle2 size={16} color={Color.BG_FOREST_500} />
-	);
+	const apiErrorMessage =
+		(updateDomainError?.response?.data as RenderErrorResponseDTO)?.error
+			?.message ?? null;
+
+	const errorMessage =
+		validationError ??
+		(is409
+			? apiErrorMessage ??
+			  "You've already updated the custom domain once today. Please contact support."
+			: apiErrorMessage);
+
+	const hasError = Boolean(errorMessage);
+
+	const statusIcon = ((): JSX.Element => {
+		if (isLoading) {
+			return <Loader2 size={16} className="animate-spin edit-modal-status-icon" />;
+		}
+
+		if (hasError) {
+			return <AlertCircle size={16} color={Color.BG_CHERRY_500} />;
+		}
+
+		return <CheckCircle2 size={16} color={Color.BG_FOREST_500} />;
+	})();
 
 	return (
-		<Modal
+		<DialogWrapper
 			className="edit-workspace-modal"
 			title="Edit Workspace Link"
 			open={isOpen}
-			onCancel={handleClose}
-			destroyOnClose
-			footer={null}
-			width={512}
+			onOpenChange={(open: boolean): void => {
+				if (!open) {
+					handleClose();
+				}
+			}}
+			width="base"
 		>
-			<p className="edit-modal-description">
-				Enter your preferred subdomain to create a unique URL for your team. Need
-				help?{' '}
-				<a
-					href="https://signoz.io/support"
-					target="_blank"
-					rel="noreferrer"
-					className="edit-modal-link"
-				>
-					Contact support.
-				</a>
-			</p>
+			<div className="edit-workspace-modal-content">
+				<p className="edit-modal-description">
+					Enter your preferred subdomain to create a unique URL for your team. Need
+					help?{' '}
+					<a
+						href="https://signoz.io/support"
+						target="_blank"
+						rel="noreferrer"
+						className="edit-modal-link"
+					>
+						Contact support.
+					</a>
+				</p>
 
-			<div className="edit-modal-field">
-				<label
-					htmlFor="workspace-url-input"
-					className={`edit-modal-label${
-						isError || is409 ? ' edit-modal-label--error' : ''
-					}`}
-				>
-					Workspace URL
-				</label>
+				<div className="edit-modal-field">
+					<label
+						htmlFor="workspace-url-input"
+						className={`edit-modal-label${
+							hasError ? ' edit-modal-label--error' : ''
+						}`}
+					>
+						Workspace URL
+					</label>
 
-				<div
-					className={`edit-modal-input-wrapper${
-						isError ? ' edit-modal-input-wrapper--error' : ''
-					}`}
-				>
-					<div className="edit-modal-input-field">
-						{statusIcon}
-						<Input
-							id="workspace-url-input"
-							aria-describedby="workspace-url-helper"
-							aria-invalid={isError || is409}
-							value={value}
-							onChange={handleChange}
-							onKeyDown={handleKeyDown}
-							autoFocus
-						/>
+					<div
+						className={`edit-modal-input-wrapper${
+							hasError ? ' edit-modal-input-wrapper--error' : ''
+						}`}
+					>
+						<div className="edit-modal-input-field">
+							{statusIcon}
+							<Input
+								id="workspace-url-input"
+								aria-describedby="workspace-url-helper"
+								aria-invalid={hasError}
+								value={value}
+								onChange={handleChange}
+								onKeyDown={handleKeyDown}
+								autoFocus
+							/>
+						</div>
+						<div className="edit-modal-input-suffix">{dnsSuffix}</div>
 					</div>
-					<div className="edit-modal-input-suffix">{dnsSuffix}</div>
+
+					<span
+						id="workspace-url-helper"
+						className={`edit-modal-helper${
+							hasError ? ' edit-modal-helper--error' : ''
+						}`}
+					>
+						{hasError
+							? errorMessage
+							: "To help you easily explore SigNoz, we've selected a tenant sub domain name for you."}
+					</span>
 				</div>
 
-				<span
-					id="workspace-url-helper"
-					className={`edit-modal-helper${
-						isError || is409 ? ' edit-modal-helper--error' : ''
-					}`}
-				>
-					{isError || is409
-						? errorMessage
-						: "To help you easily explore SigNoz, we've selected a tenant sub domain name for you."}
-				</span>
-			</div>
+				<div className="edit-modal-note">
+					<span className="edit-modal-note-emoji">🚧</span>
+					<span className="edit-modal-note-text">
+						Note that your previous URL still remains accessible. Your access
+						credentials for the new URL remain the same.
+					</span>
+				</div>
 
-			<div className="edit-modal-note">
-				<span className="edit-modal-note-emoji">🚧</span>
-				<span className="edit-modal-note-text">
-					Note that your previous URL still remains accessible. Your access
-					credentials for the new URL remain the same.
-				</span>
+				<div className="edit-modal-footer">
+					{is409 ? (
+						<LaunchChatSupport
+							attributes={{ screen: 'Custom Domain Settings' }}
+							eventName="Custom Domain Settings: Facing Issues Updating Custom Domain"
+							message="Hi Team, I need help with updating custom domain"
+							buttonText="Contact Support"
+						/>
+					) : (
+						<Button
+							variant="solid"
+							size="md"
+							color="primary"
+							className="edit-modal-apply-btn"
+							onClick={handleSubmit}
+							disabled={isLoading}
+							loading={isLoading}
+						>
+							Apply Changes
+						</Button>
+					)}
+				</div>
 			</div>
-
-			<div className="edit-modal-footer">
-				{is409 ? (
-					<LaunchChatSupport
-						attributes={{ screen: 'Custom Domain Settings' }}
-						eventName="Custom Domain Settings: Facing Issues Updating Custom Domain"
-						message="Hi Team, I need help with updating custom domain"
-						buttonText="Contact Support"
-					/>
-				) : (
-					<Button
-						variant="solid"
-						size="md"
-						color="primary"
-						className="edit-modal-apply-btn"
-						onClick={handleSubmit}
-						disabled={isLoading}
-						loading={isLoading}
-					>
-						Apply Changes
-					</Button>
-				)}
-			</div>
-		</Modal>
+		</DialogWrapper>
 	);
 }
