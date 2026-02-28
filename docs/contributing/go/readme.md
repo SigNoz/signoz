@@ -41,6 +41,7 @@ In addition, we have a few additional rules that make certain areas stricter tha
 - [Handler](handler.md) - HTTP handler patterns
 - [Integration](integration.md) - Integration testing
 - [Provider](provider.md) - Dependency injection and provider patterns
-- [Packages](packages.md) — Naming, layout, and conventions for `pkg/` packages
+- [Packages](packages.md) - Naming, layout, and conventions for `pkg/` packages
+- [Service](service.md) - Managed service lifecycle with `factory.Service`
 - [SQL](sql.md) - Database and SQL patterns
 - [Testing](testing.md) - Writing tests that catch bugs without becoming a maintenance burden
