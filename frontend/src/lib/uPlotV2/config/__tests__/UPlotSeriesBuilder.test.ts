@@ -135,7 +135,6 @@ describe('UPlotSeriesBuilder', () => {
 		const smallPointsBuilder = new UPlotSeriesBuilder(
 			createBaseProps({
 				lineWidth: 4,
-				pointSize: 2,
 			}),
 		);
 		const largePointsBuilder = new UPlotSeriesBuilder(
@@ -148,7 +147,7 @@ describe('UPlotSeriesBuilder', () => {
 		const smallConfig = smallPointsBuilder.getConfig();
 		const largeConfig = largePointsBuilder.getConfig();
 
-		expect(smallConfig.points?.size).toBeUndefined();
+		expect(smallConfig.points?.size).toBe(12); // should be lineWidth * 3, when pointSize is not provided
 		expect(largeConfig.points?.size).toBe(4);
 	});
 
