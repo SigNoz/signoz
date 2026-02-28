@@ -1,55 +1,57 @@
-package cloudintegrations
+package store
 
 import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type cloudProviderAccountsRepository interface {
-	listConnected(ctx context.Context, orgId string, provider string) ([]types.CloudIntegration, *model.ApiError)
+var (
+	CodeCloudIntegrationAccountNotFound errors.Code = errors.MustNewCode("cloud_integration_account_not_found")
+)
 
-	get(ctx context.Context, orgId string, provider string, id string) (*types.CloudIntegration, *model.ApiError)
+type CloudProviderAccountsRepository interface {
+	ListConnected(ctx context.Context, orgId string, provider string) ([]integrationtypes.CloudIntegration, error)
 
-	getConnectedCloudAccount(ctx context.Context, orgId string, provider string, accountID string) (*types.CloudIntegration, *model.ApiError)
+	Get(ctx context.Context, orgId string, provider string, id string) (*integrationtypes.CloudIntegration, error)
+
+	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*integrationtypes.CloudIntegration, error)
 
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields
-	upsert(
+	Upsert(
 		ctx context.Context,
 		orgId string,
 		provider string,
 		id *string,
-		config *types.AccountConfig,
+		config []byte,
 		accountId *string,
-		agentReport *types.AgentReport,
+		agentReport *integrationtypes.AgentReport,
 		removedAt *time.Time,
-	) (*types.CloudIntegration, *model.ApiError)
+	) (*integrationtypes.CloudIntegration, error)
 }
 
-func newCloudProviderAccountsRepository(store sqlstore.SQLStore) (
-	*cloudProviderAccountsSQLRepository, error,
-) {
-	return &cloudProviderAccountsSQLRepository{
-		store: store,
-	}, nil
+func NewCloudProviderAccountsRepository(store sqlstore.SQLStore) CloudProviderAccountsRepository {
+	return &cloudProviderAccountsSQLRepository{store: store}
 }
 
 type cloudProviderAccountsSQLRepository struct {
 	store sqlstore.SQLStore
 }
 
-func (r *cloudProviderAccountsSQLRepository) listConnected(
+func (r *cloudProviderAccountsSQLRepository) ListConnected(
 	ctx context.Context, orgId string, cloudProvider string,
-) ([]types.CloudIntegration, *model.ApiError) {
-	accounts := []types.CloudIntegration{}
+) ([]integrationtypes.CloudIntegration, error) {
+	accounts := []integrationtypes.CloudIntegration{}
 
 	err := r.store.BunDB().NewSelect().
 		Model(&accounts).
@@ -62,18 +64,17 @@ func (r *cloudProviderAccountsSQLRepository) listConnected(
 		Scan(ctx)
 
 	if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not query connected cloud accounts: %w", err,
-		))
+		slog.ErrorContext(ctx, "error querying connected cloud accounts", "error", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "could not query connected cloud accounts")
 	}
 
 	return accounts, nil
 }
 
-func (r *cloudProviderAccountsSQLRepository) get(
+func (r *cloudProviderAccountsSQLRepository) Get(
 	ctx context.Context, orgId string, provider string, id string,
-) (*types.CloudIntegration, *model.ApiError) {
-	var result types.CloudIntegration
+) (*integrationtypes.CloudIntegration, error) {
+	var result integrationtypes.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -82,23 +83,25 @@ func (r *cloudProviderAccountsSQLRepository) get(
 		Where("id = ?", id).
 		Scan(ctx)
 
-	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find account with Id %s", id,
-		))
-	} else if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't query cloud provider accounts: %w", err,
-		))
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.WrapNotFoundf(
+				err,
+				CodeCloudIntegrationAccountNotFound,
+				"couldn't find account with Id %s", id,
+			)
+		}
+
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud provider account")
 	}
 
 	return &result, nil
 }
 
-func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
+func (r *cloudProviderAccountsSQLRepository) GetConnectedCloudAccount(
 	ctx context.Context, orgId string, provider string, accountId string,
-) (*types.CloudIntegration, *model.ApiError) {
-	var result types.CloudIntegration
+) (*integrationtypes.CloudIntegration, error) {
+	var result integrationtypes.CloudIntegration
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -109,29 +112,25 @@ func (r *cloudProviderAccountsSQLRepository) getConnectedCloudAccount(
 		Where("removed_at is NULL").
 		Scan(ctx)
 
-	if err == sql.ErrNoRows {
-		return nil, model.NotFoundError(fmt.Errorf(
-			"couldn't find connected cloud account %s", accountId,
-		))
+	if errors.Is(err, sql.ErrNoRows) {
+		return nil, errors.WrapNotFoundf(err, CodeCloudIntegrationAccountNotFound, "couldn't find connected cloud account %s", accountId)
 	} else if err != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't query cloud provider accounts: %w", err,
-		))
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud provider account")
 	}
 
 	return &result, nil
 }
 
-func (r *cloudProviderAccountsSQLRepository) upsert(
+func (r *cloudProviderAccountsSQLRepository) Upsert(
 	ctx context.Context,
 	orgId string,
 	provider string,
 	id *string,
-	config *types.AccountConfig,
+	config []byte,
 	accountId *string,
-	agentReport *types.AgentReport,
+	agentReport *integrationtypes.AgentReport,
 	removedAt *time.Time,
-) (*types.CloudIntegration, *model.ApiError) {
+) (*integrationtypes.CloudIntegration, error) {
 	// Insert
 	if id == nil {
 		temp := valuer.GenerateUUID().StringValue()
@@ -181,7 +180,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		)
 	}
 
-	integration := types.CloudIntegration{
+	integration := integrationtypes.CloudIntegration{
 		OrgID:        orgId,
 		Provider:     provider,
 		Identifiable: types.Identifiable{ID: valuer.MustNewUUID(*id)},
@@ -189,28 +188,25 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		Config:          config,
+		Config:          string(config),
 		AccountID:       accountId,
 		LastAgentReport: agentReport,
 		RemovedAt:       removedAt,
 	}
 
-	_, dbErr := r.store.BunDB().NewInsert().
+	_, err := r.store.BunDB().NewInsert().
 		Model(&integration).
 		On(onConflictClause).
 		Exec(ctx)
 
-	if dbErr != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"could not upsert cloud account record: %w", dbErr,
-		))
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't upsert cloud integration account")
 	}
 
-	upsertedAccount, apiErr := r.get(ctx, orgId, provider, *id)
-	if apiErr != nil {
-		return nil, model.InternalError(fmt.Errorf(
-			"couldn't fetch upserted account by id: %w", apiErr.ToError(),
-		))
+	upsertedAccount, err := r.Get(ctx, orgId, provider, *id)
+	if err != nil {
+		slog.ErrorContext(ctx, "error upserting cloud integration account", "error", err)
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't get upserted cloud integration account")
 	}
 
 	return upsertedAccount, nil

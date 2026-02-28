@@ -7,6 +7,37 @@
     "metrics": true,
     "logs": true
   },
+  "ingestion_status_check": {
+    "metrics": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "key": "aws_Lambda_Invocations_sum",
+            "attributes": []
+          }
+        ]
+      }
+    ],
+    "logs": [
+      {
+        "category": "$default",
+        "display_name": "Default",
+        "checks": [
+          {
+            "attributes": [
+              {
+                "name": "aws.cloudwatch.log_group_name",
+                "operator": "ILIKE",
+                "value": "/aws/lambda%"
+              }
+            ]
+          }
+        ]
+      }
+    ]
+  },
   "data_collected": {
     "metrics": [
       {

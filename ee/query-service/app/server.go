@@ -37,7 +37,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
@@ -121,13 +120,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		)
 	}
 
-	cloudIntegrationsController, err := cloudintegrations.NewController(signoz.SQLStore)
-	if err != nil {
-		return nil, fmt.Errorf(
-			"couldn't create cloud provider integrations controller: %w", err,
-		)
-	}
-
 	// ingestion pipelines manager
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
@@ -161,11 +153,11 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		RulesManager:                  rm,
 		UsageManager:                  usageManager,
 		IntegrationsController:        integrationsController,
-		CloudIntegrationsController:   cloudIntegrationsController,
 		LogsParsingPipelineController: logParsingPipelineController,
 		FluxInterval:                  config.Querier.FluxInterval,
 		GatewayUrl:                    config.Gateway.URL.String(),
 		GlobalConfig:                  config.Global,
+		Logger:                        signoz.Instrumentation.Logger(),
 	}
 
 	apiHandler, err := api.NewAPIHandler(apiOpts, signoz, config)
