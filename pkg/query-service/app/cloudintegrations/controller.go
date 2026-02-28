@@ -150,8 +150,8 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 }
 
 type AccountStatusResponse struct {
-	Id             string              `json:"id"`
-	CloudAccountId *string             `json:"cloud_account_id,omitempty"`
+	Id             string                         `json:"id"`
+	CloudAccountId *string                        `json:"cloud_account_id,omitempty"`
 	Status         integrationtypes.AccountStatus `json:"status"`
 }
 
@@ -442,7 +442,7 @@ func (c *Controller) GetServiceDetails(
 }
 
 type UpdateServiceConfigRequest struct {
-	CloudAccountId string                   `json:"cloud_account_id"`
+	CloudAccountId string                              `json:"cloud_account_id"`
 	Config         integrationtypes.CloudServiceConfig `json:"config"`
 }
 
@@ -461,7 +461,7 @@ func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 }
 
 type UpdateServiceConfigResponse struct {
-	Id     string                   `json:"id"`
+	Id     string                              `json:"id"`
 	Config integrationtypes.CloudServiceConfig `json:"config"`
 }
 

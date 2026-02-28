@@ -16,7 +16,7 @@ type ServiceDetails struct {
 	services.Definition
 
 	Config           *integrationtypes.CloudServiceConfig `json:"config"`
-	ConnectionStatus *ServiceConnectionStatus  `json:"status,omitempty"`
+	ConnectionStatus *ServiceConnectionStatus             `json:"status,omitempty"`
 }
 
 type AccountStatus struct {
