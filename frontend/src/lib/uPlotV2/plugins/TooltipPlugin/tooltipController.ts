@@ -10,9 +10,9 @@ import {
 
 const WINDOW_OFFSET = 16;
 
-/** Get the plot instance from the controller; returns null if GC'd or never set. */
+/** Get the plot instance from the controller; returns null if never set or cleared. */
 export function getPlot(controller: TooltipControllerState): uPlot | null {
-	return controller.plot?.deref() ?? null;
+	return controller.plot ?? null;
 }
 
 export function createInitialControllerState(): TooltipControllerState {

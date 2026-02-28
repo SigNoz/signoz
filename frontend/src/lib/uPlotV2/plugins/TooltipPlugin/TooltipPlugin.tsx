@@ -74,9 +74,9 @@ export default function TooltipPlugin({
 		layoutRef.current = createLayoutObserver(layoutRef);
 
 		/**
-		 * Plot lifecycle and GC: controller.plot uses WeakRef, viewState uses
-		 * hasPlot (boolean), and the destroy hook clears refs when uPlot.destroy()
-		 * runs—so detached canvases can be garbage collected.
+		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
+		 * reference; clearPlotReferences runs in cleanup so
+		 * detached canvases can be garbage collected.
 		 */
 		// Controller holds the mutable interaction state for this tooltip
 		// instance. It is intentionally *not* React state so uPlot hooks
@@ -86,7 +86,6 @@ export default function TooltipPlugin({
 
 		/**
 		 * Clear plot references so detached canvases can be garbage collected.
-		 * Uses WeakRef + hasPlot (boolean) to avoid retaining the uPlot instance.
 		 */
 		const clearPlotReferences = (): void => {
 			controller.plot = null;
@@ -281,7 +280,7 @@ export default function TooltipPlugin({
 		// Called once per uPlot instance; used to store the instance
 		// on the controller and optionally attach the pinning handler.
 		const handleInit = (u: uPlot): void => {
-			controller.plot = new WeakRef(u);
+			controller.plot = u;
 			updateState({ hasPlot: true });
 			if (canPinTooltip) {
 				overClickHandler = handleUPlotOverClick;
