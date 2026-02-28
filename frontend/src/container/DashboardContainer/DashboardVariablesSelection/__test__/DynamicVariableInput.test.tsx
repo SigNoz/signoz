@@ -1,11 +1,23 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable sonarjs/no-duplicate-string */
 import * as ReactQuery from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import * as ReactRedux from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import DynamicVariableInput from '../DynamicVariableInput';
+
+// Mock useVariableFetchState to return "fetching" state so useQuery is enabled
+jest.mock('hooks/dashboard/useVariableFetchState', () => ({
+	useVariableFetchState: (): Record<string, unknown> => ({
+		variableFetchCycleId: 0,
+		variableFetchState: 'loading',
+		isVariableSettled: false,
+		isVariableFetching: true,
+		hasVariableFetchedOnce: false,
+		isVariableWaitingForDependencies: false,
+		variableDependencyWaitMessage: '',
+	}),
+}));
 
 // Don't mock the components - use real ones
 
@@ -39,7 +51,6 @@ const mockQueryResult = {
 	fetchPreviousPage: jest.fn(),
 	hasNextPage: false,
 	hasPreviousPage: false,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 } as any;
 
 // Sample data for testing
@@ -217,9 +228,10 @@ describe('DynamicVariableInput Component', () => {
 				'',
 				'Traces',
 				'service.name',
+				0, // variableFetchCycleId
 			],
 			expect.objectContaining({
-				enabled: true, // Type is 'DYNAMIC'
+				enabled: true, // isVariableFetching is true from mock
 				queryFn: expect.any(Function),
 				onSuccess: expect.any(Function),
 				onError: expect.any(Function),

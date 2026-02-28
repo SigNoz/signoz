@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { uniqueOptions } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 
 import { OptionData } from './types';

@@ -28,6 +28,8 @@ interface SelectVariableInputProps {
 	showRetryButton?: boolean;
 	showIncompleteDataMessage?: boolean;
 	onSearch?: (searchTerm: string) => void;
+	waiting?: boolean;
+	waitingMessage?: string;
 }
 
 const MAX_TAG_DISPLAY_VALUES = 10;
@@ -65,6 +67,7 @@ function SelectVariableInput({
 	showRetryButton,
 	showIncompleteDataMessage,
 	onSearch,
+	waitingMessage,
 }: SelectVariableInputProps): JSX.Element {
 	const commonProps = useMemo(
 		() => ({
@@ -78,7 +81,6 @@ function SelectVariableInput({
 			className: 'variable-select',
 			popupClassName: 'dropdown-styles',
 			getPopupContainer: popupContainer,
-			style: SelectItemStyle,
 			showSearch: true,
 			bordered: false,
 
@@ -86,6 +88,8 @@ function SelectVariableInput({
 			'data-testid': 'variable-select',
 			onChange,
 			loading,
+			waitingMessage,
+			style: SelectItemStyle,
 			options,
 			errorMessage,
 			onRetry,
@@ -101,6 +105,7 @@ function SelectVariableInput({
 			defaultValue,
 			onChange,
 			loading,
+			waitingMessage,
 			options,
 			value,
 			errorMessage,

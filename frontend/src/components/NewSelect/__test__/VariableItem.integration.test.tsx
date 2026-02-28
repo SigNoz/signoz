@@ -1,5 +1,5 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';
@@ -65,7 +65,6 @@ function TestWrapper({ children }: { children: React.ReactNode }): JSX.Element {
 		<Provider store={mockStore}>
 			<QueryClientProvider client={queryClient}>
 				<VirtuosoMockContext.Provider
-					// eslint-disable-next-line react/jsx-no-constructed-context-values
 					value={{ viewportHeight: 300, itemHeight: 40 }}
 				>
 					{children}
@@ -78,12 +77,10 @@ function TestWrapper({ children }: { children: React.ReactNode }): JSX.Element {
 describe('VariableItem Integration Tests', () => {
 	let user: ReturnType<typeof userEvent.setup>;
 	let mockOnValueUpdate: jest.Mock;
-	let mockSetVariablesToGetUpdated: jest.Mock;
 
 	beforeEach(() => {
 		user = userEvent.setup();
 		mockOnValueUpdate = jest.fn();
-		mockSetVariablesToGetUpdated = jest.fn();
 		jest.clearAllMocks();
 	});
 
@@ -102,9 +99,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -150,9 +144,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -195,9 +186,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -247,9 +235,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -272,9 +257,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -308,9 +290,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -344,9 +323,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -369,9 +345,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -405,9 +378,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -461,9 +431,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -508,9 +475,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -548,9 +512,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);
@@ -582,9 +543,6 @@ describe('VariableItem Integration Tests', () => {
 						variableData={variable}
 						existingVariables={{}}
 						onValueUpdate={mockOnValueUpdate}
-						variablesToGetUpdated={[]}
-						setVariablesToGetUpdated={mockSetVariablesToGetUpdated}
-						dependencyData={null}
 					/>
 				</TestWrapper>,
 			);

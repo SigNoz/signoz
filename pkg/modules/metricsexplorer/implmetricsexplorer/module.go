@@ -56,6 +56,88 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
+func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
+	if err := params.Validate(); err != nil {
+		return nil, err
+	}
+
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("DISTINCT metric_name")
+
+	if params.Start != nil && params.End != nil {
+		start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(*params.Start), uint64(*params.End), nil)
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, distributedTsTable))
+		sb.Where(sb.Between("unix_milli", start, end))
+	} else {
+		sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
+	}
+
+	sb.Where(sb.E("__normalized", false))
+
+	if params.Search != "" {
+		searchLower := strings.ToLower(params.Search)
+		searchLower = strings.ReplaceAll(searchLower, "%", "\\%")
+		searchLower = strings.ReplaceAll(searchLower, "_", "\\_")
+		sb.Where(sb.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
+	}
+
+	sb.OrderBy("metric_name ASC")
+	sb.Limit(params.Limit)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(valueCtx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list metrics")
+	}
+	defer rows.Close()
+
+	metricNames := make([]string, 0)
+	for rows.Next() {
+		var name string
+		if err := rows.Scan(&name); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan metric name")
+		}
+		metricNames = append(metricNames, name)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating metric names")
+	}
+
+	if len(metricNames) == 0 {
+		return &metricsexplorertypes.ListMetricsResponse{
+			Metrics: []metricsexplorertypes.ListMetric{},
+		}, nil
+	}
+
+	metadata, err := m.GetMetricMetadataMulti(ctx, orgID, metricNames)
+	if err != nil {
+		return nil, err
+	}
+
+	metrics := make([]metricsexplorertypes.ListMetric, 0, len(metricNames))
+	for _, name := range metricNames {
+		metric := metricsexplorertypes.ListMetric{
+			MetricName: name,
+		}
+		if meta, ok := metadata[name]; ok && meta != nil {
+			metric.Description = meta.Description
+			metric.MetricType = meta.MetricType
+			metric.MetricUnit = meta.MetricUnit
+			metric.Temporality = meta.Temporality
+			metric.IsMonotonic = meta.IsMonotonic
+		}
+		metrics = append(metrics, metric)
+	}
+
+	return &metricsexplorertypes.ListMetricsResponse{
+		Metrics: metrics,
+	}, nil
+}
+
 func (m *module) GetStats(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.StatsRequest) (*metricsexplorertypes.StatsResponse, error) {
 	if err := req.Validate(); err != nil {
 		return nil, err
@@ -322,6 +404,26 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 	}, nil
 }
 
+func (m *module) CheckMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) (bool, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("count(*) > 0 as metricExists")
+	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
+	sb.Where(sb.E("metric_name", metricName))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	db := m.telemetryStore.ClickhouseDB()
+	var exists bool
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+
+	err := db.QueryRow(valueCtx, query, args...).Scan(&exists)
+	if err != nil {
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to check if metric exists")
+	}
+
+	return exists, nil
+}
+
 func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, []string) {
 	hits := make(map[string]*metricsexplorertypes.MetricMetadata)
 	misses := make([]string, 0)
@@ -411,7 +513,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 		"metric_name",
 		"anyLast(description) AS description",
 		"anyLast(type) AS metric_type",
-		"anyLast(unit) AS metric_unit",
+		"argMax(unit, unix_milli) AS metric_unit",
 		"anyLast(temporality) AS temporality",
 		"anyLast(is_monotonic) AS is_monotonic",
 	)

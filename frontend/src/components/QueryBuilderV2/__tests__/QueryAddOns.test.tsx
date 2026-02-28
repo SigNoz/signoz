@@ -1,4 +1,4 @@
-/* eslint-disable */
+import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	fireEvent,
 	render,
@@ -7,40 +7,46 @@ import {
 	waitFor,
 	within,
 } from 'tests/test-utils';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import QueryAddOns from '../QueryV2/QueryAddOns/QueryAddOns';
-import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 // Mocks: only what is required for this component to render and for us to assert handler calls
 const mockHandleChangeQueryData = jest.fn();
 const mockHandleSetQueryData = jest.fn();
 
 jest.mock('hooks/queryBuilder/useQueryBuilderOperations', () => ({
-	useQueryOperations: () => ({
+	useQueryOperations: (): {
+		handleChangeQueryData: typeof mockHandleChangeQueryData;
+	} => ({
 		handleChangeQueryData: mockHandleChangeQueryData,
 	}),
 }));
 
 jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
-	useQueryBuilder: () => ({
+	useQueryBuilder: (): {
+		handleSetQueryData: typeof mockHandleSetQueryData;
+	} => ({
 		handleSetQueryData: mockHandleSetQueryData,
 	}),
 }));
 
 jest.mock('container/QueryBuilder/filters/GroupByFilter/GroupByFilter', () => ({
-	GroupByFilter: ({ onChange }: any) => (
-		<button data-testid="groupby" onClick={() => onChange(['service.name'])}>
+	GroupByFilter: ({ onChange }: any): JSX.Element => (
+		<button
+			data-testid="groupby"
+			onClick={(): void => onChange(['service.name'])}
+		>
 			GroupByFilter
 		</button>
 	),
 }));
 
 jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
-	OrderByFilter: ({ onChange }: any) => (
+	OrderByFilter: ({ onChange }: any): JSX.Element => (
 		<button
 			data-testid="orderby"
-			onClick={() => onChange([{ columnName: 'duration', order: 'desc' }])}
+			onClick={(): void => onChange([{ columnName: 'duration', order: 'desc' }])}
 		>
 			OrderByFilter
 		</button>
@@ -49,9 +55,12 @@ jest.mock('container/QueryBuilder/filters/OrderByFilter/OrderByFilter', () => ({
 
 jest.mock('../QueryV2/QueryAddOns/HavingFilter/HavingFilter', () => ({
 	__esModule: true,
-	default: ({ onChange, onClose }: any) => (
+	default: ({ onChange, onClose }: any): JSX.Element => (
 		<div>
-			<button data-testid="having-change" onClick={() => onChange('p99 > 500')}>
+			<button
+				data-testid="having-change"
+				onClick={(): void => onChange('p99 > 500')}
+			>
 				HavingFilter
 			</button>
 			<button data-testid="having-close" onClick={onClose}>

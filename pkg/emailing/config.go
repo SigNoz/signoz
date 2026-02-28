@@ -10,6 +10,27 @@ type Config struct {
 
 type Templates struct {
 	Directory string `mapstructure:"directory"`
+	Format    Format `mapstructure:"format"`
+}
+
+type Format struct {
+	Header Header `mapstructure:"header"`
+	Help   Help   `mapstructure:"help"`
+	Footer Footer `mapstructure:"footer"`
+}
+
+type Header struct {
+	Enabled bool   `mapstructure:"enabled"`
+	LogoURL string `mapstructure:"logo_url"`
+}
+
+type Help struct {
+	Enabled bool   `mapstructure:"enabled"`
+	Email   string `mapstructure:"email"`
+}
+
+type Footer struct {
+	Enabled bool `mapstructure:"enabled"`
 }
 
 type SMTP struct {
@@ -45,6 +66,19 @@ func newConfig() factory.Config {
 		Enabled: false,
 		Templates: Templates{
 			Directory: "/root/templates",
+			Format: Format{
+				Header: Header{
+					Enabled: false,
+					LogoURL: "",
+				},
+				Help: Help{
+					Enabled: false,
+					Email:   "",
+				},
+				Footer: Footer{
+					Enabled: false,
+				},
+			},
 		},
 		SMTP: SMTP{
 			Address: "localhost:25",

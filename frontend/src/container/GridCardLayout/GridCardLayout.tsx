@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
@@ -16,7 +17,6 @@ import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useWidgetsByDynamicVariableId } from 'hooks/dashboard/useWidgetsByDynamicVariableId';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -101,8 +101,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const [currentPanelMap, setCurrentPanelMap] = useState<
 		Record<string, { widgets: Layout[]; collapsed: boolean }>
 	>({});
-
-	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
 		setCurrentPanelMap(panelMap);
@@ -332,7 +330,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		);
 	}, [currentSelectRowId, form, widgets]);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleRowCollapse = (id: string): void => {
 		if (!selectedDashboard) {
 			return;
@@ -360,7 +357,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
 					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
 						updatedDashboardLayout[j].i
-						// eslint-disable-next-line @typescript-eslint/no-loop-func
 					].widgets.map((w) => ({
 						...w,
 						y: w.y + maxY,
@@ -400,7 +396,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
 					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
 						updatedDashboardLayout[j].i
-						// eslint-disable-next-line @typescript-eslint/no-loop-func
 					].widgets.map((w) => ({
 						...w,
 						y: w.y + maxY,
@@ -617,7 +612,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 									onDragSelect={onDragSelect}
 									dataAvailable={checkIfDataExists}
 									enableDrillDown={enableDrillDown}
-									widgetsByDynamicVariableId={widgetsByDynamicVariableId}
 								/>
 							</Card>
 						</CardContainer>

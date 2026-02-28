@@ -1,4 +1,3 @@
-/* eslint-disable react/require-default-props */
 import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';

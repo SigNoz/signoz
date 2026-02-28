@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
@@ -8,7 +7,6 @@ import styled from 'styled-components';
 import {
 	getActiveLogBackground,
 	getCustomHighlightBackground,
-	getDefaultLogBackground,
 } from 'utils/logs';
 
 import { RawLogContentProps } from './types';
@@ -45,13 +43,12 @@ export const RawLogViewContainer = styled(Row)<{
 				: `margin: 2px 0;`}
 	}
 
-	${({ $isActiveLog, $logType }): string =>
-		getActiveLogBackground($isActiveLog, true, $logType)}
-
 	${({ $isReadOnly, $isActiveLog, $isDarkMode, $logType }): string =>
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
-			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
+			: !$isReadOnly
+			? `&:hover { ${getActiveLogBackground(true, $isDarkMode, $logType)} }`
+			: ''}
 
 	${({ $isHightlightedLog, $isDarkMode }): string =>
 		$isHightlightedLog

@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/cognitive-complexity */
 import React, { useCallback, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
@@ -395,7 +393,7 @@ export default function TableViewActions(
 								onOpenChange={setIsOpen}
 								arrow={false}
 								content={
-									<div>
+									<div data-log-detail-ignore="true">
 										<Button
 											className="more-filter-actions"
 											type="text"
@@ -481,7 +479,7 @@ export default function TableViewActions(
 							onOpenChange={setIsOpen}
 							arrow={false}
 							content={
-								<div>
+								<div data-log-detail-ignore="true">
 									<Button
 										className="more-filter-actions"
 										type="text"

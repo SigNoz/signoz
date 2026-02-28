@@ -26,7 +26,7 @@ func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) er
 		Model(role).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "role with id: %s already exists", role.ID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "role with name: %s already exists", role.Name)
 	}
 
 	return nil

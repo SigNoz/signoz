@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { useEffect, useRef, useState } from 'react';
 import { isEmpty } from 'lodash-es';
 

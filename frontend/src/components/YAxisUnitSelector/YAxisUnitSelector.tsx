@@ -22,6 +22,8 @@ function YAxisUnitSelector({
 	'data-testid': dataTestId,
 	source,
 	initialValue,
+	categoriesOverride,
+	containerClassName,
 }: YAxisUnitSelectorProps): JSX.Element {
 	const universalUnit = mapMetricUnitToUniversalUnit(value);
 
@@ -66,10 +68,14 @@ function YAxisUnitSelector({
 		return aliases.some((alias) => alias.toLowerCase().includes(search));
 	};
 
-	const categories = getYAxisCategories(source);
+	const categoriesToRender = useMemo(() => {
+		return categoriesOverride || getYAxisCategories(source);
+	}, [categoriesOverride, source]);
 
 	return (
-		<div className="y-axis-unit-selector-component">
+		<div
+			className={classNames('y-axis-unit-selector-component', containerClassName)}
+		>
 			<Select
 				showSearch
 				value={universalUnit}
@@ -90,7 +96,7 @@ function YAxisUnitSelector({
 				data-testid={dataTestId}
 				allowClear
 			>
-				{categories.map((category) => (
+				{categoriesToRender.map((category) => (
 					<Select.OptGroup key={category.name} label={category.name}>
 						{category.units.map((unit) => (
 							<Select.Option key={unit.id} value={unit.id}>

@@ -1,3 +1,5 @@
+import { YAxisCategoryNames } from './constants';
+
 export interface YAxisUnitSelectorProps {
 	value: string | undefined;
 	onChange: (value: UniversalYAxisUnit) => void;
@@ -7,6 +9,8 @@ export interface YAxisUnitSelectorProps {
 	'data-testid'?: string;
 	source: YAxisSource;
 	initialValue?: string;
+	categoriesOverride?: YAxisCategory[];
+	containerClassName?: string;
 }
 
 export enum UniversalYAxisUnit {
@@ -669,7 +673,7 @@ export interface UnitFamilyConfig {
 }
 
 export interface YAxisCategory {
-	name: string;
+	name: YAxisCategoryNames;
 	units: {
 		name: string;
 		id: UniversalYAxisUnit;

@@ -28,31 +28,12 @@ interface TestGatewayIngestionKeysResponse {
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
 const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
 jest.mock('react-router-dom', () => {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const actual = jest.requireActual('react-router-dom');
 	return {
 		...actual,
 		useHistory: (): { push: typeof mockPush } => ({ push: mockPush }),
 	};
 });
-
-// Mock deployments data hook to avoid unrelated network calls in this page
-jest.mock(
-	'hooks/CustomDomain/useGetDeploymentsData',
-	(): Record<string, unknown> => ({
-		useGetDeploymentsData: (): {
-			data: undefined;
-			isLoading: boolean;
-			isFetching: boolean;
-			isError: boolean;
-		} => ({
-			data: undefined,
-			isLoading: false,
-			isFetching: false,
-			isError: false,
-		}),
-	}),
-);
 
 const TEST_CREATED_UPDATED = '2024-01-01T00:00:00Z';
 const TEST_EXPIRES_AT = '2030-01-01T00:00:00Z';

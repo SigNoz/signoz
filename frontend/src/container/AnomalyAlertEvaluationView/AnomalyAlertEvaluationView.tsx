@@ -30,21 +30,17 @@ function UplotChart({
 
 	useEffect(() => {
 		if (plotInstance.current) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
 			plotInstance.current.destroy();
 		}
 
 		if (data && data.length > 0) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 			// @ts-ignore
-			// eslint-disable-next-line new-cap
 			plotInstance.current = new uPlot(options, data, chartRef.current);
 		}
 
 		return (): void => {
 			if (plotInstance.current) {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				plotInstance.current.destroy();
 			}
@@ -62,7 +58,6 @@ function AnomalyAlertEvaluationView({
 	yAxisUnit: string;
 }): JSX.Element {
 	const { spline } = uPlot.paths;
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	const _spline = spline ? spline() : undefined;
 	const chartRef = useRef<HTMLDivElement>(null);
 	const isDarkMode = useIsDarkMode();
@@ -280,7 +275,6 @@ function AnomalyAlertEvaluationView({
 	};
 
 	const handleSearchValueChange = useDebouncedFn((event): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		const value = event?.target?.value || '';
 

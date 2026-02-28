@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { SuccessResponse } from 'types/api';
 import {
 	MetricRangePayloadV5,
@@ -73,7 +72,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'time_series',
 			data: { results: [timeSeries] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('time_series', [
@@ -156,7 +155,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'scalar',
 			data: { results: [scalar] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('scalar', [
@@ -239,7 +238,7 @@ describe('convertV5ResponseToLegacy', () => {
 		const v5Data: QueryRangeResponseV5 = {
 			type: 'scalar',
 			data: { results: [scalar] },
-			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0 },
+			meta: { rowsScanned: 0, bytesScanned: 0, durationMs: 0, stepIntervals: {} },
 		};
 
 		const params = makeBaseParams('scalar', [

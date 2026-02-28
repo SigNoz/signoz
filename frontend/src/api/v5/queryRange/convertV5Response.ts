@@ -274,7 +274,6 @@ function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
 ): any {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
 	// Convert V5 distribution format to legacy histogram format
 	return {
 		...distributionData,
@@ -388,6 +387,7 @@ export function convertV5ResponseToLegacy(
 					warnings: v5Data?.data?.warning || [],
 				},
 				warning: v5Data?.warning || undefined,
+				meta: v5Data?.meta,
 			},
 			warning: v5Data?.warning || undefined,
 		};
@@ -406,6 +406,7 @@ export function convertV5ResponseToLegacy(
 		payload: {
 			data: convertedData,
 			warning: v5Response.payload?.data?.warning || undefined,
+			meta: v5Data?.meta,
 		},
 	};
 
@@ -413,7 +414,6 @@ export function convertV5ResponseToLegacy(
 	if (legacyResponse.payload?.data?.result) {
 		legacyResponse.payload.data.result = legacyResponse.payload.data.result.map(
 			(queryData: any) => {
-				// eslint-disable-line @typescript-eslint/no-explicit-any
 				const newQueryData = cloneDeep(queryData);
 				newQueryData.legend = legendMap[queryData.queryName];
 

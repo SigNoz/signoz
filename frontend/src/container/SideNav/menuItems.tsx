@@ -28,6 +28,7 @@ import {
 	ScrollText,
 	Search,
 	Settings,
+	Shield,
 	Slack,
 	Unplug,
 	User,
@@ -74,7 +75,6 @@ export const helpSupportMenuItem = {
 
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };
@@ -311,6 +311,13 @@ export const settingsMenuItems: SidebarItem[] = [
 		icon: <Receipt size={16} />,
 		isEnabled: false,
 		itemKey: 'billing',
+	},
+	{
+		key: ROUTES.ROLES_SETTINGS,
+		label: 'Roles',
+		icon: <Shield size={16} />,
+		isEnabled: false,
+		itemKey: 'roles',
 	},
 	{
 		key: ROUTES.ORG_SETTINGS,

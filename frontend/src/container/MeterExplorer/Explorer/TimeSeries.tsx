@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';

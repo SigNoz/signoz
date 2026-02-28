@@ -1,4 +1,5 @@
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
 	useCallback,
@@ -827,7 +828,6 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
 					prevState.builder.queryData,

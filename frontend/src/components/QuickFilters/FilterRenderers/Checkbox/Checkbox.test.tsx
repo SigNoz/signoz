@@ -53,7 +53,6 @@ const MOCK_SERVICE_NAMES = [MQ_KAFKA, OTEL_DEMO, OTLP_PYTHON, SAMPLE_FLASK];
 const createMockFilter = (
 	overrides: Partial<MockFilterConfig> = {},
 ): MockFilterConfig => ({
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	title: 'Service Name',
 	attributeKey: {
 		key: SERVICE_NAME_KEY,
@@ -151,7 +150,6 @@ describe('CheckboxFilter - User Flows', () => {
 		// User should see the filter is automatically opened (not collapsed)
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 

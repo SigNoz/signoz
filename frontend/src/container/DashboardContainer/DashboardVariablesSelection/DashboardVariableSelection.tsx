@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
@@ -9,11 +10,16 @@ import {
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
+import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
+import {
+	enqueueDescendantsOfVariable,
+	enqueueFetchOfAllVariables,
+	initializeVariableFetchStore,
+} from 'providers/Dashboard/store/variableFetchStore';
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { onUpdateVariableNode } from './util';
 import VariableItem from './VariableItem';
 
 import './DashboardVariableSelection.styles.scss';
@@ -22,15 +28,19 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const {
 		setSelectedDashboard,
 		updateLocalStorageDashboardVariables,
-		variablesToGetUpdated,
-		setVariablesToGetUpdated,
 	} = useDashboard();
 
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
+	const dashboardId = useDashboardVariablesSelector(
+		(state) => state.dashboardId,
+	);
 	const sortedVariablesArray = useDashboardVariablesSelector(
 		(state) => state.sortedVariablesArray,
+	);
+	const dynamicVariableOrder = useDashboardVariablesSelector(
+		(state) => state.dynamicVariableOrder,
 	);
 	const dependencyData = useDashboardVariablesSelector(
 		(state) => state.dependencyData,
@@ -50,18 +60,22 @@ function DashboardVariableSelection(): JSX.Element | null {
 	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	// Memoize the order key to avoid unnecessary triggers
-	const dependencyOrderKey = useMemo(
-		() => dependencyData?.order?.join(',') ?? '',
-		[dependencyData?.order],
-	);
+	const variableOrderKey = useMemo(() => {
+		const queryVariableOrderKey = dependencyData?.order?.join(',') ?? '';
+		const dynamicVariableOrderKey = dynamicVariableOrder?.join(',') ?? '';
+		return `${queryVariableOrderKey}|${dynamicVariableOrderKey}`;
+	}, [dependencyData?.order, dynamicVariableOrder]);
 
-	// Trigger refetch when dependency order changes or global time changes
+	// Initialize fetch store then start a new fetch cycle.
+	// Runs on dependency order changes, and time range changes.
 	useEffect(() => {
-		if (dependencyData?.order && dependencyData.order.length > 0) {
-			setVariablesToGetUpdated(dependencyData?.order || []);
-		}
+		const allVariableNames = sortedVariablesArray
+			.map((v) => v.name)
+			.filter((name): name is string => !!name);
+		initializeVariableFetchStore(allVariableNames);
+		enqueueFetchOfAllVariables();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [dependencyOrderKey, minTime, maxTime]);
+	}, [variableOrderKey, minTime, maxTime]);
 
 	// Performance optimization: For dynamic variables with allSelected=true, we don't store
 	// individual values in localStorage since we can always derive them from available options.
@@ -73,7 +87,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			value: IDashboardVariable['selectedValue'],
 			allSelected: boolean,
 			haveCustomValuesSelected?: boolean,
-			// eslint-disable-next-line sonarjs/cognitive-complexity
 		): void => {
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values
@@ -86,6 +99,28 @@ function DashboardVariableSelection(): JSX.Element | null {
 			} else {
 				updateUrlVariable(name || id, value);
 			}
+
+			// Synchronously update the external store with the new variable value so that
+			// child variables see the updated parent value when they refetch, rather than
+			// waiting for setSelectedDashboard → useEffect → updateDashboardVariablesStore.
+			const updatedVariables = { ...dashboardVariables };
+			if (updatedVariables[id]) {
+				updatedVariables[id] = {
+					...updatedVariables[id],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			if (updatedVariables[name]) {
+				updatedVariables[name] = {
+					...updatedVariables[name],
+					selectedValue: value,
+					allSelected,
+					haveCustomValuesSelected,
+				};
+			}
+			updateDashboardVariablesStore({ dashboardId, variables: updatedVariables });
 
 			setSelectedDashboard((prev) => {
 				if (prev) {
@@ -121,29 +156,16 @@ function DashboardVariableSelection(): JSX.Element | null {
 				return prev;
 			});
 
-			if (dependencyData) {
-				const updatedVariables: string[] = [];
-				onUpdateVariableNode(
-					name,
-					dependencyData.graph,
-					dependencyData.order,
-					(node) => updatedVariables.push(node),
-				);
-				setVariablesToGetUpdated((prev) => [
-					...new Set([...prev, ...updatedVariables.filter((v) => v !== name)]),
-				]);
-			} else {
-				setVariablesToGetUpdated((prev) => prev.filter((v) => v !== name));
-			}
+			// Cascade: enqueue query-type descendants for refetching.
+			// Safe to call synchronously now that the store already has the updated value.
+			enqueueDescendantsOfVariable(name);
 		},
 		[
-			// This can be removed
+			dashboardId,
 			dashboardVariables,
 			updateLocalStorageDashboardVariables,
-			dependencyData,
 			updateUrlVariable,
 			setSelectedDashboard,
-			setVariablesToGetUpdated,
 		],
 	);
 
@@ -158,9 +180,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 						existingVariables={dashboardVariables}
 						variableData={variable}
 						onValueUpdate={onValueUpdate}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
 					/>
 				);
 			})}

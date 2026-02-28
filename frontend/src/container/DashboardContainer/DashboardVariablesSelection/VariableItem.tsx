@@ -1,7 +1,6 @@
 import { memo } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
-import { IDependencyData } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import CustomVariableInput from './CustomVariableInput';
@@ -21,18 +20,12 @@ export interface VariableItemProps {
 		allSelected: boolean,
 		haveCustomValuesSelected?: boolean,
 	) => void;
-	variablesToGetUpdated: string[];
-	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
-	dependencyData: IDependencyData | null;
 }
 
 function VariableItem({
 	variableData,
 	onValueUpdate,
 	existingVariables,
-	variablesToGetUpdated,
-	setVariablesToGetUpdated,
-	dependencyData,
 }: VariableItemProps): JSX.Element {
 	const { name, description, type: variableType } = variableData;
 
@@ -65,9 +58,6 @@ function VariableItem({
 						variableData={variableData}
 						onValueUpdate={onValueUpdate}
 						existingVariables={existingVariables}
-						variablesToGetUpdated={variablesToGetUpdated}
-						setVariablesToGetUpdated={setVariablesToGetUpdated}
-						dependencyData={dependencyData}
 					/>
 				)}
 				{variableType === 'DYNAMIC' && (
