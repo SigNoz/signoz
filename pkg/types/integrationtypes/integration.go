@@ -1,4 +1,4 @@
-package types
+package integrationtypes
 
 import (
 	"database/sql/driver"
@@ -6,6 +6,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 )
 
@@ -26,17 +27,17 @@ var AllIntegrationUserEmails = []IntegrationUserEmail{
 type InstalledIntegration struct {
 	bun.BaseModel `bun:"table:installed_integration"`
 
-	Identifiable
+	types.Identifiable
 	Type        string                     `json:"type" bun:"type,type:text,unique:org_id_type"`
 	Config      InstalledIntegrationConfig `json:"config" bun:"config,type:text"`
 	InstalledAt time.Time                  `json:"installed_at" bun:"installed_at,default:current_timestamp"`
 	OrgID       string                     `json:"org_id" bun:"org_id,type:text,unique:org_id_type,references:organizations(id),on_delete:cascade"`
 }
 
-type InstalledIntegrationConfig map[string]interface{}
+type InstalledIntegrationConfig map[string]any
 
 // For serializing from db
-func (c *InstalledIntegrationConfig) Scan(src interface{}) error {
+func (c *InstalledIntegrationConfig) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
 	case []byte:
@@ -67,8 +68,8 @@ func (c *InstalledIntegrationConfig) Value() (driver.Value, error) {
 type CloudIntegration struct {
 	bun.BaseModel `bun:"table:cloud_integration"`
 
-	Identifiable
-	TimeAuditable
+	types.Identifiable
+	types.TimeAuditable
 	Provider        string         `json:"provider" bun:"provider,type:text,unique:provider_id"`
 	Config          *AccountConfig `json:"config" bun:"config,type:text"`
 	AccountID       *string        `json:"account_id" bun:"account_id,type:text"`
@@ -194,8 +195,8 @@ func (r *AgentReport) Value() (driver.Value, error) {
 type CloudIntegrationService struct {
 	bun.BaseModel `bun:"table:cloud_integration_service,alias:cis"`
 
-	Identifiable
-	TimeAuditable
+	types.Identifiable
+	types.TimeAuditable
 	Type               string             `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	Config             CloudServiceConfig `bun:"config,type:text"`
 	CloudIntegrationID string             `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
