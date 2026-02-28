@@ -49,6 +49,43 @@ Follow these rules:
 
 5. **Test files stay alongside source**: Unit tests go in `_test.go` files next to the code they test, in the same package.
 
+## How should I order code within a file?
+
+Within a single `.go` file, declarations should follow this order:
+
+1. Constants
+2. Variables
+3. Types (structs, interfaces)
+4. Constructor functions (`New...`)
+5. Exported methods and functions
+6. Unexported methods and functions
+
+```go
+// 1. Constants
+const defaultTimeout = 30 * time.Second
+
+// 2. Variables
+var ErrNotFound = errors.New(errors.TypeNotFound, errors.CodeNotFound, "resource not found")
+
+// 3. Types
+type Store struct {
+    db *sql.DB
+}
+
+// 4. Constructors
+func NewStore(db *sql.DB) *Store {
+    return &Store{db: db}
+}
+
+// 5. Exported methods
+func (s *Store) Get(ctx context.Context, id string) (*Resource, error) { ... }
+
+// 6. Unexported methods
+func (s *Store) buildQuery(id string) string { ... }
+```
+
+This ordering makes files predictable. A reader scanning from top to bottom sees the contract (constants, types, constructors) before the implementation (methods), and exported behavior before internal helpers.
+
 ## How should I name symbols?
 
 ### Exported symbols
@@ -105,6 +142,31 @@ When two packages are tightly coupled (one imports the other's constants, they c
 5. Delete the old packages. Do not leave behind re-export shims.
 6. Verify with `go build ./...`, `go test ./<new-pkg>/...`, and `go vet ./...`.
 
+## When should I use valuer types?
+
+The `pkg/valuer` package provides typed wrappers for common domain values: `valuer.String`, `valuer.Email`, `valuer.UUID`, and `valuer.TextDuration`. These types carry validation, normalization, and consistent serialization (JSON, SQL, text) that raw Go primitives do not.
+
+Use a valuer type instead of a raw primitive when the value represents a domain concept with any of:
+
+- **Enums**: All enums in the codebase must be backed by `valuer.String`. Do not use raw `string` constants or `iota`-based `int` enums. A struct embedding `valuer.String` with predefined variables gives you normalization, serialization, and an `Enum()` method for OpenAPI schema generation in one place.
+- **Validation**: emails must match a format, UUIDs must be parseable, durations must be valid.
+- **Normalization**: `valuer.String` lowercases and trims input, so comparisons are consistent throughout the system.
+- **Serialization boundary**: the value is stored in a database, sent over the wire, or bound from an HTTP parameter. Valuer types implement `Scan`, `Value`, `MarshalJSON`, `UnmarshalJSON`, and `UnmarshalParam` consistently.
+
+```go
+// Wrong: raw string constant with no validation or normalization.
+const SignalTraces = "traces"
+
+// Right: valuer-backed type that normalizes and serializes consistently.
+type Signal struct {
+    valuer.String
+}
+
+var SignalTraces = Signal{valuer.NewString("traces")}
+```
+
+Only primitive domain types that serve as shared infrastructure belong in `pkg/valuer`. If you need a new base type (like `Email` or `TextDuration`) that multiple packages will embed for validation and serialization, add it there. Domain-specific types that build on top of a valuer (like `Signal` embedding `valuer.String`) belong in their own domain package, not in `pkg/valuer`.
+
 ## When should I add documentation?
 
 Add a `doc.go` with a package-level comment for any package that is non-trivial or has multiple consumers. Keep it to 1–3 sentences:
@@ -119,6 +181,10 @@ package cache
 
 - Package names are domain-specific and lowercase. Never generic names like `util` or `common`.
 - The file matching the package name (e.g., `cache.go`) defines the public interface. Implementation details go elsewhere.
+- Within a file, order declarations: constants, variables, types, constructors, exported functions, unexported functions.
+- Segregate types across files by responsibility. A file with 5 unrelated types is harder to navigate than 5 files with one type each.
+- Use valuer types (`valuer.String`, `valuer.Email`, `valuer.UUID`, `valuer.TextDuration`) for domain values that need validation, normalization, or cross-boundary serialization. Do not use raw string constants where a valuer type exists.
+- Avoid `init()` functions. If you need to initialize a variable, use a package-level `var` with a function call or a `sync.Once`. `init()` hides execution order, makes testing harder, and has caused subtle bugs in large codebases.
 - Never introduce circular imports. Extract shared types into `pkg/types/` when needed.
 - Watch for symbol name collisions when merging packages, prefix to disambiguate.
 - Put test helpers in a `{pkg}test/` sub-package, not in the main package.
