@@ -116,10 +116,11 @@ func (typ *Identity) UnmarshalBinary(data []byte) error {
 
 func (typ *Identity) ToClaims() Claims {
 	return Claims{
-		UserID: typ.UserID.String(),
-		Email:  typ.Email.String(),
-		Role:   typ.Role,
-		OrgID:  typ.OrgID.String(),
+		UserID:    typ.UserID.String(),
+		Principal: PrincipalUser.String(),
+		Email:     typ.Email.String(),
+		Role:      typ.Role,
+		OrgID:     typ.OrgID.String(),
 	}
 }
 

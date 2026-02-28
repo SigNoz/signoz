@@ -2,6 +2,7 @@ package implserviceaccount
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -33,7 +34,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 	}
 
 	// authz actions cannot run in sql transactions
-	err = module.authz.Grant(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.Grant(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -125,6 +126,20 @@ func (module *module) List(ctx context.Context, orgID valuer.UUID) ([]*serviceac
 	return serviceAccounts, nil
 }
 
+func (module *module) GetByKey(ctx context.Context, key string) (*serviceaccounttypes.ServiceAccountWithKey, error) {
+	storableFactorAPIKey, err := module.store.GetFactorAPIKeyByKey(ctx, key)
+	if err != nil {
+		return nil, err
+	}
+
+	storableServiceAccount, err := module.store.GetByID(ctx, valuer.MustNewUUID(storableFactorAPIKey.ServiceAccountID))
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceaccounttypes.NewServiceAccountWithKey(storableServiceAccount, storableFactorAPIKey), nil
+}
+
 func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
 	serviceAccount, err := module.Get(ctx, orgID, input.ID)
 	if err != nil {
@@ -138,7 +153,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serv
 
 	// gets the role diff if any to modify grants.
 	grants, revokes := serviceAccount.PatchRoles(input)
-	err = module.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -203,7 +218,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	// revoke from authz first as this cannot run in sql transaction
-	err = module.authz.Revoke(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -280,6 +295,23 @@ func (module *module) UpdateFactorAPIKey(ctx context.Context, serviceAccountID v
 	return module.store.UpdateFactorAPIKey(ctx, serviceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
 }
 
+func (module *module) SetLastObservedAt(ctx context.Context, key string, time time.Time) error {
+	storable, err := module.store.GetFactorAPIKeyByKey(ctx, key)
+	if err != nil {
+		return err
+	}
+
+	factorAPIKey := serviceaccounttypes.NewFactorAPIKeyFromStorable(storable)
+	factorAPIKey.SetLastObservedAt(time)
+
+	err = module.store.UpdateFactorAPIKey(ctx, factorAPIKey.ServiceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {
 	factorAPIKey, err := module.GetFactorAPIKey(ctx, serviceAccountID, id)
 	if err != nil {
@@ -309,7 +341,7 @@ func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID v
 }
 
 func (module *module) disableServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
-	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, nil))
+	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, input.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -337,7 +369,7 @@ func (module *module) disableServiceAccount(ctx context.Context, orgID valuer.UU
 }
 
 func (module *module) activateServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
-	err := module.authz.Grant(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, nil))
+	err := module.authz.Grant(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, input.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}

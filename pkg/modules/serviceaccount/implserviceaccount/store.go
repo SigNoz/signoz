@@ -212,6 +212,23 @@ func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer
 	return storable, nil
 }
 
+func (store *store) GetFactorAPIKeyByKey(ctx context.Context, key string) (*serviceaccounttypes.StorableFactorAPIKey, error) {
+	storable := new(serviceaccounttypes.StorableFactorAPIKey)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("key = ?", key).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccounFactorAPIKeytNotFound, "api key with key: %s doesn't exist", key)
+	}
+
+	return storable, nil
+}
+
 func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID) ([]*serviceaccounttypes.StorableFactorAPIKey, error) {
 	storables := make([]*serviceaccounttypes.StorableFactorAPIKey, 0)
 

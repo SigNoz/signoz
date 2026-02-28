@@ -3,6 +3,7 @@ package serviceaccount
 import (
 	"context"
 	"net/http"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -17,6 +18,9 @@ type Module interface {
 
 	// Gets a service account by id without fetching roles.
 	GetWithoutRoles(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
+
+	// Gets a service account by factor API key
+	GetByKey(context.Context, string) (*serviceaccounttypes.ServiceAccountWithKey, error)
 
 	// List all service accounts for an organization.
 	List(context.Context, valuer.UUID) ([]*serviceaccounttypes.ServiceAccount, error)
@@ -33,11 +37,14 @@ type Module interface {
 	// Creates a new API key for a service account
 	CreateFactorAPIKey(context.Context, *serviceaccounttypes.FactorAPIKey) error
 
-	// Gets a factor API key by id
+	// Gets a factor API key by service account id and key id
 	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.FactorAPIKey, error)
 
 	// Lists all the API keys for a service account
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
+
+	// Sets the last observed at for the key
+	SetLastObservedAt(context.Context, string, time.Time) error
 
 	// Updates an existing API key for a service account
 	UpdateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error

@@ -114,6 +114,10 @@ func (apiKey *FactorAPIKey) Update(name string, expiresAt uint64) {
 	apiKey.UpdatedAt = time.Now()
 }
 
+func (apiKey *FactorAPIKey) SetLastObservedAt(time time.Time) {
+	apiKey.LastUsed = time
+}
+
 func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	type Alias PostableFactorAPIKey
 

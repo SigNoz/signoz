@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -46,6 +47,11 @@ type ServiceAccount struct {
 	Roles  []string      `json:"roles" required:"true" nullable:"false"`
 	Status valuer.String `json:"status" required:"true"`
 	OrgID  valuer.UUID   `json:"orgID" required:"true"`
+}
+
+type ServiceAccountWithKey struct {
+	*ServiceAccount
+	*FactorAPIKey
 }
 
 type PostableServiceAccount struct {
@@ -126,6 +132,28 @@ func NewStorableServiceAccount(serviceAccount *ServiceAccount) *StorableServiceA
 		Email:         serviceAccount.Email.String(),
 		Status:        serviceAccount.Status,
 		OrgID:         serviceAccount.OrgID.String(),
+	}
+}
+
+func NewServiceAccountWithKey(storableServiceAccount *StorableServiceAccount, storableFactorAPIKey *StorableFactorAPIKey) *ServiceAccountWithKey {
+	return &ServiceAccountWithKey{
+		&ServiceAccount{
+			Identifiable:  storableFactorAPIKey.Identifiable,
+			TimeAuditable: storableFactorAPIKey.TimeAuditable,
+			Name:          storableFactorAPIKey.Name,
+			Email:         valuer.MustNewEmail(storableServiceAccount.Email),
+			Status:        storableServiceAccount.Status,
+			OrgID:         valuer.MustNewUUID(storableServiceAccount.OrgID),
+		},
+		&FactorAPIKey{
+			Identifiable:     storableFactorAPIKey.Identifiable,
+			TimeAuditable:    storableFactorAPIKey.TimeAuditable,
+			Name:             storableFactorAPIKey.Name,
+			Key:              storableFactorAPIKey.Key,
+			ExpiresAt:        storableFactorAPIKey.ExpiresAt,
+			LastUsed:         storableFactorAPIKey.LastUsed,
+			ServiceAccountID: valuer.MustNewUUID(storableFactorAPIKey.ServiceAccountID),
+		},
 	}
 }
 
@@ -250,4 +278,13 @@ func (sa *UpdatableServiceAccountStatus) UnmarshalJSON(data []byte) error {
 
 	*sa = UpdatableServiceAccountStatus(temp)
 	return nil
+}
+
+func (sa *ServiceAccountWithKey) ToClaims() authtypes.Claims {
+	return authtypes.Claims{
+		ServiceAccountID: sa.ServiceAccount.ID.String(),
+		Principal:        authtypes.PrincipalServiceAccount.String(),
+		OrgID:            sa.ServiceAccount.OrgID.String(),
+		Email:            sa.Email.String(),
+	}
 }

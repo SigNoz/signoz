@@ -11,12 +11,15 @@ import (
 
 type claimsKey struct{}
 type accessTokenKey struct{}
+type serviceAccountKey struct{}
 
 type Claims struct {
-	UserID string
-	Email  string
-	Role   types.Role
-	OrgID  string
+	UserID           string
+	ServiceAccountID string
+	Principal        string
+	Email            string
+	Role             types.Role
+	OrgID            string
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -47,9 +50,24 @@ func AccessTokenFromContext(ctx context.Context) (string, error) {
 	return accessToken, nil
 }
 
+func NewContextWithServiceAccountKey(ctx context.Context, key string) context.Context {
+	return context.WithValue(ctx, serviceAccountKey{}, key)
+}
+
+func ServiceAccountKeyFromContext(ctx context.Context) (string, error) {
+	key, ok := ctx.Value(serviceAccountKey{}).(string)
+	if !ok {
+		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return key, nil
+}
+
 func (c *Claims) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("user_id", c.UserID),
+		slog.String("service_account_id", c.ServiceAccountID),
+		slog.String("principal", c.Principal),
 		slog.String("email", c.Email),
 		slog.String("role", c.Role.String()),
 		slog.String("org_id", c.OrgID),
