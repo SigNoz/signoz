@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/infrastructuremonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -108,6 +109,9 @@ type Config struct {
 	// MetricsExplorer config
 	MetricsExplorer metricsexplorer.Config `mapstructure:"metricsexplorer"`
 
+	// InfrastructureMonitoring config
+	InfrastructureMonitoring infrastructuremonitoring.Config `mapstructure:"infrastructuremonitoring"`
+
 	// Flagger config
 	Flagger flagger.Config `mapstructure:"flagger"`
 
@@ -174,6 +178,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		gateway.NewConfigFactory(),
 		tokenizer.NewConfigFactory(),
 		metricsexplorer.NewConfigFactory(),
+		infrastructuremonitoring.NewConfigFactory(),
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
 	}

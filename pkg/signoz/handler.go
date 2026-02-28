@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/fields/implfields"
+	"github.com/SigNoz/signoz/pkg/modules/infrastructuremonitoring"
+	"github.com/SigNoz/signoz/pkg/modules/infrastructuremonitoring/implinfrastructuremonitoring"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
@@ -36,22 +38,23 @@ import (
 )
 
 type Handlers struct {
-	SavedView       savedview.Handler
-	Apdex           apdex.Handler
-	Dashboard       dashboard.Handler
-	QuickFilter     quickfilter.Handler
-	TraceFunnel     tracefunnel.Handler
-	RawDataExport   rawdataexport.Handler
-	SpanPercentile  spanpercentile.Handler
-	Services        services.Handler
-	MetricsExplorer metricsexplorer.Handler
-	Global          global.Handler
-	FlaggerHandler  flagger.Handler
-	GatewayHandler  gateway.Handler
-	Fields          fields.Handler
-	AuthzHandler    authz.Handler
-	ZeusHandler     zeus.Handler
-	QuerierHandler  querier.Handler
+	SavedView                savedview.Handler
+	Apdex                    apdex.Handler
+	Dashboard                dashboard.Handler
+	QuickFilter              quickfilter.Handler
+	TraceFunnel              tracefunnel.Handler
+	RawDataExport            rawdataexport.Handler
+	SpanPercentile           spanpercentile.Handler
+	Services                 services.Handler
+	MetricsExplorer          metricsexplorer.Handler
+	InfrastructureMonitoring infrastructuremonitoring.Handler
+	Global                   global.Handler
+	FlaggerHandler           flagger.Handler
+	GatewayHandler           gateway.Handler
+	Fields                   fields.Handler
+	AuthzHandler             authz.Handler
+	ZeusHandler              zeus.Handler
+	QuerierHandler           querier.Handler
 }
 
 func NewHandlers(
@@ -68,21 +71,22 @@ func NewHandlers(
 	zeusService zeus.Zeus,
 ) Handlers {
 	return Handlers{
-		SavedView:       implsavedview.NewHandler(modules.SavedView),
-		Apdex:           implapdex.NewHandler(modules.Apdex),
-		Dashboard:       impldashboard.NewHandler(modules.Dashboard, providerSettings),
-		QuickFilter:     implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:     impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:   implrawdataexport.NewHandler(modules.RawDataExport),
-		Services:        implservices.NewHandler(modules.Services),
-		MetricsExplorer: implmetricsexplorer.NewHandler(modules.MetricsExplorer),
-		SpanPercentile:  implspanpercentile.NewHandler(modules.SpanPercentile),
-		Global:          signozglobal.NewHandler(global),
-		FlaggerHandler:  flagger.NewHandler(flaggerService),
-		GatewayHandler:  gateway.NewHandler(gatewayService),
-		Fields:          implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AuthzHandler:    signozauthzapi.NewHandler(authz),
-		ZeusHandler:     zeus.NewHandler(zeusService, licensing),
-		QuerierHandler:  querierHandler,
+		SavedView:                implsavedview.NewHandler(modules.SavedView),
+		Apdex:                    implapdex.NewHandler(modules.Apdex),
+		Dashboard:                impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		QuickFilter:              implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:              impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:            implrawdataexport.NewHandler(modules.RawDataExport),
+		Services:                 implservices.NewHandler(modules.Services),
+		MetricsExplorer:          implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		InfrastructureMonitoring: implinfrastructuremonitoring.NewHandler(modules.InfrastructureMonitoring),
+		SpanPercentile:           implspanpercentile.NewHandler(modules.SpanPercentile),
+		Global:                   signozglobal.NewHandler(global),
+		FlaggerHandler:           flagger.NewHandler(flaggerService),
+		GatewayHandler:           gateway.NewHandler(gatewayService),
+		Fields:                   implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AuthzHandler:             signozauthzapi.NewHandler(authz),
+		ZeusHandler:              zeus.NewHandler(zeusService, licensing),
+		QuerierHandler:           querierHandler,
 	}
 }
