@@ -19,6 +19,8 @@ const config: Config.InitialOptions = {
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^@signozhq/icons$':
 			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
+		'^react-syntax-highlighter/dist/esm/(.*)$':
+			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
 	},
 	globals: {
 		extensionsToTreatAsEsm: ['.ts'],
