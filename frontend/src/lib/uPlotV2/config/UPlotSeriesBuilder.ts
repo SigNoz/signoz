@@ -1,4 +1,3 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
@@ -23,6 +22,8 @@ import {
  * Path builders are static and shared across all instances of UPlotSeriesBuilder
  */
 let builders: PathBuilders | null = null;
+
+const DEFAULT_LINE_WIDTH = 2;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	constructor(props: SeriesProps) {
 		super(props);
@@ -53,7 +54,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
-			width: lineWidth ?? 2,
+			width: lineWidth ?? DEFAULT_LINE_WIDTH,
 		};
 
 		if (lineStyle === LineStyle.Dashed) {
@@ -66,9 +67,9 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 
 		if (fillColor) {
 			lineConfig.fill = fillColor;
-		} else if (this.props.panelType === PANEL_TYPES.BAR) {
+		} else if (this.props.drawStyle === DrawStyle.Bar) {
 			lineConfig.fill = resolvedLineColor;
-		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
+		} else if (this.props.drawStyle === DrawStyle.Histogram) {
 			lineConfig.fill = `${resolvedLineColor}40`;
 		}
 
@@ -137,10 +138,13 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			drawStyle,
 			showPoints,
 		} = this.props;
+
+		const resolvedPointSize = pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * 3;
+
 		const pointsConfig: Partial<Series.Points> = {
 			stroke: resolvedLineColor,
 			fill: resolvedLineColor,
-			size: !pointSize || pointSize < (lineWidth ?? 2) ? undefined : pointSize,
+			size: resolvedPointSize,
 			filter: pointsFilter || undefined,
 		};
 
@@ -231,7 +235,7 @@ function getPathBuilder({
 		throw new Error('Required uPlot path builders are not available');
 	}
 
-	if (drawStyle === DrawStyle.Bar) {
+	if (drawStyle === DrawStyle.Bar || drawStyle === DrawStyle.Histogram) {
 		const pathBuilders = uPlot.paths;
 		return getBarPathBuilder({
 			pathBuilders,
