@@ -30,13 +30,14 @@ type ServiceAccount struct {
 	sfGroup        *singleflight.Group
 }
 
-func NewServiceAccount(store sqlstore.SQLStore, headers []string, logger *slog.Logger, sharder sharder.Sharder) *ServiceAccount {
+func NewServiceAccount(store sqlstore.SQLStore, headers []string, logger *slog.Logger, sharder sharder.Sharder, serviceAccount serviceaccount.Module) *ServiceAccount {
 	return &ServiceAccount{
-		store:   store,
-		headers: headers,
-		logger:  logger,
-		sharder: sharder,
-		sfGroup: &singleflight.Group{},
+		store:          store,
+		headers:        headers,
+		logger:         logger,
+		sharder:        sharder,
+		serviceAccount: serviceAccount,
+		sfGroup:        &singleflight.Group{},
 	}
 }
 

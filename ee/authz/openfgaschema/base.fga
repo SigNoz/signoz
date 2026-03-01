@@ -34,7 +34,7 @@ type metaresources
 
 type metaresource
   relations
-      define read: [user, aserviceaccount, anonymous, role#assignee]
+      define read: [user, serviceaccount, anonymous, role#assignee]
       define update: [user, serviceaccount, role#assignee]
       define delete: [user, serviceaccount, role#assignee]
 

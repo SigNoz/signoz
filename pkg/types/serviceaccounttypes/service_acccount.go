@@ -138,9 +138,9 @@ func NewStorableServiceAccount(serviceAccount *ServiceAccount) *StorableServiceA
 func NewServiceAccountWithKey(storableServiceAccount *StorableServiceAccount, storableFactorAPIKey *StorableFactorAPIKey) *ServiceAccountWithKey {
 	return &ServiceAccountWithKey{
 		&ServiceAccount{
-			Identifiable:  storableFactorAPIKey.Identifiable,
-			TimeAuditable: storableFactorAPIKey.TimeAuditable,
-			Name:          storableFactorAPIKey.Name,
+			Identifiable:  storableServiceAccount.Identifiable,
+			TimeAuditable: storableServiceAccount.TimeAuditable,
+			Name:          storableServiceAccount.Name,
 			Email:         valuer.MustNewEmail(storableServiceAccount.Email),
 			Status:        storableServiceAccount.Status,
 			OrgID:         valuer.MustNewUUID(storableServiceAccount.OrgID),

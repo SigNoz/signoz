@@ -139,7 +139,7 @@ func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtyp
 
 		subject = user
 	case authtypes.PrincipalServiceAccount.String():
-		serviceAccount, err := authtypes.NewSubject(authtypes.TypeableServiceAccount, claims.UserID, orgID, nil)
+		serviceAccount, err := authtypes.NewSubject(authtypes.TypeableServiceAccount, claims.ServiceAccountID, orgID, nil)
 		if err != nil {
 			return err
 		}
