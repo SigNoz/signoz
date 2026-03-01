@@ -9,7 +9,12 @@ import {
 import { TimeSeriesChartProps } from '../types';
 
 export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
-	const { children, renderTooltip: customRenderTooltip, ...rest } = props;
+	const {
+		children,
+		renderTooltip: customRenderTooltip,
+		pinnedTooltipElement,
+		...rest
+	} = props;
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {
@@ -21,10 +26,17 @@ export default function TimeSeries(props: TimeSeriesChartProps): JSX.Element {
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
+				pinnedTooltipElement,
 			};
 			return <TimeSeriesTooltip {...tooltipProps} />;
 		},
-		[customRenderTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
+		[
+			customRenderTooltip,
+			pinnedTooltipElement,
+			rest.timezone,
+			rest.yAxisUnit,
+			rest.decimalPrecision,
+		],
 	);
 
 	return (

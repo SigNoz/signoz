@@ -13,6 +13,7 @@ export default function Histogram(props: HistogramChartProps): JSX.Element {
 		children,
 		renderTooltip: customRenderTooltip,
 		isQueriesMerged,
+		pinnedTooltipElement,
 		...rest
 	} = props;
 
@@ -26,10 +27,17 @@ export default function Histogram(props: HistogramChartProps): JSX.Element {
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
+				pinnedTooltipElement,
 			};
 			return <HistogramTooltip {...tooltipProps} />;
 		},
-		[customRenderTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
+		[
+			customRenderTooltip,
+			pinnedTooltipElement,
+			rest.timezone,
+			rest.yAxisUnit,
+			rest.decimalPrecision,
+		],
 	);
 
 	return (

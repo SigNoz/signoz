@@ -42,6 +42,22 @@ export interface TooltipPluginProps {
 	maxHeight?: number;
 }
 
+export interface TooltipClickData {
+	xValue: number;
+	yValue: number;
+	focusedSeries: {
+		seriesIndex: number;
+		seriesName: string;
+		value: number;
+		color: string;
+	} | null;
+	clickedDataTimestamp: number;
+	mouseX: number;
+	mouseY: number;
+	absoluteMouseX: number;
+	absoluteMouseY: number;
+}
+
 /**
  * Mutable, non-React state that drives tooltip behaviour:
  * - whether the tooltip is active / pinned
@@ -68,6 +84,9 @@ export interface TooltipControllerState {
 	windowWidth: number;
 	windowHeight: number;
 	pendingPinnedUpdate: boolean;
+
+	/** Data about the click that triggered the tooltip */
+	clickData: TooltipClickData | null;
 }
 
 /**

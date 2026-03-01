@@ -1,6 +1,7 @@
 import { useLayoutEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
+import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
 import {
@@ -142,6 +143,7 @@ export default function TooltipPlugin({
 			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
+			controller.clickData = null;
 			if (controller.plot) {
 				controller.plot.setCursor({ left: -10, top: -10 });
 			}
@@ -161,6 +163,7 @@ export default function TooltipPlugin({
 				isPinned: controller.pinned,
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
+				clickData: controller.clickData,
 			});
 		}
 
@@ -247,6 +250,26 @@ export default function TooltipPlugin({
 				!controller.pinned &&
 				controller.focusedSeriesIndex != null
 			) {
+				const xValue = u.posToVal(event.offsetX, 'x');
+				const yValue = u.posToVal(event.offsetY, 'y');
+				const focusedSeries = getFocusedSeriesAtPosition(event, u);
+
+				let clickedDataTimestamp = xValue;
+				if (focusedSeries) {
+					clickedDataTimestamp = u.data[0][u.posToIdx(event.offsetX)];
+				}
+
+				controller.clickData = {
+					xValue,
+					yValue,
+					focusedSeries,
+					clickedDataTimestamp,
+					mouseX: event.offsetX,
+					mouseY: event.offsetY,
+					absoluteMouseX: event.clientX,
+					absoluteMouseY: event.clientY,
+				};
+
 				setTimeout(() => {
 					controller.pinned = true;
 					scheduleRender(true);

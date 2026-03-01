@@ -10,7 +10,15 @@ import { useBarChartStacking } from '../../hooks/useBarChartStacking';
 import { BarChartProps } from '../types';
 
 export default function BarChart(props: BarChartProps): JSX.Element {
-	const { children, isStackedBarChart, config, data, ...rest } = props;
+	const {
+		children,
+		isStackedBarChart,
+		renderTooltip: customRenderTooltip,
+		config,
+		data,
+		pinnedTooltipElement,
+		...rest
+	} = props;
 
 	const chartData = useBarChartStacking({
 		data,
@@ -20,16 +28,27 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {
+			if (customRenderTooltip) {
+				return customRenderTooltip(props);
+			}
 			const tooltipProps: BarTooltipProps = {
 				...props,
 				timezone: rest.timezone,
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
 				isStackedBarChart: isStackedBarChart,
+				pinnedTooltipElement,
 			};
 			return <BarChartTooltip {...tooltipProps} />;
 		},
-		[rest.timezone, rest.yAxisUnit, rest.decimalPrecision, isStackedBarChart],
+		[
+			customRenderTooltip,
+			rest.timezone,
+			rest.yAxisUnit,
+			rest.decimalPrecision,
+			isStackedBarChart,
+			pinnedTooltipElement,
+		],
 	);
 
 	return (
