@@ -9,6 +9,12 @@ import { UPlotConfigBuilder } from '../../config/UPlotConfigBuilder';
 import TooltipPlugin from '../TooltipPlugin/TooltipPlugin';
 import { DashboardCursorSync } from '../TooltipPlugin/types';
 
+// Avoid depending on the full uPlot + onClickPlugin behaviour in these tests.
+// We only care that pinning logic runs without throwing, not which series is focused.
+jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
+	getFocusedSeriesAtPosition: jest.fn(() => null),
+}));
+
 // ---------------------------------------------------------------------------
 // Mock helpers
 // ---------------------------------------------------------------------------
@@ -55,11 +61,21 @@ function createFakePlot(): {
 	over: HTMLDivElement;
 	setCursor: jest.Mock<void, [uPlot.Cursor]>;
 	cursor: { event: Record<string, unknown> };
+	posToVal: jest.Mock<number, [value: number]>;
+	posToIdx: jest.Mock<number, []>;
+	data: [number[], number[]];
 } {
+	const over = document.createElement('div');
+
+	// Provide the minimal uPlot surface used by TooltipPlugin's pin logic.
 	return {
-		over: document.createElement('div'),
+		over,
 		setCursor: jest.fn(),
 		cursor: { event: {} },
+		// In real uPlot these map overlay coordinates to data-space values.
+		posToVal: jest.fn((value: number) => value),
+		posToIdx: jest.fn(() => 0),
+		data: [[0], [0]],
 	};
 }
 
