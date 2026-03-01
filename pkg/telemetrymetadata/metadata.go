@@ -1632,7 +1632,6 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 		return nil, nil, err
 	}
 	meterMetricsTemporality, meterMetricsTypes, err := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
-	fmt.Println("meter metrics temporality and types", meterMetricsTemporality, meterMetricsTypes, err)
 	if err != nil {
 		return nil, nil, err
 	}
