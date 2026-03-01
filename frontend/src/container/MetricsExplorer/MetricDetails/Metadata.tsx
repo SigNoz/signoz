@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Spin, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import {
@@ -355,11 +355,15 @@ function Metadata({
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
 						<Typography.Text>Metadata</Typography.Text>
-						{actionButton}
+						{!isLoadingMetricMetadata && actionButton}
 					</div>
 				),
 				key: 'metric-metadata',
-				children: isErrorMetricMetadata ? (
+				children: isLoadingMetricMetadata ? (
+					<div className="metrics-accordion-loading-state">
+						<Spin size="small" />
+					</div>
+				) : isErrorMetricMetadata ? (
 					<div className="metric-metadata-error-state">
 						<MetricDetailsErrorState
 							refetch={refetchMetricMetadata}
@@ -381,19 +385,12 @@ function Metadata({
 		[
 			actionButton,
 			columns,
+			isLoadingMetricMetadata,
 			isErrorMetricMetadata,
 			refetchMetricMetadata,
 			tableData,
 		],
 	);
-
-	if (isLoadingMetricMetadata) {
-		return (
-			<div className="metrics-metadata-skeleton-container">
-				<Skeleton active paragraph={{ rows: 8 }} />
-			</div>
-		);
-	}
 
 	return (
 		<Collapse

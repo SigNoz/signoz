@@ -34,6 +34,8 @@ export interface MetadataProps {
 export interface AllAttributesProps {
 	metricName: string;
 	metricType: MetrictypesTypeDTO | undefined;
+	minTime?: number;
+	maxTime?: number;
 }
 
 export interface AllAttributesValueProps {

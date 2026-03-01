@@ -324,6 +324,21 @@ describe('Metadata', () => {
 		expect(editButton2).toBeInTheDocument();
 	});
 
+	it('should show section header but not edit controls while loading', () => {
+		render(
+			<Metadata
+				metricName={MOCK_METRIC_NAME}
+				metadata={null}
+				isErrorMetricMetadata={false}
+				isLoadingMetricMetadata
+				refetchMetricMetadata={mockRefetchMetricMetadata}
+			/>,
+		);
+
+		expect(screen.getByText('Metadata')).toBeInTheDocument();
+		expect(screen.queryByText('Edit')).not.toBeInTheDocument();
+	});
+
 	it('should not allow editing of unit if it is already set', async () => {
 		render(
 			<Metadata

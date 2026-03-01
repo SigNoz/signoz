@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import {
 	Button,
@@ -6,7 +6,7 @@ import {
 	Input,
 	Menu,
 	Popover,
-	Skeleton,
+	Tooltip,
 	Typography,
 } from 'antd';
 import { ColumnsType } from 'antd/es/table';
@@ -15,7 +15,7 @@ import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';
 import { useNotifications } from 'hooks/useNotifications';
-import { Compass, Copy, Search } from 'lucide-react';
+import { Check, Copy, Info, Search, SquareArrowOutUpRight } from 'lucide-react';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -30,6 +30,8 @@ import {
 import { getMetricDetailsQuery } from './utils';
 
 const ALL_ATTRIBUTES_KEY = 'all-attributes';
+const INITIAL_VISIBLE_COUNT = 5;
+const COPY_FEEDBACK_DURATION_MS = 1500;
 
 function AllAttributesEmptyText({
 	isErrorAttributes,
@@ -53,16 +55,27 @@ export function AllAttributesValue({
 	filterValue,
 	goToMetricsExploreWithAppliedAttribute,
 }: AllAttributesValueProps): JSX.Element {
-	const [visibleIndex, setVisibleIndex] = useState(5);
 	const [attributePopoverKey, setAttributePopoverKey] = useState<string | null>(
 		null,
 	);
+	const [allValuesOpen, setAllValuesOpen] = useState(false);
+	const [allValuesSearch, setAllValuesSearch] = useState('');
+	const [copiedValue, setCopiedValue] = useState<string | null>(null);
 	const [, copyToClipboard] = useCopyToClipboard();
 	const { notifications } = useNotifications();
+	const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
-	const handleShowMore = (): void => {
-		setVisibleIndex(visibleIndex + 5);
-	};
+	const handleCopyWithFeedback = useCallback(
+		(value: string): void => {
+			copyToClipboard(value);
+			setCopiedValue(value);
+			clearTimeout(copyTimerRef.current);
+			copyTimerRef.current = setTimeout(() => {
+				setCopiedValue(null);
+			}, COPY_FEEDBACK_DURATION_MS);
+		},
+		[copyToClipboard],
+	);
 
 	const handleMenuItemClick = useCallback(
 		(key: string, attribute: string): void => {
@@ -70,10 +83,10 @@ export function AllAttributesValue({
 				case 'open-in-explorer':
 					goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
 					break;
-				case 'copy-attribute':
-					copyToClipboard(attribute);
+				case 'copy-value':
+					handleCopyWithFeedback(attribute);
 					notifications.success({
-						message: 'Attribute copied!',
+						message: 'Value copied!',
 					});
 					break;
 				default:
@@ -84,7 +97,7 @@ export function AllAttributesValue({
 		[
 			goToMetricsExploreWithAppliedAttribute,
 			filterKey,
-			copyToClipboard,
+			handleCopyWithFeedback,
 			notifications,
 		],
 	);
@@ -94,14 +107,14 @@ export function AllAttributesValue({
 			<Menu
 				items={[
 					{
-						icon: <Compass size={16} />,
-						label: 'Open in Explorer',
+						icon: <SquareArrowOutUpRight size={14} />,
+						label: 'Open in Metric Explorer',
 						key: 'open-in-explorer',
 					},
 					{
-						icon: <Copy size={16} />,
-						label: 'Copy Attribute',
-						key: 'copy-attribute',
+						icon: <Copy size={14} />,
+						label: 'Copy Value',
+						key: 'copy-value',
 					},
 				]}
 				onClick={(info): void => {
@@ -111,9 +124,75 @@ export function AllAttributesValue({
 		),
 		[handleMenuItemClick],
 	);
+
+	const filteredAllValues = useMemo(
+		() =>
+			allValuesSearch
+				? filterValue.filter((v) =>
+						v.toLowerCase().includes(allValuesSearch.toLowerCase()),
+				  )
+				: filterValue,
+		[filterValue, allValuesSearch],
+	);
+
+	const allValuesPopoverContent = (
+		<div className="all-values-popover">
+			<Input
+				placeholder="Search values"
+				size="small"
+				prefix={<Search size={12} />}
+				value={allValuesSearch}
+				onChange={(e): void => setAllValuesSearch(e.target.value)}
+				allowClear
+			/>
+			<div className="all-values-list">
+				{allValuesOpen &&
+					filteredAllValues.map((attribute) => {
+						const isCopied = copiedValue === attribute;
+						return (
+							<div key={attribute} className="all-values-item">
+								<Typography.Text ellipsis className="all-values-item-text">
+									{attribute}
+								</Typography.Text>
+								<div className="all-values-item-actions">
+									<Tooltip title={isCopied ? 'Copied!' : 'Copy value'}>
+										<Button
+											type="text"
+											size="small"
+											className={isCopied ? 'copy-success' : ''}
+											icon={isCopied ? <Check size={12} /> : <Copy size={12} />}
+											onClick={(): void => {
+												handleCopyWithFeedback(attribute);
+											}}
+										/>
+									</Tooltip>
+									<Tooltip title="Open in Metric Explorer">
+										<Button
+											type="text"
+											size="small"
+											icon={<SquareArrowOutUpRight size={12} />}
+											onClick={(): void => {
+												goToMetricsExploreWithAppliedAttribute(filterKey, attribute);
+												setAllValuesOpen(false);
+											}}
+										/>
+									</Tooltip>
+								</div>
+							</div>
+						);
+					})}
+				{allValuesOpen && filteredAllValues.length === 0 && (
+					<Typography.Text type="secondary" className="all-values-empty">
+						No values found
+					</Typography.Text>
+				)}
+			</div>
+		</div>
+	);
+
 	return (
 		<div className="all-attributes-value">
-			{filterValue.slice(0, visibleIndex).map((attribute) => (
+			{filterValue.slice(0, INITIAL_VISIBLE_COUNT).map((attribute) => (
 				<Popover
 					key={attribute}
 					content={attributePopoverContent(attribute)}
@@ -132,10 +211,24 @@ export function AllAttributesValue({
 					</Button>
 				</Popover>
 			))}
-			{visibleIndex < filterValue.length && (
-				<Button type="text" onClick={handleShowMore}>
-					Show More
-				</Button>
+			{filterValue.length > INITIAL_VISIBLE_COUNT && (
+				<Popover
+					content={allValuesPopoverContent}
+					trigger="click"
+					open={allValuesOpen}
+					onOpenChange={(open): void => {
+						setAllValuesOpen(open);
+						if (!open) {
+							setAllValuesSearch('');
+							setCopiedValue(null);
+						}
+					}}
+					overlayClassName="all-values-popover-overlay"
+				>
+					<Button type="text" className="all-values-button">
+						All values ({filterValue.length})
+					</Button>
+				</Popover>
 			)}
 		</div>
 	);
@@ -144,18 +237,30 @@ export function AllAttributesValue({
 function AllAttributes({
 	metricName,
 	metricType,
+	minTime,
+	maxTime,
 }: AllAttributesProps): JSX.Element {
 	const [searchString, setSearchString] = useState('');
 	const [activeKey, setActiveKey] = useState<string[]>([ALL_ATTRIBUTES_KEY]);
+	const [keyPopoverOpen, setKeyPopoverOpen] = useState<string | null>(null);
+	const [copiedKey, setCopiedKey] = useState<string | null>(null);
+	const [, copyToClipboard] = useCopyToClipboard();
+	const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
 	const {
 		data: attributesData,
 		isLoading: isLoadingAttributes,
 		isError: isErrorAttributes,
 		refetch: refetchAttributes,
-	} = useGetMetricAttributes({
-		metricName,
-	});
+	} = useGetMetricAttributes(
+		{
+			metricName,
+		},
+		{
+			start: minTime ? Math.floor(minTime / 1000000) : undefined,
+			end: maxTime ? Math.floor(maxTime / 1000000) : undefined,
+		},
+	);
 
 	const attributes = useMemo(() => attributesData?.data.attributes ?? [], [
 		attributesData,
@@ -164,12 +269,14 @@ function AllAttributes({
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const goToMetricsExplorerwithAppliedSpaceAggregation = useCallback(
-		(groupBy: string) => {
+		(groupBy: string, valueCount?: number) => {
+			const limit = valueCount && valueCount > 250 ? 100 : undefined;
 			const compositeQuery = getMetricDetailsQuery(
 				metricName,
 				metricType,
 				undefined,
 				groupBy,
+				limit,
 			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
@@ -216,6 +323,28 @@ function AllAttributes({
 		[metricName, metricType, handleExplorerTabChange],
 	);
 
+	const handleKeyMenuItemClick = useCallback(
+		(menuKey: string, attributeKey: string, valueCount?: number): void => {
+			switch (menuKey) {
+				case 'open-in-explorer':
+					goToMetricsExplorerwithAppliedSpaceAggregation(attributeKey, valueCount);
+					break;
+				case 'copy-key':
+					copyToClipboard(attributeKey);
+					setCopiedKey(attributeKey);
+					clearTimeout(copyTimerRef.current);
+					copyTimerRef.current = setTimeout(() => {
+						setCopiedKey(null);
+					}, COPY_FEEDBACK_DURATION_MS);
+					break;
+				default:
+					break;
+			}
+			setKeyPopoverOpen(null);
+		},
+		[goToMetricsExplorerwithAppliedSpaceAggregation, copyToClipboard],
+	);
+
 	const filteredAttributes = useMemo(
 		() =>
 			attributes.filter(
@@ -254,21 +383,57 @@ function AllAttributes({
 				width: 50,
 				align: 'left',
 				className: 'metric-metadata-key',
-				render: (field: { label: string; contribution: number }): JSX.Element => (
-					<div className="all-attributes-key">
-						<Button
-							type="text"
-							onClick={(): void =>
-								goToMetricsExplorerwithAppliedSpaceAggregation(field.label)
-							}
-						>
-							<Typography.Text>{field.label}</Typography.Text>
-						</Button>
-						<Typography.Text className="all-attributes-contribution">
-							{field.contribution}
-						</Typography.Text>
-					</div>
-				),
+				render: (field: { label: string; contribution: number }): JSX.Element => {
+					const isCopied = copiedKey === field.label;
+					return (
+						<div className="all-attributes-key">
+							<Popover
+								content={
+									<Menu
+										items={[
+											{
+												icon: <SquareArrowOutUpRight size={14} />,
+												label: 'Open in Metric Explorer',
+												key: 'open-in-explorer',
+											},
+											{
+												icon: <Copy size={14} />,
+												label: 'Copy Key',
+												key: 'copy-key',
+											},
+										]}
+										onClick={(info): void => {
+											handleKeyMenuItemClick(info.key, field.label, field.contribution);
+										}}
+									/>
+								}
+								trigger="click"
+								placement="right"
+								overlayClassName="attribute-key-popover-overlay"
+								open={keyPopoverOpen === field.label}
+								onOpenChange={(open): void => {
+									if (!open) {
+										setKeyPopoverOpen(null);
+									} else {
+										setKeyPopoverOpen(field.label);
+									}
+								}}
+							>
+								<Button type="text">
+									<Typography.Text>{field.label}</Typography.Text>
+								</Button>
+							</Popover>
+							{isCopied && (
+								<span className="copy-feedback">
+									<Check size={12} />
+								</span>
+							)}
+							<Typography.Text className="all-attributes-contribution">
+								{field.contribution}
+							</Typography.Text>
+						</div>
+					);
+				},
 			},
 			{
 				title: 'Value',
@@ -291,7 +456,9 @@ function AllAttributes({
 		],
 		[
 			goToMetricsExploreWithAppliedAttribute,
-			goToMetricsExplorerwithAppliedSpaceAggregation,
+			handleKeyMenuItemClick,
+			keyPopoverOpen,
+			copiedKey,
 		],
 	);
 
@@ -300,7 +467,12 @@ function AllAttributes({
 			{
 				label: (
 					<div className="metrics-accordion-header">
-						<Typography.Text>All Attributes</Typography.Text>
+						<div className="all-attributes-header-title">
+							<Typography.Text>All Attributes</Typography.Text>
+							<Tooltip title="Showing attributes for the selected time range">
+								<Info size={14} />
+							</Tooltip>
+						</div>
 						<Input
 							className="all-attributes-search-input"
 							placeholder="Search"
@@ -329,7 +501,9 @@ function AllAttributes({
 						className="metrics-accordion-content all-attributes-content"
 						scroll={{ y: 600 }}
 						locale={{
-							emptyText: (
+							emptyText: isLoadingAttributes ? (
+								' '
+							) : (
 								<AllAttributesEmptyText
 									isErrorAttributes={isErrorAttributes}
 									refetchAttributes={refetchAttributes}
@@ -349,14 +523,6 @@ function AllAttributes({
 			refetchAttributes,
 		],
 	);
-
-	if (isLoadingAttributes) {
-		return (
-			<div className="all-attributes-skeleton-container">
-				<Skeleton active paragraph={{ rows: 8 }} />
-			</div>
-		);
-	}
 
 	return (
 		<Collapse

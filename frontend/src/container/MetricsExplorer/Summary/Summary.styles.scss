@@ -37,7 +37,7 @@
 
 	.metrics-search-container {
 		display: flex;
-		gap: 16px;
+		gap: 8px;
 		align-items: center;
 
 		.metrics-search-options {
@@ -51,10 +51,6 @@
 			gap: 8px;
 			flex: 1;
 
-			.lucide-info {
-				cursor: pointer;
-			}
-
 			.query-builder-search-container {
 				width: 100%;
 			}
@@ -66,8 +62,6 @@
 			margin-left: -16px;
 			margin-right: -16px;
 
-			max-height: 500px;
-			overflow-y: auto;
 			.ant-table-thead > tr > th {
 				padding: 12px;
 				font-weight: 500;
