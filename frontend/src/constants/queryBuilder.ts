@@ -177,7 +177,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MetricAggregateOperator.COUNT,
+			timeAggregation: MetricAggregateOperator.AVG,
 			spaceAggregation: MetricAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
@@ -225,7 +225,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MeterAggregateOperator.COUNT,
+			timeAggregation: MeterAggregateOperator.AVG,
 			spaceAggregation: MeterAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
