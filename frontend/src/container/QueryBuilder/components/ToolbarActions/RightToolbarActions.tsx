@@ -1,7 +1,9 @@
 import { MutableRefObject, useEffect } from 'react';
 import { useQueryClient } from 'react-query';
+import { Button, Tooltip } from 'antd';
 import { LogsExplorerShortcuts } from 'constants/shortcuts/logsExplorerShortcuts';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { ZoomOut } from 'lucide-react';
 
 import RunQueryBtn from '../RunQueryBtn/RunQueryBtn';
 
@@ -13,6 +15,7 @@ interface RightToolbarActionsProps {
 	listQueryKeyRef?: MutableRefObject<any>;
 	chartQueryKeyRef?: MutableRefObject<any>;
 	showLiveLogs?: boolean;
+	onZoomOut?: () => void;
 }
 
 export default function RightToolbarActions({
@@ -21,6 +24,7 @@ export default function RightToolbarActions({
 	listQueryKeyRef,
 	chartQueryKeyRef,
 	showLiveLogs,
+	onZoomOut,
 }: RightToolbarActionsProps): JSX.Element {
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
 
@@ -58,6 +62,14 @@ export default function RightToolbarActions({
 
 	return (
 		<div className="right-toolbar-actions-container">
+			<Tooltip title="Zoom out">
+				<Button
+					type="text"
+					icon={<ZoomOut size={16} />}
+					className="zoom-out-btn"
+					onClick={(): void => onZoomOut?.()}
+				/>
+			</Tooltip>
 			<RunQueryBtn
 				isLoadingQueries={isLoadingQueries}
 				handleCancelQuery={handleCancelQuery}
