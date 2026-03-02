@@ -6,6 +6,8 @@ import requests
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import SigNoz
 
+from sqlalchemy import sql
+
 
 def test_reinvite_deleted_user(
     signoz: SigNoz,
@@ -48,7 +50,6 @@ def test_reinvite_deleted_user(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Soft delete the user (set status to deleted via DB since feature flag may not be enabled)
-    from sqlalchemy import sql
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
             sql.text("UPDATE users SET status = 'deleted' WHERE id = :user_id"),
