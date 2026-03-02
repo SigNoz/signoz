@@ -1077,15 +1077,15 @@
       }
     },
     "assets": {
-      "dashboards": [
-        {
-          "id": "overview",
-          "title": "AWS MSK Overview",
-          "description": "Overview of AWS MSK",
-          "image": "file://assets/dashboards/overview.png",
-          "definition": "file://assets/dashboards/overview.json"
-        }
-      ]
-    }
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "AWS MSK Cluster Monitoring",
+        "description": "Comprehensive monitoring dashboard for AWS MSK clusters",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
   }
   
