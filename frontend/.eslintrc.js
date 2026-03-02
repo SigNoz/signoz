@@ -2,7 +2,11 @@
  * ESLint Configuration for SigNoz Frontend
  */
 module.exports = {
-	ignorePatterns: ['src/parser/*.ts', 'scripts/update-registry.js'],
+	ignorePatterns: [
+		'src/parser/*.ts',
+		'scripts/update-registry.js',
+		'scripts/generate-permissions-type.js',
+	],
 	env: {
 		browser: true,
 		es2021: true,

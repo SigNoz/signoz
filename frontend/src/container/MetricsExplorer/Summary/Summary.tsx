@@ -15,13 +15,12 @@ import {
 	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	convertExpressionToFilters,
-	convertFiltersToExpression,
-} from 'components/QueryBuilderV2/utils';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -61,10 +60,13 @@ function Summary(): JSX.Element {
 		heatmapView,
 		setHeatmapView,
 	] = useState<MetricsexplorertypesTreemapModeDTO>(
-		MetricsexplorertypesTreemapModeDTO.timeseries,
+		MetricsexplorertypesTreemapModeDTO.samples,
 	);
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
+
 	const query = useMemo(() => currentQuery?.builder?.queryData[0], [
 		currentQuery,
 	]);
@@ -89,6 +91,15 @@ function Summary(): JSX.Element {
 		setCurrentQueryFilterExpression,
 	] = useState<string>(query?.filter?.expression || '');
 
+	const [appliedFilterExpression, setAppliedFilterExpression] = useState(
+		query?.filter?.expression || '',
+	);
+
+	const queryFilterExpression = useMemo(
+		() => ({ expression: appliedFilterExpression }),
+		[appliedFilterExpression],
+	);
+
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
 			[MetricsExplorerEventKeys.Tab]: 'summary',
@@ -99,11 +110,6 @@ function Summary(): JSX.Element {
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	const queryFilterExpression = useMemo(() => {
-		const filters = query.filters || { items: [], op: 'AND' };
-		return convertFiltersToExpression(filters);
-	}, [query.filters]);
 
 	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(() => {
 		return {
@@ -187,6 +193,7 @@ function Summary(): JSX.Element {
 				},
 			});
 			setCurrentQueryFilterExpression(expression);
+			setAppliedFilterExpression(expression);
 			setCurrentPage(1);
 			if (expression) {
 				logEvent(MetricsExplorerEvents.FilterApplied, {

@@ -87,6 +87,7 @@ export function getMetricDetailsQuery(
 	metricType: MetrictypesTypeDTO | undefined,
 	filter?: { key: string; value: string },
 	groupBy?: string,
+	limit?: number,
 ): Query {
 	let timeAggregation;
 	let spaceAggregation;
@@ -170,6 +171,7 @@ export function getMetricDetailsQuery(
 								},
 						  ]
 						: [],
+					...(limit ? { limit } : {}),
 				},
 			],
 			queryFormulas: [],
