@@ -215,6 +215,13 @@ func (q *QueryBuilderQuery[T]) validateAggregations(requestType RequestType) err
 					aggId,
 				)
 			}
+			if !v.SpaceAggregation.IsValid() {
+				return errors.Newf(
+					errors.TypeInvalidInput,
+					errors.CodeInvalidInput,
+					"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
+				)
+			}
 		case TraceAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
