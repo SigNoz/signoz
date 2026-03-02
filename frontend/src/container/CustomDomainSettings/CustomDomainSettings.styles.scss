@@ -104,7 +104,7 @@
 
 	.custom-domain-callout {
 		margin: 0 var(--margin-3) var(--margin-3);
-		font-size: 13px;
+		font-size: var(--paragraph-base-400-font-size);
 		max-width: 742px;
 		--callout-background: var(--primary);
 		--callout-border-color: var(--callout-primary-border);
@@ -127,7 +127,7 @@
 
 	.custom-domain-card-license {
 		color: var(--l1-foreground);
-		font-size: 13px;
+		font-size: var(--paragraph-base-400-font-size);
 		line-height: var(--line-height-20);
 		letter-spacing: -0.07px;
 	}
@@ -140,7 +140,7 @@
 		background: var(--l2-background);
 		color: var(--l2-foreground);
 		font-family: 'SF Mono', 'Fira Code', monospace;
-		font-size: 13px;
+		font-size: var(--paragraph-base-400-font-size);
 		line-height: var(--line-height-20);
 	}
 }
@@ -182,7 +182,7 @@
 
 .workspace-url-dropdown-header {
 	color: var(--l2-foreground);
-	font-size: 13px;
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 	padding: 0 var(--padding-3) var(--padding-2);
@@ -229,7 +229,7 @@
 }
 
 .workspace-url-dropdown-item-label {
-	font-size: 13px;
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 	color: var(--l2-foreground);
@@ -254,7 +254,7 @@
 .edit-modal-description {
 	margin: 0;
 	color: var(--l1-foreground);
-	font-size: 13px;
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 }
@@ -315,7 +315,7 @@
 			outline: none;
 			box-shadow: none;
 			color: var(--l1-foreground);
-			font-size: 13px;
+			font-size: var(--paragraph-base-400-font-size);
 			line-height: var(--line-height-20);
 			padding: 0;
 
@@ -337,7 +337,7 @@
 	border-left: none;
 	border-radius: 0 2px 2px 0;
 	color: var(--l2-foreground);
-	font-size: 13px;
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	white-space: nowrap;
 }
@@ -374,7 +374,7 @@
 
 .edit-modal-note-text {
 	color: var(--l2-foreground);
-	font-size: 13px;
+	font-size: var(--paragraph-base-400-font-size);
 	line-height: var(--line-height-20);
 	letter-spacing: -0.07px;
 }
@@ -424,7 +424,7 @@
 	color: var(--bg-base-white);
 
 	.custom-domain-toast-message {
-		font-size: 13px;
+		font-size: var(--paragraph-base-400-font-size);
 		line-height: var(--line-height-20);
 		white-space: nowrap;
 		overflow: hidden;

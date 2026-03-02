@@ -251,9 +251,9 @@
 				flex-direction: row;
 				align-items: center;
 				gap: 8px;
-				font-size: 11px;
-				font-weight: 400;
-				line-height: 18px;
+				font-size: var(--paragraph-small-400-font-size);
+				font-weight: var(--paragraph-small-400-font-weight);
+				line-height: var(--paragraph-small-400-line-height);
 				letter-spacing: 0.12px;
 				color: var(--foreground);
 			}
