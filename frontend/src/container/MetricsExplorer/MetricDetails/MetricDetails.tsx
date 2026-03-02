@@ -80,7 +80,14 @@ function MetricDetails({
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(metricName, metadata?.type);
+			const compositeQuery = getMetricDetailsQuery(
+				metricName,
+				metadata?.type,
+				undefined,
+				undefined,
+				undefined,
+				metadata?.isMonotonic,
+			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
@@ -89,6 +96,7 @@ function MetricDetails({
 					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
+				true,
 			);
 			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
 				[MetricsExplorerEventKeys.MetricName]: metricName,
@@ -96,7 +104,12 @@ function MetricDetails({
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
 			});
 		}
-	}, [metricName, handleExplorerTabChange, metadata?.type]);
+	}, [
+		metricName,
+		handleExplorerTabChange,
+		metadata?.type,
+		metadata?.isMonotonic,
+	]);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.ModalOpened, {
@@ -182,6 +195,7 @@ function MetricDetails({
 				<AllAttributes
 					metricName={metricName}
 					metricType={metadata?.type}
+					isMonotonic={metadata?.isMonotonic}
 					minTime={minTime}
 					maxTime={maxTime}
 				/>

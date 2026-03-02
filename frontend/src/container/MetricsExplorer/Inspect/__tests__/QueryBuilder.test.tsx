@@ -1,8 +1,9 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import * as metricsService from 'api/generated/services/metrics';
 import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
@@ -23,26 +24,30 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('container/QueryBuilder/filters', () => ({
-	AggregatorFilter: ({ onSelect, onChange, defaultValue }: any): JSX.Element => (
-		<div data-testid="mock-aggregator-filter">
-			<input
-				data-testid="metric-name-input"
-				defaultValue={defaultValue}
-				onChange={(e: React.ChangeEvent<HTMLInputElement>): void =>
-					onChange({ key: e.target.value })
-				}
-			/>
-			<button
-				type="button"
-				data-testid="select-metric-button"
-				onClick={(): void => onSelect({ key: 'test_metric_2' })}
-			>
-				Select Metric
-			</button>
-		</div>
-	),
+jest.mock('api/generated/services/metrics', () => ({
+	useListMetrics: jest.fn().mockReturnValue({
+		isFetching: false,
+		isError: false,
+		data: { data: { metrics: [] } },
+	}),
+	useUpdateMetricMetadata: jest.fn().mockReturnValue({
+		mutate: jest.fn(),
+		isLoading: false,
+	}),
 }));
+
+jest.mock('hooks/useDebounce', () => ({
+	__esModule: true,
+	default: <T,>(value: T): T => value,
+}));
+
+jest.mock(
+	'container/QueryBuilder/filters/QueryBuilderSearch/OptionRenderer',
+	() => ({
+		__esModule: true,
+		default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
+	}),
+);
 
 jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	user: {
@@ -123,6 +128,24 @@ describe('QueryBuilder', () => {
 
 	it('should call setCurrentMetricName when metric name is selected', async () => {
 		const user = userEvent.setup();
+		(metricsService.useListMetrics as jest.Mock).mockReturnValue({
+			isFetching: false,
+			isError: false,
+			data: {
+				data: {
+					metrics: [
+						{
+							metricName: 'test_metric_2',
+							type: 'Sum',
+							isMonotonic: true,
+							description: '',
+							temporality: 'cumulative',
+							unit: '',
+						},
+					],
+				},
+			},
+		});
 
 		render(
 			<QueryClientProvider client={queryClient}>
@@ -137,8 +160,12 @@ describe('QueryBuilder', () => {
 
 		expect(screen.getByText('From')).toBeInTheDocument();
 
-		const selectButton = screen.getByTestId('select-metric-button');
-		await user.click(selectButton);
+		const input = within(metricNameSearch).getByRole('combobox');
+		fireEvent.change(input, { target: { value: 'test_metric_2' } });
+
+		const options = document.querySelectorAll('.ant-select-item');
+		expect(options.length).toBeGreaterThan(0);
+		await user.click(options[0] as HTMLElement);
 
 		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
 	});
