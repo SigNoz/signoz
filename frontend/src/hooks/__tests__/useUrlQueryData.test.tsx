@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { Router } from 'react-router-dom';

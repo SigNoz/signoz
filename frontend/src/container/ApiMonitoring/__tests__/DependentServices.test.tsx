@@ -88,7 +88,6 @@ describe('DependentServices', () => {
 		{
 			key: 'service1',
 			serviceData: {
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				serviceName: 'auth-service',
 				count: 500,
 				percentage: 62.5,

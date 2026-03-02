@@ -126,7 +126,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			expect(logsCard).toBeInTheDocument();
 
 			// Find all inputs in the Logs card - there should be 2 (total retention + S3)
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			const inputs = logsCard?.querySelectorAll('input[type="text"]');
 			expect(inputs).toHaveLength(2);
 
@@ -144,7 +143,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 
 			// Wait for dropdown options to appear and verify only "Days" is available
 			await waitFor(() => {
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				const dropdownOptions = document.querySelectorAll('.ant-select-item');
 				expect(dropdownOptions).toHaveLength(1);
 				expect(dropdownOptions[0]).toHaveTextContent('Days');

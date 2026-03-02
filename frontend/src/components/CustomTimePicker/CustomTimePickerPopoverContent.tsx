@@ -92,7 +92,6 @@ const getDateRange = (
 	return { from, to };
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function CustomTimePickerPopoverContent({
 	isLiveLogsEnabled,
 	minTime,

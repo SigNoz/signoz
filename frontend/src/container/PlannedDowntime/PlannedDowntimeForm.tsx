@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable sonarjs/no-identical-functions */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined } from '@ant-design/icons';
 import {
@@ -255,10 +253,7 @@ export function PlannedDowntimeForm(
 		setSelectedTags(options);
 	};
 
-	const noTagRenderer: SelectProps['tagRender'] = () => (
-		// eslint-disable-next-line react/jsx-no-useless-fragment
-		<></>
-	);
+	const noTagRenderer: SelectProps['tagRender'] = () => <></>;
 
 	const handleClose = (removedTag: DefaultOptionType['value']): void => {
 		if (!removedTag) {

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
 import { fireEvent, render, screen, waitFor } from 'tests/test-utils';

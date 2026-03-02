@@ -115,7 +115,6 @@ describe('PlotContext', () => {
 
 	it('throws when usePlotContext is used outside provider', () => {
 		const Consumer = (): JSX.Element => {
-			// eslint-disable-next-line react-hooks/rules-of-hooks
 			usePlotContext();
 			return <div />;
 		};

@@ -1,6 +1,5 @@
 import { SPAN_ATTRIBUTES } from 'container/ApiMonitoring/Explorer/Domains/DomainDetails/constants';
 
-/* eslint-disable sonarjs/no-duplicate-string */
 export const traceDetailResponse = [
 	{
 		startTimestampMillis: 1721304358677,

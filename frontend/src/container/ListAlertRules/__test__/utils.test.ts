@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { GettableAlert } from 'types/api/alerts/get';
 
 import { filterAlerts } from '../utils';

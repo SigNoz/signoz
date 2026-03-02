@@ -1,5 +1,5 @@
-/* eslint-disable no-nested-ternary */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
@@ -342,7 +342,7 @@ function Summary(): JSX.Element {
 					openInspectModal={openInspectModal}
 				/>
 			)}
-			{isInspectModalOpen && (
+			{isInspectModalOpen && selectedMetricName && (
 				<InspectModal
 					isOpen={isInspectModalOpen}
 					onClose={closeInspectModal}

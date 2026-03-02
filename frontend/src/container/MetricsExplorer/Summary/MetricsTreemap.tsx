@@ -139,7 +139,6 @@ function MetricsTreemapInternal({
 								}
 								return (
 									<Group
-										// eslint-disable-next-line react/no-array-index-key
 										key={node.data.id || `node-${i}`}
 										top={node.y0 + TREEMAP_MARGINS.TOP}
 										left={node.x0 + TREEMAP_MARGINS.LEFT}

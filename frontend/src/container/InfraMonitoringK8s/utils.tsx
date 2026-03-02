@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tag, Tooltip } from 'antd';
@@ -278,7 +276,6 @@ export const getK8sPodsListColumns = (
 ): ColumnType<K8sPodsRowData>[] => {
 	const updatedColumnsConfig = [...columnsConfig];
 
-	// eslint-disable-next-line no-restricted-syntax
 	for (const column of addedColumns) {
 		const config = columnConfigMap[column.id as keyof typeof columnConfigMap];
 		if (config) {

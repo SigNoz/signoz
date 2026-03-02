@@ -81,7 +81,6 @@ function SignUp(): JSX.Element {
 				source: 'SigNoz Cloud',
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		getInviteDetailsResponse.data?.data,
 		form,
@@ -149,7 +148,6 @@ function SignUp(): JSX.Element {
 		}
 	};
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSubmit = (): void => {
 		(async (): Promise<void> => {
 			try {
