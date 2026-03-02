@@ -764,3 +764,7 @@ notifications	-  2050
 .cursor-pointer {
 	cursor: pointer;
 }
+
+div[data-radix-popper-content-wrapper] {
+	z-index: 5000 !important;
+}

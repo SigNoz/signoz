@@ -2,25 +2,30 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import {
 	AlertOutlined,
-	CloudDownloadOutlined,
-	CopyOutlined,
-	DeleteOutlined,
-	EditFilled,
-	FullscreenOutlined,
 	InfoCircleOutlined,
 	MoreOutlined,
 	SearchOutlined,
 } from '@ant-design/icons';
+import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
+import {
+	ClipboardCopy,
+	CloudDownload,
+	Expand,
+	Pencil,
+	Trash,
+} from '@signozhq/icons';
+import { Input, Popover, Tooltip, Typography } from 'antd';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import ErrorPopover from 'components/ErrorPopover/ErrorPopover';
+import { GuardButton } from 'components/PermissionlessButton/PermissionlessButton';
 import Spinner from 'components/Spinner';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import useGetResolvedText from 'hooks/dashboard/useGetResolvedText';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
+import { buildObjectString } from 'hooks/useAuthZ/utils';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -35,10 +40,10 @@ import APIError from 'types/api/error';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { buildAbsolutePath } from 'utils/app';
 
+import { cn } from '../../../lib/cn';
 import { errorTooltipPosition } from './config';
 import { MENUITEM_KEYS_VS_LABELS, MenuItemKeys } from './contants';
-import { MenuItem } from './types';
-import { generateMenuList, isTWidgetOptions } from './utils';
+import { isTWidgetOptions } from './utils';
 
 import './WidgetHeader.styles.scss';
 
@@ -60,6 +65,149 @@ interface IWidgetHeaderProps {
 	isFetchingResponse: boolean;
 	tableProcessedDataRef: React.MutableRefObject<RowData[]>;
 	setSearchTerm: React.Dispatch<React.SetStateAction<string>>;
+}
+
+interface WidgetActionsMenuProps {
+	isViewVisible: boolean;
+	isEditVisible: boolean;
+	isCloneVisible: boolean;
+	isDownloadVisible: boolean;
+	isDeleteVisible: boolean;
+	isCreateAlertsVisible: boolean;
+	dashboardId: string;
+	isFetching: boolean;
+	canEdit: boolean;
+	canDelete: boolean;
+	onActionClick: (key: MenuItemKeys) => void;
+}
+
+function WidgetActionsMenu({
+	isViewVisible,
+	isEditVisible,
+	isCloneVisible,
+	isDownloadVisible,
+	isDeleteVisible,
+	isCreateAlertsVisible,
+	dashboardId,
+	isFetching,
+	canEdit,
+	canDelete,
+	onActionClick,
+}: WidgetActionsMenuProps): JSX.Element {
+	return (
+		<div className="widget-header-menu-content" role="menu">
+			{isViewVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<Expand />}
+					role="menuitem"
+					relation="read"
+					object={buildObjectString('dashboard', dashboardId)}
+					disabled={isFetching}
+					className="w-full gap-2 px-2 justify-start"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.View);
+					}}
+				>
+					{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View]}
+				</GuardButton>
+			)}
+			{isEditVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<Pencil />}
+					role="menuitem"
+					relation="update"
+					object={buildObjectString('dashboard', dashboardId)}
+					disabled={!canEdit}
+					className="w-full gap-2 px-2 justify-start"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.Edit);
+					}}
+				>
+					{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit]}
+				</GuardButton>
+			)}
+			{isCloneVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<ClipboardCopy />}
+					role="menuitem"
+					relation="update"
+					object={buildObjectString('dashboard', dashboardId)}
+					disabled={!canEdit}
+					className="w-full gap-2 px-2 justify-start"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.Clone);
+					}}
+				>
+					{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone]}
+				</GuardButton>
+			)}
+			{isDownloadVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<CloudDownload />}
+					role="menuitem"
+					relation="read"
+					object={buildObjectString('dashboard', dashboardId)}
+					className="w-full gap-2 px-2 justify-start"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.Download);
+					}}
+				>
+					{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download]}
+				</GuardButton>
+			)}
+			{isDeleteVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<Trash />}
+					role="menuitem"
+					relation="update"
+					object={buildObjectString('dashboard', dashboardId)}
+					disabled={!canDelete}
+					className="w-full gap-2 px-2 justify-start text-bg-cherry-500"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.Delete);
+					}}
+				>
+					{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete]}
+				</GuardButton>
+			)}
+			{isCreateAlertsVisible && (
+				<GuardButton
+					variant="ghost"
+					prefixIcon={<AlertOutlined />}
+					role="menuitem"
+					relation="read"
+					object={buildObjectString('dashboard', dashboardId)}
+					className="w-full gap-2 px-2 justify-start"
+					onClick={(e): void => {
+						e.stopPropagation();
+						onActionClick(MenuItemKeys.CreateAlerts);
+					}}
+				>
+					<span
+						style={{
+							display: 'flex',
+							alignItems: 'baseline',
+							justifyContent: 'space-between',
+							width: '100%',
+						}}
+					>
+						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
+						<SquareArrowOutUpRight size={10} />
+					</span>
+				</GuardButton>
+			)}
+		</div>
+	);
 }
 
 function WidgetHeader({
@@ -125,8 +273,8 @@ function WidgetHeader({
 		],
 	);
 
-	const onMenuItemSelectHandler: MenuProps['onClick'] = useCallback(
-		({ key }: { key: string }): void => {
+	const onMenuItemSelectHandler = useCallback(
+		(key: string): void => {
 			if (isTWidgetOptions(key)) {
 				const functionToCall = keyMethodMapping[key];
 
@@ -144,85 +292,36 @@ function WidgetHeader({
 		user.role,
 	);
 
-	const actions = useMemo(
-		(): MenuItem[] => [
-			{
-				key: MenuItemKeys.View,
-				icon: <FullscreenOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.View],
-				isVisible: headerMenuList?.includes(MenuItemKeys.View) || false,
-				disabled: queryResponse.isFetching,
-			},
-			{
-				key: MenuItemKeys.Edit,
-				icon: <EditFilled />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Edit],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Edit) || false,
-				disabled: !editWidget,
-			},
-			{
-				key: MenuItemKeys.Clone,
-				icon: <CopyOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Clone],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Clone) || false,
-				disabled: !editWidget,
-			},
-			{
-				key: MenuItemKeys.Download,
-				icon: <CloudDownloadOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
-				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
-				disabled: false,
-			},
-			{
-				key: MenuItemKeys.Delete,
-				icon: <DeleteOutlined />,
-				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
-				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
-				disabled: !deleteWidget,
-				danger: true,
-			},
-			{
-				key: MenuItemKeys.CreateAlerts,
-				icon: <AlertOutlined />,
-				label: (
-					<span
-						style={{
-							display: 'flex',
-							alignItems: 'baseline',
-							justifyContent: 'space-between',
-						}}
-					>
-						{MENUITEM_KEYS_VS_LABELS[MenuItemKeys.CreateAlerts]}
-						<SquareArrowOutUpRight size={10} />
-					</span>
-				),
-				isVisible: headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false,
-				disabled: false,
-			},
-		],
-		[
-			headerMenuList,
-			queryResponse.isFetching,
-			editWidget,
-			deleteWidget,
-			widget.panelTypes,
-		],
+	const dashboardResourceId = useMemo(() => {
+		const pathname = globalThis.window?.location?.pathname || '';
+		return pathname.match(/\/dashboard\/([^/]+)/)?.[1] || String(widget.id);
+	}, [widget.id]);
+	const isViewVisible = headerMenuList?.includes(MenuItemKeys.View) || false;
+	const isEditVisible = headerMenuList?.includes(MenuItemKeys.Edit) || false;
+	const isCloneVisible = headerMenuList?.includes(MenuItemKeys.Clone) || false;
+	const isDeleteVisible = headerMenuList?.includes(MenuItemKeys.Delete) || false;
+	const isCreateAlertsVisible =
+		headerMenuList?.includes(MenuItemKeys.CreateAlerts) || false;
+	const isDownloadVisible = widget.panelTypes === PANEL_TYPES.TABLE;
+	const hasVisibleActions =
+		isViewVisible ||
+		isEditVisible ||
+		isCloneVisible ||
+		isDeleteVisible ||
+		isCreateAlertsVisible ||
+		isDownloadVisible;
+	const onWidgetActionClick = useCallback(
+		(key: MenuItemKeys): void => {
+			onMenuItemSelectHandler(key);
+			setIsWidgetActionsOpen(false);
+		},
+		[onMenuItemSelectHandler],
 	);
-
-	const updatedMenuList = useMemo(() => generateMenuList(actions), [actions]);
 
 	const [showGlobalSearch, setShowGlobalSearch] = useState(false);
+	const [isWidgetActionsOpen, setIsWidgetActionsOpen] = useState(false);
 
 	const globalSearchAvailable = widget.panelTypes === PANEL_TYPES.TABLE;
-
-	const menu = useMemo(
-		() => ({
-			items: updatedMenuList,
-			onClick: onMenuItemSelectHandler,
-		}),
-		[updatedMenuList, onMenuItemSelectHandler],
-	);
 
 	const { truncatedText, fullText } = useGetResolvedText({
 		text: widget.title as string,
@@ -319,15 +418,41 @@ function WidgetHeader({
 							/>
 						)}
 
-						{menu && Array.isArray(menu.items) && menu.items.length > 0 && (
-							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
-								<MoreOutlined
+						{hasVisibleActions && (
+							<Popover
+								open={isWidgetActionsOpen}
+								onOpenChange={setIsWidgetActionsOpen}
+								arrow={false}
+								rootClassName="widget-header-popover"
+								trigger="click"
+								placement="bottomRight"
+								content={
+									<WidgetActionsMenu
+										isViewVisible={isViewVisible}
+										isEditVisible={isEditVisible}
+										isCloneVisible={isCloneVisible}
+										isDownloadVisible={isDownloadVisible}
+										isDeleteVisible={isDeleteVisible}
+										isCreateAlertsVisible={isCreateAlertsVisible}
+										dashboardId={dashboardResourceId}
+										isFetching={queryResponse.isFetching}
+										canEdit={editWidget}
+										canDelete={deleteWidget}
+										onActionClick={onWidgetActionClick}
+									/>
+								}
+							>
+								<Button
+									variant="ghost"
+									size="icon"
 									data-testid="widget-header-options"
-									className={`widget-header-more-options ${
-										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
-									}`}
+									className={cn(
+										'widget-header-more-options',
+										globalSearchAvailable && 'widget-header-more-options-visible',
+									)}
+									prefixIcon={<MoreOutlined />}
 								/>
-							</Dropdown>
+							</Popover>
 						)}
 					</div>
 				</>

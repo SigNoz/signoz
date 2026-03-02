@@ -3,9 +3,9 @@ import permissionsType from './permissions.type';
 import {
 	AuthZObject,
 	AuthZRelation,
-	AuthZResource,
 	BrandedPermission,
 	ResourceName,
+	ResourcesForRelation,
 	ResourceType,
 } from './types';
 
@@ -19,11 +19,11 @@ export function buildPermission<R extends AuthZRelation>(
 	return `${relation}${PermissionSeparator}${object}` as BrandedPermission;
 }
 
-export function buildObjectString(
-	resource: AuthZResource,
+export function buildObjectString<R extends 'delete' | 'read' | 'update'>(
+	resource: ResourcesForRelation<R>,
 	objectId: string,
-): `${AuthZResource}${typeof ObjectSeparator}${string}` {
-	return `${resource}${ObjectSeparator}${objectId}` as const;
+): AuthZObject<R> {
+	return `${resource}${ObjectSeparator}${objectId}` as AuthZObject<R>;
 }
 
 export function parsePermission(

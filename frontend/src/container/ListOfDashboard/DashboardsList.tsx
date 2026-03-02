@@ -43,7 +43,6 @@ import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/Gene
 import dayjs from 'dayjs';
 import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
-import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -72,7 +71,6 @@ import {
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
-import { useAppContext } from 'providers/App/App';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import {
@@ -83,6 +81,8 @@ import {
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 
+import { GuardButton } from '../../components/PermissionlessButton/PermissionlessButton';
+import { buildObjectString } from '../../hooks/useAuthZ/utils';
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
 import { RequestDashboardBtn } from './RequestDashboardBtn';
@@ -105,7 +105,6 @@ function DashboardsList(): JSX.Element {
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { user } = useAppContext();
 	const { safeNavigate } = useSafeNavigate();
 	const {
 		dashboardsListQueryParams,
@@ -116,10 +115,6 @@ function DashboardsList(): JSX.Element {
 
 	const [searchString, setSearchString] = useState<string>(
 		dashboardsListQueryParams.search || '',
-	);
-	const [action, createNewDashboard] = useComponentPermission(
-		['action', 'create_new_dashboards'],
-		user.role,
 	);
 
 	const [
@@ -435,78 +430,87 @@ function DashboardsList(): JSX.Element {
 								)}
 							</div>
 
-							{action && (
-								<Popover
-									trigger="click"
-									content={
-										<div className="dashboard-action-content">
-											<section className="section-1">
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Expand size={12} />}
-													onClick={onClickHandler}
-												>
-													View
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<SquareArrowOutUpRight size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														window.open(getLink(), '_blank');
-													}}
-												>
-													Open in New Tab
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<Link2 size={12} />}
-													onClick={(e): void => {
-														e.stopPropagation();
-														e.preventDefault();
-														setCopy(`${window.location.origin}${getLink()}`);
-													}}
-												>
-													Copy Link
-												</Button>
-												<Button
-													type="text"
-													className="action-btn"
-													icon={<FileJson size={12} />}
-													onClick={handleJsonExport}
-												>
-													Export JSON
-												</Button>
-											</section>
-											<section className="section-2">
-												<DeleteButton
-													name={dashboard.name}
-													id={dashboard.id}
-													isLocked={dashboard.isLocked}
-													createdBy={dashboard.createdBy}
-												/>
-											</section>
-										</div>
-									}
-									placement="bottomRight"
-									arrow={false}
-									rootClassName="dashboard-actions"
-								>
-									<EllipsisVertical
-										className="dashboard-action-icon"
-										size={14}
-										data-testid="dashboard-action-icon"
-										onClick={(e): void => {
-											e.stopPropagation();
-											e.preventDefault();
-										}}
-									/>
-								</Popover>
-							)}
+							<Popover
+								trigger="click"
+								content={
+									<div
+										className="dashboard-action-content"
+										onClick={(e): void => e.stopPropagation()}
+									>
+										<section className="section-1">
+											<GuardButton
+												variant="link"
+												prefixIcon={<Expand size={12} className="mr-2" />}
+												onClick={onClickHandler}
+												relation="read"
+												className="gap-2 px-2 justify-start"
+												object={buildObjectString('dashboard', dashboard.id)}
+											>
+												View
+											</GuardButton>
+											<GuardButton
+												variant="link"
+												relation="read"
+												object={buildObjectString('dashboard', dashboard.id)}
+												className="gap-2 px-2 justify-start"
+												prefixIcon={<SquareArrowOutUpRight size={12} className="mr-2" />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													window.open(getLink(), '_blank');
+												}}
+											>
+												Open in New Tab
+											</GuardButton>
+											<GuardButton
+												variant="link"
+												relation="read"
+												object={buildObjectString('dashboard', dashboard.id)}
+												className="gap-2 px-2 justify-start"
+												prefixIcon={<Link2 size={12} className="mr-2" />}
+												onClick={(e): void => {
+													e.stopPropagation();
+													e.preventDefault();
+													setCopy(`${window.location.origin}${getLink()}`);
+												}}
+											>
+												Copy Link
+											</GuardButton>
+											<GuardButton
+												variant="link"
+												relation="read"
+												object={buildObjectString('dashboard', dashboard.id)}
+												className="gap-2 px-2 justify-start"
+												prefixIcon={<FileJson size={12} className="mr-2" />}
+												onClick={handleJsonExport}
+											>
+												Export JSON
+											</GuardButton>
+										</section>
+										<section className="section-2">
+											<DeleteButton
+												name={dashboard.name}
+												id={dashboard.id}
+												isLocked={dashboard.isLocked}
+												createdBy={dashboard.createdBy}
+											/>
+										</section>
+									</div>
+								}
+								placement="bottomRight"
+								arrow={false}
+								rootClassName="dashboard-actions"
+							>
+								<EllipsisVertical
+									className="dashboard-action-icon"
+									size={14}
+									data-testid="dashboard-action-icon"
+									onClick={(e): void => {
+										e.stopPropagation();
+										e.preventDefault();
+									}}
+								/>
+							</Popover>
 						</div>
 						<div className="dashboard-details">
 							<div className="dashboard-created-at">
@@ -563,6 +567,19 @@ function DashboardsList(): JSX.Element {
 				label: (
 					<div
 						className="create-dashboard-menu-item"
+						onClick={(): void => {
+							onNewDashboardHandler();
+						}}
+					>
+						<LayoutGrid size={14} /> Create dashboard
+					</div>
+				),
+				key: '0',
+			},
+			{
+				label: (
+					<div
+						className="create-dashboard-menu-item"
 						onClick={(): void => onModalHandler(false)}
 					>
 						<Radius size={14} /> Import JSON
@@ -594,24 +611,8 @@ function DashboardsList(): JSX.Element {
 			},
 		];
 
-		if (createNewDashboard) {
-			menuItems.unshift({
-				label: (
-					<div
-						className="create-dashboard-menu-item"
-						onClick={(): void => {
-							onNewDashboardHandler();
-						}}
-					>
-						<LayoutGrid size={14} /> Create dashboard
-					</div>
-				),
-				key: '0',
-			});
-		}
-
 		return menuItems;
-	}, [createNewDashboard, onNewDashboardHandler]);
+	}, [onNewDashboardHandler]);
 
 	const showPaginationItem = (total: number, range: number[]): JSX.Element => (
 		<>
@@ -719,41 +720,41 @@ function DashboardsList(): JSX.Element {
 							</Typography.Text>
 						</section>
 
-						{createNewDashboard && (
-							<section className="actions">
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
-								>
-									<Button
-										type="text"
-										className="new-dashboard"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New Dashboard
-									</Button>
-								</Dropdown>
-								<Button
-									type="text"
-									className="learn-more"
-									data-testid="learn-more"
+						<section className="actions">
+							<Dropdown
+								overlayClassName="new-dashboard-menu"
+								menu={{ items: getCreateDashboardItems }}
+								placement="bottomRight"
+								trigger={['click']}
+							>
+								<GuardButton
+									relation="create"
+									object="dashboards"
+									variant="solid"
+									color="primary"
+									prefixIcon={<Plus />}
 									onClick={(): void => {
-										window.open(
-											'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
-											'_blank',
-										);
+										logEvent('Dashboard List: New dashboard clicked', {});
 									}}
 								>
-									Learn more
-								</Button>
-								<ArrowUpRight size={16} className="learn-more-arrow" />
-							</section>
-						)}
+									New Dashboard
+								</GuardButton>
+							</Dropdown>
+							<Button
+								type="text"
+								className="learn-more"
+								data-testid="learn-more"
+								onClick={(): void => {
+									window.open(
+										'https://signoz.io/docs/userguide/manage-dashboards?utm_source=product&utm_medium=dashboard-list-empty-state',
+										'_blank',
+									);
+								}}
+							>
+								Learn more
+							</Button>
+							<ArrowUpRight size={16} className="learn-more-arrow" />
+						</section>
 					</div>
 				) : (
 					<>
@@ -764,25 +765,25 @@ function DashboardsList(): JSX.Element {
 								value={searchString}
 								onChange={handleSearch}
 							/>
-							{createNewDashboard && (
-								<Dropdown
-									overlayClassName="new-dashboard-menu"
-									menu={{ items: getCreateDashboardItems }}
-									placement="bottomRight"
-									trigger={['click']}
+							<Dropdown
+								overlayClassName="new-dashboard-menu"
+								menu={{ items: getCreateDashboardItems }}
+								placement="bottomRight"
+								trigger={['click']}
+							>
+								<GuardButton
+									relation="create"
+									object="dashboards"
+									variant="solid"
+									color="primary"
+									prefixIcon={<Plus />}
+									onClick={(): void => {
+										logEvent('Dashboard List: New dashboard clicked', {});
+									}}
 								>
-									<Button
-										type="primary"
-										className="periscope-btn primary btn"
-										icon={<Plus size={14} />}
-										onClick={(): void => {
-											logEvent('Dashboard List: New dashboard clicked', {});
-										}}
-									>
-										New dashboard
-									</Button>
-								</Dropdown>
-							)}
+									New dashboard
+								</GuardButton>
+							</Dropdown>
 						</div>
 
 						{dashboards.length === 0 ? (

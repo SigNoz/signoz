@@ -31,6 +31,15 @@ jest.mock('hooks/useSafeNavigate', () => ({
 	}),
 }));
 
+jest.mock('components/PermissionlessButton/PermissionlessButton', () => ({
+	GuardButton: ({ children, prefixIcon, ...props }: any): JSX.Element => (
+		<button type="button" {...props}>
+			{prefixIcon}
+			{children}
+		</button>
+	),
+}));
+
 // Mock data
 const mockProps: WidgetGraphComponentProps = {
 	widget: {
@@ -205,7 +214,7 @@ describe('WidgetGraphComponent', () => {
 		expect(skeleton).toBeInTheDocument();
 
 		const moreOptionsButton = getByTestId('widget-header-options');
-		fireEvent.mouseEnter(moreOptionsButton);
+		fireEvent.click(moreOptionsButton);
 
 		const menu = await findByRole('menu');
 		expect(menu).toBeInTheDocument();

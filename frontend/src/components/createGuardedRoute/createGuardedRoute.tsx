@@ -39,6 +39,15 @@ function OnNoPermissionsFallback(response: {
 	);
 }
 
+/**
+ * If you want to guard a route, you can use this function to create a guarded route.
+ *
+ * @example
+ * ```tsx
+ * createGuardedRoute(Component, 'read', 'dashboard:{id}'); // use when route has a dynamic parameter like /dashboard/:id
+ * createGuardedRoute(Component, 'list', 'dashboards');
+ * ```
+ */
 // eslint-disable-next-line @typescript-eslint/ban-types
 export function createGuardedRoute<P extends object, R extends AuthZRelation>(
 	Component: ComponentType<P>,

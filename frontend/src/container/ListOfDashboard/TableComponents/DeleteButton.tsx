@@ -1,8 +1,9 @@
-import { useCallback } from 'react';
+import { useCallback, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import { Modal, Tooltip, Typography } from 'antd';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
+import { Trash } from '@signozhq/icons';
+import { Modal, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { useDeleteDashboard } from 'hooks/dashboard/useDeleteDashboard';
@@ -11,8 +12,10 @@ import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import { ButtonWithTooltip } from '../../../components/ButtonWithTooltip/ButtonWithTooltip';
+import { useAuthZ } from '../../../hooks/useAuthZ/useAuthZ';
+import { buildPermission } from '../../../hooks/useAuthZ/utils';
 import { Data } from '../DashboardsList';
-import { TableLinkText } from './styles';
 
 import './DeleteButton.styles.scss';
 
@@ -88,7 +91,20 @@ export function DeleteButton({
 		routeToListPage,
 	]);
 
-	const getDeleteTooltipContent = (): string => {
+	const canDeletePermission = buildPermission('assignee', `role:signoz-admin`);
+	const canDeleteProps = useAuthZ([canDeletePermission]);
+	const canDelete =
+		!isLocked && canDeleteProps.permissions?.[canDeletePermission]?.isGranted;
+
+	const tooltipMessage = useMemo(() => {
+		if (canDeleteProps.error) {
+			return canDeleteProps.error.message;
+		}
+
+		if (canDelete) {
+			return undefined;
+		}
+
 		if (isLocked) {
 			if (user.role === USER_ROLES.ADMIN || isAuthor) {
 				return t('dashboard:locked_dashboard_delete_tooltip_admin_author');
@@ -97,27 +113,30 @@ export function DeleteButton({
 			return t('dashboard:locked_dashboard_delete_tooltip_editor');
 		}
 
-		return '';
-	};
+		return `You don't have delete:dashboard:${id} permission.`;
+	}, [canDeleteProps.error, canDelete, isLocked, user, isAuthor, id, t]);
 
 	return (
 		<>
-			<Tooltip placement="left" title={getDeleteTooltipContent()}>
-				<TableLinkText
-					type="danger"
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						if (!isLocked) {
-							openConfirmationDialog();
-						}
-					}}
-					className="delete-btn"
-					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
-				>
-					<DeleteOutlined /> Delete dashboard
-				</TableLinkText>
-			</Tooltip>
+			<ButtonWithTooltip
+				variant="ghost"
+				color="destructive"
+				onClick={(e): void => {
+					e.preventDefault();
+					e.stopPropagation();
+					if (!isLocked) {
+						openConfirmationDialog();
+					}
+				}}
+				loading={canDeleteProps.isLoading}
+				className="w-full gap-2 px-2 justify-start"
+				disabled={!canDelete}
+				prefixIcon={<Trash className="mr-2" />}
+				tooltipTitle={tooltipMessage}
+				tooltipDisabled={canDeleteProps.isLoading || canDelete}
+			>
+				Delete dashboard
+			</ButtonWithTooltip>
 
 			{contextHolder}
 		</>

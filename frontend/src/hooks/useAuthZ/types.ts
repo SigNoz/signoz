@@ -14,7 +14,7 @@ type ResourceTypeMap = {
 
 type RelationName = keyof RelationsByType;
 
-type ResourcesForRelation<R extends RelationName> = Extract<
+export type ResourcesForRelation<R extends RelationName> = Extract<
 	Resource,
 	{ type: RelationsByType[R][number] }
 >['name'];

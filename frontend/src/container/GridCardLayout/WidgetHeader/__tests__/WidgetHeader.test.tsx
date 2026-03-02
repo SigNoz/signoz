@@ -83,6 +83,15 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 		</MemoryRouter>,
 	);
 
+jest.mock('components/PermissionlessButton/PermissionlessButton', () => ({
+	GuardButton: ({ children, prefixIcon, ...props }: any): JSX.Element => (
+		<button type="button" {...props}>
+			{prefixIcon}
+			{children}
+		</button>
+	),
+}));
+
 jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 	__esModule: true,
 	default: jest.fn(() => jest.fn()),
@@ -479,7 +488,7 @@ describe('WidgetHeader', () => {
 
 			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
 			expect(moreOptionsIcon).toBeInTheDocument();
-			await userEvent.hover(moreOptionsIcon);
+			await userEvent.click(moreOptionsIcon);
 
 			await screen.findByText(CREATE_ALERTS_TEXT);
 
@@ -513,7 +522,7 @@ describe('WidgetHeader', () => {
 			expect(useCreateAlerts).toHaveBeenCalledWith(mockWidget, 'dashboardView');
 
 			const moreOptionsIcon = await screen.findByTestId(WIDGET_HEADER_OPTIONS_ID);
-			await userEvent.hover(moreOptionsIcon);
+			await userEvent.click(moreOptionsIcon);
 
 			const createAlertsMenuItem = await screen.findByText(CREATE_ALERTS_TEXT);
 
