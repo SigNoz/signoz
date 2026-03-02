@@ -496,7 +496,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -798,7 +798,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1028,7 +1028,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1175,6 +1175,7 @@ func TestDispatcherRace(t *testing.T) {
 }
 
 func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T) {
+	ctx := context.Background()
 	const numAlerts = 5000
 	confData := `receivers:
 - name: 'slack'
@@ -1247,7 +1248,7 @@ route:
 	for i := 0; i < numAlerts; i++ {
 		ruleId := fmt.Sprintf("Alert_%d", i)
 		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(ruleId)})
-		require.NoError(t, alerts.Put(alert))
+		require.NoError(t, alerts.Put(ctx, alert))
 	}
 
 	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
