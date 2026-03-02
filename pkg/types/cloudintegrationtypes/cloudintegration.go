@@ -23,8 +23,8 @@ import (
 type CloudProviderType struct{ valuer.String }
 
 var (
-	CloudProviderTypeAWS   = valuer.NewString("aws")
-	CloudProviderTypeAzure = valuer.NewString("azure")
+	CloudProviderTypeAWS   = CloudProviderType{valuer.NewString("aws")}
+	CloudProviderTypeAzure = CloudProviderType{valuer.NewString("azure")}
 )
 
 var ErrCodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provider")
@@ -32,10 +32,10 @@ var ErrCodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provide
 // NewCloudProvider returns a new CloudProviderType from a string. It validates the input and returns an error if the input is not valid.
 func NewCloudProvider(provider string) (CloudProviderType, error) {
 	switch provider {
-	case CloudProviderTypeAWS.String():
-		return CloudProviderType{CloudProviderTypeAWS}, nil
-	case CloudProviderTypeAzure.String():
-		return CloudProviderType{CloudProviderTypeAzure}, nil
+	case CloudProviderTypeAWS.StringValue():
+		return CloudProviderTypeAWS, nil
+	case CloudProviderTypeAzure.StringValue():
+		return CloudProviderTypeAzure, nil
 	default:
 		return CloudProviderType{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider)
 	}
@@ -456,6 +456,10 @@ type GettableDeployment struct {
 }
 
 // --------------------------------------------------------------------------
+// DATABASE TYPES
+// --------------------------------------------------------------------------
+
+// --------------------------------------------------------------------------
 // Cloud integration uses the cloud_integration table
 // and cloud_integrations_service table
 // --------------------------------------------------------------------------
@@ -465,12 +469,30 @@ type CloudIntegration struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Provider        string         `json:"provider" bun:"provider,type:text,unique:provider_id"`
-	Config          *AccountConfig `json:"config" bun:"config,type:text"`
-	AccountID       *string        `json:"account_id" bun:"account_id,type:text"`
-	LastAgentReport *AgentReport   `json:"last_agent_report" bun:"last_agent_report,type:text"`
-	RemovedAt       *time.Time     `json:"removed_at" bun:"removed_at,type:timestamp,nullzero"`
-	OrgID           string         `bun:"org_id,type:text,unique:provider_id"`
+	Provider        string       `json:"provider" bun:"provider,type:text,unique:provider_id"`
+	Config          string       `json:"config" bun:"config,type:text"` // json serialized config
+	AccountID       *string      `json:"account_id" bun:"account_id,type:text"`
+	LastAgentReport *AgentReport `json:"last_agent_report" bun:"last_agent_report,type:text"`
+	RemovedAt       *time.Time   `json:"removed_at" bun:"removed_at,type:timestamp,nullzero"`
+	OrgID           string       `bun:"org_id,type:text,unique:provider_id"`
+}
+
+// Account represents a cloud integration account, this is used for business logic and API responses.
+type Account struct {
+	Id             string        `json:"id"`
+	CloudAccountId string        `json:"cloud_account_id"`
+	Config         any           `json:"config"` // AWSAccountConfig or AzureAccountConfig
+	Status         AccountStatus `json:"status"`
+}
+
+// AccountStatus is generic struct for cloud integration account status
+type AccountStatus struct {
+	Integration AccountIntegrationStatus `json:"integration"`
+}
+
+// AccountIntegrationStatus stores heartbeat information from agent check in
+type AccountIntegrationStatus struct {
+	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
 }
 
 func (a *CloudIntegration) Status() AccountStatus {
@@ -482,73 +504,32 @@ func (a *CloudIntegration) Status() AccountStatus {
 	return status
 }
 
-func (a *CloudIntegration) Account() Account {
-	ca := Account{Id: a.ID.StringValue(), Status: a.Status()}
+func (a *CloudIntegration) Account(cloudProvider CloudProviderType) *Account {
+	ca := &Account{Id: a.ID.StringValue(), Status: a.Status()}
 
 	if a.AccountID != nil {
 		ca.CloudAccountId = *a.AccountID
 	}
 
-	if a.Config != nil {
-		ca.Config = *a.Config
-	} else {
-		ca.Config = DefaultAccountConfig()
+	ca.Config = map[string]interface{}{}
+
+	if len(a.Config) < 1 {
+		return ca
 	}
-	return ca
-}
 
-type Account struct {
-	Id             string        `json:"id"`
-	CloudAccountId string        `json:"cloud_account_id"`
-	Config         AccountConfig `json:"config"`
-	Status         AccountStatus `json:"status"`
-}
-
-type AccountStatus struct {
-	Integration AccountIntegrationStatus `json:"integration"`
-}
-
-type AccountIntegrationStatus struct {
-	LastHeartbeatTsMillis *int64 `json:"last_heartbeat_ts_ms"`
-}
-
-func DefaultAccountConfig() AccountConfig {
-	return AccountConfig{
-		EnabledRegions: []string{},
-	}
-}
-
-type AccountConfig struct {
-	EnabledRegions []string `json:"regions"`
-}
-
-// For serializing from db
-func (c *AccountConfig) Scan(src any) error {
-	var data []byte
-	switch v := src.(type) {
-	case []byte:
-		data = v
-	case string:
-		data = []byte(v)
+	switch cloudProvider {
+	case CloudProviderTypeAWS:
+		config := new(AWSAccountConfig)
+		_ = UnmarshalJSON([]byte(a.Config), config)
+		ca.Config = config
+	case CloudProviderTypeAzure:
+		config := new(AzureAccountConfig)
+		_ = UnmarshalJSON([]byte(a.Config), config)
+		ca.Config = config
 	default:
-		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
 
-	return json.Unmarshal(data, c)
-}
-
-// For serializing to db
-func (c *AccountConfig) Value() (driver.Value, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "cloud account config is nil")
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize cloud account config to JSON")
-	}
-	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
-	return string(serialized), nil
+	return ca
 }
 
 type AgentReport struct {
@@ -556,7 +537,7 @@ type AgentReport struct {
 	Data            map[string]any `json:"data"`
 }
 
-// For serializing from db
+// Scan scans data from db
 func (r *AgentReport) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -571,7 +552,7 @@ func (r *AgentReport) Scan(src any) error {
 	return json.Unmarshal(data, r)
 }
 
-// For serializing to db
+// Value serializes data to bytes for db insertion
 func (r *AgentReport) Value() (driver.Value, error) {
 	if r == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")
@@ -583,8 +564,7 @@ func (r *AgentReport) Value() (driver.Value, error) {
 			err, errors.CodeInternal, "couldn't serialize agent report to JSON",
 		)
 	}
-	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
-	return string(serialized), nil
+	return serialized, nil
 }
 
 type CloudIntegrationService struct {
@@ -592,52 +572,7 @@ type CloudIntegrationService struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Type               string             `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
-	Config             CloudServiceConfig `bun:"config,type:text"`
-	CloudIntegrationID string             `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
-}
-
-type CloudServiceLogsConfig struct {
-	Enabled   bool                `json:"enabled"`
-	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
-}
-
-type CloudServiceMetricsConfig struct {
-	Enabled bool `json:"enabled"`
-}
-
-type CloudServiceConfig struct {
-	Logs    *CloudServiceLogsConfig    `json:"logs,omitempty"`
-	Metrics *CloudServiceMetricsConfig `json:"metrics,omitempty"`
-}
-
-// For serializing from db
-func (c *CloudServiceConfig) Scan(src any) error {
-	var data []byte
-	switch src := src.(type) {
-	case []byte:
-		data = src
-	case string:
-		data = []byte(src)
-	default:
-		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
-	}
-
-	return json.Unmarshal(data, c)
-}
-
-// For serializing to db
-func (c *CloudServiceConfig) Value() (driver.Value, error) {
-	if c == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "cloud service config is nil")
-	}
-
-	serialized, err := json.Marshal(c)
-	if err != nil {
-		return nil, errors.WrapInternalf(
-			err, errors.CodeInternal, "couldn't serialize cloud service config to JSON",
-		)
-	}
-	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytea
-	return string(serialized), nil
+	Type               string `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
+	Config             string `bun:"config,type:text"` // json serialized config
+	CloudIntegrationID string `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
 }

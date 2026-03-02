@@ -1,0 +1,136 @@
+package implcloudintegration
+
+import (
+	"context"
+	"database/sql"
+	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/types"
+	cloudintegrationtypes "github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var ErrCodeServiceConfigNotFound = errors.MustNewCode("service_config_not_found")
+
+// Compile-time assertion to ensure this type implements the interface.
+var _ cloudintegrationtypes.CloudIntegrationServiceStore = (*serviceConfigSQLRepository)(nil)
+
+// serviceConfigSQLRepository is a SQL-backed implementation of CloudIntegrationServiceStore.
+type serviceConfigSQLRepository struct {
+	store sqlstore.SQLStore
+}
+
+// NewSQLCloudIntegrationServiceStore constructs a SQL-backed CloudIntegrationServiceStore.
+func NewSQLCloudIntegrationServiceStore(store sqlstore.SQLStore) cloudintegrationtypes.CloudIntegrationServiceStore {
+	return &serviceConfigSQLRepository{store: store}
+}
+
+// -----------------------------
+// Service config store implementation
+// -----------------------------
+
+func (r *serviceConfigSQLRepository) Get(
+	ctx context.Context,
+	orgID string,
+	cloudAccountId string,
+	serviceType string,
+) ([]byte, error) {
+	var result cloudintegrationtypes.CloudIntegrationService
+
+	err := r.store.BunDB().NewSelect().
+		Model(&result).
+		Join("JOIN cloud_integration ci ON ci.id = cis.cloud_integration_id").
+		Where("ci.org_id = ?", orgID).
+		Where("ci.id = ?", cloudAccountId).
+		Where("cis.type = ?", serviceType).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.WrapNotFoundf(err, ErrCodeServiceConfigNotFound, "couldn't find config for cloud account %s", cloudAccountId)
+		}
+
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud service config")
+	}
+
+	return []byte(result.Config), nil
+}
+
+func (r *serviceConfigSQLRepository) Upsert(
+	ctx context.Context,
+	orgID string,
+	cloudProvider string,
+	cloudAccountId string,
+	serviceId string,
+	config []byte,
+) ([]byte, error) {
+	// get cloud integration id from account id
+	// if the account is not connected, we don't need to upsert the config
+	var cloudIntegrationId string
+	err := r.store.BunDB().NewSelect().
+		Model((*cloudintegrationtypes.CloudIntegration)(nil)).
+		Column("id").
+		Where("provider = ?", cloudProvider).
+		Where("account_id = ?", cloudAccountId).
+		Where("org_id = ?", orgID).
+		Where("removed_at is NULL").
+		Where("last_agent_report is not NULL").
+		Scan(ctx, &cloudIntegrationId)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return nil, errors.WrapNotFoundf(
+				err,
+				ErrCodeCloudIntegrationAccountNotFound,
+				"couldn't find active cloud integration account",
+			)
+		}
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query cloud integration id")
+	}
+
+	serviceConfig := cloudintegrationtypes.CloudIntegrationService{
+		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Config:             string(config),
+		Type:               serviceId,
+		CloudIntegrationID: cloudIntegrationId,
+	}
+	_, err = r.store.BunDB().NewInsert().
+		Model(&serviceConfig).
+		On("conflict(cloud_integration_id, type) do update set config=excluded.config, updated_at=excluded.updated_at").
+		Exec(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't upsert cloud service config")
+	}
+
+	return config, nil
+}
+
+func (r *serviceConfigSQLRepository) GetAllForAccount(
+	ctx context.Context,
+	orgID string,
+	cloudAccountId string,
+) (map[string][]byte, error) {
+	var serviceConfigs []cloudintegrationtypes.CloudIntegrationService
+
+	err := r.store.BunDB().NewSelect().
+		Model(&serviceConfigs).
+		Join("JOIN cloud_integration ci ON ci.id = cis.cloud_integration_id").
+		Where("ci.id = ?", cloudAccountId).
+		Where("ci.org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't query service configs from db")
+	}
+
+	result := make(map[string][]byte)
+
+	for _, r := range serviceConfigs {
+		result[r.Type] = []byte(r.Config)
+	}
+
+	return result, nil
+}
