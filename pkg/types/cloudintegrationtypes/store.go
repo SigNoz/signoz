@@ -3,17 +3,14 @@ package cloudintegrationtypes
 import (
 	"context"
 	"time"
-
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type CloudIntegrationAccountStore interface {
-	ListConnected(ctx context.Context, orgId string, provider string) ([]types.CloudIntegration, *model.ApiError)
+	ListConnected(ctx context.Context, orgId string, provider string) ([]CloudIntegration, error)
 
-	Get(ctx context.Context, orgId string, provider string, id string) (*types.CloudIntegration, *model.ApiError)
+	Get(ctx context.Context, orgId string, provider string, id string) (*CloudIntegration, error)
 
-	GetConnectedCloudAccount(ctx context.Context, orgId string, provider string, accountID string) (*types.CloudIntegration, *model.ApiError)
+	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*CloudIntegration, error)
 
 	// Insert an account or update it by (cloudProvider, id)
 	// for specified non-empty fields
@@ -22,36 +19,24 @@ type CloudIntegrationAccountStore interface {
 		orgId string,
 		provider string,
 		id *string,
-		config *types.AccountConfig,
+		config []byte,
 		accountId *string,
-		agentReport *types.AgentReport,
+		agentReport *AgentReport,
 		removedAt *time.Time,
-	) (*types.CloudIntegration, *model.ApiError)
+	) (*CloudIntegration, error)
 }
 
 type CloudIntegrationServiceStore interface {
-	Get(
-		ctx context.Context,
-		orgID string,
-		cloudAccountId string,
-		serviceType string,
-	) (*types.CloudServiceConfig, *model.ApiError)
+	Get(ctx context.Context, orgID, cloudAccountId, serviceType string) ([]byte, error)
 
 	Upsert(
 		ctx context.Context,
-		orgID string,
-		cloudProvider string,
-		cloudAccountId string,
+		orgID,
+		cloudProvider,
+		cloudAccountId,
 		serviceId string,
-		config types.CloudServiceConfig,
-	) (*types.CloudServiceConfig, *model.ApiError)
+		config []byte,
+	) ([]byte, error)
 
-	GetAllForAccount(
-		ctx context.Context,
-		orgID string,
-		cloudAccountId string,
-	) (
-		configsBySvcId map[string]*types.CloudServiceConfig,
-		apiErr *model.ApiError,
-	)
+	GetAllForAccount(ctx context.Context, orgID, cloudAccountId string) (map[string][]byte, error)
 }
