@@ -1,6 +1,7 @@
 import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 
+import { createGuardedRoute } from '../components/createGuardedRoute/createGuardedRoute';
 import {
 	AlertHistory,
 	AlertOverview,
@@ -84,7 +85,11 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.HOME,
 		exact: true,
-		component: Home,
+		component: createGuardedRoute(
+			Home,
+			'delete',
+			'dashboard:e6dbc08b-976d-4c41-8572-93c990c3b297',
+		),
 		isPrivate: true,
 		key: 'HOME',
 	},
