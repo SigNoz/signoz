@@ -23,20 +23,25 @@ def test_change_role(
 
     assert response.status_code == HTTPStatus.CREATED
 
-    invite_token = response.json()["data"]["token"]
+    invited_user = response.json()["data"]
 
-    # Accept the invite of the new user
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "password123Z$",
-            "displayName": "role change user",
-            "token": f"{invite_token}",
-        },
+    # Activate user via reset password
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
+    assert response.status_code == HTTPStatus.OK
+    reset_token = response.json()["data"]["token"]
 
-    assert response.status_code == HTTPStatus.CREATED
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": reset_token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Make some API calls as new user
     new_user_token, new_user_refresh_token = get_tokens(
