@@ -17,5 +17,6 @@ We **recommend** (almost enforce) reviewing these guides before contributing to 
 - [Handler](handler.md) - HTTP handler patterns
 - [Integration](integration.md) - Integration testing
 - [Provider](provider.md) - Dependency injection and provider patterns
-- [Packages](packages.md) — Naming, layout, and conventions for `pkg/` packages
+- [Packages](packages.md) - Naming, layout, and conventions for `pkg/` packages
+- [Service](service.md) - Managed service lifecycle with `factory.Service`
 - [SQL](sql.md) - Database and SQL patterns
