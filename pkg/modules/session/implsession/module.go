@@ -86,6 +86,11 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 
 	context.Exists = true
 	for _, user := range users {
+		if user.Status == types.UserStatusDeleted {
+			// skip this soft deleted user in context
+			continue
+		}
+
 		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
 			return org.ID == user.OrgID
 		})

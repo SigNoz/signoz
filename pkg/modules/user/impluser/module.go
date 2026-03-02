@@ -20,8 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
@@ -366,6 +366,10 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	if err := user.ErrIfRoot(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
+	}
+
+	if user.Status == types.UserStatusDeleted {
+		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "user has been deleted")
 	}
 
 	password, err := module.store.GetPasswordByUserID(ctx, userID)
