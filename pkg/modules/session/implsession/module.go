@@ -65,6 +65,9 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 		return nil, err
 	}
 
+	// filter out deleted users
+	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
+
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
 	name := strings.Split(email.String(), "@")[1]
 
@@ -86,11 +89,6 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 
 	context.Exists = true
 	for _, user := range users {
-		if user.Status == types.UserStatusDeleted {
-			// skip this soft deleted user in context
-			continue
-		}
-
 		idx := slices.IndexFunc(orgs, func(org *types.Organization) bool {
 			return org.ID == user.OrgID
 		})
