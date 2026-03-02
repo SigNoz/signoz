@@ -69,7 +69,7 @@ function Explorer(): JSX.Element {
 			!isMetricUnitsLoading &&
 			!isMetricUnitsError &&
 			units.length > 0 &&
-			units.every((unit) => unit && unit === units[0]),
+			units.every((unit) => unit === units[0]),
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
