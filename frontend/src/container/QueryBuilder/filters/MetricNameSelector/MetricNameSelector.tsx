@@ -20,6 +20,28 @@ import OptionRenderer from '../QueryBuilderSearch/OptionRenderer';
 
 import './MetricNameSelector.styles.scss';
 
+export type MetricNameSelectorProps = {
+	query: IBuilderQuery;
+	onChange: (value: BaseAutocompleteData, isEditMode?: boolean) => void;
+	disabled?: boolean;
+	defaultValue?: string;
+	onSelect?: (value: BaseAutocompleteData) => void;
+	signalSource?: 'meter' | '';
+};
+
+function getAttributeType(
+	metric: MetricsexplorertypesListMetricDTO,
+): ATTRIBUTE_TYPES | '' {
+	return toAttributeType(metric.type, metric.isMonotonic);
+}
+
+function createAutocompleteData(
+	metricName: string,
+	type: string,
+): BaseAutocompleteData {
+	return { key: metricName, type, dataType: DataTypes.Float64 };
+}
+
 // N.B on the metric name selector behaviour.
 //
 // Metric aggregation options resolution:
@@ -51,28 +73,6 @@ import './MetricNameSelector.styles.scss';
 // Signal source:
 //   When signalSource is 'meter', the API is filtered to meter metrics only.
 //   Changing signalSource clears the input and search text.
-
-export type MetricNameSelectorProps = {
-	query: IBuilderQuery;
-	onChange: (value: BaseAutocompleteData, isEditMode?: boolean) => void;
-	disabled?: boolean;
-	defaultValue?: string;
-	onSelect?: (value: BaseAutocompleteData) => void;
-	signalSource?: 'meter' | '';
-};
-
-function getAttributeType(
-	metric: MetricsexplorertypesListMetricDTO,
-): ATTRIBUTE_TYPES | '' {
-	return toAttributeType(metric.type, metric.isMonotonic);
-}
-
-function createAutocompleteData(
-	metricName: string,
-	type: string,
-): BaseAutocompleteData {
-	return { key: metricName, type, dataType: DataTypes.Float64 };
-}
 
 export const MetricNameSelector = memo(function MetricNameSelector({
 	query,
