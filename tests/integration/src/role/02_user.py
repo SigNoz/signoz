@@ -34,7 +34,7 @@ def test_user_invite_accept_role_grant(
         timeout=2,
     )
     assert invite_response.status_code == HTTPStatus.CREATED
-    invited_user = response.json()["data"]
+    invited_user = invite_response.json()["data"]
 
     # Activate user via reset password
     response = requests.get(
