@@ -1685,10 +1685,6 @@ func (t *telemetryMetaStore) FetchTemporalityMulti(ctx context.Context, queryTim
 }
 
 func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
-	comment := ctxtypes.CommentFromContext(ctx)
-	comment.Set("signal", telemetrytypes.SignalMetrics.StringValue())
-	comment.Set("is_metadata_query", "true")
-	ctx = ctxtypes.NewContextWithComment(ctx, comment)
 	if len(metricNames) == 0 {
 		return make(map[string]metrictypes.Temporality), make(map[string]metrictypes.Type), nil
 	}
