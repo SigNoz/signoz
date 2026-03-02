@@ -6,20 +6,18 @@ allowed-tools: Bash(git:*, gh:*), Read, Glob, Grep
 
 # Review Command
 
-Perform a thorough code review following SigNoz's coding conventions and contributing guidelines and any potential bug introduced.
+Perform a thorough code review following SigNoz's coding conventions and contributing guidelines and for feature intent completion.
 
 ## Usage
 
-Invoke this command to review code changes, files, or pull requests with actionable and concise feedback.
+Invoke this command to review code changes with actionable and concise feedback.
 
 ## Process
 
 1. **Determine scope**:
    - Ask user what to review if not specified:
-     - Specific files or directories
      - Current git diff (staged or unstaged)
-     - Specific PR number or commit range
-     - All changes since origin/main
+     - All changes since origin/main or a commit range
 
 2. **Gather context**:
    ```bash
@@ -32,16 +30,10 @@ Invoke this command to review code changes, files, or pull requests with actiona
    
    # for last commit only
    git diff HEAD~1..HEAD
-
-   # For specific PR
-   gh pr view <number> --json files,additions,deletions
-   gh pr diff <number>
    ```
 
 3. **Read all relevant files thoroughly**:
-   - Use Read tool for modified files
    - Understand the context and purpose of changes
-   - Check surrounding code for context
 
 4. **Review against SigNoz guidelines**:
    - **Frontend**: Check [Frontend Guidelines](../../frontend/CONTRIBUTIONS.md)
@@ -96,13 +88,8 @@ For coding conventions and style, refer to the linked guideline docs. This check
 - [ ] Pagination/limits present where needed
 
 ### Testing
-- [ ] New functionality has tests
 - [ ] Edge cases and error paths tested
 - [ ] Tests are deterministic (no flakiness)
-
-### Git/Commits
-- [ ] Commit messages follow `type(scope): description` ([Conventional Commits](https://www.conventionalcommits.org/en/v1.0.0/))
-- [ ] Commits are atomic and logical
 
 ## Output Format
 
@@ -131,11 +118,6 @@ Provide feedback in this structured format:
 1. **[Category]** `file:line`
    **Issue**: [What could be improved]
    **Suggestion**: [Concrete improvement]
-
-### ✅ Positive Highlights
-
-- [Good practice observed]
-- [Well-implemented feature]
 
 ---
 
@@ -199,13 +181,6 @@ Use these categories for issues:
    **Issue**: File imports not organized
    **Suggestion**: Let simple-import-sort auto-organize (will happen on save)
 
-### ✅ Positive Highlights
-
-- Excellent use of virtualization for large trace lists
-- Good error boundary implementation
-- Well-structured component hierarchy
-- Comprehensive unit tests included
-
 ---
 
 **References**:
@@ -219,7 +194,6 @@ Use these categories for issues:
 - **Be specific**: Always reference exact file:line locations
 - **Be concise**: Get to the point, avoid verbosity
 - **Be actionable**: Every comment should have clear resolution path
-- **Be balanced**: Acknowledge good work alongside issues
 - **Be educational**: Explain why something is an issue, link to guidelines
 
 ## Priority Levels

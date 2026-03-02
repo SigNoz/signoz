@@ -31,7 +31,7 @@ Create a PR with auto-filled template from commits after origin/main.
 
 4. **Generate PR**:
    - **Title**: Short (<70 chars), from commit messages or main change
-   - **Body**: Fill template sections based on commits/changes:
+   - **Body**: Fill template sections based on commits/changes, keep these minimal and to the point:
      - Summary (why/what/approach) - end with "Closes #<issue_number>" if issue number is available from branch name (git branch --show-current)
      - Change Type checkboxes
      - Bug Context (if applicable)
@@ -50,6 +50,6 @@ Create a PR with auto-filled template from commits after origin/main.
 ## Notes
 
 - Analyze ALL commits messages from origin/main to HEAD
-- Fill template sections based on code analysis
+- Fill template sections based on commit messages, look into code changes if messages doesn't have all the context.
 - Leave template sections as they are if you can't determine the content
 - Don't add the changes to git stage, only commit or push whatever user has already staged

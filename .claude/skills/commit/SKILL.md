@@ -1,7 +1,7 @@
 ---
 name: commit
 description: Create a conventional commit with staged changes
-allowed-tools: Bash(git:*)
+allowed-tools: Bash(git commit:*)
 ---
 
 # Create Conventional Commit
