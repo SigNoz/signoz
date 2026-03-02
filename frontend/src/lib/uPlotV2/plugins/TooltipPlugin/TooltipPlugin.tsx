@@ -74,11 +74,6 @@ export default function TooltipPlugin({
 		layoutRef.current?.observer.disconnect();
 		layoutRef.current = createLayoutObserver(layoutRef);
 
-		/**
-		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
-		 * reference; clearPlotReferences runs in cleanup so
-		 * detached canvases can be garbage collected.
-		 */
 		// Controller holds the mutable interaction state for this tooltip
 		// instance. It is intentionally *not* React state so uPlot hooks
 		// and DOM listeners can update it freely without triggering a
@@ -86,7 +81,9 @@ export default function TooltipPlugin({
 		const controller: TooltipControllerState = createInitialControllerState();
 
 		/**
-		 * Clear plot references so detached canvases can be garbage collected.
+		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
+		 * reference; clearPlotReferences runs in cleanup so
+		 * detached canvases can be garbage collected.
 		 */
 		const clearPlotReferences = (): void => {
 			controller.plot = null;
