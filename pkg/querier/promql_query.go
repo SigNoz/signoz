@@ -242,6 +242,9 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, len(v.Metric))
 		for name, value := range v.Metric.Copy().Map() {
+			if strings.HasPrefix(name, "__") || name == "fingerprint" {
+				continue
+			}
 			lbls = append(lbls, &qbv5.Label{
 				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 				Value: value,
