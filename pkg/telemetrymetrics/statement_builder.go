@@ -160,15 +160,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 		query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 
-		// check for origTimeAgg's and origSpaceAgg's validity
-		if origTimeAgg.IsZero() || !origTimeAgg.IsValid() {
-			return nil, errors.Newf(
-				errors.TypeInvalidInput,
-				errors.CodeInvalidInput,
-				"invalid time aggregation, should be one of the following: [`rate`, `increase`]",
-			)
-		}
-
+		// check for origSpaceAgg's validity
 		if origSpaceAgg.IsZero() || !origSpaceAgg.IsValid() {
 			return nil, errors.Newf(
 				errors.TypeInvalidInput,
