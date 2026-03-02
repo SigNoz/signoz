@@ -176,17 +176,6 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 }
 
 type UserStore interface {
-	// invite
-	// CreateBulkInvite(ctx context.Context, invites []*Invite) error
-	// ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
-	// DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-
-	// Get invite by token.
-	// GetInviteByToken(ctx context.Context, token string) (*Invite, error)
-
-	// Get invite by email and org.
-	// GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*Invite, error)
-
 	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
 
@@ -210,9 +199,6 @@ type UserStore interface {
 
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
-
-	// List users in pending invite status
-	ListPendingInviteUsers(ctx context.Context, orgID valuer.UUID) ([]*User, error)
 
 	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
