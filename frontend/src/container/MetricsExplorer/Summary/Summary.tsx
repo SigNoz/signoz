@@ -16,9 +16,11 @@ import {
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -62,6 +64,9 @@ function Summary(): JSX.Element {
 	);
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
+
+	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
+
 	const query = useMemo(() => currentQuery?.builder?.queryData[0], [
 		currentQuery,
 	]);
@@ -84,9 +89,11 @@ function Summary(): JSX.Element {
 	const [
 		currentQueryFilterExpression,
 		setCurrentQueryFilterExpression,
-	] = useState<string>('');
+	] = useState<string>(query?.filter?.expression || '');
 
-	const [appliedFilterExpression, setAppliedFilterExpression] = useState('');
+	const [appliedFilterExpression, setAppliedFilterExpression] = useState(
+		query?.filter?.expression || '',
+	);
 
 	const queryFilterExpression = useMemo(
 		() => ({ expression: appliedFilterExpression }),

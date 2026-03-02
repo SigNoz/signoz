@@ -334,7 +334,7 @@ function Metadata({
 						e.stopPropagation();
 						setIsEditing(true);
 					}}
-					disabled={isUpdatingMetricsMetadata}
+					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 				>
 					<Edit2 size={14} />
 					<Typography.Text>Edit</Typography.Text>
@@ -345,6 +345,7 @@ function Metadata({
 		isEditing,
 		isErrorMetricMetadata,
 		isUpdatingMetricsMetadata,
+		isLoadingMetricMetadata,
 		cancelEdit,
 		handleSave,
 	]);
@@ -355,7 +356,7 @@ function Metadata({
 				label: (
 					<div className="metrics-accordion-header metrics-metadata-header">
 						<Typography.Text>Metadata</Typography.Text>
-						{!isLoadingMetricMetadata && actionButton}
+						{actionButton}
 					</div>
 				),
 				key: 'metric-metadata',

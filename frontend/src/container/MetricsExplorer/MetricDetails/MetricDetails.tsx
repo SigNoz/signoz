@@ -111,7 +111,7 @@ function MetricDetails({
 		(e: React.MouseEvent | React.KeyboardEvent): void => {
 			if ('key' in e && e.key === 'Escape') {
 				const openPopover = document.querySelector(
-					'.ant-popover:not(.ant-popover-hidden)',
+					'.metric-details-popover:not(.ant-popover-hidden)',
 				);
 				if (openPopover) {
 					return;

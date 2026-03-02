@@ -4,7 +4,8 @@ import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { userEvent } from 'tests/test-utils';
 
 import ROUTES from '../../../../constants/routes';
-import AllAttributes, { AllAttributesValue } from '../AllAttributes';
+import AllAttributes from '../AllAttributes';
+import { AllAttributesValue } from '../AllAttributesValue';
 import { getMockMetricAttributesData, MOCK_METRIC_NAME } from './testUtlls';
 
 jest.mock('react-router-dom', () => ({
