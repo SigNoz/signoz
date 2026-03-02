@@ -72,7 +72,6 @@ export type UseQueryOperations = (
 	handleChangeAggregatorAttribute: (
 		value: BaseAutocompleteData,
 		isEditMode?: boolean,
-		attributeKeys?: BaseAutocompleteData[],
 	) => void;
 	handleChangeDataSource: (newSource: DataSource) => void;
 	handleDeleteQuery: () => void;

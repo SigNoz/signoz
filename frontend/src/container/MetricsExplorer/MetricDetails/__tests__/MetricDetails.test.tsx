@@ -24,6 +24,13 @@ jest.mock('react-router-dom', () => ({
 		pathname: `${ROUTES.METRICS_EXPLORER}`,
 	}),
 }));
+jest.mock('react-redux', () => ({
+	...jest.requireActual('react-redux'),
+	useSelector: jest.fn().mockReturnValue({
+		maxTime: 1700000000000000000,
+		minTime: 1699900000000000000,
+	}),
+}));
 jest.mock('hooks/useSafeNavigate', () => ({
 	useSafeNavigate: (): any => ({
 		safeNavigate: jest.fn(),

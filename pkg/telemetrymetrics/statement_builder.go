@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -189,9 +188,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// spatial_aggregation_cte
-		if frag, args, err := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); err != nil {
-			return nil, err
-		} else if frag != "" {
+		if frag, args := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -522,14 +519,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, []any, error) {
-	if query.Aggregations[0].SpaceAggregation.IsZero() {
-		return "", nil, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
-		)
-	}
+) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("ts")
@@ -546,7 +536,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
 func (b *MetricQueryStatementBuilder) BuildFinalSelect(
