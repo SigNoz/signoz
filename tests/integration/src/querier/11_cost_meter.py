@@ -94,6 +94,7 @@ def test_list_meter_metric_names(
             "end": end_ms,
             "limit": 100,
             "searchText": "cost_test_list",
+            "source": "meter",
         },
         headers={"authorization": f"Bearer {token}"},
         timeout=30,
