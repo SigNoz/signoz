@@ -2,11 +2,8 @@ import { memo, useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { flushSync } from 'react-dom';
 import { AutoComplete, Spin, Typography } from 'antd';
 import { useListMetrics } from 'api/generated/services/metrics';
-import {
-	MetricsexplorertypesListMetricDTO,
-	MetrictypesTypeDTO,
-} from 'api/generated/services/sigNoz.schemas';
-import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
+import { MetricsexplorertypesListMetricDTO } from 'api/generated/services/sigNoz.schemas';
+import { ATTRIBUTE_TYPES, toAttributeType } from 'constants/queryBuilder';
 import { DEBOUNCE_DELAY } from 'constants/queryBuilderFilterConfig';
 import useDebounce from 'hooks/useDebounce';
 import {
@@ -55,32 +52,6 @@ import './MetricNameSelector.styles.scss';
 //   When signalSource is 'meter', the API is filtered to meter metrics only.
 //   Changing signalSource clears the input and search text.
 
-function getAttributeType(
-	metric: MetricsexplorertypesListMetricDTO,
-): ATTRIBUTE_TYPES | '' {
-	if (metric.type === MetrictypesTypeDTO.sum && !metric.isMonotonic) {
-		return ATTRIBUTE_TYPES.GAUGE;
-	}
-
-	const mapping: Record<MetrictypesTypeDTO, ATTRIBUTE_TYPES> = {
-		[MetrictypesTypeDTO.sum]: ATTRIBUTE_TYPES.SUM,
-		[MetrictypesTypeDTO.gauge]: ATTRIBUTE_TYPES.GAUGE,
-		[MetrictypesTypeDTO.histogram]: ATTRIBUTE_TYPES.HISTOGRAM,
-		[MetrictypesTypeDTO.summary]: ATTRIBUTE_TYPES.GAUGE,
-		[MetrictypesTypeDTO.exponentialhistogram]:
-			ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
-	};
-
-	return mapping[metric.type] || '';
-}
-
-function toAutocompleteData(
-	metricName: string,
-	type: string,
-): BaseAutocompleteData {
-	return { key: metricName, type, dataType: DataTypes.Float64 };
-}
-
 export type MetricNameSelectorProps = {
 	query: IBuilderQuery;
 	onChange: (value: BaseAutocompleteData, isEditMode?: boolean) => void;
@@ -89,6 +60,19 @@ export type MetricNameSelectorProps = {
 	onSelect?: (value: BaseAutocompleteData) => void;
 	signalSource?: 'meter' | '';
 };
+
+function getAttributeType(
+	metric: MetricsexplorertypesListMetricDTO,
+): ATTRIBUTE_TYPES | '' {
+	return toAttributeType(metric.type, metric.isMonotonic);
+}
+
+function createAutocompleteData(
+	metricName: string,
+	type: string,
+): BaseAutocompleteData {
+	return { key: metricName, type, dataType: DataTypes.Float64 };
+}
 
 export const MetricNameSelector = memo(function MetricNameSelector({
 	query,
@@ -104,7 +88,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		'';
 
 	const [inputValue, setInputValue] = useState<string>(
-		defaultValue || currentMetricName,
+		currentMetricName || defaultValue || '',
 	);
 	const [searchText, setSearchText] = useState<string>(currentMetricName);
 
@@ -113,7 +97,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	const prevSignalSourceRef = useRef(signalSource);
 
 	useEffect(() => {
-		setInputValue(defaultValue || currentMetricName);
+		setInputValue(currentMetricName || defaultValue || '');
 	}, [defaultValue, currentMetricName]);
 
 	useEffect(() => {
@@ -175,7 +159,7 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 			const found = metrics.find((m) => m.metricName === metricName);
 			if (found) {
 				onChange(
-					toAutocompleteData(found.metricName, getAttributeType(found)),
+					createAutocompleteData(found.metricName, getAttributeType(found)),
 					true,
 				);
 			}
@@ -186,9 +170,9 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		(text: string): BaseAutocompleteData => {
 			const found = metricsRef.current.find((m) => m.metricName === text);
 			if (found) {
-				return toAutocompleteData(found.metricName, getAttributeType(found));
+				return createAutocompleteData(found.metricName, getAttributeType(found));
 			}
-			return toAutocompleteData(text, '');
+			return createAutocompleteData(text, '');
 		},
 		[],
 	);
