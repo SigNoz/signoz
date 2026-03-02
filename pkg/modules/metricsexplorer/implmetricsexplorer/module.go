@@ -786,9 +786,8 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		Logger:           m.logger,
 		FieldMapper:      m.fieldMapper,
 		ConditionBuilder: m.condBuilder,
-		FullTextColumn: &telemetrytypes.TelemetryFieldKey{
-			Name: "labels"},
-		FieldKeys: keys,
+		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+		FieldKeys:        keys,
 	}
 
 	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
