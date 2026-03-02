@@ -55,43 +55,6 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 	}
 }
 
-// func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
-// 	invite, err := m.store.GetInviteByToken(ctx, token)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	user, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.OrgID)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	factorPassword, err := types.NewFactorPassword(password, user.ID.StringValue())
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	err = m.CreateUser(ctx, user, root.WithFactorPassword(factorPassword))
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	if err := m.DeleteInvite(ctx, invite.OrgID.String(), invite.ID); err != nil {
-// 		return nil, err
-// 	}
-
-// 	return user, nil
-// }
-
-// func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
-// 	invite, err := m.store.GetInviteByToken(ctx, token)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return invite, nil
-// }
-
 // CreateBulk implements invite.Module.
 func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.User, error) {
 	creator, err := m.store.GetUser(ctx, userID)
@@ -198,14 +161,6 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	return invitedUsers, nil
 }
-
-// func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.User, error) {
-// 	return m.store.ListPendingInviteUsers(ctx, orgID)
-// }
-
-// func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-// 	return m.store.DeleteInvite(ctx, orgID, id)
-// }
 
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
