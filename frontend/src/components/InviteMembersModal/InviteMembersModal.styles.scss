@@ -1,0 +1,420 @@
+.invite-members-modal {
+	display: flex !important;
+	flex-direction: column !important;
+	max-width: 700px !important;
+	padding: 0 !important;
+	gap: 0 !important;
+	background: #121317 !important;
+	border: 1px solid #161922 !important;
+	border-radius: 4px !important;
+	box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.04) !important;
+
+	[data-slot='dialog-header'] {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		padding: 16px;
+		border-bottom: 1px solid #161922;
+		margin: 0;
+		flex-shrink: 0;
+		background: transparent;
+	}
+
+	[data-slot='dialog-title'] {
+		font-family: Inter, sans-serif;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 1;
+		letter-spacing: -0.065px;
+		color: #ffffff;
+		margin: 0;
+	}
+
+	// Close button rendered by DialogWrapper
+	[data-slot='dialog-close'] {
+		color: #c0c1c3;
+		opacity: 0.7;
+		transition: opacity 0.15s;
+		background: transparent;
+		border: none;
+
+		&:hover {
+			opacity: 1;
+		}
+	}
+}
+
+// ─── Content area ─────────────────────────────────────────────────────────────
+.invite-members-modal__content {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	padding: 16px;
+	flex: 1;
+}
+
+// ─── Table Structure ──────────────────────────────────────────────────────────
+.invite-members-modal__table {
+	width: 100%;
+	min-height: 0;
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+}
+
+.invite-members-modal__table-header {
+	display: flex;
+	gap: 16px;
+	align-items: center;
+	flex-shrink: 0;
+	height: auto;
+	width: 100%;
+	justify-content: flex-end;
+
+	.email-header {
+		flex: 0 0 220px;
+		width: 220px;
+	}
+
+	.role-header {
+		flex: 1 0 0;
+		min-width: 0;
+	}
+
+	.action-header {
+		flex: 0 0 32px;
+		width: 32px;
+	}
+
+	.table-header-cell {
+		color: var(--l1-foreground);
+		font-family: Inter, sans-serif;
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 600;
+		line-height: 100%;
+		letter-spacing: -0.065px;
+	}
+}
+
+.invite-members-modal__container {
+	display: flex;
+	flex-direction: column;
+	gap: 16px !important;
+	width: 100%;
+	flex: 0 1 auto;
+	min-height: 0;
+	overflow-x: hidden;
+}
+
+// ─── Rows & Cells ─────────────────────────────────────────────────────────────
+.team-member-row {
+	display: flex;
+	width: 100%;
+	gap: 16px;
+
+	> div.email-cell {
+		flex: 0 0 220px;
+		width: 220px;
+	}
+
+	> div.role-cell {
+		flex: 1 0 0;
+		min-width: 0;
+	}
+
+	> div.action-cell {
+		flex: 0 0 32px;
+		width: 32px;
+	}
+}
+
+.team-member-cell {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	&.action-cell {
+		display: flex;
+		align-items: flex-end;
+		justify-content: center;
+		height: 32px;
+	}
+}
+
+// ─── Form Elements ────────────────────────────────────────────────────────────
+.team-member-email-input {
+	width: 100%;
+	height: 32px !important;
+	border-radius: 2px;
+	background: var(--l3-background);
+	border: 1px solid var(--l3-border);
+	color: var(--l1-foreground);
+	font-family: Inter, sans-serif;
+	font-size: 13px;
+	font-weight: 400;
+	line-height: 1;
+	letter-spacing: -0.065px;
+	padding: 6px 8px;
+	box-sizing: border-box;
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+
+	&:hover {
+		border-color: var(--l3-border);
+	}
+
+	&:focus {
+		border-color: var(--bg-robin-500);
+		box-shadow: none;
+	}
+}
+
+.team-member-role-select {
+	width: 100%;
+
+	.ant-select-selector {
+		height: 32px !important;
+		border-radius: 2px !important;
+		background: var(--l3-background) !important;
+		border: 1px solid var(--l3-border) !important;
+		color: var(--l1-foreground) !important;
+		font-family: Inter, sans-serif !important;
+		font-size: 13px !important;
+		font-weight: 400 !important;
+		line-height: 1 !important;
+		letter-spacing: -0.065px !important;
+		padding: 0 8px !important;
+		box-sizing: border-box !important;
+
+		.ant-select-selection-placeholder {
+			color: var(--l3-foreground) !important;
+		}
+
+		.ant-select-selection-item {
+			color: var(--l1-foreground) !important;
+			line-height: 30px !important;
+		}
+	}
+
+	.ant-select-arrow {
+		color: var(--l3-foreground) !important;
+	}
+
+	&.ant-select-focused .ant-select-selector {
+		border-color: var(--bg-robin-500) !important;
+	}
+
+	&:hover .ant-select-selector {
+		border-color: var(--bg-robin-500) !important;
+	}
+}
+
+// ─── Actions ──────────────────────────────────────────────────────────────────
+.remove-team-member-button {
+	display: flex !important;
+	align-items: center !important;
+	justify-content: center !important;
+	width: 32px !important;
+	height: 32px !important;
+	min-width: 32px !important;
+	border: none !important;
+	border-radius: 2px !important;
+	background: transparent !important;
+	color: #e5484d !important;
+	opacity: 0.6 !important;
+	cursor: pointer;
+	padding: 0 !important;
+	transition: background-color 0.2s, opacity 0.2s;
+	box-shadow: none !important;
+
+	svg {
+		color: #e5484d !important;
+		width: 14px !important;
+		height: 14px !important;
+	}
+
+	&:hover {
+		background: rgba(229, 72, 77, 0.1) !important;
+		opacity: 0.9 !important;
+		color: #e5484d !important;
+
+		svg {
+			color: #e5484d !important;
+		}
+	}
+
+	&:active {
+		opacity: 0.7 !important;
+		background: rgba(229, 72, 77, 0.15) !important;
+	}
+
+	&:focus-visible {
+		outline: 2px solid var(--bg-robin-500);
+		outline-offset: 2px;
+	}
+}
+
+// ─── Validation ───────────────────────────────────────────────────────────────
+.email-error-message {
+	font-size: 12px;
+	font-weight: 400;
+	line-height: 16px;
+	margin-top: 4px;
+	width: 100%;
+	display: block;
+	color: var(--bg-cherry-500);
+}
+
+.invite-team-members-error-callout {
+	background: rgba(229, 72, 77, 0.1);
+	border: 1px solid rgba(229, 72, 77, 0.2);
+	border-radius: 4px;
+	animation: horizontal-shaking 300ms ease-out;
+}
+
+@keyframes horizontal-shaking {
+	0% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(5px);
+	}
+	50% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}
+
+// ─── Footer ───────────────────────────────────────────────────────────────────
+.invite-members-modal__footer {
+	display: flex !important;
+	flex-direction: row !important;
+	align-items: center !important;
+	justify-content: space-between !important;
+	padding: 0 16px !important;
+	height: 64px !important;
+	min-height: 64px !important;
+	border-top: 1px solid #161922 !important;
+	gap: 0 !important;
+	flex-shrink: 0;
+}
+
+.invite-members-modal__footer-right {
+	display: flex;
+	align-items: center;
+	gap: 12px;
+}
+
+.add-another-member-button {
+	&:hover {
+		border-color: var(--bg-robin-500) !important;
+		border-style: dashed !important;
+		color: var(--l1-foreground);
+
+		svg,
+		[class*='icon'] {
+			color: var(--l1-foreground) !important;
+		}
+	}
+}
+
+// ─── Light mode overrides ─────────────────────────────────────────────────────
+.lightMode {
+	.invite-members-modal {
+		background: #ffffff !important;
+		border-color: #e9e9e9 !important;
+
+		[data-slot='dialog-header'] {
+			border-bottom-color: #e9e9e9;
+		}
+
+		[data-slot='dialog-title'] {
+			color: #121317;
+		}
+	}
+
+	.invite-members-modal__table-header {
+		.table-header-cell {
+			color: var(--l3-foreground);
+		}
+	}
+
+	.team-member-email-input {
+		background: var(--bg-vanilla-200) !important;
+		border-color: var(--bg-vanilla-300) !important;
+		color: var(--text-ink-500) !important;
+
+		&::placeholder {
+			color: var(--text-neutral-light-200) !important;
+		}
+
+		&:hover {
+			border-color: var(--bg-vanilla-300) !important;
+		}
+
+		&:focus {
+			border-color: var(--bg-robin-500) !important;
+		}
+	}
+
+	.team-member-role-select {
+		.ant-select-selector {
+			background: var(--l3-background) !important;
+			border: 1px solid var(--l3-border) !important;
+			color: var(--l1-foreground) !important;
+
+			.ant-select-selection-placeholder {
+				color: var(--l3-foreground) !important;
+			}
+			.ant-select-selection-item {
+				color: var(--l1-foreground) !important;
+			}
+		}
+		.ant-select-arrow {
+			color: var(--l3-foreground) !important;
+		}
+	}
+
+	.remove-team-member-button {
+		color: var(--bg-cherry-500) !important;
+
+		svg {
+			color: var(--bg-cherry-500) !important;
+		}
+
+		&:hover {
+			background: rgba(245, 101, 101, 0.1) !important;
+		}
+	}
+
+	.add-another-member-button {
+		border-color: var(--text-vanilla-300) !important;
+		color: var(--l3-foreground);
+
+		svg {
+			color: var(--l3-foreground) !important;
+		}
+
+		&:hover {
+			border-color: var(--bg-robin-500) !important;
+			color: var(--l1-foreground);
+			background: rgba(78, 116, 248, 0.1) !important;
+
+			svg {
+				color: var(--l1-foreground) !important;
+			}
+		}
+	}
+
+	.invite-members-modal__footer {
+		border-top-color: #e9e9e9 !important;
+	}
+}

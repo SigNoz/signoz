@@ -1,3 +1,4 @@
+import type React from 'react';
 import { Badge } from '@signozhq/badge';
 import { Pagination, Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
@@ -14,6 +15,8 @@ export interface MemberRow {
 	role: ROLES;
 	status: 'Active' | 'Invited';
 	joinedOn: string | null;
+	updatedAt?: string | null;
+	token?: string | null;
 }
 
 interface MembersTableProps {
@@ -24,6 +27,7 @@ interface MembersTableProps {
 	pageSize: number;
 	searchQuery: string;
 	onPageChange: (page: number) => void;
+	onRowClick?: (member: MemberRow) => void;
 	onSortChange?: (
 		sorter: SorterResult<MemberRow> | SorterResult<MemberRow>[],
 	) => void;
@@ -96,6 +100,7 @@ function MembersTable({
 	pageSize,
 	searchQuery,
 	onPageChange,
+	onRowClick,
 	onSortChange,
 }: MembersTableProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
@@ -129,12 +134,7 @@ function MembersTable({
 				<Badge color="vanilla">{formatRoleLabel(role)}</Badge>
 			),
 		},
-		{
-			title: 'Permissions',
-			key: 'permissions',
-			width: 250,
-			render: (): JSX.Element => <span className="member-dash">&#8213;</span>,
-		},
+
 		{
 			title: 'Status',
 			dataIndex: 'status',
@@ -151,7 +151,7 @@ function MembersTable({
 			title: 'Joined On',
 			dataIndex: 'joinedOn',
 			key: 'joinedOn',
-			width: 220,
+			width: 250,
 			align: 'right' as const,
 			sorter: (a, b): number => {
 				if (!a.joinedOn && !b.joinedOn) {
@@ -197,6 +197,10 @@ function MembersTable({
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
+				onRow={(record): React.HTMLAttributes<HTMLElement> => ({
+					onClick: (): void => onRowClick?.(record),
+					style: onRowClick ? { cursor: 'pointer' } : undefined,
+				})}
 				onChange={(_, __, sorter): void => {
 					if (onSortChange) {
 						onSortChange(

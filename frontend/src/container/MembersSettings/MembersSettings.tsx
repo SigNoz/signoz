@@ -8,11 +8,11 @@ import type { MenuProps } from 'antd';
 import { Dropdown, Typography } from 'antd';
 import getPendingInvites from 'api/v1/invite/get';
 import getAll from 'api/v1/user/get';
+import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
+import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
-
-import InviteMemberModal from './InviteMemberModal/InviteMemberModal';
 
 import './MembersSettings.styles.scss';
 
@@ -31,6 +31,7 @@ function MembersSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterMode, setFilterMode] = useState<FilterMode>('all');
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
+	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
 	const {
 		data: usersData,
@@ -60,6 +61,9 @@ function MembersSettings(): JSX.Element {
 			role: user.role,
 			status: 'Active' as const,
 			joinedOn: user.createdAt ? String(user.createdAt) : null,
+			updatedAt: (user as { updatedAt?: number }).updatedAt
+				? String((user as { updatedAt?: number }).updatedAt)
+				: null,
 		}));
 
 		const pendingInvites: MemberRow[] = (invitesData?.data ?? []).map(
@@ -69,7 +73,8 @@ function MembersSettings(): JSX.Element {
 				email: invite.email,
 				role: invite.role,
 				status: 'Invited' as const,
-				joinedOn: null,
+				joinedOn: invite.createdAt ? String(invite.createdAt) : null,
+				token: invite.token ?? null,
 			}),
 		);
 
@@ -153,10 +158,23 @@ function MembersSettings(): JSX.Element {
 		refetchInvites();
 	}, [refetchUsers, refetchInvites]);
 
+	const handleRowClick = useCallback((member: MemberRow): void => {
+		setSelectedMember(member);
+	}, []);
+
+	const handleDrawerClose = useCallback((): void => {
+		setSelectedMember(null);
+	}, []);
+
+	const handleMemberEditSuccess = useCallback((): void => {
+		refetchUsers();
+		refetchInvites();
+		setSelectedMember(null);
+	}, [refetchUsers, refetchInvites]);
+
 	return (
 		<>
 			<div className="members-settings">
-				{/* Page header */}
 				<div className="members-settings__header">
 					<Typography.Title level={5} className="members-settings__title">
 						Members
@@ -208,7 +226,6 @@ function MembersSettings(): JSX.Element {
 					</Button>
 				</div>
 			</div>
-			{/* Table */}
 			<MembersTable
 				data={paginatedMembers}
 				loading={isLoading}
@@ -217,13 +234,20 @@ function MembersSettings(): JSX.Element {
 				pageSize={PAGE_SIZE}
 				searchQuery={searchQuery}
 				onPageChange={setPage}
+				onRowClick={handleRowClick}
 			/>
 
-			{/* Invite modal */}
-			<InviteMemberModal
+			<InviteMembersModal
 				open={isInviteModalOpen}
 				onClose={(): void => setIsInviteModalOpen(false)}
 				onSuccess={handleInviteSuccess}
+			/>
+
+			<EditMemberDrawer
+				member={selectedMember}
+				open={selectedMember !== null}
+				onClose={handleDrawerClose}
+				onSuccess={handleMemberEditSuccess}
 			/>
 		</>
 	);

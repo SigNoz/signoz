@@ -123,14 +123,6 @@
 	}
 }
 
-// ─── Permissions dash ─────────────────────────────────────────────────────────
-.member-dash {
-	font-size: 14px;
-	color: var(--slate-50, #62687c);
-	line-height: 18px;
-	letter-spacing: -0.07px;
-}
-
 // ─── Joined On ────────────────────────────────────────────────────────────────
 .member-joined-date {
 	font-size: 14px;
@@ -233,7 +225,6 @@
 		}
 	}
 
-	.member-dash,
 	.member-joined-dash {
 		color: #5a5f6e;
 	}
