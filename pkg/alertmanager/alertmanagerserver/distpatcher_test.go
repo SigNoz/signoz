@@ -365,7 +365,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -638,7 +638,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -897,7 +897,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1159,7 +1159,7 @@ func newAlert(labels model.LabelSet) *alertmanagertypes.Alert {
 func TestDispatcherRace(t *testing.T) {
 	logger := promslog.NewNopLogger()
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1195,7 +1195,7 @@ route:
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1266,7 +1266,7 @@ func TestDispatcher_DoMaintenance(t *testing.T) {
 	r := prometheus.NewRegistry()
 	marker := alertmanagertypes.NewMarker(r)
 
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, 0, alertmanagertypes.AlertStoreCallback{}, promslog.NewNopLogger(), nil, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, 0, alertmanagertypes.AlertStoreCallback{}, promslog.NewNopLogger(), prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1371,7 +1371,7 @@ route:
 			logger := providerSettings.Logger
 			route := dispatch.NewRoute(conf.Route, nil)
 			marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, nil, nil)
+			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, alertmanagertypes.AlertStoreCallback{}, logger, prometheus.NewRegistry(), nil)
 			if err != nil {
 				t.Fatal(err)
 			}
