@@ -34,19 +34,25 @@ def test_user_invite_accept_role_grant(
         timeout=2,
     )
     assert invite_response.status_code == HTTPStatus.CREATED
-    invite_token = invite_response.json()["data"]["token"]
+    invited_user = response.json()["data"]
 
-    # accept the invite for editor
-    accept_payload = {
-        "token": invite_token,
-        "password": "password123Z$",
-    }
-    accept_response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json=accept_payload,
+    # Activate user via reset password
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert accept_response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.OK
+    reset_token = response.json()["data"]["token"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": USER_EDITOR_PASSWORD, "token": reset_token},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Login with editor email and password
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
