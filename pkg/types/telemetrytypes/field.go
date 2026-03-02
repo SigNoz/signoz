@@ -121,6 +121,7 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
+	f.Evolutions = src.Evolutions
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {

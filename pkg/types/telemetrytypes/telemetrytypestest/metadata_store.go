@@ -114,12 +114,12 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 				FieldName:    "__all__",
 			}
 
-			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+			if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
 				keys[i].Evolutions = keyEvolutions
 			}
 
 			selector.FieldName = key.Name
-			if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+			if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
 				keys[i].Evolutions = keyEvolutions
 			}
 		}
@@ -361,12 +361,12 @@ func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context,
 	for i, selector := range selectors {
 		// Build the key: Signal:FieldContext:FieldName
 		selector.FieldName = "__all__"
-		key := telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
+		key := selector.QualifiedName()
 		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
 			result[key] = entries
 		}
 		selector.FieldName = selectors[i].FieldName
-		key = telemetrytypes.GetEvolutionMetadataUniqueKey(selector)
+		key = selector.QualifiedName()
 		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
 			result[key] = entries
 		}

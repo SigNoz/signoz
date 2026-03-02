@@ -585,12 +585,12 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			FieldName:    "__all__",
 		}
 
-		if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+		if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
 			keys[i].Evolutions = keyEvolutions
 		}
 
 		selector.FieldName = key.Name
-		if keyEvolutions, ok := evolutions[telemetrytypes.GetEvolutionMetadataUniqueKey(selector)]; ok {
+		if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
 			keys[i].Evolutions = keyEvolutions
 		}
 	}
@@ -1839,13 +1839,9 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 			clause = sb.E("field_context", selector.FieldContext)
 		}
 
-		if selector.FieldName != "" {
-			clause = sb.And(clause,
-				sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
-			)
-		} else {
-			clause = sb.And(clause, sb.E("field_name", "__all__"))
-		}
+		clause = sb.And(clause,
+			sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
+		)
 
 		clauses = append(clauses, sb.And(sb.E("signal", selector.Signal), clause))
 	}
@@ -1897,12 +1893,12 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
 
 	for _, evolution := range evolutions {
-		key := telemetrytypes.GetEvolutionMetadataUniqueKey(&telemetrytypes.EvolutionSelector{
+		key := &telemetrytypes.EvolutionSelector{
 			Signal:       evolution.Signal,
 			FieldContext: evolution.FieldContext,
 			FieldName:    evolution.FieldName,
-		})
-		evolutionsByUniqueKey[key] = append(evolutionsByUniqueKey[key], evolution)
+		}
+		evolutionsByUniqueKey[key.QualifiedName()] = append(evolutionsByUniqueKey[key.QualifiedName()], evolution)
 	}
 	return evolutionsByUniqueKey, nil
 }

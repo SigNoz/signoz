@@ -59,7 +59,7 @@ func CollisionHandledFinalExpr(
 		return nil
 	}
 
-	colName, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
 	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -94,9 +94,9 @@ func CollisionHandledFinalExpr(
 				if err != nil {
 					return "", nil, err
 				}
-				colName, _ = fm.FieldFor(ctx, startNs, endNs, key)
-				colName, _ = DataTypeCollisionHandledFieldName(key, dummyValue, colName, qbtypes.FilterOperatorUnknown)
-				stmts = append(stmts, colName)
+				fieldExpression, _ = fm.FieldFor(ctx, startNs, endNs, key)
+				fieldExpression, _ = DataTypeCollisionHandledFieldName(key, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
+				stmts = append(stmts, fieldExpression)
 			}
 		}
 	} else {
@@ -111,10 +111,10 @@ func CollisionHandledFinalExpr(
 		} else if strings.Contains(field.Name, telemetrytypes.ArraySep) || strings.Contains(field.Name, telemetrytypes.ArrayAnyIndex) {
 			return "", nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "Group by/Aggregation isn't available for the Array Paths: %s", field.Name)
 		} else {
-			colName, _ = DataTypeCollisionHandledFieldName(field, dummyValue, colName, qbtypes.FilterOperatorUnknown)
+			fieldExpression, _ = DataTypeCollisionHandledFieldName(field, dummyValue, fieldExpression, qbtypes.FilterOperatorUnknown)
 		}
 
-		stmts = append(stmts, colName)
+		stmts = append(stmts, fieldExpression)
 	}
 
 	for idx := range stmts {

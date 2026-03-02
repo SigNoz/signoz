@@ -97,10 +97,10 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, err := m.FieldFor(ctx, startNs, endNs, field)
 	if err != nil {
 		return "", err
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }

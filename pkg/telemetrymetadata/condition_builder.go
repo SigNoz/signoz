@@ -44,7 +44,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		// if we don't have a table field name, we can't build a condition for related values
 		return "", nil
@@ -56,7 +56,7 @@ func (c *conditionBuilder) ConditionFor(
 		return "", nil
 	}
 
-	tblFieldName, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, tblFieldName, operator)
+	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
 	// key must exists to apply main filter
 	expr := `if(mapContains(%s, %s), %s, true)`
@@ -67,29 +67,29 @@ func (c *conditionBuilder) ConditionFor(
 	switch operator {
 	// regular operators
 	case qbtypes.FilterOperatorEqual:
-		cond = sb.E(tblFieldName, value)
+		cond = sb.E(fieldExpression, value)
 	case qbtypes.FilterOperatorNotEqual:
-		cond = sb.NE(tblFieldName, value)
+		cond = sb.NE(fieldExpression, value)
 
 	// like and not like
 	case qbtypes.FilterOperatorLike:
-		cond = sb.Like(tblFieldName, value)
+		cond = sb.Like(fieldExpression, value)
 	case qbtypes.FilterOperatorNotLike:
-		cond = sb.NotLike(tblFieldName, value)
+		cond = sb.NotLike(fieldExpression, value)
 	case qbtypes.FilterOperatorILike:
-		cond = sb.ILike(tblFieldName, value)
+		cond = sb.ILike(fieldExpression, value)
 	case qbtypes.FilterOperatorNotILike:
-		cond = sb.NotILike(tblFieldName, value)
+		cond = sb.NotILike(fieldExpression, value)
 
 	case qbtypes.FilterOperatorContains:
-		cond = sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
+		cond = sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
 	case qbtypes.FilterOperatorNotContains:
-		cond = sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value))
+		cond = sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value))
 
 	case qbtypes.FilterOperatorRegexp:
-		cond = fmt.Sprintf(`match(%s, %s)`, tblFieldName, sb.Var(value))
+		cond = fmt.Sprintf(`match(%s, %s)`, fieldExpression, sb.Var(value))
 	case qbtypes.FilterOperatorNotRegexp:
-		cond = fmt.Sprintf(`NOT match(%s, %s)`, tblFieldName, sb.Var(value))
+		cond = fmt.Sprintf(`NOT match(%s, %s)`, fieldExpression, sb.Var(value))
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -100,7 +100,7 @@ func (c *conditionBuilder) ConditionFor(
 		// instead of using IN, we use `=` + `OR` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.E(tblFieldName, value))
+			conditions = append(conditions, sb.E(fieldExpression, value))
 		}
 		cond = sb.Or(conditions...)
 	case qbtypes.FilterOperatorNotIn:
@@ -111,7 +111,7 @@ func (c *conditionBuilder) ConditionFor(
 		// instead of using NOT IN, we use `!=` + `AND` to make use of index
 		conditions := []string{}
 		for _, value := range values {
-			conditions = append(conditions, sb.NE(tblFieldName, value))
+			conditions = append(conditions, sb.NE(fieldExpression, value))
 		}
 		cond = sb.And(conditions...)
 

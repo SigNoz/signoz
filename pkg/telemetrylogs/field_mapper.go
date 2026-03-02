@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
+	"slices"
 	"sort"
 	"strconv"
 	"strings"
@@ -208,13 +209,16 @@ func selectEvolutionsForColumns(columns []*schema.Column, evolutions []*telemetr
 	}
 
 	// Sort by ReleaseTime descending (newest first)
-	for i := 0; i < len(pairs)-1; i++ {
-		for j := i + 1; j < len(pairs); j++ {
-			if pairs[i].evolution.ReleaseTime.Before(pairs[j].evolution.ReleaseTime) {
-				pairs[i], pairs[j] = pairs[j], pairs[i]
-			}
+	slices.SortFunc(pairs, func(a, b colEvoPair) int {
+		// Sort by ReleaseTime descending (newest first)
+		if a.evolution.ReleaseTime.After(b.evolution.ReleaseTime) {
+			return -1
 		}
-	}
+		if a.evolution.ReleaseTime.Before(b.evolution.ReleaseTime) {
+			return 1
+		}
+		return 0
+	})
 
 	// Extract results
 	newColumns := make([]*schema.Column, len(pairs))
@@ -337,7 +341,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, tsStart, tsEnd, field)
+	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -347,7 +351,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 			if _, ok := logsV2Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextLog
-				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
+				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -365,19 +369,19 @@ func (m *fieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
+			fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
-				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
+				fieldExpression, _ = m.FieldFor(ctx, tsStart, tsEnd, key)
+				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", fieldExpression, fieldExpression))
 			}
-			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
+			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern

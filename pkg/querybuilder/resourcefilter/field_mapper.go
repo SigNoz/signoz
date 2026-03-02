@@ -68,9 +68,9 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	key *telemetrytypes.TelemetryFieldKey,
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
-	colName, err := m.FieldFor(ctx, tsStart, tsEnd, key)
+	fieldExpression, err := m.FieldFor(ctx, tsStart, tsEnd, key)
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("%s AS `%s`", colName, key.Name), nil
+	return fmt.Sprintf("%s AS `%s`", fieldExpression, key.Name), nil
 }

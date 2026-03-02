@@ -254,6 +254,9 @@ func (m *defaultFieldMapper) FieldFor(
 	if err != nil {
 		return "", err
 	}
+	if len(columns) != 1 {
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+	}
 	column := columns[0]
 
 	switch column.Type.GetType() {
@@ -319,7 +322,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 	keys map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, error) {
 
-	colName, err := m.FieldFor(ctx, startNs, endNs, field)
+	fieldExpression, err := m.FieldFor(ctx, startNs, endNs, field)
 	if errors.Is(err, qbtypes.ErrColumnNotFound) {
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
@@ -329,7 +332,7 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			if _, ok := indexV3Columns[field.Name]; ok {
 				// if it is, attach the column name directly
 				field.FieldContext = telemetrytypes.FieldContextSpan
-				colName, _ = m.FieldFor(ctx, startNs, endNs, field)
+				fieldExpression, _ = m.FieldFor(ctx, startNs, endNs, field)
 			} else {
 				// - the context is not provided
 				// - there are not keys for the field
@@ -347,17 +350,17 @@ func (m *defaultFieldMapper) ColumnExpressionFor(
 			}
 		} else if len(keysForField) == 1 {
 			// we have a single key for the field, use it
-			colName, _ = m.FieldFor(ctx, startNs, endNs, keysForField[0])
+			fieldExpression, _ = m.FieldFor(ctx, startNs, endNs, keysForField[0])
 		} else {
 			// select any non-empty value from the keys
 			args := []string{}
 			for _, key := range keysForField {
-				colName, _ = m.FieldFor(ctx, startNs, endNs, key)
-				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", colName, colName))
+				fieldExpression, _ = m.FieldFor(ctx, startNs, endNs, key)
+				args = append(args, fmt.Sprintf("toString(%s) != '', toString(%s)", fieldExpression, fieldExpression))
 			}
-			colName = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
+			fieldExpression = fmt.Sprintf("multiIf(%s, NULL)", strings.Join(args, ", "))
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(colName), field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }

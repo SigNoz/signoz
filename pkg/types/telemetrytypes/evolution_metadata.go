@@ -20,6 +20,6 @@ type EvolutionSelector struct {
 	FieldName    string
 }
 
-func GetEvolutionMetadataUniqueKey(selector *EvolutionSelector) string {
-	return selector.Signal.StringValue() + ":" + selector.FieldContext.StringValue() + ":" + selector.FieldName
+func (e *EvolutionSelector) QualifiedName() string {
+	return e.Signal.StringValue() + ":" + e.FieldContext.StringValue() + ":" + e.FieldName
 }
