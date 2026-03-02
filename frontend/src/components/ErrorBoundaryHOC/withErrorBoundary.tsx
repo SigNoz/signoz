@@ -81,7 +81,6 @@ function withErrorBoundary<P extends Record<string, unknown>>(
 				}}
 				onError={onError}
 			>
-				{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 				<WrappedComponent {...props} />
 			</Sentry.ErrorBoundary>
 		);

@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
-
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import {

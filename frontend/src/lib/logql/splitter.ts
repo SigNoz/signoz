@@ -1,14 +1,13 @@
-/* eslint-disable  */
-// @ts-ignore
 // @ts-nocheck
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const splitter = (queryString: string): string[] => {
 	const splittedParts: string[] = [];
 	let start = 0;
 	let isBracketStart = false;
 	let isQuoteStart = false;
 
-	const pushPart = (idx) => {
+	const pushPart = (idx): void => {
 		splittedParts.push(queryString.slice(start, idx));
 		start = idx + 1;
 	};

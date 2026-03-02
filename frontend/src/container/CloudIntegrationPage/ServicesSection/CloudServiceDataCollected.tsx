@@ -66,7 +66,6 @@ function CloudServiceDataCollected({
 					<Table
 						columns={logsColumns}
 						dataSource={logsData}
-						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...tableProps}
 						className="cloud-service-data-collected__table-logs"
 					/>
@@ -78,7 +77,6 @@ function CloudServiceDataCollected({
 					<Table
 						columns={metricsColumns}
 						dataSource={metricsData}
-						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...tableProps}
 						className="cloud-service-data-collected__table-metrics"
 					/>

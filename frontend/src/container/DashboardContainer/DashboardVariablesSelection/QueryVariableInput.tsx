@@ -1,5 +1,6 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';

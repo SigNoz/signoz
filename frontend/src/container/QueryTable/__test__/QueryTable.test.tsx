@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import WidgetHeader from 'container/GridCardLayout/WidgetHeader';
 import { fireEvent, render } from 'tests/test-utils';
 

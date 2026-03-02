@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';

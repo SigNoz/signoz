@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { ChangeEvent, useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useHistory } from 'react-router-dom';
@@ -106,7 +104,7 @@ const SIGNALS_CONFIG = [
 
 // Using any type here because antd's DatePicker expects its own internal Dayjs type
 // which conflicts with our project's Dayjs type that has additional plugins (tz, utc etc).
-// eslint-disable-next-line @typescript-eslint/no-explicit-any, @typescript-eslint/explicit-module-boundary-types
+// eslint-disable-next-line @typescript-eslint/explicit-module-boundary-types
 export const disabledDate = (current: any): boolean =>
 	// Disable all dates before today
 	current && current < dayjs().endOf('day');
@@ -337,7 +335,6 @@ function MultiIngestionSettings(): JSX.Element {
 	useEffect(() => {
 		setDataSource(ingestionKeys?.data.keys || []);
 		setTotalIngestionKeys(ingestionKeys?.data._pagination?.total || 0);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [ingestionKeys?.data]);
 
 	useEffect(() => {

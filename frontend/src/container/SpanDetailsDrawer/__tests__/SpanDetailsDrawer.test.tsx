@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
-
 import getSpanPercentiles from 'api/trace/getSpanPercentiles';
 import getUserPreference from 'api/v1/user/preferences/name/get';
 import { QueryParams } from 'constants/query';
@@ -67,7 +64,6 @@ const mockUpdateAllQueriesOperators = jest.fn().mockReturnValue({
 				dataSource: 'logs',
 				queryName: 'A',
 				aggregateOperator: 'noop',
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				filter: { expression: "trace_id = 'test-trace-id'" },
 				expression: 'A',
 				disabled: false,
@@ -134,8 +130,8 @@ jest.mock('lib/uPlotLib/utils/generateColor', () => ({
 jest.mock(
 	'container/SpanDetailsDrawer/Events/components/AttributeWithExpandablePopover',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function AttributeWithExpandablePopover({
 			attributeKey,
 			attributeValue,
 			onExpand,
@@ -179,8 +175,11 @@ jest.mock('api/v1/user/preferences/name/get', () => ({
 jest.mock(
 	'components/OverlayScrollbar/OverlayScrollbar',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function ({ children }: { children: React.ReactNode }) {
+		function OverlayScrollbar({
+			children,
+		}: {
+			children: React.ReactNode;
+		}): JSX.Element {
 			return <div data-testid="overlay-scrollbar">{children}</div>;
 		},
 );
@@ -210,7 +209,7 @@ jest.mock('react-virtuoso', () => ({
 jest.mock(
 	'components/Logs/RawLogView',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 		function MockRawLogView({
 			data,
 			onLogClick,
@@ -223,10 +222,8 @@ jest.mock(
 			helpTooltip: string;
 		}) {
 			return (
-				// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 				<div
 					data-testid={`raw-log-${data.id}`}
-					// eslint-disable-next-line sonarjs/no-duplicate-string
 					className={isHighlighted ? 'log-highlighted' : 'log-context'}
 					title={helpTooltip}
 					onClick={(e): void => onLogClick?.(data, e)}
@@ -288,7 +285,6 @@ const renderSpanDetailsDrawer = (props = {}): void => {
 				selectedSpan={mockSpan}
 				traceStartTime={1640995200000} // 2022-01-01 00:00:00 in milliseconds
 				traceEndTime={1640995260000} // 2022-01-01 00:01:00 in milliseconds
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
 		</QueryBuilderContext.Provider>,
@@ -416,13 +412,9 @@ describe('SpanDetailsDrawer', () => {
 		// Wait for logs view to open and logs to be displayed
 		await waitFor(() => {
 			expect(screen.getByTestId('overlay-scrollbar')).toBeInTheDocument();
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-span-log-1')).toBeInTheDocument();
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-span-log-2')).toBeInTheDocument();
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-context-log-before')).toBeInTheDocument();
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			expect(screen.getByTestId('raw-log-context-log-after')).toBeInTheDocument();
 		});
 	});
@@ -565,7 +557,6 @@ describe('SpanDetailsDrawer', () => {
 		fireEvent.click(contextLog);
 
 		// Verify window.open was called
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		await waitFor(() => {
 			expect(mockWindowOpen).toHaveBeenCalledWith(
 				expect.stringContaining(ROUTES.LOGS_EXPLORER),
@@ -611,7 +602,6 @@ describe('SpanDetailsDrawer', () => {
 		fireEvent.click(spanLog);
 
 		// Verify window.open was called for new tab
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		await waitFor(() => {
 			expect(mockWindowOpen).toHaveBeenCalledWith(
 				expect.stringContaining(ROUTES.LOGS_EXPLORER),

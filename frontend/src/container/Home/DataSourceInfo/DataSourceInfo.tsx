@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { useEffect, useState } from 'react';
 import { Button, Skeleton, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';

@@ -1,6 +1,6 @@
 import { Dashboard, DashboardTemplate } from 'types/api/dashboard/getAll';
 
-export const filterDashboard = (
+export const filterDashboards = (
 	searchValue: string,
 	dashboardList: Dashboard[],
 ): Dashboard[] => {

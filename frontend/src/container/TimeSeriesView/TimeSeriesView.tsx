@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';

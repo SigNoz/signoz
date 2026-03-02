@@ -2,6 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';

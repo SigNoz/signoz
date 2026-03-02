@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { ColumnType } from 'antd/es/table';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';

@@ -1,4 +1,3 @@
-// eslint-disable-next-line import/no-extraneous-dependencies
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	getOperatorFromValue,
