@@ -18,7 +18,8 @@ export enum DashboardCursorSync {
 }
 
 export interface TooltipViewState {
-	plot?: uPlot | null;
+	/** Whether a plot instance exists; plot reference is in controller, not state. */
+	hasPlot?: boolean;
 	style: Partial<CSSProperties>;
 	isHovering: boolean;
 	isPinned: boolean;
