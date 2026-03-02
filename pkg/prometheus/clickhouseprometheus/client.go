@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	promValue "github.com/prometheus/prometheus/model/value"
 	"github.com/prometheus/prometheus/prompb"
 	"github.com/prometheus/prometheus/storage"
@@ -137,6 +139,11 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 }
 
 func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalMetrics.StringValue(),
+		"module_name":   "clickhouse-prometheus",
+		"function_name": "getFingerprintsFromClickhouseQuery",
+	})
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
 		return nil, err
@@ -168,6 +175,11 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 }
 
 func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalMetrics.StringValue(),
+		"module_name":   "clickhouse-prometheus",
+		"function_name": "querySamples",
+	})
 	argCount := len(args)
 
 	query := fmt.Sprintf(`
@@ -244,6 +256,12 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 }
 
 func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*prompb.QueryResult, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalMetrics.StringValue(),
+		"module_name":   "clickhouse-prometheus",
+		"function_name": "queryRaw",
+	})
+
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
 		return nil, err

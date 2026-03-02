@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -105,6 +106,11 @@ func (m *module) PromotePaths(ctx context.Context, paths []string) error {
 
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalLogs.StringValue(),
+		"module_name":   "promote",
+		"function_name": "createIndexes",
+	})
 	if len(indexes) == 0 {
 		return nil
 	}

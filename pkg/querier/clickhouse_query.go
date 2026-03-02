@@ -99,10 +99,11 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 }
 
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
-
-	comment := ctxtypes.CommentFromContext(ctx)
-	comment.Set("duration", qbtypes.DurationBucket(q.fromMS, q.toMS))
-	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"module_name":   "clickhouse-query",
+		"function_name": "Execute",
+		"duration":      qbtypes.DurationBucket(q.fromMS, q.toMS),
+	})
 
 	totalRows := uint64(0)
 	totalBytes := uint64(0)

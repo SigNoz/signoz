@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -34,6 +35,12 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 
 // FetchTopLevelOperations returns top-level operations per service using db query
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalTraces.StringValue(),
+		"module_name":   "services",
+		"function_name": "FetchTopLevelOperations",
+	})
+
 	db := m.TelemetryStore.ClickhouseDB()
 	query := fmt.Sprintf("SELECT name, serviceName, max(time) as ts FROM %s.%s WHERE time >= @start", telemetrytraces.DBName, telemetrytraces.TopLevelOperationsTableName)
 	args := []any{clickhouse.Named("start", start)}

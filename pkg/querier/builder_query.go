@@ -213,11 +213,12 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
-
-	comment := ctxtypes.CommentFromContext(ctx)
-	comment.Set("signal", q.spec.Signal.StringValue())
-	comment.Set("duration", qbtypes.DurationBucket(q.fromMS, q.toMS))
-	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        q.spec.Signal.StringValue(),
+		"module_name":   "builder-query",
+		"function_name": "executeWithContext",
+		"duration":      qbtypes.DurationBucket(q.fromMS, q.toMS),
+	})
 
 	totalRows := uint64(0)
 	totalBytes := uint64(0)

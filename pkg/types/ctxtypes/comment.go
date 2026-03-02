@@ -104,6 +104,21 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	return comments
 }
 
+// AddCommentsToContext returns a new context with all key-value pairs from comments merged into the Comment in the context.
+func AddCommentsToContext(ctx context.Context, comments map[string]string) context.Context {
+	if len(comments) == 0 {
+		return ctx
+	}
+	comment := CommentFromContext(ctx)
+	if comment == nil {
+		comment = NewComment()
+	}
+	for k, v := range comments {
+		comment.Set(k, v)
+	}
+	return NewContextWithComment(ctx, comment)
+}
+
 // NewComment creates a new Comment with an empty map. It is safe to use concurrently.
 func NewComment() *Comment {
 	return &Comment{vals: map[string]string{}}

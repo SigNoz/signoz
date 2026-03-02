@@ -6,7 +6,9 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
 type traceOperatorQuery struct {
@@ -52,6 +54,13 @@ func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, erro
 }
 
 func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"signal":        telemetrytypes.SignalTraces.StringValue(),
+		"module_name":   "querier",
+		"function_name": "executeWithContext",
+		"duration":      qbtypes.DurationBucket(q.fromMS, q.toMS),
+	})
+
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
