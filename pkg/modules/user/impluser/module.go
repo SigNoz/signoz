@@ -434,6 +434,11 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
+	// handle soft deleted users
+	if user.Status == types.UserStatusDeleted {
+		return nil
+	}
+
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
