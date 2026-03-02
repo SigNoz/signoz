@@ -123,7 +123,7 @@ export function createInitialViewState(): TooltipViewState {
 		isHovering: false,
 		isPinned: false,
 		contents: null,
-		plot: null,
+		hasPlot: false,
 		dismiss: (): void => {},
 	};
 }
