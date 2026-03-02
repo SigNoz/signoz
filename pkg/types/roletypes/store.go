@@ -12,6 +12,7 @@ type Store interface {
 	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableRole, error)
 	List(context.Context, valuer.UUID) ([]*StorableRole, error)
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*StorableRole, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*StorableRole, error)
 	Update(context.Context, valuer.UUID, *StorableRole) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 	RunInTx(context.Context, func(ctx context.Context) error) error
