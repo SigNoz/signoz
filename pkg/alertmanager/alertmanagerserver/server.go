@@ -190,7 +190,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, 0, alertmanagertypes.AlertStoreCallback{}, server.logger, signozRegisterer, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -211,7 +211,7 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now(), ctx)
 	// Notification sending alert takes precedence over validation errors.
-	if err := server.alerts.Put(alerts...); err != nil {
+	if err := server.alerts.Put(ctx, alerts...); err != nil {
 		return err
 	}
 
