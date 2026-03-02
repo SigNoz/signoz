@@ -28,6 +28,7 @@ func (store *store) GetUserAndFactorPasswordByEmailAndOrgID(ctx context.Context,
 		Model(user).
 		Where("email = ?", email).
 		Where("org_id = ?", orgID).
+		Where("status = ?", types.UserStatusActive).
 		Scan(ctx)
 	if err != nil {
 		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
