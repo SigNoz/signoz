@@ -20,8 +20,11 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
+	HandleExportRawDataGETParams,
+	HandleExportRawDataPOSTParams,
 	ListPromotedAndIndexedPaths200,
 	PromotetypesPromotePathDTO,
+	Querybuildertypesv5QueryRangeRequestDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
@@ -29,6 +32,206 @@ type AwaitedInput<T> = PromiseLike<T> | T;
 
 type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
+/**
+ * This endpoints allows simple query exporting raw data for traces and logs
+ * @summary Export raw data
+ */
+export const handleExportRawDataGET = (
+	params?: HandleExportRawDataGETParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v1/export_raw_data`,
+		method: 'GET',
+		params,
+		signal,
+	});
+};
+
+export const getHandleExportRawDataGETQueryKey = (
+	params?: HandleExportRawDataGETParams,
+) => {
+	return [`/api/v1/export_raw_data`, ...(params ? [params] : [])] as const;
+};
+
+export const getHandleExportRawDataGETQueryOptions = <
+	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	params?: HandleExportRawDataGETParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof handleExportRawDataGET>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getHandleExportRawDataGETQueryKey(params);
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof handleExportRawDataGET>>
+	> = ({ signal }) => handleExportRawDataGET(params, signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof handleExportRawDataGET>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type HandleExportRawDataGETQueryResult = NonNullable<
+	Awaited<ReturnType<typeof handleExportRawDataGET>>
+>;
+export type HandleExportRawDataGETQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Export raw data
+ */
+
+export function useHandleExportRawDataGET<
+	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	params?: HandleExportRawDataGETParams,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof handleExportRawDataGET>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getHandleExportRawDataGETQueryOptions(params, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Export raw data
+ */
+export const invalidateHandleExportRawDataGET = async (
+	queryClient: QueryClient,
+	params?: HandleExportRawDataGETParams,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getHandleExportRawDataGETQueryKey(params) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoints allows complex query exporting raw data for traces and logs
+ * @summary Export raw data
+ */
+export const handleExportRawDataPOST = (
+	querybuildertypesv5QueryRangeRequestDTO: BodyType<Querybuildertypesv5QueryRangeRequestDTO>,
+	params?: HandleExportRawDataPOSTParams,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<string>({
+		url: `/api/v1/export_raw_data`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: querybuildertypesv5QueryRangeRequestDTO,
+		params,
+		signal,
+	});
+};
+
+export const getHandleExportRawDataPOSTMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
+		TError,
+		{
+			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			params?: HandleExportRawDataPOSTParams;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
+	TError,
+	{
+		data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+		params?: HandleExportRawDataPOSTParams;
+	},
+	TContext
+> => {
+	const mutationKey = ['handleExportRawDataPOST'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
+		{
+			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			params?: HandleExportRawDataPOSTParams;
+		}
+	> = (props) => {
+		const { data, params } = props ?? {};
+
+		return handleExportRawDataPOST(data, params);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type HandleExportRawDataPOSTMutationResult = NonNullable<
+	Awaited<ReturnType<typeof handleExportRawDataPOST>>
+>;
+export type HandleExportRawDataPOSTMutationBody = BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+export type HandleExportRawDataPOSTMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Export raw data
+ */
+export const useHandleExportRawDataPOST = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof handleExportRawDataPOST>>,
+		TError,
+		{
+			data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+			params?: HandleExportRawDataPOSTParams;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof handleExportRawDataPOST>>,
+	TError,
+	{
+		data: BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+		params?: HandleExportRawDataPOSTParams;
+	},
+	TContext
+> => {
+	const mutationOptions = getHandleExportRawDataPOSTMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
 /**
  * This endpoints promotes and indexes paths
  * @summary Promote and index paths

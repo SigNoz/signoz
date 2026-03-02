@@ -2858,6 +2858,186 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    get:
+      deprecated: false
+      description: This endpoints allows simple query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataGET
+      parameters:
+      - in: query
+        name: format
+        schema:
+          default: csv
+          enum:
+          - csv
+          - jsonl
+          type: string
+      - in: query
+        name: signal
+        required: true
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - deprecated: true
+        in: query
+        name: source
+        schema:
+          deprecated: true
+          type: string
+      - in: query
+        name: start
+        schema:
+          minimum: 0
+          type: integer
+      - in: query
+        name: end
+        schema:
+          minimum: 0
+          type: integer
+      - in: query
+        name: limit
+        schema:
+          default: 10000
+          maximum: 50000
+          minimum: 1
+          type: integer
+      - deprecated: true
+        in: query
+        name: filter
+        schema:
+          deprecated: true
+          type: string
+      - content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        in: query
+        name: filterExpression
+      - deprecated: true
+        in: query
+        name: columns
+        schema:
+          deprecated: true
+          items:
+            type: string
+          type: array
+      - in: query
+        name: selectFields
+        schema:
+          items:
+            $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
+          type: array
+      - deprecated: true
+        in: query
+        name: order_by
+        schema:
+          deprecated: true
+          type: string
+      - in: query
+        name: order
+        schema:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
+          type: array
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
+    post:
+      deprecated: false
+      description: This endpoints allows complex query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataPOST
+      parameters:
+      - in: query
+        name: format
+        schema:
+          default: csv
+          enum:
+          - csv
+          - jsonl
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/fields/keys:
     get:
       deprecated: false
