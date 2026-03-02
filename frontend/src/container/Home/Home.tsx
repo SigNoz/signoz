@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
+import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -16,7 +17,6 @@ import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
@@ -293,7 +293,7 @@ export default function Home(): JSX.Element {
 				<Header
 					leftComponent={
 						<div className="home-header-left">
-							<HomeIcon size={14} /> Home
+							<House size={14} /> Home
 						</div>
 					}
 					rightComponent={
@@ -358,7 +358,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -385,7 +385,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Logs
 										</div>
 									</div>
@@ -399,7 +399,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -426,7 +426,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Traces
 										</div>
 									</div>
@@ -440,7 +440,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -467,7 +467,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Metrics
 										</div>
 									</div>
