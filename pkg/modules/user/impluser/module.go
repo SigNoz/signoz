@@ -94,7 +94,6 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 
 // CreateBulk implements invite.Module.
 func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.User, error) {
-	//! TODO this is an incomplete implementation - will fix this
 	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -119,8 +118,25 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 				return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
 			}
 
-			// if user is in soft deleted state, we reinitiate that 
-			// !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+			// if user is in soft deleted state, reactivate as pending_invite status
+			if existingUser.Status == types.UserStatusDeleted {
+				// give the user new role based on invite
+				role, err := types.NewRole(invite.Role.String())
+				if err != nil {
+					return nil, err
+				}
+
+				existingUser.Update(invite.Name, role)
+				existingUser.UpdateStatus(types.UserStatusPendingInvite)
+				if err := m.store.UpdateUser(ctx, orgID, existingUser); err != nil {
+					return nil, err
+				}
+
+				invitedUsers = append(invitedUsers, existingUser)
+
+				// we need to skip the new user flow
+				continue
+			}
 
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
 		}
@@ -136,14 +152,8 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			return nil, err
 		}
 
-		// generate a temp password
-		password, err := types.GenerateFactorPassword(newUser.ID.StringValue())
-		if err != nil {
-			return nil, err
-		}
-
 		// store the user and password in db
-		err = m.createUserWithoutGrant(ctx, newUser, root.WithFactorPassword(password))
+		err = m.createUserWithoutGrant(ctx, newUser)
 		if err != nil {
 			return nil, err
 		}
@@ -482,19 +492,7 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	// update the status of user if this a newly invited user and also grant authz
 	if user.Status == types.UserStatusPendingInvite {
-		err = module.authz.Grant(
-			ctx,
-			user.OrgID,
-			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
-			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
-		)
-		if err != nil {
-			return err
-		}
-
-		user.UpdateStatus(types.UserStatusActive)
-		err = module.store.UpdateUser(ctx, user.OrgID, user)
-		if err != nil {
+		if err = module.activatePendingUser(ctx, user); err != nil {
 			return err
 		}
 	}
@@ -541,6 +539,19 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	}
 
 	if existingUser != nil {
+		// for soft deleted users we cannot return them as they need to be invited again
+		if existingUser.Status == types.UserStatusDeleted {
+			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "user has been deleted, contact your admin to be re-invited")
+		}
+
+		// for users logging through SSO flow but are having status as pending_invite
+		if existingUser.Status == types.UserStatusPendingInvite {
+			// activate the user
+			if err = module.activatePendingUser(ctx, existingUser); err != nil {
+				return nil, err
+			}
+		}
+
 		return existingUser, nil
 	}
 
@@ -657,4 +668,24 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.U
 
 func (module *Module) resetLink(frontendBaseUrl string, token string) string {
 	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, token)
+}
+
+func (module *Module) activatePendingUser(ctx context.Context, user *types.User) error {
+	err := module.authz.Grant(
+		ctx,
+		user.OrgID,
+		roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+		authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+	)
+	if err != nil {
+		return err
+	}
+
+	user.UpdateStatus(types.UserStatusActive)
+	err = module.store.UpdateUser(ctx, user.OrgID, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
 }

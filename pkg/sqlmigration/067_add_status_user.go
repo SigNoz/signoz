@@ -15,7 +15,7 @@ type addStatusUser struct {
 	sqlschema sqlschema.SQLSchema
 }
 
-func AddStatusUserFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewAddStatusUserFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("add_status_user"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
@@ -60,7 +60,7 @@ func (migration *addStatusUser) Up(ctx context.Context, db *bun.DB) error {
 		Nullable: false,
 	}
 
-	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, false)
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, "active")
 
 	indexSqls := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})
 
