@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -523,13 +522,6 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
 ) (string, []any, error) {
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() && !query.Aggregations[0].Type.IsPercentileSpaceAggregationAllowed() {
-		return "", nil, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"percentile based aggregations are invalid for this metric, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`]",
-		)
-	}
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("ts")
