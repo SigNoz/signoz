@@ -2129,6 +2129,17 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	updatedAt?: Date;
 }
 
+export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+}
+
 export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	/**
 	 * @type integer
@@ -3241,7 +3252,7 @@ export type CreateServiceAccountKeyPathParameters = {
 	id: string;
 };
 export type CreateServiceAccountKey201 = {
-	data: TypesIdentifiableDTO;
+	data: ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO;
 	/**
 	 * @type string
 	 */

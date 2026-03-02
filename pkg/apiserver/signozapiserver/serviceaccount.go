@@ -119,7 +119,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint creates a service account key",
 		Request:             new(serviceaccounttypes.PostableFactorAPIKey),
 		RequestContentType:  "",
-		Response:            new(types.Identifiable),
+		Response:            new(serviceaccounttypes.GettableFactorAPIKeyWithKey),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusConflict},

@@ -1792,6 +1792,16 @@ components:
       - last_used
       - service_account_id
       type: object
+    ServiceaccounttypesGettableFactorAPIKeyWithKey:
+      properties:
+        id:
+          type: string
+        key:
+          type: string
+      required:
+      - id
+      - key
+      type: object
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
         expires_at:
@@ -5008,7 +5018,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesIdentifiable'
+                    $ref: '#/components/schemas/ServiceaccounttypesGettableFactorAPIKeyWithKey'
                   status:
                     type: string
                 required:

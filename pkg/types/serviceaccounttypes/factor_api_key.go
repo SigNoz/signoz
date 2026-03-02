@@ -38,6 +38,11 @@ type FactorAPIKey struct {
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
 
+type GettableFactorAPIKeyWithKey struct {
+	types.Identifiable
+	Key string `json:"key" required:"true"`
+}
+
 type GettableFactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
@@ -106,6 +111,15 @@ func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {
 	}
 
 	return gettables
+}
+
+func NewGettableFactorAPIKeyWithKey(id valuer.UUID, key string) *GettableFactorAPIKeyWithKey {
+	return &GettableFactorAPIKeyWithKey{
+		Identifiable: types.Identifiable{
+			ID: id,
+		},
+		Key: key,
+	}
 }
 
 func (apiKey *FactorAPIKey) Update(name string, expiresAt uint64) {

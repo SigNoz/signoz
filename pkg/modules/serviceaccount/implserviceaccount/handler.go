@@ -219,7 +219,7 @@ func (handler *handler) CreateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 		return
 	}
 
-	render.Success(rw, http.StatusCreated, types.Identifiable{ID: factorAPIKey.ID})
+	render.Success(rw, http.StatusCreated, serviceaccounttypes.NewGettableFactorAPIKeyWithKey(factorAPIKey.ID, factorAPIKey.Key))
 }
 
 func (handler *handler) ListFactorAPIKey(rw http.ResponseWriter, r *http.Request) {
