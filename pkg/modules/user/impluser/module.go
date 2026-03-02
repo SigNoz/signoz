@@ -679,7 +679,7 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 	err := module.authz.Grant(
 		ctx,
 		user.OrgID,
-		roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+		[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
 		authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
 	)
 	if err != nil {
