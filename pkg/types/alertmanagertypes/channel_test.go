@@ -277,7 +277,7 @@ func TestNewChannelFromReceiver(t *testing.T) {
 			expected: &Channel{
 				Name: "test-receiver",
 				Type: "slack",
-				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts"}]}`,
+				Data: `{"name":"test-receiver","slack_configs":[{"send_resolved":true,"api_url":"https://slack.com/api/test","channel":"#alerts","timeout":0}]}`,
 			},
 			pass: true,
 		},
