@@ -17,11 +17,6 @@ import (
 
 var ErrCodeCloudIntegrationAccountNotFound = errors.MustNewCode("cloud_integration_account_not_found")
 
-// Compile-time assertions to ensure these types implement the interfaces.
-var (
-	_ cloudintegrationtypes.CloudIntegrationAccountStore = (*cloudProviderAccountsSQLRepository)(nil)
-)
-
 // cloudProviderAccountsSQLRepository is a SQL-backed implementation of CloudIntegrationAccountStore.
 type cloudProviderAccountsSQLRepository struct {
 	store sqlstore.SQLStore

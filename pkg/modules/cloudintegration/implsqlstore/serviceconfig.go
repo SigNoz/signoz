@@ -14,9 +14,6 @@ import (
 
 var ErrCodeServiceConfigNotFound = errors.MustNewCode("service_config_not_found")
 
-// Compile-time assertion to ensure this type implements the interface.
-var _ cloudintegrationtypes.CloudIntegrationServiceStore = (*serviceConfigSQLRepository)(nil)
-
 // serviceConfigSQLRepository is a SQL-backed implementation of CloudIntegrationServiceStore.
 type serviceConfigSQLRepository struct {
 	store sqlstore.SQLStore
