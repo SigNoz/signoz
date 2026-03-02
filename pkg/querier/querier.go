@@ -527,11 +527,10 @@ func (q *querier) run(
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
 ) (*qbtypes.QueryRangeResponse, error) {
-
-	comment := ctxtypes.CommentFromContext(ctx)
-	comment.Set("panel_type", qbEvent.PanelType)
-	comment.Set("query_type", qbEvent.QueryType)
-	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		"panel_type": qbEvent.PanelType,
+		"query_type": qbEvent.QueryType,
+	})
 
 	results := make(map[string]any)
 	warnings := make([]string, 0)
