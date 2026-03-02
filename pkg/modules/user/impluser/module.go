@@ -149,7 +149,6 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
 		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
-		// TODO! improve invitation email text and add expiry details too
 		if err := m.emailing.SendHTML(ctx, invitedUser.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"inviter_email": creator.Email,
 			"link":          resetLink,
