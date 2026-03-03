@@ -47,7 +47,7 @@ function MetricsSearch({
 					}}
 					onRun={handleRunQuery}
 					showFilterSuggestionsWithoutMetric
-					placeholder="Try metric_name CONTAINS 'http.server' to view all HTTP Server metrics being sent"
+					placeholder="Search your metrics. Try service.name='api' to see all API service metrics, or http.client for HTTP client metrics."
 				/>
 			</div>
 			<RunQueryBtn

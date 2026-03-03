@@ -1,5 +1,11 @@
 import { useEffect, useState } from 'react';
-import { fireEvent, render, screen, within } from '@testing-library/react';
+import {
+	fireEvent,
+	render,
+	screen,
+	waitFor,
+	within,
+} from '@testing-library/react';
 import {
 	MetricsexplorertypesListMetricDTO,
 	MetrictypesTypeDTO,
@@ -220,6 +226,108 @@ describe('MetricNameSelector', () => {
 		fireEvent.change(input, { target: { value: 'test' } });
 
 		expect(container.querySelector('.ant-spin-spinning')).toBeInTheDocument();
+	});
+
+	it('preserves metric search text for signalSource normalization transition (undefined -> empty)', async () => {
+		returnMetrics([makeMetric({ metricName: 'http_requests_total' })]);
+
+		const query = makeQuery({
+			aggregateAttribute: {
+				key: 'http_requests_total',
+				type: '',
+				dataType: DataTypes.Float64,
+			},
+			aggregations: [
+				{
+					metricName: 'http_requests_total',
+					timeAggregation: 'rate',
+					spaceAggregation: 'sum',
+					temporality: '',
+				},
+			] as MetricAggregation[],
+		});
+
+		const { rerender } = render(
+			<MetricNameSelector
+				query={query}
+				onChange={jest.fn()}
+				signalSource={undefined}
+			/>,
+		);
+
+		rerender(
+			<MetricNameSelector query={query} onChange={jest.fn()} signalSource="" />,
+		);
+
+		await waitFor(() => {
+			const lastCall =
+				mockUseListMetrics.mock.calls[mockUseListMetrics.mock.calls.length - 1];
+			expect(lastCall?.[0]).toMatchObject({
+				searchText: 'http_requests_total',
+				limit: 100,
+			});
+		});
+	});
+
+	it('updates search text when metric name is hydrated after initial mount', async () => {
+		returnMetrics([makeMetric({ metricName: 'signoz_latency.bucket' })]);
+
+		const emptyQuery = makeQuery({
+			aggregateAttribute: {
+				key: '',
+				type: '',
+				dataType: DataTypes.Float64,
+			},
+			aggregations: [
+				{
+					metricName: '',
+					timeAggregation: 'rate',
+					spaceAggregation: 'sum',
+					temporality: '',
+				},
+			] as MetricAggregation[],
+		});
+
+		const hydratedQuery = makeQuery({
+			aggregateAttribute: {
+				key: '',
+				type: '',
+				dataType: DataTypes.Float64,
+			},
+			aggregations: [
+				{
+					metricName: 'signoz_latency.bucket',
+					timeAggregation: 'rate',
+					spaceAggregation: 'sum',
+					temporality: '',
+				},
+			] as MetricAggregation[],
+		});
+
+		const { rerender } = render(
+			<MetricNameSelector
+				query={emptyQuery}
+				onChange={jest.fn()}
+				signalSource=""
+			/>,
+		);
+
+		rerender(
+			<MetricNameSelector
+				query={hydratedQuery}
+				onChange={jest.fn()}
+				signalSource=""
+			/>,
+		);
+
+		await waitFor(() => {
+			const lastCall =
+				mockUseListMetrics.mock.calls[mockUseListMetrics.mock.calls.length - 1];
+			expect(lastCall?.[0]).toMatchObject({
+				searchText: 'signoz_latency.bucket',
+				limit: 100,
+			});
+		});
 	});
 });
 

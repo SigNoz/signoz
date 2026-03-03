@@ -2,7 +2,6 @@ import {
 	MetricsexplorertypesTreemapModeDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 
 export const METRICS_TABLE_PAGE_SIZE = 10;
 
@@ -19,30 +18,12 @@ export const TREEMAP_SQUARE_PADDING = 5;
 
 export const TREEMAP_MARGINS = { TOP: 10, LEFT: 10, RIGHT: 10, BOTTOM: 10 };
 
-// TODO: Remove this once API migration is complete
-export const METRIC_TYPE_LABEL_MAP = {
-	[MetricType.SUM]: 'Sum',
-	[MetricType.GAUGE]: 'Gauge',
-	[MetricType.HISTOGRAM]: 'Histogram',
-	[MetricType.SUMMARY]: 'Summary',
-	[MetricType.EXPONENTIAL_HISTOGRAM]: 'Exp. Histogram',
-};
-
 export const METRIC_TYPE_VIEW_LABEL_MAP: Record<MetrictypesTypeDTO, string> = {
 	[MetrictypesTypeDTO.sum]: 'Sum',
 	[MetrictypesTypeDTO.gauge]: 'Gauge',
 	[MetrictypesTypeDTO.histogram]: 'Histogram',
 	[MetrictypesTypeDTO.summary]: 'Summary',
 	[MetrictypesTypeDTO.exponentialhistogram]: 'Exp. Histogram',
-};
-
-// TODO(@amlannandy): To remove this once API migration is complete
-export const METRIC_TYPE_VALUES_MAP: Record<MetricType, string> = {
-	[MetricType.SUM]: 'Sum',
-	[MetricType.GAUGE]: 'Gauge',
-	[MetricType.HISTOGRAM]: 'Histogram',
-	[MetricType.SUMMARY]: 'Summary',
-	[MetricType.EXPONENTIAL_HISTOGRAM]: 'ExponentialHistogram',
 };
 
 export const METRIC_TYPE_VIEW_VALUES_MAP: Record<MetrictypesTypeDTO, string> = {
