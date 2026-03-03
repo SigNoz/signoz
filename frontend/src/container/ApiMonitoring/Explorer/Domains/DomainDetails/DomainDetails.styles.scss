@@ -1070,7 +1070,8 @@
 
 			.selected_view::before {
 				background: var(--bg-vanilla-300);
-				border-left: 1px solid var(--bg-slate-300);
+				// was --bg-slate-300, doesn't match the surrounding light-mode borders
+				border-left: 1px solid var(--bg-vanilla-300);
 			}
 		}
 	}
