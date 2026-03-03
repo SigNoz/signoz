@@ -2,11 +2,11 @@ import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Color } from '@signozhq/design-tokens';
 import { DialogWrapper } from '@signozhq/dialog';
+import { CircleAlert, CircleCheck, LoaderCircle } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import LaunchChatSupport from 'components/LaunchChatSupport/LaunchChatSupport';
-import { AlertCircle, CheckCircle2, Loader2 } from 'lucide-react';
 
 interface CustomDomainEditModalProps {
 	isOpen: boolean;
@@ -86,14 +86,16 @@ export default function CustomDomainEditModal({
 
 	const statusIcon = ((): JSX.Element => {
 		if (isLoading) {
-			return <Loader2 size={16} className="animate-spin edit-modal-status-icon" />;
+			return (
+				<LoaderCircle size={16} className="animate-spin edit-modal-status-icon" />
+			);
 		}
 
 		if (hasError) {
-			return <AlertCircle size={16} color={Color.BG_CHERRY_500} />;
+			return <CircleAlert size={16} color={Color.BG_CHERRY_500} />;
 		}
 
-		return <CheckCircle2 size={16} color={Color.BG_FOREST_500} />;
+		return <CircleCheck size={16} color={Color.BG_FOREST_500} />;
 	})();
 
 	return (
