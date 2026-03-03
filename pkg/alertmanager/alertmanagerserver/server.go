@@ -190,7 +190,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, 0, alertmanagertypes.AlertStoreCallback{}, server.logger, signozRegisterer, nil)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, 0, nil, server.logger, signozRegisterer, nil)
 	if err != nil {
 		return nil, err
 	}
