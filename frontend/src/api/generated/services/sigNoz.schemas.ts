@@ -2415,47 +2415,6 @@ export interface TypesIdentifiableDTO {
 	id: string;
 }
 
-export interface TypesInviteDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	inviteLink?: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface TypesOrganizationDTO {
 	/**
 	 * @type string
@@ -2504,25 +2463,6 @@ export interface TypesPostableAPIKeyDTO {
 	 * @type string
 	 */
 	role?: string;
-}
-
-export interface TypesPostableAcceptInviteDTO {
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type string
-	 */
-	sourceUrl?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
 }
 
 export interface TypesPostableForgotPasswordDTO {
@@ -2665,6 +2605,10 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3017,40 +2961,7 @@ export type GetGlobalConfig200 = {
 	status: string;
 };
 
-export type ListInvite200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesInviteDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
 export type CreateInvite201 = {
-	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteInvitePathParameters = {
-	id: string;
-};
-export type GetInvitePathParameters = {
-	token: string;
-};
-export type GetInvite200 = {
-	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AcceptInvite201 = {
 	data: TypesUserDTO;
 	/**
 	 * @type string
