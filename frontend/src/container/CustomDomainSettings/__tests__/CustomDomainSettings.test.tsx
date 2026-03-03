@@ -4,6 +4,13 @@ import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CustomDomainSettings from '../CustomDomainSettings';
 
+jest.mock('components/LaunchChatSupport/LaunchChatSupport', () => ({
+	__esModule: true,
+	default: ({ buttonText }: { buttonText?: string }): JSX.Element => (
+		<button type="button">{buttonText ?? 'Facing issues?'}</button>
+	),
+}));
+
 const mockToastCustom = jest.fn();
 jest.mock('@signozhq/sonner', () => ({
 	toast: {
