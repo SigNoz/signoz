@@ -104,6 +104,8 @@ function CustomTimePicker({
 	const location = useLocation();
 
 	const inputRef = useRef<InputRef>(null);
+	// Tracks if the last pointer down was on the input so we don't close the popover when user clicks the input again
+	const isClickFromInputRef = useRef(false);
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
@@ -238,6 +240,13 @@ function CustomTimePicker({
 	};
 
 	const handleOpenChange = (newOpen: boolean): void => {
+		// Don't close when the user clicked the input (trigger); Ant Design treats trigger as "outside" overlay
+		if (!newOpen && isClickFromInputRef.current) {
+			isClickFromInputRef.current = false;
+			return;
+		}
+		isClickFromInputRef.current = false;
+
 		setOpen(newOpen);
 
 		if (!newOpen) {
@@ -406,6 +415,12 @@ function CustomTimePicker({
 	const handleOpen = (e?: React.SyntheticEvent): void => {
 		e?.stopPropagation?.();
 
+		// If the popover is already open, avoid resetting the input value
+		// so that any in-progress edits are preserved.
+		if (open) {
+			return;
+		}
+
 		if (showLiveLogs) {
 			setOpen(true);
 			setSelectedTimePlaceholderValue('Live');
@@ -552,6 +567,12 @@ function CustomTimePicker({
 						readOnly={!open || showLiveLogs}
 						placeholder={selectedTimePlaceholderValue}
 						value={inputValue}
+						onMouseDown={(e): void => {
+							// Only treat as "click from input" when the actual input element is clicked (not suffix/chevron)
+							if (e.target === inputRef.current?.input) {
+								isClickFromInputRef.current = true;
+							}
+						}}
 						onFocus={handleOpen}
 						onClick={handleOpen}
 						onChange={handleInputChange}
