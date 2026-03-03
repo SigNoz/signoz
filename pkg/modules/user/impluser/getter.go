@@ -77,8 +77,8 @@ func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email value
 	return users, nil
 }
 
-func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	count, err := module.store.CountByOrgID(ctx, orgID)
+func (module *getter) ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	count, err := module.store.ActiveCountByOrgID(ctx, orgID)
 	if err != nil {
 		return 0, err
 	}

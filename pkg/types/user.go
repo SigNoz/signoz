@@ -221,7 +221,7 @@ type UserStore interface {
 	GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*StorableAPIKeyUser, error)
 	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
-	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+	ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	// Get root user by org.
 	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
