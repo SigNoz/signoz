@@ -62,7 +62,8 @@ func (migration *addStatusUser) Up(ctx context.Context, db *bun.DB) error {
 
 	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, "active")
 
-	indexSqls := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})
+	// we need to drop the unique index on (email, org_id)
+	indexSqls := migration.sqlschema.Operator().DropIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})
 
 	sqls = append(sqls, indexSqls...)
 
