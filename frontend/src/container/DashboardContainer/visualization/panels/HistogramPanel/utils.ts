@@ -154,7 +154,7 @@ export function prepareHistogramPanelConfig({
 	isDarkMode: boolean;
 }): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
-		widgetId: widget.id,
+		id: widget.id,
 		thresholds: widget.thresholds,
 		yAxisUnit: widget.yAxisUnit,
 		softMin: widget.softMin ?? undefined,

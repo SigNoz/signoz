@@ -53,7 +53,9 @@ def test_rate_with_steady_values_and_reset(
 
     data = response.json()
     result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
-    assert len(result_values) == 60 ## total 61 minutes covered, and 30th minute is missing
+    assert (
+        len(result_values) == 60
+    )  ## total 61 minutes covered, and 30th minute is missing
     assert (
         result_values[30]["value"] == 0.0333
     )  # reset happens and [30] is for 31st minute. 2/60 cuz delta divides by step interval
@@ -61,9 +63,7 @@ def test_rate_with_steady_values_and_reset(
         result_values[31]["value"] == 0.133
     )  # i.e 8/60 i.e 31st to 32nd minute changes
     count_of_steady_rate = sum(1 for v in result_values if v["value"] == 0.0833)
-    assert (
-        count_of_steady_rate == 58
-    )  # 1 reset + 1 high rate are excluded
+    assert count_of_steady_rate == 58  # 1 reset + 1 high rate are excluded
     # All rates should be non-negative (stale periods = 0 rate)
     for v in result_values:
         assert v["value"] >= 0, f"Rate should not be negative: {v['value']}"

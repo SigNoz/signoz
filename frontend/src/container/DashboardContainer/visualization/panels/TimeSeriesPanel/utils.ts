@@ -82,7 +82,7 @@ export const prepareUPlotConfig = ({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const builder = buildBaseConfig({
-		widgetId: widget.id,
+		id: widget.id,
 		thresholds: widget.thresholds,
 		yAxisUnit: widget.yAxisUnit,
 		softMin: widget.softMin ?? undefined,

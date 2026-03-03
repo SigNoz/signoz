@@ -11,6 +11,7 @@ import { get } from 'lodash-es';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { QueryData } from 'types/api/widgets/getQuery';
+import { v4 as uuid } from 'uuid';
 
 export const prepareStatusCodeBarChartsConfig = ({
 	timezone,
@@ -43,6 +44,7 @@ export const prepareStatusCodeBarChartsConfig = ({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const config = buildBaseConfig({
+		id: uuid(),
 		yAxisUnit: yAxisUnit,
 		apiResponse,
 		isDarkMode,

@@ -40,7 +40,7 @@ class TestConfigBuilder extends UPlotConfigBuilder {
 type ConfigMock = TestConfigBuilder;
 
 function createConfigMock(): ConfigMock {
-	return new TestConfigBuilder();
+	return new TestConfigBuilder({ id: 'test-widget' });
 }
 
 function getHandler(config: ConfigMock, hookName: string): HookHandler {
