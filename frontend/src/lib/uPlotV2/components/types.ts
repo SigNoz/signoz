@@ -1,4 +1,5 @@
 import { ReactNode } from 'react';
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
 
@@ -61,7 +62,7 @@ export interface TooltipRenderArgs {
 
 export interface BaseTooltipProps {
 	showTooltipHeader?: boolean;
-	timezone: string;
+	timezone?: Timezone;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];

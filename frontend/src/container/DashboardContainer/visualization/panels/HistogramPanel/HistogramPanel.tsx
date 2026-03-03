@@ -100,7 +100,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
 					syncMode={DashboardCursorSync.Crosshair}
-					timezone={timezone.value}
+					timezone={timezone}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}
