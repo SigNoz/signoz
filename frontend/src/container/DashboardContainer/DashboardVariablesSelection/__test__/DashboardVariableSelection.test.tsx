@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { act, render } from '@testing-library/react';
 import * as dashboardVariablesStoreModule from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
@@ -72,7 +71,6 @@ jest.mock('react-redux', () => ({
 // VariableItem mock captures the onValueUpdate prop for use in onValueUpdate tests
 jest.mock('../VariableItem', () => ({
 	__esModule: true,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	default: (props: any): JSX.Element => {
 		mockVariableItemCallbacks.onValueUpdate = props.onValueUpdate;
 		return <div data-testid="variable-item" />;

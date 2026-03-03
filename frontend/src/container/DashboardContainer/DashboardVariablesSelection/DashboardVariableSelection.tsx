@@ -1,4 +1,5 @@
 import { memo, useCallback, useEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
@@ -86,7 +87,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 			value: IDashboardVariable['selectedValue'],
 			allSelected: boolean,
 			haveCustomValuesSelected?: boolean,
-			// eslint-disable-next-line sonarjs/cognitive-complexity
 		): void => {
 			// For dynamic variables, only store in localStorage when NOT allSelected
 			// This makes localStorage much lighter by avoiding storing all individual values

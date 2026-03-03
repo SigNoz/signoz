@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { Dispatch, SetStateAction } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tooltip } from 'antd';

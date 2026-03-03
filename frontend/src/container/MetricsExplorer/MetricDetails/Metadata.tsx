@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
+import { Button, Collapse, Input, Select, Spin, Typography } from 'antd';
 import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import {
@@ -24,7 +24,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { Edit2, Save, X } from 'lucide-react';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
-import { MetricTypeViewRenderer } from '../Summary/utils';
+import MetricTypeRendererV2 from '../Summary/MetricTypeViewRenderer';
 import {
 	METRIC_METADATA_KEYS,
 	METRIC_METADATA_TEMPORALITY_OPTIONS,
@@ -98,7 +98,7 @@ function Metadata({
 				return <FieldRenderer field="-" />;
 			}
 			if (key === TableFields.TYPE) {
-				return <MetricTypeViewRenderer type={value as MetrictypesTypeDTO} />;
+				return <MetricTypeRendererV2 type={value as MetrictypesTypeDTO} />;
 			}
 			if (key === TableFields.IS_MONOTONIC) {
 				return <FieldRenderer field={value ? 'Yes' : 'No'} />;
@@ -334,7 +334,7 @@ function Metadata({
 						e.stopPropagation();
 						setIsEditing(true);
 					}}
-					disabled={isUpdatingMetricsMetadata}
+					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 				>
 					<Edit2 size={14} />
 					<Typography.Text>Edit</Typography.Text>
@@ -345,6 +345,7 @@ function Metadata({
 		isEditing,
 		isErrorMetricMetadata,
 		isUpdatingMetricsMetadata,
+		isLoadingMetricMetadata,
 		cancelEdit,
 		handleSave,
 	]);
@@ -359,7 +360,11 @@ function Metadata({
 					</div>
 				),
 				key: 'metric-metadata',
-				children: isErrorMetricMetadata ? (
+				children: isLoadingMetricMetadata ? (
+					<div className="metrics-accordion-loading-state">
+						<Spin size="small" />
+					</div>
+				) : isErrorMetricMetadata ? (
 					<div className="metric-metadata-error-state">
 						<MetricDetailsErrorState
 							refetch={refetchMetricMetadata}
@@ -381,19 +386,12 @@ function Metadata({
 		[
 			actionButton,
 			columns,
+			isLoadingMetricMetadata,
 			isErrorMetricMetadata,
 			refetchMetricMetadata,
 			tableData,
 		],
 	);
-
-	if (isLoadingMetricMetadata) {
-		return (
-			<div className="metrics-metadata-skeleton-container">
-				<Skeleton active paragraph={{ rows: 8 }} />
-			</div>
-		);
-	}
 
 	return (
 		<Collapse

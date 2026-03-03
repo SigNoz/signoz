@@ -25,7 +25,6 @@ function AddToQueryHOC({
 	]);
 
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 		<div className={cx('addToQueryContainer', fontSize)} onClick={handleQueryAdd}>
 			<Popover
 				overlayClassName="drawer-popover"

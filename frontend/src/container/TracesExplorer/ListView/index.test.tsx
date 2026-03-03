@@ -47,7 +47,6 @@ const renderListView = (
 			isFilterApplied={false}
 			setWarning={setWarning}
 			setIsLoadingQueries={setIsLoadingQueries}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		/>,
 		undefined,

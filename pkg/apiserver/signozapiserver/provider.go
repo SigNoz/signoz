@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -48,6 +49,7 @@ type provider struct {
 	authzHandler           authz.Handler
 	zeusHandler            zeus.Handler
 	querierHandler         querier.Handler
+	serviceAccountHandler  serviceaccount.Handler
 }
 
 func NewFactory(
@@ -69,6 +71,7 @@ func NewFactory(
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -93,6 +96,7 @@ func NewFactory(
 			authzHandler,
 			zeusHandler,
 			querierHandler,
+			serviceAccountHandler,
 		)
 	})
 }
@@ -119,6 +123,7 @@ func newProvider(
 	authzHandler authz.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -143,6 +148,7 @@ func newProvider(
 		authzHandler:           authzHandler,
 		zeusHandler:            zeusHandler,
 		querierHandler:         querierHandler,
+		serviceAccountHandler:  serviceAccountHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -220,6 +226,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addQuerierRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addServiceAccountRoutes(router); err != nil {
 		return err
 	}
 

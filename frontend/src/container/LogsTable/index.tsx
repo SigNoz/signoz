@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Virtuoso } from 'react-virtuoso';
 import { Card, Typography } from 'antd';

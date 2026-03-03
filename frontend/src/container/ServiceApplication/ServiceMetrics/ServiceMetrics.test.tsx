@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import useGetTopLevelOperations from 'hooks/useGetTopLevelOperations';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';

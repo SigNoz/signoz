@@ -1,4 +1,5 @@
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
 	useCallback,
@@ -827,7 +828,6 @@ export function QueryBuilderProvider({
 					},
 				};
 			});
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			setSupersetQuery((prevState) => {
 				const updatedQueryBuilderData = updateSuperSetQueryBuilderData(
 					prevState.builder.queryData,
@@ -947,6 +947,7 @@ export function QueryBuilderProvider({
 			searchParams?: Record<string, unknown>,
 			redirectingUrl?: typeof ROUTES[keyof typeof ROUTES],
 			shouldNotStringify?: boolean,
+			newTab?: boolean,
 		) => {
 			const queryType =
 				!query.queryType || !Object.values(EQueryType).includes(query.queryType)
@@ -1013,7 +1014,7 @@ export function QueryBuilderProvider({
 				? `${redirectingUrl}?${urlQuery}`
 				: `${location.pathname}?${urlQuery}`;
 
-			safeNavigate(generatedUrl);
+			safeNavigate(generatedUrl, { newTab });
 		},
 		[location.pathname, safeNavigate, urlQuery],
 	);

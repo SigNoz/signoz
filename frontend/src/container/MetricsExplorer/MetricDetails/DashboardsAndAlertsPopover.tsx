@@ -9,9 +9,6 @@ import {
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
-import history from 'lib/history';
 import { Bell, Grid } from 'lucide-react';
 import { pluralize } from 'utils/pluralize';
 
@@ -20,9 +17,6 @@ import { DashboardsAndAlertsPopoverProps } from './types';
 function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
-	const { safeNavigate } = useSafeNavigate();
-	const params = useUrlQuery();
-
 	const {
 		data: alertsData,
 		isLoading: isLoadingAlerts,
@@ -74,8 +68,10 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={alert.alertId}
 						onClick={(): void => {
-							params.set(QueryParams.ruleId, alert.alertId);
-							history.push(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`);
+							window.open(
+								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
+								'_blank',
+							);
 						}}
 						className="dashboards-popover-content-item"
 					>
@@ -85,7 +81,7 @@ function DashboardsAndAlertsPopover({
 			}));
 		}
 		return null;
-	}, [alerts, params]);
+	}, [alerts]);
 
 	const dashboardsPopoverContent = useMemo(() => {
 		if (dashboards && dashboards.length > 0) {
@@ -95,10 +91,11 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={dashboard.dashboardId}
 						onClick={(): void => {
-							safeNavigate(
+							window.open(
 								generatePath(ROUTES.DASHBOARD, {
 									dashboardId: dashboard.dashboardId,
 								}),
+								'_blank',
 							);
 						}}
 						className="dashboards-popover-content-item"
@@ -109,7 +106,7 @@ function DashboardsAndAlertsPopover({
 			}));
 		}
 		return null;
-	}, [dashboards, safeNavigate]);
+	}, [dashboards]);
 
 	if (isLoadingAlerts || isLoadingDashboards) {
 		return (

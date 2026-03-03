@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/savedviewtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -24,7 +25,7 @@ func NewModule(sqlstore sqlstore.SQLStore) savedview.Module {
 }
 
 func (module *module) GetViewsForFilters(ctx context.Context, orgID string, sourcePage string, name string, category string) ([]*v3.SavedView, error) {
-	var views []types.SavedView
+	var views []savedviewtypes.SavedView
 	var err error
 	if len(category) == 0 {
 		err = module.sqlstore.BunDB().NewSelect().Model(&views).Where("org_id = ? AND source_page = ? AND name LIKE ?", orgID, sourcePage, "%"+name+"%").Scan(ctx)
@@ -76,7 +77,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 	createBy := claims.Email
 	updatedBy := claims.Email
 
-	dbView := types.SavedView{
+	dbView := savedviewtypes.SavedView{
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: createdAt,
 			UpdatedAt: updatedAt,
@@ -105,7 +106,7 @@ func (module *module) CreateView(ctx context.Context, orgID string, view v3.Save
 }
 
 func (module *module) GetView(ctx context.Context, orgID string, uuid valuer.UUID) (*v3.SavedView, error) {
-	var view types.SavedView
+	var view savedviewtypes.SavedView
 	err := module.sqlstore.BunDB().NewSelect().Model(&view).Where("org_id = ? AND id = ?", orgID, uuid.StringValue()).Scan(ctx)
 	if err != nil {
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error in getting saved view")
@@ -146,7 +147,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 	updatedBy := claims.Email
 
 	_, err = module.sqlstore.BunDB().NewUpdate().
-		Model(&types.SavedView{}).
+		Model(&savedviewtypes.SavedView{}).
 		Set("updated_at = ?, updated_by = ?, name = ?, category = ?, source_page = ?, tags = ?, data = ?, extra_data = ?",
 			updatedAt, updatedBy, view.Name, view.Category, view.SourcePage, strings.Join(view.Tags, ","), data, view.ExtraData).
 		Where("id = ?", uuid.StringValue()).
@@ -160,7 +161,7 @@ func (module *module) UpdateView(ctx context.Context, orgID string, uuid valuer.
 
 func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.UUID) error {
 	_, err := module.sqlstore.BunDB().NewDelete().
-		Model(&types.SavedView{}).
+		Model(&savedviewtypes.SavedView{}).
 		Where("id = ?", uuid.StringValue()).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
@@ -171,7 +172,7 @@ func (module *module) DeleteView(ctx context.Context, orgID string, uuid valuer.
 }
 
 func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
-	savedViews := []*types.SavedView{}
+	savedViews := []*savedviewtypes.SavedView{}
 
 	err := module.
 		sqlstore.
@@ -184,5 +185,5 @@ func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		return nil, err
 	}
 
-	return types.NewStatsFromSavedViews(savedViews), nil
+	return savedviewtypes.NewStatsFromSavedViews(savedViews), nil
 }

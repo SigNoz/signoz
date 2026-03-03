@@ -40,7 +40,7 @@ class TestConfigBuilder extends UPlotConfigBuilder {
 type ConfigMock = TestConfigBuilder;
 
 function createConfigMock(): ConfigMock {
-	return new TestConfigBuilder();
+	return new TestConfigBuilder({ id: 'test-widget' });
 }
 
 function getHandler(config: ConfigMock, hookName: string): HookHandler {
@@ -73,10 +73,7 @@ describe('TooltipPlugin', () => {
 			(callback as FrameRequestCallback)(0);
 			return 0;
 		});
-		jest
-			.spyOn(window, 'cancelAnimationFrame')
-			// eslint-disable-next-line @typescript-eslint/no-empty-function
-			.mockImplementation(() => {});
+		jest.spyOn(window, 'cancelAnimationFrame').mockImplementation(() => {});
 	});
 
 	afterEach(() => {

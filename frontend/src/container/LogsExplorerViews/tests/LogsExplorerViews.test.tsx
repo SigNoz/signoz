@@ -38,16 +38,16 @@ const lodsQueryServerRequest = (): void =>
 jest.mock(
 	'container/TimeSeriesView/TimeSeriesView',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function TimeSeriesView() {
 			return <div>Time Series Chart</div>;
 		},
 );
 jest.mock(
 	'container/LogsExplorerChart',
 	() =>
-		// eslint-disable-next-line func-names, @typescript-eslint/explicit-function-return-type, react/display-name
-		function () {
+		// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
+		function LogsExplorerChart() {
 			return <div>Histogram Chart</div>;
 		},
 );

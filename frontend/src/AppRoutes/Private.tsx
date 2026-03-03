@@ -297,7 +297,6 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 	}, [isLoggedInState, pathname, user, isOldRoute, currentRoute, location]);
 
 	// NOTE: disabling this rule as there is no need to have div
-	// eslint-disable-next-line react/jsx-no-useless-fragment
 	return <>{children}</>;
 }
 

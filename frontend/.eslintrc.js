@@ -2,7 +2,11 @@
  * ESLint Configuration for SigNoz Frontend
  */
 module.exports = {
-	ignorePatterns: ['src/parser/*.ts', 'scripts/update-registry.js'],
+	ignorePatterns: [
+		'src/parser/*.ts',
+		'scripts/update-registry.js',
+		'scripts/generate-permissions-type.js',
+	],
 	env: {
 		browser: true,
 		es2021: true,
@@ -78,7 +82,7 @@ module.exports = {
 		// TODO: Change to 'error' after fixing ~80 empty function placeholders in providers/contexts
 		'@typescript-eslint/no-empty-function': 'off', // Disallows empty function bodies
 		'@typescript-eslint/no-var-requires': 'error', // Disallows require() in TypeScript (use import instead)
-		'@typescript-eslint/ban-ts-comment': 'off', // Allows @ts-ignore comments (sometimes needed for third-party libs)
+		'@typescript-eslint/ban-ts-comment': 'warn', // Allows @ts-ignore comments (sometimes needed for third-party libs)
 		'no-empty-function': 'off', // Disabled in favor of TypeScript version above
 
 		// React rules
@@ -146,6 +150,49 @@ module.exports = {
 
 		// SonarJS - code quality and complexity
 		'sonarjs/no-duplicate-string': 'off', // Disabled - can be noisy (enable periodically to check)
+
+		// State management governance
+		// Approved patterns: Zustand, nuqs (URL state), react-query (server state), useState/useRef/useReducer, localStorage/sessionStorage for simple cases
+		'no-restricted-imports': [
+			'error',
+			{
+				paths: [
+					{
+						name: 'redux',
+						message:
+							'[State mgmt] redux is deprecated. Migrate to Zustand, nuqs, or react-query.',
+					},
+					{
+						name: 'react-redux',
+						message:
+							'[State mgmt] react-redux is deprecated. Migrate to Zustand, nuqs, or react-query.',
+					},
+					{
+						name: 'xstate',
+						message:
+							'[State mgmt] xstate is deprecated. Migrate to Zustand or react-query.',
+					},
+					{
+						name: '@xstate/react',
+						message:
+							'[State mgmt] @xstate/react is deprecated. Migrate to Zustand or react-query.',
+					},
+					{
+						// Restrict React Context — useState/useRef/useReducer remain allowed
+						name: 'react',
+						importNames: ['createContext', 'useContext'],
+						message:
+							'[State mgmt] React Context is deprecated. Migrate shared state to Zustand.',
+					},
+					{
+						// immer used standalone as a store pattern is deprecated; Zustand bundles it internally
+						name: 'immer',
+						message:
+							'[State mgmt] Direct immer usage is deprecated. Use Zustand (which integrates immer via the immer middleware) instead.',
+					},
+				],
+			},
+		],
 	},
 	overrides: [
 		{

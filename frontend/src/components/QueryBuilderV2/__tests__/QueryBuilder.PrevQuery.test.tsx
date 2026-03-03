@@ -43,6 +43,7 @@ jest.mock(
 );
 jest.mock('container/QueryBuilder/filters', () => ({
 	AggregatorFilter: (): JSX.Element => <div />,
+	MetricNameSelector: (): JSX.Element => <div />,
 }));
 // Mock hooks
 jest.mock('hooks/queryBuilder/useQueryBuilder');

@@ -1,7 +1,9 @@
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
 	useCallback,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useMemo,
 	useRef,
@@ -11,7 +13,7 @@ import { updateSeriesVisibilityToLocalStorage } from 'container/DashboardContain
 import type uPlot from 'uplot';
 export interface PlotContextInitialState {
 	uPlotInstance: uPlot | null;
-	widgetId?: string;
+	id?: string;
 	shouldSaveSelectionPreference?: boolean;
 }
 export interface IPlotContext {
@@ -29,17 +31,17 @@ export const PlotContextProvider = ({
 }: PropsWithChildren): JSX.Element => {
 	const uPlotInstanceRef = useRef<uPlot | null>(null);
 	const activeSeriesIndex = useRef<number | undefined>(undefined);
-	const widgetIdRef = useRef<string | undefined>(undefined);
+	const idRef = useRef<string | undefined>(undefined);
 	const shouldSavePreferencesRef = useRef<boolean>(false);
 
 	const setPlotContextInitialState = useCallback(
 		({
 			uPlotInstance,
-			widgetId,
+			id,
 			shouldSaveSelectionPreference,
 		}: PlotContextInitialState): void => {
 			uPlotInstanceRef.current = uPlotInstance;
-			widgetIdRef.current = widgetId;
+			idRef.current = id;
 			activeSeriesIndex.current = undefined;
 			shouldSavePreferencesRef.current = !!shouldSaveSelectionPreference;
 		},
@@ -48,7 +50,7 @@ export const PlotContextProvider = ({
 
 	const syncSeriesVisibilityToLocalStorage = useCallback((): void => {
 		const plot = uPlotInstanceRef.current;
-		if (!plot || !widgetIdRef.current) {
+		if (!plot || !idRef.current) {
 			return;
 		}
 
@@ -59,7 +61,7 @@ export const PlotContextProvider = ({
 			}),
 		);
 
-		updateSeriesVisibilityToLocalStorage(widgetIdRef.current, seriesVisibility);
+		updateSeriesVisibilityToLocalStorage(idRef.current, seriesVisibility);
 	}, []);
 
 	const onToggleSeriesVisibility = useCallback(
@@ -82,7 +84,7 @@ export const PlotContextProvider = ({
 						show: isReset || currentSeriesIndex === seriesIndex,
 					});
 				});
-				if (widgetIdRef.current && shouldSavePreferencesRef.current) {
+				if (idRef.current && shouldSavePreferencesRef.current) {
 					syncSeriesVisibilityToLocalStorage();
 				}
 			});
@@ -102,7 +104,7 @@ export const PlotContextProvider = ({
 				return;
 			}
 			plot.setSeries(seriesIndex, { show: !series.show });
-			if (widgetIdRef.current && shouldSavePreferencesRef.current) {
+			if (idRef.current && shouldSavePreferencesRef.current) {
 				syncSeriesVisibilityToLocalStorage();
 			}
 		},
