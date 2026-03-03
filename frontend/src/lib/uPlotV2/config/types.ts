@@ -34,7 +34,7 @@ export enum SelectionPreferencesSource {
  * Props for configuring the uPlot config builder
  */
 export interface ConfigBuilderProps {
-	widgetId?: string;
+	id: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
 	selectionPreferencesSource?: SelectionPreferencesSource;
