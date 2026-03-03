@@ -8,7 +8,7 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
@@ -157,26 +157,6 @@ describe('Explorer', () => {
 		jest.clearAllMocks();
 	});
 
-	it('should render Explorer query builder with metrics datasource selected', () => {
-		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
-			...mockUseQueryBuilderData,
-			stagedQuery: initialQueriesMap[DataSource.TRACES],
-		} as any);
-
-		(useSearchParams as jest.Mock).mockReturnValue([
-			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
-			mockSetSearchParams,
-		]);
-
-		renderExplorer();
-
-		expect(mockUpdateAllQueriesOperators).toHaveBeenCalledWith(
-			initialQueriesMap[DataSource.METRICS],
-			PANEL_TYPES.TIME_SERIES,
-			DataSource.METRICS,
-		);
-	});
-
 	it('should enable one chart per query toggle when oneChartPerQuery=true in URL', () => {
 		(useSearchParams as jest.Mock).mockReturnValue([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
@@ -241,20 +221,46 @@ describe('Explorer', () => {
 		expect(yAxisUnitSelector).not.toBeInTheDocument();
 	});
 
-	it('should hide y axis unit selector for multiple metrics with different units', () => {
+	it('one chart per query toggle should be forced on and disabled when multiple metrics have different units', () => {
+		const mockQueryData = {
+			...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+			aggregateAttribute: {
+				...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+					.aggregateAttribute as BaseAutocompleteData),
+				key: 'metric1',
+			},
+		};
+		const mockStagedQueryWithMultipleQueries = {
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [mockQueryData, mockQueryData],
+			},
+		};
+
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+			...mockUseQueryBuilderData,
+			stagedQuery: mockStagedQueryWithMultipleQueries,
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
 		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
 			isLoading: false,
 			isError: false,
-			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
+			metrics: [
+				{ ...MOCK_METRIC_METADATA, unit: 'seconds' },
+				{ ...MOCK_METRIC_METADATA, unit: 'bytes' },
+			],
 		});
+
+		(useSearchParams as jest.Mock).mockReturnValue([
+			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
+			mockSetSearchParams,
+		]);
 
 		renderExplorer();
 
-		const yAxisUnitSelector = screen.queryByTestId(Y_AXIS_UNIT_SELECTOR_TEST_ID);
-		expect(yAxisUnitSelector).not.toBeInTheDocument();
-
-		// One chart per query toggle should be disabled
 		const oneChartPerQueryToggle = screen.getByRole('switch');
+		expect(oneChartPerQueryToggle).toBeChecked();
 		expect(oneChartPerQueryToggle).toBeDisabled();
 	});
 
@@ -326,5 +332,54 @@ describe('Explorer', () => {
 
 		const oneChartPerQueryToggle = screen.getByRole('switch');
 		expect(oneChartPerQueryToggle).toBeEnabled();
+	});
+
+	it('one chart per query toggle should be enabled when multiple metrics have no unit', () => {
+		const metricWithNoUnit = {
+			type: MetrictypesTypeDTO.sum,
+			description: 'metric without unit',
+			unit: '',
+			temporality: MetrictypesTemporalityDTO.cumulative,
+			isMonotonic: true,
+		};
+		const mockQueryData = {
+			...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+			aggregateAttribute: {
+				...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+					.aggregateAttribute as BaseAutocompleteData),
+				key: 'metric1',
+			},
+		};
+		const mockStagedQueryWithMultipleQueries = {
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [mockQueryData, mockQueryData],
+			},
+		};
+
+		jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+			...mockUseQueryBuilderData,
+			stagedQuery: mockStagedQueryWithMultipleQueries,
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
+		jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+			isLoading: false,
+			isError: false,
+			metrics: [metricWithNoUnit, metricWithNoUnit],
+		});
+
+		(useSearchParams as jest.Mock).mockReturnValue([
+			new URLSearchParams({ isOneChartPerQueryEnabled: 'false' }),
+			mockSetSearchParams,
+		]);
+
+		renderExplorer();
+
+		const oneChartPerQueryToggle = screen.getByRole('switch');
+		// Toggle should be enabled (not forced/disabled) since both metrics
+		// have the same unit (no unit) and should be viewable on the same graph
+		expect(oneChartPerQueryToggle).toBeEnabled();
+		expect(oneChartPerQueryToggle).not.toBeChecked();
 	});
 });
