@@ -181,7 +181,7 @@ services:
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
     !!merge <<: *db-depend
-    image: signoz/signoz:${VERSION:-v0.112.1}
+    image: signoz/signoz:${VERSION:-v0.113.0}
     container_name: signoz
     ports:
       - "8080:8080" # signoz port
@@ -204,7 +204,7 @@ services:
       retries: 3
   otel-collector:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.1}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.1}
     container_name: signoz-otel-collector
     entrypoint:
       - /bin/sh
@@ -229,7 +229,7 @@ services:
       - "4318:4318" # OTLP HTTP receiver
   signoz-telemetrystore-migrator:
     !!merge <<: *db-depend
-    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.142.0}
+    image: signoz/signoz-otel-collector:${OTELCOL_TAG:-v0.144.1}
     container_name: signoz-telemetrystore-migrator
     environment:
       - SIGNOZ_OTEL_COLLECTOR_CLICKHOUSE_DSN=tcp://clickhouse:9000

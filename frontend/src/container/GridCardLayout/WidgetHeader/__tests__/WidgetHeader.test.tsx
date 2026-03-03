@@ -1,5 +1,6 @@
 import React, { MutableRefObject } from 'react';
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
@@ -88,7 +89,6 @@ jest.mock('hooks/queryBuilder/useCreateAlerts', () => ({
 }));
 
 jest.mock('hooks/dashboard/useGetResolvedText', () => {
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const TEST_WIDGET_TITLE_RESOLVED = 'Test Widget Title';
 	return {
 		__esModule: true,

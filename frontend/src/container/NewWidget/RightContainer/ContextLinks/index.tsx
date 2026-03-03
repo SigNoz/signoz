@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { Dispatch, SetStateAction } from 'react';
 import {
 	closestCenter,

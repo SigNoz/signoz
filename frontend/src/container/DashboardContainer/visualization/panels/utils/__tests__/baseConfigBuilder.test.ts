@@ -1,11 +1,11 @@
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { STEP_INTERVAL_MULTIPLIER } from 'lib/uPlotV2/constants';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import { PanelMode } from '../../types';
-import { buildBaseConfig } from '../baseConfigBuilder';
+import { BaseConfigBuilderProps, buildBaseConfig } from '../baseConfigBuilder';
 
 jest.mock(
 	'container/DashboardContainer/visualization/panels/utils/legendVisibilityUtils',
@@ -27,16 +27,25 @@ jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
 	default: jest.fn().mockReturnValue({ name: 'onClickPlugin' }),
 }));
 
-const createWidget = (overrides: Partial<Widgets> = {}): Widgets =>
-	({
-		id: 'widget-1',
-		yAxisUnit: 'ms',
-		isLogScale: false,
-		softMin: undefined,
-		softMax: undefined,
-		thresholds: [],
-		...overrides,
-	} as Widgets);
+const createBaseConfigBuilderProps = (
+	overrides: Partial<
+		Pick<
+			BaseConfigBuilderProps,
+			'id' | 'yAxisUnit' | 'isLogScale' | 'softMin' | 'softMax' | 'thresholds'
+		>
+	> = {},
+): Pick<
+	BaseConfigBuilderProps,
+	'id' | 'yAxisUnit' | 'isLogScale' | 'softMin' | 'softMax' | 'thresholds'
+> => ({
+	id: 'widget-1',
+	yAxisUnit: 'ms',
+	isLogScale: false,
+	softMin: undefined,
+	softMax: undefined,
+	thresholds: [],
+	...overrides,
+});
 
 const createApiResponse = (
 	overrides: Partial<MetricRangePayloadProps> = {},
@@ -47,7 +56,7 @@ const createApiResponse = (
 	} as MetricRangePayloadProps);
 
 const baseProps = {
-	widget: createWidget(),
+	...createBaseConfigBuilderProps(),
 	apiResponse: createApiResponse(),
 	isDarkMode: true,
 	panelMode: PanelMode.DASHBOARD_VIEW,
@@ -63,14 +72,14 @@ describe('buildBaseConfig', () => {
 		expect(typeof builder.getLegendItems).toBe('function');
 	});
 
-	it('configures builder with widgetId and DASHBOARD_VIEW preferences', () => {
+	it('configures builder with id and DASHBOARD_VIEW preferences', () => {
 		const builder = buildBaseConfig({
 			...baseProps,
 			panelMode: PanelMode.DASHBOARD_VIEW,
-			widget: createWidget({ id: 'my-widget' }),
+			...createBaseConfigBuilderProps({ id: 'my-widget' }),
 		});
 
-		expect(builder.getWidgetId()).toBe('my-widget');
+		expect(builder.getId()).toBe('my-widget');
 		expect(builder.getShouldSaveSelectionPreference()).toBe(true);
 	});
 
@@ -127,7 +136,7 @@ describe('buildBaseConfig', () => {
 	it('configures log scale on y axis when widget.isLogScale is true', () => {
 		const builder = buildBaseConfig({
 			...baseProps,
-			widget: createWidget({ isLogScale: true }),
+			...createBaseConfigBuilderProps({ isLogScale: true }),
 		});
 
 		const config = builder.getConfig();
@@ -171,7 +180,7 @@ describe('buildBaseConfig', () => {
 	it('adds thresholds from widget', () => {
 		const builder = buildBaseConfig({
 			...baseProps,
-			widget: createWidget({
+			...createBaseConfigBuilderProps({
 				thresholds: [
 					{
 						thresholdValue: 80,
@@ -179,7 +188,7 @@ describe('buildBaseConfig', () => {
 						thresholdUnit: 'ms',
 						thresholdLabel: 'High',
 					},
-				] as Widgets['thresholds'],
+				] as ThresholdProps[],
 			}),
 		});
 

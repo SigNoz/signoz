@@ -91,7 +91,6 @@ export const getFiltersFromKeyValue = (
 export const createDynamicVariableToWidgetsMap = (
 	dynamicVariables: IDashboardVariable[],
 	widgets: Widgets[],
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): Record<string, string[]> => {
 	const dynamicVariableToWidgetsMap: Record<string, string[]> = {};
 

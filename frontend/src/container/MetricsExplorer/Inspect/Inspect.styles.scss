@@ -122,6 +122,10 @@
 				gap: 4px;
 
 				.inspect-metrics-query-builder-header {
+					display: flex;
+					align-items: center;
+					justify-content: space-between;
+
 					.query-builder-button-label {
 						display: flex;
 						align-items: center;
@@ -257,6 +261,21 @@
 
 				.completed-checklist-container {
 					margin-left: 20px;
+
+					.completed-checklist-item,
+					.whats-next-checklist-item {
+						.completed-checklist-item-title,
+						.whats-next-checklist-item-title {
+							display: flex;
+							align-items: center;
+							gap: 4px;
+							.ant-typography {
+								display: flex;
+								align-items: center;
+								gap: 4px;
+							}
+						}
+					}
 				}
 
 				.completed-message-container {

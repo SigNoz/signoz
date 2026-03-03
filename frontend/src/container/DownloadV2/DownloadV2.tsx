@@ -1,5 +1,5 @@
+import { useState } from 'react';
 import { Button, Popover, Typography } from 'antd';
-import { Excel } from 'antd-table-saveas-excel';
 import { FileDigit, FileDown, Sheet } from 'lucide-react';
 import { unparse } from 'papaparse';
 
@@ -8,25 +8,34 @@ import { DownloadProps } from './DownloadV2.types';
 import './DownloadV2.styles.scss';
 
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
-	const downloadExcelFile = (): void => {
-		const headers = Object.keys(Object.assign({}, ...data)).map((item) => {
-			const updatedTitle = item
-				.split('_')
-				.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
-				.join(' ');
-			return {
-				title: updatedTitle,
-				dataIndex: item,
-			};
-		});
-		const excel = new Excel();
-		excel
-			.addSheet(fileName)
-			.addColumns(headers)
-			.addDataSource(data, {
-				str2Percent: true,
-			})
-			.saveAs(`${fileName}.xlsx`);
+	const [isDownloading, setIsDownloading] = useState(false);
+
+	const downloadExcelFile = async (): Promise<void> => {
+		setIsDownloading(true);
+
+		try {
+			const headers = Object.keys(Object.assign({}, ...data)).map((item) => {
+				const updatedTitle = item
+					.split('_')
+					.map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+					.join(' ');
+				return {
+					title: updatedTitle,
+					dataIndex: item,
+				};
+			});
+			const excelLib = await import('antd-table-saveas-excel');
+			const excel = new excelLib.Excel();
+			excel
+				.addSheet(fileName)
+				.addColumns(headers)
+				.addDataSource(data, {
+					str2Percent: true,
+				})
+				.saveAs(`${fileName}.xlsx`);
+		} finally {
+			setIsDownloading(false);
+		}
 	};
 
 	const downloadCsvFile = (): void => {
@@ -54,6 +63,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 						type="text"
 						onClick={downloadExcelFile}
 						className="action-btns"
+						loading={isDownloading}
 					>
 						Excel (.xlsx)
 					</Button>

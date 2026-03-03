@@ -1,4 +1,5 @@
 // ** Helpers
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -101,7 +102,6 @@ export const metricsSpaceAggregationOperatorsByType = {
 
 export const mapOfQueryFilters: Record<DataSource, QueryAdditionalFilter[]> = {
 	metrics: [
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ text: 'Aggregation interval', field: 'stepInterval' },
 		{ text: 'Having', field: 'having' },
 	],
@@ -178,7 +178,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MetricAggregateOperator.COUNT,
+			timeAggregation: MetricAggregateOperator.AVG,
 			spaceAggregation: MetricAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
@@ -226,7 +226,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MeterAggregateOperator.COUNT,
+			timeAggregation: MeterAggregateOperator.AVG,
 			spaceAggregation: MeterAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
@@ -349,7 +349,6 @@ export const operatorsByTypes: Record<LocalDataType, string[]> = {
 	bool: Object.values(BoolOperators),
 };
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_TYPES {
 	TIME_SERIES = 'graph',
 	VALUE = 'value',
@@ -362,17 +361,40 @@ export enum PANEL_TYPES {
 	EMPTY_WIDGET = 'EMPTY_WIDGET',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum PANEL_GROUP_TYPES {
 	ROW = 'row',
 }
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ATTRIBUTE_TYPES {
 	SUM = 'Sum',
 	GAUGE = 'Gauge',
 	HISTOGRAM = 'Histogram',
 	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
+}
+
+const METRIC_TYPE_TO_ATTRIBUTE_TYPE: Record<
+	MetrictypesTypeDTO,
+	ATTRIBUTE_TYPES
+> = {
+	[MetrictypesTypeDTO.sum]: ATTRIBUTE_TYPES.SUM,
+	[MetrictypesTypeDTO.gauge]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.histogram]: ATTRIBUTE_TYPES.HISTOGRAM,
+	[MetrictypesTypeDTO.summary]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.exponentialhistogram]:
+		ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
+};
+
+export function toAttributeType(
+	metricType: MetrictypesTypeDTO | undefined,
+	isMonotonic?: boolean,
+): ATTRIBUTE_TYPES | '' {
+	if (!metricType) {
+		return '';
+	}
+	if (metricType === MetrictypesTypeDTO.sum && isMonotonic === false) {
+		return ATTRIBUTE_TYPES.GAUGE;
+	}
+	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';
 }
 
 export type IQueryBuilderState = 'search';

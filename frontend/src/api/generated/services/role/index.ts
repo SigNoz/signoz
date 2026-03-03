@@ -35,10 +35,6 @@ import type {
 	RoletypesPostableRoleDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint lists all roles
  * @summary List roles
