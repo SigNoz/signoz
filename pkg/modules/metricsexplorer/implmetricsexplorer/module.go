@@ -58,15 +58,6 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
-func withMetricsExplorerQuery(ctx context.Context, functionName string) context.Context {
-	comments := map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentation.CodeNamespace:    "metrics-explorer",
-		instrumentation.CodeFunctionName: functionName,
-	}
-	return ctxtypes.AddCommentsToContext(ctx, comments)
-}
-
 // TODO(srikanthccv): use metadata store to fetch metric metadata
 func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
 	ctx = withMetricsExplorerQuery(ctx, "ListMetrics")
@@ -1252,4 +1243,13 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 	}
 
 	return attributes, nil
+}
+
+func withMetricsExplorerQuery(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.CodeNamespace:    "metrics-explorer",
+		instrumentation.CodeFunctionName: functionName,
+	}
+	return ctxtypes.AddCommentsToContext(ctx, comments)
 }

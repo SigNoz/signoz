@@ -102,7 +102,6 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
 		"module_name":                 "clickhouse-query",
-		"function_name":               "Execute",
 		instrumentation.QueryDuration: instrumentation.DurationBucket(q.fromMS, q.toMS),
 	})
 
