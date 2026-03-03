@@ -98,13 +98,10 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 
 	useEffect(() => {
 		setInputValue(currentMetricName || defaultValue || '');
-	}, [defaultValue, currentMetricName]);
-
-	useEffect(() => {
 		if (currentMetricName) {
 			setSearchText(currentMetricName);
 		}
-	}, [currentMetricName]);
+	}, [defaultValue, currentMetricName]);
 
 	useEffect(() => {
 		if (prevSignalSourceRef.current !== signalSource) {

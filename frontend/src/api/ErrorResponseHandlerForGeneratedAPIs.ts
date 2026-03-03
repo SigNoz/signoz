@@ -2,7 +2,7 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 
-// Handles errors from generated API hooks (which use RenderErrorResponseDTO)
+// @deprecated Use convertToApiError instead
 export function ErrorResponseHandlerForGeneratedAPIs(
 	error: AxiosError<RenderErrorResponseDTO>,
 ): never {
