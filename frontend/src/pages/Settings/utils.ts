@@ -64,12 +64,14 @@ export const getRoutes = (
 		settings.push(...apiKeys(t));
 	}
 
+	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...customDomainSettings(t), ...billingSettings(t));
-	}
-
-	if (isAdmin) {
-		settings.push(...rolesSettings(t), ...roleDetails(t));
+		settings.push(
+			...customDomainSettings(t),
+			...billingSettings(t),
+			...rolesSettings(t),
+			...roleDetails(t),
+		);
 	}
 
 	settings.push(
