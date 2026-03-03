@@ -13,6 +13,8 @@
 		border: 1px solid var(--border);
 		border-radius: 2px;
 		box-shadow: none;
+		padding: 10px;
+		height: 33px;
 
 		&:hover:not(:disabled) {
 			color: var(--bg-vanilla-100);

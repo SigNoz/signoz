@@ -1,15 +1,58 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { useZoomOut } from 'hooks/useZoomOut';
+import { QueryParams } from 'constants/query';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import CustomTimePicker from '../CustomTimePicker';
 
-const mockHandleZoomOut = jest.fn();
-jest.mock('hooks/useZoomOut', () => ({
-	useZoomOut: (): jest.MockedFunction<typeof useZoomOut> => mockHandleZoomOut,
+const MS_PER_MIN = 60 * 1000;
+const NOW_MS = 1705312800000;
+
+const mockDispatch = jest.fn();
+const mockSafeNavigate = jest.fn();
+const mockUrlQueryDelete = jest.fn();
+const mockUrlQuerySet = jest.fn();
+
+interface MockAppState {
+	globalTime: Pick<GlobalReducer, 'minTime' | 'maxTime'>;
+}
+
+jest.mock('react-redux', () => ({
+	useDispatch: (): jest.Mock => mockDispatch,
+	useSelector: (selector: (state: MockAppState) => unknown): unknown => {
+		const mockState: MockAppState = {
+			globalTime: {
+				minTime: (NOW_MS - 15 * MS_PER_MIN) * 1e6,
+				maxTime: NOW_MS * 1e6,
+			},
+		};
+		return selector(mockState);
+	},
 }));
 
-// Mock other heavy dependencies
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
+		safeNavigate: mockSafeNavigate,
+	}),
+}));
+
+interface MockUrlQuery {
+	delete: typeof mockUrlQueryDelete;
+	set: typeof mockUrlQuerySet;
+	get: () => null;
+	toString: () => string;
+}
+
+jest.mock('hooks/useUrlQuery', () => ({
+	__esModule: true,
+	default: (): MockUrlQuery => ({
+		delete: mockUrlQueryDelete,
+		set: mockUrlQuerySet,
+		get: (): null => null,
+		toString: (): string => 'relativeTime=45m',
+	}),
+}));
+
 jest.mock('providers/Timezone', () => ({
 	useTimezone: (): { timezone: { value: string; offset: string } } => ({
 		timezone: { value: 'UTC', offset: 'UTC' },
@@ -41,6 +84,11 @@ const defaultProps = {
 describe('CustomTimePicker - zoom out button', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
+		jest.spyOn(Date, 'now').mockReturnValue(NOW_MS);
+	});
+
+	afterEach(() => {
+		jest.restoreAllMocks();
 	});
 
 	it('should render zoom out button when showLiveLogs is false', () => {
@@ -61,7 +109,35 @@ describe('CustomTimePicker - zoom out button', () => {
 		const zoomOutBtn = screen.getByTestId('zoom-out-btn');
 		await userEvent.click(zoomOutBtn);
 
-		expect(mockHandleZoomOut).toHaveBeenCalledTimes(1);
+		expect(mockDispatch).toHaveBeenCalled();
+		expect(mockUrlQuerySet).toHaveBeenCalledWith(QueryParams.relativeTime, '45m');
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			expect.stringMatching(/\/logs-explorer\?relativeTime=45m/),
+		);
+	});
+
+	it('should use real ladder logic: 15m range zooms to 45m preset and updates URL', async () => {
+		render(<CustomTimePicker {...defaultProps} showLiveLogs={false} />);
+
+		const zoomOutBtn = screen.getByTestId('zoom-out-btn');
+		await userEvent.click(zoomOutBtn);
+
+		expect(mockUrlQueryDelete).toHaveBeenCalledWith(QueryParams.startTime);
+		expect(mockUrlQueryDelete).toHaveBeenCalledWith(QueryParams.endTime);
+		expect(mockUrlQuerySet).toHaveBeenCalledWith(QueryParams.relativeTime, '45m');
+		expect(mockSafeNavigate).toHaveBeenCalledWith(
+			expect.stringMatching(/\/logs-explorer\?relativeTime=45m/),
+		);
+		expect(mockDispatch).toHaveBeenCalled();
+	});
+
+	it('should delete activeLogId when zoom out is clicked', async () => {
+		render(<CustomTimePicker {...defaultProps} showLiveLogs={false} />);
+
+		const zoomOutBtn = screen.getByTestId('zoom-out-btn');
+		await userEvent.click(zoomOutBtn);
+
+		expect(mockUrlQueryDelete).toHaveBeenCalledWith(QueryParams.activeLogId);
 	});
 
 	it('should disable zoom button when time range is >= 1 month', () => {
