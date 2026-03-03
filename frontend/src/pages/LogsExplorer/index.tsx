@@ -1,7 +1,4 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -12,7 +9,6 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource, SignalType } from 'components/QuickFilters/types';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { LOCALSTORAGE } from 'constants/localStorage';
-import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import LogExplorerQuerySection from 'container/LogExplorerQuerySection';
 import LogsExplorerViewsContainer from 'container/LogsExplorerViews';
@@ -31,19 +27,13 @@ import {
 	ICurrentQueryData,
 	useHandleExplorerTabChange,
 } from 'hooks/useHandleExplorerTabChange';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
-import { getNextZoomOutRange } from 'lib/logsZoomOutUtils';
 import { defaultTo, isEmpty, isEqual, isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { EventSourceProvider } from 'providers/EventSource';
 import { usePreferenceContext } from 'providers/preferences/context/PreferenceContextProvider';
-import { UpdateTimeInterval } from 'store/actions';
-import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 import {
 	explorerViewToPanelType,
 	panelTypeToExplorerView,
@@ -273,50 +263,6 @@ function LogsExplorer(): JSX.Element {
 		setShowLiveLogs(false);
 	}, []);
 
-	const dispatch = useDispatch();
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-	const urlQuery = useUrlQuery();
-	const location = useLocation();
-	const { safeNavigate } = useSafeNavigate();
-
-	const handleZoomOut = useCallback((): void => {
-		if (showLiveLogs) {
-			return;
-		}
-		const minMs = Math.floor((minTime ?? 0) / 1e6);
-		const maxMs = Math.floor((maxTime ?? 0) / 1e6);
-		const result = getNextZoomOutRange(minMs, maxMs);
-		if (!result) {
-			return;
-		}
-		const [newStartMs, newEndMs] = result.range;
-		const { preset } = result;
-
-		if (preset) {
-			dispatch(UpdateTimeInterval(preset));
-			urlQuery.delete(QueryParams.startTime);
-			urlQuery.delete(QueryParams.endTime);
-			urlQuery.set(QueryParams.relativeTime, preset);
-		} else {
-			dispatch(UpdateTimeInterval('custom', [newStartMs, newEndMs]));
-			urlQuery.set(QueryParams.startTime, String(newStartMs));
-			urlQuery.set(QueryParams.endTime, String(newEndMs));
-			urlQuery.delete(QueryParams.relativeTime);
-		}
-		urlQuery.delete(QueryParams.activeLogId);
-		safeNavigate(`${location.pathname}?${urlQuery.toString()}`);
-	}, [
-		dispatch,
-		location.pathname,
-		maxTime,
-		minTime,
-		safeNavigate,
-		showLiveLogs,
-		urlQuery,
-	]);
-
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<EventSourceProvider>
@@ -355,7 +301,6 @@ function LogsExplorer(): JSX.Element {
 									chartQueryKeyRef={chartQueryKeyRef}
 									isLoadingQueries={isLoadingQueries}
 									showLiveLogs={showLiveLogs}
-									onZoomOut={handleZoomOut}
 								/>
 							}
 							showLiveLogs={showLiveLogs}
