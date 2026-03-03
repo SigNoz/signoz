@@ -853,3 +853,63 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		})
 	}
 }
+
+func TestFieldForWithMaterialized(t *testing.T) {
+	ctx := context.Background()
+
+	materializedKey := &telemetrytypes.TelemetryFieldKey{
+		Name:          "service.name",
+		FieldContext:  telemetrytypes.FieldContextResource,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+		Evolutions: []*telemetrytypes.EvolutionEntry{
+			{
+				Signal:       telemetrytypes.SignalLogs,
+				ColumnName:   "resources_string",
+				ColumnType:   "Map(LowCardinality(String), String)",
+				FieldContext: telemetrytypes.FieldContextResource,
+				FieldName:    "__all__",
+				ReleaseTime:  time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			},
+			{
+				Signal:       telemetrytypes.SignalLogs,
+				ColumnName:   "resource",
+				ColumnType:   "JSON()",
+				FieldContext: telemetrytypes.FieldContextResource,
+				FieldName:    "__all__",
+				ReleaseTime:  time.Date(2024, 3, 2, 0, 0, 0, 0, time.UTC),
+			},
+		},
+	}
+
+	tests := []struct {
+		name           string
+		start, end     time.Time
+		expectedResult string
+	}{
+		{
+			name:           "Map column in use (pre-evolution to JSON)",
+			start:          time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			end:            time.Date(2024, 2, 2, 0, 0, 0, 0, time.UTC),
+			expectedResult: "`resource_string_service$$name`",
+		},
+		{
+			name:           "Multi evolution - both columns (JSON + materialized)",
+			start:          time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC),
+			end:            time.Date(2024, 4, 2, 0, 0, 0, 0, time.UTC),
+			expectedResult: "multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, `resource_string_service$$name_exists`==true, `resource_string_service$$name`, NULL)",
+		},
+	}
+
+	fm := NewFieldMapper()
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			start := uint64(tc.start.UnixNano())
+			end := uint64(tc.end.UnixNano())
+			result, err := fm.FieldFor(ctx, start, end, materializedKey)
+			require.NoError(t, err)
+			assert.Equal(t, tc.expectedResult, result)
+		})
+	}
+}

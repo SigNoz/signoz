@@ -303,7 +303,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
 					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
-					existExpr = append(existExpr, fmt.Sprintf("%s_exists = true", telemetrytypes.FieldKeyToMaterializedColumnName(key)))
+					existExpr = append(existExpr, fmt.Sprintf("%s==true", telemetrytypes.FieldKeyToMaterializedColumnNameForExists(key)))
 				} else {
 					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
 					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
