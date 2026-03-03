@@ -12,6 +12,7 @@ import { initialQueriesMap } from 'constants/queryBuilder';
 import * as useOptionsMenuHooks from 'container/OptionsMenu';
 import * as useUpdateDashboardHooks from 'hooks/dashboard/useUpdateDashboard';
 import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
+import * as useHandleExplorerTabChangeHooks from 'hooks/useHandleExplorerTabChange';
 import * as appContextHooks from 'providers/App/App';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import * as timezoneHooks from 'providers/Timezone';
@@ -29,6 +30,8 @@ const queryClient = new QueryClient();
 const mockUpdateAllQueriesOperators = jest
 	.fn()
 	.mockReturnValue(initialQueriesMap[DataSource.METRICS]);
+const mockHandleSetConfig = jest.fn();
+const mockHandleExplorerTabChange = jest.fn();
 const mockUseQueryBuilderData = {
 	handleRunQuery: jest.fn(),
 	stagedQuery: initialQueriesMap[DataSource.METRICS],
@@ -40,7 +43,7 @@ const mockUseQueryBuilderData = {
 	handleSetQueryData: jest.fn(),
 	handleSetFormulaData: jest.fn(),
 	handleSetQueryItemData: jest.fn(),
-	handleSetConfig: jest.fn(),
+	handleSetConfig: mockHandleSetConfig,
 	removeQueryBuilderEntityByIndex: jest.fn(),
 	removeQueryTypeItemByIndex: jest.fn(),
 	isDefaultQuery: jest.fn(),
@@ -135,6 +138,11 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
 	...mockUseQueryBuilderData,
 } as any);
+jest
+	.spyOn(useHandleExplorerTabChangeHooks, 'useHandleExplorerTabChange')
+	.mockReturnValue({
+		handleExplorerTabChange: mockHandleExplorerTabChange,
+	});
 
 const Y_AXIS_UNIT_SELECTOR_TEST_ID = 'y-axis-unit-selector';
 
@@ -381,5 +389,110 @@ describe('Explorer', () => {
 		// have the same unit (no unit) and should be viewable on the same graph
 		expect(oneChartPerQueryToggle).toBeEnabled();
 		expect(oneChartPerQueryToggle).not.toBeChecked();
+	});
+
+	describe('loading saved views with v5 query format', () => {
+		const EMPTY_STATE_TEXT = 'Select a metric and run a query to see the results';
+
+		it('should show empty state when no metric is selected', () => {
+			(useSearchParams as jest.Mock).mockReturnValue([
+				new URLSearchParams({}),
+				mockSetSearchParams,
+			]);
+			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+				isLoading: false,
+				isError: false,
+				metrics: [],
+			});
+			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue({
+				...mockUseQueryBuilderData,
+			} as any);
+
+			renderExplorer();
+
+			expect(screen.getByText(EMPTY_STATE_TEXT)).toBeInTheDocument();
+		});
+
+		it('should not show empty state when saved view has v5 aggregations format', () => {
+			(useSearchParams as jest.Mock).mockReturnValue([
+				new URLSearchParams({}),
+				mockSetSearchParams,
+			]);
+			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+				isLoading: false,
+				isError: false,
+				metrics: [MOCK_METRIC_METADATA],
+			});
+
+			// saved view loaded back from v5 format
+			// aggregateAttribute.key is empty (lost in v3/v4 -> v5 -> v3/v4 round trip)
+			// but aggregations[0].metricName has metric name
+			// TODO(srikanthccv): remove this mess
+			const mockQueryData = {
+				...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+				aggregateAttribute: {
+					...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+						.aggregateAttribute as BaseAutocompleteData),
+					key: '',
+				},
+				aggregations: [
+					{
+						metricName: 'http_requests_total',
+						temporality: 'cumulative',
+						timeAggregation: 'rate',
+						spaceAggregation: 'sum',
+					},
+				],
+			};
+			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+				...mockUseQueryBuilderData,
+				stagedQuery: {
+					...initialQueriesMap[DataSource.METRICS],
+					builder: {
+						...initialQueriesMap[DataSource.METRICS].builder,
+						queryData: [mockQueryData],
+					},
+				},
+			} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
+			renderExplorer();
+
+			expect(screen.queryByText(EMPTY_STATE_TEXT)).not.toBeInTheDocument();
+		});
+
+		it('should not show empty state when query uses v3 aggregateAttribute format', () => {
+			(useSearchParams as jest.Mock).mockReturnValue([
+				new URLSearchParams({}),
+				mockSetSearchParams,
+			]);
+			jest.spyOn(useGetMetricsHooks, 'useGetMetrics').mockReturnValue({
+				isLoading: false,
+				isError: false,
+				metrics: [MOCK_METRIC_METADATA],
+			});
+
+			const mockQueryData = {
+				...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+				aggregateAttribute: {
+					...(initialQueriesMap[DataSource.METRICS].builder.queryData[0]
+						.aggregateAttribute as BaseAutocompleteData),
+					key: 'system_cpu_usage',
+				},
+			};
+			jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder').mockReturnValue(({
+				...mockUseQueryBuilderData,
+				stagedQuery: {
+					...initialQueriesMap[DataSource.METRICS],
+					builder: {
+						...initialQueriesMap[DataSource.METRICS].builder,
+						queryData: [mockQueryData],
+					},
+				},
+			} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
+			renderExplorer();
+
+			expect(screen.queryByText(EMPTY_STATE_TEXT)).not.toBeInTheDocument();
+		});
 	});
 });

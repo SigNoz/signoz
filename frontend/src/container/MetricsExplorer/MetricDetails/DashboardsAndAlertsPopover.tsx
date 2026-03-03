@@ -9,7 +9,6 @@ import {
 } from 'api/generated/services/metrics';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { Bell, Grid } from 'lucide-react';
 import { pluralize } from 'utils/pluralize';
 
@@ -18,8 +17,6 @@ import { DashboardsAndAlertsPopoverProps } from './types';
 function DashboardsAndAlertsPopover({
 	metricName,
 }: DashboardsAndAlertsPopoverProps): JSX.Element | null {
-	const params = useUrlQuery();
-
 	const {
 		data: alertsData,
 		isLoading: isLoadingAlerts,
@@ -71,8 +68,10 @@ function DashboardsAndAlertsPopover({
 					<Typography.Link
 						key={alert.alertId}
 						onClick={(): void => {
-							params.set(QueryParams.ruleId, alert.alertId);
-							window.open(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, '_blank');
+							window.open(
+								`${ROUTES.ALERT_OVERVIEW}?${QueryParams.ruleId}=${alert.alertId}`,
+								'_blank',
+							);
 						}}
 						className="dashboards-popover-content-item"
 					>
@@ -82,7 +81,7 @@ function DashboardsAndAlertsPopover({
 			}));
 		}
 		return null;
-	}, [alerts, params]);
+	}, [alerts]);
 
 	const dashboardsPopoverContent = useMemo(() => {
 		if (dashboards && dashboards.length > 0) {

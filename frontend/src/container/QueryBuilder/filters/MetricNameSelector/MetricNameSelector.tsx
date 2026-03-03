@@ -101,12 +101,30 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	}, [defaultValue, currentMetricName]);
 
 	useEffect(() => {
+		if (currentMetricName) {
+			setSearchText(currentMetricName);
+		}
+	}, [currentMetricName]);
+
+	useEffect(() => {
 		if (prevSignalSourceRef.current !== signalSource) {
+			const previousSignalSource = prevSignalSourceRef.current;
 			prevSignalSourceRef.current = signalSource;
+
+			const isNormalizationTransition =
+				(previousSignalSource === undefined && signalSource === '') ||
+				(previousSignalSource === '' && signalSource === undefined);
+
+			if (isNormalizationTransition && currentMetricName) {
+				setSearchText(currentMetricName);
+				setInputValue(currentMetricName || defaultValue || '');
+				return;
+			}
+
 			setSearchText('');
 			setInputValue('');
 		}
-	}, [signalSource]);
+	}, [signalSource, currentMetricName, defaultValue]);
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
@@ -152,7 +170,9 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 	}, [metrics]);
 
 	useEffect(() => {
-		const metricName = (query.aggregations?.[0] as MetricAggregation)?.metricName;
+		const metricName =
+			(query.aggregations?.[0] as MetricAggregation)?.metricName ||
+			query.aggregateAttribute?.key;
 		const hasAggregateAttributeType = query.aggregateAttribute?.type;
 
 		if (metricName && !hasAggregateAttributeType && metrics.length > 0) {
@@ -164,7 +184,13 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 				);
 			}
 		}
-	}, [metrics, query.aggregations, query.aggregateAttribute?.type, onChange]);
+	}, [
+		metrics,
+		query.aggregations,
+		query.aggregateAttribute?.key,
+		query.aggregateAttribute?.type,
+		onChange,
+	]);
 
 	const resolveMetricFromText = useCallback(
 		(text: string): BaseAutocompleteData => {

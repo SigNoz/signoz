@@ -4,6 +4,7 @@ import { Group } from '@visx/group';
 import { Treemap } from '@visx/hierarchy';
 import { Empty, Select, Skeleton, Tooltip, Typography } from 'antd';
 import { MetricsexplorertypesTreemapModeDTO } from 'api/generated/services/sigNoz.schemas';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { HierarchyNode, stratify, treemapBinary } from 'd3-hierarchy';
 import { Info } from 'lucide-react';
 
@@ -27,6 +28,7 @@ import {
 function MetricsTreemapInternal({
 	isLoading,
 	isError,
+	error,
 	data,
 	viewType,
 	openMetricDetails,
@@ -89,6 +91,10 @@ function MetricsTreemapInternal({
 				<Skeleton style={treemapStylesWithoutPadding} active />
 			</div>
 		);
+	}
+
+	if (isError && error) {
+		return <ErrorInPlace error={error} />;
 	}
 
 	if (isError) {
@@ -174,6 +180,7 @@ function MetricsTreemap({
 	data,
 	isLoading,
 	isError,
+	error,
 	openMetricDetails,
 	setHeatmapView,
 }: MetricsTreemapProps): JSX.Element {
@@ -202,6 +209,7 @@ function MetricsTreemap({
 			<MetricsTreemapInternal
 				isLoading={isLoading}
 				isError={isError}
+				error={error}
 				data={data}
 				viewType={viewType}
 				openMetricDetails={openMetricDetails}
