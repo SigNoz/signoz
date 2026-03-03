@@ -3,7 +3,6 @@ package sqlmigration
 import (
 	"context"
 	"database/sql"
-	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -207,7 +206,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 				Identifiable: types.Identifiable{ID: valuer.MustNewUUID(saID)},
 				CreatedAt:    now,
 				UpdatedAt:    now,
-				Name:         fmt.Sprintf("%s (migrated)", user.DisplayName),
+				Name:         oldKey.Name,
 				Email:        user.Email,
 				Status:       "active",
 				OrgID:        user.OrgID,
