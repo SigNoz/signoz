@@ -74,23 +74,21 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 
 	private tzDate: ((timestamp: number) => Date) | undefined;
 
-	private widgetId: string | undefined;
+	private id: string;
 
 	private onDragSelect: (startTime: number, endTime: number) => void;
 
-	constructor(args?: ConfigBuilderProps) {
-		super(args ?? {});
+	constructor(args: ConfigBuilderProps) {
+		super(args);
 		const {
-			widgetId,
+			id,
 			onDragSelect,
 			tzDate,
 			selectionPreferencesSource,
 			shouldSaveSelectionPreference,
 			stepInterval,
 		} = args ?? {};
-		if (widgetId) {
-			this.widgetId = widgetId;
-		}
+		this.id = id;
 
 		if (tzDate) {
 			this.tzDate = tzDate;
@@ -252,10 +250,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 */
 	private getStoredVisibility(): SeriesVisibilityItem[] | null {
 		if (
-			this.widgetId &&
+			this.id &&
 			this.selectionPreferencesSource === SelectionPreferencesSource.LOCAL_STORAGE
 		) {
-			return getStoredSeriesVisibility(this.widgetId);
+			return getStoredSeriesVisibility(this.id);
 		}
 		return null;
 	}
@@ -378,10 +376,10 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
-	 * Get the widget id
+	 * Get the id for the builder
 	 */
-	getWidgetId(): string | undefined {
-		return this.widgetId;
+	getId(): string {
+		return this.id;
 	}
 
 	/**
