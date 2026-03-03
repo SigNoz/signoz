@@ -131,12 +131,7 @@ function RoleDetailsPage(): JSX.Element {
 		},
 	});
 
-	if (
-		!IS_ROLE_DETAILS_AND_CRUD_ENABLED ||
-		isLoading ||
-		isTransitioning ||
-		!role
-	) {
+	if (!IS_ROLE_DETAILS_AND_CRUD_ENABLED || isLoading || isTransitioning) {
 		return (
 			<div className="role-details-page">
 				<Skeleton
@@ -156,6 +151,18 @@ function RoleDetailsPage(): JSX.Element {
 						error,
 						'An unexpected error occurred while fetching role details.',
 					)}
+				/>
+			</div>
+		);
+	}
+
+	if (!role) {
+		return (
+			<div className="role-details-page">
+				<Skeleton
+					active
+					paragraph={{ rows: 8 }}
+					className="role-details-skeleton"
 				/>
 			</div>
 		);

@@ -6,19 +6,20 @@ import { X } from '@signozhq/icons';
 import { Input, inputVariants } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Form, Modal } from 'antd';
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
 import {
 	invalidateGetRole,
 	invalidateListRoles,
 	useCreateRole,
 	usePatchRole,
 } from 'api/generated/services/role';
-import type { RoletypesPostableRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
+import {
+	RenderErrorResponseDTO,
+	RoletypesPostableRoleDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
 import { useErrorModal } from 'providers/ErrorModalProvider';
-import { ErrorV2Resp } from 'types/api';
-import APIError from 'types/api/error';
+import { handleApiError } from 'utils/errorUtils';
 
 import '../RolesSettings.styles.scss';
 
@@ -82,12 +83,8 @@ function CreateRoleModal({
 		}
 	};
 
-	const handleError = (error: unknown): void => {
-		try {
-			ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		} catch (apiError) {
-			showErrorModal(apiError as APIError);
-		}
+	const handleError = (error: ErrorType<RenderErrorResponseDTO>): void => {
+		handleApiError(error, showErrorModal);
 	};
 
 	const { mutate: createRole, isLoading: isCreating } = useCreateRole({
