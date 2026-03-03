@@ -11,6 +11,10 @@ export default {
 				name: 'dashboards',
 				type: 'metaresources',
 			},
+			{
+				name: 'role',
+				type: 'role',
+			},
 		],
 		relations: {
 			create: ['metaresources'],
@@ -18,6 +22,7 @@ export default {
 			list: ['metaresources'],
 			read: ['user', 'role', 'organization', 'metaresource'],
 			update: ['user', 'role', 'organization', 'metaresource'],
+			assignee: ['role'],
 		},
 	},
 } as const;
