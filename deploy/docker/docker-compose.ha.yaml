@@ -147,6 +147,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ../common/clickhouse/macros/macros-1.xml:/etc/clickhouse-server/config.d/macros.xml
       - clickhouse:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-2:
@@ -162,6 +163,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ../common/clickhouse/macros/macros-2.xml:/etc/clickhouse-server/config.d/macros.xml
       - clickhouse-2:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   clickhouse-3:
@@ -177,6 +179,7 @@ services:
       - ../common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
       - ../common/clickhouse/user_scripts:/var/lib/clickhouse/user_scripts/
       - ../common/clickhouse/cluster.ha.xml:/etc/clickhouse-server/config.d/cluster.xml
+      - ../common/clickhouse/macros/macros-3.xml:/etc/clickhouse-server/config.d/macros.xml
       - clickhouse-3:/var/lib/clickhouse/
       # - ../common/clickhouse/storage.xml:/etc/clickhouse-server/config.d/storage.xml
   signoz:
