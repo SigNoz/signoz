@@ -1,4 +1,4 @@
-import { isEmpty, isUndefined } from 'lodash-es';
+import { isNil } from 'lodash-es';
 
 import createStore from '../store';
 import { VariableFetchContext } from '../variableFetchStore';
@@ -68,7 +68,6 @@ export function updateDashboardVariablesStore({
  */
 export function getVariableDependencyContext(): VariableFetchContext {
 	const state = dashboardVariablesStore.getSnapshot();
-
 	// Dynamic variables should only wait on query variables having values,
 	// not on CUSTOM, TEXTBOX, or other types.
 	const doAllQueryVariablesHaveValuesSelected = Object.values(
@@ -77,9 +76,16 @@ export function getVariableDependencyContext(): VariableFetchContext {
 		if (variable.type !== 'QUERY') {
 			return true;
 		}
-		return (
-			!isUndefined(variable.selectedValue) && !isEmpty(variable.selectedValue)
-		);
+
+		if (isNil(variable.selectedValue)) {
+			return false;
+		}
+
+		if (Array.isArray(variable.selectedValue)) {
+			return variable.selectedValue.length > 0;
+		}
+
+		return true;
 	});
 
 	return {

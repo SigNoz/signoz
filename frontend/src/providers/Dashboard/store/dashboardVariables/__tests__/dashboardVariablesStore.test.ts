@@ -234,5 +234,63 @@ describe('dashboardVariablesStore', () => {
 			} = getVariableDependencyContext();
 			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
+
+		// Any non-nil, non-empty-array selectedValue is treated as selected
+		it.each([
+			{ label: 'numeric 0', selectedValue: 0 as number },
+			{ label: 'boolean false', selectedValue: false as boolean },
+			// ideally not possible but till we have concrete schema, we should not block dynamic variables
+			{ label: 'empty string', selectedValue: '' },
+			{
+				label: 'non-empty array',
+				selectedValue: ['a', 'b'] as (string | number | boolean)[],
+			},
+		])('should return true when selectedValue is $label', ({ selectedValue }) => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({
+						name: 'env',
+						type: 'QUERY',
+						order: 0,
+						selectedValue,
+					}),
+				},
+			});
+
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
+		});
+
+		// null/undefined (tested above) and empty array are treated as not selected
+		it.each([
+			{
+				label: 'null',
+				selectedValue: null as IDashboardVariable['selectedValue'],
+			},
+			{ label: 'empty array', selectedValue: [] as (string | number | boolean)[] },
+		])(
+			'should return false when selectedValue is $label',
+			({ selectedValue }) => {
+				setDashboardVariablesStore({
+					dashboardId: 'dash-1',
+					variables: {
+						env: createVariable({
+							name: 'env',
+							type: 'QUERY',
+							order: 0,
+							selectedValue,
+						}),
+					},
+				});
+
+				const {
+					doAllQueryVariablesHaveValuesSelected,
+				} = getVariableDependencyContext();
+				expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
+			},
+		);
 	});
 });
