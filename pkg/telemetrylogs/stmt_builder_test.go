@@ -18,7 +18,7 @@ func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	keysMap := buildCompleteFieldKeyMap()
+	keysMap := buildCompleteFieldKeyMap(time.Now())
 	for _, keys := range keysMap {
 		for _, key := range keys {
 			key.Signal = telemetrytypes.SignalLogs
@@ -215,17 +215,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 	ctx := context.Background()
 
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	keysMap := buildCompleteFieldKeyMap()
-
-	// for each key of resource attribute add evolution metadata
-	for i, telemetryKeys := range keysMap {
-		for j, telemetryKey := range telemetryKeys {
-			if telemetryKey.FieldContext == telemetrytypes.FieldContextResource {
-				keysMap[i][j].Signal = telemetrytypes.SignalLogs
-				keysMap[i][j].Evolutions = mockEvolutionData(releaseTime)
-			}
-		}
-	}
+	keysMap := buildCompleteFieldKeyMap(releaseTime)
 
 	mockMetadataStore.KeysMap = keysMap
 
@@ -350,7 +340,10 @@ func TestStatementBuilderListQuery(t *testing.T) {
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+
+	// Create a test release time
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -491,7 +484,9 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	// Create a test release time
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -566,7 +561,9 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 	ctx := context.Background()
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	fm := NewFieldMapper()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	// Create a test release time
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap(releaseTime)
 	cb := NewConditionBuilder(fm)
 
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
@@ -701,6 +698,9 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 }
 
 func TestAdjustKey(t *testing.T) {
+
+	// Create a test release time
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
 	cases := []struct {
 		name        string
 		inputKey    telemetrytypes.TelemetryFieldKey
@@ -714,7 +714,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: IntrinsicFields["severity_text"],
 		},
 		{
@@ -751,7 +751,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "severity_number",
 				FieldContext:  telemetrytypes.FieldContextBody,
@@ -765,8 +765,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["service.name"][0],
 		},
 		{
 			name: "single matching key with incorrect context specified - no override",
@@ -775,7 +775,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "service.name",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -789,8 +789,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["service.name"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["service.name"][0],
 		},
 		{
 			name: "multiple matching keys - all materialized",
@@ -799,7 +799,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "multi.mat.key",
 				FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -813,7 +813,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "mixed.materialization.key",
 				FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -827,8 +827,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["mixed.materialization.key"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["mixed.materialization.key"][0],
 		},
 		{
 			name: "no matching keys - unknown field",
@@ -837,7 +837,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "unknown.field",
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
@@ -852,7 +852,7 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextAttribute,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap: buildCompleteFieldKeyMap(),
+			keysMap: buildCompleteFieldKeyMap(releaseTime),
 			expectedKey: telemetrytypes.TelemetryFieldKey{
 				Name:          "unknown.field",
 				FieldContext:  telemetrytypes.FieldContextAttribute,
@@ -867,8 +867,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["mat.key"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["mat.key"][0],
 		},
 		{
 			name: "non-materialized field",
@@ -877,8 +877,8 @@ func TestAdjustKey(t *testing.T) {
 				FieldContext:  telemetrytypes.FieldContextUnspecified,
 				FieldDataType: telemetrytypes.FieldDataTypeUnspecified,
 			},
-			keysMap:     buildCompleteFieldKeyMap(),
-			expectedKey: *buildCompleteFieldKeyMap()["user.id"][0],
+			keysMap:     buildCompleteFieldKeyMap(releaseTime),
+			expectedKey: *buildCompleteFieldKeyMap(releaseTime)["user.id"][0],
 		},
 	}
 

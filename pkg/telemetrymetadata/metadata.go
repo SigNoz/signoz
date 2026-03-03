@@ -2,7 +2,6 @@ package telemetrymetadata
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"strings"
@@ -15,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -570,45 +568,11 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		complete = complete && finished
 	}
 
-	// fetch and add evolutions
-	evolutionMetadataKeySelectors := getEvolutionMetadataKeySelectors(keys)
-	evolutions, err := t.GetColumnEvolutionMetadataMulti(ctx, evolutionMetadataKeySelectors)
-	if err != nil {
+	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
 		return nil, false, err
-	}
-	for i, key := range keys {
-		// first check if there is evolutions that with field name as __all__
-		// then check for specific field name
-		selector := &telemetrytypes.EvolutionSelector{
-			Signal:       key.Signal,
-			FieldContext: key.FieldContext,
-			FieldName:    "__all__",
-		}
-
-		if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
-			keys[i].Evolutions = keyEvolutions
-		}
-
-		selector.FieldName = key.Name
-		if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
-			keys[i].Evolutions = keyEvolutions
-		}
 	}
 
 	return keys, complete, nil
-}
-
-func getEvolutionMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
-	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
-	for _, keySelector := range keySelectors {
-		selector := &telemetrytypes.EvolutionSelector{
-			Signal:       keySelector.Signal,
-			FieldContext: keySelector.FieldContext,
-			FieldName:    keySelector.Name,
-		}
-		metadataKeySelectors = append(metadataKeySelectors, selector)
-	}
-	return metadataKeySelectors
 }
 
 func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
@@ -1810,21 +1774,6 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporality(ctx context.Cont
 	return result, nil
 }
 
-// CachedColumnEvolutionMetadata is a cacheable type for storing column evolution metadata
-type CachedEvolutionEntry struct {
-	Metadata []*telemetrytypes.EvolutionEntry `json:"metadata"`
-}
-
-var _ cachetypes.Cacheable = (*CachedEvolutionEntry)(nil)
-
-func (c *CachedEvolutionEntry) MarshalBinary() ([]byte, error) {
-	return json.Marshal(c)
-}
-
-func (c *CachedEvolutionEntry) UnmarshalBinary(data []byte) error {
-	return json.Unmarshal(data, c)
-}
-
 func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
@@ -1884,14 +1833,24 @@ func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Conte
 }
 
 // Get retrieves all evolutions for the given selectors from DB.
-func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
-	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, selectors)
+func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keysToUpdate {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    keySelector.Name,
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+
+	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
 	if err != nil {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
 	}
 
 	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
-
 	for _, evolution := range evolutions {
 		key := &telemetrytypes.EvolutionSelector{
 			Signal:       evolution.Signal,
@@ -1899,6 +1858,25 @@ func (k *telemetryMetaStore) GetColumnEvolutionMetadataMulti(ctx context.Context
 			FieldName:    evolution.FieldName,
 		}
 		evolutionsByUniqueKey[key.QualifiedName()] = append(evolutionsByUniqueKey[key.QualifiedName()], evolution)
+	}
+
+	if len(keysToUpdate) > 0 {
+		for i, key := range keysToUpdate {
+			selector := &telemetrytypes.EvolutionSelector{
+				Signal:       key.Signal,
+				FieldContext: key.FieldContext,
+				FieldName:    "__all__",
+			}
+			// first check if there is evolutions that with field name as __all__
+			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
+				keysToUpdate[i].Evolutions = keyEvolutions
+			}
+			// then check for specific field name
+			selector.FieldName = key.Name
+			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
+				keysToUpdate[i].Evolutions = keyEvolutions
+			}
+		}
 	}
 	return evolutionsByUniqueKey, nil
 }

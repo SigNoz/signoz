@@ -23,16 +23,7 @@ func TestFilterExprLogs(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
-
-	// for each key of resource attribute add evolution metadata
-	for i, telemetryKeys := range keys {
-		for j, telemetryKey := range telemetryKeys {
-			if telemetryKey.FieldContext == telemetrytypes.FieldContextResource {
-				keys[i][j].Evolutions = mockEvolutionData(releaseTime)
-			}
-		}
-	}
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
@@ -2442,7 +2433,8 @@ func TestFilterExprLogsConflictNegation(t *testing.T) {
 	cb := NewConditionBuilder(fm)
 
 	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	keys["body"] = []*telemetrytypes.TelemetryFieldKey{
 		{

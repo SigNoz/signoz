@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -15,7 +16,8 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          ctx,
@@ -52,7 +54,8 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
 		Context:          context.Background(),

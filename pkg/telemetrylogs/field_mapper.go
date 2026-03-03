@@ -291,7 +291,7 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			}
 		case schema.ColumnTypeEnumString,
 			schema.ColumnTypeEnumUInt64, schema.ColumnTypeEnumUInt32, schema.ColumnTypeEnumUInt8:
-			return column.Name, nil
+			exprs = append(exprs, column.Name)
 		case schema.ColumnTypeEnumMap:
 			keyType := column.Type.(schema.MapColumnType).KeyType
 			if _, ok := keyType.(schema.LowCardinalityColumnType); !ok {
@@ -302,10 +302,12 @@ func (m *fieldMapper) FieldFor(ctx context.Context, tsStart, tsEnd uint64, key *
 			case schema.ColumnTypeEnumString, schema.ColumnTypeEnumBool, schema.ColumnTypeEnumFloat64:
 				// a key could have been materialized, if so return the materialized column name
 				if key.Materialized {
-					return telemetrytypes.FieldKeyToMaterializedColumnName(key), nil
+					exprs = append(exprs, telemetrytypes.FieldKeyToMaterializedColumnName(key))
+					existExpr = append(existExpr, fmt.Sprintf("%s_exists = true", telemetrytypes.FieldKeyToMaterializedColumnName(key)))
+				} else {
+					exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
+					existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
 				}
-				exprs = append(exprs, fmt.Sprintf("%s['%s']", columnName, key.Name))
-				existExpr = append(existExpr, fmt.Sprintf("mapContains(%s, '%s')", columnName, key.Name))
 			default:
 				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "exists operator is not supported for map column type %s", valueType)
 			}

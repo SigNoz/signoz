@@ -98,48 +98,13 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 	}
 
 	// fetch and add evolutions
-	for k, v := range result {
-		keys := v
-		evolutionMetadataKeySelectors := getEvolutionMetadataKeySelectors(keys)
-		evolutions, err := m.GetColumnEvolutionMetadataMulti(ctx, evolutionMetadataKeySelectors)
-		if err != nil {
+	for _, v := range result {
+		if _, err := m.updateColumnEvolutionMetadataForKeys(ctx, v); err != nil {
 			return nil, false, err
 		}
-		for i, key := range keys {
-			// first check if there is evolutions that with field name as __all__
-			// then check for specific field name
-			selector := &telemetrytypes.EvolutionSelector{
-				Signal:       key.Signal,
-				FieldContext: key.FieldContext,
-				FieldName:    "__all__",
-			}
-
-			if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
-				keys[i].Evolutions = keyEvolutions
-			}
-
-			selector.FieldName = key.Name
-			if keyEvolutions, ok := evolutions[selector.QualifiedName()]; ok {
-				keys[i].Evolutions = keyEvolutions
-			}
-		}
-		result[k] = keys
 	}
 
 	return result, true, nil
-}
-
-func getEvolutionMetadataKeySelectors(keySelectors []*telemetrytypes.TelemetryFieldKey) []*telemetrytypes.EvolutionSelector {
-	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
-	for _, keySelector := range keySelectors {
-		selector := &telemetrytypes.EvolutionSelector{
-			Signal:       keySelector.Signal,
-			FieldContext: keySelector.FieldContext,
-			FieldName:    keySelector.Name,
-		}
-		metadataKeySelectors = append(metadataKeySelectors, selector)
-	}
-	return metadataKeySelectors
 }
 
 // GetKey returns a list of keys with the given name
@@ -354,24 +319,34 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 	return m.LogsJSONIndexesMap, nil
 }
 
-func (m *MockMetadataStore) GetColumnEvolutionMetadataMulti(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) (map[string][]*telemetrytypes.EvolutionEntry, error) {
-	result := make(map[string][]*telemetrytypes.EvolutionEntry)
+func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
 
-	// Iterate over each selector
-	for i, selector := range selectors {
-		// Build the key: Signal:FieldContext:FieldName
-		selector.FieldName = "__all__"
-		key := selector.QualifiedName()
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keysToUpdate {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    keySelector.Name,
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+	result := make(map[string][]*telemetrytypes.EvolutionEntry)
+	for i, selector := range metadataKeySelectors {
+		sel := &telemetrytypes.EvolutionSelector{
+			Signal:       selector.Signal,
+			FieldContext: selector.FieldContext,
+			FieldName:    "__all__",
+		}
+		key := sel.QualifiedName()
 		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
 			result[key] = entries
 		}
-		selector.FieldName = selectors[i].FieldName
-		key = selector.QualifiedName()
+		sel.FieldName = metadataKeySelectors[i].FieldName
+		key = sel.QualifiedName()
 		if entries, exists := m.ColumnEvolutionMetadataMap[key]; exists {
 			result[key] = entries
 		}
 	}
-
 	return result, nil
 }
 
