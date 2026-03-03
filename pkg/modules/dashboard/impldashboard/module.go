@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -24,9 +25,10 @@ type module struct {
 	analytics   analytics.Analytics
 	orgGetter   organization.Getter
 	queryParser queryparser.QueryParser
+	userGetter  user.Getter
 }
 
-func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser) dashboard.Module {
+func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, userGetter user.Getter) dashboard.Module {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard")
 	return &module{
 		store:       store,
@@ -34,6 +36,7 @@ func NewModule(store dashboardtypes.Store, settings factory.ProviderSettings, an
 		analytics:   analytics,
 		orgGetter:   orgGetter,
 		queryParser: queryParser,
+		userGetter:  userGetter,
 	}
 }
 
@@ -99,13 +102,18 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedByUserID valuer.UUID, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = dashboard.LockUnlock(lock, role, updatedBy)
+	user, err := module.userGetter.GetByOrgIDAndID(ctx, orgID, updatedByUserID)
+	if err != nil {
+		return err
+	}
+
+	err = dashboard.LockUnlock(lock, user.Role, user.Email.String())
 	if err != nil {
 		return err
 	}
