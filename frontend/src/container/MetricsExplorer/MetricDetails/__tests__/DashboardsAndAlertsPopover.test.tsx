@@ -16,15 +16,6 @@ import {
 
 const mockWindowOpen = jest.fn();
 Object.defineProperty(window, 'open', { value: mockWindowOpen });
-const mockSetQuery = jest.fn();
-const mockUrlQuery = {
-	set: mockSetQuery,
-	toString: jest.fn(),
-};
-jest.mock('hooks/useUrlQuery', () => ({
-	__esModule: true,
-	default: jest.fn(() => mockUrlQuery),
-}));
 
 const useGetMetricAlertsMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -156,12 +147,10 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Click on the first alert rule
 		await userEvent.click(screen.getByText(MOCK_ALERT_1.alertName));
 
-		// Should open alert in new tab
-		expect(mockSetQuery).toHaveBeenCalledWith(
-			QueryParams.ruleId,
-			MOCK_ALERT_1.alertId,
+		expect(mockWindowOpen).toHaveBeenCalledWith(
+			`/alerts/overview?${QueryParams.ruleId}=${MOCK_ALERT_1.alertId}`,
+			'_blank',
 		);
-		expect(mockWindowOpen).toHaveBeenCalled();
 	});
 
 	it('renders unique dashboards even when there are duplicates', async () => {
