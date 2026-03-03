@@ -5941,6 +5941,10 @@ paths:
         name: searchText
         schema:
           type: string
+      - in: query
+        name: source
+        schema:
+          type: string
       responses:
         "200":
           content:
