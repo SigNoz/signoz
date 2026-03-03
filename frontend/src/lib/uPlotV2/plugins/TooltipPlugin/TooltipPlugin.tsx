@@ -8,6 +8,7 @@ import {
 	createSetCursorHandler,
 	createSetLegendHandler,
 	createSetSeriesHandler,
+	getPlot,
 	isScrollEventInPlot,
 	updatePlotVisibility,
 	updateWindowSize,
@@ -53,7 +54,7 @@ export default function TooltipPlugin({
 	const [viewState, setState] = useState<TooltipViewState>(
 		createInitialViewState,
 	);
-	const { plot, isHovering, isPinned, contents, style } = viewState;
+	const { hasPlot, isHovering, isPinned, contents, style } = viewState;
 
 	/**
 	 * Merge a partial view update into the current React state.
@@ -72,11 +73,24 @@ export default function TooltipPlugin({
 		layoutRef.current?.observer.disconnect();
 		layoutRef.current = createLayoutObserver(layoutRef);
 
+		/**
+		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
+		 * reference; clearPlotReferences runs in cleanup so
+		 * detached canvases can be garbage collected.
+		 */
 		// Controller holds the mutable interaction state for this tooltip
 		// instance. It is intentionally *not* React state so uPlot hooks
 		// and DOM listeners can update it freely without triggering a
 		// render on every mouse move.
 		const controller: TooltipControllerState = createInitialControllerState();
+
+		/**
+		 * Clear plot references so detached canvases can be garbage collected.
+		 */
+		const clearPlotReferences = (): void => {
+			controller.plot = null;
+			updateState({ hasPlot: false });
+		};
 
 		const syncTooltipWithDashboard = syncMode === DashboardCursorSync.Tooltip;
 
@@ -110,9 +124,10 @@ export default function TooltipPlugin({
 		// Lock uPlot's internal cursor when the tooltip is pinned so
 		// subsequent mouse moves do not move the crosshair.
 		function updateCursorLock(): void {
-			if (controller.plot) {
+			const plot = getPlot(controller);
+			if (plot) {
 				// @ts-ignore uPlot cursor lock is not working as expected
-				controller.plot.cursor._lock = controller.pinned;
+				plot.cursor._lock = controller.pinned;
 			}
 		}
 
@@ -142,8 +157,9 @@ export default function TooltipPlugin({
 			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
-			if (controller.plot) {
-				controller.plot.setCursor({ left: -10, top: -10 });
+			const plot = getPlot(controller);
+			if (plot) {
+				plot.setCursor({ left: -10, top: -10 });
 			}
 			scheduleRender(isPinnedBeforeDismiss);
 		}
@@ -151,11 +167,12 @@ export default function TooltipPlugin({
 		// Build the React node to be rendered inside the tooltip by
 		// delegating to the caller-provided `render` function.
 		function createTooltipContents(): React.ReactNode {
-			if (!controller.hoverActive || !controller.plot) {
+			const plot = getPlot(controller);
+			if (!controller.hoverActive || !plot) {
 				return null;
 			}
 			return renderRef.current({
-				uPlotInstance: controller.plot,
+				uPlotInstance: plot,
 				dataIndexes: controller.seriesIndexes,
 				seriesIndex: controller.focusedSeriesIndex,
 				isPinned: controller.pinned,
@@ -240,9 +257,13 @@ export default function TooltipPlugin({
 
 		// When pinning is enabled, a click on the plot overlay while
 		// hovering converts the transient tooltip into a pinned one.
-		const handleUPlotOverClick = (u: uPlot, event: MouseEvent): void => {
+		// Uses getPlot(controller) to avoid closing over u (plot), which
+		// would retain the plot and detached canvases across unmounts.
+		const handleUPlotOverClick = (event: MouseEvent): void => {
+			const plot = getPlot(controller);
 			if (
-				event.target === u.over &&
+				plot &&
+				event.target === plot.over &&
 				controller.hoverActive &&
 				!controller.pinned &&
 				controller.focusedSeriesIndex != null
@@ -260,10 +281,9 @@ export default function TooltipPlugin({
 		// on the controller and optionally attach the pinning handler.
 		const handleInit = (u: uPlot): void => {
 			controller.plot = u;
-			updateState({ plot: u });
+			updateState({ hasPlot: true });
 			if (canPinTooltip) {
-				overClickHandler = (event: MouseEvent): void =>
-					handleUPlotOverClick(u, event);
+				overClickHandler = handleUPlotOverClick;
 				u.over.addEventListener('click', overClickHandler);
 			}
 		};
@@ -299,7 +319,6 @@ export default function TooltipPlugin({
 		const handleSetCursor = createSetCursorHandler(ctx);
 
 		handleWindowResize();
-
 		const removeReadyHook = config.addHook('ready', (): void =>
 			updatePlotVisibility(controller),
 		);
@@ -325,16 +344,20 @@ export default function TooltipPlugin({
 			removeSetSeriesHook();
 			removeSetLegendHook();
 			removeSetCursorHook();
-			if (controller.plot && overClickHandler) {
-				controller.plot.over.removeEventListener('click', overClickHandler);
+			if (overClickHandler) {
+				const plot = getPlot(controller);
+				if (plot) {
+					plot.over.removeEventListener('click', overClickHandler);
+				}
 				overClickHandler = null;
 			}
+			clearPlotReferences();
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [config]);
 
 	useLayoutEffect((): void => {
-		if (!plot || !layoutRef.current) {
+		if (!hasPlot || !layoutRef.current) {
 			return;
 		}
 		const layout = layoutRef.current;
@@ -349,9 +372,9 @@ export default function TooltipPlugin({
 			layout.width = 0;
 			layout.height = 0;
 		}
-	}, [isHovering, plot]);
+	}, [isHovering, hasPlot]);
 
-	if (!plot) {
+	if (!hasPlot) {
 		return null;
 	}
 

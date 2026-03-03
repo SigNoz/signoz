@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
@@ -12,6 +13,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

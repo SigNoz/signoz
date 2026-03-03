@@ -1,4 +1,5 @@
 import * as ReactQuery from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import * as ReactRedux from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';

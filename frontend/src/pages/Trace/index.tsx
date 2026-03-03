@@ -1,4 +1,5 @@
 import { MouseEventHandler, useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import * as Sentry from '@sentry/react';
 import { Card } from 'antd';
@@ -13,6 +14,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GetInitialTraceFilter } from 'store/actions/trace/getInitialFilter';

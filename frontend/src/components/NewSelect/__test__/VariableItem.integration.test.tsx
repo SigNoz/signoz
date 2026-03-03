@@ -1,4 +1,5 @@
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { VirtuosoMockContext } from 'react-virtuoso';
 import { render, screen, waitFor } from '@testing-library/react';

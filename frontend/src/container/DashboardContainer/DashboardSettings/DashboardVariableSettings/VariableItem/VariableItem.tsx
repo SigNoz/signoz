@@ -1,6 +1,7 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';

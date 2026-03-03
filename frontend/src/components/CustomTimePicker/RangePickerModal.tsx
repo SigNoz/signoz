@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { DatePicker } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';

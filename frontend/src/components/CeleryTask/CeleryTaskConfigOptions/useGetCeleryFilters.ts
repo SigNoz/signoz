@@ -1,4 +1,5 @@
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { DefaultOptionType } from 'antd/es/select';
 import { getAttributesValues } from 'api/queryBuilder/getAttributesValues';

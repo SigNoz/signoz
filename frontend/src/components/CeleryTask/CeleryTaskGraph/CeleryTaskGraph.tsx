@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
 import { ENTITY_VERSION_V4 } from 'constants/app';

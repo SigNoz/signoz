@@ -19,6 +19,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
@@ -174,7 +175,7 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
-	err := module.authz.Grant(ctx, input.OrgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role), authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
+	err := module.authz.Grant(ctx, input.OrgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(input.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.StringValue(), input.OrgID, nil))
 	if err != nil {
 		return err
 	}
@@ -236,8 +237,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	if user.Role != "" && user.Role != existingUser.Role {
 		err = m.authz.ModifyGrant(ctx,
 			orgID,
-			roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role),
-			roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role),
+			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
+			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
 			authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil),
 		)
 		if err != nil {
@@ -279,7 +280,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete root user")
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(user.Email.String())) {
+	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 
@@ -294,7 +295,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
-	err = module.authz.Revoke(ctx, orgID, roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role), authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, id, orgID, nil))
 	if err != nil {
 		return err
 	}

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
@@ -5,6 +6,7 @@ import { Filter } from 'api/v5/v5';
 import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
+import APIError from 'types/api/error';
 
 import MetricsTable from '../MetricsTable';
 import { MetricsListItemRowData } from '../types';
@@ -118,12 +120,23 @@ describe('MetricsTable', () => {
 	});
 
 	it('shows error state', () => {
+		const mockError = new APIError({
+			httpStatusCode: 400,
+			error: {
+				code: '400',
+				message: 'invalid filter expression',
+				url: '',
+				errors: [],
+			},
+		});
+
 		render(
 			<MemoryRouter>
 				<Provider store={store}>
 					<MetricsTable
 						isLoading={false}
 						isError
+						error={mockError}
 						data={[]}
 						pageSize={10}
 						currentPage={1}
@@ -138,12 +151,8 @@ describe('MetricsTable', () => {
 			</MemoryRouter>,
 		);
 
-		expect(screen.getByTestId('metrics-table-error-state')).toBeInTheDocument();
-		expect(
-			screen.getByText(
-				'Error fetching metrics. If the problem persists, please contact support.',
-			),
-		).toBeInTheDocument();
+		expect(screen.getByText('400')).toBeInTheDocument();
+		expect(screen.getByText('invalid filter expression')).toBeInTheDocument();
 	});
 
 	it('shows empty state when no data', () => {

@@ -1,17 +1,18 @@
-package types
+package savedviewtypes
 
 import (
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/uptrace/bun"
 )
 
 type SavedView struct {
 	bun.BaseModel `bun:"table:saved_views"`
 
-	Identifiable
-	TimeAuditable
-	UserAuditable
+	types.Identifiable
+	types.TimeAuditable
+	types.UserAuditable
 	OrgID      string `json:"orgId" bun:"org_id,notnull"`
 	Name       string `json:"name" bun:"name,type:text,notnull"`
 	Category   string `json:"category" bun:"category,type:text,notnull"`

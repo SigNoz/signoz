@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { SyncOutlined } from '@ant-design/icons';
