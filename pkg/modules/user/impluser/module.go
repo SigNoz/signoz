@@ -591,7 +591,7 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 
 func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	count, err := module.store.CountByOrgID(ctx, orgID)
+	count, err := module.store.ActiveCountByOrgID(ctx, orgID)
 	if err == nil {
 		stats["user.count"] = count
 	}
