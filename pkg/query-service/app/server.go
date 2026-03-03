@@ -195,7 +195,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		}),
 		otelmux.WithPublicEndpoint(),
 	))
-	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
+	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, []string{"SIGNOZ_API_KEY"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.ServiceAccountTokenizer, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,

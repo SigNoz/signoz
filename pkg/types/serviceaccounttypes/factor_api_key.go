@@ -26,7 +26,7 @@ type StorableFactorAPIKey struct {
 	Name             string    `bun:"name"`
 	Key              string    `bun:"key"`
 	ExpiresAt        uint64    `bun:"expires_at"`
-	LastUsed         time.Time `bun:"last_used"`
+	LastObservedAt   time.Time `bun:"last_observed_at"`
 	ServiceAccountID string    `bun:"service_account_id"`
 }
 
@@ -36,7 +36,7 @@ type FactorAPIKey struct {
 	Name             string      `json:"name" requrired:"true"`
 	Key              string      `json:"key" required:"true"`
 	ExpiresAt        uint64      `json:"expires_at" required:"true"`
-	LastUsed         time.Time   `json:"last_used" required:"true"`
+	LastObservedAt   time.Time   `json:"last_observed_at" required:"true"`
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
 
@@ -50,7 +50,7 @@ type GettableFactorAPIKey struct {
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
 	ExpiresAt        uint64      `json:"expires_at" required:"true"`
-	LastUsed         time.Time   `json:"last_used" required:"true"`
+	LastObservedAt   time.Time   `json:"last_observed_at" required:"true"`
 	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
 }
 
@@ -71,7 +71,7 @@ func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
 		Name:             storable.Name,
 		Key:              storable.Key,
 		ExpiresAt:        storable.ExpiresAt,
-		LastUsed:         storable.LastUsed,
+		LastObservedAt:   storable.LastObservedAt,
 		ServiceAccountID: valuer.MustNewUUID(storable.ServiceAccountID),
 	}
 }
@@ -93,7 +93,7 @@ func NewStorableFactorAPIKey(factorAPIKey *FactorAPIKey) *StorableFactorAPIKey {
 		Name:             factorAPIKey.Name,
 		Key:              factorAPIKey.Key,
 		ExpiresAt:        factorAPIKey.ExpiresAt,
-		LastUsed:         factorAPIKey.LastUsed,
+		LastObservedAt:   factorAPIKey.LastObservedAt,
 		ServiceAccountID: factorAPIKey.ServiceAccountID.String(),
 	}
 }
@@ -107,7 +107,7 @@ func NewGettableFactorAPIKeys(keys []*FactorAPIKey) []*GettableFactorAPIKey {
 			TimeAuditable:    key.TimeAuditable,
 			Name:             key.Name,
 			ExpiresAt:        key.ExpiresAt,
-			LastUsed:         key.LastUsed,
+			LastObservedAt:   key.LastObservedAt,
 			ServiceAccountID: key.ServiceAccountID,
 		}
 	}
@@ -143,11 +143,11 @@ func (apiKey *FactorAPIKey) IsExpired() error {
 }
 
 func (apiKey *FactorAPIKey) UpdateLastObservedAt(lastObservedAt time.Time) error {
-	if lastObservedAt.Before(apiKey.LastUsed) {
+	if lastObservedAt.Before(apiKey.LastObservedAt) {
 		return errors.New(errors.TypeInvalidInput, ErrCodeAPIkeyOlderLastObservedAt, "last observed at is before the current last observed at")
 	}
 
-	apiKey.LastUsed = lastObservedAt
+	apiKey.LastObservedAt = lastObservedAt
 	apiKey.UpdatedAt = time.Now()
 
 	return nil

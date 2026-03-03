@@ -162,7 +162,7 @@ func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*Facto
 		Name:             name,
 		Key:              encodedKey,
 		ExpiresAt:        expiresAt,
-		LastUsed:         time.Now(),
+		LastObservedAt:   time.Now(),
 		ServiceAccountID: sa.ID,
 	}, nil
 }

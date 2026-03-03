@@ -22,31 +22,50 @@ const (
 )
 
 type AuthN struct {
-	tokenizer tokenizer.Tokenizer
-	headers   []string
-	sharder   sharder.Sharder
-	logger    *slog.Logger
-	sfGroup   *singleflight.Group
+	tokenizer               tokenizer.Tokenizer
+	serviceAccountTokenizer tokenizer.Tokenizer
+	headers                 []string
+	serviceAccountHeaders   []string
+	sharder                 sharder.Sharder
+	logger                  *slog.Logger
+	sfGroup                 *singleflight.Group
 }
 
-func NewAuthN(headers []string, sharder sharder.Sharder, tokenizer tokenizer.Tokenizer, logger *slog.Logger) *AuthN {
+func NewAuthN(
+	headers []string,
+	serviceAccountHeaders []string,
+	sharder sharder.Sharder,
+	tokenizer tokenizer.Tokenizer,
+	serviceAccountTokenizer tokenizer.Tokenizer,
+	logger *slog.Logger,
+) *AuthN {
 	return &AuthN{
-		headers:   headers,
-		sharder:   sharder,
-		tokenizer: tokenizer,
-		logger:    logger,
-		sfGroup:   &singleflight.Group{},
+		headers:                 headers,
+		serviceAccountHeaders:   serviceAccountHeaders,
+		sharder:                 sharder,
+		tokenizer:               tokenizer,
+		serviceAccountTokenizer: serviceAccountTokenizer,
+		logger:                  logger,
+		sfGroup:                 &singleflight.Group{},
 	}
 }
 
 func (a *AuthN) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var values []string
+		var userHeaderValues []string
 		for _, header := range a.headers {
-			values = append(values, r.Header.Get(header))
+			userHeaderValues = append(userHeaderValues, r.Header.Get(header))
 		}
 
-		ctx, err := a.contextFromRequest(r.Context(), values...)
+		ctx, authType, activeTokenizer, err := a.authenticateUser(r.Context(), userHeaderValues...)
+		if err != nil {
+			var saHeaderValues []string
+			for _, header := range a.serviceAccountHeaders {
+				saHeaderValues = append(saHeaderValues, r.Header.Get(header))
+			}
+			ctx, authType, activeTokenizer, err = a.authenticateServiceAccount(r.Context(), saHeaderValues...)
+		}
+
 		if err != nil {
 			r = r.WithContext(ctx)
 			next.ServeHTTP(w, r)
@@ -67,11 +86,11 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		ctx = ctxtypes.SetAuthType(ctx, ctxtypes.AuthTypeTokenizer)
+		ctx = ctxtypes.SetAuthType(ctx, authType)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", ctxtypes.AuthTypeTokenizer.StringValue())
-		comment.Set("tokenizer_provider", a.tokenizer.Config().Provider)
+		comment.Set("auth_type", authType.StringValue())
+		comment.Set("tokenizer_provider", activeTokenizer.Config().Provider)
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 
@@ -79,15 +98,20 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 
 		next.ServeHTTP(w, r)
 
-		accessToken, err := authtypes.AccessTokenFromContext(r.Context())
+		// Track last observed at for the active tokenizer.
+		var token string
+		if authType == ctxtypes.AuthTypeAPIKey {
+			token, err = authtypes.ServiceAccountAPIKeyFromContext(r.Context())
+		} else {
+			token, err = authtypes.AccessTokenFromContext(r.Context())
+		}
 		if err != nil {
-			next.ServeHTTP(w, r)
 			return
 		}
 
 		lastObservedAtCtx := context.WithoutCancel(r.Context())
-		_, _, _ = a.sfGroup.Do(accessToken, func() (any, error) {
-			if err := a.tokenizer.SetLastObservedAt(lastObservedAtCtx, accessToken, time.Now()); err != nil {
+		_, _, _ = a.sfGroup.Do(token, func() (any, error) {
+			if err := activeTokenizer.SetLastObservedAt(lastObservedAtCtx, token, time.Now()); err != nil {
 				a.logger.ErrorContext(lastObservedAtCtx, "failed to set last observed at", "error", err)
 				return false, err
 			}
@@ -97,23 +121,60 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-func (a *AuthN) contextFromRequest(ctx context.Context, values ...string) (context.Context, error) {
+func (a *AuthN) authenticateUser(ctx context.Context, values ...string) (context.Context, ctxtypes.AuthType, tokenizer.Tokenizer, error) {
 	ctx, err := a.contextFromAccessToken(ctx, values...)
 	if err != nil {
-		return ctx, err
+		return ctx, ctxtypes.AuthTypeTokenizer, a.tokenizer, err
 	}
 
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
-		return ctx, err
+		return ctx, ctxtypes.AuthTypeTokenizer, a.tokenizer, err
 	}
 
-	authenticatedUser, err := a.tokenizer.GetIdentity(ctx, accessToken)
+	identity, err := a.tokenizer.GetIdentity(ctx, accessToken)
 	if err != nil {
-		return ctx, err
+		return ctx, ctxtypes.AuthTypeTokenizer, a.tokenizer, err
 	}
 
-	return authtypes.NewContextWithClaims(ctx, authenticatedUser.ToClaims()), nil
+	ctx = authtypes.NewContextWithClaims(ctx, identity.ToClaims())
+	return ctx, ctxtypes.AuthTypeTokenizer, a.tokenizer, nil
+}
+
+func (a *AuthN) authenticateServiceAccount(ctx context.Context, values ...string) (context.Context, ctxtypes.AuthType, tokenizer.Tokenizer, error) {
+	ctx, err := a.contextFromServiceAccountAPIKey(ctx, values...)
+	if err != nil {
+		return ctx, ctxtypes.AuthTypeAPIKey, a.serviceAccountTokenizer, err
+	}
+
+	apiKey, err := authtypes.ServiceAccountAPIKeyFromContext(ctx)
+	if err != nil {
+		return ctx, ctxtypes.AuthTypeAPIKey, a.serviceAccountTokenizer, err
+	}
+
+	identity, err := a.serviceAccountTokenizer.GetIdentity(ctx, apiKey)
+	if err != nil {
+		return ctx, ctxtypes.AuthTypeAPIKey, a.serviceAccountTokenizer, err
+	}
+
+	ctx = authtypes.NewContextWithClaims(ctx, identity.ToClaims())
+	return ctx, ctxtypes.AuthTypeAPIKey, a.serviceAccountTokenizer, nil
+}
+
+func (a *AuthN) contextFromServiceAccountAPIKey(ctx context.Context, values ...string) (context.Context, error) {
+	var value string
+	for _, v := range values {
+		if v != "" {
+			value = v
+			break
+		}
+	}
+
+	if value == "" {
+		return ctx, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key header")
+	}
+
+	return authtypes.NewContextWithServiceAccountAPIKey(ctx, value), nil
 }
 
 func (a *AuthN) contextFromAccessToken(ctx context.Context, values ...string) (context.Context, error) {

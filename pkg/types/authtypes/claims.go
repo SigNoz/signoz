@@ -9,11 +9,14 @@ import (
 
 type claimsKey struct{}
 type accessTokenKey struct{}
+type serviceAccountAPIKeyKey struct{}
 
 type Claims struct {
-	UserID string
-	Email  string
-	OrgID  string
+	UserID           string
+	ServiceAccountID string
+	Principal        string
+	Email            string
+	OrgID            string
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -42,6 +45,19 @@ func AccessTokenFromContext(ctx context.Context) (string, error) {
 	}
 
 	return accessToken, nil
+}
+
+func NewContextWithServiceAccountAPIKey(ctx context.Context, apiKey string) context.Context {
+	return context.WithValue(ctx, serviceAccountAPIKeyKey{}, apiKey)
+}
+
+func ServiceAccountAPIKeyFromContext(ctx context.Context) (string, error) {
+	apiKey, ok := ctx.Value(serviceAccountAPIKeyKey{}).(string)
+	if !ok {
+		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return apiKey, nil
 }
 
 func (c *Claims) LogValue() slog.Value {

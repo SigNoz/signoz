@@ -288,15 +288,6 @@ func (provider *provider) getOrGetSetAPIKey(ctx context.Context, key string) (*s
 	return apiKey, nil
 }
 
-func (provider *provider) setIdentity(ctx context.Context, identity *authtypes.Identity) error {
-	err := provider.cache.Set(ctx, emptyOrgID, identityCacheKey(identity.UserID), identity, 0)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
 func (provider *provider) getOrGetSetIdentity(ctx context.Context, serviceAccountID valuer.UUID) (*authtypes.Identity, error) {
 	identity := new(authtypes.Identity)
 	err := provider.cache.Get(ctx, emptyOrgID, identityCacheKey(serviceAccountID), identity)
