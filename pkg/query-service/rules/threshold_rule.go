@@ -13,10 +13,12 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/contextlinks"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -433,7 +435,10 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 
 	var results []*v3.Result
 	var queryErrors map[string]error
-
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "rules",
+		instrumentation.CodeFunctionName: "buildAndRunQuery",
+	})
 	if r.version == "v4" {
 		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {

@@ -5,12 +5,14 @@ import (
 	"math"
 	"sort"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -157,6 +159,10 @@ func (p *NamespacesRepo) getTopNamespaceGroups(ctx context.Context, orgID valuer
 		topNamespaceGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "getTopNamespaceGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topNamespaceGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -277,6 +283,10 @@ func (p *NamespacesRepo) GetNamespaceList(ctx context.Context, orgID valuer.UUID
 		}
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "GetNamespaceList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

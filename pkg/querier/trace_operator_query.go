@@ -56,10 +56,8 @@ func (q *traceOperatorQuery) Execute(ctx context.Context) (*qbtypes.Result, erro
 
 func (q *traceOperatorQuery) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
-		instrumentation.CodeNamespace:    "querier",
-		instrumentation.CodeFunctionName: "executeWithContext",
-		instrumentation.QueryDuration:    instrumentation.DurationBucket(q.fromMS, q.toMS),
+		instrumentation.TelemetrySignal: telemetrytypes.SignalTraces.StringValue(),
+		instrumentation.QueryDuration:   instrumentation.DurationBucket(q.fromMS, q.toMS),
 	})
 
 	totalRows := uint64(0)

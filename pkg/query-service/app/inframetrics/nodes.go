@@ -7,6 +7,7 @@ import (
 	"sort"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -14,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -187,6 +189,10 @@ func (p *NodesRepo) getTopNodeGroups(ctx context.Context, orgID valuer.UUID, req
 		topNodeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "getTopNodeGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topNodeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -302,6 +308,10 @@ func (p *NodesRepo) GetNodeList(ctx context.Context, orgID valuer.UUID, req mode
 		}
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "GetNodeList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

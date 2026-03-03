@@ -5,9 +5,11 @@ import (
 	"log/slog"
 	"math"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -67,6 +69,10 @@ func (p *BaseSeasonalProvider) toTSResults(ctx context.Context, resp *qbtypes.Qu
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID, params *anomalyQueryParams) (*anomalyQueryResults, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "anomaly",
+		instrumentation.CodeFunctionName: "getResults",
+	})
 	// TODO(srikanthccv): parallelize this?
 	p.logger.InfoContext(ctx, "fetching results for current period", "anomaly_current_period_query", params.CurrentPeriodQuery)
 	currentPeriodResults, err := p.querier.QueryRange(ctx, orgID, &params.CurrentPeriodQuery)

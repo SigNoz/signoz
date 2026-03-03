@@ -78,6 +78,10 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "services",
+		instrumentation.CodeFunctionName: "Get",
+	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -112,6 +116,10 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 
 // GetTopOperations implements services.Module for QBV5 based top ops
 func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "services",
+		instrumentation.CodeFunctionName: "GetTopOperations",
+	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}
@@ -132,6 +140,10 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 
 // GetEntryPointOperations implements services.Module for QBV5 based entry point ops
 func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "services",
+		instrumentation.CodeFunctionName: "GetEntryPointOperations",
+	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
 	}

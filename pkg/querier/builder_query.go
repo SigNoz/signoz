@@ -216,8 +216,6 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
 		"signal":                      q.spec.Signal.StringValue(),
-		"module_name":                 "builder-query",
-		"function_name":               "executeWithContext",
 		instrumentation.QueryDuration: instrumentation.DurationBucket(q.fromMS, q.toMS),
 	})
 

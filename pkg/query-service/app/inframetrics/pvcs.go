@@ -5,12 +5,14 @@ import (
 	"math"
 	"sort"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -190,6 +192,10 @@ func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, orgID valuer.UUID, re
 		topVolumeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "getTopVolumeGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topVolumeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -305,6 +311,10 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, orgID valuer.UUID, req model.
 		}
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "GetPvcList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

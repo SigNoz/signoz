@@ -5,12 +5,14 @@ import (
 	"math"
 	"sort"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -274,6 +276,10 @@ func (d *JobsRepo) getTopJobGroups(ctx context.Context, orgID valuer.UUID, req m
 		topJobGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "getTopJobGroups",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topJobGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -399,6 +405,10 @@ func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.
 		}
 	}
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "inframetrics",
+		instrumentation.CodeFunctionName: "GetJobList",
+	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
