@@ -37,10 +37,6 @@ import type {
 	UpdateIngestionKeyPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint returns the ingestion keys for a workspace
  * @summary Get ingestion keys for workspace

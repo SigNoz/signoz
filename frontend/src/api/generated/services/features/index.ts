@@ -18,10 +18,6 @@ import type { ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint returns the supported features and their details
  * @summary Get features

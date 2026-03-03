@@ -245,6 +245,18 @@
 							background: var(--bg-slate-300);
 							border-radius: 1px;
 						}
+						.all-attributes-value-item {
+							display: flex;
+							align-items: center;
+							gap: 4px;
+
+							.copy-feedback {
+								display: inline-flex;
+								align-items: center;
+								color: var(--bg-forest-500);
+								animation: fade-in-out 1.5s ease-in-out;
+							}
+						}
 						.ant-btn {
 							text-align: left;
 							width: fit-content;
@@ -398,9 +410,8 @@
 					}
 
 					.all-attributes-key {
-						.ant-typography:last-child {
-							color: var(--bg-vanilla-200);
-							background-color: var(--bg-robin-300);
+						.all-attributes-contribution {
+							color: var(--bg-slate-400);
 						}
 					}
 				}
@@ -580,6 +591,14 @@
 		.ant-popover-inner {
 			border: 1px solid var(--bg-vanilla-400);
 			background: var(--bg-vanilla-100) !important;
+		}
+	}
+
+	.all-values-popover {
+		.all-values-item {
+			&:hover {
+				background: rgba(0, 0, 0, 0.04);
+			}
 		}
 	}
 }

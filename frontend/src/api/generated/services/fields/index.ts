@@ -24,10 +24,6 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint returns field keys
  * @summary Get field keys

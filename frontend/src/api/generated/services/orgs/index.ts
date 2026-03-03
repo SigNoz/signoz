@@ -25,10 +25,6 @@ import type {
 	TypesOrganizationDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint returns the organization I belong to
  * @summary Get my organization

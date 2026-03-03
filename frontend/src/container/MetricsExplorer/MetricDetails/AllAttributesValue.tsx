@@ -1,7 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Button, Input, Menu, Popover, Tooltip, Typography } from 'antd';
-import { useNotifications } from 'hooks/useNotifications';
 import { Check, Copy, Search, SquareArrowOutUpRight } from 'lucide-react';
 
 import MetricDetailsErrorState from './MetricDetailsErrorState';
@@ -39,7 +38,6 @@ export function AllAttributesValue({
 	const [allValuesSearch, setAllValuesSearch] = useState('');
 	const [copiedValue, setCopiedValue] = useState<string | null>(null);
 	const [, copyToClipboard] = useCopyToClipboard();
-	const { notifications } = useNotifications();
 	const copyTimerRef = useRef<ReturnType<typeof setTimeout>>();
 
 	const handleCopyWithFeedback = useCallback(
@@ -62,21 +60,13 @@ export function AllAttributesValue({
 					break;
 				case 'copy-value':
 					handleCopyWithFeedback(attribute);
-					notifications.success({
-						message: 'Value copied!',
-					});
 					break;
 				default:
 					break;
 			}
 			setAttributePopoverKey(null);
 		},
-		[
-			goToMetricsExploreWithAppliedAttribute,
-			filterKey,
-			handleCopyWithFeedback,
-			notifications,
-		],
+		[goToMetricsExploreWithAppliedAttribute, filterKey, handleCopyWithFeedback],
 	);
 
 	const attributePopoverContent = useCallback(
@@ -169,26 +159,35 @@ export function AllAttributesValue({
 
 	return (
 		<div className="all-attributes-value">
-			{filterValue.slice(0, INITIAL_VISIBLE_COUNT).map((attribute) => (
-				<Popover
-					key={attribute}
-					content={attributePopoverContent(attribute)}
-					trigger="click"
-					overlayClassName="metric-details-popover attribute-value-popover-overlay"
-					open={attributePopoverKey === `${filterKey}-${attribute}`}
-					onOpenChange={(open): void => {
-						if (!open) {
-							setAttributePopoverKey(null);
-						} else {
-							setAttributePopoverKey(`${filterKey}-${attribute}`);
-						}
-					}}
-				>
-					<Button key={attribute} type="text">
-						<Typography.Text>{attribute}</Typography.Text>
-					</Button>
-				</Popover>
-			))}
+			{filterValue.slice(0, INITIAL_VISIBLE_COUNT).map((attribute) => {
+				const isCopied = copiedValue === attribute;
+				return (
+					<div key={attribute} className="all-attributes-value-item">
+						<Popover
+							content={attributePopoverContent(attribute)}
+							trigger="click"
+							overlayClassName="metric-details-popover attribute-value-popover-overlay"
+							open={attributePopoverKey === `${filterKey}-${attribute}`}
+							onOpenChange={(open): void => {
+								if (!open) {
+									setAttributePopoverKey(null);
+								} else {
+									setAttributePopoverKey(`${filterKey}-${attribute}`);
+								}
+							}}
+						>
+							<Button type="text">
+								<Typography.Text>{attribute}</Typography.Text>
+							</Button>
+						</Popover>
+						{isCopied && (
+							<span className="copy-feedback">
+								<Check size={12} />
+							</span>
+						)}
+					</div>
+				);
+			})}
 			{filterValue.length > INITIAL_VISIBLE_COUNT && (
 				<Popover
 					content={allValuesPopoverContent}

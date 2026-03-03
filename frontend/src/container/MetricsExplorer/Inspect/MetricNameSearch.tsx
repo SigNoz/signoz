@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Typography } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
-import { AggregatorFilter } from 'container/QueryBuilder/filters';
+import { MetricNameSelector } from 'container/QueryBuilder/filters';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { DataSource } from 'types/common/queryBuilder';
 
@@ -27,7 +27,7 @@ function MetricNameSearch({
 			className="inspect-metrics-input-group metric-name-search"
 		>
 			<Typography.Text>From</Typography.Text>
-			<AggregatorFilter
+			<MetricNameSelector
 				defaultValue={searchText ?? ''}
 				query={initialQueriesMap[DataSource.METRICS].builder.queryData[0]}
 				onSelect={handleSetMetricName}

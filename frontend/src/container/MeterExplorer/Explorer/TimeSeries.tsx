@@ -6,6 +6,7 @@ import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
+import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
 import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsFilter';
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
@@ -115,27 +116,34 @@ function TimeSeries(): JSX.Element {
 		setYAxisUnit(value);
 	};
 
+	const hasMetricSelected = useMemo(
+		() => currentQuery.builder.queryData.some((q) => q.aggregateAttribute?.key),
+		[currentQuery],
+	);
+
 	return (
 		<div className="meter-time-series-container">
 			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
-				{responseData.map((datapoint, index) => (
-					<div
-						className="time-series-view-panel"
-						// eslint-disable-next-line react/no-array-index-key
-						key={index}
-					>
-						<TimeSeriesView
-							isFilterApplied={false}
-							isError={queries[index].isError}
-							isLoading={queries[index].isLoading}
-							data={datapoint}
-							dataSource={DataSource.METRICS}
-							yAxisUnit={yAxisUnit}
-							panelType={PANEL_TYPES.BAR}
-						/>
-					</div>
-				))}
+				{!hasMetricSelected && <EmptyMetricsSearch />}
+				{hasMetricSelected &&
+					responseData.map((datapoint, index) => (
+						<div
+							className="time-series-view-panel"
+							// eslint-disable-next-line react/no-array-index-key
+							key={index}
+						>
+							<TimeSeriesView
+								isFilterApplied={false}
+								isError={queries[index].isError}
+								isLoading={queries[index].isLoading}
+								data={datapoint}
+								dataSource={DataSource.METRICS}
+								yAxisUnit={yAxisUnit}
+								panelType={PANEL_TYPES.BAR}
+							/>
+						</div>
+					))}
 			</div>
 		</div>
 	);

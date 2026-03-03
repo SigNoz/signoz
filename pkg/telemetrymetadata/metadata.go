@@ -1696,8 +1696,10 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 	if err != nil {
 		return nil, nil, err
 	}
-	// TODO: return error after table migration are run
-	meterMetricsTemporality, meterMetricsTypes, _ := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
+	meterMetricsTemporality, meterMetricsTypes, err := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
@@ -1803,6 +1805,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		"metric_name",
 		"argMax(temporality, unix_milli) as temporality",
 		"any(type) AS type",
+		"any(is_monotonic) as is_monotonic",
 	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
