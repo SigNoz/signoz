@@ -105,6 +105,10 @@
 				background: rgba(255, 255, 255, 0.04);
 			}
 
+			.ant-table-tbody > tr.expanded-clickable-row:hover > td {
+				cursor: pointer;
+			}
+
 			.ant-table-cell:first-child {
 				text-align: justify;
 			}
