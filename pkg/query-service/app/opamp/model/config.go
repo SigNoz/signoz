@@ -1,6 +1,11 @@
 package model
 
-import "github.com/SigNoz/signoz/pkg/valuer"
+import (
+	"context"
+
+	"github.com/SigNoz/signoz/pkg/types/opamptypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+)
 
 // Interface for source of otel collector config recommendations.
 type AgentConfigProvider interface {
@@ -20,4 +25,10 @@ type AgentConfigProvider interface {
 		configId string,
 		err error,
 	)
+
+	// GetDeployStatusByHash returns the DeployStatus for the given config hash
+	// (with orgId prefix as stored in the DB). Returns DeployStatusUnknown when
+	// no matching row exists. Used by the agent's first-connect handler to
+	// determine whether the reported RemoteConfigStatus resolves a pending deployment.
+	GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, configHash string) (opamptypes.DeployStatus, error)
 }

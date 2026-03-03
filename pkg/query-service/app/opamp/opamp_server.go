@@ -66,6 +66,17 @@ func (srv *Server) Start(listener string) error {
 		ListenEndpoint: listener,
 	}
 
+	// Re-register coordinator subscribers for any deployments that were in_progress
+	// when the server last shut down or crashed. Without this, notifySubscribers
+	// would find an empty map and the deployment status would stay stuck in_progress.
+	if pending, err := srv.agentConfigProvider.GetPendingDeployments(context.Background()); err != nil {
+		return err
+	} else {
+		for _, dep := range pending {
+			model.ListenToConfigUpdate(dep.OrgID, "", dep.RawConfigHash, srv.agentConfigProvider.ReportConfigDeploymentStatus)
+		}
+	}
+
 	// This will have to send request to all the agents of all tenants
 	unsubscribe := srv.agentConfigProvider.SubscribeToConfigUpdates(func() {
 		err := srv.agents.RecommendLatestConfigToAll(srv.agentConfigProvider)

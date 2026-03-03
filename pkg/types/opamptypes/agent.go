@@ -6,6 +6,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/uptrace/bun"
 )
 
@@ -77,6 +78,15 @@ var (
 	DeployFailed        = DeployStatus{valuer.NewString("failed")}
 	DeployStatusUnknown = DeployStatus{valuer.NewString("unknown")}
 )
+
+var DeployStatusToProtoStatus = map[DeployStatus]protobufs.RemoteConfigStatuses{
+	PendingDeploy:       protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
+	Deploying:           protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLYING,
+	Deployed:            protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
+	DeployInitiated:     protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLYING,
+	DeployFailed:        protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED,
+	DeployStatusUnknown: protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
+}
 
 type AgentConfigVersion struct {
 	bun.BaseModel `bun:"table:agent_config_version,alias:acv"`
