@@ -104,6 +104,8 @@ function CustomTimePicker({
 	const location = useLocation();
 
 	const inputRef = useRef<InputRef>(null);
+	const initialInputValueOnOpenRef = useRef<string>('');
+	const hasChangedSinceOpenRef = useRef<boolean>(false);
 	// Tracks if the last pointer down was on the input so we don't close the popover when user clicks the input again
 	const isClickFromInputRef = useRef(false);
 
@@ -246,6 +248,14 @@ function CustomTimePicker({
 			return;
 		}
 		isClickFromInputRef.current = false;
+
+		// If the popover is trying to close and the value changed since opening,
+		// treat it as if the user pressed Enter (attempt to apply the value)
+		if (!newOpen && hasChangedSinceOpenRef.current) {
+			hasChangedSinceOpenRef.current = false;
+			handleInputPressEnter();
+			return;
+		}
 
 		setOpen(newOpen);
 
@@ -425,6 +435,8 @@ function CustomTimePicker({
 			setOpen(true);
 			setSelectedTimePlaceholderValue('Live');
 			setInputValue('Live');
+			initialInputValueOnOpenRef.current = 'Live';
+			hasChangedSinceOpenRef.current = false;
 			return;
 		}
 
@@ -439,11 +451,21 @@ function CustomTimePicker({
 			.tz(timezone.value)
 			.format(DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
 
-		setInputValue(`${startTime} - ${endTime}`);
+		const nextValue = `${startTime} - ${endTime}`;
+		setInputValue(nextValue);
+		initialInputValueOnOpenRef.current = nextValue;
+		hasChangedSinceOpenRef.current = false;
 	};
 
 	const handleClose = (e: React.MouseEvent): void => {
 		e.stopPropagation();
+		// If the value changed since opening, treat this like pressing Enter
+		if (hasChangedSinceOpenRef.current) {
+			hasChangedSinceOpenRef.current = false;
+			handleInputPressEnter();
+			return;
+		}
+
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
 
@@ -465,6 +487,9 @@ function CustomTimePicker({
 	}, [location.pathname]);
 
 	const handleInputBlur = (): void => {
+		// Track whether the value was changed since the input was opened for editing
+		hasChangedSinceOpenRef.current =
+			inputValue !== initialInputValueOnOpenRef.current;
 		resetErrorStatus();
 	};
 
