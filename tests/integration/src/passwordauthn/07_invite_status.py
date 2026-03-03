@@ -67,7 +67,8 @@ def test_reinvite_deleted_user(
     assert response.status_code == HTTPStatus.CREATED
     reinvited_user = response.json()["data"]
     assert reinvited_user["status"] == "pending_invite"
-    assert reinvited_user["role"] == "VIEWER"  # role updated to new invite role
+    assert reinvited_user["role"] == "VIEWER" 
+    assert reinvited_user["id"] != invited_user["id"] # confirms a new user was created
 
     # Activate via reset password
     response = requests.get(

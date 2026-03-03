@@ -104,13 +104,14 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 	return user, nil
 }
 
-func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
+	var users []*types.User
+
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(user).
+		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("email = ?", email).
 		Scan(ctx)
@@ -118,7 +119,7 @@ func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Ema
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s does not exist in org %s", email, orgID)
 	}
 
-	return user, nil
+	return users, nil
 }
 
 func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {

@@ -66,7 +66,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	for _, invite := range bulkInvites.Invites {
 		// check and active user already exists with this email
-		existingUser, err := m.store.GetUserByEmailAndOrgID(ctx, invite.Email, orgID)
+		existingUser, err := m.GetNonDeletedUserByEmailAndOrgID(ctx, invite.Email, orgID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
 		}
@@ -79,26 +79,6 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			// check if a pending invite already exists
 			if existingUser.Status == types.UserStatusPendingInvite {
 				return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
-			}
-
-			// if user is in soft deleted state, reactivate as pending_invite status
-			if existingUser.Status == types.UserStatusDeleted {
-				// give the user new role based on invite
-				role, err := types.NewRole(invite.Role.String())
-				if err != nil {
-					return nil, err
-				}
-
-				existingUser.Update(invite.Name, role)
-				existingUser.UpdateStatus(types.UserStatusPendingInvite)
-				if err := m.store.UpdateUser(ctx, orgID, existingUser); err != nil {
-					return nil, err
-				}
-
-				invitedUsers = append(invitedUsers, existingUser)
-
-				// we need to skip the new user flow
-				continue
 			}
 
 			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
@@ -380,7 +360,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "Users are not allowed to reset their password themselves, please contact an admin to reset your password.")
 	}
 
-	user, err := module.store.GetUserByEmailAndOrgID(ctx, email, orgID)
+	user, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil // for security reasons
@@ -390,11 +370,6 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 
 	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
-	}
-
-	// handle soft deleted users
-	if user.Status == types.UserStatusDeleted {
-		return nil
 	}
 
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
@@ -494,7 +469,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 }
 
 func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
-	existingUser, err := module.store.GetUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
+	existingUser, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -502,11 +477,6 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	}
 
 	if existingUser != nil {
-		// for soft deleted users we cannot return them as they need to be invited again
-		if existingUser.Status == types.UserStatusDeleted {
-			return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "user has been deleted, contact your admin to be re-invited")
-		}
-
 		// for users logging through SSO flow but are having status as pending_invite
 		if existingUser.Status == types.UserStatusPendingInvite {
 			// activate the user
@@ -651,4 +621,26 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 	}
 
 	return nil
+}
+
+// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
+func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter out the deleted users
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
+
+	if len(existingUsers) > 1 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+	}
+
+	if len(existingUsers) == 1 {
+		return existingUsers[0], nil
+	}
+
+	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+
 }
