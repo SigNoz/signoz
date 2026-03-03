@@ -2,6 +2,8 @@ package sqlmigration
 
 import (
 	"context"
+	"database/sql"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -35,6 +37,33 @@ func (migration *deprecateUserInvite) Register(migrations *migrate.Migrations) e
 	return nil
 }
 
+type userInviteRow struct {
+	bun.BaseModel `bun:"table:user_invite"`
+
+	ID        string    `bun:"id"`
+	Name      string    `bun:"name"`
+	Email     string    `bun:"email"`
+	Role      string    `bun:"role"`
+	OrgID     string    `bun:"org_id"`
+	Token     string    `bun:"token"`
+	CreatedAt time.Time `bun:"created_at"`
+	UpdatedAt time.Time `bun:"updated_at"`
+}
+
+type pendingInviteUser struct {
+	bun.BaseModel `bun:"table:users"`
+
+	ID          string    `bun:"id"`
+	DisplayName string    `bun:"display_name"`
+	Email       string    `bun:"email"`
+	Role        string    `bun:"role"`
+	OrgID       string    `bun:"org_id"`
+	IsRoot      bool      `bun:"is_root"`
+	Status      string    `bun:"status"`
+	CreatedAt   time.Time `bun:"created_at"`
+	UpdatedAt   time.Time `bun:"updated_at"`
+}
+
 func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -45,6 +74,48 @@ func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error 
 		_ = tx.Rollback()
 	}()
 
+	// existing invites
+	var invites []*userInviteRow
+	err = tx.NewSelect().Model(&invites).Scan(ctx)
+	if err != nil && err != sql.ErrNoRows {
+		return err
+	}
+
+	// move all invitations to the users table as a pending_invite user
+	// skipping any invite whose email+org already has a user entry with non-deleted status
+	for _, invite := range invites {
+		existingCount, err := tx.NewSelect().
+			TableExpr("users").
+			Where("email = ?", invite.Email).
+			Where("org_id = ?", invite.OrgID).
+			Where("status != ?", "deleted").
+			Count(ctx)
+		if err != nil {
+			return err
+		}
+
+		if existingCount > 0 {
+			continue
+		}
+
+		user := &pendingInviteUser{
+			ID:          invite.ID,
+			DisplayName: invite.Name,
+			Email:       invite.Email,
+			Role:        invite.Role,
+			OrgID:       invite.OrgID,
+			IsRoot:      false,
+			Status:      "pending_invite",
+			CreatedAt:   invite.CreatedAt,
+			UpdatedAt:   time.Now(),
+		}
+
+		if _, err = tx.NewInsert().Model(user).Exec(ctx); err != nil {
+			return err
+		}
+	}
+
+	// finally drop the user_invite table
 	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("user_invite"))
 	if err != nil {
 		return err
