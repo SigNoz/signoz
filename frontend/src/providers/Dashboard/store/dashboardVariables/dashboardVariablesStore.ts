@@ -1,4 +1,4 @@
-import { isEmpty, isUndefined } from 'lodash-es';
+import { isNil } from 'lodash-es';
 
 import createStore from '../store';
 import { VariableFetchContext } from '../variableFetchStore';
@@ -68,28 +68,28 @@ export function updateDashboardVariablesStore({
  */
 export function getVariableDependencyContext(): VariableFetchContext {
 	const state = dashboardVariablesStore.getSnapshot();
+	// Dynamic variables should only wait on query variables having values,
+	// not on CUSTOM, TEXTBOX, or other types.
+	const doAllQueryVariablesHaveValuesSelected = Object.values(
+		state.variables,
+	).every((variable) => {
+		if (variable.type !== 'QUERY') {
+			return true;
+		}
 
-	// If every variable already has a selectedValue (e.g. persisted from
-	// localStorage/URL), dynamic variables can start in parallel.
-	// Otherwise they wait for query vars to settle first.
-	const doAllVariablesHaveValuesSelected = Object.values(state.variables).every(
-		(variable) => {
-			if (
-				variable.type === 'DYNAMIC' &&
-				(variable.selectedValue === null || isEmpty(variable.selectedValue)) &&
-				variable.allSelected === true
-			) {
-				return true;
-			}
+		if (isNil(variable.selectedValue)) {
+			return false;
+		}
 
-			return (
-				!isUndefined(variable.selectedValue) && !isEmpty(variable.selectedValue)
-			);
-		},
-	);
+		if (Array.isArray(variable.selectedValue)) {
+			return variable.selectedValue.length > 0;
+		}
+
+		return true;
+	});
 
 	return {
-		doAllVariablesHaveValuesSelected,
+		doAllQueryVariablesHaveValuesSelected,
 		variableTypes: state.variableTypes,
 		dynamicVariableOrder: state.dynamicVariableOrder,
 		dependencyData: state.dependencyData,
