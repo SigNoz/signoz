@@ -15,5 +15,5 @@ export const useGetIntegrationStatus = ({
 	useQuery<AxiosResponse<GetIntegrationStatusProps>, AxiosError>({
 		queryKey: ['integration-connection-status', integrationId],
 		queryFn: () => getIntegrationStatus({ integrationId }),
-		refetchInterval: 5000,
+		refetchInterval: 500000,
 	});

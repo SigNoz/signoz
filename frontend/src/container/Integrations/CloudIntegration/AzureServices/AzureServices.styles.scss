@@ -1,0 +1,182 @@
+.azure-services-container {
+	display: flex;
+	flex-direction: column;
+	height: calc(100% - 52px);
+	position: relative;
+
+	.azure-services-content {
+		height: 100%;
+		position: relative;
+
+		.azure-services-list-header {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+			padding: 6px 10px;
+			height: 40px;
+			border-bottom: 1px solid var(--bg-slate-400);
+
+			.azure-services-views-btn-group {
+				border: 1px solid var(--bg-slate-400);
+				border-radius: 4px;
+
+				display: flex;
+				align-items: center;
+
+				.azure-services-views-btn {
+					&:first-child {
+						border-radius: 4px 0px 0px 4px;
+					}
+					&:last-child {
+						border-radius: 0px 4px 4px 0px;
+					}
+
+					&:hover {
+						background-color: var(--bg-slate-400);
+					}
+
+					&.active {
+						background-color: var(--bg-slate-400);
+					}
+				}
+			}
+		}
+
+		.azure-services-list-section {
+			height: 100%;
+			position: relative;
+
+			.azure-services-list-section-content {
+				display: flex;
+				flex-direction: row;
+				width: 100%;
+				height: 100%;
+			}
+
+			.azure-services-list-section-loading-skeleton {
+				display: flex;
+				flex-direction: row;
+				width: 100%;
+
+				.azure-services-list-section-loading-skeleton-sidebar {
+					width: 240px;
+					padding: 12px;
+
+					display: flex;
+					flex-direction: column;
+					gap: 24px;
+				}
+
+				.azure-services-list-section-loading-skeleton-main {
+					flex: 1;
+					padding: 12px;
+
+					display: flex;
+					flex-direction: column;
+					gap: 24px;
+				}
+			}
+
+			.azure-services-list-view {
+				height: 100%;
+
+				.azure-services-list-view-sidebar {
+					width: 240px;
+					height: 100%;
+					border-right: 1px solid var(--l3-background);
+					padding: 12px;
+
+					.azure-services-list-view-sidebar-content {
+						display: flex;
+						flex-direction: column;
+						gap: 8px;
+						.azure-services-enabled {
+							display: flex;
+							flex-direction: column;
+							gap: 8px;
+						}
+
+						.azure-services-not-enabled {
+							display: flex;
+							flex-direction: column;
+							gap: 8px;
+						}
+
+						.azure-services-list-view-sidebar-content-header {
+							color: var(--l2-foreground);
+							font-family: Inter;
+							font-size: 11px;
+							font-style: normal;
+							font-weight: 600;
+							line-height: 18px; /* 163.636% */
+							letter-spacing: 0.44px;
+							text-transform: uppercase;
+						}
+
+						.azure-services-list-view-sidebar-content-item {
+							display: flex;
+							flex-direction: row;
+							align-items: center;
+							gap: 10px;
+							padding: 4px 12px;
+							border-radius: 4px;
+
+							cursor: pointer;
+
+							.azure-services-list-view-sidebar-content-item-icon {
+								width: 20px;
+								height: 20px;
+							}
+
+							.azure-services-list-view-sidebar-content-item-title {
+								color: var(--l1-foreground);
+								font-family: Inter;
+								font-size: 13px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 18px; /* 128.571% */
+							}
+
+							&:hover {
+								color: var(--l1-foreground);
+								font-family: Inter;
+								font-size: 13px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 18px; /* 128.571% */
+							}
+
+							&.active {
+								color: var(--l1-foreground);
+								font-family: Inter;
+								font-size: 13px;
+								font-style: normal;
+								font-weight: 400;
+								line-height: 18px; /* 128.571% */
+
+								background-color: var(--l3-background);
+
+								.azure-services-list-view-sidebar-content-item-title {
+									color: var(--l1-foreground);
+								}
+							}
+						}
+					}
+				}
+
+				.azure-services-list-view-main {
+					flex: 1;
+					padding: 12px;
+				}
+			}
+
+			.azure-services-grid-view {
+				display: flex;
+				flex-direction: row;
+				justify-content: space-between;
+				align-items: center;
+			}
+		}
+	}
+}

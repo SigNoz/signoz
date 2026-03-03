@@ -1,0 +1,53 @@
+.s3-buckets-selector {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	padding: 12px;
+	background: var(--l2-background);
+	border-radius: 4px;
+
+	.s3-buckets-selector-title {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: space-between;
+		gap: 8px;
+		font-size: 12px;
+		color: var(--l2-foreground);
+	}
+
+	.s3-buckets-selector-content {
+		display: flex;
+		flex-direction: column;
+		gap: 12px;
+
+		.s3-buckets-selector-region {
+			display: flex;
+			flex-direction: row;
+			align-items: center;
+			justify-content: space-between;
+			gap: 8px;
+
+			.s3-buckets-selector-region-header {
+				display: flex;
+				flex-direction: column;
+				gap: 4px;
+			}
+
+			.s3-buckets-selector-region-help {
+				color: var(--l2-foreground);
+				font-size: 12px;
+				line-height: 18px;
+				letter-spacing: -0.06px;
+			}
+
+			.s3-buckets-selector-region-select {
+				flex: 1;
+
+				.ant-select {
+					width: 100%;
+				}
+			}
+		}
+	}
+}

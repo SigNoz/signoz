@@ -1,0 +1,50 @@
+.cloud-integrations-header-section {
+	display: flex;
+	flex-direction: column;
+	gap: 16px;
+	border-bottom: 1px solid var(--l3-background);
+
+	.cloud-integrations-header {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		padding: 16px;
+		padding-bottom: 0px;
+		gap: 16px;
+
+		.cloud-integrations-title-section {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
+
+			.cloud-integrations-title {
+				display: flex;
+				align-items: center;
+				gap: 16px;
+
+				.cloud-integrations-icon {
+					width: 40px;
+					height: 40px;
+				}
+
+				color: var(--l1-foreground);
+				font-family: Inter;
+				font-size: 16px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 32px; /* 200% */
+				letter-spacing: -0.08px;
+			}
+
+			.cloud-integrations-description {
+				color: var(--l2-foreground);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+}

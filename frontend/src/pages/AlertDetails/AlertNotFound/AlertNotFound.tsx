@@ -1,9 +1,9 @@
 import { Button, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import { handleContactSupport } from 'container/Integrations/utils';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LifeBuoy, List } from 'lucide-react';
-import { handleContactSupport } from 'pages/Integrations/utils';
 
 import './AlertNotFound.styles.scss';
 

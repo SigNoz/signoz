@@ -1,0 +1,168 @@
+---
+description: TypeScript type safety for Jest tests - mocks, interfaces, no any
+globs:
+  - "**/*.test.ts"
+  - "**/*.test.tsx"
+  - "**/__tests__/**/*.ts"
+  - "**/__tests__/**/*.tsx"
+alwaysApply: false
+---
+
+# TypeScript Type Safety for Jest Tests
+
+**CRITICAL**: All Jest tests MUST be fully type-safe.
+
+## Requirements
+
+- Use proper TypeScript interfaces for all mock data
+- Type all Jest mock functions with `jest.MockedFunction<T>`
+- Use generic types for React components and hooks
+- Define proper return types for mock functions
+- Use `as const` for literal types when needed
+- Avoid `any` type – use proper typing instead
+
+## Mock Function Typing
+
+```ts
+// ✅ GOOD
+const mockFetchUser = jest.fn() as jest.MockedFunction<(id: number) => Promise<ApiResponse<User>>>;
+const mockEventHandler = jest.fn() as jest.MockedFunction<(event: Event) => void>;
+
+// ❌ BAD
+const mockFetchUser = jest.fn() as any;
+```
+
+## Mock Data with Interfaces
+
+```ts
+interface User { id: number; name: string; email: string; }
+interface ApiResponse<T> { data: T; status: number; message: string; }
+
+const mockUser: User = { id: 1, name: 'John Doe', email: 'john@example.com' };
+mockFetchUser.mockResolvedValue({ data: mockUser, status: 200, message: 'Success' });
+```
+
+## Component Props Typing
+
+```ts
+interface ComponentProps { title: string; data: User[]; onUserSelect: (user: User) => void; }
+
+const mockProps: ComponentProps = {
+  title: 'Test',
+  data: [{ id: 1, name: 'John', email: 'john@example.com' }],
+  onUserSelect: jest.fn() as jest.MockedFunction<(user: User) => void>,
+};
+render(<TestComponent {...mockProps} />);
+```
+
+## Hook Testing with Types
+
+```ts
+interface UseUserDataReturn {
+  user: User | null;
+  loading: boolean;
+  error: string | null;
+  refetch: () => void;
+}
+
+describe('useUserData', () => {
+  it('should return user data with proper typing', () => {
+    const mockUser: User = { id: 1, name: 'John', email: 'john@example.com' };
+    mockFetchUser.mockResolvedValue({ data: mockUser, status: 200, message: 'Success' });
+    const { result } = renderHook(() => useUserData(1));
+    expect(result.current.user).toEqual(mockUser);
+    expect(result.current.loading).toBe(false);
+    expect(result.current.error).toBeNull();
+  });
+});
+```
+
+## Generic Mock Typing
+
+```ts
+interface MockApiResponse<T> { data: T; status: number; }
+
+const mockFetchData = jest.fn() as jest.MockedFunction<
+  <T>(endpoint: string) => Promise<MockApiResponse<T>>
+>;
+mockFetchData<User>('/users').mockResolvedValue({ data: { id: 1, name: 'John' }, status: 200 });
+```
+
+## React Testing Library with Types
+
+```ts
+type TestComponentProps = ComponentProps<typeof TestComponent>;
+
+const renderTestComponent = (props: Partial<TestComponentProps> = {}): RenderResult => {
+  const defaultProps: TestComponentProps = { title: 'Test', data: [], onSelect: jest.fn(), ...props };
+  return render(<TestComponent {...defaultProps} />);
+};
+```
+
+## Error Handling with Types
+
+```ts
+interface ApiError { message: string; code: number; details?: Record<string, unknown>; }
+const mockApiError: ApiError = { message: 'API Error', code: 500, details: { endpoint: '/users' } };
+mockFetchUser.mockRejectedValue(new Error(JSON.stringify(mockApiError)));
+```
+
+## Global Mock Type Safety
+
+```ts
+// In __mocks__/routerMock.ts
+export const mockUseLocation = (overrides: Partial<Location> = {}): Location => ({
+  pathname: '/traces',
+  search: '',
+  hash: '',
+  state: null,
+  key: 'test-key',
+  ...overrides,
+});
+// In test files: const location = useLocation(); // Properly typed from global mock
+```
+
+## TypeScript Configuration for Jest
+
+```json
+// jest.config.ts
+{
+  "preset": "ts-jest/presets/js-with-ts-esm",
+  "globals": {
+    "ts-jest": {
+      "useESM": true,
+      "isolatedModules": true,
+      "tsconfig": "<rootDir>/tsconfig.jest.json"
+    }
+  },
+  "extensionsToTreatAsEsm": [".ts", ".tsx"],
+  "moduleFileExtensions": ["ts", "tsx", "js", "json"]
+}
+```
+
+```json
+// tsconfig.jest.json
+{
+  "extends": "./tsconfig.json",
+  "compilerOptions": {
+    "types": ["jest", "@testing-library/jest-dom"],
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "moduleResolution": "node"
+  },
+  "include": ["src/**/*", "**/*.test.ts", "**/*.test.tsx", "__mocks__/**/*"]
+}
+```
+
+## Type Safety Checklist
+
+- [ ] All mock functions use `jest.MockedFunction<T>`
+- [ ] All mock data has proper interfaces
+- [ ] No `any` types in test files
+- [ ] Generic types are used where appropriate
+- [ ] Error types are properly defined
+- [ ] Component props are typed
+- [ ] Hook return types are defined
+- [ ] API response types are defined
+- [ ] Global mocks are type-safe
+- [ ] Test utilities are properly typed

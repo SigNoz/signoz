@@ -1,0 +1,39 @@
+.code-block-container {
+	position: relative;
+	border-radius: 4px;
+	overflow: hidden;
+
+	.code-block-copy-btn {
+		position: absolute;
+		top: 50%;
+		right: 8px;
+		transform: translateY(-50%);
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		padding: 6px 8px;
+		color: var(--bg-vanilla-100);
+		transition: color 0.15s ease;
+
+		&.copied {
+			background-color: var(--bg-robin-500);
+		}
+	}
+
+	// CodeMirror wrapper
+	.code-block-editor {
+		border-radius: 4px;
+
+		.cm-editor {
+			border-radius: 4px;
+			font-size: 13px;
+			line-height: 1.5;
+			font-family: 'Space Mono', monospace;
+		}
+
+		.cm-scroller {
+			font-family: 'Space Mono', monospace;
+		}
+	}
+}
