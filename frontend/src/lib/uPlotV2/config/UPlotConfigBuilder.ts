@@ -376,7 +376,7 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	}
 
 	/**
-	 * Get the widget id
+	 * Get the id for the builder
 	 */
 	getId(): string {
 		return this.id;
