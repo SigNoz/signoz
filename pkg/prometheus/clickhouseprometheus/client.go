@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -176,9 +177,9 @@ func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, qu
 
 func (client *client) querySamples(ctx context.Context, start int64, end int64, fingerprints map[uint64][]prompb.Label, metricName string, subQuery string, args []any) ([]*prompb.TimeSeries, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":        telemetrytypes.SignalMetrics.StringValue(),
-		"module_name":   "clickhouse-prometheus",
-		"function_name": "querySamples",
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.CodeNamespace:    "clickhouse-prometheus",
+		instrumentation.CodeFunctionName: "querySamples",
 	})
 	argCount := len(args)
 

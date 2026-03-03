@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -58,9 +59,9 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 
 func withMetricsExplorerQuery(ctx context.Context, functionName string) context.Context {
 	comments := map[string]string{
-		"signal":        telemetrytypes.SignalMetrics.StringValue(),
-		"module_name":   "metrics-explorer",
-		"function_name": functionName,
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.CodeNamespace:    "metrics-explorer",
+		instrumentation.CodeFunctionName: functionName,
 	}
 	return ctxtypes.AddCommentsToContext(ctx, comments)
 }

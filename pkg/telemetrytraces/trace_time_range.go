@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -27,9 +28,9 @@ func (f *TraceTimeRangeFinder) GetTraceTimeRange(ctx context.Context, traceID st
 
 func (f *TraceTimeRangeFinder) GetTraceTimeRangeMulti(ctx context.Context, traceIDs []string) (startNano, endNano int64, ok bool) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":        telemetrytypes.SignalTraces.StringValue(),
-		"module_name":   "trace-time-range",
-		"function_name": "GetTraceTimeRangeMulti",
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentation.CodeNamespace:    "trace-time-range",
+		instrumentation.CodeFunctionName: "GetTraceTimeRangeMulti",
 	})
 	if len(traceIDs) == 0 {
 		return 0, 0, false

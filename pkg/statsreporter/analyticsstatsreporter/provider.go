@@ -8,6 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -203,8 +204,8 @@ func (provider *provider) Stop(ctx context.Context) error {
 
 func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map[string]any {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"module_name":   "statsreporter",
-		"function_name": "collectOrg",
+		instrumentation.CodeNamespace:    "statsreporter",
+		instrumentation.CodeFunctionName: "collectOrg",
 	})
 	var wg sync.WaitGroup
 	wg.Add(len(provider.collectors))

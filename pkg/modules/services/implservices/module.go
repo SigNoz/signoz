@@ -9,6 +9,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
@@ -36,9 +37,9 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 // FetchTopLevelOperations returns top-level operations per service using db query
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":        telemetrytypes.SignalTraces.StringValue(),
-		"module_name":   "services",
-		"function_name": "FetchTopLevelOperations",
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentation.CodeNamespace:    "services",
+		instrumentation.CodeFunctionName: "FetchTopLevelOperations",
 	})
 
 	db := m.TelemetryStore.ClickhouseDB()

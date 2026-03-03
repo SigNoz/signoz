@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -528,8 +529,8 @@ func (q *querier) run(
 	qbEvent *qbtypes.QBEvent,
 ) (*qbtypes.QueryRangeResponse, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"panel_type": qbEvent.PanelType,
-		"query_type": qbEvent.QueryType,
+		instrumentation.PanelType: qbEvent.PanelType,
+		instrumentation.QueryType: qbEvent.QueryType,
 	})
 
 	results := make(map[string]any)

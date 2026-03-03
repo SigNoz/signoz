@@ -12,6 +12,7 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -100,9 +101,9 @@ func (q *chSQLQuery) renderVars(query string, vars map[string]qbtypes.VariableIt
 
 func (q *chSQLQuery) Execute(ctx context.Context) (*qbtypes.Result, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"module_name":   "clickhouse-query",
-		"function_name": "Execute",
-		"duration":      qbtypes.DurationBucket(q.fromMS, q.toMS),
+		"module_name":                 "clickhouse-query",
+		"function_name":               "Execute",
+		instrumentation.QueryDuration: instrumentation.DurationBucket(q.fromMS, q.toMS),
 	})
 
 	totalRows := uint64(0)
