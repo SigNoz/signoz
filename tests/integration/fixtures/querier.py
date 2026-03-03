@@ -54,6 +54,7 @@ def build_builder_query(
     *,
     comparisonSpaceAggregationParam: Optional[Dict] = None,
     temporality: Optional[str] = None,
+    source: Optional[str] = None,
     step_interval: int = DEFAULT_STEP_INTERVAL,
     group_by: Optional[List[str]] = None,
     filter_expression: Optional[str] = None,
@@ -73,10 +74,14 @@ def build_builder_query(
         "stepInterval": step_interval,
         "disabled": disabled,
     }
+    if source:
+        spec["source"] = source
     if temporality:
         spec["aggregations"][0]["temporality"] = temporality
     if comparisonSpaceAggregationParam:
-        spec["aggregations"][0]["comparisonSpaceAggregationParam"] = comparisonSpaceAggregationParam
+        spec["aggregations"][0][
+            "comparisonSpaceAggregationParam"
+        ] = comparisonSpaceAggregationParam
     if group_by:
         spec["groupBy"] = [
             {

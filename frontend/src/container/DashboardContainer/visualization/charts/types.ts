@@ -1,3 +1,4 @@
+import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PrecisionOption } from 'components/Graph/types';
 import { LegendConfig, TooltipRenderArgs } from 'lib/uPlotV2/components/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
@@ -8,7 +9,7 @@ interface BaseChartProps {
 	height: number;
 	showTooltip?: boolean;
 	showLegend?: boolean;
-	timezone: string;
+	timezone?: Timezone;
 	canPinTooltip?: boolean;
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;

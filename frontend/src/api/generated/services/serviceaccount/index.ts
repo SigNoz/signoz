@@ -41,10 +41,6 @@ import type {
 	UpdateServiceAccountStatusPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint lists the service accounts for an organisation
  * @summary List service accounts
