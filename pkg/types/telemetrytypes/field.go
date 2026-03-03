@@ -41,7 +41,6 @@ type TelemetryFieldKey struct {
 	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
-	Warnings     []string            `json:"-"` // warnings attached to using a particular field key
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
@@ -61,10 +60,6 @@ func (f *TelemetryFieldKey) ArrayParentPaths() []string {
 		paths = append(paths, strings.Join(parts[:i+1], ArraySep))
 	}
 	return paths
-}
-
-func (f *TelemetryFieldKey) MustBuildJSONCondition() bool {
-	return f.FieldDataType != FieldDataTypeJSON && f.JSONDataType != nil
 }
 
 func (f *TelemetryFieldKey) ArrayParentSelectors() []*FieldKeySelector {

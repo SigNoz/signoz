@@ -52,7 +52,6 @@ var (
 		FieldContext:  telemetrytypes.FieldContextBody,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
 		JSONDataType:  &telemetrytypes.String,
-		Warnings:      []string{bodySearchDefaultWarning},
 	}
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",

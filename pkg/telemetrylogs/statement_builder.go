@@ -65,7 +65,7 @@ func (b *logQueryStatementBuilder) Build(
 	start = querybuilder.ToNanoSecs(start)
 	end = querybuilder.ToNanoSecs(end)
 
-	keySelectors := getKeySelectors(query)
+	keySelectors, warnings := getKeySelectors(query)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return nil, err
@@ -76,20 +76,32 @@ func (b *logQueryStatementBuilder) Build(
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
+	var stmt *qbtypes.Statement
 	switch requestType {
 	case qbtypes.RequestTypeRaw, qbtypes.RequestTypeRawStream:
-		return b.buildListQuery(ctx, q, query, start, end, keys, variables)
+		stmt, err = b.buildListQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeTimeSeries:
-		return b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
+		stmt, err = b.buildTimeSeriesQuery(ctx, q, query, start, end, keys, variables)
 	case qbtypes.RequestTypeScalar:
-		return b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+		stmt, err = b.buildScalarQuery(ctx, q, query, start, end, keys, false, variables)
+	default:
+		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
 
-	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
+	if err != nil {
+		return nil, err
+	}
+
+	if stmt != nil && len(warnings) > 0 {
+		stmt.Warnings = append(stmt.Warnings, warnings...)
+	}
+
+	return stmt, nil
 }
 
-func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []*telemetrytypes.FieldKeySelector {
+func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) ([]*telemetrytypes.FieldKeySelector, []string) {
 	var keySelectors []*telemetrytypes.FieldKeySelector
+	var warnings []string
 
 	for idx := range query.Aggregations {
 		aggExpr := query.Aggregations[idx]
@@ -136,7 +148,19 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) []
 		keySelectors[idx].SelectorMatchType = telemetrytypes.FieldSelectorMatchTypeExact
 	}
 
-	return keySelectors
+	// When the new JSON body experience is enabled, warn the user if they use the bare
+	// "body" key in the filter — queries on plain "body" default to body.message:string.
+	// TODO(Piyush): Setup better for coming FTS support.
+	if querybuilder.BodyJSONQueryEnabled {
+		for _, sel := range keySelectors {
+			if sel.Name == LogsV2BodyColumn {
+				warnings = append(warnings, bodySearchDefaultWarning)
+				break
+			}
+		}
+	}
+
+	return keySelectors, warnings
 }
 
 func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[string][]*telemetrytypes.TelemetryFieldKey, query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation], requestType qbtypes.RequestType) qbtypes.QueryBuilderQuery[qbtypes.LogAggregation] {

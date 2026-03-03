@@ -336,7 +336,6 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ""
 		}
-		v.warnings = append(v.warnings, v.fullTextColumn.Warnings...)
 		return cond
 	}
 
@@ -381,7 +380,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
-			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
@@ -454,7 +452,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
-			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -503,7 +500,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
-			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -590,7 +586,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				return ""
 			}
 			conds = append(conds, condition)
-			v.warnings = append(v.warnings, key.Warnings...)
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -668,7 +663,6 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
 	}
-	v.warnings = append(v.warnings, v.fullTextColumn.Warnings...)
 
 	return cond
 }
