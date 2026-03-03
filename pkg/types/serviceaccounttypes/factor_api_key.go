@@ -11,13 +11,15 @@ import (
 )
 
 var (
-	ErrCodeServiceAccountFactorAPIkeyInvalidInput  = errors.MustNewCode("service_account_factor_api_key_invalid_input")
-	ErrCodeServiceAccountFactorAPIKeyAlreadyExists = errors.MustNewCode("service_account_factor_api_key_already_exists")
-	ErrCodeServiceAccounFactorAPIKeytNotFound      = errors.MustNewCode("service_account_factor_api_key_not_found")
+	ErrCodeAPIkeyInvalidInput        = errors.MustNewCode("api_key_invalid_input")
+	ErrCodeAPIKeyAlreadyExists       = errors.MustNewCode("api_key_already_exists")
+	ErrCodeAPIKeytNotFound           = errors.MustNewCode("api_key_not_found")
+	ErrCodeAPIKeyExpired             = errors.MustNewCode("api_key_expired")
+	ErrCodeAPIkeyOlderLastObservedAt = errors.MustNewCode("api_key_older_last_observed_at")
 )
 
 type StorableFactorAPIKey struct {
-	bun.BaseModel `bun:"table:factor_api_key"`
+	bun.BaseModel `bun:"table:factor_api_key,alias:factor_api_key"`
 
 	types.Identifiable
 	types.TimeAuditable
@@ -128,6 +130,29 @@ func (apiKey *FactorAPIKey) Update(name string, expiresAt uint64) {
 	apiKey.UpdatedAt = time.Now()
 }
 
+func (apiKey *FactorAPIKey) IsExpired() error {
+	if apiKey.ExpiresAt == 0 {
+		return nil
+	}
+
+	if !time.Now().After(time.Unix(int64(apiKey.ExpiresAt), 0)) {
+		return errors.New(errors.TypeUnauthenticated, ErrCodeAPIKeyExpired, "api key has been expired")
+	}
+
+	return nil
+}
+
+func (apiKey *FactorAPIKey) UpdateLastObservedAt(lastObservedAt time.Time) error {
+	if lastObservedAt.Before(apiKey.LastUsed) {
+		return errors.New(errors.TypeInvalidInput, ErrCodeAPIkeyOlderLastObservedAt, "last observed at is before the current last observed at")
+	}
+
+	apiKey.LastUsed = lastObservedAt
+	apiKey.UpdatedAt = time.Now()
+
+	return nil
+}
+
 func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	type Alias PostableFactorAPIKey
 
@@ -137,7 +162,7 @@ func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	}
 
 	if temp.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
+		return errors.New(errors.TypeInvalidInput, ErrCodeAPIkeyInvalidInput, "name cannot be empty")
 	}
 
 	*key = PostableFactorAPIKey(temp)
@@ -153,9 +178,17 @@ func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	}
 
 	if temp.Name == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountFactorAPIkeyInvalidInput, "name cannot be empty")
+		return errors.New(errors.TypeInvalidInput, ErrCodeAPIkeyInvalidInput, "name cannot be empty")
 	}
 
 	*key = UpdatableFactorAPIKey(temp)
 	return nil
+}
+
+func (key FactorAPIKey) MarshalBinary() ([]byte, error) {
+	return json.Marshal(key)
+}
+
+func (key *FactorAPIKey) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, key)
 }

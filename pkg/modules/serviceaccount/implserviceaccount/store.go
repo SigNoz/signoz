@@ -188,7 +188,7 @@ func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceacc
 		Model(storable).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountFactorAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
 	}
 
 	return nil
@@ -206,7 +206,24 @@ func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer
 		Where("service_account_id = ?", serviceAccountID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccounFactorAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
+	}
+
+	return storable, nil
+}
+
+func (store *store) GetFactorAPIKeyByKey(ctx context.Context, key string) (*serviceaccounttypes.StorableFactorAPIKey, error) {
+	storable := new(serviceaccounttypes.StorableFactorAPIKey)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("key = ?", key).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with key: %s doesn't exist", key)
 	}
 
 	return storable, nil
@@ -229,6 +246,25 @@ func (store *store) ListFactorAPIKey(ctx context.Context, serviceAccountID value
 	return storables, nil
 }
 
+func (store *store) ListFactorAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableFactorAPIKey, error) {
+	storables := make([]*serviceaccounttypes.StorableFactorAPIKey, 0)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&storables).
+		Join("JOIN service_account").
+		JoinOn("service_account.id = factor_api_key.service_account_id").
+		Where("service_account.org_id = ?", orgID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return storables, nil
+}
+
 func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, storable *serviceaccounttypes.StorableFactorAPIKey) error {
 	_, err := store.
 		sqlstore.
@@ -236,6 +272,30 @@ func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID val
 		NewUpdate().
 		Model(storable).
 		Where("service_account_id = ?", serviceAccountID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (store *store) UpdateLastObservedAtByKey(ctx context.Context, apiKeyToLastObservedAt []map[string]any) error {
+	values := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewValues(&apiKeyToLastObservedAt)
+
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewUpdate().
+		With("update_cte", values).
+		Model((*serviceaccounttypes.StorableFactorAPIKey)(nil)).
+		TableExpr("update_cte").
+		Set("last_observed_at = update_cte.last_observed_at").
+		Where("factor_api_key.key = update_cte.key").
+		Where("factor_api_key.service_account_id = update_cte.service_account_id").
 		Exec(ctx)
 	if err != nil {
 		return err

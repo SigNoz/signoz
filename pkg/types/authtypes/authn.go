@@ -25,10 +25,11 @@ var (
 type AuthNProvider struct{ valuer.String }
 
 type Identity struct {
-	UserID valuer.UUID  `json:"userId"`
-	OrgID  valuer.UUID  `json:"orgId"`
-	Email  valuer.Email `json:"email"`
-	Role   types.Role   `json:"role"`
+	UserID           valuer.UUID  `json:"userId"`
+	ServiceAccountID valuer.UUID  `json:"serviceAccountId"`
+	Principal        Principal    `json:"principal"`
+	OrgID            valuer.UUID  `json:"orgId"`
+	Email            valuer.Email `json:"email"`
 }
 
 type CallbackIdentity struct {
@@ -78,12 +79,11 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role) *Identity {
+func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email) *Identity {
 	return &Identity{
 		UserID: userID,
 		OrgID:  orgID,
 		Email:  email,
-		Role:   role,
 	}
 }
 
@@ -118,7 +118,6 @@ func (typ *Identity) ToClaims() Claims {
 	return Claims{
 		UserID: typ.UserID.String(),
 		Email:  typ.Email.String(),
-		Role:   typ.Role,
 		OrgID:  typ.OrgID.String(),
 	}
 }

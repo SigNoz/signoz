@@ -9,6 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
@@ -250,4 +251,13 @@ func (sa *UpdatableServiceAccountStatus) UnmarshalJSON(data []byte) error {
 
 	*sa = UpdatableServiceAccountStatus(temp)
 	return nil
+}
+
+func (sa *StorableServiceAccount) ToIdentity() *authtypes.Identity {
+	return &authtypes.Identity{
+		ServiceAccountID: sa.ID,
+		Principal:        authtypes.PrincipalServiceAccount,
+		OrgID:            valuer.MustNewUUID(sa.OrgID),
+		Email:            valuer.MustNewEmail(sa.Email),
+	}
 }
