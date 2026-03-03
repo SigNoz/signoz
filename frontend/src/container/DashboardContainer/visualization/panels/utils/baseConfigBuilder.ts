@@ -16,7 +16,7 @@ import uPlot from 'uplot';
 import { PanelMode } from '../types';
 
 export interface BaseConfigBuilderProps {
-	widgetId?: string;
+	id: string;
 	thresholds?: ThresholdProps[];
 	apiResponse: MetricRangePayloadProps;
 	isDarkMode: boolean;
@@ -35,7 +35,7 @@ export interface BaseConfigBuilderProps {
 }
 
 export function buildBaseConfig({
-	widgetId,
+	id,
 	isDarkMode,
 	onClick,
 	onDragSelect,
@@ -58,8 +58,8 @@ export function buildBaseConfig({
 		: undefined;
 
 	const builder = new UPlotConfigBuilder({
+		id,
 		onDragSelect,
-		widgetId: widgetId,
 		tzDate,
 		shouldSaveSelectionPreference: panelMode === PanelMode.DASHBOARD_VIEW,
 		selectionPreferencesSource: panelMode
@@ -123,7 +123,7 @@ export function buildBaseConfig({
 		show: true,
 		side: 2,
 		isDarkMode,
-		isLogScale: isLogScale,
+		isLogScale,
 		panelType,
 	});
 
@@ -132,8 +132,8 @@ export function buildBaseConfig({
 		show: true,
 		side: 3,
 		isDarkMode,
-		isLogScale: isLogScale,
-		yAxisUnit: yAxisUnit,
+		isLogScale,
+		yAxisUnit,
 		panelType,
 	});
 
