@@ -116,7 +116,7 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 		Where("email = ?", email).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s does not exist in org %s", email, orgID)
+		return nil, err
 	}
 
 	return users, nil
