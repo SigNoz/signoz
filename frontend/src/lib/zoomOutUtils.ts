@@ -1,41 +1,54 @@
 /**
- * Logs Explorer zoom-out ladder:
- * - 3x until 1 day: 15m → 45m → 2h15m → 6h45m → 20h15m
+ * Custom Time Picker zoom-out ladder:
+ * - Until 1 day: 15m → 45m → 2hr → 7hr → 21hr
  * - Then fixed: 1d → 2d → 3d → 1w → 2w → 1m
- * - After 1 month: wrap to 15m
+ * - At 1 month: zoom out is disabled (max range)
  */
 
-import type { Time } from 'container/TopNav/DateTimeSelectionV2/types';
+import type {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 
 const MS_PER_MIN = 60 * 1000;
 const MS_PER_HOUR = 60 * MS_PER_MIN;
 const MS_PER_DAY = 24 * MS_PER_HOUR;
 const MS_PER_WEEK = 7 * MS_PER_DAY;
 
-/** Ladder steps in milliseconds (ordered from smallest to largest) */
 const ZOOM_OUT_LADDER_MS: number[] = [
 	15 * MS_PER_MIN, // 15m
 	45 * MS_PER_MIN, // 45m
-	2 * MS_PER_HOUR + 15 * MS_PER_MIN, // 2h15m
-	6 * MS_PER_HOUR + 45 * MS_PER_MIN, // 6h45m
-	20 * MS_PER_HOUR + 15 * MS_PER_MIN, // 20h15m
+	2 * MS_PER_HOUR, // 2hr
+	7 * MS_PER_HOUR, // 7hr
+	21 * MS_PER_HOUR, // 21hr
 	1 * MS_PER_DAY, // 1d
 	2 * MS_PER_DAY, // 2d
 	3 * MS_PER_DAY, // 3d
 	1 * MS_PER_WEEK, // 1w
 	2 * MS_PER_WEEK, // 2w
-	30 * MS_PER_DAY, // 1m (approx)
+	30 * MS_PER_DAY, // 1m
 ];
 
 const LADDER_LAST_INDEX = ZOOM_OUT_LADDER_MS.length - 1;
-const MIN_DURATION = ZOOM_OUT_LADDER_MS[0];
 const MAX_DURATION = ZOOM_OUT_LADDER_MS[LADDER_LAST_INDEX];
+const MIN_LADDER_DURATION_MS = ZOOM_OUT_LADDER_MS[0]; // 15m - below this we use 3x
+
+export const MAX_ZOOM_OUT_DURATION_MS = MAX_DURATION;
+
+/** Returns true when zoom out should be disabled (range at or beyond 1 month) */
+export function isZoomOutDisabled(durationMs: number): boolean {
+	return durationMs >= MAX_ZOOM_OUT_DURATION_MS;
+}
 
 /** Preset labels for ladder steps supported by GetMinMax (shows "Last 15 minutes" etc. instead of "Custom") */
-const PRESET_FOR_DURATION_MS: Record<number, Time> = {
+const PRESET_FOR_DURATION_MS: Record<number, Time | CustomTimeType> = {
 	[15 * MS_PER_MIN]: '15m',
 	[45 * MS_PER_MIN]: '45m',
+	[2 * MS_PER_HOUR]: '2h',
+	[7 * MS_PER_HOUR]: '7h',
+	[21 * MS_PER_HOUR]: '21h',
 	[1 * MS_PER_DAY]: '1d',
+	[2 * MS_PER_DAY]: '2d',
 	[3 * MS_PER_DAY]: '3d',
 	[1 * MS_PER_WEEK]: '1w',
 	[2 * MS_PER_WEEK]: '2w',
@@ -44,27 +57,34 @@ const PRESET_FOR_DURATION_MS: Record<number, Time> = {
 
 /**
  * Returns the next duration in the zoom-out ladder for the given current duration.
- * If at or past 1 month, returns 15m (wrap).
+ * Below 15m: zoom out 3x until we reach 15m, then continue with the ladder.
+ * If at or past 1 month, returns MAX_DURATION (no zoom out - button is disabled).
  */
 export function getNextDurationInLadder(durationMs: number): number {
 	if (durationMs >= MAX_DURATION) {
-		return MIN_DURATION; // Wrap: 1m → 15m
+		return MAX_DURATION; // No zoom out beyond 1 month
 	}
 
-	// Find the smallest ladder step that is strictly greater than current duration
+	// Below 15m: zoom out 3x until we reach 15m
+	if (durationMs < MIN_LADDER_DURATION_MS) {
+		const next = durationMs * 3;
+		return Math.min(next, MIN_LADDER_DURATION_MS);
+	}
+
+	// At or above 15m: use the fixed ladder
 	for (let i = 0; i < ZOOM_OUT_LADDER_MS.length; i++) {
 		if (ZOOM_OUT_LADDER_MS[i] > durationMs) {
 			return ZOOM_OUT_LADDER_MS[i];
 		}
 	}
 
-	return MIN_DURATION;
+	return MAX_DURATION;
 }
 
 export interface ZoomOutResult {
 	range: [number, number];
 	/** Preset key (e.g. '15m') when range matches a preset - use for display instead of "Custom Date Range" */
-	preset: Time | null;
+	preset: Time | CustomTimeType | null;
 }
 
 /**
@@ -86,6 +106,11 @@ export function getNextZoomOutRange(
 	}
 
 	const newDurationMs = getNextDurationInLadder(durationMs);
+
+	// No zoom out when already at max (1 month)
+	if (newDurationMs <= durationMs) {
+		return null;
+	}
 	const centerMs = startMs + durationMs / 2;
 	const computedEndMs = centerMs + newDurationMs / 2;
 

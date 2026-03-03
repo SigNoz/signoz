@@ -19,20 +19,6 @@
 			display: flex;
 			align-items: center;
 			gap: 8px;
-
-			.zoom-out-btn {
-				display: flex;
-				align-items: center;
-				justify-content: center;
-				color: var(--bg-vanilla-100);
-				border: none;
-				box-shadow: none;
-
-				&:hover {
-					color: var(--bg-vanilla-100);
-					background: rgba(255, 255, 255, 0.1);
-				}
-			}
 		}
 	}
 
@@ -63,16 +49,5 @@
 	.toolbar {
 		border-top: 1px solid var(--bg-vanilla-300);
 		border-bottom: 1px solid var(--bg-vanilla-300);
-
-		.right-toolbar-actions-container {
-			.zoom-out-btn {
-				color: var(--bg-ink-200);
-
-				&:hover {
-					color: var(--bg-ink-300);
-					background: rgba(0, 0, 0, 0.06);
-				}
-			}
-		}
 	}
 }
