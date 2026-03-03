@@ -312,7 +312,9 @@ function Summary(): JSX.Element {
 				/>
 				{showFullScreenLoading ? (
 					<MetricsLoading />
-				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
+				) : isMetricsListDataEmpty &&
+				  isMetricsTreeMapDataEmpty &&
+				  !appliedFilterExpression ? (
 					<NoLogs dataSource={DataSource.METRICS} />
 				) : (
 					<>
