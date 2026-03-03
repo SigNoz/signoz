@@ -82,7 +82,12 @@ export const prepareUPlotConfig = ({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const builder = buildBaseConfig({
-		widget,
+		widgetId: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		onClick,
 		onDragSelect,
@@ -120,7 +125,6 @@ export const prepareUPlotConfig = ({
 				: VisibilityMode.Never,
 			pointSize: 5,
 			isDarkMode,
-			panelType: PANEL_TYPES.TIME_SERIES,
 		});
 	});
 

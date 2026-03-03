@@ -112,6 +112,7 @@ export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
 	Bar = 'bar',
+	Histogram = 'histogram',
 }
 
 export enum LineInterpolation {
@@ -168,7 +169,6 @@ export interface PointsConfig {
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
-	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;
