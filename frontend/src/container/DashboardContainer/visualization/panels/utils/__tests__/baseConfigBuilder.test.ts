@@ -28,9 +28,17 @@ jest.mock('lib/uPlotLib/plugins/onClickPlugin', () => ({
 }));
 
 const createBaseConfigBuilderProps = (
-	overrides: Partial<BaseConfigBuilderProps> = {},
-): Partial<BaseConfigBuilderProps> => ({
-	widgetId: 'widget-1',
+	overrides: Partial<
+		Pick<
+			BaseConfigBuilderProps,
+			'id' | 'yAxisUnit' | 'isLogScale' | 'softMin' | 'softMax' | 'thresholds'
+		>
+	> = {},
+): Pick<
+	BaseConfigBuilderProps,
+	'id' | 'yAxisUnit' | 'isLogScale' | 'softMin' | 'softMax' | 'thresholds'
+> => ({
+	id: 'widget-1',
 	yAxisUnit: 'ms',
 	isLogScale: false,
 	softMin: undefined,
@@ -64,14 +72,14 @@ describe('buildBaseConfig', () => {
 		expect(typeof builder.getLegendItems).toBe('function');
 	});
 
-	it('configures builder with widgetId and DASHBOARD_VIEW preferences', () => {
+	it('configures builder with id and DASHBOARD_VIEW preferences', () => {
 		const builder = buildBaseConfig({
 			...baseProps,
 			panelMode: PanelMode.DASHBOARD_VIEW,
-			...createBaseConfigBuilderProps({ widgetId: 'my-widget' }),
+			...createBaseConfigBuilderProps({ id: 'my-widget' }),
 		});
 
-		expect(builder.getWidgetId()).toBe('my-widget');
+		expect(builder.getId()).toBe('my-widget');
 		expect(builder.getShouldSaveSelectionPreference()).toBe(true);
 	});
 

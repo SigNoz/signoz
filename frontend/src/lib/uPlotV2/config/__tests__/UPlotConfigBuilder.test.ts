@@ -47,21 +47,22 @@ describe('UPlotConfigBuilder', () => {
 
 	it('returns correct save selection preference flag from constructor args', () => {
 		const builder = new UPlotConfigBuilder({
+			id: 'widget-123',
 			shouldSaveSelectionPreference: true,
 		});
 
 		expect(builder.getShouldSaveSelectionPreference()).toBe(true);
 	});
 
-	it('returns widgetId from constructor args', () => {
-		const builder = new UPlotConfigBuilder({ widgetId: 'widget-123' });
+	it('returns id from constructor args', () => {
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
-		expect(builder.getWidgetId()).toBe('widget-123');
+		expect(builder.getId()).toBe('widget-123');
 	});
 
 	it('sets tzDate from constructor and includes it in config', () => {
 		const tzDate = (ts: number): Date => new Date(ts);
-		const builder = new UPlotConfigBuilder({ tzDate });
+		const builder = new UPlotConfigBuilder({ id: 'widget-123', tzDate });
 
 		const config = builder.getConfig();
 
@@ -70,7 +71,7 @@ describe('UPlotConfigBuilder', () => {
 
 	it('does not call onDragSelect for click without drag (width === 0)', () => {
 		const onDragSelect = jest.fn();
-		const builder = new UPlotConfigBuilder({ onDragSelect });
+		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
@@ -83,14 +84,15 @@ describe('UPlotConfigBuilder', () => {
 
 		// Simulate uPlot calling the hook
 		const setSelectHook = setSelectHooks[0];
-		setSelectHook!(uplotInstance);
+		expect(setSelectHook).toBeDefined();
+		setSelectHook?.(uplotInstance);
 
 		expect(onDragSelect).not.toHaveBeenCalled();
 	});
 
 	it('calls onDragSelect with start and end times in milliseconds for a drag selection', () => {
 		const onDragSelect = jest.fn();
-		const builder = new UPlotConfigBuilder({ onDragSelect });
+		const builder = new UPlotConfigBuilder({ id: 'widget-123', onDragSelect });
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
@@ -109,7 +111,8 @@ describe('UPlotConfigBuilder', () => {
 		} as unknown) as uPlot;
 
 		const setSelectHook = setSelectHooks[0];
-		setSelectHook!(uplotInstance);
+		expect(setSelectHook).toBeDefined();
+		setSelectHook?.(uplotInstance);
 
 		expect(onDragSelect).toHaveBeenCalledTimes(1);
 		// 100 and 110 seconds converted to milliseconds
@@ -117,7 +120,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('adds and removes hooks via addHook, and exposes them through getConfig', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 		const drawHook = jest.fn();
 
 		const remove = builder.addHook('draw', drawHook as uPlot.Hooks.Defs['draw']);
@@ -132,7 +135,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('adds axes, scales, and series and wires them into the final config', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		// Add axis and scale
 		builder.addAxis({ scaleKey: 'y', label: 'Requests' });
@@ -168,7 +171,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('merges axis when addAxis is called twice with same scaleKey', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		builder.addAxis({ scaleKey: 'y', label: 'Requests' });
 		builder.addAxis({ scaleKey: 'y', label: 'Updated Label', show: false });
@@ -181,7 +184,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('merges scale when addScale is called twice with same scaleKey', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		builder.addScale({ scaleKey: 'y', min: 0 });
 		builder.addScale({ scaleKey: 'y', max: 100 });
@@ -202,7 +205,7 @@ describe('UPlotConfigBuilder', () => {
 		]);
 
 		const builder = new UPlotConfigBuilder({
-			widgetId: 'widget-1',
+			id: 'widget-1',
 			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
 		});
 
@@ -229,7 +232,7 @@ describe('UPlotConfigBuilder', () => {
 		]);
 
 		const builder = new UPlotConfigBuilder({
-			widgetId: 'widget-1',
+			id: 'widget-1',
 			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
 		});
 
@@ -267,7 +270,7 @@ describe('UPlotConfigBuilder', () => {
 		]);
 
 		const builder = new UPlotConfigBuilder({
-			widgetId: 'widget-1',
+			id: 'widget-1',
 			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
 		});
 
@@ -300,7 +303,7 @@ describe('UPlotConfigBuilder', () => {
 		]);
 
 		const builder = new UPlotConfigBuilder({
-			widgetId: 'widget-dup',
+			id: 'widget-dup',
 			selectionPreferencesSource: SelectionPreferencesSource.LOCAL_STORAGE,
 		});
 
@@ -327,7 +330,7 @@ describe('UPlotConfigBuilder', () => {
 
 	it('does not attempt to read stored visibility when using in-memory preferences', () => {
 		const builder = new UPlotConfigBuilder({
-			widgetId: 'widget-1',
+			id: 'widget-1',
 			selectionPreferencesSource: SelectionPreferencesSource.IN_MEMORY,
 		});
 
@@ -342,7 +345,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('adds thresholds only once per scale key', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		const thresholdsOptions = {
 			scaleKey: 'y',
@@ -360,7 +363,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('adds multiple thresholds when scale key is different', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		const thresholdsOptions = {
 			scaleKey: 'y',
@@ -381,7 +384,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('merges cursor configuration with defaults instead of replacing them', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		builder.setCursor({
 			drag: { setScale: false },
@@ -396,7 +399,7 @@ describe('UPlotConfigBuilder', () => {
 
 	describe('getCursorConfig', () => {
 		it('returns default cursor merged with custom cursor when no stepInterval', () => {
-			const builder = new UPlotConfigBuilder();
+			const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 			builder.setCursor({
 				drag: { setScale: false },
@@ -410,7 +413,7 @@ describe('UPlotConfigBuilder', () => {
 		});
 
 		it('returns hover prox as DEFAULT_HOVER_PROXIMITY_VALUE when stepInterval is not set', () => {
-			const builder = new UPlotConfigBuilder();
+			const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 			const cursorConfig = builder.getCursorConfig();
 
@@ -422,15 +425,15 @@ describe('UPlotConfigBuilder', () => {
 			const mockWidth = 100;
 			calculateWidthBasedOnStepIntervalMock.mockReturnValue(mockWidth);
 
-			const builder = new UPlotConfigBuilder({ stepInterval });
+			const builder = new UPlotConfigBuilder({ id: 'widget-123', stepInterval });
 			const cursorConfig = builder.getCursorConfig();
 
 			expect(typeof cursorConfig.hover?.prox).toBe('function');
 
 			const uPlotInstance = {} as uPlot;
-			const proxResult = (cursorConfig.hover!.prox as (u: uPlot) => number)(
-				uPlotInstance,
-			);
+			const prox = cursorConfig.hover?.prox as ((u: uPlot) => number) | undefined;
+			expect(prox).toBeDefined();
+			const proxResult = prox ? prox(uPlotInstance) : NaN;
 
 			expect(calculateWidthBasedOnStepIntervalMock).toHaveBeenCalledWith({
 				uPlotInstance,
@@ -441,7 +444,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('adds plugins and includes them in config', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 		const plugin: uPlot.Plugin = {
 			opts: (): void => {},
 			hooks: {},
@@ -456,7 +459,7 @@ describe('UPlotConfigBuilder', () => {
 
 	it('sets padding, legend, focus, select, tzDate, bands and includes them in config', () => {
 		const tzDate = (ts: number): Date => new Date(ts);
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		const bands: uPlot.Band[] = [{ series: [1, 2], fill: (): string => '#000' }];
 
@@ -478,7 +481,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('does not include plugins when none added', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		const config = builder.getConfig();
 
@@ -486,7 +489,7 @@ describe('UPlotConfigBuilder', () => {
 	});
 
 	it('does not include bands when empty', () => {
-		const builder = new UPlotConfigBuilder();
+		const builder = new UPlotConfigBuilder({ id: 'widget-123' });
 
 		const config = builder.getConfig();
 
