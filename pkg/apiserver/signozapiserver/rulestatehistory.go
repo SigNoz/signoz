@@ -11,9 +11,6 @@ import (
 )
 
 func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
-	if provider.ruleStateHistoryHandler == nil {
-		return nil
-	}
 
 	if err := router.Handle("/api/v2/rules/{id}/history/stats", handler.New(
 		provider.authZ.ViewAccess(provider.ruleStateHistoryHandler.GetRuleHistoryStats),
@@ -57,7 +54,7 @@ func (provider *provider) addRuleStateHistoryRoutes(router *mux.Router) error {
 			Summary:             "Get top contributors to rule firing",
 			Description:         "Returns top label combinations contributing to rule firing in the selected time range.",
 			RequestQuery:        new(rulestatehistorytypes.V2HistoryBaseQueryParams),
-			Response:            new([]rulestatehistorytypes.RuleStateHistoryContributor),
+			Response:            new([]rulestatehistorytypes.RuleStateHistoryContributorResponse),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},

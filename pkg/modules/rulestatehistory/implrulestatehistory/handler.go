@@ -4,6 +4,7 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
+	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -82,19 +83,31 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 		}
 	}
 
-	timeline, err := h.module.GetHistoryTimeline(r.Context(), ruleID, req.Query)
+	timelineItems, timelineTotal, err := h.module.GetHistoryTimeline(r.Context(), ruleID, req.Query)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
 	resp := rulestatehistorytypes.RuleStateTimelineResponse{}
-	if timeline != nil {
-		resp.Items = timeline.Items
-		resp.Total = timeline.Total
+	resp.Items = make([]rulestatehistorytypes.RuleStateHistoryResponseItem, 0, len(timelineItems))
+	for _, item := range timelineItems {
+		resp.Items = append(resp.Items, rulestatehistorytypes.RuleStateHistoryResponseItem{
+			RuleID:              item.RuleID,
+			RuleName:            item.RuleName,
+			OverallState:        item.OverallState,
+			OverallStateChanged: item.OverallStateChanged,
+			State:               item.State,
+			StateChanged:        item.StateChanged,
+			UnixMilli:           item.UnixMilli,
+			Labels:              toQBLabels(item.Labels),
+			Fingerprint:         item.Fingerprint,
+			Value:               item.Value,
+		})
 	}
-	if timeline != nil && req.Query.Limit > 0 && req.Query.Offset+int64(len(timeline.Items)) < int64(timeline.Total) {
-		nextOffset := req.Query.Offset + int64(len(timeline.Items))
+	resp.Total = timelineTotal
+	if req.Query.Limit > 0 && req.Query.Offset+int64(len(timelineItems)) < int64(timelineTotal) {
+		nextOffset := req.Query.Offset + int64(len(timelineItems))
 		nextCursor, err := encodeCursor(cursorToken{Offset: nextOffset, Limit: req.Query.Limit})
 		if err != nil {
 			render.Error(w, err)
@@ -117,7 +130,17 @@ func (h *handler) GetRuleHistoryContributors(w http.ResponseWriter, r *http.Requ
 		render.Error(w, err)
 		return
 	}
-	render.Success(w, http.StatusOK, res)
+	converted := make([]rulestatehistorytypes.RuleStateHistoryContributorResponse, 0, len(res))
+	for _, item := range res {
+		converted = append(converted, rulestatehistorytypes.RuleStateHistoryContributorResponse{
+			Fingerprint:       item.Fingerprint,
+			Labels:            toQBLabels(item.Labels),
+			Count:             item.Count,
+			RelatedTracesLink: item.RelatedTracesLink,
+			RelatedLogsLink:   item.RelatedLogsLink,
+		})
+	}
+	render.Success(w, http.StatusOK, converted)
 }
 
 func (h *handler) GetRuleHistoryFilterKeys(w http.ResponseWriter, r *http.Request) {
@@ -283,6 +306,35 @@ func normalizeFilterLimit(limit int64) int64 {
 		return 200
 	}
 	return limit
+}
+
+func toQBLabels(raw rulestatehistorytypes.LabelsString) []*qbtypes.Label {
+	if strings.TrimSpace(string(raw)) == "" {
+		return []*qbtypes.Label{}
+	}
+
+	labelsMap := map[string]any{}
+	if err := json.Unmarshal([]byte(raw), &labelsMap); err != nil {
+		return []*qbtypes.Label{}
+	}
+
+	keys := make([]string, 0, len(labelsMap))
+	for key := range labelsMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	labels := make([]*qbtypes.Label, 0, len(keys))
+	for _, key := range keys {
+		labels = append(labels, &qbtypes.Label{
+			Key: telemetrytypes.TelemetryFieldKey{
+				Name: key,
+			},
+			Value: labelsMap[key],
+		})
+	}
+
+	return labels
 }
 
 func parseFilterExpression(values ...string) qbtypes.Filter {

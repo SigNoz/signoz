@@ -4,23 +4,31 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-type RuleStateTimeline struct {
-	Items []RuleStateHistory `json:"items" required:"true"`
-	Total uint64             `json:"total" required:"true"`
-}
-
 type RuleStateTimelineResponse struct {
-	Items      []RuleStateHistory `json:"items" required:"true"`
-	Total      uint64             `json:"total" required:"true"`
-	NextCursor string             `json:"nextCursor,omitempty"`
+	Items      []RuleStateHistoryResponseItem `json:"items" required:"true"`
+	Total      uint64                         `json:"total" required:"true"`
+	NextCursor string                         `json:"nextCursor,omitempty"`
 }
 
-type RuleStateHistoryContributor struct {
-	Fingerprint       uint64       `json:"fingerprint" ch:"fingerprint" required:"true"`
-	Labels            LabelsString `json:"labels" ch:"labels" required:"true"`
-	Count             uint64       `json:"count" ch:"count" required:"true"`
-	RelatedTracesLink string       `json:"relatedTracesLink,omitempty"`
-	RelatedLogsLink   string       `json:"relatedLogsLink,omitempty"`
+type RuleStateHistoryResponseItem struct {
+	RuleID              string           `json:"ruleID" required:"true"`
+	RuleName            string           `json:"ruleName" required:"true"`
+	OverallState        AlertState       `json:"overallState" required:"true"`
+	OverallStateChanged bool             `json:"overallStateChanged" required:"true"`
+	State               AlertState       `json:"state" required:"true"`
+	StateChanged        bool             `json:"stateChanged" required:"true"`
+	UnixMilli           int64            `json:"unixMilli" required:"true"`
+	Labels              []*qbtypes.Label `json:"labels" required:"true"`
+	Fingerprint         uint64           `json:"fingerprint" required:"true"`
+	Value               float64          `json:"value" required:"true"`
+}
+
+type RuleStateHistoryContributorResponse struct {
+	Fingerprint       uint64           `json:"fingerprint" required:"true"`
+	Labels            []*qbtypes.Label `json:"labels" required:"true"`
+	Count             uint64           `json:"count" required:"true"`
+	RelatedTracesLink string           `json:"relatedTracesLink,omitempty"`
+	RelatedLogsLink   string           `json:"relatedLogsLink,omitempty"`
 }
 
 type RuleStateWindow struct {

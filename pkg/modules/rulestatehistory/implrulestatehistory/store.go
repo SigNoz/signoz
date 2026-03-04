@@ -63,7 +63,7 @@ func (s *store) AddRuleStateHistory(ctx context.Context, entries []rulestatehist
 	if err != nil {
 		return err
 	}
-	defer statement.Abort()
+	defer statement.Abort() //nolint:errcheck
 
 	for _, history := range entries {
 		if err = statement.Append(
@@ -101,7 +101,7 @@ func (s *store) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string)
 	return history, nil
 }
 
-func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) (*rulestatehistorytypes.RuleStateTimeline, error) {
+func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
 		"rule_id",
@@ -120,7 +120,7 @@ func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string,
 
 	whereClause, err := s.buildFilterClause(ctx, query.FilterExpression, query.Start, query.End)
 	if err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 	if whereClause != nil {
 		sb.AddWhereClause(sqlbuilder.CopyWhereClause(whereClause))
@@ -134,7 +134,7 @@ func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string,
 
 	history := []rulestatehistorytypes.RuleStateHistory{}
 	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &history, selectQuery, args...); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
 	countSB := sqlbuilder.NewSelectBuilder()
@@ -148,13 +148,10 @@ func (s *store) ReadRuleStateHistoryByRuleID(ctx context.Context, ruleID string,
 	var total uint64
 	countQuery, countArgs := countSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 	if err := s.telemetryStore.ClickhouseDB().QueryRow(ctx, countQuery, countArgs...).Scan(&total); err != nil {
-		return nil, err
+		return nil, 0, err
 	}
 
-	return &rulestatehistorytypes.RuleStateTimeline{
-		Items: history,
-		Total: total,
-	}, nil
+	return history, total, nil
 }
 
 func (s *store) ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error) {
@@ -477,7 +474,7 @@ func (s *store) querySeries(ctx context.Context, selectQuery string, args ...any
 func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, startMillis, endMillis int64) (*sqlbuilder.WhereClause, error) {
 	expression := strings.TrimSpace(filter.Expression)
 	if expression == "" {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	selectors := querybuilder.QueryStringToKeysSelectors(expression)
@@ -513,7 +510,7 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 		return nil, err
 	}
 	if prepared == nil || prepared.WhereClause == nil {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 	return prepared.WhereClause, nil
 }

@@ -26,7 +26,7 @@ func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string
 	return m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
 }
 
-func (m *module) GetHistoryTimeline(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) (*rulestatehistorytypes.RuleStateTimeline, error) {
+func (m *module) GetHistoryTimeline(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error) {
 	return m.store.ReadRuleStateHistoryByRuleID(ctx, ruleID, &query)
 }
 

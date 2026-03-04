@@ -13,7 +13,7 @@ type Module interface {
 	AddRuleStateHistory(context.Context, []rulestatehistorytypes.RuleStateHistory) error
 	GetLastSavedRuleStateHistory(context.Context, string) ([]rulestatehistorytypes.RuleStateHistory, error)
 	GetHistoryStats(context.Context, string, rulestatehistorytypes.Query) (rulestatehistorytypes.Stats, error)
-	GetHistoryTimeline(context.Context, string, rulestatehistorytypes.Query) (*rulestatehistorytypes.RuleStateTimeline, error)
+	GetHistoryTimeline(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistory, uint64, error)
 	GetHistoryFilterKeys(context.Context, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldKeys, error)
 	GetHistoryFilterValues(context.Context, string, string, rulestatehistorytypes.Query, string, int64) (*telemetrytypes.GettableFieldValues, error)
 	GetHistoryContributors(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateHistoryContributor, error)
