@@ -7,11 +7,12 @@ import {
 	Button,
 	Spin,
 	Table,
+	TableColumnType as ColumnType,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { ColumnType, SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';

@@ -1,4 +1,4 @@
-import { FilterDropdownProps } from 'antd/es/table/interface';
+import type { FilterDropdownProps } from 'antd/es/table/interface';
 
 export interface FilterDropdownExtendsProps {
 	placeholder: string;

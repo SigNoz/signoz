@@ -27,7 +27,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { TableProps } from 'antd/lib';
+import type { TableProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';

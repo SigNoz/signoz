@@ -8,7 +8,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { Info } from 'lucide-react';
