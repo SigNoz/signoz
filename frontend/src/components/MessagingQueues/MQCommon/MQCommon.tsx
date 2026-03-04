@@ -1,6 +1,6 @@
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import { Info } from 'lucide-react';
 
 import './MQCommon.styles.scss';

@@ -1,6 +1,6 @@
 import { Dispatch, SetStateAction } from 'react';
 import { UseMutateAsyncFunction } from 'react-query';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { SaveViewWithNameProps } from 'components/ExplorerCard/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';

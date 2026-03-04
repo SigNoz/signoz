@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
-import { TablePaginationConfig, TableProps } from 'antd/lib';
+import { TablePaginationConfig, TableProps } from 'antd';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import deleteAlerts from 'api/alerts/delete';
 import get from 'api/alerts/get';
 import getAll from 'api/alerts/getAll';

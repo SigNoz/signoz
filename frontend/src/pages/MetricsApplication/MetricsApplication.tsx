@@ -1,5 +1,5 @@
 import { useParams } from 'react-router-dom';
-import { Tabs, TabsProps } from 'antd/lib';
+import { Tabs, TabsProps } from 'antd';
 import { QueryParams } from 'constants/query';
 import DBCall from 'container/MetricsApplication/Tabs/DBCall';
 import External from 'container/MetricsApplication/Tabs/External';
