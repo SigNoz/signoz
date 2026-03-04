@@ -1,4 +1,4 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import getFiltersApi from 'api/trace/getFilters';
 import xor from 'lodash-es/xor';
 // eslint-disable-next-line no-restricted-imports

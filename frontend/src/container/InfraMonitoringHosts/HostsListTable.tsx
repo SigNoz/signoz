@@ -8,7 +8,7 @@ import {
 	TableProps,
 	Typography,
 } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 
