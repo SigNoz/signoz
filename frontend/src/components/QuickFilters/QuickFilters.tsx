@@ -23,7 +23,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
-import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
+import { Frown, Lightbulb, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
@@ -291,6 +291,27 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					/>
 				</div>
 			)}
+			<section className="filters-info">
+				<Tooltip
+					title={
+						<div className="filters-info-tooltip">
+							<div className="filters-info-tooltip-title">Adaptive Filters</div>
+							<div>Values update automatically as you apply filters.</div>
+							<div className="filters-info-tooltip-detail">
+								The most relevant values are shown first, followed by all other
+								available options.
+							</div>
+						</div>
+					}
+					placement="right"
+					mouseEnterDelay={0.3}
+				>
+					<Typography.Text className="filters-info-toggle">
+						<Lightbulb size={15} />
+						Adaptive filters
+					</Typography.Text>
+				</Tooltip>
+			</section>
 			<section className="filters">
 				{filterConfig.map((filter) => {
 					switch (filter.type) {

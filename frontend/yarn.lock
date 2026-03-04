@@ -4804,6 +4804,28 @@
     "@radix-ui/react-roving-focus" "1.0.4"
     "@radix-ui/react-use-controllable-state" "1.0.1"
 
+"@radix-ui/react-toggle-group@^1.1.7":
+  version "1.1.11"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-toggle-group/-/react-toggle-group-1.1.11.tgz#e513d6ffdb07509b400ab5b26f2523747c0d51c1"
+  integrity sha512-5umnS0T8JQzQT6HbPyO7Hh9dgd82NmS36DQr+X/YJ9ctFNCiiQd6IJAYYZ33LUwm8M+taCz5t2ui29fHZc4Y6Q==
+  dependencies:
+    "@radix-ui/primitive" "1.1.3"
+    "@radix-ui/react-context" "1.1.2"
+    "@radix-ui/react-direction" "1.1.1"
+    "@radix-ui/react-primitive" "2.1.3"
+    "@radix-ui/react-roving-focus" "1.1.11"
+    "@radix-ui/react-toggle" "1.1.10"
+    "@radix-ui/react-use-controllable-state" "1.2.2"
+
+"@radix-ui/react-toggle@1.1.10", "@radix-ui/react-toggle@^1.1.6":
+  version "1.1.10"
+  resolved "https://registry.yarnpkg.com/@radix-ui/react-toggle/-/react-toggle-1.1.10.tgz#b04ba0f9609599df666fce5b2f38109a197f08cf"
+  integrity sha512-lS1odchhFTeZv3xwHH31YPObmJn8gOg7Lq12inrr0+BH/l3Tsq32VfjqH1oh80ARM3mlkfMic15n0kg4sD1poQ==
+  dependencies:
+    "@radix-ui/primitive" "1.1.3"
+    "@radix-ui/react-primitive" "2.1.3"
+    "@radix-ui/react-use-controllable-state" "1.2.2"
+
 "@radix-ui/react-tooltip@1.0.7":
   version "1.0.7"
   resolved "https://registry.yarnpkg.com/@radix-ui/react-tooltip/-/react-tooltip-1.0.7.tgz#8f55070f852e7e7450cc1d9210b793d2e5a7686e"
@@ -5483,6 +5505,20 @@
   resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
   integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
 
+"@signozhq/dialog@^0.0.2":
+  version "0.0.2"
+  resolved "https://registry.yarnpkg.com/@signozhq/dialog/-/dialog-0.0.2.tgz#55bd8e693f76325fda9aabe3197350e0adc163c4"
+  integrity sha512-YT5t3oZpGkAuWptTqhCgVtLjxsRQrEIrQHFoXpP9elM1+O4TS9WHr+07BLQutOVg6u9n9pCvW3OYf0SCETkDVQ==
+  dependencies:
+    "@radix-ui/react-dialog" "^1.1.11"
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
 "@signozhq/icons@0.1.0", "@signozhq/icons@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.1.0.tgz#00dfb430dbac423bfff715876f91a7b8a72509e4"
@@ -5591,6 +5627,21 @@
     class-variance-authority "^0.7.0"
     clsx "^2.1.1"
     lodash-es "^4.17.21"
+    lucide-react "^0.445.0"
+    tailwind-merge "^2.5.2"
+    tailwindcss-animate "^1.0.7"
+
+"@signozhq/toggle-group@^0.0.1":
+  version "0.0.1"
+  resolved "https://registry.yarnpkg.com/@signozhq/toggle-group/-/toggle-group-0.0.1.tgz#c82ff1da34e77b24da53c2d595ad6b4a0d1b1de4"
+  integrity sha512-871bQayL5MaqsuNOFHKexidu9W2Hlg1y4xmH8C5mGmlfZ4bd0ovJ9OweQrM6Puys3jeMwi69xmJuesYCfKQc1g==
+  dependencies:
+    "@radix-ui/react-icons" "^1.3.0"
+    "@radix-ui/react-slot" "^1.1.0"
+    "@radix-ui/react-toggle" "^1.1.6"
+    "@radix-ui/react-toggle-group" "^1.1.7"
+    class-variance-authority "^0.7.0"
+    clsx "^2.1.1"
     lucide-react "^0.445.0"
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
