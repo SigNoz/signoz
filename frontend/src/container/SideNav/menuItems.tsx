@@ -38,7 +38,11 @@ import {
 	UserPlus,
 } from 'lucide-react';
 
-import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
+import {
+	SecondaryMenuItemKey,
+	SettingsNavSection,
+	SidebarItem,
+} from './sideNav.types';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -300,70 +304,87 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	},
 ];
 
-export const settingsMenuItems: SidebarItem[] = [
+export const settingsNavSections: SettingsNavSection[] = [
 	{
-		key: ROUTES.SETTINGS,
-		label: 'General',
-		icon: <Settings size={16} />,
-		isEnabled: true,
-		itemKey: 'general',
-	},
-	{
-		key: ROUTES.BILLING,
-		label: 'Billing',
-		icon: <Receipt size={16} />,
-		isEnabled: false,
-		itemKey: 'billing',
-	},
-	{
-		key: ROUTES.ROLES_SETTINGS,
-		label: 'Roles',
-		icon: <Shield size={16} />,
-		isEnabled: false,
-		itemKey: 'roles',
-	},
-	{
-		key: ROUTES.ORG_SETTINGS,
-		label: 'Members & SSO',
-		icon: <User size={16} />,
-		isEnabled: false,
-		itemKey: 'members-sso',
+		key: 'general',
+		items: [
+			{
+				key: ROUTES.SETTINGS,
+				label: 'Workspace',
+				icon: <Settings size={16} />,
+				isEnabled: true,
+				itemKey: 'workspace',
+			},
+			{
+				key: ROUTES.MY_SETTINGS,
+				label: 'Account',
+				icon: <User size={16} />,
+				isEnabled: true,
+				itemKey: 'account',
+			},
+			{
+				key: ROUTES.ALL_CHANNELS,
+				label: 'Notification Channels',
+				icon: <FileKey2 size={16} />,
+				isEnabled: true,
+				itemKey: 'notification-channels',
+			},
+			{
+				key: ROUTES.BILLING,
+				label: 'Billing',
+				icon: <Receipt size={16} />,
+				isEnabled: false,
+				itemKey: 'billing',
+			},
+		],
 	},
 
 	{
-		key: ROUTES.INTEGRATIONS,
-		label: 'Integrations',
-		icon: <Unplug size={16} />,
-		isEnabled: false,
-		itemKey: 'integrations',
+		key: 'identity-access',
+		title: 'IDENTITY & ACCESS',
+		items: [
+			{
+				key: ROUTES.ROLES_SETTINGS,
+				label: 'Roles',
+				icon: <Shield size={16} />,
+				isEnabled: false,
+				itemKey: 'roles',
+			},
+			{
+				key: ROUTES.INTEGRATIONS,
+				label: 'Integrations',
+				icon: <Unplug size={16} />,
+				isEnabled: false,
+				itemKey: 'integrations',
+			},
+			{
+				key: ROUTES.API_KEYS,
+				label: 'API Keys',
+				icon: <Key size={16} />,
+				isEnabled: false,
+				itemKey: 'api-keys',
+			},
+			{
+				key: ROUTES.INGESTION_SETTINGS,
+				label: 'Ingestion',
+				icon: <RocketOutlined rotate={45} />,
+				isEnabled: false,
+				itemKey: 'ingestion',
+			},
+		],
 	},
 	{
-		key: ROUTES.ALL_CHANNELS,
-		label: 'Notification Channels',
-		icon: <FileKey2 size={16} />,
-		isEnabled: true,
-		itemKey: 'notification-channels',
-	},
-	{
-		key: ROUTES.API_KEYS,
-		label: 'API Keys',
-		icon: <Key size={16} />,
-		isEnabled: false,
-		itemKey: 'api-keys',
-	},
-	{
-		key: ROUTES.INGESTION_SETTINGS,
-		label: 'Ingestion',
-		icon: <RocketOutlined rotate={45} />,
-		isEnabled: false,
-		itemKey: 'ingestion',
-	},
-	{
-		key: ROUTES.MY_SETTINGS,
-		label: 'Account Settings',
-		icon: <User size={16} />,
-		isEnabled: true,
-		itemKey: 'account-settings',
+		key: 'authentication',
+		title: 'Authentication',
+		items: [
+			{
+				key: ROUTES.ORG_SETTINGS,
+				label: 'Members & SSO',
+				icon: <User size={16} />,
+				isEnabled: false,
+				itemKey: 'members-sso',
+			},
+		],
 	},
 ];
 
