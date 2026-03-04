@@ -35,9 +35,8 @@ type FormValues = {
 function SignUp(): JSX.Element {
 	const [loading, setLoading] = useState(false);
 
-	const [confirmPasswordError, setConfirmPasswordError] = useState<boolean>(
-		false,
-	);
+	const [confirmPasswordError, setConfirmPasswordError] =
+		useState<boolean>(false);
 	const [formError, setFormError] = useState<APIError | null>();
 	const { search } = useLocation();
 	const params = new URLSearchParams(search);

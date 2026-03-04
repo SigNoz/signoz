@@ -87,9 +87,8 @@ export default function ModuleStepsContainer({
 
 		const { step } = activeStep;
 
-		const {
-			name: selectedDataSourceName = '',
-		} = selectedDataSource as DataSourceType;
+		const { name: selectedDataSourceName = '' } =
+			selectedDataSource as DataSourceType;
 
 		if (
 			step.id === environmentDetailsStep &&

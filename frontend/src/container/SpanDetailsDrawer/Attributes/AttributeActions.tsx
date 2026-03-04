@@ -36,12 +36,8 @@ export default function AttributeActions({
 	const [isFilterInLoading, setIsFilterInLoading] = useState<boolean>(false);
 	const [isFilterOutLoading, setIsFilterOutLoading] = useState<boolean>(false);
 
-	const {
-		onAddToQuery,
-		onGroupByAttribute,
-		onCopyFieldName,
-		onCopyFieldValue,
-	} = useTraceActions();
+	const { onAddToQuery, onGroupByAttribute, onCopyFieldName, onCopyFieldValue } =
+		useTraceActions();
 
 	const textToCopy = useMemo(() => {
 		const str = record.value == null ? '' : String(record.value);

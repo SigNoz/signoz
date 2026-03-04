@@ -56,9 +56,8 @@ export function usePreferenceUpdater({
 	updateColumns: (newColumns: TelemetryFieldKey[]) => void;
 	updateFormatting: (newFormatting: FormattingOptions) => void;
 } {
-	const {
-		redirectWithQuery: redirectWithOptionsData,
-	} = useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
+	const { redirectWithQuery: redirectWithOptionsData } =
+		useUrlQueryData<OptionsQuery>(URL_OPTIONS, defaultOptionsQuery);
 	const updater = getUpdaterConfig(
 		preferences,
 		redirectWithOptionsData,

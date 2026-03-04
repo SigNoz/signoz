@@ -169,10 +169,8 @@ function MultiIngestionSettings(): JSX.Element {
 	const [updatedTags, setUpdatedTags] = useState<string[]>([]);
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isEditAddLimitOpen, setIsEditAddLimitOpen] = useState(false);
-	const [
-		activeAPIKey,
-		setActiveAPIKey,
-	] = useState<GatewaytypesIngestionKeyDTO | null>(null);
+	const [activeAPIKey, setActiveAPIKey] =
+		useState<GatewaytypesIngestionKeyDTO | null>(null);
 	const [activeSignal, setActiveSignal] = useState<LimitProps | null>(null);
 
 	const [searchValue, setSearchValue] = useState<string>('');
@@ -194,20 +192,16 @@ function MultiIngestionSettings(): JSX.Element {
 		setHasCreateLimitForIngestionKeyError,
 	] = useState(false);
 
-	const [
-		createLimitForIngestionKeyError,
-		setCreateLimitForIngestionKeyError,
-	] = useState<string | null>(null);
+	const [createLimitForIngestionKeyError, setCreateLimitForIngestionKeyError] =
+		useState<string | null>(null);
 
 	const [
 		hasUpdateLimitForIngestionKeyError,
 		setHasUpdateLimitForIngestionKeyError,
 	] = useState(false);
 
-	const [
-		updateLimitForIngestionKeyError,
-		setUpdateLimitForIngestionKeyError,
-	] = useState<string | null>(null);
+	const [updateLimitForIngestionKeyError, setUpdateLimitForIngestionKeyError] =
+		useState<string | null>(null);
 
 	const { t } = useTranslation(['ingestionKeys']);
 
@@ -364,35 +358,25 @@ function MultiIngestionSettings(): JSX.Element {
 		error: globalConfigError,
 	} = useGetGlobalConfig();
 
-	const {
-		mutate: createIngestionKey,
-		isLoading: isLoadingCreateAPIKey,
-	} = useCreateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createIngestionKey, isLoading: isLoadingCreateAPIKey } =
+		useCreateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: updateAPIKey,
-		isLoading: isLoadingUpdateAPIKey,
-	} = useUpdateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateAPIKey, isLoading: isLoadingUpdateAPIKey } =
+		useUpdateIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: deleteAPIKey,
-		isLoading: isDeleteingAPIKey,
-	} = useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: deleteAPIKey, isLoading: isDeleteingAPIKey } =
+		useDeleteIngestionKey<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: createLimitForIngestionKey,
-		isLoading: isLoadingLimitForKey,
-	} = useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: createLimitForIngestionKey, isLoading: isLoadingLimitForKey } =
+		useCreateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const {
 		mutate: updateLimitForIngestionKey,
 		isLoading: isLoadingUpdatedLimitForKey,
 	} = useUpdateIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
-	const {
-		mutate: deleteLimitForKey,
-		isLoading: isDeletingLimit,
-	} = useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: deleteLimitForKey, isLoading: isDeletingLimit } =
+		useDeleteIngestionKeyLimit<AxiosError<RenderErrorResponseDTO>>();
 
 	const onDeleteHandler = (): void => {
 		clearSearch();
@@ -921,7 +905,7 @@ function MultiIngestionSettings(): JSX.Element {
 					? getFormattedTime(
 							dayjs(APIKey.created_at).toISOString(),
 							formatTimezoneAdjustedTimestamp,
-					  )
+						)
 					: '';
 
 				const expiresOn =
@@ -931,13 +915,13 @@ function MultiIngestionSettings(): JSX.Element {
 						: getFormattedTime(
 								dayjs(APIKey?.expires_at).toISOString(),
 								formatTimezoneAdjustedTimestamp,
-						  );
+							);
 
 				const updatedOn = APIKey?.updated_at
 					? getFormattedTime(
 							dayjs(APIKey.updated_at).toISOString(),
 							formatTimezoneAdjustedTimestamp,
-					  )
+						)
 					: '';
 
 				const onCopyKey = (e: React.MouseEvent): void => {
@@ -1030,21 +1014,23 @@ function MultiIngestionSettings(): JSX.Element {
 									</Row>
 								)}
 
-								{APIKey.tags && Array.isArray(APIKey.tags) && APIKey.tags.length > 0 && (
-									<Row>
-										<Col span={6}> Tags </Col>
-										<Col span={12}>
-											<div className="ingestion-key-tags-container">
-												<div className="ingestion-key-tags">
-													{APIKey.tags.map((tag, index) => (
-														// eslint-disable-next-line react/no-array-index-key
-														<Tag key={`${tag}-${index}`}> {tag} </Tag>
-													))}
+								{APIKey.tags &&
+									Array.isArray(APIKey.tags) &&
+									APIKey.tags.length > 0 && (
+										<Row>
+											<Col span={6}> Tags </Col>
+											<Col span={12}>
+												<div className="ingestion-key-tags-container">
+													<div className="ingestion-key-tags">
+														{APIKey.tags.map((tag, index) => (
+															// eslint-disable-next-line react/no-array-index-key
+															<Tag key={`${tag}-${index}`}> {tag} </Tag>
+														))}
+													</div>
 												</div>
-											</div>
-										</Col>
-									</Row>
-								)}
+											</Col>
+										</Row>
+									)}
 
 								<div className="limits-container">
 									<h4 className=""> LIMITS </h4>
@@ -1171,7 +1157,7 @@ function MultiIngestionSettings(): JSX.Element {
 																															enabled: value,
 																														},
 																													},
-																											  }
+																												}
 																											: null,
 																									);
 																								}}
@@ -1261,7 +1247,7 @@ function MultiIngestionSettings(): JSX.Element {
 																															enabled: value,
 																														},
 																													},
-																											  }
+																												}
 																											: null,
 																									);
 																								}}

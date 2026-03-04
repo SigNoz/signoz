@@ -157,15 +157,8 @@ export const useGraphClickToShowButton = ({
 	return useCallback(
 		(props: GraphClickProps) => {
 			cleanup();
-			const {
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				metric,
-				queryData,
-				menuItems,
-			} = props;
+			const { xValue, yValue, mouseX, mouseY, metric, queryData, menuItems } =
+				props;
 
 			if (
 				isButtonEnabled &&

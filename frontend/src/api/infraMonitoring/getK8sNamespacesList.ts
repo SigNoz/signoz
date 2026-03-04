@@ -95,7 +95,7 @@ export const getK8sNamespacesList = async (
 								[] as typeof props.filters.items,
 							),
 						},
-				  }
+					}
 				: props;
 
 		const response = await axios.post('/namespaces/list', requestProps, {

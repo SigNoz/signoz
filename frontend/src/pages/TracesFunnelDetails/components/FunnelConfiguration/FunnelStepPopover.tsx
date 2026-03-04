@@ -58,8 +58,8 @@ function FunnelStepActions({
 					!hasEditPermission
 						? 'You need editor or admin access to delete steps'
 						: stepsCount <= 2
-						? 'Minimum 2 steps required'
-						: 'Delete'
+							? 'Minimum 2 steps required'
+							: 'Delete'
 				}
 			>
 				<Button

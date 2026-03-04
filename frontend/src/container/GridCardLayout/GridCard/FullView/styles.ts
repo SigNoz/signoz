@@ -24,7 +24,7 @@ export const TimeContainer = styled.div<Props>`
 		$panelType === PANEL_TYPES.TABLE
 			? css`
 					margin-bottom: 1rem;
-			  `
+				`
 			: css``}
 
 	.time-container {

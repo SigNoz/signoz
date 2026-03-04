@@ -19,7 +19,7 @@ export const getTopOperationList = ({
 		numCalls,
 		p95: 0,
 		p99: 0,
-	} as TopOperationList);
+	}) as TopOperationList;
 
 export const defaultApiCallExpectation = {
 	service: 'test-service',

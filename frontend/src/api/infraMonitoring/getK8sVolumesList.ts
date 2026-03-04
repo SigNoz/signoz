@@ -117,7 +117,7 @@ export const getK8sVolumesList = async (
 								[] as typeof props.filters.items,
 							),
 						},
-				  }
+					}
 				: props;
 
 		const response = await axios.post('/pvcs/list', requestProps, {

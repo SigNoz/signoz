@@ -88,11 +88,11 @@ function RawLogView({
 					? formatTimezoneAdjustedTimestamp(
 							data.timestamp,
 							DATE_TIME_FORMATS.ISO_DATETIME_MS,
-					  )
+						)
 					: formatTimezoneAdjustedTimestamp(
 							data.timestamp / 1e6,
 							DATE_TIME_FORMATS.ISO_DATETIME_MS,
-					  );
+						);
 			parts.push(date);
 		}
 

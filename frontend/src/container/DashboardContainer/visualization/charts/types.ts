@@ -29,12 +29,10 @@ interface UPlotBasedChartProps {
 }
 
 export interface TimeSeriesChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps {}
+	extends BaseChartProps, UPlotBasedChartProps {}
 
 export interface HistogramChartProps
-	extends BaseChartProps,
-		UPlotBasedChartProps {
+	extends BaseChartProps, UPlotBasedChartProps {
 	isQueriesMerged?: boolean;
 }
 

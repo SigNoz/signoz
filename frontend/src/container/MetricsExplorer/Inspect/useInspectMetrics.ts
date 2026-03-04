@@ -191,13 +191,11 @@ export function useInspectMetrics(
 			metricInspectionOptions.appliedOptions.timeAggregationOption &&
 			metricInspectionOptions.appliedOptions.timeAggregationInterval
 		) {
-			const {
-				timeAggregatedSeries,
-				timeAggregatedSeriesMap,
-			} = applyTimeAggregation(
-				inspectMetricsTimeSeries,
-				metricInspectionOptions.appliedOptions,
-			);
+			const { timeAggregatedSeries, timeAggregatedSeriesMap } =
+				applyTimeAggregation(
+					inspectMetricsTimeSeries,
+					metricInspectionOptions.appliedOptions,
+				);
 			timeSeries = timeAggregatedSeries;
 			setTimeAggregatedSeriesMap(timeAggregatedSeriesMap);
 			setAggregatedTimeSeries(timeSeries);

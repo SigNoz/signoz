@@ -60,10 +60,10 @@ const GridPanelSwitch = forwardRef<
 		const Component = getComponentForPanelType(panelType, dataSource) as FC<
 			PropsTypePropsMap[typeof panelType]
 		>;
-		const componentProps = useMemo(() => currentProps[panelType], [
-			panelType,
-			currentProps,
-		]);
+		const componentProps = useMemo(
+			() => currentProps[panelType],
+			[panelType, currentProps],
+		);
 
 		if (!Component || !componentProps) {
 			return null;

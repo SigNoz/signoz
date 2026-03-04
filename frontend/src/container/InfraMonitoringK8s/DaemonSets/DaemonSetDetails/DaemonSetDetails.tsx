@@ -71,12 +71,14 @@ function DaemonSetDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / 1000000000),
+		[maxTime],
+	);
 
 	const urlQuery = useUrlQuery();
 
@@ -183,13 +185,11 @@ function DaemonSetDetails({
 		};
 	}, [daemonSet?.meta.k8s_daemonset_name, searchParams]);
 
-	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
-		IBuilderQuery['filters']
-	>(initialFilters);
+	const [logAndTracesFilters, setLogAndTracesFilters] =
+		useState<IBuilderQuery['filters']>(initialFilters);
 
-	const [eventsFilters, setEventsFilters] = useState<IBuilderQuery['filters']>(
-		initialEventsFilters,
-	);
+	const [eventsFilters, setEventsFilters] =
+		useState<IBuilderQuery['filters']>(initialEventsFilters);
 
 	useEffect(() => {
 		if (daemonSet) {
@@ -305,9 +305,8 @@ function DaemonSetDetails({
 
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]:
+						JSON.stringify(updatedFilters),
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
 				});
 				return updatedFilters;
@@ -347,9 +346,8 @@ function DaemonSetDetails({
 
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]:
+						JSON.stringify(updatedFilters),
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
 				});
 
@@ -394,9 +392,8 @@ function DaemonSetDetails({
 
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]:
+						JSON.stringify(updatedFilters),
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
 				});
 

@@ -24,20 +24,18 @@ function RemoveIntegrationAccount({
 		setIsModalOpen(true);
 	};
 
-	const {
-		mutate: removeIntegration,
-		isLoading: isRemoveIntegrationLoading,
-	} = useMutation(removeAwsIntegrationAccount, {
-		onSuccess: () => {
-			onRemoveIntegrationAccountSuccess?.();
-			setIsModalOpen(false);
-		},
-		onError: () => {
-			notifications.error({
-				message: SOMETHING_WENT_WRONG,
-			});
-		},
-	});
+	const { mutate: removeIntegration, isLoading: isRemoveIntegrationLoading } =
+		useMutation(removeAwsIntegrationAccount, {
+			onSuccess: () => {
+				onRemoveIntegrationAccountSuccess?.();
+				setIsModalOpen(false);
+			},
+			onError: () => {
+				notifications.error({
+					message: SOMETHING_WENT_WRONG,
+				});
+			},
+		});
 	const handleOk = (): void => {
 		logEvent(INTEGRATION_TELEMETRY_EVENTS.AWS_INTEGRATION_ACCOUNT_REMOVED, {
 			accountId,

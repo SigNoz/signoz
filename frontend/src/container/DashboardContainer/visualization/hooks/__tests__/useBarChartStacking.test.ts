@@ -7,7 +7,7 @@ import { useBarChartStacking } from '../useBarChartStacking';
 type MockConfig = { addHook: jest.Mock };
 
 function asConfig(c: MockConfig): UseBarChartStackingParams['config'] {
-	return (c as unknown) as UseBarChartStackingParams['config'];
+	return c as unknown as UseBarChartStackingParams['config'];
 }
 
 function createMockConfig(): {
@@ -74,7 +74,7 @@ function createMockConfig(): {
 }
 
 function createMockPlot(overrides: Partial<uPlot> = {}): uPlot {
-	return ({
+	return {
 		data: [
 			[0, 1, 2],
 			[1, 2, 3],
@@ -85,7 +85,7 @@ function createMockPlot(overrides: Partial<uPlot> = {}): uPlot {
 		addBand: jest.fn(),
 		setData: jest.fn(),
 		...overrides,
-	} as unknown) as uPlot;
+	} as unknown as uPlot;
 }
 
 describe('useBarChartStacking', () => {

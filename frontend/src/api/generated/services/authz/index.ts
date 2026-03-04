@@ -45,7 +45,7 @@ export const authzCheck = (
 
 export const getAuthzCheckMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
@@ -62,8 +62,8 @@ export const getAuthzCheckMutationOptions = <
 	const mutationKey = ['authzCheck'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -91,7 +91,7 @@ export type AuthzCheckMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useAuthzCheck = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof authzCheck>>,
@@ -127,7 +127,7 @@ export const getAuthzResourcesQueryKey = () => {
 
 export const getAuthzResourcesQueryOptions = <
 	TData = Awaited<ReturnType<typeof authzResources>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof authzResources>>,
@@ -161,7 +161,7 @@ export type AuthzResourcesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useAuthzResources<
 	TData = Awaited<ReturnType<typeof authzResources>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof authzResources>>,

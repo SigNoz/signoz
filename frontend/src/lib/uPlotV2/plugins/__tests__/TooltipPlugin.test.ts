@@ -280,9 +280,9 @@ describe('TooltipPlugin', () => {
 			});
 
 			expect(
-				(document.querySelector(
-					'.tooltip-plugin-container',
-				) as HTMLElement)?.classList.contains('pinned'),
+				(
+					document.querySelector('.tooltip-plugin-container') as HTMLElement
+				)?.classList.contains('pinned'),
 			).toBe(true);
 
 			// Simulate data update – should dismiss the pinned tooltip.

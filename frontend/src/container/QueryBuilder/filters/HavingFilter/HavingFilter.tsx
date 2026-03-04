@@ -31,9 +31,8 @@ export function HavingFilter({
 	const [searchText, setSearchText] = useState<string>('');
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
 	const [localValues, setLocalValues] = useState<string[]>([]);
-	const [currentFormValue, setCurrentFormValue] = useState<HavingForm>(
-		initialHavingValues,
-	);
+	const [currentFormValue, setCurrentFormValue] =
+		useState<HavingForm>(initialHavingValues);
 	const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
 	const { isMulti } = useTagValidation(

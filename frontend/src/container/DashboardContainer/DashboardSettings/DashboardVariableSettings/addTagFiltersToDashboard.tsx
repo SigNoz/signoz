@@ -34,9 +34,11 @@ const updateQueryFilters = (
 				newFilter.value = valueToAdd;
 				newFilter.op = 'IN';
 			} else {
-				newFilter.value = (isArray(newFilter.value)
-					? [...newFilter.value, valueToAdd]
-					: [newFilter.value, valueToAdd]) as string[] | string;
+				newFilter.value = (
+					isArray(newFilter.value)
+						? [...newFilter.value, valueToAdd]
+						: [newFilter.value, valueToAdd]
+				) as string[] | string;
 
 				newFilter.op = 'IN';
 			}

@@ -192,7 +192,7 @@ describe('Dashboard landing page actions header tests', () => {
 			handleToggleDashboardSlider: jest.fn(),
 			handleDashboardLockToggle: jest.fn(),
 			dashboardResponse: {} as IDashboardContext['dashboardResponse'],
-			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,
+			selectedDashboard: getDashboardById.data as unknown as Dashboard,
 			dashboardId: '4',
 			layouts: [],
 			panelMap: {},

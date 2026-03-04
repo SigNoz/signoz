@@ -515,7 +515,7 @@ function NewWidget({
 								customLegendColors: selectedWidget?.customLegendColors || {},
 								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
-					  ]
+						]
 					: [
 							...preWidgets,
 							{
@@ -547,7 +547,7 @@ function NewWidget({
 								contextLinks: selectedWidget?.contextLinks || { linksData: [] },
 							},
 							...afterWidgets,
-					  ],
+						],
 				layout: [...updatedLayout],
 			},
 		};

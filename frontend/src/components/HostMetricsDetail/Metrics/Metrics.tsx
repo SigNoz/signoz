@@ -55,10 +55,10 @@ function Metrics({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const {
-		visibilities,
-		setElement,
-	} = useMultiIntersectionObserver(hostWidgetInfo.length, { threshold: 0.1 });
+	const { visibilities, setElement } = useMultiIntersectionObserver(
+		hostWidgetInfo.length,
+		{ threshold: 0.1 },
+	);
 
 	const legendScrollPositionRef = useRef<{
 		scrollTop: number;

@@ -19,7 +19,7 @@ export interface RawLogViewProps {
 	handleChangeSelectedView?: ChangeViewFunctionType;
 	onSetActiveLog?: (
 		log: ILog,
-		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+		selectedTab?: (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES],
 	) => void;
 	onClearActiveLog?: () => void;
 }

@@ -101,12 +101,16 @@ describe('LogsDownloadOptionsMenu', () => {
 		(message.success as jest.Mock).mockReset();
 		(message.error as jest.Mock).mockReset();
 		// jsdom doesn't implement it by default
-		((URL as unknown) as {
-			createObjectURL: (b: Blob) => string;
-		}).createObjectURL = jest.fn(() => 'blob:mock');
-		((URL as unknown) as {
-			revokeObjectURL: (u: string) => void;
-		}).revokeObjectURL = jest.fn();
+		(
+			URL as unknown as {
+				createObjectURL: (b: Blob) => string;
+			}
+		).createObjectURL = jest.fn(() => 'blob:mock');
+		(
+			URL as unknown as {
+				revokeObjectURL: (u: string) => void;
+			}
+		).revokeObjectURL = jest.fn();
 	});
 
 	beforeAll(() => {

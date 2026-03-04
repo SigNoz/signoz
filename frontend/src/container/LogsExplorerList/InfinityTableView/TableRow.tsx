@@ -25,7 +25,7 @@ interface TableRowProps {
 	log: Record<string, unknown>;
 	onShowLogDetails?: (
 		log: ILog,
-		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+		selectedTab?: (typeof VIEW_TYPES)[keyof typeof VIEW_TYPES],
 	) => void;
 	logs: ILog[];
 	hasActions: boolean;
@@ -47,10 +47,10 @@ export default function TableRow({
 }: TableRowProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 
-	const currentLog = useMemo(() => logs.find(({ id }) => id === log.id), [
-		logs,
-		log.id,
-	]);
+	const currentLog = useMemo(
+		() => logs.find(({ id }) => id === log.id),
+		[logs, log.id],
+	);
 
 	const { onLogCopy, isLogsExplorerPage } = useCopyLogLink(currentLog?.id);
 

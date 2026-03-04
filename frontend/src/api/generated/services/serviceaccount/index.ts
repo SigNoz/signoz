@@ -59,7 +59,7 @@ export const getListServiceAccountsQueryKey = () => {
 
 export const getListServiceAccountsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listServiceAccounts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccounts>>,
@@ -93,7 +93,7 @@ export type ListServiceAccountsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListServiceAccounts<
 	TData = Awaited<ReturnType<typeof listServiceAccounts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listServiceAccounts>>,
@@ -146,7 +146,7 @@ export const createServiceAccount = (
 
 export const getCreateServiceAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccount>>,
@@ -163,8 +163,8 @@ export const getCreateServiceAccountMutationOptions = <
 	const mutationKey = ['createServiceAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -184,15 +184,17 @@ export const getCreateServiceAccountMutationOptions = <
 export type CreateServiceAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createServiceAccount>>
 >;
-export type CreateServiceAccountMutationBody = BodyType<ServiceaccounttypesPostableServiceAccountDTO>;
-export type CreateServiceAccountMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateServiceAccountMutationBody =
+	BodyType<ServiceaccounttypesPostableServiceAccountDTO>;
+export type CreateServiceAccountMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create service account
  */
 export const useCreateServiceAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccount>>,
@@ -225,7 +227,7 @@ export const deleteServiceAccount = ({
 
 export const getDeleteServiceAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteServiceAccount>>,
@@ -242,8 +244,8 @@ export const getDeleteServiceAccountMutationOptions = <
 	const mutationKey = ['deleteServiceAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -264,14 +266,15 @@ export type DeleteServiceAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof deleteServiceAccount>>
 >;
 
-export type DeleteServiceAccountMutationError = ErrorType<RenderErrorResponseDTO>;
+export type DeleteServiceAccountMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Deletes a service account
  */
 export const useDeleteServiceAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteServiceAccount>>,
@@ -312,7 +315,7 @@ export const getGetServiceAccountQueryKey = ({
 
 export const getGetServiceAccountQueryOptions = <
 	TData = Awaited<ReturnType<typeof getServiceAccount>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetServiceAccountPathParameters,
 	options?: {
@@ -355,7 +358,7 @@ export type GetServiceAccountQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetServiceAccount<
 	TData = Awaited<ReturnType<typeof getServiceAccount>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetServiceAccountPathParameters,
 	options?: {
@@ -411,7 +414,7 @@ export const updateServiceAccount = (
 
 export const getUpdateServiceAccountMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccount>>,
@@ -434,8 +437,8 @@ export const getUpdateServiceAccountMutationOptions = <
 	const mutationKey = ['updateServiceAccount'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -458,15 +461,17 @@ export const getUpdateServiceAccountMutationOptions = <
 export type UpdateServiceAccountMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateServiceAccount>>
 >;
-export type UpdateServiceAccountMutationBody = BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
-export type UpdateServiceAccountMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateServiceAccountMutationBody =
+	BodyType<ServiceaccounttypesUpdatableServiceAccountDTO>;
+export type UpdateServiceAccountMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Updates a service account
  */
 export const useUpdateServiceAccount = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccount>>,
@@ -513,7 +518,7 @@ export const getListServiceAccountKeysQueryKey = ({
 
 export const getListServiceAccountKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof listServiceAccountKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: ListServiceAccountKeysPathParameters,
 	options?: {
@@ -548,7 +553,8 @@ export const getListServiceAccountKeysQueryOptions = <
 export type ListServiceAccountKeysQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listServiceAccountKeys>>
 >;
-export type ListServiceAccountKeysQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListServiceAccountKeysQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List service account keys
@@ -556,7 +562,7 @@ export type ListServiceAccountKeysQueryError = ErrorType<RenderErrorResponseDTO>
 
 export function useListServiceAccountKeys<
 	TData = Awaited<ReturnType<typeof listServiceAccountKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: ListServiceAccountKeysPathParameters,
 	options?: {
@@ -614,7 +620,7 @@ export const createServiceAccountKey = (
 
 export const getCreateServiceAccountKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccountKey>>,
@@ -637,8 +643,8 @@ export const getCreateServiceAccountKeyMutationOptions = <
 	const mutationKey = ['createServiceAccountKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -661,15 +667,17 @@ export const getCreateServiceAccountKeyMutationOptions = <
 export type CreateServiceAccountKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createServiceAccountKey>>
 >;
-export type CreateServiceAccountKeyMutationBody = BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
-export type CreateServiceAccountKeyMutationError = ErrorType<RenderErrorResponseDTO>;
+export type CreateServiceAccountKeyMutationBody =
+	BodyType<ServiceaccounttypesPostableFactorAPIKeyDTO>;
+export type CreateServiceAccountKeyMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Create a service account key
  */
 export const useCreateServiceAccountKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createServiceAccountKey>>,
@@ -709,7 +717,7 @@ export const revokeServiceAccountKey = ({
 
 export const getRevokeServiceAccountKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeServiceAccountKey>>,
@@ -726,8 +734,8 @@ export const getRevokeServiceAccountKeyMutationOptions = <
 	const mutationKey = ['revokeServiceAccountKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -748,14 +756,15 @@ export type RevokeServiceAccountKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof revokeServiceAccountKey>>
 >;
 
-export type RevokeServiceAccountKeyMutationError = ErrorType<RenderErrorResponseDTO>;
+export type RevokeServiceAccountKeyMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Revoke a service account key
  */
 export const useRevokeServiceAccountKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeServiceAccountKey>>,
@@ -791,7 +800,7 @@ export const updateServiceAccountKey = (
 
 export const getUpdateServiceAccountKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountKey>>,
@@ -814,8 +823,8 @@ export const getUpdateServiceAccountKeyMutationOptions = <
 	const mutationKey = ['updateServiceAccountKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -838,15 +847,17 @@ export const getUpdateServiceAccountKeyMutationOptions = <
 export type UpdateServiceAccountKeyMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateServiceAccountKey>>
 >;
-export type UpdateServiceAccountKeyMutationBody = BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
-export type UpdateServiceAccountKeyMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateServiceAccountKeyMutationBody =
+	BodyType<ServiceaccounttypesUpdatableFactorAPIKeyDTO>;
+export type UpdateServiceAccountKeyMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Updates a service account key
  */
 export const useUpdateServiceAccountKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountKey>>,
@@ -888,7 +899,7 @@ export const updateServiceAccountStatus = (
 
 export const getUpdateServiceAccountStatusMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountStatus>>,
@@ -911,8 +922,8 @@ export const getUpdateServiceAccountStatusMutationOptions = <
 	const mutationKey = ['updateServiceAccountStatus'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -935,15 +946,17 @@ export const getUpdateServiceAccountStatusMutationOptions = <
 export type UpdateServiceAccountStatusMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateServiceAccountStatus>>
 >;
-export type UpdateServiceAccountStatusMutationBody = BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
-export type UpdateServiceAccountStatusMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateServiceAccountStatusMutationBody =
+	BodyType<ServiceaccounttypesUpdatableServiceAccountStatusDTO>;
+export type UpdateServiceAccountStatusMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Updates a service account status
  */
 export const useUpdateServiceAccountStatus = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateServiceAccountStatus>>,

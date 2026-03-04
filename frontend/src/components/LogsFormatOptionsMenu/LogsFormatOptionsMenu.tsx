@@ -35,13 +35,11 @@ function OptionsMenu({
 	const [fontSizeValue, setFontSizeValue] = useState<FontSize>(
 		fontSize?.value || FontSize.SMALL,
 	);
-	const [isFontSizeOptionsOpen, setIsFontSizeOptionsOpen] = useState<boolean>(
-		false,
-	);
+	const [isFontSizeOptionsOpen, setIsFontSizeOptionsOpen] =
+		useState<boolean>(false);
 
-	const [showAddNewColumnContainer, setShowAddNewColumnContainer] = useState(
-		false,
-	);
+	const [showAddNewColumnContainer, setShowAddNewColumnContainer] =
+		useState(false);
 
 	const [selectedValue, setSelectedValue] = useState<string | null>(null);
 	const listRef = useRef<HTMLDivElement>(null);

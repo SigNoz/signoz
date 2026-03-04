@@ -57,7 +57,7 @@ jest.mock('hooks/routingPolicies/useGetRoutingPolicies', () => ({
 			isFetching: false,
 			isLoading: false,
 			isError: false,
-		} as any),
+		}) as any,
 }));
 jest.mock('hooks/routingPolicies/useCreateRoutingPolicy', () => ({
 	useCreateRoutingPolicy: (): any => ({

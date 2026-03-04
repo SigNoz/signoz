@@ -154,9 +154,10 @@ function MessagingQueuesDetails({
 
 	const configDetailQueryData: {
 		[key: string]: string;
-	} = useMemo(() => (configDetails ? JSON.parse(configDetails) : {}), [
-		configDetails,
-	]);
+	} = useMemo(
+		() => (configDetails ? JSON.parse(configDetails) : {}),
+		[configDetails],
+	);
 
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,

@@ -56,7 +56,7 @@ export function OrderByFilter({
 				: [
 						...groupByOptions,
 						...(isNewQueryV2 ? aggregationOptionsFromParsed : aggregationOptions),
-				  ];
+					];
 
 		return generateOptions(options);
 	}, [

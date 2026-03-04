@@ -141,7 +141,12 @@ export default function Events({
 		return basePayload;
 	}, [timeRange.startTime, timeRange.endTime, filters, page]);
 
-	const { data: eventsData, isLoading, isFetching, isError } = useQuery({
+	const {
+		data: eventsData,
+		isLoading,
+		isFetching,
+		isError,
+	} = useQuery({
 		queryKey: [queryKey, timeRange.startTime, timeRange.endTime, filters, page],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
@@ -228,10 +233,7 @@ export default function Events({
 				className="periscope-btn-icon"
 				size={14}
 				onClick={(e): void =>
-					onExpand(
-						record,
-						(e as unknown) as React.MouseEvent<HTMLElement, MouseEvent>,
-					)
+					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
 				}
 			/>
 		) : (
@@ -240,10 +242,7 @@ export default function Events({
 				size={14}
 				// eslint-disable-next-line sonarjs/no-identical-functions
 				onClick={(e): void =>
-					onExpand(
-						record,
-						(e as unknown) as React.MouseEvent<HTMLElement, MouseEvent>,
-					)
+					onExpand(record, e as unknown as React.MouseEvent<HTMLElement, MouseEvent>)
 				}
 			/>
 		);

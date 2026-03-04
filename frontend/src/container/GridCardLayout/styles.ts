@@ -31,10 +31,10 @@ export const Card = styled(CardComponent)<CardProps>`
 			$panelType === PANEL_TYPES.TABLE
 				? css`
 						height: 100%;
-				  `
+					`
 				: css`
 						height: calc(100% - 30px);
-				  `}
+					`}
 		padding: 0;
 	}
 `;

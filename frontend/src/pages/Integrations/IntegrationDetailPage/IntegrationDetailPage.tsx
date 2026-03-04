@@ -30,25 +30,17 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 		setActiveDetailTab,
 	} = props;
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		refetch,
-		isRefetching,
-		isError,
-	} = useGetIntegration({
-		integrationId: selectedIntegration,
-	});
+	const { data, isLoading, isFetching, refetch, isRefetching, isError } =
+		useGetIntegration({
+			integrationId: selectedIntegration,
+		});
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
-	const {
-		data: integrationStatus,
-		isLoading: isStatusLoading,
-	} = useGetIntegrationStatus({
-		integrationId: selectedIntegration,
-	});
+	const { data: integrationStatus, isLoading: isStatusLoading } =
+		useGetIntegrationStatus({
+			integrationId: selectedIntegration,
+		});
 
 	const loading = isLoading || isFetching || isRefetching || isStatusLoading;
 	const integrationData = data?.data.data;

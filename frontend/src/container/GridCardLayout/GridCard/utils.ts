@@ -77,7 +77,8 @@ export const getLocalStorageGraphVisibilityState = ({
 						newGraphVisibilityStates[i + 1] = item.dataIndex[index].show;
 					}
 				});
-				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
+				visibilityStateAndLegendEntry.graphVisibilityStates =
+					newGraphVisibilityStates;
 			}
 		});
 	}
@@ -127,7 +128,8 @@ export const getGraphVisibilityStateOnDataChange = ({
 						}
 					}
 				});
-				visibilityStateAndLegendEntry.graphVisibilityStates = newGraphVisibilityStates;
+				visibilityStateAndLegendEntry.graphVisibilityStates =
+					newGraphVisibilityStates;
 			}
 		});
 	}
@@ -170,9 +172,7 @@ interface HandleGraphClickParams {
 	metric?: { [key: string]: string };
 	queryData?: { queryName: string; inFocusOrNot: boolean };
 	widget: Widgets;
-	navigateToExplorerPages: (
-		props: NavigateToExplorerPagesProps,
-	) => Promise<{
+	navigateToExplorerPages: (props: NavigateToExplorerPagesProps) => Promise<{
 		[queryName: string]: {
 			filters: TagFilterItem[];
 			dataSource?: string;
@@ -220,12 +220,12 @@ export const handleGraphClick = async ({
 							(result[key].dataSource as DataSource) === DataSource.TRACES
 								? 'Traces'
 								: 'Logs'
-					  }`
+						}`
 					: `View ${
 							(result[key].dataSource as DataSource) === DataSource.TRACES
 								? 'Traces'
 								: 'Logs'
-					  }: ${key}`,
+						}: ${key}`,
 			onClick: (): void =>
 				navigateToExplorer({
 					filters: [...result[key].filters, ...(customFilters || [])],

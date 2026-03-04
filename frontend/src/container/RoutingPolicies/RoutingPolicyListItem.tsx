@@ -85,7 +85,7 @@ function PolicyListItemContent({
 						? formatTimezoneAdjustedTimestamp(
 								routingPolicy.createdAt,
 								DATE_TIME_FORMATS.MONTH_DATETIME,
-						  )
+							)
 						: '-'}
 				</Typography>
 			</div>
@@ -100,7 +100,7 @@ function PolicyListItemContent({
 						? formatTimezoneAdjustedTimestamp(
 								routingPolicy.updatedAt,
 								DATE_TIME_FORMATS.MONTH_DATETIME,
-						  )
+							)
 						: '-'}
 				</Typography>
 			</div>

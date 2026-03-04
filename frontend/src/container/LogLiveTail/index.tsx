@@ -76,9 +76,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		batchedEventsRef.current = [];
 	}, [dispatch]);
 
-	const pushLiveLogThrottled = useMemo(() => throttle(pushLiveLog, 1000), [
-		pushLiveLog,
-	]);
+	const pushLiveLogThrottled = useMemo(
+		() => throttle(pushLiveLog, 1000),
+		[pushLiveLog],
+	);
 
 	const batchLiveLog = useCallback(
 		(e: { data: string }): void => {
@@ -102,7 +103,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 				...(liveTailSourceRef.current && firstLogsId
 					? {
 							idGt: firstLogsId,
-					  }
+						}
 					: {}),
 			});
 
@@ -190,9 +191,10 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 		[dispatch, liveTail, liveTailStartRange],
 	);
 
-	const isDisabled = useMemo(() => selectedAutoRefreshInterval?.length > 0, [
-		selectedAutoRefreshInterval,
-	]);
+	const isDisabled = useMemo(
+		() => selectedAutoRefreshInterval?.length > 0,
+		[selectedAutoRefreshInterval],
+	);
 
 	const onLiveTailStop = (): void => {
 		handleLiveTail('STOPPED');

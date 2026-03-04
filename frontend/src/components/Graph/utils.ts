@@ -95,7 +95,7 @@ export const getGraphOptions = (
 							},
 						],
 					},
-			  }
+				}
 			: {}),
 		title: {
 			display: title !== undefined,

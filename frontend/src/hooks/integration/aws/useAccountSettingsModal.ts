@@ -57,9 +57,10 @@ export function useAccountSettingsModal({
 }: UseAccountSettingsModalProps): UseAccountSettingsModal {
 	const [form] = Form.useForm();
 	const { mutate: updateConfig, isLoading } = useUpdateAccountConfig();
-	const accountRegions = useMemo(() => account?.config?.regions || [], [
-		account?.config?.regions,
-	]);
+	const accountRegions = useMemo(
+		() => account?.config?.regions || [],
+		[account?.config?.regions],
+	);
 	const [isInitialRegionsSet, setIsInitialRegionsSet] = useState(false);
 
 	const [selectedRegions, setSelectedRegions] = useState<string[]>([]);

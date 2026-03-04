@@ -69,13 +69,16 @@ export function usePinnedAttributes(
 	// Create pinned attributes state from stored keys, filtering by available attributes
 	const pinnedAttributes = useMemo(
 		(): Record<string, boolean> =>
-			pinnedKeys.reduce((acc, key) => {
-				// Only include if the attribute exists in the current span
-				if (availableAttributes.includes(key)) {
-					acc[key] = true;
-				}
-				return acc;
-			}, {} as Record<string, boolean>),
+			pinnedKeys.reduce(
+				(acc, key) => {
+					// Only include if the attribute exists in the current span
+					if (availableAttributes.includes(key)) {
+						acc[key] = true;
+					}
+					return acc;
+				},
+				{} as Record<string, boolean>,
+			),
 		[pinnedKeys, availableAttributes],
 	);
 

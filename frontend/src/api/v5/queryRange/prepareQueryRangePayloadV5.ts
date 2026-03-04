@@ -139,10 +139,9 @@ function createBaseSpec(
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
-	const nonEmptySelectColumns = (queryData.selectColumns as (
-		| BaseAutocompleteData
-		| TelemetryFieldKey
-	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+	const nonEmptySelectColumns = (
+		queryData.selectColumns as (BaseAutocompleteData | TelemetryFieldKey)[]
+	)?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	return {
 		stepInterval: queryData?.stepInterval || null,
@@ -160,7 +159,7 @@ function createBaseSpec(
 							signal: item?.signal,
 							materialized: item?.materialized,
 						}),
-				  )
+					)
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -179,52 +178,48 @@ function createBaseSpec(
 							},
 							direction: order.order,
 						}),
-				  )
+					)
 				: undefined,
 		legend: isEmpty(queryData.legend) ? undefined : queryData.legend,
 		having: isEmpty(queryData.having) ? undefined : (queryData?.having as Having),
 		functions: isEmpty(queryData.functions)
 			? undefined
-			: queryData.functions.map(
-					(func: QueryFunction): QueryFunction => {
-						// Normalize function name to handle case sensitivity
-						const normalizedName = normalizeFunctionName(func?.name);
-						return {
-							name: normalizedName as FunctionName,
-							args: isEmpty(func.namedArgs)
-								? func.args?.map((arg) => ({
-										value: arg?.value,
-								  }))
-								: Object.entries(func?.namedArgs || {}).map(([name, value]) => ({
-										name,
-										value,
-								  })),
-						};
-					},
-			  ),
+			: queryData.functions.map((func: QueryFunction): QueryFunction => {
+					// Normalize function name to handle case sensitivity
+					const normalizedName = normalizeFunctionName(func?.name);
+					return {
+						name: normalizedName as FunctionName,
+						args: isEmpty(func.namedArgs)
+							? func.args?.map((arg) => ({
+									value: arg?.value,
+								}))
+							: Object.entries(func?.namedArgs || {}).map(([name, value]) => ({
+									name,
+									value,
+								})),
+					};
+				}),
 		selectFields: isEmpty(nonEmptySelectColumns)
 			? undefined
-			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => {
-						const fieldName = column.name ?? column.key;
-						const isDeprecated = isDeprecatedField(fieldName);
+			: nonEmptySelectColumns?.map((column: any): TelemetryFieldKey => {
+					const fieldName = column.name ?? column.key;
+					const isDeprecated = isDeprecatedField(fieldName);
 
-						const fieldObj: TelemetryFieldKey = {
-							name: fieldName,
-							fieldDataType:
-								column?.fieldDataType ?? (column?.dataType as FieldDataType),
-							signal: column?.signal ?? undefined,
-						};
+					const fieldObj: TelemetryFieldKey = {
+						name: fieldName,
+						fieldDataType:
+							column?.fieldDataType ?? (column?.dataType as FieldDataType),
+						signal: column?.signal ?? undefined,
+					};
 
-						// Only add fieldContext if the field is NOT deprecated
-						if (!isDeprecated && fieldName !== 'name') {
-							fieldObj.fieldContext =
-								column?.fieldContext ?? (column?.type as FieldContext);
-						}
+					// Only add fieldContext if the field is NOT deprecated
+					if (!isDeprecated && fieldName !== 'name') {
+						fieldObj.fieldContext =
+							column?.fieldContext ?? (column?.type as FieldContext);
+					}
 
-						return fieldObj;
-					},
-			  ),
+					return fieldObj;
+				}),
 	};
 }
 
@@ -236,7 +231,8 @@ export function parseAggregations(
 	const result: { expression: string; alias?: string }[] = [];
 	// Matches function calls like "count()" or "sum(field)" with optional alias like "as 'alias'"
 	// Handles quoted ('alias'), dash-separated (field-name), and unquoted values after "as" keyword
-	const regex = /([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
+	const regex =
+		/([a-zA-Z0-9_]+\([^)]*\))(?:\s*as\s+((?:'[^']*'|"[^"]*"|[a-zA-Z0-9_-]+)))?/g;
 	let match = regex.exec(expression);
 	while (match !== null) {
 		const expr = match[1];
@@ -365,10 +361,9 @@ function createTraceOperatorBaseSpec(
 	requestType: RequestType,
 	panelType?: PANEL_TYPES,
 ): BaseBuilderQuery {
-	const nonEmptySelectColumns = (queryData.selectColumns as (
-		| BaseAutocompleteData
-		| TelemetryFieldKey
-	)[])?.filter((c) => ('key' in c ? c?.key : c?.name));
+	const nonEmptySelectColumns = (
+		queryData.selectColumns as (BaseAutocompleteData | TelemetryFieldKey)[]
+	)?.filter((c) => ('key' in c ? c?.key : c?.name));
 
 	const {
 		stepInterval,
@@ -395,7 +390,7 @@ function createTraceOperatorBaseSpec(
 							signal: item?.signal,
 							materialized: item?.materialized,
 						}),
-				  )
+					)
 				: undefined,
 		limit:
 			panelType === PANEL_TYPES.TABLE || panelType === PANEL_TYPES.LIST
@@ -411,7 +406,7 @@ function createTraceOperatorBaseSpec(
 							},
 							direction: order.order,
 						}),
-				  )
+					)
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
 		having: isEmpty(having) ? undefined : (having as Having),
@@ -425,7 +420,7 @@ function createTraceOperatorBaseSpec(
 						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
 						signal: column?.signal ?? undefined,
 					}),
-			  ),
+				),
 	};
 }
 
@@ -507,18 +502,22 @@ export function convertClickHouseQueriesToV5(
 /**
  * Helper function to reduce query arrays to objects
  */
-function reduceQueriesToObject(
-	queryArray: any[],
-): { queries: Record<string, any>; legends: Record<string, string> } {
+function reduceQueriesToObject(queryArray: any[]): {
+	queries: Record<string, any>;
+	legends: Record<string, string>;
+} {
 	const legends: Record<string, string> = {};
-	const queries = queryArray.reduce((acc, queryItem) => {
-		if (!queryItem.query) {
+	const queries = queryArray.reduce(
+		(acc, queryItem) => {
+			if (!queryItem.query) {
+				return acc;
+			}
+			acc[queryItem.name] = queryItem;
+			legends[queryItem.name] = queryItem.legend;
 			return acc;
-		}
-		acc[queryItem.name] = queryItem;
-		legends[queryItem.name] = queryItem.legend;
-		return acc;
-	}, {} as Record<string, any>);
+		},
+		{} as Record<string, any>,
+	);
 
 	return { queries, legends };
 }
@@ -554,7 +553,7 @@ export const prepareQueryRangePayloadV5 = ({
 				queryTraceOperator && queryTraceOperator.length > 0
 					? queryTraceOperator.filter((traceOperator) =>
 							Boolean(traceOperator.expression.trim()),
-					  )
+						)
 					: [];
 
 			const currentTraceOperator = mapQueryDataToApi(
@@ -648,15 +647,18 @@ export const prepareQueryRangePayloadV5 = ({
 					: graphType === PANEL_TYPES.TABLE),
 			fillGaps: fillGaps || false,
 		},
-		variables: Object.entries(variables).reduce((acc, [key, value]) => {
-			acc[key] = {
-				value,
-				type: dynamicVariables
-					?.find((v) => v.name === key)
-					?.type?.toLowerCase() as VariableType,
-			};
-			return acc;
-		}, {} as Record<string, VariableItem>),
+		variables: Object.entries(variables).reduce(
+			(acc, [key, value]) => {
+				acc[key] = {
+					value,
+					type: dynamicVariables
+						?.find((v) => v.name === key)
+						?.type?.toLowerCase() as VariableType,
+				};
+				return acc;
+			},
+			{} as Record<string, VariableItem>,
+		),
 	};
 
 	return { legendMap, queryPayload };

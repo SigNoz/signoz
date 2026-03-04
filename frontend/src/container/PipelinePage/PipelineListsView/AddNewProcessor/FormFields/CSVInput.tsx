@@ -6,7 +6,7 @@ function CSVInput({ value, onChange, ...otherProps }: InputProps): JSX.Element {
 		((value as string[]) || []).join(', '),
 	);
 
-	const onChangeHandler = (onChange as unknown) as (v: string[]) => void;
+	const onChangeHandler = onChange as unknown as (v: string[]) => void;
 
 	const onInputChange: ChangeEventHandler<HTMLInputElement> = (e) => {
 		const newValue = e.target.value;

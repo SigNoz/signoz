@@ -47,16 +47,14 @@ describe('InfraMonitoringHosts utils', () => {
 
 			// Test CPU progress bar
 			const cpuProgress = render(result[0].cpu as JSX.Element);
-			const cpuProgressBar = cpuProgress.container.querySelector(
-				PROGRESS_BAR_CLASS,
-			);
+			const cpuProgressBar =
+				cpuProgress.container.querySelector(PROGRESS_BAR_CLASS);
 			expect(cpuProgressBar).toBeTruthy();
 
 			// Test memory progress bar
 			const memoryProgress = render(result[0].memory as JSX.Element);
-			const memoryProgressBar = memoryProgress.container.querySelector(
-				PROGRESS_BAR_CLASS,
-			);
+			const memoryProgressBar =
+				memoryProgress.container.querySelector(PROGRESS_BAR_CLASS);
 			expect(memoryProgressBar).toBeTruthy();
 		});
 

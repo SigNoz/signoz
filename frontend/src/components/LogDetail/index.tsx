@@ -257,7 +257,7 @@ function LogDetailInner({
 											...query.filter,
 											expression: value,
 										},
-								  }
+									}
 								: query,
 						),
 					},

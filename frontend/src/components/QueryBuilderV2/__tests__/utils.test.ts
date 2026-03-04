@@ -947,7 +947,7 @@ describe('convertAggregationToExpression', () => {
 	it('should handle undefined aggregateAttribute parameter with traces', () => {
 		const result = convertAggregationToExpression({
 			aggregateOperator: 'noop',
-			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			aggregateAttribute: undefined as unknown as BaseAutocompleteData,
 			dataSource: DataSource.TRACES,
 		});
 
@@ -961,7 +961,7 @@ describe('convertAggregationToExpression', () => {
 	it('should handle undefined aggregateAttribute parameter with logs', () => {
 		const result = convertAggregationToExpression({
 			aggregateOperator: 'noop',
-			aggregateAttribute: (undefined as unknown) as BaseAutocompleteData,
+			aggregateAttribute: undefined as unknown as BaseAutocompleteData,
 			dataSource: DataSource.LOGS,
 		});
 

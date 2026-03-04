@@ -89,10 +89,8 @@ function CustomTimePicker({
 	minTime,
 	maxTime,
 }: CustomTimePickerProps): JSX.Element {
-	const [
-		selectedTimePlaceholderValue,
-		setSelectedTimePlaceholderValue,
-	] = useState('Select / Enter Time Range');
+	const [selectedTimePlaceholderValue, setSelectedTimePlaceholderValue] =
+		useState('Select / Enter Time Range');
 
 	const [inputValue, setInputValue] = useState('');
 	const [inputStatus, setInputStatus] = useState<CustomTimePickerInputStatus>(

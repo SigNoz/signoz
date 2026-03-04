@@ -134,9 +134,10 @@ function HostsList(): JSX.Element {
 		},
 	);
 
-	const hostMetricsData = useMemo(() => data?.payload?.data?.records || [], [
-		data,
-	]);
+	const hostMetricsData = useMemo(
+		() => data?.payload?.data?.records || [],
+		[data],
+	);
 
 	const { currentQuery } = useQueryBuilder();
 

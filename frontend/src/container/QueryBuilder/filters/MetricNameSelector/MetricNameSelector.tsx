@@ -125,7 +125,11 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 
 	const debouncedValue = useDebounce(searchText, DEBOUNCE_DELAY);
 
-	const { isFetching, isError, data: listMetricsData } = useListMetrics(
+	const {
+		isFetching,
+		isError,
+		data: listMetricsData,
+	} = useListMetrics(
 		{
 			searchText: debouncedValue,
 			limit: 100,
@@ -139,9 +143,10 @@ export const MetricNameSelector = memo(function MetricNameSelector({
 		},
 	);
 
-	const metrics = useMemo(() => listMetricsData?.data?.metrics ?? [], [
-		listMetricsData,
-	]);
+	const metrics = useMemo(
+		() => listMetricsData?.data?.metrics ?? [],
+		[listMetricsData],
+	);
 
 	useEffect(() => {
 		metricsRef.current = metrics;

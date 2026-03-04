@@ -73,12 +73,14 @@ function HostMetricsDetails({
 	>((state) => state.globalTime);
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / 1000000000),
+		[maxTime],
+	);
 
 	const urlQuery = useUrlQuery();
 
@@ -129,13 +131,11 @@ function HostMetricsDetails({
 		};
 	}, [host?.hostName, searchParams]);
 
-	const [logFilters, setLogFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [logFilters, setLogFilters] =
+		useState<IBuilderQuery['filters']>(initialFilters);
 
-	const [tracesFilters, setTracesFilters] = useState<IBuilderQuery['filters']>(
-		initialFilters,
-	);
+	const [tracesFilters, setTracesFilters] =
+		useState<IBuilderQuery['filters']>(initialFilters);
 
 	useEffect(() => {
 		if (host) {
@@ -242,9 +242,8 @@ function HostMetricsDetails({
 
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]:
+						JSON.stringify(updatedFilters),
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
 				});
 				return updatedFilters;
@@ -279,9 +278,8 @@ function HostMetricsDetails({
 
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]:
+						JSON.stringify(updatedFilters),
 					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
 				});
 

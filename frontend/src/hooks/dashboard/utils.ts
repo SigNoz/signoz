@@ -124,9 +124,9 @@ export const createDynamicVariableToWidgetsMap = (
 												typeof v === 'string' &&
 												variable.name &&
 												textContainsVariableReference(v, variable.name),
-									  )
+										)
 									: typeof filter.value === 'string' &&
-									  textContainsVariableReference(filter.value, variable.name)) &&
+										textContainsVariableReference(filter.value, variable.name)) &&
 								!dynamicVariableToWidgetsMap[variable.id].includes(widget.id)
 							) {
 								dynamicVariableToWidgetsMap[variable.id].push(widget.id);

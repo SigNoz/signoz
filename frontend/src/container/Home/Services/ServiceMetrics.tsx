@@ -249,9 +249,10 @@ function ServiceMetrics({
 		},
 	);
 
-	const isLoading = useMemo(() => dataQueries.some((query) => query.isLoading), [
-		dataQueries,
-	]);
+	const isLoading = useMemo(
+		() => dataQueries.some((query) => query.isLoading),
+		[dataQueries],
+	);
 
 	const services: ServicesList[] = useMemo(
 		() =>
@@ -274,9 +275,10 @@ function ServiceMetrics({
 	);
 
 	const servicesExist = sortedServices.length > 0;
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (!loadingUserPreferences && servicesExist) {

@@ -66,10 +66,8 @@ function OnboardingContextProvider({
 		OnboardingMethods.QUICK_START,
 	);
 
-	const [
-		selectedDataSource,
-		setSelectedDataSource,
-	] = useState<DataSourceType | null>(defaultApplicationDataSource);
+	const [selectedDataSource, setSelectedDataSource] =
+		useState<DataSourceType | null>(defaultApplicationDataSource);
 
 	const updateServiceName = (newValue: string): void => {
 		setServiceName(newValue);

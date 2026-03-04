@@ -92,9 +92,8 @@ function Explorer(): JSX.Element {
 	const [showOneChartPerQuery, toggleShowOneChartPerQuery] = useState(
 		isOneChartPerQueryEnabled,
 	);
-	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
-		false,
-	);
+	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] =
+		useState(false);
 	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 

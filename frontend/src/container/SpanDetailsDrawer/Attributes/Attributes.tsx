@@ -32,13 +32,13 @@ function Attributes(props: IAttributesProps): JSX.Element {
 		[span],
 	);
 
-	const availableAttributes = useMemo(() => Object.keys(flattenSpanData), [
-		flattenSpanData,
-	]);
-
-	const { pinnedAttributes, togglePin } = usePinnedAttributes(
-		availableAttributes,
+	const availableAttributes = useMemo(
+		() => Object.keys(flattenSpanData),
+		[flattenSpanData],
 	);
+
+	const { pinnedAttributes, togglePin } =
+		usePinnedAttributes(availableAttributes);
 
 	const sortPinnedAttributes = useCallback(
 		(data: AttributeRecord[]): AttributeRecord[] =>

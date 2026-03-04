@@ -55,11 +55,8 @@ function ValidTracesCount(): JSX.Element {
 }
 
 function StepsFooter({ stepsCount, isSaving }: StepsFooterProps): JSX.Element {
-	const {
-		hasIncompleteStepFields,
-		handleSaveFunnel,
-		hasUnsavedChanges,
-	} = useFunnelContext();
+	const { hasIncompleteStepFields, handleSaveFunnel, hasUnsavedChanges } =
+		useFunnelContext();
 
 	return (
 		<div className="steps-footer">

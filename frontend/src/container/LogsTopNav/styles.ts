@@ -14,6 +14,6 @@ export const LiveButtonStyled = styled(Button)<ButtonProps>`
 					&:active {
 						background-color: #1eb475 !important;
 					}
-			  `
+				`
 			: css``}
 `;

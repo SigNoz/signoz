@@ -110,10 +110,8 @@ function K8sVolumesList({
 		return [];
 	});
 
-	const [
-		selectedRowData,
-		setSelectedRowData,
-	] = useState<K8sVolumesRowData | null>(null);
+	const [selectedRowData, setSelectedRowData] =
+		useState<K8sVolumesRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -209,26 +207,24 @@ function K8sVolumesList({
 		dotMetricsEnabled,
 	);
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.NODES,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true,
-		K8sCategory.NODES,
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.NODES,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true,
+			K8sCategory.NODES,
+		);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sVolumesListQuery();
@@ -296,43 +292,43 @@ function K8sVolumesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sVolumesRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter: SorterResult<K8sVolumesRowData> | SorterResult<K8sVolumesRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Volumes,
-				});
-			}
+	const handleTableChange: TableProps<K8sVolumesRowData>['onChange'] =
+		useCallback(
+			(
+				pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter: SorterResult<K8sVolumesRowData> | SorterResult<K8sVolumesRowData>[],
+			): void => {
+				if (pagination.current) {
+					setCurrentPage(pagination.current);
+					logEvent(InfraMonitoringEvents.PageNumberChanged, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.ListPage,
+						category: InfraMonitoringEvents.Volumes,
+					});
+				}
 
-			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
-				});
-			} else {
-				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
-			}
-		},
-		[searchParams, setSearchParams],
-	);
+				if ('field' in sorter && sorter.order) {
+					const currentOrderBy = {
+						columnName: sorter.field as string,
+						order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+					};
+					setOrderBy(currentOrderBy);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+							JSON.stringify(currentOrderBy),
+					});
+				} else {
+					setOrderBy(null);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+					});
+				}
+			},
+			[searchParams, setSearchParams],
+		);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -519,13 +515,13 @@ function K8sVolumesList({
 
 	const handleCloseVolumeDetail = (): void => {
 		setselectedVolumeUID(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) => key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
 				),
 			),
-		});
+		);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -533,7 +529,7 @@ function K8sVolumesList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,

@@ -71,7 +71,7 @@ export const changePassword = (
 
 export const getChangePasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof changePassword>>,
@@ -94,8 +94,8 @@ export const getChangePasswordMutationOptions = <
 	const mutationKey = ['changePassword'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -118,7 +118,8 @@ export const getChangePasswordMutationOptions = <
 export type ChangePasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof changePassword>>
 >;
-export type ChangePasswordMutationBody = BodyType<TypesChangePasswordRequestDTO>;
+export type ChangePasswordMutationBody =
+	BodyType<TypesChangePasswordRequestDTO>;
 export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -126,7 +127,7 @@ export type ChangePasswordMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useChangePassword = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof changePassword>>,
@@ -173,7 +174,7 @@ export const getGetResetPasswordTokenQueryKey = ({
 
 export const getGetResetPasswordTokenQueryOptions = <
 	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
@@ -216,7 +217,7 @@ export type GetResetPasswordTokenQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetResetPasswordToken<
 	TData = Awaited<ReturnType<typeof getResetPasswordToken>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetResetPasswordTokenPathParameters,
 	options?: {
@@ -272,7 +273,7 @@ export const getListInviteQueryKey = () => {
 
 export const getListInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
 }) => {
@@ -302,7 +303,7 @@ export type ListInviteQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListInvite<
 	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -351,7 +352,7 @@ export const createInvite = (
 
 export const getCreateInviteMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
@@ -368,8 +369,8 @@ export const getCreateInviteMutationOptions = <
 	const mutationKey = ['createInvite'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -397,7 +398,7 @@ export type CreateInviteMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateInvite = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createInvite>>,
@@ -428,7 +429,7 @@ export const deleteInvite = ({ id }: DeleteInvitePathParameters) => {
 
 export const getDeleteInviteMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteInvite>>,
@@ -445,8 +446,8 @@ export const getDeleteInviteMutationOptions = <
 	const mutationKey = ['deleteInvite'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -474,7 +475,7 @@ export type DeleteInviteMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteInvite = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteInvite>>,
@@ -513,7 +514,7 @@ export const getGetInviteQueryKey = ({ token }: GetInvitePathParameters) => {
 
 export const getGetInviteQueryOptions = <
 	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ token }: GetInvitePathParameters,
 	options?: {
@@ -549,7 +550,7 @@ export type GetInviteQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetInvite<
 	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ token }: GetInvitePathParameters,
 	options?: {
@@ -602,7 +603,7 @@ export const acceptInvite = (
 
 export const getAcceptInviteMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
@@ -619,8 +620,8 @@ export const getAcceptInviteMutationOptions = <
 	const mutationKey = ['acceptInvite'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -648,7 +649,7 @@ export type AcceptInviteMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useAcceptInvite = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof acceptInvite>>,
@@ -685,7 +686,7 @@ export const createBulkInvite = (
 
 export const getCreateBulkInviteMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
@@ -702,8 +703,8 @@ export const getCreateBulkInviteMutationOptions = <
 	const mutationKey = ['createBulkInvite'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -731,7 +732,7 @@ export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateBulkInvite = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
@@ -767,7 +768,7 @@ export const getListAPIKeysQueryKey = () => {
 
 export const getListAPIKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAPIKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAPIKeys>>,
@@ -801,7 +802,7 @@ export type ListAPIKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListAPIKeys<
 	TData = Awaited<ReturnType<typeof listAPIKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAPIKeys>>,
@@ -854,7 +855,7 @@ export const createAPIKey = (
 
 export const getCreateAPIKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
@@ -871,8 +872,8 @@ export const getCreateAPIKeyMutationOptions = <
 	const mutationKey = ['createAPIKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -900,7 +901,7 @@ export type CreateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateAPIKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAPIKey>>,
@@ -931,7 +932,7 @@ export const revokeAPIKey = ({ id }: RevokeAPIKeyPathParameters) => {
 
 export const getRevokeAPIKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeAPIKey>>,
@@ -948,8 +949,8 @@ export const getRevokeAPIKeyMutationOptions = <
 	const mutationKey = ['revokeAPIKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -977,7 +978,7 @@ export type RevokeAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useRevokeAPIKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof revokeAPIKey>>,
@@ -1013,7 +1014,7 @@ export const updateAPIKey = (
 
 export const getUpdateAPIKeyMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAPIKey>>,
@@ -1036,8 +1037,8 @@ export const getUpdateAPIKeyMutationOptions = <
 	const mutationKey = ['updateAPIKey'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1068,7 +1069,7 @@ export type UpdateAPIKeyMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateAPIKey = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAPIKey>>,
@@ -1111,7 +1112,7 @@ export const resetPassword = (
 
 export const getResetPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
@@ -1128,8 +1129,8 @@ export const getResetPasswordMutationOptions = <
 	const mutationKey = ['resetPassword'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1157,7 +1158,7 @@ export type ResetPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useResetPassword = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof resetPassword>>,
@@ -1193,7 +1194,7 @@ export const getListUsersQueryKey = () => {
 
 export const getListUsersQueryOptions = <
 	TData = Awaited<ReturnType<typeof listUsers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }) => {
@@ -1223,7 +1224,7 @@ export type ListUsersQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListUsers<
 	TData = Awaited<ReturnType<typeof listUsers>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1266,7 +1267,7 @@ export const deleteUser = ({ id }: DeleteUserPathParameters) => {
 
 export const getDeleteUserMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUser>>,
@@ -1283,8 +1284,8 @@ export const getDeleteUserMutationOptions = <
 	const mutationKey = ['deleteUser'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1312,7 +1313,7 @@ export type DeleteUserMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteUser = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteUser>>,
@@ -1351,7 +1352,7 @@ export const getGetUserQueryKey = ({ id }: GetUserPathParameters) => {
 
 export const getGetUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getUser>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetUserPathParameters,
 	options?: {
@@ -1387,7 +1388,7 @@ export type GetUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetUser<
 	TData = Awaited<ReturnType<typeof getUser>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetUserPathParameters,
 	options?: {
@@ -1439,7 +1440,7 @@ export const updateUser = (
 
 export const getUpdateUserMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
@@ -1456,8 +1457,8 @@ export const getUpdateUserMutationOptions = <
 	const mutationKey = ['updateUser'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1485,7 +1486,7 @@ export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateUser = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
@@ -1521,7 +1522,7 @@ export const getGetMyUserQueryKey = () => {
 
 export const getGetMyUserQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyUser>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }) => {
@@ -1551,7 +1552,7 @@ export type GetMyUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMyUser<
 	TData = Awaited<ReturnType<typeof getMyUser>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -1600,7 +1601,7 @@ export const forgotPassword = (
 
 export const getForgotPasswordMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,
@@ -1617,8 +1618,8 @@ export const getForgotPasswordMutationOptions = <
 	const mutationKey = ['forgotPassword'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -1638,7 +1639,8 @@ export const getForgotPasswordMutationOptions = <
 export type ForgotPasswordMutationResult = NonNullable<
 	Awaited<ReturnType<typeof forgotPassword>>
 >;
-export type ForgotPasswordMutationBody = BodyType<TypesPostableForgotPasswordDTO>;
+export type ForgotPasswordMutationBody =
+	BodyType<TypesPostableForgotPasswordDTO>;
 export type ForgotPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1646,7 +1648,7 @@ export type ForgotPasswordMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useForgotPassword = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof forgotPassword>>,

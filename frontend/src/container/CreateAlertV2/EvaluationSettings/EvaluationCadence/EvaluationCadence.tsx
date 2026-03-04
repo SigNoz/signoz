@@ -18,10 +18,8 @@ function EvaluationCadence(): JSX.Element {
 		isEvaluationCadenceDetailsVisible,
 		setIsEvaluationCadenceDetailsVisible,
 	] = useState(false);
-	const [
-		isCustomScheduleButtonVisible,
-		setIsCustomScheduleButtonVisible,
-	] = useState(true);
+	const [isCustomScheduleButtonVisible, setIsCustomScheduleButtonVisible] =
+		useState(true);
 	const [
 		isEvaluationCadencePreviewVisible,
 		setIsEvaluationCadencePreviewVisible,

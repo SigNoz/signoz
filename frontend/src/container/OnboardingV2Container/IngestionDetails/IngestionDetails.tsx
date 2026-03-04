@@ -38,10 +38,8 @@ export default function OnboardingIngestionDetails(): JSX.Element {
 	const { notifications } = useNotifications();
 	const [, handleCopyToClipboard] = useCopyToClipboard();
 
-	const [
-		firstIngestionKey,
-		setFirstIngestionKey,
-	] = useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
+	const [firstIngestionKey, setFirstIngestionKey] =
+		useState<GatewaytypesIngestionKeyDTO>({} as GatewaytypesIngestionKeyDTO);
 
 	const {
 		data: ingestionKeys,

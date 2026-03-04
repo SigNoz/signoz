@@ -43,9 +43,10 @@ export function PlannedDowntime(): JSX.Element {
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
-	const [initialValues, setInitialValues] = useState<
-		Partial<DowntimeSchedules & { editMode: boolean }>
-	>(defautlInitialValues);
+	const [initialValues, setInitialValues] =
+		useState<Partial<DowntimeSchedules & { editMode: boolean }>>(
+			defautlInitialValues,
+		);
 
 	const downtimeSchedules = useGetAllDowntimeSchedules();
 	const alertOptions = React.useMemo(

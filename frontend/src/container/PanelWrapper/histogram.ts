@@ -110,7 +110,7 @@ export function join(
 		}
 	}
 
-	return (data as unknown) as AlignedData[];
+	return data as unknown as AlignedData[];
 }
 
 export function histogram(
@@ -159,7 +159,7 @@ function replaceUndefinedWithNull(arrays: (number | null)[][]): AlignedData[] {
 			}
 		}
 	}
-	return (arrays as unknown) as AlignedData[];
+	return arrays as unknown as AlignedData[];
 }
 
 function addNullToFirstHistogram(
@@ -258,13 +258,13 @@ export const buildHistogramData = (
 	});
 
 	const joinHistogram = replaceUndefinedWithNull(
-		(join(histograms) as unknown) as (number | null)[][],
+		join(histograms) as unknown as (number | null)[][],
 	);
 
 	addNullToFirstHistogram(
-		(joinHistogram as unknown) as (number | null)[][],
+		joinHistogram as unknown as (number | null)[][],
 		bucketSize,
 	);
 
-	return (joinHistogram as unknown) as AlignedData;
+	return joinHistogram as unknown as AlignedData;
 };

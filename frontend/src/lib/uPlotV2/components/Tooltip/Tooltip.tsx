@@ -59,7 +59,7 @@ export default function Tooltip({
 					: Math.min(
 							tooltipContent.length * TOOLTIP_ITEM_HEIGHT,
 							TOOLTIP_LIST_MAX_HEIGHT,
-					  ),
+						),
 			width: '100%',
 		};
 	}, [listHeight, tooltipContent.length]);

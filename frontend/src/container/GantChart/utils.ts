@@ -44,9 +44,10 @@ export const getMetaDataFromSpanTree = (
 	};
 };
 
-export function getTopLeftFromBody(
-	elem: HTMLElement,
-): { top: number; left: number } {
+export function getTopLeftFromBody(elem: HTMLElement): {
+	top: number;
+	left: number;
+} {
 	const box = elem.getBoundingClientRect();
 
 	const { body } = document;

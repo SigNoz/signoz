@@ -78,14 +78,17 @@ function TableView({
 	const dataSource = useMemo(
 		() =>
 			inspectMetricsTimeSeries.map((series, index) => {
-				const labelData = labelKeys.reduce((acc, label) => {
-					acc[label] = (
-						<div style={getDynamicColumnStyle(series.strokeColor)}>
-							{series.labels[label]}
-						</div>
-					);
-					return acc;
-				}, {} as Record<string, JSX.Element>);
+				const labelData = labelKeys.reduce(
+					(acc, label) => {
+						acc[label] = (
+							<div style={getDynamicColumnStyle(series.strokeColor)}>
+								{series.labels[label]}
+							</div>
+						);
+						return acc;
+					},
+					{} as Record<string, JSX.Element>,
+				);
 
 				return {
 					key: index,

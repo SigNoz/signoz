@@ -39,7 +39,7 @@ export const queryRangeV5 = (
 
 export const getQueryRangeV5MutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangeV5>>,
@@ -56,8 +56,8 @@ export const getQueryRangeV5MutationOptions = <
 	const mutationKey = ['queryRangeV5'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -77,7 +77,8 @@ export const getQueryRangeV5MutationOptions = <
 export type QueryRangeV5MutationResult = NonNullable<
 	Awaited<ReturnType<typeof queryRangeV5>>
 >;
-export type QueryRangeV5MutationBody = BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+export type QueryRangeV5MutationBody =
+	BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 export type QueryRangeV5MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -85,7 +86,7 @@ export type QueryRangeV5MutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useQueryRangeV5 = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof queryRangeV5>>,
@@ -122,7 +123,7 @@ export const replaceVariables = (
 
 export const getReplaceVariablesMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof replaceVariables>>,
@@ -139,8 +140,8 @@ export const getReplaceVariablesMutationOptions = <
 	const mutationKey = ['replaceVariables'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -160,7 +161,8 @@ export const getReplaceVariablesMutationOptions = <
 export type ReplaceVariablesMutationResult = NonNullable<
 	Awaited<ReturnType<typeof replaceVariables>>
 >;
-export type ReplaceVariablesMutationBody = BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
+export type ReplaceVariablesMutationBody =
+	BodyType<Querybuildertypesv5QueryRangeRequestDTO>;
 export type ReplaceVariablesMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -168,7 +170,7 @@ export type ReplaceVariablesMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useReplaceVariables = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof replaceVariables>>,

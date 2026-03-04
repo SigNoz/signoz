@@ -170,7 +170,7 @@ export function getMetricDetailsQuery(
 											type: DataTypes.String,
 										},
 									},
-							  ]
+								]
 							: [],
 					},
 					groupBy: groupBy
@@ -181,7 +181,7 @@ export function getMetricDetailsQuery(
 									type: 'tag',
 									id: `${groupBy}--string--tag--false`,
 								},
-						  ]
+							]
 						: [],
 					...(limit ? { limit } : {}),
 				},

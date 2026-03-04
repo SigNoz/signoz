@@ -163,8 +163,8 @@ function DynamicVariableInput({
 				const currentStrings = Array.isArray(tempSelection)
 					? tempSelection.map((v) => v.toString())
 					: tempSelection
-					? [tempSelection.toString()]
-					: [];
+						? [tempSelection.toString()]
+						: [];
 
 				const areSame =
 					currentStrings.length === latestValues.length &&

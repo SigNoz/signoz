@@ -42,10 +42,8 @@ export default function CustomDomainSettings(): JSX.Element {
 
 	const [, setCopyUrl] = useCopyToClipboard();
 
-	const [
-		customDomainDetails,
-		setCustomDomainDetails,
-	] = useState<CustomDomainSettingsProps | null>();
+	const [customDomainDetails, setCustomDomainDetails] =
+		useState<CustomDomainSettingsProps | null>();
 
 	const [editForm] = Form.useForm();
 
@@ -62,10 +60,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		refetch: refetchHosts,
 	} = useGetHosts();
 
-	const {
-		mutate: updateSubDomain,
-		isLoading: isLoadingUpdateCustomDomain,
-	} = usePutHost<AxiosError<RenderErrorResponseDTO>>();
+	const { mutate: updateSubDomain, isLoading: isLoadingUpdateCustomDomain } =
+		usePutHost<AxiosError<RenderErrorResponseDTO>>();
 
 	const stripProtocol = (url: string): string => {
 		return url?.split('://')[1] ?? url;

@@ -52,10 +52,13 @@ export const updateURL = (
 		}
 	});
 
-	const preResultParams = preResult.reduce((acc, item) => {
-		acc[item.key] = item.value;
-		return acc;
-	}, {} as Record<string, string>);
+	const preResultParams = preResult.reduce(
+		(acc, item) => {
+			acc[item.key] = item.value;
+			return acc;
+		},
+		{} as Record<string, string>,
+	);
 
 	const queryParams = {
 		selected: JSON.stringify(Object.fromEntries(selectedFilter)),

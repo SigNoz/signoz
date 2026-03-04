@@ -23,12 +23,14 @@ function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
 	const [selectedRelatedMetric, setSelectedRelatedMetric] = useState('all');
 	const [searchValue, setSearchValue] = useState<string | null>(null);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / 1000000000),
+		[maxTime],
+	);
 
 	useEffect(() => {
 		if (metricNames.length) {
@@ -36,15 +38,12 @@ function RelatedMetrics({ metricNames }: RelatedMetricsProps): JSX.Element {
 		}
 	}, [metricNames]);
 
-	const {
-		relatedMetrics,
-		isRelatedMetricsLoading,
-		isRelatedMetricsError,
-	} = useGetRelatedMetricsGraphs({
-		selectedMetricName,
-		startMs,
-		endMs,
-	});
+	const { relatedMetrics, isRelatedMetricsLoading, isRelatedMetricsError } =
+		useGetRelatedMetricsGraphs({
+			selectedMetricName,
+			startMs,
+			endMs,
+		});
 
 	const metricNamesSelectOptions = useMemo(
 		() =>

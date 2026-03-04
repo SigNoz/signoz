@@ -51,9 +51,10 @@ export const useActiveLog = (): UseActiveLog => {
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const { notifications } = useNotifications();
 
-	const isLogsPage = useMemo(() => pathname === ROUTES.OLD_LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsPage = useMemo(
+		() => pathname === ROUTES.OLD_LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
 
@@ -100,7 +101,7 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldValue: string,
 			operator: string,
 			dataType?: DataTypes,
-			fieldType?: MetricsType | undefined,
+			fieldType?: MetricsType,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(

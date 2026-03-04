@@ -32,12 +32,14 @@ function VolumeDetails({
 		GlobalReducer
 	>((state) => state.globalTime);
 
-	const startMs = useMemo(() => Math.floor(Number(minTime) / 1000000000), [
-		minTime,
-	]);
-	const endMs = useMemo(() => Math.floor(Number(maxTime) / 1000000000), [
-		maxTime,
-	]);
+	const startMs = useMemo(
+		() => Math.floor(Number(minTime) / 1000000000),
+		[minTime],
+	);
+	const endMs = useMemo(
+		() => Math.floor(Number(maxTime) / 1000000000),
+		[maxTime],
+	);
 
 	const [modalTimeRange, setModalTimeRange] = useState(() => ({
 		startTime: startMs,

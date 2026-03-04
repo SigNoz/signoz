@@ -15,14 +15,8 @@ function GraphWrapper({
 
 	const relativeTime = urlQuery.get('relativeTime');
 
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		isValidRuleId,
-		ruleId,
-	} = useGetAlertRuleDetailsTimelineGraphData();
+	const { isLoading, isRefetching, isError, data, isValidRuleId, ruleId } =
+		useGetAlertRuleDetailsTimelineGraphData();
 
 	// TODO(shaheer): uncomment when the API is ready for
 	// const { startTime } = useAlertHistoryQueryParams();

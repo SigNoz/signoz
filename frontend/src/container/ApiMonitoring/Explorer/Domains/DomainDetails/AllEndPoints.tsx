@@ -44,16 +44,14 @@ function AllEndPoints({
 		[key: string]: any;
 	}>({});
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys({
-		dataSource: DataSource.TRACES,
-		aggregateAttribute: '',
-		aggregateOperator: 'noop',
-		searchText: groupBySearchValue,
-		tagType: '',
-	});
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys({
+			dataSource: DataSource.TRACES,
+			aggregateAttribute: '',
+			aggregateOperator: 'noop',
+			searchText: groupBySearchValue,
+			tagType: '',
+		});
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -121,7 +119,7 @@ function AllEndPoints({
 			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				// Check if the key exists in our cached options first
 				if (allAvailableGroupByOptions[element]) {

@@ -81,10 +81,8 @@ function WidgetGraphComponent({
 	);
 	const graphRef = useRef<HTMLDivElement>(null);
 
-	const [
-		currentGraphRef,
-		setCurrentGraphRef,
-	] = useState<RefObject<HTMLDivElement> | null>(graphRef);
+	const [currentGraphRef, setCurrentGraphRef] =
+		useState<RefObject<HTMLDivElement> | null>(graphRef);
 
 	useEffect(() => {
 		if (!lineChartRef.current) {
@@ -177,10 +175,8 @@ function WidgetGraphComponent({
 					widgets: [
 						...(selectedDashboard.data.widgets || []),
 						{
-							...{
-								...widget,
-								id: uuid,
-							},
+							...widget,
+							id: uuid,
 						},
 					],
 				},
@@ -252,12 +248,11 @@ function WidgetGraphComponent({
 		existingSearchParams.delete(QueryParams.graphType);
 		const updatedQueryParams = Object.fromEntries(existingSearchParams.entries());
 		if (queryResponse.data?.payload) {
-			const {
-				graphVisibilityStates: localStoredVisibilityState,
-			} = getLocalStorageGraphVisibilityState({
-				apiResponse: queryResponse.data?.payload?.data?.result,
-				name: widget.id,
-			});
+			const { graphVisibilityStates: localStoredVisibilityState } =
+				getLocalStorageGraphVisibilityState({
+					apiResponse: queryResponse.data?.payload?.data?.result,
+					name: widget.id,
+				});
 			setGraphVisibility(localStoredVisibilityState);
 		}
 		safeNavigate({

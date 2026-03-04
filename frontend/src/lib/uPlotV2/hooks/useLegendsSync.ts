@@ -49,24 +49,22 @@ export default function useLegendsSync({
 	 */
 	const applyVisibilityUpdates = useCallback(
 		(updates: Record<number, boolean>): void => {
-			setLegendItemsMap(
-				(prev): Record<number, LegendItem> => {
-					let hasChanges = false;
-					const next = { ...prev };
+			setLegendItemsMap((prev): Record<number, LegendItem> => {
+				let hasChanges = false;
+				const next = { ...prev };
 
-					for (const [idxStr, show] of Object.entries(updates)) {
-						const idx = Number(idxStr);
-						const current = next[idx];
-						if (!current || current.show === show) {
-							continue;
-						}
-						next[idx] = { ...current, show };
-						hasChanges = true;
+				for (const [idxStr, show] of Object.entries(updates)) {
+					const idx = Number(idxStr);
+					const current = next[idx];
+					if (!current || current.show === show) {
+						continue;
 					}
+					next[idx] = { ...current, show };
+					hasChanges = true;
+				}
 
-					return hasChanges ? next : prev;
-				},
-			);
+				return hasChanges ? next : prev;
+			});
 		},
 		[],
 	);

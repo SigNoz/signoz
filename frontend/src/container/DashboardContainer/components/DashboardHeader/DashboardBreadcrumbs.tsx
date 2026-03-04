@@ -20,7 +20,7 @@ function DashboardBreadcrumbs(): JSX.Element {
 		? {
 				...selectedDashboard.data,
 				uuid: selectedDashboard.id,
-		  }
+			}
 		: ({} as DashboardData);
 
 	const { title = '', image = Base64Icons[0] } = selectedData || {};

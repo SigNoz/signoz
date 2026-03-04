@@ -23,10 +23,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 function TimeSeries(): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 

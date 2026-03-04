@@ -15,7 +15,7 @@ export function getInfinityDefaultStyles(fontSize: FontSize): CSSProperties {
 			fontSize === FontSize.SMALL
 				? '10px'
 				: fontSize === FontSize.MEDIUM
-				? '12px'
-				: '15px',
+					? '12px'
+					: '15px',
 	};
 }

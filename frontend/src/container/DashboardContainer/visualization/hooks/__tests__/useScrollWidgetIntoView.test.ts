@@ -29,14 +29,14 @@ describe('useScrollWidgetIntoView', () => {
 	it('scrolls into view and focuses when toScrollWidgetId matches widget id', () => {
 		const setToScrollWidgetId = jest.fn();
 		const mockElement = createMockElement();
-		const ref = ({
+		const ref = {
 			current: mockElement,
-		} as unknown) as React.RefObject<HTMLDivElement>;
+		} as unknown as React.RefObject<HTMLDivElement>;
 
-		mockedUseDashboard.mockReturnValue(({
+		mockedUseDashboard.mockReturnValue({
 			toScrollWidgetId: 'widget-id',
 			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useDashboard>);
+		} as unknown as ReturnType<typeof useDashboard>);
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 
@@ -51,14 +51,14 @@ describe('useScrollWidgetIntoView', () => {
 	it('does nothing when toScrollWidgetId does not match widget id', () => {
 		const setToScrollWidgetId = jest.fn();
 		const mockElement = createMockElement();
-		const ref = ({
+		const ref = {
 			current: mockElement,
-		} as unknown) as React.RefObject<HTMLDivElement>;
+		} as unknown as React.RefObject<HTMLDivElement>;
 
-		mockedUseDashboard.mockReturnValue(({
+		mockedUseDashboard.mockReturnValue({
 			toScrollWidgetId: 'other-widget',
 			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useDashboard>);
+		} as unknown as ReturnType<typeof useDashboard>);
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 

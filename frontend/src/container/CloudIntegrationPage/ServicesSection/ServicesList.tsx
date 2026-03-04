@@ -17,9 +17,8 @@ function ServicesList({
 }: ServicesListProps): JSX.Element {
 	const urlQuery = useUrlQuery();
 	const navigate = useNavigate();
-	const { data: services = [], isLoading } = useGetAccountServices(
-		cloudAccountId,
-	);
+	const { data: services = [], isLoading } =
+		useGetAccountServices(cloudAccountId);
 	const activeService = urlQuery.get('service');
 
 	const handleActiveService = useCallback(

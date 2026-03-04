@@ -19,7 +19,7 @@ const TIMEZONE_TYPES = {
 	STANDARD: 'STANDARD',
 } as const;
 
-type TimezoneType = typeof TIMEZONE_TYPES[keyof typeof TIMEZONE_TYPES];
+type TimezoneType = (typeof TIMEZONE_TYPES)[keyof typeof TIMEZONE_TYPES];
 
 export const UTC_TIMEZONE: Timezone = {
 	name: 'Coordinated Universal Time — UTC, GMT',

@@ -205,10 +205,8 @@ const generateTooltipContent = (
 		return container;
 	}
 
-	const sortedData: Record<
-		string,
-		UplotTooltipDataProps
-	> = sortTooltipContentBasedOnValue(formattedData);
+	const sortedData: Record<string, UplotTooltipDataProps> =
+		sortTooltipContentBasedOnValue(formattedData);
 
 	const headerDiv = document.createElement('div');
 	headerDiv.classList.add('tooltip-content-row', 'tooltip-content-header');

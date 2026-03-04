@@ -152,7 +152,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									shouldKeepLocalTime,
-							  )
+								)
 							: undefined,
 						recurrence: values.recurrence as Recurrence,
 					},
@@ -209,7 +209,7 @@ export function PlannedDowntimeForm(
 									timezoneInitialValue,
 									values.timezone,
 									!isEditMode,
-							  )
+								)
 							: undefined,
 						startTime: handleTimeConversion(
 							values.startTime,
@@ -221,7 +221,7 @@ export function PlannedDowntimeForm(
 							? undefined
 							: values.recurrence?.repeatOn,
 						repeatType: values.recurrence?.repeatType,
-				  };
+					};
 
 		const payloadValues = { ...values, recurrence: recurrenceData };
 		await saveHanlder(payloadValues);

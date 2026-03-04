@@ -75,9 +75,10 @@ function TraceWaterfall(props: ITraceWaterfallProps): JSX.Element {
 	}, [errorFetchingTraceData, isFetchingTraceData, traceData]);
 
 	// capture the spans from the response, since we do not need to do any manipulation on the same we will keep this as a simple constant [ memoized ]
-	const spans = useMemo(() => traceData?.payload?.spans || [], [
-		traceData?.payload?.spans,
-	]);
+	const spans = useMemo(
+		() => traceData?.payload?.spans || [],
+		[traceData?.payload?.spans],
+	);
 
 	// get the content based on the current state of the trace waterfall
 	const getContent = useMemo(() => {

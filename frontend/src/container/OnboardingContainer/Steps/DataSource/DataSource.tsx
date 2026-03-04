@@ -62,10 +62,8 @@ export default function DataSource(): JSX.Element {
 
 	const requestedDataSourceName = Form.useWatch('requestedDataSourceName', form);
 
-	const [
-		isSubmittingRequestForDataSource,
-		setIsSubmittingRequestForDataSource,
-	] = useState(false);
+	const [isSubmittingRequestForDataSource, setIsSubmittingRequestForDataSource] =
+		useState(false);
 
 	const { notifications } = useNotifications();
 

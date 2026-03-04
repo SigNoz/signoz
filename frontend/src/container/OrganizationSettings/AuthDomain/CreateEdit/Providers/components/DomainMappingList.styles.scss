@@ -52,7 +52,9 @@
 		color: var(--destructive) !important;
 		opacity: 0.6 !important;
 		cursor: pointer;
-		transition: background-color 0.2s, opacity 0.2s;
+		transition:
+			background-color 0.2s,
+			opacity 0.2s;
 		box-shadow: none !important;
 		display: flex;
 		align-items: center;

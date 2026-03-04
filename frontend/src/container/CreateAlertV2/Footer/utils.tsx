@@ -56,18 +56,19 @@ export function validateCreateAlertState(
 export function getNotificationSettingsProps(
 	notificationSettings: NotificationSettingsState,
 ): PostableAlertRuleV2['notificationSettings'] {
-	const notificationSettingsProps: PostableAlertRuleV2['notificationSettings'] = {
-		groupBy: notificationSettings.multipleNotifications || [],
-		usePolicy: notificationSettings.routingPolicies,
-		renotify: {
-			enabled: notificationSettings.reNotification.enabled,
-			interval: getFormattedTimeValue(
-				notificationSettings.reNotification.value,
-				notificationSettings.reNotification.unit,
-			),
-			alertStates: notificationSettings.reNotification.conditions,
-		},
-	};
+	const notificationSettingsProps: PostableAlertRuleV2['notificationSettings'] =
+		{
+			groupBy: notificationSettings.multipleNotifications || [],
+			usePolicy: notificationSettings.routingPolicies,
+			renotify: {
+				enabled: notificationSettings.reNotification.enabled,
+				interval: getFormattedTimeValue(
+					notificationSettings.reNotification.value,
+					notificationSettings.reNotification.unit,
+				),
+				alertStates: notificationSettings.reNotification.conditions,
+			},
+		};
 
 	return notificationSettingsProps;
 }
@@ -243,14 +244,12 @@ export function buildCreateThresholdAlertRulePayload(
 	const alertOnAbsentProps = getAlertOnAbsentProps(advancedOptions);
 
 	// Enforce minimum datapoints
-	const enforceMinimumDatapointsProps = getEnforceMinimumDatapointsProps(
-		advancedOptions,
-	);
+	const enforceMinimumDatapointsProps =
+		getEnforceMinimumDatapointsProps(advancedOptions);
 
 	// Notification settings
-	const notificationSettingsProps = getNotificationSettingsProps(
-		notificationSettings,
-	);
+	const notificationSettingsProps =
+		getNotificationSettingsProps(notificationSettings);
 
 	// Evaluation
 	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
@@ -314,13 +313,11 @@ export function buildCreateAnomalyAlertRulePayload(
 	});
 
 	const alertOnAbsentProps = getAlertOnAbsentProps(advancedOptions);
-	const enforceMinimumDatapointsProps = getEnforceMinimumDatapointsProps(
-		advancedOptions,
-	);
+	const enforceMinimumDatapointsProps =
+		getEnforceMinimumDatapointsProps(advancedOptions);
 	const evaluationProps = getEvaluationProps(evaluationWindow, advancedOptions);
-	const notificationSettingsProps = getNotificationSettingsProps(
-		notificationSettings,
-	);
+	const notificationSettingsProps =
+		getNotificationSettingsProps(notificationSettings);
 
 	return {
 		alert: basicAlertState.name,

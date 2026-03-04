@@ -713,7 +713,7 @@ describe('prepareQueryRangePayloadV5', () => {
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
 							filter: { expression: 'http.status_code >= 500' },
-							filters: (undefined as unknown) as IBuilderQuery['filters'],
+							filters: undefined as unknown as IBuilderQuery['filters'],
 						}),
 					],
 					queryFormulas: [],
@@ -746,7 +746,7 @@ describe('prepareQueryRangePayloadV5', () => {
 					queryData: [
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
-							filter: (undefined as unknown) as IBuilderQuery['filter'],
+							filter: undefined as unknown as IBuilderQuery['filter'],
 							filters: {
 								items: [
 									{
@@ -834,8 +834,8 @@ describe('prepareQueryRangePayloadV5', () => {
 					queryData: [
 						baseBuilderQuery({
 							dataSource: DataSource.LOGS,
-							filter: (undefined as unknown) as IBuilderQuery['filter'],
-							filters: (undefined as unknown) as IBuilderQuery['filters'],
+							filter: undefined as unknown as IBuilderQuery['filter'],
+							filters: undefined as unknown as IBuilderQuery['filters'],
 						}),
 					],
 					queryFormulas: [],

@@ -3,7 +3,7 @@ import { IBuilderTraceOperator } from 'types/api/queryBuilder/queryBuilderData';
 import { getInvolvedQueriesInTraceOperator } from '../utils/utils';
 
 const makeTraceOperator = (expression: string): IBuilderTraceOperator =>
-	(({ expression } as unknown) as IBuilderTraceOperator);
+	({ expression }) as unknown as IBuilderTraceOperator;
 
 describe('getInvolvedQueriesInTraceOperator', () => {
 	it('returns empty array for empty input', () => {

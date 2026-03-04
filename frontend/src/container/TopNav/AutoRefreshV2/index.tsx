@@ -50,10 +50,10 @@ function AutoRefresh({
 
 	const localStorageData = JSON.parse(get(DASHBOARD_TIME_IN_DURATION) || '{}');
 
-	const localStorageValue = useMemo(() => localStorageData[pathname], [
-		pathname,
-		localStorageData,
-	]);
+	const localStorageValue = useMemo(
+		() => localStorageData[pathname],
+		[pathname, localStorageData],
+	);
 
 	const [isAutoRefreshEnabled, setIsAutoRefreshfreshEnabled] = useState<boolean>(
 		Boolean(localStorageValue),

@@ -32,14 +32,8 @@ interface IntegrationsListProps {
 function IntegrationsList(props: IntegrationsListProps): JSX.Element {
 	const { setSelectedIntegration, setActiveDetailTab } = props;
 
-	const {
-		data,
-		isFetching,
-		isLoading,
-		isRefetching,
-		isError,
-		refetch,
-	} = useGetAllIntegrations();
+	const { data, isFetching, isLoading, isRefetching, isError, refetch } =
+		useGetAllIntegrations();
 
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
