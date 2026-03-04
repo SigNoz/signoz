@@ -60,7 +60,7 @@ describe('SettingsPage nav sections', () => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
 
-		it.each(['IDENTITY & ACCESS', 'Authentication'])(
+		it.each(['Identity & Access', 'Authentication'])(
 			'renders "%s" section title',
 			(text) => {
 				expect(screen.getByText(text)).toBeInTheDocument();
