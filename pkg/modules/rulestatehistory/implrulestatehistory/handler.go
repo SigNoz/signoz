@@ -1,0 +1,296 @@
+package implrulestatehistory
+
+import (
+	"encoding/base64"
+	"encoding/json"
+	"net/http"
+	"strings"
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/http/binding"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/gorilla/mux"
+)
+
+type handler struct {
+	module rulestatehistory.Module
+}
+
+type ruleHistoryRequest struct {
+	Query  rulestatehistorytypes.Query
+	Cursor string
+}
+
+type cursorToken struct {
+	Offset int64 `json:"offset"`
+	Limit  int64 `json:"limit"`
+}
+
+func NewHandler(module rulestatehistory.Module) rulestatehistory.Handler {
+	return &handler{module: module}
+}
+
+func (h *handler) GetRuleHistoryStats(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	req, ok := h.parseV2BaseQueryRequest(w, r)
+	if !ok {
+		return
+	}
+
+	stats, err := h.module.GetHistoryStats(r.Context(), ruleID, req.Query)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusOK, stats)
+}
+
+func (h *handler) GetRuleHistoryOverallStatus(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	req, ok := h.parseV2BaseQueryRequest(w, r)
+	if !ok {
+		return
+	}
+
+	res, err := h.module.GetHistoryOverallStatus(r.Context(), ruleID, req.Query)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusOK, res)
+}
+
+func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	req, ok := h.parseV2TimelineQueryRequest(w, r)
+	if !ok {
+		return
+	}
+	if req.Cursor != "" {
+		token, err := decodeCursor(req.Cursor)
+		if err != nil {
+			render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid cursor"))
+			return
+		}
+		req.Query.Offset = token.Offset
+		if req.Query.Limit == 0 {
+			req.Query.Limit = token.Limit
+		}
+	}
+
+	timeline, err := h.module.GetHistoryTimeline(r.Context(), ruleID, req.Query)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	resp := rulestatehistorytypes.RuleStateTimelineResponse{}
+	if timeline != nil {
+		resp.Items = timeline.Items
+		resp.Total = timeline.Total
+	}
+	if timeline != nil && req.Query.Limit > 0 && req.Query.Offset+int64(len(timeline.Items)) < int64(timeline.Total) {
+		nextOffset := req.Query.Offset + int64(len(timeline.Items))
+		nextCursor, err := encodeCursor(cursorToken{Offset: nextOffset, Limit: req.Query.Limit})
+		if err != nil {
+			render.Error(w, err)
+			return
+		}
+		resp.NextCursor = nextCursor
+	}
+	render.Success(w, http.StatusOK, resp)
+}
+
+func (h *handler) GetRuleHistoryContributors(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	req, ok := h.parseV2BaseQueryRequest(w, r)
+	if !ok {
+		return
+	}
+
+	res, err := h.module.GetHistoryContributors(r.Context(), ruleID, req.Query)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusOK, res)
+}
+
+func (h *handler) GetRuleHistoryFilterKeys(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	query, search, limit, ok := h.parseV2FilterKeysRequest(w, r)
+	if !ok {
+		return
+	}
+
+	res, err := h.module.GetHistoryFilterKeys(r.Context(), ruleID, query, search, limit)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusOK, res)
+}
+
+func (h *handler) GetRuleHistoryFilterValues(w http.ResponseWriter, r *http.Request) {
+	ruleID := mux.Vars(r)["id"]
+	query, key, search, limit, ok := h.parseV2FilterValuesRequest(w, r)
+	if !ok {
+		return
+	}
+
+	res, err := h.module.GetHistoryFilterValues(r.Context(), ruleID, key, query, search, limit)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+	render.Success(w, http.StatusOK, res)
+}
+
+func (h *handler) parseV2BaseQueryRequest(w http.ResponseWriter, r *http.Request) (*ruleHistoryRequest, bool) {
+	req, err := parseV2BaseQueryFromURL(r)
+	if err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return nil, false
+	}
+	if req.Query.Start == 0 || req.Query.End == 0 || req.Query.Start >= req.Query.End {
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end are required and start must be less than end"))
+		return nil, false
+	}
+	return req, true
+}
+
+func (h *handler) parseV2TimelineQueryRequest(w http.ResponseWriter, r *http.Request) (*ruleHistoryRequest, bool) {
+	req, err := parseV2TimelineQueryFromURL(r)
+	if err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return nil, false
+	}
+	if err := req.Query.Validate(); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return nil, false
+	}
+	return req, true
+}
+
+func (h *handler) parseV2FilterKeysRequest(w http.ResponseWriter, r *http.Request) (rulestatehistorytypes.Query, string, int64, bool) {
+	raw := telemetrytypes.PostableFieldKeysParams{}
+	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return rulestatehistorytypes.Query{}, "", 0, false
+	}
+
+	query := rulestatehistorytypes.Query{
+		Start:            raw.StartUnixMilli,
+		End:              raw.EndUnixMilli,
+		FilterExpression: qbtypes.Filter{},
+		Order:            qbtypes.OrderDirectionAsc,
+	}
+	if err := query.Validate(); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return rulestatehistorytypes.Query{}, "", 0, false
+	}
+
+	limit := normalizeFilterLimit(int64(raw.Limit))
+	return query, strings.TrimSpace(raw.SearchText), limit, true
+}
+
+func (h *handler) parseV2FilterValuesRequest(w http.ResponseWriter, r *http.Request) (rulestatehistorytypes.Query, string, string, int64, bool) {
+	raw := telemetrytypes.PostableFieldValueParams{}
+	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return rulestatehistorytypes.Query{}, "", "", 0, false
+	}
+
+	key := strings.TrimSpace(raw.Name)
+	if key == "" {
+		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "key is required"))
+		return rulestatehistorytypes.Query{}, "", "", 0, false
+	}
+
+	query := rulestatehistorytypes.Query{
+		Start:            raw.StartUnixMilli,
+		End:              raw.EndUnixMilli,
+		FilterExpression: parseFilterExpression(raw.ExistingQuery),
+		Order:            qbtypes.OrderDirectionAsc,
+	}
+	if err := query.Validate(); err != nil {
+		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
+		return rulestatehistorytypes.Query{}, "", "", 0, false
+	}
+
+	limit := normalizeFilterLimit(int64(raw.Limit))
+	return query, key, strings.TrimSpace(raw.SearchText), limit, true
+}
+
+func parseV2BaseQueryFromURL(r *http.Request) (*ruleHistoryRequest, error) {
+	raw := rulestatehistorytypes.V2HistoryBaseQueryParams{}
+	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
+		return nil, err
+	}
+
+	req := &ruleHistoryRequest{}
+	req.Query.Start = raw.Start
+	req.Query.End = raw.End
+	return req, nil
+}
+
+func parseV2TimelineQueryFromURL(r *http.Request) (*ruleHistoryRequest, error) {
+	raw := rulestatehistorytypes.V2HistoryTimelineQueryParams{}
+	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
+		return nil, err
+	}
+
+	req := &ruleHistoryRequest{}
+	req.Query.Start = raw.Start
+	req.Query.End = raw.End
+	req.Query.State = raw.State
+	req.Query.Limit = raw.Limit
+	req.Query.Order = raw.Order
+	req.Query.FilterExpression = parseFilterExpression(raw.FilterExpression)
+	req.Cursor = raw.Cursor
+	return req, nil
+}
+
+func encodeCursor(token cursorToken) (string, error) {
+	data, err := json.Marshal(token)
+	if err != nil {
+		return "", err
+	}
+	return base64.RawURLEncoding.EncodeToString(data), nil
+}
+
+func decodeCursor(cursor string) (*cursorToken, error) {
+	data, err := base64.RawURLEncoding.DecodeString(cursor)
+	if err != nil {
+		return nil, err
+	}
+	token := &cursorToken{}
+	if err := json.Unmarshal(data, token); err != nil {
+		return nil, err
+	}
+	return token, nil
+}
+
+func normalizeFilterLimit(limit int64) int64 {
+	if limit <= 0 {
+		return 50
+	}
+	if limit > 200 {
+		return 200
+	}
+	return limit
+}
+
+func parseFilterExpression(values ...string) qbtypes.Filter {
+	for _, value := range values {
+		expr := strings.TrimSpace(value)
+		if expr != "" {
+			return qbtypes.Filter{Expression: expr}
+		}
+	}
+	return qbtypes.Filter{}
+}
