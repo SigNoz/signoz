@@ -1,4 +1,6 @@
 import { RocketOutlined } from '@ant-design/icons';
+import { Style } from '@signozhq/design-tokens';
+import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
@@ -8,6 +10,7 @@ import {
 	Book,
 	Boxes,
 	BugIcon,
+	Building2,
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
@@ -20,6 +23,7 @@ import {
 	Layers2,
 	LayoutGrid,
 	ListMinus,
+	LogOut,
 	MessageSquareText,
 	Plus,
 	Receipt,
@@ -361,13 +365,6 @@ export const settingsMenuItems: SidebarItem[] = [
 		isEnabled: true,
 		itemKey: 'account-settings',
 	},
-	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Layers2 size={16} />,
-		isEnabled: true,
-		itemKey: 'keyboard-shortcuts',
-	},
 ];
 
 export const helpSupportDropdownMenuItems: SidebarItem[] = [
@@ -418,18 +415,84 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		itemKey: 'chat-support',
 	},
 	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Keyboard size={14} />,
-		itemKey: 'keyboard-shortcuts',
-	},
-	{
 		key: 'invite-collaborators',
 		label: 'Invite a Team Member',
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
 ];
+
+export interface UserSettingsMenuItemsParams {
+	userEmail: string;
+	isWorkspaceBlocked: boolean;
+	isEnterpriseSelfHostedUser: boolean;
+	isCommunityEnterpriseUser: boolean;
+}
+
+export const getUserSettingsDropdownMenuItems = ({
+	userEmail,
+	isWorkspaceBlocked,
+	isEnterpriseSelfHostedUser,
+	isCommunityEnterpriseUser,
+}: UserSettingsMenuItemsParams): MenuProps['items'] =>
+	[
+		{
+			key: 'label',
+			label: (
+				<div className="user-settings-dropdown-logged-in-section">
+					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
+					<span className="user-settings-dropdown-label-email">{userEmail}</span>
+				</div>
+			),
+			disabled: true,
+			dataTestId: 'logged-in-as-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'workspace',
+			label: 'Workspace Settings',
+			icon: <Building2 size={14} color={Style.L1_FOREGROUND} />,
+			disabled: isWorkspaceBlocked,
+			dataTestId: 'workspace-settings-nav-item',
+		},
+		{
+			key: 'account',
+			label: 'Account Settings',
+			icon: <User size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'account-settings-nav-item',
+		},
+		...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
+			? [
+					{
+						key: 'license',
+						label: 'Manage License',
+						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
+						dataTestId: 'manage-license-nav-item',
+					},
+			  ]
+			: []),
+		{
+			key: 'keyboard-shortcuts',
+			label: 'Keyboard Shortcuts',
+			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'keyboard-shortcuts-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'logout',
+			label: (
+				<span className="user-settings-dropdown-logout-section">Sign out</span>
+			),
+			icon: (
+				<LogOut
+					size={14}
+					className="user-settings-dropdown-logout-section"
+					color={Style.DANGER_BACKGROUND}
+				/>
+			),
+			dataTestId: 'logout-nav-item',
+		},
+	].filter(Boolean);
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {
