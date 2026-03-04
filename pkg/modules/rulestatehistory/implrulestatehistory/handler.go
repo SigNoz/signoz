@@ -82,6 +82,9 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 			req.Query.Limit = token.Limit
 		}
 	}
+	if req.Query.Limit == 0 {
+		req.Query.Limit = 50
+	}
 
 	timelineItems, timelineTotal, err := h.module.GetHistoryTimeline(r.Context(), ruleID, req.Query)
 	if err != nil {
