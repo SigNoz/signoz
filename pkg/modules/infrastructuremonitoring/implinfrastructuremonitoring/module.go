@@ -7,6 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/infrastructuremonitoring"
+	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/infrastructuremonitoringtypes"
@@ -16,6 +17,7 @@ import (
 
 type module struct {
 	telemetryStore         telemetrystore.TelemetryStore
+	querier                querier.Querier
 	telemetryMetadataStore telemetrytypes.MetadataStore
 	fieldMapper            qbtypes.FieldMapper
 	condBuilder            qbtypes.ConditionBuilder
@@ -25,11 +27,12 @@ type module struct {
 }
 
 // NewModule constructs the infrastructure monitoring module with the provided dependencies.
-func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings, cfg infrastructuremonitoring.Config) infrastructuremonitoring.Module {
+func NewModule(ts telemetrystore.TelemetryStore, querier querier.Querier, telemetryMetadataStore telemetrytypes.MetadataStore, cache cache.Cache, providerSettings factory.ProviderSettings, cfg infrastructuremonitoring.Config) infrastructuremonitoring.Module {
 	fieldMapper := telemetrymetrics.NewFieldMapper()
 	condBuilder := telemetrymetrics.NewConditionBuilder(fieldMapper)
 	return &module{
 		telemetryStore:         ts,
+		querier:                querier,
 		fieldMapper:            fieldMapper,
 		condBuilder:            condBuilder,
 		logger:                 providerSettings.Logger,
