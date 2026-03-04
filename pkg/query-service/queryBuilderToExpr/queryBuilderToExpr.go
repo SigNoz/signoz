@@ -325,7 +325,6 @@ func (v *exprVisitor) buildExistsExpr(key *telemetrytypes.TelemetryFieldKey, isN
 		}
 		nilCheckFilter := fmt.Sprintf("%s.%s %s nil", key.FieldContext.StringValue(), key.Name, logOperatorsToExpr[nilOp])
 		return fmt.Sprintf(`(%s or (type(body) == "map" && (%s)))`, jsonMembership, nilCheckFilter)
-
 	case telemetrytypes.FieldContextAttribute, telemetrytypes.FieldContextResource:
 		// Check membership in the attributes / resource map.
 		target := "resource"
@@ -333,7 +332,6 @@ func (v *exprVisitor) buildExistsExpr(key *telemetrytypes.TelemetryFieldKey, isN
 			target = "attributes"
 		}
 		return fmt.Sprintf("%q %s %s", key.Name, logOperatorsToExpr[op], target)
-
 	default:
 		// Intrinsic / top-level field: use a nil comparison.
 		nilOp := qbtypes.FilterOperatorNotEqual
@@ -593,6 +591,10 @@ func Parse(filter *qbtypes.Filter) (string, error) {
 			len(visitor.errors),
 		)
 		return "", combinedErrors.WithAdditional(visitor.errors...)
+	}
+
+	if _, err := expr.Compile(result); err != nil {
+		return "", errors.WrapUnexpectedf(err, CodeExprCompilationFailed, "failed to compile expression: %s", result)
 	}
 
 	return result, nil
