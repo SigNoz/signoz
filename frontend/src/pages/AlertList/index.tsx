@@ -1,7 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Tabs } from 'antd';
-import { TabsProps } from 'antd/lib';
+import { Tabs, TabsProps } from 'antd';
 import ConfigureIcon from 'assets/AlertHistory/ConfigureIcon';
 import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
 import ROUTES from 'constants/routes';
