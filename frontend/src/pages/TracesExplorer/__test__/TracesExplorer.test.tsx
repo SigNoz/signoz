@@ -502,7 +502,7 @@ jest.mock('hooks/useHandleExplorerTabChange', () => ({
 
 let capturedPayload: QueryRangePayloadV5;
 
-describe('TracesExplorer - ', () => {
+describe('TracesExplorer -', () => {
 	const quickFiltersListURL = `${BASE_URL}/api/v1/orgs/me/filters/traces`;
 
 	const setupServer = (): void => {
@@ -657,10 +657,10 @@ describe('TracesExplorer - ', () => {
 		await waitFor(() => {
 			expect(capturedPayload).toBeDefined();
 			expect(
-				(capturedPayload?.compositeQuery?.queries[0].spec as any).order,
+				(capturedPayload?.compositeQuery?.queries[0].spec as any)?.order,
 			).toEqual(defaultOrderBy);
 			expect(
-				(capturedPayload?.compositeQuery?.queries[0].spec as any).order,
+				(capturedPayload?.compositeQuery?.queries[0].spec as any)?.order,
 			).not.toEqual(orderBy);
 		});
 	});

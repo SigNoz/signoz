@@ -58,7 +58,7 @@ import {
 	CalendarClock,
 	Check,
 	Copy,
-	Infinity,
+	Infinity as InfinityIcon,
 	Minus,
 	PenLine,
 	Plus,
@@ -1201,7 +1201,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1233,7 +1233,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1291,7 +1291,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1323,7 +1323,7 @@ function MultiIngestionSettings(): JSX.Element {
 																						</Form.Item>
 																					) : (
 																						<div className="no-limit">
-																							<Infinity size={16} /> NO LIMIT
+																							<InfinityIcon size={16} /> NO LIMIT
 																						</div>
 																					)}
 																				</div>
@@ -1408,7 +1408,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1427,7 +1427,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>
@@ -1475,7 +1475,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 
@@ -1494,7 +1494,7 @@ function MultiIngestionSettings(): JSX.Element {
 																					</div>
 																				) : (
 																					<>
-																						<Infinity size={16} /> NO LIMIT
+																						<InfinityIcon size={16} /> NO LIMIT
 																					</>
 																				))}
 																		</div>

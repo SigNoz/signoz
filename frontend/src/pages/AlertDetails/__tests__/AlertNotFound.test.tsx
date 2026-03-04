@@ -13,6 +13,7 @@ jest.mock('lib/history', () => ({
 	},
 }));
 
+// oxlint-disable-next-line import/first
 import history from 'lib/history';
 
 const mockSafeNavigate = jest.fn();

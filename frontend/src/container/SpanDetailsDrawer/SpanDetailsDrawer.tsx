@@ -405,7 +405,7 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 			if (shouldUpdateUserPreference) {
 				updateUserPreferenceMutation({
 					name: USER_PREFERENCES.SPAN_PERCENTILE_RESOURCE_ATTRIBUTES,
-					value: [...Object.keys(selectedResourceAttributes)],
+					value: Object.keys(selectedResourceAttributes),
 				});
 
 				setShouldUpdateUserPreference(false);
@@ -451,8 +451,10 @@ function SpanDetailsDrawer(props: ISpanDetailsDrawerProps): JSX.Element {
 
 	useEffect(() => {
 		if (userSelectedResourceAttributes) {
-			const userSelectedResourceAttributesList = (userSelectedResourceAttributes
-				?.data?.value as string[]).map((attribute: string) => attribute);
+			const userSelectedResourceAttributesList = (
+				(userSelectedResourceAttributes?.data?.value as string[]) ||
+				([] as string[])
+			).map((attribute: string) => attribute);
 
 			let selectedResourceAttributesMap: Record<string, string> = {};
 

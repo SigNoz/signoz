@@ -30,7 +30,6 @@ const editOpsgenie = async (
 		};
 	} catch (error) {
 		return ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
-		throw error;
 	}
 };
 

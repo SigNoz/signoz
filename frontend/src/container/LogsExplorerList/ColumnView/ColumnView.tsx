@@ -221,7 +221,7 @@ function ColumnView({
 		onColumnOrderChange(formattedColumns);
 	};
 
-	const handleRowClick = (row: Row<Record<string, unknown>>): void => {
+	const handleRowClick = (row: Row<Record<string, string>>): void => {
 		const currentLog = logs.find(({ id }) => id === row.original.id);
 
 		setShowActiveLog(true);
