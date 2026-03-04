@@ -218,9 +218,9 @@ function App(): JSX.Element {
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/')
 		) {
-			window.Pylon('hideChatBubble');
+			window.Pylon?.('hideChatBubble');
 		} else {
-			window.Pylon('showChatBubble');
+			window.Pylon?.('showChatBubble');
 		}
 	}, [pathname]);
 

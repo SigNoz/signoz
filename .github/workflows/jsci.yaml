@@ -103,8 +103,9 @@ jobs:
           make py-test-setup
 
       - name: Generate permissions.type.ts
+        working-directory: ./frontend
         run: |
-          node frontend/scripts/generate-permissions-type.js
+          yarn generate:permissions-type
 
       - name: Teardown test environment
         if: always()
