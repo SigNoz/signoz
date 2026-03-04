@@ -17,11 +17,8 @@ function SaveViewWithName({
 }: SaveViewWithNameProps): JSX.Element {
 	const [form] = Form.useForm<SaveViewFormProps>();
 	const { t } = useTranslation(['explorer']);
-	const {
-		currentQuery,
-		panelType,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, panelType, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 	const { notifications } = useNotifications();
 	const compositeQuery = mapCompositeQueryFromQuery(currentQuery, panelType);
 

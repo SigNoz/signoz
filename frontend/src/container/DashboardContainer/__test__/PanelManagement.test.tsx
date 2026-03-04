@@ -1,6 +1,11 @@
 import { VirtuosoMockContext } from 'react-virtuoso';
-import { act, fireEvent, render, screen } from '@testing-library/react';
-import { renderHook } from '@testing-library/react';
+import {
+	act,
+	fireEvent,
+	render,
+	renderHook,
+	screen,
+} from '@testing-library/react';
 import {
 	Dashboard,
 	IDashboardVariable,

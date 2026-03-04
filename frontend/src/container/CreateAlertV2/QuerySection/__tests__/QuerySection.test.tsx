@@ -368,9 +368,8 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toEqual({
 			...mockUseQueryBuilder.currentQuery,
@@ -423,9 +422,8 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toEqual({
 			...mockCurrentQueryWithPromQL,
@@ -478,9 +476,8 @@ describe('QuerySection', () => {
 			mockUseQueryBuilder.redirectWithQueryBuilderData,
 		).toHaveBeenCalledTimes(1);
 
-		const [
-			queryArg,
-		] = mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
+		const [queryArg] =
+			mockUseQueryBuilder.redirectWithQueryBuilderData.mock.calls[0];
 
 		expect(queryArg).toEqual({
 			...mockCurrentQueryWithClickhouseSQL,

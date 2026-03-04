@@ -26,9 +26,7 @@ export function buildObjectString(
 	return `${resource}${ObjectSeparator}${objectId}` as const;
 }
 
-export function parsePermission(
-	permission: BrandedPermission,
-): {
+export function parsePermission(permission: BrandedPermission): {
 	relation: AuthZRelation;
 	object: string;
 } {
@@ -36,10 +34,13 @@ export function parsePermission(
 	return { relation: relation as AuthZRelation, object };
 }
 
-const resourceNameToType = permissionsType.data.resources.reduce((acc, r) => {
-	acc[r.name] = r.type;
-	return acc;
-}, {} as Record<ResourceName, ResourceType>);
+const resourceNameToType = permissionsType.data.resources.reduce(
+	(acc, r) => {
+		acc[r.name] = r.type;
+		return acc;
+	},
+	{} as Record<ResourceName, ResourceType>,
+);
 
 export function permissionToTransactionDto(
 	permission: BrandedPermission,

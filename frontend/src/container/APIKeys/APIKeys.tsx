@@ -350,7 +350,7 @@ function APIKeys(): JSX.Element {
 						: getDateDifference(
 								new Date(APIKey?.createdAt).getTime() / 1000,
 								APIKey?.expiresAt,
-						  );
+							);
 
 				const isExpired = isExpiredToken(APIKey.expiresAt);
 
@@ -693,7 +693,7 @@ function APIKeys(): JSX.Element {
 								>
 									Copy key and close
 								</Button>,
-						  ]
+							]
 						: [
 								<Button
 									key="cancel"
@@ -714,7 +714,7 @@ function APIKeys(): JSX.Element {
 								>
 									Create new key
 								</Button>,
-						  ]
+							]
 				}
 			>
 				{!showNewAPIKeyDetails && (

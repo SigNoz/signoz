@@ -61,10 +61,8 @@ function ListView({
 	setIsLoadingQueries,
 	queryKeyRef,
 }: ListViewProps): JSX.Element {
-	const {
-		stagedQuery,
-		panelType: panelTypeFromQueryBuilder,
-	} = useQueryBuilder();
+	const { stagedQuery, panelType: panelTypeFromQueryBuilder } =
+		useQueryBuilder();
 
 	const panelType = panelTypeFromQueryBuilder || PANEL_TYPES.LIST;
 
@@ -176,9 +174,10 @@ function ListView({
 	const totalCount = useMemo(() => dataLength || 0, [dataLength]);
 
 	const queryTableDataResult = data?.payload?.data?.newResult?.data?.result;
-	const queryTableData = useMemo(() => queryTableDataResult || [], [
-		queryTableDataResult,
-	]);
+	const queryTableData = useMemo(
+		() => queryTableDataResult || [],
+		[queryTableDataResult],
+	);
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 

@@ -270,7 +270,7 @@ function AddSpanToFunnelModal({
 							>
 								Save Funnel
 							</Button>,
-					  ]
+						]
 					: [
 							<Button
 								key="create"
@@ -281,7 +281,7 @@ function AddSpanToFunnelModal({
 							>
 								Create new funnel
 							</Button>,
-					  ]
+						]
 			}
 		>
 			{activeView === ModalView.LIST

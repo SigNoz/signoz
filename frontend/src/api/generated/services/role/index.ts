@@ -53,7 +53,7 @@ export const getListRolesQueryKey = () => {
 
 export const getListRolesQueryOptions = <
 	TData = Awaited<ReturnType<typeof listRoles>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
 }) => {
@@ -83,7 +83,7 @@ export type ListRolesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListRoles<
 	TData = Awaited<ReturnType<typeof listRoles>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof listRoles>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -132,7 +132,7 @@ export const createRole = (
 
 export const getCreateRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
@@ -149,8 +149,8 @@ export const getCreateRoleMutationOptions = <
 	const mutationKey = ['createRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -178,7 +178,7 @@ export type CreateRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createRole>>,
@@ -209,7 +209,7 @@ export const deleteRole = ({ id }: DeleteRolePathParameters) => {
 
 export const getDeleteRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
@@ -226,8 +226,8 @@ export const getDeleteRoleMutationOptions = <
 	const mutationKey = ['deleteRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -255,7 +255,7 @@ export type DeleteRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteRole>>,
@@ -294,7 +294,7 @@ export const getGetRoleQueryKey = ({ id }: GetRolePathParameters) => {
 
 export const getGetRoleQueryOptions = <
 	TData = Awaited<ReturnType<typeof getRole>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRolePathParameters,
 	options?: {
@@ -330,7 +330,7 @@ export type GetRoleQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetRole<
 	TData = Awaited<ReturnType<typeof getRole>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id }: GetRolePathParameters,
 	options?: {
@@ -382,7 +382,7 @@ export const patchRole = (
 
 export const getPatchRoleMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRole>>,
@@ -405,8 +405,8 @@ export const getPatchRoleMutationOptions = <
 	const mutationKey = ['patchRole'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -437,7 +437,7 @@ export type PatchRoleMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePatchRole = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchRole>>,
@@ -485,7 +485,7 @@ export const getGetObjectsQueryKey = ({
 
 export const getGetObjectsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getObjects>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, relation }: GetObjectsPathParameters,
 	options?: {
@@ -526,7 +526,7 @@ export type GetObjectsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetObjects<
 	TData = Awaited<ReturnType<typeof getObjects>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	{ id, relation }: GetObjectsPathParameters,
 	options?: {
@@ -582,7 +582,7 @@ export const patchObjects = (
 
 export const getPatchObjectsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchObjects>>,
@@ -605,8 +605,8 @@ export const getPatchObjectsMutationOptions = <
 	const mutationKey = ['patchObjects'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -637,7 +637,7 @@ export type PatchObjectsMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePatchObjects = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof patchObjects>>,

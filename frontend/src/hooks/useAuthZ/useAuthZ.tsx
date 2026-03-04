@@ -93,9 +93,10 @@ export function useAuthZ(permissions: BrandedPermission[]): UseAuthZResult {
 		}),
 	);
 
-	const isLoading = useMemo(() => queryResults.some((q) => q.isLoading), [
-		queryResults,
-	]);
+	const isLoading = useMemo(
+		() => queryResults.some((q) => q.isLoading),
+		[queryResults],
+	);
 	const error = useMemo(
 		() =>
 			!isLoading

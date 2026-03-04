@@ -401,15 +401,16 @@ describe('Footer utils', () => {
 
 	describe('buildCreateThresholdAlertRulePayload', () => {
 		const mockCreateAlertContextState = createMockAlertContextState();
-		const INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS: BuildCreateAlertRulePayloadArgs = {
-			basicAlertState: mockCreateAlertContextState.alertState,
-			thresholdState: mockCreateAlertContextState.thresholdState,
-			advancedOptions: mockCreateAlertContextState.advancedOptions,
-			evaluationWindow: mockCreateAlertContextState.evaluationWindow,
-			notificationSettings: mockCreateAlertContextState.notificationSettings,
-			query: initialQueriesMap.metrics,
-			alertType: mockCreateAlertContextState.alertType,
-		};
+		const INITIAL_BUILD_CREATE_ALERT_RULE_PAYLOAD_ARGS: BuildCreateAlertRulePayloadArgs =
+			{
+				basicAlertState: mockCreateAlertContextState.alertState,
+				thresholdState: mockCreateAlertContextState.thresholdState,
+				advancedOptions: mockCreateAlertContextState.advancedOptions,
+				evaluationWindow: mockCreateAlertContextState.evaluationWindow,
+				notificationSettings: mockCreateAlertContextState.notificationSettings,
+				query: initialQueriesMap.metrics,
+				alertType: mockCreateAlertContextState.alertType,
+			};
 
 		it('verify buildCreateThresholdAlertRulePayload', () => {
 			const props = buildCreateThresholdAlertRulePayload(

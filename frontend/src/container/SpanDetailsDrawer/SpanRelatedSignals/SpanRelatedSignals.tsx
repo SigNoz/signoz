@@ -45,9 +45,8 @@ function SpanRelatedSignals({
 	onClose,
 	initialView,
 }: SpanRelatedSignalsProps): JSX.Element {
-	const [selectedView, setSelectedView] = useState<RelatedSignalsViews>(
-		initialView,
-	);
+	const [selectedView, setSelectedView] =
+		useState<RelatedSignalsViews>(initialView);
 	const isDarkMode = useIsDarkMode();
 
 	// Extract infrastructure metadata from span attributes

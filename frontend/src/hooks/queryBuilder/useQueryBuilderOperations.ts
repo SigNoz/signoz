@@ -122,7 +122,7 @@ export const useQueryOperations: UseQueryOperations = ({
 				(acc, item) => {
 					if (
 						filterConfigs &&
-						filterConfigs[item.field as typeof additionalFiltersKeys[number]]
+						filterConfigs[item.field as (typeof additionalFiltersKeys)[number]]
 							?.isHidden
 					) {
 						return acc;
@@ -145,10 +145,8 @@ export const useQueryOperations: UseQueryOperations = ({
 		string[]
 	>(getNewListOfAdditionalFilters(dataSource, true));
 
-	const [
-		listOfAdditionalFormulaFilters,
-		setListOfAdditionalFormulaFilters,
-	] = useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
+	const [listOfAdditionalFormulaFilters, setListOfAdditionalFormulaFilters] =
+		useState<string[]>(getNewListOfAdditionalFilters(dataSource, false));
 
 	const handleChangeOperator = useCallback(
 		(value: string): void => {
@@ -187,17 +185,23 @@ export const useQueryOperations: UseQueryOperations = ({
 
 	const handleSpaceAggregationChange = useCallback(
 		(value: string): void => {
+			const metricAggregation = query.aggregations?.[0] as MetricAggregation;
+
+			// since this will throw TypeError if metricAggregation is undefined
+			if (!metricAggregation) {
+				return;
+			}
+
 			const newQuery: IBuilderQuery = {
 				...query,
 				spaceAggregation: value,
 				aggregations: [
 					{
-						...query.aggregations?.[0],
+						...metricAggregation,
 						spaceAggregation: value as SpaceAggregation,
-						metricName: (query.aggregations?.[0] as MetricAggregation).metricName,
-						temporality: (query.aggregations?.[0] as MetricAggregation).temporality,
-						timeAggregation: (query.aggregations?.[0] as MetricAggregation)
-							.timeAggregation,
+						metricName: metricAggregation.metricName,
+						temporality: metricAggregation.temporality,
+						timeAggregation: metricAggregation.timeAggregation,
 					},
 				],
 			};
@@ -220,7 +224,7 @@ export const useQueryOperations: UseQueryOperations = ({
 						panelType: panelType || PANEL_TYPES.TIME_SERIES,
 						aggregateAttributeType:
 							(aggregateAttribute?.type as ATTRIBUTE_TYPES) || ATTRIBUTE_TYPES.GAUGE,
-				  });
+					});
 
 			switch (aggregateAttribute?.type) {
 				case ATTRIBUTE_TYPES.SUM:
@@ -532,32 +536,31 @@ export const useQueryOperations: UseQueryOperations = ({
 		index,
 	]);
 
-	const handleChangeQueryData:
-		| HandleChangeQueryData
-		| HandleChangeQueryDataV5 = useCallback(
-		(key: string, value: any) => {
-			const newQuery = {
-				...query,
-				[key]:
-					key === LEGEND && typeof value === 'string'
-						? getFormatedLegend(value)
-						: value,
-			};
+	const handleChangeQueryData: HandleChangeQueryData | HandleChangeQueryDataV5 =
+		useCallback(
+			(key: string, value: any) => {
+				const newQuery = {
+					...query,
+					[key]:
+						key === LEGEND && typeof value === 'string'
+							? getFormatedLegend(value)
+							: value,
+				};
 
-			if (isForTraceOperator) {
-				handleSetTraceOperatorData(index, newQuery);
-			} else {
-				handleSetQueryData(index, newQuery);
-			}
-		},
-		[
-			query,
-			index,
-			handleSetQueryData,
-			handleSetTraceOperatorData,
-			isForTraceOperator,
-		],
-	);
+				if (isForTraceOperator) {
+					handleSetTraceOperatorData(index, newQuery);
+				} else {
+					handleSetQueryData(index, newQuery);
+				}
+			},
+			[
+				query,
+				index,
+				handleSetQueryData,
+				handleSetTraceOperatorData,
+				isForTraceOperator,
+			],
+		);
 
 	const handleChangeFormulaData: HandleChangeFormulaData = useCallback(
 		(key, value) => {

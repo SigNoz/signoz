@@ -52,10 +52,7 @@ export function join(
 	tables: AlignedData[],
 	nullModes?: number[][],
 ): AlignedData[] {
-	let xVals: Set<number>;
-
-	// eslint-disable-next-line prefer-const
-	xVals = new Set();
+	const xVals = new Set<number>();
 
 	for (let ti = 0; ti < tables.length; ti++) {
 		const t = tables[ti];
@@ -113,7 +110,7 @@ export function join(
 		}
 	}
 
-	return (data as unknown) as AlignedData[];
+	return data as unknown as AlignedData[];
 }
 
 export function histogram(
@@ -162,7 +159,7 @@ function replaceUndefinedWithNull(arrays: (number | null)[][]): AlignedData[] {
 			}
 		}
 	}
-	return (arrays as unknown) as AlignedData[];
+	return arrays as unknown as AlignedData[];
 }
 
 function addNullToFirstHistogram(
@@ -261,13 +258,13 @@ export const buildHistogramData = (
 	});
 
 	const joinHistogram = replaceUndefinedWithNull(
-		(join(histograms) as unknown) as (number | null)[][],
+		join(histograms) as unknown as (number | null)[][],
 	);
 
 	addNullToFirstHistogram(
-		(joinHistogram as unknown) as (number | null)[][],
+		joinHistogram as unknown as (number | null)[][],
 		bucketSize,
 	);
 
-	return (joinHistogram as unknown) as AlignedData;
+	return joinHistogram as unknown as AlignedData;
 };

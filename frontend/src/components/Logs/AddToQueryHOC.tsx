@@ -20,9 +20,10 @@ function AddToQueryHOC({
 		onAddToQuery(fieldKey, fieldValue, OPERATORS['='], dataType);
 	};
 
-	const popOverContent = useMemo(() => <span>Add to query: {fieldKey}</span>, [
-		fieldKey,
-	]);
+	const popOverContent = useMemo(
+		() => <span>Add to query: {fieldKey}</span>,
+		[fieldKey],
+	);
 
 	return (
 		<div className={cx('addToQueryContainer', fontSize)} onClick={handleQueryAdd}>

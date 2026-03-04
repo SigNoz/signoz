@@ -55,6 +55,6 @@ export const getFilterConfig = (
 					type: att.type,
 				},
 				defaultOpen: index < 2,
-			} as IQuickFiltersConfig),
+			}) as IQuickFiltersConfig,
 	);
 };

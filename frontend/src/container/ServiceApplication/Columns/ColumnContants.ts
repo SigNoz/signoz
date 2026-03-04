@@ -12,12 +12,12 @@ export const ColumnTitle: Record<ColumnKey, string> = {
 	[ColumnKey.Operations]: 'Operations Per Second',
 };
 
-export enum ColumnWidth {
-	Application = 200,
-	P99 = 150,
-	ErrorRate = 150,
-	Operations = 150,
-}
+export const ColumnWidth = {
+	Application: 200,
+	P99: 150,
+	ErrorRate: 150,
+	Operations: 150,
+};
 
 export const SORTING_ORDER = 'descend';
 

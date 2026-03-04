@@ -199,8 +199,8 @@ describe('RolesSettings', () => {
 	it('handles invalid dates gracefully by showing fallback', async () => {
 		const invalidRole = {
 			id: 'edge-0009',
-			createdAt: ('invalid-date' as unknown) as Date,
-			updatedAt: ('not-a-date' as unknown) as Date,
+			createdAt: 'invalid-date' as unknown as Date,
+			updatedAt: 'not-a-date' as unknown as Date,
 			name: 'invalid-date-role',
 			description: 'Tests date parsing fallback.',
 			type: 'custom',

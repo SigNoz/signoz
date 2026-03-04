@@ -25,10 +25,11 @@ export const useGetRelatedMetricsGraphs = ({
 	startMs,
 	endMs,
 }: UseGetRelatedMetricsGraphsProps): UseGetRelatedMetricsGraphsReturn => {
-	const { maxTime, minTime, selectedTime: globalSelectedTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		maxTime,
+		minTime,
+		selectedTime: globalSelectedTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	// Build the query for the related metrics
 	const relatedMetricsQuery = useMemo(

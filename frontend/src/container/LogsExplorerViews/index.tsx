@@ -111,9 +111,10 @@ function LogsExplorerViewsContainer({
 
 	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
-	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
-		stagedQuery,
-	]);
+	const listQuery = useMemo(
+		() => getListQuery(stagedQuery) || null,
+		[stagedQuery],
+	);
 
 	const isLimit: boolean = useMemo(() => {
 		if (!listQuery) {
@@ -157,37 +158,33 @@ function LogsExplorerViewsContainer({
 		'custom',
 	);
 
-	const {
-		data,
-		isLoading,
-		isFetching,
-		isError,
-		isSuccess,
-		error,
-	} = useGetExplorerQueryRange(
-		requestData,
-		selectedPanelType,
-		ENTITY_VERSION_V5,
-		{
-			keepPreviousData: true,
-			enabled: !isLimit && !!requestData,
-		},
-		{
-			...(activeLogId &&
-				!logs.length && {
-					start: minTime,
-					end: maxTime,
-				}),
-		},
-		undefined,
-		listQueryKeyRef,
-		{
-			...(!isEmpty(queryId) &&
-				selectedPanelType !== PANEL_TYPES.LIST && { 'X-SIGNOZ-QUERY-ID': queryId }),
-		},
-		// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
-		'custom',
-	);
+	const { data, isLoading, isFetching, isError, isSuccess, error } =
+		useGetExplorerQueryRange(
+			requestData,
+			selectedPanelType,
+			ENTITY_VERSION_V5,
+			{
+				keepPreviousData: true,
+				enabled: !isLimit && !!requestData,
+			},
+			{
+				...(activeLogId &&
+					!logs.length && {
+						start: minTime,
+						end: maxTime,
+					}),
+			},
+			undefined,
+			listQueryKeyRef,
+			{
+				...(!isEmpty(queryId) &&
+					selectedPanelType !== PANEL_TYPES.LIST && {
+						'X-SIGNOZ-QUERY-ID': queryId,
+					}),
+			},
+			// custom selected time interval to prevent recalculating the start and end timestamps before fetching next pages
+			'custom',
+		);
 
 	const getRequestData = useCallback(
 		(

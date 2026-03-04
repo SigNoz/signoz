@@ -303,7 +303,11 @@
 					color: var(--l3-foreground);
 					font-variant-numeric: lining-nums tabular-nums stacked-fractions
 						slashed-zero;
-					font-feature-settings: 'dlig' on, 'salt' on, 'cpsp' on, 'case' on;
+					font-feature-settings:
+						'dlig' on,
+						'salt' on,
+						'cpsp' on,
+						'case' on;
 					font-family: Inter;
 					font-size: 11px;
 					font-style: normal;

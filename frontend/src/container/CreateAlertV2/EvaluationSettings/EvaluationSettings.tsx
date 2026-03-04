@@ -11,10 +11,8 @@ import './styles.scss';
 function EvaluationSettings(): JSX.Element {
 	const { evaluationWindow, setEvaluationWindow } = useCreateAlertState();
 
-	const [
-		isEvaluationWindowPopoverOpen,
-		setIsEvaluationWindowPopoverOpen,
-	] = useState(false);
+	const [isEvaluationWindowPopoverOpen, setIsEvaluationWindowPopoverOpen] =
+		useState(false);
 
 	const popoverContent = (
 		<Popover

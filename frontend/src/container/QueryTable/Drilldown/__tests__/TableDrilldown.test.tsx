@@ -338,12 +338,8 @@ describe('TableDrilldown', () => {
 		// Verify redirectWithQueryBuilderData was called instead of safeNavigate
 		expect(mockRedirectWithQueryBuilderData).toHaveBeenCalledTimes(1);
 
-		const [
-			query,
-			queryParams,
-			,
-			newTab,
-		] = mockRedirectWithQueryBuilderData.mock.calls[0];
+		const [query, queryParams, , newTab] =
+			mockRedirectWithQueryBuilderData.mock.calls[0];
 
 		// Check that the query contains the filter that was added
 		expect(query.builder).toBeDefined();

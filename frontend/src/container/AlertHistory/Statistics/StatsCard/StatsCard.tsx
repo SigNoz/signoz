@@ -98,9 +98,8 @@ function StatsCard({
 	if (!displayTime) {
 		displayTime = '';
 	}
-	const formattedStartTimeForTooltip = convertTimestampToLocaleDateString(
-		startTime,
-	);
+	const formattedStartTimeForTooltip =
+		convertTimestampToLocaleDateString(startTime);
 	const formattedEndTimeForTooltip = convertTimestampToLocaleDateString(endTime);
 
 	return (

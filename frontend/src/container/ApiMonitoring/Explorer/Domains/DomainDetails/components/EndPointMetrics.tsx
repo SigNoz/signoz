@@ -16,13 +16,8 @@ function EndPointMetrics({
 }: {
 	endPointMetricsDataQuery: UseQueryResult<SuccessResponse<any>, unknown>;
 }): JSX.Element {
-	const {
-		isLoading,
-		isRefetching,
-		isError,
-		data,
-		refetch,
-	} = endPointMetricsDataQuery;
+	const { isLoading, isRefetching, isError, data, refetch } =
+		endPointMetricsDataQuery;
 
 	const metricsData = useMemo(() => {
 		if (isLoading || isRefetching || isError) {

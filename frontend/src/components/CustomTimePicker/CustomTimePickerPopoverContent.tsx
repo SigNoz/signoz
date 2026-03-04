@@ -116,9 +116,10 @@ function CustomTimePickerPopoverContent({
 }: CustomTimePickerPopoverContentProps): JSX.Element {
 	const { pathname } = useLocation();
 
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
+	const isLogsExplorerPage = useMemo(
+		() => pathname === ROUTES.LOGS_EXPLORER,
+		[pathname],
+	);
 
 	const url = new URLSearchParams(window.location.search);
 
@@ -154,8 +155,8 @@ function CustomTimePickerPopoverContent({
 		if (!customDateTimeVisible) {
 			const customTimeRanges = getCustomTimeRanges();
 
-			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] = customTimeRanges.map(
-				(range) => ({
+			const formattedCustomTimeRanges: RecentlyUsedDateTimeRange[] =
+				customTimeRanges.map((range) => ({
 					label: `${dayjs(range.from)
 						.tz(timezone.value)
 						.format(DATE_TIME_FORMATS.DD_MMM_YYYY_HH_MM_SS)} - ${dayjs(range.to)
@@ -165,8 +166,7 @@ function CustomTimePickerPopoverContent({
 					to: range.to,
 					value: range.timestamp,
 					timestamp: range.timestamp,
-				}),
-			);
+				}));
 
 			setRecentlyUsedTimeRanges(formattedCustomTimeRanges);
 		}

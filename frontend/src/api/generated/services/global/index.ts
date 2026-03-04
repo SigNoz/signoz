@@ -39,7 +39,7 @@ export const getGetGlobalConfigQueryKey = () => {
 
 export const getGetGlobalConfigQueryOptions = <
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,
@@ -73,7 +73,7 @@ export type GetGlobalConfigQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetGlobalConfig<
 	TData = Awaited<ReturnType<typeof getGlobalConfig>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getGlobalConfig>>,

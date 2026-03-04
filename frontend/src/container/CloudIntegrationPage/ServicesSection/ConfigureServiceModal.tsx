@@ -68,10 +68,8 @@ function ConfigureServiceModal({
 		[form],
 	);
 
-	const {
-		mutate: updateServiceConfig,
-		isLoading: isUpdating,
-	} = useUpdateServiceConfig();
+	const { mutate: updateServiceConfig, isLoading: isUpdating } =
+		useUpdateServiceConfig();
 
 	const queryClient = useQueryClient();
 

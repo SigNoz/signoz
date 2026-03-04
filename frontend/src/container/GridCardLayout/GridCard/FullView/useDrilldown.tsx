@@ -66,7 +66,7 @@ const useDrilldown = ({
 				panelType: selectedPanelType,
 				dashboardId: selectedDashboard?.id || '',
 				widgetId: widget.id,
-		  })
+			})
 		: '';
 
 	const showResetQuery = useMemo(

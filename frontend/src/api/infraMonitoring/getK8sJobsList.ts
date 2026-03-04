@@ -104,7 +104,7 @@ export const getK8sJobsList = async (
 								[] as typeof props.filters.items,
 							),
 						},
-				  }
+					}
 				: props;
 
 		const response = await axios.post('/jobs/list', requestProps, {

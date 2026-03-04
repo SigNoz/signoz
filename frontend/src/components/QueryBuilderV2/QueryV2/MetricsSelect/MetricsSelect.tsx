@@ -49,11 +49,8 @@ export const MetricsSelect = memo(function MetricsSelect({
 		entityVersion: version,
 	});
 
-	const {
-		updateAllQueriesOperators,
-		handleSetQueryData,
-		panelType,
-	} = useQueryBuilder();
+	const { updateAllQueriesOperators, handleSetQueryData, panelType } =
+		useQueryBuilder();
 
 	const source = useMemo(
 		() => (signalSource === 'meter' ? 'meter' : 'metrics'),
@@ -123,9 +120,8 @@ export const MetricsSelect = memo(function MetricsSelect({
 				signalSource: newSignalSource,
 				panelType: panelType || '',
 			});
-			const savedQuery: IBuilderQuery | null = getPreviousQueryFromKey(
-				newQueryKey,
-			);
+			const savedQuery: IBuilderQuery | null =
+				getPreviousQueryFromKey(newQueryKey);
 
 			// remove the new query key from session storage
 			removeKeyFromPreviousQuery(newQueryKey);

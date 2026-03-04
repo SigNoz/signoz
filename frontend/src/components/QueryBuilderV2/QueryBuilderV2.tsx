@@ -76,32 +76,34 @@ export const QueryBuilderV2 = memo(function QueryBuilderV2({
 		[showTraceOperator, isListViewPanel],
 	);
 
-	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			filters: {
-				customKey: 'body',
-				customOp: OPERATORS.CONTAINS,
-			},
-		};
+	const listViewLogFilterConfigs: QueryBuilderProps['filterConfigs'] =
+		useMemo(() => {
+			const config: QueryBuilderProps['filterConfigs'] = {
+				stepInterval: { isHidden: true, isDisabled: true },
+				having: { isHidden: true, isDisabled: true },
+				filters: {
+					customKey: 'body',
+					customOp: OPERATORS.CONTAINS,
+				},
+			};
 
-		return config;
-	}, []);
+			return config;
+		}, []);
 
-	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
-		const config: QueryBuilderProps['filterConfigs'] = {
-			stepInterval: { isHidden: true, isDisabled: true },
-			having: { isHidden: true, isDisabled: true },
-			limit: { isHidden: true, isDisabled: true },
-			filters: {
-				customKey: 'body',
-				customOp: OPERATORS.CONTAINS,
-			},
-		};
+	const listViewTracesFilterConfigs: QueryBuilderProps['filterConfigs'] =
+		useMemo(() => {
+			const config: QueryBuilderProps['filterConfigs'] = {
+				stepInterval: { isHidden: true, isDisabled: true },
+				having: { isHidden: true, isDisabled: true },
+				limit: { isHidden: true, isDisabled: true },
+				filters: {
+					customKey: 'body',
+					customOp: OPERATORS.CONTAINS,
+				},
+			};
 
-		return config;
-	}, []);
+			return config;
+		}, []);
 
 	const queryFilterConfigs = useMemo(() => {
 		if (isListViewPanel) {

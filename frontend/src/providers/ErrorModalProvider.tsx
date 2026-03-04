@@ -38,10 +38,10 @@ export function ErrorModalProvider({
 		setIsVisible(false);
 	}, []);
 
-	const value = useMemo(() => ({ showErrorModal, hideErrorModal }), [
-		showErrorModal,
-		hideErrorModal,
-	]);
+	const value = useMemo(
+		() => ({ showErrorModal, hideErrorModal }),
+		[showErrorModal, hideErrorModal],
+	);
 
 	return (
 		<ErrorModalContext.Provider value={value}>

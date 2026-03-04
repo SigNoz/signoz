@@ -75,9 +75,10 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 			}
 
 			if (newSelectedMap.get(name)?.find((e) => e === keyValue)) {
-				newSelectedMap.set(name, [
-					...(newSelectedMap.get(name) || []).filter((e) => e !== keyValue),
-				]);
+				newSelectedMap.set(
+					name,
+					(newSelectedMap.get(name) || []).filter((e) => e !== keyValue),
+				);
 			} else {
 				newSelectedMap.set(name, [
 					...new Set([...(newSelectedMap.get(name) || []), keyValue]),
@@ -112,8 +113,8 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 				updatedFilter.set(name, {
 					[`${keyValue}`]: '-1',
-					...(filter.get(name) || {}),
-					...(updatedFilter.get(name) || {}),
+					...filter.get(name),
+					...updatedFilter.get(name),
 				});
 
 				dispatch({
@@ -163,9 +164,10 @@ function CheckBoxComponent(props: CheckBoxProps): JSX.Element {
 
 	const isCheckBoxSelected = isUserSelected;
 
-	const TooTipOverLay = useMemo((): JSX.Element => <div>{keyValue}</div>, [
-		keyValue,
-	]);
+	const TooTipOverLay = useMemo(
+		(): JSX.Element => <div>{keyValue}</div>,
+		[keyValue],
+	);
 
 	return (
 		<CheckBoxContainer>

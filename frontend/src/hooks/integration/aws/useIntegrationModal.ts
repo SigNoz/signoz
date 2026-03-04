@@ -103,16 +103,12 @@ export function useIntegrationModal({
 		onClose();
 	}, [onClose]);
 
-	const {
-		mutate: generateUrl,
-		isLoading: isGeneratingUrl,
-	} = useGenerateConnectionUrl();
+	const { mutate: generateUrl, isLoading: isGeneratingUrl } =
+		useGenerateConnectionUrl();
 
 	const handleError = useAxiosError();
-	const {
-		data: connectionParams,
-		isLoading: isConnectionParamsLoading,
-	} = useConnectionParams({ options: { onError: handleError } });
+	const { data: connectionParams, isLoading: isConnectionParamsLoading } =
+		useConnectionParams({ options: { onError: handleError } });
 
 	const handleGenerateUrl = useCallback(
 		(payload: GenerateConnectionUrlPayload): void => {

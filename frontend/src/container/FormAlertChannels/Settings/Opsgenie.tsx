@@ -9,14 +9,14 @@ const { TextArea } = Input;
 function OpsgenieForm({ setSelectedConfig }: OpsgenieFormProps): JSX.Element {
 	const { t } = useTranslation('channels');
 
-	const handleInputChange = (field: string) => (
-		event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-	): void => {
-		setSelectedConfig((value) => ({
-			...value,
-			[field]: event.target.value,
-		}));
-	};
+	const handleInputChange =
+		(field: string) =>
+		(event: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>): void => {
+			setSelectedConfig((value) => ({
+				...value,
+				[field]: event.target.value,
+			}));
+		};
 
 	return (
 		<>

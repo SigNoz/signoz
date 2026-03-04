@@ -77,9 +77,10 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 	}, [error, isFetching, data]);
 
 	// capture the spans from the response, since we do not need to do any manipulation on the same we will keep this as a simple constant [ memoized ]
-	const spans = useMemo(() => data?.payload?.spans || [], [
-		data?.payload?.spans,
-	]);
+	const spans = useMemo(
+		() => data?.payload?.spans || [],
+		[data?.payload?.spans],
+	);
 
 	// get the content based on the current state of the trace waterfall
 	const getContent = useMemo(() => {

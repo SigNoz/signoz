@@ -55,9 +55,8 @@ function Threshold({
 	const [value, setValue] = useState<number>(thresholdValue);
 	const [unit, setUnit] = useState<string>(thresholdUnit);
 	const [color, setColor] = useState<string>(thresholdColor);
-	const [format, setFormat] = useState<ThresholdProps['thresholdFormat']>(
-		thresholdFormat,
-	);
+	const [format, setFormat] =
+		useState<ThresholdProps['thresholdFormat']>(thresholdFormat);
 	const [label, setLabel] = useState<string>(thresholdLabel);
 	const [tableSelectedOption, setTableSelectedOption] = useState<string>(
 		thresholdTableOptions,

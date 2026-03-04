@@ -45,7 +45,7 @@ const createApiResponse = (
 	data: {
 		result,
 		resultType: 'matrix',
-		newResult: (null as unknown) as MetricRangePayloadV3,
+		newResult: null as unknown as MetricRangePayloadV3,
 	},
 });
 
@@ -57,7 +57,7 @@ const createWidget = (overrides: Partial<Widgets> = {}): Widgets =>
 		thresholds: [],
 		customLegendColors: {},
 		...overrides,
-	} as Widgets);
+	}) as Widgets;
 
 const defaultTimezone = {
 	name: 'UTC',
@@ -173,7 +173,7 @@ describe('TimeSeriesPanel utils', () => {
 			const builder = prepareUPlotConfig({
 				...baseParams,
 				apiResponse,
-				currentQuery: (null as unknown) as Query,
+				currentQuery: null as unknown as Query,
 			});
 
 			expect(getLabelNameMock).toHaveBeenCalled();

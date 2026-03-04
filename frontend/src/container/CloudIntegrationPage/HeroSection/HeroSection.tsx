@@ -13,7 +13,7 @@ function HeroSection(): JSX.Element {
 				isDarkMode
 					? {
 							backgroundImage: `url('/Images/integrations-hero-bg.png')`,
-					  }
+						}
 					: {}
 			}
 		>

@@ -30,10 +30,11 @@ export const useGetExplorerQueryRange = (
 	Error
 > => {
 	const { isEnabledQuery } = useQueryBuilder();
-	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedInterval,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const key =
 		typeof options?.queryKey === 'string'

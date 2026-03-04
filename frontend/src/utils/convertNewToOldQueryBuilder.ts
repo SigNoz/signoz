@@ -29,7 +29,7 @@ export const convertBuilderQueryToIBuilderQuery = (
 	// Determine data source based on signal
 	const dataSource = getDataSourceFromSignal(builderQuery.signal);
 
-	const result: IBuilderQuery = ({
+	const result: IBuilderQuery = {
 		...builderQuery,
 		queryName: builderQuery.name,
 		dataSource,
@@ -46,7 +46,7 @@ export const convertBuilderQueryToIBuilderQuery = (
 				columnName: order?.key?.name,
 				order: order?.direction,
 			})) || [],
-	} as unknown) as IBuilderQuery;
+	} as unknown as IBuilderQuery;
 
 	return result;
 };
@@ -57,7 +57,7 @@ export const convertBuilderQueryToIBuilderQuery = (
 export const convertQueryBuilderFormulaToIBuilderFormula = (
 	formula: QueryBuilderFormula,
 ): IBuilderFormula => {
-	const result: IBuilderFormula = ({
+	const result: IBuilderFormula = {
 		...formula,
 		expression: formula.expression,
 		queryName: formula.name,
@@ -67,7 +67,7 @@ export const convertQueryBuilderFormulaToIBuilderFormula = (
 			columnName: order?.key?.name,
 			order: order?.direction,
 		})),
-	} as unknown) as IBuilderFormula;
+	} as unknown as IBuilderFormula;
 
 	return result;
 };

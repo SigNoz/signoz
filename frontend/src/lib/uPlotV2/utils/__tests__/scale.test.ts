@@ -77,12 +77,8 @@ describe('scale utils', () => {
 
 	describe('getRangeConfig', () => {
 		it('computes range config and fixed range flags correctly', () => {
-			const {
-				rangeConfig,
-				hardMinOnly,
-				hardMaxOnly,
-				hasFixedRange,
-			} = scaleUtils.getRangeConfig(0, 100, null, null, 0.1, 0.2);
+			const { rangeConfig, hardMinOnly, hardMaxOnly, hasFixedRange } =
+				scaleUtils.getRangeConfig(0, 100, null, null, 0.1, 0.2);
 
 			expect(rangeConfig.min).toEqual({
 				pad: 0.1,
@@ -115,19 +111,19 @@ describe('scale utils', () => {
 
 			const rangeFn = scaleUtils.createRangeFunction(params);
 
-			const u = ({
+			const u = {
 				scales: {
 					y: {
 						distr: 1,
 						log: 10,
 					},
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			const result = rangeFn(
 				u,
-				(null as unknown) as number,
-				(null as unknown) as number,
+				null as unknown as number,
+				null as unknown as number,
 				'y',
 			);
 
@@ -148,14 +144,14 @@ describe('scale utils', () => {
 
 			// Use an undefined distr so the range function skips calling uPlot.rangeNum
 			// and we can focus on the behavior of applyHardLimits.
-			const u = ({
+			const u = {
 				scales: {
 					y: {
 						distr: undefined,
 						log: 10,
 					},
 				},
-			} as unknown) as uPlot;
+			} as unknown as uPlot;
 
 			const result = rangeFn(u, 10, 20, 'y');
 

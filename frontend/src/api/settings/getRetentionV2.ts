@@ -9,9 +9,8 @@ const getRetentionV2 = async (): Promise<
 	SuccessResponseV2<PayloadProps<'logs'>>
 > => {
 	try {
-		const response = await ApiV2Instance.get<PayloadProps<'logs'>>(
-			`/settings/ttl`,
-		);
+		const response =
+			await ApiV2Instance.get<PayloadProps<'logs'>>(`/settings/ttl`);
 
 		return {
 			httpStatusCode: response.status,

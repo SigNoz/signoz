@@ -57,8 +57,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -92,8 +92,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -144,8 +144,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -179,8 +179,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -217,8 +217,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -252,8 +252,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -291,8 +291,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -350,8 +350,8 @@ describe('createGuardedRoute', () => {
 			prop2: 42,
 			prop3: true,
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);
@@ -396,8 +396,8 @@ describe('createGuardedRoute', () => {
 		const props1 = {
 			testProp: 'test-value-1',
 			match: mockMatch1,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		const { unmount } = render(<GuardedComponent {...props1} />);
@@ -421,8 +421,8 @@ describe('createGuardedRoute', () => {
 		const props2 = {
 			testProp: 'test-value-2',
 			match: mockMatch2,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props2} />);
@@ -459,8 +459,8 @@ describe('createGuardedRoute', () => {
 		const props = {
 			testProp: 'test-value',
 			match: mockMatch,
-			location: ({} as unknown) as RouteComponentProps['location'],
-			history: ({} as unknown) as RouteComponentProps['history'],
+			location: {} as unknown as RouteComponentProps['location'],
+			history: {} as unknown as RouteComponentProps['history'],
 		};
 
 		render(<GuardedComponent {...props} />);

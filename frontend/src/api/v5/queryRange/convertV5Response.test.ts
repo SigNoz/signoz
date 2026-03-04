@@ -52,18 +52,18 @@ describe('convertV5ResponseToLegacy', () => {
 					alias: '__result_0',
 					meta: {},
 					series: [
-						({
+						{
 							labels: [
 								{
-									key: ({ name: 'service.name' } as unknown) as TelemetryFieldKey,
+									key: { name: 'service.name' } as unknown as TelemetryFieldKey,
 									value: 'adservice',
 								},
 							],
 							values: [
-								({ timestamp: 1000, value: 10 } as unknown) as TimeSeriesValue,
-								({ timestamp: 2000, value: 12 } as unknown) as TimeSeriesValue,
+								{ timestamp: 1000, value: 10 } as unknown as TimeSeriesValue,
+								{ timestamp: 2000, value: 12 } as unknown as TimeSeriesValue,
 							],
-						} as unknown) as TimeSeries,
+						} as unknown as TimeSeries,
 					],
 				},
 			],
@@ -88,10 +88,8 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 
 		const legendMap = { A: '{{service.name}}' };
 		const result = convertV5ResponseToLegacy(input, legendMap, false);
@@ -121,33 +119,33 @@ describe('convertV5ResponseToLegacy', () => {
 		const scalar: ScalarData = {
 			columns: [
 				// group column
-				({
+				{
 					name: 'service.name',
 					queryName: 'A',
 					aggregationIndex: 0,
 					columnType: 'group',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// aggregation 0
-				({
+				{
 					name: '__result_0',
 					queryName: 'A',
 					aggregationIndex: 0,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// aggregation 1
-				({
+				{
 					name: '__result_1',
 					queryName: 'A',
 					aggregationIndex: 1,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 				// formula F1
-				({
+				{
 					name: '__result',
 					queryName: 'F1',
 					aggregationIndex: 0,
 					columnType: 'aggregation',
-				} as unknown) as ScalarData['columns'][number],
+				} as unknown as ScalarData['columns'][number],
 			],
 			data: [['adservice', 606, 1.452, 151.5]],
 		};
@@ -174,17 +172,15 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 			{
 				type: 'builder_formula',
-				spec: ({
+				spec: {
 					name: 'F1',
 					expression: 'A * 0.25',
-				} as unknown) as QueryBuilderFormula,
+				} as unknown as QueryBuilderFormula,
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 		const legendMap = { A: '{{service.name}}', F1: '' };
 		const result = convertV5ResponseToLegacy(input, legendMap, false);
 
@@ -254,10 +250,8 @@ describe('convertV5ResponseToLegacy', () => {
 			},
 		]);
 
-		const input: SuccessResponse<
-			MetricRangePayloadV5,
-			QueryRangeRequestV5
-		> = makeBaseSuccess({ data: v5Data }, params);
+		const input: SuccessResponse<MetricRangePayloadV5, QueryRangeRequestV5> =
+			makeBaseSuccess({ data: v5Data }, params);
 		const legendMap = { A: '{{service.name}}' };
 		const result = convertV5ResponseToLegacy(input, legendMap, true);
 

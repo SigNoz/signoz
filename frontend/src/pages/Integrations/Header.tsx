@@ -11,9 +11,8 @@ function Header(): JSX.Element {
 	const history = useHistory();
 	const { user } = useAppContext();
 
-	const isGetStartedWithCloudAllowed = routePermission.GET_STARTED_WITH_CLOUD.includes(
-		user.role,
-	);
+	const isGetStartedWithCloudAllowed =
+		routePermission.GET_STARTED_WITH_CLOUD.includes(user.role);
 
 	return (
 		<div className="integrations-header">

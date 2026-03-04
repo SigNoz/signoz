@@ -108,10 +108,8 @@ function K8sClustersList({
 		return [];
 	});
 
-	const [
-		selectedRowData,
-		setSelectedRowData,
-	] = useState<K8sClustersRowData | null>(null);
+	const [selectedRowData, setSelectedRowData] =
+		useState<K8sClustersRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -233,26 +231,24 @@ function K8sClustersList({
 		dotMetricsEnabled,
 	);
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.CLUSTERS,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true,
-		K8sCategory.NODES,
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.CLUSTERS,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true,
+			K8sCategory.NODES,
+		);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sClustersListQuery();
@@ -353,45 +349,45 @@ function K8sClustersList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sClustersRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<K8sClustersRowData>
-				| SorterResult<K8sClustersRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Cluster,
-				});
-			}
+	const handleTableChange: TableProps<K8sClustersRowData>['onChange'] =
+		useCallback(
+			(
+				pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<K8sClustersRowData>
+					| SorterResult<K8sClustersRowData>[],
+			): void => {
+				if (pagination.current) {
+					setCurrentPage(pagination.current);
+					logEvent(InfraMonitoringEvents.PageNumberChanged, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.ListPage,
+						category: InfraMonitoringEvents.Cluster,
+					});
+				}
 
-			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
-				});
-			} else {
-				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
-			}
-		},
-		[searchParams, setSearchParams],
-	);
+				if ('field' in sorter && sorter.order) {
+					const currentOrderBy = {
+						columnName: sorter.field as string,
+						order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+					};
+					setOrderBy(currentOrderBy);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+							JSON.stringify(currentOrderBy),
+					});
+				} else {
+					setOrderBy(null);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+					});
+				}
+			},
+			[searchParams, setSearchParams],
+		);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -580,8 +576,8 @@ function K8sClustersList({
 
 	const handleCloseClusterDetail = (): void => {
 		setselectedClusterName(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
 						![
@@ -593,7 +589,7 @@ function K8sClustersList({
 						].includes(key),
 				),
 			),
-		});
+		);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -601,7 +597,7 @@ function K8sClustersList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,

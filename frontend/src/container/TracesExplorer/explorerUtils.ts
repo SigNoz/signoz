@@ -17,7 +17,7 @@ export const getListViewQuery = (
 					columnName: orderBy.split(':')[0],
 					order: orderBy.split(':')[1] as 'asc' | 'desc',
 				},
-		  ]
+			]
 		: [];
 
 	for (let i = 0; i < query.builder.queryData.length; i++) {

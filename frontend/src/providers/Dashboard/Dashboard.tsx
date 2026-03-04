@@ -102,10 +102,8 @@ export function DashboardProvider({
 		null,
 	);
 
-	const [
-		dashboardQueryRangeCalled,
-		setDashboardQueryRangeCalled,
-	] = useState<boolean>(false);
+	const [dashboardQueryRangeCalled, setDashboardQueryRangeCalled] =
+		useState<boolean>(false);
 
 	const isDashboardPage = useRouteMatch<Props>({
 		path: ROUTES.DASHBOARD,
@@ -161,10 +159,8 @@ export function DashboardProvider({
 		}
 	}, [selectedDashboard]);
 
-	const {
-		currentDashboard,
-		updateLocalStorageDashboardVariables,
-	} = useDashboardVariablesFromLocalStorage(dashboardId);
+	const { currentDashboard, updateLocalStorageDashboardVariables } =
+		useDashboardVariablesFromLocalStorage(dashboardId);
 
 	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
 

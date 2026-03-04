@@ -388,7 +388,7 @@ function ClientSideQBSearch(
 						({
 							label: key.key,
 							value: key,
-						} as Option),
+						}) as Option,
 				) || [],
 			);
 		}
@@ -462,7 +462,7 @@ function ClientSideQBSearch(
 							({
 								label: checkCommaInValue(String(val)),
 								value: val,
-							} as Option),
+							}) as Option,
 					),
 				);
 			} else {
@@ -490,7 +490,7 @@ function ClientSideQBSearch(
 				Array.isArray(tag.value) &&
 				tag.value[tag.value.length - 1] === ''
 					? tag.value?.slice(0, -1)
-					: tag.value ?? '';
+					: (tag.value ?? '');
 			filterTags.items.push({
 				id: tag.id || uuid().slice(0, 8),
 				key: tag.key,

@@ -4,4 +4,5 @@ export interface VariablesSettingsTab {
 	resetState: () => void;
 }
 
-export type VariablesSettingsTabHandle = MutableRefObject<VariablesSettingsTab | null>;
+export type VariablesSettingsTabHandle =
+	MutableRefObject<VariablesSettingsTab | null>;

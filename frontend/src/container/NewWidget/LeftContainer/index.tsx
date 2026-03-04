@@ -1,5 +1,4 @@
-import { memo, useEffect } from 'react';
-import { useMemo } from 'react';
+import { memo, useEffect, useMemo } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -33,10 +32,11 @@ function LeftContainer({
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
-	const { selectedTime: globalSelectedInterval, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedInterval,
+		minTime,
+		maxTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const queryRangeKey = useMemo(
 		() => [
 			REACT_QUERY_KEY.GET_QUERY_RANGE,

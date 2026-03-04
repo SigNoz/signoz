@@ -133,7 +133,7 @@ export const getThresholds = (
 							threshold.thresholdValue,
 							threshold.unit,
 							yAxisUnit,
-					  )})`,
+						)})`,
 				thresholdUnit: threshold.unit,
 				thresholdColor: threshold.color || Color.TEXT_SAKURA_500,
 			};

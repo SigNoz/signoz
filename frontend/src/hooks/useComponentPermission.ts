@@ -12,10 +12,10 @@ const useComponentPermission = (
 		[role],
 	);
 
-	return useMemo(() => component.map((e) => getComponentPermission(e)), [
-		component,
-		getComponentPermission,
-	]);
+	return useMemo(
+		() => component.map((e) => getComponentPermission(e)),
+		[component, getComponentPermission],
+	);
 };
 
 export default useComponentPermission;

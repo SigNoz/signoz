@@ -223,26 +223,24 @@ function K8sJobsList({
 		dotMetricsEnabled,
 	);
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.JOBS,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true,
-		K8sCategory.JOBS,
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.JOBS,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true,
+			K8sCategory.JOBS,
+		);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sJobsListQuery();
@@ -366,9 +364,8 @@ function K8sJobsList({
 				setOrderBy(currentOrderBy);
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+						JSON.stringify(currentOrderBy),
 				});
 			} else {
 				setOrderBy(null);
@@ -557,8 +554,8 @@ function K8sJobsList({
 
 	const handleCloseJobDetail = (): void => {
 		setselectedJobUID(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
 						![
@@ -570,7 +567,7 @@ function K8sJobsList({
 						].includes(key),
 				),
 			),
-		});
+		);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -578,7 +575,7 @@ function K8sJobsList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,

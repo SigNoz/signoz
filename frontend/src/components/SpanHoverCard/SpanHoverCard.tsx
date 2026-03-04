@@ -26,18 +26,15 @@ function SpanHoverCard({
 	children,
 }: SpanHoverCardProps): JSX.Element {
 	const duration = span.durationNano / 1e6; // Convert nanoseconds to milliseconds
-	const { time: formattedDuration, timeUnitName } = convertTimeToRelevantUnit(
-		duration,
-	);
+	const { time: formattedDuration, timeUnitName } =
+		convertTimeToRelevantUnit(duration);
 
 	const { timezone } = useTimezone();
 
 	// Calculate relative start time from trace start
 	const relativeStartTime = span.timestamp - traceMetadata.startTime;
-	const {
-		time: relativeTime,
-		timeUnitName: relativeTimeUnit,
-	} = convertTimeToRelevantUnit(relativeStartTime);
+	const { time: relativeTime, timeUnitName: relativeTimeUnit } =
+		convertTimeToRelevantUnit(relativeStartTime);
 
 	// Format absolute start time
 	const startTimeFormatted = dayjs(span.timestamp)

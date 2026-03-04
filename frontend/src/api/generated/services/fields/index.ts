@@ -46,7 +46,7 @@ export const getGetFieldsKeysQueryKey = (params?: GetFieldsKeysParams) => {
 
 export const getGetFieldsKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -83,7 +83,7 @@ export type GetFieldsKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFieldsKeys<
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -143,7 +143,7 @@ export const getGetFieldsValuesQueryKey = (params?: GetFieldsValuesParams) => {
 
 export const getGetFieldsValuesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsValuesParams,
 	options?: {
@@ -180,7 +180,7 @@ export type GetFieldsValuesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFieldsValues<
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(
 	params?: GetFieldsValuesParams,
 	options?: {

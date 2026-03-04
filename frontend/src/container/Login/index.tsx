@@ -58,10 +58,8 @@ function Login(): JSX.Element {
 	const [sessionsContext, setSessionsContext] = useState<SessionsContext>();
 	const [isSubmitting, setIsSubmitting] = useState<boolean>(false);
 	const [sessionsOrgId, setSessionsOrgId] = useState<string>('');
-	const [
-		sessionsContextLoading,
-		setIsLoadingSessionsContext,
-	] = useState<boolean>(false);
+	const [sessionsContextLoading, setIsLoadingSessionsContext] =
+		useState<boolean>(false);
 	const [form] = Form.useForm<FormValues>();
 	const [errorMessage, setErrorMessage] = useState<APIError>();
 

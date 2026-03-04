@@ -35,12 +35,8 @@ type LogsTableProps = {
 function LogsTable(props: LogsTableProps): JSX.Element {
 	const { viewMode, linesPerRow } = props;
 
-	const {
-		activeLog,
-		onClearActiveLog,
-		onAddToQuery,
-		onSetActiveLog,
-	} = useActiveLog();
+	const { activeLog, onClearActiveLog, onAddToQuery, onSetActiveLog } =
+		useActiveLog();
 
 	const {
 		logs,
@@ -49,15 +45,15 @@ function LogsTable(props: LogsTableProps): JSX.Element {
 		liveTail,
 	} = useSelector<AppState, ILogsReducer>((state) => state.logs);
 
-	const isLiveTail = useMemo(() => logs.length === 0 && liveTail === 'PLAYING', [
-		logs?.length,
-		liveTail,
-	]);
+	const isLiveTail = useMemo(
+		() => logs.length === 0 && liveTail === 'PLAYING',
+		[logs?.length, liveTail],
+	);
 
-	const isNoLogs = useMemo(() => logs.length === 0 && liveTail === 'STOPPED', [
-		logs?.length,
-		liveTail,
-	]);
+	const isNoLogs = useMemo(
+		() => logs.length === 0 && liveTail === 'STOPPED',
+		[logs?.length, liveTail],
+	);
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,

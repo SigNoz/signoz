@@ -26,10 +26,8 @@ function AddFunnelDescriptionModal({
 	const { notifications } = useNotifications();
 	const queryClient = useQueryClient();
 
-	const {
-		mutate: saveFunnelDescription,
-		isLoading,
-	} = useSaveFunnelDescription();
+	const { mutate: saveFunnelDescription, isLoading } =
+		useSaveFunnelDescription();
 
 	const handleCancel = (): void => {
 		setDescription('');

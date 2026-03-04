@@ -21,7 +21,7 @@ const createMockHost = (): HostData =>
 		memoryTimeSeries: { labels: {}, labelsArray: [], values: [] },
 		waitTimeSeries: { labels: {}, labelsArray: [], values: [] },
 		load15TimeSeries: { labels: {}, labelsArray: [], values: [] },
-	} as HostData);
+	}) as HostData;
 
 const createMockTableData = (
 	overrides: Partial<HostListResponse['data']> = {},

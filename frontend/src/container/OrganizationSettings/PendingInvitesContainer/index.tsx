@@ -22,10 +22,8 @@ import InviteUserModal from '../InviteUserModal/InviteUserModal';
 import { TitleWrapper } from './styles';
 
 function PendingInvitesContainer(): JSX.Element {
-	const [
-		isInviteTeamMemberModalOpen,
-		setIsInviteTeamMemberModalOpen,
-	] = useState<boolean>(false);
+	const [isInviteTeamMemberModalOpen, setIsInviteTeamMemberModalOpen] =
+		useState<boolean>(false);
 	const [form] = Form.useForm<InviteMemberFormValues>();
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const [state, setText] = useCopyToClipboard();

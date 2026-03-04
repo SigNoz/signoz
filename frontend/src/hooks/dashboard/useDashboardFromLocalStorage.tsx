@@ -28,15 +28,11 @@ interface UseDashboardVariablesFromLocalStorageReturn {
 export const useDashboardVariablesFromLocalStorage = (
 	dashboardId: string,
 ): UseDashboardVariablesFromLocalStorageReturn => {
-	const [
-		allDashboards,
-		setAllDashboards,
-	] = useState<DashboardLocalStorageVariables>({});
+	const [allDashboards, setAllDashboards] =
+		useState<DashboardLocalStorageVariables>({});
 
-	const [
-		currentDashboard,
-		setCurrentDashboard,
-	] = useState<LocalStoreDashboardVariables>({});
+	const [currentDashboard, setCurrentDashboard] =
+		useState<LocalStoreDashboardVariables>({});
 
 	useEffect(() => {
 		const localStoreDashboardVariablesString = getLocalStorageKey(
@@ -96,9 +92,10 @@ export const useDashboardVariablesFromLocalStorage = (
 			[id]:
 				isDynamic && allSelected
 					? {
-							selectedValue: (undefined as unknown) as IDashboardVariable['selectedValue'],
+							selectedValue:
+								undefined as unknown as IDashboardVariable['selectedValue'],
 							allSelected: true,
-					  }
+						}
 					: { selectedValue, allSelected },
 		}));
 	};

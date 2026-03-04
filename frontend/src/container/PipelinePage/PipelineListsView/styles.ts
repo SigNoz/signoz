@@ -43,9 +43,8 @@ export const ProcessorIndexIcon = styled(Avatar)`
 	font-weight: 400;
 `;
 
-export const StyledTable: React.FC<
-	TableProps<any> & { isDarkMode: boolean }
-> = styled(Table)`
+export const StyledTable: React.FC<TableProps<any> & { isDarkMode: boolean }> =
+	styled(Table)`
 	.ant-table-tbody > tr > td {
 		border: none;
 	}

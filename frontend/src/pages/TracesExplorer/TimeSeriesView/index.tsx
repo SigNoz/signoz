@@ -60,10 +60,11 @@ function TimeSeriesViewContainer({
 		setYAxisUnit(value);
 	};
 
-	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		selectedTime: globalSelectedTime,
+		maxTime,
+		minTime,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const queryKey = useMemo(
 		() => [

@@ -54,21 +54,15 @@ const DEFAULT_ORDER_BY: Querybuildertypesv5OrderByDTO = {
 function Summary(): JSX.Element {
 	const { pageSize, setPageSize } = usePageSize('metricsExplorer');
 	const [currentPage, setCurrentPage] = useState(1);
-	const [orderBy, setOrderBy] = useState<Querybuildertypesv5OrderByDTO>(
-		DEFAULT_ORDER_BY,
-	);
-	const [
-		heatmapView,
-		setHeatmapView,
-	] = useState<MetricsexplorertypesTreemapModeDTO>(
-		MetricsexplorertypesTreemapModeDTO.samples,
-	);
+	const [orderBy, setOrderBy] =
+		useState<Querybuildertypesv5OrderByDTO>(DEFAULT_ORDER_BY);
+	const [heatmapView, setHeatmapView] =
+		useState<MetricsexplorertypesTreemapModeDTO>(
+			MetricsexplorertypesTreemapModeDTO.samples,
+		);
 
-	const {
-		currentQuery,
-		stagedQuery,
-		redirectWithQueryBuilderData,
-	} = useQueryBuilder();
+	const { currentQuery, stagedQuery, redirectWithQueryBuilderData } =
+		useQueryBuilder();
 
 	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
 
@@ -96,10 +90,8 @@ function Summary(): JSX.Element {
 
 	const appliedFilterExpression = query?.filter?.expression || '';
 
-	const [
-		currentQueryFilterExpression,
-		setCurrentQueryFilterExpression,
-	] = useState<string>(appliedFilterExpression);
+	const [currentQueryFilterExpression, setCurrentQueryFilterExpression] =
+		useState<string>(appliedFilterExpression);
 
 	useEffect(() => {
 		setCurrentQueryFilterExpression(appliedFilterExpression);

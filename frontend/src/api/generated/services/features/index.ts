@@ -36,7 +36,7 @@ export const getGetFeaturesQueryKey = () => {
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -70,7 +70,7 @@ export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetFeatures<
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,

@@ -101,12 +101,11 @@ function UplotPanelWrapper({
 	});
 
 	useEffect(() => {
-		const {
-			graphVisibilityStates: localStoredVisibilityState,
-		} = getLocalStorageGraphVisibilityState({
-			apiResponse: queryResponse.data?.payload.data.result || [],
-			name: widget.id,
-		});
+		const { graphVisibilityStates: localStoredVisibilityState } =
+			getLocalStorageGraphVisibilityState({
+				apiResponse: queryResponse.data?.payload.data.result || [],
+				name: widget.id,
+			});
 		if (setGraphVisibility) {
 			setGraphVisibility(localStoredVisibilityState);
 		}
@@ -227,7 +226,7 @@ function UplotPanelWrapper({
 				yAxisUnit: widget?.yAxisUnit,
 				onClickHandler: enableDrillDown
 					? clickHandlerWithContextMenu
-					: onClickHandler ?? _noop,
+					: (onClickHandler ?? _noop),
 				thresholds: widget.thresholds,
 				minTimeScale,
 				maxTimeScale,

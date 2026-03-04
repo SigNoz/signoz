@@ -59,9 +59,10 @@ function AllAttributes({
 		},
 	);
 
-	const attributes = useMemo(() => attributesData?.data.attributes ?? [], [
-		attributesData,
-	]);
+	const attributes = useMemo(
+		() => attributesData?.data.attributes ?? [],
+		[attributesData],
+	);
 
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
@@ -173,7 +174,7 @@ function AllAttributes({
 							key: attribute.key,
 							value: attribute.values,
 						},
-				  }))
+					}))
 				: [],
 		[filteredAttributes],
 	);

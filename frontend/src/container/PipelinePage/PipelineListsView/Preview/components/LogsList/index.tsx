@@ -9,12 +9,8 @@ import { ILog } from 'types/api/logs/log';
 import './styles.scss';
 
 function LogsList({ logs }: LogsListProps): JSX.Element {
-	const {
-		activeLog,
-		onSetActiveLog,
-		onClearActiveLog,
-		onAddToQuery,
-	} = useActiveLog();
+	const { activeLog, onSetActiveLog, onClearActiveLog, onAddToQuery } =
+		useActiveLog();
 
 	const makeLogDetailsHandler = (log: ILog) => (): void => onSetActiveLog(log);
 

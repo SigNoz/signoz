@@ -109,10 +109,8 @@ function K8sNamespacesList({
 		return [];
 	});
 
-	const [
-		selectedRowData,
-		setSelectedRowData,
-	] = useState<K8sNamespacesRowData | null>(null);
+	const [selectedRowData, setSelectedRowData] =
+		useState<K8sNamespacesRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -234,26 +232,24 @@ function K8sNamespacesList({
 		dotMetricsEnabled,
 	);
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.NAMESPACES,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true,
-		K8sCategory.NODES,
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.NAMESPACES,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true,
+			K8sCategory.NODES,
+		);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sNamespacesListQuery();
@@ -321,9 +317,10 @@ function K8sNamespacesList({
 		dotMetricsEnabled,
 	);
 
-	const namespacesData = useMemo(() => data?.payload?.data?.records || [], [
-		data,
-	]);
+	const namespacesData = useMemo(
+		() => data?.payload?.data?.records || [],
+		[data],
+	);
 	const totalCount = data?.payload?.data?.total || 0;
 
 	const formattedNamespacesData = useMemo(
@@ -356,45 +353,45 @@ function K8sNamespacesList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sNamespacesRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<K8sNamespacesRowData>
-				| SorterResult<K8sNamespacesRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Namespace,
-				});
-			}
+	const handleTableChange: TableProps<K8sNamespacesRowData>['onChange'] =
+		useCallback(
+			(
+				pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<K8sNamespacesRowData>
+					| SorterResult<K8sNamespacesRowData>[],
+			): void => {
+				if (pagination.current) {
+					setCurrentPage(pagination.current);
+					logEvent(InfraMonitoringEvents.PageNumberChanged, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.ListPage,
+						category: InfraMonitoringEvents.Namespace,
+					});
+				}
 
-			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
-				});
-			} else {
-				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
-			}
-		},
-		[searchParams, setSearchParams],
-	);
+				if ('field' in sorter && sorter.order) {
+					const currentOrderBy = {
+						columnName: sorter.field as string,
+						order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+					};
+					setOrderBy(currentOrderBy);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+							JSON.stringify(currentOrderBy),
+					});
+				} else {
+					setOrderBy(null);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+					});
+				}
+			},
+			[searchParams, setSearchParams],
+		);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -588,8 +585,8 @@ function K8sNamespacesList({
 
 	const handleCloseNamespaceDetail = (): void => {
 		setselectedNamespaceUID(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
 						![
@@ -601,7 +598,7 @@ function K8sNamespacesList({
 						].includes(key),
 				),
 			),
-		});
+		);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -609,7 +606,7 @@ function K8sNamespacesList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,

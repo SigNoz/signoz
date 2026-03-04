@@ -84,13 +84,8 @@ import { getActiveMenuKeyFromPath } from './sideNav.utils';
 import './SideNav.styles.scss';
 
 function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
-	const {
-		attributes,
-		listeners,
-		setNodeRef,
-		transform,
-		transition,
-	} = useSortable({ id: item.key });
+	const { attributes, listeners, setNodeRef, transform, transition } =
+		useSortable({ id: item.key });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -148,12 +143,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		},
 	);
 
-	const [
-		helpSupportDropdownMenuItems,
-		setHelpSupportDropdownMenuItems,
-	] = useState<(SidebarItem | DropdownSeparator)[]>(
-		DefaultHelpSupportDropdownMenuItems,
-	);
+	const [helpSupportDropdownMenuItems, setHelpSupportDropdownMenuItems] =
+		useState<(SidebarItem | DropdownSeparator)[]>(
+			DefaultHelpSupportDropdownMenuItems,
+		);
 
 	const [tempPinnedMenuItems, setTempPinnedMenuItems] = useState<SidebarItem[]>(
 		[],
@@ -229,7 +222,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		const navShortcutsPreference = userPreferences?.find(
 			(preference) => preference.name === USER_PREFERENCES.NAV_SHORTCUTS,
 		);
-		const navShortcuts = (navShortcutsPreference?.value as unknown) as
+		const navShortcuts = navShortcutsPreference?.value as unknown as
 			| string[]
 			| undefined;
 
@@ -308,10 +301,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
-	const [
-		showVersionUpdateNotification,
-		setShowVersionUpdateNotification,
-	] = useState(false);
+	const [showVersionUpdateNotification, setShowVersionUpdateNotification] =
+		useState(false);
 
 	const [isMoreMenuCollapsed, setIsMoreMenuCollapsed] = useState(false);
 
@@ -475,13 +466,15 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		[pathname, search],
 	);
 
-	const activeMenuKey = useMemo(() => getActiveMenuKeyFromPath(pathname), [
-		pathname,
-	]);
+	const activeMenuKey = useMemo(
+		() => getActiveMenuKeyFromPath(pathname),
+		[pathname],
+	);
 
-	const isSettingsPage = useMemo(() => pathname.startsWith(ROUTES.SETTINGS), [
-		pathname,
-	]);
+	const isSettingsPage = useMemo(
+		() => pathname.startsWith(ROUTES.SETTINGS),
+		[pathname],
+	);
 
 	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
 		() =>
@@ -516,7 +509,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								label: 'Manage License',
 								dataTestId: 'manage-license-nav-item',
 							},
-					  ]
+						]
 					: []),
 				{ type: 'divider' as const },
 				{
@@ -768,8 +761,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	}, [deregisterShortcut, onClickHandler, registerShortcut]);
 
 	const isPinnedItem = useMemo(
-		() => (item: SidebarItem): boolean =>
-			secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
+		() =>
+			(item: SidebarItem): boolean =>
+				secondaryMenuItems.some((i) => i.key === item.key && i.isPinned),
 		[secondaryMenuItems],
 	);
 
@@ -814,7 +808,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										},
 									);
 									onTogglePin(item);
-							  }
+								}
 							: undefined
 					}
 					onClick={(event): void => {
@@ -1135,11 +1129,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										? renderNavItems(
 												activeMoreMenuItems.filter((item) => item.isEnabled),
 												true,
-										  )
+											)
 										: renderNavItems(
 												moreMenuItems.filter((item) => item.isEnabled),
 												true,
-										  )}
+											)}
 								</div>
 							</div>
 						)}

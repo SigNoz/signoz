@@ -47,7 +47,7 @@ export const getListAuthDomainsQueryKey = () => {
 
 export const getListAuthDomainsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -81,7 +81,7 @@ export type ListAuthDomainsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useListAuthDomains<
 	TData = Awaited<ReturnType<typeof listAuthDomains>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listAuthDomains>>,
@@ -134,7 +134,7 @@ export const createAuthDomain = (
 
 export const getCreateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
@@ -151,8 +151,8 @@ export const getCreateAuthDomainMutationOptions = <
 	const mutationKey = ['createAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -172,7 +172,8 @@ export const getCreateAuthDomainMutationOptions = <
 export type CreateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createAuthDomain>>
 >;
-export type CreateAuthDomainMutationBody = BodyType<AuthtypesPostableAuthDomainDTO>;
+export type CreateAuthDomainMutationBody =
+	BodyType<AuthtypesPostableAuthDomainDTO>;
 export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -180,7 +181,7 @@ export type CreateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useCreateAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createAuthDomain>>,
@@ -211,7 +212,7 @@ export const deleteAuthDomain = ({ id }: DeleteAuthDomainPathParameters) => {
 
 export const getDeleteAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
@@ -228,8 +229,8 @@ export const getDeleteAuthDomainMutationOptions = <
 	const mutationKey = ['deleteAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -257,7 +258,7 @@ export type DeleteAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useDeleteAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof deleteAuthDomain>>,
@@ -293,7 +294,7 @@ export const updateAuthDomain = (
 
 export const getUpdateAuthDomainMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,
@@ -316,8 +317,8 @@ export const getUpdateAuthDomainMutationOptions = <
 	const mutationKey = ['updateAuthDomain'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -340,7 +341,8 @@ export const getUpdateAuthDomainMutationOptions = <
 export type UpdateAuthDomainMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateAuthDomain>>
 >;
-export type UpdateAuthDomainMutationBody = BodyType<AuthtypesUpdateableAuthDomainDTO>;
+export type UpdateAuthDomainMutationBody =
+	BodyType<AuthtypesUpdateableAuthDomainDTO>;
 export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -348,7 +350,7 @@ export type UpdateAuthDomainMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const useUpdateAuthDomain = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateAuthDomain>>,

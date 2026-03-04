@@ -39,22 +39,22 @@ export const RawLogViewContainer = styled(Row)<{
 			fontSize === FontSize.SMALL
 				? `margin: 1px 0;`
 				: fontSize === FontSize.MEDIUM
-				? `margin: 1px 0;`
-				: `margin: 2px 0;`}
+					? `margin: 1px 0;`
+					: `margin: 2px 0;`}
 	}
 
 	${({ $isReadOnly, $isActiveLog, $isDarkMode, $logType }): string =>
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
 			: !$isReadOnly
-			? `&:hover { ${getActiveLogBackground(true, $isDarkMode, $logType)} }`
-			: ''}
+				? `&:hover { ${getActiveLogBackground(true, $isDarkMode, $logType)} }`
+				: ''}
 
 	${({ $isHightlightedLog, $isDarkMode }): string =>
 		$isHightlightedLog
 			? `background-color: ${
 					$isDarkMode ? Color.BG_ROBIN_600 : Color.BG_VANILLA_400
-			  };
+				};
 			  transition: background-color 2s ease-in;`
 			: ''}
 
@@ -104,8 +104,8 @@ export const RawLogContent = styled.div<RawLogContentProps>`
 		fontSize === FontSize.SMALL
 			? `font-size:11px; line-height:16px; padding:1px;`
 			: fontSize === FontSize.MEDIUM
-			? `font-size:13px; line-height:20px; padding:1px;`
-			: `font-size:14px; line-height:24px; padding:2px;`}
+				? `font-size:13px; line-height:20px; padding:1px;`
+				: `font-size:14px; line-height:24px; padding:2px;`}
 
 	cursor: ${({ $isActiveLog, $isReadOnly }): string =>
 		$isActiveLog || $isReadOnly ? 'initial' : 'pointer'};

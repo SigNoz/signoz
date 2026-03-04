@@ -111,10 +111,8 @@ function K8sDeploymentsList({
 		return [];
 	});
 
-	const [
-		selectedRowData,
-		setSelectedRowData,
-	] = useState<K8sDeploymentsRowData | null>(null);
+	const [selectedRowData, setSelectedRowData] =
+		useState<K8sDeploymentsRowData | null>(null);
 
 	const [groupByOptions, setGroupByOptions] = useState<
 		{ value: string; label: string }[]
@@ -236,26 +234,24 @@ function K8sDeploymentsList({
 		dotMetricsEnabled,
 	);
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.DEPLOYMENTS,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true,
-		K8sCategory.NODES,
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.DEPLOYMENTS,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true,
+			K8sCategory.NODES,
+		);
 
 	const query = useMemo(() => {
 		const baseQuery = getK8sDeploymentsListQuery();
@@ -323,9 +319,10 @@ function K8sDeploymentsList({
 		dotMetricsEnabled,
 	);
 
-	const deploymentsData = useMemo(() => data?.payload?.data?.records || [], [
-		data,
-	]);
+	const deploymentsData = useMemo(
+		() => data?.payload?.data?.records || [],
+		[data],
+	);
 	const totalCount = data?.payload?.data?.total || 0;
 
 	const formattedDeploymentsData = useMemo(
@@ -340,9 +337,10 @@ function K8sDeploymentsList({
 		return groupedByRowData?.payload?.data?.records || [];
 	}, [groupedByRowData, selectedRowData]);
 
-	const columns = useMemo(() => getK8sDeploymentsListColumns(groupBy), [
-		groupBy,
-	]);
+	const columns = useMemo(
+		() => getK8sDeploymentsListColumns(groupBy),
+		[groupBy],
+	);
 
 	const handleGroupByRowClick = (record: K8sDeploymentsRowData): void => {
 		setSelectedRowData(record);
@@ -360,45 +358,45 @@ function K8sDeploymentsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
-	const handleTableChange: TableProps<K8sDeploymentsRowData>['onChange'] = useCallback(
-		(
-			pagination: TablePaginationConfig,
-			_filters: Record<string, (string | number | boolean)[] | null>,
-			sorter:
-				| SorterResult<K8sDeploymentsRowData>
-				| SorterResult<K8sDeploymentsRowData>[],
-		): void => {
-			if (pagination.current) {
-				setCurrentPage(pagination.current);
-				logEvent(InfraMonitoringEvents.PageNumberChanged, {
-					entity: InfraMonitoringEvents.K8sEntity,
-					page: InfraMonitoringEvents.ListPage,
-					category: InfraMonitoringEvents.Deployment,
-				});
-			}
+	const handleTableChange: TableProps<K8sDeploymentsRowData>['onChange'] =
+		useCallback(
+			(
+				pagination: TablePaginationConfig,
+				_filters: Record<string, (string | number | boolean)[] | null>,
+				sorter:
+					| SorterResult<K8sDeploymentsRowData>
+					| SorterResult<K8sDeploymentsRowData>[],
+			): void => {
+				if (pagination.current) {
+					setCurrentPage(pagination.current);
+					logEvent(InfraMonitoringEvents.PageNumberChanged, {
+						entity: InfraMonitoringEvents.K8sEntity,
+						page: InfraMonitoringEvents.ListPage,
+						category: InfraMonitoringEvents.Deployment,
+					});
+				}
 
-			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
-					columnName: sorter.field as string,
-					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
-				});
-			} else {
-				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
-			}
-		},
-		[searchParams, setSearchParams],
-	);
+				if ('field' in sorter && sorter.order) {
+					const currentOrderBy = {
+						columnName: sorter.field as string,
+						order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
+					};
+					setOrderBy(currentOrderBy);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+							JSON.stringify(currentOrderBy),
+					});
+				} else {
+					setOrderBy(null);
+					setSearchParams({
+						...Object.fromEntries(searchParams.entries()),
+						[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
+					});
+				}
+			},
+			[searchParams, setSearchParams],
+		);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,
@@ -592,8 +590,8 @@ function K8sDeploymentsList({
 
 	const handleCloseDeploymentDetail = (): void => {
 		setselectedDeploymentUID(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
 						![
@@ -605,7 +603,7 @@ function K8sDeploymentsList({
 						].includes(key),
 				),
 			),
-		});
+		);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -613,7 +611,7 @@ function K8sDeploymentsList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,

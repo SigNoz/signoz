@@ -15,9 +15,10 @@ function Integrations(): JSX.Element {
 	const history = useHistory();
 	const location = useLocation();
 
-	const selectedIntegration = useMemo(() => urlQuery.get('integration'), [
-		urlQuery,
-	]);
+	const selectedIntegration = useMemo(
+		() => urlQuery.get('integration'),
+		[urlQuery],
+	);
 
 	const setSelectedIntegration = useCallback(
 		(integration: string | null) => {

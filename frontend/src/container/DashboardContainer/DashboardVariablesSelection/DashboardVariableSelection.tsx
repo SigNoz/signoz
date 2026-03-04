@@ -25,10 +25,8 @@ import VariableItem from './VariableItem';
 import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
-	const {
-		setSelectedDashboard,
-		updateLocalStorageDashboardVariables,
-	} = useDashboard();
+	const { setSelectedDashboard, updateLocalStorageDashboardVariables } =
+		useDashboard();
 
 	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
 

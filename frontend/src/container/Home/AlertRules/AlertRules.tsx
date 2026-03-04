@@ -30,7 +30,11 @@ export default function AlertRules({
 	const params = new URLSearchParams(location.search);
 
 	// Fetch Alerts
-	const { data: alerts, isError, isLoading } = useQuery('allAlerts', {
+	const {
+		data: alerts,
+		isError,
+		isLoading,
+	} = useQuery('allAlerts', {
 		queryFn: getAll,
 		cacheTime: 0,
 	});

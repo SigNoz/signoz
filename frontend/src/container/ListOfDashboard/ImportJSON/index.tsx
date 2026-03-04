@@ -39,9 +39,8 @@ function ImportJSON({
 	const [jsonData, setJsonData] = useState<Record<string, unknown>>();
 	const { t } = useTranslation(['dashboard', 'common']);
 	const [isUploadJSONError, setIsUploadJSONError] = useState<boolean>(false);
-	const [isCreateDashboardError, setIsCreateDashboardError] = useState<boolean>(
-		false,
-	);
+	const [isCreateDashboardError, setIsCreateDashboardError] =
+		useState<boolean>(false);
 
 	const [dashboardCreating, setDashboardCreating] = useState<boolean>(false);
 

@@ -124,26 +124,24 @@ function K8sPodsList({
 		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
 			?.active || false;
 
-	const {
-		data: groupByFiltersData,
-		isLoading: isLoadingGroupByFilters,
-	} = useGetAggregateKeys(
-		{
-			dataSource: currentQuery.builder.queryData[0].dataSource,
-			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.PODS,
-				dotMetricsEnabled,
-			),
-			aggregateOperator: 'noop',
-			searchText: '',
-			tagType: '',
-		},
-		{
-			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
-		},
-		true, // isInfraMonitoring
-		K8sCategory.PODS, // infraMonitoringEntity
-	);
+	const { data: groupByFiltersData, isLoading: isLoadingGroupByFilters } =
+		useGetAggregateKeys(
+			{
+				dataSource: currentQuery.builder.queryData[0].dataSource,
+				aggregateAttribute: GetK8sEntityToAggregateAttribute(
+					K8sCategory.PODS,
+					dotMetricsEnabled,
+				),
+				aggregateOperator: 'noop',
+				searchText: '',
+				tagType: '',
+			},
+			{
+				queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
+			},
+			true, // isInfraMonitoring
+			K8sCategory.PODS, // infraMonitoringEntity
+		);
 
 	// Reset pagination every time quick filters are changed
 	useEffect(() => {
@@ -353,10 +351,10 @@ function K8sPodsList({
 		[groupedByRowData, groupBy],
 	);
 
-	const columns = useMemo(() => getK8sPodsListColumns(addedColumns, groupBy), [
-		addedColumns,
-		groupBy,
-	]);
+	const columns = useMemo(
+		() => getK8sPodsListColumns(addedColumns, groupBy),
+		[addedColumns, groupBy],
+	);
 
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
@@ -381,9 +379,8 @@ function K8sPodsList({
 				setOrderBy(currentOrderBy);
 				setSearchParams({
 					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
+					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]:
+						JSON.stringify(currentOrderBy),
 				});
 			} else {
 				setOrderBy(null);
@@ -428,7 +425,7 @@ function K8sPodsList({
 			const groupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
-				const element = (value[index] as unknown) as string;
+				const element = value[index] as unknown as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
 					(key) => key.key === element,
@@ -515,8 +512,8 @@ function K8sPodsList({
 
 	const handleClosePodDetail = (): void => {
 		setSelectedPodUID(null);
-		setSearchParams({
-			...Object.fromEntries(
+		setSearchParams(
+			Object.fromEntries(
 				Array.from(searchParams.entries()).filter(
 					([key]) =>
 						![
@@ -528,7 +525,7 @@ function K8sPodsList({
 						].includes(key),
 				),
 			),
-		});
+		);
 	};
 
 	const handleAddColumn = useCallback(
@@ -567,9 +564,10 @@ function K8sPodsList({
 		[setAddedColumns, setAvailableColumns],
 	);
 
-	const nestedColumns = useMemo(() => getK8sPodsListColumns(addedColumns, []), [
-		addedColumns,
-	]);
+	const nestedColumns = useMemo(
+		() => getK8sPodsListColumns(addedColumns, []),
+		[addedColumns],
+	);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 

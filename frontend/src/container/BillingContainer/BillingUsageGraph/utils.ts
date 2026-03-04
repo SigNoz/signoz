@@ -115,9 +115,7 @@ export function csvFileName(csvData: QuantityData[]): string {
 	return `billing_usage_(${startDate}-${endDate}).csv`;
 }
 
-export function prepareCsvData(
-	data: Partial<UsageResponsePayloadProps>,
-): {
+export function prepareCsvData(data: Partial<UsageResponsePayloadProps>): {
 	csvData: string;
 	fileName: string;
 } {

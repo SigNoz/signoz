@@ -82,9 +82,8 @@ function ServiceDetails(): JSX.Element | null {
 	const urlQuery = useUrlQuery();
 	const cloudAccountId = urlQuery.get('cloudAccountId');
 	const serviceId = urlQuery.get('service');
-	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] = useState(
-		false,
-	);
+	const [isConfigureServiceModalOpen, setIsConfigureServiceModalOpen] =
+		useState(false);
 	const openServiceConfigModal = (): void => {
 		setIsConfigureServiceModalOpen(true);
 		logEvent('AWS Integration: Service settings viewed', {

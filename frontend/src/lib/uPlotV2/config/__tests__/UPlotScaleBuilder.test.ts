@@ -171,8 +171,7 @@ describe('UPlotScaleBuilder', () => {
 
 	it('respects explicit range function when provided on props', () => {
 		const explicitRange: uPlot.Scale.Range = jest.fn(() => [
-			0,
-			10,
+			0, 10,
 		]) as uPlot.Scale.Range;
 
 		const builder = new UPlotScaleBuilder(

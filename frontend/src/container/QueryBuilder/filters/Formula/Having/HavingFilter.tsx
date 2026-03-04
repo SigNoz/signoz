@@ -18,9 +18,8 @@ function HavingFilter({ formula, onChange }: HavingFilterProps): JSX.Element {
 	const { having } = formula;
 	const [searchText, setSearchText] = useState<string>('');
 	const [localValues, setLocalValues] = useState<string[]>([]);
-	const [currentFormValue, setCurrentFormValue] = useState<HavingForm>(
-		initialHavingValues,
-	);
+	const [currentFormValue, setCurrentFormValue] =
+		useState<HavingForm>(initialHavingValues);
 	const [options, setOptions] = useState<SelectOption<string, string>[]>([]);
 
 	const { isMulti } = useTagValidation(

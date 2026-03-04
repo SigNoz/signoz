@@ -102,7 +102,7 @@ function renderWithDashboardProvider(
 					url: `/dashboard/${routeMatchParams.dashboardId}`,
 					isExact: true,
 					params: routeMatchParams,
-			  }
+				}
 			: null,
 	);
 

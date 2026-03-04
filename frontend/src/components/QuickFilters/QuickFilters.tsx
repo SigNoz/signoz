@@ -292,6 +292,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 				</div>
 			)}
 			<section className="filters">
+				{/* oxlint-disable-next-line react/jsx-key */}
 				{filterConfig.map((filter) => {
 					switch (filter.type) {
 						case FiltersType.CHECKBOX:

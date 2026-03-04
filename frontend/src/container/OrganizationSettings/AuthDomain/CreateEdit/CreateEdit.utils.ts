@@ -120,7 +120,7 @@ export function prepareInitialValues(
 					domainToAdminEmailList: convertDomainMappingsToList(
 						record.googleAuthConfig.domainToAdminEmail,
 					),
-			  }
+				}
 			: undefined,
 		roleMapping: record.roleMapping
 			? {
@@ -128,7 +128,7 @@ export function prepareInitialValues(
 					groupMappingsList: convertGroupMappingsToList(
 						record.roleMapping.groupMappings,
 					),
-			  }
+				}
 			: undefined,
 	};
 }

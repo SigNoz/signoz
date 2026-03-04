@@ -27,9 +27,8 @@ function TraceGraphFilter(): JSX.Element {
 		AppState,
 		TraceReducer
 	>((state) => state.traces);
-	const [selectedGroupByLocal, setSelectedGroupByLocal] = useState<string>(
-		selectedGroupBy,
-	);
+	const [selectedGroupByLocal, setSelectedGroupByLocal] =
+		useState<string>(selectedGroupBy);
 	const globalTime = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);

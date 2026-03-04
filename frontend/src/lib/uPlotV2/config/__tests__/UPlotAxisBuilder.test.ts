@@ -181,7 +181,7 @@ describe('UPlotAxisBuilder', () => {
 		);
 
 		// Simulate uPlot calling the values formatter
-		const valuesFn = (config.values as unknown) as (
+		const valuesFn = config.values as unknown as (
 			self: uPlot,
 			vals: unknown[],
 		) => string[];
@@ -315,17 +315,14 @@ describe('UPlotAxisBuilder', () => {
 			ticks: { size: 10 },
 			font: ['12px sans-serif'],
 		};
-		const mockSelf = ({
+		const mockSelf = {
 			axes: [mockAxis],
 			ctx: { measureText: jest.fn(() => ({ width: 60 })), font: '' },
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
-		const result = (sizeFn as (
-			s: uPlot,
-			v: string[],
-			a: number,
-			c: number,
-		) => number)(
+		const result = (
+			sizeFn as (s: uPlot, v: string[], a: number, c: number) => number
+		)(
 			mockSelf,
 			['100', '200'],
 			0,
@@ -349,7 +346,7 @@ describe('UPlotAxisBuilder', () => {
 			font: ['12px sans-serif'],
 		};
 		const measureText = jest.fn(() => ({ width: 48 }));
-		const mockSelf = ({
+		const mockSelf = {
 			axes: [mockAxis],
 			ctx: {
 				measureText,
@@ -360,14 +357,11 @@ describe('UPlotAxisBuilder', () => {
 					/* noop */
 				},
 			},
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
-		const result = (sizeFn as (
-			s: uPlot,
-			v: string[],
-			a: number,
-			c: number,
-		) => number)(
+		const result = (
+			sizeFn as (s: uPlot, v: string[], a: number, c: number) => number
+		)(
 			mockSelf,
 			['10', '2000ms'],
 			0,

@@ -51,10 +51,7 @@ export function mergeAlignedDataTables(
 	alignedTables: AlignedData[],
 	nullModes?: number[][],
 ): AlignedData {
-	let mergedXValues: Set<number>;
-
-	// eslint-disable-next-line prefer-const
-	mergedXValues = new Set();
+	const mergedXValues: Set<number> = new Set();
 
 	// Collect all unique x-values from every table.
 	for (let tableIndex = 0; tableIndex < alignedTables.length; tableIndex++) {

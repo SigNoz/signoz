@@ -13,10 +13,8 @@ import NotificationMessage from './NotificationMessage';
 import './styles.scss';
 
 function NotificationSettings(): JSX.Element {
-	const {
-		notificationSettings,
-		setNotificationSettings,
-	} = useCreateAlertState();
+	const { notificationSettings, setNotificationSettings } =
+		useCreateAlertState();
 
 	const repeatNotificationsInput = (
 		<div className="repeat-notifications-input">

@@ -86,7 +86,7 @@ describe('mapQueryDataFromApi', (): void => {
 		// filter overridden from V5 spec (no trailing space)
 		expect(q.filter).toEqual({ expression: "service.name = 'adservice'" });
 		// having overridden from V5 spec
-		expect(((q.having as unknown) as { expression: string }).expression).toBe(
+		expect((q.having as unknown as { expression: string }).expression).toBe(
 			'avg(app.ads.count) != 0',
 		);
 		// orderBy preserved from base

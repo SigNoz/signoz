@@ -32,21 +32,17 @@ export function Formula({
 	isAdditionalFilterEnable,
 	isQBV2,
 }: FormulaProps): JSX.Element {
-	const {
-		removeQueryBuilderEntityByIndex,
-		handleSetFormulaData,
-	} = useQueryBuilder();
+	const { removeQueryBuilderEntityByIndex, handleSetFormulaData } =
+		useQueryBuilder();
 
-	const {
-		listOfAdditionalFormulaFilters,
-		handleChangeFormulaData,
-	} = useQueryOperations({
-		index,
-		query,
-		filterConfigs,
-		formula,
-		entityVersion: '',
-	});
+	const { listOfAdditionalFormulaFilters, handleChangeFormulaData } =
+		useQueryOperations({
+			index,
+			query,
+			filterConfigs,
+			formula,
+			entityVersion: '',
+		});
 
 	const [isCollapse, setIsCollapsed] = useState(false);
 

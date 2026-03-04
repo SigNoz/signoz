@@ -39,9 +39,10 @@ function DomainList(): JSX.Element {
 	);
 
 	const { currentQuery, handleRunQuery } = useQueryBuilder();
-	const query = useMemo(() => currentQuery?.builder?.queryData[0] || null, [
-		currentQuery,
-	]);
+	const query = useMemo(
+		() => currentQuery?.builder?.queryData[0] || null,
+		[currentQuery],
+	);
 
 	const { handleChangeQueryData } = useQueryOperations({
 		index: 0,

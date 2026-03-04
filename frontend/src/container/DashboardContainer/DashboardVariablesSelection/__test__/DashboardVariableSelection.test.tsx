@@ -35,7 +35,8 @@ const mockUpdateLocalStorageDashboardVariables = jest.fn();
 jest.mock('providers/Dashboard/Dashboard', () => ({
 	useDashboard: (): Record<string, unknown> => ({
 		setSelectedDashboard: mockSetSelectedDashboard,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+		updateLocalStorageDashboardVariables:
+			mockUpdateLocalStorageDashboardVariables,
 	}),
 }));
 

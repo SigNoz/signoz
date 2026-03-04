@@ -59,19 +59,16 @@ function GridCardGraph({
 }: GridCardGraphProps): JSX.Element {
 	const dispatch = useDispatch();
 	const [errorMessage, setErrorMessage] = useState<string>();
-	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
-		false,
-	);
-	const {
-		toScrollWidgetId,
-		setToScrollWidgetId,
-		setDashboardQueryRangeCalled,
-	} = useDashboard();
+	const [isInternalServerError, setIsInternalServerError] =
+		useState<boolean>(false);
+	const { toScrollWidgetId, setToScrollWidgetId, setDashboardQueryRangeCalled } =
+		useDashboard();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -224,7 +221,7 @@ function GridCardGraph({
 								return { ...acc, [id]: variable.selectedValue };
 							}
 							return acc;
-					  }, {})
+						}, {})
 					: {},
 				...(customTimeRange && customTimeRange.startTime && customTimeRange.endTime
 					? [customTimeRange.startTime, customTimeRange.endTime]

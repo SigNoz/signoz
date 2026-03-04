@@ -76,7 +76,7 @@ jest.mock('uplot', () => {
 // ---------------------------------------------------------------------------
 
 const createMockConfig = (): UPlotConfigBuilder => {
-	return ({
+	return {
 		getConfig: jest.fn().mockReturnValue({
 			series: [{ value: (): string => '' }],
 			axes: [],
@@ -86,7 +86,7 @@ const createMockConfig = (): UPlotConfigBuilder => {
 		}),
 		getId: jest.fn().mockReturnValue(undefined),
 		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
-	} as unknown) as UPlotConfigBuilder;
+	} as unknown as UPlotConfigBuilder;
 };
 
 const validData: AlignedData = [
@@ -208,7 +208,7 @@ describe('UPlotChart', () => {
 
 			render(
 				<UPlotChart
-					config={(config as unknown) as UPlotConfigBuilder}
+					config={config as unknown as UPlotConfigBuilder}
 					data={validData}
 					width={500}
 					height={300}

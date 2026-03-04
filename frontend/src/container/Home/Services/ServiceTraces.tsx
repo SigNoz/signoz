@@ -65,12 +65,14 @@ export default function ServiceTraces({
 		[services],
 	);
 
-	const servicesExist = useMemo(() => sortedServices.length > 0, [
-		sortedServices,
-	]);
-	const top5Services = useMemo(() => sortedServices.slice(0, 5), [
-		sortedServices,
-	]);
+	const servicesExist = useMemo(
+		() => sortedServices.length > 0,
+		[sortedServices],
+	);
+	const top5Services = useMemo(
+		() => sortedServices.slice(0, 5),
+		[sortedServices],
+	);
 
 	useEffect(() => {
 		if (servicesExist && !loadingUserPreferences) {

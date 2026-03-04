@@ -75,12 +75,12 @@ describe('UPlotConfigBuilder', () => {
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
-		expect(setSelectHooks.length).toBe(1);
+		expect(setSelectHooks).toHaveLength(1);
 
-		const uplotInstance = ({
+		const uplotInstance = {
 			select: { left: 10, width: 0 },
 			posToVal: jest.fn(),
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		// Simulate uPlot calling the hook
 		const setSelectHook = setSelectHooks[0];
@@ -96,7 +96,7 @@ describe('UPlotConfigBuilder', () => {
 
 		const config = builder.getConfig();
 		const setSelectHooks = config.hooks?.setSelect ?? [];
-		expect(setSelectHooks.length).toBe(1);
+		expect(setSelectHooks).toHaveLength(1);
 
 		const posToVal = jest
 			.fn()
@@ -105,10 +105,10 @@ describe('UPlotConfigBuilder', () => {
 			// left + width
 			.mockReturnValueOnce(110);
 
-		const uplotInstance = ({
+		const uplotInstance = {
 			select: { left: 50, width: 20 },
 			posToVal,
-		} as unknown) as uPlot;
+		} as unknown as uPlot;
 
 		const setSelectHook = setSelectHooks[0];
 		expect(setSelectHook).toBeDefined();
@@ -359,7 +359,7 @@ describe('UPlotConfigBuilder', () => {
 		const drawHooks = config.hooks?.draw ?? [];
 
 		// Only a single draw hook should be registered for the same scaleKey
-		expect(drawHooks.length).toBe(1);
+		expect(drawHooks).toHaveLength(1);
 	});
 
 	it('adds multiple thresholds when scale key is different', () => {
@@ -380,7 +380,7 @@ describe('UPlotConfigBuilder', () => {
 		const drawHooks = config.hooks?.draw ?? [];
 
 		// Two draw hooks should be registered for different scaleKeys
-		expect(drawHooks.length).toBe(2);
+		expect(drawHooks).toHaveLength(2);
 	});
 
 	it('merges cursor configuration with defaults instead of replacing them', () => {

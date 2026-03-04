@@ -39,12 +39,13 @@ interface FilterProps {
 
 export function Filter(props: FilterProps): JSX.Element {
 	const { setOpen } = props;
-	const [selectedFilters, setSelectedFilters] = useState<
-		Record<
-			AllTraceFilterKeys,
-			{ values: string[] | string; keys: BaseAutocompleteData }
-		>
-	>();
+	const [selectedFilters, setSelectedFilters] =
+		useState<
+			Record<
+				AllTraceFilterKeys,
+				{ values: string[] | string; keys: BaseAutocompleteData }
+			>
+		>();
 
 	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
 	const compositeQuery = useGetCompositeQueryParam();

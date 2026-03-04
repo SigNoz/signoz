@@ -250,14 +250,14 @@ function IntegrationDetailHeader(
 										latestData.last_received_ts_ms
 											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
-											  )
+												)
 											: ''
 									}
 									key={
 										latestData.last_received_ts_ms
 											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
-											  )
+												)
 											: ''
 									}
 									placement="right"
@@ -266,7 +266,7 @@ function IntegrationDetailHeader(
 										{latestData.last_received_ts_ms
 											? dayjs(latestData.last_received_ts_ms).format(
 													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
-											  )
+												)
 											: ''}
 									</Typography.Text>
 								</Tooltip>

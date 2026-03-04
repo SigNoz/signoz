@@ -23,11 +23,8 @@ function MenuItemGenerator({
 	refetchAllView,
 	sourcePage,
 }: MenuItemLabelGeneratorProps): JSX.Element {
-	const {
-		panelType,
-		redirectWithQueryBuilderData,
-		updateAllQueriesOperators,
-	} = useQueryBuilder();
+	const { panelType, redirectWithQueryBuilderData, updateAllQueriesOperators } =
+		useQueryBuilder();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 
 	const { notifications } = useNotifications();

@@ -44,7 +44,7 @@ export const getGetHostsQueryKey = () => {
 
 export const getGetHostsQueryOptions = <
 	TData = Awaited<ReturnType<typeof getHosts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getHosts>>, TError, TData>;
 }) => {
@@ -74,7 +74,7 @@ export type GetHostsQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetHosts<
 	TData = Awaited<ReturnType<typeof getHosts>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof getHosts>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -121,7 +121,7 @@ export const putHost = (
 
 export const getPutHostMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
@@ -138,8 +138,8 @@ export const getPutHostMutationOptions = <
 	const mutationKey = ['putHost'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -167,7 +167,7 @@ export type PutHostMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePutHost = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putHost>>,
@@ -202,7 +202,7 @@ export const putProfile = (
 
 export const getPutProfileMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,
@@ -219,8 +219,8 @@ export const getPutProfileMutationOptions = <
 	const mutationKey = ['putProfile'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -248,7 +248,7 @@ export type PutProfileMutationError = ErrorType<RenderErrorResponseDTO>;
  */
 export const usePutProfile = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof putProfile>>,

@@ -100,7 +100,7 @@ export const getK8sStatefulSetsList = async (
 								[] as typeof props.filters.items,
 							),
 						},
-				  }
+					}
 				: props;
 
 		const response = await axios.post('/statefulsets/list', requestProps, {

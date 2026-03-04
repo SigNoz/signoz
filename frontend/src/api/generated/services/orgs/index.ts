@@ -43,7 +43,7 @@ export const getGetMyOrganizationQueryKey = () => {
 
 export const getGetMyOrganizationQueryOptions = <
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -77,7 +77,7 @@ export type GetMyOrganizationQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useGetMyOrganization<
 	TData = Awaited<ReturnType<typeof getMyOrganization>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getMyOrganization>>,
@@ -128,7 +128,7 @@ export const updateMyOrganization = (
 
 export const getUpdateMyOrganizationMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,
@@ -145,8 +145,8 @@ export const getUpdateMyOrganizationMutationOptions = <
 	const mutationKey = ['updateMyOrganization'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -167,14 +167,15 @@ export type UpdateMyOrganizationMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMyOrganization>>
 >;
 export type UpdateMyOrganizationMutationBody = BodyType<TypesOrganizationDTO>;
-export type UpdateMyOrganizationMutationError = ErrorType<RenderErrorResponseDTO>;
+export type UpdateMyOrganizationMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Update my organization
  */
 export const useUpdateMyOrganization = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyOrganization>>,

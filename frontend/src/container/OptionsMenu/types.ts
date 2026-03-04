@@ -20,8 +20,10 @@ export interface OptionsQuery {
 	version?: number;
 }
 
-export interface InitialOptions
-	extends Omit<Partial<OptionsQuery>, 'selectColumns'> {
+export interface InitialOptions extends Omit<
+	Partial<OptionsQuery>,
+	'selectColumns'
+> {
 	selectColumns?: string[];
 }
 

@@ -116,15 +116,12 @@ function returnMetrics(
 
 // snippet so tests can assert on them.
 function MetricQueryHarness({ query }: { query: IBuilderQuery }): JSX.Element {
-	const {
-		handleChangeAggregatorAttribute,
-		operators,
-		spaceAggregationOptions,
-	} = useQueryOperations({
-		query,
-		index: 0,
-		entityVersion: ENTITY_VERSION_V5,
-	});
+	const { handleChangeAggregatorAttribute, operators, spaceAggregationOptions } =
+		useQueryOperations({
+			query,
+			index: 0,
+			entityVersion: ENTITY_VERSION_V5,
+		});
 
 	return (
 		<div>
@@ -532,15 +529,12 @@ function StatefulMetricQueryHarness({
 		};
 	}, []);
 
-	const {
-		handleChangeAggregatorAttribute,
-		operators,
-		spaceAggregationOptions,
-	} = useQueryOperations({
-		query,
-		index: 0,
-		entityVersion: ENTITY_VERSION_V5,
-	});
+	const { handleChangeAggregatorAttribute, operators, spaceAggregationOptions } =
+		useQueryOperations({
+			query,
+			index: 0,
+			entityVersion: ENTITY_VERSION_V5,
+		});
 
 	const currentAggregation = query.aggregations?.[0] as MetricAggregation;
 

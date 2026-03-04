@@ -183,9 +183,10 @@ function DropRateView(): JSX.Element {
 		[tableData],
 	);
 
-	const evaluationTime = useMemo(() => convertToMilliseconds(interval), [
-		interval,
-	]);
+	const evaluationTime = useMemo(
+		() => convertToMilliseconds(interval),
+		[interval],
+	);
 	const tableApiPayload: MessagingQueueServicePayload = useMemo(
 		() => ({
 			start: minTime,

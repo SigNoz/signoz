@@ -181,7 +181,9 @@
 		cursor: pointer;
 		border-radius: 4px;
 		opacity: 1;
-		transition: opacity 0.15s ease, color 0.15s ease;
+		transition:
+			opacity 0.15s ease,
+			color 0.15s ease;
 
 		&:hover {
 			color: var(--bg-vanilla-100);

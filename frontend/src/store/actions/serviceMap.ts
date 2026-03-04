@@ -33,31 +33,30 @@ export interface ServiceMapLoading {
 	};
 }
 
-export const getDetailedServiceMapItems = (
-	globalTime: GlobalTime,
-	queries: IResourceAttribute[],
-) => async (dispatch: Dispatch): Promise<void> => {
-	const start = `${globalTime.minTime}`;
-	const end = `${globalTime.maxTime}`;
+export const getDetailedServiceMapItems =
+	(globalTime: GlobalTime, queries: IResourceAttribute[]) =>
+	async (dispatch: Dispatch): Promise<void> => {
+		const start = `${globalTime.minTime}`;
+		const end = `${globalTime.maxTime}`;
 
-	const serviceMapPayload = {
-		start,
-		end,
-		tags: convertRawQueriesToTraceSelectedTags(queries),
+		const serviceMapPayload = {
+			start,
+			end,
+			tags: convertRawQueriesToTraceSelectedTags(queries),
+		};
+		const [dependencyGraphResponse] = await Promise.all([
+			api.post<ServicesMapItem[]>(`/dependency_graph`, serviceMapPayload),
+		]);
+
+		dispatch<ServiceMapItemAction>({
+			type: ActionTypes.getServiceMapItems,
+			payload: dependencyGraphResponse.data,
+		});
+
+		dispatch<ServiceMapLoading>({
+			type: ActionTypes.serviceMapLoading,
+			payload: {
+				loading: false,
+			},
+		});
 	};
-	const [dependencyGraphResponse] = await Promise.all([
-		api.post<ServicesMapItem[]>(`/dependency_graph`, serviceMapPayload),
-	]);
-
-	dispatch<ServiceMapItemAction>({
-		type: ActionTypes.getServiceMapItems,
-		payload: dependencyGraphResponse.data,
-	});
-
-	dispatch<ServiceMapLoading>({
-		type: ActionTypes.serviceMapLoading,
-		payload: {
-			loading: false,
-		},
-	});
-};

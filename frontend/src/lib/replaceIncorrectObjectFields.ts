@@ -2,7 +2,7 @@ export function replaceIncorrectObjectFields<
 	// eslint-disable-next-line @typescript-eslint/ban-types
 	TargetValue extends object,
 	// eslint-disable-next-line @typescript-eslint/ban-types
-	ResultValue extends object
+	ResultValue extends object,
 >(
 	targetObject: TargetValue,
 	defaultObject: ResultValue,
@@ -16,9 +16,9 @@ export function replaceIncorrectObjectFields<
 
 	defaultObjectKeys.forEach((key) => {
 		if (targetObjectKeys.includes(key)) {
-			result[key as keyof ResultValue] = (targetObject[
+			result[key as keyof ResultValue] = targetObject[
 				key as keyof TargetValue
-			] as unknown) as ResultValue[keyof ResultValue];
+			] as unknown as ResultValue[keyof ResultValue];
 		} else {
 			isValid = false;
 		}

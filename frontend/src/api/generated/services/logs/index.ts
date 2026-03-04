@@ -43,7 +43,7 @@ export const getListPromotedAndIndexedPathsQueryKey = () => {
 
 export const getListPromotedAndIndexedPathsQueryOptions = <
 	TData = Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
@@ -70,7 +70,8 @@ export const getListPromotedAndIndexedPathsQueryOptions = <
 export type ListPromotedAndIndexedPathsQueryResult = NonNullable<
 	Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>
 >;
-export type ListPromotedAndIndexedPathsQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListPromotedAndIndexedPathsQueryError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Promote and index paths
@@ -78,7 +79,7 @@ export type ListPromotedAndIndexedPathsQueryError = ErrorType<RenderErrorRespons
 
 export function useListPromotedAndIndexedPaths<
 	TData = Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<RenderErrorResponseDTO>,
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof listPromotedAndIndexedPaths>>,
@@ -133,7 +134,7 @@ export const handlePromoteAndIndexPaths = (
 
 export const getHandlePromoteAndIndexPathsMutationOptions = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,
@@ -150,8 +151,8 @@ export const getHandlePromoteAndIndexPathsMutationOptions = <
 	const mutationKey = ['handlePromoteAndIndexPaths'];
 	const { mutation: mutationOptions } = options
 		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
+			'mutationKey' in options.mutation &&
+			options.mutation.mutationKey
 			? options
 			: { ...options, mutation: { ...options.mutation, mutationKey } }
 		: { mutation: { mutationKey } };
@@ -174,14 +175,15 @@ export type HandlePromoteAndIndexPathsMutationResult = NonNullable<
 export type HandlePromoteAndIndexPathsMutationBody = BodyType<
 	PromotetypesPromotePathDTO[] | null
 >;
-export type HandlePromoteAndIndexPathsMutationError = ErrorType<RenderErrorResponseDTO>;
+export type HandlePromoteAndIndexPathsMutationError =
+	ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Promote and index paths
  */
 export const useHandlePromoteAndIndexPaths = <
 	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
+	TContext = unknown,
 >(options?: {
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof handlePromoteAndIndexPaths>>,

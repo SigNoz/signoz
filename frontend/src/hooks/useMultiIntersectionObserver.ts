@@ -17,9 +17,10 @@ export function useMultiIntersectionObserver(
 	);
 
 	const setElement = useCallback<(index: number) => SetElement>(
-		(index) => (el): void => {
-			elementsRef.current[index] = el;
-		},
+		(index) =>
+			(el): void => {
+				elementsRef.current[index] = el;
+			},
 		[],
 	);
 

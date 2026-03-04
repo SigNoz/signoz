@@ -22,8 +22,8 @@ describe('Value panel wrappper tests', () => {
 		const { getByText } = render(
 			<ValuePanelWrapper
 				panelMode={PanelMode.DASHBOARD_VIEW}
-				widget={(valuePanelWidget as unknown) as Widgets}
-				queryResponse={(valuePanelQueryResponse as unknown) as any}
+				widget={valuePanelWidget as unknown as Widgets}
+				queryResponse={valuePanelQueryResponse as unknown as any}
 				onDragSelect={(): void => {}}
 			/>,
 		);
@@ -37,8 +37,8 @@ describe('Value panel wrappper tests', () => {
 		const { getByTestId, container } = render(
 			<ValuePanelWrapper
 				panelMode={PanelMode.DASHBOARD_VIEW}
-				widget={({ ...valuePanelWidget, thresholds } as unknown) as Widgets}
-				queryResponse={(valuePanelQueryResponse as unknown) as any}
+				widget={{ ...valuePanelWidget, thresholds } as unknown as Widgets}
+				queryResponse={valuePanelQueryResponse as unknown as any}
 				onDragSelect={(): void => {}}
 			/>,
 		);

@@ -88,7 +88,7 @@ function ExpandedRow({
 					queryFn: (): Promise<SuccessResponse<MetricRangePayloadProps>> =>
 						GetMetricQueryRange(payload, ENTITY_VERSION_V4),
 					enabled: !!payload && !!selectedRowData,
-			  }))
+				}))
 			: [],
 	);
 
@@ -107,7 +107,7 @@ function ExpandedRow({
 										groupedByRowQuery.data?.payload.data.result[0].table?.rows,
 										[],
 										orderBy,
-								  )
+									)
 								: []
 						}
 						pagination={false}

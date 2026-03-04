@@ -1,3 +1,4 @@
+// oxlint-disable import/first
 // Mock dayjs before importing any other modules
 const MOCK_DATE_STRING = '2024-01-15T00:30:00Z';
 const MOCK_DATE_STRING_NON_LEAP_YEAR = '2023-01-15T00:30:00Z';
@@ -14,7 +15,7 @@ jest.mock('dayjs', () => {
 		return originalDayjs(MOCK_DATE_STRING);
 	});
 	Object.keys(originalDayjs).forEach((key) => {
-		((mockDayjs as unknown) as Record<string, unknown>)[key] = originalDayjs[key];
+		(mockDayjs as unknown as Record<string, unknown>)[key] = originalDayjs[key];
 	});
 	return mockDayjs;
 });

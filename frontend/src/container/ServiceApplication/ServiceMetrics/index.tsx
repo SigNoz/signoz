@@ -17,10 +17,11 @@ import SkipOnBoardingModal from '../SkipOnBoardModal';
 import ServiceMetricsApplication from './ServiceMetricsApplication';
 
 function ServicesUsingMetrics(): JSX.Element {
-	const { maxTime, minTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		maxTime,
+		minTime,
+		selectedTime: globalSelectedInterval,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 	const { queries } = useResourceAttribute();
 	const selectedTags = useMemo(
 		() => (convertRawQueriesToTraceSelectedTags(queries) as Tags[]) || [],
