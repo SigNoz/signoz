@@ -1,9 +1,7 @@
 import { useCallback } from 'react';
-import { Tooltip } from 'antd';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
-import { Info } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { MetricsSearchProps } from './types';
@@ -26,15 +24,17 @@ function MetricsSearch({
 		onChange(currentQueryFilterExpression);
 	}, [currentQueryFilterExpression, onChange]);
 
+	const handleRunQuery = useCallback(
+		(expression: string): void => {
+			setCurrentQueryFilterExpression(expression);
+			onChange(expression);
+		},
+		[setCurrentQueryFilterExpression, onChange],
+	);
+
 	return (
 		<div className="metrics-search-container">
 			<div data-testid="qb-search-container" className="qb-search-container">
-				<Tooltip
-					title="Use filters to refine metrics based on attributes. Example: service_name=api - Shows all metrics associated with the API service"
-					placement="right"
-				>
-					<Info size={16} />
-				</Tooltip>
 				<QuerySearch
 					onChange={handleOnChange}
 					dataSource={DataSource.METRICS}
@@ -45,8 +45,9 @@ function MetricsSearch({
 							expression: currentQueryFilterExpression,
 						},
 					}}
-					onRun={handleOnChange}
+					onRun={handleRunQuery}
 					showFilterSuggestionsWithoutMetric
+					placeholder="Search your metrics. Try service.name='api' to see all API service metrics, or http.client for HTTP client metrics."
 				/>
 			</div>
 			<RunQueryBtn

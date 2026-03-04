@@ -1,5 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Button, Skeleton, Tooltip, Typography } from 'antd';
+import { Button, Spin, Tooltip, Typography } from 'antd';
 import { useGetMetricHighlights } from 'api/generated/services/metrics';
 import { InfoIcon } from 'lucide-react';
 
@@ -38,17 +38,6 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 	const lastReceivedText = formatTimestampToReadableDate(
 		metricHighlights?.lastReceived,
 	);
-
-	if (isLoadingMetricHighlights) {
-		return (
-			<div
-				className="metric-details-content-grid"
-				data-testid="metric-highlights-loading-state"
-			>
-				<Skeleton title={false} paragraph={{ rows: 2 }} active />
-			</div>
-		);
-	}
 
 	if (isErrorMetricHighlights) {
 		return (
@@ -89,32 +78,41 @@ function Highlights({ metricName }: HighlightsProps): JSX.Element {
 				</Typography.Text>
 			</div>
 			<div className="values-row">
-				<Typography.Text
-					className="metric-details-grid-value"
-					data-testid="metric-highlights-data-points"
-				>
-					<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
-						{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
-					</Tooltip>
-				</Typography.Text>
-				<Typography.Text
-					className="metric-details-grid-value"
-					data-testid="metric-highlights-time-series-total"
-				>
-					<Tooltip
-						title="Active time series are those that have received data points in the last 1
-					hour."
-						placement="top"
-					>
-						<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
-					</Tooltip>
-				</Typography.Text>
-				<Typography.Text
-					className="metric-details-grid-value"
-					data-testid="metric-highlights-last-received"
-				>
-					<Tooltip title={lastReceivedText}>{lastReceivedText}</Tooltip>
-				</Typography.Text>
+				{isLoadingMetricHighlights ? (
+					<div className="metric-highlights-loading-inline">
+						<Spin size="small" />
+						<Typography.Text type="secondary">Loading metric stats</Typography.Text>
+					</div>
+				) : (
+					<>
+						<Typography.Text
+							className="metric-details-grid-value"
+							data-testid="metric-highlights-data-points"
+						>
+							<Tooltip title={metricHighlights?.dataPoints?.toLocaleString()}>
+								{formatNumberIntoHumanReadableFormat(metricHighlights?.dataPoints ?? 0)}
+							</Tooltip>
+						</Typography.Text>
+						<Typography.Text
+							className="metric-details-grid-value"
+							data-testid="metric-highlights-time-series-total"
+						>
+							<Tooltip
+								title="Active time series are those that have received data points in the last 1
+							hour."
+								placement="top"
+							>
+								<span>{`${timeSeriesTotal} total ⎯ ${timeSeriesActive} active`}</span>
+							</Tooltip>
+						</Typography.Text>
+						<Typography.Text
+							className="metric-details-grid-value"
+							data-testid="metric-highlights-last-received"
+						>
+							<Tooltip title={lastReceivedText}>{lastReceivedText}</Tooltip>
+						</Typography.Text>
+					</>
+				)}
 			</div>
 		</div>
 	);
