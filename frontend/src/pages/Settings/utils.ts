@@ -7,7 +7,6 @@ import {
 	apiKeys,
 	billingSettings,
 	createAlertChannels,
-	customDomainSettings,
 	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
@@ -64,7 +63,7 @@ export const getRoutes = (
 	}
 
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...customDomainSettings(t), ...billingSettings(t));
+		settings.push(...billingSettings(t));
 	}
 
 	if (isAdmin) {

@@ -42,6 +42,8 @@ const config: Config.InitialOptions = {
 			'<rootDir>/node_modules/@signozhq/command/dist/command.js',
 		'^@signozhq/radio-group':
 			'<rootDir>/node_modules/@signozhq/radio-group/dist/radio-group.js',
+		'^@signozhq/dialog$':
+			'<rootDir>/node_modules/@signozhq/dialog/dist/dialog.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
 	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],
