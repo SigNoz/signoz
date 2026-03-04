@@ -1,8 +1,6 @@
 import { ReactNode } from 'react';
-import { ColumnsType } from 'antd/es/table';
-import { Typography } from 'antd/lib';
+import { TableColumnsType as ColumnsType, Typography } from 'antd';
 import { TimestampInput } from 'hooks/useTimezoneFormatter/useTimezoneFormatter';
-// import Typography from 'antd/es/typography/Typography';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IField } from 'types/api/logs/fields';
