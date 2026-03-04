@@ -336,12 +336,19 @@ export const settingsNavSections: SettingsNavSection[] = [
 				isEnabled: false,
 				itemKey: 'billing',
 			},
+			{
+				key: ROUTES.INTEGRATIONS,
+				label: 'Integrations',
+				icon: <Unplug size={16} />,
+				isEnabled: false,
+				itemKey: 'integrations',
+			},
 		],
 	},
 
 	{
 		key: 'identity-access',
-		title: 'IDENTITY & ACCESS',
+		title: 'Identity & Access',
 		items: [
 			{
 				key: ROUTES.ROLES_SETTINGS,
@@ -349,13 +356,6 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Shield size={16} />,
 				isEnabled: false,
 				itemKey: 'roles',
-			},
-			{
-				key: ROUTES.INTEGRATIONS,
-				label: 'Integrations',
-				icon: <Unplug size={16} />,
-				isEnabled: false,
-				itemKey: 'integrations',
 			},
 			{
 				key: ROUTES.API_KEYS,

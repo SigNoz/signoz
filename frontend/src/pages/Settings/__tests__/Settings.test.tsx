@@ -54,6 +54,8 @@ describe('SettingsPage nav sections', () => {
 			'roles',
 			'api-keys',
 			'members-sso',
+			'integrations',
+			'ingestion',
 		])('renders "%s" element', (id) => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
