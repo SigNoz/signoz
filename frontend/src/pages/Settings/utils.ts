@@ -7,7 +7,6 @@ import {
 	apiKeys,
 	billingSettings,
 	createAlertChannels,
-	customDomainSettings,
 	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
