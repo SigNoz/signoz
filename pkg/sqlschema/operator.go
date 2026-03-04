@@ -95,6 +95,19 @@ func (operator *Operator) DropColumn(table *Table, column *Column) [][]byte {
 	return [][]byte{column.ToDropSQL(operator.fmter, table.Name, operator.support.ColumnIfNotExistsExists)}
 }
 
+func (operator *Operator) RenameColumn(table *Table, column *Column, newName ColumnName) [][]byte {
+	index := operator.findColumnByName(table, column.Name)
+	// If the column does not exist, we do not need to rename it.
+	if index == -1 {
+		return [][]byte{}
+	}
+
+	sql := column.ToRenameSQL(operator.fmter, table.Name, newName)
+	table.Columns[index].Name = newName
+
+	return [][]byte{sql}
+}
+
 func (operator *Operator) DropConstraint(table *Table, uniqueConstraints []*UniqueConstraint, constraint Constraint) [][]byte {
 	// The name of the input constraint is not guaranteed to be the same as the name of the constraint in the database.
 	// So we need to find the constraint in the database and drop it.

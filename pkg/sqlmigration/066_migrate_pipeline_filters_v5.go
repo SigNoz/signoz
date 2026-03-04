@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
+	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/transition"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/uptrace/bun"
@@ -18,17 +18,17 @@ import (
 )
 
 type migratePipelineFiltersV5 struct {
-	store  sqlstore.SQLStore
-	logger *slog.Logger
+	sqlschema sqlschema.SQLSchema
+	logger    *slog.Logger
 }
 
 func NewMigratePipelineFiltersV5Factory(
-	store sqlstore.SQLStore,
+	sqlschema sqlschema.SQLSchema,
 ) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
 		factory.MustNewName("migrate_pipeline_filters_v5"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return newMigratePipelineFiltersV5(ctx, c, store, ps.Logger)
+			return newMigratePipelineFiltersV5(ctx, c, sqlschema, ps.Logger)
 		},
 	)
 }
@@ -36,7 +36,7 @@ func NewMigratePipelineFiltersV5Factory(
 func newMigratePipelineFiltersV5(
 	_ context.Context,
 	_ Config,
-	store sqlstore.SQLStore,
+	sqlschema sqlschema.SQLSchema,
 	logger *slog.Logger,
 ) (SQLMigration, error) {
 	if logger == nil {
@@ -44,8 +44,8 @@ func newMigratePipelineFiltersV5(
 	}
 
 	return &migratePipelineFiltersV5{
-		store:  store,
-		logger: logger,
+		sqlschema: sqlschema,
+		logger:    logger,
 	}, nil
 }
 
@@ -64,6 +64,11 @@ type pipelineFilterRow struct {
 }
 
 func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) error {
+	table, uniqueConstraints, err := migration.sqlschema.GetTable(ctx, "pipelines")
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -74,13 +79,21 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 	}()
 
 	// 1. Rename existing filter column to filter_deprecated
-	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "pipelines", "filter", "filter_deprecated"); err != nil {
-		return err
+	for _, sql := range migration.sqlschema.Operator().RenameColumn(table, &sqlschema.Column{Name: "filter"}, "filter_deprecated") {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	// 2. Add new filter column (v5); existing rows get default ''
-	if err := migration.store.Dialect().AddColumn(ctx, tx, "pipelines", "filter", "TEXT NOT NULL DEFAULT ''"); err != nil {
-		return err
+	for _, sql := range migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, &sqlschema.Column{
+		Name:     "filter",
+		DataType: sqlschema.DataTypeText,
+		Nullable: false,
+	}, "") {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	// 3. Copy v5 filter data: read from filter_deprecated, migrate to v5 expression, write to filter
@@ -133,6 +146,11 @@ func (migration *migratePipelineFiltersV5) Up(ctx context.Context, db *bun.DB) e
 }
 
 func (migration *migratePipelineFiltersV5) Down(ctx context.Context, db *bun.DB) error {
+	table, _, err := migration.sqlschema.GetTable(ctx, "pipelines")
+	if err != nil {
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -143,13 +161,17 @@ func (migration *migratePipelineFiltersV5) Down(ctx context.Context, db *bun.DB)
 	}()
 
 	// 1. Drop the new filter column
-	if err := migration.store.Dialect().DropColumn(ctx, tx, "pipelines", "filter"); err != nil {
-		return err
+	for _, sql := range migration.sqlschema.Operator().DropColumn(table, &sqlschema.Column{Name: "filter"}) {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	// 2. Rename filter_deprecated back to filter
-	if _, err := migration.store.Dialect().RenameColumn(ctx, tx, "pipelines", "filter_deprecated", "filter"); err != nil {
-		return err
+	for _, sql := range migration.sqlschema.Operator().RenameColumn(table, &sqlschema.Column{Name: "filter_deprecated"}, "filter") {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

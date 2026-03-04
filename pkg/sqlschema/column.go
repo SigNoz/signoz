@@ -118,6 +118,19 @@ func (column *Column) ToUpdateSQL(fmter SQLFormatter, tableName TableName, value
 	return sql
 }
 
+func (column *Column) ToRenameSQL(fmter SQLFormatter, tableName TableName, newName ColumnName) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "ALTER TABLE "...)
+	sql = fmter.AppendIdent(sql, string(tableName))
+	sql = append(sql, " RENAME COLUMN "...)
+	sql = fmter.AppendIdent(sql, string(column.Name))
+	sql = append(sql, " TO "...)
+	sql = fmter.AppendIdent(sql, string(newName))
+
+	return sql
+}
+
 func (column *Column) ToSetNotNullSQL(fmter SQLFormatter, tableName TableName) []byte {
 	sql := []byte{}
 

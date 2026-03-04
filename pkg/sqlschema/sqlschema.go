@@ -50,6 +50,9 @@ type SQLOperator interface {
 	// Returns a list of SQL statements to drop a column from a table.
 	DropColumn(*Table, *Column) [][]byte
 
+	// Returns a list of SQL statements to rename a column in a table.
+	RenameColumn(*Table, *Column, ColumnName) [][]byte
+
 	// Returns a list of SQL statements to drop a constraint from a table.
 	DropConstraint(*Table, []*UniqueConstraint, Constraint) [][]byte
 }
