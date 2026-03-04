@@ -32,10 +32,6 @@ import type {
 	UpdateUserPreferencePathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint lists all org preferences
  * @summary List org preferences
