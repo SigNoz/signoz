@@ -118,7 +118,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 					}}
 					yAxisUnit={widget.yAxisUnit}
 					decimalPrecision={widget.decimalPrecision}
-					timezone={timezone.value}
+					timezone={timezone}
 					data={chartData as uPlot.AlignedData}
 					width={containerDimensions.width}
 					height={containerDimensions.height}

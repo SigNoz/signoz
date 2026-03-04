@@ -84,7 +84,7 @@ const createMockConfig = (): UPlotConfigBuilder => {
 			hooks: {},
 			cursor: {},
 		}),
-		getWidgetId: jest.fn().mockReturnValue(undefined),
+		getId: jest.fn().mockReturnValue(undefined),
 		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
 	} as unknown) as UPlotConfigBuilder;
 };
