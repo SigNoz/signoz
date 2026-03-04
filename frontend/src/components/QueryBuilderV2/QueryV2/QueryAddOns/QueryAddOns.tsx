@@ -202,8 +202,8 @@ function QueryAddOns({
 		} else {
 			filteredAddOns = Object.values(ADD_ONS);
 
-			// Filter out group_by for metrics data source
 			if (query.dataSource === DataSource.METRICS) {
+				// Filter out group_by for metrics data source (handled in MetricsAggregateSection)
 				filteredAddOns = filteredAddOns.filter(
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
