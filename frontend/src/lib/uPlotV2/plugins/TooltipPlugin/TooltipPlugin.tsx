@@ -276,7 +276,16 @@ export default function TooltipPlugin({
 
 				let clickedDataTimestamp = xValue;
 				if (focusedSeries) {
-					clickedDataTimestamp = plot.data[0][plot.posToIdx(event.offsetX)];
+					const dataIndex = plot.posToIdx(event.offsetX);
+					const xSeriesData = plot.data[0];
+					if (
+						xSeriesData &&
+						dataIndex >= 0 &&
+						dataIndex < xSeriesData.length &&
+						xSeriesData[dataIndex] !== undefined
+					) {
+						clickedDataTimestamp = xSeriesData[dataIndex];
+					}
 				}
 
 				const clickData: TooltipClickData = {
