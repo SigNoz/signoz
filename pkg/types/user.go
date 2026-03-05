@@ -22,6 +22,7 @@ var (
 	ErrAPIKeyAlreadyExists              = errors.MustNewCode("api_key_already_exists")
 	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
+	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
 )
 
 var (
@@ -157,7 +158,7 @@ func (u *User) ErrIfRoot() error {
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "unsupported operation for deleted user")
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
 	return nil
 }
