@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import TimelineV3 from 'components/TimelineV3/TimelineV3';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 
@@ -6,15 +7,18 @@ import { DEFAULT_ROW_HEIGHT } from './constants';
 import { useCanvasSetup } from './hooks/useCanvasSetup';
 import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
 import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
+import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
-import { FlamegraphCanvasProps } from './types';
+import { FlamegraphCanvasProps, SpanRect } from './types';
+import { formatDuration } from './utils';
 
 function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
-	const { spans, traceMetadata, selectedSpan } = props;
+	const { spans, traceMetadata, firstSpanAtFetchLevel, onSpanClick } = props;
 
 	const isDarkMode = useIsDarkMode(); //TODO: see if can be removed or use a new hook
 	const canvasRef = useRef<HTMLCanvasElement>(null);
 	const containerRef = useRef<HTMLDivElement>(null);
+	const spanRectsRef = useRef<SpanRect[]>([]);
 
 	const [viewStartTs, setViewStartTs] = useState<number>(
 		traceMetadata.startTime,
@@ -68,9 +72,11 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 
 	const {
 		handleMouseDown,
-		handleMouseMove,
+		handleMouseMove: handleDragMouseMove,
 		handleMouseUp,
 		handleDragMouseLeave,
+		suppressClickRef,
+		isDraggingRef,
 	} = useFlamegraphDrag({
 		canvasRef,
 		containerRef,
@@ -84,6 +90,24 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		totalHeight,
 	});
 
+	const {
+		hoveredSpanId,
+		handleHoverMouseMove,
+		handleHoverMouseLeave,
+		handleClick,
+		tooltipContent,
+	} = useFlamegraphHover({
+		canvasRef,
+		spanRectsRef,
+		traceMetadata,
+		viewStartTs,
+		viewEndTs,
+		isDraggingRef,
+		suppressClickRef,
+		onSpanClick,
+		isDarkMode,
+	});
+
 	const { drawFlamegraph } = useFlamegraphDraw({
 		canvasRef,
 		containerRef,
@@ -92,17 +116,63 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		viewEndTs,
 		scrollTop,
 		rowHeight,
-		selectedSpanId: selectedSpan?.spanId,
-		hoveredSpanId: '',
+		selectedSpanId: firstSpanAtFetchLevel || undefined,
+		hoveredSpanId: hoveredSpanId ?? '',
 		isDarkMode,
+		spanRectsRef,
 	});
 
 	useCanvasSetup(canvasRef, containerRef, drawFlamegraph);
 
+	const handleMouseMove = useCallback(
+		(e: React.MouseEvent): void => {
+			handleDragMouseMove(e);
+			handleHoverMouseMove(e);
+		},
+		[handleDragMouseMove, handleHoverMouseMove],
+	);
+
 	const handleMouseLeave = useCallback((): void => {
 		isOverFlamegraphRef.current = false;
 		handleDragMouseLeave();
-	}, [isOverFlamegraphRef, handleDragMouseLeave]);
+		handleHoverMouseLeave();
+	}, [isOverFlamegraphRef, handleDragMouseLeave, handleHoverMouseLeave]);
+
+	// todo: move to a separate component/utils file
+	const tooltipElement = tooltipContent
+		? createPortal(
+				<div
+					style={{
+						position: 'fixed',
+						left: Math.min(tooltipContent.clientX + 15, window.innerWidth - 220),
+						top: Math.min(tooltipContent.clientY + 15, window.innerHeight - 100),
+						zIndex: 1000,
+						backgroundColor: 'rgba(30, 30, 30, 0.95)',
+						color: '#fff',
+						padding: '8px 12px',
+						borderRadius: 4,
+						fontSize: 12,
+						fontFamily: 'Inter, sans-serif',
+						boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+						pointerEvents: 'none',
+					}}
+				>
+					<div
+						style={{
+							fontWeight: 600,
+							marginBottom: 4,
+							color: tooltipContent.spanColor,
+						}}
+					>
+						{tooltipContent.spanName}
+					</div>
+					<div>Status: {tooltipContent.status}</div>
+					<div>Start: {tooltipContent.startMs.toFixed(2)} ms</div>
+					<div>Duration: {formatDuration(tooltipContent.durationMs * 1e6)}</div>
+				</div>,
+				document.body,
+		  )
+		: null;
 
 	return (
 		<div
@@ -112,6 +182,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				height: '100%',
 			}}
 		>
+			{tooltipElement}
 			<TimelineV3
 				startTimestamp={viewStartTs}
 				endTimestamp={viewEndTs}
@@ -140,6 +211,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 					onMouseDown={handleMouseDown}
 					onMouseMove={handleMouseMove}
 					onMouseUp={handleMouseUp}
+					onClick={handleClick}
 				/>
 			</div>
 		</div>

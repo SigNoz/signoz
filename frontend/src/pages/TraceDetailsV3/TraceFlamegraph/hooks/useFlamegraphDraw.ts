@@ -1,4 +1,4 @@
-import { RefObject, useCallback, useRef } from 'react';
+import React, { RefObject, useCallback, useRef } from 'react';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import { SpanRect } from '../types';
@@ -21,6 +21,7 @@ interface UseFlamegraphDrawArgs {
 	selectedSpanId: string | undefined;
 	hoveredSpanId: string;
 	isDarkMode: boolean;
+	spanRectsRef?: React.MutableRefObject<SpanRect[]>;
 }
 
 interface UseFlamegraphDrawResult {
@@ -94,12 +95,7 @@ function drawLevel(args: DrawLevelArgs): void {
 		// Minimum 1px width so tiny spans remain visible
 		width = clamp(width, 1, Infinity);
 
-		const color = getSpanColor({
-			span,
-			selectedSpanId,
-			hoveredSpanId,
-			isDarkMode,
-		});
+		const color = getSpanColor({ span, isDarkMode });
 
 		drawSpanBar({
 			ctx,
@@ -112,6 +108,8 @@ function drawLevel(args: DrawLevelArgs): void {
 			color,
 			isDarkMode,
 			metrics,
+			selectedSpanId,
+			hoveredSpanId,
 		});
 	}
 }
@@ -130,9 +128,11 @@ export function useFlamegraphDraw(
 		selectedSpanId,
 		hoveredSpanId,
 		isDarkMode,
+		spanRectsRef: spanRectsRefProp,
 	} = args;
 
-	const spanRectsRef = useRef<SpanRect[]>([]);
+	const spanRectsRefInternal = useRef<SpanRect[]>([]);
+	const spanRectsRef = spanRectsRefProp ?? spanRectsRefInternal;
 
 	const drawFlamegraph = useCallback(() => {
 		const canvas = canvasRef.current;
@@ -199,6 +199,7 @@ export function useFlamegraphDraw(
 	}, [
 		canvasRef,
 		containerRef,
+		spanRectsRef,
 		spans,
 		viewStartTs,
 		viewEndTs,

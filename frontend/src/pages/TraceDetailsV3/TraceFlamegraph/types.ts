@@ -11,6 +11,7 @@ export interface FlamegraphCanvasProps {
 	spans: FlamegraphSpan[][];
 	firstSpanAtFetchLevel: string;
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
+	onSpanClick: (spanId: string) => void;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
 }

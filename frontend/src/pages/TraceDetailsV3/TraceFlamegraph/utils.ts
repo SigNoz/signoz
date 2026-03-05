@@ -1,10 +1,10 @@
-import Color from 'color';
 import { themeColors } from 'constants/theme';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import {
+	DASHED_BORDER_LINE_DASH,
 	EVENT_DOT_SIZE_RATIO,
 	LABEL_FONT,
 	LABEL_PADDING_X,
@@ -54,22 +54,15 @@ export function getFlamegraphRowMetrics(
 
 interface GetSpanColorArgs {
 	span: FlamegraphSpan;
-	selectedSpanId: string | undefined;
-	hoveredSpanId: string;
 	isDarkMode: boolean;
 }
 
 export function getSpanColor(args: GetSpanColorArgs): string {
-	const { span, selectedSpanId, hoveredSpanId, isDarkMode } = args;
+	const { span, isDarkMode } = args;
 	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
 
 	if (span.hasError) {
 		color = isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)';
-	}
-
-	if (selectedSpanId === span.spanId || hoveredSpanId === span.spanId) {
-		const colorObj = Color(color);
-		color = isDarkMode ? colorObj.lighten(0.7).hex() : colorObj.darken(0.7).hex();
 	}
 
 	return color;
@@ -117,6 +110,8 @@ interface DrawSpanBarArgs {
 	color: string;
 	isDarkMode: boolean;
 	metrics: FlamegraphRowMetrics;
+	selectedSpanId?: string | null;
+	hoveredSpanId?: string | null;
 }
 
 export function drawSpanBar(args: DrawSpanBarArgs): void {
@@ -131,14 +126,28 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		color,
 		isDarkMode,
 		metrics,
+		selectedSpanId,
+		hoveredSpanId,
 	} = args;
 
 	const spanY = y + metrics.SPAN_BAR_Y_OFFSET;
+	const isSelectedOrHovered =
+		selectedSpanId === span.spanId || hoveredSpanId === span.spanId;
 
-	ctx.fillStyle = color;
 	ctx.beginPath();
 	ctx.roundRect(x, spanY, width, metrics.SPAN_BAR_HEIGHT, 2);
-	ctx.fill();
+
+	if (isSelectedOrHovered) {
+		// Transparent background, dashed border in same color as span
+		ctx.setLineDash(DASHED_BORDER_LINE_DASH);
+		ctx.strokeStyle = color;
+		ctx.lineWidth = 2;
+		ctx.stroke();
+		ctx.setLineDash([]);
+	} else {
+		ctx.fillStyle = color;
+		ctx.fill();
+	}
 
 	spanRectsArray.push({
 		span,
@@ -178,6 +187,8 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		x,
 		y: spanY,
 		width,
+		color,
+		isSelectedOrHovered,
 		isDarkMode,
 		spanBarHeight: metrics.SPAN_BAR_HEIGHT,
 	});
@@ -195,12 +206,24 @@ interface DrawSpanLabelArgs {
 	x: number;
 	y: number;
 	width: number;
+	color: string;
+	isSelectedOrHovered: boolean;
 	isDarkMode: boolean;
 	spanBarHeight: number;
 }
 
 function drawSpanLabel(args: DrawSpanLabelArgs): void {
-	const { ctx, span, x, y, width, isDarkMode, spanBarHeight } = args;
+	const {
+		ctx,
+		span,
+		x,
+		y,
+		width,
+		color,
+		isSelectedOrHovered,
+		isDarkMode,
+		spanBarHeight,
+	} = args;
 
 	if (width < MIN_WIDTH_FOR_NAME) {
 		return;
@@ -216,7 +239,11 @@ function drawSpanLabel(args: DrawSpanLabelArgs): void {
 	ctx.clip();
 
 	ctx.font = LABEL_FONT;
-	ctx.fillStyle = isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)';
+	ctx.fillStyle = isSelectedOrHovered
+		? color
+		: isDarkMode
+		? 'rgba(0, 0, 0, 0.9)'
+		: 'rgba(255, 255, 255, 0.9)';
 	ctx.textBaseline = 'middle';
 
 	const textY = y + spanBarHeight / 2;

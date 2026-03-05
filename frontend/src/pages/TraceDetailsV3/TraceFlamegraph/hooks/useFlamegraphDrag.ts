@@ -30,6 +30,7 @@ interface UseFlamegraphDragResult {
 	handleMouseUp: () => void;
 	handleDragMouseLeave: () => void;
 	suppressClickRef: MutableRefObject<boolean>;
+	isDraggingRef: MutableRefObject<boolean>;
 }
 
 const DRAG_THRESHOLD = 5;
@@ -172,5 +173,6 @@ export function useFlamegraphDrag(
 		handleMouseUp,
 		handleDragMouseLeave,
 		suppressClickRef,
+		isDraggingRef,
 	};
 }

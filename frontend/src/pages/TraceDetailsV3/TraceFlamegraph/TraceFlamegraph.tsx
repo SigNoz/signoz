@@ -1,5 +1,5 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useHistory, useLocation, useParams } from 'react-router-dom';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
@@ -27,6 +27,8 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 	const { selectedSpan } = props;
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
+	const history = useHistory();
+	const { search } = useLocation();
 	const [firstSpanAtFetchLevel, setFirstSpanAtFetchLevel] = useState<string>(
 		urlQuery.get('spanId') || '',
 	);
@@ -34,6 +36,19 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 	useEffect(() => {
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
+
+	const handleSpanClick = useCallback(
+		(spanId: string): void => {
+			setFirstSpanAtFetchLevel(spanId);
+			const searchParams = new URLSearchParams(search);
+			//tood: use from query params constants
+			if (searchParams.get('spanId') !== spanId) {
+				searchParams.set('spanId', spanId);
+				history.replace({ search: searchParams.toString() });
+			}
+		},
+		[history, search],
+	);
 
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
@@ -75,6 +90,7 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 						spans={spans}
 						firstSpanAtFetchLevel={firstSpanAtFetchLevel}
 						setFirstSpanAtFetchLevel={setFirstSpanAtFetchLevel}
+						onSpanClick={handleSpanClick}
 						traceMetadata={{
 							startTime: data?.payload?.startTimestampMillis || 0,
 							endTime: data?.payload?.endTimestampMillis || 0,
@@ -93,6 +109,7 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 		selectedSpan,
 		spans,
 		traceId,
+		handleSpanClick,
 	]);
 
 	return <>{content}</>;
