@@ -12,6 +12,7 @@ import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
+import { EMAIL_REGEX } from 'utils/app';
 import { v4 as uuid } from 'uuid';
 
 import './InviteMembersModal.styles.scss';
@@ -80,7 +81,7 @@ function InviteMembersModal({
 		const touchedRows = rows.filter(isRowTouched);
 
 		touchedRows.forEach((row) => {
-			const emailValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(row.email);
+			const emailValid = EMAIL_REGEX.test(row.email);
 			const roleValid = Boolean(row.role && row.role.trim() !== '');
 
 			if (!emailValid || !row.email) {
@@ -107,7 +108,7 @@ function InviteMembersModal({
 	const debouncedValidateEmail = useMemo(
 		() =>
 			debounce((email: string, rowId: string) => {
-				const isValid = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+				const isValid = EMAIL_REGEX.test(email);
 				setEmailValidity((prev) => ({ ...prev, [rowId]: isValid }));
 			}, 500),
 		[],

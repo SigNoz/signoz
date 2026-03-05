@@ -46,7 +46,7 @@
 		align-items: center;
 		justify-content: space-between;
 		height: 32px;
-		padding: 0 8px;
+		padding: 0 var(--padding-2);
 		border-radius: 2px;
 		background: var(--l2-background);
 		border: 1px solid var(--border);
@@ -228,7 +228,7 @@
 		display: flex;
 		justify-content: flex-end;
 		gap: var(--spacing-4);
-		margin-top: 24px;
+		margin-top: var(--margin-6);
 	}
 }
 

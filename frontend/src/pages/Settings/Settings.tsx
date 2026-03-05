@@ -140,8 +140,7 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS ||
-							item.key === ROUTES.ROLES_SETTINGS
+							item.key === ROUTES.MEMBERS_SETTINGS
 								? true
 								: item.isEnabled,
 					}));

@@ -61,9 +61,6 @@ function MembersSettings(): JSX.Element {
 			role: user.role,
 			status: MemberStatus.Active,
 			joinedOn: user.createdAt ? String(user.createdAt) : null,
-			updatedAt: (user as { updatedAt?: number }).updatedAt
-				? String((user as { updatedAt?: number }).updatedAt)
-				: null,
 		}));
 
 		const pendingInvites: MemberRow[] = (invitesData?.data ?? []).map(
