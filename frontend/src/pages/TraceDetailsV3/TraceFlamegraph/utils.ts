@@ -5,18 +5,51 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
 import {
-	EVENT_DOT_SIZE,
+	EVENT_DOT_SIZE_RATIO,
 	LABEL_FONT,
 	LABEL_PADDING_X,
-	MIN_WIDTH_FOR_DURATION,
+	MAX_EVENT_DOT_SIZE,
+	MAX_SPAN_BAR_HEIGHT,
+	MIN_EVENT_DOT_SIZE,
+	MIN_SPAN_BAR_HEIGHT,
 	MIN_WIDTH_FOR_NAME,
-	SPAN_BAR_HEIGHT,
-	SPAN_BAR_Y_OFFSET,
+	MIN_WIDTH_FOR_NAME_AND_DURATION,
+	SPAN_BAR_HEIGHT_RATIO,
 } from './constants';
 import { SpanRect } from './types';
 
 export function clamp(v: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, v));
+}
+
+export interface FlamegraphRowMetrics {
+	ROW_HEIGHT: number;
+	SPAN_BAR_HEIGHT: number;
+	SPAN_BAR_Y_OFFSET: number;
+	EVENT_DOT_SIZE: number;
+}
+
+export function getFlamegraphRowMetrics(
+	rowHeight: number,
+): FlamegraphRowMetrics {
+	const spanBarHeight = clamp(
+		Math.round(rowHeight * SPAN_BAR_HEIGHT_RATIO),
+		MIN_SPAN_BAR_HEIGHT,
+		MAX_SPAN_BAR_HEIGHT,
+	);
+	const spanBarYOffset = Math.floor((rowHeight - spanBarHeight) / 2);
+	const eventDotSize = clamp(
+		Math.round(spanBarHeight * EVENT_DOT_SIZE_RATIO),
+		MIN_EVENT_DOT_SIZE,
+		MAX_EVENT_DOT_SIZE,
+	);
+
+	return {
+		ROW_HEIGHT: rowHeight,
+		SPAN_BAR_HEIGHT: spanBarHeight,
+		SPAN_BAR_Y_OFFSET: spanBarYOffset,
+		EVENT_DOT_SIZE: eventDotSize,
+	};
 }
 
 interface GetSpanColorArgs {
@@ -48,10 +81,11 @@ interface DrawEventDotArgs {
 	y: number;
 	isError: boolean;
 	isDarkMode: boolean;
+	eventDotSize: number;
 }
 
 export function drawEventDot(args: DrawEventDotArgs): void {
-	const { ctx, x, y, isError, isDarkMode } = args;
+	const { ctx, x, y, isError, isDarkMode, eventDotSize } = args;
 
 	ctx.save();
 	ctx.translate(x, y);
@@ -66,9 +100,9 @@ export function drawEventDot(args: DrawEventDotArgs): void {
 	}
 
 	ctx.lineWidth = 1;
-	const half = EVENT_DOT_SIZE / 2;
-	ctx.fillRect(-half, -half, EVENT_DOT_SIZE, EVENT_DOT_SIZE);
-	ctx.strokeRect(-half, -half, EVENT_DOT_SIZE, EVENT_DOT_SIZE);
+	const half = eventDotSize / 2;
+	ctx.fillRect(-half, -half, eventDotSize, eventDotSize);
+	ctx.strokeRect(-half, -half, eventDotSize, eventDotSize);
 	ctx.restore();
 }
 
@@ -82,6 +116,7 @@ interface DrawSpanBarArgs {
 	spanRectsArray: SpanRect[];
 	color: string;
 	isDarkMode: boolean;
+	metrics: FlamegraphRowMetrics;
 }
 
 export function drawSpanBar(args: DrawSpanBarArgs): void {
@@ -95,13 +130,14 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		spanRectsArray,
 		color,
 		isDarkMode,
+		metrics,
 	} = args;
 
-	const spanY = y + SPAN_BAR_Y_OFFSET;
+	const spanY = y + metrics.SPAN_BAR_Y_OFFSET;
 
 	ctx.fillStyle = color;
 	ctx.beginPath();
-	ctx.roundRect(x, spanY, width, SPAN_BAR_HEIGHT, 2);
+	ctx.roundRect(x, spanY, width, metrics.SPAN_BAR_HEIGHT, 2);
 	ctx.fill();
 
 	spanRectsArray.push({
@@ -109,7 +145,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 		x,
 		y: spanY,
 		width,
-		height: SPAN_BAR_HEIGHT,
+		height: metrics.SPAN_BAR_HEIGHT,
 		level: levelIndex,
 	});
 
@@ -124,7 +160,7 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 			((eventTimeMs - span.timestamp) / spanDurationMs) * 100;
 		const clampedOffset = clamp(eventOffsetPercent, 1, 99);
 		const eventX = x + (clampedOffset / 100) * width;
-		const eventY = spanY + SPAN_BAR_HEIGHT / 2;
+		const eventY = spanY + metrics.SPAN_BAR_HEIGHT / 2;
 
 		drawEventDot({
 			ctx,
@@ -132,10 +168,19 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 			y: eventY,
 			isError: event.isError,
 			isDarkMode,
+			eventDotSize: metrics.EVENT_DOT_SIZE,
 		});
 	});
 
-	drawSpanLabel({ ctx, span, x, y: spanY, width, isDarkMode });
+	drawSpanLabel({
+		ctx,
+		span,
+		x,
+		y: spanY,
+		width,
+		isDarkMode,
+		spanBarHeight: metrics.SPAN_BAR_HEIGHT,
+	});
 }
 
 export function formatDuration(durationNano: number): string {
@@ -151,37 +196,37 @@ interface DrawSpanLabelArgs {
 	y: number;
 	width: number;
 	isDarkMode: boolean;
+	spanBarHeight: number;
 }
 
 function drawSpanLabel(args: DrawSpanLabelArgs): void {
-	const { ctx, span, x, y, width, isDarkMode } = args;
+	const { ctx, span, x, y, width, isDarkMode, spanBarHeight } = args;
 
-	if (width < MIN_WIDTH_FOR_DURATION) {
+	if (width < MIN_WIDTH_FOR_NAME) {
 		return;
 	}
 
-	const duration = formatDuration(span.durationNano);
 	const name = span.name;
 
 	ctx.save();
 
 	// Clip text to span bar bounds
 	ctx.beginPath();
-	ctx.rect(x, y, width, SPAN_BAR_HEIGHT);
+	ctx.rect(x, y, width, spanBarHeight);
 	ctx.clip();
 
 	ctx.font = LABEL_FONT;
 	ctx.fillStyle = isDarkMode ? 'rgba(0, 0, 0, 0.9)' : 'rgba(255, 255, 255, 0.9)';
 	ctx.textBaseline = 'middle';
 
-	const textY = y + SPAN_BAR_HEIGHT / 2;
+	const textY = y + spanBarHeight / 2;
 	const leftX = x + LABEL_PADDING_X;
 	const rightX = x + width - LABEL_PADDING_X;
 	const availableWidth = width - LABEL_PADDING_X * 2;
 
-	const durationWidth = ctx.measureText(duration).width;
-
-	if (width >= MIN_WIDTH_FOR_NAME) {
+	if (width >= MIN_WIDTH_FOR_NAME_AND_DURATION) {
+		const duration = formatDuration(span.durationNano);
+		const durationWidth = ctx.measureText(duration).width;
 		const minGap = 6;
 		const nameSpace = availableWidth - durationWidth - minGap;
 
@@ -192,12 +237,12 @@ function drawSpanLabel(args: DrawSpanLabelArgs): void {
 		// Name left-aligned, truncated to fit remaining space
 		if (nameSpace > 20) {
 			ctx.textAlign = 'left';
-			const truncatedName = truncateText(ctx, name, nameSpace);
-			ctx.fillText(truncatedName, leftX, textY);
+			ctx.fillText(truncateText(ctx, name, nameSpace), leftX, textY);
 		}
 	} else {
-		ctx.textAlign = 'right';
-		ctx.fillText(duration, rightX, textY);
+		// Name only, truncated to fit
+		ctx.textAlign = 'left';
+		ctx.fillText(truncateText(ctx, name, availableWidth), leftX, textY);
 	}
 
 	ctx.restore();

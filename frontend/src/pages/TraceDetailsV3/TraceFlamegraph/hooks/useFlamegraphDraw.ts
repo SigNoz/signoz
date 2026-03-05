@@ -1,9 +1,14 @@
 import { RefObject, useCallback, useRef } from 'react';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
 
-import { ROW_HEIGHT } from '../constants';
 import { SpanRect } from '../types';
-import { clamp, drawSpanBar, getSpanColor } from '../utils';
+import {
+	clamp,
+	drawSpanBar,
+	FlamegraphRowMetrics,
+	getFlamegraphRowMetrics,
+	getSpanColor,
+} from '../utils';
 
 interface UseFlamegraphDrawArgs {
 	canvasRef: RefObject<HTMLCanvasElement>;
@@ -12,6 +17,7 @@ interface UseFlamegraphDrawArgs {
 	viewStartTs: number;
 	viewEndTs: number;
 	scrollTop: number;
+	rowHeight: number;
 	selectedSpanId: string | undefined;
 	hoveredSpanId: string;
 	isDarkMode: boolean;
@@ -36,6 +42,7 @@ interface DrawLevelArgs {
 	hoveredSpanId: string;
 	isDarkMode: boolean;
 	spanRectsArray: SpanRect[];
+	metrics: FlamegraphRowMetrics;
 }
 
 function drawLevel(args: DrawLevelArgs): void {
@@ -51,6 +58,7 @@ function drawLevel(args: DrawLevelArgs): void {
 		hoveredSpanId,
 		isDarkMode,
 		spanRectsArray,
+		metrics,
 	} = args;
 
 	const viewEndTs = viewStartTs + timeSpan;
@@ -103,6 +111,7 @@ function drawLevel(args: DrawLevelArgs): void {
 			spanRectsArray,
 			color,
 			isDarkMode,
+			metrics,
 		});
 	}
 }
@@ -117,6 +126,7 @@ export function useFlamegraphDraw(
 		viewStartTs,
 		viewEndTs,
 		scrollTop,
+		rowHeight,
 		selectedSpanId,
 		hoveredSpanId,
 		isDarkMode,
@@ -145,16 +155,17 @@ export function useFlamegraphDraw(
 		}
 
 		const cssWidth = canvas.width / dpr;
+		const metrics = getFlamegraphRowMetrics(rowHeight);
 
 		// ---- Vertical clipping window ----
 		const viewportHeight = container.clientHeight;
 
 		const firstLevel = Math.max(
 			0,
-			Math.floor(scrollTop / ROW_HEIGHT) - OVERSCAN_ROWS,
+			Math.floor(scrollTop / metrics.ROW_HEIGHT) - OVERSCAN_ROWS,
 		);
 		const visibleLevelCount =
-			Math.ceil(viewportHeight / ROW_HEIGHT) + 2 * OVERSCAN_ROWS;
+			Math.ceil(viewportHeight / metrics.ROW_HEIGHT) + 2 * OVERSCAN_ROWS;
 		const lastLevel = Math.min(spans.length - 1, firstLevel + visibleLevelCount);
 
 		ctx.clearRect(0, 0, cssWidth, viewportHeight);
@@ -172,7 +183,7 @@ export function useFlamegraphDraw(
 				ctx,
 				levelSpans,
 				levelIndex,
-				y: levelIndex * ROW_HEIGHT - scrollTop,
+				y: levelIndex * metrics.ROW_HEIGHT - scrollTop,
 				viewStartTs,
 				timeSpan,
 				cssWidth,
@@ -180,6 +191,7 @@ export function useFlamegraphDraw(
 				hoveredSpanId,
 				isDarkMode,
 				spanRectsArray,
+				metrics,
 			});
 		}
 
@@ -191,6 +203,7 @@ export function useFlamegraphDraw(
 		viewStartTs,
 		viewEndTs,
 		scrollTop,
+		rowHeight,
 		selectedSpanId,
 		hoveredSpanId,
 		isDarkMode,
