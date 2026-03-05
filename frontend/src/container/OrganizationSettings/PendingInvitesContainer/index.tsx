@@ -4,8 +4,13 @@ import { useQuery } from 'react-query';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button, Form, Space, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import {
+	Button,
+	Form,
+	Space,
+	TableColumnsType as ColumnsType,
+	Typography,
+} from 'antd';
 import get from 'api/v1/invite/get';
 import deleteInvite from 'api/v1/invite/id/delete';
 import ErrorContent from 'components/ErrorModal/components/ErrorContent';

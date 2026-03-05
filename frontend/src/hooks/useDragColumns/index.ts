@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
