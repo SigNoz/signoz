@@ -12,6 +12,7 @@ const tooltipPlugin = (
 	const tooltipTopOffset = 10;
 	let isMouseOverPlot = false;
 	let overElement: HTMLElement;
+	let plotInstance: any;
 
 	function formatValue(value: string | number | Date): string | number | Date {
 		if (typeof value === 'string' && !Number.isNaN(parseFloat(value))) {
@@ -129,11 +130,11 @@ const tooltipPlugin = (
 	};
 
 	const handleMouseMove = (e: MouseEvent): void => {
-		if (isMouseOverPlot && overElement) {
+		if (isMouseOverPlot && overElement && plotInstance) {
 			const rect = overElement.getBoundingClientRect();
 			const left = e.clientX - rect.left;
 			const top = e.clientY - rect.top;
-			updateTooltip(overElement as any, left, top);
+			updateTooltip(plotInstance, left, top);
 		}
 	};
 
@@ -143,10 +144,9 @@ const tooltipPlugin = (
 		tooltip.style.display = 'none';
 		u.over.appendChild(tooltip);
 
-		// Store reference for cleanup
 		overElement = u.over;
+		plotInstance = u;
 
-		// Add event listeners with named handlers
 		overElement.addEventListener('mouseenter', handleMouseEnter);
 		overElement.addEventListener('mouseleave', handleMouseLeave);
 		overElement.addEventListener('mousemove', handleMouseMove);
@@ -161,6 +161,7 @@ const tooltipPlugin = (
 		if (tooltip && tooltip.parentNode) {
 			tooltip.parentNode.removeChild(tooltip);
 		}
+		plotInstance = null;
 	}
 
 	return {
