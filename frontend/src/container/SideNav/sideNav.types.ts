@@ -28,6 +28,7 @@ export interface SettingsNavSection {
 	title?: string;
 	items: SidebarItem[];
 	key: string;
+	hasDivider?: boolean;
 }
 
 export interface DropdownSeparator {

@@ -44,6 +44,11 @@
 				flex-direction: column;
 			}
 
+			.settings-nav-section--with-divider {
+				border-top: 1px solid var(--secondary);
+				padding-top: var(--padding-4);
+			}
+
 			.settings-nav-section-title {
 				font-size: var(--uppercase-small-600-font-size);
 				font-weight: var(--uppercase-small-600-font-weight);

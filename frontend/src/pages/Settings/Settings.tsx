@@ -262,7 +262,12 @@ function SettingsPage(): JSX.Element {
 							return null;
 						}
 						return (
-							<div key={section.key} className="settings-nav-section">
+							<div
+								key={section.key}
+								className={`settings-nav-section${
+									section.hasDivider ? ' settings-nav-section--with-divider' : ''
+								}`}
+							>
 								{section.title && (
 									<div className="settings-nav-section-title">{section.title}</div>
 								)}
