@@ -77,6 +77,9 @@ type Getter interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
 
+	// Count users by org id irrespective of the user status.
+	CountByOrgID(context.Context, valuer.UUID) (int64, error)
+
 	// Count active users by org id.
 	ActiveCountByOrgID(context.Context, valuer.UUID) (int64, error)
 
