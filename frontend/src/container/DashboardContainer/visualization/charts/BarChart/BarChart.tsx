@@ -13,7 +13,7 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 	const {
 		children,
 		isStackedBarChart,
-		renderTooltip: customRenderTooltip,
+		customTooltip,
 		config,
 		data,
 		pinnedTooltipElement,
@@ -28,8 +28,8 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {
-			if (customRenderTooltip) {
-				return customRenderTooltip(props);
+			if (customTooltip) {
+				return customTooltip(props);
 			}
 			const tooltipProps: BarTooltipProps = {
 				...props,
@@ -37,17 +37,15 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 				yAxisUnit: rest.yAxisUnit,
 				decimalPrecision: rest.decimalPrecision,
 				isStackedBarChart: isStackedBarChart,
-				pinnedTooltipElement,
 			};
 			return <BarChartTooltip {...tooltipProps} />;
 		},
 		[
-			customRenderTooltip,
+			customTooltip,
 			rest.timezone,
 			rest.yAxisUnit,
 			rest.decimalPrecision,
 			isStackedBarChart,
-			pinnedTooltipElement,
 		],
 	);
 
@@ -56,7 +54,8 @@ export default function BarChart(props: BarChartProps): JSX.Element {
 			{...rest}
 			config={config}
 			data={chartData}
-			renderTooltip={renderTooltip}
+			customTooltip={renderTooltip}
+			pinnedTooltipElement={pinnedTooltipElement}
 		>
 			{children}
 		</ChartWrapper>

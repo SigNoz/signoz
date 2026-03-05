@@ -6,7 +6,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { render, RenderResult, screen } from 'tests/test-utils';
 import uPlot from 'uplot';
 
-import type { TooltipClickData } from '../../../plugins/TooltipPlugin/types';
 import { TooltipContentItem } from '../../types';
 import Tooltip from '../Tooltip';
 
@@ -206,44 +205,5 @@ describe('Tooltip', () => {
 		const list = screen.getByTestId('uplot-tooltip-list');
 		// Falls back to content length: 2 items * 38px = 76px
 		expect(list).toHaveStyle({ height: '76px' });
-	});
-
-	it('renders pinned tooltip content when clickData is provided', () => {
-		const uPlotInstance = createUPlotInstance(0);
-
-		const clickData: TooltipClickData = {
-			xValue: 100,
-			yValue: 200,
-			focusedSeries: {
-				seriesIndex: 1,
-				seriesName: 'Series A',
-				value: 10,
-				color: '#ff0000',
-			},
-			clickedDataTimestamp: 100,
-			mouseX: 50,
-			mouseY: 60,
-			absoluteMouseX: 150,
-			absoluteMouseY: 160,
-		};
-
-		const pinnedTooltipElement = jest.fn(
-			(data: TooltipClickData): JSX.Element => (
-				<div data-testid="pinned-tooltip">{`Pinned at ${data.xValue}`}</div>
-			),
-		);
-
-		renderTooltip({
-			uPlotInstance,
-			isPinned: true,
-			clickData,
-			pinnedTooltipElement,
-			content: [createTooltipContent()],
-		});
-
-		expect(pinnedTooltipElement).toHaveBeenCalledWith(clickData);
-		expect(screen.getByTestId('pinned-tooltip')).toBeInTheDocument();
-		expect(screen.queryByTestId('uplot-tooltip-header')).not.toBeInTheDocument();
-		expect(screen.queryByTestId('uplot-tooltip-list')).not.toBeInTheDocument();
 	});
 });

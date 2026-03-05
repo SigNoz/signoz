@@ -1,4 +1,4 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
 import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -16,6 +16,7 @@ import {
 } from './tooltipController';
 import {
 	DashboardCursorSync,
+	TooltipClickData,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -39,6 +40,7 @@ export default function TooltipPlugin({
 	maxHeight = 400,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
+	pinnedTooltipElement,
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -155,7 +157,6 @@ export default function TooltipPlugin({
 			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
-			controller.clickData = null;
 			const plot = getPlot(controller);
 			if (plot) {
 				plot.setCursor({ left: -10, top: -10 });
@@ -177,7 +178,6 @@ export default function TooltipPlugin({
 				isPinned: controller.pinned,
 				dismiss: dismissTooltip,
 				viaSync: controller.cursorDrivenBySync,
-				clickData: controller.clickData,
 			});
 		}
 
@@ -277,7 +277,7 @@ export default function TooltipPlugin({
 					clickedDataTimestamp = plot.data[0][plot.posToIdx(event.offsetX)];
 				}
 
-				controller.clickData = {
+				const clickData: TooltipClickData = {
 					xValue,
 					yValue,
 					focusedSeries,
@@ -287,6 +287,8 @@ export default function TooltipPlugin({
 					absoluteMouseX: event.clientX,
 					absoluteMouseY: event.clientY,
 				};
+
+				updateState({ clickData });
 
 				setTimeout(() => {
 					controller.pinned = true;
@@ -394,6 +396,24 @@ export default function TooltipPlugin({
 		}
 	}, [isHovering, hasPlot]);
 
+	const tooltipBody = useMemo(() => {
+		if (isPinned && pinnedTooltipElement != null && viewState.clickData != null) {
+			return pinnedTooltipElement(viewState.clickData);
+		}
+
+		if (isHovering) {
+			return contents;
+		}
+
+		return null;
+	}, [
+		isPinned,
+		pinnedTooltipElement,
+		viewState.clickData,
+		isHovering,
+		contents,
+	]);
+
 	if (!hasPlot) {
 		return null;
 	}
@@ -415,7 +435,7 @@ export default function TooltipPlugin({
 			ref={containerRef}
 			data-testid="tooltip-plugin-container"
 		>
-			{isHovering ? contents : null}
+			{tooltipBody}
 		</div>,
 		portalRoot.current,
 	);

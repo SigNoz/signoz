@@ -24,6 +24,7 @@ export interface TooltipViewState {
 	isHovering: boolean;
 	isPinned: boolean;
 	dismiss: () => void;
+	clickData: TooltipClickData | null;
 	contents?: ReactNode;
 }
 
@@ -39,6 +40,7 @@ export interface TooltipPluginProps {
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	render: (args: TooltipRenderArgs) => ReactNode;
+	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;
 	maxHeight?: number;
 }
@@ -85,9 +87,6 @@ export interface TooltipControllerState {
 	windowWidth: number;
 	windowHeight: number;
 	pendingPinnedUpdate: boolean;
-
-	/** Data about the click that triggered the tooltip */
-	clickData: TooltipClickData | null;
 }
 
 /**

@@ -17,7 +17,7 @@ interface BaseChartProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	pinnedTooltipElement?: (clickData: TooltipClickData) => React.ReactNode;
-	renderTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
+	customTooltip?: (props: TooltipRenderArgs) => React.ReactNode;
 	'data-testid'?: string;
 }
 interface UPlotBasedChartProps {

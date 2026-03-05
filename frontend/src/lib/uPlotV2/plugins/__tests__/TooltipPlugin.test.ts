@@ -214,6 +214,34 @@ describe('TooltipPlugin', () => {
 			});
 		});
 
+		it('renders pinnedTooltipElement after pinning and hides hover content', async () => {
+			const config = createConfigMock();
+			const pinnedTooltipElement = jest.fn(() =>
+				React.createElement('div', null, 'pinned-tooltip'),
+			);
+
+			const fakePlot = renderAndActivateHover(
+				config,
+				() => React.createElement('div', null, 'hover-tooltip'),
+				{
+					canPinTooltip: true,
+					pinnedTooltipElement,
+				},
+			);
+
+			expect(screen.getByText('hover-tooltip')).toBeInTheDocument();
+
+			act(() => {
+				fakePlot.over.dispatchEvent(new MouseEvent('click', { bubbles: true }));
+			});
+
+			await waitFor(() => {
+				expect(pinnedTooltipElement).toHaveBeenCalled();
+				expect(screen.getByText('pinned-tooltip')).toBeInTheDocument();
+				expect(screen.queryByText('hover-tooltip')).not.toBeInTheDocument();
+			});
+		});
+
 		it('dismisses a pinned tooltip via the dismiss callback', async () => {
 			const config = createConfigMock();
 

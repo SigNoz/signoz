@@ -31,7 +31,6 @@ export function createInitialControllerState(): TooltipControllerState {
 		windowWidth: window.innerWidth - WINDOW_OFFSET,
 		windowHeight: window.innerHeight - WINDOW_OFFSET,
 		pendingPinnedUpdate: false,
-		clickData: null,
 	};
 }
 

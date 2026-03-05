@@ -4,7 +4,6 @@ import { PrecisionOption } from 'components/Graph/types';
 import uPlot from 'uplot';
 
 import { UPlotConfigBuilder } from '../config/UPlotConfigBuilder';
-import { TooltipClickData } from '../plugins/TooltipPlugin/types';
 
 /**
  * Props for the Plot component
@@ -59,7 +58,6 @@ export interface TooltipRenderArgs {
 	isPinned: boolean;
 	dismiss: () => void;
 	viaSync: boolean;
-	clickData: TooltipClickData | null;
 }
 
 export interface BaseTooltipProps {
@@ -68,7 +66,6 @@ export interface BaseTooltipProps {
 	yAxisUnit?: string;
 	decimalPrecision?: PrecisionOption;
 	content?: TooltipContentItem[];
-	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 }
 
 export interface TimeSeriesTooltipProps
