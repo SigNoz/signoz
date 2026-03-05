@@ -70,6 +70,8 @@ interface CustomTimePickerProps {
 	showRecentlyUsed?: boolean;
 	minTime: number;
 	maxTime: number;
+	/** When true, zoom-out button is hidden (e.g. in drawer/modal time selection) */
+	isModalTimeSelection?: boolean;
 }
 
 function CustomTimePicker({
@@ -92,6 +94,7 @@ function CustomTimePicker({
 	showRecentlyUsed = true,
 	minTime,
 	maxTime,
+	isModalTimeSelection = false,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -643,7 +646,7 @@ function CustomTimePicker({
 					/>
 				</Popover>
 			</Tooltip>
-			{!showLiveLogs && (
+			{!showLiveLogs && !isModalTimeSelection && (
 				<Tooltip
 					title={
 						zoomOutDisabled ? 'Zoom out time range is limited to 1 month' : 'Zoom out'

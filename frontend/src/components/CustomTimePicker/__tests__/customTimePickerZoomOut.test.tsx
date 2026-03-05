@@ -103,6 +103,18 @@ describe('CustomTimePicker - zoom out button', () => {
 		expect(screen.queryByTestId('zoom-out-btn')).not.toBeInTheDocument();
 	});
 
+	it('should not render zoom out button when isModalTimeSelection is true', () => {
+		render(
+			<CustomTimePicker
+				{...defaultProps}
+				showLiveLogs={false}
+				isModalTimeSelection={true}
+			/>,
+		);
+
+		expect(screen.queryByTestId('zoom-out-btn')).not.toBeInTheDocument();
+	});
+
 	it('should call handleZoomOut when zoom out button is clicked', async () => {
 		render(<CustomTimePicker {...defaultProps} showLiveLogs={false} />);
 
