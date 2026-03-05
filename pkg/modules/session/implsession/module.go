@@ -66,7 +66,7 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	}
 
 	// filter out deleted users
-	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
+	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
 	name := strings.Split(email.String(), "@")[1]

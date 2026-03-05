@@ -327,7 +327,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, errors.WithAdditionalf(err, "cannot update root user")
 	}
 
-	if existingUser.Status == types.UserStatusDeleted {
+	if err := existingUser.ErrIfDeleted(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
@@ -398,7 +398,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.WithAdditionalf(err, "cannot delete root user")
 	}
 
-	if user.Status == types.UserStatusDeleted {
+	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
@@ -445,7 +445,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
-	if user.Status == types.UserStatusDeleted {
+	if err := user.ErrIfDeleted(); err != nil {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "user has been deleted")
 	}
 
@@ -564,8 +564,8 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	}
 
 	// handle deleted user
-	if user.Status == types.UserStatusDeleted {
-		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "deleted users cannot reset their password")
+	if err := user.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "deleted users cannot reset their password")
 	}
 
 	if err := user.ErrIfRoot(); err != nil {
@@ -769,7 +769,7 @@ func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 	}
 
 	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
 	if len(existingUsers) > 1 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
