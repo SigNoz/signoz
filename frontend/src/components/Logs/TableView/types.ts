@@ -1,4 +1,7 @@
-import { ColumnsType, ColumnType } from 'antd/es/table';
+import {
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+} from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
