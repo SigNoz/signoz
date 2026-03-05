@@ -2,9 +2,6 @@ import { useCallback, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import getLocalStorageKey from 'api/browser/localstorage/get';
-import setLocalStorageKey from 'api/browser/localstorage/set';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -12,6 +9,7 @@ import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { updateMetricsTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 
 export interface UseZoomOutOptions {
 	/** When true, the zoom out handler does nothing (e.g. when live logs are enabled) */
@@ -40,21 +38,6 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
 
-	const updateLocalStorageForRoute = (pathname: string, value: string): void => {
-		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-		let preRoutesObject: Record<string, string> = {};
-		try {
-			preRoutesObject = preRoutes ? JSON.parse(preRoutes) : {};
-		} catch {
-			preRoutesObject = {};
-		}
-		const preRoute = { ...preRoutesObject, [pathname]: value };
-		setLocalStorageKey(
-			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-			JSON.stringify(preRoute),
-		);
-	};
-
 	return useCallback((): void => {
 		if (isDisabled) {
 			return;
@@ -73,13 +56,13 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 			urlQuery.delete(QueryParams.startTime);
 			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, preset);
-			updateLocalStorageForRoute(location.pathname, preset);
+			updateMetricsTimeDurationForRoute(location.pathname, preset);
 		} else {
 			dispatch(UpdateTimeInterval('custom', [newStartMs, newEndMs]));
 			urlQuery.set(QueryParams.startTime, String(newStartMs));
 			urlQuery.set(QueryParams.endTime, String(newEndMs));
 			urlQuery.delete(QueryParams.relativeTime);
-			updateLocalStorageForRoute(
+			updateMetricsTimeDurationForRoute(
 				location.pathname,
 				JSON.stringify({
 					startTime: newStartMs,
