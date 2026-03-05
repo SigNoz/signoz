@@ -153,6 +153,15 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
+// ErrIfDeleted returns an error if the user is in deleted state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *User) ErrIfDeleted() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
@@ -227,10 +236,13 @@ type UserStore interface {
 	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
-	ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+	CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error)
 
 	// Get root user by org.
 	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
+
+	// Get user by reset password token
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

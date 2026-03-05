@@ -328,7 +328,7 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 }
 
 func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error {
-	_, err := store.sqlstore.BunDB().NewDelete().
+	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().
 		Model(&types.ResetPasswordToken{}).
 		Where("password_id = ?", passwordID).
 		Exec(ctx)
@@ -357,36 +357,13 @@ func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*t
 }
 
 func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.FactorPassword) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
-	_, err = tx.
+	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewUpdate().
 		Model(factorPassword).
 		Where("user_id = ?", factorPassword.UserID).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
-	}
-
-	_, err = tx.
-		NewDelete().
-		Model(&types.ResetPasswordToken{}).
-		Where("password_id = ?", factorPassword.ID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -514,22 +491,34 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 	return int64(count), nil
 }
 
-func (store *store) ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+func (store *store) CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error) {
 	user := new(types.User)
-
-	count, err := store.
-		sqlstore.
-		BunDB().
-		NewSelect().
-		Model(user).
-		Where("org_id = ?", orgID).
-		Where("status = ?", types.UserStatusActive.StringValue()).
-		Count(ctx)
-	if err != nil {
-		return 0, err
+	var results []struct {
+		Status string `bun:"status"`
+		Count  int64  `bun:"count"`
 	}
 
-	return int64(count), nil
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		ColumnExpr("status").
+		ColumnExpr("COUNT(*) AS count").
+		Where("org_id = ?", orgID.StringValue()).
+		Where("status IN (?)", bun.In(statuses)).
+		GroupExpr("status").
+		Scan(ctx, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[string]int64, len(results))
+	for _, r := range results {
+		counts[r.Status] = r.Count
+	}
+
+	return counts, nil
 }
 
 func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
@@ -587,4 +576,23 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 	}
 
 	return users, nil
+}
+
+func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*types.User, error) {
+	user := new(types.User)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		Join("JOIN factor_password ON factor_password.user_id = \"user\".id").
+		Join("JOIN reset_password_token ON reset_password_token.password_id = factor_password.id").
+		Where("reset_password_token.token = ?", token).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user not found for reset password token")
+	}
+
+	return user, nil
 }

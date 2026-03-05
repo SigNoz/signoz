@@ -86,13 +86,13 @@ func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int6
 	return count, nil
 }
 
-func (module *getter) ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	count, err := module.store.ActiveCountByOrgID(ctx, orgID)
+func (module *getter) CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error) {
+	counts, err := module.store.CountByOrgIDGroupedByStatus(ctx, orgID, statuses)
 	if err != nil {
-		return 0, err
+		return nil, err
 	}
 
-	return count, nil
+	return counts, nil
 }
 
 func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valuer.UUID) (*types.FactorPassword, error) {
