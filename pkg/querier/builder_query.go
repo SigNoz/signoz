@@ -215,8 +215,8 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":                      q.spec.Signal.StringValue(),
-		instrumentation.QueryDuration: instrumentation.DurationBucket(q.fromMS, q.toMS),
+		instrumentation.TelemetrySignal: q.spec.Signal.StringValue(),
+		instrumentation.QueryDuration:   instrumentation.DurationBucket(q.fromMS, q.toMS),
 	})
 
 	totalRows := uint64(0)
