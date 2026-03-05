@@ -36,15 +36,14 @@ const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 /**
  * Removes the prefix from a key to get the base key name.
- * Handles both underscore prefixes (tag_, resource_) and dot prefixes (tag., resource.)
+ * Handles dot prefixes (tag., resource.)
  * Example: 'resource.service.name' -> 'service.name'
- * Example: 'resource_service_name' -> 'service_name'
  */
 function getKeyWithoutPrefix(key: string | undefined): string {
 	if (!key) {
 		return '';
 	}
-	return key.replace(/^(tag_|resource_|tag\.|resource\.)/, '').trim();
+	return key.replace(/^(tag\.|resource\.)/, '').trim();
 }
 
 /**
