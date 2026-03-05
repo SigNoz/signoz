@@ -424,6 +424,7 @@ export default function TooltipPlugin({
 		isHovering,
 		contents,
 	]);
+	const isTooltipVisible = isHovering || tooltipBody != null;
 
 	if (!hasPlot) {
 		return null;
@@ -433,7 +434,7 @@ export default function TooltipPlugin({
 		<div
 			className={cx('tooltip-plugin-container', {
 				pinned: isPinned,
-				visible: isHovering,
+				visible: isTooltipVisible,
 			})}
 			style={{
 				...style,
@@ -442,7 +443,7 @@ export default function TooltipPlugin({
 			}}
 			aria-live="polite"
 			aria-atomic="true"
-			aria-hidden={!isHovering}
+			aria-hidden={!isTooltipVisible}
 			ref={containerRef}
 			data-testid="tooltip-plugin-container"
 		>
