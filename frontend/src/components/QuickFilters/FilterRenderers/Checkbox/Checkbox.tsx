@@ -35,20 +35,19 @@ const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 /**
- * Removes the prefix from a key to get the base key name.
- * Handles dot prefixes (tag., resource.)
+ * Removes the resource. prefix from a key to get the base key name.
  * Example: 'resource.service.name' -> 'service.name'
  */
 function getKeyWithoutPrefix(key: string | undefined): string {
 	if (!key) {
 		return '';
 	}
-	return key.replace(/^(tag\.|resource\.)/, '').trim();
+	return key.replace(/^resource\./, '').trim();
 }
 
 /**
  * Compares two keys by their base name (without prefix).
- * This ensures that 'service.name' matches 'resource.service.name' or 'tag.service.name'
+ * This ensures that 'service.name' matches 'resource.service.name'
  */
 function isKeyMatch(
 	itemKey: string | undefined,
