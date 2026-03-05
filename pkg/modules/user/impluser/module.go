@@ -52,27 +52,14 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 
 // TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
-	// token in this case is the reset password token
-	resetPasswordToken, err := m.store.GetResetPasswordToken(ctx, token)
+	// get the user by reset password token
+	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
 
-	// get the factor password
-	factorPassword, err := m.store.GetPassword(ctx, resetPasswordToken.PasswordID)
-	if err != nil {
-		return nil, err
-	}
-
-	userID := valuer.MustNewUUID(factorPassword.UserID)
-
+	// update the password and delete the token
 	err = m.UpdatePasswordByResetPasswordToken(ctx, token, password)
-	if err != nil {
-		return nil, err
-	}
-
-	// get the user
-	user, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -288,9 +275,9 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 
 	// only delete the user if it has pending status
 	if user.Status == types.UserStatusPendingInvite {
-		// hard delete the user row
-		err = m.store.DeleteUser(ctx, user.OrgID.StringValue(), user.ID.StringValue())
-		if err != nil {
+		// soft delete the user
+		user.UpdateStatus(types.UserStatusDeleted)
+		if err := m.store.UpdateUser(ctx, valuer.MustNewUUID(orgID), user); err != nil {
 			return err
 		}
 	}
@@ -338,6 +325,10 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 
 	if err := existingUser.ErrIfRoot(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot update root user")
+	}
+
+	if existingUser.Status == types.UserStatusDeleted {
+		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
 	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
@@ -405,6 +396,10 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 
 	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete root user")
+	}
+
+	if user.Status == types.UserStatusDeleted {
+		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
 	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
@@ -596,12 +591,20 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if user.Status == types.UserStatusPendingInvite {
 			user.UpdateStatus(types.UserStatusActive)
-			if err = module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
+			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
 		}
 
-		return module.store.UpdatePassword(ctx, password)
+		if err := module.store.UpdatePassword(ctx, password); err != nil {
+			return err
+		}
+
+		if err := module.store.DeleteResetPasswordTokenByPasswordID(ctx, password.ID); err != nil {
+			return err
+		}
+
+		return nil
 	})
 }
 
@@ -609,6 +612,10 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	user, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return err
+	}
+
+	if err := user.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot change password for deleted user")
 	}
 
 	if err := user.ErrIfRoot(); err != nil {
@@ -628,7 +635,17 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 		return err
 	}
 
-	if err := module.store.UpdatePassword(ctx, password); err != nil {
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.UpdatePassword(ctx, password); err != nil {
+			return err
+		}
+
+		if err := module.store.DeleteResetPasswordTokenByPasswordID(ctx, password.ID); err != nil {
+			return err
+		}
+
+		return nil
+	}); err != nil {
 		return err
 	}
 
@@ -728,12 +745,15 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 
 func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	count, err := module.store.ActiveCountByOrgID(ctx, orgID)
+	counts, err := module.store.CountByOrgIDGroupedByStatus(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err == nil {
-		stats["user.count"] = count
+		stats["user.count"] = counts[types.UserStatusActive.StringValue()] + counts[types.UserStatusDeleted.StringValue()] + counts[types.UserStatusPendingInvite.StringValue()]
+		stats["user.count.active"] = counts[types.UserStatusActive.StringValue()]
+		stats["user.count.deleted"] = counts[types.UserStatusDeleted.StringValue()]
+		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite.StringValue()]
 	}
 
-	count, err = module.store.CountAPIKeyByOrgID(ctx, orgID)
+	count, err := module.store.CountAPIKeyByOrgID(ctx, orgID)
 	if err == nil {
 		stats["factor.api_key.count"] = count
 	}

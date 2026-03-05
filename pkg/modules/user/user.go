@@ -80,8 +80,8 @@ type Getter interface {
 	// Count users by org id irrespective of the user status.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 
-	// Count active users by org id.
-	ActiveCountByOrgID(context.Context, valuer.UUID) (int64, error)
+	// Count of users by org id and grouped by status.
+	CountByOrgIDGroupedByStatus(context.Context, valuer.UUID, []string) (map[string]int64, error)
 
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
