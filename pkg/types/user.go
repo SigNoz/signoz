@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -64,6 +65,10 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 
 	if orgID.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
+	}
+
+	if !slices.Contains(ValidUserStatus, status) {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid status: %s, allowed status are: %v", status, ValidUserStatus)
 	}
 
 	return &User{

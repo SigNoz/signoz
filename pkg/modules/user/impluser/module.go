@@ -2,7 +2,6 @@ package impluser
 
 import (
 	"context"
-	"fmt"
 	"slices"
 	"strings"
 	"time"
@@ -196,7 +195,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			continue
 		}
 
-		resetLink := m.resetLink(frontendBaseUrl, resetPasswordToken.Token)
+		resetLink := types.FactorPasswordResetLink(frontendBaseUrl, resetPasswordToken.Token)
 
 		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
 		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
@@ -527,7 +526,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return err
 	}
 
-	resetLink := module.resetLink(frontendBaseURL, token.Token)
+	resetLink := types.FactorPasswordResetLink(frontendBaseURL, token.Token)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
@@ -582,10 +581,22 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
+	// since grant is idempotent, multiple calls won't cause issues in case of retries
+	if user.Status == types.UserStatusPendingInvite {
+		if err = module.authz.Grant(
+			ctx,
+			user.OrgID,
+			[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
+			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
+		); err != nil {
+			return err
+		}
+	}
+
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		// update the status of user if this a newly invited user and also grant authz
 		if user.Status == types.UserStatusPendingInvite {
-			if err = module.activatePendingUser(ctx, user); err != nil {
+			user.UpdateStatus(types.UserStatusActive)
+			if err = module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
 		}
@@ -730,6 +741,28 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
+// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
+func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter out the deleted users
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
+
+	if len(existingUsers) > 1 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+	}
+
+	if len(existingUsers) == 1 {
+		return existingUsers[0], nil
+	}
+
+	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+
+}
+
 func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
@@ -755,10 +788,6 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.U
 	return nil
 }
 
-func (module *Module) resetLink(frontendBaseUrl string, token string) string {
-	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, token)
-}
-
 func (module *Module) activatePendingUser(ctx context.Context, user *types.User) error {
 	err := module.authz.Grant(
 		ctx,
@@ -777,26 +806,4 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 	}
 
 	return nil
-}
-
-// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
-func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.Status == types.UserStatusDeleted })
-
-	if len(existingUsers) > 1 {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
-	}
-
-	if len(existingUsers) == 1 {
-		return existingUsers[0], nil
-	}
-
-	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
-
 }
