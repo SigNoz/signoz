@@ -1,7 +1,6 @@
 import React, { Dispatch, SetStateAction, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
-import { Button } from 'antd';
-import { Tag } from 'antd/lib';
+import { Button, Tag } from 'antd';
 import Input from 'components/Input';
 import { Check, X } from 'lucide-react';
 

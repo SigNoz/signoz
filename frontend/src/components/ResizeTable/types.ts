@@ -1,7 +1,7 @@
 import { TableProps } from 'antd';
-import { ColumnsType } from 'antd/es/table';
-import { PaginationProps } from 'antd/lib';
-import { ColumnGroupType, ColumnType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/es/table';
+import type { PaginationProps } from 'antd/lib';
+import type { ColumnGroupType, ColumnType } from 'antd/lib/table';
 import { LaunchChatSupportProps } from 'components/LaunchChatSupport/LaunchChatSupport';
 
 import { TableDataSource } from './contants';

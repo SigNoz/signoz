@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import {
 	Button,
 	Collapse,
@@ -9,7 +10,6 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricAttributes } from 'api/generated/services/metrics';
 import { ResizeTable } from 'components/ResizeTable';

@@ -11,3 +11,8 @@ export const USER_ROLES = {
 	EDITOR: 'EDITOR',
 	AUTHOR: 'AUTHOR',
 };
+
+export enum RoleType {
+	MANAGED = 'managed',
+	CUSTOM = 'custom',
+}
