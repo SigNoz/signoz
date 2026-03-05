@@ -1,7 +1,10 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
+import getLocalStorageKey from 'api/browser/localstorage/get';
+import setLocalStorageKey from 'api/browser/localstorage/set';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -22,8 +25,12 @@ export interface UseZoomOutOptions {
  * Computes the next time range using the zoom-out ladder, updates Redux global time,
  * and navigates with the new URL params.
  */
+const EMPTY_PARAMS: string[] = [];
+
 export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
-	const { isDisabled = false, urlParamsToDelete = [] } = options;
+	const { isDisabled = false, urlParamsToDelete = EMPTY_PARAMS } = options;
+	const urlParamsToDeleteRef = useRef(urlParamsToDelete);
+	urlParamsToDeleteRef.current = urlParamsToDelete;
 
 	const dispatch = useDispatch();
 	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
@@ -32,6 +39,21 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 	const urlQuery = useUrlQuery();
 	const location = useLocation();
 	const { safeNavigate } = useSafeNavigate();
+
+	const updateLocalStorageForRoute = (pathname: string, value: string): void => {
+		const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
+		let preRoutesObject: Record<string, string> = {};
+		try {
+			preRoutesObject = preRoutes ? JSON.parse(preRoutes) : {};
+		} catch {
+			preRoutesObject = {};
+		}
+		const preRoute = { ...preRoutesObject, [pathname]: value };
+		setLocalStorageKey(
+			LOCALSTORAGE.METRICS_TIME_IN_DURATION,
+			JSON.stringify(preRoute),
+		);
+	};
 
 	return useCallback((): void => {
 		if (isDisabled) {
@@ -51,13 +73,21 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 			urlQuery.delete(QueryParams.startTime);
 			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, preset);
+			updateLocalStorageForRoute(location.pathname, preset);
 		} else {
 			dispatch(UpdateTimeInterval('custom', [newStartMs, newEndMs]));
 			urlQuery.set(QueryParams.startTime, String(newStartMs));
 			urlQuery.set(QueryParams.endTime, String(newEndMs));
 			urlQuery.delete(QueryParams.relativeTime);
+			updateLocalStorageForRoute(
+				location.pathname,
+				JSON.stringify({
+					startTime: newStartMs,
+					endTime: newEndMs,
+				}),
+			);
 		}
-		for (const param of urlParamsToDelete) {
+		for (const param of urlParamsToDeleteRef.current) {
 			urlQuery.delete(param);
 		}
 		safeNavigate(`${location.pathname}?${urlQuery.toString()}`);
@@ -68,7 +98,6 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 		maxTime,
 		minTime,
 		safeNavigate,
-		urlParamsToDelete,
 		urlQuery,
 	]);
 }

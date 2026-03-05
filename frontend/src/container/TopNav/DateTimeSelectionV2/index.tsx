@@ -738,6 +738,7 @@ function DateTimeSelection({
 						showRecentlyUsed={showRecentlyUsed}
 						minTime={minTimeForDateTimePicker}
 						maxTime={maxTimeForDateTimePicker}
+						isModalTimeSelection={isModalTimeSelection}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (
