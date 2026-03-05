@@ -655,9 +655,8 @@ function CustomTimePicker({
 							onClick={handleZoomOut}
 							disabled={zoomOutDisabled}
 							data-testid="zoom-out-btn"
-						>
-							<ZoomOut size={14} />
-						</Button>
+							prefixIcon={<ZoomOut size={14} />}
+						/>
 					</span>
 				</Tooltip>
 			)}
