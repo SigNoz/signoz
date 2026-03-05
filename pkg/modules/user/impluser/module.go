@@ -423,8 +423,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// for now we are only soft deleting users
-	user.UpdateStatus(types.UserStatusDeleted)
-	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+	if err := module.store.SoftDeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
 	}
 
