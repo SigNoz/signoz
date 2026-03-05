@@ -263,6 +263,92 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 	return nil
 }
 
+func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string) error {
+	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	// get the password id
+
+	var password types.FactorPassword
+	err = tx.NewSelect().
+		Model(&password).
+		Where("user_id = ?", id).
+		Scan(ctx)
+	if err != nil && err != sql.ErrNoRows {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete password")
+	}
+
+	// delete reset password request
+	_, err = tx.NewDelete().
+		Model(new(types.ResetPasswordToken)).
+		Where("password_id = ?", password.ID.String()).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete reset password request")
+	}
+
+	// delete factor password
+	_, err = tx.NewDelete().
+		Model(new(types.FactorPassword)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
+	}
+
+	// delete api keys
+	_, err = tx.NewDelete().
+		Model(&types.StorableAPIKey{}).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
+	}
+
+	// delete user_preference
+	_, err = tx.NewDelete().
+		Model(new(preferencetypes.StorableUserPreference)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user preferences")
+	}
+
+	// delete tokens
+	_, err = tx.NewDelete().
+		Model(new(authtypes.StorableToken)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete tokens")
+	}
+
+	// soft delete user
+	_, err = tx.NewUpdate().
+		Model(new(types.User)).
+		Set("status = ?", types.UserStatusDeleted).
+		Set("updated_at = ?", time.Now()).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
+	}
+
+	return nil
+}
+
 func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
 	_, err := store.
 		sqlstore.

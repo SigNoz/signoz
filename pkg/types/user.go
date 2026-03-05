@@ -217,6 +217,7 @@ type UserStore interface {
 
 	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
+	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
 	// Creates a password.
 	CreatePassword(ctx context.Context, password *FactorPassword) error
