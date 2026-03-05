@@ -7,8 +7,10 @@ import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
+import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
+import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { v4 as uuid } from 'uuid';
 
@@ -161,45 +163,45 @@ function InviteMembersModal({
 		}
 
 		setIsSubmitting(true);
-		let hasError = false;
-
-		await Promise.all(
-			touchedRows.map(
-				async (row): Promise<void> => {
-					try {
-						await sendInvite({
-							email: row.email.trim(),
-							name: '',
-							role: row.role as ROLES,
-							frontendBaseUrl: window.location.origin,
-						});
-					} catch (err: unknown) {
-						hasError = true;
-						const apiErr = err as {
-							response?: { status: number };
-							getErrorMessage?: () => string;
-						};
-						if (apiErr?.response?.status === 409) {
-							toast.error(`${row.email} is already a member`, { richColors: true });
-						} else {
-							const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-							toast.error(`Failed to invite ${row.email}: ${errorMessage}`, {
-								richColors: true,
-							});
-						}
-					}
-				},
-			),
-		);
-
-		setIsSubmitting(false);
-
-		if (!hasError) {
+		try {
+			if (touchedRows.length === 1) {
+				const row = touchedRows[0];
+				await sendInvite({
+					email: row.email.trim(),
+					name: '',
+					role: row.role as ROLES,
+					frontendBaseUrl: window.location.origin,
+				});
+			} else {
+				await inviteUsers({
+					invites: touchedRows.map((row) => ({
+						email: row.email.trim(),
+						name: '',
+						role: row.role,
+						frontendBaseUrl: window.location.origin,
+					})),
+				});
+			}
 			toast.success('Invites sent successfully', { richColors: true });
 			resetAndClose();
 			onSuccess?.();
-		} else {
-			onSuccess?.();
+		} catch (err) {
+			const apiErr = err as APIError;
+			if (apiErr?.getHttpStatusCode() === 409) {
+				toast.error(
+					touchedRows.length === 1
+						? `${touchedRows[0].email} is already a member`
+						: 'Invite for one or more users already exists',
+					{ richColors: true },
+				);
+			} else {
+				const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
+				toast.error(`Failed to send invites: ${errorMessage}`, {
+					richColors: true,
+				});
+			}
+		} finally {
+			setIsSubmitting(false);
 		}
 	}, [rows, onSuccess, resetAndClose, validateAllUsers]);
 
