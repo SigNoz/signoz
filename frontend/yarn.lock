@@ -5520,10 +5520,13 @@
     tailwindcss-animate "^1.0.7"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 =======
 >>>>>>> 1227bd5ff (feat: added password modal and other functionality)
+=======
+>>>>>>> 24ce2f8e4 (feat: rebased with settings nav changes)
 "@signozhq/drawer@0.0.4":
   version "0.0.4"
   resolved "https://registry.yarnpkg.com/@signozhq/drawer/-/drawer-0.0.4.tgz#7c6e6779602113f55df8a55076e68b9cc13c7d79"
@@ -5540,9 +5543,12 @@
     vaul "^1.1.2"
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 4f3863acd (feat: added password modal and other functionality)
 >>>>>>> 1227bd5ff (feat: added password modal and other functionality)
+=======
+>>>>>>> 24ce2f8e4 (feat: rebased with settings nav changes)
 "@signozhq/icons@0.1.0", "@signozhq/icons@^0.1.0":
   version "0.1.0"
   resolved "https://registry.yarnpkg.com/@signozhq/icons/-/icons-0.1.0.tgz#00dfb430dbac423bfff715876f91a7b8a72509e4"
