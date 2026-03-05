@@ -400,6 +400,19 @@ export const settingsNavSections: SettingsNavSection[] = [
 			},
 		],
 	},
+	{
+		key: 'shortcuts',
+		hasDivider: true,
+		items: [
+			{
+				key: ROUTES.SHORTCUTS,
+				label: 'Keyboard Shortcuts',
+				icon: <Keyboard size={16} />,
+				isEnabled: true,
+				itemKey: 'keyboard-shortcuts',
+			},
+		],
+	},
 ];
 
 export const helpSupportDropdownMenuItems: SidebarItem[] = [
