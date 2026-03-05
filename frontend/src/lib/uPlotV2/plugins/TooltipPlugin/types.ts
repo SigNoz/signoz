@@ -77,6 +77,7 @@ export interface TooltipControllerState {
 	hoverActive: boolean;
 	isAnySeriesActive: boolean;
 	pinned: boolean;
+	clickData: TooltipClickData | null;
 	style: TooltipViewState['style'];
 	horizontalOffset: number;
 	verticalOffset: number;

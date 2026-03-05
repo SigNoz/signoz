@@ -157,6 +157,7 @@ export default function TooltipPlugin({
 			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
+			controller.clickData = null;
 			const plot = getPlot(controller);
 			if (plot) {
 				plot.setCursor({ left: -10, top: -10 });
@@ -196,6 +197,7 @@ export default function TooltipPlugin({
 				style: controller.style,
 				isPinned: controller.pinned,
 				isHovering: controller.hoverActive,
+				clickData: controller.clickData,
 				contents: createTooltipContents(),
 				dismiss: dismissTooltip,
 			});
@@ -288,7 +290,7 @@ export default function TooltipPlugin({
 					absoluteMouseY: event.clientY,
 				};
 
-				updateState({ clickData });
+				controller.clickData = clickData;
 
 				setTimeout(() => {
 					controller.pinned = true;
