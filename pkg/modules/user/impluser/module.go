@@ -130,44 +130,50 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	invitedUsers := make([]*types.User, 0, len(bulkInvites.Invites))
 	var invites []*types.Invite // TODO(balanikaran) remove this and more to types.User as return
 
-	for _, invite := range bulkInvites.Invites {
-		// check and active user already exists with this email
-		existingUser, err := m.GetNonDeletedUserByEmailAndOrgID(ctx, invite.Email, orgID)
-		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
-
-		if existingUser != nil {
-			if err := existingUser.ErrIfRoot(); err != nil {
-				return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
+	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+		for _, invite := range bulkInvites.Invites {
+			// check if an active user already exists with this email
+			existingUser, err := m.GetNonDeletedUserByEmailAndOrgID(ctx, invite.Email, orgID)
+			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+				return err
 			}
 
-			// check if a pending invite already exists
-			if existingUser.Status == types.UserStatusPendingInvite {
-				return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
+			if existingUser != nil {
+				if err := existingUser.ErrIfRoot(); err != nil {
+					return errors.WithAdditionalf(err, "Cannot send invite to root user")
+				}
+
+				// check if a pending invite already exists
+				if existingUser.Status == types.UserStatusPendingInvite {
+					return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
+				}
+
+				return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
 			}
 
-			return nil, errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
+			role, err := types.NewRole(invite.Role.String())
+			if err != nil {
+				return err
+			}
+
+			// create a new user with pending invite status
+			newUser, err := types.NewUser(invite.Name, invite.Email, role, orgID, types.UserStatusPendingInvite)
+			if err != nil {
+				return err
+			}
+
+			// store the user and password in db
+			err = m.createUserWithoutGrant(ctx, newUser)
+			if err != nil {
+				return err
+			}
+
+			invitedUsers = append(invitedUsers, newUser)
 		}
 
-		role, err := types.NewRole(invite.Role.String())
-		if err != nil {
-			return nil, err
-		}
-
-		// create a new user with pending invite status
-		newUser, err := types.NewUser(invite.Name, invite.Email, role, orgID, types.UserStatusPendingInvite)
-		if err != nil {
-			return nil, err
-		}
-
-		// store the user and password in db
-		err = m.createUserWithoutGrant(ctx, newUser)
-		if err != nil {
-			return nil, err
-		}
-
-		invitedUsers = append(invitedUsers, newUser)
+		return nil
+	}); err != nil {
+		return nil, err
 	}
 
 	// send password reset emails to all the invited users
@@ -281,17 +287,13 @@ func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID)
 		return err
 	}
 
-	// revoke grants
-	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
-	err = m.authz.Revoke(ctx, user.OrgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
-	if err != nil {
-		return err
-	}
-
-	// hard delete the user row
-	err = m.store.DeleteUser(ctx, user.OrgID.StringValue(), user.ID.StringValue())
-	if err != nil {
-		return err
+	// only delete the user if it has pending status
+	if user.Status == types.UserStatusPendingInvite {
+		// hard delete the user row
+		err = m.store.DeleteUser(ctx, user.OrgID.StringValue(), user.ID.StringValue())
+		if err != nil {
+			return err
+		}
 	}
 
 	return nil
@@ -580,14 +582,16 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	// update the status of user if this a newly invited user and also grant authz
-	if user.Status == types.UserStatusPendingInvite {
-		if err = module.activatePendingUser(ctx, user); err != nil {
-			return err
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// update the status of user if this a newly invited user and also grant authz
+		if user.Status == types.UserStatusPendingInvite {
+			if err = module.activatePendingUser(ctx, user); err != nil {
+				return err
+			}
 		}
-	}
 
-	return module.store.UpdatePassword(ctx, password)
+		return module.store.UpdatePassword(ctx, password)
+	})
 }
 
 func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
