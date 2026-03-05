@@ -1,6 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { useEffect, useRef, useState } from 'react';
 import { Button, Input } from 'antd';
 import { GripVertical, TableColumnsSplit, X } from 'lucide-react';

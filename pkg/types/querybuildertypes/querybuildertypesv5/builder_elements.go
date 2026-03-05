@@ -446,6 +446,8 @@ type MetricAggregation struct {
 	TimeAggregation metrictypes.TimeAggregation `json:"timeAggregation"`
 	// space aggregation to apply to the query
 	SpaceAggregation metrictypes.SpaceAggregation `json:"spaceAggregation"`
+	// param for space aggregation if needed
+	ComparisonSpaceAggregationParam *metrictypes.ComparisonSpaceAggregationParam `json:"comparisonSpaceAggregationParam,omitempty"`
 	// table hints to use for the query
 	TableHints *metrictypes.MetricTableHints `json:"-"`
 	// value filter to apply to the query

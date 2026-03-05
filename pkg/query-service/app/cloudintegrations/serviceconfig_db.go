@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -18,7 +19,7 @@ type ServiceConfigDatabase interface {
 		orgID string,
 		cloudAccountId string,
 		serviceType string,
-	) (*types.CloudServiceConfig, *model.ApiError)
+	) (*integrationtypes.CloudServiceConfig, *model.ApiError)
 
 	upsert(
 		ctx context.Context,
@@ -26,15 +27,15 @@ type ServiceConfigDatabase interface {
 		cloudProvider string,
 		cloudAccountId string,
 		serviceId string,
-		config types.CloudServiceConfig,
-	) (*types.CloudServiceConfig, *model.ApiError)
+		config integrationtypes.CloudServiceConfig,
+	) (*integrationtypes.CloudServiceConfig, *model.ApiError)
 
 	getAllForAccount(
 		ctx context.Context,
 		orgID string,
 		cloudAccountId string,
 	) (
-		configsBySvcId map[string]*types.CloudServiceConfig,
+		configsBySvcId map[string]*integrationtypes.CloudServiceConfig,
 		apiErr *model.ApiError,
 	)
 }
@@ -56,9 +57,9 @@ func (r *serviceConfigSQLRepository) get(
 	orgID string,
 	cloudAccountId string,
 	serviceType string,
-) (*types.CloudServiceConfig, *model.ApiError) {
+) (*integrationtypes.CloudServiceConfig, *model.ApiError) {
 
-	var result types.CloudIntegrationService
+	var result integrationtypes.CloudIntegrationService
 
 	err := r.store.BunDB().NewSelect().
 		Model(&result).
@@ -89,14 +90,14 @@ func (r *serviceConfigSQLRepository) upsert(
 	cloudProvider string,
 	cloudAccountId string,
 	serviceId string,
-	config types.CloudServiceConfig,
-) (*types.CloudServiceConfig, *model.ApiError) {
+	config integrationtypes.CloudServiceConfig,
+) (*integrationtypes.CloudServiceConfig, *model.ApiError) {
 
 	// get cloud integration id from account id
 	// if the account is not connected, we don't need to upsert the config
 	var cloudIntegrationId string
 	err := r.store.BunDB().NewSelect().
-		Model((*types.CloudIntegration)(nil)).
+		Model((*integrationtypes.CloudIntegration)(nil)).
 		Column("id").
 		Where("provider = ?", cloudProvider).
 		Where("account_id = ?", cloudAccountId).
@@ -111,7 +112,7 @@ func (r *serviceConfigSQLRepository) upsert(
 		))
 	}
 
-	serviceConfig := types.CloudIntegrationService{
+	serviceConfig := integrationtypes.CloudIntegrationService{
 		Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
@@ -139,8 +140,8 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 	ctx context.Context,
 	orgID string,
 	cloudAccountId string,
-) (map[string]*types.CloudServiceConfig, *model.ApiError) {
-	serviceConfigs := []types.CloudIntegrationService{}
+) (map[string]*integrationtypes.CloudServiceConfig, *model.ApiError) {
+	serviceConfigs := []integrationtypes.CloudIntegrationService{}
 
 	err := r.store.BunDB().NewSelect().
 		Model(&serviceConfigs).
@@ -154,7 +155,7 @@ func (r *serviceConfigSQLRepository) getAllForAccount(
 		))
 	}
 
-	result := map[string]*types.CloudServiceConfig{}
+	result := map[string]*integrationtypes.CloudServiceConfig{}
 
 	for _, r := range serviceConfigs {
 		result[r.Type] = &r.Config

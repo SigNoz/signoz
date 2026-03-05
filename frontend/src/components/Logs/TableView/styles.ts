@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
 

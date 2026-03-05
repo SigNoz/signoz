@@ -1,4 +1,5 @@
 import GetLogs from 'api/logs/GetLogs';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_LOADING, SET_LOGS } from 'types/actions/logs';

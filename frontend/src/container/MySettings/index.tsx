@@ -36,7 +36,6 @@ function MySettings(): JSX.Element {
 				)?.value as boolean,
 			);
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [userPreferences]);
 
 	const {

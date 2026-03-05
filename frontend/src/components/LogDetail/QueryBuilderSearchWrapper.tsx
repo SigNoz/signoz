@@ -48,7 +48,6 @@ function QueryBuilderSearchWrapper({
 		setContextQuery({ ...nextQuery });
 	};
 
-	// eslint-disable-next-line react/jsx-no-useless-fragment
 	if (!contextQuery || !isEdit) {
 		return <></>;
 	}

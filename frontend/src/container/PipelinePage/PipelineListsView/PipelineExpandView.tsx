@@ -3,7 +3,7 @@ import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { PlusCircleOutlined } from '@ant-design/icons';
-import { TableLocale } from 'antd/es/table/interface';
+import type { TableLocale } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
@@ -196,7 +196,6 @@ function PipelineExpandView({
 		logEvent('Logs: Pipelines: Clicked Add New Processor', {
 			source: 'signoz-ui',
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

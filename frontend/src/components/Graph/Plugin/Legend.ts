@@ -55,7 +55,6 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 			  )
 			: null;
 
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		items?.forEach((item: Record<any, any>, index: number) => {
 			const li = document.createElement('li');
 			li.style.alignItems = 'center';
@@ -65,7 +64,6 @@ export const legend = (id: string, isLonger: boolean): Plugin<ChartType> => ({
 			// li.style.marginTop = '5px';
 
 			li.onclick = (): void => {
-				// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 				// @ts-ignore
 				const { type } = chart.config;
 				if (type === 'pie' || type === 'doughnut') {

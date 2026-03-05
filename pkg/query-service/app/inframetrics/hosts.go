@@ -67,10 +67,58 @@ var (
 		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    GetDotMetrics("system_cpu_time"),
-		"memory": GetDotMetrics("system_memory_usage"),
-		"load15": GetDotMetrics("system_cpu_load_average_15m"),
-		"wait":   GetDotMetrics("system_cpu_time"),
+		"filesystem": GetDotMetrics("system_filesystem_usage"),
+		"cpu":        GetDotMetrics("system_cpu_time"),
+		"memory":     GetDotMetrics("system_memory_usage"),
+		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":       GetDotMetrics("system_cpu_time"),
+	}
+	uniqueMetricNamesForHosts = []string{
+		GetDotMetrics("system_uptime"),
+		GetDotMetrics("system_cpu_time"),
+		GetDotMetrics("system_cpu_load_average_1m"),
+		GetDotMetrics("system_cpu_load_average_5m"),
+		GetDotMetrics("system_cpu_load_average_15m"),
+		GetDotMetrics("system_memory_usage"),
+		GetDotMetrics("system_paging_usage"),
+		GetDotMetrics("system_paging_faults"),
+		GetDotMetrics("system_paging_operations"),
+		GetDotMetrics("system_disk_io"),
+		GetDotMetrics("system_disk_operations"),
+		GetDotMetrics("system_disk_io_time"),
+		GetDotMetrics("system_disk_operation_time"),
+		GetDotMetrics("system_disk_merged"),
+		GetDotMetrics("system_disk_pending_operations"),
+		GetDotMetrics("system_disk_weighted_io_time"),
+		GetDotMetrics("system_filesystem_usage"),
+		GetDotMetrics("system_filesystem_inodes_usage"),
+		GetDotMetrics("system_network_io"),
+		GetDotMetrics("system_network_errors"),
+		GetDotMetrics("system_network_connections"),
+		GetDotMetrics("system_network_dropped"),
+		GetDotMetrics("system_network_packets"),
+		GetDotMetrics("system_processes_count"),
+		GetDotMetrics("system_processes_created"),
+		GetDotMetrics("process_cpu_time"),
+		GetDotMetrics("process_disk_io"),
+		GetDotMetrics("process_memory_usage"),
+		GetDotMetrics("process_memory_virtual"),
+		GetDotMetrics("nfs_client_net_count"),
+		GetDotMetrics("nfs_client_net_tcp_connection_accepted"),
+		GetDotMetrics("nfs_client_operation_count"),
+		GetDotMetrics("nfs_client_procedure_count"),
+		GetDotMetrics("nfs_client_rpc_authrefresh_count"),
+		GetDotMetrics("nfs_client_rpc_count"),
+		GetDotMetrics("nfs_client_rpc_retransmit_count"),
+		GetDotMetrics("nfs_server_fh_stale_count"),
+		GetDotMetrics("nfs_server_io"),
+		GetDotMetrics("nfs_server_net_count"),
+		GetDotMetrics("nfs_server_net_tcp_connection_accepted"),
+		GetDotMetrics("nfs_server_operation_count"),
+		GetDotMetrics("nfs_server_procedure_count"),
+		GetDotMetrics("nfs_server_repcache_requests"),
+		GetDotMetrics("nfs_server_rpc_count"),
+		GetDotMetrics("nfs_server_thread_count"),
 	}
 )
 
@@ -130,62 +178,9 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (map[string]bool, error) {
-	activeStatus := map[string]bool{}
-	step := common.MinAllowedStepInterval(req.Start, req.End)
-
-	hasHostName := false
-	for _, key := range req.GroupBy {
-		if key.Key == hostNameAttrKey {
-			hasHostName = true
-		}
-	}
-
-	if !hasHostName {
-		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: hostNameAttrKey})
-	}
-
-	params := v3.QueryRangeParamsV3{
-		Start: time.Now().Add(-time.Minute * 10).UTC().UnixMilli(),
-		End:   time.Now().UTC().UnixMilli(),
-		Step:  step,
-		CompositeQuery: &v3.CompositeQuery{
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"A": {
-					QueryName:    "A",
-					StepInterval: step,
-					DataSource:   v3.DataSourceMetrics,
-					AggregateAttribute: v3.AttributeKey{
-						Key:      metricToUseForHostAttributes,
-						DataType: v3.AttributeKeyDataTypeFloat64,
-					},
-					Temporality:      v3.Unspecified,
-					Filters:          req.Filters,
-					GroupBy:          req.GroupBy,
-					Expression:       "A",
-					TimeAggregation:  v3.TimeAggregationAvg,
-					SpaceAggregation: v3.SpaceAggregationAvg,
-					Disabled:         false,
-				},
-			},
-			QueryType: v3.QueryTypeBuilder,
-			PanelType: v3.PanelTypeGraph,
-		},
-	}
-
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, result := range queryResponse {
-		for _, series := range result.Series {
-			name := series.Labels[hostNameAttrKey]
-			activeStatus[name] = true
-		}
-	}
-
-	return activeStatus, nil
+func (h *HostsRepo) getActiveHosts(ctx context.Context) (map[string]bool, error) {
+	tenMinAgo := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	return h.reader.GetActiveHostsFromMetricMetadata(ctx, uniqueMetricNamesForHosts, hostNameAttrKey, tenMinAgo)
 }
 
 func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostListRequest) (map[string]map[string]string, error) {
@@ -316,24 +311,15 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req
 	return topHostGroups, allHostGroups, nil
 }
 
-func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostListRequest) (bool, error) {
-
+// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for host metrics
+// in distributed_metadata. Uses metricNamesForHosts plus system.filesystem.usage.
+func (h *HostsRepo) GetHostMetricsExistenceAndEarliestTime(ctx context.Context, req model.HostListRequest) (uint64, uint64, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 
-	namesStr := "'" + strings.Join(names, "','") + "'"
-
-	query := fmt.Sprintf("SELECT count() FROM %s.%s WHERE metric_name IN (%s)",
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
-
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
+	return h.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
 }
 
 func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
@@ -412,8 +398,25 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		resp.ClusterNames = clusterNames
 		resp.NodeNames = nodeNames
 	}
-	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
-		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
+
+	// 1. Check if any host metrics exist and get earliest retention time
+	// if no hosts metrics exist, that means we should show the onboarding guide on UI, and return early.
+	// 2. If host metrics exist, but req.End is earlier than the earliest time of host metrics as read from
+	// metadata table, then we should convey the same to the user and return early
+	if count, minFirstReportedUnixMilli, err := h.GetHostMetricsExistenceAndEarliestTime(ctx, req); err == nil {
+		if count == 0 {
+			resp.SentAnyHostMetricsData = false
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyHostMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
@@ -441,7 +444,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		return resp, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, orgID, req)
+	activeHosts, err := h.getActiveHosts(ctx)
 	if err != nil {
 		return resp, err
 	}

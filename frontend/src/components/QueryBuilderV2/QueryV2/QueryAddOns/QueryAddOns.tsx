@@ -1,4 +1,3 @@
-/* eslint-disable react/require-default-props */
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Button, Radio, RadioChangeEvent, Tooltip } from 'antd';
 import InputWithLabel from 'components/InputWithLabel/InputWithLabel';
@@ -203,8 +202,8 @@ function QueryAddOns({
 		} else {
 			filteredAddOns = Object.values(ADD_ONS);
 
-			// Filter out group_by for metrics data source
 			if (query.dataSource === DataSource.METRICS) {
+				// Filter out group_by for metrics data source (handled in MetricsAggregateSection)
 				filteredAddOns = filteredAddOns.filter(
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
@@ -248,8 +247,6 @@ function QueryAddOns({
 				filteredAddOns.some((addOn) => addOn.key === view.key),
 			),
 		);
-
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [panelType, isListViewPanel, query, showReduceTo]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {

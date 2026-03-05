@@ -1,6 +1,8 @@
 import { ReactNode } from 'react';
-import { ColumnsType } from 'antd/es/table';
-import { ColumnType } from 'antd/lib/table';
+import {
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+} from 'antd';
 import {
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,

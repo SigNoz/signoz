@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription/utils';

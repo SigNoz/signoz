@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';

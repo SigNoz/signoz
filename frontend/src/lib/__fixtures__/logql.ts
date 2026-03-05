@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint no-useless-escape: 0 */
-
 const logqlQueries = [
 	{
 		query: "OPERATION in ('bcd','xy\\'z') AND FULLTEXT contains 'helloxyz'", // Query with IN

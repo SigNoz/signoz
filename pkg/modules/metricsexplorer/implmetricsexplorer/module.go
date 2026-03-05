@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetrymeter"
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
@@ -56,11 +57,81 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
+// TODO(srikanthccv): use metadata store to fetch metric metadata
 func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
 
+	if params.Source == "meter" {
+		return m.listMeterMetrics(ctx, params)
+	}
+	return m.listMetrics(ctx, orgID, params)
+}
+
+func (m *module) listMeterMetrics(ctx context.Context, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select(
+		"metric_name",
+		"any(description) AS description",
+		"any(type) AS metric_type",
+		"any(unit) AS metric_unit",
+		"argMax(temporality, unix_milli) AS temporality",
+		"any(is_monotonic) AS is_monotonic",
+	)
+	sb.From(fmt.Sprintf("%s.%s", telemetrymeter.DBName, telemetrymeter.SamplesTableName))
+
+	if params.Start != nil && params.End != nil {
+		sb.Where(sb.Between("unix_milli", *params.Start, *params.End))
+	}
+
+	if params.Search != "" {
+		searchLower := strings.ToLower(params.Search)
+		searchLower = strings.ReplaceAll(searchLower, "%", "\\%")
+		searchLower = strings.ReplaceAll(searchLower, "_", "\\_")
+		sb.Where(sb.Like("lower(metric_name)", fmt.Sprintf("%%%s%%", searchLower)))
+	}
+
+	sb.GroupBy("metric_name")
+	sb.OrderBy("metric_name ASC")
+	sb.Limit(params.Limit)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	valueCtx := ctxtypes.SetClickhouseMaxThreads(ctx, m.config.TelemetryStore.Threads)
+	db := m.telemetryStore.ClickhouseDB()
+	rows, err := db.Query(valueCtx, query, args...)
+	if err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to list meter metrics")
+	}
+	defer rows.Close()
+
+	metrics := make([]metricsexplorertypes.ListMetric, 0)
+	for rows.Next() {
+		var metric metricsexplorertypes.ListMetric
+		if err := rows.Scan(
+			&metric.MetricName,
+			&metric.Description,
+			&metric.MetricType,
+			&metric.MetricUnit,
+			&metric.Temporality,
+			&metric.IsMonotonic,
+		); err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to scan meter metric")
+		}
+		metrics = append(metrics, metric)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, errors.WrapInternalf(err, errors.CodeInternal, "error iterating meter metrics")
+	}
+
+	return &metricsexplorertypes.ListMetricsResponse{
+		Metrics: metrics,
+	}, nil
+}
+
+func (m *module) listMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("DISTINCT metric_name")
 
@@ -513,7 +584,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 		"metric_name",
 		"anyLast(description) AS description",
 		"anyLast(type) AS metric_type",
-		"anyLast(unit) AS metric_unit",
+		"argMax(unit, unix_milli) AS metric_unit",
 		"anyLast(temporality) AS temporality",
 		"anyLast(is_monotonic) AS is_monotonic",
 	)
@@ -715,9 +786,8 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 		Logger:           m.logger,
 		FieldMapper:      m.fieldMapper,
 		ConditionBuilder: m.condBuilder,
-		FullTextColumn: &telemetrytypes.TelemetryFieldKey{
-			Name: "labels"},
-		FieldKeys: keys,
+		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
+		FieldKeys:        keys,
 	}
 
 	startNs := querybuilder.ToNanoSecs(uint64(startMillis))

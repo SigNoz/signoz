@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import {
 	ReactNode,
 	useCallback,
@@ -12,6 +9,7 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
@@ -50,6 +48,7 @@ import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -117,7 +116,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 	const [showSlowApiWarning, setShowSlowApiWarning] = useState(false);
 	const [slowApiWarningShown, setSlowApiWarningShown] = useState(false);
 
-	const { latestVersion } = useSelector<AppState, AppReducer>(
+	const { currentVersion } = useSelector<AppState, AppReducer>(
 		(state) => state.app,
 	);
 
@@ -213,9 +212,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		},
 		{
 			queryFn: (): Promise<SuccessResponse<ChangelogSchema> | ErrorResponse> =>
-				getChangelogByVersion(latestVersion, changelogForTenant),
-			queryKey: ['getChangelogByVersion', latestVersion, changelogForTenant],
-			enabled: isLoggedIn && Boolean(latestVersion),
+				getChangelogByVersion(currentVersion, changelogForTenant),
+			queryKey: ['getChangelogByVersion', currentVersion, changelogForTenant],
+			enabled: isLoggedIn && Boolean(currentVersion),
 		},
 	]);
 
@@ -226,7 +225,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 			!changelog &&
 			!getChangelogByVersionResponse.isLoading &&
 			isLoggedIn &&
-			Boolean(latestVersion)
+			Boolean(currentVersion)
 		) {
 			getChangelogByVersionResponse.refetch();
 		}
@@ -237,9 +236,9 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		let timer: ReturnType<typeof setTimeout>;
 		if (
 			isCloudUserVal &&
-			Boolean(latestVersion) &&
+			Boolean(currentVersion) &&
 			seenChangelogVersion != null &&
-			latestVersion !== seenChangelogVersion &&
+			currentVersion !== seenChangelogVersion &&
 			daysSinceAccountCreation > MIN_ACCOUNT_AGE_FOR_CHANGELOG && // Show to only users older than 2 weeks
 			!isWorkspaceAccessRestricted
 		) {
@@ -255,7 +254,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		isCloudUserVal,
-		latestVersion,
+		currentVersion,
 		seenChangelogVersion,
 		toggleChangelogModal,
 		isWorkspaceAccessRestricted,

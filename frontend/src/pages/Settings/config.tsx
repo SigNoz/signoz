@@ -5,7 +5,6 @@ import APIKeys from 'container/APIKeys/APIKeys';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
-import CustomDomainSettings from 'container/CustomDomainSettings';
 import GeneralSettings from 'container/GeneralSettings';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import IngestionSettings from 'container/IngestionSettings/IngestionSettings';
@@ -13,6 +12,7 @@ import MultiIngestionSettings from 'container/IngestionSettings/MultiIngestionSe
 import MySettings from 'container/MySettings';
 import OrganizationSettings from 'container/OrganizationSettings';
 import RolesSettings from 'container/RolesSettings';
+import RoleDetailsPage from 'container/RolesSettings/RoleDetails';
 import { TFunction } from 'i18next';
 import {
 	Backpack,
@@ -20,7 +20,6 @@ import {
 	Building,
 	Cpu,
 	CreditCard,
-	Globe,
 	Keyboard,
 	KeySquare,
 	Pencil,
@@ -124,19 +123,6 @@ export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
 	},
 ];
 
-export const customDomainSettings = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: CustomDomainSettings,
-		name: (
-			<div className="periscope-tab">
-				<Globe size={16} /> {t('routes:custom_domain_settings').toString()}
-			</div>
-		),
-		route: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-	},
-];
-
 export const billingSettings = (t: TFunction): RouteTabProps['routes'] => [
 	{
 		Component: BillingContainer,
@@ -160,6 +146,19 @@ export const rolesSettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.ROLES_SETTINGS,
 		key: ROUTES.ROLES_SETTINGS,
+	},
+];
+
+export const roleDetails = (t: TFunction): RouteTabProps['routes'] => [
+	{
+		Component: RoleDetailsPage,
+		name: (
+			<div className="periscope-tab">
+				<Shield size={16} /> {t('routes:role_details').toString()}
+			</div>
+		),
+		route: ROUTES.ROLE_DETAILS,
+		key: ROUTES.ROLE_DETAILS,
 	},
 ];
 

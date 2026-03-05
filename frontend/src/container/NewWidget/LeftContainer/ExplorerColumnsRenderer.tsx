@@ -1,6 +1,4 @@
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
 import { useEffect, useState } from 'react';
 import {
 	DragDropContext,
@@ -9,8 +7,15 @@ import {
 	DropResult,
 } from 'react-beautiful-dnd';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Divider, Dropdown, Input, Tooltip, Typography } from 'antd';
-import { MenuProps } from 'antd/lib';
+import {
+	Button,
+	Divider,
+	Dropdown,
+	Input,
+	MenuProps,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { FieldDataType } from 'api/v5/v5';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';

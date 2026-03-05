@@ -98,7 +98,6 @@ function ServiceDetails(): JSX.Element | null {
 		cloudAccountId || undefined,
 	);
 
-	// eslint-disable-next-line @typescript-eslint/naming-convention
 	const { config, supported_signals } = serviceDetailsData ?? {};
 
 	const totalSupportedSignals = Object.entries(supported_signals || {}).filter(

@@ -53,7 +53,6 @@ const MOCK_SERVICE_NAMES = [MQ_KAFKA, OTEL_DEMO, OTLP_PYTHON, SAMPLE_FLASK];
 const createMockFilter = (
 	overrides: Partial<MockFilterConfig> = {},
 ): MockFilterConfig => ({
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	title: 'Service Name',
 	attributeKey: {
 		key: SERVICE_NAME_KEY,
@@ -152,7 +151,7 @@ describe('CheckboxFilter - User Flows', () => {
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
 			// eslint-disable-next-line sonarjs/no-duplicate-string
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
 		});
 
 		// User should see visual separator between checked and unchecked items
@@ -186,7 +185,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// Initially auto-opened due to active filters
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
 		});
 
 		// User manually closes the filter
@@ -194,7 +193,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// User should see filter is now closed (respecting user preference)
 		expect(
-			screen.queryByPlaceholderText('Filter values'),
+			screen.queryByPlaceholderText('Search values'),
 		).not.toBeInTheDocument();
 
 		// User manually opens the filter again
@@ -202,7 +201,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// User should see filter is now open (respecting user preference)
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
 		});
 	});
 
