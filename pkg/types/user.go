@@ -192,7 +192,7 @@ type UserStore interface {
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
 
 	// Get users by role and org.
-	GetUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)

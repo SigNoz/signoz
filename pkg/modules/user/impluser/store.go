@@ -122,7 +122,7 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 	return users, nil
 }
 
-func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
+func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
 	var users []*types.User
 
 	err := store.
@@ -132,6 +132,7 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("role = ?", role).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
