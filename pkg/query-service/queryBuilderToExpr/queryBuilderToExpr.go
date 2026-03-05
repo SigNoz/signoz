@@ -427,13 +427,13 @@ func buildFilterExpr(key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOpe
 		// contains / not contains must be case-insensitive to match query-time behaviour.
 		filter = fmt.Sprintf("lower(%s) %s lower(%s)", keyName, logOperatorsToExpr[op], fmtValue)
 	case qbtypes.FilterOperatorLike:
-		filter = fmt.Sprintf("like(string(%s), %s)", keyName, fmtValue)
+		filter = fmt.Sprintf(`type(%s) != "map" && like(string(%s), %s)`, keyName, keyName, fmtValue)
 	case qbtypes.FilterOperatorNotLike:
-		filter = fmt.Sprintf("not like(string(%s), %s)", keyName, fmtValue)
+		filter = fmt.Sprintf(`type(%s) != "map" && not like(string(%s), %s)`, keyName, keyName, fmtValue)
 	case qbtypes.FilterOperatorILike:
-		filter = fmt.Sprintf("ilike(string(%s), %s)", keyName, fmtValue)
+		filter = fmt.Sprintf(`type(%s) != "map" && ilike(string(%s), %s)`, keyName, keyName, fmtValue)
 	case qbtypes.FilterOperatorNotILike:
-		filter = fmt.Sprintf("not ilike(string(%s), %s)", keyName, fmtValue)
+		filter = fmt.Sprintf(`type(%s) != "map" && not ilike(string(%s), %s)`, keyName, keyName, fmtValue)
 	default:
 		filter = fmt.Sprintf("%s %s %s", keyName, logOperatorsToExpr[op], fmtValue)
 	}
