@@ -506,6 +506,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 
 	var results []*v3.Result
 
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.CodeNamespace:    "rules",
+		instrumentation.CodeFunctionName: "buildAndRunQueryV5",
+	})
+
 	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
 	if err != nil {
 		r.logger.ErrorContext(ctx, "failed to get alert query result", "rule_name", r.Name(), "error", err)

@@ -110,12 +110,7 @@ func AddCommentsToContext(ctx context.Context, comments map[string]string) conte
 		return ctx
 	}
 	comment := CommentFromContext(ctx)
-	if comment == nil {
-		comment = NewComment()
-	}
-	for k, v := range comments {
-		comment.Set(k, v)
-	}
+	comment.Merge(comments)
 	return NewContextWithComment(ctx, comment)
 }
 
