@@ -1,5 +1,4 @@
-import { Tooltip, Typography } from 'antd';
-import TextArea from 'antd/lib/input/TextArea';
+import { Input, Tooltip, Typography } from 'antd';
 import { Info } from 'lucide-react';
 
 import { useCreateAlertState } from '../context';
@@ -76,7 +75,7 @@ function NotificationMessage(): JSX.Element {
 					</Popover> */}
 				</div>
 			</div>
-			<TextArea
+			<Input.TextArea
 				value={notificationSettings.description}
 				onChange={(e): void =>
 					setNotificationSettings({

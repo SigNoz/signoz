@@ -3,8 +3,14 @@ import { useRef } from 'react';
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { SearchOutlined } from '@ant-design/icons';
-import { InputRef, Switch, Tooltip, Typography } from 'antd';
-import { ColumnsType, ColumnType } from 'antd/lib/table';
+import {
+	InputRef,
+	Switch,
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import TextToolTip from 'components/TextToolTip';
 import Download from 'container/Download/Download';

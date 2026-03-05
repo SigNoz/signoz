@@ -1,6 +1,6 @@
 import { grey } from '@ant-design/colors';
 import { Checkbox, ConfigProvider } from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { CheckBoxProps } from '../types';
 

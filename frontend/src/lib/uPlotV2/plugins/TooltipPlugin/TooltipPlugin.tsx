@@ -1,6 +1,7 @@
-import { useLayoutEffect, useRef, useState } from 'react';
+import { useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
+import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
 import uPlot from 'uplot';
 
 import {
@@ -15,6 +16,7 @@ import {
 } from './tooltipController';
 import {
 	DashboardCursorSync,
+	TooltipClickData,
 	TooltipControllerContext,
 	TooltipControllerState,
 	TooltipLayoutInfo,
@@ -38,6 +40,7 @@ export default function TooltipPlugin({
 	maxHeight = 400,
 	syncMode = DashboardCursorSync.None,
 	syncKey = '_tooltip_sync_global_',
+	pinnedTooltipElement,
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
@@ -73,11 +76,6 @@ export default function TooltipPlugin({
 		layoutRef.current?.observer.disconnect();
 		layoutRef.current = createLayoutObserver(layoutRef);
 
-		/**
-		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
-		 * reference; clearPlotReferences runs in cleanup so
-		 * detached canvases can be garbage collected.
-		 */
 		// Controller holds the mutable interaction state for this tooltip
 		// instance. It is intentionally *not* React state so uPlot hooks
 		// and DOM listeners can update it freely without triggering a
@@ -85,7 +83,9 @@ export default function TooltipPlugin({
 		const controller: TooltipControllerState = createInitialControllerState();
 
 		/**
-		 * Clear plot references so detached canvases can be garbage collected.
+		 * Plot lifecycle and GC: viewState uses hasPlot (boolean), not the plot
+		 * reference; clearPlotReferences runs in cleanup so
+		 * detached canvases can be garbage collected.
 		 */
 		const clearPlotReferences = (): void => {
 			controller.plot = null;
@@ -157,6 +157,7 @@ export default function TooltipPlugin({
 			const isPinnedBeforeDismiss = controller.pinned;
 			controller.pinned = false;
 			controller.hoverActive = false;
+			controller.clickData = null;
 			const plot = getPlot(controller);
 			if (plot) {
 				plot.setCursor({ left: -10, top: -10 });
@@ -196,6 +197,7 @@ export default function TooltipPlugin({
 				style: controller.style,
 				isPinned: controller.pinned,
 				isHovering: controller.hoverActive,
+				clickData: controller.clickData,
 				contents: createTooltipContents(),
 				dismiss: dismissTooltip,
 			});
@@ -268,6 +270,37 @@ export default function TooltipPlugin({
 				!controller.pinned &&
 				controller.focusedSeriesIndex != null
 			) {
+				const xValue = plot.posToVal(event.offsetX, 'x');
+				const yValue = plot.posToVal(event.offsetY, 'y');
+				const focusedSeries = getFocusedSeriesAtPosition(event, plot);
+
+				let clickedDataTimestamp = xValue;
+				if (focusedSeries) {
+					const dataIndex = plot.posToIdx(event.offsetX);
+					const xSeriesData = plot.data[0];
+					if (
+						xSeriesData &&
+						dataIndex >= 0 &&
+						dataIndex < xSeriesData.length &&
+						xSeriesData[dataIndex] !== undefined
+					) {
+						clickedDataTimestamp = xSeriesData[dataIndex];
+					}
+				}
+
+				const clickData: TooltipClickData = {
+					xValue,
+					yValue,
+					focusedSeries,
+					clickedDataTimestamp,
+					mouseX: event.offsetX,
+					mouseY: event.offsetY,
+					absoluteMouseX: event.clientX,
+					absoluteMouseY: event.clientY,
+				};
+
+				controller.clickData = clickData;
+
 				setTimeout(() => {
 					controller.pinned = true;
 					scheduleRender(true);
@@ -374,6 +407,25 @@ export default function TooltipPlugin({
 		}
 	}, [isHovering, hasPlot]);
 
+	const tooltipBody = useMemo(() => {
+		if (isPinned && pinnedTooltipElement != null && viewState.clickData != null) {
+			return pinnedTooltipElement(viewState.clickData);
+		}
+
+		if (isHovering) {
+			return contents;
+		}
+
+		return null;
+	}, [
+		isPinned,
+		pinnedTooltipElement,
+		viewState.clickData,
+		isHovering,
+		contents,
+	]);
+	const isTooltipVisible = isHovering || tooltipBody != null;
+
 	if (!hasPlot) {
 		return null;
 	}
@@ -382,7 +434,7 @@ export default function TooltipPlugin({
 		<div
 			className={cx('tooltip-plugin-container', {
 				pinned: isPinned,
-				visible: isHovering,
+				visible: isTooltipVisible,
 			})}
 			style={{
 				...style,
@@ -391,11 +443,11 @@ export default function TooltipPlugin({
 			}}
 			aria-live="polite"
 			aria-atomic="true"
-			aria-hidden={!isHovering}
+			aria-hidden={!isTooltipVisible}
 			ref={containerRef}
 			data-testid="tooltip-plugin-container"
 		>
-			{isHovering ? contents : null}
+			{tooltipBody}
 		</div>,
 		portalRoot.current,
 	);
