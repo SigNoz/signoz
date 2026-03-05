@@ -497,6 +497,23 @@ func (store *store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*type
 	return flattenedAPIKeys[0], nil
 }
 
+func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	user := new(types.User)
+
+	count, err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(user).
+		Where("org_id = ?", orgID).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(count), nil
+}
+
 func (store *store) ActiveCountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	user := new(types.User)
 
