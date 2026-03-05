@@ -27,6 +27,22 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/invite/bulk", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateBulkInvite), handler.OpenAPIDef{
+		ID:                 "CreateBulkInvite",
+		Tags:               []string{"users"},
+		Summary:            "Create bulk invite",
+		Description:        "This endpoint creates a bulk invite for a user",
+		Request:            make([]*types.PostableInvite, 0),
+		RequestContentType: "application/json",
+		Response:           nil,
+		SuccessStatusCode:  http.StatusCreated,
+		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusConflict},
+		Deprecated:         false,
+		SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
 	// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 	if err := router.Handle("/api/v1/invite/{token}", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetInvite), handler.OpenAPIDef{
 		ID:                  "GetInvite",
@@ -42,22 +58,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Deprecated:          false,
 		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
 	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/invite/bulk", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateBulkInvite), handler.OpenAPIDef{
-		ID:                 "CreateBulkInvite",
-		Tags:               []string{"users"},
-		Summary:            "Create bulk invite",
-		Description:        "This endpoint creates a bulk invite for a user",
-		Request:            make([]*types.PostableInvite, 0),
-		RequestContentType: "application/json",
-		Response:           nil,
-		SuccessStatusCode:  http.StatusCreated,
-		ErrorStatusCodes:   []int{http.StatusBadRequest, http.StatusConflict},
-		Deprecated:         false,
-		SecuritySchemes:    newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
 
