@@ -17,26 +17,6 @@ type deprecateUserInvite struct {
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewDeprecateUserInviteFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
-	return factory.NewProviderFactory(
-		factory.MustNewName("deprecate_user_invite"),
-		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &deprecateUserInvite{
-				sqlstore:  sqlstore,
-				sqlschema: sqlschema,
-			}, nil
-		},
-	)
-}
-
-func (migration *deprecateUserInvite) Register(migrations *migrate.Migrations) error {
-	if err := migrations.Register(migration.Up, migration.Down); err != nil {
-		return err
-	}
-
-	return nil
-}
-
 type userInviteRow struct {
 	bun.BaseModel `bun:"table:user_invite"`
 
@@ -64,6 +44,26 @@ type pendingInviteUser struct {
 	UpdatedAt   time.Time `bun:"updated_at"`
 }
 
+func NewDeprecateUserInviteFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+	return factory.NewProviderFactory(
+		factory.MustNewName("deprecate_user_invite"),
+		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
+			return &deprecateUserInvite{
+				sqlstore:  sqlstore,
+				sqlschema: sqlschema,
+			}, nil
+		},
+	)
+}
+
+func (migration *deprecateUserInvite) Register(migrations *migrate.Migrations) error {
+	if err := migrations.Register(migration.Up, migration.Down); err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
@@ -83,6 +83,8 @@ func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error 
 
 	// move all invitations to the users table as a pending_invite user
 	// skipping any invite whose email+org already has a user entry with non-deleted status
+	users := make([]*pendingInviteUser, 0, len(invites))
+
 	for _, invite := range invites {
 		existingCount, err := tx.NewSelect().
 			TableExpr("users").
@@ -110,7 +112,12 @@ func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error 
 			UpdatedAt:   time.Now(),
 		}
 
-		if _, err = tx.NewInsert().Model(user).Exec(ctx); err != nil {
+		users = append(users, user)
+	}
+
+	if len(users) > 0 {
+		_, err = tx.NewInsert().Model(&users).Exec(ctx)
+		if err != nil {
 			return err
 		}
 	}
