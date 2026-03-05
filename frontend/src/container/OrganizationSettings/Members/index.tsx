@@ -1,8 +1,13 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { Button, Modal, Space, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import {
+	Button,
+	Modal,
+	Space,
+	TableColumnsType as ColumnsType,
+	Typography,
+} from 'antd';
 import getAll from 'api/v1/user/get';
 import deleteUser from 'api/v1/user/id/delete';
 import update from 'api/v1/user/id/update';
