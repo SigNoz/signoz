@@ -116,6 +116,7 @@ export function getNextZoomOutRange(
 
 	let newStartMs: number;
 	let newEndMs: number;
+	let preset: Time | CustomTimeType | null = null;
 
 	if (computedEndMs <= nowMs) {
 		// Phase 1: center-anchored
@@ -125,9 +126,8 @@ export function getNextZoomOutRange(
 		// Phase 2: end-anchored at now
 		newStartMs = nowMs - newDurationMs;
 		newEndMs = nowMs;
+		preset = PRESET_FOR_DURATION_MS[newDurationMs] ?? null;
 	}
-
-	const preset = PRESET_FOR_DURATION_MS[newDurationMs] ?? null;
 
 	return {
 		range: [Math.round(newStartMs), Math.round(newEndMs)],

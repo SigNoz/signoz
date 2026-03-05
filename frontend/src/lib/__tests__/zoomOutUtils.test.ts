@@ -73,7 +73,7 @@ describe('zoomOutUtils', () => {
 			const result = getNextZoomOutRange(start15m, end15m) as ZoomOutResult;
 
 			expect(result).not.toBeNull();
-			expect(result.preset).toBe('45m');
+			expect(result.preset).toBeNull();
 			const [newStart, newEnd] = result.range;
 			expect(newEnd - newStart).toBe(45 * MS_PER_MIN);
 			const newCenter = (newStart + newEnd) / 2;
