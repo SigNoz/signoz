@@ -24,6 +24,8 @@ import update from 'api/v1/user/id/update';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
+import { INVITE_PREFIX, MemberStatus } from 'container/MembersSettings/utils';
+import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
 
@@ -34,12 +36,6 @@ export interface EditMemberDrawerProps {
 	open: boolean;
 	onClose: () => void;
 	onSuccess: () => void;
-}
-
-const INVITE_PREFIX = 'invite-';
-
-function formatRoleLabel(role: string): string {
-	return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -61,14 +57,14 @@ function EditMemberDrawer({
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
 
-	const isInvited = member?.status === 'Invited';
+	const isInvited = member?.status === MemberStatus.Invited;
 	// Invited member IDs are prefixed with 'invite-'; strip it to get the real invite ID
 	const inviteId =
 		isInvited && member ? member.id.slice(INVITE_PREFIX.length) : null;
 
 	useEffect(() => {
 		if (member) {
-			setDisplayName(member.name);
+			setDisplayName(member.name ?? '');
 			setSelectedRole(member.role);
 		}
 	}, [member]);
@@ -274,16 +270,16 @@ function EditMemberDrawer({
 							document.body
 						}
 					>
-						<Select.Option value="ADMIN">{formatRoleLabel('ADMIN')}</Select.Option>
-						<Select.Option value="EDITOR">{formatRoleLabel('EDITOR')}</Select.Option>
-						<Select.Option value="VIEWER">{formatRoleLabel('VIEWER')}</Select.Option>
+						<Select.Option value="ADMIN">{capitalize('ADMIN')}</Select.Option>
+						<Select.Option value="EDITOR">{capitalize('EDITOR')}</Select.Option>
+						<Select.Option value="VIEWER">{capitalize('VIEWER')}</Select.Option>
 					</Select>
 				</div>
 
 				<div className="edit-member-drawer__meta">
 					<div className="edit-member-drawer__meta-item">
 						<span className="edit-member-drawer__meta-label">Status</span>
-						{member?.status === 'Active' ? (
+						{member?.status === MemberStatus.Active ? (
 							<Badge color="forest" variant="outline">
 								ACTIVE
 							</Badge>

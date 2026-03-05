@@ -2,10 +2,10 @@ import { useCallback, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
-import { ChevronDown, Plus } from '@signozhq/icons';
+import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
-import { Dropdown, Typography } from 'antd';
+import { Dropdown } from 'antd';
 import getPendingInvites from 'api/v1/invite/get';
 import getAll from 'api/v1/user/get';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
@@ -14,11 +14,11 @@ import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
 
+import { FilterMode, INVITE_PREFIX, MemberStatus } from './utils';
+
 import './MembersSettings.styles.scss';
 
 const PAGE_SIZE = 20;
-
-type FilterMode = 'all' | 'invited';
 
 function MembersSettings(): JSX.Element {
 	const { org } = useAppContext();
@@ -29,7 +29,7 @@ function MembersSettings(): JSX.Element {
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
 	const [searchQuery, setSearchQuery] = useState('');
-	const [filterMode, setFilterMode] = useState<FilterMode>('all');
+	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
@@ -59,7 +59,7 @@ function MembersSettings(): JSX.Element {
 			name: user.displayName,
 			email: user.email,
 			role: user.role,
-			status: 'Active' as const,
+			status: MemberStatus.Active,
 			joinedOn: user.createdAt ? String(user.createdAt) : null,
 			updatedAt: (user as { updatedAt?: number }).updatedAt
 				? String((user as { updatedAt?: number }).updatedAt)
@@ -68,11 +68,11 @@ function MembersSettings(): JSX.Element {
 
 		const pendingInvites: MemberRow[] = (invitesData?.data ?? []).map(
 			(invite) => ({
-				id: `invite-${invite.id}`,
+				id: `${INVITE_PREFIX}${invite.id}`,
 				name: invite.name ?? '',
 				email: invite.email,
 				role: invite.role,
-				status: 'Invited' as const,
+				status: MemberStatus.Invited,
 				joinedOn: invite.createdAt ? String(invite.createdAt) : null,
 				token: invite.token ?? null,
 			}),
@@ -84,15 +84,15 @@ function MembersSettings(): JSX.Element {
 	const filteredMembers = useMemo((): MemberRow[] => {
 		let result = allMembers;
 
-		if (filterMode === 'invited') {
-			result = result.filter((m) => m.status === 'Invited');
+		if (filterMode === FilterMode.Invited) {
+			result = result.filter((m) => m.status === MemberStatus.Invited);
 		}
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
 				(m) =>
-					m.name.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
+					m?.name?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
 			);
 		}
 
@@ -117,39 +117,35 @@ function MembersSettings(): JSX.Element {
 
 	const filterMenuItems: MenuProps['items'] = [
 		{
-			key: 'all',
+			key: FilterMode.All,
 			label: (
 				<div className="members-filter-option">
 					<span>All members ⎯ {totalCount}</span>
-					{filterMode === 'all' && (
-						<span className="members-filter-option__check">✓</span>
-					)}
+					{filterMode === FilterMode.All && <Check size={14} />}
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode('all');
+				setFilterMode(FilterMode.All);
 				setPage(1);
 			},
 		},
 		{
-			key: 'invited',
+			key: FilterMode.Invited,
 			label: (
 				<div className="members-filter-option">
 					<span>Pending invites ⎯ {pendingCount}</span>
-					{filterMode === 'invited' && (
-						<span className="members-filter-option__check">✓</span>
-					)}
+					{filterMode === FilterMode.Invited && <Check size={14} />}
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode('invited');
+				setFilterMode(FilterMode.Invited);
 				setPage(1);
 			},
 		},
 	];
 
 	const filterLabel =
-		filterMode === 'all'
+		filterMode === FilterMode.All
 			? `All members ⎯ ${totalCount}`
 			: `Pending invites ⎯ ${pendingCount}`;
 
@@ -176,15 +172,12 @@ function MembersSettings(): JSX.Element {
 		<>
 			<div className="members-settings">
 				<div className="members-settings__header">
-					<Typography.Title level={5} className="members-settings__title">
-						Members
-					</Typography.Title>
-					<Typography.Text className="members-settings__subtitle">
+					<h1 className="members-settings__title">Members</h1>
+					<p className="members-settings__subtitle">
 						Overview of people added to this workspace.
-					</Typography.Text>
+					</p>
 				</div>
 
-				{/* Controls row */}
 				<div className="members-settings__controls">
 					<Dropdown
 						menu={{ items: filterMenuItems }}

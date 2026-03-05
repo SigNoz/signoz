@@ -1,13 +1,14 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
+import { Style } from '@signozhq/design-tokens';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { Select, Typography } from 'antd';
+import { Select } from 'antd';
 import sendInvite from 'api/v1/invite/create';
 import { cloneDeep, debounce } from 'lodash-es';
-import { ChevronDown, CircleAlert, Plus, Trash2, X } from 'lucide-react';
 import { ROLES } from 'types/roles';
 import { v4 as uuid } from 'uuid';
 
@@ -217,7 +218,7 @@ function InviteMembersModal({
 			showCloseButton
 			width="wide"
 			className="invite-members-modal"
-			disableOutsideClick
+			disableOutsideClick={false}
 		>
 			<div className="invite-members-modal__content">
 				<div className="invite-members-modal__table">
@@ -239,9 +240,7 @@ function InviteMembersModal({
 											className="team-member-email-input"
 										/>
 										{emailValidity[row.id] === false && row.email.trim() !== '' && (
-											<Typography.Text className="email-error-message">
-												Invalid email address
-											</Typography.Text>
+											<span className="email-error-message">Invalid email address</span>
 										)}
 									</div>
 									<div className="team-member-cell role-cell">
@@ -265,7 +264,7 @@ function InviteMembersModal({
 										{rows.length > 1 && (
 											<Button
 												variant="ghost"
-												color="secondary"
+												color="destructive"
 												className="remove-team-member-button"
 												onClick={(): void => removeRow(row.id)}
 												aria-label="Remove row"
@@ -292,14 +291,13 @@ function InviteMembersModal({
 				)}
 			</div>
 
-			{/* Footer */}
 			<DialogFooter className="invite-members-modal__footer">
 				<Button
 					variant="dashed"
 					color="secondary"
 					size="sm"
 					className="add-another-member-button"
-					prefixIcon={<Plus size={12} />}
+					prefixIcon={<Plus size={12} color={Style.L1_FOREGROUND} />}
 					onClick={addRow}
 				>
 					Add another

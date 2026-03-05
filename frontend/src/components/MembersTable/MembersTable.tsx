@@ -3,6 +3,8 @@ import { Badge } from '@signozhq/badge';
 import { Pagination, Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { MemberStatus } from 'container/MembersSettings/utils';
+import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
 
@@ -10,10 +12,10 @@ import './MembersTable.styles.scss';
 
 export interface MemberRow {
 	id: string;
-	name: string;
+	name?: string;
 	email: string;
 	role: ROLES;
-	status: 'Active' | 'Invited';
+	status: MemberStatus;
 	joinedOn: string | null;
 	updatedAt?: string | null;
 	token?: string | null;
@@ -33,15 +35,11 @@ interface MembersTableProps {
 	) => void;
 }
 
-function formatRoleLabel(role: string): string {
-	return role.charAt(0).toUpperCase() + role.slice(1).toLowerCase();
-}
-
 function NameEmailCell({
 	name,
 	email,
 }: {
-	name: string;
+	name?: string;
 	email: string;
 }): JSX.Element {
 	return (
@@ -59,7 +57,7 @@ function NameEmailCell({
 }
 
 function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
-	if (status === 'Active') {
+	if (status === MemberStatus.Active) {
 		return (
 			<Badge color="forest" variant="outline">
 				ACTIVE
@@ -80,7 +78,13 @@ function MembersEmptyState({
 }): JSX.Element {
 	return (
 		<div className="members-empty-state">
-			<span className="members-empty-state__emoji">🧐</span>
+			<span
+				className="members-empty-state__emoji"
+				role="img"
+				aria-label="monocle face"
+			>
+				🧐
+			</span>
 			{searchQuery ? (
 				<p className="members-empty-state__text">
 					No results for <strong>{searchQuery}</strong>
@@ -131,7 +135,7 @@ function MembersTable({
 			key: 'role',
 			width: 180,
 			render: (role: ROLES): JSX.Element => (
-				<Badge color="vanilla">{formatRoleLabel(role)}</Badge>
+				<Badge color="vanilla">{capitalize(role)}</Badge>
 			),
 		},
 

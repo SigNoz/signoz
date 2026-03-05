@@ -1,73 +1,79 @@
 .members-settings {
 	display: flex;
 	flex-direction: column;
-	gap: 16px;
-	padding: 16px 8px 24px 16px;
+	gap: var(--spacing-8);
+	padding: var(--padding-4) var(--padding-2) var(--padding-6) var(--padding-4);
 	height: 100%;
-}
 
-.members-settings__header {
-	display: flex;
-	flex-direction: column;
-	gap: 4px;
-
-	.ant-typography {
-		margin-bottom: 0 !important;
+	&__header {
+		display: flex;
+		flex-direction: column;
+		gap: var(--spacing-2);
 	}
-}
 
-.members-settings__title {
-	font-size: 18px !important;
-	font-weight: 500 !important;
-	color: var(--vanilla-100) !important;
-	letter-spacing: -0.09px;
-	line-height: 28px !important;
-	margin: 0 !important;
-}
+	&__title {
+		font-size: var(--label-large-500-font-size);
+		font-weight: var(--label-large-500-font-weight);
+		color: var(--text-base-white);
+		letter-spacing: -0.09px;
+		line-height: var(--line-height-normal);
+		margin: 0;
+	}
 
-.members-settings__subtitle {
-	font-size: 14px;
-	color: var(--vanilla-400);
-	letter-spacing: -0.07px;
-	line-height: 20px;
-}
+	&__subtitle {
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		color: var(--foreground);
+		letter-spacing: -0.07px;
+		line-height: var(--paragraph-base-400-line-height);
+		margin: 0;
+	}
 
-.members-settings__controls {
-	display: flex;
-	align-items: center;
-	gap: 8px;
+	&__controls {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-4);
+	}
+
+	&__search {
+		flex: 1;
+		min-width: 0;
+	}
 }
 
 .members-filter-trigger {
 	display: flex;
 	align-items: center;
-	gap: 4px;
+	gap: var(--spacing-2);
 	border: 1px solid var(--border);
 	border-radius: 2px;
 	background-color: var(--l2-background);
 
+	> span {
+		color: var(--foreground);
+	}
+
 	&__chevron {
 		flex-shrink: 0;
-		color: var(--card-foreground);
+		color: var(--foreground);
 	}
 }
 
 .members-filter-dropdown {
 	.ant-dropdown-menu {
-		background: rgba(18, 19, 23, 0.9);
-		border: 1px solid var(--slate-400);
+		padding: var(--padding-3) 14px;
 		border-radius: 4px;
+		border: 1px solid var(--border);
+		background: var(--l2-background);
 		backdrop-filter: blur(20px);
-		padding: 11px 13px;
-		box-shadow: 4px 10px 16px 0 rgba(0, 0, 0, 0.2);
 	}
 
 	.ant-dropdown-menu-item {
-		background: transparent;
-		padding: 4px 0;
+		background: transparent !important;
+		padding: var(--padding-1) 0 !important;
 
 		&:hover {
-			background: transparent;
+			background: transparent !important;
 		}
 	}
 }
@@ -76,21 +82,16 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 16px;
-	font-size: 14px;
-	color: var(--vanilla-100);
+	font-size: var(--paragraph-base-400-font-size);
+	font-weight: var(--paragraph-base-400-font-weight);
+	color: var(--foreground);
 	letter-spacing: 0.14px;
 	min-width: 170px;
 
-	&__check {
-		color: var(--vanilla-100);
-		font-size: 14px;
+	&:hover {
+		color: var(--card-foreground);
+		background: transparent;
 	}
-}
-
-.members-settings__search {
-	flex: 1;
-	min-width: 0;
 }
 
 .members-search-input {
@@ -100,6 +101,20 @@
 	border-color: var(--border);
 
 	&::placeholder {
-		color: var(--l2-foreground);
+		color: var(--l3-foreground);
+	}
+}
+
+.lightMode {
+	.members-settings {
+		&__title {
+			color: var(--text-base-black);
+		}
+	}
+
+	.members-filter-option {
+		&:hover {
+			color: var(--vanilla-100);
+		}
 	}
 }
