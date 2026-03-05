@@ -1,4 +1,4 @@
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 
 import { DataSetProps } from '../types';
 import Label from './Label';

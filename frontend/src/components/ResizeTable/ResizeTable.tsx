@@ -9,7 +9,7 @@ import {
 import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
 import { Table } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';

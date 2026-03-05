@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+import { Input as SignozInput } from '@signozhq/input';
 import { Col, Row, Select } from 'antd';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { find } from 'lodash-es';
@@ -34,6 +35,7 @@ function Retention({
 	text,
 	hide,
 	isS3Field = false,
+	compact = false,
 }: RetentionProps): JSX.Element | null {
 	// Filter available units based on type and field
 	const availableUnits = useMemo(
@@ -126,6 +128,27 @@ function Retention({
 		return null;
 	}
 
+	if (compact) {
+		return (
+			<div className="retention-input-group">
+				<SignozInput
+					type="number"
+					min={0}
+					value={selectedValue && selectedValue >= 0 ? selectedValue : ''}
+					disabled={isCloudUserVal}
+					onChange={(e): void => onChangeHandler(e, setSelectedValue)}
+				/>
+				<Select
+					value={selectedTimeUnit}
+					onChange={currentSelectedOption}
+					disabled={isCloudUserVal}
+				>
+					{menuItems}
+				</Select>
+			</div>
+		);
+	}
+
 	return (
 		<RetentionContainer>
 			<Row justify="space-between">
@@ -162,9 +185,11 @@ interface RetentionProps {
 	setRetentionValue: Dispatch<SetStateAction<number | null>>;
 	hide: boolean;
 	isS3Field?: boolean;
+	compact?: boolean;
 }
 
 Retention.defaultProps = {
 	isS3Field: false,
+	compact: false,
 };
 export default Retention;
