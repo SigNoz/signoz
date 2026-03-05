@@ -119,12 +119,14 @@ export const quickFiltersAttributeValuesResponse = {
 	status: 'success',
 	data: {
 		data: {
-			values: {
-				relatedValues: ['mq-kafka', 'otel-demo', 'otlp-python', 'sample-flask'],
-				stringValues: ['mq-kafka', 'otel-demo', 'otlp-python', 'sample-flask'],
-				numberValues: [],
-			},
-			complete: true,
+			stringAttributeValues: [
+				'mq-kafka',
+				'otel-demo',
+				'otlp-python',
+				'sample-flask',
+			],
+			numberAttributeValues: null,
+			boolAttributeValues: null,
 		},
 	},
 };

@@ -151,7 +151,7 @@ describe('CheckboxFilter - User Flows', () => {
 		expect(screen.getByText('Service Name')).toBeInTheDocument();
 		await waitFor(() => {
 			// eslint-disable-next-line sonarjs/no-duplicate-string
-			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 
 		// User should see visual separator between checked and unchecked items
@@ -185,7 +185,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// Initially auto-opened due to active filters
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 
 		// User manually closes the filter
@@ -193,7 +193,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// User should see filter is now closed (respecting user preference)
 		expect(
-			screen.queryByPlaceholderText('Search values'),
+			screen.queryByPlaceholderText('Filter values'),
 		).not.toBeInTheDocument();
 
 		// User manually opens the filter again
@@ -201,7 +201,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// User should see filter is now open (respecting user preference)
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 	});
 
