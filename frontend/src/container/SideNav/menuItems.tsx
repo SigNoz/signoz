@@ -352,6 +352,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				itemKey: 'roles',
 			},
 			{
+				key: ROUTES.MEMBERS_SETTINGS,
+				label: 'Members',
+				icon: <Users size={16} />,
+				isEnabled: false,
+				itemKey: 'members',
+			},
+			{
 				key: ROUTES.API_KEYS,
 				label: 'API Keys',
 				icon: <Key size={16} />,
@@ -373,10 +380,10 @@ export const settingsNavSections: SettingsNavSection[] = [
 		items: [
 			{
 				key: ROUTES.ORG_SETTINGS,
-				label: 'Members & SSO',
+				label: 'Single Sign-on',
 				icon: <User size={16} />,
 				isEnabled: false,
-				itemKey: 'members-sso',
+				itemKey: 'sso',
 			},
 		],
 	},
