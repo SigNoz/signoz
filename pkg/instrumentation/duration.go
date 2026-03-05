@@ -1,12 +1,19 @@
 package instrumentation
 
-import "time"
+import (
+	"math"
+	"time"
+)
 
 // DurationBucket returns a human-readable bucket label for the duration between fromMS and toMS.
 // fromMS and toMS are Unix timestamps (same unit as used by time.Unix).
 // Returns labels like "<1h", "<6h", "<24h", "<3D", "<1W", "<2W", "<1M", or ">=1M".
-func DurationBucket(fromMS, toMS uint64) string {
-	diff := time.Unix(0, int64(toMS)).Sub(time.Unix(0, int64(fromMS)))
+func DurationBucket(from, to uint64) string {
+	// make sure it's nanoseconds regardless of the unit
+	fromNS := toNanoSecs(from)
+	toNS := toNanoSecs(to)
+
+	diff := time.Unix(0, int64(toNS)).Sub(time.Unix(0, int64(fromNS)))
 
 	buckets := []struct {
 		d time.Duration
@@ -28,4 +35,20 @@ func DurationBucket(fromMS, toMS uint64) string {
 	}
 
 	return ">=1M"
+}
+
+// (todo): move this to a common package to be shared with querybuilder.
+// toNanoSecs takes epoch and returns it in ns
+func toNanoSecs(epoch uint64) uint64 {
+	temp := epoch
+	count := 0
+	if epoch == 0 {
+		count = 1
+	} else {
+		for epoch != 0 {
+			epoch /= 10
+			count++
+		}
+	}
+	return temp * uint64(math.Pow(10, float64(19-count)))
 }

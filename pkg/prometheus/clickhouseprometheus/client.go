@@ -141,9 +141,9 @@ func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Qu
 
 func (client *client) getFingerprintsFromClickhouseQuery(ctx context.Context, query string, args []any) (map[uint64][]prompb.Label, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":        telemetrytypes.SignalMetrics.StringValue(),
-		"module_name":   "clickhouse-prometheus",
-		"function_name": "getFingerprintsFromClickhouseQuery",
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.CodeNamespace:    "clickhouse-prometheus",
+		instrumentation.CodeFunctionName: "getFingerprintsFromClickhouseQuery",
 	})
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -258,9 +258,9 @@ func (client *client) querySamples(ctx context.Context, start int64, end int64, 
 
 func (client *client) queryRaw(ctx context.Context, query string, ts int64) (*prompb.QueryResult, error) {
 	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		"signal":        telemetrytypes.SignalMetrics.StringValue(),
-		"module_name":   "clickhouse-prometheus",
-		"function_name": "queryRaw",
+		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.CodeNamespace:    "clickhouse-prometheus",
+		instrumentation.CodeFunctionName: "queryRaw",
 	})
 
 	rows, err := client.telemetryStore.ClickhouseDB().Query(ctx, query)

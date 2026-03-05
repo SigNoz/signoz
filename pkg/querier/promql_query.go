@@ -189,10 +189,10 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
-	comment := ctxtypes.CommentFromContext(ctx)
-	comment.Set("signal", telemetrytypes.SignalMetrics.StringValue())
-	comment.Set("duration", instrumentation.DurationBucket(q.tr.From, q.tr.To))
-	ctx = ctxtypes.NewContextWithComment(ctx, comment)
+	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
+		instrumentation.TelemetrySignal: telemetrytypes.SignalMetrics.StringValue(),
+		instrumentation.QueryDuration:   instrumentation.DurationBucket(q.tr.From, q.tr.To),
+	})
 
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
