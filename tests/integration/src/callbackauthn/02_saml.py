@@ -4,6 +4,7 @@ from typing import Any, Callable, Dict, List
 
 import requests
 from selenium import webdriver
+from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import (
@@ -570,3 +571,123 @@ def test_saml_empty_name_fallback(
 
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
+
+
+def test_saml_sso_login_activates_pending_invite_user(
+    signoz: SigNoz,
+    idp: TestContainerIDP,  # pylint: disable=unused-argument
+    driver: webdriver.Chrome,
+    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """
+    Verify that an invited user (pending_invite) who logs in via SAML SSO is
+    auto-activated with the role from the invite, not the SSO default/group role.
+
+    1. Admin invites user as ADMIN
+    2. User exists in IDP with 'signoz-viewers' group (would normally get VIEWER)
+    3. SSO login activates the user with ADMIN role (invite role wins)
+    """
+    email = "sso-pending-invite@saml.integration.test"
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Invite user as ADMIN
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": email, "role": "ADMIN", "name": "SAML SSO Pending User"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    assert response.json()["data"]["status"] == "pending_invite"
+
+    # Create IDP user in viewer group — SSO would normally assign VIEWER
+    create_user_idp_with_groups(email, "password", True, ["signoz-viewers"])
+
+    perform_saml_login(
+        signoz, driver, get_session_context, idp_login, email, "password"
+    )
+
+    # User should be active with ADMIN role from invite, not VIEWER from SSO
+    found_user = get_user_by_email(signoz, admin_token, email)
+    assert found_user is not None
+    assert found_user["status"] == "active"
+    assert found_user["role"] == "ADMIN"
+
+
+def test_saml_sso_deleted_user_gets_new_user_on_login(
+    signoz: SigNoz,
+    idp: TestContainerIDP,  # pylint: disable=unused-argument
+    driver: webdriver.Chrome,
+    create_user_idp: Callable[[str, str, bool, str, str], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """
+    Verify the full deleted-user SAML SSO lifecycle:
+    1. Invite + activate a user (EDITOR)
+    2. Soft delete the user
+    3. SSO login attempt — user should remain deleted (blocked)
+    5. SSO login — new user should created
+    """
+    email = "sso-deleted-lifecycle@saml.integration.test"
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # --- Step 1: Invite and activate via password reset ---
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": email, "role": "EDITOR", "name": "SAML SSO Lifecycle User"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+    user_id = response.json()["data"]["id"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/getResetPasswordToken/{user_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": response.json()["data"]["token"]},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # --- Step 2: Soft delete via DB (feature flag may not be enabled) ---
+    with signoz.sqlstore.conn.connect() as conn:
+        conn.execute(
+            sql.text("UPDATE users SET status = 'deleted' WHERE id = :user_id"),
+            {"user_id": user_id},
+        )
+        conn.commit()
+
+    # --- Step 3: SSO login should be blocked for deleted user ---
+    create_user_idp(email, "password", True, "SAML", "Lifecycle")
+
+    perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
+
+    # Verify user is NOT reactivated — check via DB since API may filter deleted users
+    with signoz.sqlstore.conn.connect() as conn:
+        result = conn.execute(
+            sql.text("SELECT status FROM users WHERE id = :user_id"),
+            {"user_id": user_id},
+        )
+        row = result.fetchone()
+        assert row is not None
+        assert row[0] == "deleted"
+
+    # Verify a NEW active user was auto-provisioned via SSO
+    found_user = get_user_by_email(signoz, admin_token, email)
+    assert found_user is not None
+    assert found_user["status"] == "active"
+    assert found_user["id"] != user_id  # new user, different ID
+    assert found_user["role"] == "VIEWER"  # default role from SSO domain config
