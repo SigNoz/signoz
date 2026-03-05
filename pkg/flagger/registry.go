@@ -3,10 +3,9 @@ package flagger
 import "github.com/SigNoz/signoz/pkg/types/featuretypes"
 
 var (
-	FeatureUseSpanMetrics  = featuretypes.MustNewName("use_span_metrics")
-	FeatureKafkaSpanEval   = featuretypes.MustNewName("kafka_span_eval")
-	FeatureHideRootUser    = featuretypes.MustNewName("hide_root_user")
-	FeatureSoftDeleteUsers = featuretypes.MustNewName("soft_delete_users")
+	FeatureUseSpanMetrics = featuretypes.MustNewName("use_span_metrics")
+	FeatureKafkaSpanEval  = featuretypes.MustNewName("kafka_span_eval")
+	FeatureHideRootUser   = featuretypes.MustNewName("hide_root_user")
 )
 
 func MustNewRegistry() featuretypes.Registry {
@@ -32,14 +31,6 @@ func MustNewRegistry() featuretypes.Registry {
 			Kind:           featuretypes.KindBoolean,
 			Stage:          featuretypes.StageStable,
 			Description:    "Controls whether root admin user is hidden or not",
-			DefaultVariant: featuretypes.MustNewName("disabled"),
-			Variants:       featuretypes.NewBooleanVariants(),
-		},
-		&featuretypes.Feature{
-			Name:           FeatureSoftDeleteUsers,
-			Kind:           featuretypes.KindBoolean,
-			Stage:          featuretypes.StageStable,
-			Description:    "Controls whether users are soft deleted or not",
 			DefaultVariant: featuretypes.MustNewName("disabled"),
 			Variants:       featuretypes.NewBooleanVariants(),
 		},

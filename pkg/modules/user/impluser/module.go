@@ -12,7 +12,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
@@ -20,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -36,11 +34,10 @@ type Module struct {
 	authz     authz.AuthZ
 	analytics analytics.Analytics
 	config    user.Config
-	flagger   flagger.Flagger
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, flagger flagger.Flagger) root.Module {
+func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:     store,
@@ -51,18 +48,87 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		analytics: analytics,
 		authz:     authz,
 		config:    config,
-		flagger:   flagger,
 	}
 }
 
+// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
+func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
+	// token in this case is the reset password token
+	resetPasswordToken, err := m.store.GetResetPasswordToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the factor password
+	factorPassword, err := m.store.GetPassword(ctx, resetPasswordToken.PasswordID)
+	if err != nil {
+		return nil, err
+	}
+
+	userID := valuer.MustNewUUID(factorPassword.UserID)
+
+	err = m.UpdatePasswordByResetPasswordToken(ctx, token, password)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the user
+	user, err := m.store.GetUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return user, nil
+}
+
+// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
+func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
+	// token in this case is the reset password token
+	resetPasswordToken, err := m.store.GetResetPasswordToken(ctx, token)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the factor password
+	factorPassword, err := m.store.GetPassword(ctx, resetPasswordToken.PasswordID)
+	if err != nil {
+		return nil, err
+	}
+
+	// get the user
+	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(factorPassword.UserID))
+	if err != nil {
+		return nil, err
+	}
+
+	// create a dummy invite obj for backward compatibility
+	invite := &types.Invite{
+		Identifiable: types.Identifiable{
+			ID: resetPasswordToken.PasswordID,
+		},
+		Name:  user.DisplayName,
+		Email: user.Email,
+		Token: resetPasswordToken.Token,
+		Role:  user.Role,
+		OrgID: user.OrgID,
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: user.CreatedAt,
+			UpdatedAt: user.UpdatedAt, // dummy
+		},
+	}
+
+	return invite, nil
+}
+
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.User, error) {
+func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
 	creator, err := m.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
 	invitedUsers := make([]*types.User, 0, len(bulkInvites.Invites))
+	var invites []*types.Invite // TODO(balanikaran) remove this and more to types.User as return
 
 	for _, invite := range bulkInvites.Invites {
 		// check and active user already exists with this email
@@ -136,9 +202,99 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
 		}
+
+		// TODO(balanikaran): deprecate this
+		invite := &types.Invite{
+			Identifiable: types.Identifiable{
+				ID: resetPasswordToken.PasswordID,
+			},
+			Name:  invitedUser.DisplayName,
+			Email: invitedUser.Email,
+			Token: resetPasswordToken.Token,
+			Role:  invitedUser.Role,
+			OrgID: invitedUser.OrgID,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: invitedUser.CreatedAt,
+				UpdatedAt: invitedUser.UpdatedAt, // dummy
+			},
+		}
+
+		invites = append(invites, invite)
 	}
 
-	return invitedUsers, nil
+	return invites, nil // TODO(balanikaran) move to types.User
+}
+
+// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
+func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
+	// find all the users with pending_invite status
+	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
+	if err != nil {
+		return nil, err
+	}
+
+	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
+
+	var invites []*types.Invite
+
+	for _, pUser := range pendingUsers {
+		// get the reset password token
+		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.ID)
+		if err != nil {
+			return nil, err
+		}
+
+		// create a dummy invite obj for backward compatibility
+		invite := &types.Invite{
+			Identifiable: types.Identifiable{
+				ID: resetPasswordToken.PasswordID,
+			},
+			Name:  pUser.DisplayName,
+			Email: pUser.Email,
+			Token: resetPasswordToken.Token,
+			Role:  pUser.Role,
+			OrgID: pUser.OrgID,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: pUser.CreatedAt,
+				UpdatedAt: pUser.UpdatedAt, // dummy
+			},
+		}
+
+		invites = append(invites, invite)
+	}
+
+	return invites, nil
+}
+
+// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
+func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
+	// the id in this case is the password id
+	// get the factor password
+	factorPassword, err := m.store.GetPassword(ctx, id)
+	if err != nil {
+		return err
+	}
+
+	// get the user
+	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(factorPassword.UserID))
+	if err != nil {
+		return err
+	}
+
+	// revoke grants
+	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
+	err = m.authz.Revoke(ctx, user.OrgID, []string{roletypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}, authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil))
+	if err != nil {
+		return err
+	}
+
+	// hard delete the user row
+	err = m.store.DeleteUser(ctx, user.OrgID.StringValue(), user.ID.StringValue())
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
@@ -270,23 +426,14 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	softDeleteUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureSoftDeleteUsers, evalCtx)
-
-	if softDeleteUsers {
-		user.UpdateStatus(types.UserStatusDeleted)
-		if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
-			return err
-		}
-	} else {
-		if err := module.store.DeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
-			return err
-		}
+	// for now we are only soft deleting users
+	user.UpdateStatus(types.UserStatusDeleted)
+	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+		return err
 	}
 
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
-		"deleted_by":     deletedBy,
-		"is_soft_delete": softDeleteUsers,
+		"deleted_by": deletedBy,
 	})
 
 	return nil
