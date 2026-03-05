@@ -30,7 +30,8 @@ export default function ChartWrapper({
 	onDestroy = noop,
 	children,
 	layoutChildren,
-	renderTooltip,
+	customTooltip,
+	pinnedTooltipElement,
 	'data-testid': testId,
 }: ChartProps): JSX.Element {
 	const plotInstanceRef = useRef<uPlot | null>(null);
@@ -53,12 +54,12 @@ export default function ChartWrapper({
 
 	const renderTooltipCallback = useCallback(
 		(args: TooltipRenderArgs): React.ReactNode => {
-			if (renderTooltip) {
-				return renderTooltip(args);
+			if (customTooltip) {
+				return customTooltip(args);
 			}
 			return null;
 		},
-		[renderTooltip],
+		[customTooltip],
 	);
 
 	return (
@@ -99,6 +100,7 @@ export default function ChartWrapper({
 								)}
 								syncKey={syncKey}
 								render={renderTooltipCallback}
+								pinnedTooltipElement={pinnedTooltipElement}
 							/>
 						)}
 					</UPlotChart>

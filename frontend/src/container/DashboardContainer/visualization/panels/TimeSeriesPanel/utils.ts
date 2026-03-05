@@ -66,7 +66,7 @@ export const prepareUPlotConfig = ({
 	widget: Widgets;
 	isDarkMode: boolean;
 	currentQuery: Query;
-	onClick: OnClickPluginOpts['onClick'];
+	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
 	apiResponse: MetricRangePayloadProps;
 	timezone: Timezone;
