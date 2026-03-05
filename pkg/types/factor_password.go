@@ -2,6 +2,7 @@ package types
 
 import (
 	"encoding/json"
+	"fmt"
 	"slices"
 	"time"
 	"unicode"
@@ -219,4 +220,8 @@ func comparePassword(hashedPassword string, password string) bool {
 
 func (r *ResetPasswordToken) IsExpired() bool {
 	return r.ExpiresAt.Before(time.Now())
+}
+
+func FactorPasswordResetLink(frontendBaseUrl string, token string) string {
+	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, token)
 }
