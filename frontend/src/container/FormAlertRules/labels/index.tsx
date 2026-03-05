@@ -4,6 +4,7 @@ import {
 	CloseCircleFilled,
 	ExclamationCircleOutlined,
 } from '@ant-design/icons';
+// eslint-disable-next-line no-restricted-imports
 import { useMachine } from '@xstate/react';
 import { Button, Input, message, Modal } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';

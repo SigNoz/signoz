@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable react/display-name */
 import { jest } from '@jest/globals';
 import { fireEvent, waitFor } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -28,14 +27,14 @@ import { QueryBuilderV2 } from '../../QueryBuilderV2';
 jest.mock(
 	'../QueryAggregation/QueryAggregation',
 	() =>
-		function () {
+		function QueryAggregation() {
 			return <div>QueryAggregation</div>;
 		},
 );
 jest.mock(
 	'../MerticsAggregateSection/MetricsAggregateSection',
 	() =>
-		function () {
+		function MetricsAggregateSection() {
 			return <div>MetricsAggregateSection</div>;
 		},
 );

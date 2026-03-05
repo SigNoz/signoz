@@ -1,4 +1,3 @@
-/* eslint-disable jsx-a11y/img-redundant-alt */
 import { useCallback, useRef, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Typography } from 'antd';

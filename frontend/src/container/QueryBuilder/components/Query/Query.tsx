@@ -24,6 +24,7 @@ import {
 	AggregatorFilter,
 	GroupByFilter,
 	HavingFilter,
+	MetricNameSelector,
 	OperatorsSelect,
 	OrderByFilter,
 	ReduceToFilter,
@@ -45,7 +46,6 @@ import { QueryProps } from './Query.interfaces';
 
 import './Query.styles.scss';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 export const Query = memo(function Query({
 	index,
 	queryVariant,
@@ -404,7 +404,7 @@ export const Query = memo(function Query({
 										)}
 
 										<Col flex="auto">
-											<AggregatorFilter
+											<MetricNameSelector
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>

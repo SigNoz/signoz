@@ -1,4 +1,4 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -37,7 +37,6 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	return undefined;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const omitIdFromQuery = (query: Query | null): any => ({
 	...query,
 	builder: {

@@ -29,10 +29,6 @@ import type {
 	UpdateAuthDomainPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint lists all auth domains
  * @summary List all auth domains

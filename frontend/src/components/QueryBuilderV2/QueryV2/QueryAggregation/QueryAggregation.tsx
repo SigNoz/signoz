@@ -26,7 +26,6 @@ function QueryAggregationOptions({
 	queryData: IBuilderQuery | IBuilderTraceOperator;
 }): JSX.Element {
 	const showAggregationInterval = useMemo(() => {
-		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
 		if (panelType === PANEL_TYPES.VALUE) {
 			return false;
 		}

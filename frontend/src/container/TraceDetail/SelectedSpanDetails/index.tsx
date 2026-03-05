@@ -1,4 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
 import { Button, Modal, Row, Tabs, Tooltip, Typography } from 'antd';

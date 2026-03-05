@@ -4,6 +4,7 @@ import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useTimezone } from 'providers/Timezone';
 
 import { TooltipProps } from '../types';
 
@@ -22,6 +23,14 @@ export default function Tooltip({
 	const isDarkMode = useIsDarkMode();
 	const [listHeight, setListHeight] = useState(0);
 	const tooltipContent = content ?? [];
+	const { timezone: userTimezone } = useTimezone();
+
+	const resolvedTimezone = useMemo(() => {
+		if (!timezone) {
+			return userTimezone.value;
+		}
+		return timezone.value;
+	}, [timezone, userTimezone]);
 
 	const headerTitle = useMemo(() => {
 		if (!showTooltipHeader) {
@@ -33,10 +42,10 @@ export default function Tooltip({
 			return null;
 		}
 		return dayjs(data[0][cursorIdx] * 1000)
-			.tz(timezone)
+			.tz(resolvedTimezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 	}, [
-		timezone,
+		resolvedTimezone,
 		uPlotInstance.data,
 		uPlotInstance.cursor.idx,
 		showTooltipHeader,

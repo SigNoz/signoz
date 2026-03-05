@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { CheckCircleFilled } from '@ant-design/icons';
@@ -11,7 +10,6 @@ import {
 	startCompletion,
 } from '@codemirror/autocomplete';
 import { javascript } from '@codemirror/lang-javascript';
-import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { copilot } from '@uiw/codemirror-theme-copilot';
 import { githubLight } from '@uiw/codemirror-theme-github';
@@ -86,6 +84,7 @@ interface QuerySearchProps {
 	signalSource?: string;
 	hardcodedAttributeKeys?: QueryKeyDataSuggestionsProps[];
 	onRun?: (query: string) => void;
+	showFilterSuggestionsWithoutMetric?: boolean;
 }
 
 function QuerySearch({
@@ -96,6 +95,7 @@ function QuerySearch({
 	onRun,
 	signalSource,
 	hardcodedAttributeKeys,
+	showFilterSuggestionsWithoutMetric,
 }: QuerySearchProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const [valueSuggestions, setValueSuggestions] = useState<any[]>([]);
@@ -252,7 +252,8 @@ function QuerySearch({
 		async (searchText?: string): Promise<void> => {
 			if (
 				dataSource === DataSource.METRICS &&
-				!queryData.aggregateAttribute?.key
+				!queryData.aggregateAttribute?.key &&
+				!showFilterSuggestionsWithoutMetric
 			) {
 				setKeySuggestions([]);
 				return;
@@ -271,7 +272,6 @@ function QuerySearch({
 				metricName: debouncedMetricName ?? undefined,
 				signalSource: signalSource as 'meter' | '',
 			});
-
 			if (response.data.data) {
 				const { keys } = response.data.data;
 				const options = generateOptions(keys);
@@ -301,6 +301,7 @@ function QuerySearch({
 			queryData.aggregateAttribute?.key,
 			signalSource,
 			hardcodedAttributeKeys,
+			showFilterSuggestionsWithoutMetric,
 		],
 	);
 
@@ -389,7 +390,6 @@ function QuerySearch({
 
 	// Use callback to prevent dependency changes on each render
 	const fetchValueSuggestions = useCallback(
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		async ({
 			key,
 			searchText,
@@ -431,6 +431,7 @@ function QuerySearch({
 			}
 
 			const sanitizedSearchText = searchText ? searchText?.trim() : '';
+			const existingQuery = queryData.filter?.expression || '';
 
 			try {
 				const response = await getValueSuggestions({
@@ -439,9 +440,9 @@ function QuerySearch({
 					signal: dataSource,
 					signalSource: signalSource as 'meter' | '',
 					metricName: debouncedMetricName ?? undefined,
-				});
+					existingQuery,
+				}); // Skip updates if component unmounted or key changed
 
-				// Skip updates if component unmounted or key changed
 				if (
 					!isMountedRef.current ||
 					lastKeyRef.current !== key ||
@@ -453,7 +454,9 @@ function QuerySearch({
 				// Process the response data
 				const responseData = response.data as any;
 				const values = responseData.data?.values || {};
-				const stringValues = values.stringValues || [];
+				const relatedValues = values.relatedValues || [];
+				const stringValues =
+					relatedValues.length > 0 ? relatedValues : values.stringValues || [];
 				const numberValues = values.numberValues || [];
 
 				// Generate options from string values - explicitly handle empty strings
@@ -528,11 +531,12 @@ function QuerySearch({
 		},
 		[
 			activeKey,
-			dataSource,
 			isLoadingSuggestions,
-			debouncedMetricName,
-			signalSource,
+			queryData.filter?.expression,
 			toggleSuggestions,
+			dataSource,
+			signalSource,
+			debouncedMetricName,
 		],
 	);
 
@@ -564,15 +568,7 @@ function QuerySearch({
 		const lastPos = lastPosRef.current;
 
 		if (newPos.line !== lastPos.line || newPos.ch !== lastPos.ch) {
-			setCursorPos((lastPos) => {
-				if (newPos.ch !== lastPos.ch && newPos.ch === 0) {
-					Sentry.captureEvent({
-						message: `Cursor jumped to start of line from ${lastPos.ch} to ${newPos.ch}`,
-						level: 'warning',
-					});
-				}
-				return newPos;
-			});
+			setCursorPos(newPos);
 			lastPosRef.current = newPos;
 
 			if (doc) {
@@ -676,7 +672,6 @@ function QuerySearch({
 	};
 
 	// Enhanced myCompletions function to better use context including query pairs
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	function autoSuggestions(context: CompletionContext): CompletionResult | null {
 		// This matches words before the cursor position
 		// eslint-disable-next-line no-useless-escape
@@ -1094,7 +1089,6 @@ function QuerySearch({
 				!(isLoadingSuggestions && lastKeyRef.current === keyName);
 
 			if (shouldFetch) {
-				// eslint-disable-next-line sonarjs/no-identical-functions
 				debouncedFetchValueSuggestions({
 					key: keyName,
 					searchText,
@@ -1249,19 +1243,17 @@ function QuerySearch({
 		if (!queryContext) {
 			return;
 		}
-		// Trigger suggestions based on context
-		if (editorRef.current) {
+		// Only trigger suggestions and fetch if editor is focused (i.e., user is interacting)
+		if (isFocused && editorRef.current) {
 			toggleSuggestions(10);
-		}
-
-		// Handle value suggestions for value context
-		if (queryContext.isInValue) {
-			const { keyToken, currentToken } = queryContext;
-			const key = keyToken || currentToken;
-
-			// Only fetch if needed and if we have a valid key
-			if (key && key !== activeKey && !isLoadingSuggestions) {
-				fetchValueSuggestions({ key });
+			// Handle value suggestions for value context
+			if (queryContext.isInValue) {
+				const { keyToken, currentToken } = queryContext;
+				const key = keyToken || currentToken;
+				// Only fetch if needed and if we have a valid key
+				if (key && key !== activeKey && !isLoadingSuggestions) {
+					fetchValueSuggestions({ key });
+				}
 			}
 		}
 	}, [
@@ -1270,6 +1262,7 @@ function QuerySearch({
 		isLoadingSuggestions,
 		activeKey,
 		fetchValueSuggestions,
+		isFocused,
 	]);
 
 	const getTooltipContent = (): JSX.Element => (
@@ -1328,7 +1321,10 @@ function QuerySearch({
 			)}
 
 			<div className="query-where-clause-editor-container">
-				<Tooltip title={getTooltipContent()} placement="left">
+				<Tooltip
+					title={<div data-log-detail-ignore="true">{getTooltipContent()}</div>}
+					placement="left"
+				>
 					<a
 						href="https://signoz.io/docs/userguide/search-syntax/"
 						target="_blank"
@@ -1562,6 +1558,7 @@ QuerySearch.defaultProps = {
 	hardcodedAttributeKeys: undefined,
 	placeholder:
 		"Enter your filter query (e.g., http.status_code >= 500 AND service.name = 'frontend')",
+	showFilterSuggestionsWithoutMetric: false,
 };
 
 export default QuerySearch;

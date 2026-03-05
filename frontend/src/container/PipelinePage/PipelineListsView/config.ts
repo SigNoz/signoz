@@ -1,4 +1,7 @@
-import { ColumnGroupType, ColumnType } from 'antd/lib/table/interface';
+import {
+	TableColumnGroupType as ColumnGroupType,
+	TableColumnType as ColumnType,
+} from 'antd/';
 import {
 	HistoryData,
 	PipelineData,

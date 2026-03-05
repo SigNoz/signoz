@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 
 const filterColumns = <T>(
 	initialColumns: ColumnsType<T>,

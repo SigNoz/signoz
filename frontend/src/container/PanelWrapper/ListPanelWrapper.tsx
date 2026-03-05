@@ -12,7 +12,6 @@ function ListPanelWrapper({
 	const dataSource = widget.query.builder?.queryData[0]?.dataSource;
 
 	if (!setRequestData) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 

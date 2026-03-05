@@ -111,11 +111,9 @@ function Panel({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
 	const onDragSelect = useCallback((_start: number, _end: number): void => {
 		// Handle drag select if needed - no-op for public dashboards
 	}, []);

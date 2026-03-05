@@ -1,5 +1,6 @@
 // utils
 import { useCallback, useLayoutEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import get from 'api/browser/localstorage/get';
 import { LOCALSTORAGE } from 'constants/localStorage';

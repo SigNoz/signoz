@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
@@ -11,7 +12,7 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
@@ -143,7 +144,6 @@ function HostMetricsDetails({
 				page: InfraMonitoringEvents.DetailedPage,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [host]);
 
 	useEffect(() => {
@@ -207,7 +207,6 @@ function HostMetricsDetails({
 				page: InfraMonitoringEvents.DetailedPage,
 			});
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
 	);
 
@@ -490,7 +489,6 @@ function HostMetricsDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

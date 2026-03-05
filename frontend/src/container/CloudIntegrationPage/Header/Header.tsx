@@ -1,5 +1,5 @@
 import { Link } from 'react-router-dom';
-import Breadcrumb from 'antd/es/breadcrumb';
+import { Breadcrumb } from 'antd';
 import ROUTES from 'constants/routes';
 import { Blocks, LifeBuoy } from 'lucide-react';
 

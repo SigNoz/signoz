@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { ILog } from 'types/api/logs/log';
 
 import { getLogIndicatorType, getLogIndicatorTypeForTable } from './utils';

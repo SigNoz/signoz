@@ -1,6 +1,7 @@
 import api from 'api';
 import { IResourceAttribute } from 'hooks/useResourceAttribute/types';
 import { convertRawQueriesToTraceSelectedTags } from 'hooks/useResourceAttribute/utils';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { GlobalTime } from 'types/actions/globalTime';
 

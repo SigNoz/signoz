@@ -164,7 +164,6 @@ export function buildHistogramBuckets(
 
 	const buckets = [...bucketMap.values()];
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	sortBuckets && buckets.sort((a, b) => sortBuckets(a.value, b.value));
 
 	const bucketValues = Array(buckets.length);

@@ -13,7 +13,6 @@ import {
 	DraftingCompass,
 	FileKey2,
 	Github,
-	Globe,
 	HardDrive,
 	Home,
 	Key,
@@ -75,7 +74,6 @@ export const helpSupportMenuItem = {
 
 export const shortcutMenuItem = {
 	key: ROUTES.SHORTCUTS,
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	label: 'Keyboard Shortcuts',
 	icon: <Layers2 size={16} />,
 };
@@ -327,13 +325,7 @@ export const settingsMenuItems: SidebarItem[] = [
 		isEnabled: false,
 		itemKey: 'members-sso',
 	},
-	{
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		label: 'Custom Domain',
-		icon: <Globe size={16} />,
-		isEnabled: false,
-		itemKey: 'custom-domain',
-	},
+
 	{
 		key: ROUTES.INTEGRATIONS,
 		label: 'Integrations',
