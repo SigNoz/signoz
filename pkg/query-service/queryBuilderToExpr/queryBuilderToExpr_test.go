@@ -205,42 +205,42 @@ func TestParseExpression(t *testing.T) {
 			Query: &qbtypes.Filter{
 				Expression: "attribute.key LIKE 'foo%'",
 			},
-			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && like(attributes["key"], "foo%")`,
+			Expr: `attributes["key"] != nil && like(string(attributes["key"]), "foo%")`,
 		},
 		{
 			Name: "NOT LIKE",
 			Query: &qbtypes.Filter{
 				Expression: "attribute.key NOT LIKE 'foo%'",
 			},
-			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && not like(attributes["key"], "foo%")`,
+			Expr: `attributes["key"] != nil && not like(string(attributes["key"]), "foo%")`,
 		},
 		{
 			Name: "ILIKE",
 			Query: &qbtypes.Filter{
 				Expression: "attribute.key ILIKE 'FOO%'",
 			},
-			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && ilike(attributes["key"], "FOO%")`,
+			Expr: `attributes["key"] != nil && ilike(string(attributes["key"]), "FOO%")`,
 		},
 		{
 			Name: "NOT ILIKE",
 			Query: &qbtypes.Filter{
 				Expression: "attribute.key NOT ILIKE 'FOO%'",
 			},
-			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && not ilike(attributes["key"], "FOO%")`,
+			Expr: `attributes["key"] != nil && not ilike(string(attributes["key"]), "FOO%")`,
 		},
 		{
 			Name: "body LIKE",
 			Query: &qbtypes.Filter{
 				Expression: "body LIKE 'Server%'",
 			},
-			Expr: `body != nil && type(body) == "string" && like(body, "Server%")`,
+			Expr: `body != nil && like(string(body), "Server%")`,
 		},
 		{
 			Name: "body ILIKE",
 			Query: &qbtypes.Filter{
 				Expression: "body ILIKE 'server%'",
 			},
-			Expr: `body != nil && type(body) == "string" && ilike(body, "server%")`,
+			Expr: `body != nil && ilike(string(body), "server%")`,
 		},
 	}
 
@@ -581,7 +581,8 @@ func TestExpressionVSEntry(t *testing.T) {
 			Query: &qbtypes.Filter{
 				Expression: "body LIKE '%checkbody%'",
 			},
-			ExpectedMatches: []int{2, 9, 16},
+			// string(map) yields "map[msg:checkbody substring level:info]" so entry 18 matches
+			ExpectedMatches: []int{2, 9, 16, 18},
 		},
 		{
 			Name: "LIKE single-char wildcard (attribute)",
@@ -638,7 +639,7 @@ func TestExpressionVSEntry(t *testing.T) {
 			Query: &qbtypes.Filter{
 				Expression: "body ILIKE '%checkbody%'",
 			},
-			ExpectedMatches: []int{2, 9, 10, 16},
+			ExpectedMatches: []int{2, 9, 10, 16, 18},
 		},
 		{
 			Name: "NOT ILIKE case-insensitive exact (attribute)",
@@ -655,12 +656,12 @@ func TestExpressionVSEntry(t *testing.T) {
 			ExpectedMatches: []int{6, 7, 15},
 		},
 		{
-			Name: "LIKE numeric attribute excluded by type check",
+			Name: "LIKE numeric attribute converted via string()",
 			Query: &qbtypes.Filter{
 				Expression: "attribute.count LIKE '%5%'",
 			},
-			// count is int64; type check skips like(); no matches
-			ExpectedMatches: []int{},
+			// count int64(5) -> string "5" matches; count int64(10) -> "10" does not
+			ExpectedMatches: []int{4},
 		},
 		{
 			Name: "LIKE with multi filter (attribute + resource)",
