@@ -38,7 +38,6 @@ var logOperatorsToExpr = map[qbtypes.FilterOperator]string{
 	qbtypes.FilterOperatorNotIn:           "not in",
 	qbtypes.FilterOperatorExists:          "in",
 	qbtypes.FilterOperatorNotExists:       "not in",
-	// LIKE/NOT LIKE and ILIKE/NOT ILIKE are not supported yet
 }
 
 func getName(key *telemetrytypes.TelemetryFieldKey) (string, error) {
@@ -249,17 +248,32 @@ func (v *exprVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		op = qbtypes.FilterOperatorIn
 	case ctx.NotInClause() != nil:
 		op = qbtypes.FilterOperatorNotIn
-	case ctx.LIKE() != nil || ctx.ILIKE() != nil:
-		v.errors = append(v.errors, "LIKE/ILIKE operators are not supported in expr expressions")
-		return ""
+	case ctx.LIKE() != nil:
+		if notModifier {
+			op = qbtypes.FilterOperatorNotLike
+		} else {
+			op = qbtypes.FilterOperatorLike
+		}
+	case ctx.ILIKE() != nil:
+		if notModifier {
+			op = qbtypes.FilterOperatorNotILike
+		} else {
+			op = qbtypes.FilterOperatorILike
+		}
 	default:
 		v.errors = append(v.errors, fmt.Sprintf("unsupported comparison operator: %s", ctx.GetText()))
 		return ""
 	}
 
-	if _, ok := logOperatorsToExpr[op]; !ok {
-		v.errors = append(v.errors, fmt.Sprintf("operator not supported: %v", op))
-		return ""
+	switch op {
+	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorNotLike,
+		qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotILike:
+		// supported using functions
+	default:
+		if _, ok := logOperatorsToExpr[op]; !ok {
+			v.errors = append(v.errors, fmt.Sprintf("operator not supported: %v", op))
+			return ""
+		}
 	}
 
 	// Build the right-hand side value.
@@ -275,8 +289,9 @@ func (v *exprVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		value = v.buildValue(valuesCtx[0])
 	}
 
-	// Validate regex patterns eagerly.
-	if op == qbtypes.FilterOperatorRegexp || op == qbtypes.FilterOperatorNotRegexp {
+	// Validate patterns eagerly.
+	switch op {
+	case qbtypes.FilterOperatorRegexp, qbtypes.FilterOperatorNotRegexp:
 		str, ok := value.(string)
 		if !ok {
 			v.errors = append(v.errors, "value for regex operator must be a string")
@@ -284,6 +299,13 @@ func (v *exprVisitor) VisitComparison(ctx *grammar.ComparisonContext) any {
 		}
 		if _, err := regexp.Compile(str); err != nil {
 			v.errors = append(v.errors, "value for regex operator must be a valid regex")
+			return ""
+		}
+	case qbtypes.FilterOperatorLike, qbtypes.FilterOperatorNotLike,
+		qbtypes.FilterOperatorILike, qbtypes.FilterOperatorNotILike:
+		_, ok := value.(string)
+		if !ok {
+			v.errors = append(v.errors, "value for LIKE/NOT LIKE/ILIKE/ NOT ILIKE operator must be a string")
 			return ""
 		}
 	}
@@ -400,10 +422,19 @@ func buildFilterExpr(key *telemetrytypes.TelemetryFieldKey, op qbtypes.FilterOpe
 	fmtValue := exprFormattedValue(value)
 	var filter string
 
-	if op == qbtypes.FilterOperatorContains || op == qbtypes.FilterOperatorNotContains {
+	switch op {
+	case qbtypes.FilterOperatorContains, qbtypes.FilterOperatorNotContains:
 		// contains / not contains must be case-insensitive to match query-time behaviour.
 		filter = fmt.Sprintf("lower(%s) %s lower(%s)", keyName, logOperatorsToExpr[op], fmtValue)
-	} else {
+	case qbtypes.FilterOperatorLike:
+		filter = fmt.Sprintf(`type(%s) == "string" && like(%s, %s)`, keyName, keyName, fmtValue)
+	case qbtypes.FilterOperatorNotLike:
+		filter = fmt.Sprintf(`type(%s) == "string" && not like(%s, %s)`, keyName, keyName, fmtValue)
+	case qbtypes.FilterOperatorILike:
+		filter = fmt.Sprintf(`type(%s) == "string" && ilike(%s, %s)`, keyName, keyName, fmtValue)
+	case qbtypes.FilterOperatorNotILike:
+		filter = fmt.Sprintf(`type(%s) == "string" && not ilike(%s, %s)`, keyName, keyName, fmtValue)
+	default:
 		filter = fmt.Sprintf("%s %s %s", keyName, logOperatorsToExpr[op], fmtValue)
 	}
 

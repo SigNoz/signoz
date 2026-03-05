@@ -200,6 +200,48 @@ func TestParseExpression(t *testing.T) {
 			},
 			ExpectError: true,
 		},
+		{
+			Name: "LIKE",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key LIKE 'foo%'",
+			},
+			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && like(attributes["key"], "foo%")`,
+		},
+		{
+			Name: "NOT LIKE",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key NOT LIKE 'foo%'",
+			},
+			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && not like(attributes["key"], "foo%")`,
+		},
+		{
+			Name: "ILIKE",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key ILIKE 'FOO%'",
+			},
+			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && ilike(attributes["key"], "FOO%")`,
+		},
+		{
+			Name: "NOT ILIKE",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.key NOT ILIKE 'FOO%'",
+			},
+			Expr: `attributes["key"] != nil && type(attributes["key"]) == "string" && not ilike(attributes["key"], "FOO%")`,
+		},
+		{
+			Name: "body LIKE",
+			Query: &qbtypes.Filter{
+				Expression: "body LIKE 'Server%'",
+			},
+			Expr: `body != nil && type(body) == "string" && like(body, "Server%")`,
+		},
+		{
+			Name: "body ILIKE",
+			Query: &qbtypes.Filter{
+				Expression: "body ILIKE 'server%'",
+			},
+			Expr: `body != nil && type(body) == "string" && ilike(body, "server%")`,
+		},
 	}
 
 	for _, tt := range testCases {
@@ -511,6 +553,121 @@ func TestExpressionVSEntry(t *testing.T) {
 				Expression: "attribute.code = '404' and trace_id exists",
 			},
 			ExpectedMatches: []int{5},
+		},
+		// LIKE / NOT LIKE / ILIKE / NOT ILIKE – pattern and type-safety coverage
+		{
+			Name: "LIKE exact match (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level LIKE 'info'",
+			},
+			ExpectedMatches: []int{0, 2, 16, 20},
+		},
+		{
+			Name: "LIKE prefix match (body)",
+			Query: &qbtypes.Filter{
+				Expression: "body LIKE 'Server%'",
+			},
+			ExpectedMatches: []int{13},
+		},
+		{
+			Name: "LIKE suffix match (body)",
+			Query: &qbtypes.Filter{
+				Expression: "body LIKE '%8080'",
+			},
+			ExpectedMatches: []int{13},
+		},
+		{
+			Name: "LIKE substring with % (body)",
+			Query: &qbtypes.Filter{
+				Expression: "body LIKE '%checkbody%'",
+			},
+			ExpectedMatches: []int{2, 9, 16},
+		},
+		{
+			Name: "LIKE single-char wildcard (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level LIKE 'inf_'",
+			},
+			ExpectedMatches: []int{0, 2, 16, 20},
+		},
+		{
+			Name: "LIKE prefix on attribute",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.service LIKE 'au%'",
+			},
+			ExpectedMatches: []int{6, 7, 15},
+		},
+		{
+			Name: "LIKE pattern on resource",
+			Query: &qbtypes.Filter{
+				Expression: "resource.host LIKE 'node-1%'",
+			},
+			ExpectedMatches: []int{1, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19},
+		},
+		{
+			Name: "NOT LIKE exact match (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level NOT LIKE 'info'",
+			},
+			ExpectedMatches: []int{1, 3, 14, 15, 17},
+		},
+		{
+			Name: "NOT LIKE suffix pattern (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level NOT LIKE '%o'",
+			},
+			// level ending in 'o': info; not ending in 'o': error, debug, warn
+			ExpectedMatches: []int{1, 3, 14, 15, 17},
+		},
+		{
+			Name: "ILIKE case-insensitive exact (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level ILIKE 'INFO'",
+			},
+			ExpectedMatches: []int{0, 2, 16, 20},
+		},
+		{
+			Name: "ILIKE case-insensitive prefix (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.status ILIKE 'ACT%'",
+			},
+			ExpectedMatches: []int{11},
+		},
+		{
+			Name: "ILIKE case-insensitive substring (body)",
+			Query: &qbtypes.Filter{
+				Expression: "body ILIKE '%checkbody%'",
+			},
+			ExpectedMatches: []int{2, 9, 10, 16},
+		},
+		{
+			Name: "NOT ILIKE case-insensitive exact (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level NOT ILIKE 'INFO'",
+			},
+			ExpectedMatches: []int{1, 3, 14, 15, 17},
+		},
+		{
+			Name: "NOT ILIKE case-insensitive (attribute)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.service NOT ILIKE 'API'",
+			},
+			ExpectedMatches: []int{6, 7, 15},
+		},
+		{
+			Name: "LIKE numeric attribute excluded by type check",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.count LIKE '%5%'",
+			},
+			// count is int64; type check skips like(); no matches
+			ExpectedMatches: []int{},
+		},
+		{
+			Name: "LIKE with multi filter (attribute + resource)",
+			Query: &qbtypes.Filter{
+				Expression: "attribute.level LIKE 'info' and resource.env = 'prod'",
+			},
+			ExpectedMatches: []int{0},
 		},
 	}
 
