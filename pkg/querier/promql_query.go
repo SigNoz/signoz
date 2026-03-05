@@ -238,11 +238,21 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
+	excludeLabel := func(labelName string) bool {
+		if labelName == "__name__" {
+			return false
+		}
+		return strings.HasPrefix(labelName, "__") || labelName == "fingerprint"
+	}
+
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
 		v.Metric.Range(func(l labels.Label) {
+			if excludeLabel(l.Name) {
+				return
+			}
 			lbls = append(lbls, &qbv5.Label{
 				Key:   telemetrytypes.TelemetryFieldKey{Name: l.Name},
 				Value: l.Value,
