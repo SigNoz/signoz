@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useRef } from 'react';
 import type { SelectProps } from 'antd';
 import { Tag, Tooltip } from 'antd';
-import { BaseOptionType } from 'antd/es/select';
+import type { BaseOptionType } from 'antd/es/select';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';

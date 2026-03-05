@@ -245,6 +245,7 @@ export function getAppContextMock(
 			ee: 'Y',
 			setupCompleted: true,
 		},
+
 		...appContextOverrides,
 	};
 }

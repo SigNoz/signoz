@@ -1,5 +1,4 @@
-import { Typography } from 'antd';
-import { Empty } from 'antd/lib';
+import { Empty, Typography } from 'antd';
 
 interface EmptyMetricsSearchProps {
 	hasQueryResult?: boolean;
