@@ -177,30 +177,11 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			"invitee_role":  invitedUser.Role,
 		})
 
-		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
-		if frontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
-			continue
-		}
-
 		// generate reset password token
 		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, invitedUser.ID)
 		if err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
 			continue
-		}
-
-		resetLink := m.resetLink(frontendBaseUrl, resetPasswordToken.Token)
-
-		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
-		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
-
-		if err := m.emailing.SendHTML(ctx, invitedUser.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
-			"inviter_email": creator.Email,
-			"link":          resetLink,
-			"Expiry":        humanizedTokenLifetime,
-		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
 		}
 
 		// TODO(balanikaran): deprecate this
@@ -220,6 +201,25 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		}
 
 		invites = append(invites, invite)
+
+		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
+		if frontendBaseUrl == "" {
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
+			continue
+		}
+
+		resetLink := m.resetLink(frontendBaseUrl, resetPasswordToken.Token)
+
+		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
+		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
+
+		if err := m.emailing.SendHTML(ctx, invitedUser.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+			"inviter_email": creator.Email,
+			"link":          resetLink,
+			"Expiry":        humanizedTokenLifetime,
+		}); err != nil {
+			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
+		}
 	}
 
 	return invites, nil // TODO(balanikaran) move to types.User
@@ -569,6 +569,10 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
+	}
+
+	if user.Status == types.UserStatusDeleted {
+		return errors.Newf(errors.TypeNotFound, types.ErrCodeUserNotFound, "user with id %s does not exist", user.ID)
 	}
 
 	if err := password.Update(passwd); err != nil {

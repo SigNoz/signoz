@@ -132,6 +132,7 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("role = ?", role).
+		Where("status != ?", types.UserStatusDeleted.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

@@ -71,6 +71,11 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if len(invites) == 0 {
+		render.Error(rw, errors.New(errors.TypeInternal, errors.CodeInternal, "failed to create invite"))
+		return
+	}
+
 	render.Success(rw, http.StatusCreated, invites[0])
 }
 
