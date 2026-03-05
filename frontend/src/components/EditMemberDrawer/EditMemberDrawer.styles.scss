@@ -116,6 +116,16 @@
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-2);
+
+		[data-slot='badge'] {
+			padding: var(--padding-1) var(--padding-2);
+			align-items: center;
+			font-size: var(--uppercase-small-500-font-size);
+			font-weight: var(--uppercase-small-500-font-weight);
+			line-height: 100%;
+			letter-spacing: 0.44px;
+			text-transform: uppercase;
+		}
 	}
 
 	&__meta-label {
@@ -167,10 +177,10 @@
 		border: none;
 		cursor: pointer;
 		font-family: Inter, sans-serif;
-		font-size: 11px;
-		font-weight: 400;
-		line-height: 1;
-		letter-spacing: 0;
+		font-size: var(--label-small-400-font-size);
+		font-weight: var(--label-small-400-font-weight);
+		line-height: var(--label-small-400-line-height);
+		letter-spacing: var(--label-small-400-letter-spacing);
 		transition: opacity 0.15s ease;
 
 		&:disabled {
@@ -183,29 +193,38 @@
 		}
 
 		&--danger {
-			color: var(--bg-cherry-500, #e5484d);
+			color: var(--destructive);
 		}
 
 		&--warning {
-			color: var(--bg-amber-500, #ffcd56);
+			color: var(--accent-amber);
 		}
 	}
+}
 
-	&__delete-body {
-		font-size: 13px;
-		font-weight: 400;
-		color: var(--vanilla-400, #b0b2b4);
-		line-height: var(--line-height-20);
+.delete-dialog {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+
+	[data-slot='dialog-title'] {
+		color: var(--l1-foreground);
+	}
+
+	&__body {
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		color: var(--l2-foreground);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.065px;
 		margin: 0;
 
 		strong {
-			font-weight: 500;
-			color: var(--vanilla-100, #fff);
+			font-weight: var(--font-weight-medium);
+			color: var(--l1-foreground);
 		}
 	}
 
-	&__delete-footer {
+	&__footer {
 		display: flex;
 		justify-content: flex-end;
 		gap: var(--spacing-4);
@@ -214,6 +233,14 @@
 }
 
 .reset-link-dialog {
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
+
+	[data-slot='dialog-header'] {
+		border-color: var(--l2-border);
+		color: var(--l1-foreground);
+	}
+
 	[data-slot='dialog-description'] {
 		width: 510px;
 	}
@@ -225,10 +252,10 @@
 	}
 
 	&__description {
-		font-size: 13px;
-		font-weight: 400;
-		color: var(--vanilla-400, #b0b2b4);
-		line-height: var(--line-height-20);
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		color: var(--l2-foreground);
+		line-height: var(--paragraph-base-400-line-height);
 		letter-spacing: -0.065px;
 		margin: 0;
 		white-space: normal;
@@ -256,77 +283,22 @@
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
-		padding: 0 8px;
-		font-size: var(--font-size-sm);
-		font-weight: var(--font-weight-normal);
-		color: var(--foreground);
+		padding: 0 var(--padding-2);
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		color: var(--l2-foreground);
 		line-height: var(--line-height-18);
 		letter-spacing: -0.07px;
 	}
 
 	&__copy-btn {
 		flex-shrink: 0;
-		height: 32px !important;
-		border-radius: 0 2px 2px 0 !important;
-		border-top: none !important;
-		border-right: none !important;
-		border-bottom: none !important;
-		border-left: 1px solid var(--border) !important;
+		height: 32px;
+		border-radius: 0 2px 2px 0;
+		border-top: none;
+		border-right: none;
+		border-bottom: none;
+		border-left: 1px solid var(--border);
 		min-width: 64px;
-	}
-}
-
-.lightMode {
-	.edit-member-drawer {
-		&__label,
-		&__email-text,
-		&__meta-label {
-			color: #5a5f6e;
-		}
-
-		&__input {
-			background: #f5f5f7 !important;
-			border-color: #d9d9d9 !important;
-			color: #1d1f29 !important;
-		}
-
-		&__input-wrapper {
-			background: #f5f5f7;
-			border-color: #d9d9d9;
-		}
-
-		&__role-select {
-			.ant-select-selector {
-				background: #f5f5f7 !important;
-				border-color: #d9d9d9 !important;
-			}
-
-			.ant-select-selection-item {
-				color: #1d1f29;
-			}
-		}
-
-		&__footer {
-			background: #fff;
-			border-top-color: #e8e8e8;
-		}
-
-		&__footer-divider {
-			background: #e8e8e8;
-		}
-
-		&__footer-btn {
-			&--warning {
-				color: #b45309;
-			}
-		}
-
-		&__delete-body {
-			color: #5a5f6e;
-
-			strong {
-				color: #1d1f29;
-			}
-		}
 	}
 }

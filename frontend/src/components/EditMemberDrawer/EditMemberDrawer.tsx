@@ -305,37 +305,34 @@ function EditMemberDrawer({
 
 			<div className="edit-member-drawer__footer">
 				<div className="edit-member-drawer__footer-left">
-					<button
-						type="button"
+					<Button
 						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
 						onClick={(): void => setShowDeleteConfirm(true)}
 					>
 						<Trash2 size={12} />
 						{isInvited ? 'Cancel Invite' : 'Delete Member'}
-					</button>
+					</Button>
 
 					<div className="edit-member-drawer__footer-divider" />
 
 					{isInvited ? (
-						<button
-							type="button"
+						<Button
 							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
 							onClick={handleCopyInviteLink}
 							disabled={!member?.token}
 						>
 							<Link size={12} />
 							Copy Invite Link
-						</button>
+						</Button>
 					) : (
-						<button
-							type="button"
+						<Button
 							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
 							onClick={handleGenerateResetLink}
 							disabled={isGeneratingLink}
 						>
 							<RefreshCw size={12} />
 							{isGeneratingLink ? 'Generating...' : 'Generate Password Reset Link'}
-						</button>
+						</Button>
 					)}
 				</div>
 
@@ -360,11 +357,19 @@ function EditMemberDrawer({
 	);
 
 	const deleteDialogTitle = isInvited ? 'Cancel Invitation' : 'Delete Member';
-	const deleteDialogBody = isInvited
-		? `Are you sure you want to cancel the invitation for ${member?.email}? They will no longer be able to join the workspace using this invite.`
-		: `Are you sure you want to delete ${
-				member?.name || member?.email
-		  }? This will permanently remove their access to the workspace.`;
+	const deleteDialogBody = isInvited ? (
+		<>
+			Are you sure you want to cancel the invitation for{' '}
+			<strong>{member?.email}</strong>? They will no longer be able to join the
+			workspace using this invite.
+		</>
+	) : (
+		<>
+			Are you sure you want to delete{' '}
+			<strong>{member?.name || member?.email}</strong>? This will permanently
+			remove their access to the workspace.
+		</>
+	);
 	const deleteConfirmLabel = isInvited ? 'Cancel Invite' : 'Delete Member';
 
 	return (
@@ -432,13 +437,13 @@ function EditMemberDrawer({
 				}}
 				title={deleteDialogTitle}
 				width="narrow"
-				className="alert-dialog"
+				className="alert-dialog delete-dialog"
 				showCloseButton={false}
 				disableOutsideClick={false}
 			>
-				<p className="edit-member-drawer__delete-body">{deleteDialogBody}</p>
+				<p className="delete-dialog__body">{deleteDialogBody}</p>
 
-				<DialogFooter className="edit-member-drawer__delete-footer">
+				<DialogFooter className="delete-dialog__footer">
 					<Button
 						variant="solid"
 						color="secondary"
