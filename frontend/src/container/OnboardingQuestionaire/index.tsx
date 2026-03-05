@@ -12,7 +12,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
+import { InviteTeamMembersProps } from 'container/OrganizationSettings/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';

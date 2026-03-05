@@ -6,7 +6,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import APIError from 'types/api/error';
 
 import InviteTeamMembers from '../InviteTeamMembers';
-import { InviteMemberFormValues } from '../PendingInvitesContainer';
+import { InviteMemberFormValues } from '../utils';
 
 export interface InviteUserModalProps {
 	isInviteTeamMemberModalOpen: boolean;
