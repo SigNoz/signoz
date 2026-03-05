@@ -11,11 +11,6 @@ func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 		return nil
 	}
 
-	toRemove := make(map[string]struct{}, len(labelsToRemove))
-	for _, l := range labelsToRemove {
-		toRemove[l] = struct{}{}
-	}
-
 	switch res.Value.(type) {
 	case promql.Vector:
 		value := res.Value.(promql.Vector)
