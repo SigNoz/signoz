@@ -64,7 +64,7 @@ describe('zoomOutUtils', () => {
 			expect(getNextZoomOutRange(NOW_MS, NOW_MS - 1000)).toBeNull();
 		});
 
-		it('should return center-anchored range when new end does not exceed now (Phase 1)', () => {
+		it('should return center-anchored range and preset=null when new end does not exceed now (Phase 1)', () => {
 			// 15m range centered well before now so zoom to 45m keeps end <= now
 			// Center at now-30m: end = center + 22.5m = now - 7.5m <= now
 			const centerMs = NOW_MS - 30 * MS_PER_MIN;
@@ -73,7 +73,7 @@ describe('zoomOutUtils', () => {
 			const result = getNextZoomOutRange(start15m, end15m) as ZoomOutResult;
 
 			expect(result).not.toBeNull();
-			expect(result.preset).toBe('45m');
+			expect(result.preset).toBeNull(); // Phase 1: preserve center-anchored range, avoid GetMinMax "last X from now"
 			const [newStart, newEnd] = result.range;
 			expect(newEnd - newStart).toBe(45 * MS_PER_MIN);
 			const newCenter = (newStart + newEnd) / 2;

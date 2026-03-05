@@ -117,8 +117,9 @@ export function getNextZoomOutRange(
 	let newStartMs: number;
 	let newEndMs: number;
 
-	if (computedEndMs <= nowMs) {
-		// Phase 1: center-anchored
+	const isPhase1 = computedEndMs <= nowMs;
+	if (isPhase1) {
+		// Phase 1: center-anchored (historical range not ending at now)
 		newStartMs = centerMs - newDurationMs / 2;
 		newEndMs = computedEndMs;
 	} else {
@@ -127,7 +128,9 @@ export function getNextZoomOutRange(
 		newEndMs = nowMs;
 	}
 
-	const preset = PRESET_FOR_DURATION_MS[newDurationMs] ?? null;
+	// Phase 2 only: use preset so GetMinMax produces "last X from now".
+	// Phase 1: preset=null so the center-anchored range is preserved (GetMinMax would discard it).
+	const preset = isPhase1 ? null : PRESET_FOR_DURATION_MS[newDurationMs] ?? null;
 
 	return {
 		range: [Math.round(newStartMs), Math.round(newEndMs)],
