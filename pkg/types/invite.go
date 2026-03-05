@@ -14,17 +14,6 @@ var (
 	ErrInviteNotFound      = errors.MustNewCode("invite_not_found")
 )
 
-type PostableInvite struct {
-	Name            string       `json:"name"`
-	Email           valuer.Email `json:"email"`
-	Role            Role         `json:"role"`
-	FrontendBaseUrl string       `json:"frontendBaseUrl"`
-}
-
-type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
-}
-
 type GettableInvite = Invite
 
 type Invite struct {
@@ -55,6 +44,17 @@ type PostableAcceptInvite struct {
 
 	// reference URL to track where the register request is coming from
 	SourceURL string `json:"sourceUrl"`
+}
+
+type PostableInvite struct {
+	Name            string       `json:"name"`
+	Email           valuer.Email `json:"email"`
+	Role            Role         `json:"role"`
+	FrontendBaseUrl string       `json:"frontendBaseUrl"`
+}
+
+type PostableBulkInviteRequest struct {
+	Invites []PostableInvite `json:"invites"`
 }
 
 type GettableCreateInviteResponse struct {
