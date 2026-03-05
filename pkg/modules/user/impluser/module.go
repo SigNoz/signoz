@@ -567,6 +567,11 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
+	// handle deleted user
+	if user.Status == types.UserStatusDeleted {
+		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "deleted users cannot reset their password")
+	}
+
 	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
