@@ -403,7 +403,7 @@ describe('CheckboxFilter - User Flows', () => {
 
 		// Filter should auto-open because it has active filters (key match via prefix stripping)
 		await waitFor(() => {
-			expect(screen.getByPlaceholderText('Search values')).toBeInTheDocument();
+			expect(screen.getByPlaceholderText('Filter values')).toBeInTheDocument();
 		});
 
 		// otel-demo should be checked (filter uses resource.service.name IN [otel-demo])
