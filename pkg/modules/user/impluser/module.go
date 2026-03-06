@@ -50,7 +50,6 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 	}
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
 	// get the user by reset password token
 	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
@@ -64,25 +63,15 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 		return nil, err
 	}
 
+	// mark the user as active
+	user.Status = types.UserStatusActive
+
 	return user, nil
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
-	// token in this case is the reset password token
-	resetPasswordToken, err := m.store.GetResetPasswordToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	// get the factor password
-	factorPassword, err := m.store.GetPassword(ctx, resetPasswordToken.PasswordID)
-	if err != nil {
-		return nil, err
-	}
-
 	// get the user
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(factorPassword.UserID))
+	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -94,12 +83,12 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 		},
 		Name:  user.DisplayName,
 		Email: user.Email,
-		Token: resetPasswordToken.Token,
+		Token: token,
 		Role:  user.Role,
 		OrgID: user.OrgID,
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt, // dummy
+			UpdatedAt: user.UpdatedAt,
 		},
 	}
 
@@ -113,30 +102,40 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		return nil, err
 	}
 
-	invitedUsers := make([]*types.User, 0, len(bulkInvites.Invites))
-	var invites []*types.Invite // TODO(balanikaran) remove this and more to types.User as return
+	// validate all emails to be invited
+	emails := make([]string, 0, len(bulkInvites.Invites))
+	for _, invite := range bulkInvites.Invites {
+		emails = append(emails, invite.Email.StringValue())
+	}
+
+	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	if err != nil {
+		return nil, err
+	}
+
+	if len(users) > 0 {
+		if err := users[0].ErrIfRoot(); err != nil {
+			return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
+		}
+
+		if users[0].Status == types.UserStatusPendingInvite {
+			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email.StringValue())
+		}
+
+		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", users[0].Email.StringValue())
+	}
+
+	type userWithResetToken struct {
+		User               *types.User
+		ResetPasswordToken *types.ResetPasswordToken
+	}
+
+	newUsersWithResetToken := make([]*userWithResetToken, 0, len(bulkInvites.Invites))
+
+	var invites []*types.Invite
 
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, invite := range bulkInvites.Invites {
-			// check if an active user already exists with this email
-			existingUser, err := m.GetNonDeletedUserByEmailAndOrgID(ctx, invite.Email, orgID)
-			if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-				return err
-			}
-
-			if existingUser != nil {
-				if err := existingUser.ErrIfRoot(); err != nil {
-					return errors.WithAdditionalf(err, "Cannot send invite to root user")
-				}
-
-				// check if a pending invite already exists
-				if existingUser.Status == types.UserStatusPendingInvite {
-					return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email")
-				}
-
-				return errors.New(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with the same email")
-			}
-
 			role, err := types.NewRole(invite.Role.String())
 			if err != nil {
 				return err
@@ -154,72 +153,70 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 				return err
 			}
 
-			invitedUsers = append(invitedUsers, newUser)
-		}
+			// generate reset password token
+			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID)
+			if err != nil {
+				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+				return err
+			}
 
+			newUsersWithResetToken = append(newUsersWithResetToken, &userWithResetToken{
+				User:               newUser,
+				ResetPasswordToken: resetPasswordToken,
+			})
+		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 
 	// send password reset emails to all the invited users
-	for i, invitedUser := range invitedUsers {
+	for i, userWithToken := range newUsersWithResetToken {
 		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
-			"invitee_email": invitedUser.Email,
-			"invitee_role":  invitedUser.Role,
+			"invitee_email": userWithToken.User.Email,
+			"invitee_role":  userWithToken.User.Role,
 		})
 
-		// generate reset password token
-		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, invitedUser.ID)
-		if err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
-			continue
-		}
-
-		// TODO(balanikaran): deprecate this
 		invite := &types.Invite{
 			Identifiable: types.Identifiable{
-				ID: invitedUser.ID,
+				ID: userWithToken.User.ID,
 			},
-			Name:  invitedUser.DisplayName,
-			Email: invitedUser.Email,
-			Token: resetPasswordToken.Token,
-			Role:  invitedUser.Role,
-			OrgID: invitedUser.OrgID,
+			Name:  userWithToken.User.DisplayName,
+			Email: userWithToken.User.Email,
+			Token: userWithToken.ResetPasswordToken.Token,
+			Role:  userWithToken.User.Role,
+			OrgID: userWithToken.User.OrgID,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: invitedUser.CreatedAt,
-				UpdatedAt: invitedUser.UpdatedAt, // dummy
+				CreatedAt: userWithToken.User.CreatedAt,
+				UpdatedAt: userWithToken.User.UpdatedAt,
 			},
 		}
 
 		invites = append(invites, invite)
-		// TODO(balanikaran): deprecate till here
 
 		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
 		if frontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", userWithToken.User.Email)
 			continue
 		}
 
-		resetLink := types.FactorPasswordResetLink(frontendBaseUrl, resetPasswordToken.Token)
+		resetLink := userWithToken.ResetPasswordToken.FactorPasswordResetLink(frontendBaseUrl)
 
 		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
 		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
-		if err := m.emailing.SendHTML(ctx, invitedUser.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+		if err := m.emailing.SendHTML(ctx, userWithToken.User.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"inviter_email": creator.Email,
 			"link":          resetLink,
 			"Expiry":        humanizedTokenLifetime,
 		}); err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
 		}
-
 	}
 
-	return invites, nil // TODO(balanikaran) move to []*types.User (invitedUsers)
+	return invites, nil
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
 	// find all the users with pending_invite status
 	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
@@ -258,27 +255,6 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 	}
 
 	return invites, nil
-}
-
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
-func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	// the id in this case is the user id
-	// get the user
-	user, err := m.store.GetUser(ctx, id)
-	if err != nil {
-		return err
-	}
-
-	// only delete the user if it has pending status
-	if user.Status == types.UserStatusPendingInvite {
-		// soft delete the user
-		user.UpdateStatus(types.UserStatusDeleted)
-		if err := m.store.UpdateUser(ctx, valuer.MustNewUUID(orgID), user); err != nil {
-			return err
-		}
-	}
-
-	return nil
 }
 
 func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
@@ -516,7 +492,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return err
 	}
 
-	resetLink := types.FactorPasswordResetLink(frontendBaseURL, token.Token)
+	resetLink := token.FactorPasswordResetLink(frontendBaseURL)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
@@ -585,7 +561,9 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if user.Status == types.UserStatusPendingInvite {
-			user.UpdateStatus(types.UserStatusActive)
+			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+				return err
+			}
 			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
@@ -659,7 +637,7 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 		// for users logging through SSO flow but are having status as pending_invite
 		if existingUser.Status == types.UserStatusPendingInvite {
 			// respect the role coming from the SSO
-			existingUser.Role = user.Role
+			existingUser.Update("", user.Role)
 			// activate the user
 			if err = module.activatePendingUser(ctx, existingUser); err != nil {
 				return nil, err
@@ -742,12 +720,12 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 
 func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
-	counts, err := module.store.CountByOrgIDGroupedByStatus(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err == nil {
-		stats["user.count"] = counts[types.UserStatusActive.StringValue()] + counts[types.UserStatusDeleted.StringValue()] + counts[types.UserStatusPendingInvite.StringValue()]
-		stats["user.count.active"] = counts[types.UserStatusActive.StringValue()]
-		stats["user.count.deleted"] = counts[types.UserStatusDeleted.StringValue()]
-		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite.StringValue()]
+		stats["user.count"] = counts[types.UserStatusActive] + counts[types.UserStatusDeleted] + counts[types.UserStatusPendingInvite]
+		stats["user.count.active"] = counts[types.UserStatusActive]
+		stats["user.count.deleted"] = counts[types.UserStatusDeleted]
+		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite]
 	}
 
 	count, err := module.store.CountAPIKeyByOrgID(ctx, orgID)
@@ -816,7 +794,9 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 		return err
 	}
 
-	user.UpdateStatus(types.UserStatusActive)
+	if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+		return err
+	}
 	err = module.store.UpdateUser(ctx, user.OrgID, user)
 	if err != nil {
 		return err

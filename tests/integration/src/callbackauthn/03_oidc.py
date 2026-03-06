@@ -563,7 +563,6 @@ def test_oidc_sso_login_activates_pending_invite_user(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
-    user_id = response.json()["data"]["id"]
 
     # Create IDP user in viewer group — SSO would normally assign VIEWER
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
