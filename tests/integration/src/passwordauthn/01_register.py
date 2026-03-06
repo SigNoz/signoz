@@ -138,16 +138,7 @@ def test_invite_and_register(
     assert found_user["status"] == "pending_invite"
     assert found_user["role"] == "EDITOR"
 
-    # Get the reset password token through admin token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{found_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
+    reset_token = invited_user["token"]
 
     # Reset the password to complete the invite flow (activates the user and also grants authz)
     response = requests.post(
