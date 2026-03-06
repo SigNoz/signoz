@@ -104,7 +104,7 @@ func CommentFromHTTPRequest(req *http.Request) map[string]string {
 	return comments
 }
 
-// AddCommentsToContext returns a new context with all key-value pairs from comments merged into the Comment in the context.
+// AddCommentsToContext returns a new context with all key-value pairs merged into the Comment in the context.
 func NewContextWithCommentVals(ctx context.Context, vals map[string]string) context.Context {
 	comment := CommentFromContext(ctx)
 	comment.Merge(vals)
