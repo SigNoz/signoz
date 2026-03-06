@@ -137,7 +137,10 @@ export const deleteDowntimeHandler = ({
 
 export const createEditDowntimeSchedule = async (
 	props: DowntimeScheduleUpdatePayload,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<
+	| SuccessResponse<PayloadProps>
+	| ErrorResponse<{ code: string; message: string } | string>
+> => {
 	if (props.id) {
 		return updateDowntimeSchedule({ ...props });
 	}
