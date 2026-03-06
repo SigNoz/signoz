@@ -195,6 +195,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				display: 'flex',
 				flexDirection: 'column',
 				height: '100%',
+				padding: '15px',
 			}}
 		>
 			{tooltipElement}
