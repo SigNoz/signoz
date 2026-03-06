@@ -56,18 +56,10 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 		<div ref={ref as never} className="timeline-v3-container">
 			<svg
 				width={width}
-				height={timelineHeight}
+				height={timelineHeight * 2.5}
 				xmlns="http://www.w3.org/2000/svg"
 				overflow="visible"
 			>
-				<line
-					x1="0"
-					y1={timelineHeight}
-					x2={width}
-					y2={timelineHeight}
-					stroke={strokeColor}
-					strokeWidth="1"
-				/>
 				{intervals &&
 					intervals.length > 0 &&
 					intervals.map((interval, index) => (
@@ -79,17 +71,12 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 						>
 							<text
 								x={index === intervals.length - 1 ? -10 : 0}
-								y={2 * Math.floor(timelineHeight / 4)}
+								y={timelineHeight * 2}
 								fill={strokeColor}
 							>
 								{interval.label}
 							</text>
-							<line
-								y1={3 * Math.floor(timelineHeight / 4)}
-								y2={timelineHeight + 0.5}
-								stroke={strokeColor}
-								strokeWidth="1"
-							/>
+							<line y1={0} y2={timelineHeight} stroke={strokeColor} strokeWidth="1" />
 						</g>
 					))}
 			</svg>
