@@ -2,12 +2,15 @@
  * ESLint Configuration for SigNoz Frontend
  */
 module.exports = {
-	ignorePatterns: ['src/parser/*.ts', 'scripts/update-registry.js'],
+	ignorePatterns: [
+		'src/parser/*.ts',
+		'scripts/update-registry.js',
+		'scripts/generate-permissions-type.js',
+	],
 	env: {
 		browser: true,
 		es2021: true,
 		node: true,
-		'jest/globals': true,
 	},
 	extends: [
 		'eslint:recommended',
@@ -21,6 +24,7 @@ module.exports = {
 	parser: '@typescript-eslint/parser',
 	parserOptions: {
 		project: './tsconfig.json',
+		tsconfigRootDir: __dirname,
 		ecmaFeatures: {
 			jsx: true,
 		},
@@ -33,7 +37,7 @@ module.exports = {
 		'simple-import-sort', // Auto-sort imports
 		'react-hooks', // React Hooks rules
 		'prettier', // Code formatting
-		'jest', // Jest test rules
+		// 'jest', // TODO: Wait support on Biome to enable again
 		'jsx-a11y', // Accessibility rules
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity

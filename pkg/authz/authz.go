@@ -62,14 +62,17 @@ type AuthZ interface {
 	//  Lists all the roles for the organization filtered by name
 	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*roletypes.Role, error)
 
+	//  Lists all the roles for the organization filtered by ids
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*roletypes.Role, error)
+
 	// Grants a role to the subject based on role name.
-	Grant(context.Context, valuer.UUID, string, string) error
+	Grant(context.Context, valuer.UUID, []string, string) error
 
 	// Revokes a granted role from the subject based on role name.
-	Revoke(context.Context, valuer.UUID, string, string) error
+	Revoke(context.Context, valuer.UUID, []string, string) error
 
 	// Changes the granted role for the subject based on role name.
-	ModifyGrant(context.Context, valuer.UUID, string, string, string) error
+	ModifyGrant(context.Context, valuer.UUID, []string, []string, string) error
 
 	// Bootstrap the managed roles.
 	CreateManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error

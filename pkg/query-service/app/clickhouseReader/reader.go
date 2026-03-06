@@ -3541,6 +3541,45 @@ func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (
 	return count, nil
 }
 
+func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context, metricNames []string, hostNameAttr string, sinceUnixMilli int64) (map[string]bool, error) {
+	activeHosts := map[string]bool{}
+
+	query := fmt.Sprintf(
+		`SELECT DISTINCT attr_string_value
+		FROM %s.%s
+		WHERE metric_name IN @metricNames
+		  AND attr_name = @attrName
+		  AND last_reported_unix_milli >= @sinceUnixMilli`,
+		signozMetricDBName,
+		constants.SIGNOZ_METADATA_TABLENAME,
+	)
+
+	rows, err := r.db.Query(ctx, query,
+		clickhouse.Named("metricNames", metricNames),
+		clickhouse.Named("attrName", hostNameAttr),
+		clickhouse.Named("sinceUnixMilli", sinceUnixMilli),
+	)
+	if err != nil {
+		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error querying active hosts")
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var hostName string
+		if err := rows.Scan(&hostName); err != nil {
+			return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error scanning active host row")
+		}
+		if hostName != "" {
+			activeHosts[hostName] = true
+		}
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errorsV2.WrapInternalf(err, errorsV2.CodeInternal, "error iterating active host rows")
+	}
+
+	return activeHosts, nil
+}
+
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
