@@ -37,17 +37,7 @@ def test_reinvite_deleted_user(
     )
     assert response.status_code == HTTPStatus.CREATED
     invited_user = response.json()["data"]
-
-    # get the reset password token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
+    reset_token = invited_user["token"]
 
     # reset the password to make it active
     response = requests.post(
@@ -77,20 +67,12 @@ def test_reinvite_deleted_user(
     assert reinvited_user["role"] == "VIEWER" 
     assert reinvited_user["id"] != invited_user["id"] # confirms a new user was created
 
-    # Activate via reset password
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{reinvited_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
+    reinvited_user_reset_password_token = reinvited_user["token"]
+    
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "newPassword123Z$", "token": reset_token},
+        json={"password": "newPassword123Z$", "token": reinvited_user_reset_password_token},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT

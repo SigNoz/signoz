@@ -29,6 +29,7 @@ def test_duplicate_user_invite_rejected(
     )
     assert response.status_code == HTTPStatus.CREATED
     invited_user = response.json()["data"]
+    reset_token = invited_user["token"]
 
     # Invite the same email again — should fail
     response = requests.post(
@@ -39,17 +40,7 @@ def test_duplicate_user_invite_rejected(
     )
     assert response.status_code == HTTPStatus.CONFLICT
 
-    # Activate the user via reset password
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
-
+    # activate the user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
         json={"password": "password123Z$", "token": reset_token},
