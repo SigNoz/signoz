@@ -188,6 +188,58 @@ describe('TooltipPlugin', () => {
 			expect(container).not.toBeNull();
 			expect(container.parentElement).toBe(document.body);
 		});
+
+		it('moves tooltip portal root to fullscreen element and back on exit', async () => {
+			const config = createConfigMock();
+			let mockedFullscreenElement: Element | null = null;
+			const originalFullscreenElementDescriptor = Object.getOwnPropertyDescriptor(
+				Document.prototype,
+				'fullscreenElement',
+			);
+			Object.defineProperty(Document.prototype, 'fullscreenElement', {
+				configurable: true,
+				get: () => mockedFullscreenElement,
+			});
+
+			renderAndActivateHover(config);
+
+			const container = document.querySelector(
+				'.tooltip-plugin-container',
+			) as HTMLElement;
+			expect(container.parentElement).toBe(document.body);
+
+			const fullscreenRoot = document.createElement('div');
+			document.body.appendChild(fullscreenRoot);
+
+			act(() => {
+				mockedFullscreenElement = fullscreenRoot;
+				document.dispatchEvent(new Event('fullscreenchange'));
+			});
+
+			await waitFor(() => {
+				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+				expect(updatedContainer.parentElement).toBe(fullscreenRoot);
+			});
+
+			act(() => {
+				mockedFullscreenElement = null;
+				document.dispatchEvent(new Event('fullscreenchange'));
+			});
+
+			await waitFor(() => {
+				const updatedContainer = screen.getByTestId('tooltip-plugin-container');
+				expect(updatedContainer.parentElement).toBe(document.body);
+			});
+
+			if (originalFullscreenElementDescriptor) {
+				Object.defineProperty(
+					Document.prototype,
+					'fullscreenElement',
+					originalFullscreenElementDescriptor,
+				);
+			}
+			fullscreenRoot.remove();
+		});
 	});
 
 	// ---- Pin behaviour ----------------------------------------------------------

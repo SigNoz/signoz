@@ -1,4 +1,4 @@
-import { useLayoutEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import cx from 'classnames';
 import { getFocusedSeriesAtPosition } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -44,12 +44,14 @@ export default function TooltipPlugin({
 	canPinTooltip = false,
 }: TooltipPluginProps): JSX.Element | null {
 	const containerRef = useRef<HTMLDivElement>(null);
-	const portalRoot = useRef<HTMLElement>(document.body);
 	const rafId = useRef<number | null>(null);
 	const dismissTimeoutId = useRef<ReturnType<typeof setTimeout> | null>(null);
 	const layoutRef = useRef<TooltipLayoutInfo>();
 	const renderRef = useRef(render);
 	renderRef.current = render;
+	const [portalRoot, setPortalRoot] = useState<HTMLElement>(
+		(document.fullscreenElement as HTMLElement) ?? document.body,
+	);
 
 	// React-managed snapshot of what should be rendered. The controller
 	// owns the interaction state and calls `updateState` when a visible
@@ -389,6 +391,19 @@ export default function TooltipPlugin({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [config]);
 
+	const resolvePortalRoot = useCallback((): void => {
+		setPortalRoot((document.fullscreenElement as HTMLElement) ?? document.body);
+	}, []);
+
+	useLayoutEffect((): (() => void) => {
+		resolvePortalRoot();
+		document.addEventListener('fullscreenchange', resolvePortalRoot);
+
+		return (): void => {
+			document.removeEventListener('fullscreenchange', resolvePortalRoot);
+		};
+	}, [resolvePortalRoot]);
+
 	useLayoutEffect((): void => {
 		if (!hasPlot || !layoutRef.current) {
 			return;
@@ -449,6 +464,6 @@ export default function TooltipPlugin({
 		>
 			{tooltipBody}
 		</div>,
-		portalRoot.current,
+		portalRoot,
 	);
 }
