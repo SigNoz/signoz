@@ -352,7 +352,7 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(resetPasswordToken).
 		Exec(ctx)
@@ -385,7 +385,7 @@ func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID)
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(password).
 		Where("user_id = ?", userID).
@@ -401,7 +401,7 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(resetPasswordToken).
 		Where("password_id = ?", passwordID).
@@ -691,9 +691,9 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(&users).
-		Where("email IN (?)", emails).
-		Where("org_id = ?", bun.In(orgID)).
-		Where("status in (?)", statuses).
+		Where("email IN (?)", bun.In(emails)).
+		Where("org_id = ?", orgID).
+		Where("status in (?)", bun.In(statuses)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
