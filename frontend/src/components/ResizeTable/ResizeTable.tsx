@@ -29,15 +29,20 @@ function ResizeTable({
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
+	const onColumnWidthsChangeRef = useRef(onColumnWidthsChange);
 
 	const updateAllColumnWidths = useRef(
 		debounce((widthsConfig: Record<string, number>) => {
-			if (!onColumnWidthsChange) {
+			if (!onColumnWidthsChangeRef.current) {
 				return;
 			}
-			onColumnWidthsChange(widthsConfig);
+			onColumnWidthsChangeRef.current(widthsConfig);
 		}, 1000),
 	).current;
+
+	useEffect(() => {
+		onColumnWidthsChangeRef.current = onColumnWidthsChange;
+	}, [onColumnWidthsChange]);
 
 	const handleResize = useCallback(
 		(index: number) => (
