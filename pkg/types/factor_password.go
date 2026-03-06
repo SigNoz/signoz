@@ -222,6 +222,6 @@ func (r *ResetPasswordToken) IsExpired() bool {
 	return r.ExpiresAt.Before(time.Now())
 }
 
-func FactorPasswordResetLink(frontendBaseUrl string, token string) string {
-	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, token)
+func (r *ResetPasswordToken) FactorPasswordResetLink(frontendBaseUrl string) string {
+	return fmt.Sprintf("%s/password-reset?token=%s", frontendBaseUrl, r.Token)
 }

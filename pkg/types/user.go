@@ -127,9 +127,15 @@ func (u *User) Update(displayName string, role Role) {
 	u.UpdatedAt = time.Now()
 }
 
-func (u *User) UpdateStatus(status valuer.String) {
+func (u *User) UpdateStatus(status valuer.String) error {
+	if err := u.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
+	}
+
 	u.Status = status
 	u.UpdatedAt = time.Now()
+
+	return nil
 }
 
 // PromoteToRoot promotes the user to a root user with admin role.
@@ -215,6 +221,9 @@ type UserStore interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
 
+	// Get users for an org id using emails and statuses
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
+
 	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	SoftDeleteUser(ctx context.Context, orgID string, id string) error
@@ -238,7 +247,7 @@ type UserStore interface {
 	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
-	CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error)
+	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
 	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)

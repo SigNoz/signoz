@@ -43,7 +43,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 	if err := router.Handle("/api/v1/invite/{token}", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetInvite), handler.OpenAPIDef{
 		ID:                  "GetInvite",
 		Tags:                []string{"users"},
@@ -61,7 +60,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 	if err := router.Handle("/api/v1/invite/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.DeleteInvite), handler.OpenAPIDef{
 		ID:                  "DeleteInvite",
 		Tags:                []string{"users"},
@@ -79,7 +77,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 	if err := router.Handle("/api/v1/invite", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListInvite), handler.OpenAPIDef{
 		ID:                  "ListInvite",
 		Tags:                []string{"users"},
@@ -97,7 +94,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 	if err := router.Handle("/api/v1/invite/accept", handler.New(provider.authZ.OpenAccess(provider.userHandler.AcceptInvite), handler.OpenAPIDef{
 		ID:                  "AcceptInvite",
 		Tags:                []string{"users"},

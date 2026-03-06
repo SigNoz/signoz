@@ -577,11 +577,11 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 	return int64(count), nil
 }
 
-func (store *store) CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error) {
+func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
 	user := new(types.User)
 	var results []struct {
-		Status string `bun:"status"`
-		Count  int64  `bun:"count"`
+		Status valuer.String `bun:"status"`
+		Count  int64         `bun:"count"`
 	}
 
 	err := store.
@@ -599,7 +599,7 @@ func (store *store) CountByOrgIDGroupedByStatus(ctx context.Context, orgID value
 		return nil, err
 	}
 
-	counts := make(map[string]int64, len(results))
+	counts := make(map[valuer.String]int64, len(results))
 	for _, r := range results {
 		counts[r.Status] = r.Count
 	}
@@ -672,7 +672,7 @@ func (store *store) GetUserByResetPasswordToken(ctx context.Context, token strin
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(user).
-		Join("JOIN factor_password ON factor_password.user_id = \"user\".id").
+		Join("JOIN factor_password ON factor_password.user_id = user.id").
 		Join("JOIN reset_password_token ON reset_password_token.password_id = factor_password.id").
 		Where("reset_password_token.token = ?", token).
 		Scan(ctx)
@@ -681,4 +681,23 @@ func (store *store) GetUserByResetPasswordToken(ctx context.Context, token strin
 	}
 
 	return user, nil
+}
+
+func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*types.User, error) {
+	users := []*types.User{}
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Where("email IN (?)", emails).
+		Where("org_id = ?", bun.In(orgID)).
+		Where("status in (?)", statuses).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
 }

@@ -86,8 +86,8 @@ func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int6
 	return count, nil
 }
 
-func (module *getter) CountByOrgIDGroupedByStatus(ctx context.Context, orgID valuer.UUID, statuses []string) (map[string]int64, error) {
-	counts, err := module.store.CountByOrgIDGroupedByStatus(ctx, orgID, statuses)
+func (module *getter) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
+	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, statuses)
 	if err != nil {
 		return nil, err
 	}

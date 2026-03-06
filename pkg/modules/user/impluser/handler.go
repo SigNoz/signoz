@@ -27,7 +27,6 @@ func NewHandler(module root.Module, getter root.Getter) root.Handler {
 	return &handler{module: module, getter: getter}
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (h *handler) AcceptInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -105,7 +104,6 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 	render.Success(rw, http.StatusCreated, nil)
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -120,7 +118,6 @@ func (h *handler) GetInvite(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, invite)
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (h *handler) ListInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
@@ -140,12 +137,11 @@ func (h *handler) ListInvite(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusOK, invites)
 }
 
-// TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (h *handler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	id := mux.Vars(r)["id"] // this is now the pending user id
+	id := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {

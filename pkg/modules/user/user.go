@@ -41,10 +41,9 @@ type Module interface {
 
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
-	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)                // TODO(balanikaran) - deprecate this
-	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error                 // TODO(balanikaran) - deprecate this
-	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) // TODO(balanikaran) - deprecate this
-	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)            // TODO(balanikaran) - deprecate this
+	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
+	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
+	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
@@ -77,11 +76,11 @@ type Getter interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
 
-	// Count users by org id irrespective of the user status.
+	// Count users by org id.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 
 	// Count of users by org id and grouped by status.
-	CountByOrgIDGroupedByStatus(context.Context, valuer.UUID, []string) (map[string]int64, error)
+	CountByOrgIDAndStatuses(context.Context, valuer.UUID, []string) (map[valuer.String]int64, error)
 
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
@@ -90,10 +89,10 @@ type Getter interface {
 type Handler interface {
 	// invite
 	CreateInvite(http.ResponseWriter, *http.Request)
-	AcceptInvite(http.ResponseWriter, *http.Request) // TODO(balanikaran) - deprecate this
-	GetInvite(http.ResponseWriter, *http.Request)    // public function // TODO(balanikaran) - deprecate this
-	ListInvite(http.ResponseWriter, *http.Request)   // TODO(balanikaran) - deprecate this
-	DeleteInvite(http.ResponseWriter, *http.Request) // TODO(balanikaran) - deprecate this
+	AcceptInvite(http.ResponseWriter, *http.Request)
+	GetInvite(http.ResponseWriter, *http.Request) // public function
+	ListInvite(http.ResponseWriter, *http.Request)
+	DeleteInvite(http.ResponseWriter, *http.Request)
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
 	ListUsers(http.ResponseWriter, *http.Request)
