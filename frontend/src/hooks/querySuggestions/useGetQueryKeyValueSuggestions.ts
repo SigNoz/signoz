@@ -1,11 +1,7 @@
-/* eslint-disable no-restricted-imports */
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { getValueSuggestions } from 'api/querySuggestions/getValueSuggestion';
 import { AxiosError, AxiosResponse } from 'axios';
-import { AppState } from 'store/reducers';
 import { QueryKeyValueSuggestionsResponseProps } from 'types/api/querySuggestions/types';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 export const useGetQueryKeyValueSuggestions = ({
 	key,
@@ -13,7 +9,6 @@ export const useGetQueryKeyValueSuggestions = ({
 	searchText,
 	signalSource,
 	metricName,
-	existingQuery,
 	options,
 }: {
 	key: string;
@@ -25,24 +20,11 @@ export const useGetQueryKeyValueSuggestions = ({
 		AxiosError
 	>;
 	metricName?: string;
-	existingQuery?: string;
 }): UseQueryResult<
 	AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
 	AxiosError
-> => {
-	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
-
-	const timeRangeKey =
-		minTime != null && maxTime != null
-			? `${Math.floor(minTime / 1e9)}-${Math.floor(maxTime / 1e9)}`
-			: null;
-
-	return useQuery<
-		AxiosResponse<QueryKeyValueSuggestionsResponseProps>,
-		AxiosError
-	>({
+> =>
+	useQuery<AxiosResponse<QueryKeyValueSuggestionsResponseProps>, AxiosError>({
 		queryKey: [
 			'queryKeyValueSuggestions',
 			key,
@@ -50,7 +32,6 @@ export const useGetQueryKeyValueSuggestions = ({
 			searchText,
 			signalSource,
 			metricName,
-			timeRangeKey,
 		],
 		queryFn: () =>
 			getValueSuggestions({
@@ -59,8 +40,6 @@ export const useGetQueryKeyValueSuggestions = ({
 				searchText: searchText || '',
 				signalSource: signalSource as 'meter' | '',
 				metricName: metricName || '',
-				existingQuery,
 			}),
 		...options,
 	});
-};
