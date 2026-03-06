@@ -9,7 +9,7 @@ import { getNextZoomOutRange } from 'lib/zoomOutUtils';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { updateMetricsTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 
 export interface UseZoomOutOptions {
 	/** When true, the zoom out handler does nothing (e.g. when live logs are enabled) */
@@ -56,13 +56,13 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 			urlQuery.delete(QueryParams.startTime);
 			urlQuery.delete(QueryParams.endTime);
 			urlQuery.set(QueryParams.relativeTime, preset);
-			updateMetricsTimeDurationForRoute(location.pathname, preset);
+			persistTimeDurationForRoute(location.pathname, preset);
 		} else {
 			dispatch(UpdateTimeInterval('custom', [newStartMs, newEndMs]));
 			urlQuery.set(QueryParams.startTime, String(newStartMs));
 			urlQuery.set(QueryParams.endTime, String(newEndMs));
 			urlQuery.delete(QueryParams.relativeTime);
-			updateMetricsTimeDurationForRoute(
+			persistTimeDurationForRoute(
 				location.pathname,
 				JSON.stringify({
 					startTime: newStartMs,

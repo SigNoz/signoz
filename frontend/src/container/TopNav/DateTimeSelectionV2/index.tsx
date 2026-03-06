@@ -30,7 +30,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
-import { updateMetricsTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -235,7 +235,7 @@ function DateTimeSelection({
 
 	const updateLocalStorageForRoutes = useCallback(
 		(value: Time | string): void => {
-			updateMetricsTimeDurationForRoute(location.pathname, String(value));
+			persistTimeDurationForRoute(location.pathname, String(value));
 		},
 		[location.pathname],
 	);
