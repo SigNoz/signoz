@@ -8,6 +8,7 @@ function ListPanelWrapper({
 	widget,
 	queryResponse,
 	setRequestData,
+	onColumnWidthsChange,
 }: PanelWrapperProps): JSX.Element {
 	const dataSource = widget.query.builder?.queryData[0]?.dataSource;
 
@@ -21,6 +22,7 @@ function ListPanelWrapper({
 				widget={widget}
 				queryResponse={queryResponse}
 				setRequestData={setRequestData}
+				onColumnWidthsChange={onColumnWidthsChange}
 			/>
 		);
 	}
@@ -29,6 +31,7 @@ function ListPanelWrapper({
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
+			onColumnWidthsChange={onColumnWidthsChange}
 		/>
 	);
 }
