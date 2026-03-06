@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
@@ -90,7 +90,9 @@ function MembersSettings(): JSX.Element {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
 				(m) =>
-					m?.name?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
+					m?.name?.toLowerCase().includes(q) ||
+					m.email.toLowerCase().includes(q) ||
+					m.role.toLowerCase().includes(q),
 			);
 		}
 
@@ -109,6 +111,16 @@ function MembersSettings(): JSX.Element {
 		},
 		[history, urlQuery],
 	);
+
+	useEffect(() => {
+		if (filteredMembers.length === 0) {
+			return;
+		}
+		const maxPage = Math.ceil(filteredMembers.length / PAGE_SIZE);
+		if (currentPage > maxPage) {
+			setPage(maxPage);
+		}
+	}, [filteredMembers.length, currentPage, setPage]);
 
 	const pendingCount = invitesData?.data?.length ?? 0;
 	const totalCount = allMembers.length;
@@ -147,7 +159,7 @@ function MembersSettings(): JSX.Element {
 			? `All members ⎯ ${totalCount}`
 			: `Pending invites ⎯ ${pendingCount}`;
 
-	const handleInviteSuccess = useCallback((): void => {
+	const handleInviteComplete = useCallback((): void => {
 		refetchUsers();
 		refetchInvites();
 	}, [refetchUsers, refetchInvites]);
@@ -160,7 +172,7 @@ function MembersSettings(): JSX.Element {
 		setSelectedMember(null);
 	}, []);
 
-	const handleMemberEditSuccess = useCallback((): void => {
+	const handleMemberEditComplete = useCallback((): void => {
 		refetchUsers();
 		refetchInvites();
 		setSelectedMember(null);
@@ -195,7 +207,7 @@ function MembersSettings(): JSX.Element {
 
 					<div className="members-settings__search">
 						<Input
-							placeholder="Search by name or email..."
+							placeholder="Search by name, email, or role..."
 							value={searchQuery}
 							onChange={(e): void => {
 								setSearchQuery(e.target.value);
@@ -231,14 +243,15 @@ function MembersSettings(): JSX.Element {
 			<InviteMembersModal
 				open={isInviteModalOpen}
 				onClose={(): void => setIsInviteModalOpen(false)}
-				onSuccess={handleInviteSuccess}
+				onComplete={handleInviteComplete}
 			/>
 
 			<EditMemberDrawer
 				member={selectedMember}
 				open={selectedMember !== null}
 				onClose={handleDrawerClose}
-				onSuccess={handleMemberEditSuccess}
+				onComplete={handleMemberEditComplete}
+				onRefetch={handleInviteComplete}
 			/>
 		</>
 	);

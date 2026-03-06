@@ -91,7 +91,7 @@ function renderDrawer(
 			member={activeMember}
 			open
 			onClose={jest.fn()}
-			onSuccess={jest.fn()}
+			onComplete={jest.fn()}
 			{...props}
 		/>,
 	);
@@ -117,10 +117,10 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('enables Save after editing name and calls update API on confirm', async () => {
-		const onSuccess = jest.fn();
+		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		renderDrawer({ onSuccess });
+		renderDrawer({ onComplete });
 
 		const nameInput = screen.getByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
@@ -138,15 +138,15 @@ describe('EditMemberDrawer', () => {
 					displayName: 'Alice Updated',
 				}),
 			);
-			expect(onSuccess).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
 	it('shows delete confirm dialog and calls deleteUser for active members', async () => {
-		const onSuccess = jest.fn();
+		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		renderDrawer({ onSuccess });
+		renderDrawer({ onComplete });
 
 		await user.click(screen.getByRole('button', { name: /delete member/i }));
 
@@ -159,7 +159,7 @@ describe('EditMemberDrawer', () => {
 
 		await waitFor(() => {
 			expect(mockDeleteUser).toHaveBeenCalledWith({ userId: 'user-1' });
-			expect(onSuccess).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
@@ -177,10 +177,10 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('calls cancelInvite after confirming Cancel Invite for invited members', async () => {
-		const onSuccess = jest.fn();
+		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		renderDrawer({ member: invitedMember, onSuccess });
+		renderDrawer({ member: invitedMember, onComplete });
 
 		await user.click(screen.getByRole('button', { name: /cancel invite/i }));
 
@@ -193,7 +193,7 @@ describe('EditMemberDrawer', () => {
 
 		await waitFor(() => {
 			expect(mockCancelInvite).toHaveBeenCalledWith({ id: 'abc123' });
-			expect(onSuccess).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 

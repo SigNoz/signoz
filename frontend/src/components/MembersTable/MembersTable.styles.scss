@@ -35,6 +35,18 @@
 			&::before {
 				display: none !important;
 			}
+
+			.ant-table-column-sorters {
+				display: inline-flex;
+				align-items: center;
+				gap: var(--spacing-1);
+				width: auto;
+			}
+
+			.ant-table-column-title {
+				flex: unset;
+			}
+
 			.ant-table-column-sorter {
 				color: var(--foreground);
 				opacity: 0.6;

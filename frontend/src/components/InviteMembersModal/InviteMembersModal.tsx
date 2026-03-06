@@ -26,7 +26,7 @@ interface InviteRow {
 export interface InviteMembersModalProps {
 	open: boolean;
 	onClose: () => void;
-	onSuccess?: () => void;
+	onComplete?: () => void;
 }
 
 const EMPTY_ROW = (): InviteRow => ({ id: uuid(), email: '', role: '' });
@@ -37,9 +37,13 @@ const isRowTouched = (row: InviteRow): boolean =>
 function InviteMembersModal({
 	open,
 	onClose,
-	onSuccess,
+	onComplete,
 }: InviteMembersModalProps): JSX.Element {
-	const [rows, setRows] = useState<InviteRow[]>([]);
+	const [rows, setRows] = useState<InviteRow[]>(() => [
+		EMPTY_ROW(),
+		EMPTY_ROW(),
+		EMPTY_ROW(),
+	]);
 	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [emailValidity, setEmailValidity] = useState<Record<string, boolean>>(
 		{},
@@ -114,6 +118,15 @@ function InviteMembersModal({
 		[],
 	);
 
+	useEffect(() => {
+		if (!open) {
+			debouncedValidateEmail.cancel();
+		}
+		return (): void => {
+			debouncedValidateEmail.cancel();
+		};
+	}, [open, debouncedValidateEmail]);
+
 	const updateEmail = (id: string, email: string): void => {
 		const updatedRows = cloneDeep(rows);
 		const rowToUpdate = updatedRows.find((r) => r.id === id);
@@ -185,7 +198,7 @@ function InviteMembersModal({
 			}
 			toast.success('Invites sent successfully', { richColors: true });
 			resetAndClose();
-			onSuccess?.();
+			onComplete?.();
 		} catch (err) {
 			const apiErr = err as APIError;
 			if (apiErr?.getHttpStatusCode() === 409) {
@@ -204,7 +217,7 @@ function InviteMembersModal({
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [rows, onSuccess, resetAndClose, validateAllUsers]);
+	}, [rows, onComplete, resetAndClose, validateAllUsers]);
 
 	const touchedRows = rows.filter(isRowTouched);
 	const isSubmitDisabled = isSubmitting || touchedRows.length === 0;

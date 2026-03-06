@@ -98,7 +98,7 @@ describe('MembersSettings (integration)', () => {
 		await screen.findByText('Alice Smith');
 
 		await user.type(
-			screen.getByPlaceholderText(/search by name or email/i),
+			screen.getByPlaceholderText(/Search by name, email, or role/i),
 			'bob',
 		);
 
