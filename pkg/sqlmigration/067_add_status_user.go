@@ -73,6 +73,13 @@ func (migration *addStatusUser) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
+	// add a partial unique index to enforce uniqueness of (email, org_id) for non-deleted users
+	// replaces the full unique index dropped above, while still allowing multiple deleted
+	// rows for the same (email, org_id) so that users can be re-invited after deletion.
+	if _, err := tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email_org_id_non_deleted ON users (email, org_id) WHERE status != 'deleted'`); err != nil {
+		return err
+	}
+
 	if err := tx.Commit(); err != nil {
 		return err
 	}

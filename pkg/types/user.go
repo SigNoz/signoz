@@ -128,8 +128,14 @@ func (u *User) Update(displayName string, role Role) {
 }
 
 func (u *User) UpdateStatus(status valuer.String) error {
+	// no updates allowed if user is in delete state
 	if err := u.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
+	}
+
+	// not udpates allowed from active to pending state
+	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "cannot move user to pending state from active state")
 	}
 
 	u.Status = status
@@ -165,6 +171,15 @@ func (u *User) ErrIfRoot() error {
 func (u *User) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
+// ErrIfPending returns an error if the user is in pending invite state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *User) ErrIfPending() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for pending user")
 	}
 	return nil
 }
