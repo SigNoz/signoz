@@ -9,7 +9,7 @@ import { LOCALSTORAGE } from 'constants/localStorage';
  * @param pathname - The route path (e.g. /infrastructure-monitoring/hosts)
  * @param value - The time value to store (preset string like '1w' or JSON string for custom range)
  */
-export function updateMetricsTimeDurationForRoute(
+export function persistTimeDurationForRoute(
 	pathname: string,
 	value: string,
 ): void {

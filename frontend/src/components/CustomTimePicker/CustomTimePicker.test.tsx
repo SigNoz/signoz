@@ -16,6 +16,15 @@ jest.mock('react-router-dom', () => {
 	};
 });
 
+jest.mock('react-redux', () => ({
+	...jest.requireActual('react-redux'),
+	useDispatch: jest.fn(() => jest.fn()),
+	useSelector: jest.fn(() => ({
+		minTime: 0,
+		maxTime: Date.now(),
+	})),
+}));
+
 jest.mock('providers/Timezone', () => {
 	const actual = jest.requireActual('providers/Timezone');
 
