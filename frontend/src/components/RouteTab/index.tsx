@@ -70,7 +70,6 @@ function RouteTab({
 					/>
 				)
 			}
-			// eslint-disable-next-line react/jsx-props-no-spreading ---- TODO: remove this once follow the linting rules
 			{...rest}
 		/>
 	);

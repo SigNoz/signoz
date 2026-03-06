@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 /* eslint-disable sonarjs/cognitive-complexity */
 import { PANEL_TYPES } from 'constants/queryBuilder';

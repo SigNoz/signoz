@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unescaped-entities */
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
@@ -114,7 +113,6 @@ export default function WorkspaceBlocked(): JSX.Element {
 		updateCreditCard({
 			url: window.location.origin,
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [updateCreditCard]);
 
 	const handleExtendTrial = (): void => {

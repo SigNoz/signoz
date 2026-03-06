@@ -1,5 +1,6 @@
 import { MutableRefObject, useMemo } from 'react';
 import { UseQueryOptions, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -51,7 +52,6 @@ export const useGetExplorerQueryRange = (
 	}, [options, isEnabledQuery, isDependentOnQB]);
 
 	if (keyRef) {
-		// eslint-disable-next-line no-param-reassign
 		keyRef.current = [key, globalSelectedInterval, requestData, minTime, maxTime];
 	}
 

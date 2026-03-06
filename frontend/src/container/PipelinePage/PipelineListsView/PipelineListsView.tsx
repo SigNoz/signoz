@@ -10,7 +10,7 @@ import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
 import { ExclamationCircleOutlined, PlusOutlined } from '@ant-design/icons';
 import { Card, Form, Modal, Table, Typography } from 'antd';
-import { ExpandableConfig } from 'antd/es/table/interface';
+import type { ExpandableConfig } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import savePipeline from 'api/pipeline/post';
 import { useNotifications } from 'hooks/useNotifications';
@@ -392,7 +392,6 @@ function PipelineListsView({
 		logEvent('Logs: Pipelines: Clicked Add New Pipeline', {
 			source: 'signoz-ui',
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType, pipelineForm]);
 
 	const footer = useCallback((): JSX.Element | undefined => {

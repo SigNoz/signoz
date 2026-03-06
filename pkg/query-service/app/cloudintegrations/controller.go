@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/maps"
 )
@@ -52,7 +53,7 @@ func NewController(sqlStore sqlstore.SQLStore) (*Controller, error) {
 }
 
 type ConnectedAccountsListResponse struct {
-	Accounts []types.Account `json:"accounts"`
+	Accounts []integrationtypes.Account `json:"accounts"`
 }
 
 func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cloudProvider string) (
@@ -67,7 +68,7 @@ func (c *Controller) ListConnectedAccounts(ctx context.Context, orgId string, cl
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud accounts")
 	}
 
-	connectedAccounts := []types.Account{}
+	connectedAccounts := []integrationtypes.Account{}
 	for _, a := range accountRecords {
 		connectedAccounts = append(connectedAccounts, a.Account())
 	}
@@ -81,7 +82,7 @@ type GenerateConnectionUrlRequest struct {
 	// Optional. To be specified for updates.
 	AccountId *string `json:"account_id,omitempty"`
 
-	AccountConfig types.AccountConfig `json:"account_config"`
+	AccountConfig integrationtypes.AccountConfig `json:"account_config"`
 
 	AgentConfig SigNozAgentConfig `json:"agent_config"`
 }
@@ -149,9 +150,9 @@ func (c *Controller) GenerateConnectionUrl(ctx context.Context, orgId string, cl
 }
 
 type AccountStatusResponse struct {
-	Id             string              `json:"id"`
-	CloudAccountId *string             `json:"cloud_account_id,omitempty"`
-	Status         types.AccountStatus `json:"status"`
+	Id             string                         `json:"id"`
+	CloudAccountId *string                        `json:"cloud_account_id,omitempty"`
+	Status         integrationtypes.AccountStatus `json:"status"`
 }
 
 func (c *Controller) GetAccountStatus(ctx context.Context, orgId string, cloudProvider string, accountId string) (
@@ -217,7 +218,7 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 		))
 	}
 
-	agentReport := types.AgentReport{
+	agentReport := integrationtypes.AgentReport{
 		TimestampMillis: time.Now().UnixMilli(),
 		Data:            req.Data,
 	}
@@ -286,10 +287,10 @@ func (c *Controller) CheckInAsAgent(ctx context.Context, orgId string, cloudProv
 }
 
 type UpdateAccountConfigRequest struct {
-	Config types.AccountConfig `json:"config"`
+	Config integrationtypes.AccountConfig `json:"config"`
 }
 
-func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*types.Account, *model.ApiError) {
+func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, cloudProvider string, accountId string, req UpdateAccountConfigRequest) (*integrationtypes.Account, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -306,7 +307,7 @@ func (c *Controller) UpdateAccountConfig(ctx context.Context, orgId string, clou
 	return &account, nil
 }
 
-func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*types.CloudIntegration, *model.ApiError) {
+func (c *Controller) DisconnectAccount(ctx context.Context, orgId string, cloudProvider string, accountId string) (*integrationtypes.CloudIntegration, *model.ApiError) {
 	if apiErr := validateCloudProviderName(cloudProvider); apiErr != nil {
 		return nil, apiErr
 	}
@@ -346,7 +347,7 @@ func (c *Controller) ListServices(
 		return nil, model.WrapApiError(apiErr, "couldn't list cloud services")
 	}
 
-	svcConfigs := map[string]*types.CloudServiceConfig{}
+	svcConfigs := map[string]*integrationtypes.CloudServiceConfig{}
 	if cloudAccountId != nil {
 		activeAccount, apiErr := c.accountsRepo.getConnectedCloudAccount(
 			ctx, orgID, cloudProvider, *cloudAccountId,
@@ -441,8 +442,8 @@ func (c *Controller) GetServiceDetails(
 }
 
 type UpdateServiceConfigRequest struct {
-	CloudAccountId string                   `json:"cloud_account_id"`
-	Config         types.CloudServiceConfig `json:"config"`
+	CloudAccountId string                              `json:"cloud_account_id"`
+	Config         integrationtypes.CloudServiceConfig `json:"config"`
 }
 
 func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
@@ -460,8 +461,8 @@ func (u *UpdateServiceConfigRequest) Validate(def *services.Definition) error {
 }
 
 type UpdateServiceConfigResponse struct {
-	Id     string                   `json:"id"`
-	Config types.CloudServiceConfig `json:"config"`
+	Id     string                              `json:"id"`
+	Config integrationtypes.CloudServiceConfig `json:"config"`
 }
 
 func (c *Controller) UpdateServiceConfig(

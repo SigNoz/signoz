@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';

@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -55,6 +55,7 @@ import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
 import './LogDetails.styles.scss';
 
+/* eslint-disable-next-line sonarjs/cognitive-complexity */
 function LogDetailInner({
 	log,
 	onClose,
@@ -86,8 +87,13 @@ function LogDetailInner({
 		const handleClickOutside = (e: MouseEvent): void => {
 			const target = e.target as HTMLElement;
 
-			// Don't close if clicking on explicitly ignored regions
-			if (target.closest('[data-log-detail-ignore="true"]')) {
+			// Don't close if clicking on drawer content, overlays, or portal elements
+			if (
+				target.closest('[data-log-detail-ignore="true"]') ||
+				target.closest('.cm-tooltip-autocomplete') ||
+				target.closest('.drawer-popover') ||
+				target.closest('.query-status-popover')
+			) {
 				return;
 			}
 
@@ -104,6 +110,7 @@ function LogDetailInner({
 
 	// Keyboard navigation - handle up/down arrow keys
 	// Only listen when in OVERVIEW tab
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
 			!logs ||
@@ -400,7 +407,11 @@ function LogDetailInner({
 			<div className="log-detail-drawer__content" data-log-detail-ignore="true">
 				<div className="log-detail-drawer__log">
 					<Divider type="vertical" className={cx('log-type-indicator', logType)} />
-					<Tooltip title={removeEscapeCharacters(log?.body)} placement="left">
+					<Tooltip
+						title={removeEscapeCharacters(log?.body)}
+						placement="left"
+						mouseLeaveDelay={0}
+					>
 						<div className="log-body" dangerouslySetInnerHTML={htmlBody} />
 					</Tooltip>
 
@@ -415,7 +426,6 @@ function LogDetailInner({
 					>
 						<Radio.Button
 							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 							}
 							value={VIEW_TYPES.OVERVIEW}
@@ -466,6 +476,7 @@ function LogDetailInner({
 								title="Show Filters"
 								placement="topLeft"
 								aria-label="Show Filters"
+								mouseLeaveDelay={0}
 							>
 								<Button
 									className="action-btn"
@@ -481,6 +492,7 @@ function LogDetailInner({
 							aria-label={
 								selectedView === VIEW_TYPES.JSON ? 'Copy JSON' : 'Copy Log Link'
 							}
+							mouseLeaveDelay={0}
 						>
 							<Button
 								className="action-btn"
@@ -562,11 +574,9 @@ function LogDetailInner({
 function LogDetail(props: LogDetailProps): JSX.Element {
 	const { log } = props;
 	if (!log) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 

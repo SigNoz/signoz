@@ -2,6 +2,7 @@
 	.roles-settings-header {
 		display: flex;
 		flex-direction: column;
+		align-items: flex-start;
 		gap: 4px;
 		width: 100%;
 		padding: 16px;
@@ -31,8 +32,28 @@
 		padding: 0 16px;
 	}
 
+	.roles-settings-toolbar {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		margin-bottom: 12px;
+
+		.role-settings-toolbar-button {
+			display: flex;
+			width: 156px;
+			height: 32px;
+			padding: 6px 12px;
+			justify-content: center;
+			align-items: center;
+			gap: 6px;
+			border-radius: 2px;
+		}
+	}
+
 	// todo: https://github.com/SigNoz/components/issues/116
 	.roles-search-wrapper {
+		flex: 1;
+
 		input {
 			width: 100%;
 			background: var(--l3-background);
@@ -153,6 +174,14 @@
 	background: rgba(171, 189, 255, 0.02);
 	border-bottom: 1px solid var(--secondary);
 	gap: 24px;
+
+	&--clickable {
+		cursor: pointer;
+
+		&:hover {
+			background: rgba(171, 189, 255, 0.05);
+		}
+	}
 }
 
 .roles-table-cell {
@@ -234,5 +263,137 @@
 
 	.roles-table-row {
 		background: rgba(0, 0, 0, 0.01);
+	}
+
+	.create-role-modal {
+		.ant-modal-title {
+			color: var(--text-base-black);
+		}
+	}
+}
+
+.create-role-modal {
+	.ant-modal-content {
+		padding: 0;
+		background: var(--l2-background);
+		border: 1px solid var(--secondary);
+		border-radius: 4px;
+	}
+
+	.ant-modal-header {
+		background: var(--l2-background);
+		border-bottom: 1px solid var(--secondary);
+		padding: 16px;
+		margin-bottom: 0;
+	}
+
+	.ant-modal-close {
+		top: 14px;
+		inset-inline-end: 16px;
+		width: 14px;
+		height: 14px;
+		color: var(--foreground);
+
+		.ant-modal-close-x {
+			font-size: 12px;
+			display: flex;
+			align-items: center;
+			justify-content: center;
+		}
+	}
+
+	.ant-modal-title {
+		color: var(--text-base-white);
+		font-family: Inter;
+		font-size: 13px;
+		font-weight: 400;
+		line-height: 1;
+		letter-spacing: -0.065px;
+	}
+
+	.ant-modal-body {
+		padding: 16px;
+	}
+
+	.create-role-form {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.ant-form-item {
+			margin-bottom: 0;
+		}
+
+		.ant-form-item-label {
+			padding-bottom: 8px;
+
+			label {
+				color: var(--foreground);
+				font-family: Inter;
+				font-size: 14px;
+				font-weight: 400;
+				line-height: 20px;
+			}
+		}
+
+		// todo: https://github.com/SigNoz/components/issues/116
+		input,
+		textarea {
+			width: 100%;
+			background: var(--l3-background);
+			border: 1px solid var(--l3-border);
+			border-radius: 2px;
+			padding: 6px 8px;
+			font-family: Inter;
+			font-size: 14px;
+			font-weight: 400;
+			line-height: 18px;
+			letter-spacing: -0.07px;
+			color: var(--l1-foreground);
+			outline: none;
+			box-shadow: none;
+
+			&::placeholder {
+				color: var(--l3-foreground);
+				opacity: 0.4;
+			}
+
+			&:focus,
+			&:hover {
+				border-color: var(--input);
+				box-shadow: none;
+			}
+		}
+
+		input {
+			height: 32px;
+		}
+
+		input:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+
+			&:hover {
+				border-color: var(--l3-border);
+				box-shadow: none;
+			}
+		}
+
+		textarea {
+			min-height: 100px;
+			resize: vertical;
+		}
+	}
+
+	.ant-modal-footer {
+		display: flex;
+		flex-direction: row;
+		align-items: center;
+		justify-content: flex-end;
+		gap: 12px;
+		margin: 0;
+		padding: 0 16px;
+		height: 56px;
+		border-top: 1px solid var(--secondary);
 	}
 }

@@ -154,7 +154,12 @@ export function prepareHistogramPanelConfig({
 	isDarkMode: boolean;
 }): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
-		widget,
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		apiResponse,
 		panelMode,
@@ -191,10 +196,8 @@ export function prepareHistogramPanelConfig({
 		builder.addSeries({
 			label: '',
 			scaleKey: 'y',
-			drawStyle: DrawStyle.Bar,
-			panelType: PANEL_TYPES.HISTOGRAM,
+			drawStyle: DrawStyle.Histogram,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: false,
 			barWidthFactor: 1,
 			pointSize: 5,
 			lineColor: '#3f5ecc',
@@ -216,10 +219,8 @@ export function prepareHistogramPanelConfig({
 			builder.addSeries({
 				label: label,
 				scaleKey: 'y',
-				drawStyle: DrawStyle.Bar,
-				panelType: PANEL_TYPES.HISTOGRAM,
+				drawStyle: DrawStyle.Histogram,
 				colorMapping: widget.customLegendColors ?? {},
-				spanGaps: false,
 				barWidthFactor: 1,
 				pointSize: 5,
 				isDarkMode,

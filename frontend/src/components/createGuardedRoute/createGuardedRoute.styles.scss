@@ -1,0 +1,41 @@
+.guard-authz-error-no-authz {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+
+	width: 100%;
+	height: 100%;
+
+	padding: 24px;
+
+	.guard-authz-error-no-authz-content {
+		display: flex;
+		flex-direction: column;
+		justify-content: flex-start;
+		gap: 8px;
+		max-width: 500px;
+	}
+
+	img {
+		width: 32px;
+		height: 32px;
+	}
+
+	h3 {
+		font-size: 18px;
+		color: var(--l1-foreground);
+		line-height: 18px;
+	}
+
+	p {
+		font-size: 14px;
+		color: var(--l3-foreground);
+		line-height: 18px;
+
+		span {
+			background-color: var(--l3-background);
+			white-space: nowrap;
+			padding: 0 2px;
+		}
+	}
+}
