@@ -136,7 +136,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 
 	// not udpates allowed from active to pending state
 	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
-		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "cannot move user to pending state from active state")
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot move user to pending state from active state")
 	}
 
 	u.Status = status

@@ -2530,7 +2530,7 @@ export interface TypesPostableBulkInviteRequestDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	invites?: TypesPostableInviteDTO[] | null;
+	invites: TypesPostableInviteDTO[] | null;
 }
 
 export interface TypesPostableForgotPasswordDTO {
