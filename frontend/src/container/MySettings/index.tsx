@@ -161,7 +161,7 @@ function MySettings(): JSX.Element {
 		<div className="my-settings-container">
 			<div className="user-info-section">
 				<div className="user-info-section-header">
-					<div className="user-info-section-title">General </div>
+					<div className="user-info-section-title">Account </div>
 
 					<div className="user-info-section-subtitle">
 						Manage your account settings.
