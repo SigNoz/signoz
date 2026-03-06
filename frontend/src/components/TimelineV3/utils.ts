@@ -1,5 +1,4 @@
 import {
-	getMinimumIntervalsBasedOnWidth,
 	IIntervalUnit,
 	Interval,
 	INTERVAL_UNITS,
@@ -9,7 +8,19 @@ import { toFixed } from 'utils/toFixed';
 
 export type { Interval };
 
-export { getMinimumIntervalsBasedOnWidth };
+/** Fewer intervals than TimelineV2 for a cleaner flamegraph ruler. */
+export function getMinimumIntervalsBasedOnWidth(width: number): number {
+	if (width < 640) {
+		return 3;
+	}
+	if (width < 768) {
+		return 4;
+	}
+	if (width < 1024) {
+		return 5;
+	}
+	return 6;
+}
 
 /**
  * Computes timeline intervals with offset-aware labels.
