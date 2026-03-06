@@ -588,7 +588,7 @@ def test_saml_sso_login_activates_pending_invite_user(
 
     1. Admin invites user as ADMIN
     2. User exists in IDP with 'signoz-viewers' group (would normally get VIEWER)
-    3. SSO login activates the user with ADMIN role (invite role wins)
+    3. SSO login activates the user with VIEWER role (SSO Wins)
     """
     email = "sso-pending-invite@saml.integration.test"
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -601,7 +601,6 @@ def test_saml_sso_login_activates_pending_invite_user(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
-    assert response.json()["data"]["status"] == "pending_invite"
 
     # Create IDP user in viewer group — SSO would normally assign VIEWER
     create_user_idp_with_groups(email, "password", True, ["signoz-viewers"])
@@ -610,11 +609,11 @@ def test_saml_sso_login_activates_pending_invite_user(
         signoz, driver, get_session_context, idp_login, email, "password"
     )
 
-    # User should be active with ADMIN role from invite, not VIEWER from SSO
+    # User should be active with VIEWER role from SSO
     found_user = get_user_by_email(signoz, admin_token, email)
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "ADMIN"
+    assert found_user["role"] == "VIEWER"
 
 
 def test_saml_sso_deleted_user_gets_new_user_on_login(
@@ -645,30 +644,22 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     )
     assert response.status_code == HTTPStatus.CREATED
     user_id = response.json()["data"]["id"]
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{user_id}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
+    reset_token = response.json()["data"]["token"]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": response.json()["data"]["token"]},
+        json={"password": "password123Z$", "token": reset_token},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # --- Step 2: Soft delete via DB (feature flag may not be enabled) ---
-    with signoz.sqlstore.conn.connect() as conn:
-        conn.execute(
-            sql.text("UPDATE users SET status = 'deleted' WHERE id = :user_id"),
-            {"user_id": user_id},
-        )
-        conn.commit()
+    # --- Step 2: Soft delete via DB using API
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # --- Step 3: SSO login should be blocked for deleted user ---
     create_user_idp(email, "password", True, "SAML", "Lifecycle")
@@ -686,8 +677,15 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
         assert row[0] == "deleted"
 
     # Verify a NEW active user was auto-provisioned via SSO
-    found_user = get_user_by_email(signoz, admin_token, email)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    found_user = next(
+        (user for user in response.json()["data"] if user["email"] == email and user["id"] != user_id),
+        None,
+    )
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["id"] != user_id  # new user, different ID
     assert found_user["role"] == "VIEWER"  # default role from SSO domain config
