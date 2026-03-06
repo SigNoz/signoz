@@ -81,7 +81,18 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const {
+		selectedDashboard,
+		isDashboardLocked,
+		setColumnWidths,
+	} = useDashboard();
+
+	const onColumnWidthsChange = useCallback(
+		(widths: Record<string, number>) => {
+			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
+		},
+		[setColumnWidths, widget.id],
+	);
 	const { dashboardVariables } = useDashboardVariables();
 	const { user } = useAppContext();
 
@@ -381,6 +392,7 @@ function FullView({
 								onClickHandler={onClickHandler}
 								enableDrillDown={enableDrillDown}
 								selectedGraph={selectedPanelType}
+								onColumnWidthsChange={onColumnWidthsChange}
 							/>
 						</GraphContainer>
 					</div>
