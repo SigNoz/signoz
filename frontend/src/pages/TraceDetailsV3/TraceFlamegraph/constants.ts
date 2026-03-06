@@ -32,5 +32,5 @@ export const SCROLL_ZOOM_INTENSITY_V = 0.001;
 // Minimum visible time span in ms (prevents zooming to sub-pixel)
 export const MIN_VISIBLE_SPAN_MS = 5;
 
-// Selection and hover style (derived from span color per mock design)
+// Selected span style (dashed border)
 export const DASHED_BORDER_LINE_DASH = [4, 2];

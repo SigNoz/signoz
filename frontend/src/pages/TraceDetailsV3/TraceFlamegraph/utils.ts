@@ -22,6 +22,19 @@ export function clamp(v: number, min: number, max: number): number {
 	return Math.max(min, Math.min(max, v));
 }
 
+export function findSpanById(
+	spans: FlamegraphSpan[][],
+	spanId: string,
+): { span: FlamegraphSpan; levelIndex: number } | null {
+	for (let levelIndex = 0; levelIndex < spans.length; levelIndex++) {
+		const span = spans[levelIndex]?.find((s) => s.spanId === spanId);
+		if (span) {
+			return { span, levelIndex };
+		}
+	}
+	return null;
+}
+
 export interface FlamegraphRowMetrics {
 	ROW_HEIGHT: number;
 	SPAN_BAR_HEIGHT: number;
@@ -131,19 +144,25 @@ export function drawSpanBar(args: DrawSpanBarArgs): void {
 	} = args;
 
 	const spanY = y + metrics.SPAN_BAR_Y_OFFSET;
-	const isSelectedOrHovered =
-		selectedSpanId === span.spanId || hoveredSpanId === span.spanId;
+	const isSelected = selectedSpanId === span.spanId;
+	const isHovered = hoveredSpanId === span.spanId;
+	const isSelectedOrHovered = isSelected || isHovered;
 
 	ctx.beginPath();
 	ctx.roundRect(x, spanY, width, metrics.SPAN_BAR_HEIGHT, 2);
 
 	if (isSelectedOrHovered) {
-		// Transparent background, dashed border in same color as span
-		ctx.setLineDash(DASHED_BORDER_LINE_DASH);
+		// Transparent background, border in same color as span
+		// Selected: dashed border, 2px; hovered: solid border, 1px
+		if (isSelected) {
+			ctx.setLineDash(DASHED_BORDER_LINE_DASH);
+		}
 		ctx.strokeStyle = color;
-		ctx.lineWidth = 2;
+		ctx.lineWidth = isSelected ? 2 : 1;
 		ctx.stroke();
-		ctx.setLineDash([]);
+		if (isSelected) {
+			ctx.setLineDash([]);
+		}
 	} else {
 		ctx.fillStyle = color;
 		ctx.fill();

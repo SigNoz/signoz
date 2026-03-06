@@ -9,6 +9,7 @@ import { useFlamegraphDrag } from './hooks/useFlamegraphDrag';
 import { useFlamegraphDraw } from './hooks/useFlamegraphDraw';
 import { useFlamegraphHover } from './hooks/useFlamegraphHover';
 import { useFlamegraphZoom } from './hooks/useFlamegraphZoom';
+import { useScrollToSpan } from './hooks/useScrollToSpan';
 import { FlamegraphCanvasProps, SpanRect } from './types';
 import { formatDuration } from './utils';
 
@@ -120,6 +121,20 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 		hoveredSpanId: hoveredSpanId ?? '',
 		isDarkMode,
 		spanRectsRef,
+	});
+
+	useScrollToSpan({
+		firstSpanAtFetchLevel,
+		spans,
+		traceMetadata,
+		containerRef,
+		viewStartRef,
+		viewEndRef,
+		scrollTopRef,
+		rowHeight,
+		setViewStartTs,
+		setViewEndTs,
+		setScrollTop,
 	});
 
 	useCanvasSetup(canvasRef, containerRef, drawFlamegraph);
