@@ -13,7 +13,6 @@ import {
 	DraftingCompass,
 	FileKey2,
 	Github,
-	Globe,
 	HardDrive,
 	Home,
 	Key,
@@ -26,7 +25,6 @@ import {
 	Receipt,
 	Route,
 	ScrollText,
-	Search,
 	Settings,
 	Shield,
 	Slack,
@@ -190,12 +188,6 @@ export const primaryMenuItems: SidebarItem[] = [
 		itemKey: 'home',
 	},
 	{
-		key: 'quick-search',
-		label: 'Search',
-		icon: <Search size={16} />,
-		itemKey: 'quick-search',
-	},
-	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
@@ -326,13 +318,7 @@ export const settingsMenuItems: SidebarItem[] = [
 		isEnabled: false,
 		itemKey: 'members-sso',
 	},
-	{
-		key: ROUTES.CUSTOM_DOMAIN_SETTINGS,
-		label: 'Custom Domain',
-		icon: <Globe size={16} />,
-		isEnabled: false,
-		itemKey: 'custom-domain',
-	},
+
 	{
 		key: ROUTES.INTEGRATIONS,
 		label: 'Integrations',

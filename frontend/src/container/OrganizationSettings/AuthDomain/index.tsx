@@ -3,9 +3,7 @@ import { PlusOutlined } from '@ant-design/icons';
 import { Button } from '@signozhq/button';
 import { Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
-import { Modal } from 'antd';
-import { Table } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { Modal, Table, TableColumnsType as ColumnsType } from 'antd';
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useDeleteAuthDomain,

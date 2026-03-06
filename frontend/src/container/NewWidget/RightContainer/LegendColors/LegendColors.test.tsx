@@ -1,5 +1,5 @@
 import { ColorPickerProps } from 'antd';
-import { Color } from 'antd/es/color-picker';
+import type { Color } from 'antd/es/color-picker';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import LegendColors from './LegendColors';

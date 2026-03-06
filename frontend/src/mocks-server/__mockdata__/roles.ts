@@ -62,3 +62,6 @@ export const listRolesSuccessResponse = {
 	status: 'success',
 	data: allRoles,
 };
+
+export const customRoleResponse = { status: 'success', data: customRoles[0] };
+export const managedRoleResponse = { status: 'success', data: managedRoles[0] };
