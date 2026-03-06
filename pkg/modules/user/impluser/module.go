@@ -567,14 +567,13 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		); err != nil {
 			return err
 		}
-
-		if err := user.UpdateStatus(types.UserStatusActive); err != nil {
-			return err
-		}
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if user.Status == types.UserStatusPendingInvite {
+			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+				return err
+			}
 			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
