@@ -195,7 +195,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				display: 'flex',
 				flexDirection: 'column',
 				height: '100%',
-				padding: '15px',
+				padding: '0 15px',
 			}}
 		>
 			{tooltipElement}
@@ -203,7 +203,7 @@ function FlamegraphCanvas(props: FlamegraphCanvasProps): JSX.Element {
 				startTimestamp={viewStartTs}
 				endTimestamp={viewEndTs}
 				offsetTimestamp={viewStartTs - traceMetadata.startTime}
-				timelineHeight={22}
+				timelineHeight={10}
 			/>
 			<div
 				ref={containerRef}
