@@ -20,6 +20,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 
@@ -269,6 +272,12 @@ func (r *ClickHouseReader) GetQueryRangeResult(ctx context.Context, query *model
 }
 
 func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetServicesList",
+	})
+
 	services := []string{}
 	rows, err := r.db.Query(ctx, fmt.Sprintf(`SELECT DISTINCT resource_string_service$$name FROM %s.%s WHERE ts_bucket_start > (toUnixTimestamp(now() - INTERVAL 1 DAY) - 1800) AND toDate(timestamp) > now() - INTERVAL 1 DAY`, r.TraceDB, r.traceTableName))
 	if err != nil {
@@ -288,6 +297,12 @@ func (r *ClickHouseReader) GetServicesList(ctx context.Context) (*[]string, erro
 }
 
 func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end time.Time, services []string) (*map[string][]string, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTopLevelOperations",
+	})
+
 	start = start.In(time.UTC)
 
 	// The `top_level_operations` that have `time` >= start
@@ -382,6 +397,12 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 }
 
 func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceItem, *model.ApiError) {
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetServices",
+	})
 
 	if r.indexTable == "" {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: ErrNoIndexTable}
@@ -739,6 +760,11 @@ func (r *ClickHouseReader) GetEntryPointOperations(ctx context.Context, queryPar
 
 func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *model.GetTopOperationsParams) (*[]model.TopOperationsItem, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTopOperations",
+	})
 	namedArgs := []interface{}{
 		clickhouse.Named("start", strconv.FormatInt(queryParams.Start.UnixNano(), 10)),
 		clickhouse.Named("end", strconv.FormatInt(queryParams.End.UnixNano(), 10)),
@@ -794,6 +820,11 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 
 func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetUsageParams) (*[]model.UsageItem, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetUsage",
+	})
 	var usageItems []model.UsageItem
 	namedArgs := []interface{}{
 		clickhouse.Named("interval", queryParams.StepHour),
@@ -829,6 +860,13 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 }
 
 func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string, traceDetailsQuery string) ([]model.SpanItemV2, *model.ApiError) {
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetSpansForTrace",
+	})
+
 	var traceSummary model.TraceSummary
 	summaryQuery := fmt.Sprintf("SELECT trace_id, min(start) AS start, max(end) AS end, sum(num_spans) AS num_spans FROM %s.%s WHERE trace_id=$1 GROUP BY trace_id", r.TraceDB, r.traceSummaryTable)
 	err := r.db.QueryRow(ctx, summaryQuery, traceID).Scan(&traceSummary.TraceID, &traceSummary.Start, &traceSummary.End, &traceSummary.NumSpans)
@@ -1227,6 +1265,11 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 
 func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *model.GetServicesParams) (*[]model.ServiceMapDependencyResponseItem, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetDependencyGraph",
+	})
 	response := []model.ServiceMapDependencyResponseItem{}
 
 	args := []interface{}{}
@@ -1281,6 +1324,11 @@ func getLocalTableName(tableName string) string {
 }
 
 func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "setTTLLogs",
+	})
 	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
 	if hasCustomRetention {
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("SetTTLV2 only supported")}
@@ -1444,6 +1492,11 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 }
 
 func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "setTTLTraces",
+	})
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -1589,6 +1642,12 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 }
 
 func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, error) {
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "hasCustomRetentionColumn",
+	})
+
 	// Directly query for the _retention_days column existence
 	query := fmt.Sprintf("SELECT 1 FROM system.columns WHERE database = '%s' AND table = '%s' AND name = '_retention_days' LIMIT 1", r.logsDB, r.logsLocalTableV2)
 
@@ -1610,6 +1669,11 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 
 func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *model.CustomRetentionTTLParams) (*model.CustomRetentionTTLResponse, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "SetTTLV2",
+	})
 	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
 	if err != nil {
 		return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "custom retention not supported")
@@ -1999,6 +2063,10 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 
 // Enhanced validation function with duplicate detection and efficient key validation
 func (r *ClickHouseReader) validateTTLConditions(ctx context.Context, ttlConditions []model.CustomRetentionRule) error {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "validateTTLConditions",
+	})
 	if len(ttlConditions) == 0 {
 		return nil
 	}
@@ -2116,6 +2184,11 @@ func (r *ClickHouseReader) SetTTL(ctx context.Context, orgID string, params *mod
 }
 
 func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "setTTLMetrics",
+	})
 	// uuid is used as transaction id
 	uuidWithHyphen := uuid.New()
 	uuid := strings.Replace(uuidWithHyphen.String(), "-", "", -1)
@@ -2324,6 +2397,10 @@ func (r *ClickHouseReader) getTTLQueryStatus(ctx context.Context, orgID string, 
 
 func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string, coldStorageVolume string) *model.ApiError {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "setColdStorage",
+	})
 	// Set the storage policy for the required table. If it is already set, then setting it again
 	// will not a problem.
 	if len(coldStorageVolume) > 0 {
@@ -2340,6 +2417,10 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 
 // GetDisks returns a list of disks {name, type} configured in clickhouse DB.
 func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetDisks",
+	})
 	diskItems := []model.DiskItem{}
 
 	query := "SELECT name,type FROM system.disks"
@@ -2363,6 +2444,10 @@ func getLocalTableNameArray(tableNames []string) []string {
 // GetTTL returns current ttl, expected ttl and past setTTL status for metrics/traces.
 func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *model.GetTTLParams) (*model.GetTTLResponseItem, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTTL",
+	})
 	parseTTL := func(queryResp string) (int, int) {
 
 		zap.L().Info("Parsing TTL from: ", zap.String("queryResp", queryResp))
@@ -2532,6 +2617,11 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 
 func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.ListErrorsParams) (*[]model.Error, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "ListErrors",
+	})
 	var getErrorResponses []model.Error
 
 	query := "SELECT any(exceptionMessage) as exceptionMessage, count() AS exceptionCount, min(timestamp) as firstSeen, max(timestamp) as lastSeen, groupID"
@@ -2604,6 +2694,12 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 
 func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.CountErrorsParams) (uint64, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "CountErrors",
+	})
+
 	var errorCount uint64
 
 	query := fmt.Sprintf("SELECT count(distinct(groupID)) FROM %s.%s WHERE timestamp >= @timestampL AND timestamp <= @timestampU", r.TraceDB, r.errorTable)
@@ -2641,6 +2737,11 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 
 func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetErrorFromErrorID",
+	})
 	if queryParams.ErrorID == "" {
 		zap.L().Error("errorId missing from params")
 		return nil, &model.ApiError{Typ: model.ErrorBadData, Err: fmt.Errorf("ErrorID missing from params")}
@@ -2668,6 +2769,11 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 
 func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams *model.GetErrorParams) (*model.ErrorWithSpan, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetErrorFromGroupID",
+	})
 	var getErrorWithSpanReponse []model.ErrorWithSpan
 
 	query := fmt.Sprintf("SELECT errorID, exceptionType, exceptionStacktrace, exceptionEscaped, exceptionMessage, timestamp, spanID, traceID, serviceName, groupID FROM %s.%s WHERE timestamp = @timestamp AND groupID = @groupID LIMIT 1", r.TraceDB, r.errorTable)
@@ -2716,6 +2822,11 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 
 func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "getNextErrorID",
+	})
 	var getNextErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
 	query := fmt.Sprintf("SELECT errorID as nextErrorID, timestamp as nextTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp >= @timestamp AND errorID != @errorID ORDER BY timestamp ASC LIMIT 2", r.TraceDB, r.errorTable)
@@ -2785,6 +2896,11 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 
 func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *model.GetErrorParams) (string, time.Time, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "getPrevErrorID",
+	})
 	var getPrevErrorIDReponse []model.NextPrevErrorIDsDBResponse
 
 	query := fmt.Sprintf("SELECT errorID as prevErrorID, timestamp as prevTimestamp FROM %s.%s WHERE groupID = @groupID AND timestamp <= @timestamp AND errorID != @errorID ORDER BY timestamp DESC LIMIT 2", r.TraceDB, r.errorTable)
@@ -2876,6 +2992,11 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UU
 }
 
 func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLogFields",
+	})
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
 		Selected:    constants.StaticSelectedLogFields,
@@ -2912,6 +3033,11 @@ func (r *ClickHouseReader) GetLogFields(ctx context.Context) (*model.GetFieldsRe
 }
 
 func (r *ClickHouseReader) GetLogFieldsFromNames(ctx context.Context, fieldNames []string) (*model.GetFieldsResponse, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLogFieldsFromNames",
+	})
 	// response will contain top level fields from the otel log model
 	response := model.GetFieldsResponse{
 		Selected:    constants.StaticSelectedLogFields,
@@ -2962,6 +3088,10 @@ func (r *ClickHouseReader) extractSelectedAndInterestingFields(tableStatement st
 }
 
 func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "UpdateLogField",
+	})
 	if !field.Selected {
 		return model.ForbiddenError(errors.New("removing a selected field is not allowed, please reach out to support."))
 	}
@@ -3028,6 +3158,10 @@ func (r *ClickHouseReader) UpdateLogField(ctx context.Context, field *model.Upda
 }
 
 func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFieldsResponse, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTraceFields",
+	})
 	// response will contain top level fields from the otel trace model
 	response := model.GetFieldsResponse{
 		Selected:    []model.Field{},
@@ -3083,6 +3217,11 @@ func (r *ClickHouseReader) GetTraceFields(ctx context.Context) (*model.GetFields
 }
 
 func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.UpdateField) *model.ApiError {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "UpdateTraceField",
+	})
 	if !field.Selected {
 		return model.ForbiddenError(errors.New("removing a selected field is not allowed, please reach out to support."))
 	}
@@ -3174,6 +3313,10 @@ func (r *ClickHouseReader) UpdateTraceField(ctx context.Context, field *model.Up
 	return nil
 }
 func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string) (*model.DashboardVar, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "QueryDashboardVars",
+	})
 	var result = model.DashboardVar{VariableValues: make([]interface{}, 0)}
 	rows, err := r.db.Query(ctx, query)
 
@@ -3210,6 +3353,11 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 }
 
 func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest, skipSignozMetrics bool) (*v3.AggregateAttributeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricAggregateAttributes",
+	})
 	var response v3.AggregateAttributeResponse
 	normalized := true
 	if constants.IsDotMetricsEnabled {
@@ -3288,6 +3436,11 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 }
 
 func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgID valuer.UUID, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMeterAggregateAttributes",
+	})
 	var response v3.AggregateAttributeResponse
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
@@ -3336,6 +3489,11 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 }
 
 func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricAttributeKeys",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3376,6 +3534,11 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 }
 
 func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMeterAttributeKeys",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3412,6 +3575,11 @@ func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.Fi
 
 func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricAttributeValues",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3452,6 +3620,11 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 
 func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.UUID, metricName, serviceName string) (*v3.MetricMetadataResponse, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricMetadata",
+	})
 	unixMilli := common.PastDayRoundOff()
 
 	// 1. Fetch metadata from cache/db using unified function
@@ -3533,6 +3706,10 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 // GetCountOfThings returns the count of things in the query
 // This is a generic function that can be used to check if any data exists for a given query
 func (r *ClickHouseReader) GetCountOfThings(ctx context.Context, query string) (uint64, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetCountOfThings",
+	})
 	var count uint64
 	err := r.db.QueryRow(ctx, query).Scan(&count)
 	if err != nil {
@@ -3583,6 +3760,11 @@ func (r *ClickHouseReader) GetActiveHostsFromMetricMetadata(ctx context.Context,
 func (r *ClickHouseReader) GetLatestReceivedMetric(
 	ctx context.Context, metricNames []string, labelValues map[string]string,
 ) (*model.MetricStatus, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLatestReceivedMetric",
+	})
 	// at least 1 metric name must be specified.
 	// this query can be too slow otherwise.
 	if len(metricNames) < 1 {
@@ -3667,6 +3849,11 @@ func isColumn(tableStatement, attrType, field, datType string) bool {
 
 func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLogAggregateAttributes",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3751,6 +3938,11 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 }
 
 func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLogAttributeKeys",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -3817,6 +4009,10 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 }
 
 func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.FilterAttributeValueRequest) ([]string, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "FetchRelatedValues",
+	})
 	var andConditions []string
 
 	andConditions = append(andConditions, fmt.Sprintf("unix_milli >= %d", req.StartTimeMillis))
@@ -3908,6 +4104,11 @@ func (r *ClickHouseReader) FetchRelatedValues(ctx context.Context, req *v3.Filte
 }
 
 func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLogAttributeValues",
+	})
 	var err error
 	var filterValueColumn string
 	var rows driver.Rows
@@ -4225,6 +4426,10 @@ func readRowsForTimeSeriesResult(rows driver.Rows, vars []interface{}, columnNam
 
 // GetTimeSeriesResultV3 runs the query and returns list of time series
 func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query string) ([]*v3.Series, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTimeSeriesResultV3",
+	})
 	// Hook up query progress reporting if requested.
 	queryId := ctx.Value("queryId")
 	if queryId != nil {
@@ -4288,6 +4493,10 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 
 // GetListResultV3 runs the query and returns list of rows
 func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([]*v3.Row, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetListResultV3",
+	})
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
 		zap.L().Error("error while reading time series result", zap.Error(err))
@@ -4350,6 +4559,11 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 // GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for the given host metric names
 // from distributed_metadata. When count is 0, minFirstReportedUnixMilli is 0.
 func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Context, metricNames []string) (uint64, uint64, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsExistenceAndEarliestTime",
+	})
 	if len(metricNames) == 0 {
 		return 0, 0, nil
 	}
@@ -4385,6 +4599,10 @@ func getPersonalisedError(err error) error {
 }
 
 func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "CheckClickHouse",
+	})
 	rows, err := r.db.Query(ctx, "SELECT 1")
 	if err != nil {
 		return err
@@ -4395,6 +4613,11 @@ func (r *ClickHouseReader) CheckClickHouse(ctx context.Context) error {
 }
 
 func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req *v3.AggregateAttributeRequest) (*v3.AggregateAttributeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTraceAggregateAttributes",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -4488,6 +4711,11 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 
 func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.FilterAttributeKeyRequest) (*v3.FilterAttributeKeyResponse, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTraceAttributeKeys",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -4556,6 +4784,11 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 }
 
 func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.FilterAttributeValueRequest) (*v3.FilterAttributeValueResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTraceAttributeValues",
+	})
 	var query string
 	var filterValueColumn string
 	var err error
@@ -4649,6 +4882,11 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 }
 
 func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, names []string) (map[string]v3.AttributeKey, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetSpanAttributeKeysByNames",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -4697,6 +4935,10 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 }
 
 func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHistory []model.RuleStateHistory) error {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "AddRuleStateHistory",
+	})
 	var statement driver.Batch
 	var err error
 
@@ -4728,6 +4970,10 @@ func (r *ClickHouseReader) AddRuleStateHistory(ctx context.Context, ruleStateHis
 }
 
 func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]model.RuleStateHistory, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetLastSavedRuleStateHistory",
+	})
 	query := fmt.Sprintf("SELECT * FROM %s.%s WHERE rule_id = '%s' AND state_changed = true ORDER BY unix_milli DESC LIMIT 1 BY fingerprint",
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID)
 
@@ -4742,6 +4988,10 @@ func (r *ClickHouseReader) GetLastSavedRuleStateHistory(ctx context.Context, rul
 func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (*model.RuleStateTimeline, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "ReadRuleStateHistoryByRuleID",
+	})
 	var conditions []string
 
 	conditions = append(conditions, fmt.Sprintf("rule_id = '%s'", ruleID))
@@ -4856,6 +5106,10 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 
 func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.RuleStateHistoryContributor, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "ReadRuleStateHistoryTopContributorsByRuleID",
+	})
 	query := fmt.Sprintf(`SELECT
 		fingerprint,
 		any(labels) as labels,
@@ -4880,6 +5134,10 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 
 func (r *ClickHouseReader) GetOverallStateTransitions(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) ([]model.ReleStateItem, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetOverallStateTransitions",
+	})
 	tmpl := `WITH firing_events AS (
     SELECT
         rule_id,
@@ -5007,6 +5265,10 @@ ORDER BY firing_time ASC;`
 
 func (r *ClickHouseReader) GetAvgResolutionTime(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (float64, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAvgResolutionTime",
+	})
 	tmpl := `
 WITH firing_events AS (
     SELECT
@@ -5118,6 +5380,10 @@ ORDER BY ts ASC;`
 }
 
 func (r *ClickHouseReader) GetTotalTriggers(ctx context.Context, ruleID string, params *model.QueryRuleStateHistory) (uint64, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTotalTriggers",
+	})
 	query := fmt.Sprintf("SELECT count(*) FROM %s.%s WHERE rule_id = '%s' AND (state_changed = true) AND (state = '%s') AND unix_milli >= %d AND unix_milli <= %d",
 		signozHistoryDBName, ruleStateHistoryTableName, ruleID, model.StateFiring.String(), params.Start, params.End)
 
@@ -5146,6 +5412,11 @@ func (r *ClickHouseReader) GetTriggersByInterval(ctx context.Context, ruleID str
 }
 
 func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, traceID []string) (int64, int64, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMinAndMaxTimestampForTraceID",
+	})
 	var minTime, maxTime time.Time
 
 	query := fmt.Sprintf("SELECT min(timestamp), max(timestamp) FROM %s.%s WHERE traceID IN ('%s')",
@@ -5183,6 +5454,11 @@ func (r *ClickHouseReader) SubscribeToQueryProgress(
 }
 
 func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, req *metrics_explorer.FilterKeyRequest) (*[]v3.AttributeKey, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAllMetricFilterAttributeKeys",
+	})
 	var rows driver.Rows
 	var response []v3.AttributeKey
 	normalized := true
@@ -5220,6 +5496,11 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 }
 
 func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAllMetricFilterAttributeValues",
+	})
 	var query string
 	var err error
 	var rows driver.Rows
@@ -5256,6 +5537,11 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 }
 
 func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAllMetricFilterUnits",
+	})
 	var rows driver.Rows
 	var response []string
 	query := fmt.Sprintf("SELECT DISTINCT unit FROM %s.%s WHERE unit ILIKE $1 AND unit IS NOT NULL ORDER BY unit", signozMetricDBName, signozTSTableNameV41Day)
@@ -5283,6 +5569,11 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 	return response, nil
 }
 func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *metrics_explorer.FilterValueRequest) ([]string, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAllMetricFilterTypes",
+	})
 	var rows driver.Rows
 	var response []string
 	query := fmt.Sprintf("SELECT DISTINCT type FROM %s.%s WHERE type ILIKE $1 AND type IS NOT NULL ORDER BY type", signozMetricDBName, signozTSTableNameV41Day)
@@ -5310,6 +5601,11 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 }
 
 func (r *ClickHouseReader) GetMetricsDataPoints(ctx context.Context, metricName string) (uint64, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsDataPoints",
+	})
 	query := fmt.Sprintf(`SELECT 
     sum(count) as data_points
 FROM %s.%s
@@ -5325,6 +5621,11 @@ WHERE metric_name = ?
 }
 
 func (r *ClickHouseReader) GetMetricsLastReceived(ctx context.Context, metricName string) (int64, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsLastReceived",
+	})
 	query := fmt.Sprintf(`SELECT 
     MAX(unix_milli) AS last_received_time
 FROM %s.%s
@@ -5350,6 +5651,11 @@ WHERE metric_name = ? and unix_milli > ?
 }
 
 func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetTotalTimeSeriesForMetricName",
+	})
 	query := fmt.Sprintf(`SELECT 
     uniq(fingerprint) AS timeSeriesCount
 FROM %s.%s
@@ -5364,6 +5670,11 @@ WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
 }
 
 func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metricName string, start, end *int64, filters *v3.FilterSet) (*[]metrics_explorer.Attribute, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAttributesForMetricName",
+	})
 	whereClause := ""
 	if filters != nil {
 		conditions, _ := utils.BuildFilterConditions(filters, "t")
@@ -5431,6 +5742,11 @@ WHERE metric_name = ? AND __normalized=? %s`
 }
 
 func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetActiveTimeSeriesForMetricName",
+	})
 	milli := time.Now().Add(-duration).UnixMilli()
 	query := fmt.Sprintf("SELECT uniq(fingerprint) FROM %s.%s WHERE metric_name = '%s' and unix_milli >= ?", signozMetricDBName, signozTSTableNameV4, metricName)
 	var timeSeries uint64
@@ -5444,6 +5760,11 @@ func (r *ClickHouseReader) GetActiveTimeSeriesForMetricName(ctx context.Context,
 }
 
 func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.UUID, req *metrics_explorer.SummaryListMetricsRequest) (*metrics_explorer.SummaryListMetricsResponse, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "ListSummaryMetrics",
+	})
 	var args []interface{}
 
 	// Build filter conditions (if any)
@@ -5662,6 +5983,11 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 }
 
 func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsTimeSeriesPercentage",
+	})
 	var args []interface{}
 
 	normalized := true
@@ -5742,6 +6068,11 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 
 func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req *metrics_explorer.TreeMapMetricsRequest) (*[]metrics_explorer.TreeMapResponseItem, *model.ApiError) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsSamplesPercentage",
+	})
 	conditions, _ := utils.BuildFilterConditions(&req.Filters, "ts")
 	whereClause := ""
 	if conditions != nil {
@@ -5901,6 +6232,11 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 }
 
 func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetNameSimilarity",
+	})
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	normalized := true
@@ -5954,6 +6290,11 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 }
 
 func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metrics_explorer.RelatedMetricsRequest) (map[string]metrics_explorer.RelatedMetricsScore, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetAttributeSimilarity",
+	})
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 
 	normalized := true
@@ -6112,6 +6453,11 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 }
 
 func (r *ClickHouseReader) GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetMetricsAllResourceAttributes",
+	})
 	start, end, attTable, _ := utils.WhichAttributesTableToUse(start, end)
 	query := fmt.Sprintf(`SELECT 
     key, 
@@ -6148,6 +6494,11 @@ ORDER BY distinct_value_count DESC;`, signozMetadataDbName, attTable)
 }
 
 func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_explorer.InspectMetricsRequest, fingerprints []string) (*metrics_explorer.InspectMetricsResponse, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetInspectMetrics",
+	})
 	start, end, _, localTsTable := utils.WhichTSTableToUse(req.Start, req.End)
 	fingerprintsString := strings.Join(fingerprints, ",")
 	query := fmt.Sprintf(`SELECT
@@ -6242,6 +6593,11 @@ func (r *ClickHouseReader) GetInspectMetrics(ctx context.Context, req *metrics_e
 }
 
 func (r *ClickHouseReader) GetInspectMetricsFingerprints(ctx context.Context, attributes []string, req *metrics_explorer.InspectMetricsRequest) ([]string, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetInspectMetricsFingerprints",
+	})
 	// Build dynamic key selections and JSON extracts
 	var jsonExtracts []string
 	var groupBys []string
@@ -6323,6 +6679,11 @@ LIMIT 40`, // added rand to get diff value every time we run this query
 }
 
 func (r *ClickHouseReader) UpdateMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *model.UpdateMetricsMetadata) *model.ApiError {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "UpdateMetricsMetadata",
+	})
 	if req.MetricType == v3.MetricTypeHistogram {
 		labels := []string{"le"}
 		hasLabels, apiError := r.CheckForLabelsInMetric(ctx, req.MetricName, labels)
@@ -6367,6 +6728,11 @@ VALUES ( ?, ?, ?, ?, ?, ?, ?);`, signozMetricDBName, signozUpdatedMetricsMetadat
 }
 
 func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricName string, labels []string) (bool, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "CheckForLabelsInMetric",
+	})
 	if len(labels) == 0 {
 		return true, nil
 	}
@@ -6401,6 +6767,11 @@ func (r *ClickHouseReader) CheckForLabelsInMetric(ctx context.Context, metricNam
 }
 
 func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID valuer.UUID, metricNames ...string) (map[string]*model.UpdateMetricsMetadata, *model.ApiError) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetUpdatedMetricsMetadata",
+	})
 	cachedMetadata := make(map[string]*model.UpdateMetricsMetadata)
 	var missingMetrics []string
 
@@ -6510,6 +6881,11 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 }
 
 func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.SearchTracesParams) (*[]model.SearchSpansResult, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "SearchTraces",
+	})
 	searchSpansResult := []model.SearchSpansResult{
 		{
 			Columns:   []string{"__time", "SpanId", "TraceId", "ServiceName", "Name", "Kind", "DurationNano", "TagsKeys", "TagsValues", "References", "Events", "HasError", "StatusMessage", "StatusCodeString", "SpanKind"},
@@ -6621,6 +6997,11 @@ func (r *ClickHouseReader) GetNormalizedStatus(
 	metricNames []string,
 ) (map[string]bool, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "clickhouse-reader",
+		instrumentationtypes.CodeFunctionName: "GetNormalizedStatus",
+	})
 	if len(metricNames) == 0 {
 		return map[string]bool{}, nil
 	}
