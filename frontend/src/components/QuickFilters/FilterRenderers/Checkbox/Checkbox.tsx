@@ -35,14 +35,34 @@ const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
 
 /**
- * Removes the resource. prefix from a key to get the base key name.
+ * These prefixes are added to attribute keys based on their context.
+ */
+const FIELD_CONTEXT_PREFIXES = [
+	'metric',
+	'log',
+	'span',
+	'trace',
+	'resource',
+	'scope',
+	'attribute',
+	'event',
+	'body',
+];
+
+/**
+ * Removes the field context prefix from a key to get the base key name.
  * Example: 'resource.service.name' -> 'service.name'
+ * Example: 'attribute.http.method' -> 'http.method'
  */
 function getKeyWithoutPrefix(key: string | undefined): string {
 	if (!key) {
 		return '';
 	}
-	return key.replace(/^resource\./, '').trim();
+	const prefixPattern = new RegExp(
+		`^(${FIELD_CONTEXT_PREFIXES.join('|')})\\.`,
+		'i',
+	);
+	return key.replace(prefixPattern, '').trim();
 }
 
 /**
