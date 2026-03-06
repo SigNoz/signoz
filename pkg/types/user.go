@@ -23,6 +23,7 @@ var (
 	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
 	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
+	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
 )
 
 var (
@@ -178,8 +179,8 @@ func (u *User) ErrIfDeleted() error {
 // ErrIfPending returns an error if the user is in pending invite state.
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfPending() error {
-	if u.Status == UserStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for pending user")
+	if u.Status == UserStatusPendingInvite {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
 	}
 	return nil
 }
