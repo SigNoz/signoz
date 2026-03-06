@@ -1,4 +1,4 @@
-package instrumentation
+package instrumentationtypes
 
 import (
 	"math"
@@ -10,8 +10,8 @@ import (
 // Returns labels like "<1h", "<6h", "<24h", "<3D", "<1W", "<2W", "<1M", or ">=1M".
 func DurationBucket(from, to uint64) string {
 	// make sure it's nanoseconds regardless of the unit
-	fromNS := toNanoSecs(from)
-	toNS := toNanoSecs(to)
+	fromNS := ToNanoSecs(from)
+	toNS := ToNanoSecs(to)
 
 	diff := time.Unix(0, int64(toNS)).Sub(time.Unix(0, int64(fromNS)))
 
@@ -37,9 +37,8 @@ func DurationBucket(from, to uint64) string {
 	return ">=1M"
 }
 
-// (todo): move this to a common package to be shared with querybuilder.
-// toNanoSecs takes epoch and returns it in ns
-func toNanoSecs(epoch uint64) uint64 {
+// ToNanoSecs takes epoch and returns it in ns
+func ToNanoSecs(epoch uint64) uint64 {
 	temp := epoch
 	count := 0
 	if epoch == 0 {

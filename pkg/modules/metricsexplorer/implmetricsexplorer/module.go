@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -19,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -1247,9 +1247,9 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 
 func withMetricsExplorerQuery(ctx context.Context, functionName string) context.Context {
 	comments := map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
-		instrumentation.CodeNamespace:    "metrics-explorer",
-		instrumentation.CodeFunctionName: functionName,
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metrics-explorer",
+		instrumentationtypes.CodeFunctionName: functionName,
 	}
-	return ctxtypes.AddCommentsToContext(ctx, comments)
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

@@ -10,10 +10,10 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/bytedance/sonic"
@@ -214,9 +214,9 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal: q.spec.Signal.StringValue(),
-		instrumentation.QueryDuration:   instrumentation.DurationBucket(q.fromMS, q.toMS),
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: q.spec.Signal.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
 	})
 
 	totalRows := uint64(0)

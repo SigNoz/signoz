@@ -11,10 +11,10 @@ import (
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -49,10 +49,10 @@ var (
 // searchOperator: LIKE for pattern matching, EQUAL for exact match
 func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, []string, bool, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
-		instrumentation.CodeNamespace:    "metadata",
-		instrumentation.CodeFunctionName: "fetchBodyJSONPaths",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "fetchBodyJSONPaths",
 	})
 	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
@@ -556,9 +556,9 @@ func (t *telemetryMetaStore) PromotePaths(ctx context.Context, paths ...string) 
 }
 
 func withTelemetryContext(ctx context.Context, functionName string) context.Context {
-	return ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
-		instrumentation.CodeNamespace:    "metadata",
-		instrumentation.CodeFunctionName: functionName,
+	return ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: functionName,
 	})
 }

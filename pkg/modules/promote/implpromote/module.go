@@ -8,11 +8,11 @@ import (
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -107,10 +107,10 @@ func (m *module) PromotePaths(ctx context.Context, paths []string) error {
 
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
-		instrumentation.CodeNamespace:    "promote",
-		instrumentation.CodeFunctionName: "createIndexes",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "promote",
+		instrumentationtypes.CodeFunctionName: "createIndexes",
 	})
 	if len(indexes) == 0 {
 		return nil

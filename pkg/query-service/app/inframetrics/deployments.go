@@ -5,7 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -13,6 +12,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -232,9 +232,9 @@ func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, orgID valu
 		topDeploymentGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "inframetrics",
-		instrumentation.CodeFunctionName: "getTopDeploymentGroups",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopDeploymentGroups",
 	})
 	queryResponse, _, err := d.querierV2.QueryRange(ctx, orgID, topDeploymentGroupsQueryRangeParams)
 	if err != nil {

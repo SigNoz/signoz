@@ -7,7 +7,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
@@ -18,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -107,9 +107,9 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 }
 
 func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.UUID, widgetIdx, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "dashboard",
-		instrumentation.CodeFunctionName: "GetPublicWidgetQueryRange",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "dashboard",
+		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRange",
 	})
 	dashboard, err := module.GetDashboardByPublicID(ctx, id)
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"math"
 	"sort"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -13,6 +12,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -173,9 +173,9 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, orgID valuer.UU
 		topProcessGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "inframetrics",
-		instrumentation.CodeFunctionName: "getTopProcessGroups",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopProcessGroups",
 	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topProcessGroupsQueryRangeParams)
 	if err != nil {
@@ -290,9 +290,9 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, r
 		}
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "inframetrics",
-		instrumentation.CodeFunctionName: "GetProcessList",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetProcessList",
 	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {

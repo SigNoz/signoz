@@ -1,4 +1,4 @@
-package instrumentation
+package instrumentationtypes
 
 import semconv "go.opentelemetry.io/collector/semconv/v1.6.1"
 

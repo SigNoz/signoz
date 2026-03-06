@@ -9,7 +9,6 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -18,6 +17,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
@@ -274,9 +274,9 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req
 		topHostGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "inframetrics",
-		instrumentation.CodeFunctionName: "getTopHostGroups",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopHostGroups",
 	})
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, topHostGroupsQueryRangeParams)
 	if err != nil {
@@ -488,9 +488,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		}
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "inframetrics",
-		instrumentation.CodeFunctionName: "GetHostList",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetHostList",
 	})
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {

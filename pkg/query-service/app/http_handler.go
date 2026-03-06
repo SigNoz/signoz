@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/thirdpartyapi"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
@@ -66,6 +65,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -2414,9 +2414,9 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "onboardKafka",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "onboardKafka",
 	})
 
 	results, errQueriesByName, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
@@ -2531,9 +2531,9 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getNetworkData",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getNetworkData",
 	})
 
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
@@ -2628,9 +2628,9 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getProducerData",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerData",
 	})
 	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureKafkaSpanEval, evalCtx)
 
@@ -2703,9 +2703,9 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getConsumerData",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerData",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -2761,9 +2761,9 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getPartitionOverviewLatencyData",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getPartitionOverviewLatencyData",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -2819,9 +2819,9 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getConsumerPartitionLatencyData",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerPartitionLatencyData",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -2880,9 +2880,9 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getProducerThroughputOverview",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputOverview",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, producerQueryRangeParams)
 	if err != nil {
@@ -2995,9 +2995,9 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getProducerThroughputDetails",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputDetails",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -3053,9 +3053,9 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getConsumerThroughputOverview",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputOverview",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -3111,9 +3111,9 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getConsumerThroughputDetails",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputDetails",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -3175,9 +3175,9 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getProducerConsumerEval",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerConsumerEval",
 	})
 	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
@@ -3440,9 +3440,9 @@ func (aH *APIHandler) calculateLogsConnectionStatus(ctx context.Context, orgID v
 			},
 		},
 	}
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "calculateLogsConnectionStatus",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
 	})
 	queryRes, _, err := aH.querier.QueryRange(ctx, orgID, qrParams)
 	if err != nil {
@@ -3996,9 +3996,9 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 			},
 		},
 	}
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "calculateLogsConnectionStatus",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
 	})
 	queryRes, _, err := aH.querier.QueryRange(
 		ctx, orgID, qrParams,
@@ -4548,9 +4548,9 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "QueryRange",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
 	})
 	result, errQueriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
@@ -4946,9 +4946,9 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "QueryRangeV4",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRangeV4",
 	})
 	aH.queryRangeV4(ctx, queryRangeParams, w, r)
 }
@@ -5043,9 +5043,9 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getDomainList",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainList",
 	})
 	// Execute the query using the v5 querier
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
@@ -5103,9 +5103,9 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ctx := ctxtypes.AddCommentsToContext(r.Context(), map[string]string{
-		instrumentation.CodeNamespace:    "app",
-		instrumentation.CodeFunctionName: "getDomainInfo",
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainInfo",
 	})
 	// Execute the query using the v5 querier
 	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)

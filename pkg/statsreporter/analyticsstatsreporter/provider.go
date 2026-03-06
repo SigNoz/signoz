@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/statsreporter"
@@ -16,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
 	"go.opentelemetry.io/otel/attribute"
@@ -203,9 +203,9 @@ func (provider *provider) Stop(ctx context.Context) error {
 }
 
 func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map[string]any {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "statsreporter",
-		instrumentation.CodeFunctionName: "collectOrg",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "statsreporter",
+		instrumentationtypes.CodeFunctionName: "collectOrg",
 	})
 	var wg sync.WaitGroup
 	wg.Add(len(provider.collectors))

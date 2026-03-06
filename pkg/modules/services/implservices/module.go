@@ -9,12 +9,12 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/servicetypes/servicetypesv1"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -36,10 +36,10 @@ func NewModule(q querier.Querier, ts telemetrystore.TelemetryStore) services.Mod
 
 // FetchTopLevelOperations returns top-level operations per service using db query
 func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
-		instrumentation.CodeNamespace:    "services",
-		instrumentation.CodeFunctionName: "FetchTopLevelOperations",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "services",
+		instrumentationtypes.CodeFunctionName: "FetchTopLevelOperations",
 	})
 
 	db := m.TelemetryStore.ClickhouseDB()
@@ -78,9 +78,9 @@ func (m *module) FetchTopLevelOperations(ctx context.Context, start time.Time, s
 // Get implements services.Module
 // Builds a QBv5 traces aggregation grouped by service.name and maps results to ResponseItem.
 func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "services",
-		instrumentation.CodeFunctionName: "Get",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "services",
+		instrumentationtypes.CodeFunctionName: "Get",
 	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
@@ -116,9 +116,9 @@ func (m *module) Get(ctx context.Context, orgUUID valuer.UUID, req *servicetypes
 
 // GetTopOperations implements services.Module for QBV5 based top ops
 func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "services",
-		instrumentation.CodeFunctionName: "GetTopOperations",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "services",
+		instrumentationtypes.CodeFunctionName: "GetTopOperations",
 	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
@@ -140,9 +140,9 @@ func (m *module) GetTopOperations(ctx context.Context, orgUUID valuer.UUID, req 
 
 // GetEntryPointOperations implements services.Module for QBV5 based entry point ops
 func (m *module) GetEntryPointOperations(ctx context.Context, orgUUID valuer.UUID, req *servicetypesv1.OperationsRequest) ([]servicetypesv1.OperationItem, error) {
-	ctx = ctxtypes.AddCommentsToContext(ctx, map[string]string{
-		instrumentation.CodeNamespace:    "services",
-		instrumentation.CodeFunctionName: "GetEntryPointOperations",
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "services",
+		instrumentationtypes.CodeFunctionName: "GetEntryPointOperations",
 	})
 	if req == nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "request is nil")
