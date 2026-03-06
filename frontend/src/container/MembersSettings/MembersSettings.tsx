@@ -28,6 +28,7 @@ function MembersSettings(): JSX.Element {
 	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
 	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
 
+	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done - for search
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
@@ -104,6 +105,7 @@ function MembersSettings(): JSX.Element {
 		return filteredMembers.slice(start, start + PAGE_SIZE);
 	}, [filteredMembers, currentPage]);
 
+	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done
 	const setPage = useCallback(
 		(page: number): void => {
 			urlQuery.set('page', String(page));

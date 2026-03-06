@@ -89,6 +89,53 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
+	const saveInvitedMember = useCallback(async (): Promise<void> => {
+		if (!member || !inviteId) {
+			return;
+		}
+		await cancelInvite({ id: inviteId });
+		try {
+			await sendInvite({
+				email: member.email,
+				name: displayName,
+				role: selectedRole,
+				frontendBaseUrl: window.location.origin,
+			});
+			toast.success('Invite updated successfully', { richColors: true });
+			onComplete();
+			onClose();
+		} catch {
+			onRefetch?.();
+			onClose();
+			toast.error(
+				'Failed to send the updated invite. Please re-invite this member.',
+				{ richColors: true },
+			);
+		}
+	}, [
+		member,
+		inviteId,
+		displayName,
+		selectedRole,
+		onComplete,
+		onClose,
+		onRefetch,
+	]);
+
+	const saveActiveMember = useCallback(async (): Promise<void> => {
+		if (!member) {
+			return;
+		}
+		await update({
+			userId: member.id,
+			displayName,
+			role: selectedRole,
+		});
+		toast.success('Member details updated successfully', { richColors: true });
+		onComplete();
+		onClose();
+	}, [member, displayName, selectedRole, onComplete, onClose]);
+
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!member || !isDirty) {
 			return;
@@ -96,33 +143,10 @@ function EditMemberDrawer({
 		setIsSaving(true);
 		try {
 			if (isInvited && inviteId) {
-				await cancelInvite({ id: inviteId });
-				try {
-					await sendInvite({
-						email: member.email,
-						name: displayName,
-						role: selectedRole,
-						frontendBaseUrl: window.location.origin,
-					});
-					toast.success('Invite updated successfully', { richColors: true });
-				} catch {
-					onRefetch?.();
-					onClose();
-					toast.error(
-						'Failed to send the updated invite. Please re-invite this member.',
-						{ richColors: true },
-					);
-				}
+				await saveInvitedMember();
 			} else {
-				await update({
-					userId: member.id,
-					displayName,
-					role: selectedRole,
-				});
-				toast.success('Member details updated successfully', { richColors: true });
+				await saveActiveMember();
 			}
-			onComplete();
-			onClose();
 		} catch {
 			toast.error(
 				isInvited ? 'Failed to update invite' : 'Failed to update member details',
@@ -136,11 +160,8 @@ function EditMemberDrawer({
 		isDirty,
 		isInvited,
 		inviteId,
-		displayName,
-		selectedRole,
-		onComplete,
-		onClose,
-		onRefetch,
+		saveInvitedMember,
+		saveActiveMember,
 	]);
 
 	const handleDelete = useCallback(async (): Promise<void> => {
