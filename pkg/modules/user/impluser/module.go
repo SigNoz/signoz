@@ -104,8 +104,14 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	// validate all emails to be invited
 	emails := make([]string, 0, len(bulkInvites.Invites))
+	seen := make(map[string]struct{}, len(bulkInvites.Invites))
 	for _, invite := range bulkInvites.Invites {
-		emails = append(emails, invite.Email.StringValue())
+		email := invite.Email.StringValue()
+		if _, exists := seen[email]; exists {
+			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Duplicate email in request: %s", email)
+		}
+		seen[email] = struct{}{}
+		emails = append(emails, email)
 	}
 
 	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
@@ -130,12 +136,10 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 		ResetPasswordToken *types.ResetPasswordToken
 	}
 
-	newUsersWithResetToken := make([]*userWithResetToken, 0, len(bulkInvites.Invites))
-
-	var invites []*types.Invite
+	newUsersWithResetToken := make([]*userWithResetToken, len(bulkInvites.Invites))
 
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
-		for _, invite := range bulkInvites.Invites {
+		for idx, invite := range bulkInvites.Invites {
 			role, err := types.NewRole(invite.Role.String())
 			if err != nil {
 				return err
@@ -160,18 +164,20 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 				return err
 			}
 
-			newUsersWithResetToken = append(newUsersWithResetToken, &userWithResetToken{
+			newUsersWithResetToken[idx] = &userWithResetToken{
 				User:               newUser,
 				ResetPasswordToken: resetPasswordToken,
-			})
+			}
 		}
 		return nil
 	}); err != nil {
 		return nil, err
 	}
 
+	invites := make([]*types.Invite, len(bulkInvites.Invites))
+
 	// send password reset emails to all the invited users
-	for i, userWithToken := range newUsersWithResetToken {
+	for idx, userWithToken := range newUsersWithResetToken {
 		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
 			"invitee_email": userWithToken.User.Email,
 			"invitee_role":  userWithToken.User.Role,
@@ -192,9 +198,9 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			},
 		}
 
-		invites = append(invites, invite)
+		invites[idx] = invite
 
-		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
+		frontendBaseUrl := bulkInvites.Invites[idx].FrontendBaseUrl
 		if frontendBaseUrl == "" {
 			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", userWithToken.User.Email)
 			continue
@@ -301,6 +307,10 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 
 	if err := existingUser.ErrIfDeleted(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
+	}
+
+	if err := existingUser.ErrIfPending(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update pending user")
 	}
 
 	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
@@ -557,13 +567,14 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		); err != nil {
 			return err
 		}
+
+		if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+			return err
+		}
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if user.Status == types.UserStatusPendingInvite {
-			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
-				return err
-			}
 			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
