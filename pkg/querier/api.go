@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -33,6 +34,10 @@ func NewHandler(set factory.ProviderSettings, querier Querier, analytics analyti
 
 func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	ctx := req.Context()
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "querier",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
+	})
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
