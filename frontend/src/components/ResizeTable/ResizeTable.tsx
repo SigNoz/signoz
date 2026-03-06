@@ -63,7 +63,7 @@ function ResizeTable({
 				...col,
 				...(onDragColumn && {
 					title: (
-						<DragSpanStyle className="dragHandler">
+						<DragSpanStyle className="dragHandler" data-testid="drag-column-title">
 							{col?.title?.toString() || ''}
 						</DragSpanStyle>
 					),
@@ -109,16 +109,7 @@ function ResizeTable({
 			return col;
 		});
 
-		setColumns((prev) => {
-			const unchanged =
-				prev.length === columnsWithStoredWidths.length &&
-				columnsWithStoredWidths.every(
-					(col, i) =>
-						col.width === prev[i]?.width &&
-						(col as RowData).dataIndex === (prev[i] as RowData)?.dataIndex,
-				);
-			return unchanged ? prev : columnsWithStoredWidths;
-		});
+		setColumns(columnsWithStoredWidths);
 	}, [columns, columnWidths]);
 
 	const lastReportedWidthsRef = useRef<Record<string, number>>({});
