@@ -125,6 +125,7 @@ function MembersTable({
 			title: 'Name / Email',
 			dataIndex: 'name',
 			key: 'name',
+			sorter: (a, b): number => a.email.localeCompare(b.email),
 			render: (_, record): JSX.Element => (
 				<NameEmailCell name={record.name} email={record.email} />
 			),
@@ -134,6 +135,7 @@ function MembersTable({
 			dataIndex: 'role',
 			key: 'role',
 			width: 180,
+			sorter: (a, b): number => a.role.localeCompare(b.role),
 			render: (role: ROLES): JSX.Element => (
 				<Badge color="vanilla">{capitalize(role)}</Badge>
 			),

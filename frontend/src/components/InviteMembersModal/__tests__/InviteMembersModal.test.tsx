@@ -19,7 +19,7 @@ const mockInviteUsers = jest.mocked(inviteUsers);
 const defaultProps = {
 	open: true,
 	onClose: jest.fn(),
-	onSuccess: jest.fn(),
+	onComplete: jest.fn(),
 };
 
 describe('InviteMembersModal', () => {
@@ -118,9 +118,9 @@ describe('InviteMembersModal', () => {
 
 	it('uses sendInvite (single) when only one row is filled', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSuccess = jest.fn();
+		const onComplete = jest.fn();
 
-		render(<InviteMembersModal {...defaultProps} onSuccess={onSuccess} />);
+		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
 
 		const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
 		await user.type(emailInputs[0], 'single@signoz.io');
@@ -138,15 +138,15 @@ describe('InviteMembersModal', () => {
 				expect.objectContaining({ email: 'single@signoz.io', role: 'VIEWER' }),
 			);
 			expect(mockInviteUsers).not.toHaveBeenCalled();
-			expect(onSuccess).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 
 	it('uses inviteUsers (bulk) when multiple rows are filled', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSuccess = jest.fn();
+		const onComplete = jest.fn();
 
-		render(<InviteMembersModal {...defaultProps} onSuccess={onSuccess} />);
+		render(<InviteMembersModal {...defaultProps} onComplete={onComplete} />);
 
 		const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
 
@@ -171,7 +171,7 @@ describe('InviteMembersModal', () => {
 				]),
 			});
 			expect(mockSendInvite).not.toHaveBeenCalled();
-			expect(onSuccess).toHaveBeenCalled();
+			expect(onComplete).toHaveBeenCalled();
 		});
 	});
 });

@@ -35,7 +35,8 @@ export interface EditMemberDrawerProps {
 	member: MemberRow | null;
 	open: boolean;
 	onClose: () => void;
-	onSuccess: () => void;
+	onComplete: () => void;
+	onRefetch?: () => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -43,7 +44,8 @@ function EditMemberDrawer({
 	member,
 	open,
 	onClose,
-	onSuccess,
+	onComplete,
+	onRefetch,
 }: EditMemberDrawerProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -95,13 +97,22 @@ function EditMemberDrawer({
 		try {
 			if (isInvited && inviteId) {
 				await cancelInvite({ id: inviteId });
-				await sendInvite({
-					email: member.email,
-					name: displayName,
-					role: selectedRole,
-					frontendBaseUrl: window.location.origin,
-				});
-				toast.success('Invite updated successfully', { richColors: true });
+				try {
+					await sendInvite({
+						email: member.email,
+						name: displayName,
+						role: selectedRole,
+						frontendBaseUrl: window.location.origin,
+					});
+					toast.success('Invite updated successfully', { richColors: true });
+				} catch {
+					onRefetch?.();
+					onClose();
+					toast.error(
+						'Failed to send the updated invite. Please re-invite this member.',
+						{ richColors: true },
+					);
+				}
 			} else {
 				await update({
 					userId: member.id,
@@ -110,7 +121,7 @@ function EditMemberDrawer({
 				});
 				toast.success('Member details updated successfully', { richColors: true });
 			}
-			onSuccess();
+			onComplete();
 			onClose();
 		} catch {
 			toast.error(
@@ -127,8 +138,9 @@ function EditMemberDrawer({
 		inviteId,
 		displayName,
 		selectedRole,
-		onSuccess,
+		onComplete,
 		onClose,
+		onRefetch,
 	]);
 
 	const handleDelete = useCallback(async (): Promise<void> => {
@@ -145,7 +157,7 @@ function EditMemberDrawer({
 				toast.success('Member deleted successfully', { richColors: true });
 			}
 			setShowDeleteConfirm(false);
-			onSuccess();
+			onComplete();
 			onClose();
 		} catch {
 			toast.error(
@@ -155,7 +167,7 @@ function EditMemberDrawer({
 		} finally {
 			setIsDeleting(false);
 		}
-	}, [member, isInvited, inviteId, onSuccess, onClose]);
+	}, [member, isInvited, inviteId, onComplete, onClose]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -170,6 +182,11 @@ function EditMemberDrawer({
 				setHasCopiedResetLink(false);
 				setShowResetLinkDialog(true);
 				onClose();
+			} else {
+				toast.error('Failed to generate password reset link', {
+					richColors: true,
+					position: 'top-right',
+				});
 			}
 		} catch {
 			toast.error('Failed to generate password reset link', {
