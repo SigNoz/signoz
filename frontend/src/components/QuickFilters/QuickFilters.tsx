@@ -23,7 +23,7 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useApiMonitoringParams } from 'container/ApiMonitoring/queryParams';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { isFunction, isNull } from 'lodash-es';
-import { Frown, Lightbulb, Settings2 as SettingsIcon } from 'lucide-react';
+import { Frown, Settings2 as SettingsIcon } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { USER_ROLES } from 'types/roles';
@@ -291,6 +291,8 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 					/>
 				</div>
 			)}
+			{/* 
+			revert back to this when dynamic filters are ready
 			<section className="filters-info">
 				<Tooltip
 					title={
@@ -311,7 +313,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 						Adaptive filters
 					</Typography.Text>
 				</Tooltip>
-			</section>
+			</section> */}
 			<section className="filters">
 				{filterConfig.map((filter) => {
 					switch (filter.type) {
