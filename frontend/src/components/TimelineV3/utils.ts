@@ -30,10 +30,14 @@ export function getIntervals(
 			: Math.floor(Number(integerPartString) / 10 ** (integerPartLength - 1)) *
 			  10 ** (integerPartLength - 1);
 
+	// Unit must suit both: (1) tick granularity (intervalSpread) and (2) label magnitude
+	// (offsetTimestamp). When zoomed deep into a trace, labels show offsetTimestamp + elapsed,
+	// so we must pick a unit where that value is readable (e.g. "500.00s" not "500000.00ms").
+	const valueForUnitSelection = Math.max(offsetTimestamp, intervalSpread);
 	let intervalUnit: IIntervalUnit = INTERVAL_UNITS[0];
 	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
 		const standardInterval = INTERVAL_UNITS[idx];
-		if (intervalSpread * standardInterval.multiplier >= 1) {
+		if (valueForUnitSelection * standardInterval.multiplier >= 1) {
 			intervalUnit = INTERVAL_UNITS[idx];
 			break;
 		}
