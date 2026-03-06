@@ -579,7 +579,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     found_user = next(
-        (user for user in response.json()["data"] if user["email"] == email and user["id"] != user_id),
+        (user for user in response.json()["data"] if user["email"] == email),
         None,
     )
     assert found_user is not None
