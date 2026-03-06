@@ -550,7 +550,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
 
     1. Admin invites user as ADMIN
     2. User exists in IDP with 'signoz-viewers' group (would normally get VIEWER)
-    3. SSO login activates the user with ADMIN role (invite role wins)
+    3. SSO login activates the user with VIEWER role (SSO wins)
     """
     email = "sso-pending-invite@oidc.integration.test"
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -563,7 +563,6 @@ def test_oidc_sso_login_activates_pending_invite_user(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
-    assert response.json()["data"]["status"] == "pending_invite"
 
     # Create IDP user in viewer group — SSO would normally assign VIEWER
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
@@ -576,7 +575,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
     found_user = get_user_by_email(signoz, admin_token, email)
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "ADMIN"
+    assert found_user["role"] == "VIEWER"
 
 
 def test_oidc_sso_deleted_user_blocked_and_reinvite_activates(
@@ -668,7 +667,15 @@ def test_oidc_sso_deleted_user_blocked_and_reinvite_activates(
         signoz, idp, driver, get_session_context, idp_login, email, "password123"
     )
 
-    found_user = get_user_by_email(signoz, admin_token, email)
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    found_user = next(
+        (user for user in response.json()["data"] if user["email"] == email and user["id"] != user_id),
+        None,
+    )
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"
+    assert found_user["role"] == "VIEWER"  # default role from SSO domain config

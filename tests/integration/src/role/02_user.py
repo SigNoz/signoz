@@ -35,17 +35,7 @@ def test_user_invite_accept_role_grant(
     )
     assert invite_response.status_code == HTTPStatus.CREATED
     invited_user = invite_response.json()["data"]
-
-    # Activate user via reset password
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
+    reset_token = invited_user["token"]
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
