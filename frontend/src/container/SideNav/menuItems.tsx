@@ -29,7 +29,6 @@ import {
 	Receipt,
 	Route,
 	ScrollText,
-	Search,
 	Settings,
 	Shield,
 	Slack,
@@ -195,12 +194,6 @@ export const primaryMenuItems: SidebarItem[] = [
 		label: 'Home',
 		icon: <Home size={16} />,
 		itemKey: 'home',
-	},
-	{
-		key: 'quick-search',
-		label: 'Search',
-		icon: <Search size={16} />,
-		itemKey: 'quick-search',
 	},
 	{
 		key: ROUTES.LIST_ALL_ALERT,

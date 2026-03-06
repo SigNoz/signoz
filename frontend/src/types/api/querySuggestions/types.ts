@@ -47,7 +47,6 @@ export interface QueryKeyValueRequestProps {
 	searchText: string;
 	signalSource?: 'meter' | '';
 	metricName?: string;
-	existingQuery?: string;
 }
 
 export type SignalType = 'traces' | 'logs' | 'metrics';
