@@ -14,24 +14,31 @@ def test_reinvite_deleted_user(
     get_token: Callable[[str, str], str],
 ):
     """
-    Verify that a deleted user can be re-invited:
+    Verify that a deleted user if re-inivited creates a new user altogether:
     1. Invite and activate a user
-    2. Soft delete the user
-    3. Re-invite the same email — should succeed and reactivate as pending_invite
-    4. Reset password — user becomes active again
+    2. Call the delete user api
+    3. Re-invite the same email — should succeed and create a new user with pending_invite status
+    4. Reset password for the new user
+    5. Get User API returns two users now, one deleted and one active
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create and activate a user
+    reinvite_user_email = "reinvite@integration.test"
+    reinvite_user_name = "reinvite user"
+    reinvite_user_role = "EDITOR"
+    reinvite_user_password = "password123Z$"
+
+    # invite the user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "reinvite@integration.test", "role": "EDITOR", "name": "reinvite user"},
+        json={"email": reinvite_user_email, "role": reinvite_user_role, "name": reinvite_user_name},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
     invited_user = response.json()["data"]
 
+    # get the reset password token
     response = requests.get(
         signoz.self.host_configs["8080"].get(
             f"/api/v1/getResetPasswordToken/{invited_user['id']}"
@@ -42,31 +49,31 @@ def test_reinvite_deleted_user(
     assert response.status_code == HTTPStatus.OK
     reset_token = response.json()["data"]["token"]
 
+    # reset the password to make it active
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": reset_token},
+        json={"password": reinvite_user_password, "token": reset_token},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Soft delete the user (set status to deleted via DB since feature flag may not be enabled)
-    with signoz.sqlstore.conn.connect() as conn:
-        conn.execute(
-            sql.text("UPDATE users SET status = 'deleted' WHERE id = :user_id"),
-            {"user_id": invited_user["id"]},
-        )
-        conn.commit()
+    # call the delete api which now soft deletes the user
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{invited_user['id']}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Re-invite the same email — should succeed
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "reinvite@integration.test", "role": "VIEWER", "name": "reinvite user v2"},
+        json={"email": reinvite_user_email, "role": "VIEWER", "name": "reinvite user v2"},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
     reinvited_user = response.json()["data"]
-    assert reinvited_user["status"] == "pending_invite"
     assert reinvited_user["role"] == "VIEWER" 
     assert reinvited_user["id"] != invited_user["id"] # confirms a new user was created
 

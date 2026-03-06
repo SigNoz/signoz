@@ -119,7 +119,6 @@ def test_invite_and_register(
 
     invited_user = response.json()["data"]
     assert invited_user["email"] == "editor@integration.test"
-    assert invited_user["status"] == "pending_invite"
     assert invited_user["role"] == "EDITOR"
 
     # Verify the user user appears in the users list but as pending_invite status
@@ -137,12 +136,12 @@ def test_invite_and_register(
     )
     assert found_user is not None
     assert found_user["status"] == "pending_invite"
-    assert invited_user["role"] == "EDITOR"
+    assert found_user["role"] == "EDITOR"
 
     # Get the reset password token through admin token
     response = requests.get(
         signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
+            f"/api/v1/getResetPasswordToken/{found_user['id']}"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
@@ -211,17 +210,7 @@ def test_revoke_invite_and_register(
     )
     assert response.status_code == HTTPStatus.CREATED
     invited_user = response.json()["data"]
-
-    # Get reset password token before revoking
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{invited_user['id']}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-    reset_token = response.json()["data"]["token"]
+    reset_token = invited_user["token"]
 
     # Delete the pending invite user (revoke the invite)
     response = requests.delete(
@@ -268,3 +257,85 @@ def test_self_access(
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["data"]["role"] == "EDITOR"
+
+
+def test_old_invite_flow(signoz: types.SigNoz, get_token: Callable[[str, str], str]):
+    admin_token = get_token("admin@integration.test", "password123Z$")
+
+    # invite a new user
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": "oldinviteflow@integration.test", "role": "VIEWER", "name": "old invite flow"},
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    # get the invite token using get api
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        timeout=2,
+        headers={
+            "Authorization": f"Bearer {admin_token}"
+        },
+    )
+
+    invite_response = response.json()["data"]
+    found_invite = next(
+        (
+            invite
+            for invite in invite_response
+            if invite["email"] == "oldinviteflow@integration.test"
+        ),
+        None,
+    )
+
+    # accept the invite
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
+        json={
+            "password": "password123Z$",
+            "displayName": "old invite flow",
+            "token": f"{found_invite['token']}",
+        },
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    # verify the invite token has been deleted
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v1/invite/{found_invite['token']}"),
+        timeout=2,
+    )
+    assert response.status_code in (HTTPStatus.NOT_FOUND, HTTPStatus.BAD_REQUEST)
+
+    # verify that admin endpoints cannot be called
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={
+            "Authorization": f"Bearer {get_token("oldinviteflow@integration.test", "password123Z$")}"
+        },
+    )
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+    # verify the user has been created
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={
+            "Authorization": f"Bearer {admin_token}"
+        },
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    user_response = response.json()["data"]
+    found_user = next(
+        (user for user in user_response if user["email"] == "oldinviteflow@integration.test"),
+        None,
+    )
+
+    assert found_user is not None
+    assert found_user["role"] == "VIEWER"
+    assert found_user["displayName"] == "old invite flow"
+    assert found_user["email"] == "oldinviteflow@integration.test"

@@ -90,7 +90,7 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 	// create a dummy invite obj for backward compatibility
 	invite := &types.Invite{
 		Identifiable: types.Identifiable{
-			ID: resetPasswordToken.PasswordID,
+			ID: user.ID,
 		},
 		Name:  user.DisplayName,
 		Email: user.Email,
@@ -169,16 +169,35 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			"invitee_role":  invitedUser.Role,
 		})
 
-		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
-		if frontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
-			continue
-		}
-
 		// generate reset password token
 		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, invitedUser.ID)
 		if err != nil {
 			m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+			continue
+		}
+
+		// TODO(balanikaran): deprecate this
+		invite := &types.Invite{
+			Identifiable: types.Identifiable{
+				ID: invitedUser.ID,
+			},
+			Name:  invitedUser.DisplayName,
+			Email: invitedUser.Email,
+			Token: resetPasswordToken.Token,
+			Role:  invitedUser.Role,
+			OrgID: invitedUser.OrgID,
+			TimeAuditable: types.TimeAuditable{
+				CreatedAt: invitedUser.CreatedAt,
+				UpdatedAt: invitedUser.UpdatedAt, // dummy
+			},
+		}
+
+		invites = append(invites, invite)
+		// TODO(balanikaran): deprecate till here
+
+		frontendBaseUrl := bulkInvites.Invites[i].FrontendBaseUrl
+		if frontendBaseUrl == "" {
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", invitedUser.Email)
 			continue
 		}
 
@@ -195,26 +214,9 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
 		}
 
-		// TODO(balanikaran): deprecate this
-		invite := &types.Invite{
-			Identifiable: types.Identifiable{
-				ID: resetPasswordToken.PasswordID,
-			},
-			Name:  invitedUser.DisplayName,
-			Email: invitedUser.Email,
-			Token: resetPasswordToken.Token,
-			Role:  invitedUser.Role,
-			OrgID: invitedUser.OrgID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: invitedUser.CreatedAt,
-				UpdatedAt: invitedUser.UpdatedAt, // dummy
-			},
-		}
-
-		invites = append(invites, invite)
 	}
 
-	return invites, nil // TODO(balanikaran) move to types.User
+	return invites, nil // TODO(balanikaran) move to []*types.User (invitedUsers)
 }
 
 // TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
@@ -239,7 +241,7 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 		// create a dummy invite obj for backward compatibility
 		invite := &types.Invite{
 			Identifiable: types.Identifiable{
-				ID: resetPasswordToken.PasswordID,
+				ID: pUser.ID,
 			},
 			Name:  pUser.DisplayName,
 			Email: pUser.Email,
@@ -260,15 +262,9 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 
 // TODO(balanikaran): deprecate this one frontend changes are live with new invitation flow
 func (m *Module) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	// the id in this case is the password id
-	// get the factor password
-	factorPassword, err := m.store.GetPassword(ctx, id)
-	if err != nil {
-		return err
-	}
-
+	// the id in this case is the user id
 	// get the user
-	user, err := m.store.GetUser(ctx, valuer.MustNewUUID(factorPassword.UserID))
+	user, err := m.store.GetUser(ctx, id)
 	if err != nil {
 		return err
 	}
@@ -662,6 +658,8 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	if existingUser != nil {
 		// for users logging through SSO flow but are having status as pending_invite
 		if existingUser.Status == types.UserStatusPendingInvite {
+			// respect the role coming from the SSO
+			existingUser.Role = user.Role
 			// activate the user
 			if err = module.activatePendingUser(ctx, existingUser); err != nil {
 				return nil, err
