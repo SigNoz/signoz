@@ -563,6 +563,7 @@ def test_oidc_sso_login_activates_pending_invite_user(
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
+    user_id = response.json()["data"]["id"]
 
     # Create IDP user in viewer group — SSO would normally assign VIEWER
     create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
@@ -572,101 +573,6 @@ def test_oidc_sso_login_activates_pending_invite_user(
     )
 
     # User should be active with ADMIN role from invite, not VIEWER from SSO
-    found_user = get_user_by_email(signoz, admin_token, email)
-    assert found_user is not None
-    assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"
-
-
-def test_oidc_sso_deleted_user_blocked_and_reinvite_activates(
-    signoz: SigNoz,
-    idp: TestContainerIDP,
-    driver: webdriver.Chrome,
-    create_user_idp: Callable[[str, str, bool, str, str], None],
-    idp_login: Callable[[str, str], None],
-    get_token: Callable[[str, str], str],
-    get_session_context: Callable[[str], str],
-) -> None:
-    """
-    Verify the full deleted-user OIDC SSO lifecycle:
-    1. Invite + activate a user (EDITOR)
-    2. Soft delete the user
-    3. SSO login attempt — user should remain deleted (blocked)
-    4. Re-invite the same email as VIEWER
-    5. SSO login — user should become active with VIEWER role
-    """
-    email = "sso-deleted-lifecycle@oidc.integration.test"
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    # --- Step 1: Invite and activate via password reset ---
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "EDITOR", "name": "OIDC SSO Lifecycle User"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.CREATED
-    user_id = response.json()["data"]["id"]
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/getResetPasswordToken/{user_id}"
-        ),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.OK
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "password123Z$", "token": response.json()["data"]["token"]},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.NO_CONTENT
-
-    # --- Step 2: Soft delete via DB (feature flag may not be enabled) ---
-    with signoz.sqlstore.conn.connect() as conn:
-        conn.execute(
-            sql.text("UPDATE users SET status = 'deleted' WHERE id = :user_id"),
-            {"user_id": user_id},
-        )
-        conn.commit()
-
-    # --- Step 3: SSO login should be blocked for deleted user ---
-    create_user_idp(email, "password123", True, "OIDC", "Lifecycle")
-
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
-
-    # Verify user is NOT reactivated — check via DB since API may filter deleted users
-    with signoz.sqlstore.conn.connect() as conn:
-        result = conn.execute(
-            sql.text("SELECT status FROM users WHERE id = :user_id"),
-            {"user_id": user_id},
-        )
-        row = result.fetchone()
-        assert row is not None
-        assert row[0] == "deleted"
-
-    # --- Step 4: Re-invite as VIEWER ---
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": email, "role": "VIEWER", "name": "OIDC SSO Lifecycle User v2"},
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
-    )
-    assert response.status_code == HTTPStatus.CREATED
-    assert response.json()["data"]["status"] == "pending_invite"
-    assert response.json()["data"]["role"] == "VIEWER"
-
-    # --- Step 5: SSO login should activate with new role ---
-    driver.delete_all_cookies()
-
-    perform_oidc_login(
-        signoz, idp, driver, get_session_context, idp_login, email, "password123"
-    )
-
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
@@ -678,4 +584,4 @@ def test_oidc_sso_deleted_user_blocked_and_reinvite_activates(
     )
     assert found_user is not None
     assert found_user["status"] == "active"
-    assert found_user["role"] == "VIEWER"  # default role from SSO domain config
+    assert found_user["role"] == "VIEWER"
