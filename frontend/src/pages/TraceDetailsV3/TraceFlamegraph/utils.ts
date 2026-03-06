@@ -72,7 +72,7 @@ interface GetSpanColorArgs {
 
 export function getSpanColor(args: GetSpanColorArgs): string {
 	const { span, isDarkMode } = args;
-	let color = generateColor(span.serviceName, themeColors.traceDetailColors);
+	let color = generateColor(span.serviceName, themeColors.chartcolors);
 
 	if (span.hasError) {
 		color = isDarkMode ? 'rgb(239, 68, 68)' : 'rgb(220, 38, 38)';
