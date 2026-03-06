@@ -17,9 +17,6 @@ enum TraceFlamegraphState {
 }
 
 interface TraceFlamegraphProps {
-	serviceExecTime: Record<string, number>;
-	startTime: number;
-	endTime: number;
 	selectedSpan: Span | undefined;
 }
 

@@ -31,9 +31,14 @@ export function getIntervals(
 			  10 ** (integerPartLength - 1);
 
 	let intervalUnit: IIntervalUnit = INTERVAL_UNITS[0];
+	const maxLabelTimeMagnitude = Math.max(
+		intervalSpread,
+		Math.abs(offsetTimestamp),
+		Math.abs(offsetTimestamp + baseSpread),
+	);
 	for (let idx = INTERVAL_UNITS.length - 1; idx >= 0; idx -= 1) {
 		const standardInterval = INTERVAL_UNITS[idx];
-		if (intervalSpread * standardInterval.multiplier >= 1) {
+		if (maxLabelTimeMagnitude * standardInterval.multiplier >= 1) {
 			intervalUnit = INTERVAL_UNITS[idx];
 			break;
 		}

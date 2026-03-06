@@ -50,7 +50,7 @@ function TimelineV3(props: ITimelineV3Props): JSX.Element {
 		return <div />;
 	}
 
-	const strokeColor = isDarkMode ? ' rgb(192,193,195,0.8)' : 'black';
+	const strokeColor = isDarkMode ? 'rgb(192,193,195,0.8)' : 'black';
 
 	return (
 		<div ref={ref as never} className="timeline-v3-container">
