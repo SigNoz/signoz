@@ -4,19 +4,11 @@ import ROUTES from 'constants/routes';
 import history from 'lib/history';
 import { Compass, Cone, TowerControl } from 'lucide-react';
 
-import TraceDetailsV2 from './TraceDetailV2';
+import TraceDetailsV3 from '../TraceDetailsV3';
 
 import './TraceDetailV2.styles.scss';
 
-interface INewTraceDetailProps {
-	items: {
-		label: JSX.Element;
-		key: string;
-		children: JSX.Element;
-	}[];
-}
-
-function NewTraceDetail(props: INewTraceDetailProps): JSX.Element {
+function NewTraceDetail(props: any): JSX.Element {
 	const { items } = props;
 	return (
 		<div className="traces-module-container">
@@ -50,7 +42,7 @@ export default function TraceDetailsPage(): JSX.Element {
 				</div>
 			),
 			key: 'trace-details',
-			children: <TraceDetailsV2 />,
+			children: <TraceDetailsV3 />,
 		},
 		{
 			label: (
