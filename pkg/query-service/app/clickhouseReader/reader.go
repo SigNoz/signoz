@@ -1084,7 +1084,19 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	}
 
 	processingPostCache := time.Now()
-	selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint := tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
+	limit := min(req.Limit, tracedetail.MaxLimitToSelectAllSpans)
+	selectAllSpans := totalSpans <= uint64(limit)
+
+	var (
+		selectedSpans                          []*model.Span
+		uncollapsedSpans                       []string
+		rootServiceName, rootServiceEntryPoint string
+	)
+	if selectAllSpans {
+		selectedSpans, rootServiceName, rootServiceEntryPoint = tracedetail.GetAllSpans(traceRoots)
+	} else {
+		selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint = tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
+	}
 	zap.L().Info("getWaterfallSpansForTraceWithMetadata: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID))
 
 	// convert start timestamp to millis because right now frontend is expecting it in millis
@@ -1097,7 +1109,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	}
 
 	response.Spans = selectedSpans
-	response.UncollapsedSpans = uncollapsedSpans
+	response.UncollapsedSpans = uncollapsedSpans // ignoring if all spans are returning
 	response.StartTimestampMillis = startTime / 1000000
 	response.EndTimestampMillis = endTime / 1000000
 	response.TotalSpansCount = totalSpans
@@ -1106,6 +1118,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	response.RootServiceEntryPoint = rootServiceEntryPoint
 	response.ServiceNameToTotalDurationMap = serviceNameToTotalDurationMap
 	response.HasMissingSpans = hasMissingSpans
+	response.HasMore = !selectAllSpans
 	return response, nil
 }
 
