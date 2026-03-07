@@ -69,6 +69,50 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
+  lint-pnpm:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+      - name: install
+        run: cd frontend && pnpm install
+      - name: lint
+        run: echo 'done'
+  lint-pnpm-cache:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: checkout
+        uses: actions/checkout@v4
+      - name: setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+      - name: setup node
+        uses: actions/setup-node@v6
+        with:
+          node-version: "22"
+          cache: 'pnpm'
+          cache-dependency-path: frontend/pnpm-lock.yaml
+      - name: install
+        run: cd frontend && pnpm install
+      - name: lint
+        run: echo 'done'
   md-languages:
     if: |
       github.event_name == 'merge_group' ||
