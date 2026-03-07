@@ -58,7 +58,8 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		dashboardMigrator.Migrate(ctx, req)
 	}
 
-	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.UserID), req)
+	// TODO[@vikrantgupta25]: figure out what to do with this author thing
+	dashboard, err := handler.module.Create(ctx, orgID, claims.Email, valuer.MustNewUUID(claims.GetIdentityID()), req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -156,7 +157,7 @@ func (handler *handler) LockUnlock(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = handler.module.LockUnlock(ctx, orgID, dashboardID, claims.Email, claims.Role, *req.Locked)
+	err = handler.module.LockUnlock(ctx, orgID, dashboardID, valuer.MustNewUUID(claims.UserID), *req.Locked)
 	if err != nil {
 		render.Error(rw, err)
 		return

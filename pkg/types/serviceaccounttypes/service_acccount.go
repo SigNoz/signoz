@@ -9,16 +9,18 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 var (
-	ErrCodeServiceAccountInvalidInput      = errors.MustNewCode("service_account_invalid_input")
-	ErrCodeServiceAccountAlreadyExists     = errors.MustNewCode("service_account_already_exists")
-	ErrCodeServiceAccountNotFound          = errors.MustNewCode("service_account_not_found")
-	ErrCodeServiceAccountRoleAlreadyExists = errors.MustNewCode("service_account_role_already_exists")
+	ErrCodeServiceAccountInvalidInput         = errors.MustNewCode("service_account_invalid_input")
+	ErrCodeServiceAccountAlreadyExists        = errors.MustNewCode("service_account_already_exists")
+	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
+	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
+	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
 )
 
 var (
@@ -129,19 +131,42 @@ func NewStorableServiceAccount(serviceAccount *ServiceAccount) *StorableServiceA
 	}
 }
 
-func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string) {
+func (sa *ServiceAccount) Update(name string, email valuer.Email, roles []string) error {
+	if err := sa.ErrIfDisabled(); err != nil {
+		return err
+	}
+
 	sa.Name = name
 	sa.Email = email
 	sa.Roles = roles
 	sa.UpdatedAt = time.Now()
+
+	return nil
 }
 
-func (sa *ServiceAccount) UpdateStatus(status valuer.String) {
+func (sa *ServiceAccount) UpdateStatus(status valuer.String) error {
+	if err := sa.ErrIfDisabled(); err != nil {
+		return err
+	}
+
 	sa.Status = status
 	sa.UpdatedAt = time.Now()
+	return nil
+}
+
+func (sa *ServiceAccount) ErrIfDisabled() error {
+	if sa.Status == StatusDisabled {
+		return errors.New(errors.TypeUnsupported, ErrCodeServiceAccountOperationUnsupported, "this operation is not supported for disabled service account")
+	}
+
+	return nil
 }
 
 func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*FactorAPIKey, error) {
+	if err := sa.ErrIfDisabled(); err != nil {
+		return nil, err
+	}
+
 	key := make([]byte, 32)
 	_, err := rand.Read(key)
 	if err != nil {
@@ -161,7 +186,7 @@ func (sa *ServiceAccount) NewFactorAPIKey(name string, expiresAt uint64) (*Facto
 		Name:             name,
 		Key:              encodedKey,
 		ExpiresAt:        expiresAt,
-		LastUsed:         time.Now(),
+		LastObservedAt:   time.Now(),
 		ServiceAccountID: sa.ID,
 	}, nil
 }
@@ -250,4 +275,13 @@ func (sa *UpdatableServiceAccountStatus) UnmarshalJSON(data []byte) error {
 
 	*sa = UpdatableServiceAccountStatus(temp)
 	return nil
+}
+
+func (sa *StorableServiceAccount) ToIdentity() *authtypes.Identity {
+	return &authtypes.Identity{
+		ServiceAccountID: sa.ID,
+		Principal:        authtypes.PrincipalServiceAccount,
+		OrgID:            valuer.MustNewUUID(sa.OrgID),
+		Email:            valuer.MustNewEmail(sa.Email),
+	}
 }

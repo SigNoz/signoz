@@ -1775,7 +1775,7 @@ components:
           type: string
         key:
           type: string
-        last_used:
+        last_observed_at:
           format: date-time
           type: string
         name:
@@ -1789,7 +1789,7 @@ components:
       - id
       - key
       - expires_at
-      - last_used
+      - last_observed_at
       - service_account_id
       type: object
     ServiceaccounttypesGettableFactorAPIKeyWithKey:
@@ -1989,43 +1989,6 @@ components:
         userId:
           type: string
       type: object
-    TypesGettableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        createdByUser:
-          $ref: '#/components/schemas/TypesUser'
-        expiresAt:
-          format: int64
-          type: integer
-        id:
-          type: string
-        lastUsed:
-          format: int64
-          type: integer
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        updatedByUser:
-          $ref: '#/components/schemas/TypesUser'
-        userId:
-          type: string
-      required:
-      - id
-      type: object
     TypesGettableGlobalConfig:
       properties:
         external_url:
@@ -2087,16 +2050,6 @@ components:
       required:
       - id
       type: object
-    TypesPostableAPIKey:
-      properties:
-        expiresInDays:
-          format: int64
-          type: integer
-        name:
-          type: string
-        role:
-          type: string
-      type: object
     TypesPostableAcceptInvite:
       properties:
         displayName:
@@ -2148,33 +2101,6 @@ components:
         passwordId:
           type: string
         token:
-          type: string
-      required:
-      - id
-      type: object
-    TypesStorableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        userId:
           type: string
       required:
       - id
@@ -3852,222 +3778,6 @@ paths:
       summary: Update org preference
       tags:
       - preferences
-  /api/v1/pats:
-    get:
-      deprecated: false
-      description: This endpoint lists all api keys
-      operationId: ListAPIKeys
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesGettableAPIKey'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List api keys
-      tags:
-      - users
-    post:
-      deprecated: false
-      description: This endpoint creates an api key
-      operationId: CreateAPIKey
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableAPIKey'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesGettableAPIKey'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create api key
-      tags:
-      - users
-  /api/v1/pats/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint revokes an api key
-      operationId: RevokeAPIKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Revoke api key
-      tags:
-      - users
-    put:
-      deprecated: false
-      description: This endpoint updates an api key
-      operationId: UpdateAPIKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesStorableAPIKey'
-      responses:
-        "204":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update api key
-      tags:
-      - users
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false

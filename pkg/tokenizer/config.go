@@ -17,6 +17,9 @@ type Config struct {
 	// Config for the JWT tokenizer.
 	JWT JWTConfig `mapstructure:"jwt"`
 
+	// Config for the serviceAccount tokenizer.
+	ServiceAccount ServiceAccountConfig `mapstructure:"service_account"`
+
 	// Rotation config
 	Rotation RotationConfig `mapstructure:"rotation"`
 
@@ -35,6 +38,11 @@ type OpaqueConfig struct {
 type JWTConfig struct {
 	// The secret to sign the JWT tokens.
 	Secret string `mapstructure:"secret"`
+}
+
+type ServiceAccountConfig struct {
+	// GC config
+	GC GCConfig `mapstructure:"gc"`
 }
 
 type GCConfig struct {
@@ -80,6 +88,11 @@ func newConfig() factory.Config {
 		},
 		JWT: JWTConfig{
 			Secret: "",
+		},
+		ServiceAccount: ServiceAccountConfig{
+			GC: GCConfig{
+				Interval: 1 * time.Hour, // 1 hour
+			},
 		},
 		Rotation: RotationConfig{
 			Interval: 30 * time.Minute, // 30 minutes

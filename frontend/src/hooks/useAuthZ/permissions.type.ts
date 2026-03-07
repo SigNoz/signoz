@@ -14,10 +14,10 @@ export default {
 		],
 		relations: {
 			create: ['metaresources'],
-			delete: ['user', 'role', 'organization', 'metaresource'],
+			delete: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
 			list: ['metaresources'],
-			read: ['user', 'role', 'organization', 'metaresource'],
-			update: ['user', 'role', 'organization', 'metaresource'],
+			read: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
+			update: ['user', 'serviceaccount', 'role', 'organization', 'metaresource'],
 		},
 	},
 } as const;
