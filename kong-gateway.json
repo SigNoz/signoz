@@ -65,7 +65,7 @@
       "y": 0,
       "i": "1-total-requests",
       "type": "TIMESERIES",
-      "title": "Panel - Total Requests"
+      "title": "Panel - Request Rate"
     },
     {
       "h": 2,
@@ -110,7 +110,7 @@
       "y": 2,
       "i": "6-request-rate",
       "type": "TIMESERIES",
-      "title": "Panel - Request Rate"
+      "title": "Panel - Request Rate by Service"
     },
     {
       "h": 2,
@@ -164,7 +164,7 @@
       "y": 4,
       "i": "12-plugin-latency",
       "type": "TIMESERIES",
-      "title": "Panel - Plugin Latency"
+      "title": "Panel - Kong Latency (including plugins)"
     },
     {
       "h": 2,
@@ -173,7 +173,7 @@
       "y": 4,
       "i": "13-total-errors",
       "type": "TIMESERIES",
-      "title": "Panel - Total Errors"
+      "title": "Panel - Error Rates (4xx, 5xx)"
     },
     {
       "h": 2,
@@ -182,7 +182,7 @@
       "y": 4,
       "i": "14-error-rate",
       "type": "TIMESERIES",
-      "title": "Panel - Error Rate"
+      "title": "Panel - 5xx Error Rate"
     },
     {
       "h": 2,
@@ -191,7 +191,7 @@
       "y": 4,
       "i": "15-top-error-types",
       "type": "TIMESERIES",
-      "title": "Panel - Top Error Types"
+      "title": "Panel - Top Error Types (4xx, 5xx)"
     },
     {
       "h": 2,
@@ -200,7 +200,7 @@
       "y": 6,
       "i": "16-failed-requests-by-service",
       "type": "TIMESERIES",
-      "title": "Panel - Failed Requests by Service"
+      "title": "Panel - Failed Requests (5xx) by Service"
     },
     {
       "h": 2,
@@ -227,7 +227,7 @@
       "y": 6,
       "i": "19-connection-rate",
       "type": "TIMESERIES",
-      "title": "Panel - Connection Rate"
+      "title": "Panel - New Connection Rate"
     },
     {
       "h": 2,
@@ -236,7 +236,7 @@
       "y": 6,
       "i": "20-rejected-connections",
       "type": "TIMESERIES",
-      "title": "Panel - Rejected Connections"
+      "title": "Panel - Dropped Connections Rate"
     },
     {
       "h": 2,
@@ -254,7 +254,7 @@
       "y": 8,
       "i": "22-service-error-rates",
       "type": "TIMESERIES",
-      "title": "Panel - Service Error Rates (5xx)"
+      "title": "Panel - Service 5xx Error Rates"
     },
     {
       "h": 2,
@@ -263,24 +263,24 @@
       "y": 8,
       "i": "23-pod-restarts",
       "type": "TIMESERIES",
-      "title": "Panel - Pod Restarts"
+      "title": "Panel - Pod Restart Rate"
     }
   ],
   "panels": {
     "1-total-requests": {
-      "description": "Displays the total number of API requests handled by Kong.",
+      "description": "Rate of incoming API requests handled by Kong (requests per second).",
       "query": {
         "promql": [
           {
             "query": "sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
-            "legend": "Total Requests"
+            "legend": "Request Rate (RPS)"
           }
         ],
         "queryType": "promql",
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "short"
+        "unit": "rps"
       }
     },
     "2-active-connections": {
@@ -300,11 +300,11 @@
       }
     },
     "3-uptime": {
-      "description": "Displays the total uptime of the Kong instance since the last restart.",
+      "description": "Average uptime of Kong pods since last restart.",
       "query": {
         "promql": [
           {
-            "query": "(time() - process_start_time_seconds{job=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"})",
+            "query": "avg(time() - process_start_time_seconds{job=\"kong\", namespace=~\"$namespace\"})",
             "legend": "Uptime (seconds)"
           }
         ],
@@ -315,11 +315,11 @@
       }
     },
     "4-cpu-usage": {
-      "description": "Illustrates the CPU usage by the Kong process.",
+      "description": "CPU usage per Kong pod (in cores).",
       "query": {
         "promql": [
           {
-            "query": "sum(rate(container_cpu_usage_seconds_total{container=\"kong\", namespace=~\"$namespace\", pod=~\"$service.*\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (pod) * 100",
+            "query": "sum(rate(container_cpu_usage_seconds_total{container=\"kong\", namespace=~\"$namespace\", pod=~\"$service.*\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (pod)",
             "legend": "{{pod}}"
           }
         ],
@@ -327,11 +327,11 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "percent"
+        "unit": "cores"
       }
     },
     "5-memory-usage": {
-      "description": "Shows the memory consumption of Kong.",
+      "description": "Memory consumption per Kong pod (working set bytes).",
       "query": {
         "promql": [
           {
@@ -347,7 +347,7 @@
       }
     },
     "6-request-rate": {
-      "description": "Displays the rate of incoming API requests per second.",
+      "description": "Displays the rate of incoming API requests per second, broken down by service.",
       "query": {
         "promql": [
           {
@@ -363,7 +363,7 @@
       }
     },
     "7-response-status-codes": {
-      "description": "Shows the distribution of HTTP response status codes.",
+      "description": "Shows the distribution of HTTP response status codes (2xx, 4xx, 5xx).",
       "query": {
         "promql": [
           {
@@ -387,7 +387,7 @@
       }
     },
     "8-request-size": {
-      "description": "Illustrates the average and percentile sizes of incoming API requests.",
+      "description": "Average and percentile sizes of incoming API requests.",
       "query": {
         "promql": [
           {
@@ -411,7 +411,7 @@
       }
     },
     "9-response-size": {
-      "description": "Displays the average and percentile sizes of responses sent by Kong.",
+      "description": "Average and percentile sizes of responses sent by Kong.",
       "query": {
         "promql": [
           {
@@ -435,19 +435,19 @@
       }
     },
     "10-latency-percentiles": {
-      "description": "Displays latency percentiles (p50, p90, p99) to highlight variations in request processing times.",
+      "description": "Request latency percentiles (p50, p90, p99) in milliseconds.",
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
             "legend": "p50"
           },
           {
-            "query": "histogram_quantile(0.90, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
+            "query": "histogram_quantile(0.90, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
             "legend": "p90"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
             "legend": "p99"
           }
         ],
@@ -459,15 +459,15 @@
       }
     },
     "11-upstream-latency": {
-      "description": "Illustrates the latency of upstream services that Kong communicates with.",
+      "description": "Upstream latency percentiles (p50, p99) in milliseconds, broken down by service.",
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service))",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service)) * 1000",
             "legend": "p50 - {{service}}"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service))",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service)) * 1000",
             "legend": "p99 - {{service}}"
           }
         ],
@@ -479,15 +479,15 @@
       }
     },
     "12-plugin-latency": {
-      "description": "Shows the additional latency introduced by each plugin during request processing.",
+      "description": "Latency added by Kong itself (including all plugins) in milliseconds.",
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
             "legend": "p50"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
             "legend": "p99"
           }
         ],
@@ -499,7 +499,7 @@
       }
     },
     "13-total-errors": {
-      "description": "Displays the total number of errors encountered by Kong.",
+      "description": "Rate of 4xx and 5xx errors per second.",
       "query": {
         "promql": [
           {
@@ -515,11 +515,11 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "short"
+        "unit": "rps"
       }
     },
     "14-error-rate": {
-      "description": "Shows the rate of errors per second, helping to identify spikes or trends.",
+      "description": "Rate of 5xx errors per second.",
       "query": {
         "promql": [
           {
@@ -535,11 +535,11 @@
       }
     },
     "15-top-error-types": {
-      "description": "Lists the most common error types (e.g., connection timeouts, authentication failures).",
+      "description": "Most frequent HTTP error codes (4xx and 5xx).",
       "query": {
         "promql": [
           {
-            "query": "topk(5, sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\", code!~\"2.*\"}[5m])) by (code))",
+            "query": "topk(5, sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\", code=~\"4.*|5.*\"}[5m])) by (code))",
             "legend": "HTTP {{code}}"
           }
         ],
@@ -547,11 +547,11 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "short"
+        "unit": "rps"
       }
     },
     "16-failed-requests-by-service": {
-      "description": "Monitors the number of failed requests segmented by the upstream service.",
+      "description": "Rate of 5xx errors broken down by service.",
       "query": {
         "promql": [
           {
@@ -567,7 +567,7 @@
       }
     },
     "17-incoming-traffic-volume": {
-      "description": "Displays the amount of incoming traffic to Kong, measured in bytes per second.",
+      "description": "Incoming traffic rate in bytes per second.",
       "query": {
         "promql": [
           {
@@ -583,7 +583,7 @@
       }
     },
     "18-outgoing-traffic-volume": {
-      "description": "Shows the amount of outgoing traffic from Kong to upstream services.",
+      "description": "Outgoing traffic rate in bytes per second.",
       "query": {
         "promql": [
           {
@@ -599,11 +599,11 @@
       }
     },
     "19-connection-rate": {
-      "description": "Illustrates the rate of new connections being established with Kong.",
+      "description": "Rate of new accepted connections per second.",
       "query": {
         "promql": [
           {
-            "query": "sum(rate(kong_nginx_http_total_connections{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
+            "query": "sum(rate(kong_nginx_http_connections_total{state=\"accepted\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
             "legend": "New Connections/sec"
           }
         ],
@@ -611,15 +611,15 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "short"
+        "unit": "rps"
       }
     },
     "20-rejected-connections": {
-      "description": "Monitors the number of connection attempts rejected by Kong.",
+      "description": "Rate of dropped connections per second.",
       "query": {
         "promql": [
           {
-            "query": "sum(rate(kong_nginx_http_rejected_connections_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
+            "query": "sum(rate(kong_nginx_http_connections_total{state=\"dropped\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
             "legend": "Rejected Connections/sec"
           }
         ],
@@ -627,11 +627,11 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "short"
+        "unit": "rps"
       }
     },
     "21-top-services-by-requests": {
-      "description": "Shows the top Kong services by request rate.",
+      "description": "Top 10 services by request rate.",
       "query": {
         "promql": [
           {
@@ -647,7 +647,7 @@
       }
     },
     "22-service-error-rates": {
-      "description": "Displays the error rates (5xx) per service.",
+      "description": "5xx error rate per service.",
       "query": {
         "promql": [
           {
@@ -663,11 +663,11 @@
       }
     },
     "23-pod-restarts": {
-      "description": "Monitors the number of times Kong pods have restarted.",
+      "description": "Rate of Kong pod restarts per second.",
       "query": {
         "promql": [
           {
-            "query": "sum(kube_pod_container_status_restarts_total{container=\"kong\", namespace=~\"$namespace\", pod=~\"$service.*\", environment=~\"$environment\", cluster=~\"$cluster\"}) by (pod)",
+            "query": "sum(rate(kube_pod_container_status_restarts_total{container=\"kong\", namespace=~\"$namespace\", pod=~\"$service.*\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (pod)",
             "legend": "{{pod}}"
           }
         ],
