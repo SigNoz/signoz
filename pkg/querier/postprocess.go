@@ -199,6 +199,11 @@ func postProcessMetricQuery(
 		}
 	}
 
+	if distData, ok := result.Value.(*qbtypes.DistributionData); ok {
+		result = q.applyDistributionLimit(result, distData, query.Limit, query.Order)
+		return result
+	}
+
 	result = q.applySeriesLimit(result, query.Limit, query.Order)
 
 	if len(query.Functions) > 0 {
@@ -275,6 +280,141 @@ func (q *querier) applySeriesLimit(result *qbtypes.Result, limit int, orderBy []
 	}
 
 	return result
+}
+
+// applyDistributionLimit limits the number of distribution aggregations in the result
+func (q *querier) applyDistributionLimit(result *qbtypes.Result, distData *qbtypes.DistributionData, limit int, orderBy []qbtypes.OrderBy) *qbtypes.Result {
+	if distData == nil || len(distData.Aggregations) == 0 {
+		return result
+	}
+
+	// If no orderBy is specified, sort by total count descending
+	effectiveOrderBy := orderBy
+	if len(effectiveOrderBy) == 0 {
+		effectiveOrderBy = []qbtypes.OrderBy{
+			{
+				Key: qbtypes.OrderByKey{
+					TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+						Name:          qbtypes.DefaultOrderByKey,
+						FieldDataType: telemetrytypes.FieldDataTypeFloat64,
+					},
+				},
+				Direction: qbtypes.OrderDirectionDesc,
+			},
+		}
+	}
+
+	// Cache aggregation values and labels
+	aggValues := make(map[*qbtypes.DistributionAggregation]float64, len(distData.Aggregations))
+	aggLabels := make(map[*qbtypes.DistributionAggregation]map[string]string, len(distData.Aggregations))
+
+	for _, agg := range distData.Aggregations {
+		// Calculate total count across all buckets
+		totalCount := 0.0
+		for _, bucket := range agg.Buckets {
+			totalCount += bucket.Count
+		}
+		aggValues[agg] = totalCount
+
+		// Cache all labels for this aggregation
+		labelMap := make(map[string]string)
+		for _, label := range agg.Labels {
+			if strVal, ok := label.Value.(string); ok {
+				labelMap[label.Key.Name] = strVal
+			} else {
+				labelMap[label.Key.Name] = convertDistributionValueToString(label.Value)
+			}
+		}
+		aggLabels[agg] = labelMap
+	}
+
+	// Sort the aggregations based on the order criteria
+	slices.SortStableFunc(distData.Aggregations, func(i, j *qbtypes.DistributionAggregation) int {
+		if compareDistributionAggregations(i, j, effectiveOrderBy, aggValues, aggLabels) {
+			return -1
+		}
+		if compareDistributionAggregations(j, i, effectiveOrderBy, aggValues, aggLabels) {
+			return 1
+		}
+		return 0
+	})
+
+	// Apply limit if specified
+	if limit > 0 && len(distData.Aggregations) > limit {
+		distData.Aggregations = distData.Aggregations[:limit]
+	}
+
+	result.Value = distData
+	return result
+}
+
+// compareDistributionAggregations compares two distribution aggregations based on the order criteria
+func compareDistributionAggregations(
+	aggI, aggJ *qbtypes.DistributionAggregation,
+	orderBy []qbtypes.OrderBy,
+	aggValues map[*qbtypes.DistributionAggregation]float64,
+	aggLabels map[*qbtypes.DistributionAggregation]map[string]string,
+) bool {
+	for _, order := range orderBy {
+		columnName := order.Key.Name
+		direction := order.Direction
+
+		if columnName == qbtypes.DefaultOrderByKey || columnName == "value" {
+			valueI := aggValues[aggI]
+			valueJ := aggValues[aggJ]
+
+			if valueI != valueJ {
+				if direction == qbtypes.OrderDirectionAsc {
+					return valueI < valueJ
+				} else { // desc
+					return valueI > valueJ
+				}
+			}
+		} else {
+			labelI, existsI := aggLabels[aggI][columnName]
+			labelJ, existsJ := aggLabels[aggJ][columnName]
+
+			if existsI != existsJ {
+				// Handle missing labels - non-existent labels come first
+				return !existsI
+			}
+
+			if existsI && existsJ {
+				comparison := strings.Compare(labelI, labelJ)
+				if comparison != 0 {
+					if direction == qbtypes.OrderDirectionAsc {
+						return comparison < 0
+					} else { // desc
+						return comparison > 0
+					}
+				}
+			}
+		}
+	}
+
+	// If all order criteria are equal, preserve original order
+	return false
+}
+
+// convertDistributionValueToString converts various types to string for comparison
+func convertDistributionValueToString(value any) string {
+	switch v := value.(type) {
+	case string:
+		return v
+	case int:
+		return fmt.Sprintf("%d", v)
+	case int64:
+		return fmt.Sprintf("%d", v)
+	case float64:
+		return fmt.Sprintf("%f", v)
+	case bool:
+		if v {
+			return "true"
+		}
+		return "false"
+	default:
+		return fmt.Sprintf("%v", v)
+	}
 }
 
 // applyFunctions applies functions to time series data
