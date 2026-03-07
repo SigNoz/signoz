@@ -3,7 +3,13 @@
 set -o errexit
 
 # Variables
-BASE_DIR="$(dirname "$(readlink -f "$0")")"
+# WSL compatibility: use realpath if readlink -f fails
+if BASE_DIR="$(dirname "$(readlink -f "$0" 2>/dev/null)")"; then
+    :
+else
+    BASE_DIR="$(dirname "$(realpath "$0" 2>/dev/null || echo "$0")")"
+fi
+
 DOCKER_STANDALONE_DIR="docker"
 DOCKER_SWARM_DIR="docker-swarm" # TODO: Add docker swarm support
 
@@ -68,7 +74,7 @@ check_os() {
 
     platform=$(uname -s | tr '[:upper:]' '[:lower:]')
 
-    os_name="$(cat /etc/*-release | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
+    os_name="$(cat /etc/*-release 2>/dev/null | awk -F= '$1 == "NAME" { gsub(/"/, ""); print $2; exit }')"
 
     case "$os_name" in
         Ubuntu*|Pop!_OS)
@@ -228,16 +234,43 @@ install_docker_compose() {
 
 start_docker() {
     echo -e "🐳 Starting Docker ...\n"
+    
+    # Check if Docker is already running
+    if docker ps > /dev/null 2>&1; then
+        return 0
+    fi
+    
     if [[ $os == "Mac" ]]; then
         open --background -a Docker && while ! docker system info > /dev/null 2>&1; do sleep 1; done
     else
-        if ! $sudo_cmd systemctl is-active docker.service > /dev/null; then
-            echo "Starting docker service"
-            $sudo_cmd systemctl start docker.service
-        fi
-        if [[ -z $sudo_cmd ]]; then
-            if ! docker ps > /dev/null && true; then
-                request_sudo
+        # Check if we're in WSL
+        if grep -qi microsoft /proc/version 2>/dev/null || grep -qi wsl /proc/version 2>/dev/null; then
+            echo "ℹ️  WSL detected: Docker Desktop should be running on Windows"
+            
+            # Test if Docker is accessible
+            if ! docker ps > /dev/null 2>&1; then
+                echo ""
+                echo "❌ ERROR: Docker is not accessible from WSL"
+                echo ""
+                echo "Please ensure:"
+                echo "  1. Docker Desktop is running on Windows"
+                echo "  2. WSL integration is enabled in Docker Desktop settings"
+                echo "     (Settings → Resources → WSL Integration)"
+                echo ""
+                exit 1
+            fi
+            
+            echo "✅ Docker is accessible from WSL"
+        else
+            # Native Linux - use systemctl
+            if ! $sudo_cmd systemctl is-active docker.service > /dev/null 2>&1; then
+                echo "Starting docker service"
+                $sudo_cmd systemctl start docker.service
+            fi
+            if [[ -z $sudo_cmd ]]; then
+                if ! docker ps > /dev/null 2>&1; then
+                    request_sudo
+                fi
             fi
         fi
     fi
@@ -412,8 +445,7 @@ send_event() {
             others='"email": "'"$email"'",'
             ;;
         *)
-            print_error "unknown event type: $1"
-            exit 1
+            return
             ;;
     esac
 
@@ -423,10 +455,11 @@ send_event() {
 
     DATA='{ "anonymousId": "'"$SIGNOZ_INSTALLATION_ID"'", "event": "'"$event"'", "properties": { "os": "'"$os"'", '"$error $others"' "setup_type": "'"$setup_type"'" } }'
 
+    # Send analytics with timeout (non-blocking)
     if has_curl; then
-        curl -sfL -d "$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
+        curl -sfL --max-time 3 -d "$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1 || true
     elif has_wget; then
-        wget -q --post-data="$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1
+        wget -q --timeout=3 --post-data="$DATA" --header "$HEADER_1" --header "$HEADER_2" "$URL" > /dev/null 2>&1 || true
     fi
 }
 
@@ -434,6 +467,15 @@ send_event "install_started"
 
 if [[ $desired_os -eq 0 ]]; then
     send_event "os_not_supported"
+    echo ""
+    echo "❌ ERROR: Your OS ($os) is not supported by this installer."
+    echo "   Supported OS: Ubuntu, Debian, Linux Mint, Amazon Linux, Red Hat, CentOS, Rocky Linux, SLES, openSUSE, Mac OS"
+    echo ""
+    echo "   You can still install SigNoz manually using docker compose:"
+    echo "   cd signoz/deploy/docker"
+    echo "   docker compose up -d"
+    echo ""
+    exit 1
 fi
 
 # Check is Docker daemon is installed and available. If not, the install & start Docker for Linux machines. We cannot automatically install Docker Desktop on Mac OS
@@ -466,20 +508,31 @@ if ! is_command_present docker; then
 fi
 
 if has_docker_compose_plugin; then
-    echo "docker compose plugin is present, using it"
+    echo "✓ Using docker compose plugin"
     docker_compose_cmd="docker compose"
 # Install docker-compose
 else
     docker_compose_cmd="docker-compose"
     if ! is_command_present docker-compose; then
+        echo "docker-compose not found, installing..."
         request_sudo
         install_docker_compose
+    else
+        echo "✓ Using docker-compose"
+        docker-compose --version
     fi
 fi
 
 start_docker
 
 # Switch to the Docker Standalone directory
+if [[ ! -d "${BASE_DIR}/${DOCKER_STANDALONE_DIR}" ]]; then
+    echo "❌ ERROR: Directory ${BASE_DIR}/${DOCKER_STANDALONE_DIR} does not exist!"
+    echo "   Current directory: $(pwd)"
+    echo "   BASE_DIR: $BASE_DIR"
+    echo "   DOCKER_STANDALONE_DIR: $DOCKER_STANDALONE_DIR"
+    exit 1
+fi
 pushd "${BASE_DIR}/${DOCKER_STANDALONE_DIR}" > /dev/null 2>&1
 
 # check for open ports, if signoz is not installed
