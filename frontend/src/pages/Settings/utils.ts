@@ -17,6 +17,7 @@ import {
 	organizationSettings,
 	roleDetails,
 	rolesSettings,
+	serviceAccountsSettings,
 } from './config';
 
 export const getRoutes = (
@@ -62,7 +63,11 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...apiKeys(t), ...membersSettings(t));
+		settings.push(
+			...apiKeys(t),
+			...membersSettings(t),
+			...serviceAccountsSettings(t),
+		);
 	}
 
 	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
