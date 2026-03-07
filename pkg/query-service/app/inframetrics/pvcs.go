@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"golang.org/x/exp/slices"
 )
@@ -190,6 +192,10 @@ func (p *PvcsRepo) getTopVolumeGroups(ctx context.Context, orgID valuer.UUID, re
 		topVolumeGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopVolumeGroups",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, topVolumeGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -305,6 +311,10 @@ func (p *PvcsRepo) GetPvcList(ctx context.Context, orgID valuer.UUID, req model.
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetPvcList",
+	})
 	queryResponse, _, err := p.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

@@ -9,11 +9,11 @@ import {
 	Input,
 	Modal,
 	Select,
+	SelectProps,
 	Spin,
 	Typography,
 } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { SelectProps } from 'antd/lib';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	DowntimeSchedules,
 	Recurrence,

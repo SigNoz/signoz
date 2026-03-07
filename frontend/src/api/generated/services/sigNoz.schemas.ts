@@ -3308,6 +3308,11 @@ export type ListMetricsParams = {
 	 * @description undefined
 	 */
 	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
 };
 
 export type ListMetrics200 = {

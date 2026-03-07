@@ -1,9 +1,17 @@
 import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { TableProps } from 'antd/lib';
+import {
+	Collapse,
+	Flex,
+	Space,
+	Table,
+	TableProps,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	DowntimeSchedules,
 	PayloadProps,

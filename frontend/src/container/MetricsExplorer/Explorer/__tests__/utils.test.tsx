@@ -139,4 +139,14 @@ describe('getMetricUnits', () => {
 		expect(result).toHaveLength(1);
 		expect(result[0]).toBe('s');
 	});
+
+	it('should return undefined for metrics with no unit', () => {
+		const result = getMetricUnits([
+			{ ...MOCK_METRIC_METADATA, unit: '' },
+			{ ...MOCK_METRIC_METADATA, unit: '' },
+		]);
+		expect(result).toHaveLength(2);
+		expect(result[0]).toBeUndefined();
+		expect(result[1]).toBeUndefined();
+	});
 });
