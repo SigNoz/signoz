@@ -85,6 +85,7 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.INGESTION_SETTINGS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
+							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
 							item.key === ROUTES.SHORTCUTS
 								? true
 								: item.isEnabled,
@@ -116,6 +117,7 @@ function SettingsPage(): JSX.Element {
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
 							item.key === ROUTES.MEMBERS_SETTINGS ||
+							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS ||
 							item.key === ROUTES.INGESTION_SETTINGS
 								? true
 								: item.isEnabled,
@@ -141,7 +143,8 @@ function SettingsPage(): JSX.Element {
 						isEnabled:
 							item.key === ROUTES.API_KEYS ||
 							item.key === ROUTES.ORG_SETTINGS ||
-							item.key === ROUTES.MEMBERS_SETTINGS
+							item.key === ROUTES.MEMBERS_SETTINGS ||
+							item.key === ROUTES.SERVICE_ACCOUNTS_SETTINGS
 								? true
 								: item.isEnabled,
 					}));
