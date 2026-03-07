@@ -63,20 +63,25 @@ func ServiceAccountAPIKeyFromContext(ctx context.Context) (string, error) {
 func (c *Claims) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("user_id", c.UserID),
+		slog.String("service_account_id", c.ServiceAccountID),
+		slog.String("principal", c.Principal),
 		slog.String("email", c.Email),
 		slog.String("org_id", c.OrgID),
 	)
+}
+
+func (c *Claims) GetIdentityID() string {
+	if c.Principal == PrincipalUser.StringValue() {
+		return c.UserID
+	}
+
+	return c.ServiceAccountID
 }
 
 func (c *Claims) IsSelfAccess(id string) error {
 	if c.UserID == id {
 		return nil
 	}
-
-	// TODO[@vikrantgupta25]: check this
-	// if c.Role == types.RoleAdmin {
-	// 	return nil
-	// }
 
 	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only the user/admin can access their own resource")
 }

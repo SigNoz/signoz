@@ -92,6 +92,8 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 		comment.Set("auth_type", authType.StringValue())
 		comment.Set("tokenizer_provider", activeTokenizer.Config().Provider)
 		comment.Set("user_id", claims.UserID)
+		comment.Set("service_account_id", claims.ServiceAccountID)
+		comment.Set("principal", claims.Principal)
 		comment.Set("org_id", claims.OrgID)
 
 		r = r.WithContext(ctxtypes.NewContextWithComment(ctx, comment))
