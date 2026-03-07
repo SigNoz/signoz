@@ -174,6 +174,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
 		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
+		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 	)
 }
 

@@ -135,7 +135,7 @@ func (apiKey *FactorAPIKey) IsExpired() error {
 		return nil
 	}
 
-	if !time.Now().After(time.Unix(int64(apiKey.ExpiresAt), 0)) {
+	if time.Now().After(time.Unix(int64(apiKey.ExpiresAt), 0)) {
 		return errors.New(errors.TypeUnauthenticated, ErrCodeAPIKeyExpired, "api key has been expired")
 	}
 
