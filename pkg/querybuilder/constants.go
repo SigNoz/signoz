@@ -4,6 +4,10 @@ import (
 	"os"
 )
 
+const (
+	TrueConditionLiteral = "true"
+)
+
 var (
 	BodyJSONQueryEnabled = GetOrDefaultEnv("BODY_JSON_QUERY_ENABLED", "false") == "true"
 )
