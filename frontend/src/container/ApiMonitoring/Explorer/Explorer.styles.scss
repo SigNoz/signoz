@@ -238,6 +238,7 @@
 		.ant-table {
 			.ant-table-thead > tr > th {
 				background: var(--bg-vanilla-100);
+				border-bottom: 1px solid var(--bg-vanilla-300);
 				color: var(--text-ink-300);
 			}
 
