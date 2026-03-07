@@ -6,6 +6,7 @@ import (
 	"math"
 	"strconv"
 	"strings"
+	"sync"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -88,6 +89,41 @@ func (client *client) Read(ctx context.Context, query *prompb.Query, sortSeries 
 	res.Timeseries = timeseries
 
 	return remote.FromQueryResult(sortSeries, res), nil
+}
+
+func (c *client) ReadMultiple(ctx context.Context, queries []*prompb.Query, sortSeries bool) (storage.SeriesSet, error) {
+	if len(queries) == 0 {
+		return storage.EmptySeriesSet(), nil
+	}
+	if len(queries) == 1 {
+		return c.Read(ctx, queries[0], sortSeries)
+	}
+
+	type result struct {
+		ss  storage.SeriesSet
+		err error
+	}
+
+	results := make([]result, len(queries))
+	var wg sync.WaitGroup
+	wg.Add(len(queries))
+	for i, q := range queries {
+		go func(i int, q *prompb.Query) {
+			defer wg.Done()
+			ss, err := c.Read(ctx, q, sortSeries)
+			results[i] = result{ss, err}
+		}(i, q)
+	}
+	wg.Wait()
+
+	sets := make([]storage.SeriesSet, 0, len(queries))
+	for _, r := range results {
+		if r.err != nil {
+			return nil, r.err
+		}
+		sets = append(sets, r.ss)
+	}
+	return storage.NewMergeSeriesSet(sets, 0, storage.ChainedSeriesMerge), nil
 }
 
 func (client *client) queryToClickhouseQuery(_ context.Context, query *prompb.Query, metricName string, subQuery bool) (string, []any, error) {
