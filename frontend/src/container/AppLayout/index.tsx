@@ -249,7 +249,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 
 		return (): void => {
-			clearInterval(timer);
+			clearTimeout(timer);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
