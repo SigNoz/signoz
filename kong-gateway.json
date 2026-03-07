@@ -16,7 +16,7 @@
       "sort": 1,
       "dataSource": "prometheus",
       "query": {
-        "query": "label_values(nginx_ingress_controller_requests, namespace)",
+        "query": "label_values(kong_http_requests_total, namespace)",
         "legendFormat": ""
       }
     },
@@ -28,7 +28,7 @@
       "sort": 2,
       "dataSource": "prometheus",
       "query": {
-        "query": "label_values(nginx_ingress_controller_requests{namespace=~\"$namespace\"}, service)",
+        "query": "label_values(kong_http_requests_total{namespace=~\"$namespace\"}, service)",
         "legendFormat": ""
       }
     },
@@ -40,7 +40,7 @@
       "sort": 3,
       "dataSource": "prometheus",
       "query": {
-        "query": "label_values(nginx_ingress_controller_requests, environment)",
+        "query": "label_values(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\"}, environment)",
         "legendFormat": ""
       }
     },
@@ -52,7 +52,7 @@
       "sort": 4,
       "dataSource": "prometheus",
       "query": {
-        "query": "label_values(nginx_ingress_controller_requests, cluster)",
+        "query": "label_values(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\"}, cluster)",
         "legendFormat": ""
       }
     }
@@ -243,18 +243,18 @@
       "w": 4,
       "x": 0,
       "y": 8,
-      "i": "21-active-plugins",
+      "i": "21-top-services-by-requests",
       "type": "TIMESERIES",
-      "title": "Panel - Active Plugins"
+      "title": "Panel - Top Services by Requests"
     },
     {
       "h": 2,
       "w": 4,
       "x": 4,
       "y": 8,
-      "i": "22-plugin-error-rates",
+      "i": "22-service-error-rates",
       "type": "TIMESERIES",
-      "title": "Panel - Plugin Error Rates"
+      "title": "Panel - Service Error Rates (5xx)"
     },
     {
       "h": 2,
@@ -304,7 +304,7 @@
       "query": {
         "promql": [
           {
-            "query": "max(kong_nginx_metric_errors_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"})",
+            "query": "(time() - process_start_time_seconds{job=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"})",
             "legend": "Uptime (seconds)"
           }
         ],
@@ -455,7 +455,7 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "s"
+        "unit": "ms"
       }
     },
     "11-upstream-latency": {
@@ -475,7 +475,7 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "s"
+        "unit": "ms"
       }
     },
     "12-plugin-latency": {
@@ -495,7 +495,7 @@
         "stepInterval": 60
       },
       "yAxis": {
-        "unit": "s"
+        "unit": "ms"
       }
     },
     "13-total-errors": {
@@ -507,7 +507,7 @@
             "legend": "5xx Errors"
           },
           {
-            "query": "sum(rate(kong_nginx_http_4xx_errors_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m]))",
+            "query": "sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\", code=~\"4.*\"}[5m]))",
             "legend": "4xx Errors"
           }
         ],
@@ -630,13 +630,13 @@
         "unit": "short"
       }
     },
-    "21-active-plugins": {
-      "description": "Lists the active plugins and the number of requests processed by each.",
+    "21-top-services-by-requests": {
+      "description": "Shows the top Kong services by request rate.",
       "query": {
         "promql": [
           {
-            "query": "sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (plugin)",
-            "legend": "{{plugin}}"
+            "query": "topk(10, sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (service))",
+            "legend": "{{service}}"
           }
         ],
         "queryType": "promql",
@@ -646,13 +646,13 @@
         "unit": "rps"
       }
     },
-    "22-plugin-error-rates": {
-      "description": "Displays the error rates associated with each plugin.",
+    "22-service-error-rates": {
+      "description": "Displays the error rates (5xx) per service.",
       "query": {
         "promql": [
           {
-            "query": "sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\", code=~\"5.*\"}[5m])) by (plugin)",
-            "legend": "{{plugin}}"
+            "query": "sum(rate(kong_http_requests_total{namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\", code=~\"5.*\"}[5m])) by (service)",
+            "legend": "{{service}}"
           }
         ],
         "queryType": "promql",
