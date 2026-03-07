@@ -13,6 +13,9 @@ type Config struct {
 	CacheTTL time.Duration `yaml:"cache_ttl" mapstructure:"cache_ttl"`
 	// FluxInterval is the interval for recent data that should not be cached
 	FluxInterval time.Duration `yaml:"flux_interval" mapstructure:"flux_interval"`
+	// HeatmapCacheRounding is the interval for rounding heatmap query timestamps
+	// This allows caching of "last N hours" queries
+	HeatmapCacheRounding time.Duration `yaml:"heatmap_cache_rounding" mapstructure:"heatmap_cache_rounding"`
 	// MaxConcurrentQueries is the maximum number of concurrent queries for missing ranges
 	MaxConcurrentQueries int `yaml:"max_concurrent_queries" mapstructure:"max_concurrent_queries"`
 }
@@ -27,6 +30,7 @@ func newConfig() factory.Config {
 		// Default values
 		CacheTTL:             168 * time.Hour,
 		FluxInterval:         5 * time.Minute,
+		HeatmapCacheRounding: 5 * time.Minute,
 		MaxConcurrentQueries: 4,
 	}
 }
