@@ -3,6 +3,7 @@ package querybuilder
 import (
 	"fmt"
 	"regexp"
+	"slices"
 	"strings"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -19,19 +20,40 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	}
 }
 
-func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildTraceColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
-func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildLogColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
-func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) string {
+func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
+	if len(strings.TrimSpace(expression)) == 0 {
+		return "", nil
+	}
 	r.buildMetricColumnMap(aggregations)
-	return r.rewriteExpression(expression)
+	rewritten := r.rewriteExpression(expression)
+	if err := r.validateWithANTLR(expression, rewritten); err != nil {
+		return "", err
+	}
+	return rewritten, nil
 }
 
 func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.TraceAggregation) {
@@ -104,6 +126,8 @@ func (r *HavingExpressionRewriter) buildMetricColumnMap(aggregations []qbtypes.M
 }
 
 func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
+	expression = normalizeImplicitAND(expression)
+
 	quotedStrings := make(map[string]string)
 	quotePattern := regexp.MustCompile(`'[^']*'|"[^"]*"`)
 	quotedIdx := 0
@@ -125,13 +149,9 @@ func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
 		mappings = append(mappings, mapping{from: from, to: to})
 	}
 
-	for i := 0; i < len(mappings); i++ {
-		for j := i + 1; j < len(mappings); j++ {
-			if len(mappings[j].from) > len(mappings[i].from) {
-				mappings[i], mappings[j] = mappings[j], mappings[i]
-			}
-		}
-	}
+	slices.SortFunc(mappings, func(a, b mapping) int {
+		return len(b.from) - len(a.from)
+	})
 
 	for _, m := range mappings {
 		if strings.Contains(m.from, "(") {
