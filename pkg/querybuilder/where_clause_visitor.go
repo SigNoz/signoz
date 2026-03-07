@@ -23,6 +23,7 @@ const stringMatchingOperatorDocURL = "https://signoz.io/docs/userguide/operators
 // filterExpressionVisitor implements the FilterQueryVisitor interface
 // to convert the parsed filter expressions into ClickHouse WHERE clause
 type filterExpressionVisitor struct {
+	context            context.Context
 	logger             *slog.Logger
 	fieldMapper        qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
@@ -46,6 +47,7 @@ type filterExpressionVisitor struct {
 }
 
 type FilterExprVisitorOpts struct {
+	Context            context.Context
 	Logger             *slog.Logger
 	FieldMapper        qbtypes.FieldMapper
 	ConditionBuilder   qbtypes.ConditionBuilder
@@ -65,6 +67,7 @@ type FilterExprVisitorOpts struct {
 // newFilterExpressionVisitor creates a new filterExpressionVisitor
 func newFilterExpressionVisitor(opts FilterExprVisitorOpts) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
+		context:            opts.Context,
 		logger:             opts.Logger,
 		fieldMapper:        opts.FieldMapper,
 		conditionBuilder:   opts.ConditionBuilder,
@@ -90,7 +93,7 @@ type PreparedWhereClause struct {
 }
 
 // PrepareWhereClause generates a ClickHouse compatible WHERE clause from the filter query
-func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64, endNs uint64) (*PreparedWhereClause, error) {
+func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWhereClause, error) {
 
 	// Setup the ANTLR parsing pipeline
 	input := antlr.NewInputStream(query)
@@ -124,8 +127,6 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 	}
 	tokens.Reset()
 
-	opts.StartNs = startNs
-	opts.EndNs = endNs
 	visitor := newFilterExpressionVisitor(opts)
 
 	// Handle syntax errors
@@ -317,7 +318,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			// create a full text search condition on the body field
 
 			keyText := keyCtx.GetText()
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder, v.startNs, v.endNs)
+			cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(keyText), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -337,7 +338,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
 				return ""
 			}
-			cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
+			cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 				return ""
@@ -381,7 +382,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, nil, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -453,7 +454,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		}
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, values, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -501,7 +502,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, []any{value1, value2}, v.builder)
 			if err != nil {
 				return ""
 			}
@@ -586,7 +587,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 		var conds []string
 		for _, key := range keys {
-			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder, v.startNs, v.endNs)
+			condition, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, key, op, value, v.builder)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
 				return ""
@@ -665,7 +666,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 		v.errors = append(v.errors, "full text search is not supported")
 		return ""
 	}
-	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
+	cond, err := v.conditionBuilder.ConditionFor(v.context, v.startNs, v.endNs, v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ""
@@ -750,13 +751,13 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			if key.FieldContext == telemetrytypes.FieldContextBody {
 				var err error
 				if BodyJSONQueryEnabled {
-					fieldName, err = v.fieldMapper.FieldFor(context.Background(), key)
+					fieldName, err = v.fieldMapper.FieldFor(v.context, v.startNs, v.endNs, key)
 					if err != nil {
 						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
 						return ""
 					}
 				} else {
-					fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
+					fieldName, _ = v.jsonKeyToKey(v.context, key, qbtypes.FilterOperatorUnknown, value)
 				}
 			} else {
 				// TODO(add docs for json body search)

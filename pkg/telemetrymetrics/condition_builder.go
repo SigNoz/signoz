@@ -23,6 +23,8 @@ func NewConditionBuilder(fm qbtypes.FieldMapper) *conditionBuilder {
 
 func (c *conditionBuilder) conditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
@@ -33,7 +35,7 @@ func (c *conditionBuilder) conditionFor(
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	tblFieldName, err := c.fm.FieldFor(ctx, key)
+	fieldExpression, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
@@ -41,52 +43,52 @@ func (c *conditionBuilder) conditionFor(
 	// TODO(srikanthccv): use the same data type collision handling when metrics schemas are updated
 	switch v := value.(type) {
 	case float64:
-		tblFieldName = fmt.Sprintf("toFloat64OrNull(%s)", tblFieldName)
+		fieldExpression = fmt.Sprintf("toFloat64OrNull(%s)", fieldExpression)
 	case []any:
 		if len(v) > 0 && (operator == qbtypes.FilterOperatorBetween || operator == qbtypes.FilterOperatorNotBetween) {
 			if _, ok := v[0].(float64); ok {
-				tblFieldName = fmt.Sprintf("toFloat64OrNull(%s)", tblFieldName)
+				fieldExpression = fmt.Sprintf("toFloat64OrNull(%s)", fieldExpression)
 			}
 		}
 	}
 
 	switch operator {
 	case qbtypes.FilterOperatorEqual:
-		return sb.E(tblFieldName, value), nil
+		return sb.E(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotEqual:
-		return sb.NE(tblFieldName, value), nil
+		return sb.NE(fieldExpression, value), nil
 	case qbtypes.FilterOperatorGreaterThan:
-		return sb.G(tblFieldName, value), nil
+		return sb.G(fieldExpression, value), nil
 	case qbtypes.FilterOperatorGreaterThanOrEq:
-		return sb.GE(tblFieldName, value), nil
+		return sb.GE(fieldExpression, value), nil
 	case qbtypes.FilterOperatorLessThan:
-		return sb.LT(tblFieldName, value), nil
+		return sb.LT(fieldExpression, value), nil
 	case qbtypes.FilterOperatorLessThanOrEq:
-		return sb.LE(tblFieldName, value), nil
+		return sb.LE(fieldExpression, value), nil
 
 	// like and not like
 	case qbtypes.FilterOperatorLike:
-		return sb.Like(tblFieldName, value), nil
+		return sb.Like(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotLike:
-		return sb.NotLike(tblFieldName, value), nil
+		return sb.NotLike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorILike:
-		return sb.ILike(tblFieldName, value), nil
+		return sb.ILike(fieldExpression, value), nil
 	case qbtypes.FilterOperatorNotILike:
-		return sb.NotILike(tblFieldName, value), nil
+		return sb.NotILike(fieldExpression, value), nil
 
 	case qbtypes.FilterOperatorContains:
-		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.ILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
-		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
+		return sb.NotILike(fieldExpression, fmt.Sprintf("%%%s%%", value)), nil
 
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+		return fmt.Sprintf(`match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	case qbtypes.FilterOperatorNotRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
-		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(tblFieldName), sb.Var(value)), nil
+		return fmt.Sprintf(`NOT match(%s, %s)`, sqlbuilder.Escape(fieldExpression), sb.Var(value)), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween:
 		values, ok := value.([]any)
@@ -96,7 +98,7 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.Between(tblFieldName, values[0], values[1]), nil
+		return sb.Between(fieldExpression, values[0], values[1]), nil
 	case qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)
 		if !ok {
@@ -105,7 +107,7 @@ func (c *conditionBuilder) conditionFor(
 		if len(values) != 2 {
 			return "", qbtypes.ErrBetweenValues
 		}
-		return sb.NotBetween(tblFieldName, values[0], values[1]), nil
+		return sb.NotBetween(fieldExpression, values[0], values[1]), nil
 
 	// in and not in
 	case qbtypes.FilterOperatorIn:
@@ -113,13 +115,13 @@ func (c *conditionBuilder) conditionFor(
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.In(tblFieldName, values), nil
+		return sb.In(fieldExpression, values), nil
 	case qbtypes.FilterOperatorNotIn:
 		values, ok := value.([]any)
 		if !ok {
 			return "", qbtypes.ErrInValues
 		}
-		return sb.NotIn(tblFieldName, values), nil
+		return sb.NotIn(fieldExpression, values), nil
 
 	// exists and not exists
 	// in the UI based query builder, `exists` and `not exists` are used for
@@ -141,14 +143,14 @@ func (c *conditionBuilder) conditionFor(
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
-	condition, err := c.conditionFor(ctx, key, operator, value, sb)
+	condition, err := c.conditionFor(ctx, startNs, endNs, key, operator, value, sb)
 	if err != nil {
 		return "", err
 	}

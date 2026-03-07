@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -44,12 +45,12 @@ func keyIndexFilter(key *telemetrytypes.TelemetryFieldKey) any {
 
 func (b *defaultConditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	op qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-    _ uint64,
-    _ uint64,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
@@ -60,15 +61,23 @@ func (b *defaultConditionBuilder) ConditionFor(
 	// as we store resource values as string
 	formattedValue := querybuilder.FormatValueForContains(value)
 
-	column, err := b.fm.ColumnFor(ctx, key)
+	columns, err := b.fm.ColumnFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
 
+	if len(columns) != 1 {
+		return "", errors.Newf(errors.TypeInternal, errors.CodeInternal, "expected exactly 1 column, got %d", len(columns))
+	}
+
+	// resource evolution on main table doesn't affect this
+	// as we have not changed the resource column in the resource fingerprint table.
+	column := columns[0]
+
 	keyIdxFilter := sb.Like(column.Name, keyIndexFilter(key))
 	valueForIndexFilter := valueForIndexFilter(op, key, value)
 
-	fieldName, err := b.fm.FieldFor(ctx, key)
+	fieldName, err := b.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}
