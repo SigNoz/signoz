@@ -1,0 +1,22 @@
+{
+  "label_email": "E-mail",
+  "placeholder_email": "nome@suaempresa.com.br",
+  "label_password": "Senha",
+  "button_initiate_login": "Próximo",
+  "button_login": "Entrar",
+  "login_page_title": "Login no SigNoz",
+  "login_with_sso": "Entrar via SSO",
+  "login_with_pwd": "Entrar com senha",
+  "forgot_password": "Esqueceu a senha?",
+  "create_an_account": "Criar uma conta",
+  "prompt_if_admin": "Se você é administrador,",
+  "prompt_create_account": "Se esta é a primeira vez que você configura o SigNoz,",
+  "prompt_no_account": "Não tem uma conta? Entre em contato com seu administrador para solicitar um convite.",
+  "prompt_forgot_password": "Peça ao administrador para redefinir sua senha e enviar um novo link de convite",
+  "prompt_on_sso_error": "Você está tentando resolver um problema de configuração do SSO?",
+  "unexpected_error": "Desculpe, algo deu errado",
+  "failed_to_login": "Desculpe, falha ao entrar",
+  "invalid_email": "Por favor, insira um endereço de e-mail válido",
+  "invalid_account": "Esta conta não existe. Para criar uma nova, entre em contato com o administrador para receber um convite",
+  "invalid_config": "Configuração inválida detectada, por favor entre em contato com seu administrador"
+}
