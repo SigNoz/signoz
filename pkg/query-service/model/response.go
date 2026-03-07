@@ -329,6 +329,7 @@ type GetWaterfallSpansForTraceWithMetadataResponse struct {
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	// this is needed for frontend and query service sync
 	UncollapsedSpans []string `json:"uncollapsedSpans"`
+	HasMore          bool     `json:"hasMore"`
 }
 
 type GetFlamegraphSpansForTraceResponse struct {
@@ -336,6 +337,7 @@ type GetFlamegraphSpansForTraceResponse struct {
 	EndTimestampMillis   uint64              `json:"endTimestampMillis"`
 	DurationNano         uint64              `json:"durationNano"`
 	Spans                [][]*FlamegraphSpan `json:"spans"`
+	HasMore              bool                `json:"hasMore"`
 }
 
 type OtelSpanRef struct {
