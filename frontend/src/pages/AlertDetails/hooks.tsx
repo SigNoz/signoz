@@ -18,7 +18,12 @@ import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
-import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
+import {
+	AlertDetailsTab,
+	FilterStateReturn,
+	TimelineFilter,
+	TimeLineFilterState,
+} from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
 import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
@@ -274,6 +279,25 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
 	const hasStartAndEnd = startTime !== null && endTime !== null;
 
+	const prepareFilterState = (state: TimeLineFilterState): FilterStateReturn => {
+		switch (state) {
+			case TimelineFilter.ALL:
+				return 'normal';
+
+			case TimelineFilter.FIRED:
+				return 'firing';
+
+			case TimelineFilter.RECOVERING:
+				return 'recovering';
+
+			case TimelineFilter.RESOLVED:
+				return 'normal';
+
+			default:
+				return 'normal';
+		}
+	};
+
 	const { isLoading, isRefetching, isError, data } = useQuery(
 		[
 			REACT_QUERY_KEY.ALERT_RULE_TIMELINE_TABLE,
@@ -297,7 +321,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 					filters,
 					...(timelineFilter && timelineFilter !== TimelineFilter.ALL
 						? {
-								state: timelineFilter === TimelineFilter.FIRED ? 'firing' : 'normal',
+								state: prepareFilterState(timelineFilter as TimeLineFilterState),
 						  }
 						: {}),
 				}),
