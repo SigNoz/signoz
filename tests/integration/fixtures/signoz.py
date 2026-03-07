@@ -73,6 +73,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_POLL__INTERVAL": "5s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__WAIT": "1s",
                 "SIGNOZ_ALERTMANAGER_SIGNOZ_ROUTE_GROUP__INTERVAL": "5s",
+                "BODY_JSON_QUERY_ENABLED": "true",
             }
             | sqlstore.env
             | clickhouse.env
