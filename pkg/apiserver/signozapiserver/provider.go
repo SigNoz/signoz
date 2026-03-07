@@ -18,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -29,27 +30,28 @@ import (
 )
 
 type provider struct {
-	config                 apiserver.Config
-	settings               factory.ScopedProviderSettings
-	router                 *mux.Router
-	authZ                  *middleware.AuthZ
-	orgHandler             organization.Handler
-	userHandler            user.Handler
-	sessionHandler         session.Handler
-	authDomainHandler      authdomain.Handler
-	preferenceHandler      preference.Handler
-	globalHandler          global.Handler
-	promoteHandler         promote.Handler
-	flaggerHandler         flagger.Handler
-	dashboardModule        dashboard.Module
-	dashboardHandler       dashboard.Handler
-	metricsExplorerHandler metricsexplorer.Handler
-	gatewayHandler         gateway.Handler
-	fieldsHandler          fields.Handler
-	authzHandler           authz.Handler
-	zeusHandler            zeus.Handler
-	querierHandler         querier.Handler
-	serviceAccountHandler  serviceaccount.Handler
+	config                  apiserver.Config
+	settings                factory.ScopedProviderSettings
+	router                  *mux.Router
+	authZ                   *middleware.AuthZ
+	orgHandler              organization.Handler
+	userHandler             user.Handler
+	sessionHandler          session.Handler
+	authDomainHandler       authdomain.Handler
+	preferenceHandler       preference.Handler
+	globalHandler           global.Handler
+	promoteHandler          promote.Handler
+	flaggerHandler          flagger.Handler
+	dashboardModule         dashboard.Module
+	dashboardHandler        dashboard.Handler
+	metricsExplorerHandler  metricsexplorer.Handler
+	gatewayHandler          gateway.Handler
+	fieldsHandler           fields.Handler
+	authzHandler            authz.Handler
+	zeusHandler             zeus.Handler
+	querierHandler          querier.Handler
+	serviceAccountHandler   serviceaccount.Handler
+	ruleStateHistoryHandler rulestatehistory.Handler
 }
 
 func NewFactory(
@@ -72,6 +74,7 @@ func NewFactory(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -97,6 +100,7 @@ func NewFactory(
 			zeusHandler,
 			querierHandler,
 			serviceAccountHandler,
+			ruleStateHistoryHandler,
 		)
 	})
 }
@@ -124,31 +128,33 @@ func newProvider(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
 
 	provider := &provider{
-		config:                 config,
-		settings:               settings,
-		router:                 router,
-		orgHandler:             orgHandler,
-		userHandler:            userHandler,
-		sessionHandler:         sessionHandler,
-		authDomainHandler:      authDomainHandler,
-		preferenceHandler:      preferenceHandler,
-		globalHandler:          globalHandler,
-		promoteHandler:         promoteHandler,
-		flaggerHandler:         flaggerHandler,
-		dashboardModule:        dashboardModule,
-		dashboardHandler:       dashboardHandler,
-		metricsExplorerHandler: metricsExplorerHandler,
-		gatewayHandler:         gatewayHandler,
-		fieldsHandler:          fieldsHandler,
-		authzHandler:           authzHandler,
-		zeusHandler:            zeusHandler,
-		querierHandler:         querierHandler,
-		serviceAccountHandler:  serviceAccountHandler,
+		config:                  config,
+		settings:                settings,
+		router:                  router,
+		orgHandler:              orgHandler,
+		userHandler:             userHandler,
+		sessionHandler:          sessionHandler,
+		authDomainHandler:       authDomainHandler,
+		preferenceHandler:       preferenceHandler,
+		globalHandler:           globalHandler,
+		promoteHandler:          promoteHandler,
+		flaggerHandler:          flaggerHandler,
+		dashboardModule:         dashboardModule,
+		dashboardHandler:        dashboardHandler,
+		metricsExplorerHandler:  metricsExplorerHandler,
+		gatewayHandler:          gatewayHandler,
+		fieldsHandler:           fieldsHandler,
+		authzHandler:            authzHandler,
+		zeusHandler:             zeusHandler,
+		querierHandler:          querierHandler,
+		serviceAccountHandler:   serviceAccountHandler,
+		ruleStateHistoryHandler: ruleStateHistoryHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -230,6 +236,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addServiceAccountRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRuleStateHistoryRoutes(router); err != nil {
 		return err
 	}
 

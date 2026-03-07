@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -102,6 +103,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Modules.RuleStateHistory,
 		signoz.Querier,
 		signoz.Instrumentation.ToProviderSettings(),
 		signoz.QueryParser,
@@ -349,29 +351,30 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, ruleStateHistoryModule rulestatehistory.Module, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		TelemetryStore:      telemetryStore,
-		MetadataStore:       metadataStore,
-		Prometheus:          prometheus,
-		Context:             context.Background(),
-		Logger:              zap.L(),
-		Reader:              ch,
-		Querier:             querier,
-		SLogger:             providerSettings.Logger,
-		Cache:               cache,
-		EvalDelay:           baseconst.GetEvalDelay(),
-		PrepareTaskFunc:     rules.PrepareTaskFunc,
-		PrepareTestRuleFunc: rules.TestNotification,
-		Alertmanager:        alertmanager,
-		OrgGetter:           orgGetter,
-		RuleStore:           ruleStore,
-		MaintenanceStore:    maintenanceStore,
-		SqlStore:            sqlstore,
-		QueryParser:         queryParser,
+		TelemetryStore:         telemetryStore,
+		MetadataStore:          metadataStore,
+		Prometheus:             prometheus,
+		Context:                context.Background(),
+		Logger:                 zap.L(),
+		Reader:                 ch,
+		Querier:                querier,
+		SLogger:                providerSettings.Logger,
+		Cache:                  cache,
+		EvalDelay:              baseconst.GetEvalDelay(),
+		PrepareTaskFunc:        rules.PrepareTaskFunc,
+		PrepareTestRuleFunc:    rules.TestNotification,
+		Alertmanager:           alertmanager,
+		OrgGetter:              orgGetter,
+		RuleStore:              ruleStore,
+		MaintenanceStore:       maintenanceStore,
+		SqlStore:               sqlstore,
+		QueryParser:            queryParser,
+		RuleStateHistoryModule: ruleStateHistoryModule,
 	}
 
 	// create Manager

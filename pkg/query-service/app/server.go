@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -106,6 +107,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Modules.RuleStateHistory,
 		signoz.Querier,
 		signoz.Instrumentation.ToProviderSettings(),
 		signoz.QueryParser,
@@ -336,6 +338,7 @@ func makeRulesManager(
 	metadataStore telemetrytypes.MetadataStore,
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
+	ruleStateHistoryModule rulestatehistory.Module,
 	querier querier.Querier,
 	providerSettings factory.ProviderSettings,
 	queryParser queryparser.QueryParser,
@@ -344,22 +347,23 @@ func makeRulesManager(
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:   telemetryStore,
-		MetadataStore:    metadataStore,
-		Prometheus:       prometheus,
-		Context:          context.Background(),
-		Logger:           zap.L(),
-		Reader:           ch,
-		Querier:          querier,
-		SLogger:          providerSettings.Logger,
-		Cache:            cache,
-		EvalDelay:        constants.GetEvalDelay(),
-		OrgGetter:        orgGetter,
-		Alertmanager:     alertmanager,
-		RuleStore:        ruleStore,
-		MaintenanceStore: maintenanceStore,
-		SqlStore:         sqlstore,
-		QueryParser:      queryParser,
+		TelemetryStore:         telemetryStore,
+		MetadataStore:          metadataStore,
+		Prometheus:             prometheus,
+		Context:                context.Background(),
+		Logger:                 zap.L(),
+		Reader:                 ch,
+		Querier:                querier,
+		SLogger:                providerSettings.Logger,
+		Cache:                  cache,
+		EvalDelay:              constants.GetEvalDelay(),
+		OrgGetter:              orgGetter,
+		Alertmanager:           alertmanager,
+		RuleStore:              ruleStore,
+		MaintenanceStore:       maintenanceStore,
+		SqlStore:               sqlstore,
+		QueryParser:            queryParser,
+		RuleStateHistoryModule: ruleStateHistoryModule,
 	}
 
 	// create Manager
