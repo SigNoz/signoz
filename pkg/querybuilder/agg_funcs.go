@@ -229,6 +229,11 @@ var (
 		FuncName:    "max",
 		RequireArgs: true, Numeric: true, Rate: true, MinArgs: 1, MaxArgs: 1,
 	}
+	AggrFuncDistribution = AggrFunc{
+		Name:        valuer.NewString("distribution"),
+		FuncName:    "histogram",
+		RequireArgs: true, Numeric: true, MinArgs: 1, MaxArgs: 2,
+	}
 )
 
 func init() {
@@ -271,6 +276,7 @@ func init() {
 		AggrFuncRateAvg,
 		AggrFuncRateMin,
 		AggrFuncRateMax,
+		AggrFuncDistribution,
 	}
 
 	for _, aggFunc := range aggFuncs {
