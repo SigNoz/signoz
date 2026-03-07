@@ -439,15 +439,15 @@
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
             "legend": "p50"
           },
           {
-            "query": "histogram_quantile(0.90, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
+            "query": "histogram_quantile(0.90, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
             "legend": "p90"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"request\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
             "legend": "p99"
           }
         ],
@@ -463,11 +463,11 @@
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service)) * 1000",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service))",
             "legend": "p50 - {{service}}"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service)) * 1000",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"upstream\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le, service))",
             "legend": "p99 - {{service}}"
           }
         ],
@@ -483,11 +483,11 @@
       "query": {
         "promql": [
           {
-            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
+            "query": "histogram_quantile(0.50, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
             "legend": "p50"
           },
           {
-            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le)) * 1000",
+            "query": "histogram_quantile(0.99, sum(rate(kong_latency_bucket{type=\"kong\", namespace=~\"$namespace\", service=~\"$service\", environment=~\"$environment\", cluster=~\"$cluster\"}[5m])) by (le))",
             "legend": "p99"
           }
         ],
@@ -681,3 +681,4 @@
   },
   "version": "v3"
 }
+
