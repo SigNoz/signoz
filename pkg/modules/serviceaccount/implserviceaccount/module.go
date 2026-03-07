@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -58,6 +59,24 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 	}
 
 	return nil
+}
+
+func (module *module) GetOrCreate(ctx context.Context, serviceAccount *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error) {
+	existingServiceAccount, err := module.store.GetByOrgIDAndName(ctx, serviceAccount.OrgID, serviceAccount.Name)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	if existingServiceAccount != nil {
+		return serviceAccount, nil
+	}
+
+	err = module.Create(ctx, serviceAccount.OrgID, serviceAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {

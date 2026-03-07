@@ -65,6 +65,24 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 	return storable, nil
 }
 
+func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.StorableServiceAccount, error) {
+	storable := new(serviceaccounttypes.StorableServiceAccount)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with name: %s doesn't exist in org: %s", name, orgID.String())
+	}
+
+	return storable, nil
+}
+
 func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccount, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccount, 0)
 
