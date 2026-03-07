@@ -1,0 +1,38 @@
+.steps-transition-results {
+	display: flex;
+	flex-direction: column;
+	gap: 20px;
+	&__steps-selector {
+		display: flex;
+		justify-content: center;
+	}
+
+	&__results {
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+	}
+}
+
+.lightMode {
+	.steps-transition-results {
+		&__steps-selector {
+			.views-tabs {
+				.tab {
+					background: var(--bg-vanilla-100);
+				}
+
+				.selected_view {
+					background: var(--bg-vanilla-300);
+					border: 1px solid var(--bg-slate-300);
+					color: var(--text-ink-400);
+				}
+
+				.selected_view::before {
+					background: var(--bg-vanilla-300);
+					border-left: 1px solid var(--bg-slate-300);
+				}
+			}
+		}
+	}
+}

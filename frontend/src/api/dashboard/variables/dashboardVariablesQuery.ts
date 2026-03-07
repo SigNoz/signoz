@@ -11,6 +11,7 @@ import {
 
 const dashboardVariablesQuery = async (
 	props: Props,
+	signal?: AbortSignal,
 ): Promise<SuccessResponse<VariableResponseProps> | ErrorResponse> => {
 	try {
 		const { globalTime } = store.getState();
@@ -32,7 +33,7 @@ const dashboardVariablesQuery = async (
 
 		payload.variables = { ...payload.variables, ...timeVariables };
 
-		const response = await axios.post(`/variables/query`, payload);
+		const response = await axios.post(`/variables/query`, payload, { signal });
 
 		return {
 			statusCode: 200,
@@ -43,7 +44,6 @@ const dashboardVariablesQuery = async (
 	} catch (error) {
 		const formattedError = ErrorResponseHandler(error as AxiosError);
 
-		// eslint-disable-next-line @typescript-eslint/no-throw-literal
 		throw { message: 'Error fetching data', details: formattedError };
 	}
 };

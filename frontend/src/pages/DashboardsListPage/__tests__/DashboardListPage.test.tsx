@@ -1,7 +1,7 @@
-/* eslint-disable sonarjs/no-duplicate-string */
+import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
+import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription/utils';
 import DashboardsList from 'container/ListOfDashboard';
-import * as dashboardUtils from 'container/NewDashboard/DashboardDescription';
 import {
 	dashboardEmptyState,
 	dashboardSuccessResponse,
@@ -9,11 +9,11 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
-import { MemoryRouter, useLocation } from 'react-router-dom';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
-jest.mock('container/NewDashboard/DashboardDescription', () => ({
-	sanitizeDashboardData: jest.fn(),
+jest.mock('container/DashboardContainer/DashboardDescription/utils', () => ({
+	sanitizeDashboardData: jest.fn((data) => data),
+	downloadObjectAsJson: jest.fn(),
 }));
 
 jest.mock('react-router-dom', () => ({
@@ -28,6 +28,12 @@ jest.mock('react-router-dom', () => ({
 
 const mockWindowOpen = jest.fn();
 window.open = mockWindowOpen;
+
+jest.mock('hooks/useSafeNavigate', () => ({
+	useSafeNavigate: (): any => ({
+		safeNavigate: jest.fn(),
+	}),
+}));
 
 describe('dashboard list page', () => {
 	// should render on updatedAt and descend when the column key and order is messed up
@@ -226,11 +232,10 @@ describe('dashboard list page', () => {
 		expect(exportJsonBtn).toBeInTheDocument();
 		fireEvent.click(exportJsonBtn);
 		const firstDashboardData = dashboardSuccessResponse.data[0];
-		expect(dashboardUtils.sanitizeDashboardData).toHaveBeenCalledWith(
+		expect(sanitizeDashboardData).toHaveBeenCalledWith(
 			expect.objectContaining({
-				id: firstDashboardData.uuid,
 				title: firstDashboardData.data.title,
-				createdAt: firstDashboardData.created_at,
+				createdAt: firstDashboardData.createdAt,
 			}),
 		);
 	});

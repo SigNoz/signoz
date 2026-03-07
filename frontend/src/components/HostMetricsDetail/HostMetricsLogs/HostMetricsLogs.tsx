@@ -1,80 +1,64 @@
-/* eslint-disable no-nested-ternary */
-import './HostMetricLogs.styles.scss';
-
+import { useCallback, useEffect, useMemo, useRef } from 'react';
+import { useQuery } from 'react-query';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
+import LogDetail from 'components/LogDetail';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { DEFAULT_ENTITY_VERSION } from 'constants/app';
 import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { FontSize } from 'container/OptionsMenu/types';
-import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
+import { useHandleLogsPagination } from 'hooks/infraMonitoring/useHandleLogsPagination';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
-import { isEqual } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { Virtuoso } from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import {
-	IBuilderQuery,
-	TagFilterItem,
-} from 'types/api/queryBuilder/queryBuilderData';
-import { v4 } from 'uuid';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import { getHostLogsQueryPayload } from './constants';
 import NoLogsContainer from './NoLogsContainer';
+
+import './HostMetricLogs.styles.scss';
 
 interface Props {
 	timeRange: {
 		startTime: number;
 		endTime: number;
 	};
-	handleChangeLogFilters: (filters: IBuilderQuery['filters']) => void;
 	filters: IBuilderQuery['filters'];
 }
 
-function HostMetricsLogs({
-	timeRange,
-	handleChangeLogFilters,
-	filters,
-}: Props): JSX.Element {
-	const [logs, setLogs] = useState<ILog[]>([]);
-	const [hasReachedEndOfLogs, setHasReachedEndOfLogs] = useState(false);
-	const [restFilters, setRestFilters] = useState<TagFilterItem[]>([]);
-	const [resetLogsList, setResetLogsList] = useState<boolean>(false);
+function HostMetricsLogs({ timeRange, filters }: Props): JSX.Element {
+	const virtuosoRef = useRef<VirtuosoHandle>(null);
+	const {
+		activeLog,
+		onAddToQuery,
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers();
 
-	useEffect(() => {
-		const newRestFilters = filters.items.filter(
-			(item) => item.key?.key !== 'id' && item.key?.key !== 'host.name',
-		);
-
-		const areFiltersSame = isEqual(restFilters, newRestFilters);
-
-		if (!areFiltersSame) {
-			setResetLogsList(true);
-		}
-
-		setRestFilters(newRestFilters);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [filters]);
-
-	const queryPayload = useMemo(() => {
-		const basePayload = getHostLogsQueryPayload(
-			timeRange.startTime,
-			timeRange.endTime,
-			filters,
-		);
-
-		basePayload.query.builder.queryData[0].pageSize = 100;
-		basePayload.query.builder.queryData[0].orderBy = [
-			{ columnName: 'timestamp', order: ORDERBY_FILTERS.DESC },
-		];
-
-		return basePayload;
-	}, [timeRange.startTime, timeRange.endTime, filters]);
-
-	const [isPaginating, setIsPaginating] = useState(false);
+	const basePayload = getHostLogsQueryPayload(
+		timeRange.startTime,
+		timeRange.endTime,
+		filters,
+	);
+	const {
+		logs,
+		hasReachedEndOfLogs,
+		isPaginating,
+		currentPage,
+		setIsPaginating,
+		handleNewData,
+		loadMoreLogs,
+		queryPayload,
+	} = useHandleLogsPagination({
+		timeRange,
+		filters,
+		excludeFilterKeys: ['host.name'],
+		basePayload,
+	});
 
 	const { data, isLoading, isFetching, isError } = useQuery({
 		queryKey: [
@@ -82,6 +66,7 @@ function HostMetricsLogs({
 			timeRange.startTime,
 			timeRange.endTime,
 			filters,
+			currentPage,
 		],
 		queryFn: () => GetMetricQueryRange(queryPayload, DEFAULT_ENTITY_VERSION),
 		enabled: !!queryPayload,
@@ -90,84 +75,52 @@ function HostMetricsLogs({
 
 	useEffect(() => {
 		if (data?.payload?.data?.newResult?.data?.result) {
-			const currentData = data.payload.data.newResult.data.result;
-
-			if (resetLogsList) {
-				const currentLogs: ILog[] =
-					currentData[0].list?.map((item) => ({
-						...item.data,
-						timestamp: item.timestamp,
-					})) || [];
-
-				setLogs(currentLogs);
-
-				setResetLogsList(false);
-			}
-
-			if (currentData.length > 0 && currentData[0].list) {
-				const currentLogs: ILog[] =
-					currentData[0].list.map((item) => ({
-						...item.data,
-						timestamp: item.timestamp,
-					})) || [];
-
-				setLogs((prev) => [...prev, ...currentLogs]);
-			} else {
-				setHasReachedEndOfLogs(true);
-			}
+			handleNewData(data.payload.data.newResult.data.result);
 		}
-	}, [data, restFilters, isPaginating, resetLogsList]);
-
-	const getItemContent = useCallback(
-		(_: number, logToRender: ILog): JSX.Element => (
-			<RawLogView
-				isReadOnly
-				isTextOverflowEllipsisDisabled
-				key={logToRender.id}
-				data={logToRender}
-				linesPerRow={5}
-				fontSize={FontSize.MEDIUM}
-			/>
-		),
-		[],
-	);
-
-	const loadMoreLogs = useCallback(() => {
-		if (!logs.length) return;
-
-		setIsPaginating(true);
-		const lastLog = logs[logs.length - 1];
-
-		const newItems = [
-			...filters.items.filter((item) => item.key?.key !== 'id'),
-			{
-				id: v4(),
-				key: {
-					key: 'id',
-					type: '',
-					dataType: DataTypes.String,
-					isColumn: true,
-				},
-				op: '<',
-				value: lastLog.id,
-			},
-		];
-
-		const newFilters = {
-			op: 'AND',
-			items: newItems,
-		} as IBuilderQuery['filters'];
-
-		handleChangeLogFilters(newFilters);
-	}, [logs, filters, handleChangeLogFilters]);
+	}, [data, handleNewData]);
 
 	useEffect(() => {
 		setIsPaginating(false);
-	}, [data]);
+	}, [data, setIsPaginating]);
+
+	const handleScrollToLog = useScrollToLog({
+		logs,
+		virtuosoRef,
+	});
+
+	const getItemContent = useCallback(
+		(_: number, logToRender: ILog): JSX.Element => {
+			return (
+				<div key={logToRender.id}>
+					<RawLogView
+						isTextOverflowEllipsisDisabled
+						data={logToRender}
+						linesPerRow={5}
+						fontSize={FontSize.MEDIUM}
+						selectedFields={[
+							{
+								dataType: 'string',
+								type: '',
+								name: 'body',
+							},
+							{
+								dataType: 'string',
+								type: '',
+								name: 'timestamp',
+							},
+						]}
+						onSetActiveLog={handleSetActiveLog}
+						onClearActiveLog={handleCloseLogDetail}
+						isActiveLog={activeLog?.id === logToRender.id}
+					/>
+				</div>
+			);
+		},
+		[activeLog, handleSetActiveLog, handleCloseLogDetail],
+	);
 
 	const renderFooter = useCallback(
 		(): JSX.Element | null => (
-			// eslint-disable-next-line react/jsx-no-useless-fragment
 			<>
 				{isFetching ? (
 					<div className="logs-loading-skeleton"> Loading more logs ... </div>
@@ -186,6 +139,7 @@ function HostMetricsLogs({
 					<Virtuoso
 						className="host-metrics-logs-virtuoso"
 						key="host-metrics-logs-virtuoso"
+						ref={virtuosoRef}
 						data={logs}
 						endReached={loadMoreLogs}
 						totalCount={logs.length}
@@ -207,7 +161,24 @@ function HostMetricsLogs({
 			{!isLoading && !isError && logs.length === 0 && <NoLogsContainer />}
 			{isError && !isLoading && <LogsError />}
 			{!isLoading && !isError && logs.length > 0 && (
-				<div className="host-metrics-logs-list-container">{renderContent}</div>
+				<div
+					className="host-metrics-logs-list-container"
+					data-log-detail-ignore="true"
+				>
+					{renderContent}
+				</div>
+			)}
+			{selectedTab && activeLog && (
+				<LogDetail
+					log={activeLog}
+					onClose={handleCloseLogDetail}
+					logs={logs}
+					onNavigateLog={handleSetActiveLog}
+					selectedTab={selectedTab}
+					onAddToQuery={onAddToQuery}
+					onClickActionItem={onAddToQuery}
+					onScrollToLog={handleScrollToLog}
+				/>
 			)}
 		</div>
 	);

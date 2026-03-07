@@ -1,3 +1,7 @@
+import { Dispatch, SetStateAction, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
+import { useParams } from 'react-router-dom';
 import { Button, Modal, Row, Tabs, Tooltip, Typography } from 'antd';
 import Editor from 'components/Editor';
 import { StyledSpace } from 'components/Styled';
@@ -7,9 +11,6 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { PanelRight } from 'lucide-react';
-import { Dispatch, SetStateAction, useState } from 'react';
-import { useSelector } from 'react-redux';
-import { useParams } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -18,6 +19,8 @@ import { getTraceToLogsQuery } from './config';
 import Events from './Events';
 import { CardContainer, CustomSubText, styles } from './styles';
 import Tags from './Tags';
+
+const FIVE_MINUTES_IN_MS = 5 * 60 * 1000;
 
 function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
@@ -86,10 +89,10 @@ function SelectedSpanDetails(props: SelectedSpanDetailsProps): JSX.Element {
 		history.push(
 			`${ROUTES.LOGS_EXPLORER}?${createQueryParams({
 				[QueryParams.compositeQuery]: JSON.stringify(query),
-				// we subtract 1000 milliseconds from the start time to handle the cases when the trace duration is in nanoseconds
-				[QueryParams.startTime]: traceStartTime - 1000,
-				// we add 1000 milliseconds to the end time for nano second duration traces
-				[QueryParams.endTime]: traceEndTime + 1000,
+				// we subtract 5 minutes from the start time to handle the cases when the trace duration is in nanoseconds
+				[QueryParams.startTime]: traceStartTime - FIVE_MINUTES_IN_MS,
+				// we add 5 minutes to the end time for nano second duration traces
+				[QueryParams.endTime]: traceEndTime + FIVE_MINUTES_IN_MS,
 			})}`,
 		);
 	};

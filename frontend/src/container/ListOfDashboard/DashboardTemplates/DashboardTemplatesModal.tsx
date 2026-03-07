@@ -1,9 +1,5 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-import './DashboardTemplatesModal.styles.scss';
-
+import { ChangeEvent, useState } from 'react';
 import { Button, Input, Modal, Typography } from 'antd';
 import ApacheIcon from 'assets/CustomIcons/ApacheIcon';
 import DockerIcon from 'assets/CustomIcons/DockerIcon';
@@ -17,10 +13,11 @@ import PostgreSQLIcon from 'assets/CustomIcons/PostgreSQLIcon';
 import RedisIcon from 'assets/CustomIcons/RedisIcon';
 import cx from 'classnames';
 import { ConciergeBell, DraftingCompass, Drill, Plus, X } from 'lucide-react';
-import { ChangeEvent, useState } from 'react';
 import { DashboardTemplate } from 'types/api/dashboard/getAll';
 
 import { filterTemplates } from '../utils';
+
+import './DashboardTemplatesModal.styles.scss';
 
 const templatesList: DashboardTemplate[] = [
 	{

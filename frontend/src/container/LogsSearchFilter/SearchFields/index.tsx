@@ -1,8 +1,9 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { useNotifications } from 'hooks/useNotifications';
 import { reverseParser } from 'lib/logql';
 import { flatten } from 'lodash-es';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { ILogsReducer } from 'types/reducer/logs';
 

@@ -1,3 +1,7 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import { Col } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ENTITY_VERSION_V4 } from 'constants/app';
@@ -11,20 +15,21 @@ import {
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useDispatch } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
 import store from 'store';
 import { UpdateTimeInterval } from 'store/actions';
 import { TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../constants/features';
+import { useAppContext } from '../../../providers/App/App';
 import { GraphTitle, MENU_ITEMS, SERVICE_CHART_ID } from '../constant';
 import { getWidgetQueryBuilder } from '../MetricsApplication.factory';
 import { Card, GraphContainer, Row } from '../styles';
@@ -33,9 +38,9 @@ import { IServiceName } from './types';
 import {
 	dbSystemTags,
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function DBCall(): JSX.Element {
@@ -79,7 +84,12 @@ function DBCall(): JSX.Element {
 		[queries],
 	);
 
-	const legend = '{{db_system}}';
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
+
+	const legend = dotMetricsEnabled ? '{{db.system}}' : '{{db_system}}';
 
 	const databaseCallsRPSWidget = useMemo(
 		() =>
@@ -91,6 +101,7 @@ function DBCall(): JSX.Element {
 						servicename,
 						legend,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -101,7 +112,7 @@ function DBCall(): JSX.Element {
 				id: SERVICE_CHART_ID.dbCallsRPS,
 				fillSpans: false,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled, legend],
 	);
 	const databaseCallsAverageDurationWidget = useMemo(
 		() =>
@@ -112,6 +123,7 @@ function DBCall(): JSX.Element {
 					builder: databaseCallsAvgDuration({
 						servicename,
 						tagFilterItems,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -122,7 +134,7 @@ function DBCall(): JSX.Element {
 				id: GraphTitle.DATABASE_CALLS_AVG_DURATION,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems],
+		[servicename, tagFilterItems, dotMetricsEnabled],
 	);
 
 	const stepInterval = useMemo(
@@ -140,7 +152,7 @@ function DBCall(): JSX.Element {
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -157,6 +169,9 @@ function DBCall(): JSX.Element {
 		servicename,
 		isDBCall: true,
 	});
+	const { safeNavigate } = useSafeNavigate();
+
+	const onGraphClickHandler = useGraphClickHandler(setSelectedTimeStamp);
 
 	return (
 		<Row gutter={24}>
@@ -171,6 +186,7 @@ function DBCall(): JSX.Element {
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
 						stepInterval,
+						safeNavigate,
 					})}
 				>
 					View Traces
@@ -180,7 +196,7 @@ function DBCall(): JSX.Element {
 						<Graph
 							widget={databaseCallsRPSWidget}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,
@@ -206,6 +222,7 @@ function DBCall(): JSX.Element {
 						timestamp: selectedTimeStamp,
 						apmToTraceQuery,
 						stepInterval,
+						safeNavigate,
 					})}
 				>
 					View Traces
@@ -217,7 +234,7 @@ function DBCall(): JSX.Element {
 							widget={databaseCallsAverageDurationWidget}
 							headerMenuList={MENU_ITEMS}
 							onClickHandler={(xValue, yValue, mouseX, mouseY): void => {
-								onGraphClickHandler(setSelectedTimeStamp)(
+								onGraphClickHandler(
 									xValue,
 									yValue,
 									mouseX,

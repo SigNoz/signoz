@@ -1,5 +1,4 @@
-import './Overview.styles.scss';
-
+import { ReactNode, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import {
@@ -12,28 +11,25 @@ import {
 	Typography,
 } from 'antd';
 import { AddToQueryHOCProps } from 'components/Logs/AddToQueryHOC';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { OptionsQuery } from 'container/OptionsMenu/types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ChevronDown, ChevronRight, Search } from 'lucide-react';
-import { ReactNode, useState } from 'react';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { ActionItemProps } from './ActionItem';
 import TableView from './TableView';
 import { removeEscapeCharacters } from './utils';
+
+import './Overview.styles.scss';
 
 interface OverviewProps {
 	logData: ILog;
 	isListViewPanel?: boolean;
 	selectedOptions: OptionsQuery;
 	listViewPanelSelectedFields?: IField[] | null;
-	onGroupByAttribute?: (
-		fieldKey: string,
-		isJSON?: boolean,
-		dataType?: DataTypes,
-	) => Promise<void>;
+	handleChangeSelectedView?: ChangeViewFunctionType;
 }
 
 type Props = OverviewProps &
@@ -46,11 +42,11 @@ function Overview({
 	onClickActionItem,
 	isListViewPanel = false,
 	selectedOptions,
-	onGroupByAttribute,
 	listViewPanelSelectedFields,
+	handleChangeSelectedView,
 }: Props): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
-	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(false);
+	const [isSearchVisible, setIsSearchVisible] = useState<boolean>(true);
 	const [isAttributesExpanded, setIsAttributesExpanded] = useState<boolean>(
 		true,
 	);
@@ -108,7 +104,6 @@ function Overview({
 		<div className="overview-container">
 			<Collapse
 				defaultActiveKey={['1']}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -136,7 +131,6 @@ function Overview({
 											monaco.editor.remeasureFonts();
 										});
 									}}
-									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
 								<Divider
@@ -165,7 +159,6 @@ function Overview({
 				className="attribute-table"
 				defaultActiveKey={['1']}
 				bordered={false}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -173,7 +166,6 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 							<div
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}
@@ -212,11 +204,11 @@ function Overview({
 									logData={logData}
 									onAddToQuery={onAddToQuery}
 									fieldSearchInput={fieldSearchInput}
-									onGroupByAttribute={onGroupByAttribute}
 									onClickActionItem={onClickActionItem}
 									isListViewPanel={isListViewPanel}
 									selectedOptions={selectedOptions}
 									listViewPanelSelectedFields={listViewPanelSelectedFields}
+									handleChangeSelectedView={handleChangeSelectedView}
 								/>
 							</>
 						),
@@ -231,7 +223,7 @@ function Overview({
 Overview.defaultProps = {
 	isListViewPanel: false,
 	listViewPanelSelectedFields: null,
-	onGroupByAttribute: undefined,
+	handleChangeSelectedView: undefined,
 };
 
 export default Overview;

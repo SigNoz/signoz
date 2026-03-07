@@ -1,6 +1,6 @@
 package inframetrics
 
-import v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+import v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 
 var HostsTableListQuery = v3.QueryRangeParamsV3{
 	CompositeQuery: &v3.CompositeQuery{
@@ -110,8 +110,8 @@ var HostsTableListQuery = v3.QueryRangeParamsV3{
 								DataType: v3.AttributeKeyDataTypeString,
 								Type:     v3.AttributeKeyTypeTag,
 							},
-							Operator: v3.FilterOperatorIn,
-							Value:    []string{"used", "cached"},
+							Operator: v3.FilterOperatorEqual,
+							Value:    "used",
 						},
 						{
 							Key: v3.AttributeKey{

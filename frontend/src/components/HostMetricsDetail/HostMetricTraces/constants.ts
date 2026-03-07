@@ -6,7 +6,7 @@ import {
 } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
-import { DataSource } from 'types/common/queryBuilder';
+import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { nanoToMilli } from 'utils/timeUtils';
 
 export const columns = [
@@ -55,37 +55,31 @@ export const selectedColumns: BaseAutocompleteData[] = [
 		key: 'timestamp',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
 	},
 	{
 		key: 'serviceName',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
 	},
 	{
 		key: 'name',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
 	},
 	{
 		key: 'durationNano',
 		dataType: DataTypes.Float64,
 		type: 'tag',
-		isColumn: true,
 	},
 	{
 		key: 'httpMethod',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
 	},
 	{
 		key: 'responseStatusCode',
 		dataType: DataTypes.String,
 		type: 'tag',
-		isColumn: true,
 	},
 ];
 
@@ -108,9 +102,7 @@ export const getHostTracesQueryPayload = (
 						id: '------false',
 						dataType: DataTypes.EMPTY,
 						key: '',
-						isColumn: false,
 						type: '',
-						isJSON: false,
 					},
 					timeAggregation: 'rate',
 					spaceAggregation: 'sum',
@@ -129,10 +121,11 @@ export const getHostTracesQueryPayload = (
 					],
 					groupBy: [],
 					legend: '',
-					reduceTo: 'avg',
+					reduceTo: ReduceOperators.AVG,
 				},
 			],
 			queryFormulas: [],
+			queryTraceOperator: [],
 		},
 		id: '572f1d91-6ac0-46c0-b726-c21488b34434',
 		queryType: EQueryType.QUERY_BUILDER,
@@ -154,8 +147,6 @@ export const getHostTracesQueryPayload = (
 				key: 'serviceName',
 				dataType: 'string',
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'serviceName--string--tag--true',
 				isIndexed: false,
 			},
@@ -163,8 +154,6 @@ export const getHostTracesQueryPayload = (
 				key: 'name',
 				dataType: 'string',
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'name--string--tag--true',
 				isIndexed: false,
 			},
@@ -172,8 +161,6 @@ export const getHostTracesQueryPayload = (
 				key: 'durationNano',
 				dataType: 'float64',
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'durationNano--float64--tag--true',
 				isIndexed: false,
 			},
@@ -181,8 +168,6 @@ export const getHostTracesQueryPayload = (
 				key: 'httpMethod',
 				dataType: 'string',
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'httpMethod--string--tag--true',
 				isIndexed: false,
 			},
@@ -190,8 +175,6 @@ export const getHostTracesQueryPayload = (
 				key: 'responseStatusCode',
 				dataType: 'string',
 				type: 'tag',
-				isColumn: true,
-				isJSON: false,
 				id: 'responseStatusCode--string--tag--true',
 				isIndexed: false,
 			},

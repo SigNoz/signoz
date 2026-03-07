@@ -1,3 +1,5 @@
+import { useCallback } from 'react';
+import { useHistory } from 'react-router-dom';
 import { ArrowLeftOutlined } from '@ant-design/icons';
 import { Button } from 'antd';
 import { QueryParams } from 'constants/query';
@@ -8,8 +10,6 @@ import {
 import ROUTES from 'constants/routes';
 import { useGetCompositeQueryParam } from 'hooks/queryBuilder/useGetCompositeQueryParam';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback } from 'react';
-import { useHistory } from 'react-router-dom';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { constructCompositeQuery } from '../constants';
@@ -22,7 +22,9 @@ function BackButton(): JSX.Element {
 	const compositeQuery = useGetCompositeQueryParam();
 
 	const handleBack = useCallback(() => {
-		if (!compositeQuery) return;
+		if (!compositeQuery) {
+			return;
+		}
 
 		const nextCompositeQuery = constructCompositeQuery({
 			query: compositeQuery,

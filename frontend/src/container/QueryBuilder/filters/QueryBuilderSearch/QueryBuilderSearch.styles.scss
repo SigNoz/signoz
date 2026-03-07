@@ -1,14 +1,8 @@
-.selectOptionContainer {
+.query-builder-search-container {
+	position: relative;
 	display: flex;
-	gap: 8px;
-	justify-content: space-between;
 	align-items: center;
-	overflow-x: auto;
-
-	&::-webkit-scrollbar {
-		width: 0.2rem;
-		height: 0.2rem;
-	}
+	gap: 12px;
 }
 
 .logs-popup {
@@ -409,4 +403,7 @@
 			}
 		}
 	}
+}
+.span-scope-selector {
+	width: 160px;
 }

@@ -1,0 +1,34 @@
+{
+    "service.name": [
+        {
+            "name": "service.name",
+            "fieldContext": "resource",
+            "fieldDataType": "string",
+            "signal": "metrics"
+        }
+    ],
+    "http.request.method": [
+        {
+            "name": "http.request.method",
+            "fieldContext": "attribute",
+            "fieldDataType": "string",
+            "signal": "metrics"
+        }
+    ],
+    "http.response.status_code": [
+        {
+            "name": "http.response.status_code",
+            "fieldContext": "attribute",
+            "fieldDataType": "int",
+            "signal": "metrics"
+        }
+    ],
+    "host.name": [
+        {
+            "name": "host.name",
+            "fieldContext": "resource",
+            "fieldDataType": "string",
+            "signal": "metrics"
+        }
+    ]
+}

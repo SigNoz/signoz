@@ -1,21 +1,3 @@
-import './TracesTableComponent.styles.scss';
-
-import { Table } from 'antd';
-import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
-import { SOMETHING_WENT_WRONG } from 'constants/api';
-import Controls from 'container/Controls';
-import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
-import { tableStyles } from 'container/TracesExplorer/ListView/styles';
-import {
-	getListColumns,
-	getTraceLink,
-	transformDataWithDate,
-} from 'container/TracesExplorer/ListView/utils';
-import { Pagination } from 'hooks/queryPagination';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import history from 'lib/history';
-import { RowData } from 'lib/query/createTableColumnsFromQuery';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	HTMLAttributes,
@@ -26,19 +8,40 @@ import {
 	useState,
 } from 'react';
 import { UseQueryResult } from 'react-query';
+import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
+import { ResizeTable } from 'components/ResizeTable';
+import { SOMETHING_WENT_WRONG } from 'constants/api';
+import Controls from 'container/Controls';
+import { PER_PAGE_OPTIONS } from 'container/TracesExplorer/ListView/configs';
+import { tableStyles } from 'container/TracesExplorer/ListView/styles';
+import {
+	getListColumns,
+	getTraceLink,
+	transformDataWithDate,
+} from 'container/TracesExplorer/ListView/utils';
+import { Pagination } from 'hooks/queryPagination';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import history from 'lib/history';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+
+import './TracesTableComponent.styles.scss';
 
 function TracesTableComponent({
 	widget,
 	queryResponse,
 	setRequestData,
+	onColumnWidthsChange,
 }: TracesTableComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
 		limit: 10,
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	useEffect(() => {
 		setRequestData((prev) => ({
@@ -52,9 +55,14 @@ function TracesTableComponent({
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
-	const columns = getListColumns(
-		widget.selectedTracesFields || [],
-		formatTimezoneAdjustedTimestamp,
+	const columns = useMemo(
+		() =>
+			getListColumns(
+				widget.selectedTracesFields || [],
+				formatTimezoneAdjustedTimestamp,
+			),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+		[widget.selectedTracesFields],
 	);
 
 	const dataLength =
@@ -87,6 +95,25 @@ function TracesTableComponent({
 		[],
 	);
 
+	const handlePaginationChange = useCallback(
+		(newPagination: Pagination) => {
+			const urlQuery = new URLSearchParams(window.location.search);
+
+			// Update URL with new pagination values
+			urlQuery.set('offset', newPagination.offset.toString());
+			urlQuery.set('limit', newPagination.limit.toString());
+
+			// Update URL without page reload
+			safeNavigate({
+				search: urlQuery.toString(),
+			});
+
+			// Update component state
+			setPagination(newPagination);
+		},
+		[safeNavigate],
+	);
+
 	if (queryResponse.isError) {
 		return <div>{SOMETHING_WENT_WRONG}</div>;
 	}
@@ -95,16 +122,18 @@ function TracesTableComponent({
 		<div className="traces-table">
 			<div className="resize-table">
 				<OverlayScrollbar>
-					<Table
+					<ResizeTable
 						pagination={false}
 						tableLayout="fixed"
-						scroll={{ x: true }}
+						scroll={{ x: 'max-content' }}
 						loading={queryResponse.isFetching}
 						style={tableStyles}
 						dataSource={transformedQueryTableData}
 						columns={columns}
 						onRow={handleRow}
 						sticky
+						columnWidths={widget.columnWidths}
+						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</OverlayScrollbar>
 			</div>
@@ -116,19 +145,19 @@ function TracesTableComponent({
 					offset={pagination.offset}
 					countPerPage={pagination.limit}
 					handleNavigatePrevious={(): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							offset: pagination.offset - pagination.limit,
 						});
 					}}
 					handleNavigateNext={(): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							offset: pagination.offset + pagination.limit,
 						});
 					}}
 					handleCountItemsPerPageChange={(value): void => {
-						setPagination({
+						handlePaginationChange({
 							...pagination,
 							limit: value,
 							offset: 0,
@@ -147,6 +176,7 @@ export type TracesTableComponentProps = {
 	>;
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export default TracesTableComponent;

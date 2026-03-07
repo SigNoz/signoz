@@ -1,0 +1,30 @@
+.error-waterfall {
+	display: flex;
+	padding: 12px;
+	margin: 20px;
+	gap: 12px;
+	align-items: flex-start;
+	border-radius: 4px;
+	background: var(--bg-cherry-500);
+
+	.text {
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+		flex-shrink: 0;
+	}
+
+	.value {
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 20px; /* 142.857% */
+		letter-spacing: -0.07px;
+	}
+}

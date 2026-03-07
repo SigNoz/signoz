@@ -1,13 +1,15 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Threshold.styles.scss';
-
+import { useMemo, useRef, useState } from 'react';
+import { useDrag, useDrop, XYCoord } from 'react-dnd';
 import { Button, Input, InputNumber, Select, Space, Typography } from 'antd';
+import YAxisUnitSelector from 'components/YAxisUnitSelector';
+import { Y_AXIS_UNIT_NAMES } from 'components/YAxisUnitSelector/constants';
+import { YAxisSource } from 'components/YAxisUnitSelector/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { unitOptions } from 'container/NewWidget/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { getColumnUnit } from 'lib/query/createTableColumnsFromQuery';
 import { Check, Pencil, Trash2, X } from 'lucide-react';
-import { useMemo, useRef, useState } from 'react';
-import { useDrag, useDrop, XYCoord } from 'react-dnd';
 
 import {
 	operatorOptions,
@@ -19,6 +21,8 @@ import ColorSelector from './ColorSelector';
 import CustomColor from './CustomColor';
 import ShowCaseValue from './ShowCaseValue';
 import { ThresholdProps } from './types';
+
+import './Threshold.styles.scss';
 
 const wrapStyle = {
 	flexWrap: 'wrap',
@@ -42,6 +46,7 @@ function Threshold({
 	tableOptions,
 	thresholdTableOptions = '',
 	columnUnits,
+	yAxisUnit,
 }: ThresholdProps): JSX.Element {
 	const [isEditMode, setIsEditMode] = useState<boolean>(isEditEnabled);
 	const [operator, setOperator] = useState<string | number>(
@@ -134,7 +139,6 @@ function Threshold({
 	const [{ handlerId }, drop] = useDrop<
 		ThresholdProps,
 		void,
-		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		{ handlerId: any }
 	>({
 		accept: 'Threshold',
@@ -171,7 +175,6 @@ function Threshold({
 			}
 
 			moveThreshold(dragIndex, hoverIndex);
-			// eslint-disable-next-line no-param-reassign
 			item.keyIndex = hoverIndex;
 		},
 	});
@@ -194,12 +197,25 @@ function Threshold({
 
 	const allowDragAndDrop = panelTypeVsDragAndDrop[selectedGraph];
 
-	const isInvalidUnitComparison = useMemo(
-		() =>
-			unit !== 'none' &&
-			convertUnit(value, unit, columnUnits?.[tableSelectedOption]) === null,
-		[unit, value, columnUnits, tableSelectedOption],
-	);
+	const isInvalidUnitComparison = useMemo(() => {
+		const toUnitId =
+			selectedGraph === PANEL_TYPES.TABLE
+				? getColumnUnit(tableSelectedOption, columnUnits || {})
+				: yAxisUnit;
+		return unit !== 'none' && convertUnit(value, unit, toUnitId) === null;
+	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits, unit, value]);
+
+	const unitSelectCategories = useMemo(() => {
+		return unitOptions(
+			selectedGraph === PANEL_TYPES.TABLE
+				? getColumnUnit(tableSelectedOption, columnUnits || {}) || ''
+				: yAxisUnit || '',
+		);
+	}, [selectedGraph, yAxisUnit, tableSelectedOption, columnUnits]);
+
+	const unitLabel = useMemo(() => {
+		return Y_AXIS_UNIT_NAMES[unit as keyof typeof Y_AXIS_UNIT_NAMES];
+	}, [unit]);
 
 	return (
 		<div
@@ -310,15 +326,17 @@ function Threshold({
 						<ShowCaseValue value={value} className="unit-input" />
 					)}
 					{isEditMode ? (
-						<Select
-							defaultValue={unit}
-							options={unitOptions(columnUnits?.[tableSelectedOption] || '')}
+						<YAxisUnitSelector
+							value={unit}
 							onChange={handleUnitChange}
-							showSearch
-							className="unit-selection"
+							placeholder="Select unit"
+							source={YAxisSource.DASHBOARDS}
+							initialValue={unit}
+							categoriesOverride={unitSelectCategories}
+							containerClassName="unit-selection"
 						/>
 					) : (
-						<ShowCaseValue value={unit} className="unit-selection-prev" />
+						<ShowCaseValue value={unitLabel} className="unit-selection-prev" />
 					)}
 				</div>
 				<div className="thresholds-color-selector">
@@ -349,9 +367,16 @@ function Threshold({
 					)}
 				</div>
 				{isInvalidUnitComparison && (
-					<Typography.Text className="invalid-unit">
-						Threshold unit ({unit}) is not valid in comparison with the column unit (
-						{columnUnits?.[tableSelectedOption] || 'none'})
+					<Typography.Text
+						className="invalid-unit"
+						data-testid="invalid-unit-comparison"
+					>
+						Threshold unit ({unit}) is not valid in comparison with the{' '}
+						{selectedGraph === PANEL_TYPES.TABLE ? 'column' : 'y-axis'} unit (
+						{selectedGraph === PANEL_TYPES.TABLE
+							? getColumnUnit(tableSelectedOption, columnUnits || {}) || 'none'
+							: yAxisUnit || 'none'}
+						)
 					</Typography.Text>
 				)}
 				{isEditMode && (

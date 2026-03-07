@@ -1,12 +1,3 @@
-import './TimezonePicker.styles.scss';
-
-import { Color } from '@signozhq/design-tokens';
-import { Input } from 'antd';
-import cx from 'classnames';
-import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
-import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { Check, Search } from 'lucide-react';
-import { useTimezone } from 'providers/Timezone';
 import {
 	Dispatch,
 	SetStateAction,
@@ -14,8 +5,18 @@ import {
 	useEffect,
 	useState,
 } from 'react';
+import { Color } from '@signozhq/design-tokens';
+import { Input } from 'antd';
+import logEvent from 'api/common/logEvent';
+import cx from 'classnames';
+import { TimezonePickerShortcuts } from 'constants/shortcuts/TimezonePickerShortcuts';
+import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
+import { Check, Search } from 'lucide-react';
+import { useTimezone } from 'providers/Timezone';
 
 import { Timezone, TIMEZONE_DATA } from './timezoneUtils';
+
+import './TimezonePicker.styles.scss';
 
 interface SearchBarProps {
 	value: string;
@@ -71,6 +72,7 @@ function SearchBar({
 					onKeyDown={handleKeyDown}
 					tabIndex={0}
 					autoFocus
+					data-1p-ignore
 				/>
 			</div>
 			<kbd className="timezone-picker__esc-key">esc</kbd>
@@ -119,14 +121,15 @@ interface TimezonePickerProps {
 	setActiveView: Dispatch<SetStateAction<'datetime' | 'timezone'>>;
 	setIsOpen: Dispatch<SetStateAction<boolean>>;
 	isOpenedFromFooter: boolean;
+	onTimezoneSelect: (timezone: Timezone) => void;
 }
 
 function TimezonePicker({
 	setActiveView,
 	setIsOpen,
 	isOpenedFromFooter,
+	onTimezoneSelect,
 }: TimezonePickerProps): JSX.Element {
-	console.log({ isOpenedFromFooter });
 	const [searchTerm, setSearchTerm] = useState('');
 	const { timezone, updateTimezone } = useTimezone();
 	const [selectedTimezone, setSelectedTimezone] = useState<string>(
@@ -152,13 +155,19 @@ function TimezonePicker({
 	}, [isOpenedFromFooter, setActiveView, setIsOpen]);
 
 	const handleTimezoneSelect = useCallback(
-		(timezone: Timezone) => {
+		(timezone: Timezone): void => {
 			setSelectedTimezone(timezone.name);
 			updateTimezone(timezone);
+			onTimezoneSelect(timezone);
 			handleCloseTimezonePicker();
-			setIsOpen(false);
+			logEvent('DateTimePicker: New Timezone Selected', {
+				timezone: {
+					name: timezone.name,
+					offset: timezone.offset,
+				},
+			});
 		},
-		[handleCloseTimezonePicker, setIsOpen, updateTimezone],
+		[handleCloseTimezonePicker, updateTimezone, onTimezoneSelect],
 	);
 
 	// Register keyboard shortcuts
@@ -187,7 +196,7 @@ function TimezonePicker({
 			<div className="timezone-picker__list">
 				{getFilteredTimezones(searchTerm).map((timezone) => (
 					<TimezoneItem
-						key={timezone.value}
+						key={`${timezone.value}-${timezone.name}`}
 						timezone={timezone}
 						isSelected={timezone.name === selectedTimezone}
 						onClick={(): void => handleTimezoneSelect(timezone)}

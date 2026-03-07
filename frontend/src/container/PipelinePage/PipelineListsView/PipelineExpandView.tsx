@@ -1,11 +1,11 @@
-import { PlusCircleOutlined } from '@ant-design/icons';
-import { TableLocale } from 'antd/es/table/interface';
-import logEvent from 'api/common/logEvent';
-import { useIsDarkMode } from 'hooks/useDarkMode';
 import React, { useCallback, useMemo } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
 import { useTranslation } from 'react-i18next';
+import { PlusCircleOutlined } from '@ant-design/icons';
+import type { TableLocale } from 'antd/es/table/interface';
+import logEvent from 'api/common/logEvent';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import {
 	ActionMode,
 	ActionType,
@@ -156,7 +156,9 @@ function PipelineExpandView({
 
 	const onCancelReorderProcessorRow = useCallback(
 		() => (): void => {
-			if (expandedPipelineData) setExpandedPipelineData(expandedPipelineData);
+			if (expandedPipelineData) {
+				setExpandedPipelineData(expandedPipelineData);
+			}
 		},
 		[expandedPipelineData, setExpandedPipelineData],
 	);
@@ -194,7 +196,6 @@ function PipelineExpandView({
 		logEvent('Logs: Pipelines: Clicked Add New Processor', {
 			source: 'signoz-ui',
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [setActionType]);
 
 	const footer = useCallback((): JSX.Element | undefined => {
@@ -219,21 +220,6 @@ function PipelineExpandView({
 			moveRow: moveProcessorRow,
 		} as React.HTMLAttributes<unknown>);
 
-	const processorData = useMemo(
-		() =>
-			expandedPipelineData?.config &&
-			expandedPipelineData?.config.map(
-				(item: ProcessorData): ProcessorData => ({
-					id: item.id,
-					orderId: item.orderId,
-					type: item.type,
-					name: item.name,
-					enabled: item.enabled,
-				}),
-			),
-		[expandedPipelineData],
-	);
-
 	const getLocales = (): TableLocale => ({
 		emptyText: <span />,
 	});
@@ -248,7 +234,7 @@ function PipelineExpandView({
 				rowKey="id"
 				size="small"
 				components={tableComponents}
-				dataSource={processorData}
+				dataSource={expandedPipelineData?.config}
 				pagination={false}
 				onRow={onRowHandler}
 				footer={footer}

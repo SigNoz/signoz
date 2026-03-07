@@ -1,6 +1,14 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import './Query.styles.scss';
-
+// ** Hooks
+import {
+	ChangeEvent,
+	memo,
+	ReactNode,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
+import { useLocation } from 'react-use';
 import { Col, Input, Row, Tooltip, Typography } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 // ** Constants
@@ -16,6 +24,7 @@ import {
 	AggregatorFilter,
 	GroupByFilter,
 	HavingFilter,
+	MetricNameSelector,
 	OperatorsSelect,
 	OrderByFilter,
 	ReduceToFilter,
@@ -26,16 +35,6 @@ import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearc
 import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-// ** Hooks
-import {
-	ChangeEvent,
-	memo,
-	ReactNode,
-	useCallback,
-	useMemo,
-	useState,
-} from 'react';
-import { useLocation } from 'react-use';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { transformToUpperCase } from 'utils/transformToUpperCase';
@@ -45,7 +44,8 @@ import SpaceAggregationOptions from '../SpaceAggregationOptions/SpaceAggregation
 // ** Types
 import { QueryProps } from './Query.interfaces';
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
+import './Query.styles.scss';
+
 export const Query = memo(function Query({
 	index,
 	queryVariant,
@@ -81,10 +81,6 @@ export const Query = memo(function Query({
 		isListViewPanel,
 		entityVersion: version,
 	});
-
-	const isLogsExplorerPage = useMemo(() => pathname === ROUTES.LOGS_EXPLORER, [
-		pathname,
-	]);
 
 	const handleChangeAggregateEvery = useCallback(
 		(value: IBuilderQuery['stepInterval']) => {
@@ -328,7 +324,7 @@ export const Query = memo(function Query({
 	]);
 
 	const disableOperatorSelector =
-		!query?.aggregateAttribute.key || query?.aggregateAttribute.key === '';
+		!query?.aggregateAttribute?.key || query?.aggregateAttribute?.key === '';
 
 	const isVersionV4 = version && version === ENTITY_VERSION_V4;
 
@@ -354,6 +350,7 @@ export const Query = memo(function Query({
 				showDeleteButton={currentQuery.builder.queryData.length > 1}
 				isListViewPanel={isListViewPanel}
 				index={index}
+				queryVariant={queryVariant}
 			/>
 
 			{!isCollapse && (
@@ -398,7 +395,7 @@ export const Query = memo(function Query({
 													}
 												>
 													<OperatorsSelect
-														value={query.aggregateOperator}
+														value={query.aggregateOperator || ''}
 														onChange={handleChangeOperator}
 														operators={operators}
 													/>
@@ -407,7 +404,7 @@ export const Query = memo(function Query({
 										)}
 
 										<Col flex="auto">
-											<AggregatorFilter
+											<MetricNameSelector
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>
@@ -437,7 +434,7 @@ export const Query = memo(function Query({
 														}
 													>
 														<OperatorsSelect
-															value={query.aggregateOperator}
+															value={query.aggregateOperator || ''}
 															onChange={handleChangeOperator}
 															operators={operators}
 															disabled={disableOperatorSelector}
@@ -457,11 +454,12 @@ export const Query = memo(function Query({
 										</Col>
 									)}
 									<Col flex="1" className="qb-search-container">
-										{isLogsExplorerPage ? (
+										{[DataSource.LOGS, DataSource.TRACES].includes(query.dataSource) ? (
 											<QueryBuilderSearchV2
 												query={query}
 												onChange={handleChangeTagFilters}
 												whereClauseConfig={filterConfigs?.filters}
+												hideSpanScopeSelector={query.dataSource !== DataSource.TRACES}
 											/>
 										) : (
 											<QueryBuilderSearch
@@ -496,7 +494,7 @@ export const Query = memo(function Query({
 										}
 									>
 										<OperatorsSelect
-											value={query.aggregateOperator}
+											value={query.aggregateOperator || ''}
 											onChange={handleChangeOperator}
 											operators={operators}
 										/>
@@ -523,7 +521,7 @@ export const Query = memo(function Query({
 											panelType={panelType}
 											key={`${panelType}${query.spaceAggregation}${query.timeAggregation}`}
 											aggregatorAttributeType={
-												query?.aggregateAttribute.type as ATTRIBUTE_TYPES
+												query?.aggregateAttribute?.type as ATTRIBUTE_TYPES
 											}
 											selectedValue={query.spaceAggregation}
 											disabled={disableOperatorSelector}
@@ -551,7 +549,7 @@ export const Query = memo(function Query({
 										</Row>
 									) : (
 										<GroupByFilter
-											disabled={isMetricsDataSource && !query.aggregateAttribute.key}
+											disabled={isMetricsDataSource && !query.aggregateAttribute?.key}
 											query={query}
 											onChange={handleChangeGroupByKeys}
 										/>

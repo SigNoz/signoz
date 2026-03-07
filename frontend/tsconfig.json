@@ -3,8 +3,9 @@
 		"sourceMap": true,
 		"outDir": "./dist/",
 		"noImplicitAny": true,
+		"noImplicitReturns": true,
 		"module": "esnext",
-		"target": "es5",
+		"target": "es2018",
 		"jsx": "react-jsx",
 		"allowJs": true,
 		"strict": true,
@@ -14,13 +15,14 @@
 		"lib": ["dom", "dom.iterable", "esnext"],
 		"allowSyntheticDefaultImports": true,
 		"noFallthroughCasesInSwitch": true,
-		"moduleResolution": "node",
+		"moduleResolution": "bundler",
 		"resolveJsonModule": true,
 		"isolatedModules": true,
 		"noEmit": true,
 		"baseUrl": "./src",
 		"paths": {
-			"@constants/*": ["/container/OnboardingContainer/constants/*"]
+			"*": ["./*"],
+			"@constants/*": ["./container/OnboardingContainer/constants/*"]
 		},
 		"downlevelIteration": true,
 		"plugins": [
@@ -28,27 +30,26 @@
 				"name": "typescript-plugin-css-modules"
 			}
 		],
-		"types": ["node", "jest"]
+		"types": ["vite/client", "node", "jest"]
 	},
-	"exclude": ["node_modules"],
+	"exclude": ["node_modules", "src/parser/*.ts", "src/parser/TraceOperatorParser/*.ts", "orval.config.ts"],
 	"include": [
 		"./src",
 		"./src/**/*.ts",
 		"src/**/*.tsx",
 		"src/**/*.d.ts",
-		"./babel.config.js",
+		"babel.config.cjs",
 		"./jest.config.ts",
-		"./.eslintrc.js",
+		"./.eslintrc.cjs",
 		"./__mocks__",
 		"./conf/default.conf",
 		"./public",
-		"./tests",
-		"./playwright.config.ts",
 		"./commitlint.config.ts",
-		"./webpack.config.js",
-		"./webpack.config.prod.js",
+		"./vite.config.ts",
 		"./jest.setup.ts",
 		"./tests/**.ts",
-		"./**/*.d.ts"
+		"./**/*.d.ts",
+		"./playwright.config.ts",
+		"./e2e/**/*.ts"
 	]
 }

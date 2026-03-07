@@ -1,10 +1,11 @@
+import { useMemo } from 'react';
 import { EllipsisOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { Button, TableColumnsType as ColumnsType } from 'antd';
 import ClientSideQBSearch, {
 	AttributeKey,
 } from 'components/ClientSideQBSearch/ClientSideQBSearch';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import { transformKeyValuesToAttributeValuesMap } from 'container/QueryBuilder/filters/utils';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -14,7 +15,6 @@ import AlertLabels, {
 	AlertLabelsProps,
 } from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';
 import AlertState from 'pages/AlertDetails/AlertHeader/AlertState/AlertState';
-import { useMemo } from 'react';
 import { AlertRuleTimelineTableResponse } from 'types/api/alerts/def';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -112,7 +112,7 @@ export const timelineTableColumns = ({
 		width: 200,
 		render: (value): JSX.Element => (
 			<div className="alert-rule__created-at">
-				{formatTimezoneAdjustedTimestamp(value, 'MMM D, YYYY ⎯ HH:mm:ss')}
+				{formatTimezoneAdjustedTimestamp(value, DATE_TIME_FORMATS.DASH_DATETIME)}
 			</div>
 		),
 	},

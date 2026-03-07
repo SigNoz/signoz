@@ -12,9 +12,9 @@
 
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>文档</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>中文ReadMe</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.de-de.md"><b>德文ReadMe</b></a> •
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>葡萄牙语ReadMe</b></a> •
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>中文ReadMe</b></a> •
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>德文ReadMe</b></a> •
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>葡萄牙语ReadMe</b></a> •
   <a href="https://signoz.io/slack"><b>Slack 社区</b></a> •
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
@@ -186,25 +186,6 @@ Jaeger 仅仅是一个分布式追踪系统。 但是 SigNoz 可以提供 metric
 我们 ❤️ 你的贡献，无论大小。 请先阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 再开始给 SigNoz 做贡献。
 
 如果你不知道如何开始？ 只需要在 [slack 社区](https://signoz.io/slack) 通过 `#contributing` 频道联系我们。
-
-### 项目维护人员
-
-#### 后端
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-
-#### 前端
-
-- [Palash Gupta](https://github.com/palashgdev)
-- [Yunus M](https://github.com/YounixM)
-- [Rajat Dabade](https://github.com/Rajat-Dabade)
-
-#### 运维开发
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
 
 <br /><br />
 

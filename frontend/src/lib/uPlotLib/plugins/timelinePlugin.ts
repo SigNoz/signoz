@@ -175,7 +175,9 @@ export function distr(
 		gap = space / (numItems + 1);
 	}
 
-	if (Number.isNaN(gap) || gap === Infinity) gap = 0;
+	if (Number.isNaN(gap) || gap === Infinity) {
+		gap = 0;
+	}
 
 	let offs = 0;
 	if (justify === SPACE_AROUND) {
@@ -188,9 +190,12 @@ export function distr(
 	const iwidRounded = roundDec(iwid, 6);
 
 	if (onlyIdx == null) {
-		for (let i = 0; i < numItems; i++)
+		for (let i = 0; i < numItems; i++) {
 			each(i, coord(i, offs, iwid, gap), iwidRounded);
-	} else each(onlyIdx, coord(onlyIdx, offs, iwid, gap), iwidRounded);
+		}
+	} else {
+		each(onlyIdx, coord(onlyIdx, offs, iwid, gap), iwidRounded);
+	}
 }
 
 function timelinePlugin(opts: any): any {
@@ -266,7 +271,9 @@ function timelinePlugin(opts: any): any {
 		const fillStyle = fill(iy + 1, ix, value);
 		let fillPath = fillPaths.get(fillStyle);
 
-		if (fillPath == null) fillPaths.set(fillStyle, (fillPath = new Path2D()));
+		if (fillPath == null) {
+			fillPaths.set(fillStyle, (fillPath = new Path2D()));
+		}
 
 		rect(fillPath, lft, top, wid, hgt);
 
@@ -274,8 +281,9 @@ function timelinePlugin(opts: any): any {
 			const strokeStyle = stroke(iy + 1, ix, value);
 			let strokePath = strokePaths.get(strokeStyle);
 
-			if (strokePath == null)
+			if (strokePath == null) {
 				strokePaths.set(strokeStyle, (strokePath = new Path2D()));
+			}
 
 			rect(
 				strokePath,
@@ -399,7 +407,6 @@ function timelinePlugin(opts: any): any {
 					}
 				});
 
-				// eslint-disable-next-line no-param-reassign
 				u.ctx.lineWidth = strokeWidth;
 				drawBoxes(u.ctx);
 
@@ -475,7 +482,6 @@ function timelinePlugin(opts: any): any {
 
 				// force-clear the path cache to cause drawBars() to rebuild new quadtree
 				u.series.forEach((s: any) => {
-					// eslint-disable-next-line no-param-reassign
 					s._paths = null;
 				});
 			},
@@ -503,7 +509,9 @@ function timelinePlugin(opts: any): any {
 						seriesIdx: number,
 						closestIdx: any,
 					) => {
-						if (seriesIdx === 0) return closestIdx;
+						if (seriesIdx === 0) {
+							return closestIdx;
+						}
 
 						const cx = round(u.cursor.left * pxRatio);
 
@@ -513,8 +521,9 @@ function timelinePlugin(opts: any): any {
 							hovered[seriesIdx - 1] = null;
 
 							qt.get(cx, cy, 1, 1, (o: { x: any; y: any; w: any; h: any }) => {
-								if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h))
+								if (pointWithin(cx, cy, o.x, o.y, o.x + o.w, o.y + o.h)) {
 									hovered[seriesIdx - 1] = o;
+								}
 							});
 						}
 
@@ -541,13 +550,15 @@ function timelinePlugin(opts: any): any {
 								const colWid = u.data[0][1] - u.data[0][0];
 								const scalePad = colWid / 2;
 
-								// eslint-disable-next-line no-param-reassign
-								if (min <= u.data[0][0]) min = u.data[0][0] - scalePad;
+								if (min <= u.data[0][0]) {
+									min = u.data[0][0] - scalePad;
+								}
 
 								const lastIdx = u.data[0].length - 1;
 
-								// eslint-disable-next-line no-param-reassign
-								if (max >= u.data[0][lastIdx]) max = u.data[0][lastIdx] + scalePad;
+								if (max >= u.data[0][lastIdx]) {
+									max = u.data[0][lastIdx] + scalePad;
+								}
 							}
 
 							return [min, max];
@@ -576,7 +587,9 @@ function timelinePlugin(opts: any): any {
 								for (let i = 0; i < u.data[0].length; i += skipFactor) {
 									const v = u.data[0][i];
 
-									if (v >= scaleMin && v <= scaleMax) splits.push(v);
+									if (v >= scaleMin && v <= scaleMax) {
+										splits.push(v);
+									}
 								}
 
 								return splits;

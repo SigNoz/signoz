@@ -1,10 +1,10 @@
+import { ChangeEvent, useCallback } from 'react';
 import MEditor, { Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Input } from 'antd';
 import { LEGEND } from 'constants/global';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ChangeEvent, useCallback } from 'react';
 import { IClickHouseQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { getFormatedLegend } from 'utils/getFormatedLegend';
@@ -91,8 +91,8 @@ function ClickHouseQueryBuilder({
 
 	return (
 		<QueryHeader
-			name={queryData.name}
-			disabled={queryData.disabled}
+			name={queryData?.name}
+			disabled={queryData?.disabled}
 			onDisable={handleDisable}
 			onDelete={handleRemoveQuery}
 			deletable={deletable}
@@ -101,7 +101,7 @@ function ClickHouseQueryBuilder({
 				language="sql"
 				height="200px"
 				onChange={handleUpdateEditor}
-				value={queryData.query}
+				value={queryData?.query}
 				onMount={(_, monaco): void => {
 					document.fonts.ready.then(() => {
 						monaco.editor.remeasureFonts();
@@ -118,15 +118,14 @@ function ClickHouseQueryBuilder({
 					fontFamily: 'Space Mono',
 				}}
 				theme={isDarkMode ? 'my-theme' : 'light'}
-				// eslint-disable-next-line react/jsx-no-bind
 				beforeMount={setEditorTheme}
 			/>
 			<Input
 				onChange={handleUpdateInput}
 				name="legend"
 				size="middle"
-				defaultValue={queryData.legend}
-				value={queryData.legend}
+				defaultValue={queryData?.legend}
+				value={queryData?.legend}
 				addonBefore="Legend Format"
 			/>
 		</QueryHeader>

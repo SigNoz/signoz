@@ -30,14 +30,16 @@ export const getChartData = (
 	};
 	const chartLabels: ChartData<'line'>['labels'] = [];
 
-	Object.keys(allDataPoints).forEach((timestamp) => {
-		const key = allDataPoints[timestamp];
-		if (key.value) {
-			chartDataset.data.push(key.value);
-			const date = dayjs(key.timestamp / 1000000);
-			chartLabels.push(date.toDate().getTime());
-		}
-	});
+	if (allDataPoints && typeof allDataPoints === 'object') {
+		Object.keys(allDataPoints).forEach((timestamp) => {
+			const key = allDataPoints[timestamp];
+			if (key.value) {
+				chartDataset.data.push(key.value);
+				const date = dayjs(key.timestamp / 1000000);
+				chartLabels.push(date.toDate().getTime());
+			}
+		});
+	}
 
 	return {
 		datasets: [
@@ -69,7 +71,6 @@ export const getChartDataforGroupBy = (
 	const allGroupBy = Object.keys(items).map((e) => items[e].groupBy);
 
 	keys(allGroupBy).forEach((e: string): void => {
-		// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 		// @ts-ignore
 		const { length } = keys(allGroupBy[e]);
 

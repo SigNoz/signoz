@@ -1,7 +1,7 @@
+import { useTranslation } from 'react-i18next';
 import { SearchOutlined } from '@ant-design/icons';
 import { Input, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useTranslation } from 'react-i18next';
 
 import { FieldTitle } from '../styles';
 import { OptionsMenuConfig } from '../types';
@@ -17,7 +17,9 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 	const { t } = useTranslation(['trace']);
 	const isDarkMode = useIsDarkMode();
 
-	if (!config) return null;
+	if (!config) {
+		return null;
+	}
 
 	return (
 		<AddColumnWrapper direction="vertical">
@@ -42,10 +44,10 @@ function AddColumnField({ config }: AddColumnFieldProps): JSX.Element | null {
 				</SearchIconWrapper>
 			</Input.Group>
 
-			{config.value?.map(({ key, id }) => (
-				<AddColumnItem direction="horizontal" key={id}>
-					<Typography>{key}</Typography>
-					<DeleteOutlinedIcon onClick={(): void => config.onRemove(id as string)} />
+			{config.value?.map(({ name }) => (
+				<AddColumnItem direction="horizontal" key={name}>
+					<Typography>{name}</Typography>
+					<DeleteOutlinedIcon onClick={(): void => config.onRemove(name)} />
 				</AddColumnItem>
 			))}
 		</AddColumnWrapper>

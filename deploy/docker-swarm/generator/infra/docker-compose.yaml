@@ -1,0 +1,69 @@
+version: "3"
+x-common: &common
+  networks:
+    - signoz-net
+  extra_hosts:
+    - host.docker.internal:host-gateway
+  logging:
+    options:
+      max-size: 50m
+      max-file: "3"
+  deploy:
+    mode: global
+    restart_policy:
+      condition: on-failure
+services:
+  otel-agent:
+    <<: *common
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    command:
+      - --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./otel-agent-config.yaml:/etc/otel-collector-config.yaml
+      - /:/hostfs:ro
+    environment:
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
+    # Before exposing the ports, make sure the ports are not used by other services
+    # ports:
+    #   - "4317:4317"
+    #   - "4318:4318"
+  otel-metrics:
+    <<: *common
+    image: otel/opentelemetry-collector-contrib:0.111.0
+    user: 0:0   #  If you have security concerns, you can replace this with your `UID:GID` that has necessary permissions to docker.sock
+    command:
+      - --config=/etc/otel-collector-config.yaml
+    volumes:
+      - ./otel-metrics-config.yaml:/etc/otel-collector-config.yaml
+      - /var/run/docker.sock:/var/run/docker.sock
+    environment:
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
+      - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
+      # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
+    # Before exposing the ports, make sure the ports are not used by other services
+    # ports:
+    #   - "4317:4317"
+    #   - "4318:4318"
+    deploy:
+      mode: replicated
+      replicas: 1
+      placement:
+        constraints:
+          - node.role == manager
+  logspout:
+    <<: *common
+    image: "gliderlabs/logspout:v3.2.14"
+    command: syslog+tcp://otel-agent:2255
+    user: root
+    volumes:
+      - /etc/hostname:/etc/host_hostname:ro
+      - /var/run/docker.sock:/var/run/docker.sock
+    depends_on:
+      - otel-agent
+
+networks:
+  signoz-net:
+    name: signoz-net
+    external: true

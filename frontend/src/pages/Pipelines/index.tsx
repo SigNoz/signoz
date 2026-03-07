@@ -1,5 +1,6 @@
-import './Pipelines.styles.scss';
-
+import { useEffect, useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
 import * as Sentry from '@sentry/react';
 import type { TabsProps } from 'antd';
 import { Tabs } from 'antd';
@@ -9,11 +10,10 @@ import ChangeHistory from 'container/PipelinePage/Layouts/ChangeHistory';
 import PipelinePage from 'container/PipelinePage/Layouts/Pipeline';
 import { useNotifications } from 'hooks/useNotifications';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect, useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
 import { SuccessResponse } from 'types/api';
 import { Pipeline } from 'types/api/pipeline/def';
+
+import './Pipelines.styles.scss';
 
 const pipelineRefetchInterval = (
 	pipelineResponse: SuccessResponse<Pipeline> | undefined,

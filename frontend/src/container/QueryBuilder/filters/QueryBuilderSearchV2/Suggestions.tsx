@@ -1,15 +1,15 @@
-import './Suggestions.styles.scss';
-
+import { useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip, Typography } from 'antd';
 import cx from 'classnames';
 import { isEmpty, isObject } from 'lodash-es';
 import { Check, Zap } from 'lucide-react';
-import { useMemo, useState } from 'react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { getTagToken } from '../QueryBuilderSearch/utils';
 import { DropdownState } from './QueryBuilderSearchV2';
+
+import './Suggestions.styles.scss';
 
 interface ISuggestionsProps {
 	label: string;

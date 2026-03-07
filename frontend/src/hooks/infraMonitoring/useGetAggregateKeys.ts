@@ -1,7 +1,7 @@
-import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
-import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { useMemo } from 'react';
 import { useQuery, UseQueryOptions, UseQueryResult } from 'react-query';
+import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
+import { QueryBuilderKeys } from 'constants/queryBuilder';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { IGetAttributeKeysPayload } from 'types/api/queryBuilder/getAttributeKeys';
 import { IQueryAutocompleteResponse } from 'types/api/queryBuilder/queryAutocompleteResponse';

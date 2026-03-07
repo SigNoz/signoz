@@ -8,9 +8,9 @@ import (
 	"net/http"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/errors"
 )
 
 func TestSuccess(t *testing.T) {
@@ -47,6 +47,9 @@ func TestSuccess(t *testing.T) {
 
 	res, err := http.DefaultClient.Do(req)
 	require.NoError(t, err)
+	defer func() {
+		require.NoError(t, res.Body.Close())
+	}()
 
 	actual, err := io.ReadAll(res.Body)
 	require.NoError(t, err)
@@ -68,13 +71,13 @@ func TestError(t *testing.T) {
 		"/already_exists": {
 			name:       "AlreadyExists",
 			statusCode: http.StatusConflict,
-			err:        errors.New(errors.TypeAlreadyExists, "already_exists", "already exists").WithUrl("https://already_exists"),
+			err:        errors.New(errors.TypeAlreadyExists, errors.MustNewCode("already_exists"), "already exists").WithUrl("https://already_exists"),
 			expected:   []byte(`{"status":"error","error":{"code":"already_exists","message":"already exists","url":"https://already_exists"}}`),
 		},
 		"/unauthenticated": {
 			name:       "Unauthenticated",
 			statusCode: http.StatusUnauthorized,
-			err:        errors.New(errors.TypeUnauthenticated, "not_allowed", "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
+			err:        errors.New(errors.TypeUnauthenticated, errors.MustNewCode("not_allowed"), "not allowed").WithUrl("https://unauthenticated").WithAdditional("a1", "a2"),
 			expected:   []byte(`{"status":"error","error":{"code":"not_allowed","message":"not allowed","url":"https://unauthenticated","errors":[{"message":"a1"},{"message":"a2"}]}}`),
 		},
 	}
@@ -104,6 +107,9 @@ func TestError(t *testing.T) {
 
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, res.Body.Close())
+			}()
 
 			actual, err := io.ReadAll(res.Body)
 			require.NoError(t, err)

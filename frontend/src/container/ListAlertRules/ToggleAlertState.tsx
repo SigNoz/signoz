@@ -1,7 +1,7 @@
+import { Dispatch, SetStateAction, useState } from 'react';
 import patchAlert from 'api/alerts/patch';
 import { State } from 'hooks/useFetch';
 import { useNotifications } from 'hooks/useNotifications';
-import { Dispatch, SetStateAction, useState } from 'react';
 import { GettableAlert } from 'types/api/alerts/get';
 import { PayloadProps as PatchPayloadProps } from 'types/api/alerts/patch';
 
@@ -25,7 +25,7 @@ function ToggleAlertState({
 	const defaultErrorMessage = 'Something went wrong';
 
 	const onToggleHandler = async (
-		id: number,
+		id: string,
 		disabled: boolean,
 	): Promise<void> => {
 		try {

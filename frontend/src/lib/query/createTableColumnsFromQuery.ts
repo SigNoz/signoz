@@ -1,5 +1,8 @@
-import { ColumnsType } from 'antd/es/table';
-import { ColumnType } from 'antd/lib/table';
+import { ReactNode } from 'react';
+import {
+	TableColumnsType as ColumnsType,
+	TableColumnType as ColumnType,
+} from 'antd';
 import {
 	initialClickHouseData,
 	initialFormulaBuilderFormValues,
@@ -10,7 +13,6 @@ import { FORMULA_REGEXP } from 'constants/regExp';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
 import { get, isEqual, isNaN, isObject } from 'lodash-es';
-import { ReactNode } from 'react';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
@@ -41,6 +43,7 @@ export type DynamicColumn = {
 	title: string;
 	data: (string | number)[];
 	type: 'field' | 'operator' | 'formula';
+	id?: string;
 };
 
 type DynamicColumns = DynamicColumn[];
@@ -93,7 +96,10 @@ const getQueryByName = <T extends keyof QueryBuilderData>(
 		);
 	}
 	if (query.queryType === EQueryType.QUERY_BUILDER) {
-		const queryArray = query.builder[type];
+		const queryArray = (query.builder[type] || []) as (
+			| IBuilderQuery
+			| IBuilderFormula
+		)[];
 		const defaultValue =
 			type === 'queryData'
 				? initialQueryBuilderFormValues
@@ -119,8 +125,11 @@ const addLabels = (
 	query: IBuilderQuery | IBuilderFormula | IClickHouseQuery | IPromQLQuery,
 	label: string,
 	dynamicColumns: DynamicColumns,
+	columnId?: string,
 ): void => {
-	if (isValueExist('dataIndex', label, dynamicColumns)) return;
+	if (isValueExist('dataIndex', label, dynamicColumns)) {
+		return;
+	}
 
 	const fieldObj: DynamicColumn = {
 		query,
@@ -129,6 +138,7 @@ const addLabels = (
 		title: label,
 		data: [],
 		type: 'field',
+		id: columnId,
 	};
 
 	dynamicColumns.push(fieldObj);
@@ -139,6 +149,7 @@ const addOperatorFormulaColumns = (
 	dynamicColumns: DynamicColumns,
 	queryType: EQueryType,
 	customLabel?: string,
+	columnId?: string,
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): void => {
 	if (isFormula(get(query, 'queryName', ''))) {
@@ -156,6 +167,7 @@ const addOperatorFormulaColumns = (
 			title: customLabel || formulaLabel,
 			data: [],
 			type: 'formula',
+			id: columnId,
 		};
 
 		dynamicColumns.push(formulaColumn);
@@ -166,8 +178,8 @@ const addOperatorFormulaColumns = (
 	if (queryType === EQueryType.QUERY_BUILDER) {
 		const currentQueryData = query as IBuilderQuery;
 		let operatorLabel = `${currentQueryData.aggregateOperator}`;
-		if (currentQueryData.aggregateAttribute.key) {
-			operatorLabel += `(${currentQueryData.aggregateAttribute.key})`;
+		if (currentQueryData.aggregateAttribute?.key) {
+			operatorLabel += `(${currentQueryData.aggregateAttribute?.key})`;
 		}
 
 		if (currentQueryData.legend) {
@@ -177,10 +189,11 @@ const addOperatorFormulaColumns = (
 		const operatorColumn: DynamicColumn = {
 			query,
 			field: currentQueryData.queryName,
-			dataIndex: currentQueryData.queryName,
+			dataIndex: customLabel || currentQueryData.queryName,
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
@@ -221,54 +234,88 @@ const addOperatorFormulaColumns = (
 			title: customLabel || operatorLabel,
 			data: [],
 			type: 'operator',
+			id: columnId,
 		};
 
 		dynamicColumns.push(operatorColumn);
 	}
 };
 
-const transformColumnTitles = (
+const processTableColumns = (
+	table: NonNullable<QueryDataV3['table']>,
+	currentStagedQuery:
+		| IBuilderQuery
+		| IBuilderFormula
+		| IClickHouseQuery
+		| IPromQLQuery,
 	dynamicColumns: DynamicColumns,
-): DynamicColumns =>
-	dynamicColumns.map((item) => {
-		if (isFormula(item.field as string)) {
-			return item;
+	queryType: EQueryType,
+): void => {
+	table.columns.forEach((column) => {
+		if (column.isValueColumn) {
+			// For value columns, add as operator/formula column
+			addOperatorFormulaColumns(
+				currentStagedQuery,
+				dynamicColumns,
+				queryType,
+				column.name,
+				column.id,
+			);
+		} else {
+			// For non-value columns, add as field/label column
+			addLabels(currentStagedQuery, column.name, dynamicColumns, column.id);
 		}
-
-		const sameValues = dynamicColumns.filter(
-			(column) => column.title === item.title,
-		);
-
-		if (sameValues.length > 1) {
-			return {
-				...item,
-				dataIndex: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-				title: `${item.title} - ${get(
-					item.query,
-					'queryName',
-					get(item.query, 'name', ''),
-				)}`,
-			};
-		}
-
-		return item;
 	});
+};
+
+const processSeriesColumns = (
+	series: NonNullable<QueryDataV3['series']>,
+	currentStagedQuery:
+		| IBuilderQuery
+		| IBuilderFormula
+		| IClickHouseQuery
+		| IPromQLQuery,
+	dynamicColumns: DynamicColumns,
+	queryType: EQueryType,
+	currentQuery: QueryDataV3,
+): void => {
+	const isValuesColumnExist = series.some((item) => item.values.length > 0);
+	const isEveryValuesExist = series.every((item) => item.values.length > 0);
+
+	if (isValuesColumnExist) {
+		addOperatorFormulaColumns(
+			currentStagedQuery,
+			dynamicColumns,
+			queryType,
+			isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
+		);
+	}
+
+	series.forEach((seria) => {
+		seria.labelsArray?.forEach((lab) => {
+			Object.keys(lab).forEach((label) => {
+				if (label === currentQuery?.queryName) {
+					return;
+				}
+
+				addLabels(currentStagedQuery, label, dynamicColumns);
+			});
+		});
+	});
+};
 
 const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 	const dynamicColumns: DynamicColumns = [];
 
 	queryTableData.forEach((currentQuery) => {
-		const { series, queryName, list } = currentQuery;
+		const { series, queryName, list, table } = currentQuery;
 
 		const currentStagedQuery = getQueryByName(
 			query,
 			queryName,
 			isFormula(queryName) ? 'queryFormulas' : 'queryData',
 		);
+
 		if (list) {
 			list.forEach((listItem) => {
 				Object.keys(listItem.data).forEach((label) => {
@@ -277,32 +324,27 @@ const getDynamicColumns: GetDynamicColumns = (queryTableData, query) => {
 			});
 		}
 
+		if (table) {
+			processTableColumns(
+				table,
+				currentStagedQuery,
+				dynamicColumns,
+				query.queryType,
+			);
+		}
+
 		if (series) {
-			const isValuesColumnExist = series.some((item) => item.values.length > 0);
-			const isEveryValuesExist = series.every((item) => item.values.length > 0);
-
-			if (isValuesColumnExist) {
-				addOperatorFormulaColumns(
-					currentStagedQuery,
-					dynamicColumns,
-					query.queryType,
-					isEveryValuesExist ? undefined : get(currentStagedQuery, 'queryName', ''),
-				);
-			}
-
-			series.forEach((seria) => {
-				seria.labelsArray?.forEach((lab) => {
-					Object.keys(lab).forEach((label) => {
-						if (label === currentQuery?.queryName) return;
-
-						addLabels(currentStagedQuery, label, dynamicColumns);
-					});
-				});
-			});
+			processSeriesColumns(
+				series,
+				currentStagedQuery,
+				dynamicColumns,
+				query.queryType,
+				currentQuery,
+			);
 		}
 	});
 
-	return transformColumnTitles(dynamicColumns);
+	return dynamicColumns;
 };
 
 const fillEmptyRowCells = (
@@ -326,7 +368,9 @@ const findSeriaValueFromAnotherQuery = (
 	currentLabels: Record<string, string>,
 	nextQuery: QueryDataV3 | null,
 ): SeriesItem | null => {
-	if (!nextQuery || !nextQuery.series) return null;
+	if (!nextQuery || !nextQuery.series) {
+		return null;
+	}
 
 	let value = null;
 
@@ -334,7 +378,9 @@ const findSeriaValueFromAnotherQuery = (
 
 	nextQuery.series.forEach((seria) => {
 		const localLabelEntries = Object.entries(seria.labels);
-		if (localLabelEntries.length !== labelEntries.length) return;
+		if (localLabelEntries.length !== labelEntries.length) {
+			return;
+		}
 
 		const isExistLabels = isEqual(localLabelEntries, labelEntries);
 
@@ -410,7 +456,9 @@ const fillDataFromSeries = (
 	const { series, queryName } = currentQuery;
 	const isEqualQuery = isEqualQueriesByLabel(equalQueriesByLabels, queryName);
 
-	if (!series) return;
+	if (!series) {
+		return;
+	}
 
 	series.forEach((seria) => {
 		const unusedColumnsKeys = new Set<keyof RowData>(
@@ -419,7 +467,9 @@ const fillDataFromSeries = (
 
 		columns.forEach((column) => {
 			if (queryName === column.field) {
-				if (seria.values.length === 0) return;
+				if (seria.values.length === 0) {
+					return;
+				}
 
 				fillAggregationData(
 					column,
@@ -442,7 +492,9 @@ const fillDataFromSeries = (
 				return;
 			}
 
-			if (isEqualQuery) return;
+			if (isEqualQuery) {
+				return;
+			}
 
 			fillLabelsData(column, seria, unusedColumnsKeys);
 
@@ -455,20 +507,79 @@ const fillDataFromList = (
 	listItem: ListItem,
 	columns: DynamicColumns,
 ): void => {
+	const listData = listItem.data || {};
 	columns.forEach((column) => {
-		if (isFormula(column.field)) return;
+		if (isFormula(column.field)) {
+			return;
+		}
 
-		Object.keys(listItem.data).forEach((label) => {
+		Object.keys(listData).forEach((label) => {
 			if (column.dataIndex === label) {
-				if (listItem.data[label as ListItemKey] !== '') {
-					if (isObject(listItem.data[label as ListItemKey])) {
-						column.data.push(JSON.stringify(listItem.data[label as ListItemKey]));
+				const listValue = listData[label as ListItemKey];
+				if (listValue !== '') {
+					if (isObject(listValue)) {
+						column.data.push(JSON.stringify(listValue));
 					} else {
-						column.data.push(listItem.data[label as ListItemKey].toString());
+						column.data.push(listValue?.toString() ?? '');
 					}
 				} else {
 					column.data.push('N/A');
 				}
+			}
+		});
+	});
+};
+
+const processTableRowValue = (value: any, column: DynamicColumn): void => {
+	if (value !== null && value !== undefined && value !== '') {
+		if (isObject(value)) {
+			column.data.push(JSON.stringify(value));
+		} else if (typeof value === 'number' || !isNaN(Number(value))) {
+			column.data.push(Number(value));
+		} else {
+			column.data.push(value.toString());
+		}
+	} else {
+		column.data.push('N/A');
+	}
+};
+
+const fillDataFromTable = (
+	currentQuery: QueryDataV3,
+	columns: DynamicColumns,
+): void => {
+	const { table } = currentQuery;
+
+	if (!table || !table.rows) {
+		return;
+	}
+
+	table.rows.forEach((row) => {
+		const unusedColumnsKeys = new Set<keyof RowData>(
+			columns.map((item) => item.id || item.title),
+		);
+
+		columns.forEach((column) => {
+			const rowData = row.data || {};
+			const columnField = column.id || column.title || column.field;
+
+			if (Object.prototype.hasOwnProperty.call(rowData, columnField)) {
+				const value = rowData[columnField];
+				processTableRowValue(value, column);
+				unusedColumnsKeys.delete(columnField);
+			} else {
+				column.data.push('N/A');
+				unusedColumnsKeys.delete(columnField);
+			}
+		});
+
+		// Fill any remaining unused columns with N/A
+		unusedColumnsKeys.forEach((key) => {
+			const unusedCol = columns.find(
+				(item) => item.id === key || item.title === key,
+			);
+			if (unusedCol) {
+				unusedCol.data.push('N/A');
 			}
 		});
 	});
@@ -497,6 +608,8 @@ const fillColumnsData: FillColumnData = (queryTableData, cols) => {
 				fillDataFromList(listItem, resultColumns);
 			});
 		}
+
+		fillDataFromTable(currentQuery, resultColumns);
 	});
 
 	const rowsLength = resultColumns.length > 0 ? resultColumns[0].data.length : 0;
@@ -512,9 +625,9 @@ const generateData = (
 
 	for (let i = 0; i < rowsLength; i += 1) {
 		const rowData: RowData = dynamicColumns.reduce((acc, item) => {
-			const { dataIndex } = item;
+			const { dataIndex, id } = item;
 
-			acc[dataIndex] = item.data[i];
+			acc[id || dataIndex] = item.data[i];
 			acc.key = uuid();
 
 			return acc;
@@ -533,25 +646,22 @@ const generateTableColumns = (
 	const columns: ColumnsType<RowData> = dynamicColumns.reduce<
 		ColumnsType<RowData>
 	>((acc, item) => {
+		const dataIndex = item.id || item.dataIndex;
 		const column: ColumnType<RowData> = {
-			dataIndex: item.dataIndex,
+			dataIndex,
 			title: item.title,
 			width: QUERY_TABLE_CONFIG.width,
-			render: renderColumnCell && renderColumnCell[item.dataIndex],
+			render: renderColumnCell && renderColumnCell[dataIndex],
 			sorter: (a: RowData, b: RowData): number => {
-				const valueA = Number(
-					a[`${item.dataIndex}_without_unit`] ?? a[item.dataIndex],
-				);
-				const valueB = Number(
-					b[`${item.dataIndex}_without_unit`] ?? b[item.dataIndex],
-				);
+				const valueA = Number(a[`${dataIndex}_without_unit`] ?? a[dataIndex]);
+				const valueB = Number(b[`${dataIndex}_without_unit`] ?? b[dataIndex]);
 
 				if (!isNaN(valueA) && !isNaN(valueB)) {
 					return valueA - valueB;
 				}
 
-				return ((a[item.dataIndex] as string) || '').localeCompare(
-					(b[item.dataIndex] as string) || '',
+				return ((a[dataIndex] as string) || '').localeCompare(
+					(b[dataIndex] as string) || '',
 				);
 			},
 		};
@@ -560,6 +670,72 @@ const generateTableColumns = (
 	}, []);
 
 	return columns;
+};
+
+/**
+ * Gets the appropriate column unit with fallback logic
+ * New syntax: queryName.expression -> unit
+ * Old syntax: queryName -> unit (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnUnits - The column units mapping
+ * @returns The unit string (none if the unit is set to empty string) or undefined if not found
+ */
+export const getColumnUnit = (
+	columnKey: string,
+	columnUnits: Record<string, string>,
+): string | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnUnits[columnKey] !== undefined) {
+		return columnUnits[columnKey] || 'none';
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		if (columnUnits[queryName] !== undefined) {
+			return columnUnits[queryName] || 'none';
+		}
+	}
+
+	return undefined;
+};
+
+/**
+ * Gets the appropriate column width with fallback logic
+ * New syntax: queryName.expression -> width
+ * Old syntax: queryName -> width (fallback)
+ *
+ * Examples:
+ * - New syntax: "A.count()" -> looks for "A.count()" first, then falls back to "A"
+ * - Old syntax: "A" -> looks for "A" directly
+ * - Mixed: "A.avg(test)" -> looks for "A.avg(test)" first, then falls back to "A"
+ *
+ * @param columnKey - The column identifier (could be queryName.expression or queryName)
+ * @param columnWidths - The column widths mapping
+ * @returns The width number or undefined if not found
+ */
+export const getColumnWidth = (
+	columnKey: string,
+	columnWidths: Record<string, number>,
+): number | undefined => {
+	// First try the exact match (new syntax: queryName.expression)
+	if (columnWidths[columnKey]) {
+		return columnWidths[columnKey];
+	}
+
+	// Fallback to old syntax: extract queryName from queryName.expression
+	if (columnKey.includes('.')) {
+		const queryName = columnKey.split('.')[0];
+		return columnWidths[queryName];
+	}
+
+	return undefined;
 };
 
 export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
@@ -571,29 +747,6 @@ export const createTableColumnsFromQuery: CreateTableDataFromQuery = ({
 	const sortedQueryTableData = queryTableData.sort((a, b) =>
 		a.queryName < b.queryName ? -1 : 1,
 	);
-
-	// the reason we need this is because the filling of values in rows doesn't account for mismatch enteries
-	// in the response. Example : Series A -> [label1, label2] and Series B -> [label2,label1] this isn't accounted for
-	sortedQueryTableData.forEach((q) => {
-		q.series?.forEach((s) => {
-			s.labelsArray?.sort((a, b) =>
-				Object.keys(a)[0] < Object.keys(b)[0] ? -1 : 1,
-			);
-		});
-		q.series?.sort((a, b) => {
-			let labelA = '';
-			let labelB = '';
-			a.labelsArray?.forEach((lab) => {
-				labelA += Object.values(lab)[0];
-			});
-
-			b.labelsArray?.forEach((lab) => {
-				labelB += Object.values(lab)[0];
-			});
-
-			return labelA < labelB ? -1 : 1;
-		});
-	});
 
 	const dynamicColumns = getDynamicColumns(sortedQueryTableData, query);
 

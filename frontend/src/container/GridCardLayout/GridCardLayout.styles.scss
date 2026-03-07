@@ -2,6 +2,7 @@
 	overflow: auto;
 	margin: 8px -8px;
 	margin-right: 0;
+	margin-bottom: 64px;
 
 	.react-grid-layout {
 		border: none !important;
@@ -40,9 +41,11 @@
 			}
 		}
 
-		.widget-graph-container {
-			&.graph {
-				height: 100%;
+		.widget-graph-component-container {
+			.widget-graph-container {
+				&.graph-panel-container {
+					height: 100%;
+				}
 			}
 		}
 	}
@@ -88,11 +91,19 @@
 	}
 }
 
-.widget-graph-container {
-	height: 100%;
+.widget-graph-component-container {
+	.widget-graph-container {
+		height: 100%;
 
-	&.graph {
-		height: calc(100% - 30px);
+		&.graph-panel-container {
+			height: calc(100% - 30px);
+		}
+	}
+
+	&:hover {
+		.widget-header-more-options {
+			visibility: visible;
+		}
 	}
 }
 
@@ -104,6 +115,16 @@
 			background-color: var(--bg-ink-400);
 		}
 	}
+}
+
+.error-message-container {
+	display: flex;
+	width: 100%;
+	height: 100%;
+	justify-content: center;
+	align-items: center;
+	padding-top: 0;
+	padding-bottom: 32px;
 }
 
 .row-settings {
@@ -123,7 +144,8 @@
 
 		.menu-content {
 			.section-1 {
-				.rename-btn {
+				.rename-btn,
+				.new-panel-btn {
 					display: flex;
 					align-items: center;
 					gap: 6px;
@@ -139,6 +161,10 @@
 					.ant-btn-icon {
 						margin-inline-end: 0px;
 					}
+				}
+
+				.rename-btn {
+					padding-bottom: 10px;
 				}
 			}
 
@@ -276,6 +302,38 @@
 	}
 }
 
+.view-onclick-show-button {
+	position: absolute;
+	background: var(--bg-vanilla-100);
+	border: 2px solid var(--bg-vanilla-300);
+	border-radius: 4px;
+	cursor: pointer;
+	font-size: 12px;
+	font-weight: 500;
+	box-shadow: none;
+	list-style-type: none;
+	padding: 4px;
+	color: var(--bg-ink-100);
+	display: flex;
+	flex-direction: column;
+	gap: 2px;
+	overflow: auto;
+	max-height: 150px;
+	width: max-content;
+	max-width: 200px;
+
+	.menu-item {
+		cursor: pointer;
+		padding: 4px;
+		padding-right: 12px;
+
+		&:hover {
+			background-color: var(--bg-vanilla-200);
+			border-radius: 2px;
+		}
+	}
+}
+
 .lightMode {
 	.fullscreen-grid-container {
 		.react-grid-layout {
@@ -356,6 +414,18 @@
 						}
 					}
 				}
+			}
+		}
+	}
+
+	.view-onclick-show-button {
+		background: var(--bg-ink-400);
+		border-color: var(--bg-ink-300);
+		color: var(--bg-vanilla-100);
+
+		.menu-item {
+			&:hover {
+				background-color: var(--bg-ink-100);
 			}
 		}
 	}

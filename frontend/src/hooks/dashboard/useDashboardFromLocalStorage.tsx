@@ -1,8 +1,8 @@
+import { useEffect, useState } from 'react';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageKey from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTo } from 'lodash-es';
-import { useEffect, useState } from 'react';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 interface LocalStoreDashboardVariables {
@@ -21,6 +21,7 @@ interface UseDashboardVariablesFromLocalStorageReturn {
 		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isDynamic?: boolean,
 	) => void;
 }
 
@@ -88,10 +89,17 @@ export const useDashboardVariablesFromLocalStorage = (
 		id: string,
 		selectedValue: IDashboardVariable['selectedValue'],
 		allSelected: boolean,
+		isDynamic?: boolean,
 	): void => {
 		setCurrentDashboard((prev) => ({
 			...prev,
-			[id]: { selectedValue, allSelected },
+			[id]:
+				isDynamic && allSelected
+					? {
+							selectedValue: (undefined as unknown) as IDashboardVariable['selectedValue'],
+							allSelected: true,
+					  }
+					: { selectedValue, allSelected },
 		}));
 	};
 

@@ -5,7 +5,7 @@ import { MenuItemKeys } from './contants';
 export interface MenuItem {
 	key: MenuItemKeys;
 	icon: ReactNode;
-	label: string;
+	label: ReactNode;
 	isVisible: boolean;
 	disabled: boolean;
 	danger?: boolean;

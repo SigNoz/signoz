@@ -1,3 +1,5 @@
+import { ReactNode, useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Space, Typography } from 'antd';
 import TextToolTip from 'components/TextToolTip';
 import {
@@ -15,11 +17,11 @@ import {
 } from 'container/MetricsApplication/constant';
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { apDexMetricsQueryBuilderQueries } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
-import { ReactNode, useMemo } from 'react';
-import { useParams } from 'react-router-dom';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
+import { FeatureKeys } from '../../../../../constants/features';
+import { useAppContext } from '../../../../../providers/App/App';
 import { IServiceName } from '../../types';
 import { ApDexMetricsProps } from './types';
 
@@ -34,7 +36,10 @@ function ApDexMetrics({
 }: ApDexMetricsProps): JSX.Element {
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
-
+	const { featureFlags } = useAppContext();
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 	const apDexMetricsWidget = useMemo(
 		() =>
 			getWidgetQueryBuilder({
@@ -48,6 +53,7 @@ function ApDexMetrics({
 						threashold: thresholdValue || 0,
 						delta: delta || false,
 						metricsBuckets: metricsBuckets || [],
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -73,11 +79,14 @@ function ApDexMetrics({
 			tagFilterItems,
 			thresholdValue,
 			topLevelOperationsRoute,
+			dotMetricsEnabled,
 		],
 	);
 
 	const threshold: ReactNode = useMemo(() => {
-		if (thresholdValue) return <DisplayThreshold threshold={thresholdValue} />;
+		if (thresholdValue) {
+			return <DisplayThreshold threshold={thresholdValue} />;
+		}
 		return null;
 	}, [thresholdValue]);
 

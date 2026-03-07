@@ -1,13 +1,14 @@
 import { Card } from 'antd';
 import styled from 'styled-components';
 
-export const TableHeader = styled(Card)`
+export const TableHeader = styled(Card)<Props>`
 	&&& {
 		flex: 1;
 		text-align: center;
 		.ant-card-body {
 			padding: 1rem;
 		}
+		min-width: ${(props): string => props.minWidth || ''};
 	}
 `;
 
@@ -37,6 +38,7 @@ export const TableRow = styled(Card)`
 
 interface Props {
 	minWidth?: string;
+	overflowX?: string;
 }
 export const TableCell = styled.div<Props>`
 	&&& {
@@ -45,6 +47,10 @@ export const TableCell = styled.div<Props>`
 		display: flex;
 		justify-content: flex-start;
 		align-items: center;
+		overflow-x: ${(props): string => props.overflowX || 'none'};
+		::-webkit-scrollbar {
+			height: ${(props): string => (props.overflowX ? '2px' : '8px')};
+		}
 	}
 `;
 

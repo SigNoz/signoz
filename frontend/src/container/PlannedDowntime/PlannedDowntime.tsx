@@ -1,9 +1,9 @@
-import './PlannedDowntime.styles.scss';
-import 'dayjs/locale/en';
-
+import React, { ChangeEvent, useEffect, useState } from 'react';
+import { useQuery } from 'react-query';
+import { useHistory } from 'react-router-dom';
 import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Button, Flex, Form, Input, Typography } from 'antd';
+import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
 import { useDeleteDowntimeSchedule } from 'api/plannedDowntime/deleteDowntimeSchedule';
 import {
@@ -11,10 +11,14 @@ import {
 	useGetAllDowntimeSchedules,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import dayjs from 'dayjs';
+import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { Search } from 'lucide-react';
-import React, { ChangeEvent, useEffect, useState } from 'react';
-import { useQuery } from 'react-query';
+import { useAppContext } from 'providers/App/App';
+import { USER_ROLES } from 'types/roles';
+
+import 'dayjs/locale/en';
 
 import { PlannedDowntimeDeleteModal } from './PlannedDowntimeDeleteModal';
 import { PlannedDowntimeForm } from './PlannedDowntimeForm';
@@ -23,6 +27,8 @@ import {
 	defautlInitialValues,
 	deleteDowntimeHandler,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 dayjs.locale('en');
 
@@ -33,6 +39,9 @@ export function PlannedDowntime(): JSX.Element {
 	});
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [form] = Form.useForm();
+	const { user } = useAppContext();
+	const history = useHistory();
+	const urlQuery = useUrlQuery();
 
 	const [initialValues, setInitialValues] = useState<
 		Partial<DowntimeSchedules & { editMode: boolean }>
@@ -54,16 +63,31 @@ export function PlannedDowntime(): JSX.Element {
 		}
 	}, [form, isOpen]);
 
-	const [searchValue, setSearchValue] = React.useState<string | number>('');
+	const [searchValue, setSearchValue] = React.useState<string | number>(
+		urlQuery.get('search') || '',
+	);
 	const [deleteData, setDeleteData] = useState<{ id: number; name: string }>();
 	const [isEditMode, setEditMode] = useState<boolean>(false);
 
+	const updateUrlWithSearch = useDebouncedFn((value) => {
+		const searchValue = value as string;
+		if (searchValue) {
+			urlQuery.set('search', searchValue);
+		} else {
+			urlQuery.delete('search');
+		}
+		const url = `/alerts?${urlQuery.toString()}`;
+		history.replace(url);
+	}, 300);
+
 	const handleSearch = (e: ChangeEvent<HTMLInputElement>): void => {
 		setSearchValue(e.target.value);
+		updateUrlWithSearch(e.target.value);
 	};
 
 	const clearSearch = (): void => {
 		setSearchValue('');
+		updateUrlWithSearch('');
 	};
 
 	// Delete Downtime Schedule
@@ -108,18 +132,27 @@ export function PlannedDowntime(): JSX.Element {
 						value={searchValue}
 						onChange={handleSearch}
 					/>
-					<Button
-						icon={<PlusOutlined />}
-						type="primary"
-						onClick={(): void => {
-							setInitialValues({ ...defautlInitialValues, editMode: false });
-							setIsOpen(true);
-							setEditMode(false);
-							form.resetFields();
-						}}
+					<Tooltip
+						title={
+							user?.role === USER_ROLES.VIEWER
+								? 'You need edit permissions to create a planned downtime'
+								: ''
+						}
 					>
-						New downtime
-					</Button>
+						<Button
+							icon={<PlusOutlined />}
+							type="primary"
+							onClick={(): void => {
+								setInitialValues({ ...defautlInitialValues, editMode: false });
+								setIsOpen(true);
+								setEditMode(false);
+								form.resetFields();
+							}}
+							disabled={user?.role === USER_ROLES.VIEWER}
+						>
+							New downtime
+						</Button>
+					</Tooltip>
 				</Flex>
 				<br />
 				<PlannedDowntimeList

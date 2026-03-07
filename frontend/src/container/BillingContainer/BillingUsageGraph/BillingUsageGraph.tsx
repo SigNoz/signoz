@@ -1,6 +1,4 @@
-import './BillingUsageGraph.styles.scss';
-import '../../../lib/uPlotLib/uPlotLib.styles.scss';
-
+import { useMemo, useRef } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Card, Flex, Typography } from 'antd';
 import Uplot from 'components/Uplot';
@@ -12,13 +10,15 @@ import getRenderer from 'lib/uPlotLib/utils/getRenderer';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { getXAxisScale } from 'lib/uPlotLib/utils/getXAxisScale';
 import { getYAxisScale } from 'lib/uPlotLib/utils/getYAxisScale';
-import { useMemo, useRef } from 'react';
 import uPlot from 'uplot';
 
 import {
 	convertDataToMetricRangePayload,
 	fillMissingValuesForQuantities,
 } from './utils';
+
+import './BillingUsageGraph.styles.scss';
+import '../../../lib/uPlotLib/uPlotLib.styles.scss';
 
 interface BillingUsageGraphProps {
 	data: any;
@@ -122,7 +122,7 @@ export function BillingUsageGraph(props: BillingUsageGraphProps): JSX.Element {
 		[graphCompatibleData.data.result],
 	);
 
-	const axesOptions = getAxes(isDarkMode, '');
+	const axesOptions = getAxes({ isDarkMode, yAxisUnit: '' });
 
 	const optionsForChart: uPlot.Options = useMemo(
 		() => ({

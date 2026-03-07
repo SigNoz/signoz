@@ -1,9 +1,9 @@
-import './Containers.styles.scss';
-
-import { Space, Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Space, Typography } from 'antd';
 
 import WaitlistFragment from '../WaitlistFragment/WaitlistFragment';
+
+import './Containers.styles.scss';
 
 const { Text } = Typography;
 

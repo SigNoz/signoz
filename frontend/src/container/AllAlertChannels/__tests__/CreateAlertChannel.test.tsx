@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
-
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
 import {
@@ -15,7 +12,7 @@ import {
 } from 'mocks-server/__mockdata__/alerts';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { fireEvent, render, screen, waitFor } from 'tests/test-utils';
+import { act, fireEvent, render, screen, waitFor } from 'tests/test-utils';
 
 import { testLabelInputAndHelpValue } from './testUtils';
 
@@ -30,12 +27,17 @@ jest.mock('hooks/useNotifications', () => ({
 		},
 	})),
 }));
-
-jest.mock('hooks/useFeatureFlag', () => ({
+const showErrorModal = jest.fn();
+jest.mock('providers/ErrorModalProvider', () => ({
 	__esModule: true,
-	default: jest.fn().mockImplementation(() => ({
-		active: true,
+	...jest.requireActual('providers/ErrorModalProvider'),
+	useErrorModal: jest.fn(() => ({
+		showErrorModal,
 	})),
+}));
+
+jest.mock('components/MarkdownRenderer/MarkdownRenderer', () => ({
+	MarkdownRenderer: jest.fn(() => <div>Mocked MarkdownRenderer</div>),
 }));
 
 describe('Create Alert Channel', () => {
@@ -115,7 +117,7 @@ describe('Create Alert Channel', () => {
 			expect(screen.getByText('button_test_channel')).toBeInTheDocument();
 			expect(screen.getByText('button_return')).toBeInTheDocument();
 		});
-		it('Should check if saving the form without filling the name displays "Something went wrong"', async () => {
+		it('Should check if saving the form without filling the name displays error notification', async () => {
 			const saveButton = screen.getByRole('button', {
 				name: 'button_save_channel',
 			});
@@ -124,8 +126,8 @@ describe('Create Alert Channel', () => {
 
 			await waitFor(() =>
 				expect(errorNotification).toHaveBeenCalledWith({
-					description: 'Something went wrong',
 					message: 'Error',
+					description: 'channel_name_required',
 				}),
 			);
 		});
@@ -159,14 +161,11 @@ describe('Create Alert Channel', () => {
 				name: 'button_test_channel',
 			});
 
-			fireEvent.click(testButton);
+			act(() => {
+				fireEvent.click(testButton);
+			});
 
-			await waitFor(() =>
-				expect(errorNotification).toHaveBeenCalledWith({
-					message: 'Error',
-					description: 'channel_test_failed',
-				}),
-			);
+			await waitFor(() => expect(showErrorModal).toHaveBeenCalled());
 		});
 	});
 	describe('New Alert Channel Cascading Fields Based on Channel Type', () => {
@@ -362,7 +361,7 @@ describe('Create Alert Channel', () => {
 				expect(priorityTextArea).toHaveValue(opsGeniePriorityDefaultValue);
 			});
 		});
-		describe('Opsgenie', () => {
+		describe('Email', () => {
 			beforeEach(() => {
 				render(<CreateAlertChannels preType={ChannelType.Email} />);
 			});
@@ -385,7 +384,7 @@ describe('Create Alert Channel', () => {
 			});
 
 			it('Should check if the selected item in the type dropdown has text "msteams"', () => {
-				expect(screen.getByText('msteams')).toBeInTheDocument();
+				expect(screen.getByText('Microsoft Teams')).toBeInTheDocument();
 			});
 
 			it('Should check if Webhook URL label and input are displayed properly ', () => {

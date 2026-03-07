@@ -1,3 +1,4 @@
+import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { render } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
 
@@ -8,10 +9,19 @@ import {
 	valuePanelWidget,
 } from './valuePanelWrapperHelper';
 
+window.ResizeObserver =
+	window.ResizeObserver ||
+	jest.fn().mockImplementation(() => ({
+		disconnect: jest.fn(),
+		observe: jest.fn(),
+		unobserve: jest.fn(),
+	}));
+
 describe('Value panel wrappper tests', () => {
 	it('should render value panel correctly with yaxis unit', () => {
 		const { getByText } = render(
 			<ValuePanelWrapper
+				panelMode={PanelMode.DASHBOARD_VIEW}
 				widget={(valuePanelWidget as unknown) as Widgets}
 				queryResponse={(valuePanelQueryResponse as unknown) as any}
 				onDragSelect={(): void => {}}
@@ -19,12 +29,14 @@ describe('Value panel wrappper tests', () => {
 		);
 
 		// selected y axis unit as miliseconds (ms)
-		expect(getByText('295 ms')).toBeInTheDocument();
+		expect(getByText('295.43')).toBeInTheDocument();
+		expect(getByText('ms')).toBeInTheDocument();
 	});
 
 	it('should render tooltip when there are conflicting thresholds', () => {
 		const { getByTestId, container } = render(
 			<ValuePanelWrapper
+				panelMode={PanelMode.DASHBOARD_VIEW}
 				widget={({ ...valuePanelWidget, thresholds } as unknown) as Widgets}
 				queryResponse={(valuePanelQueryResponse as unknown) as any}
 				onDragSelect={(): void => {}}

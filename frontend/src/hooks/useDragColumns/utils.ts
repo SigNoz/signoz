@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 
 const filterColumns = <T>(
 	initialColumns: ColumnsType<T>,
@@ -28,7 +28,9 @@ export const getDraggedColumns = <T>(
 				({ title: columnTitle }) => title === columnTitle,
 			);
 
-			if (column) return [...acc, column];
+			if (column) {
+				return [...acc, column];
+			}
 			return acc;
 		}, [] as ColumnsType<T>);
 	}

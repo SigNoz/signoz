@@ -1,4 +1,4 @@
-// Jest Snapshot v1, https://goo.gl/fbAQLP
+// Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
 exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
 <DocumentFragment>
@@ -99,5 +99,3 @@ exports[`DraggableTableRow Snapshot test should render DraggableTableRow 1`] = `
   </div>
 </DocumentFragment>
 `;
-
-exports[`PipelinePage container test should render AddNewPipeline section 1`] = `<DocumentFragment />`;

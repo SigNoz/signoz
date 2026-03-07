@@ -1,0 +1,130 @@
+{
+  "id": "sns",
+  "title": "SNS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_SNS_NumberOfMessagesPublished_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfMessagesPublished_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfMessagesPublished_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfMessagesPublished_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsDelivered_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsDelivered_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsDelivered_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsDelivered_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsFailed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsFailed_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsFailed_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_NumberOfNotificationsFailed_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_PublishSize_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_PublishSize_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_PublishSize_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SNS_PublishSize_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/SNS"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "SNS Overview",
+        "description": "Overview of SNS",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

@@ -1,7 +1,7 @@
+import { QueryKey, useQuery, UseQueryResult } from 'react-query';
 import getTopLevelOperations, {
 	ServiceDataProps,
 } from 'api/metrics/getTopLevelOperations';
-import { QueryKey, useQuery, UseQueryResult } from 'react-query';
 
 interface UseGetTopLevelOperationsParams {
 	start: number;

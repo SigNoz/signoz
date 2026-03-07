@@ -1,6 +1,5 @@
+import { MessagingQueuesPayloadProps } from 'api/messagingQueues/getConsumerLagDetails';
 import { RowData } from 'pages/MessagingQueues/MessagingQueuesUtils';
-
-import { MessagingQueuesPayloadProps } from './getConsumerLagDetails';
 
 export function getTableDataForProducerLatencyOverview(
 	data: MessagingQueuesPayloadProps['payload'],

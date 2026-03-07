@@ -15,3 +15,12 @@ declare module '*.module.scss' {
 	const classes: { [key: string]: string };
 	export default classes;
 }
+
+declare interface WindowEventMap {
+	AFTER_LOGIN: CustomEvent;
+	LOGOUT: CustomEvent;
+}
+
+declare interface Window {
+	Pylon: (command: string, ...args: unknown[]) => void;
+}

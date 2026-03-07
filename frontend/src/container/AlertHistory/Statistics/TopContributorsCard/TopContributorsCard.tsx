@@ -1,16 +1,16 @@
-import './TopContributorsCard.styles.scss';
-
+import { useMemo, useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
 import { Button } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
-import { useMemo, useState } from 'react';
-import { useLocation } from 'react-router-dom';
 
 import TopContributorsContent from './TopContributorsContent';
 import { TopContributorsCardProps } from './types';
 import ViewAllDrawer from './ViewAllDrawer';
+
+import './TopContributorsCard.styles.scss';
 
 function TopContributorsCard({
 	topContributorsData,
@@ -22,7 +22,7 @@ function TopContributorsCard({
 	const viewAllTopContributorsParam = searchParams.get('viewAllTopContributors');
 
 	const [isViewAllVisible, setIsViewAllVisible] = useState(
-		!!viewAllTopContributorsParam ?? false,
+		!!viewAllTopContributorsParam,
 	);
 
 	const isDarkMode = useIsDarkMode();

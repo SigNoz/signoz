@@ -1,0 +1,45 @@
+.infra-monitoring-container {
+	.volumes-list-table {
+		.expanded-table-container {
+			padding-left: 60px;
+		}
+
+		.ant-table-row-expand-icon-cell {
+			min-width: 30px !important;
+			max-width: 30px !important;
+		}
+	}
+}
+
+.ant-table-cell {
+	&:has(.pvc-name-header) {
+		min-width: 250px !important;
+		max-width: 250px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.namespace-name-header) {
+		min-width: 220px !important;
+		max-width: 220px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.small-col) {
+		min-width: 120px !important;
+		max-width: 120px !important;
+	}
+}
+
+.expanded-volumes-list-table {
+	.ant-table-cell {
+		min-width: 223px !important;
+		max-width: 223px !important;
+	}
+
+	.ant-table-row-expand-icon-cell {
+		min-width: 30px !important;
+		max-width: 30px !important;
+	}
+}

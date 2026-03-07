@@ -1,10 +1,10 @@
-import './LabelColumn.styles.scss';
-
 import { Popover, Tag } from 'antd';
 
 import { LabelColumnProps } from './TableRenderer.types';
 import TagWithToolTip from './TagWithToolTip';
 import { getLabelAndValueContent } from './utils';
+
+import './LabelColumn.styles.scss';
 
 function LabelColumn({ labels, value, color }: LabelColumnProps): JSX.Element {
 	const newLabels = labels.length > 3 ? labels.slice(0, 3) : labels;

@@ -2,19 +2,25 @@ package inframetrics
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"math"
 	"sort"
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/app/metrics/v4/helpers"
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/metrics/v4/helpers"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"go.uber.org/zap"
+	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
 
@@ -37,15 +43,15 @@ var (
 		"mode",
 		"mountpoint",
 		"type",
-		"os_type",
-		"process_cgroup",
-		"process_command",
-		"process_command_line",
-		"process_executable_name",
-		"process_executable_path",
-		"process_owner",
-		"process_parent_pid",
-		"process_pid",
+		GetDotMetrics("os_type"),
+		GetDotMetrics("process_cgroup"),
+		GetDotMetrics("process_command"),
+		GetDotMetrics("process_command_line"),
+		GetDotMetrics("process_executable_name"),
+		GetDotMetrics("process_executable_path"),
+		GetDotMetrics("process_owner"),
+		GetDotMetrics("process_parent_pid"),
+		GetDotMetrics("process_pid"),
 	}
 
 	queryNamesForTopHosts = map[string][]string{
@@ -56,17 +62,65 @@ var (
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
-	metricToUseForHostAttributes = "system_cpu_load_average_15m"
-	hostNameAttrKey              = "host_name"
+	metricToUseForHostAttributes = GetDotMetrics("system_cpu_load_average_15m")
+	hostNameAttrKey              = GetDotMetrics("host_name")
 	agentNameToIgnore            = "k8s-infra-otel-agent"
 	hostAttrsToEnrich            = []string{
-		"os_type",
+		GetDotMetrics("os_type"),
 	}
 	metricNamesForHosts = map[string]string{
-		"cpu":    "system_cpu_time",
-		"memory": "system_memory_usage",
-		"load15": "system_cpu_load_average_15m",
-		"wait":   "system_cpu_time",
+		"filesystem": GetDotMetrics("system_filesystem_usage"),
+		"cpu":        GetDotMetrics("system_cpu_time"),
+		"memory":     GetDotMetrics("system_memory_usage"),
+		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
+		"wait":       GetDotMetrics("system_cpu_time"),
+	}
+	uniqueMetricNamesForHosts = []string{
+		GetDotMetrics("system_uptime"),
+		GetDotMetrics("system_cpu_time"),
+		GetDotMetrics("system_cpu_load_average_1m"),
+		GetDotMetrics("system_cpu_load_average_5m"),
+		GetDotMetrics("system_cpu_load_average_15m"),
+		GetDotMetrics("system_memory_usage"),
+		GetDotMetrics("system_paging_usage"),
+		GetDotMetrics("system_paging_faults"),
+		GetDotMetrics("system_paging_operations"),
+		GetDotMetrics("system_disk_io"),
+		GetDotMetrics("system_disk_operations"),
+		GetDotMetrics("system_disk_io_time"),
+		GetDotMetrics("system_disk_operation_time"),
+		GetDotMetrics("system_disk_merged"),
+		GetDotMetrics("system_disk_pending_operations"),
+		GetDotMetrics("system_disk_weighted_io_time"),
+		GetDotMetrics("system_filesystem_usage"),
+		GetDotMetrics("system_filesystem_inodes_usage"),
+		GetDotMetrics("system_network_io"),
+		GetDotMetrics("system_network_errors"),
+		GetDotMetrics("system_network_connections"),
+		GetDotMetrics("system_network_dropped"),
+		GetDotMetrics("system_network_packets"),
+		GetDotMetrics("system_processes_count"),
+		GetDotMetrics("system_processes_created"),
+		GetDotMetrics("process_cpu_time"),
+		GetDotMetrics("process_disk_io"),
+		GetDotMetrics("process_memory_usage"),
+		GetDotMetrics("process_memory_virtual"),
+		GetDotMetrics("nfs_client_net_count"),
+		GetDotMetrics("nfs_client_net_tcp_connection_accepted"),
+		GetDotMetrics("nfs_client_operation_count"),
+		GetDotMetrics("nfs_client_procedure_count"),
+		GetDotMetrics("nfs_client_rpc_authrefresh_count"),
+		GetDotMetrics("nfs_client_rpc_count"),
+		GetDotMetrics("nfs_client_rpc_retransmit_count"),
+		GetDotMetrics("nfs_server_fh_stale_count"),
+		GetDotMetrics("nfs_server_io"),
+		GetDotMetrics("nfs_server_net_count"),
+		GetDotMetrics("nfs_server_net_tcp_connection_accepted"),
+		GetDotMetrics("nfs_server_operation_count"),
+		GetDotMetrics("nfs_server_procedure_count"),
+		GetDotMetrics("nfs_server_repcache_requests"),
+		GetDotMetrics("nfs_server_rpc_count"),
+		GetDotMetrics("nfs_server_thread_count"),
 	}
 )
 
@@ -126,62 +180,9 @@ func (h *HostsRepo) GetHostAttributeValues(ctx context.Context, req v3.FilterAtt
 	return &v3.FilterAttributeValueResponse{StringAttributeValues: hostNames}, nil
 }
 
-func (h *HostsRepo) getActiveHosts(ctx context.Context, req model.HostListRequest) (map[string]bool, error) {
-	activeStatus := map[string]bool{}
-	step := common.MinAllowedStepInterval(req.Start, req.End)
-
-	hasHostName := false
-	for _, key := range req.GroupBy {
-		if key.Key == hostNameAttrKey {
-			hasHostName = true
-		}
-	}
-
-	if !hasHostName {
-		req.GroupBy = append(req.GroupBy, v3.AttributeKey{Key: hostNameAttrKey})
-	}
-
-	params := v3.QueryRangeParamsV3{
-		Start: time.Now().Add(-time.Minute * 10).UTC().UnixMilli(),
-		End:   time.Now().UTC().UnixMilli(),
-		Step:  step,
-		CompositeQuery: &v3.CompositeQuery{
-			BuilderQueries: map[string]*v3.BuilderQuery{
-				"A": {
-					QueryName:    "A",
-					StepInterval: step,
-					DataSource:   v3.DataSourceMetrics,
-					AggregateAttribute: v3.AttributeKey{
-						Key:      metricToUseForHostAttributes,
-						DataType: v3.AttributeKeyDataTypeFloat64,
-					},
-					Temporality:      v3.Unspecified,
-					Filters:          req.Filters,
-					GroupBy:          req.GroupBy,
-					Expression:       "A",
-					TimeAggregation:  v3.TimeAggregationAvg,
-					SpaceAggregation: v3.SpaceAggregationAvg,
-					Disabled:         false,
-				},
-			},
-			QueryType: v3.QueryTypeBuilder,
-			PanelType: v3.PanelTypeGraph,
-		},
-	}
-
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, &params)
-	if err != nil {
-		return nil, err
-	}
-
-	for _, result := range queryResponse {
-		for _, series := range result.Series {
-			name := series.Labels[hostNameAttrKey]
-			activeStatus[name] = true
-		}
-	}
-
-	return activeStatus, nil
+func (h *HostsRepo) getActiveHosts(ctx context.Context) (map[string]bool, error) {
+	tenMinAgo := time.Now().Add(-10 * time.Minute).UTC().UnixMilli()
+	return h.reader.GetActiveHostsFromMetricMetadata(ctx, uniqueMetricNamesForHosts, hostNameAttrKey, tenMinAgo)
 }
 
 func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostListRequest) (map[string]map[string]string, error) {
@@ -245,7 +246,7 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 	return hostAttrs, nil
 }
 
-func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
+func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req model.HostListRequest, q *v3.QueryRangeParamsV3) ([]map[string]string, []map[string]string, error) {
 	step, timeSeriesTableName, samplesTableName := getParamsForTopHosts(req)
 
 	queryNames := queryNamesForTopHosts[req.OrderBy.ColumnName]
@@ -273,7 +274,11 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequ
 		topHostGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, topHostGroupsQueryRangeParams)
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopHostGroups",
+	})
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, topHostGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
 	}
@@ -312,46 +317,68 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, req model.HostListRequ
 	return topHostGroups, allHostGroups, nil
 }
 
-func (h *HostsRepo) DidSendHostMetricsData(ctx context.Context, req model.HostListRequest) (bool, error) {
-
+// GetHostMetricsExistenceAndEarliestTime returns (count, minFirstReportedUnixMilli, error) for host metrics
+// in distributed_metadata. Uses metricNamesForHosts plus system.filesystem.usage.
+func (h *HostsRepo) GetHostMetricsExistenceAndEarliestTime(ctx context.Context, req model.HostListRequest) (uint64, uint64, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 
-	namesStr := "'" + strings.Join(names, "','") + "'"
-
-	query := fmt.Sprintf("SELECT count() FROM %s.%s WHERE metric_name IN (%s)",
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_v4_1DAY_TABLENAME, namesStr)
-
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	if err != nil {
-		return false, err
-	}
-
-	return count > 0, nil
+	return h.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
 }
 
-func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) (bool, error) {
+func (h *HostsRepo) IsSendingK8SAgentMetrics(ctx context.Context, req model.HostListRequest) ([]string, []string, error) {
 	names := []string{}
 	for _, metricName := range metricNamesForHosts {
 		names = append(names, metricName)
 	}
 	namesStr := "'" + strings.Join(names, "','") + "'"
 
+	queryForRecentFingerprints := fmt.Sprintf(`
+	SELECT DISTINCT fingerprint
+	FROM %s.%s
+	WHERE metric_name IN (%s)
+		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 5 MINUTE) * 1000`,
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_SAMPLES_V4_TABLENAME, namesStr)
+
 	query := fmt.Sprintf(`
-	SELECT count()
+	SELECT DISTINCT JSONExtractString(labels, '%s') as k8s_cluster_name, JSONExtractString(labels, '%s') as k8s_node_name
 	FROM %s.%s
 	WHERE metric_name IN (%s)
 		AND unix_milli >= toUnixTimestamp(now() - INTERVAL 60 MINUTE) * 1000
-		AND JSONExtractString(labels, 'host_name') LIKE '%%-otel-agent%%'`,
-		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr)
+		AND JSONExtractString(labels, '%s') LIKE '%%-otel-agent%%'
+		AND fingerprint GLOBAL IN (%s)`,
+		GetDotMetrics("k8s_cluster_name"), GetDotMetrics("k8s_node_name"),
+		constants.SIGNOZ_METRIC_DBNAME, constants.SIGNOZ_TIMESERIES_V4_TABLENAME, namesStr, GetDotMetrics("host_name"), queryForRecentFingerprints)
 
-	count, err := h.reader.GetCountOfThings(ctx, query)
-	return count > 0, err
+	result, err := h.reader.GetListResultV3(ctx, query)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	clusterNames := make(map[string]struct{})
+	nodeNames := make(map[string]struct{})
+
+	for _, row := range result {
+		switch v := row.Data[GetDotMetrics("k8s_cluster_name")].(type) {
+		case string:
+			clusterNames[v] = struct{}{}
+		case *string:
+			clusterNames[*v] = struct{}{}
+		}
+		switch v := row.Data[GetDotMetrics("k8s_node_name")].(type) {
+		case string:
+			nodeNames[v] = struct{}{}
+		case *string:
+			nodeNames[*v] = struct{}{}
+		}
+	}
+
+	return maps.Keys(clusterNames), maps.Keys(nodeNames), nil
 }
 
-func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) (model.HostListResponse, error) {
+func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req model.HostListRequest) (model.HostListResponse, error) {
 	resp := model.HostListResponse{}
 
 	if req.Limit == 0 {
@@ -372,14 +399,37 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 	}
 
 	// don't fail the request if we can't get these values
-	if sendingK8SAgentMetrics, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
-		resp.IsSendingK8SAgentMetrics = sendingK8SAgentMetrics
+	if clusterNames, nodeNames, err := h.IsSendingK8SAgentMetrics(ctx, req); err == nil {
+		resp.IsSendingK8SAgentMetrics = len(clusterNames) > 0 || len(nodeNames) > 0
+		resp.ClusterNames = clusterNames
+		resp.NodeNames = nodeNames
 	}
-	if sentAnyHostMetricsData, err := h.DidSendHostMetricsData(ctx, req); err == nil {
-		resp.SentAnyHostMetricsData = sentAnyHostMetricsData
+
+	// 1. Check if any host metrics exist and get earliest retention time
+	// if no hosts metrics exist, that means we should show the onboarding guide on UI, and return early.
+	// 2. If host metrics exist, but req.End is earlier than the earliest time of host metrics as read from
+	// metadata table, then we should convey the same to the user and return early
+	if count, minFirstReportedUnixMilli, err := h.GetHostMetricsExistenceAndEarliestTime(ctx, req); err == nil {
+		if count == 0 {
+			resp.SentAnyHostMetricsData = false
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyHostMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.HostListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
+	if step <= 0 {
+		zap.L().Error("step is less than or equal to 0", zap.Int64("step", step))
+		return resp, errors.New("step is less than or equal to 0")
+	}
 
 	query := HostsTableListQuery.Clone()
 
@@ -400,12 +450,12 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		return resp, err
 	}
 
-	activeHosts, err := h.getActiveHosts(ctx, req)
+	activeHosts, err := h.getActiveHosts(ctx)
 	if err != nil {
 		return resp, err
 	}
 
-	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, req, query)
+	topHostGroups, allHostGroups, err := h.getTopHostGroups(ctx, orgID, req, query)
 	if err != nil {
 		return resp, err
 	}
@@ -438,7 +488,11 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 		}
 	}
 
-	queryResponse, _, err := h.querierV2.QueryRange(ctx, query)
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetHostList",
+	})
+	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err
 	}
@@ -479,7 +533,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, req model.HostListRequest) 
 			if _, ok := hostAttrs[record.HostName]; ok {
 				record.Meta = hostAttrs[record.HostName]
 			}
-			if osType, ok := record.Meta["os_type"]; ok {
+			if osType, ok := record.Meta[GetDotMetrics("os_type")]; ok {
 				record.OS = osType
 			}
 			record.Active = activeHosts[record.HostName]

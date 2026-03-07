@@ -1,22 +1,20 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-import './Onboarding.styles.scss';
-
+import { useCallback, useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { useQuery } from 'react-query';
+import { useEffectOnce } from 'react-use';
 import { ArrowRightOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import getIngestionData from 'api/settings/getIngestionData';
 import cx from 'classnames';
+import { FeatureKeys } from 'constants/features';
 import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/PendingInvitesContainer';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
-import { useCallback, useEffect, useState } from 'react';
-import { useTranslation } from 'react-i18next';
-import { useQuery } from 'react-query';
-import { useEffectOnce } from 'react-use';
+import { useAppContext } from 'providers/App/App';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -41,6 +39,8 @@ import {
 	INFRASTRUCTURE_MONITORING_STEPS,
 	LOGS_MANAGEMENT_STEPS,
 } from './utils/getSteps';
+
+import './Onboarding.styles.scss';
 
 export enum ModulesMap {
 	APM = 'APM',
@@ -105,6 +105,11 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
+
+	const { featureFlags } = useAppContext();
+	const isOnboardingV3Enabled = featureFlags?.find(
+		(flag) => flag.name === FeatureKeys.ONBOARDING_V3,
+	)?.active;
 
 	const {
 		selectedDataSource,
@@ -384,7 +389,12 @@ export default function Onboarding(): JSX.Element {
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
-							history.push(ROUTES.GET_STARTED);
+
+							if (isOnboardingV3Enabled) {
+								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
+							} else {
+								history.push(ROUTES.GET_STARTED);
+							}
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}
@@ -396,6 +406,7 @@ export default function Onboarding(): JSX.Element {
 				form={form}
 				isInviteTeamMemberModalOpen={isInviteTeamMemberModalOpen}
 				toggleModal={toggleModal}
+				onClose={(): void => {}}
 			/>
 		</div>
 	);

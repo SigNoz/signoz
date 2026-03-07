@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { queryByAttribute, waitFor } from '@testing-library/react';
 import { fireEvent, render, screen, within } from 'tests/test-utils';
 
@@ -18,10 +17,6 @@ jest.mock('hooks/useNotifications', () => ({
 		},
 	})),
 }));
-
-window.analytics = {
-	track: jest.fn(),
-};
 
 describe('Onboarding invite team member flow', () => {
 	it('initial render and get started page', async () => {

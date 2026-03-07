@@ -282,7 +282,7 @@ WITH trace_data AS (
         (toUnixTimestamp64Nano(c.timestamp) - toUnixTimestamp64Nano(p.timestamp)) + p.durationNano AS time_difference
     FROM
         signoz_traces.distributed_signoz_index_v3 p
-    INNER JOIN
+    GLOBAL INNER JOIN
         signoz_traces.distributed_signoz_index_v3 c
             ON p.trace_id = c.trace_id
             AND c.parent_span_id = p.span_id

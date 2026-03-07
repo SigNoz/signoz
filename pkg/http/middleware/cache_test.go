@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -46,11 +47,14 @@ func TestCache(t *testing.T) {
 
 			res, err := http.DefaultClient.Do(req)
 			require.NoError(t, err)
+			defer func() {
+				require.NoError(t, res.Body.Close())
+			}()
 
 			actual := res.Header.Get("Cache-control")
 			require.NoError(t, err)
 
-			require.Equal(t, "max-age="+strconv.Itoa(int(age.Seconds())), string(actual))
+			assert.Contains(t, actual, "max-age="+strconv.Itoa(int(age.Seconds())))
 		})
 	}
 }

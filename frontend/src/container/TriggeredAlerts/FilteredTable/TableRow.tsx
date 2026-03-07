@@ -1,6 +1,6 @@
+import { useState } from 'react';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { Tag } from 'antd';
-import { useState } from 'react';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import ExapandableRow from './ExapandableRow';
@@ -19,7 +19,7 @@ function TableRowComponent({
 	return (
 		<div>
 			<TableRow>
-				<TableCell>
+				<TableCell minWidth="90px">
 					<StatusContainer>
 						<IconContainer onClick={onClickHandler}>
 							{!isClicked ? <PlusSquareOutlined /> : <MinusSquareOutlined />}
@@ -33,10 +33,10 @@ function TableRowComponent({
 						</>
 					</StatusContainer>
 				</TableCell>
-				<TableCell />
-				<TableCell />
-				<TableCell />
-				<TableCell />
+				<TableCell minWidth="90px" />
+				<TableCell minWidth="90px" />
+				<TableCell minWidth="90px" />
+				<TableCell minWidth="90px" />
 				{/* <TableCell minWidth="200px">
 					<Button type="primary">Resume Group</Button>
 				</TableCell> */}

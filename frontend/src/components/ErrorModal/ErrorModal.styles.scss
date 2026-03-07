@@ -1,0 +1,118 @@
+.error-modal {
+	&__trigger {
+		width: fit-content;
+		display: flex;
+		align-items: center;
+		gap: 4px;
+		border-radius: 20px;
+		background: rgba(229, 72, 77, 0.2);
+		padding-left: 3px;
+		padding-right: 8px;
+		cursor: pointer;
+		span {
+			color: var(--bg-cherry-500);
+			font-size: 10px;
+			font-weight: 500;
+			line-height: 20px; /* 200% */
+			letter-spacing: 0.4px;
+			text-transform: uppercase;
+		}
+	}
+	&__wrap {
+		background: linear-gradient(
+			180deg,
+			rgba(11, 12, 14, 0.12) 0.07%,
+			rgba(39, 8, 14, 0.24) 50.04%,
+			rgba(106, 29, 44, 0.36) 75.02%,
+			rgba(197, 57, 85, 0.48) 87.51%,
+			rgba(242, 71, 105, 0.6) 100%
+		);
+		-webkit-backdrop-filter: blur(10px);
+		backdrop-filter: blur(10px);
+
+		.ant-modal {
+			bottom: 40px;
+			top: unset;
+			position: absolute;
+			width: 520px;
+			left: 0px;
+			right: 0px;
+			margin: auto;
+		}
+	}
+	&__body {
+		padding: 0;
+		background: var(--bg-ink-400);
+		overflow: hidden;
+		border-top-left-radius: 4px;
+		border-top-right-radius: 4px;
+	}
+	&__header {
+		background: none !important;
+		.ant-modal-title {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+		}
+		.key-value-label {
+			padding: 0;
+			border: none;
+			border-radius: 4px;
+			overflow: hidden;
+			&__key,
+			&__value {
+				padding: 4px 8px;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 500;
+				line-height: 16px;
+				letter-spacing: 0.48px;
+			}
+			&__key {
+				text-transform: uppercase;
+				&,
+				&:hover {
+					color: var(--bg-vanilla-100);
+				}
+			}
+			&__value {
+				color: var(--bg-vanilla-400);
+				pointer-events: none;
+			}
+		}
+		.close-button {
+			padding: 3px 7px;
+			background: var(--bg-ink-400);
+			display: inline-flex;
+			align-items: center;
+			border-radius: 4px;
+			border: 1px solid var(--bg-slate-500);
+			box-shadow: none;
+		}
+	}
+	&__footer {
+		margin: 0 !important;
+		height: 6px;
+		background: var(--bg-sakura-500);
+	}
+	&__content {
+		padding: 0 !important;
+		border-radius: 4px;
+		overflow: hidden;
+		background: none !important;
+	}
+}
+
+.lightMode {
+	.error-modal {
+		&__body,
+		&__header .close-button {
+			background: var(--bg-vanilla-100);
+		}
+		&__header .close-button {
+			svg {
+				fill: var(--bg-vanilla-100);
+			}
+		}
+	}
+}

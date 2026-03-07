@@ -1,4 +1,4 @@
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -28,7 +28,7 @@ const defaultAnnotations = {
 
 export const alertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: ENTITY_VERSION_V4,
+	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -62,7 +62,7 @@ export const alertDefaults: AlertDef = {
 
 export const anamolyAlertDefaults: AlertDef = {
 	alertType: AlertTypes.METRICS_BASED_ALERT,
-	version: ENTITY_VERSION_V4,
+	version: ENTITY_VERSION_V5,
 	ruleType: AlertDetectionTypes.ANOMALY_DETECTION_ALERT,
 	condition: {
 		compositeQuery: {
@@ -107,7 +107,7 @@ export const anamolyAlertDefaults: AlertDef = {
 
 export const logAlertDefaults: AlertDef = {
 	alertType: AlertTypes.LOGS_BASED_ALERT,
-	version: ENTITY_VERSION_V4,
+	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -139,7 +139,7 @@ export const logAlertDefaults: AlertDef = {
 
 export const traceAlertDefaults: AlertDef = {
 	alertType: AlertTypes.TRACES_BASED_ALERT,
-	version: ENTITY_VERSION_V4,
+	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {
@@ -171,7 +171,7 @@ export const traceAlertDefaults: AlertDef = {
 
 export const exceptionAlertDefaults: AlertDef = {
 	alertType: AlertTypes.EXCEPTIONS_BASED_ALERT,
-	version: ENTITY_VERSION_V4,
+	version: ENTITY_VERSION_V5,
 	condition: {
 		compositeQuery: {
 			builderQueries: {

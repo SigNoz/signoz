@@ -1,5 +1,7 @@
-import './logs.styles.scss';
-
+import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
 import { QueryParams } from 'constants/query';
 import LogControls from 'container/LogControls';
@@ -10,9 +12,7 @@ import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
 import history from 'lib/history';
-import { useCallback, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -29,6 +29,8 @@ import {
 import { useSelectedLogView } from './hooks';
 import PopoverContent from './PopoverContent';
 import SpaceContainer from './styles';
+
+import './logs.styles.scss';
 
 function OldLogsExplorer(): JSX.Element {
 	const dispatch = useDispatch<Dispatch<AppActions>>();
@@ -82,7 +84,7 @@ function OldLogsExplorer(): JSX.Element {
 	};
 
 	return (
-		<>
+		<div className="old-logs-explorer">
 			<SpaceContainer
 				split={<Divider type="vertical" />}
 				align="center"
@@ -144,7 +146,7 @@ function OldLogsExplorer(): JSX.Element {
 			</Row>
 
 			<LogDetailedView />
-		</>
+		</div>
 	);
 }
 

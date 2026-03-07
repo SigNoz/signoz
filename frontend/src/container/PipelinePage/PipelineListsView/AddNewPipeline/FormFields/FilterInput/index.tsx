@@ -1,16 +1,16 @@
-import './styles.scss';
-
+import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
-import { useTranslation } from 'react-i18next';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
 import { ProcessorFormField } from '../../../AddNewProcessor/config';
 import { formValidationRules } from '../../../config';
 import LogsFilterPreview from '../../../Preview/LogsFilterPreview';
 import { FormLabelStyle } from '../../styles';
+
+import './styles.scss';
 
 function TagFilterInput({
 	value,
@@ -30,7 +30,7 @@ function TagFilterInput({
 	};
 
 	return (
-		<QueryBuilderSearch
+		<QueryBuilderSearchV2
 			query={query}
 			onChange={onQueryChange}
 			placeholder={placeholder}

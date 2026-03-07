@@ -3,13 +3,16 @@
 	"alert_channels": "Alert Channels",
 	"organization_settings": "Organization Settings",
 	"ingestion_settings": "Ingestion Settings",
-	"api_keys": "Access Tokens",
+	"api_keys": "API Keys",
 	"my_settings": "My Settings",
 	"overview_metrics": "Overview Metrics",
+	"custom_domain_settings": "Custom Domain Settings",
 	"dbcall_metrics": "Database Calls",
 	"external_metrics": "External Calls",
 	"pipeline": "Pipeline",
 	"pipelines": "Pipelines",
 	"archives": "Archives",
-	"logs_to_metrics": "Logs To Metrics"
+	"logs_to_metrics": "Logs To Metrics",
+	"roles": "Roles",
+	"role_details": "Role Details"
 }

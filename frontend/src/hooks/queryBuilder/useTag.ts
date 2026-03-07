@@ -1,3 +1,4 @@
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	getOperatorFromValue,
 	getTagToken,
@@ -5,8 +6,6 @@ import {
 	isInNInOperator,
 } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { unparse } from 'papaparse';
-// eslint-disable-next-line import/no-extraneous-dependencies
-import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
 	IBuilderQuery,
 	TagFilter,
@@ -55,9 +54,10 @@ export const useTag = (
 	setSearchKey: (value: string) => void,
 	whereClauseConfig?: WhereClauseConfig,
 ): IUseTag => {
-	const initTagsData = useMemo(() => queryFilterTags(query?.filters), [
-		query?.filters,
-	]);
+	const initTagsData = useMemo(
+		() => queryFilterTags(query?.filters || { items: [], op: 'AND' }),
+		[query?.filters],
+	);
 
 	const [tags, setTags] = useState<string[]>(initTagsData);
 

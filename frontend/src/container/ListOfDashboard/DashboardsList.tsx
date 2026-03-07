@@ -1,9 +1,16 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable jsx-a11y/img-redundant-alt */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-import './DashboardList.styles.scss';
-
+import {
+	ChangeEvent,
+	Key,
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
+import { Layout } from 'react-grid-layout';
+import { useTranslation } from 'react-i18next';
+import { generatePath } from 'react-router-dom';
+import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -20,21 +27,26 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { TableProps } from 'antd/lib';
+import type { TableProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import createDashboard from 'api/dashboard/create';
+import createDashboard from 'api/v1/dashboards/create';
 import { AxiosError } from 'axios';
 import cx from 'classnames';
-import { ENTITY_VERSION_V4 } from 'constants/app';
+import { ENTITY_VERSION_V5 } from 'constants/app';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
-import { sanitizeDashboardData } from 'container/NewDashboard/DashboardDescription';
-import { downloadObjectAsJson } from 'container/NewDashboard/DashboardDescription/utils';
-import { Base64Icons } from 'container/NewDashboard/DashboardSettings/General/utils';
+import {
+	downloadObjectAsJson,
+	sanitizeDashboardData,
+} from 'container/DashboardContainer/DashboardDescription/utils';
+import { Base64Icons } from 'container/DashboardContainer/DashboardSettings/General/utils';
 import dayjs from 'dayjs';
+import useDashboardsListQueryParams from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useGetAllDashboard } from 'hooks/dashboard/useGetAllDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useNotifications } from 'hooks/useNotifications';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { get, isEmpty, isUndefined } from 'lodash-es';
 import {
 	ArrowDownWideNarrow,
@@ -55,35 +67,21 @@ import {
 	Radius,
 	RotateCw,
 	Search,
+	SquareArrowOutUpRight,
 } from 'lucide-react';
 // #TODO: lucide will be removing brand icons like Github in future, in that case we can use simple icons
 // see more: https://github.com/lucide-icons/lucide/issues/94
 import { handleContactSupport } from 'pages/Integrations/utils';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
-import {
-	ChangeEvent,
-	Key,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
-import { Layout } from 'react-grid-layout';
-import { useTranslation } from 'react-i18next';
-import { useSelector } from 'react-redux';
-import { generatePath, Link } from 'react-router-dom';
-import { useCopyToClipboard } from 'react-use';
-import { AppState } from 'store/reducers';
 import {
 	Dashboard,
 	IDashboardVariable,
 	WidgetRow,
 	Widgets,
 } from 'types/api/dashboard/getAll';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import APIError from 'types/api/error';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -92,32 +90,36 @@ import { DeleteButton } from './TableComponents/DeleteButton';
 import {
 	DashboardDynamicColumns,
 	DynamicColumns,
-	filterDashboard,
+	filterDashboards,
 } from './utils';
+
+import './DashboardList.styles.scss';
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardsList(): JSX.Element {
 	const {
 		data: dashboardListResponse,
 		isLoading: isDashboardListLoading,
-		isRefetching: isDashboardListRefetching,
+		isFetching: isDashboardListFetching,
 		error: dashboardFetchError,
 		refetch: refetchDashboardList,
 	} = useGetAllDashboard();
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
-
+	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 	const {
-		listSortOrder: sortOrder,
-		setListSortOrder: setSortOrder,
-	} = useDashboard();
+		dashboardsListQueryParams,
+		updateDashboardsListQueryParams,
+	} = useDashboardsListQueryParams();
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const [searchString, setSearchString] = useState<string>(
-		sortOrder.search || '',
+		dashboardsListQueryParams.search || '',
 	);
 	const [action, createNewDashboard] = useComponentPermission(
 		['action', 'create_new_dashboards'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -133,7 +135,6 @@ function DashboardsList(): JSX.Element {
 	] = useState<boolean>(false);
 
 	const [uploadedGrafana, setUploadedGrafana] = useState<boolean>(false);
-	const [isFilteringDashboards, setIsFilteringDashboards] = useState(false);
 	const [isConfigureMetadataOpen, setIsConfigureMetadata] = useState<boolean>(
 		false,
 	);
@@ -181,75 +182,41 @@ function DashboardsList(): JSX.Element {
 		}
 	}
 
-	const [dashboards, setDashboards] = useState<Dashboard[]>();
-
-	const sortDashboardsByCreatedAt = (dashboards: Dashboard[]): void => {
-		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.created_at).getTime() - new Date(a.created_at).getTime(),
+	const dashboards = useMemo((): Dashboard[] => {
+		const filteredDashboards = filterDashboards(
+			searchString,
+			dashboardListResponse?.data || [],
 		);
-		setDashboards(sortedDashboards);
-	};
 
-	const sortDashboardsByUpdatedAt = (dashboards: Dashboard[]): void => {
-		const sortedDashboards = dashboards.sort(
-			(a, b) =>
-				new Date(b.updated_at).getTime() - new Date(a.updated_at).getTime(),
+		if (dashboardsListQueryParams.columnKey === 'createdAt') {
+			return filteredDashboards.sort(
+				(a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime(),
+			);
+		}
+		return filteredDashboards.sort(
+			(a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime(),
 		);
-		setDashboards(sortedDashboards);
-	};
+	}, [
+		dashboardListResponse?.data,
+		searchString,
+		dashboardsListQueryParams.columnKey,
+	]);
 
 	const sortHandle = (key: string): void => {
-		if (!dashboards) return;
-		if (key === 'createdAt') {
-			sortDashboardsByCreatedAt(dashboards);
-			setSortOrder({
-				columnKey: 'createdAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-		} else if (key === 'updatedAt') {
-			sortDashboardsByUpdatedAt(dashboards);
-			setSortOrder({
-				columnKey: 'updatedAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-		}
+		updateDashboardsListQueryParams({
+			columnKey: key,
+			order: 'descend',
+			page: dashboardsListQueryParams.page || '1',
+			search: dashboardsListQueryParams.search || '',
+		});
 	};
 
 	function handlePageSizeUpdate(page: number): void {
-		setSortOrder({ ...sortOrder, pagination: String(page) });
+		updateDashboardsListQueryParams({
+			...dashboardsListQueryParams,
+			page: String(page),
+		});
 	}
-
-	useEffect(() => {
-		const filteredDashboards = filterDashboard(
-			searchString,
-			dashboardListResponse || [],
-		);
-		if (sortOrder.columnKey === 'updatedAt') {
-			sortDashboardsByUpdatedAt(filteredDashboards || []);
-		} else if (sortOrder.columnKey === 'createdAt') {
-			sortDashboardsByCreatedAt(filteredDashboards || []);
-		} else if (sortOrder.columnKey === 'null') {
-			setSortOrder({
-				columnKey: 'updatedAt',
-				order: 'descend',
-				pagination: sortOrder.pagination || '1',
-				search: sortOrder.search || '',
-			});
-			sortDashboardsByUpdatedAt(filteredDashboards || []);
-		}
-	}, [
-		dashboardListResponse,
-		searchString,
-		setSortOrder,
-		sortOrder.columnKey,
-		sortOrder.pagination,
-		sortOrder.search,
-	]);
 
 	const [newDashboardState, setNewDashboardState] = useState({
 		loading: false,
@@ -257,26 +224,27 @@ function DashboardsList(): JSX.Element {
 		errorMessage: '',
 	});
 
-	const data: Data[] =
-		dashboards?.map((e) => ({
-			createdAt: e.created_at,
-			description: e.data.description || '',
-			id: e.uuid,
-			lastUpdatedTime: e.updated_at,
-			name: e.data.title,
-			tags: e.data.tags || [],
-			key: e.uuid,
-			createdBy: e.created_by,
-			isLocked: !!e.isLocked || false,
-			lastUpdatedBy: e.updated_by,
-			image: e.data.image || Base64Icons[0],
-			variables: e.data.variables,
-			widgets: e.data.widgets,
-			layout: e.data.layout,
-			panelMap: e.data.panelMap,
-			version: e.data.version,
-			refetchDashboardList,
-		})) || [];
+	const { showErrorModal } = useErrorModal();
+
+	const data: Data[] = dashboards.map((e) => ({
+		createdAt: e.createdAt,
+		description: e.data.description || '',
+		id: e.id,
+		lastUpdatedTime: e.updatedAt,
+		name: e.data.title,
+		tags: e.data.tags || [],
+		key: e.id,
+		createdBy: e.createdBy,
+		isLocked: !!e.locked || false,
+		lastUpdatedBy: e.updatedBy,
+		image: e.data.image || Base64Icons[0],
+		variables: e.data.variables,
+		widgets: e.data.widgets,
+		layout: e.data.layout,
+		panelMap: e.data.panelMap,
+		version: e.data.version,
+		refetchDashboardList,
+	}));
 
 	const onNewDashboardHandler = useCallback(async () => {
 		try {
@@ -290,31 +258,23 @@ function DashboardsList(): JSX.Element {
 					ns: 'dashboard',
 				}),
 				uploadedGrafana: false,
-				version: ENTITY_VERSION_V4,
+				version: ENTITY_VERSION_V5,
 			});
 
-			if (response.statusCode === 200) {
-				history.push(
-					generatePath(ROUTES.DASHBOARD, {
-						dashboardId: response.payload.uuid,
-					}),
-				);
-			} else {
-				setNewDashboardState({
-					...newDashboardState,
-					loading: false,
-					error: true,
-					errorMessage: response.error || 'Something went wrong',
-				});
-			}
+			safeNavigate(
+				generatePath(ROUTES.DASHBOARD, {
+					dashboardId: response.data.id,
+				}),
+			);
 		} catch (error) {
+			showErrorModal(error as APIError);
 			setNewDashboardState({
 				...newDashboardState,
 				error: true,
 				errorMessage: (error as AxiosError).toString() || 'Something went Wrong',
 			});
 		}
-	}, [newDashboardState, t]);
+	}, [newDashboardState, safeNavigate, showErrorModal, t]);
 
 	const onModalHandler = (uploadedGrafana: boolean): void => {
 		logEvent('Dashboard List: Import JSON clicked', {});
@@ -324,16 +284,12 @@ function DashboardsList(): JSX.Element {
 	};
 
 	const handleSearch = (event: ChangeEvent<HTMLInputElement>): void => {
-		setIsFilteringDashboards(true);
 		const searchText = (event as React.BaseSyntheticEvent)?.target?.value || '';
-		const filteredDashboards = filterDashboard(
-			searchText,
-			dashboardListResponse || [],
-		);
-		setDashboards(filteredDashboards);
-		setIsFilteringDashboards(false);
 		setSearchString(searchText);
-		setSortOrder({ ...sortOrder, search: searchText });
+		updateDashboardsListQueryParams({
+			...dashboardsListQueryParams,
+			search: searchText,
+		});
 	};
 
 	const [state, setCopy] = useCopyToClipboard();
@@ -363,7 +319,7 @@ function DashboardsList(): JSX.Element {
 	function getFormattedTime(dashboard: Dashboard, option: string): string {
 		return formatTimezoneAdjustedTimestamp(
 			get(dashboard, option, ''),
-			'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
+			DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 		);
 	}
 
@@ -409,7 +365,7 @@ function DashboardsList(): JSX.Element {
 			render: (dashboard: Data, _, index): JSX.Element => {
 				const formattedDateAndTime = formatTimezoneAdjustedTimestamp(
 					dashboard.createdAt,
-					'MMM D, YYYY ⎯ hh:mm:ss A (UTC Z)',
+					DATE_TIME_FORMATS.DASH_DATETIME_UTC,
 				);
 
 				const getLink = (): string => `${ROUTES.ALL_DASHBOARD}/${dashboard.id}`;
@@ -419,7 +375,7 @@ function DashboardsList(): JSX.Element {
 					if (event.metaKey || event.ctrlKey) {
 						window.open(getLink(), '_blank');
 					} else {
-						history.push(getLink());
+						safeNavigate(getLink());
 					}
 					logEvent('Dashboard List: Clicked on dashboard', {
 						dashboardId: dashboard.id,
@@ -445,11 +401,7 @@ function DashboardsList(): JSX.Element {
 									placement="left"
 									overlayClassName="title-toolip"
 								>
-									<Link
-										to={getLink()}
-										className="title-link"
-										onClick={(e): void => e.stopPropagation()}
-									>
+									<div className="title-link" onClick={onClickHandler}>
 										<img
 											src={dashboard?.image || Base64Icons[0]}
 											alt="dashboard-image"
@@ -461,7 +413,7 @@ function DashboardsList(): JSX.Element {
 										>
 											{dashboard.name}
 										</Typography.Text>
-									</Link>
+									</div>
 								</Tooltip>
 							</div>
 
@@ -496,6 +448,18 @@ function DashboardsList(): JSX.Element {
 													onClick={onClickHandler}
 												>
 													View
+												</Button>
+												<Button
+													type="text"
+													className="action-btn"
+													icon={<SquareArrowOutUpRight size={12} />}
+													onClick={(e): void => {
+														e.stopPropagation();
+														e.preventDefault();
+														window.open(getLink(), '_blank');
+													}}
+												>
+													Open in New Tab
 												</Button>
 												<Button
 													type="text"
@@ -609,7 +573,7 @@ function DashboardsList(): JSX.Element {
 			{
 				label: (
 					<a
-						href="https://github.com/SigNoz/dashboards"
+						href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
 						target="_blank"
 						rel="noopener noreferrer"
 					>
@@ -663,8 +627,8 @@ function DashboardsList(): JSX.Element {
 		showTotal: showPaginationItem,
 		showSizeChanger: false,
 		onChange: (page: any): void => handlePageSizeUpdate(page),
-		current: Number(sortOrder.pagination),
-		defaultCurrent: Number(sortOrder.pagination) || 1,
+		current: Number(dashboardsListQueryParams.page),
+		defaultCurrent: Number(dashboardsListQueryParams.page) || 1,
 		hideOnSinglePage: true,
 	};
 
@@ -676,7 +640,7 @@ function DashboardsList(): JSX.Element {
 			!isUndefined(dashboardListResponse)
 		) {
 			logEvent('Dashboard List: Page visited', {
-				number: dashboardListResponse?.length,
+				number: dashboardListResponse?.data?.length,
 			});
 			logEventCalledRef.current = true;
 		}
@@ -693,7 +657,7 @@ function DashboardsList(): JSX.Element {
 							Create and manage dashboards for your workspace.
 						</Typography.Text>
 					</Flex>
-					{isCloudUser() && (
+					{isCloudUserVal && (
 						<div className="integrations-container">
 							<div className="integrations-content">
 								<RequestDashboardBtn />
@@ -702,9 +666,7 @@ function DashboardsList(): JSX.Element {
 					)}
 				</div>
 
-				{isDashboardListLoading ||
-				isFilteringDashboards ||
-				isDashboardListRefetching ? (
+				{isDashboardListFetching ? (
 					<div className="loading-dashboard-details">
 						<Skeleton.Input active size="large" className="skeleton-1" />
 						<Skeleton.Input active size="large" className="skeleton-1" />
@@ -734,14 +696,14 @@ function DashboardsList(): JSX.Element {
 							<Button
 								type="text"
 								className="learn-more"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								Contact Support
 							</Button>
 							<ArrowUpRight size={16} className="learn-more-arrow" />
 						</section>
 					</div>
-				) : dashboards?.length === 0 && !searchString ? (
+				) : dashboards.length === 0 && !searchString ? (
 					<div className="dashboard-empty-state">
 						<img
 							src="/Icons/dashboards.svg"
@@ -823,7 +785,7 @@ function DashboardsList(): JSX.Element {
 							)}
 						</div>
 
-						{dashboards?.length === 0 ? (
+						{dashboards.length === 0 ? (
 							<div className="no-search">
 								<img src="/Icons/emptyState.svg" alt="img" className="img" />
 								<Typography.Text className="text">
@@ -852,7 +814,9 @@ function DashboardsList(): JSX.Element {
 															data-testid="sort-by-last-created"
 														>
 															Last created
-															{sortOrder.columnKey === 'createdAt' && <Check size={14} />}
+															{dashboardsListQueryParams.columnKey === 'createdAt' && (
+																<Check size={14} />
+															)}
 														</Button>
 														<Button
 															type="text"
@@ -861,7 +825,9 @@ function DashboardsList(): JSX.Element {
 															data-testid="sort-by-last-updated"
 														>
 															Last updated
-															{sortOrder.columnKey === 'updatedAt' && <Check size={14} />}
+															{dashboardsListQueryParams.columnKey === 'updatedAt' && (
+																<Check size={14} />
+															)}
 														</Button>
 													</div>
 												}
@@ -903,11 +869,7 @@ function DashboardsList(): JSX.Element {
 									columns={columns}
 									dataSource={data}
 									showSorterTooltip
-									loading={
-										isDashboardListLoading ||
-										isFilteringDashboards ||
-										isDashboardListRefetching
-									}
+									loading={isDashboardListFetching}
 									showHeader={false}
 									pagination={paginationConfig}
 								/>
@@ -956,12 +918,12 @@ function DashboardsList(): JSX.Element {
 						<div className="configure-preview">
 							<section className="header">
 								<img
-									src={dashboards?.[0]?.data?.image || Base64Icons[0]}
+									src={dashboards[0]?.data?.image || Base64Icons[0]}
 									alt="dashboard-image"
 									style={{ height: '14px', width: '14px' }}
 								/>
 								<Typography.Text className="title">
-									{dashboards?.[0]?.data?.title}
+									{dashboards[0]?.data?.title}
 								</Typography.Text>
 							</section>
 							<section className="details">
@@ -969,16 +931,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.createdAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{getFormattedTime(dashboards?.[0] as Dashboard, 'created_at')}
+											{getFormattedTime(dashboards[0] as Dashboard, 'created_at')}
 										</Typography.Text>
 									)}
 									{visibleColumns.createdBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.created_by?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.createdBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.created_by}
+												{dashboards[0]?.createdBy}
 											</Typography.Text>
 										</div>
 									)}
@@ -987,16 +949,16 @@ function DashboardsList(): JSX.Element {
 									{visibleColumns.updatedAt && (
 										<Typography.Text className="formatted-time">
 											<CalendarClock size={14} />
-											{onLastUpdated(dashboards?.[0]?.updated_at || '')}
+											{onLastUpdated(dashboards[0]?.updatedAt || '')}
 										</Typography.Text>
 									)}
 									{visibleColumns.updatedBy && (
 										<div className="user">
 											<Typography.Text className="user-tag">
-												{dashboards?.[0]?.updated_by?.substring(0, 1).toUpperCase()}
+												{dashboards[0]?.updatedBy?.substring(0, 1).toUpperCase()}
 											</Typography.Text>
 											<Typography.Text className="dashboard-created-by">
-												{dashboards?.[0]?.updated_by}
+												{dashboards[0]?.updatedBy}
 											</Typography.Text>
 										</div>
 									)}

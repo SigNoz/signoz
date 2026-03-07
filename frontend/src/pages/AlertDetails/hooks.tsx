@@ -1,5 +1,8 @@
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
-import { TablePaginationConfig, TableProps } from 'antd/lib';
+import { useCallback, useMemo } from 'react';
+import { useMutation, useQuery, useQueryClient } from 'react-query';
+import { generatePath, useLocation } from 'react-router-dom';
+import { TablePaginationConfig, TableProps } from 'antd';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import deleteAlerts from 'api/alerts/delete';
 import get from 'api/alerts/get';
 import getAll from 'api/alerts/getAll';
@@ -17,9 +20,10 @@ import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
-import { RelativeTimeMap } from 'container/TopNav/DateTimeSelection/config';
+import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import GetMinMax from 'lib/getMinMax';
@@ -30,9 +34,6 @@ import { OrderPreferenceItems } from 'pages/Logs/config';
 import BetaTag from 'periscope/components/BetaTag/BetaTag';
 import PaginationInfoText from 'periscope/components/PaginationInfoText/PaginationInfoText';
 import { useAlertRule } from 'providers/Alert';
-import { useCallback, useMemo } from 'react';
-import { useMutation, useQuery, useQueryClient } from 'react-query';
-import { generatePath, useLocation } from 'react-router-dom';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	AlertDef,
@@ -68,8 +69,9 @@ export const useAlertHistoryQueryParams = (): {
 	const hasStartAndEndParams = !!intStartTime && !!intEndTime;
 
 	const { maxTime, minTime } = useMemo(() => {
-		if (hasStartAndEndParams)
+		if (hasStartAndEndParams) {
 			return GetMinMax('custom', [intStartTime, intEndTime]);
+		}
 		return GetMinMax(relativeTime);
 	}, [hasStartAndEndParams, intStartTime, intEndTime, relativeTime]);
 
@@ -152,7 +154,7 @@ type Props = {
 export const useGetAlertRuleDetails = (): Props => {
 	const { ruleId } = useAlertHistoryQueryParams();
 
-	const isValidRuleId = ruleId !== null && String(ruleId).length !== 0;
+	const isValidRuleId = ruleId !== null && ruleId !== '';
 
 	const {
 		isLoading,
@@ -162,7 +164,7 @@ export const useGetAlertRuleDetails = (): Props => {
 	} = useQuery([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId], {
 		queryFn: () =>
 			get({
-				id: parseInt(ruleId || '', 10),
+				id: ruleId || '',
 			}),
 		enabled: isValidRuleId,
 		refetchOnWindowFocus: false,
@@ -203,7 +205,7 @@ export const useGetAlertRuleDetailsStats = (): GetAlertRuleDetailsStatsProps => 
 		{
 			queryFn: () =>
 				ruleStats({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -233,7 +235,7 @@ export const useGetAlertRuleDetailsTopContributors = (): GetAlertRuleDetailsTopC
 		{
 			queryFn: () =>
 				topContributors({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),
@@ -286,7 +288,7 @@ export const useGetAlertRuleDetailsTimelineTable = ({
 		{
 			queryFn: () =>
 				timelineTable({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 					limit: TIMELINE_TABLE_PAGE_SIZE,
@@ -321,6 +323,8 @@ export const useTimelineTable = ({
 		extra: any,
 	) => void;
 } => {
+	const { safeNavigate } = useSafeNavigate();
+
 	const { pathname } = useLocation();
 
 	const { search } = useLocation();
@@ -343,7 +347,7 @@ export const useTimelineTable = ({
 				const updatedOrder = order === 'ascend' ? 'asc' : 'desc';
 				const params = new URLSearchParams(window.location.search);
 
-				history.replace(
+				safeNavigate(
 					`${pathname}?${createQueryParams({
 						...Object.fromEntries(params),
 						order: updatedOrder,
@@ -353,7 +357,7 @@ export const useTimelineTable = ({
 				);
 			}
 		},
-		[pathname],
+		[pathname, safeNavigate],
 	);
 
 	const offsetInt = parseInt(offset, 10);
@@ -391,7 +395,7 @@ export const useAlertRuleStatusToggle = ({
 		{
 			onSuccess: (data) => {
 				setAlertRuleState(data?.payload?.state);
-
+				queryClient.refetchQueries([REACT_QUERY_KEY.ALERT_RULE_DETAILS, ruleId]);
 				notifications.success({
 					message: `Alert has been ${
 						data?.payload?.state === 'disabled' ? 'disabled' : 'enabled'
@@ -407,7 +411,7 @@ export const useAlertRuleStatusToggle = ({
 
 	const handleAlertStateToggle = (): void => {
 		const args = {
-			id: parseInt(ruleId, 10),
+			id: ruleId,
 			data: { disabled: alertRuleState !== 'disabled' },
 		};
 		toggleAlertState(args);
@@ -509,7 +513,7 @@ export const useAlertRuleUpdate = ({
 export const useAlertRuleDelete = ({
 	ruleId,
 }: {
-	ruleId: number;
+	ruleId: string;
 }): {
 	handleAlertDelete: () => void;
 } => {
@@ -557,7 +561,7 @@ export const useGetAlertRuleDetailsTimelineGraphData = (): GetAlertRuleDetailsTi
 		{
 			queryFn: () =>
 				timelineGraph({
-					id: parseInt(ruleId || '', 10),
+					id: ruleId || '',
 					start: startTime,
 					end: endTime,
 				}),

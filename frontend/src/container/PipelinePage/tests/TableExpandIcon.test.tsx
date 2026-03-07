@@ -1,9 +1,10 @@
+import { I18nextProvider } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
+import { Provider } from 'react-redux';
+import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import { pipelineMockData } from 'container/PipelinePage/mocks/pipeline';
 import TableExpandIcon from 'container/PipelinePage/PipelineListsView/TableComponents/TableExpandIcon';
-import { I18nextProvider } from 'react-i18next';
-import { Provider } from 'react-redux';
-import { MemoryRouter } from 'react-router-dom';
 import i18n from 'ReactI18';
 import store from 'store';
 

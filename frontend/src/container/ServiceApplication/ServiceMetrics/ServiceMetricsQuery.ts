@@ -19,24 +19,24 @@ import {
 
 export const serviceMetricsQuery = (
 	topLevelOperation: [keyof ServiceDataProps, string[]],
+	dotMetricsEnabled: boolean,
 ): QueryBuilderData => {
 	const p99AutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
-		key: WidgetKeys.Signoz_latency_bucket,
+		key: dotMetricsEnabled
+			? WidgetKeys.Signoz_latency_bucket
+			: WidgetKeys.Signoz_latency_bucket_norm,
 		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
 	};
 
 	const operationPrSecondAutoCompleteData: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		key: WidgetKeys.SignozCallsTotal,
 		type: '',
 	};
@@ -53,8 +53,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -64,7 +65,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -78,8 +78,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -89,8 +90,7 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				isColumn: false,
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -100,7 +100,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -114,8 +113,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -125,7 +125,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -139,8 +138,9 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -150,7 +150,6 @@ export const serviceMetricsQuery = (
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
 				key: WidgetKeys.Operation,
 				type: MetricsType.Tag,
 			},
@@ -194,8 +193,9 @@ export const serviceMetricsQuery = (
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			isColumn: false,
-			key: WidgetKeys.Service_name,
+			key: dotMetricsEnabled
+				? WidgetKeys.Service_name
+				: WidgetKeys.Service_name_norm,
 			type: MetricsType.Tag,
 		},
 	];

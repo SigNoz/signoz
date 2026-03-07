@@ -1,8 +1,8 @@
-import './RenameModal.styles.scss';
-
+import { useCallback, useEffect, useRef } from 'react';
 import { Button, Input, InputRef, Modal, Typography } from 'antd';
 import { Check, X } from 'lucide-react';
-import { useCallback, useEffect, useRef } from 'react';
+
+import './RenameModal.styles.scss';
 
 type Props = {
 	isOpen: boolean;

@@ -1,11 +1,13 @@
-import './MQDetails.style.scss';
-
-import { Radio } from 'antd';
-import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { Dispatch, SetStateAction, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useHistory, useLocation } from 'react-router-dom';
+import { Radio } from 'antd';
+import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
+import { getPartitionLatencyOverview } from 'api/messagingQueues/getPartitionLatencyOverview';
+import { getTopicThroughputOverview } from 'api/messagingQueues/getTopicThroughputOverview';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -15,10 +17,9 @@ import {
 	ProducerLatencyOptions,
 	setConfigDetail,
 } from '../MessagingQueuesUtils';
-import { MessagingQueueServicePayload } from './MQTables/getConsumerLagDetails';
-import { getKafkaSpanEval } from './MQTables/getKafkaSpanEval';
-import { getPartitionLatencyOverview } from './MQTables/getPartitionLatencyOverview';
 import MessagingQueuesTable from './MQTables/MQTables';
+
+import './MQDetails.style.scss';
 
 type SelectedViewType = keyof typeof MessagingQueuesViewType;
 
@@ -87,7 +88,6 @@ function MessagingQueueOverview({
 			start: minTime,
 			end: maxTime,
 			detailType:
-				// eslint-disable-next-line no-nested-ternary
 				selectedView === MessagingQueuesViewType.producerLatency.value
 					? option === ProducerLatencyOptions.Producers
 						? 'producer'
@@ -112,6 +112,7 @@ function MessagingQueueOverview({
 				tableApi={getTableApi(selectedView)}
 				validConfigPresent
 				type="Overview"
+				option={option}
 			/>
 		</div>
 	);

@@ -24,9 +24,6 @@ describe('WorkspaceLocked', () => {
 		});
 		expect(workspaceLocked).toBeInTheDocument();
 
-		const gotQuestionText = await screen.findByText(/got question?/i);
-		expect(gotQuestionText).toBeInTheDocument();
-
 		const contactUsBtn = await screen.findByRole('button', {
 			name: /Contact Us/i,
 		});
@@ -58,7 +55,7 @@ describe('WorkspaceLocked', () => {
 			),
 		);
 
-		render(<WorkspaceLocked />, {}, 'VIEWER');
+		render(<WorkspaceLocked />, {}, { role: 'VIEWER' });
 		const updateCreditCardBtn = await screen.queryByRole('button', {
 			name: /Continue My Journey/i,
 		});

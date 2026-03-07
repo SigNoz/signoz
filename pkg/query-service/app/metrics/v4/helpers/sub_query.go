@@ -5,15 +5,21 @@ import (
 	"strings"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 var (
 	sixHoursInMilliseconds = time.Hour.Milliseconds() * 6
 	oneDayInMilliseconds   = time.Hour.Milliseconds() * 24
 	oneWeekInMilliseconds  = oneDayInMilliseconds * 7
+
+	// when the query requests for almost 1 day, but not exactly 1 day, we need to add an offset to the end time
+	// to make sure that we are using the correct table
+	// this is because the start gets adjusted to the nearest step interval and uses the 5m table for 4m step interval
+	// leading to time series that doesn't best represent the rate of change
+	offsetBucket = 60 * time.Minute.Milliseconds()
 )
 
 func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, string) {
@@ -58,15 +64,9 @@ func whichTSTableToUse(start, end int64, mq *v3.BuilderQuery) (int64, int64, str
 		start = start - (start % (time.Hour.Milliseconds() * 24))
 		tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
 	} else {
-		if constants.UseMetricsPreAggregation() {
-			// adjust the start time to nearest 1 week
-			start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
-		} else {
-			// continue to use the 1 day table
-			start = start - (start % (time.Hour.Milliseconds() * 24))
-			tableName = constants.SIGNOZ_TIMESERIES_v4_1DAY_LOCAL_TABLENAME
-		}
+		// adjust the start time to nearest 1 week
+		start = start - (start % (time.Hour.Milliseconds() * 24 * 7))
+		tableName = constants.SIGNOZ_TIMESERIES_v4_1WEEK_LOCAL_TABLENAME
 	}
 
 	return start, end, tableName
@@ -93,18 +93,13 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 		return constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME
 	}
 
-	// continue to use the old table if pre-aggregation is disabled
-	if !constants.UseMetricsPreAggregation() {
-		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
-	}
-
 	// if the time aggregation is count_distinct, we need to use the distributed_samples_v4 table
 	// because the aggregated tables don't support count_distinct
 	if mq.TimeAggregation == v3.TimeAggregationCountDistinct {
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
 	}
 
-	if end-start < oneDayInMilliseconds {
+	if end-start < oneDayInMilliseconds+offsetBucket {
 		// if we are dealing with delta metrics and interval is greater than 5 minutes, we can use the 5m aggregated table
 		// why would interval be greater than 5 minutes?
 		// we allow people to configure the step interval so we can make use of this
@@ -115,7 +110,7 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 			return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
 		}
 		return constants.SIGNOZ_SAMPLES_V4_TABLENAME
-	} else if end-start < oneWeekInMilliseconds {
+	} else if end-start < oneWeekInMilliseconds+offsetBucket {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_5M_TABLENAME
 	} else {
 		return constants.SIGNOZ_SAMPLES_V4_AGG_30M_TABLENAME
@@ -261,8 +256,13 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 	var fs *v3.FilterSet = mq.Filters
 	var groupTags []v3.AttributeKey = mq.GroupBy
 
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
+	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
+	if constants.IsDotMetricsEnabled {
+		conditions = append(conditions, "__normalized = false")
+	} else {
+		conditions = append(conditions, "__normalized = true")
+	}
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 
@@ -279,7 +279,10 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 			if op == v3.FilterOperatorContains || op == v3.FilterOperatorNotContains {
 				toFormat = fmt.Sprintf("%%%s%%", toFormat)
 			}
-			fmtVal := utils.ClickHouseFormattedValue(toFormat)
+			var fmtVal string
+			if op != v3.FilterOperatorExists && op != v3.FilterOperatorNotExists {
+				fmtVal = utils.ClickHouseFormattedValue(toFormat)
+			}
 			switch op {
 			case v3.FilterOperatorEqual:
 				conditions = append(conditions, fmt.Sprintf("JSONExtractString(labels, '%s') = %s", item.Key.Key, fmtVal))
@@ -313,6 +316,10 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 				conditions = append(conditions, fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", item.Key.Key))
 			case v3.FilterOperatorNotExists:
 				conditions = append(conditions, fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", item.Key.Key))
+			case v3.FilterOperatorILike:
+				conditions = append(conditions, fmt.Sprintf("ilike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
+			case v3.FilterOperatorNotILike:
+				conditions = append(conditions, fmt.Sprintf("notILike(JSONExtractString(labels, '%s'), %s)", item.Key.Key, fmtVal))
 			default:
 				return "", fmt.Errorf("unsupported filter operator")
 			}
@@ -322,7 +329,7 @@ func PrepareTimeseriesFilterQuery(start, end int64, mq *v3.BuilderQuery) (string
 
 	var selectLabels string
 	for _, tag := range groupTags {
-		selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, tag.Key)
+		selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, utils.AddBackTickToFormatTag(tag.Key))
 	}
 
 	// The table JOIN key always exists
@@ -345,8 +352,13 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 	var fs *v3.FilterSet = mq.Filters
 	var groupTags []v3.AttributeKey = mq.GroupBy
 
-	conditions = append(conditions, fmt.Sprintf("metric_name = %s", utils.ClickHouseFormattedValue(mq.AggregateAttribute.Key)))
+	conditions = append(conditions, fmt.Sprintf("metric_name IN %s", utils.ClickHouseFormattedMetricNames(mq.AggregateAttribute.Key)))
 	conditions = append(conditions, fmt.Sprintf("temporality = '%s'", mq.Temporality))
+	if constants.IsDotMetricsEnabled {
+		conditions = append(conditions, "__normalized = false")
+	} else {
+		conditions = append(conditions, "__normalized = true")
+	}
 
 	start, end, tableName := whichTSTableToUse(start, end, mq)
 
@@ -406,7 +418,7 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 		selectLabels += "labels, "
 	} else {
 		for _, tag := range groupTags {
-			selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, tag.Key)
+			selectLabels += fmt.Sprintf("JSONExtractString(labels, '%s') as %s, ", tag.Key, utils.AddBackTickToFormatTag(tag.Key))
 		}
 	}
 
@@ -422,4 +434,11 @@ func PrepareTimeseriesFilterQueryV3(start, end int64, mq *v3.BuilderQuery) (stri
 	)
 
 	return filterSubQuery, nil
+}
+
+func AddFlagsFilters(samplesTableFilter string, tableName string) string {
+	if tableName == constants.SIGNOZ_SAMPLES_V4_TABLENAME || tableName == constants.SIGNOZ_SAMPLES_V4_LOCAL_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_TABLENAME || tableName == constants.SIGNOZ_EXP_HISTOGRAM_LOCAL_TABLENAME {
+		samplesTableFilter = fmt.Sprintf("%s AND %s", samplesTableFilter, "bitAnd(flags, 1) = 0")
+	}
+	return samplesTableFilter
 }

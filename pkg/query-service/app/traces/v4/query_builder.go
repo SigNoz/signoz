@@ -4,11 +4,11 @@ import (
 	"fmt"
 	"strings"
 
-	"go.signoz.io/signoz/pkg/query-service/app/resource"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/query-service/app/resource"
+	tracesV3 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
 
 const NANOSECOND = 1000000000
@@ -30,6 +30,8 @@ var tracesOperatorMappingV3 = map[v3.FilterOperator]string{
 	v3.FilterOperatorNotContains:     "NOT ILIKE",
 	v3.FilterOperatorExists:          "mapContains(%s, '%s')",
 	v3.FilterOperatorNotExists:       "NOT mapContains(%s, '%s')",
+	v3.FilterOperatorILike:           "ILIKE",
+	v3.FilterOperatorNotILike:        "NOT ILIKE",
 }
 
 func getClickHouseTracesColumnType(columnType v3.AttributeKeyType) string {
@@ -49,7 +51,20 @@ func getClickHouseTracesColumnDataType(columnDataType v3.AttributeKeyDataType) s
 	return "string"
 }
 
-func getColumnName(key v3.AttributeKey) string {
+func getColumnName(key v3.AttributeKey, replaceAlias bool) string {
+	if replaceAlias {
+		// It should be in DeprecatedStaticFieldsTraces
+		if _, ok := constants.DeprecatedStaticFieldsTraces[key.Key]; ok {
+			// It should not be in NewStaticFieldsTraces
+			if _, ok := constants.NewStaticFieldsTraces[key.Key]; !ok {
+				// It should have a mapping in OldToNewTraceFieldsMap
+				if _, ok := constants.OldToNewTraceFieldsMap[key.Key]; ok {
+					key = constants.NewStaticFieldsTraces[constants.OldToNewTraceFieldsMap[key.Key]]
+				}
+			}
+		}
+	}
+
 	// if key present in static return as it is
 	if _, ok := constants.StaticFieldsTraces[key.Key]; ok {
 		return key.Key
@@ -68,7 +83,7 @@ func getColumnName(key v3.AttributeKey) string {
 func getSelectLabels(groupBy []v3.AttributeKey) string {
 	var labels []string
 	for _, tag := range groupBy {
-		name := getColumnName(tag)
+		name := getColumnName(tag, true)
 		labels = append(labels, fmt.Sprintf(" %s as `%s`", name, tag.Key))
 	}
 	return strings.Join(labels, ",")
@@ -78,29 +93,30 @@ func getSelectLabels(groupBy []v3.AttributeKey) string {
 func existsSubQueryForFixedColumn(key v3.AttributeKey, op v3.FilterOperator) (string, error) {
 	if key.DataType == v3.AttributeKeyDataTypeString {
 		if op == v3.FilterOperatorExists {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
+			return fmt.Sprintf("%s %s ''", getColumnName(key, true), tracesOperatorMappingV3[v3.FilterOperatorNotEqual]), nil
 		} else {
-			return fmt.Sprintf("%s %s ''", getColumnName(key), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
+			return fmt.Sprintf("%s %s ''", getColumnName(key, true), tracesOperatorMappingV3[v3.FilterOperatorEqual]), nil
 		}
 	} else {
 		return "", fmt.Errorf("unsupported operation, exists and not exists can only be applied on custom attributes or string type columns")
 	}
 }
 
-func buildTracesFilterQuery(fs *v3.FilterSet) (string, error) {
+func BuildTracesFilterQuery(fs *v3.FilterSet, skipAllowed bool) (string, error) {
 	var conditions []string
 
 	if fs != nil && len(fs.Items) != 0 {
 		for _, item := range fs.Items {
 
-			// skip if it's a resource attribute
-			if item.Key.Type == v3.AttributeKeyTypeResource {
+			// skip if it's a resource attribute or Span search scope attribute
+			// adding skipAllowed because traceFunnels requires the resource one as well.
+			if skipAllowed && (item.Key.Type == v3.AttributeKeyTypeResource || item.Key.Type == v3.AttributeKeyTypeSpanSearchScope) {
 				continue
 			}
 
 			val := item.Value
 			// generate the key
-			columnName := getColumnName(item.Key)
+			columnName := getColumnName(item.Key, true)
 			var fmtVal string
 			item.Operator = v3.FilterOperator(strings.ToLower(strings.TrimSpace(string(item.Operator))))
 			if item.Operator != v3.FilterOperatorExists && item.Operator != v3.FilterOperatorNotExists {
@@ -167,7 +183,7 @@ func handleEmptyValuesInGroupBy(groupBy []v3.AttributeKey) (string, error) {
 			Operator: "AND",
 			Items:    filterItems,
 		}
-		return buildTracesFilterQuery(&filterSet)
+		return BuildTracesFilterQuery(&filterSet, true)
 	}
 	return "", nil
 }
@@ -185,7 +201,9 @@ func orderBy(panelType v3.PanelType, items []v3.OrderBy, tagLookup map[string]st
 			orderBy = append(orderBy, fmt.Sprintf("`%s` %s", item.ColumnName, item.Order))
 		} else if panelType == v3.PanelTypeList {
 			attr := v3.AttributeKey{Key: item.ColumnName, DataType: item.DataType, Type: item.Type, IsColumn: item.IsColumn}
-			name := getColumnName(attr)
+			// we want to keep the original name as it will be already corrected by the select query
+			// so we are setting replaceAlias = false
+			name := getColumnName(attr, false)
 			orderBy = append(orderBy, fmt.Sprintf("%s %s", name, item.Order))
 		}
 	}
@@ -213,6 +231,31 @@ func orderByAttributeKeyTags(panelType v3.PanelType, items []v3.OrderBy, tags []
 	return str
 }
 
+func buildSpanScopeQuery(fs *v3.FilterSet) (string, error) {
+	var query string
+	if fs == nil || len(fs.Items) == 0 {
+		return "", nil
+	}
+	for _, item := range fs.Items {
+		// skip anything other than Span Search scope attribute
+		if item.Key.Type != v3.AttributeKeyTypeSpanSearchScope {
+			continue
+		}
+		keyName := strings.ToLower(item.Key.Key)
+
+		if keyName == constants.SpanSearchScopeRoot {
+			query = "parent_span_id = '' "
+			return query, nil
+		} else if keyName == constants.SpanSearchScopeEntryPoint {
+			query = "((name, `resource_string_service$$name`) GLOBAL IN ( SELECT DISTINCT name, serviceName from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_TOP_LEVEL_OPERATIONS_TABLENAME + " )) AND parent_span_id != '' "
+			return query, nil
+		} else {
+			return "", fmt.Errorf("invalid scope item type: %s", item.Key.Type)
+		}
+	}
+	return "", nil
+}
+
 func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.PanelType, options v3.QBOptions) (string, error) {
 	tracesStart := utils.GetEpochNanoSecs(start)
 	tracesEnd := utils.GetEpochNanoSecs(end)
@@ -223,7 +266,7 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	timeFilter := fmt.Sprintf("(timestamp >= '%d' AND timestamp <= '%d') AND (ts_bucket_start >= %d AND ts_bucket_start <= %d)", tracesStart, tracesEnd, bucketStart, bucketEnd)
 
-	filterSubQuery, err := buildTracesFilterQuery(mq.Filters)
+	filterSubQuery, err := BuildTracesFilterQuery(mq.Filters, true)
 	if err != nil {
 		return "", err
 	}
@@ -248,6 +291,11 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		filterSubQuery = filterSubQuery + " AND (resource_fingerprint GLOBAL IN " + resourceSubQuery + ")"
 	}
 
+	spanScopeSubQuery, err := buildSpanScopeQuery(mq.Filters)
+	if spanScopeSubQuery != "" {
+		filterSubQuery = filterSubQuery + " AND " + spanScopeSubQuery
+	}
+
 	// timerange will be sent in epoch millisecond
 	selectLabels := getSelectLabels(mq.GroupBy)
 	if selectLabels != "" {
@@ -262,21 +310,40 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 	if mq.AggregateOperator == v3.AggregateOperatorNoOp {
 		var query string
 		if panelType == v3.PanelTypeTrace {
-			withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter, filterSubQuery)
-			withSubQuery = tracesV3.AddLimitToQuery(withSubQuery, mq.Limit)
-			if mq.Offset != 0 {
-				withSubQuery = tracesV3.AddOffsetToQuery(withSubQuery, mq.Offset)
+			if len(mq.OrderBy) > 1 {
+				return "", fmt.Errorf("multiple orderBy criteria are not supported for trace queries")
 			}
-			query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(constants.TracesExplorerViewSQLSelectAfterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter)
+			orderBySpanCount := false
+
+			// Check if orderBy contains a specific reference to span_count
+			if len(mq.OrderBy) == 1 && mq.OrderBy[0].ColumnName == constants.OrderBySpanCount {
+				orderBySpanCount = true
+			}
+			if !orderBySpanCount {
+				withSubQuery := fmt.Sprintf(constants.TracesExplorerViewSQLSelectWithSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter)
+				afterSubQuery := tracesV3.AddLimitToQuery(constants.TracesExplorerViewSQLSelectAfterSubQuery, mq.Limit)
+				if mq.Offset != 0 {
+					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
+				}
+				query = fmt.Sprintf(constants.TracesExplorerViewSQLSelectBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter, filterSubQuery) + withSubQuery + ")" + afterSubQuery
+			} else {
+				withSubQueryWithLimits := tracesV3.AddLimitToQuery(constants.TracesExplorerSpanCountWithSubQuery, mq.Limit)
+				withSubQuery := fmt.Sprintf(withSubQueryWithLimits, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3_LOCAL_TABLENAME, timeFilter, filterSubQuery)
+				afterSubQuery := tracesV3.AddLimitToQuery(constants.TraceExplorerSpanCountAfterSubQuery, mq.Limit)
+				if mq.Offset != 0 {
+					afterSubQuery = tracesV3.AddOffsetToQuery(afterSubQuery, mq.Offset)
+				}
+				query = fmt.Sprintf(constants.TraceExplorerSpanCountBeforeSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3) + withSubQuery + ") " + fmt.Sprintf(afterSubQuery, constants.SIGNOZ_TRACE_DBNAME, constants.SIGNOZ_SPAN_INDEX_V3, timeFilter)
+			}
 			// adding this to avoid the distributed product mode error which doesn't allow global in
 			query += " settings distributed_product_mode='allow', max_memory_usage=10000000000"
 		} else if panelType == v3.PanelTypeList {
 			if len(mq.SelectColumns) == 0 {
 				return "", fmt.Errorf("select columns cannot be empty for panelType %s", panelType)
 			}
-			// add it to the select labels
 			selectLabels = getSelectLabels(mq.SelectColumns)
-			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, spanID, traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
+			// add it to the select labels
+			queryNoOpTmpl := fmt.Sprintf("SELECT timestamp as timestamp_datetime, span_id as spanID, trace_id as traceID,%s ", selectLabels) + "from " + constants.SIGNOZ_TRACE_DBNAME + "." + constants.SIGNOZ_SPAN_INDEX_V3 + " where %s %s" + "%s"
 			query = fmt.Sprintf(queryNoOpTmpl, timeFilter, filterSubQuery, orderBy)
 		} else {
 			return "", fmt.Errorf("unsupported aggregate operator %s for panelType %s", mq.AggregateOperator, panelType)
@@ -297,7 +364,10 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 
 	aggregationKey := ""
 	if mq.AggregateAttribute.Key != "" {
-		aggregationKey = getColumnName(mq.AggregateAttribute)
+		aggregationKey = getColumnName(mq.AggregateAttribute, true)
+		if mq.AggregateAttribute.Key == "timestamp" {
+			aggregationKey = "toUnixTimestamp64Nano(timestamp)"
+		}
 	}
 
 	var queryTmpl string
@@ -334,10 +404,13 @@ func buildTracesQuery(start, end, step int64, mq *v3.BuilderQuery, panelType v3.
 		v3.AggregateOperatorRateAvg,
 		v3.AggregateOperatorRateMin,
 		v3.AggregateOperatorRate:
-
 		rate := float64(step)
-		if options.PreferRPM {
-			rate = rate / 60.0
+		if panelType == v3.PanelTypeTable {
+			// if the panel type is table the denominator will be the total time range
+			duration := tracesEnd - tracesStart
+			if duration >= 0 {
+				rate = float64(duration) / NANOSECOND
+			}
 		}
 
 		op := fmt.Sprintf("%s(%s)/%f", tracesV3.AggregateOperatorToSQLFunc[mq.AggregateOperator], aggregationKey, rate)

@@ -1,8 +1,4 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable sonarjs/no-identical-functions */
-import './PlannedDowntime.styles.scss';
-import 'dayjs/locale/en';
-
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { CheckOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -13,16 +9,17 @@ import {
 	Input,
 	Modal,
 	Select,
+	SelectProps,
 	Spin,
 	Typography,
 } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { SelectProps } from 'antd/lib';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	DowntimeSchedules,
 	Recurrence,
 } from 'api/plannedDowntime/getAllDowntimeSchedules';
 import { DowntimeScheduleUpdatePayload } from 'api/plannedDowntime/updateDowntimeSchedule';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import {
 	ModalButtonWrapper,
 	ModalTitle,
@@ -32,8 +29,9 @@ import timezone from 'dayjs/plugin/timezone';
 import utc from 'dayjs/plugin/utc';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo, isEmpty } from 'lodash-es';
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { ALL_TIME_ZONES } from 'utils/timeZoneUtil';
+
+import 'dayjs/locale/en';
 
 import { AlertRuleTags } from './PlannedDowntimeList';
 import {
@@ -48,13 +46,15 @@ import {
 	recurrenceWeeklyOptions,
 } from './PlannedDowntimeutils';
 
+import './PlannedDowntime.styles.scss';
+
 dayjs.locale('en');
 dayjs.extend(utc);
 dayjs.extend(timezone);
 
-const TIME_FORMAT = 'HH:mm';
-const DATE_FORMAT = 'Do MMM YYYY';
-const ORDINAL_FORMAT = 'Do';
+const TIME_FORMAT = DATE_TIME_FORMATS.TIME;
+const DATE_FORMAT = DATE_TIME_FORMATS.ORDINAL_DATE;
+const ORDINAL_FORMAT = DATE_TIME_FORMATS.ORDINAL_ONLY;
 
 interface PlannedDowntimeFormData {
 	name: string;
@@ -66,7 +66,7 @@ interface PlannedDowntimeFormData {
 	timezone?: string;
 }
 
-const customFormat = 'Do MMMM, YYYY ⎯ HH:mm:ss';
+const customFormat = DATE_TIME_FORMATS.ORDINAL_DATETIME;
 
 interface PlannedDowntimeFormProps {
 	initialValues: Partial<
@@ -253,10 +253,7 @@ export function PlannedDowntimeForm(
 		setSelectedTags(options);
 	};
 
-	const noTagRenderer: SelectProps['tagRender'] = () => (
-		// eslint-disable-next-line react/jsx-no-useless-fragment
-		<></>
-	);
+	const noTagRenderer: SelectProps['tagRender'] = () => <></>;
 
 	const handleClose = (removedTag: DefaultOptionType['value']): void => {
 		if (!removedTag) {

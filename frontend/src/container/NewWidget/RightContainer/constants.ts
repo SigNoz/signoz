@@ -1,4 +1,4 @@
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export const operatorOptions: DefaultOptionType[] = [
@@ -56,6 +56,18 @@ export const panelTypeVsFillSpan: { [key in PANEL_TYPES]: boolean } = {
 	[PANEL_TYPES.LIST]: false,
 	[PANEL_TYPES.PIE]: false,
 	[PANEL_TYPES.BAR]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
+export const panelTypeVsLogScale: { [key in PANEL_TYPES]: boolean } = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: false,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: false,
+	[PANEL_TYPES.BAR]: true,
 	[PANEL_TYPES.HISTOGRAM]: false,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
@@ -136,5 +148,61 @@ export const panelTypeVsStackingChartPreferences: {
 	[PANEL_TYPES.BAR]: true,
 	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
+export const panelTypeVsLegendPosition: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: false,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: false,
+	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
+export const panelTypeVsLegendColors: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: false,
+	[PANEL_TYPES.TABLE]: false,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: true,
+	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.HISTOGRAM]: true,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
+export const panelTypeVsContextLinks: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: true,
+	[PANEL_TYPES.TABLE]: true,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: true,
+	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: true,
+	[PANEL_TYPES.TRACE]: false,
+	[PANEL_TYPES.EMPTY_WIDGET]: false,
+} as const;
+
+export const panelTypeVsDecimalPrecision: {
+	[key in PANEL_TYPES]: boolean;
+} = {
+	[PANEL_TYPES.TIME_SERIES]: true,
+	[PANEL_TYPES.VALUE]: true,
+	[PANEL_TYPES.TABLE]: true,
+	[PANEL_TYPES.LIST]: false,
+	[PANEL_TYPES.PIE]: true,
+	[PANEL_TYPES.BAR]: true,
+	[PANEL_TYPES.HISTOGRAM]: false,
+	[PANEL_TYPES.TRACE]: false,
 	[PANEL_TYPES.EMPTY_WIDGET]: false,
 } as const;

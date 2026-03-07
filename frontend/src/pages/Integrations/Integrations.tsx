@@ -1,15 +1,14 @@
-import './Integrations.styles.scss';
-
-import logEvent from 'api/common/logEvent';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
+import logEvent from 'api/common/logEvent';
+import useUrlQuery from 'hooks/useUrlQuery';
 
 import Header from './Header';
 import IntegrationDetailPage from './IntegrationDetailPage/IntegrationDetailPage';
 import IntegrationsList from './IntegrationsList';
-import { RequestIntegrationBtn } from './RequestIntegrationBtn';
 import { INTEGRATION_TELEMETRY_EVENTS } from './utils';
+
+import './Integrations.styles.scss';
 
 function Integrations(): JSX.Element {
 	const urlQuery = useUrlQuery();
@@ -42,10 +41,8 @@ function Integrations(): JSX.Element {
 
 	useEffect(() => {
 		logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_LIST_VISITED, {});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const [searchTerm, setSearchTerm] = useState<string>('');
 	return (
 		<div className="integrations-container">
 			<div className="integrations-content">
@@ -58,13 +55,11 @@ function Integrations(): JSX.Element {
 					/>
 				) : (
 					<>
-						<Header setSearchTerm={setSearchTerm} searchTerm={searchTerm} />
+						<Header />
 						<IntegrationsList
 							setSelectedIntegration={setSelectedIntegration}
-							searchTerm={searchTerm}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
-						<RequestIntegrationBtn />
 					</>
 				)}
 			</div>

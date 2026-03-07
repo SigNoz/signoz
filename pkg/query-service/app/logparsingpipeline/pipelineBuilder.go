@@ -6,12 +6,15 @@ import (
 	"slices"
 	"strings"
 
+	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/queryBuilderToExpr"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/antonmedv/expr"
 	"github.com/antonmedv/expr/ast"
 	"github.com/antonmedv/expr/parser"
-	"github.com/pkg/errors"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/queryBuilderToExpr"
+	"github.com/google/uuid"
 )
 
 const (
@@ -22,22 +25,22 @@ const (
 // only alphabets, digits and `-` are used when translating pipeline identifiers
 var badCharsForCollectorConfName = regexp.MustCompile("[^a-zA-Z0-9-]")
 
-func CollectorConfProcessorName(p Pipeline) string {
+func CollectorConfProcessorName(p pipelinetypes.GettablePipeline) string {
 	normalizedAlias := badCharsForCollectorConfName.ReplaceAllString(p.Alias, "-")
 	return constants.LogsPPLPfx + normalizedAlias
 }
 
-func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []string, error) {
+func PreparePipelineProcessor(gettablePipelines []pipelinetypes.GettablePipeline) (map[string]interface{}, []string, error) {
 	processors := map[string]interface{}{}
 	names := []string{}
-	for pipelineIdx, v := range pipelines {
+	for pipelineIdx, v := range gettablePipelines {
 		if !v.Enabled {
 			continue
 		}
 
 		operators, err := getOperators(v.Config)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to prepare operators")
+			return nil, nil, err
 		}
 
 		if len(operators) == 0 {
@@ -46,14 +49,14 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 
 		filterExpr, err := queryBuilderToExpr.Parse(v.Filter)
 		if err != nil {
-			return nil, nil, errors.Wrap(err, "failed to parse pipeline filter")
+			return nil, nil, err
 		}
 
-		router := []PipelineOperator{
+		router := []pipelinetypes.PipelineOperator{
 			{
 				ID:   "router_signoz",
 				Type: "router",
-				Routes: &[]Route{
+				Routes: &[]pipelinetypes.Route{
 					{
 						Output: operators[0].ID,
 						Expr:   filterExpr,
@@ -66,13 +69,13 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 		v.Config = append(router, operators...)
 
 		// noop operator is needed as the default operator so that logs are not dropped
-		noop := PipelineOperator{
+		noop := pipelinetypes.PipelineOperator{
 			ID:   NOOP,
 			Type: NOOP,
 		}
 		v.Config = append(v.Config, noop)
 
-		processor := Processor{
+		processor := pipelinetypes.Processor{
 			Operators: v.Config,
 		}
 		name := CollectorConfProcessorName(v)
@@ -88,14 +91,10 @@ func PreparePipelineProcessor(pipelines []Pipeline) (map[string]interface{}, []s
 	return processors, names, nil
 }
 
-func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
-	filteredOp := []PipelineOperator{}
+func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.PipelineOperator, error) {
+	filteredOp := []pipelinetypes.PipelineOperator{}
 	for i, operator := range ops {
 		if operator.Enabled {
-			if len(filteredOp) > 0 {
-				filteredOp[len(filteredOp)-1].Output = operator.ID
-			}
-
 			if operator.Type == "regex_parser" {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
@@ -123,16 +122,13 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				operator.If = parseFromNotNilCheck
 
 			} else if operator.Type == "json_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				operators, err := processJSONParser(&operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of json parser op %s: %w", operator.Name, err,
-					)
+					return nil, fmt.Errorf("couldn't process json_parser op %s: %s", operator.Name, err)
 				}
-				operator.If = fmt.Sprintf(
-					`%s && %s matches "^\\s*{.*}\\s*$"`, parseFromNotNilCheck, operator.ParseFrom,
-				)
 
+				filteredOp = append(filteredOp, operators...)
+				continue // Continue here to skip deduplication of json_parser operator
 			} else if operator.Type == "add" {
 				if strings.HasPrefix(operator.Value, "EXPR(") && strings.HasSuffix(operator.Value, ")") {
 					expression := strings.TrimSuffix(strings.TrimPrefix(operator.Value, "EXPR("), ")")
@@ -147,7 +143,6 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 						operator.If = fieldsNotNilCheck
 					}
 				}
-
 			} else if operator.Type == "move" || operator.Type == "copy" {
 				fromNotNilCheck, err := fieldNotNilCheck(operator.From)
 				if err != nil {
@@ -156,7 +151,6 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					)
 				}
 				operator.If = fromNotNilCheck
-
 			} else if operator.Type == "remove" {
 				fieldNotNilCheck, err := fieldNotNilCheck(operator.Field)
 				if err != nil {
@@ -165,10 +159,8 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 					)
 				}
 				operator.If = fieldNotNilCheck
-
 			} else if operator.Type == "trace_parser" {
 				cleanTraceParser(&operator)
-
 			} else if operator.Type == "time_parser" {
 				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
 				if err != nil {
@@ -179,7 +171,7 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 				operator.If = parseFromNotNilCheck
 
 				if operator.LayoutType == "strptime" {
-					regex, err := RegexForStrptimeLayout(operator.Layout)
+					regex, err := pipelinetypes.RegexForStrptimeLayout(operator.Layout)
 					if err != nil {
 						return nil, fmt.Errorf(
 							"couldn't generate layout regex for time_parser %s: %w", operator.Name, err,
@@ -201,19 +193,11 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 
 				}
 				// TODO(Raj): Maybe add support for gotime too eventually
-
 			} else if operator.Type == "severity_parser" {
-				parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+				err := processSeverityParser(&operator)
 				if err != nil {
-					return nil, fmt.Errorf(
-						"couldn't generate nil check for parseFrom of severity parser %s: %w", operator.Name, err,
-					)
+					return nil, err
 				}
-				operator.If = fmt.Sprintf(
-					`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
-					parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
-				)
-
 			}
 
 			filteredOp = append(filteredOp, operator)
@@ -221,10 +205,194 @@ func getOperators(ops []PipelineOperator) ([]PipelineOperator, error) {
 			filteredOp[len(filteredOp)-1].Output = ""
 		}
 	}
+
+	for idx := range filteredOp {
+		if idx > 0 {
+			filteredOp[idx-1].Output = filteredOp[idx].ID
+		}
+	}
 	return filteredOp, nil
 }
 
-func cleanTraceParser(operator *PipelineOperator) {
+func processSeverityParser(operator *pipelinetypes.PipelineOperator) error {
+	if operator.Type != "severity_parser" {
+		return errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", operator.Type)
+	}
+
+	parseFromNotNilCheck, err := fieldNotNilCheck(operator.ParseFrom)
+	if err != nil {
+		return errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
+			"couldn't generate nil check for parseFrom of severity parser %s", operator.Name,
+		)
+	}
+	operator.If = fmt.Sprintf(
+		`%s && ( type(%s) == "string" || ( type(%s) in ["int", "float"] && %s == float(int(%s)) ) )`,
+		parseFromNotNilCheck, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom, operator.ParseFrom,
+	)
+
+	return nil
+}
+
+// processJSONParser converts simple JSON parser operator into multiple operators for JSONMapping of default variables
+func processJSONParser(parent *pipelinetypes.PipelineOperator) ([]pipelinetypes.PipelineOperator, error) {
+	if parent.Type != "json_parser" {
+		return nil, errors.NewUnexpectedf(CodeInvalidOperatorType, "operator type received %s", parent.Type)
+	}
+
+	parseFromNotNilCheck, err := fieldNotNilCheck(parent.ParseFrom)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, CodeFieldNilCheckType,
+			"couldn't generate nil check for parseFrom of json parser op %s: %s", parent.Name, err,
+		)
+	}
+	parent.If = fmt.Sprintf(
+		`%s && ((type(%s) == "string" && isJSON(%s) && type(fromJSON(unquote(%s))) == "map" ) || type(%s) == "map")`,
+		parseFromNotNilCheck, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom, parent.ParseFrom,
+	)
+	if parent.EnableFlattening {
+		parent.MaxFlatteningDepth = constants.MaxJSONFlatteningDepth
+	}
+
+	// return if no mapping available
+	if parent.Mapping == nil {
+		return []pipelinetypes.PipelineOperator{*parent}, nil
+	}
+
+	mapping := parent.Mapping
+	children := []pipelinetypes.PipelineOperator{}
+
+	// cloning since the same function is used when saving pipelines (POST request) hence reversing
+	// the same array inplace ends up with saving mapping in a reversed order in database
+	cloneAndReverse := func(input []string) []string {
+		cloned := slices.Clone(input)
+		slices.Reverse(cloned)
+
+		return cloned
+	}
+
+	generateCustomID := func() string {
+		return fmt.Sprintf("%s-json-parser", uuid.NewString()) // json-parser helps in identifying processors part of JSON Parser
+	}
+
+	// reusable move operator function
+	generateMoveOperators := func(keywords []string, to string) error {
+		for _, keyword := range cloneAndReverse(keywords) {
+			operator := pipelinetypes.PipelineOperator{
+				Type:    "move",
+				ID:      generateCustomID(),
+				OnError: signozstanzahelper.SendOnErrorQuiet,
+				From:    fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				To:      to,
+			}
+
+			fromNotNilCheck, err := fieldNotNilCheck(operator.From)
+			if err != nil {
+				return err
+			}
+
+			operator.If = fromNotNilCheck
+			children = append(children, operator)
+		}
+
+		return nil
+	}
+
+	// JSONMapping: host
+	err = generateMoveOperators(mapping[pipelinetypes.Host], `resource["host.name"]`)
+	if err != nil {
+		return nil, err
+	}
+
+	// JSONMapping: service
+	err = generateMoveOperators(mapping[pipelinetypes.Service], `resource["service.name"]`)
+	if err != nil {
+		return nil, err
+	}
+
+	// JSONMapping: trace_id
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceID]) {
+		operator := pipelinetypes.PipelineOperator{
+			Type:    "trace_parser",
+			ID:      generateCustomID(),
+			OnError: signozstanzahelper.SendOnErrorQuiet,
+			TraceParser: &pipelinetypes.TraceParser{
+				TraceId: &pipelinetypes.ParseFrom{
+					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				},
+			},
+		}
+
+		children = append(children, operator)
+	}
+
+	// JSONMapping: span_id
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.SpanID]) {
+		operator := pipelinetypes.PipelineOperator{
+			Type:    "trace_parser",
+			ID:      generateCustomID(),
+			OnError: signozstanzahelper.SendOnErrorQuiet,
+			TraceParser: &pipelinetypes.TraceParser{
+				SpanId: &pipelinetypes.ParseFrom{
+					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				},
+			},
+		}
+
+		children = append(children, operator)
+	}
+
+	// JSONMapping: trace_flags
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.TraceFlags]) {
+		operator := pipelinetypes.PipelineOperator{
+			Type:    "trace_parser",
+			ID:      generateCustomID(),
+			OnError: signozstanzahelper.SendOnErrorQuiet,
+			TraceParser: &pipelinetypes.TraceParser{
+				TraceFlags: &pipelinetypes.ParseFrom{
+					ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+				},
+			},
+		}
+
+		children = append(children, operator)
+	}
+
+	// JSONMapping: severity
+	for _, keyword := range cloneAndReverse(mapping[pipelinetypes.Severity]) {
+		operator := pipelinetypes.PipelineOperator{
+			Type:      "severity_parser",
+			ID:        generateCustomID(),
+			OnError:   signozstanzahelper.SendOnErrorQuiet,
+			ParseFrom: fmt.Sprintf(`%s["%s"]`, parent.ParseTo, keyword),
+		}
+		err := processSeverityParser(&operator)
+		if err != nil {
+			return nil, err
+		}
+
+		operator.Mapping = pipelinetypes.DefaultSeverityMapping
+		children = append(children, operator)
+	}
+
+	// JSONMapping: environment
+	err = generateMoveOperators(mapping[pipelinetypes.Environment], `resource["deployment.environment.name"]`)
+	if err != nil {
+		return nil, err
+	}
+
+	// JSONMapping: body
+	err = generateMoveOperators(mapping[pipelinetypes.Message], `body`)
+	if err != nil {
+		return nil, err
+	}
+
+	// removed mapping reference so it doesn't appear in Collector's config
+	parent.Mapping = nil
+	return append(append([]pipelinetypes.PipelineOperator{}, *parent), children...), nil
+}
+
+// TODO: (Piyush) remove this in future
+func cleanTraceParser(operator *pipelinetypes.PipelineOperator) {
 	if operator.TraceId != nil && len(operator.TraceId.ParseFrom) < 1 {
 		operator.TraceId = nil
 	}
@@ -240,7 +408,7 @@ func cleanTraceParser(operator *PipelineOperator) {
 func fieldNotNilCheck(fieldPath string) (string, error) {
 	_, err := expr.Compile(fieldPath)
 	if err != nil {
-		return "", fmt.Errorf("invalid fieldPath %s: %w", fieldPath, err)
+		return "", errors.WrapInvalidInputf(err, CodeFieldNilCheckType, "invalid fieldPath %s", fieldPath)
 	}
 
 	// helper for turning `.` into `?.` in field paths.
@@ -269,7 +437,7 @@ func fieldNotNilCheck(fieldPath string) (string, error) {
 	// should come out to be (attributes.test != nil && attributes.test["a.b"]?.value != nil)
 	collectionNotNilCheck, err := fieldNotNilCheck(parts[0])
 	if err != nil {
-		return "", fmt.Errorf("couldn't generate nil check for %s: %w", parts[0], err)
+		return "", errors.WithAdditionalf(err, "couldn't generate nil check for %s", parts[0])
 	}
 
 	// generate nil check for entire path.

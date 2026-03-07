@@ -20,7 +20,7 @@ export const transformToOrderByStringValues = (
 			return {
 				label: `${
 					entityVersion === 'v4' ? query.spaceAggregation : query.aggregateOperator
-				}(${query.aggregateAttribute.key}) ${item.order}`,
+				}(${query.aggregateAttribute?.key || ''}) ${item.order}`,
 				value: `${item.columnName}${orderByValueDelimiter}${item.order}`,
 			};
 		}
@@ -74,7 +74,9 @@ export function splitOrderByFromString(str: string): OrderByPayload | null {
 	const order = splittedStr.pop() || ORDERBY_FILTERS.ASC;
 	const columnName = splittedStr.join(' ');
 
-	if (!columnName) return null;
+	if (!columnName) {
+		return null;
+	}
 
 	return { columnName, order };
 }

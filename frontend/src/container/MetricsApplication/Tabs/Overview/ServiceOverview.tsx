@@ -1,3 +1,5 @@
+import { useMemo } from 'react';
+import { useParams } from 'react-router-dom';
 import { Skeleton } from 'antd';
 import { ENTITY_VERSION_V4 } from 'constants/app';
 import { FeatureKeys } from 'constants/features';
@@ -10,12 +12,11 @@ import {
 import { getWidgetQueryBuilder } from 'container/MetricsApplication/MetricsApplication.factory';
 import { latency } from 'container/MetricsApplication/MetricsPageQueries/OverviewQueries';
 import { Card, GraphContainer } from 'container/MetricsApplication/styles';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import { resourceAttributesToTagFilterItems } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import { useMemo } from 'react';
-import { useParams } from 'react-router-dom';
+import { useAppContext } from 'providers/App/App';
 import { EQueryType } from 'types/common/dashboard';
 import { v4 as uuid } from 'uuid';
 
@@ -40,8 +41,10 @@ function ServiceOverview({
 	const { servicename: encodedServiceName } = useParams<IServiceName>();
 	const servicename = decodeURIComponent(encodedServiceName);
 
-	const isSpanMetricEnable = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnable =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	const { queries } = useResourceAttribute();
 
@@ -52,6 +55,10 @@ function ServiceOverview({
 			) || [],
 		[isSpanMetricEnable, queries],
 	);
+
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const latencyWidget = useMemo(
 		() =>
@@ -64,6 +71,7 @@ function ServiceOverview({
 						tagFilterItems,
 						isSpanMetricEnable,
 						topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -73,7 +81,13 @@ function ServiceOverview({
 				yAxisUnit: 'ns',
 				id: SERVICE_CHART_ID.latency,
 			}),
-		[isSpanMetricEnable, servicename, tagFilterItems, topLevelOperationsRoute],
+		[
+			isSpanMetricEnable,
+			servicename,
+			tagFilterItems,
+			topLevelOperationsRoute,
+			dotMetricsEnabled,
+		],
 	);
 
 	const isQueryEnabled =
@@ -82,6 +96,8 @@ function ServiceOverview({
 	const apmToTraceQuery = useGetAPMToTracesQueries({ servicename });
 
 	const apmToLogQuery = useGetAPMToLogsQueries({ servicename });
+
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -94,6 +110,7 @@ function ServiceOverview({
 					apmToTraceQuery: apmToLogQuery,
 					isViewLogsClicked: true,
 					stepInterval,
+					safeNavigate,
 				})}
 				onViewTracesClick={onViewTracePopupClick({
 					servicename,
@@ -101,6 +118,7 @@ function ServiceOverview({
 					timestamp: selectedTimeStamp,
 					apmToTraceQuery,
 					stepInterval,
+					safeNavigate,
 				})}
 			/>
 			<Card data-testid="service_latency">

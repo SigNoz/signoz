@@ -1,20 +1,22 @@
+import { useQuery } from 'react-query';
+import {
+	Skeleton,
+	Table,
+	TableColumnsType as ColumnsType,
+	Typography,
+} from 'antd';
+import getIngestionData from 'api/settings/getIngestionData';
+import { useAppContext } from 'providers/App/App';
+import { IngestionDataType } from 'types/api/settings/ingestion';
+
 import './IngestionSettings.styles.scss';
 
-import { Skeleton, Table, Typography } from 'antd';
-import type { ColumnsType } from 'antd/es/table';
-import getIngestionData from 'api/settings/getIngestionData';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
-import { IngestionDataType } from 'types/api/settings/ingestion';
-import AppReducer from 'types/reducer/app';
-
 export default function IngestionSettings(): JSX.Element {
-	const { user } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const { data: ingestionData, isFetching } = useQuery({
 		queryFn: getIngestionData,
-		queryKey: ['getIngestionData', user?.userId],
+		queryKey: ['getIngestionData', user?.id],
 	});
 
 	const columns: ColumnsType<IngestionDataType> = [

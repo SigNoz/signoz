@@ -1,0 +1,134 @@
+.details-drawer {
+	.ant-drawer-wrapper-body {
+		border-left: 1px solid var(--bg-slate-500);
+	}
+	.ant-drawer-header {
+		background: var(--bg-ink-400);
+		border-bottom: 1px solid var(--bg-slate-500);
+
+		.ant-drawer-header-title {
+			display: flex;
+			align-items: center;
+
+			.ant-drawer-close {
+				margin-inline-end: 0px;
+				padding: 0px;
+				padding-right: 16px;
+				border-right: 1px solid var(--bg-slate-500);
+			}
+
+			.ant-drawer-title {
+				padding-left: 16px;
+				color: var(--bg-vanilla-400);
+				font-family: Inter;
+				font-size: 14px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 20px; /* 142.857% */
+				letter-spacing: -0.07px;
+			}
+		}
+	}
+	.ant-drawer-body {
+		padding: 16px;
+		background: var(--bg-ink-400);
+
+		&::-webkit-scrollbar {
+			width: 0.1rem;
+		}
+	}
+
+	.details-drawer-tabs {
+		margin-top: 32px;
+
+		.ant-tabs-tab {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			width: 114px;
+			height: 32px;
+			flex-shrink: 0;
+			padding: 7px 20px;
+			border-radius: 2px 0px 0px 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-400);
+			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
+
+			color: #fff;
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 150% */
+			letter-spacing: -0.06px;
+
+			.ant-btn {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 0px;
+			}
+
+			.ant-btn:hover {
+				background: unset;
+			}
+		}
+
+		.ant-tabs-tab-active {
+			background: var(--bg-slate-400);
+		}
+
+		.ant-tabs-tab + .ant-tabs-tab {
+			margin-left: 0px;
+		}
+
+		.ant-tabs-nav::before {
+			border-bottom: 0px;
+		}
+
+		.ant-tabs-ink-bar {
+			background: none;
+		}
+	}
+}
+
+.lightMode {
+	.details-drawer {
+		.ant-drawer-wrapper-body {
+			border-left: 1px solid var(--bg-vanilla-300);
+		}
+		.ant-drawer-header {
+			background: var(--bg-vanilla-200);
+			border-bottom: 1px solid var(--bg-vanilla-300);
+
+			.ant-drawer-header-title {
+				.ant-drawer-close {
+					border-right: 1px solid var(--bg-vanilla-300);
+				}
+
+				.ant-drawer-title {
+					color: var(--bg-ink-400);
+				}
+			}
+		}
+		.ant-drawer-body {
+			background: var(--bg-vanilla-200);
+		}
+
+		.details-drawer-tabs {
+			.ant-tabs-tab {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+				color: var(--bg-ink-400);
+			}
+
+			.ant-tabs-tab-active {
+				background: var(--bg-vanilla-200);
+			}
+
+			.ant-tabs-tab + .ant-tabs-tab {
+				border-left: none;
+			}
+		}
+	}
+}

@@ -1,8 +1,7 @@
-/* eslint-disable react/no-unstable-nested-components */
+import { useCallback, useMemo, useRef } from 'react';
 import type { SelectProps } from 'antd';
 import { Tag, Tooltip } from 'antd';
-import { BaseOptionType } from 'antd/es/select';
-import { useCallback, useMemo, useRef } from 'react';
+import type { BaseOptionType } from 'antd/es/select';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Container, Select } from './styles';
@@ -20,7 +19,6 @@ function TextOverflowTooltip({
 		<Tooltip
 			placement="left"
 			title={option.value}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...(!isOverflow ? { open: false } : {})}
 		>
 			<div className="ant-select-item-option-content" ref={contentRef}>
@@ -65,11 +63,14 @@ function Filter({
 
 	const uniqueLabels: Array<string> = useMemo(() => {
 		const allLabelsSet = new Set<string>();
-		allAlerts.forEach((e) =>
+		allAlerts.forEach((e) => {
+			if (!e.labels) {
+				return;
+			}
 			Object.keys(e.labels).forEach((e) => {
 				allLabelsSet.add(e);
-			}),
-		);
+			});
+		});
 		return [...allLabelsSet];
 	}, [allAlerts]);
 

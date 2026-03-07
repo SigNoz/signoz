@@ -3,7 +3,10 @@ export interface CheckoutSuccessPayloadProps {
 }
 
 export interface CheckoutRequestPayloadProps {
-	licenseKey: string;
-	successURL: string;
-	cancelURL: string;
+	url: string;
+}
+
+export interface PayloadProps {
+	data: CheckoutSuccessPayloadProps;
+	status: string;
 }

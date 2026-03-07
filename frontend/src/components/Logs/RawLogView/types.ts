@@ -1,3 +1,6 @@
+import { MouseEvent } from 'react';
+import { VIEW_TYPES } from 'components/LogDetail/constants';
+import { ChangeViewFunctionType } from 'container/ExplorerOptions/types';
 import { FontSize } from 'container/OptionsMenu/types';
 import { IField } from 'types/api/logs/fields';
 import { ILog } from 'types/api/logs/log';
@@ -6,10 +9,19 @@ export interface RawLogViewProps {
 	isActiveLog?: boolean;
 	isReadOnly?: boolean;
 	isTextOverflowEllipsisDisabled?: boolean;
+	isHighlighted?: boolean;
+	helpTooltip?: string;
 	data: ILog;
 	linesPerRow: number;
 	fontSize: FontSize;
 	selectedFields?: IField[];
+	onLogClick?: (log: ILog, event: MouseEvent) => void;
+	handleChangeSelectedView?: ChangeViewFunctionType;
+	onSetActiveLog?: (
+		log: ILog,
+		selectedTab?: typeof VIEW_TYPES[keyof typeof VIEW_TYPES],
+	) => void;
+	onClearActiveLog?: () => void;
 }
 
 export interface RawLogContentProps {

@@ -4,22 +4,8 @@ import (
 	"context"
 	"strings"
 
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
-
-type LogsLiveTailClientV2 struct {
-	Name  string
-	Logs  chan *SignozLogV2
-	Done  chan *bool
-	Error chan error
-}
-
-type LogsLiveTailClient struct {
-	Name  string
-	Logs  chan *SignozLog
-	Done  chan *bool
-	Error chan error
-}
 
 type QueryProgress struct {
 	ReadRows uint64 `json:"read_rows"`

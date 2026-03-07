@@ -1,8 +1,8 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { EditFilled, PlusOutlined } from '@ant-design/icons';
 import logEvent from 'api/common/logEvent';
 import TextToolTip from 'components/TextToolTip';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 import { ActionMode, ActionType, Pipeline } from 'types/api/pipeline/def';
 
 import { ButtonContainer, CustomButton } from '../../styles';

@@ -4,4 +4,5 @@ export interface IGetAggregateAttributePayload {
 	aggregateOperator: string;
 	dataSource: DataSource;
 	searchText: string;
+	source?: 'meter' | '';
 }

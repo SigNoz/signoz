@@ -11,6 +11,7 @@
 	}
 
 	.hosts-list-controls {
+		flex: 1;
 		padding: 8px;
 
 		display: flex;
@@ -51,6 +52,43 @@
 		cursor: pointer;
 	}
 
+	.hosts-list-content {
+		display: flex;
+		flex-direction: row;
+		align-items: stretch;
+		height: calc(100vh - 110px);
+
+		.hosts-quick-filters-container {
+			width: 280px;
+			min-width: 280px;
+			border-right: 1px solid var(--bg-slate-400);
+			height: 100%;
+
+			.hosts-quick-filters-container-header {
+				padding: 8px;
+				border-bottom: 1px solid var(--bg-slate-400);
+
+				display: flex;
+				align-items: center;
+				justify-content: space-between;
+			}
+		}
+	}
+
+	.hosts-list-table-container {
+		flex: 1;
+
+		.hosts-list-table-header {
+			display: flex;
+			justify-content: space-between;
+			align-items: center;
+
+			.quick-filters-toggle-container {
+				padding: 0 8px;
+			}
+		}
+	}
+
 	.hosts-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
@@ -88,17 +126,35 @@
 				background: var(--bg-ink-500);
 			}
 
-			.ant-table-cell:has(.hostname-column-value) {
+			.ant-table-cell:has(.hostname-column-value),
+			.ant-table-cell:has(.hostname-cell-missing) {
 				background: var(--bg-ink-400);
 			}
 
 			.hostname-column-value {
-				color: var(--Vanilla-100, #fff);
+				color: var(--bg-vanilla-100);
 				font-family: 'Geist Mono';
 				font-style: normal;
 				font-weight: 600;
 				line-height: 20px; /* 142.857% */
 				letter-spacing: -0.07px;
+			}
+
+			.hostname-cell-missing {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+
+			.hostname-cell-placeholder {
+				color: var(--Vanilla-400, #c0c1c3);
+			}
+
+			.hostname-cell-warning-icon {
+				display: inline-flex;
+				align-items: center;
+				margin-left: 4px;
+				cursor: help;
 			}
 
 			.status-cell {
@@ -134,8 +190,23 @@
 			.ant-table-cell:nth-child(n + 3) {
 				padding-right: 24px;
 			}
+			.status-header {
+				display: flex;
+				align-items: center;
+				gap: 4px;
+			}
+			.memory-usage-header {
+				display: flex;
+				align-items: center;
+				justify-content: flex-end;
+				gap: 4px;
+				margin-right: 4px;
+			}
 			.column-header-right {
 				text-align: right;
+			}
+			.column-header-left {
+				text-align: left;
 			}
 			.ant-table-tbody > tr > td {
 				border-bottom: none;
@@ -155,13 +226,13 @@
 		.ant-pagination {
 			position: fixed;
 			bottom: 0;
-			width: calc(100% - 64px);
+			width: calc(100% - 364px);
 			background: var(--bg-ink-500);
 			padding: 16px;
 			margin: 0;
 
-			// this is to offset intercom icon till we improve the design
-			padding-right: 72px;
+			// this is to offset chat support icon till we improve the design
+			right: 20px;
 
 			.ant-pagination-item {
 				border-radius: 4px;
@@ -211,6 +282,7 @@
 	display: flex;
 	flex-direction: column;
 	gap: 2px;
+	flex: 1;
 
 	.hosts-list-loading-state-item {
 		height: 48px;
@@ -219,6 +291,7 @@
 }
 
 .no-filtered-hosts-message-container {
+	flex: 1;
 	height: 30vh;
 	display: flex;
 	flex-direction: column;
@@ -243,6 +316,7 @@
 .hosts-empty-state-container {
 	padding: 16px;
 	height: 40vh;
+	flex: 1;
 	display: flex;
 	flex-direction: column;
 	align-items: center;
@@ -306,12 +380,17 @@
 				color: var(--bg-ink-500);
 			}
 
-			.ant-table-cell:has(.hostname-column-value) {
+			.ant-table-cell:has(.hostname-column-value),
+			.ant-table-cell:has(.hostname-cell-missing) {
 				background: var(--bg-vanilla-100);
 			}
 
 			.hostname-column-value {
 				color: var(--bg-ink-300);
+			}
+
+			.hostname-cell-placeholder {
+				color: var(--text-ink-300);
 			}
 
 			.ant-table-tbody > tr:hover > td {

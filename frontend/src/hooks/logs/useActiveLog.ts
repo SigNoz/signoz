@@ -1,16 +1,20 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQueryClient } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useHistory, useLocation } from 'react-router-dom';
 import { getAggregateKeys } from 'api/queryBuilder/getAttributeKeys';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { OPERATORS, QueryBuilderKeys } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
+import { MetricsType } from 'container/MetricsApplication/constant';
 import { getOperatorValue } from 'container/QueryBuilder/filters/QueryBuilderSearch/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import { chooseAutocompleteFromCustomValue } from 'lib/newQueryBuilder/chooseAutocompleteFromCustomValue';
-import { useCallback, useMemo, useState } from 'react';
-import { useQueryClient } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useHistory, useLocation } from 'react-router-dom';
 import { AppState } from 'store/reducers';
 import { SET_DETAILED_LOG_DATA } from 'types/actions/logs';
 import { ILog } from 'types/api/logs/log';
@@ -34,6 +38,7 @@ export function getOldLogsOperatorFromNew(operator: string): string {
 			return operator;
 	}
 }
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export const useActiveLog = (): UseActiveLog => {
 	const dispatch = useDispatch();
 
@@ -51,6 +56,20 @@ export const useActiveLog = (): UseActiveLog => {
 	]);
 
 	const [activeLog, setActiveLog] = useState<ILog | null>(null);
+
+	// Close drawer/clear active log when query in URL changes
+	const urlQuery = useUrlQuery();
+	const compositeQuery = urlQuery.get(QueryParams.compositeQuery) ?? '';
+	const prevQueryRef = useRef<string | null>(null);
+	useEffect(() => {
+		if (
+			prevQueryRef.current !== null &&
+			prevQueryRef.current !== compositeQuery
+		) {
+			setActiveLog(null);
+		}
+		prevQueryRef.current = compositeQuery;
+	}, [compositeQuery]);
 
 	const onSetDetailedLogData = useCallback(
 		(logData: ILog) => {
@@ -80,8 +99,8 @@ export const useActiveLog = (): UseActiveLog => {
 			fieldKey: string,
 			fieldValue: string,
 			operator: string,
-			isJSON?: boolean,
 			dataType?: DataTypes,
+			fieldType?: MetricsType | undefined,
 		): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
@@ -89,10 +108,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 
@@ -102,8 +122,8 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
-					isJSON,
 					dataType,
+					fieldType,
 				);
 
 				const currentOperator = getOperatorValue(operator);
@@ -117,7 +137,7 @@ export const useActiveLog = (): UseActiveLog => {
 							filters: {
 								...item.filters,
 								items: [
-									...item.filters.items,
+									...(item.filters?.items || []),
 									{
 										id: uuid(),
 										key: existAutocompleteKey,
@@ -125,6 +145,7 @@ export const useActiveLog = (): UseActiveLog => {
 										value: fieldValue,
 									},
 								],
+								op: item.filters?.op || 'AND',
 							},
 						})),
 					},
@@ -139,11 +160,7 @@ export const useActiveLog = (): UseActiveLog => {
 	);
 
 	const onGroupByAttribute = useCallback(
-		async (
-			fieldKey: string,
-			isJSON?: boolean,
-			dataType?: DataTypes,
-		): Promise<void> => {
+		async (fieldKey: string, dataType?: DataTypes): Promise<void> => {
 			try {
 				const keysAutocompleteResponse = await queryClient.fetchQuery(
 					[QueryBuilderKeys.GET_AGGREGATE_KEYS, fieldKey],
@@ -151,10 +168,11 @@ export const useActiveLog = (): UseActiveLog => {
 					async () =>
 						getAggregateKeys({
 							searchText: fieldKey,
-							aggregateOperator: currentQuery.builder.queryData[0].aggregateOperator,
+							aggregateOperator:
+								currentQuery.builder.queryData[0].aggregateOperator || '',
 							dataSource: currentQuery.builder.queryData[0].dataSource,
 							aggregateAttribute:
-								currentQuery.builder.queryData[0].aggregateAttribute.key,
+								currentQuery.builder.queryData[0].aggregateAttribute?.key || '',
 						}),
 				);
 
@@ -164,7 +182,6 @@ export const useActiveLog = (): UseActiveLog => {
 				const existAutocompleteKey = chooseAutocompleteFromCustomValue(
 					keysAutocomplete,
 					fieldKey,
-					isJSON,
 					dataType,
 				);
 

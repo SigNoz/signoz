@@ -1,0 +1,39 @@
+# yaml-language-server: $schema=https://goreleaser.com/static/schema-pro.json
+# vim: set ts=2 sw=2 tw=0 fo=cnqoj
+version: 2
+
+project_name: histogram-quantile
+
+monorepo:
+  tag_prefix: histogram-quantile/
+
+before:
+  hooks:
+    - go mod tidy
+
+builds:
+  - id: signoz
+    binary: bin/histogram-quantile
+    main: scripts/clickhouse/histogramquantile/main.go
+    goos:
+      - linux
+      - darwin
+    goarch:
+      - amd64
+      - arm64
+    goamd64:
+      - v1
+    goarm64:
+      - v8.0
+
+archives:
+  - formats:
+      - tar.gz
+    name_template: >-
+      {{ .ProjectName }}_{{- .Os }}_{{- .Arch }}
+    files:
+      - README.md
+      - LICENSE
+
+release:
+  name_template: "histogram-quantile/v{{ .Version }}"

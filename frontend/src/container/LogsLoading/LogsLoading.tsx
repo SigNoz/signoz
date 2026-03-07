@@ -1,8 +1,8 @@
-import './LogsLoading.styles.scss';
-
-import { Typography } from 'antd';
 import { useTranslation } from 'react-i18next';
+import { Typography } from 'antd';
 import { DataSource } from 'types/common/queryBuilder';
+
+import './LogsLoading.styles.scss';
 
 export function LogsLoading(): JSX.Element {
 	const { t } = useTranslation('common');

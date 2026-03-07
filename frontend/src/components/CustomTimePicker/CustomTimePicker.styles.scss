@@ -1,6 +1,16 @@
 .custom-time-picker {
 	display: flex;
 	flex-direction: column;
+
+	.timeSelection-input {
+		&:hover {
+			border-color: #1d212d !important;
+		}
+	}
+
+	.time-input-suffix {
+		display: flex;
+	}
 }
 
 .time-options-container {
@@ -26,7 +36,6 @@
 }
 
 .time-selection-dropdown-content {
-	min-width: 172px;
 	width: 100%;
 }
 
@@ -38,18 +47,16 @@
 	padding: 4px 8px;
 	padding-left: 0px !important;
 
-	&.custom-time {
-		input:not(:focus) {
-			min-width: 280px;
+	input {
+		width: 280px;
+
+		&::placeholder {
+			color: white;
 		}
-	}
 
-	input::placeholder {
-		color: white;
-	}
-
-	input:focus::placeholder {
-		color: rgba($color: #ffffff, $alpha: 0.4);
+		&:focus::placeholder {
+			color: rgba($color: #ffffff, $alpha: 0.4);
+		}
 	}
 }
 
@@ -124,6 +131,45 @@
 	border-top: 1px solid var(--bg-ink-200);
 	padding: 8px 14px;
 	.timezone-container {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		&__left {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+
+			.timezone__name {
+				font-size: 12px;
+				line-height: 16px;
+				color: var(--bg-robin-400);
+				font-weight: 500;
+			}
+
+			.timezone__separator {
+				font-size: 12px;
+				line-height: 16px;
+				color: var(--bg-robin-300);
+				font-weight: 500;
+			}
+
+			.timezone__offset {
+				font-size: 11px;
+				line-height: 14px;
+				color: var(--bg-robin-400);
+				font-weight: 500;
+			}
+		}
+
+		&__right {
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			gap: 6px;
+		}
+
 		&,
 		.timezone {
 			font-family: Inter;
@@ -131,10 +177,12 @@
 			line-height: 16px;
 			letter-spacing: -0.06px;
 		}
+
 		display: flex;
 		align-items: center;
 		color: var(--bg-vanilla-400);
 		gap: 6px;
+
 		.timezone {
 			display: flex;
 			align-items: center;
@@ -148,7 +196,68 @@
 		}
 	}
 }
+
 .timezone-badge {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: 2px;
+	color: var(--bg-vanilla-400);
+	background-color: var(--bg-ink-200);
+	font-size: 9px;
+	font-weight: 400;
+	line-height: 12px;
+	letter-spacing: -0.045px;
+	margin-right: 4px;
+	width: 72px;
+	cursor: pointer;
+}
+
+.time-input-prefix {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0 4px;
+	border-radius: 3px;
+
+	width: 36px;
+
+	font-size: 11px;
+	color: var(--bg-vanilla-400);
+	background-color: var(--bg-ink-200);
+	cursor: pointer;
+
+	&.is-live {
+		background-color: transparent;
+		color: var(--bg-forest-500);
+	}
+
+	.live-dot-icon {
+		width: 8px;
+		height: 8px;
+		border-radius: 50%;
+		background-color: var(--bg-forest-500);
+		animation: ripple 1s infinite;
+
+		margin-right: 4px;
+		margin-left: 4px;
+	}
+}
+
+@keyframes ripple {
+	0% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+	}
+	60% {
+		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+	}
+	100% {
+		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+	}
+}
+
+.time-input-suffix-icon-badge {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -161,17 +270,22 @@
 	line-height: 16px;
 	letter-spacing: -0.06px;
 	cursor: pointer;
+	height: 20px;
+	width: 20px;
+
+	&:hover {
+		background: rgba(171, 189, 255, 0.08);
+	}
 }
 
 .lightMode {
 	.date-time-popover__footer {
 		border-color: var(--bg-vanilla-400);
 	}
+
 	.timezone-container {
 		color: var(--bg-ink-400);
-		&__clock-icon {
-			stroke: var(--bg-ink-400);
-		}
+
 		.timezone {
 			color: var(--bg-ink-100);
 			background: rgb(179 179 179 / 15%);
@@ -180,8 +294,31 @@
 			}
 		}
 	}
+
+	.custom-time-picker {
+		.timeSelection-input {
+			&:hover {
+				border-color: var(--bg-vanilla-300) !important;
+			}
+		}
+	}
+
 	.timezone-badge {
 		color: var(--bg-ink-100);
 		background: rgb(179 179 179 / 15%);
+	}
+
+	.time-input-prefix {
+		background-color: var(--bg-vanilla-300);
+		color: var(--bg-ink-400);
+	}
+
+	.time-input-suffix-icon-badge {
+		color: var(--bg-ink-100);
+		background: rgb(179 179 179 / 15%);
+
+		&:hover {
+			background: rgb(179 179 179 / 20%);
+		}
 	}
 }

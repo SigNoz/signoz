@@ -1,7 +1,11 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import '../MQDetails.style.scss';
-
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { Table, Typography } from 'antd';
+import logEvent from 'api/common/logEvent';
+import { MessagingQueueServicePayload } from 'api/messagingQueues/getConsumerLagDetails';
+import { getKafkaSpanEval } from 'api/messagingQueues/getKafkaSpanEval';
 import axios from 'axios';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
@@ -13,20 +17,17 @@ import {
 	MessagingQueuesViewType,
 	RowData,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useEffect, useMemo, useState } from 'react';
-import { useMutation } from 'react-query';
-import { useSelector } from 'react-redux';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
-import { MessagingQueueServicePayload } from '../MQTables/getConsumerLagDetails';
-import { getKafkaSpanEval } from '../MQTables/getKafkaSpanEval';
 import {
 	convertToMilliseconds,
 	DropRateAPIResponse,
 	DropRateResponse,
 } from './dropRateViewUtils';
 import EvaluationTimeSelector from './EvaluationTimeSelector';
+
+import '../MQDetails.style.scss';
 
 export function getTableData(data: DropRateResponse[]): RowData[] {
 	if (data?.length === 0) {
@@ -93,6 +94,9 @@ export function getColumns(
 											className="traceid-text"
 											onClick={(): void => {
 												window.open(`${ROUTES.TRACE}/${item}`, '_blank');
+												logEvent(`MQ Kafka: Drop Rate - traceid navigation`, {
+													item,
+												});
 											}}
 										>
 											{item}
@@ -128,8 +132,9 @@ export function getColumns(
 			}
 
 			if (column === 'breach_percentage' && text) {
-				if (!isNumber(text))
+				if (!isNumber(text)) {
 					return <Typography.Text>{text.toString()}</Typography.Text>;
+				}
 				return (
 					<Typography.Text>
 						{(typeof text === 'string' ? parseFloat(text) : text).toFixed(2)} %
@@ -217,7 +222,6 @@ function DropRateView(): JSX.Element {
 			setColumns(getColumns(data, visibleCounts, handleShowMore));
 			setTableData(getTableData(data));
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [data, visibleCounts]);
 
 	useEffect(() => {
@@ -226,6 +230,22 @@ function DropRateView(): JSX.Element {
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, evaluationTime]);
+
+	const prevTableDataRef = useRef<string>();
+
+	useEffect(() => {
+		if (tableData.length > 0) {
+			const currentTableData = JSON.stringify(tableData);
+
+			if (currentTableData !== prevTableDataRef.current) {
+				logEvent(`MQ Kafka: Drop Rate View`, {
+					dataRender: tableData.length,
+				});
+				prevTableDataRef.current = currentTableData;
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [JSON.stringify(tableData)]);
 
 	return (
 		<div className={cx('mq-overview-container', 'droprate-view')}>

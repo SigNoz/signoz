@@ -4,9 +4,13 @@ import { ROLES } from 'types/roles';
 export interface PendingInvite {
 	createdAt: number;
 	email: User['email'];
-	name: User['name'];
+	name: User['displayName'];
 	role: ROLES;
+	id: string;
 	token: string;
 }
 
-export type PayloadProps = PendingInvite[];
+export type PayloadProps = {
+	data: PendingInvite[];
+	status: string;
+};

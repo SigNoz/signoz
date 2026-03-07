@@ -1,0 +1,145 @@
+.auth-error-container {
+	margin-top: 24px;
+	width: 100%;
+	animation: horizontal-shaking 300ms ease-out;
+
+	.error-content {
+		background: rgba(229, 72, 77, 0.1);
+		border: 1px solid rgba(229, 72, 77, 0.2);
+		border-radius: 4px;
+
+		&__summary-section {
+			border-bottom: 1px solid rgba(229, 72, 77, 0.2);
+		}
+
+		&__summary {
+			padding: 16px;
+		}
+
+		&__summary-left {
+			gap: 10px;
+		}
+
+		&__icon-wrapper {
+			width: 12px;
+			height: 12px;
+			flex-shrink: 0;
+		}
+
+		&__summary-text {
+			gap: 6px;
+		}
+
+		&__error-code {
+			color: #fadadb;
+			font-size: 13px;
+			font-weight: 500;
+			line-height: 1;
+			letter-spacing: -0.065px;
+		}
+
+		&__error-message {
+			color: #f5b6b8;
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.065px;
+		}
+
+		&__message-badge {
+			padding: 0px 16px 16px;
+		}
+
+		&__message-badge-label-text {
+			color: #fadadb;
+		}
+
+		&__message-badge-line {
+			background-image: radial-gradient(
+				circle,
+				rgba(229, 72, 77, 0.3) 1px,
+				transparent 2px
+			);
+		}
+
+		&__messages-section {
+			padding: 0;
+		}
+
+		&__message-list {
+			max-height: 200px;
+		}
+
+		&__message-item {
+			color: #f5b6b8;
+			font-size: 13px;
+			font-weight: 400;
+			line-height: 20px;
+			letter-spacing: -0.065px;
+
+			&::before {
+				background: #f5b6b8;
+			}
+		}
+
+		&__scroll-hint {
+			background: rgba(229, 72, 77, 0.2);
+		}
+
+		&__scroll-hint-text {
+			color: #fadadb;
+		}
+	}
+
+	.auth-error-icon {
+		color: var(--bg-cherry-300);
+		padding-top: 1px;
+	}
+}
+
+.lightMode {
+	.auth-error-container {
+		.error-content {
+			background: rgba(229, 72, 77, 0.1);
+			border-color: rgba(229, 72, 77, 0.2);
+
+			&__error-code {
+				color: var(--bg-ink-100);
+			}
+
+			&__error-message {
+				color: var(--bg-ink-400);
+			}
+
+			&__message-item {
+				color: var(--bg-ink-400);
+
+				&::before {
+					background: var(--bg-ink-400);
+				}
+			}
+
+			&__scroll-hint-text {
+				color: var(--bg-ink-100);
+			}
+		}
+	}
+}
+
+@keyframes horizontal-shaking {
+	0% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(5px);
+	}
+	50% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}

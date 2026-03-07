@@ -1,10 +1,9 @@
 .label-column {
+	display: flex;
+	flex-wrap: wrap;
 
-    display: flex;
-    flex-wrap: wrap;
-
-    .label-column--tag {
-        white-space: normal;
-        margin: 0.2rem 0.2rem;
-    }
+	.label-column--tag {
+		white-space: normal;
+		margin: 0.2rem 0.2rem;
+	}
 }

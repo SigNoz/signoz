@@ -1,7 +1,7 @@
-import Spinner from 'components/Spinner';
-import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import ReactDragListView from 'react-drag-listview';
 import { TableComponents } from 'react-virtuoso';
+import Spinner from 'components/Spinner';
+import { dragColumnParams } from 'hooks/useDragColumns/configs';
 
 import { TableStyled } from './styles';
 
@@ -20,7 +20,6 @@ export const LogsCustomTable = ({
 		}
 		return (
 			<ReactDragListView.DragColumn
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...dragColumnParams}
 				onDragEnd={handleDragEnd}
 			>

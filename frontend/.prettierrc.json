@@ -4,5 +4,14 @@
 	"tabWidth": 1,
 	"singleQuote": true,
 	"jsxSingleQuote": false,
-	"semi": true
+	"semi": true,
+	"printWidth": 80,
+	"bracketSpacing": true,
+	"jsxBracketSameLine": false,
+	"arrowParens": "always",
+	"endOfLine": "lf",
+	"quoteProps": "as-needed",
+	"proseWrap": "preserve",
+	"htmlWhitespaceSensitivity": "css",
+	"embeddedLanguageFormatting": "auto"
 }

@@ -8,7 +8,7 @@ import { handleKeyDownLimitFilter } from '../utils';
 function LimitFilter({ onChange, query }: LimitFilterProps): JSX.Element {
 	const isMetricsDataSource = query.dataSource === DataSource.METRICS;
 
-	const isDisabled = isMetricsDataSource && !query.aggregateAttribute.key;
+	const isDisabled = isMetricsDataSource && !query.aggregateAttribute?.key;
 
 	return (
 		<InputNumber

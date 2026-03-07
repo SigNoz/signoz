@@ -4,8 +4,10 @@ import (
 	"context"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 // A Rule encapsulates a vector expression which is evaluated at a specified
@@ -13,25 +15,28 @@ import (
 type Rule interface {
 	ID() string
 	Name() string
-	Type() RuleType
+	Type() ruletypes.RuleType
 
 	Labels() labels.BaseLabels
 	Annotations() labels.BaseLabels
-	Condition() *RuleCondition
-	EvalDelay() time.Duration
-	EvalWindow() time.Duration
-	HoldDuration() time.Duration
+	Condition() *ruletypes.RuleCondition
+	EvalDelay() valuer.TextDuration
+	EvalWindow() valuer.TextDuration
+	HoldDuration() valuer.TextDuration
 	State() model.AlertState
-	ActiveAlerts() []*Alert
+	ActiveAlerts() []*ruletypes.Alert
+	// ActiveAlertsLabelFP returns a map of active alert labels fingerprint
+	ActiveAlertsLabelFP() map[uint64]struct{}
 
 	PreferredChannels() []string
 
-	Eval(context.Context, time.Time) (interface{}, error)
+	// Eval evaluates the rule at the given timestamp and returns the number of active alerts.
+	Eval(context.Context, time.Time) (int, error)
 	String() string
 	SetLastError(error)
 	LastError() error
-	SetHealth(RuleHealth)
-	Health() RuleHealth
+	SetHealth(ruletypes.RuleHealth)
+	Health() ruletypes.RuleHealth
 	SetEvaluationDuration(time.Duration)
 	GetEvaluationDuration() time.Duration
 	SetEvaluationTimestamp(time.Time)

@@ -1,14 +1,15 @@
-import '../GantChart.styles.scss';
-
+import { useEffect } from 'react';
 import { Popover, Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { convertTimeToRelevantUnit } from 'container/TraceDetail/utils';
 import dayjs from 'dayjs';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useTimezone } from 'providers/Timezone';
-import { useEffect } from 'react';
 import { toFixed } from 'utils/toFixed';
 
 import { SpanBorder, SpanLine, SpanText, SpanWrapper } from './styles';
+
+import '../GantChart.styles.scss';
 
 interface SpanLengthProps {
 	globalStart: number;
@@ -43,7 +44,7 @@ function Span(props: SpanLengthProps): JSX.Element {
 	const getContent = (): JSX.Element => {
 		const timeStamp = dayjs(startTime)
 			.tz(timezone.value)
-			.format('h:mm:ss:SSS A (UTC Z)');
+			.format(DATE_TIME_FORMATS.TIME_UTC_MS);
 		const startTimeInMs = startTime - globalStart;
 		return (
 			<div>

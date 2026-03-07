@@ -1,3 +1,4 @@
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { Format } from 'container/NewWidget/RightContainer/types';
 import { EQueryType } from 'types/common/dashboard';
 import {
@@ -6,6 +7,14 @@ import {
 	ReduceOperators,
 } from 'types/common/queryBuilder';
 
+import {
+	Filter,
+	Having as HavingV5,
+	LogAggregation,
+	MetricAggregation,
+	QueryFunction,
+	TraceAggregation,
+} from '../v5/queryRange';
 import { BaseAutocompleteData } from './queryAutocompleteResponse';
 
 // Type for Formula
@@ -20,11 +29,13 @@ export interface IBuilderFormula {
 	orderBy?: OrderByPayload[];
 }
 
+export type IBuilderTraceOperator = IBuilderQuery;
+
 export interface TagFilterItem {
 	id: string;
 	key?: BaseAutocompleteData;
 	op: string;
-	value: string[] | string | number | boolean;
+	value: (string | number | boolean)[] | string | number | boolean;
 }
 
 export interface TagFilter {
@@ -57,25 +68,28 @@ export interface QueryFunctionProps {
 export type IBuilderQuery = {
 	queryName: string;
 	dataSource: DataSource;
-	aggregateOperator: string;
-	aggregateAttribute: BaseAutocompleteData;
-	timeAggregation: string;
+	aggregateOperator?: string;
+	aggregateAttribute?: BaseAutocompleteData;
+	aggregations?: TraceAggregation[] | LogAggregation[] | MetricAggregation[];
+	timeAggregation?: string;
 	spaceAggregation?: string;
 	temporality?: string;
-	functions: QueryFunctionProps[];
-	filters: TagFilter;
+	functions: QueryFunction[];
+	filter?: Filter;
+	filters?: TagFilter;
 	groupBy: BaseAutocompleteData[];
 	expression: string;
 	disabled: boolean;
-	having: Having[];
+	having: Having[] | HavingV5;
 	limit: number | null;
-	stepInterval: number;
+	stepInterval: number | undefined | null;
 	orderBy: OrderByPayload[];
-	reduceTo: ReduceOperators;
+	reduceTo?: ReduceOperators;
 	legend: string;
 	pageSize?: number;
 	offset?: number;
-	selectColumns?: BaseAutocompleteData[];
+	selectColumns?: BaseAutocompleteData[] | TelemetryFieldKey[];
+	source?: 'meter' | '';
 };
 
 export interface IClickHouseQuery {
@@ -106,12 +120,13 @@ export type BuilderClickHouseResource = Record<string, IClickHouseQuery>;
 export type BuilderPromQLResource = Record<string, IPromQLQuery>;
 export type BuilderQueryDataResourse = Record<
 	string,
-	IBuilderQuery | IBuilderFormula
+	IBuilderQuery | IBuilderFormula | IBuilderTraceOperator
 >;
 
 export type MapData =
 	| IBuilderQuery
 	| IBuilderFormula
+	| IBuilderTraceOperator
 	| IClickHouseQuery
 	| IPromQLQuery;
 

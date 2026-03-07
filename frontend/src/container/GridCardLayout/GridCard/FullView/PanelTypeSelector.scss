@@ -1,0 +1,42 @@
+.panel-type-selector {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+	margin-left: 16px;
+	min-width: 180px;
+
+	.typography {
+		font-size: 12px;
+		font-weight: 500;
+		color: var(--bg-slate-600);
+		line-height: 16px;
+		white-space: nowrap;
+	}
+
+	.panel-type-select {
+		.view-panel-select-option {
+			display: flex;
+			align-items: center;
+			gap: 8px;
+
+			.icon {
+				display: flex;
+				align-items: center;
+				justify-content: center;
+			}
+
+			.display {
+				font-size: 14px;
+				line-height: 20px;
+			}
+		}
+	}
+}
+
+.ant-select-item-option-content {
+	.view-panel-select-option {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+	}
+}

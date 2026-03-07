@@ -1,9 +1,8 @@
-import './AlertLabels.styles.scss';
-
 import KeyValueLabel from 'periscope/components/KeyValueLabel';
 import SeeMore from 'periscope/components/SeeMore';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+import './AlertLabels.styles.scss';
+
 export type AlertLabelsProps = {
 	labels: Record<string, any>;
 	initialCount?: number;

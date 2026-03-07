@@ -1,0 +1,27 @@
+services:
+
+  postgres:
+    image: postgres:15
+    container_name: postgres
+    environment:
+      POSTGRES_DB: signoz
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "pg_isready",
+          "-d",
+          "signoz",
+          "-U",
+          "postgres"
+        ]
+      interval: 30s
+      timeout: 30s
+      retries: 3
+    restart: on-failure
+    ports:
+      - "127.0.0.1:5432:5432/tcp"
+    volumes:
+      - ${PWD}/fs/tmp/var/lib/postgresql/data/:/var/lib/postgresql/data/

@@ -1,7 +1,7 @@
+import RGL, { WidthProvider } from 'react-grid-layout';
 import { Button as ButtonComponent, Card as CardComponent, Space } from 'antd';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
-import RGL, { WidthProvider } from 'react-grid-layout';
 import styled, { css } from 'styled-components';
 
 const ReactGridLayoutComponent = WidthProvider(RGL);
@@ -17,12 +17,6 @@ export const Card = styled(CardComponent)<CardProps>`
 		overflow: hidden;
 		border-radius: 3px;
 		border: 1px solid var(--bg-slate-500);
-		background: linear-gradient(
-				0deg,
-				rgba(171, 189, 255, 0) 0%,
-				rgba(171, 189, 255, 0) 100%
-			),
-			#0b0c0e;
 
 		${({ isDarkMode }): StyledCSS =>
 			!isDarkMode &&

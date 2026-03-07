@@ -1,5 +1,5 @@
-import debounce from 'lodash-es/debounce';
 import { useMemo, useRef } from 'react';
+import debounce from 'lodash-es/debounce';
 
 export interface DebouncedFunc<T extends (...args: unknown[]) => unknown> {
 	(...args: Parameters<T>): ReturnType<T> | undefined;

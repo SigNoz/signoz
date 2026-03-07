@@ -1,6 +1,6 @@
+import { useMemo } from 'react';
 import { Select, Spin } from 'antd';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
-import { useMemo } from 'react';
 import { MetricAggregateOperator } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -29,13 +29,13 @@ function OrderByFilter({
 
 	const { data, isFetching } = useGetAggregateKeys(
 		{
-			aggregateAttribute: query.aggregateAttribute.key,
+			aggregateAttribute: query.aggregateAttribute?.key || '',
 			dataSource: query.dataSource,
-			aggregateOperator: query.aggregateOperator,
+			aggregateOperator: query.aggregateOperator || '',
 			searchText: debouncedSearchText,
 		},
 		{
-			enabled: !!query.aggregateAttribute.key,
+			enabled: !!query.aggregateAttribute?.key,
 			keepPreviousData: true,
 		},
 	);
@@ -59,7 +59,7 @@ function OrderByFilter({
 	]);
 
 	const isDisabledSelect =
-		!query.aggregateAttribute.key ||
+		!query.aggregateAttribute?.key ||
 		query.aggregateOperator === MetricAggregateOperator.NOOP;
 
 	return (

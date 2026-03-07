@@ -1,8 +1,9 @@
+import { UseMutateAsyncFunction } from 'react-query';
 import { FormInstance } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { UseMutateAsyncFunction } from 'react-query';
+import { OptionsQuery } from 'container/OptionsMenu/types';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import {
@@ -25,7 +26,7 @@ export type GetViewDetailsUsingViewKey = (
 	| {
 			query: Query;
 			name: string;
-			uuid: string;
+			id: string;
 			panelType: PANEL_TYPES;
 			extraData?: string;
 	  }
@@ -36,6 +37,7 @@ export interface IsQueryUpdatedInViewProps {
 	data: ViewProps[] | undefined;
 	stagedQuery: Query | null;
 	currentPanelType: PANEL_TYPES | null;
+	options: OptionsQuery;
 }
 
 export interface SaveViewWithNameProps {

@@ -1,15 +1,18 @@
+import { memo, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
 import { FastBackwardOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import Controls from 'container/Controls';
 import Download from 'container/Download/Download';
 import { getGlobalTime } from 'container/LogsSearchFilter/utils';
-import { getMinMax } from 'container/TopNav/AutoRefresh/config';
 import dayjs from 'dayjs';
 import { Pagination } from 'hooks/queryPagination';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
-import { memo, useMemo } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -49,7 +52,7 @@ function LogControls(): JSX.Element | null {
 	};
 
 	const handleGoToLatest = (): void => {
-		const { maxTime, minTime } = getMinMax(
+		const { maxTime, minTime } = getMinMaxForSelectedTime(
 			globalTime.selectedTime,
 			globalTime.minTime,
 			globalTime.maxTime,
@@ -85,8 +88,8 @@ function LogControls(): JSX.Element | null {
 			logs.map((log) => {
 				const timestamp =
 					typeof log.timestamp === 'string'
-						? dayjs(log.timestamp).format('YYYY-MM-DD HH:mm:ss.SSS')
-						: dayjs(log.timestamp / 1e6).format('YYYY-MM-DD HH:mm:ss.SSS');
+						? dayjs(log.timestamp).format(DATE_TIME_FORMATS.ISO_DATETIME_MS)
+						: dayjs(log.timestamp / 1e6).format(DATE_TIME_FORMATS.ISO_DATETIME_MS);
 
 				return FlatLogData({
 					...log,

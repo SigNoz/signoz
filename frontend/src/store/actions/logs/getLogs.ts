@@ -1,4 +1,5 @@
 import GetLogs from 'api/logs/GetLogs';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_LOADING, SET_LOGS } from 'types/actions/logs';
@@ -16,16 +17,17 @@ export const getLogs = (
 
 	const response = await GetLogs(props);
 
-	if (response.payload)
+	if (response.payload) {
 		dispatch({
 			type: SET_LOGS,
 			payload: response.payload,
 		});
-	else
+	} else {
 		dispatch({
 			type: SET_LOGS,
 			payload: [],
 		});
+	}
 
 	dispatch({
 		type: SET_LOADING,

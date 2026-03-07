@@ -1,0 +1,37 @@
+.run-query-btn {
+	display: flex;
+	min-width: 132px;
+	align-items: center;
+	gap: 6px;
+
+	.ant-btn-icon {
+		margin: 0 !important;
+	}
+}
+
+.cancel-query-btn {
+	display: flex;
+	min-width: 132px;
+	align-items: center;
+	gap: 6px;
+}
+
+.cmd-hint {
+	display: inline-flex;
+	align-items: center;
+	gap: 2px;
+	padding: 2px 4px;
+	border-radius: 4px;
+	//not using var here to support opacity 60%. To be handled at design system level.
+	background: rgba(35, 38, 46, 0.6);
+	line-height: 1;
+	font-size: 10px;
+}
+
+.lightMode {
+	.cmd-hint {
+		color: var(--bg-ink-200);
+		//not using var here to support opacity 60%. To be handled at design system level.
+		background: rgba(231, 232, 236, 0.8);
+	}
+}

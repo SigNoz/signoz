@@ -8,14 +8,27 @@ import (
 	"net/http"
 	"time"
 
-	"go.signoz.io/signoz/ee/query-service/constants"
-	basemodel "go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/ee/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/flagger"
+	"github.com/SigNoz/signoz/pkg/http/render"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/licensetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.uber.org/zap"
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
-	featureSet, err := ah.FF().GetFeatureFlags()
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	featureSet, err := ah.Signoz.Licensing.GetFeatureFlags(r.Context(), orgID)
 	if err != nil {
 		ah.HandleError(w, err, http.StatusInternalServerError)
 		return
@@ -23,7 +36,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 	if constants.FetchFeatures == "true" {
 		zap.L().Debug("fetching license")
-		license, err := ah.LM().GetRepo().GetActiveLicense(ctx)
+		license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 		if err != nil {
 			zap.L().Error("failed to fetch license", zap.Error(err))
 		} else if license == nil {
@@ -43,10 +56,20 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	if ah.opts.PreferSpanMetrics {
-		for idx := range featureSet {
-			feature := &featureSet[idx]
-			if feature.Name == basemodel.UseSpanMetrics {
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	useSpanMetrics := ah.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureUseSpanMetrics, evalCtx)
+
+	featureSet = append(featureSet, &licensetypes.Feature{
+		Name:       valuer.NewString(flagger.FeatureUseSpanMetrics.String()),
+		Active:     useSpanMetrics,
+		Usage:      0,
+		UsageLimit: -1,
+		Route:      "",
+	})
+
+	if constants.IsDotMetricsEnabled {
+		for idx, feature := range featureSet {
+			if feature.Name == licensetypes.DotMetricsEnabled {
 				featureSet[idx].Active = true
 			}
 		}
@@ -57,7 +80,7 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 
 // fetchZeusFeatures makes an HTTP GET request to the /zeusFeatures endpoint
 // and returns the FeatureSet.
-func fetchZeusFeatures(url, licenseKey string) (basemodel.FeatureSet, error) {
+func fetchZeusFeatures(url, licenseKey string) ([]*licensetypes.Feature, error) {
 	// Check if the URL is empty
 	if url == "" {
 		return nil, fmt.Errorf("url is empty")
@@ -116,28 +139,28 @@ func fetchZeusFeatures(url, licenseKey string) (basemodel.FeatureSet, error) {
 }
 
 type ZeusFeaturesResponse struct {
-	Status string               `json:"status"`
-	Data   basemodel.FeatureSet `json:"data"`
+	Status string                  `json:"status"`
+	Data   []*licensetypes.Feature `json:"data"`
 }
 
 // MergeFeatureSets merges two FeatureSet arrays with precedence to zeusFeatures.
-func MergeFeatureSets(zeusFeatures, internalFeatures basemodel.FeatureSet) basemodel.FeatureSet {
+func MergeFeatureSets(zeusFeatures, internalFeatures []*licensetypes.Feature) []*licensetypes.Feature {
 	// Create a map to store the merged features
-	featureMap := make(map[string]basemodel.Feature)
+	featureMap := make(map[string]*licensetypes.Feature)
 
 	// Add all features from the otherFeatures set to the map
 	for _, feature := range internalFeatures {
-		featureMap[feature.Name] = feature
+		featureMap[feature.Name.StringValue()] = feature
 	}
 
 	// Add all features from the zeusFeatures set to the map
 	// If a feature already exists (i.e., same name), the zeusFeature will overwrite it
 	for _, feature := range zeusFeatures {
-		featureMap[feature.Name] = feature
+		featureMap[feature.Name.StringValue()] = feature
 	}
 
 	// Convert the map back to a FeatureSet slice
-	var mergedFeatures basemodel.FeatureSet
+	var mergedFeatures []*licensetypes.Feature
 	for _, feature := range featureMap {
 		mergedFeatures = append(mergedFeatures, feature)
 	}

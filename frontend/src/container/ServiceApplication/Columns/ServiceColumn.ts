@@ -28,7 +28,9 @@ export const getColumns = (
 				}`,
 				sorter: (a: ServicesList, b: ServicesList): number => a.p99 - b.p99,
 				render: (value: number): string => {
-					if (Number.isNaN(value)) return '0.00';
+					if (Number.isNaN(value)) {
+						return '0.00';
+					}
 					return isMetricData ? value.toFixed(2) : (value / 1000000).toFixed(2);
 				},
 			},

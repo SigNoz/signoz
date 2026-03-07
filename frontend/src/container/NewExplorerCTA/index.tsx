@@ -1,11 +1,13 @@
-import { CompassOutlined } from '@ant-design/icons';
+import { useCallback, useMemo } from 'react';
+import { useLocation } from 'react-router-dom';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import history from 'lib/history';
-import { useCallback, useMemo } from 'react';
-import { useLocation } from 'react-router-dom';
+import { Undo } from 'lucide-react';
 
 import { buttonText, RIBBON_STYLES } from './config';
+
+import './NewExplorerCTA.styles.scss';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
@@ -34,11 +36,11 @@ function NewExplorerCTA(): JSX.Element | null {
 	const button = useMemo(
 		() => (
 			<Button
-				icon={<CompassOutlined />}
+				icon={<Undo size={16} />}
 				onClick={onClickHandler}
-				danger
 				data-testid="newExplorerCTA"
-				type="primary"
+				type="text"
+				className="periscope-btn link"
 			>
 				{buttonText[location.pathname]}
 			</Button>

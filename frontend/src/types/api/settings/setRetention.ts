@@ -7,6 +7,23 @@ export interface Props {
 	toColdDuration?: string;
 }
 
+export interface PropsV2 {
+	type: TTTLType;
+	defaultTTLDays: number;
+	coldStorageVolume: string;
+	coldStorageDurationDays: number;
+	ttlConditions: {
+		conditions: {
+			key: string;
+			values: string[];
+		}[];
+		ttlDays: number;
+	}[];
+}
 export interface PayloadProps {
 	success: 'message';
+}
+
+export interface PayloadPropsV2 {
+	message: string;
 }

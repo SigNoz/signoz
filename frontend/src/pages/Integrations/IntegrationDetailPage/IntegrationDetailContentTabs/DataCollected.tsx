@@ -1,7 +1,7 @@
-import './IntegrationDetailContentTabs.styles.scss';
-
 import { Table, Typography } from 'antd';
 import { BarChart2, ScrollText } from 'lucide-react';
+
+import './IntegrationDetailContentTabs.styles.scss';
 
 interface DataCollectedProps {
 	logsData: Array<any>;

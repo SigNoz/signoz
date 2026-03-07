@@ -1,6 +1,7 @@
-import { Form, Input } from 'antd';
 import React from 'react';
 import { useTranslation } from 'react-i18next';
+import { Form, Input } from 'antd';
+import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 
 import { MsTeamsChannel } from '../../CreateAlertChannels/config';
 
@@ -9,7 +10,20 @@ function MsTeams({ setSelectedConfig }: MsTeamsProps): JSX.Element {
 
 	return (
 		<>
-			<Form.Item name="webhook_url" label={t('field_webhook_url')}>
+			<Form.Item
+				name="webhook_url"
+				label={t('field_webhook_url')}
+				tooltip={{
+					title: (
+						<MarkdownRenderer
+							markdownContent={t('tooltip_ms_teams_url')}
+							variables={{}}
+						/>
+					),
+					overlayInnerStyle: { maxWidth: 400 },
+					placement: 'right',
+				}}
+			>
 				<Input
 					onChange={(event): void => {
 						setSelectedConfig((value) => ({

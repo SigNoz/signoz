@@ -1,9 +1,4 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable react/jsx-no-comment-textnodes */
-/* eslint-disable sonarjs/prefer-single-boolean-return */
-import './ModuleStepsContainer.styles.scss';
-
+import { SetStateAction, useState } from 'react';
 import {
 	ArrowLeftOutlined,
 	ArrowRightOutlined,
@@ -20,7 +15,6 @@ import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUti
 import history from 'lib/history';
 import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
-import { SetStateAction, useState } from 'react';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -29,6 +23,8 @@ import {
 	SelectedModuleStepProps,
 	useCases,
 } from '../../OnboardingContainer';
+
+import './ModuleStepsContainer.styles.scss';
 
 interface ModuleStepsContainerProps {
 	onReselectModule: any;
@@ -115,31 +111,23 @@ export default function ModuleStepsContainer({
 					dataSource: selectedDataSource,
 				});
 
-				if (
+				return !(
 					doesHaveFrameworks &&
 					(selectedFramework === null || selectedFramework === '')
-				) {
-					return false;
-				}
-
-				return true;
+				);
 			}
 
 			return false;
 		}
 
-		if (
+		return !(
 			(selectedModuleID === useCases.InfrastructureMonitoring.id &&
 				selectedModuleSteps[current].id === dataSourceStep &&
 				!selectedDataSourceName) ||
 			(selectedModuleID === useCases.LogsManagement.id &&
 				selectedModuleSteps[current].id === dataSourceStep &&
 				!selectedDataSourceName)
-		) {
-			return false;
-		}
-
-		return true;
+		);
 	};
 
 	const redirectToModules = (): void => {
@@ -380,7 +368,7 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleLogoClick = (): void => {
-		history.push('/');
+		history.push('/home');
 	};
 
 	return (

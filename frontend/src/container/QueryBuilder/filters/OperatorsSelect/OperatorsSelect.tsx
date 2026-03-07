@@ -1,5 +1,5 @@
-import { Select } from 'antd';
 import { memo } from 'react';
+import { Select } from 'antd';
 
 // ** Types
 import { selectStyle } from '../QueryBuilderSearch/config';
@@ -9,6 +9,7 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 	operators,
 	value,
 	onChange,
+	className,
 	...props
 }: OperatorsSelectProps): JSX.Element {
 	return (
@@ -18,8 +19,8 @@ export const OperatorsSelect = memo(function OperatorsSelect({
 			onChange={onChange}
 			style={selectStyle}
 			showSearch
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
+			popupClassName={className}
 		/>
 	);
 });

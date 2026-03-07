@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 
 export type UseDragColumns<T> = {
 	draggedColumns: ColumnsType<T>;
@@ -7,4 +7,5 @@ export type UseDragColumns<T> = {
 		fromIndex: number,
 		toIndex: number,
 	) => void;
+	onColumnOrderChange: (newColumns: ColumnsType<T>) => void;
 };

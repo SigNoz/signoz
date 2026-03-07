@@ -27,7 +27,9 @@ export const onSaveApDexSettings = ({
 	handlePopOverClose,
 	servicename,
 }: OnSaveApDexSettingsProps) => async (): Promise<void> => {
-	if (!refetchGetApDexSetting) return;
+	if (!refetchGetApDexSetting) {
+		return;
+	}
 
 	try {
 		await mutateAsync({

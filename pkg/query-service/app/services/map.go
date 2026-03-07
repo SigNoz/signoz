@@ -5,7 +5,7 @@ import (
 	"strings"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
-	"go.signoz.io/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
 var (

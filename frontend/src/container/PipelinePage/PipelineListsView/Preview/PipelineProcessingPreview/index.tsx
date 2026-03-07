@@ -1,13 +1,13 @@
-import './styles.scss';
-
-import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelection/config';
 import { useState } from 'react';
+import { RelativeDurationOptions } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { PipelineData } from 'types/api/pipeline/def';
 
 import PreviewIntervalSelector from '../components/PreviewIntervalSelector';
 import SampleLogsResponseDisplay from '../components/SampleLogs/SampleLogsResponseDisplay';
 import useSampleLogs from '../hooks/useSampleLogs';
 import LogsProcessingSimulator from './components/LogsProcessingSimulator';
+
+import './styles.scss';
 
 function PipelineProcessingPreview({
 	pipeline,

@@ -1,13 +1,12 @@
+import { useCallback, useEffect, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
 import getTriggeredApi from 'api/alerts/getTriggered';
 import logEvent from 'api/common/logEvent';
 import Spinner from 'components/Spinner';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import useAxiosError from 'hooks/useAxiosError';
 import { isUndefined } from 'lodash-es';
-import { useCallback, useEffect, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useSelector } from 'react-redux';
-import { AppState } from 'store/reducers';
+import { useAppContext } from 'providers/App/App';
 
 import { Value } from './Filter';
 import TriggerComponent from './TriggeredAlert';
@@ -15,16 +14,15 @@ import TriggerComponent from './TriggeredAlert';
 function TriggeredAlerts(): JSX.Element {
 	const [selectedGroup, setSelectedGroup] = useState<Value[]>([]);
 	const [selectedFilter, setSelectedFilter] = useState<Value[]>([]);
-	const userId = useSelector<AppState, string | undefined>(
-		(state) => state.app.user?.userId,
-	);
+
+	const { user } = useAppContext();
 
 	const hasLoggedEvent = useRef(false); // Track if logEvent has been called
 
 	const handleError = useAxiosError();
 
 	const alertsResponse = useQuery(
-		[REACT_QUERY_KEY.GET_TRIGGERED_ALERTS, userId],
+		[REACT_QUERY_KEY.GET_TRIGGERED_ALERTS, user.id],
 		{
 			queryFn: () =>
 				getTriggeredApi({
@@ -71,13 +69,15 @@ function TriggeredAlerts(): JSX.Element {
 	}
 
 	return (
-		<TriggerComponent
-			allAlerts={alertsResponse?.data?.payload || []}
-			selectedFilter={selectedFilter}
-			selectedGroup={selectedGroup}
-			onSelectedFilterChange={handleSelectedFilterChange}
-			onSelectedGroupChange={handleSelectedGroupChange}
-		/>
+		<div className="triggered-alerts-container">
+			<TriggerComponent
+				allAlerts={alertsResponse?.data?.payload || []}
+				selectedFilter={selectedFilter}
+				selectedGroup={selectedGroup}
+				onSelectedFilterChange={handleSelectedFilterChange}
+				onSelectedGroupChange={handleSelectedGroupChange}
+			/>
+		</div>
 	);
 }
 

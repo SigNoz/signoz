@@ -1,0 +1,250 @@
+{
+  "id": "sqs",
+  "title": "SQS",
+  "icon": "file://icon.svg",
+  "overview": "file://overview.md",
+  "supported_signals": {
+    "metrics": true,
+    "logs": false
+  },
+  "data_collected": {
+    "metrics": [
+      {
+        "name": "aws_SQS_ApproximateAgeOfOldestMessage_count",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateAgeOfOldestMessage_max",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateAgeOfOldestMessage_min",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateAgeOfOldestMessage_sum",
+        "unit": "Seconds",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesDelayed_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesDelayed_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesDelayed_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesDelayed_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesNotVisible_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesNotVisible_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesNotVisible_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesNotVisible_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesVisible_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesVisible_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesVisible_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_ApproximateNumberOfMessagesVisible_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfEmptyReceives_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfEmptyReceives_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfEmptyReceives_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfEmptyReceives_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesDeleted_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesDeleted_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesDeleted_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesDeleted_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesReceived_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesReceived_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesReceived_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesReceived_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesSent_count",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesSent_max",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesSent_min",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_NumberOfMessagesSent_sum",
+        "unit": "Count",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_sum",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_max",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_min",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      },
+      {
+        "name": "aws_SQS_SentMessageSize_count",
+        "unit": "Bytes",
+        "type": "Gauge",
+        "description": ""
+      }
+    ]
+  },
+  "telemetry_collection_strategy": {
+    "aws_metrics": {
+      "cloudwatch_metric_stream_filters": [
+        {
+          "Namespace": "AWS/SQS"
+        }
+      ]
+    }
+  },
+  "assets": {
+    "dashboards": [
+      {
+        "id": "overview",
+        "title": "AWS SQS Overview",
+        "description": "Overview of SQS",
+        "image": "file://assets/dashboards/overview.png",
+        "definition": "file://assets/dashboards/overview.json"
+      }
+    ]
+  }
+}

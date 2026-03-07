@@ -1,21 +1,26 @@
-import './ContextLogRenderer.styles.scss';
-
-import { Skeleton } from 'antd';
+import { useCallback, useEffect, useMemo, useState } from 'react';
+import { Virtuoso } from 'react-virtuoso';
+import { Button, Skeleton } from 'antd';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
 import ShowButton from 'container/LogsContextList/ShowButton';
+import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
+import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
 import { FontSize } from 'container/OptionsMenu/types';
 import { ORDERBY_FILTERS } from 'container/QueryBuilder/filters/OrderByFilter/config';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Virtuoso } from 'react-virtuoso';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { ILog } from 'types/api/logs/log';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import { useContextLogData } from './useContextLogData';
+
+import './ContextLogRenderer.styles.scss';
 
 function ContextLogRenderer({
 	isEdit,
@@ -27,17 +32,19 @@ function ContextLogRenderer({
 	const [afterLogPage, setAfterLogPage] = useState<number>(1);
 	const [logs, setLogs] = useState<ILog[]>([log]);
 
-	const { initialDataSource, stagedQuery } = useQueryBuilder();
+	const { stagedQuery } = useQueryBuilder();
 
 	const listQuery = useMemo(() => {
-		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) return null;
+		if (!stagedQuery || stagedQuery.builder.queryData.length < 1) {
+			return null;
+		}
 
 		return stagedQuery.builder.queryData.find((item) => !item.disabled) || null;
 	}, [stagedQuery]);
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator: listQuery?.aggregateOperator || StringOperators.NOOP,
 	});
 
@@ -73,12 +80,10 @@ function ContextLogRenderer({
 
 	useEffect(() => {
 		setLogs((prev) => [...previousLogs, ...prev]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [previousLogs]);
 
 	useEffect(() => {
 		setLogs((prev) => [...prev, ...afterLogs]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [afterLogs]);
 
 	useEffect(() => {
@@ -99,19 +104,50 @@ function ContextLogRenderer({
 		}
 	}, [options.fontSize]);
 
+	const urlQuery = useUrlQuery();
+
+	const handleLogClick = useCallback(
+		(logId: string): void => {
+			urlQuery.set(QueryParams.activeLogId, `"${logId}"`);
+
+			urlQuery.set(
+				QueryParams.compositeQuery,
+				encodeURIComponent(JSON.stringify(query)),
+			);
+
+			const link = `${ROUTES.LOGS_EXPLORER}?${urlQuery.toString()}`;
+			window.open(link, '_blank', 'noopener,noreferrer');
+		},
+		[query, urlQuery],
+	);
+
 	const getItemContent = useCallback(
 		(_: number, logTorender: ILog): JSX.Element => (
-			<RawLogView
-				isActiveLog={logTorender.id === log.id}
-				isReadOnly
-				isTextOverflowEllipsisDisabled
-				key={logTorender.id}
-				data={logTorender}
-				linesPerRow={1}
-				fontSize={options.fontSize}
-			/>
+			<Button
+				type="text"
+				size="small"
+				className="context-log-renderer__item"
+				onClick={(): void => {
+					handleLogClick(logTorender.id);
+				}}
+			>
+				<RawLogView
+					isActiveLog={logTorender.id === log.id}
+					isReadOnly
+					isTextOverflowEllipsisDisabled
+					key={logTorender.id}
+					data={logTorender}
+					linesPerRow={1}
+					fontSize={options.fontSize}
+					selectedFields={convertKeysToColumnFields(
+						options.selectColumns?.length
+							? options.selectColumns
+							: defaultLogsSelectedColumns,
+					)}
+				/>
+			</Button>
 		),
-		[log.id, options.fontSize],
+		[handleLogClick, log.id, options.fontSize, options.selectColumns],
 	);
 
 	return (

@@ -5,34 +5,41 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"math"
+	"net/url"
+	"reflect"
 	"text/template"
 	"time"
 
-	"go.uber.org/zap"
+	"github.com/SigNoz/signoz/pkg/contextlinks"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
 
-	"go.signoz.io/signoz/pkg/query-service/common"
-	"go.signoz.io/signoz/pkg/query-service/contextlinks"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	"go.signoz.io/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
+	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
+	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 
-	"go.signoz.io/signoz/pkg/query-service/app/querier"
-	querierV2 "go.signoz.io/signoz/pkg/query-service/app/querier/v2"
-	"go.signoz.io/signoz/pkg/query-service/app/queryBuilder"
-	"go.signoz.io/signoz/pkg/query-service/constants"
-	"go.signoz.io/signoz/pkg/query-service/interfaces"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils/labels"
-	querytemplate "go.signoz.io/signoz/pkg/query-service/utils/queryTemplate"
-	"go.signoz.io/signoz/pkg/query-service/utils/times"
-	"go.signoz.io/signoz/pkg/query-service/utils/timestamp"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
+	"github.com/SigNoz/signoz/pkg/units"
 
-	logsv3 "go.signoz.io/signoz/pkg/query-service/app/logs/v3"
-	tracesV3 "go.signoz.io/signoz/pkg/query-service/app/traces/v3"
-	tracesV4 "go.signoz.io/signoz/pkg/query-service/app/traces/v4"
-	"go.signoz.io/signoz/pkg/query-service/formatter"
+	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
-	yaml "gopkg.in/yaml.v2"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
 type ThresholdRule struct {
@@ -48,67 +55,77 @@ type ThresholdRule struct {
 	// querierV2 is used for alerts created after the introduction of new metrics query builder
 	querierV2 interfaces.Querier
 
+	// querierV5 is used for alerts migrated after the introduction of new query builder
+	querierV5 querierV5.Querier
+
 	// used for attribute metadata enrichment for logs and traces
 	logsKeys  map[string]v3.AttributeKey
 	spansKeys map[string]v3.AttributeKey
-
-	useTraceNewSchema bool
 }
+
+var _ Rule = (*ThresholdRule)(nil)
 
 func NewThresholdRule(
 	id string,
-	p *PostableRule,
-	featureFlags interfaces.FeatureLookup,
+	orgID valuer.UUID,
+	p *ruletypes.PostableRule,
 	reader interfaces.Reader,
-	useLogsNewSchema bool,
-	useTraceNewSchema bool,
+	querierV5 querierV5.Querier,
+	logger *slog.Logger,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
+	logger.Info("creating new ThresholdRule", "id", id)
 
-	zap.L().Info("creating new ThresholdRule", zap.String("id", id), zap.Any("opts", opts))
+	opts = append(opts, WithLogger(logger))
 
-	baseRule, err := NewBaseRule(id, p, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, p, reader, opts...)
 	if err != nil {
 		return nil, err
 	}
 
 	t := ThresholdRule{
-		BaseRule:          baseRule,
-		version:           p.Version,
-		useTraceNewSchema: useTraceNewSchema,
+		BaseRule: baseRule,
+		version:  p.Version,
 	}
 
 	querierOption := querier.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:            reader,
-		Cache:             nil,
-		KeyGenerator:      queryBuilder.NewKeyGenerator(),
-		FeatureLookup:     featureFlags,
-		UseLogsNewSchema:  useLogsNewSchema,
-		UseTraceNewSchema: useTraceNewSchema,
+		Reader:       reader,
+		Cache:        nil,
+		KeyGenerator: queryBuilder.NewKeyGenerator(),
 	}
 
 	t.querier = querier.NewQuerier(querierOption)
 	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
+	t.querierV5 = querierV5
 	t.reader = reader
 	return &t, nil
 }
 
-func (r *ThresholdRule) Type() RuleType {
-	return RuleTypeThreshold
+func (r *ThresholdRule) hostFromSource() string {
+	parsedUrl, err := url.Parse(r.source)
+	if err != nil {
+		return ""
+	}
+	if parsedUrl.Port() != "" {
+		return fmt.Sprintf("%s://%s:%s", parsedUrl.Scheme, parsedUrl.Hostname(), parsedUrl.Port())
+	}
+	return fmt.Sprintf("%s://%s", parsedUrl.Scheme, parsedUrl.Hostname())
 }
 
-func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3, error) {
+func (r *ThresholdRule) Type() ruletypes.RuleType {
+	return ruletypes.RuleTypeThreshold
+}
 
-	zap.L().Info("prepareQueryRange", zap.Int64("ts", ts.UnixMilli()), zap.Int64("evalWindow", r.evalWindow.Milliseconds()), zap.Int64("evalDelay", r.evalDelay.Milliseconds()))
+func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*v3.QueryRangeParamsV3, error) {
+	r.logger.InfoContext(
+		ctx, "prepare query range request v4", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
+	)
 
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
@@ -126,7 +143,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 				PromQueries:       make(map[string]*v3.PromQuery),
 				Unit:              r.ruleCondition.CompositeQuery.Unit,
 			},
-			Variables: make(map[string]interface{}, 0),
+			Variables: make(map[string]interface{}),
 			NoCache:   true,
 		}
 		querytemplate.AssignReservedVarsV3(params)
@@ -162,7 +179,7 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 
 			q.SetShiftByFromFunc()
 
-			if q.DataSource == v3.DataSourceMetrics && constants.UseMetricsPreAggregation() {
+			if q.DataSource == v3.DataSourceMetrics {
 				// if the time range is greater than 1 day, and less than 1 week set the step interval to be multiple of 5 minutes
 				// if the time range is greater than 1 week, set the step interval to be multiple of 30 mins
 				if end-start >= 24*time.Hour.Milliseconds() && end-start < 7*24*time.Hour.Milliseconds() {
@@ -184,15 +201,19 @@ func (r *ThresholdRule) prepareQueryRange(ts time.Time) (*v3.QueryRangeParamsV3,
 		End:            end,
 		Step:           int64(math.Max(float64(common.MinAllowedStepInterval(start, end)), 60)),
 		CompositeQuery: r.ruleCondition.CompositeQuery,
-		Variables:      make(map[string]interface{}, 0),
+		Variables:      make(map[string]interface{}),
 		NoCache:        true,
 	}, nil
 }
 
-func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) string {
+func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lbls labels.Labels) string {
+	if r.version == "v5" {
+		return r.prepareLinksToLogsV5(ctx, ts, lbls)
+	}
+
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRange(ts)
+	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return ""
 	}
@@ -223,10 +244,14 @@ func (r *ThresholdRule) prepareLinksToLogs(ts time.Time, lbls labels.Labels) str
 	return contextlinks.PrepareLinksToLogs(start, end, filterItems)
 }
 
-func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) string {
+func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, lbls labels.Labels) string {
+	if r.version == "v5" {
+		return r.prepareLinksToTracesV5(ctx, ts, lbls)
+	}
+
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRange(ts)
+	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return ""
 	}
@@ -257,17 +282,118 @@ func (r *ThresholdRule) prepareLinksToTraces(ts time.Time, lbls labels.Labels) s
 	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
 }
 
+func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+	r.logger.InfoContext(
+		ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
+	)
+
+	startTs, endTs := r.Timestamps(ts)
+	start, end := startTs.UnixMilli(), endTs.UnixMilli()
+
+	req := &qbtypes.QueryRangeRequest{
+		Start:       uint64(start),
+		End:         uint64(end),
+		RequestType: qbtypes.RequestTypeTimeSeries,
+		CompositeQuery: qbtypes.CompositeQuery{
+			Queries: make([]qbtypes.QueryEnvelope, 0),
+		},
+		NoCache: true,
+	}
+	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
+	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
+	return req, nil
+}
+
+func (r *ThresholdRule) prepareLinksToLogsV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	qr, err := r.prepareQueryRangeV5(ctx, ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(int64(qr.Start))
+	end := time.UnixMilli(int64(qr.End))
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	var q qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+
+	for _, query := range r.ruleCondition.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+				q = spec
+			}
+		}
+	}
+
+	if q.Signal != telemetrytypes.SignalLogs {
+		return ""
+	}
+
+	filterExpr := ""
+	if q.Filter != nil && q.Filter.Expression != "" {
+		filterExpr = q.Filter.Expression
+	}
+
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+
+	return contextlinks.PrepareLinksToLogsV5(start, end, whereClause)
+}
+
+func (r *ThresholdRule) prepareLinksToTracesV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
+	selectedQuery := r.GetSelectedQuery()
+
+	qr, err := r.prepareQueryRangeV5(ctx, ts)
+	if err != nil {
+		return ""
+	}
+	start := time.UnixMilli(int64(qr.Start))
+	end := time.UnixMilli(int64(qr.End))
+
+	// TODO(srikanthccv): handle formula queries
+	if selectedQuery < "A" || selectedQuery > "Z" {
+		return ""
+	}
+
+	var q qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]
+
+	for _, query := range r.ruleCondition.CompositeQuery.Queries {
+		if query.Type == qbtypes.QueryTypeBuilder {
+			switch spec := query.Spec.(type) {
+			case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+				q = spec
+			}
+		}
+	}
+
+	if q.Signal != telemetrytypes.SignalTraces {
+		return ""
+	}
+
+	filterExpr := ""
+	if q.Filter != nil && q.Filter.Expression != "" {
+		filterExpr = q.Filter.Expression
+	}
+
+	whereClause := contextlinks.PrepareFilterExpression(lbls.Map(), filterExpr, q.GroupBy)
+
+	return contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
+}
+
 func (r *ThresholdRule) GetSelectedQuery() string {
 	return r.ruleCondition.GetSelectedQueryName()
 }
 
-func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vector, error) {
-
-	params, err := r.prepareQueryRange(ts)
+func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
+	params, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
 		return nil, err
 	}
-	err = r.PopulateTemporality(ctx, params)
+	err = r.PopulateTemporality(ctx, orgID, params)
 	if err != nil {
 		return nil, fmt.Errorf("internal error while setting temporality")
 	}
@@ -287,9 +413,9 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		if hasLogsQuery {
 			// check if any enrichment is required for logs if yes then enrich them
 			if logsv3.EnrichmentRequired(params) {
-				logsFields, err := r.reader.GetLogFields(ctx)
-				if err != nil {
-					return nil, err
+				logsFields, apiErr := r.reader.GetLogFieldsFromNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
+				if apiErr != nil {
+					return nil, apiErr.ToError()
 				}
 				logsKeys := model.GetLogFieldsV3(ctx, params, logsFields)
 				r.logsKeys = logsKeys
@@ -298,37 +424,36 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		}
 
 		if hasTracesQuery {
-			spanKeys, err := r.reader.GetSpanAttributeKeys(ctx)
+			spanKeys, err := r.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(params.CompositeQuery))
 			if err != nil {
 				return nil, err
 			}
 			r.spansKeys = spanKeys
-			if r.useTraceNewSchema {
-				tracesV4.Enrich(params, spanKeys)
-			} else {
-				tracesV3.Enrich(params, spanKeys)
-			}
+			tracesV4.Enrich(params, spanKeys)
 		}
 	}
 
 	var results []*v3.Result
 	var queryErrors map[string]error
-
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
+	})
 	if r.version == "v4" {
-		results, queryErrors, err = r.querierV2.QueryRange(ctx, params)
+		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {
-		results, queryErrors, err = r.querier.QueryRange(ctx, params)
+		results, queryErrors, err = r.querier.QueryRange(ctx, orgID, params)
 	}
 
 	if err != nil {
-		zap.L().Error("failed to get alert query result", zap.String("rule", r.Name()), zap.Error(err), zap.Any("errors", queryErrors))
+		r.logger.ErrorContext(ctx, "failed to get alert query range result", "rule_name", r.Name(), "error", err, "query_errors", queryErrors)
 		return nil, fmt.Errorf("internal error while querying")
 	}
 
 	if params.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		results, err = postprocess.PostProcessResult(results, params)
 		if err != nil {
-			zap.L().Error("failed to post process result", zap.String("rule", r.Name()), zap.Error(err))
+			r.logger.ErrorContext(ctx, "failed to post process result", "rule_name", r.Name(), "error", err)
 			return nil, fmt.Errorf("internal error while post processing")
 		}
 	}
@@ -343,51 +468,147 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, ts time.Time) (Vec
 		}
 	}
 
-	if queryResult != nil && len(queryResult.Series) > 0 {
-		r.lastTimestampWithDatapoints = time.Now()
+	hasData := queryResult != nil && len(queryResult.Series) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
 	}
 
-	var resultVector Vector
+	var resultVector ruletypes.Vector
 
-	// if the data is missing for `For` duration then we should send alert
-	if r.ruleCondition.AlertOnAbsent && r.lastTimestampWithDatapoints.Add(time.Duration(r.Condition().AbsentFor)*time.Minute).Before(time.Now()) {
-		zap.L().Info("no data found for rule condition", zap.String("ruleid", r.ID()))
-		lbls := labels.NewBuilder(labels.Labels{})
-		if !r.lastTimestampWithDatapoints.IsZero() {
-			lbls.Set("lastSeen", r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
-		}
-		resultVector = append(resultVector, Sample{
-			Metric:    lbls.Labels(),
-			IsMissing: true,
-		})
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
 		return resultVector, nil
 	}
 
 	for _, series := range queryResult.Series {
-		smpl, shouldAlert := r.ShouldAlert(*series)
-		if shouldAlert {
-			resultVector = append(resultVector, smpl)
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
 		}
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
 	}
+
 	return resultVector, nil
 }
 
-func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, error) {
-
-	prevState := r.State()
-
-	valueFormatter := formatter.FromUnit(r.Unit())
-	res, err := r.buildAndRunQuery(ctx, ts)
-
+func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
+	params, err := r.prepareQueryRangeV5(ctx, ts)
 	if err != nil {
 		return nil, err
+	}
+
+	var results []*v3.Result
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "buildAndRunQueryV5",
+	})
+
+	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
+	if err != nil {
+		r.logger.ErrorContext(ctx, "failed to get alert query result", "rule_name", r.Name(), "error", err)
+		return nil, fmt.Errorf("internal error while querying")
+	}
+
+	for _, item := range v5Result.Data.Results {
+		if tsData, ok := item.(*qbtypes.TimeSeriesData); ok {
+			results = append(results, transition.ConvertV5TimeSeriesDataToV4Result(tsData))
+		} else {
+			// NOTE: should not happen but just to ensure we don't miss it if it happens for some reason
+			r.logger.WarnContext(ctx, "expected qbtypes.TimeSeriesData but got", "item_type", reflect.TypeOf(item))
+		}
+	}
+
+	selectedQuery := r.GetSelectedQuery()
+
+	var queryResult *v3.Result
+	for _, res := range results {
+		if res.QueryName == selectedQuery {
+			queryResult = res
+			break
+		}
+	}
+
+	hasData := queryResult != nil && len(queryResult.Series) > 0
+	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
+		return ruletypes.Vector{*missingDataAlert}, nil
+	}
+
+	var resultVector ruletypes.Vector
+
+	if queryResult == nil {
+		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
+		return resultVector, nil
+	}
+
+	// Filter out new series if newGroupEvalDelay is configured
+	seriesToProcess := queryResult.Series
+	if r.ShouldSkipNewGroups() {
+		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
+		// In case of error we log the error and continue with the original series
+		if filterErr != nil {
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+		} else {
+			seriesToProcess = filteredSeries
+		}
+	}
+
+	for _, series := range seriesToProcess {
+		if !r.Condition().ShouldEval(series) {
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Points), "requiredPoints", r.Condition().RequiredNumPoints)
+			continue
+		}
+		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+			ActiveAlerts:  r.ActiveAlertsLabelFP(),
+			SendUnmatched: r.ShouldSendUnmatched(),
+		})
+		if err != nil {
+			return nil, err
+		}
+		resultVector = append(resultVector, resultSeries...)
+	}
+
+	return resultVector, nil
+}
+
+func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
+	prevState := r.State()
+
+	valueFormatter := units.FormatterFromUnit(r.Unit())
+
+	var res ruletypes.Vector
+	var err error
+
+	if r.version == "v5" {
+		r.logger.InfoContext(ctx, "running v5 query")
+		res, err = r.buildAndRunQueryV5(ctx, r.orgID, ts)
+	} else {
+		r.logger.InfoContext(ctx, "running v4 query")
+		res, err = r.buildAndRunQuery(ctx, r.orgID, ts)
+	}
+
+	if err != nil {
+		return 0, err
 	}
 
 	r.mtx.Lock()
 	defer r.mtx.Unlock()
 
 	resultFPs := map[uint64]struct{}{}
-	var alerts = make(map[uint64]*Alert, len(res))
+	alerts := make(map[uint64]*ruletypes.Alert, len(res))
+
+	ruleReceivers := r.Threshold.GetRuleReceivers()
+	ruleReceiverMap := make(map[string][]string)
+	for _, value := range ruleReceivers {
+		ruleReceiverMap[value.Name] = value.Channels
+	}
 
 	for _, smpl := range res {
 		l := make(map[string]string, len(smpl.Metric))
@@ -396,18 +617,18 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 
 		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(r.targetVal(), r.Unit())
-		zap.L().Debug("Alert template data for rule", zap.String("name", r.Name()), zap.String("formatter", valueFormatter.Name()), zap.String("value", value), zap.String("threshold", threshold))
+		// todo(aniket): handle different threshold
+		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
+		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
-		tmplData := AlertTemplateData(l, value, threshold)
+		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
 		// who are not used to Go's templating system.
 		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
 
 		// utility function to apply go template on labels and annotations
 		expand := func(text string) string {
-
-			tmpl := NewTemplateExpander(
+			tmpl := ruletypes.NewTemplateExpander(
 				ctx,
 				defs+text,
 				"__alert_"+r.Name(),
@@ -418,7 +639,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				zap.L().Error("Expanding alert template failed", zap.Error(err), zap.Any("data", tmplData))
+				r.logger.ErrorContext(ctx, "Expanding alert template failed", "error", err, "data", tmplData)
 			}
 			return result
 		}
@@ -440,21 +661,23 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		}
 		if smpl.IsMissing {
 			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(labels.NoDataLabel, "true")
 		}
 
 		// Links with timestamps should go in annotations since labels
 		// is used alert grouping, and we want to group alerts with the same
 		// label set, but different timestamps, together.
-		if r.typ == AlertTypeTraces {
-			link := r.prepareLinksToTraces(ts, smpl.Metric)
+		switch r.typ {
+		case ruletypes.AlertTypeTraces:
+			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				zap.L().Info("adding traces link to annotations", zap.String("link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)))
+				r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
 				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
-		} else if r.typ == AlertTypeLogs {
-			link := r.prepareLinksToLogs(ts, smpl.Metric)
+		case ruletypes.AlertTypeLogs:
+			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				zap.L().Info("adding logs link to annotations", zap.String("link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)))
+				r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
 				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
 			}
 		}
@@ -464,12 +687,10 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			zap.L().Error("the alert query returns duplicate records", zap.String("ruleid", r.ID()), zap.Any("alert", alerts[h]))
-			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
-			return nil, err
+			return 0, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 		}
 
-		alerts[h] = &Alert{
+		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
 			QueryResultLables: resultLabels,
 			Annotations:       annotations,
@@ -477,12 +698,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			State:             model.StatePending,
 			Value:             smpl.V,
 			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         r.preferredChannels,
+			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
 			Missing:           smpl.IsMissing,
+			IsRecovering:      smpl.IsRecovering,
 		}
 	}
 
-	zap.L().Info("number of alerts found", zap.String("name", r.Name()), zap.Int("count", len(alerts)))
+	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
@@ -492,7 +714,12 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
-			alert.Receivers = r.preferredChannels
+			// Update the recovering and missing state of existing alert
+			alert.IsRecovering = a.IsRecovering
+			alert.Missing = a.Missing
+			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
+				alert.Receivers = ruleReceiverMap[v]
+			}
 			continue
 		}
 
@@ -505,15 +732,16 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
-			zap.L().Error("error marshaling labels", zap.Error(err), zap.Any("labels", a.Labels))
+			r.logger.ErrorContext(ctx, "error marshaling labels", "error", err, "labels", a.Labels)
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ResolvedRetention) {
+			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
 			if a.State != model.StateInactive {
+				r.logger.DebugContext(ctx, "converting firing alert to inActive", "name", r.Name())
 				a.State = model.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
@@ -530,13 +758,38 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration {
+		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
+			r.logger.DebugContext(ctx, "converting pending alert to firing", "name", r.Name())
 			a.State = model.StateFiring
 			a.FiredAt = ts
 			state := model.StateFiring
 			if a.Missing {
 				state = model.StateNoData
 			}
+			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				RuleID:       r.ID(),
+				RuleName:     r.Name(),
+				State:        state,
+				StateChanged: true,
+				UnixMilli:    ts.UnixMilli(),
+				Labels:       model.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLables.Hash(),
+				Value:        a.Value,
+			})
+		}
+
+		// We need to change firing alert to recovering if the returned sample meets recovery threshold
+		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		// We need to change recovering alerts to firing if the returned sample meets target threshold
+		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		// in any of the above case we need to update the status of alert
+		if changeAlertingToRecovering || changeRecoveringToFiring {
+			state := model.StateRecovering
+			if changeRecoveringToFiring {
+				state = model.StateFiring
+			}
+			a.State = state
+			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
 			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
@@ -561,37 +814,26 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (interface{}, er
 
 	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
 
-	r.health = HealthGood
+	r.health = ruletypes.HealthGood
 	r.lastError = err
 
 	return len(r.Active), nil
 }
 
 func (r *ThresholdRule) String() string {
-
-	ar := PostableRule{
+	ar := ruletypes.PostableRule{
 		AlertName:         r.name,
 		RuleCondition:     r.ruleCondition,
-		EvalWindow:        Duration(r.evalWindow),
+		EvalWindow:        r.evalWindow,
 		Labels:            r.labels.Map(),
 		Annotations:       r.annotations.Map(),
 		PreferredChannels: r.preferredChannels,
 	}
 
-	byt, err := yaml.Marshal(ar)
+	byt, err := json.Marshal(ar)
 	if err != nil {
 		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
 	}
 
 	return string(byt)
-}
-
-func removeGroupinSetPoints(series v3.Series) []v3.Point {
-	var result []v3.Point
-	for _, s := range series.Points {
-		if s.Timestamp >= 0 && !math.IsNaN(s.Value) && !math.IsInf(s.Value, 0) {
-			result = append(result, s)
-		}
-	}
-	return result
 }

@@ -1,28 +1,28 @@
-/* eslint-disable no-nested-ternary */
-import './IntegrationDetailPage.styles.scss';
-
+import { useState } from 'react';
+import { useMutation } from 'react-query';
 import { Button, Modal, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import installIntegration from 'api/Integrations/installIntegration';
 import ConfigureIcon from 'assets/Integrations/ConfigureIcon';
 import cx from 'classnames';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowLeftRight, Check } from 'lucide-react';
-import { useState } from 'react';
-import { useMutation } from 'react-query';
 import { IntegrationConnectionStatus } from 'types/api/integrations/types';
 
 import { INTEGRATION_TELEMETRY_EVENTS } from '../utils';
 import TestConnection, { ConnectionStates } from './TestConnection';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailHeaderProps {
 	id: string;
 	title: string;
 	description: string;
 	icon: string;
-	refetchIntegrationDetails: () => void;
+	onUnInstallSuccess: () => void;
 	connectionState: ConnectionStates;
 	connectionData: IntegrationConnectionStatus;
 	setActiveDetailTab: React.Dispatch<React.SetStateAction<string | null>>;
@@ -38,7 +38,7 @@ function IntegrationDetailHeader(
 		description,
 		connectionState,
 		connectionData,
-		refetchIntegrationDetails,
+		onUnInstallSuccess,
 		setActiveDetailTab,
 	} = props;
 	const [isModalOpen, setIsModalOpen] = useState(false);
@@ -61,7 +61,7 @@ function IntegrationDetailHeader(
 		installIntegration,
 		{
 			onSuccess: () => {
-				refetchIntegrationDetails();
+				onUnInstallSuccess();
 			},
 			onError: () => {
 				notifications.error({
@@ -248,20 +248,25 @@ function IntegrationDetailHeader(
 								<Tooltip
 									title={
 										latestData.last_received_ts_ms
-											? // eslint-disable-next-line sonarjs/no-duplicate-string
-											  dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											? dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''
 									}
 									key={
 										latestData.last_received_ts_ms
-											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											? dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''
 									}
 									placement="right"
 								>
 									<Typography.Text className="last-value" ellipsis>
 										{latestData.last_received_ts_ms
-											? dayjs(latestData.last_received_ts_ms).format('DD MMM YYYY HH:mm')
+											? dayjs(latestData.last_received_ts_ms).format(
+													DATE_TIME_FORMATS.MONTH_DATETIME_SHORT,
+											  )
 											: ''}
 									</Typography.Text>
 								</Tooltip>

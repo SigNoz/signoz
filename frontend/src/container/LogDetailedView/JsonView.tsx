@@ -1,13 +1,13 @@
-import './JsonView.styles.scss';
-
+import { useMemo, useState } from 'react';
 import MEditor, { EditorProps, Monaco } from '@monaco-editor/react';
 import { Color } from '@signozhq/design-tokens';
 import { Switch, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo, useState } from 'react';
 
 import { JSONViewProps } from './LogDetailedView.types';
 import { aggregateAttributesResourcesToString } from './utils';
+
+import './JsonView.styles.scss';
 
 function JSONView({ logData }: JSONViewProps): JSX.Element {
 	const [isWrapWord, setIsWrapWord] = useState<boolean>(true);
@@ -74,7 +74,6 @@ function JSONView({ logData }: JSONViewProps): JSX.Element {
 				onChange={(): void => {}}
 				height="68vh"
 				theme={isDarkMode ? 'my-theme' : 'light'}
-				// eslint-disable-next-line react/jsx-no-bind
 				beforeMount={setEditorTheme}
 			/>
 

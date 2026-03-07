@@ -1,10 +1,10 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Row, Tag, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
-import useFeatureFlags from 'hooks/useFeatureFlag';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
+import { useAppContext } from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 
 import { getOptionList } from './config';
@@ -13,9 +13,11 @@ import { OptionType } from './types';
 
 function SelectAlertType({ onSelect }: SelectAlertTypeProps): JSX.Element {
 	const { t } = useTranslation(['alerts']);
+	const { featureFlags } = useAppContext();
 
 	const isAnomalyDetectionEnabled =
-		useFeatureFlags(FeatureKeys.ANOMALY_DETECTION)?.active || false;
+		featureFlags?.find((flag) => flag.name === FeatureKeys.ANOMALY_DETECTION)
+			?.active || false;
 
 	const optionList = getOptionList(t, isAnomalyDetectionEnabled);
 

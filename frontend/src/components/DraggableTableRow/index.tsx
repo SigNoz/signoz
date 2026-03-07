@@ -16,7 +16,9 @@ function DraggableTableRow({
 
 	const handleDrop = useCallback(
 		(item: { index: number }) => {
-			if (moveRow) moveRow(item.index, index);
+			if (moveRow) {
+				moveRow(item.index, index);
+			}
 		},
 		[moveRow, index],
 	);
@@ -35,13 +37,7 @@ function DraggableTableRow({
 	drop(drag(ref));
 
 	return (
-		<tr
-			ref={ref}
-			className={className}
-			style={{ ...style }}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...restProps}
-		/>
+		<tr ref={ref} className={className} style={{ ...style }} {...restProps} />
 	);
 }
 

@@ -1,7 +1,8 @@
+import { useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { Provider } from 'react-redux';
 import { render, renderHook } from '@testing-library/react';
 import TraceFlameGraph from 'container/TraceFlameGraph';
-import { useState } from 'react';
-import { Provider } from 'react-redux';
 import store from 'store';
 
 test('loads and displays greeting', () => {

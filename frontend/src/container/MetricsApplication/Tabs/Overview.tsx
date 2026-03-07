@@ -1,3 +1,8 @@
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation, useParams } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
 import getTopLevelOperations, {
 	ServiceDataProps,
@@ -8,27 +13,26 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
 import { getQueryString } from 'container/SideNav/helper';
-import useFeatureFlag from 'hooks/useFeatureFlag';
 import useResourceAttribute from 'hooks/useResourceAttribute';
 import {
 	convertRawQueriesToTraceSelectedTags,
+	getResourceDeploymentKeys,
 	resourceAttributesToTagFilterItems,
 } from 'hooks/useResourceAttribute/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import getStep from 'lib/getStep';
 import history from 'lib/history';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { defaultTo } from 'lodash-es';
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation, useParams } from 'react-router-dom';
+import { useAppContext } from 'providers/App/App';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
 import { GraphTitle, SERVICE_CHART_ID } from '../constant';
@@ -49,10 +53,10 @@ import { IServiceName } from './types';
 import {
 	generateExplorerPath,
 	handleNonInQueryRange,
-	onGraphClickHandler,
 	onViewTracePopupClick,
 	useGetAPMToLogsQueries,
 	useGetAPMToTracesQueries,
+	useGraphClickHandler,
 } from './util';
 
 function Application(): JSX.Element {
@@ -68,12 +72,16 @@ function Application(): JSX.Element {
 	const { queries } = useResourceAttribute();
 	const urlQuery = useUrlQuery();
 
-	const isSpanMetricEnabled = useFeatureFlag(FeatureKeys.USE_SPAN_METRICS)
-		?.active;
+	const { featureFlags } = useAppContext();
+	const isSpanMetricEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.USE_SPAN_METRICS)
+			?.active || false;
 
 	const handleSetTimeStamp = useCallback((selectTime: number) => {
 		setSelectedTimeStamp(selectTime);
 	}, []);
+
+	const onGraphClickHandler = useGraphClickHandler(handleSetTimeStamp);
 
 	const dispatch = useDispatch();
 	const handleGraphClick = useCallback(
@@ -82,22 +90,19 @@ function Application(): JSX.Element {
 			yValue,
 			mouseX,
 			mouseY,
-		): Promise<void> =>
-			onGraphClickHandler(handleSetTimeStamp)(
-				xValue,
-				yValue,
-				mouseX,
-				mouseY,
-				type,
-			),
+		): Promise<void> => onGraphClickHandler(xValue, yValue, mouseX, mouseY, type),
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[handleSetTimeStamp],
 	);
+	const dotMetricsEnabled =
+		featureFlags?.find((flag) => flag.name === FeatureKeys.DOT_METRICS_ENABLED)
+			?.active || false;
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
 		if (!logEventCalledRef.current) {
 			const selectedEnvironments = queries.find(
-				(val) => val.tagKey === 'resource_deployment_environment',
+				(val) => val.tagKey === getResourceDeploymentKeys(dotMetricsEnabled),
 			)?.tagValue;
 
 			logEvent('APM: Service detail page visited', {
@@ -155,6 +160,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -164,7 +170,7 @@ function Application(): JSX.Element {
 				yAxisUnit: 'ops',
 				id: SERVICE_CHART_ID.rps,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const errorPercentageWidget = useMemo(
@@ -177,6 +183,7 @@ function Application(): JSX.Element {
 						servicename,
 						tagFilterItems,
 						topLevelOperations: topLevelOperationsRoute,
+						dotMetricsEnabled,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),
@@ -187,7 +194,7 @@ function Application(): JSX.Element {
 				id: SERVICE_CHART_ID.errorPercentage,
 				fillSpans: true,
 			}),
-		[servicename, tagFilterItems, topLevelOperationsRoute],
+		[servicename, tagFilterItems, topLevelOperationsRoute, dotMetricsEnabled],
 	);
 
 	const stepInterval = useMemo(
@@ -217,14 +224,21 @@ function Application(): JSX.Element {
 		[dispatch, pathname, urlQuery],
 	);
 
+	/**
+	 *
+	 * @param timestamp - The timestamp in seconds
+	 * @param apmToTraceQuery - query object
+	 * @param isViewLogsClicked - Whether this is for viewing logs vs traces
+	 * @returns A callback function that handles the navigation when executed
+	 */
 	const onErrorTrackHandler = useCallback(
 		(
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
 		): (() => void) => (): void => {
-			const endTime = timestamp;
-			const startTime = timestamp - stepInterval;
+			const endTime = secondsToMilliseconds(timestamp);
+			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
 			const urlParams = new URLSearchParams(search);
 			urlParams.set(QueryParams.startTime, startTime.toString());
@@ -261,8 +275,6 @@ function Application(): JSX.Element {
 					key: 'severity_text',
 					dataType: DataTypes.String,
 					type: '',
-					isColumn: true,
-					isJSON: false,
 					id: 'severity_text--string----true',
 				},
 				op: 'in',
@@ -279,8 +291,6 @@ function Application(): JSX.Element {
 					key: 'hasError',
 					dataType: DataTypes.bool,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'hasError--bool--tag--true',
 				},
 				op: 'in',
@@ -288,6 +298,7 @@ function Application(): JSX.Element {
 			},
 		],
 	});
+	const { safeNavigate } = useSafeNavigate();
 
 	return (
 		<>
@@ -315,6 +326,7 @@ function Application(): JSX.Element {
 							timestamp: selectedTimeStamp,
 							apmToTraceQuery,
 							stepInterval,
+							safeNavigate,
 						})}
 					>
 						View Traces
@@ -344,6 +356,7 @@ function Application(): JSX.Element {
 								timestamp: selectedTimeStamp,
 								apmToTraceQuery,
 								stepInterval,
+								safeNavigate,
 							})}
 						>
 							View Traces

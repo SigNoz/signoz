@@ -1,4 +1,5 @@
 import { FC } from 'react';
+import Spinner from 'components/Spinner';
 
 import { PanelTypeVsPanelWrapper } from './constants';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -17,17 +18,29 @@ function PanelWrapper({
 	tableProcessedDataRef,
 	customTooltipElement,
 	searchTerm,
+	openTracesButton,
+	onOpenTraceBtnClick,
+	customSeries,
+	customOnRowClick,
+	panelMode,
+	enableDrillDown = false,
+	onColumnWidthsChange,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
 	] as FC<PanelWrapperProps>;
 
 	if (!Component) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
+
+	if (queryResponse.isFetching || queryResponse.isLoading) {
+		return <Spinner height="100%" size="large" tip="Loading..." />;
+	}
+
 	return (
 		<Component
+			panelMode={panelMode}
 			widget={widget}
 			queryResponse={queryResponse}
 			setRequestData={setRequestData}
@@ -41,6 +54,12 @@ function PanelWrapper({
 			tableProcessedDataRef={tableProcessedDataRef}
 			customTooltipElement={customTooltipElement}
 			searchTerm={searchTerm}
+			openTracesButton={openTracesButton}
+			onOpenTraceBtnClick={onOpenTraceBtnClick}
+			customOnRowClick={customOnRowClick}
+			customSeries={customSeries}
+			enableDrillDown={enableDrillDown}
+			onColumnWidthsChange={onColumnWidthsChange}
 		/>
 	);
 }

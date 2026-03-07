@@ -1,11 +1,14 @@
-import { ToggleGraphProps } from 'components/Graph/types';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import { Dispatch, MutableRefObject, ReactNode, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
+import { ToggleGraphProps } from 'components/Graph/types';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { RowData } from 'lib/query/createTableColumnsFromQuery';
+import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
+import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
 import { SuccessResponse } from 'types/api';
-import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
+import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
+import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot from 'uplot';
 
 import { MenuItemKeys } from '../WidgetHeader/contants';
@@ -31,7 +34,15 @@ export interface WidgetGraphComponentProps {
 	setRequestData?: Dispatch<SetStateAction<GetQueryResultsProps>>;
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
+	customOnRowClick?: (record: RowData) => void;
+	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
 }
 
 export interface GridCardGraphProps {
@@ -40,11 +51,27 @@ export interface GridCardGraphProps {
 	headerMenuList?: WidgetGraphComponentProps['headerMenuList'];
 	onClickHandler?: OnClickPluginOpts['onClick'];
 	isQueryEnabled: boolean;
-	variables?: Dashboard['data']['variables'];
+	variables?: IDashboardVariables;
 	version?: string;
 	onDragSelect: (start: number, end: number) => void;
+	customOnDragSelect?: (start: number, end: number) => void;
 	customTooltipElement?: HTMLDivElement;
 	dataAvailable?: (isDataAvailable: boolean) => void;
+	getGraphData?: (graphData?: MetricRangePayloadProps['data']) => void;
+	openTracesButton?: boolean;
+	onOpenTraceBtnClick?: (record: RowData) => void;
+	customSeries?: (data: QueryData[]) => uPlot.Series[];
+	customErrorMessage?: string;
+	start?: number;
+	end?: number;
+	analyticsEvent?: string;
+	customTimeRange?: {
+		startTime: number;
+		endTime: number;
+	};
+	customOnRowClick?: (record: RowData) => void;
+	customTimeRangeWindowForCoRelation?: string | undefined;
+	enableDrillDown?: boolean;
 }
 
 export interface GetGraphVisibilityStateOnLegendClickProps {

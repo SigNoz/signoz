@@ -1,4 +1,9 @@
-import LogDetail from 'components/LogDetail';
+import { forwardRef, memo, useCallback, useMemo } from 'react';
+import {
+	TableComponents,
+	TableVirtuoso,
+	TableVirtuosoHandle,
+} from 'react-virtuoso';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import { getLogIndicatorType } from 'components/Logs/LogStateIndicator/utils';
 import { useTableView } from 'components/Logs/TableView/useTableView';
@@ -8,12 +13,6 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 import { getDraggedColumns } from 'hooks/useDragColumns/utils';
-import { forwardRef, memo, useCallback, useMemo } from 'react';
-import {
-	TableComponents,
-	TableVirtuoso,
-	TableVirtuosoHandle,
-} from 'react-virtuoso';
 import { ILog } from 'types/api/logs/log';
 
 import { getInfinityDefaultStyles } from './config';
@@ -27,7 +26,6 @@ interface CustomTableRowProps {
 	activeLogId: string;
 }
 
-// eslint-disable-next-line react/function-component-definition
 const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 	children,
 	context,
@@ -48,7 +46,6 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 				(context as CustomTableRowProps).activeLogId === props.item.id
 			}
 			$logType={logType}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		>
 			{children}
@@ -58,27 +55,40 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 
 const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function InfinityTableView(
-		{ isLoading, tableViewProps, infitiyTableProps },
-		ref,
-	): JSX.Element | null {
-		const {
-			activeLog: activeContextLog,
-			onSetActiveLog: handleSetActiveContextLog,
-			onClearActiveLog: handleClearActiveContextLog,
-			onAddToQuery: handleAddToQuery,
-		} = useActiveLog();
-		const {
-			activeLog,
+		{
+			isLoading,
+			tableViewProps,
+			infitiyTableProps,
 			onSetActiveLog,
 			onClearActiveLog,
-			onAddToQuery,
-			onGroupByAttribute,
-		} = useActiveLog();
+			activeLog,
+		},
+		ref,
+	): JSX.Element | null {
+		const { activeLog: activeContextLog } = useActiveLog();
+
+		const onSetActiveLogExpand = useCallback(
+			(log: ILog) => {
+				onSetActiveLog?.(log);
+			},
+			[onSetActiveLog],
+		);
+
+		const onSetActiveLogContext = useCallback(
+			(log: ILog) => {
+				onSetActiveLog?.(log, VIEW_TYPES.CONTEXT);
+			},
+			[onSetActiveLog],
+		);
+
+		const onCloseActiveLog = useCallback(() => {
+			onClearActiveLog?.();
+		}, [onClearActiveLog]);
 
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
-			onClickExpand: onSetActiveLog,
-			onOpenLogsContext: handleSetActiveContextLog,
+			onClickExpand: onSetActiveLogExpand,
+			onOpenLogsContext: onSetActiveLogContext,
 		});
 
 		const { draggedColumns, onDragColumns } = useDragColumns<
@@ -104,50 +114,49 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					tableColumns={tableColumns}
 					index={index}
 					log={log}
-					handleSetActiveContextLog={handleSetActiveContextLog}
 					logs={tableViewProps.logs}
 					hasActions
 					fontSize={tableViewProps.fontSize}
+					onShowLogDetails={onSetActiveLog}
+					isActiveLog={activeLog?.id === log.id}
+					onClearActiveLog={onCloseActiveLog}
 				/>
 			),
 			[
-				handleSetActiveContextLog,
 				tableColumns,
-				tableViewProps.fontSize,
+				onSetActiveLog,
 				tableViewProps.logs,
+				tableViewProps.fontSize,
+				activeLog?.id,
+				onCloseActiveLog,
 			],
 		);
-
 		const tableHeader = useCallback(
 			() => (
 				<tr>
-					{tableColumns.map((column) => {
-						const isDragColumn = column.key !== 'expand';
+					{tableColumns
+						.filter((column) => column.key)
+						.map((column) => {
+							const isDragColumn = column.key !== 'expand';
 
-						return (
-							<TableHeaderCellStyled
-								$isTimestamp={column.key === 'timestamp'}
-								$isDarkMode={isDarkMode}
-								$isDragColumn={isDragColumn}
-								key={column.key}
-								fontSize={tableViewProps?.fontSize}
-								// eslint-disable-next-line react/jsx-props-no-spreading
-								{...(isDragColumn && { className: 'dragHandler' })}
-							>
-								{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
-							</TableHeaderCellStyled>
-						);
-					})}
+							return (
+								<TableHeaderCellStyled
+									$isLogIndicator={column.key === 'state-indicator'}
+									$isDarkMode={isDarkMode}
+									$isDragColumn={isDragColumn}
+									key={column.key}
+									fontSize={tableViewProps?.fontSize}
+									{...(isDragColumn && { className: `dragHandler ${column.key}` })}
+									columnKey={column.key as string}
+								>
+									{(column.title as string).replace(/^\w/, (c) => c.toUpperCase())}
+								</TableHeaderCellStyled>
+							);
+						})}
 				</tr>
 			),
 			[tableColumns, isDarkMode, tableViewProps?.fontSize],
 		);
-
-		const handleClickExpand = (index: number): void => {
-			if (!onSetActiveLog) return;
-
-			onSetActiveLog(tableViewProps.logs[index]);
-		};
 
 		return (
 			<>
@@ -159,11 +168,8 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 					data={dataSource}
 					components={{
-						// eslint-disable-next-line react/jsx-props-no-spreading
 						Table: LogsCustomTable({ isLoading, handleDragEnd }),
 						// TODO: fix it in the future
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						TableRow: (props): any =>
 							CustomTableRow({
 								...props,
@@ -176,31 +182,9 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					itemContent={itemContent}
 					fixedHeaderContent={tableHeader}
 					totalCount={dataSource.length}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}
-					onClick={(event: any): void => {
-						handleClickExpand(event.target.parentElement.parentElement.dataset.index);
-					}}
-				/>
-
-				{activeContextLog && (
-					<LogDetail
-						log={activeContextLog}
-						onClose={handleClearActiveContextLog}
-						onAddToQuery={handleAddToQuery}
-						selectedTab={VIEW_TYPES.CONTEXT}
-						onGroupByAttribute={onGroupByAttribute}
-					/>
-				)}
-				<LogDetail
-					selectedTab={VIEW_TYPES.OVERVIEW}
-					log={activeLog}
-					onClose={onClearActiveLog}
-					onAddToQuery={onAddToQuery}
-					onClickActionItem={onAddToQuery}
-					onGroupByAttribute={onGroupByAttribute}
 				/>
 			</>
 		);

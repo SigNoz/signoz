@@ -1,6 +1,6 @@
+import { useQuery, UseQueryResult } from 'react-query';
 import { getIntegration } from 'api/Integrations/getIntegration';
 import { AxiosError, AxiosResponse } from 'axios';
-import { useQuery, UseQueryResult } from 'react-query';
 import {
 	GetIntegrationPayloadProps,
 	GetIntegrationProps,

@@ -1,11 +1,13 @@
-import { Col, Row, Space } from 'antd';
-import ROUTES from 'constants/routes';
 import { useMemo } from 'react';
 import { matchPath, useHistory } from 'react-router-dom';
+import HeaderRightSection from 'components/HeaderRightSection/HeaderRightSection';
+import ROUTES from 'constants/routes';
 
 import NewExplorerCTA from '../NewExplorerCTA';
 import DateTimeSelector from './DateTimeSelectionV2';
-import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/config';
+import { routesToDisable, routesToSkip } from './DateTimeSelectionV2/constants';
+
+import './TopNav.styles.scss';
 
 function TopNav(): JSX.Element | null {
 	const { location } = useHistory();
@@ -43,18 +45,11 @@ function TopNav(): JSX.Element | null {
 	}
 
 	return !isRouteToSkip ? (
-		<Row style={{ marginBottom: '1rem' }}>
-			<Col span={24} style={{ marginTop: '1rem' }}>
-				<Row justify="end">
-					<Space align="center" size={16} direction="horizontal">
-						<NewExplorerCTA />
-						<div>
-							<DateTimeSelector showAutoRefresh />
-						</div>
-					</Space>
-				</Row>
-			</Col>
-		</Row>
+		<div className="top-nav-container">
+			<NewExplorerCTA />
+			<DateTimeSelector showAutoRefresh />
+			<HeaderRightSection enableShare enableFeedback enableAnnouncements={false} />
+		</div>
 	) : null;
 }
 

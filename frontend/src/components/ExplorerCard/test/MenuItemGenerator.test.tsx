@@ -13,7 +13,8 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('antd/es/form/Form', () => ({
+jest.mock('antd', () => ({
+	...jest.requireActual('antd'),
 	useForm: jest.fn().mockReturnValue({
 		onFinish: jest.fn(),
 	}),
@@ -25,9 +26,9 @@ describe('MenuItemGenerator', () => {
 			<MockQueryClientProvider>
 				<MenuItemGenerator
 					viewName={viewMockData[0].name}
-					viewKey={viewMockData[0].uuid}
+					viewKey={viewMockData[0].id}
 					createdBy={viewMockData[0].createdBy}
-					uuid={viewMockData[0].uuid}
+					uuid={viewMockData[0].id}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
 					sourcePage={DataSource.TRACES}
@@ -43,9 +44,9 @@ describe('MenuItemGenerator', () => {
 			<MockQueryClientProvider>
 				<MenuItemGenerator
 					viewName={viewMockData[0].name}
-					viewKey={viewMockData[0].uuid}
+					viewKey={viewMockData[0].id}
 					createdBy={viewMockData[0].createdBy}
-					uuid={viewMockData[0].uuid}
+					uuid={viewMockData[0].id}
 					refetchAllView={jest.fn()}
 					viewData={viewMockData}
 					sourcePage={DataSource.TRACES}

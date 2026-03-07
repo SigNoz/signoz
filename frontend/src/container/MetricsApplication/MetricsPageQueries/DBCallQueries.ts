@@ -21,20 +21,19 @@ export const databaseCallsRPS = ({
 	servicename,
 	legend,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: DatabaseCallsRPSProps): QueryBuilderData => {
 	const autocompleteData: BaseAutocompleteData[] = [
 		{
 			key: WidgetKeys.SignozDBLatencyCount,
 			dataType: DataTypes.Float64,
-			isColumn: true,
 			type: '',
 		},
 	];
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			isColumn: false,
-			key: 'db_system',
+			key: dotMetricsEnabled ? WidgetKeys.Db_system : WidgetKeys.Db_system_norm,
 			type: 'tag',
 		},
 	];
@@ -43,9 +42,10 @@ export const databaseCallsRPS = ({
 			{
 				id: '',
 				key: {
-					key: WidgetKeys.Service_name,
+					key: dotMetricsEnabled
+						? WidgetKeys.Service_name
+						: WidgetKeys.Service_name_norm,
 					dataType: DataTypes.String,
-					isColumn: false,
 					type: MetricsType.Resource,
 				},
 				op: OPERATORS.IN,
@@ -75,17 +75,16 @@ export const databaseCallsRPS = ({
 export const databaseCallsAvgDuration = ({
 	servicename,
 	tagFilterItems,
+	dotMetricsEnabled,
 }: DatabaseCallProps): QueryBuilderData => {
 	const autocompleteDataA: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDbLatencySum,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 	const autocompleteDataB: BaseAutocompleteData = {
 		key: WidgetKeys.SignozDBLatencyCount,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -93,9 +92,10 @@ export const databaseCallsAvgDuration = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,

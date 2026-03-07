@@ -1,45 +1,61 @@
 package instrumentation
 
 import (
-	"context"
+	"log/slog"
 	"os"
 
-	"go.opentelemetry.io/contrib/bridges/otelzap"
-	contribsdkconfig "go.opentelemetry.io/contrib/config"
-	sdklog "go.opentelemetry.io/otel/log"
-	nooplog "go.opentelemetry.io/otel/log/noop"
-	"go.uber.org/zap"
-	"go.uber.org/zap/zapcore"
+	"github.com/SigNoz/signoz/pkg/instrumentation/loghandler"
+	"go.uber.org/zap" //nolint:depguard
 )
 
-// newLoggerProvider creates a new logger provider based on the configuration.
-// If logging is disabled, it returns a no-op logger provider.
-func newLoggerProvider(ctx context.Context, cfg Config, cfgResource contribsdkconfig.Resource) (sdklog.LoggerProvider, error) {
-	if !cfg.Logs.Enabled {
-		return nooplog.NewLoggerProvider(), nil
-	}
+type zapToSlogConverter struct{}
 
-	sdk, err := contribsdkconfig.NewSDK(
-		contribsdkconfig.WithContext(ctx),
-		contribsdkconfig.WithOpenTelemetryConfiguration(contribsdkconfig.OpenTelemetryConfiguration{
-			LoggerProvider: &cfg.Logs.LoggerProvider,
-			Resource:       &cfgResource,
-		}),
+func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
+	logger := slog.New(
+		loghandler.New(
+			slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: config.Logs.Level, AddSource: true, ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
+				// This is more in line with OpenTelemetry semantic conventions
+				if a.Key == slog.SourceKey {
+					a.Key = "code"
+					return a
+				}
+
+				if a.Key == slog.TimeKey {
+					a.Key = "timestamp"
+					return a
+				}
+
+				return a
+			}}),
+			wrappers...,
+		),
 	)
-	if err != nil {
-		return nil, err
-	}
 
-	return sdk.LoggerProvider(), nil
+	slog.SetDefault(logger)
+	_ = slog.SetLogLoggerLevel(config.Logs.Level)
+
+	return logger
 }
 
-// newLogger creates a new Zap logger with the configured level and output.
-// It combines a JSON encoder for stdout and an OpenTelemetry bridge.
-func newLogger(cfg Config, provider sdklog.LoggerProvider) *zap.Logger {
-	core := zapcore.NewTee(
-		zapcore.NewCore(zapcore.NewJSONEncoder(zap.NewProductionEncoderConfig()), zapcore.AddSync(os.Stdout), cfg.Logs.Level),
-		otelzap.NewCore("go.signoz.io/pkg/instrumentation", otelzap.WithLoggerProvider(provider)),
-	)
+func NewZapToSlogConverter() ZapToSlogConverter {
+	return &zapToSlogConverter{}
+}
 
-	return zap.New(core, zap.AddCaller(), zap.AddStacktrace(zap.ErrorLevel))
+func (*zapToSlogConverter) FieldsToAttributes(fields []zap.Field) []any {
+	// for each KV pair
+	args := make([]any, 0, len(fields)*2)
+	for _, f := range fields {
+		args = append(args, f.Key)
+
+		switch {
+		case f.Interface != nil:
+			args = append(args, f.Interface)
+		case f.String != "":
+			args = append(args, f.String)
+		default:
+			args = append(args, f.Integer)
+		}
+	}
+
+	return args
 }

@@ -1,0 +1,16 @@
+.overflow-input {
+	overflow: hidden;
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.overflow-input-mirror {
+	position: absolute;
+	visibility: hidden;
+	white-space: pre;
+	pointer-events: none;
+	font: inherit;
+	letter-spacing: inherit;
+	height: 0;
+	overflow: hidden;
+}

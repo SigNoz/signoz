@@ -1,0 +1,1091 @@
+{
+    "id": "msk",
+    "title": "MSK",
+    "icon": "file://icon.svg",
+    "overview": "file://overview.md",
+    "supported_signals": {
+      "metrics": true,
+      "logs": false
+    },
+    "data_collected": {
+      "metrics": [
+        {
+          "name": "aws_Kafka_ActiveControllerCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ActiveControllerCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ActiveControllerCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ActiveControllerCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BurstBalance_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BurstBalance_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BurstBalance_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BurstBalance_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesInPerSec_count",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesInPerSec_max",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesInPerSec_min",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesInPerSec_sum",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesOutPerSec_count",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesOutPerSec_max",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesOutPerSec_min",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_BytesOutPerSec_sum",
+          "unit": "Bytes/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ClientConnectionCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ClientConnectionCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ClientConnectionCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ClientConnectionCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ConnectionCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ConnectionCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ConnectionCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ConnectionCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIdle_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIdle_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIdle_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIdle_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIoWait_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIoWait_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIoWait_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuIoWait_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuSystem_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuSystem_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuSystem_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuSystem_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuUser_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuUser_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuUser_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_CpuUser_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_EstimatedMaxTimeLag_count",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_EstimatedMaxTimeLag_max",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_EstimatedMaxTimeLag_min",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_EstimatedMaxTimeLag_sum",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalPartitionCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalPartitionCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalPartitionCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalPartitionCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalTopicCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalTopicCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalTopicCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_GlobalTopicCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_HeapMemoryAfterGC_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_HeapMemoryAfterGC_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_HeapMemoryAfterGC_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_HeapMemoryAfterGC_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaAppLogsDiskUsed_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaAppLogsDiskUsed_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaAppLogsDiskUsed_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaAppLogsDiskUsed_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaDataLogsDiskUsed_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaDataLogsDiskUsed_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaDataLogsDiskUsed_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_KafkaDataLogsDiskUsed_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_LeaderCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_LeaderCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_LeaderCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_LeaderCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MaxOffsetLag_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MaxOffsetLag_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MaxOffsetLag_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MaxOffsetLag_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryBuffered_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryBuffered_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryBuffered_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryBuffered_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryCached_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryCached_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryCached_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryCached_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryFree_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryFree_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryFree_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryFree_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryUsed_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryUsed_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryUsed_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MemoryUsed_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MessagesInPerSec_count",
+          "unit": "Count/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MessagesInPerSec_max",
+          "unit": "Count/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MessagesInPerSec_min",
+          "unit": "Count/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_MessagesInPerSec_sum",
+          "unit": "Count/Second",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxDropped_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxDropped_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxDropped_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxDropped_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxErrors_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxErrors_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxErrors_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxErrors_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxPackets_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxPackets_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxPackets_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkRxPackets_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxDropped_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxDropped_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxDropped_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxDropped_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxErrors_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxErrors_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxErrors_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxErrors_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxPackets_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxPackets_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxPackets_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_NetworkTxPackets_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_OfflinePartitionsCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_OfflinePartitionsCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_OfflinePartitionsCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_OfflinePartitionsCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_PartitionCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_PartitionCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_PartitionCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_PartitionCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ProduceTotalTimeMsMean_count",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ProduceTotalTimeMsMean_max",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ProduceTotalTimeMsMean_min",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ProduceTotalTimeMsMean_sum",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RequestBytesMean_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RequestBytesMean_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RequestBytesMean_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RequestBytesMean_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RollingEstimatedTimeLagMax_count",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RollingEstimatedTimeLagMax_max",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RollingEstimatedTimeLagMax_min",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RollingEstimatedTimeLagMax_sum",
+          "unit": "Seconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RootDiskUsed_count",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RootDiskUsed_max",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RootDiskUsed_min",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_RootDiskUsed_sum",
+          "unit": "Percent",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SumOffsetLag_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SumOffsetLag_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SumOffsetLag_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SumOffsetLag_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapFree_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapFree_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapFree_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapFree_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapUsed_count",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapUsed_max",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapUsed_min",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_SwapUsed_sum",
+          "unit": "Bytes",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_TrafficShaping_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_TrafficShaping_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_TrafficShaping_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_TrafficShaping_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderMinIsrPartitionCount_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderMinIsrPartitionCount_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderMinIsrPartitionCount_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderMinIsrPartitionCount_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderReplicatedPartitions_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderReplicatedPartitions_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderReplicatedPartitions_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UnderReplicatedPartitions_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UserPartitionExists_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UserPartitionExists_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UserPartitionExists_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_UserPartitionExists_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperRequestLatencyMsMean_count",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperRequestLatencyMsMean_max",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperRequestLatencyMsMean_min",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperRequestLatencyMsMean_sum",
+          "unit": "Milliseconds",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperSessionState_count",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperSessionState_max",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperSessionState_min",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        },
+        {
+          "name": "aws_Kafka_ZooKeeperSessionState_sum",
+          "unit": "Count",
+          "type": "Gauge",
+          "description": ""
+        }
+      ]
+    },
+    "telemetry_collection_strategy": {
+      "aws_metrics": {
+        "cloudwatch_metric_stream_filters": [
+          {
+            "Namespace": "AWS/Kafka"
+          }
+        ]
+      }
+    },
+    "assets": {
+      "dashboards": [
+        {
+          "id": "overview",
+          "title": "AWS MSK Overview",
+          "description": "Overview of AWS MSK",
+          "image": "file://assets/dashboards/overview.png",
+          "definition": "file://assets/dashboards/overview.json"
+        }
+      ]
+    }
+  }
+  

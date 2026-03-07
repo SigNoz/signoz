@@ -1,10 +1,17 @@
-/* eslint-disable react/require-default-props */
-import './PlannedDowntime.styles.scss';
-
+import { ReactNode, useEffect } from 'react';
+import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { TableProps } from 'antd/lib';
+import {
+	Collapse,
+	Flex,
+	Space,
+	Table,
+	TableProps,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	DowntimeSchedules,
 	PayloadProps,
@@ -15,8 +22,8 @@ import cx from 'classnames';
 import { useNotifications } from 'hooks/useNotifications';
 import { defaultTo } from 'lodash-es';
 import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
-import { ReactNode, useEffect } from 'react';
-import { UseQueryResult } from 'react-query';
+import { useAppContext } from 'providers/App/App';
+import { USER_ROLES } from 'types/roles';
 
 import {
 	formatDateTime,
@@ -25,6 +32,8 @@ import {
 	getEndTime,
 	recurrenceInfo,
 } from './PlannedDowntimeutils';
+
+import './PlannedDowntime.styles.scss';
 
 const { Panel } = Collapse;
 
@@ -84,6 +93,8 @@ function HeaderComponent({
 	handleEdit: () => void;
 	handleDelete: () => void;
 }): JSX.Element {
+	const { user } = useAppContext();
+	const isCrudEnabled = user?.role !== USER_ROLES.VIEWER;
 	return (
 		<Flex className="header-content" justify="space-between">
 			<Flex gap={8}>
@@ -91,25 +102,27 @@ function HeaderComponent({
 				<Tag>{duration}</Tag>
 			</Flex>
 
-			<div className="action-btn">
-				<PenLine
-					size={14}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						handleEdit();
-					}}
-				/>
-				<Trash2
-					size={14}
-					color={Color.BG_CHERRY_500}
-					onClick={(e): void => {
-						e.preventDefault();
-						e.stopPropagation();
-						handleDelete();
-					}}
-				/>
-			</div>
+			{isCrudEnabled && (
+				<div className="action-btn">
+					<PenLine
+						size={14}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleEdit();
+						}}
+					/>
+					<Trash2
+						size={14}
+						color={Color.BG_CHERRY_500}
+						onClick={(e): void => {
+							e.preventDefault();
+							e.stopPropagation();
+							handleDelete();
+						}}
+					/>
+				</div>
+			)}
 		</Flex>
 	);
 }

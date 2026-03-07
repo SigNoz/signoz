@@ -1,3 +1,7 @@
+import { memo, useCallback } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { connect, useDispatch, useSelector } from 'react-redux';
+import { useHistory } from 'react-router-dom';
 import LogDetail from 'components/LogDetail';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import ROUTES from 'constants/routes';
@@ -5,9 +9,7 @@ import { getOldLogsOperatorFromNew } from 'hooks/logs/useActiveLog';
 import { getGeneratedFilterQueryString } from 'lib/getGeneratedFilterQueryString';
 import getStep from 'lib/getStep';
 import { getIdConditions } from 'pages/Logs/utils';
-import { memo, useCallback } from 'react';
-import { connect, useDispatch, useSelector } from 'react-redux';
-import { useHistory } from 'react-router-dom';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { getLogs } from 'store/actions/logs/getLogs';
@@ -163,5 +165,4 @@ const mapDispatchToProps = (
 	getLogsAggregate: bindActionCreators(getLogsAggregate, dispatch),
 });
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export default connect(null, mapDispatchToProps)(memo(LogDetailedView as any));

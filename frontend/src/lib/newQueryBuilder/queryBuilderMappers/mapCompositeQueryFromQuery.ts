@@ -7,6 +7,7 @@ import {
 	Query,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
+import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import { mapQueryDataToApi } from './mapQueryDataToApi';
 
@@ -17,18 +18,24 @@ const defaultCompositeQuery: ICompositeMetricQuery = {
 	chQueries: {},
 	promQueries: {},
 	unit: undefined,
+	queries: [],
 };
 
 const buildBuilderQuery = (
 	query: Query,
 	panelType: PANEL_TYPES | null,
 ): ICompositeMetricQuery => {
-	const { queryData, queryFormulas } = query.builder;
+	const { queryData, queryFormulas, queryTraceOperator } = query.builder;
 	const currentQueryData = mapQueryDataToApi(queryData, 'queryName');
 	const currentFormulas = mapQueryDataToApi(queryFormulas, 'queryName');
+	const currentTraceOperator = mapQueryDataToApi(
+		queryTraceOperator,
+		'queryName',
+	);
 	const builderQueries = {
 		...currentQueryData.data,
 		...currentFormulas.data,
+		...currentTraceOperator.data,
 	};
 
 	const compositeQuery = defaultCompositeQuery;
@@ -45,7 +52,9 @@ const buildClickHouseQuery = (
 ): ICompositeMetricQuery => {
 	const chQueries: BuilderClickHouseResource = {};
 	query.clickhouse_sql.forEach((query: IClickHouseQuery) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		chQueries[query.name] = query;
 	});
 
@@ -63,7 +72,9 @@ const buildPromQuery = (
 ): ICompositeMetricQuery => {
 	const promQueries: BuilderPromQLResource = {};
 	query.promql.forEach((query) => {
-		if (!query.query) return;
+		if (!query.query) {
+			return;
+		}
 		promQueries[query.name] = {
 			legend: query.legend,
 			name: query.name,
@@ -94,7 +105,8 @@ export const mapCompositeQueryFromQuery = (
 		const functionToBuildQuery = queryTypeMethodMapping[query.queryType];
 
 		if (functionToBuildQuery && typeof functionToBuildQuery === 'function') {
-			return functionToBuildQuery(query, panelType);
+			const compositeQuery = functionToBuildQuery(query, panelType);
+			return compositeQueryToQueryEnvelope(compositeQuery);
 		}
 	}
 
@@ -105,5 +117,6 @@ export const mapCompositeQueryFromQuery = (
 		chQueries: {},
 		promQueries: {},
 		unit: undefined,
+		queries: [],
 	};
 };

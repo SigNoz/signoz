@@ -1,8 +1,9 @@
-import './LogsExplorerList.style.scss';
-
+import { memo, useCallback, useEffect, useMemo, useRef } from 'react';
+import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
 import { Card } from 'antd';
+import logEvent from 'api/common/logEvent';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import LogDetail from 'components/LogDetail';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
 // components
 import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
@@ -11,15 +12,14 @@ import Spinner from 'components/Spinner';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
-import LogsError from 'container/LogsError/LogsError';
 import { LogsLoading } from 'container/LogsLoading/LogsLoading';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { FontSize } from 'container/OptionsMenu/types';
-import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
+import useLogDetailHandlers from 'hooks/logs/useLogDetailHandlers';
+import useScrollToLog from 'hooks/logs/useScrollToLog';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { memo, useCallback, useMemo, useRef } from 'react';
-import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
+import APIError from 'types/api/error';
 // interfaces
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
@@ -28,7 +28,13 @@ import NoLogs from '../NoLogs/NoLogs';
 import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
-import { convertKeysToColumnFields } from './utils';
+import {
+	convertKeysToColumnFields,
+	getEmptyLogsListConfig,
+	isTraceToLogsQuery,
+} from './utils';
+
+import './LogsExplorerList.style.scss';
 
 function Footer(): JSX.Element {
 	return <Spinner height={20} tip="Getting Logs" />;
@@ -40,27 +46,33 @@ function LogsExplorerList({
 	logs,
 	onEndReached,
 	isError,
+	error,
 	isFilterApplied,
+	handleChangeSelectedView,
 }: LogsExplorerListProps): JSX.Element {
 	const ref = useRef<VirtuosoHandle>(null);
-	const { initialDataSource } = useQueryBuilder();
-
 	const { activeLogId } = useCopyLogLink();
 
 	const {
 		activeLog,
-		onClearActiveLog,
 		onAddToQuery,
-		onGroupByAttribute,
-		onSetActiveLog,
-	} = useActiveLog();
+		selectedTab,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+	} = useLogDetailHandlers();
 
 	const { options } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
-		dataSource: initialDataSource || DataSource.METRICS,
+		dataSource: DataSource.LOGS,
 		aggregateOperator:
 			currentStagedQueryData?.aggregateOperator || StringOperators.NOOP,
 	});
+
+	const {
+		currentQuery,
+		lastUsedQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
 
 	const activeLogIndex = useMemo(
 		() => logs.findIndex(({ id }) => id === activeLogId),
@@ -72,41 +84,65 @@ function LogsExplorerList({
 		[options],
 	);
 
+	const handleScrollToLog = useScrollToLog({
+		logs,
+		virtuosoRef: ref,
+	});
+
+	useEffect(() => {
+		if (!isLoading && !isFetching && !isError && logs.length !== 0) {
+			logEvent('Logs Explorer: Data present', {
+				panelType: 'LIST',
+			});
+		}
+	}, [isLoading, isFetching, isError, logs.length]);
+
 	const getItemContent = useCallback(
 		(_: number, log: ILog): JSX.Element => {
 			if (options.format === 'raw') {
 				return (
-					<RawLogView
-						key={log.id}
-						data={log}
-						linesPerRow={options.maxLines}
-						selectedFields={selectedFields}
-						fontSize={options.fontSize}
-					/>
+					<div key={log.id}>
+						<RawLogView
+							data={log}
+							isActiveLog={activeLog?.id === log.id}
+							linesPerRow={options.maxLines}
+							selectedFields={selectedFields}
+							fontSize={options.fontSize}
+							handleChangeSelectedView={handleChangeSelectedView}
+							onSetActiveLog={handleSetActiveLog}
+							onClearActiveLog={handleCloseLogDetail}
+						/>
+					</div>
 				);
 			}
 
 			return (
-				<ListLogView
-					key={log.id}
-					logData={log}
-					selectedFields={selectedFields}
-					onAddToQuery={onAddToQuery}
-					onSetActiveLog={onSetActiveLog}
-					activeLog={activeLog}
-					fontSize={options.fontSize}
-					linesPerRow={options.maxLines}
-				/>
+				<div key={log.id}>
+					<ListLogView
+						logData={log}
+						isActiveLog={activeLog?.id === log.id}
+						selectedFields={selectedFields}
+						onAddToQuery={onAddToQuery}
+						onSetActiveLog={handleSetActiveLog}
+						activeLog={activeLog}
+						fontSize={options.fontSize}
+						linesPerRow={options.maxLines}
+						handleChangeSelectedView={handleChangeSelectedView}
+						onClearActiveLog={handleCloseLogDetail}
+					/>
+				</div>
 			);
 		},
 		[
-			activeLog,
-			onAddToQuery,
-			onSetActiveLog,
-			options.fontSize,
 			options.format,
+			options.fontSize,
 			options.maxLines,
+			activeLog,
 			selectedFields,
+			onAddToQuery,
+			handleSetActiveLog,
+			handleChangeSelectedView,
+			handleCloseLogDetail,
 		],
 	);
 
@@ -131,10 +167,14 @@ function LogsExplorerList({
 						activeLogIndex,
 					}}
 					infitiyTableProps={{ onEndReached }}
+					handleChangeSelectedView={handleChangeSelectedView}
+					logs={logs}
+					onSetActiveLog={handleSetActiveLog}
+					onClearActiveLog={handleCloseLogDetail}
+					activeLog={activeLog}
 				/>
 			);
 		}
-
 		function getMarginTop(): string {
 			switch (options.fontSize) {
 				case FontSize.SMALL:
@@ -177,7 +217,56 @@ function LogsExplorerList({
 		onEndReached,
 		getItemContent,
 		selectedFields,
+		handleChangeSelectedView,
+		handleSetActiveLog,
+		handleCloseLogDetail,
+		activeLog,
 	]);
+
+	const isTraceToLogsNavigation = useMemo(() => {
+		if (!currentStagedQueryData) {
+			return false;
+		}
+		return isTraceToLogsQuery(currentStagedQueryData);
+	}, [currentStagedQueryData]);
+
+	const handleClearFilters = useCallback((): void => {
+		const queryIndex = lastUsedQuery ?? 0;
+		const updatedQuery = currentQuery?.builder.queryData?.[queryIndex];
+
+		if (!updatedQuery) {
+			return;
+		}
+
+		if (updatedQuery?.filters?.items) {
+			updatedQuery.filters.items = [];
+		}
+
+		const preparedQuery = {
+			...currentQuery,
+			builder: {
+				...currentQuery.builder,
+				queryData: currentQuery.builder.queryData.map((item, idx: number) => ({
+					...item,
+					filters: {
+						...item.filters,
+						items: idx === queryIndex ? [] : [...(item.filters?.items || [])],
+						op: item.filters?.op || 'AND',
+					},
+				})),
+			},
+		};
+
+		redirectWithQueryBuilderData(preparedQuery);
+	}, [currentQuery, lastUsedQuery, redirectWithQueryBuilderData]);
+
+	const getEmptyStateMessage = useMemo(() => {
+		if (!isTraceToLogsNavigation) {
+			return;
+		}
+
+		return getEmptyLogsListConfig(handleClearFilters);
+	}, [isTraceToLogsNavigation, handleClearFilters]);
 
 	return (
 		<div className="logs-list-view-container">
@@ -194,10 +283,16 @@ function LogsExplorerList({
 				logs.length === 0 &&
 				!isError &&
 				isFilterApplied && (
-					<EmptyLogsSearch dataSource={DataSource.LOGS} panelType="LIST" />
+					<EmptyLogsSearch
+						dataSource={DataSource.LOGS}
+						panelType="LIST"
+						customMessage={getEmptyStateMessage}
+					/>
 				)}
 
-			{isError && !isLoading && !isFetching && <LogsError />}
+			{isError && !isLoading && !isFetching && error && (
+				<ErrorInPlace error={error as APIError} />
+			)}
 
 			{!isLoading && !isError && logs.length > 0 && (
 				<>
@@ -205,14 +300,19 @@ function LogsExplorerList({
 						{renderContent}
 					</InfinityWrapperStyled>
 
-					<LogDetail
-						selectedTab={VIEW_TYPES.OVERVIEW}
-						log={activeLog}
-						onClose={onClearActiveLog}
-						onAddToQuery={onAddToQuery}
-						onGroupByAttribute={onGroupByAttribute}
-						onClickActionItem={onAddToQuery}
-					/>
+					{selectedTab && activeLog && (
+						<LogDetail
+							selectedTab={selectedTab}
+							log={activeLog}
+							onClose={handleCloseLogDetail}
+							onAddToQuery={onAddToQuery}
+							onClickActionItem={onAddToQuery}
+							handleChangeSelectedView={handleChangeSelectedView}
+							logs={logs}
+							onNavigateLog={handleSetActiveLog}
+							onScrollToLog={handleScrollToLog}
+						/>
+					)}
 				</>
 			)}
 		</div>

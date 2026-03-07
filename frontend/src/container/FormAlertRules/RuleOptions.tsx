@@ -1,5 +1,4 @@
-import './RuleOptions.styles.scss';
-
+import { useTranslation } from 'react-i18next';
 import {
 	Checkbox,
 	Collapse,
@@ -11,13 +10,11 @@ import {
 	Space,
 	Typography,
 } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	getCategoryByOptionId,
 	getCategorySelectOptionByName,
-} from 'container/NewWidget/RightContainer/alertFomatCategories';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useTranslation } from 'react-i18next';
+} from 'container/CreateAlertV2/AlertCondition/utils';
 import {
 	AlertDef,
 	defaultAlgorithm,
@@ -38,15 +35,17 @@ import {
 	VerticalLine,
 } from './styles';
 
+import './RuleOptions.styles.scss';
+
 function RuleOptions({
 	alertDef,
 	setAlertDef,
 	queryCategory,
 	queryOptions,
+	yAxisUnit,
 }: RuleOptionsProps): JSX.Element {
 	// init namespace for translations
 	const { t } = useTranslation('alerts');
-	const { currentQuery } = useQueryBuilder();
 
 	const { ruleType } = alertDef;
 
@@ -62,7 +61,9 @@ function RuleOptions({
 	};
 
 	const onChangeSelectedQueryName = (value: string | unknown): void => {
-		if (typeof value !== 'string') return;
+		if (typeof value !== 'string') {
+			return;
+		}
 
 		setAlertDef({
 			...alertDef,
@@ -365,15 +366,15 @@ function RuleOptions({
 		</InlineSelect>
 	);
 
-	const selectedCategory = getCategoryByOptionId(currentQuery?.unit || '');
+	const selectedCategory = getCategoryByOptionId(yAxisUnit);
 
-	const categorySelectOptions = getCategorySelectOptionByName(
-		selectedCategory?.name,
-	);
+	const categorySelectOptions = getCategorySelectOptionByName(selectedCategory);
+
+	const step3Label = alertDef.alertType === 'METRIC_BASED_ALERT' ? '3' : '2';
 
 	return (
 		<>
-			<StepHeading>{t('alert_form_step3')}</StepHeading>
+			<StepHeading>{t('alert_form_step3', { step: step3Label })}</StepHeading>
 			<FormContainer>
 				{queryCategory === EQueryType.PROM && renderPromRuleOptions()}
 				{queryCategory !== EQueryType.PROM &&
@@ -388,7 +389,7 @@ function RuleOptions({
 				<Space direction="vertical" size="large">
 					{ruleType !== AlertDetectionTypes.ANOMALY_DETECTION_ALERT && (
 						<Space direction="horizontal" align="center">
-							<Form.Item noStyle name={['condition', 'target']}>
+							<Form.Item noStyle>
 								<InputNumber
 									addonBefore={t('field_threshold')}
 									value={alertDef?.condition?.target}
@@ -400,6 +401,7 @@ function RuleOptions({
 
 							<Form.Item noStyle>
 								<Select
+									className="rule-unit-selector"
 									getPopupContainer={popupContainer}
 									allowClear
 									showSearch
@@ -513,5 +515,6 @@ interface RuleOptionsProps {
 	setAlertDef: (a: AlertDef) => void;
 	queryCategory: EQueryType;
 	queryOptions: DefaultOptionType[];
+	yAxisUnit: string;
 }
 export default RuleOptions;

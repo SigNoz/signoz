@@ -1,7 +1,12 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { UseMutateAsyncFunction } from 'react-query';
+import type { NotificationInstance } from 'antd/es/notification/interface';
+import logEvent from 'api/common/logEvent';
 import { MenuItemLabelGeneratorProps } from 'components/ExplorerCard/types';
 import { showErrorNotification } from 'components/ExplorerCard/utils';
-import { UseMutateAsyncFunction } from 'react-query';
+import {
+	MetricsExplorerEventKeys,
+	MetricsExplorerEvents,
+} from 'container/MetricsExplorer/events';
 import { DeleteViewPayloadProps } from 'types/api/saveViews/types';
 
 type DeleteViewProps = {
@@ -29,6 +34,9 @@ export const deleteViewHandler = ({
 				message: 'View Deleted Successfully',
 			});
 			refetchAllView();
+			logEvent(MetricsExplorerEvents.ViewDeleted, {
+				[MetricsExplorerEventKeys.Tab]: 'views',
+			});
 		},
 		onError: (err) => {
 			showErrorNotification(notifications, err);

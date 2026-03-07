@@ -1,4 +1,4 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import axios from 'axios';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { QueryParams } from 'constants/query';
@@ -6,6 +6,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import isEqual from 'lodash-es/isEqual';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { DataSource } from 'types/common/queryBuilder';
 
 import {
 	DeleteViewHandlerProps,
@@ -27,31 +28,31 @@ export const getViewDetailsUsingViewKey: GetViewDetailsUsingViewKey = (
 	viewKey,
 	data,
 ) => {
-	const selectedView = data?.find((view) => view.uuid === viewKey);
+	const selectedView = data?.find((view) => view.id === viewKey);
 	if (selectedView) {
-		const { compositeQuery, name, uuid, extraData } = selectedView;
+		const { compositeQuery, name, id, extraData } = selectedView;
 		const query = mapQueryDataFromApi(compositeQuery);
-		return { query, name, uuid, panelType: compositeQuery.panelType, extraData };
+		return { query, name, id, panelType: compositeQuery.panelType, extraData };
 	}
 	return undefined;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const omitIdFromQuery = (query: Query | null): any => ({
 	...query,
 	builder: {
 		...query?.builder,
 		queryData: query?.builder.queryData.map((queryData) => {
-			const { id, ...rest } = queryData.aggregateAttribute;
+			const { id: _aggregateAttributeId, ...rest } =
+				queryData.aggregateAttribute || {};
 			const newAggregateAttribute = rest;
 			const newGroupByAttributes = queryData.groupBy.map((groupByAttribute) => {
-				const { id, ...rest } = groupByAttribute;
+				const { id: _groupByAttributeId, ...rest } = groupByAttribute;
 				return rest;
 			});
-			const newItems = queryData.filters.items.map((item) => {
-				const { id, ...newItem } = item;
+			const newItems = queryData.filters?.items?.map((item) => {
+				const { id: _itemId, ...newItem } = item;
 				if (item.key) {
-					const { id, ...rest } = item.key;
+					const { id: _keyId, ...rest } = item.key;
 					return {
 						...newItem,
 						key: rest,
@@ -80,12 +81,13 @@ export const isQueryUpdatedInView = ({
 	data,
 	stagedQuery,
 	currentPanelType,
+	options,
 }: IsQueryUpdatedInViewProps): boolean => {
 	const currentViewDetails = getViewDetailsUsingViewKey(viewKey, data);
 	if (!currentViewDetails) {
 		return false;
 	}
-	const { query, panelType } = currentViewDetails;
+	const { query, panelType, extraData } = currentViewDetails;
 
 	// Omitting id from aggregateAttribute and groupBy
 	const updatedCurrentQuery = omitIdFromQuery(stagedQuery);
@@ -97,12 +99,19 @@ export const isQueryUpdatedInView = ({
 	) {
 		return false;
 	}
-
 	return (
 		panelType !== currentPanelType ||
 		!isEqual(query.builder, updatedCurrentQuery?.builder) ||
 		!isEqual(query.clickhouse_sql, updatedCurrentQuery?.clickhouse_sql) ||
-		!isEqual(query.promql, updatedCurrentQuery?.promql)
+		!isEqual(query.promql, updatedCurrentQuery?.promql) ||
+		!isEqual(
+			options?.selectColumns,
+			extraData && JSON.parse(extraData)?.selectColumns,
+		) ||
+		(stagedQuery?.builder?.queryData?.[0]?.dataSource === DataSource.LOGS &&
+			(!isEqual(options?.format, extraData && JSON.parse(extraData)?.format) ||
+				!isEqual(options?.maxLines, extraData && JSON.parse(extraData)?.maxLines) ||
+				!isEqual(options?.fontSize, extraData && JSON.parse(extraData)?.fontSize)))
 	);
 };
 

@@ -1,3 +1,13 @@
+import AlertRuleProvider from 'providers/Alert';
+
 import AlertDetails from './AlertDetails';
 
-export default AlertDetails;
+function AlertDetailsPage(): JSX.Element {
+	return (
+		<AlertRuleProvider>
+			<AlertDetails />
+		</AlertRuleProvider>
+	);
+}
+
+export default AlertDetailsPage;

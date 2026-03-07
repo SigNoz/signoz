@@ -1,4 +1,5 @@
 import { Tag, Typography } from 'antd';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
@@ -10,7 +11,7 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 	return (
 		<>
 			{allAlerts.map((alert) => {
-				const { labels } = alert;
+				const { labels = {} } = alert;
 				const labelsObject = Object.keys(labels);
 
 				const tags = labelsObject.filter((e) => e !== 'severity');
@@ -27,26 +28,26 @@ function ExapandableRow({ allAlerts }: ExapandableRowProps): JSX.Element {
 						hoverable
 						key={alert.fingerprint}
 					>
-						<TableCell>
+						<TableCell minWidth="90px">
 							<Status severity={alert.status.state} />
 						</TableCell>
 
-						<TableCell>
-							<Typography>{labels.alertname}</Typography>
+						<TableCell minWidth="90px" overflowX="scroll">
+							<Typography>{labels.alertname || '-'}</Typography>
 						</TableCell>
 
-						<TableCell>
-							<Typography>{labels.severity}</Typography>
+						<TableCell minWidth="90px">
+							<Typography>{labels.severity || '-'}</Typography>
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px">
 							<Typography>{`${formatTimezoneAdjustedTimestamp(
 								formatedDate,
-								'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+								DATE_TIME_FORMATS.UTC_US,
 							)}`}</Typography>
 						</TableCell>
 
-						<TableCell>
+						<TableCell minWidth="90px" overflowX="scroll">
 							<div>
 								{tags.map((e) => (
 									<Tag key={e}>{`${e}:${labels[e]}`}</Tag>

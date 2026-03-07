@@ -4,8 +4,8 @@ import (
 	"math"
 	"time"
 
-	"go.signoz.io/signoz/pkg/query-service/common"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/common"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 )
 
 type Seasonality string
@@ -50,7 +50,7 @@ type GetAnomaliesResponse struct {
 //
 //	                  ^                                  ^
 //		              |                                  |
-//			(rounded value for past peiod)    +      (seasonal growth)
+//			(rounded value for past period)    +      (seasonal growth)
 //
 // score = abs(value - prediction) / stddev (current_season_query)
 type anomalyQueryParams struct {
@@ -59,7 +59,7 @@ type anomalyQueryParams struct {
 	// The results obtained from this query are used to compare with predicted values
 	// and to detect anomalies
 	CurrentPeriodQuery *v3.QueryRangeParamsV3
-	// PastPeriodQuery is the query range params for past seasonal period
+	// PastPeriodQuery is the query range params for past period of seasonality
 	// Example: For weekly seasonality, (now-1w-5m, now-1w)
 	//        : For daily seasonality, (now-1d-5m, now-1d)
 	//        : For hourly seasonality, (now-1h-5m, now-1h)
@@ -74,13 +74,12 @@ type anomalyQueryParams struct {
 	//        : For daily seasonality, this is the query range params for the (now-2d-5m, now-1d)
 	//        : For hourly seasonality, this is the query range params for the (now-2h-5m, now-1h)
 	PastSeasonQuery *v3.QueryRangeParamsV3
-
-	// Past2SeasonQuery is the query range params for past 2 seasonal period to the current season
+	// Past2SeasonQuery is the query range params for past 2 seasonal periods to the current season
 	// Example: For weekly seasonality, this is the query range params for the (now-3w-5m, now-2w)
 	//        : For daily seasonality, this is the query range params for the (now-3d-5m, now-2d)
 	//        : For hourly seasonality, this is the query range params for the (now-3h-5m, now-2h)
 	Past2SeasonQuery *v3.QueryRangeParamsV3
-	// Past3SeasonQuery is the query range params for past 3 seasonal period to the current season
+	// Past3SeasonQuery is the query range params for past 3 seasonal periods to the current season
 	// Example: For weekly seasonality, this is the query range params for the (now-4w-5m, now-3w)
 	//        : For daily seasonality, this is the query range params for the (now-4d-5m, now-3d)
 	//        : For hourly seasonality, this is the query range params for the (now-4h-5m, now-3h)
@@ -144,13 +143,13 @@ func prepareAnomalyQueryParams(req *v3.QueryRangeParamsV3, seasonality Seasonali
 	switch seasonality {
 	case SeasonalityWeekly:
 		currentGrowthPeriodStart = start - oneWeekOffset
-		currentGrowthPeriodEnd = end
+		currentGrowthPeriodEnd = start
 	case SeasonalityDaily:
 		currentGrowthPeriodStart = start - oneDayOffset
-		currentGrowthPeriodEnd = end
+		currentGrowthPeriodEnd = start
 	case SeasonalityHourly:
 		currentGrowthPeriodStart = start - oneHourOffset
-		currentGrowthPeriodEnd = end
+		currentGrowthPeriodEnd = start
 	}
 
 	currentGrowthQuery := &v3.QueryRangeParamsV3{

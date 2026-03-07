@@ -1,0 +1,43 @@
+.organization-settings-container {
+	display: flex;
+	flex-direction: column;
+	gap: 24px;
+	margin: 16px;
+
+	padding: 16px;
+
+	border: 1px solid var(--Slate-500, #161922);
+	background: var(--Ink-400, #121317);
+	border-radius: 3px;
+}
+
+.pending-invites-container,
+.members-container,
+.auth-domains-container {
+	display: flex;
+	flex-direction: column;
+	gap: 8px;
+
+	h3 {
+		margin-bottom: 0px;
+	}
+}
+
+.auth-domains-title-container {
+	display: flex;
+	flex-direction: row;
+	justify-content: space-between;
+	align-items: center;
+	gap: 8px;
+
+	h3 {
+		margin-bottom: 0px;
+	}
+}
+
+.lightMode {
+	.organization-settings-container {
+		border: 1px solid var(--bg-vanilla-300);
+		background: var(--bg-vanilla-100);
+	}
+}

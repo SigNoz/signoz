@@ -1,28 +1,24 @@
-import dayjs from 'dayjs';
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
+import dayjs from 'dayjs';
+import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
-export interface DashboardSortOrder {
-	columnKey: string;
-	order: string;
-	pagination: string;
-	search: string;
-}
+export type WidgetColumnWidths = {
+	[widgetId: string]: Record<string, number>;
+};
 
 export interface IDashboardContext {
 	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
 	handleToggleDashboardSlider: (value: boolean) => void;
 	handleDashboardLockToggle: (value: boolean) => void;
-	dashboardResponse: UseQueryResult<Dashboard, unknown>;
+	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;
 	dashboardId: string;
 	layouts: Layout[];
 	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
-	listSortOrder: DashboardSortOrder;
-	setListSortOrder: (sortOrder: DashboardSortOrder) => void;
 	setLayouts: React.Dispatch<React.SetStateAction<Layout[]>>;
 	setSelectedDashboard: React.Dispatch<
 		React.SetStateAction<Dashboard | undefined>
@@ -40,7 +36,13 @@ export interface IDashboardContext {
 			| null
 			| undefined,
 		allSelected: boolean,
+		isDynamic?: boolean,
 	) => void;
-	variablesToGetUpdated: string[];
-	setVariablesToGetUpdated: React.Dispatch<React.SetStateAction<string[]>>;
+	dashboardQueryRangeCalled: boolean;
+	setDashboardQueryRangeCalled: (value: boolean) => void;
+	selectedRowWidgetId: string | null;
+	setSelectedRowWidgetId: React.Dispatch<React.SetStateAction<string | null>>;
+	isDashboardFetching: boolean;
+	columnWidths: WidgetColumnWidths;
+	setColumnWidths: React.Dispatch<React.SetStateAction<WidgetColumnWidths>>;
 }

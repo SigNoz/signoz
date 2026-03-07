@@ -1,0 +1,14 @@
+module base
+
+type user
+
+type role 
+  relations
+    define assignee: [user]
+
+type organisation 
+  relations
+    define create: [role#assignee]
+    define read: [role#assignee]
+    define update: [role#assignee]
+    define delete: [role#assignee]

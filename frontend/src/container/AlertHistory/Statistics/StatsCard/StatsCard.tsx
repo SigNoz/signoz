@@ -1,5 +1,3 @@
-import './StatsCard.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Tooltip } from 'antd';
 import { QueryParams } from 'constants/query';
@@ -13,6 +11,8 @@ import {
 	convertTimestampToLocaleDateString,
 	extractDayFromTimestamp,
 } from './utils';
+
+import './StatsCard.styles.scss';
 
 type ChangePercentageProps = {
 	percentage: number;
@@ -135,8 +135,8 @@ function StatsCard({
 				/>
 			</div>
 
-			<div className="stats-card__graph">
-				<div className="graph">
+			<div className="stats-card__alert-history-graph">
+				<div className="alert-history-graph">
 					{!isEmpty && timeSeries.length > 1 && (
 						<StatsGraph timeSeries={timeSeries} changeDirection={changeDirection} />
 					)}

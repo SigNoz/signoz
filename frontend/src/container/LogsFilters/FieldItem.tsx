@@ -1,7 +1,7 @@
+import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Popover, Spin, Typography } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { ReactNode, useCallback, useMemo, useState } from 'react';
 import {
 	IField,
 	IInterestingFields,
@@ -24,7 +24,9 @@ function FieldItem({
 	const isDarkMode = useIsDarkMode();
 
 	const onClickHandler = useCallback(() => {
-		if (!isLoading && buttonOnClick) buttonOnClick({ fieldData, fieldIndex });
+		if (!isLoading && buttonOnClick) {
+			buttonOnClick({ fieldData, fieldIndex });
+		}
 	}, [buttonOnClick, fieldData, fieldIndex, isLoading]);
 
 	const renderContent = useMemo(() => {

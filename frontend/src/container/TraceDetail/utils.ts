@@ -13,6 +13,8 @@ export const filterSpansByString = (
 		return JSON.stringify(spanWithoutChildren).includes(searchString);
 	});
 
+export const SPAN_DETAILS_LEFT_COL_WIDTH = 350;
+
 type TTimeUnitName = 'ms' | 's' | 'm' | 'hr' | 'day' | 'week';
 
 export interface IIntervalUnit {
@@ -80,7 +82,6 @@ export const getSortedData = (treeData: ITraceTree): ITraceTree => {
 		}
 
 		// need this rule to disable
-		// eslint-disable-next-line no-param-reassign
 		treeNode.children = sortBy(treeNode.children, (e) => e.startTime);
 
 		treeNode.children.forEach((childNode) => {
@@ -115,7 +116,6 @@ export const getTreeLevelsCount = (tree: ITraceTree): number => {
 	return levels;
 };
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export const formUrlParams = (params: Record<string, any>): string => {
 	let urlParams = '';
 	Object.entries(params).forEach(([key, value], index) => {

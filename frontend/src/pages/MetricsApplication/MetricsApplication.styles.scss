@@ -1,0 +1,26 @@
+.service-route-tab {
+	margin-bottom: 64px;
+	.ant-tabs-nav {
+		&::before {
+			border-bottom: 1px solid var(--bg-slate-400);
+		}
+		.ant-tabs-nav-wrap {
+			.ant-tabs-nav-list {
+				.ant-tabs-ink-bar {
+					background-color: var(--bg-robin-500) !important;
+				}
+				.ant-tabs-tab {
+					font-size: 13px;
+					font-family: 'Inter';
+					color: var(--text-vanilla-100);
+					line-height: 20px;
+					letter-spacing: -0.07px;
+					gap: 10px;
+				}
+				.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+					color: var(--bg-robin-500);
+				}
+			}
+		}
+	}
+}

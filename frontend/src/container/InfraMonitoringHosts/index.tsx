@@ -1,13 +1,13 @@
-import './InfraMonitoring.styles.scss';
-
+import { useEffect } from 'react';
 import * as Sentry from '@sentry/react';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
-import { useEffect } from 'react';
 import { DataSource } from 'types/common/queryBuilder';
 
 import HostsList from './HostsList';
+
+import './InfraMonitoring.styles.scss';
 
 function InfraMonitoringHosts(): JSX.Element {
 	const {

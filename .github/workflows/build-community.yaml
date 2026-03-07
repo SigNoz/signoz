@@ -1,0 +1,82 @@
+name: build-community
+
+on:
+  push:
+    tags:
+      - "v[0-9]+.[0-9]+.[0-9]+"
+      - "v[0-9]+.[0-9]+.[0-9]+-rc.[0-9]+"
+
+defaults:
+  run:
+    shell: bash
+
+env:
+  PRIMUS_HOME: .primus
+  MAKE: make --no-print-directory --makefile=.primus/src/make/main.mk
+
+jobs:
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.build-info.outputs.version }}
+      hash: ${{ steps.build-info.outputs.hash }}
+      time: ${{ steps.build-info.outputs.time }}
+      branch: ${{ steps.build-info.outputs.branch }}
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - id: token
+        name: github-token-gen
+        uses: actions/create-github-app-token@v1
+        with:
+          app-id: ${{ secrets.PRIMUS_APP_ID }}
+          private-key: ${{ secrets.PRIMUS_PRIVATE_KEY }}
+          owner: ${{ github.repository_owner }}
+      - name: primus-checkout
+        uses: actions/checkout@v4
+        with:
+          repository: signoz/primus
+          ref: main
+          path: .primus
+          token: ${{ steps.token.outputs.token }}
+      - name: build-info
+        run: |
+          echo "version=$($MAKE info-version)" >> $GITHUB_OUTPUT
+          echo "hash=$($MAKE info-commit-short)" >> $GITHUB_OUTPUT
+          echo "time=$($MAKE info-timestamp)" >> $GITHUB_OUTPUT
+          echo "branch=$($MAKE info-branch)" >> $GITHUB_OUTPUT
+  js-build:
+    uses: signoz/primus.workflows/.github/workflows/js-build.yaml@main
+    needs: prepare
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      JS_SRC: frontend
+      JS_OUTPUT_ARTIFACT_CACHE_KEY: community-jsbuild-${{ github.sha }}
+      JS_OUTPUT_ARTIFACT_PATH: frontend/build
+      DOCKER_BUILD: false
+      DOCKER_MANIFEST: false
+  go-build:
+    uses: signoz/primus.workflows/.github/workflows/go-build.yaml@main
+    needs: [prepare, js-build]
+    secrets: inherit
+    with:
+      PRIMUS_REF: main
+      GO_VERSION: 1.24
+      GO_NAME: signoz-community
+      GO_INPUT_ARTIFACT_CACHE_KEY: community-jsbuild-${{ github.sha }}
+      GO_INPUT_ARTIFACT_PATH: frontend/build
+      GO_BUILD_CONTEXT: ./cmd/community
+      GO_BUILD_FLAGS: >-
+        -tags timetzdata
+        -ldflags='-s -w
+        -X github.com/SigNoz/signoz/pkg/version.version=${{ needs.prepare.outputs.version }}
+        -X github.com/SigNoz/signoz/pkg/version.variant=community
+        -X github.com/SigNoz/signoz/pkg/version.hash=${{ needs.prepare.outputs.hash }}
+        -X github.com/SigNoz/signoz/pkg/version.time=${{ needs.prepare.outputs.time }}
+        -X github.com/SigNoz/signoz/pkg/version.branch=${{ needs.prepare.outputs.branch }}
+        -X github.com/SigNoz/signoz/pkg/analytics.key=9kRrJ7oPCGPEJLF6QjMPLt5bljFhRQBr'
+      DOCKER_BASE_IMAGES: '{"alpine": "alpine:3.20.3"}'
+      DOCKER_DOCKERFILE_PATH: ./cmd/community/Dockerfile.multi-arch
+      DOCKER_MANIFEST: true
+      DOCKER_PROVIDERS: dockerhub

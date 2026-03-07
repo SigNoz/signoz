@@ -1,10 +1,10 @@
-import './Tabs2.styles.scss';
-
+import { useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Tag } from 'antd';
 import { TimelineFilter } from 'container/AlertHistory/types';
 import { Undo } from 'lucide-react';
-import { useState } from 'react';
+
+import './Tabs2.styles.scss';
 
 interface Tab {
 	value: string;

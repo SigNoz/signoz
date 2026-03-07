@@ -21,25 +21,27 @@ import { getQueryBuilderQuerieswithFormula } from './MetricsPageQueriesFactory';
 
 export const topOperationQueries = ({
 	servicename,
+	dotMetricsEnabled,
 }: TopOperationQueryFactoryProps): QueryBuilderData => {
 	const latencyAutoCompleteData: BaseAutocompleteData = {
-		key: WidgetKeys.Signoz_latency_bucket,
+		key: dotMetricsEnabled
+			? WidgetKeys.Signoz_latency_bucket
+			: WidgetKeys.Signoz_latency_bucket_norm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
 	const errorRateAutoCompleteData: BaseAutocompleteData = {
 		key: WidgetKeys.SignozCallsTotal,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
 	const numOfCallAutoCompleteData: BaseAutocompleteData = {
-		key: WidgetKeys.SignozLatencyCount,
+		key: dotMetricsEnabled
+			? WidgetKeys.SignozLatencyCount
+			: WidgetKeys.SignozLatencyCountNorm,
 		dataType: DataTypes.Float64,
-		isColumn: true,
 		type: '',
 	};
 
@@ -47,9 +49,10 @@ export const topOperationQueries = ({
 		{
 			id: '',
 			key: {
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				dataType: DataTypes.String,
-				isColumn: false,
 				type: MetricsType.Resource,
 			},
 			value: [servicename],
@@ -62,8 +65,9 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.String,
-				isColumn: false,
-				key: WidgetKeys.Service_name,
+				key: dotMetricsEnabled
+					? WidgetKeys.Service_name
+					: WidgetKeys.Service_name_norm,
 				type: MetricsType.Resource,
 			},
 			op: OPERATORS.IN,
@@ -73,8 +77,7 @@ export const topOperationQueries = ({
 			id: '',
 			key: {
 				dataType: DataTypes.Int64,
-				isColumn: false,
-				key: WidgetKeys.StatusCode,
+				key: dotMetricsEnabled ? WidgetKeys.StatusCode : WidgetKeys.StatusCodeNorm,
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS.IN,
@@ -87,7 +90,6 @@ export const topOperationQueries = ({
 	const groupBy: BaseAutocompleteData[] = [
 		{
 			dataType: DataTypes.String,
-			isColumn: false,
 			key: WidgetKeys.Operation,
 			type: MetricsType.Tag,
 		},

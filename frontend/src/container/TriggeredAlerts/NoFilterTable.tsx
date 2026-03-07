@@ -1,14 +1,19 @@
-/* eslint-disable react/display-name */
-import { Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { TableColumnsType as ColumnsType, Typography } from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import LabelColumn from 'components/TableRenderer/LabelColumn';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import AlertStatus from 'container/TriggeredAlerts/TableComponents/AlertStatus';
 import { useTimezone } from 'providers/Timezone';
 import { Alerts } from 'types/api/alerts/getTriggered';
 
 import { Value } from './Filter';
 import { FilterAlerts } from './utils';
+
+const severitySorter = (a: Alerts, b: Alerts): number => {
+	const severityLengthOfA = a.labels?.severity?.length || 0;
+	const severityLengthOfB = b.labels?.severity?.length || 0;
+	return severityLengthOfB - severityLengthOfA;
+};
 
 function NoFilterTable({
 	allAlerts,
@@ -24,8 +29,7 @@ function NoFilterTable({
 			dataIndex: 'status',
 			width: 80,
 			key: 'status',
-			sorter: (a, b): number =>
-				b.labels.severity.length - a.labels.severity.length,
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => <AlertStatus severity={value.state} />,
 		},
 		{
@@ -64,11 +68,7 @@ function NoFilterTable({
 			dataIndex: 'labels',
 			key: 'severity',
 			width: 100,
-			sorter: (a, b): number => {
-				const severityValueA = a.labels.severity;
-				const severityValueB = b.labels.severity;
-				return severityValueA.length - severityValueB.length;
-			},
+			sorter: (a, b): number => severitySorter(a, b),
 			render: (value): JSX.Element => {
 				const objectKeys = Object.keys(value);
 				const withSeverityKey = objectKeys.find((e) => e === 'severity') || '';
@@ -86,7 +86,7 @@ function NoFilterTable({
 			render: (date): JSX.Element => (
 				<Typography>{`${formatTimezoneAdjustedTimestamp(
 					date,
-					'MM/DD/YYYY hh:mm:ss A (UTC Z)',
+					DATE_TIME_FORMATS.UTC_US,
 				)}`}</Typography>
 			),
 		},

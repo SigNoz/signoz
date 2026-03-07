@@ -1,14 +1,28 @@
-/*eslint-disable*/
 //@ts-nocheck
 
-import { cloneDeep, find, maxBy, uniq, uniqBy, groupBy, sumBy } from 'lodash-es';
+import {
+	cloneDeep,
+	find,
+	groupBy,
+	maxBy,
+	sumBy,
+	uniq,
+	uniqBy,
+} from 'lodash-es';
+
 import { graphDataType } from './ServiceMap';
 
 const MIN_WIDTH = 10;
 const MAX_WIDTH = 20;
 const DEFAULT_FONT_SIZE = 6;
 
-export const getDimensions = (num, highest) => {
+export const getDimensions = (
+	num: number,
+	highest: number,
+): {
+	fontSize: number;
+	width: number;
+} => {
 	const percentage = (num / highest) * 100;
 	const width = (percentage * (MAX_WIDTH - MIN_WIDTH)) / 100 + MIN_WIDTH;
 	const fontSize = DEFAULT_FONT_SIZE;
@@ -25,7 +39,7 @@ export const getGraphData = (serviceMap, isDarkMode): graphDataType => {
 			serviceName: e[0].child,
 			errorRate: sumBy(e, 'errorRate'),
 			callRate: sumBy(e, 'callRate'),
-		}
+		};
 	});
 	const highestCallCount = maxBy(items, (e) => e?.callCount)?.callCount;
 	const highestCallRate = maxBy(services, (e) => e?.callRate)?.callRate;
@@ -96,23 +110,23 @@ export const getZoomPx = (): number => {
 	return 190;
 };
 
-const getRound2DigitsAfterDecimal = (num: number) => {
+const getRound2DigitsAfterDecimal = (num: number): number => {
 	if (num === 0) {
 		return 0;
 	}
 	return num.toFixed(20).match(/^-?\d*\.?0*\d{0,2}/)[0];
-}
+};
 
 export const getTooltip = (link: {
 	p99: number;
 	errorRate: number;
 	callRate: number;
 	id: string;
-}) => {
+}): string => {
 	return `<div style="color:#333333;padding:12px;background: white;border-radius: 2px;">
 								<div class="keyval">
 									<div class="key">P99 latency:</div>
-									<div class="val">${getRound2DigitsAfterDecimal(link.p99/ 1000000)}ms</div>
+									<div class="val">${getRound2DigitsAfterDecimal(link.p99 / 1000000)}ms</div>
 								</div>
 								<div class="keyval">
 									<div class="key">Request:</div>
@@ -125,7 +139,7 @@ export const getTooltip = (link: {
 							</div>`;
 };
 
-export const transformLabel = (label: string, zoomLevel: number) => {
+export const transformLabel = (label: string, zoomLevel: number): string => {
 	//? 13 is the minimum label length. Scaling factor of 0.9 which is slightly less than 1
 	//? ensures smoother zoom transitions, gradually increasing MAX_LENGTH, displaying more of the label as
 	//? zooming in.

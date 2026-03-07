@@ -1,6 +1,6 @@
 package opamp
 
-import "go.signoz.io/signoz/pkg/query-service/app/opamp/model"
+import "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 
 // Interface for a source of otel collector config recommendations.
 type AgentConfigProvider interface {

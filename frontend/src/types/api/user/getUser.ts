@@ -1,4 +1,3 @@
-import { UserFlags } from 'types/api/user/setFlags';
 import { User } from 'types/reducer/app';
 import { ROLES } from 'types/roles';
 
@@ -7,14 +6,16 @@ export interface Props {
 	token?: string;
 }
 
-export interface PayloadProps {
+export interface UserResponse {
 	createdAt: number;
 	email: string;
 	id: string;
-	name: string;
+	displayName: string;
 	orgId: string;
-	profilePictureURL: string;
 	organization: string;
 	role: ROLES;
-	flags: UserFlags;
+}
+export interface PayloadProps {
+	data: UserResponse;
+	status: string;
 }

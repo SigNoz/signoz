@@ -1,0 +1,122 @@
+.version-container {
+	max-height: 100vh;
+	overflow: hidden;
+
+	.version-page-header {
+		border-bottom: 1px solid var(--Slate-500, #161922);
+		background: rgba(11, 12, 14, 0.7);
+		backdrop-filter: blur(20px);
+
+		.version-page-header-title {
+			color: var(--Vanilla-100, #fff);
+			text-align: center;
+			font-family: Inter;
+			font-size: 13px;
+			font-style: normal;
+			line-height: 14px;
+			letter-spacing: 0.4px;
+
+			display: flex;
+			align-items: center;
+			gap: 8px;
+			padding: 16px;
+		}
+	}
+
+	.version-page-container {
+		padding: 16px;
+		display: flex;
+		flex-direction: column;
+		gap: 16px;
+
+		.version-card {
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+
+			padding: 16px;
+			border-radius: 4px 4px 0px 0px;
+			border: 1px solid var(--Slate-500, #161922);
+			background: var(--Ink-400, #121317);
+			border-radius: 3px;
+		}
+
+		.version-page-form {
+			display: flex;
+		}
+
+		.version-page-stale-version-container {
+			padding: 16px;
+			background-color: rgba(78, 116, 248, 0.1);
+			border-radius: 4px;
+
+			.version-page-stale-version-container-title {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				color: var(--text-vanilla-100);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 14px; /* 150% */
+				letter-spacing: 0.4px;
+			}
+		}
+
+		.version-page-latest-version-container {
+			.version-page-latest-version-container-title {
+				display: flex;
+				align-items: center;
+				gap: 8px;
+
+				color: var(--Vanilla-100, #fff);
+				font-family: Inter;
+				font-size: 12px;
+				font-style: normal;
+				font-weight: 400;
+				line-height: 14px; /* 150% */
+				letter-spacing: 0.4px;
+			}
+		}
+
+		.version-page-upgrade-container {
+			display: flex;
+			justify-content: flex-start;
+			margin-top: 16px;
+		}
+	}
+}
+
+.lightMode {
+	.version-container {
+		.version-page-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+			background: #fff;
+
+			.version-page-header-title {
+				color: var(--bg-ink-400);
+			}
+		}
+
+		.version-page-container {
+			.version-card {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-100);
+			}
+
+			.version-page-stale-version-container {
+				.version-page-stale-version-container-title {
+					color: var(--text-ink-400);
+				}
+			}
+
+			.version-page-latest-version-container {
+				.version-page-latest-version-container-title {
+					color: var(--text-ink-400);
+				}
+			}
+		}
+	}
+}

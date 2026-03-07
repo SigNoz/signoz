@@ -1,8 +1,8 @@
+import { useCallback, useMemo } from 'react';
 import { Col } from 'antd';
 import { initialQueriesMap } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useEventSource } from 'providers/EventSource';
-import { useCallback, useMemo } from 'react';
 import {
 	IBuilderQuery,
 	Query,
@@ -30,7 +30,9 @@ function FiltersInput(): JSX.Element {
 		(filters: TagFilter) => {
 			const listQueryData = stagedQuery?.builder.queryData[0];
 
-			if (!listQueryData) return;
+			if (!listQueryData) {
+				return;
+			}
 
 			const queryData: IBuilderQuery = {
 				...listQueryData,

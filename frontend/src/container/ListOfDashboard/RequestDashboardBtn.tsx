@@ -1,12 +1,12 @@
-import '../../pages/Integrations/Integrations.styles.scss';
-
+import { useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Input, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useNotifications } from 'hooks/useNotifications';
 import { Check } from 'lucide-react';
-import { useState } from 'react';
-import { useTranslation } from 'react-i18next';
+
+import '../../pages/Integrations/Integrations.styles.scss';
 
 export function RequestDashboardBtn(): JSX.Element {
 	const [
@@ -58,7 +58,14 @@ export function RequestDashboardBtn(): JSX.Element {
 	return (
 		<div className="request-entity-container">
 			<Typography.Text>
-				Can&apos;t find the dashboard you need? Request a new Dashboard.
+				<a
+					href="https://signoz.io/docs/dashboards/dashboard-templates/overview/"
+					target="_blank"
+					rel="noopener noreferrer"
+				>
+					Browse dashboard templates
+				</a>{' '}
+				or request a new template →
 			</Typography.Text>
 
 			<div className="form-section">

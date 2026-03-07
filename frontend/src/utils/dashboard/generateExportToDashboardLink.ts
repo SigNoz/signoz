@@ -1,7 +1,7 @@
+import { generatePath } from 'react-router-dom';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import { generatePath } from 'react-router-dom';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 type GenerateExportToDashboardLinkParams = {

@@ -1,0 +1,194 @@
+import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { Provider } from 'react-redux';
+import { fireEvent, render, screen, within } from '@testing-library/react';
+import userEvent from '@testing-library/user-event';
+import * as metricsService from 'api/generated/services/metrics';
+import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import * as appContextHooks from 'providers/App/App';
+import store from 'store';
+
+import ROUTES from '../../../../constants/routes';
+import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
+import QueryBuilder from '../QueryBuilder';
+import {
+	InspectionStep,
+	SpaceAggregationOptions,
+	TimeAggregationOptions,
+} from '../types';
+
+jest.mock('react-router-dom', () => ({
+	...jest.requireActual('react-router-dom'),
+	useLocation: (): { pathname: string } => ({
+		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
+	}),
+}));
+
+jest.mock('api/generated/services/metrics', () => ({
+	useListMetrics: jest.fn().mockReturnValue({
+		isFetching: false,
+		isError: false,
+		data: { data: { metrics: [] } },
+	}),
+	useUpdateMetricMetadata: jest.fn().mockReturnValue({
+		mutate: jest.fn(),
+		isLoading: false,
+	}),
+}));
+
+jest.mock('hooks/useDebounce', () => ({
+	__esModule: true,
+	default: <T,>(value: T): T => value,
+}));
+
+jest.mock(
+	'container/QueryBuilder/filters/QueryBuilderSearch/OptionRenderer',
+	() => ({
+		__esModule: true,
+		default: ({ value }: { value: string }): JSX.Element => <span>{value}</span>,
+	}),
+);
+
+jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
+	user: {
+		role: 'admin',
+	},
+	activeLicenseV3: {
+		event_queue: {
+			created_at: '0',
+			event: LicenseEvent.NO_EVENT,
+			scheduled_at: '0',
+			status: '',
+			updated_at: '0',
+		},
+		license: {
+			license_key: 'test-license-key',
+			license_type: 'trial',
+			org_id: 'test-org-id',
+			plan_id: 'test-plan-id',
+			plan_name: 'test-plan-name',
+			plan_type: 'trial',
+			plan_version: 'test-plan-version',
+		},
+	},
+} as any);
+
+const queryClient = new QueryClient();
+
+const mockSetCurrentMetricName = jest.fn();
+const mockSetAppliedMetricName = jest.fn();
+
+describe('QueryBuilder', () => {
+	const defaultProps = {
+		currentMetricName: 'test_metric',
+		setCurrentMetricName: mockSetCurrentMetricName,
+		setAppliedMetricName: mockSetAppliedMetricName,
+		spaceAggregationLabels: ['label1', 'label2'],
+		currentMetricInspectionOptions: {
+			timeAggregationInterval: 60,
+			timeAggregationOption: TimeAggregationOptions.AVG,
+			spaceAggregationLabels: [],
+			spaceAggregationOption: SpaceAggregationOptions.AVG_BY,
+			filters: {
+				items: [],
+				op: 'and',
+			},
+		},
+		dispatchMetricInspectionOptions: jest.fn(),
+		metricType: MetricType.SUM,
+		inspectionStep: InspectionStep.TIME_AGGREGATION,
+		inspectMetricsTimeSeries: [],
+		currentQuery: {
+			filters: {
+				items: [],
+				op: 'and',
+			},
+		} as any,
+		setCurrentQuery: jest.fn(),
+	};
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+	});
+
+	it('renders query builder with all components', () => {
+		render(
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<QueryBuilder {...defaultProps} />
+				</Provider>
+			</QueryClientProvider>,
+		);
+		expect(screen.getByText('Query Builder')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-name-search')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-filters')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-time-aggregation')).toBeInTheDocument();
+		expect(screen.getByTestId('metric-space-aggregation')).toBeInTheDocument();
+	});
+
+	it('should call setCurrentMetricName when metric name is selected', async () => {
+		const user = userEvent.setup();
+		(metricsService.useListMetrics as jest.Mock).mockReturnValue({
+			isFetching: false,
+			isError: false,
+			data: {
+				data: {
+					metrics: [
+						{
+							metricName: 'test_metric_2',
+							type: 'Sum',
+							isMonotonic: true,
+							description: '',
+							temporality: 'cumulative',
+							unit: '',
+						},
+					],
+				},
+			},
+		});
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<QueryBuilder {...defaultProps} />
+				</Provider>
+			</QueryClientProvider>,
+		);
+
+		const metricNameSearch = screen.getByTestId('metric-name-search');
+		expect(metricNameSearch).toBeInTheDocument();
+
+		expect(screen.getByText('From')).toBeInTheDocument();
+
+		const input = within(metricNameSearch).getByRole('combobox');
+		fireEvent.change(input, { target: { value: 'test_metric_2' } });
+
+		const options = document.querySelectorAll('.ant-select-item');
+		expect(options.length).toBeGreaterThan(0);
+		await user.click(options[0] as HTMLElement);
+
+		expect(mockSetCurrentMetricName).toHaveBeenCalledWith('test_metric_2');
+	});
+
+	it('should call setAppliedMetricName and apply inspection options when query is applied', async () => {
+		const user = userEvent.setup();
+
+		render(
+			<QueryClientProvider client={queryClient}>
+				<Provider store={store}>
+					<QueryBuilder {...defaultProps} />
+				</Provider>
+			</QueryClientProvider>,
+		);
+
+		const applyQueryButton = screen.getByText('Run Query');
+		await user.click(applyQueryButton);
+
+		expect(mockSetCurrentMetricName).toHaveBeenCalledTimes(0);
+		expect(mockSetAppliedMetricName).toHaveBeenCalledWith('test_metric');
+
+		expect(defaultProps.dispatchMetricInspectionOptions).toHaveBeenCalledWith({
+			type: 'APPLY_METRIC_INSPECTION_OPTIONS',
+		});
+	});
+});

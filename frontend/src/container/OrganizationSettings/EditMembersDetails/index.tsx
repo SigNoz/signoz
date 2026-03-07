@@ -1,8 +1,3 @@
-import { CopyOutlined } from '@ant-design/icons';
-import { Button, Input, Select, Space, Tooltip } from 'antd';
-import getResetPasswordToken from 'api/user/getResetPasswordToken';
-import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
 import {
 	ChangeEventHandler,
 	Dispatch,
@@ -13,6 +8,12 @@ import {
 } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
+import { CopyOutlined } from '@ant-design/icons';
+import { Button, Input, Select, Space, Tooltip } from 'antd';
+import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
+import ROUTES from 'constants/routes';
+import { useNotifications } from 'hooks/useNotifications';
+import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 
 import { InputGroup, SelectDrawer, Title } from './styles';
@@ -73,26 +74,13 @@ function EditMembersDetails({
 			const response = await getResetPasswordToken({
 				userId: id || '',
 			});
-
-			if (response.statusCode === 200) {
-				setPasswordLink(getPasswordLink(response.payload.token));
-			} else {
-				notifications.error({
-					message:
-						response.error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
+			setPasswordLink(getPasswordLink(response.data.token));
 			setIsLoading(false);
 		} catch (error) {
 			setIsLoading(false);
-
 			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
+				message: (error as APIError).getErrorCode(),
+				description: (error as APIError).getErrorMessage(),
 			});
 		}
 	};

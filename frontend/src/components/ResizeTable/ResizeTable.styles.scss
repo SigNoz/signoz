@@ -1,0 +1,53 @@
+.resizable-header {
+	user-select: none;
+	-webkit-user-select: none;
+	-moz-user-select: none;
+	-ms-user-select: none;
+	position: relative;
+
+	.ant-table-column-title {
+		white-space: normal;
+		overflow: hidden;
+		text-overflow: ellipsis;
+	}
+}
+
+.resize-main-table {
+	.ant-table-body {
+		.ant-table-tbody {
+			.ant-table-row {
+				.ant-table-cell {
+					.ant-typography {
+						white-space: unset;
+					}
+				}
+			}
+		}
+	}
+}
+
+.logs-table,
+.traces-table {
+	.resize-table {
+		.resize-handle {
+			position: absolute;
+			top: 0;
+			bottom: 0;
+			inset-inline-end: -5px;
+			width: 10px;
+			cursor: col-resize;
+
+			&::after {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 50%;
+				transform: translate(-50%, -50%);
+				width: 1px;
+				height: 1.6em;
+				background-color: var(--bg-slate-200);
+				transition: background-color 0.2s;
+			}
+		}
+	}
+}

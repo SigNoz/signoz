@@ -1,6 +1,6 @@
+import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { MinusSquareOutlined, PlusSquareOutlined } from '@ant-design/icons';
 import { IIntervalUnit } from 'container/TraceDetail/utils';
-import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
 
 import { CardContainer, CardWrapper, CollapseButton } from './styles';
@@ -53,7 +53,6 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 					activeSpanPath={activeSpanPath}
 					setActiveHoverId={setActiveHoverId}
 					key={data.id}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...{
 						...data,
 						globalSpread,

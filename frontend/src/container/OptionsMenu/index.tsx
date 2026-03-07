@@ -1,9 +1,9 @@
+import { useMemo } from 'react';
+import { useTranslation } from 'react-i18next';
 import { SettingFilled, SettingOutlined } from '@ant-design/icons';
 import { Popover, Space } from 'antd';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useMemo } from 'react';
-import { useTranslation } from 'react-i18next';
 
 import AddColumnField from './AddColumnField';
 import FormatField from './FormatField';

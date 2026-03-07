@@ -46,7 +46,7 @@ export const billingSuccessResponse = {
 					],
 				},
 			],
-			baseFee: 199,
+			baseFee: 49,
 			billTotal: 1278.3,
 		},
 		discount: 0,

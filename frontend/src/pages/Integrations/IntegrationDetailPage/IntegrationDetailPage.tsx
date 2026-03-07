@@ -1,15 +1,10 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable no-nested-ternary */
-import './IntegrationDetailPage.styles.scss';
-
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';
 import { useGetIntegrationStatus } from 'hooks/Integrations/useGetIntegrationStatus';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { defaultTo } from 'lodash-es';
 import { ArrowLeft, MoveUpRight, RotateCw } from 'lucide-react';
-import { isCloudUser } from 'utils/app';
 
 import { handleContactSupport } from '../utils';
 import IntegrationDetailContent from './IntegrationDetailContent';
@@ -17,6 +12,8 @@ import IntegrationDetailHeader from './IntegrationDetailHeader';
 import IntergrationsUninstallBar from './IntegrationsUninstallBar';
 import { ConnectionStates } from './TestConnection';
 import { getConnectionStatesFromConnectionStatus } from './utils';
+
+import './IntegrationDetailPage.styles.scss';
 
 interface IntegrationDetailPageProps {
 	selectedIntegration: string;
@@ -43,6 +40,8 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 	} = useGetIntegration({
 		integrationId: selectedIntegration,
 	});
+
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const {
 		data: integrationStatus,
@@ -104,7 +103,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							</Button>
 							<div
 								className="contact-support"
-								onClick={(): void => handleContactSupport(isCloudUser())}
+								onClick={(): void => handleContactSupport(isCloudUserVal)}
 							>
 								<Typography.Link className="text">Contact Support </Typography.Link>
 
@@ -126,7 +125,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 								logs: null,
 								metrics: null,
 							})}
-							refetchIntegrationDetails={refetch}
+							onUnInstallSuccess={refetch}
 							setActiveDetailTab={setActiveDetailTab}
 						/>
 						<IntegrationDetailContent
@@ -140,7 +139,7 @@ function IntegrationDetailPage(props: IntegrationDetailPageProps): JSX.Element {
 							<IntergrationsUninstallBar
 								integrationTitle={defaultTo(integrationData?.title, '')}
 								integrationId={selectedIntegration}
-								refetchIntegrationDetails={refetch}
+								onUnInstallSuccess={refetch}
 								connectionStatus={connectionStatus}
 							/>
 						)}

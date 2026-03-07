@@ -1,5 +1,7 @@
-import { Time } from 'container/TopNav/DateTimeSelection/config';
-import { Time as TimeV2 } from 'container/TopNav/DateTimeSelectionV2/config';
+import {
+	CustomTimeType,
+	Time,
+} from 'container/TopNav/DateTimeSelectionV2/types';
 import { isString } from 'lodash-es';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -7,7 +9,7 @@ import getMinAgo from './getStartAndEndTime/getMinAgo';
 
 const validCustomTimeRegex = /^(\d+)([mhdw])$/;
 
-export const isValidTimeFormat = (time: string): boolean =>
+export const isValidShortHandDateTimeFormat = (time: string): boolean =>
 	validCustomTimeRegex.test(time);
 
 const extractTimeAndUnit = (time: string): { time: number; unit: string } => {
@@ -43,7 +45,7 @@ export const getMinTimeForRelativeTimes = (
 };
 
 const GetMinMax = (
-	interval: Time | TimeV2 | string,
+	interval: Time | string,
 	dateTimeRange?: [number, number],
 	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): GetMinMaxPayload => {
@@ -114,7 +116,7 @@ const GetMinMax = (
 	} else if (interval === 'custom') {
 		maxTime = (dateTimeRange || [])[1] || 0;
 		minTime = (dateTimeRange || [])[0] || 0;
-	} else if (isString(interval) && isValidTimeFormat(interval)) {
+	} else if (isString(interval) && isValidShortHandDateTimeFormat(interval)) {
 		const { time, unit } = extractTimeAndUnit(interval);
 
 		minTime = getMinTimeForRelativeTimes(time, unit);
@@ -127,6 +129,15 @@ const GetMinMax = (
 		maxTime: maxTime * 1000000,
 	};
 };
+
+export const getMinMaxForSelectedTime = (
+	selectedTime: Time | CustomTimeType,
+	minTime: number,
+	maxTime: number,
+): GetMinMaxPayload =>
+	selectedTime !== 'custom'
+		? GetMinMax(selectedTime)
+		: GetMinMax(selectedTime, [minTime, maxTime]);
 
 export interface GetMinMaxPayload {
 	minTime: GlobalReducer['minTime'];

@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { createMachine } from 'xstate';
 
 export const ResourceAttributesFilterMachine =
@@ -57,5 +58,6 @@ export const ResourceAttributesFilterMachine =
 				},
 			},
 		},
+		predictableActionArguments: true,
 		id: 'ResourceAttributesFilterMachine',
 	});

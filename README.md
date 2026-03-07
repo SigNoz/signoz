@@ -8,7 +8,6 @@
 <p align="center">All your logs, metrics, and traces in one place. Monitor your application, spot issues before they occur and troubleshoot downtime quickly with rich context. SigNoz is a cost-effective open-source alternative to Datadog and New Relic. Visit <a href="https://signoz.io" target="_blank">signoz.io</a> for the full documentation, tutorials, and guide.</p>
 
 <p align="center">
-    <img alt="Downloads" src="https://img.shields.io/docker/pulls/signoz/query-service?label=Docker Downloads"> </a>
     <img alt="GitHub issues" src="https://img.shields.io/github/issues/signoz/signoz"> </a>
     <a href="https://twitter.com/intent/tweet?text=Monitor%20your%20applications%20and%20troubleshoot%20problems%20with%20SigNoz,%20an%20open-source%20alternative%20to%20DataDog,%20NewRelic.&url=https://signoz.io/&via=SigNozHQ&hashtags=opensource,signoz,observability"> 
         <img alt="tweet" src="https://img.shields.io/twitter/url/http/shields.io.svg?style=social"> </a> 
@@ -17,9 +16,9 @@
   
 <h3 align="center">
   <a href="https://signoz.io/docs"><b>Documentation</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.de-de.md"><b>ReadMe in German</b></a> &bull;
-  <a href="https://github.com/SigNoz/signoz/blob/develop/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.zh-cn.md"><b>ReadMe in Chinese</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.de-de.md"><b>ReadMe in German</b></a> &bull;
+  <a href="https://github.com/SigNoz/signoz/blob/main/README.pt-br.md"><b>ReadMe in Portuguese</b></a> &bull;
   <a href="https://signoz.io/slack"><b>Slack Community</b></a> &bull;
   <a href="https://twitter.com/SigNozHq"><b>Twitter</b></a>
 </h3>
@@ -66,6 +65,17 @@ Create queries on your metrics data quickly with an easy-to-use metrics query bu
 Read [more](https://signoz.io/metrics-and-dashboards/).
 
 ![metrics-n-dashboards-cover](https://github.com/user-attachments/assets/a536fd71-1d2c-4681-aa7e-516d754c47a5)
+
+### LLM Observability
+
+Monitor and debug your LLM applications with comprehensive observability. Track LLM calls, analyze token usage, monitor performance, and gain insights into your AI application's behavior in production.
+
+SigNoz LLM observability helps you understand how your language models are performing, identify issues with prompts and responses, track token usage and costs, and optimize your AI applications for better performance and reliability.
+
+[Get started with LLM Observability →](https://signoz.io/docs/llm-observability/)
+
+![llm-observability-cover](https://github.com/user-attachments/assets/a6cc0ca3-59df-48f9-9c16-7c843fccff96)
+
 
 ### Alerts
 
@@ -210,26 +220,6 @@ We have published benchmarks comparing Loki with SigNoz. Check it out [here](htt
 We ❤️ contributions big or small. Please read [CONTRIBUTING.md](CONTRIBUTING.md) to get started with making contributions to SigNoz.
 
 Not sure how to get started? Just ping us on `#contributing` in our [slack community](https://signoz.io/slack)
-
-### Project maintainers
-
-#### Backend
-
-- [Ankit Nayan](https://github.com/ankitnayan)
-- [Nityananda Gohain](https://github.com/nityanandagohain)
-- [Srikanth Chekuri](https://github.com/srikanthccv)
-- [Vishal Sharma](https://github.com/makeavish)
-
-#### Frontend
-
-- [Yunus M](https://github.com/YounixM)
-- [Vikrant Gupta](https://github.com/vikrantgupta25)
-- [Sagar Rajput](https://github.com/SagarRajput-7)
-
-#### DevOps
-
-- [Prashant Shahi](https://github.com/prashant-shahi)
-- [Vibhu Pandey](https://github.com/grandwizard28)
 
 <br /><br />
 

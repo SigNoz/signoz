@@ -1,10 +1,10 @@
+import { MouseEvent, useCallback } from 'react';
 import { DeleteOutlined } from '@ant-design/icons';
 import { Col, Row, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useDeleteView } from 'hooks/saveViews/useDeleteView';
 import { useHandleExplorerTabChange } from 'hooks/useHandleExplorerTabChange';
 import { useNotifications } from 'hooks/useNotifications';
-import { MouseEvent, useCallback } from 'react';
 
 import { MenuItemContainer } from './styles';
 import { MenuItemLabelGeneratorProps } from './types';
@@ -52,18 +52,15 @@ function MenuItemGenerator({
 	const onMenuItemSelectHandler = useCallback(
 		({ key }: { key: string }): void => {
 			const currentViewDetails = getViewDetailsUsingViewKey(key, viewData);
-			if (!currentViewDetails) return;
-			const {
-				query,
-				name,
-				uuid,
-				panelType: currentPanelType,
-			} = currentViewDetails;
+			if (!currentViewDetails) {
+				return;
+			}
+			const { query, name, id, panelType: currentPanelType } = currentViewDetails;
 
 			handleExplorerTabChange(currentPanelType, {
 				query,
 				name,
-				uuid,
+				id,
 			});
 		},
 		[viewData, handleExplorerTabChange],

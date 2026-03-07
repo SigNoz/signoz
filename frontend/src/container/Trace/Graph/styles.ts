@@ -1,5 +1,5 @@
-import { StyledCSS } from 'container/GantChart/Trace/styles';
 import { RefObject } from 'react';
+import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled, { css } from 'styled-components';
 
 interface Props {

@@ -1,5 +1,5 @@
-import { Tooltip } from 'antd';
 import { memo } from 'react';
+import { Tooltip } from 'antd';
 
 import { TabLabelProps } from './TabLabel.interfaces';
 
@@ -8,7 +8,7 @@ function TabLabel({
 	isDisabled,
 	tooltipText,
 }: TabLabelProps): JSX.Element {
-	const currentLabel = <span>{label}</span>;
+	const currentLabel = <span data-testid={`${label}`}>{label}</span>;
 
 	if (isDisabled) {
 		return (

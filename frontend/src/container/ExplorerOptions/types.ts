@@ -1,9 +1,11 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import { Dispatch, SetStateAction } from 'react';
+import { UseMutateAsyncFunction } from 'react-query';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import { AxiosResponse } from 'axios';
 import { SaveViewWithNameProps } from 'components/ExplorerCard/types';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { Dispatch, SetStateAction } from 'react';
-import { UseMutateAsyncFunction } from 'react-query';
+import { ICurrentQueryData } from 'hooks/useHandleExplorerTabChange';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { ICompositeMetricQuery } from 'types/api/alerts/compositeQuery';
 import { SaveViewPayloadProps, SaveViewProps } from 'types/api/saveViews/types';
 import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
@@ -13,7 +15,7 @@ import { PreservedViewsTypes } from './constants';
 export interface SaveNewViewHandlerProps {
 	viewName: string;
 	compositeQuery: ICompositeMetricQuery;
-	sourcePage: DataSource;
+	sourcePage: DataSource | 'meter';
 	extraData: SaveViewProps['extraData'];
 	panelType: PANEL_TYPES | null;
 	notifications: NotificationInstance;
@@ -31,8 +33,15 @@ export interface SaveNewViewHandlerProps {
 
 export type PreservedViewType =
 	| PreservedViewsTypes.LOGS
-	| PreservedViewsTypes.TRACES;
+	| PreservedViewsTypes.TRACES
+	| PreservedViewsTypes.METRICS
+	| PreservedViewsTypes.METER;
 
 export type PreservedViewsInLocalStorage = Partial<
 	Record<PreservedViewType, { key: string; value: string }>
 >;
+
+export type ChangeViewFunctionType = (
+	view: ExplorerViews,
+	querySearchParameters?: ICurrentQueryData,
+) => void;

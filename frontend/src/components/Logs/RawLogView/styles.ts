@@ -1,10 +1,13 @@
-/* eslint-disable no-nested-ternary */
 import { blue } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
 import { Col, Row, Space } from 'antd';
 import { FontSize } from 'container/OptionsMenu/types';
+import { Info } from 'lucide-react';
 import styled from 'styled-components';
-import { getActiveLogBackground, getDefaultLogBackground } from 'utils/logs';
+import {
+	getActiveLogBackground,
+	getCustomHighlightBackground,
+} from 'utils/logs';
 
 import { RawLogContentProps } from './types';
 
@@ -13,6 +16,7 @@ export const RawLogViewContainer = styled(Row)<{
 	$isReadOnly?: boolean;
 	$isActiveLog?: boolean;
 	$isHightlightedLog: boolean;
+	$isCustomHighlighted?: boolean;
 	$logType: string;
 	fontSize: FontSize;
 }>`
@@ -23,6 +27,10 @@ export const RawLogViewContainer = styled(Row)<{
 	align-items: stretch;
 
 	transition: background-color 0.2s ease-in;
+
+	&:not(:hover) .log-line-action-buttons {
+		display: none;
+	}
 
 	.log-state-indicator {
 		margin: 4px 0;
@@ -35,21 +43,32 @@ export const RawLogViewContainer = styled(Row)<{
 				: `margin: 2px 0;`}
 	}
 
-	${({ $isActiveLog, $logType }): string =>
-		getActiveLogBackground($isActiveLog, true, $logType)}
-
 	${({ $isReadOnly, $isActiveLog, $isDarkMode, $logType }): string =>
 		$isActiveLog
 			? getActiveLogBackground($isActiveLog, $isDarkMode, $logType)
-			: getDefaultLogBackground($isReadOnly, $isDarkMode)}
+			: !$isReadOnly
+			? `&:hover { ${getActiveLogBackground(true, $isDarkMode, $logType)} }`
+			: ''}
 
 	${({ $isHightlightedLog, $isDarkMode }): string =>
 		$isHightlightedLog
 			? `background-color: ${
-					$isDarkMode ? Color.BG_SLATE_500 : Color.BG_VANILLA_300
+					$isDarkMode ? Color.BG_ROBIN_600 : Color.BG_VANILLA_400
 			  };
 			  transition: background-color 2s ease-in;`
 			: ''}
+
+	${({ $isCustomHighlighted }): string =>
+		getCustomHighlightBackground($isCustomHighlighted)}
+`;
+
+export const InfoIconWrapper = styled(Info)`
+	display: flex;
+	align-items: center;
+	margin-right: 4px;
+	cursor: help;
+	flex-shrink: 0;
+	height: auto;
 `;
 
 export const ExpandIconWrapper = styled(Col)`

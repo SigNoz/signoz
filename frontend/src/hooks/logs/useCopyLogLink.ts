@@ -1,9 +1,3 @@
-import { QueryParams } from 'constants/query';
-import ROUTES from 'constants/routes';
-import { useNotifications } from 'hooks/useNotifications';
-import useUrlQuery from 'hooks/useUrlQuery';
-import useUrlQueryData from 'hooks/useUrlQueryData';
-import history from 'lib/history';
 import {
 	MouseEventHandler,
 	useCallback,
@@ -11,47 +5,36 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
+import { toast } from '@signozhq/sonner';
+import { QueryParams } from 'constants/query';
+import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
+import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlQueryData from 'hooks/useUrlQueryData';
 import { AppState } from 'store/reducers';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { HIGHLIGHTED_DELAY } from './configs';
-import { LogTimeRange, UseCopyLogLink } from './types';
+import { UseCopyLogLink } from './types';
 
 export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 	const urlQuery = useUrlQuery();
-	const { pathname } = useLocation();
+	const { pathname, search } = useLocation();
 	const [, setCopy] = useCopyToClipboard();
-	const { notifications } = useNotifications();
+
+	const { safeNavigate } = useSafeNavigate();
 
 	const { queryData: activeLogId } = useUrlQueryData<string | null>(
 		QueryParams.activeLogId,
 		null,
 	);
 
-	const { selectedTime, minTime, maxTime } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const onTimeRangeChange = useCallback(
-		(newTimeRange: LogTimeRange | null): void => {
-			if (selectedTime !== 'custom') {
-				urlQuery.delete(QueryParams.startTime);
-				urlQuery.delete(QueryParams.endTime);
-				urlQuery.set(QueryParams.relativeTime, selectedTime);
-			} else {
-				urlQuery.set(QueryParams.startTime, newTimeRange?.start.toString() || '');
-				urlQuery.set(QueryParams.endTime, newTimeRange?.end.toString() || '');
-				urlQuery.delete(QueryParams.relativeTime);
-			}
-
-			const generatedUrl = `${pathname}?${urlQuery.toString()}`;
-			history.replace(generatedUrl);
-		},
-		[pathname, urlQuery, selectedTime],
+	const { minTime, maxTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
 	);
 
 	const isActiveLog = useMemo(() => activeLogId === logId, [activeLogId, logId]);
@@ -63,7 +46,9 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 
 	const onLogCopy: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
-			if (!logId) return;
+			if (!logId) {
+				return;
+			}
 
 			event.preventDefault();
 			event.stopPropagation();
@@ -78,19 +63,26 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 			const link = `${window.location.origin}${pathname}?${urlQuery.toString()}`;
 
 			setCopy(link);
-			notifications.success({
-				message: 'Copied to clipboard',
-			});
+
+			toast.success('Copied to clipboard', { position: 'top-right' });
 		},
-		[logId, urlQuery, minTime, maxTime, pathname, setCopy, notifications],
+		[logId, urlQuery, minTime, maxTime, pathname, setCopy],
 	);
 
+	const onClearActiveLog = useCallback(() => {
+		const currentUrlQuery = new URLSearchParams(search);
+		currentUrlQuery.delete(QueryParams.activeLogId);
+		const newUrl = `${pathname}?${currentUrlQuery.toString()}`;
+		safeNavigate(newUrl);
+	}, [pathname, search, safeNavigate]);
+
 	useEffect(() => {
-		if (!isActiveLog) return;
+		if (!isActiveLog) {
+			return;
+		}
 
 		const timer = setTimeout(() => setIsHighlighted(false), HIGHLIGHTED_DELAY);
 
-		// eslint-disable-next-line consistent-return
 		return (): void => {
 			clearTimeout(timer);
 		};
@@ -101,6 +93,6 @@ export const useCopyLogLink = (logId?: string): UseCopyLogLink => {
 		isLogsExplorerPage,
 		activeLogId,
 		onLogCopy,
-		onTimeRangeChange,
+		onClearActiveLog,
 	};
 };

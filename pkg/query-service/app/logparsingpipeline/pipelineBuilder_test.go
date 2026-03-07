@@ -7,22 +7,27 @@ import (
 	"testing"
 	"time"
 
+	signozstanzahelper "github.com/SigNoz/signoz-otel-collector/processor/signozlogspipelineprocessor/stanza/operator/helper"
+	"github.com/SigNoz/signoz/pkg/query-service/model"
+	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
+	"github.com/SigNoz/signoz/pkg/query-service/utils"
+	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
+	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/google/uuid"
 	"github.com/open-telemetry/opentelemetry-collector-contrib/pkg/stanza/entry"
 	. "github.com/smartystreets/goconvey/convey"
 	"github.com/stretchr/testify/require"
-	"go.signoz.io/signoz/pkg/query-service/model"
-	v3 "go.signoz.io/signoz/pkg/query-service/model/v3"
-	"go.signoz.io/signoz/pkg/query-service/utils"
 )
 
 var prepareProcessorTestData = []struct {
 	Name      string
-	Operators []PipelineOperator
-	Output    []PipelineOperator
+	Operators []pipelinetypes.PipelineOperator
+	Output    []pipelinetypes.PipelineOperator
 }{
 	{
 		Name: "Last operator disabled",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -35,7 +40,7 @@ var prepareProcessorTestData = []struct {
 				Enabled: false,
 			},
 		},
-		Output: []PipelineOperator{
+		Output: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -45,7 +50,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "Operator in middle disabled",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -64,7 +69,7 @@ var prepareProcessorTestData = []struct {
 				Enabled: true,
 			},
 		},
-		Output: []PipelineOperator{
+		Output: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -80,7 +85,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "Single operator disabled",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -88,18 +93,18 @@ var prepareProcessorTestData = []struct {
 				Enabled: false,
 			},
 		},
-		Output: []PipelineOperator{},
+		Output: []pipelinetypes.PipelineOperator{},
 	},
 	{
 		Name: "Single operator enabled",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
 				Enabled: true,
 			},
 		},
-		Output: []PipelineOperator{
+		Output: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "t1",
 				Name:    "t1",
@@ -109,12 +114,12 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name:      "Empty operator",
-		Operators: []PipelineOperator{},
-		Output:    []PipelineOperator{},
+		Operators: []pipelinetypes.PipelineOperator{},
+		Output:    []pipelinetypes.PipelineOperator{},
 	},
 	{
 		Name: "new test",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_function",
@@ -145,7 +150,7 @@ var prepareProcessorTestData = []struct {
 				Name:    "move_lwp",
 			},
 		},
-		Output: []PipelineOperator{
+		Output: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_line",
@@ -173,7 +178,7 @@ var prepareProcessorTestData = []struct {
 	},
 	{
 		Name: "first op disabled",
-		Operators: []PipelineOperator{
+		Operators: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move_filename",
 				Output:  "move_function",
@@ -186,7 +191,7 @@ var prepareProcessorTestData = []struct {
 				Name:    "move_function",
 			},
 		},
-		Output: []PipelineOperator{
+		Output: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move_function",
 				Enabled: true,
@@ -223,14 +228,19 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			},
 		},
 	}
-	makeTestPipeline := func(config []PipelineOperator) Pipeline {
-		return Pipeline{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
-			Filter:  testPipelineFilter,
-			Config:  config,
+	makeTestPipeline := func(config []pipelinetypes.PipelineOperator) pipelinetypes.GettablePipeline {
+		return pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
+			Filter: testPipelineFilter,
+			Config: config,
 		}
 	}
 
@@ -260,14 +270,14 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 
 	type pipelineTestCase struct {
 		Name           string
-		Operator       PipelineOperator
+		Operator       pipelinetypes.PipelineOperator
 		NonMatchingLog model.SignozLog
 	}
 
 	testCases := []pipelineTestCase{
 		{
 			"regex processor should ignore log with missing field",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "regex",
 				Type:      "regex_parser",
 				Enabled:   true,
@@ -279,7 +289,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"regex processor should ignore non-matching log",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "regex",
 				Type:      "regex_parser",
 				Enabled:   true,
@@ -291,7 +301,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"json parser should ignore logs with missing field.",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "json",
 				Type:      "json_parser",
 				Enabled:   true,
@@ -303,7 +313,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 		},
 		{
 			"json parser should ignore log with non JSON target field value",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "json",
 				Type:      "json_parser",
 				Enabled:   true,
@@ -316,7 +326,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			}),
 		}, {
 			"move parser should ignore non matching logs",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:      "move",
 				Type:    "move",
 				Enabled: true,
@@ -327,7 +337,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"copy parser should ignore non matching logs",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:      "copy",
 				Type:    "copy",
 				Enabled: true,
@@ -338,7 +348,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"remove parser should ignore non matching logs",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:      "remove",
 				Type:    "remove",
 				Enabled: true,
@@ -348,7 +358,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"time parser should ignore logs with missing field.",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:         "time",
 				Type:       "time_parser",
 				Enabled:    true,
@@ -360,7 +370,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			makeTestLog("mismatching log", map[string]string{}),
 		}, {
 			"time parser should ignore logs timestamp values that don't contain expected strptime layout.",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:         "time",
 				Type:       "time_parser",
 				Enabled:    true,
@@ -374,7 +384,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			}),
 		}, {
 			"time parser should ignore logs timestamp values that don't contain an epoch",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:         "time",
 				Type:       "time_parser",
 				Enabled:    true,
@@ -388,7 +398,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 			}),
 		}, {
 			"grok parser should ignore logs with missing parse from field",
-			PipelineOperator{
+			pipelinetypes.PipelineOperator{
 				ID:        "grok",
 				Type:      "grok_parser",
 				Enabled:   true,
@@ -417,7 +427,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 					"time parser should ignore log with timestamp value %s that doesn't match layout type %s",
 					testValue, epochLayout,
 				),
-				PipelineOperator{
+				pipelinetypes.PipelineOperator{
 					ID:         "time",
 					Type:       "time_parser",
 					Enabled:    true,
@@ -434,7 +444,7 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 	}
 
 	for _, testCase := range testCases {
-		testPipelines := []Pipeline{makeTestPipeline([]PipelineOperator{testCase.Operator})}
+		testPipelines := []pipelinetypes.GettablePipeline{makeTestPipeline([]pipelinetypes.PipelineOperator{testCase.Operator})}
 
 		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),
@@ -450,11 +460,16 @@ func TestNoCollectorErrorsFromProcessorsForMismatchedLogs(t *testing.T) {
 func TestResourceFiltersWork(t *testing.T) {
 	require := require.New(t)
 
-	testPipeline := Pipeline{
-		OrderId: 1,
-		Name:    "pipeline1",
-		Alias:   "pipeline1",
-		Enabled: true,
+	testPipeline := pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrderID: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+		},
 		Filter: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{
@@ -469,7 +484,7 @@ func TestResourceFiltersWork(t *testing.T) {
 				},
 			},
 		},
-		Config: []PipelineOperator{
+		Config: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "add",
 				Type:    "add",
@@ -496,7 +511,7 @@ func TestResourceFiltersWork(t *testing.T) {
 
 	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
-		[]Pipeline{testPipeline},
+		[]pipelinetypes.GettablePipeline{testPipeline},
 		[]model.SignozLog{testLog},
 	)
 	require.Nil(err)
@@ -515,11 +530,16 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 		v3.FilterOperatorRegex,
 		v3.FilterOperatorNotRegex,
 	} {
-		testPipeline := Pipeline{
-			OrderId: 1,
-			Name:    "pipeline1",
-			Alias:   "pipeline1",
-			Enabled: true,
+		testPipeline := pipelinetypes.GettablePipeline{
+			StoreablePipeline: pipelinetypes.StoreablePipeline{
+				Identifiable: types.Identifiable{
+					ID: valuer.GenerateUUID(),
+				},
+				OrderID: 1,
+				Name:    "pipeline1",
+				Alias:   "pipeline1",
+				Enabled: true,
+			},
 			Filter: &v3.FilterSet{
 				Operator: "AND",
 				Items: []v3.FilterItem{
@@ -534,7 +554,7 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 					},
 				},
 			},
-			Config: []PipelineOperator{
+			Config: []pipelinetypes.PipelineOperator{
 				{
 					ID:      "add",
 					Type:    "add",
@@ -559,7 +579,7 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 
 		result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 			context.Background(),
-			[]Pipeline{testPipeline},
+			[]pipelinetypes.GettablePipeline{testPipeline},
 			[]model.SignozLog{testLog},
 		)
 		require.Nil(err)
@@ -571,11 +591,16 @@ func TestPipelineFilterWithStringOpsShouldNotSpamWarningsIfAttributeIsMissing(t 
 func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 	require := require.New(t)
 
-	testPipeline := Pipeline{
-		OrderId: 1,
-		Name:    "pipeline1",
-		Alias:   "pipeline1",
-		Enabled: true,
+	testPipeline := pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrderID: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+		},
 		Filter: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{
@@ -590,7 +615,7 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 				},
 			},
 		},
-		Config: []PipelineOperator{
+		Config: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move",
 				Type:    "move",
@@ -610,7 +635,7 @@ func TestAttributePathsContainingDollarDoNotBreakCollector(t *testing.T) {
 
 	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
-		[]Pipeline{testPipeline},
+		[]pipelinetypes.GettablePipeline{testPipeline},
 		testLogs,
 	)
 	require.Nil(err)
@@ -623,17 +648,22 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 	require := require.New(t)
 
 	testLogs := []model.SignozLog{
-		makeTestSignozLog("test log", map[string]interface{}{
+		makeTestSignozLog("test log", map[string]any{
 			"http.method":    "GET",
 			"order.products": `{"ids": ["pid0", "pid1"]}`,
 		}),
 	}
 
-	testPipeline := Pipeline{
-		OrderId: 1,
-		Name:    "pipeline1",
-		Alias:   "pipeline1",
-		Enabled: true,
+	testPipeline := pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrderID: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+		},
 		Filter: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{
@@ -648,7 +678,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 				},
 			},
 		},
-		Config: []PipelineOperator{
+		Config: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "move",
 				Type:    "move",
@@ -711,7 +741,7 @@ func TestMembershipOpInProcessorFieldExpressions(t *testing.T) {
 
 	result, collectorWarnAndErrorLogs, err := SimulatePipelinesProcessing(
 		context.Background(),
-		[]Pipeline{testPipeline},
+		[]pipelinetypes.GettablePipeline{testPipeline},
 		testLogs,
 	)
 	require.Nil(err)
@@ -733,11 +763,16 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 		makeTestSignozLog("test Ecom Log", map[string]interface{}{}),
 	}
 
-	testPipelines := []Pipeline{{
-		OrderId: 1,
-		Name:    "pipeline1",
-		Alias:   "pipeline1",
-		Enabled: true,
+	testPipelines := []pipelinetypes.GettablePipeline{{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrderID: 1,
+			Name:    "pipeline1",
+			Alias:   "pipeline1",
+			Enabled: true,
+		},
 		Filter: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{{
@@ -751,7 +786,7 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 				Value:    "log",
 			}},
 		},
-		Config: []PipelineOperator{
+		Config: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "add",
 				Type:    "add",
@@ -762,10 +797,15 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 			},
 		},
 	}, {
-		OrderId: 2,
-		Name:    "pipeline2",
-		Alias:   "pipeline2",
-		Enabled: true,
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Identifiable: types.Identifiable{
+				ID: valuer.GenerateUUID(),
+			},
+			OrderID: 2,
+			Name:    "pipeline2",
+			Alias:   "pipeline2",
+			Enabled: true,
+		},
 		Filter: &v3.FilterSet{
 			Operator: "AND",
 			Items: []v3.FilterItem{{
@@ -779,7 +819,7 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 				Value:    "ecom",
 			}},
 		},
-		Config: []PipelineOperator{
+		Config: []pipelinetypes.PipelineOperator{
 			{
 				ID:      "add",
 				Type:    "add",
@@ -802,4 +842,148 @@ func TestContainsFilterIsCaseInsensitive(t *testing.T) {
 
 	_, test2Exists := result[0].Attributes_string["test2"]
 	require.False(test2Exists)
+}
+
+func TestProcessJSONParser_WithFlatteningAndMapping(t *testing.T) {
+	parserID := uuid.NewString()
+	outputID := uuid.NewString()
+
+	parent := &pipelinetypes.PipelineOperator{
+		Type:             "json_parser",
+		ID:               parserID,
+		Name:             "Parse JSON",
+		OrderId:          1,
+		Enabled:          true,
+		ParseFrom:        "body",
+		ParseTo:          "attributes",
+		Output:           outputID,
+		EnableFlattening: true,
+		EnablePaths:      false,
+		PathPrefix:       "",
+		Mapping: map[string][]string{
+			pipelinetypes.Host:        {"host", "hostname"},
+			pipelinetypes.Service:     {"service", "syslog.appname"},
+			pipelinetypes.Severity:    {"status", "severity", "level", "syslog.severity"},
+			pipelinetypes.TraceID:     {"trace_id"},
+			pipelinetypes.SpanID:      {"span_id"},
+			pipelinetypes.Message:     {"message", "msg", "log"},
+			pipelinetypes.TraceFlags:  {"flags"},
+			pipelinetypes.Environment: {"service.env"},
+		},
+	}
+
+	// Total children generated = sum(len(mapping values)) + severity_parser + trace_parser ops
+	expectedMoveOps := len(parent.Mapping[pipelinetypes.Host]) +
+		len(parent.Mapping[pipelinetypes.Service]) +
+		len(parent.Mapping[pipelinetypes.Message]) +
+		len(parent.Mapping[pipelinetypes.Environment])
+	expectedTraceOps := len(parent.Mapping[pipelinetypes.TraceID]) +
+		len(parent.Mapping[pipelinetypes.SpanID]) +
+		len(parent.Mapping[pipelinetypes.TraceFlags])
+	expectedSeverityOps := len(parent.Mapping[pipelinetypes.Severity]) // severity_parser
+
+	totalOps := expectedMoveOps + expectedTraceOps + expectedSeverityOps
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.NotEmpty(t, ops)
+
+	// Parent is always first
+	parentOp := ops[0]
+	require.Equal(t, "json_parser", parentOp.Type)
+	require.Equal(t, 1, parentOp.MaxFlatteningDepth)
+	require.Nil(t, parentOp.Mapping) // Mapping should be removed
+	require.Nil(t, parent.Mapping)   // Mapping should be removed
+	require.Contains(t, parentOp.If, `isJSON(body)`)
+	require.Contains(t, parentOp.If, `type(body)`)
+
+	require.Equal(t, 1+totalOps, len(ops))
+
+	var traceParserCount, moveCount, severityParserCount int
+	for _, op := range ops[1:] {
+		require.NotEmpty(t, op.ID)
+		require.Equal(t, op.OnError, signozstanzahelper.SendOnErrorQuiet)
+
+		switch op.Type {
+		case "move":
+			require.NotEmpty(t, op.From)
+			require.NotEmpty(t, op.To)
+			moveCount++
+		case "trace_parser":
+			require.NotNil(t, op.TraceParser)
+			traceParserCount++
+		case "severity_parser":
+			require.NotEmpty(t, op.ParseFrom)
+			require.NotEmpty(t, op.If)
+			severityParserCount++
+		default:
+			t.Errorf("unexpected operator type: %s", op.Type)
+		}
+	}
+
+	require.Equal(t, expectedMoveOps, moveCount)
+	require.Equal(t, expectedTraceOps, traceParserCount)
+	require.Equal(t, expectedSeverityOps, severityParserCount)
+}
+
+func TestProcessJSONParser_WithoutMapping(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type:             "json_parser",
+		ID:               uuid.NewString(),
+		Name:             "Parse JSON",
+		OrderId:          1,
+		Enabled:          true,
+		ParseFrom:        "body",
+		ParseTo:          "attributes",
+		EnableFlattening: true,
+		EnablePaths:      true,
+		PathPrefix:       "parsed",
+		Mapping:          nil, // No mapping
+	}
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.Len(t, ops, 1) // Only the parent operator should exist
+
+	op := ops[0]
+	require.Equal(t, "json_parser", op.Type)
+	require.Equal(t, 1, op.MaxFlatteningDepth)
+	require.True(t, op.EnableFlattening)
+	require.True(t, op.EnablePaths)
+	require.Equal(t, "parsed", op.PathPrefix)
+	require.Contains(t, op.If, `isJSON(body)`)
+}
+
+func TestProcessJSONParser_Simple(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type:      "json_parser",
+		ID:        uuid.NewString(),
+		Name:      "Parse JSON",
+		OrderId:   1,
+		Enabled:   true,
+		ParseFrom: "body",
+		ParseTo:   "attributes",
+	}
+
+	ops, err := processJSONParser(parent)
+	require.NoError(t, err)
+	require.Len(t, ops, 1) // Only the parent operator should exist
+
+	op := ops[0]
+	require.Equal(t, "json_parser", op.Type)
+	require.Equal(t, 0, op.MaxFlatteningDepth)
+	require.False(t, op.EnableFlattening)
+	require.False(t, op.EnablePaths)
+	require.Equal(t, "", op.PathPrefix)
+	require.Contains(t, op.If, `isJSON(body)`)
+}
+
+func TestProcessJSONParser_InvalidType(t *testing.T) {
+	parent := &pipelinetypes.PipelineOperator{
+		Type: "copy", // Invalid type
+	}
+
+	_, err := processJSONParser(parent)
+	require.Error(t, err)
+	require.Contains(t, err.Error(), "operator type received copy")
 }

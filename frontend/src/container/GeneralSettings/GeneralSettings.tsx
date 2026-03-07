@@ -1,38 +1,51 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-import { LoadingOutlined } from '@ant-design/icons';
-import { Button, Card, Col, Divider, Modal, Row, Spin, Typography } from 'antd';
-import setRetentionApi from 'api/settings/setRetention';
-import TextToolTip from 'components/TextToolTip';
-import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
-import useComponentPermission from 'hooks/useComponentPermission';
-import { useNotifications } from 'hooks/useNotifications';
-import find from 'lodash-es/find';
 import { Fragment, useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
-import { useSelector } from 'react-redux';
 import { useInterval } from 'react-use';
-import { AppState } from 'store/reducers';
-import { ErrorResponse, SuccessResponse } from 'types/api';
+import { LoadingOutlined } from '@ant-design/icons';
+import { Button } from '@signozhq/button';
+import { Compass, ScrollText } from '@signozhq/icons';
+import { Modal, Spin } from 'antd';
+import setRetentionApi from 'api/settings/setRetention';
+import setRetentionApiV2 from 'api/settings/setRetentionV2';
+import TextToolTip from 'components/TextToolTip';
+import CustomDomainSettings from 'container/CustomDomainSettings';
+import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
+import useComponentPermission from 'hooks/useComponentPermission';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useNotifications } from 'hooks/useNotifications';
+import { StatusCodes } from 'http-status-codes';
+import find from 'lodash-es/find';
+import { BarChart2 } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
+import {
+	ErrorResponse,
+	ErrorResponseV2,
+	SuccessResponse,
+	SuccessResponseV2,
+} from 'types/api';
 import {
 	IDiskType,
 	PayloadProps as GetDisksPayload,
 } from 'types/api/disks/getDisks';
+import APIError from 'types/api/error';
 import { TTTLType } from 'types/api/settings/common';
 import {
 	PayloadPropsLogs as GetRetentionPeriodLogsPayload,
 	PayloadPropsMetrics as GetRetentionPeriodMetricsPayload,
 	PayloadPropsTraces as GetRetentionPeriodTracesPayload,
 } from 'types/api/settings/getRetention';
-import AppReducer from 'types/reducer/app';
-import { isCloudUser } from 'utils/app';
+import { USER_ROLES } from 'types/roles';
 
 import Retention from './Retention';
 import StatusMessage from './StatusMessage';
 import { ActionItemsContainer, ErrorText, ErrorTextContainer } from './styles';
 
+import './GeneralSettings.styles.scss';
+
 type NumberOrNull = number | null;
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function GeneralSettings({
 	metricsTtlValuesPayload,
 	tracesTtlValuesPayload,
@@ -68,11 +81,11 @@ function GeneralSettings({
 		logsTtlValuesPayload,
 	);
 
-	const { role } = useSelector<AppState, AppReducer>((state) => state.app);
+	const { user } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
-		role,
+		user.role,
 	);
 
 	const [
@@ -129,10 +142,10 @@ function GeneralSettings({
 
 	useEffect(() => {
 		if (logsCurrentTTLValues) {
-			setLogsTotalRetentionPeriod(logsCurrentTTLValues.logs_ttl_duration_hrs);
+			setLogsTotalRetentionPeriod(logsCurrentTTLValues.default_ttl_days * 24);
 			setLogsS3RetentionPeriod(
-				logsCurrentTTLValues.logs_move_ttl_duration_hrs
-					? logsCurrentTTLValues.logs_move_ttl_duration_hrs
+				logsCurrentTTLValues.cold_storage_ttl_days
+					? logsCurrentTTLValues.cold_storage_ttl_days * 24
 					: null,
 			);
 		}
@@ -168,14 +181,26 @@ function GeneralSettings({
 	const { notifications } = useNotifications();
 
 	const onModalToggleHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setModalMetrics((modal) => !modal);
-		if (type === 'traces') setModalTraces((modal) => !modal);
-		if (type === 'logs') setModalLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setModalMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setModalTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setModalLogs((modal) => !modal);
+		}
 	};
 	const onPostApiLoadingHandler = (type: TTTLType): void => {
-		if (type === 'metrics') setPostApiLoadingMetrics((modal) => !modal);
-		if (type === 'traces') setPostApiLoadingTraces((modal) => !modal);
-		if (type === 'logs') setPostApiLoadingLogs((modal) => !modal);
+		if (type === 'metrics') {
+			setPostApiLoadingMetrics((modal) => !modal);
+		}
+		if (type === 'traces') {
+			setPostApiLoadingTraces((modal) => !modal);
+		}
+		if (type === 'logs') {
+			setPostApiLoadingLogs((modal) => !modal);
+		}
 	};
 
 	const onClickSaveHandler = useCallback(
@@ -192,7 +217,12 @@ function GeneralSettings({
 	);
 
 	const s3Enabled = useMemo(
-		() => !!find(availableDisks, (disks: IDiskType) => disks?.type === 's3'),
+		() =>
+			!!find(
+				availableDisks,
+				(disks: IDiskType) =>
+					disks?.type === 's3' || disks?.type === 'ObjectStorage',
+			),
 		[availableDisks],
 	);
 
@@ -271,22 +301,26 @@ function GeneralSettings({
 				metricsTotalRetentionPeriod &&
 			metricsCurrentTTLValues.metrics_move_ttl_duration_hrs ===
 				metricsS3RetentionPeriod
-		)
+		) {
 			isMetricsSaveDisabled = true;
+		}
 
 		if (
 			tracesCurrentTTLValues.traces_ttl_duration_hrs ===
 				tracesTotalRetentionPeriod &&
 			tracesCurrentTTLValues.traces_move_ttl_duration_hrs ===
 				tracesS3RetentionPeriod
-		)
+		) {
 			isTracesSaveDisabled = true;
+		}
 
 		if (
-			logsCurrentTTLValues.logs_ttl_duration_hrs === logsTotalRetentionPeriod &&
-			logsCurrentTTLValues.logs_move_ttl_duration_hrs === logsS3RetentionPeriod
-		)
+			logsCurrentTTLValues.default_ttl_days * 24 === logsTotalRetentionPeriod &&
+			logsCurrentTTLValues.cold_storage_ttl_days &&
+			logsCurrentTTLValues.cold_storage_ttl_days * 24 === logsS3RetentionPeriod
+		) {
 			isLogsSaveDisabled = true;
+		}
 
 		return [
 			isMetricsSaveDisabled,
@@ -295,8 +329,8 @@ function GeneralSettings({
 			errorText,
 		];
 	}, [
-		logsCurrentTTLValues.logs_move_ttl_duration_hrs,
-		logsCurrentTTLValues.logs_ttl_duration_hrs,
+		logsCurrentTTLValues.cold_storage_ttl_days,
+		logsCurrentTTLValues.default_ttl_days,
 		logsS3RetentionPeriod,
 		logsTotalRetentionPeriod,
 		metricsCurrentTTLValues.metrics_move_ttl_duration_hrs,
@@ -338,51 +372,84 @@ function GeneralSettings({
 		}
 		try {
 			onPostApiLoadingHandler(type);
-			const setTTLResponse = await setRetentionApi({
-				type,
-				totalDuration: `${apiCallTotalRetention || -1}h`,
-				coldStorage: s3Enabled ? 's3' : null,
-				toColdDuration: `${apiCallS3Retention || -1}h`,
-			});
 			let hasSetTTLFailed = false;
-			if (setTTLResponse.statusCode === 409) {
+
+			try {
+				if (type === 'logs') {
+					// Only send S3 values if user has specified a duration
+					const s3RetentionDays =
+						apiCallS3Retention && apiCallS3Retention > 0
+							? apiCallS3Retention / 24
+							: 0;
+
+					await setRetentionApiV2({
+						type,
+						defaultTTLDays: apiCallTotalRetention ? apiCallTotalRetention / 24 : -1, // convert Hours to days
+						coldStorageVolume: s3RetentionDays > 0 ? 's3' : '',
+						coldStorageDurationDays: s3RetentionDays,
+						ttlConditions: [],
+					});
+				} else {
+					await setRetentionApi({
+						type,
+						totalDuration: `${apiCallTotalRetention || -1}h`,
+						coldStorage: s3Enabled ? 's3' : null,
+						toColdDuration: `${apiCallS3Retention || -1}h`,
+					});
+				}
+			} catch (error) {
 				hasSetTTLFailed = true;
-				notifications.error({
-					message: 'Error',
-					description: t('retention_request_race_condition'),
-					placement: 'topRight',
-				});
+				if ((error as APIError).getHttpStatusCode() === StatusCodes.CONFLICT) {
+					notifications.error({
+						message: 'Error',
+						description: t('retention_request_race_condition'),
+						placement: 'topRight',
+					});
+				} else {
+					notifications.error({
+						message: 'Error',
+						description: (error as APIError).getErrorMessage(),
+						placement: 'topRight',
+					});
+				}
 			}
 
 			if (type === 'metrics') {
 				metricsTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setMetricsCurrentTTLValues({
 						metrics_ttl_duration_hrs: metricsTotalRetentionPeriod || -1,
 						metrics_move_ttl_duration_hrs: metricsS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'traces') {
 				tracesTtlValuesRefetch();
 
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
 					setTracesCurrentTTLValues({
 						traces_ttl_duration_hrs: tracesTotalRetentionPeriod || -1,
 						traces_move_ttl_duration_hrs: tracesS3RetentionPeriod || -1,
 						status: '',
 					});
+				}
 			} else if (type === 'logs') {
 				logsTtlValuesRefetch();
-				if (!hasSetTTLFailed)
+				if (!hasSetTTLFailed) {
 					// Updates the currentTTL Values in order to avoid pushing the same values.
-					setLogsCurrentTTLValues({
-						logs_ttl_duration_hrs: logsTotalRetentionPeriod || -1,
-						logs_move_ttl_duration_hrs: logsS3RetentionPeriod || -1,
-						status: '',
-					});
+					setLogsCurrentTTLValues((prev) => ({
+						...prev,
+						cold_storage_ttl_days: logsS3RetentionPeriod
+							? logsS3RetentionPeriod / 24
+							: -1,
+						default_ttl_days: logsTotalRetentionPeriod
+							? logsTotalRetentionPeriod / 24 // convert Hours to days
+							: -1,
+					}));
+				}
 			}
 		} catch (error) {
 			notifications.error({
@@ -396,11 +463,20 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const isCloudUserVal = isCloudUser();
+	const {
+		isCloudUser: isCloudUserVal,
+		isEnterpriseSelfHostedUser,
+	} = useGetTenantLicense();
+
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+	const showCustomDomainSettings =
+		(isCloudUserVal || isEnterpriseSelfHostedUser) && isAdmin;
 
 	const renderConfig = [
 		{
 			name: 'Metrics',
+			type: 'metrics',
+			icon: <BarChart2 size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -442,6 +518,8 @@ function GeneralSettings({
 		},
 		{
 			name: 'Traces',
+			type: 'traces',
+			icon: <Compass size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -481,6 +559,8 @@ function GeneralSettings({
 		},
 		{
 			name: 'Logs',
+			type: 'logs',
+			icon: <ScrollText size={14} />,
 			retentionFields: [
 				{
 					name: t('total_retention_period'),
@@ -492,6 +572,7 @@ function GeneralSettings({
 					value: logsS3RetentionPeriod,
 					setValue: setLogsS3RetentionPeriod,
 					hide: !s3Enabled,
+					isS3Field: true,
 				},
 			],
 			save: {
@@ -524,67 +605,66 @@ function GeneralSettings({
 		) {
 			return (
 				<Fragment key={category.name}>
-					<Col xs={22} xl={11} key={category.name} style={{ margin: '0.5rem' }}>
-						<Card style={{ height: '100%' }}>
-							<Typography.Title style={{ margin: 0 }} level={3}>
-								{category.name}
-							</Typography.Title>
-							<Divider
-								style={{
-									margin: '0.5rem 0',
-									padding: 0,
-									opacity: 0.5,
-									marginBottom: '1rem',
-								}}
-							/>
-							{category.retentionFields.map((retentionField) => (
+					<div className="retention-row">
+						<span className="retention-row-label">
+							{category.icon}
+							{category.name}
+						</span>
+						<div className="retention-row-controls">
+							{category.retentionFields.map((field) => (
 								<Retention
-									key={retentionField.name}
-									text={retentionField.name}
-									retentionValue={retentionField.value}
-									setRetentionValue={retentionField.setValue}
-									hide={!!retentionField.hide}
+									key={field.name}
+									type={category.type as TTTLType}
+									text={field.name}
+									retentionValue={field.value}
+									setRetentionValue={field.setValue}
+									hide={!!field.hide}
+									isS3Field={'isS3Field' in field && !!field.isS3Field}
+									compact
 								/>
 							))}
-
 							{!isCloudUserVal && (
-								<>
-									<ActionItemsContainer>
-										<Button
-											type="primary"
-											onClick={category.save.modalOpen}
-											disabled={category.save.isDisabled}
-										>
-											{category.save.saveButtonText}
-										</Button>
-										{category.statusComponent}
-									</ActionItemsContainer>
-									<Modal
-										title={t('retention_confirmation')}
-										focusTriggerAfterClose
-										forceRender
-										destroyOnClose
-										closable
-										onCancel={(): void =>
-											onModalToggleHandler(category.name.toLowerCase() as TTTLType)
-										}
-										onOk={(): Promise<void> =>
-											onOkHandler(category.name.toLowerCase() as TTTLType)
-										}
-										centered
-										open={category.save.modal}
-										confirmLoading={category.save.apiLoading}
-									>
-										<Typography>
-											{t('retention_confirmation_description', {
-												name: category.name.toLowerCase(),
-											})}
-										</Typography>
-									</Modal>
-								</>
+								<Button
+									variant="solid"
+									size="sm"
+									color="primary"
+									onClick={category.save.modalOpen}
+									disabled={category.save.isDisabled}
+								>
+									{category.save.saveButtonText}
+								</Button>
 							)}
-						</Card>
-					</Col>
+						</div>
+					</div>
+
+					{!isCloudUserVal && (
+						<ActionItemsContainer>{category.statusComponent}</ActionItemsContainer>
+					)}
+
+					{!isCloudUserVal && (
+						<Modal
+							title={t('retention_confirmation')}
+							focusTriggerAfterClose
+							forceRender
+							destroyOnClose
+							closable
+							onCancel={(): void =>
+								onModalToggleHandler(category.name.toLowerCase() as TTTLType)
+							}
+							onOk={(): Promise<void> =>
+								onOkHandler(category.name.toLowerCase() as TTTLType)
+							}
+							centered
+							open={category.save.modal}
+							confirmLoading={category.save.apiLoading}
+						>
+							<p className="retention-modal-description">
+								{t('retention_confirmation_description', {
+									name: category.name.toLowerCase(),
+								})}
+							</p>
+						</Modal>
+					)}
 				</Fragment>
 			);
 		}
@@ -592,9 +672,24 @@ function GeneralSettings({
 	});
 
 	return (
-		<>
-			{Element}
-			<Col xs={24} md={22} xl={20} xxl={18} style={{ margin: 'auto' }}>
+		<div className="general-settings-page">
+			<div className="general-settings-header">
+				<span className="general-settings-title">Workspace</span>
+				<span className="general-settings-subtitle">
+					Manage your workspace settings.
+				</span>
+			</div>
+
+			{showCustomDomainSettings && <CustomDomainSettings />}
+
+			<div className="retention-controls-container">
+				<div className="retention-controls-header">
+					<span className="retention-controls-header-label">Retention Controls</span>
+				</div>
+				{renderConfig}
+			</div>
+
+			{(!isCloudUserVal || errorText) && (
 				<ErrorTextContainer>
 					{!isCloudUserVal && (
 						<TextToolTip
@@ -606,12 +701,10 @@ function GeneralSettings({
 					)}
 					{errorText && <ErrorText>{errorText}</ErrorText>}
 				</ErrorTextContainer>
+			)}
 
-				<Row justify="start">{renderConfig}</Row>
-
-				{isCloudUserVal && <GeneralSettingsCloud />}
-			</Col>
-		</>
+			{isCloudUserVal && <GeneralSettingsCloud />}
+		</div>
 	);
 }
 
@@ -627,7 +720,7 @@ interface GeneralSettingsProps {
 		ErrorResponse | SuccessResponse<GetRetentionPeriodTracesPayload>
 	>['refetch'];
 	logsTtlValuesRefetch: UseQueryResult<
-		ErrorResponse | SuccessResponse<GetRetentionPeriodLogsPayload>
+		ErrorResponseV2 | SuccessResponseV2<GetRetentionPeriodLogsPayload>
 	>['refetch'];
 }
 

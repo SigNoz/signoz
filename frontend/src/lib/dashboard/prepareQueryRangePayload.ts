@@ -1,7 +1,6 @@
 import getStartEndRangeTime from 'lib/getStartEndRangeTime';
 import getStep from 'lib/getStep';
 import { mapQueryDataToApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataToApi';
-import { isUndefined } from 'lodash-es';
 import store from 'store';
 import { QueryRangePayload } from 'types/api/metrics/getQueryRange';
 import { EQueryType } from 'types/common/dashboard';
@@ -27,11 +26,7 @@ export const prepareQueryRangePayload = ({
 	end: endTime,
 }: GetQueryResultsProps): PrepareQueryRangePayload => {
 	let legendMap: Record<string, string> = {};
-	const {
-		allowSelectedIntervalForStepGen,
-		lastLogLineTimestamp,
-		...restParams
-	} = params;
+	const { allowSelectedIntervalForStepGen, ...restParams } = params;
 
 	const compositeQuery: QueryRangePayload['compositeQuery'] = {
 		queryType: query.queryType,
@@ -59,7 +54,9 @@ export const prepareQueryRangePayload = ({
 		}
 		case EQueryType.CLICKHOUSE: {
 			const chQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) return acc;
+				if (!query.query) {
+					return acc;
+				}
 
 				acc[query.name] = query;
 
@@ -75,7 +72,9 @@ export const prepareQueryRangePayload = ({
 		case EQueryType.PROM: {
 			// eslint-disable-next-line sonarjs/no-identical-functions
 			const promQueries = query[query.queryType].reduce((acc, query) => {
-				if (!query.query) return acc;
+				if (!query.query) {
+					return acc;
+				}
 
 				acc[query.name] = query;
 
@@ -97,13 +96,9 @@ export const prepareQueryRangePayload = ({
 		interval: globalSelectedInterval,
 	});
 
-	const endLogTimeStamp = !isUndefined(lastLogLineTimestamp)
-		? new Date(lastLogLineTimestamp as string | number)?.getTime() || undefined
-		: undefined;
-
 	const queryPayload: QueryRangePayload = {
 		start: startTime ? startTime * 1e3 : parseInt(start, 10) * 1e3,
-		end: endTime ? endTime * 1e3 : endLogTimeStamp || parseInt(end, 10) * 1e3,
+		end: endTime ? endTime * 1e3 : parseInt(end, 10) * 1e3,
 		step: getStep({
 			start: allowSelectedIntervalForStepGen
 				? start

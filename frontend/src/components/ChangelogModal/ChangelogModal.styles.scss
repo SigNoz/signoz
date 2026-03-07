@@ -1,0 +1,162 @@
+.changelog-modal {
+	.ant-modal-content {
+		padding: unset;
+		background-color: var(--bg-ink-400, #121317);
+
+		.ant-modal-header {
+			margin-bottom: unset;
+		}
+
+		.ant-modal-footer {
+			margin-top: unset;
+		}
+	}
+
+	&-title {
+		display: flex;
+		align-items: center;
+		gap: 8px;
+		background-color: var(--bg-ink-400, #121317);
+		padding: 16px;
+		font-size: 14px;
+		line-height: 20px;
+		color: var(--text-vanilla-100, #fff);
+		border-bottom: 1px solid var(--bg-slate-500, #161922);
+	}
+
+	&-footer.scroll-available {
+		.scroll-btn-container {
+			display: block;
+		}
+	}
+
+	&-footer {
+		position: relative;
+		border: 1px solid var(--bg-slate-500, #161922);
+		padding: 12px;
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+
+		&-label {
+			color: var(--text-robin-400, #7190f9);
+			font-size: 14px;
+			line-height: 24px;
+			position: relative;
+			padding-left: 14px;
+
+			&::before {
+				content: '';
+				position: absolute;
+				top: 50%;
+				left: 0;
+				transform: translateY(-50%);
+				width: 6px;
+				height: 6px;
+				border-radius: 100%;
+				background-color: var(--bg-robin-500, #7190f9);
+			}
+		}
+
+		&-ctas {
+			display: flex;
+			margin-left: auto;
+
+			& svg {
+				font-size: 14px;
+			}
+		}
+
+		.scroll-btn-container {
+			display: none;
+			position: absolute;
+			top: -40px;
+			left: 50%;
+			transform: translateX(-50%);
+
+			.scroll-btn {
+				all: unset;
+				padding: 4px 12px 4px 10px;
+				background-color: var(--bg-slate-400, #1d212d);
+				border-radius: 20px;
+				cursor: pointer;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				gap: 4px;
+				transition: background-color 0.1s;
+
+				&:hover {
+					background-color: var(--bg-slate-200, #2c3140);
+				}
+
+				&:active {
+					background-color: var(--bg-slate-600, #1c1f2a);
+				}
+
+				span {
+					font-size: 12px;
+					line-height: 18px;
+					color: var(--text-vanilla-400, #c0c1c3);
+				}
+
+				// add animation to the chevrons down icon
+				svg {
+					animation: pulse 1s infinite;
+				}
+			}
+		}
+	}
+
+	&-content {
+		max-height: calc(100vh - 300px);
+		overflow-y: auto;
+		padding: 16px 16px 18px 16px;
+		border: 1px solid var(--bg-slate-500, #161922);
+		border-top-width: 0;
+		border-bottom-width: 0;
+	}
+}
+
+// pulse for the scroll for more icon
+@keyframes pulse {
+	0% {
+		opacity: 1;
+	}
+	50% {
+		opacity: 0.5;
+	}
+}
+
+.lightMode {
+	.changelog-modal {
+		.ant-modal-content {
+			background-color: var(--bg-vanilla-100);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-title {
+			background: var(--bg-vanilla-100);
+			color: var(--bg-ink-500);
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-content {
+			border-color: var(--bg-vanilla-300);
+		}
+
+		&-footer {
+			border-color: var(--bg-vanilla-300);
+
+			.scroll-btn-container {
+				.scroll-btn {
+					background-color: var(--bg-vanilla-300);
+
+					span {
+						color: var(--text-ink-500);
+					}
+				}
+			}
+		}
+	}
+}

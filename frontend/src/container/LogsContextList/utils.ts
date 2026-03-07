@@ -1,3 +1,4 @@
+import { convertFiltersToExpression } from 'components/QueryBuilderV2/utils';
 import { initialFilters } from 'constants/queryBuilder';
 import { getPaginationQueryData } from 'lib/newQueryBuilder/getPaginationQueryData';
 import { ILog } from 'types/api/logs/log';
@@ -5,6 +6,7 @@ import {
 	IBuilderQuery,
 	OrderByPayload,
 	Query,
+	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 
 import { INITIAL_PAGE_SIZE } from './configs';
@@ -18,6 +20,14 @@ type GetRequestDataProps = {
 	pageSize?: number;
 };
 
+const getQueryExpression = (filters: TagFilter | undefined): string => {
+	if (!filters) {
+		return '';
+	}
+	const { expression } = convertFiltersToExpression(filters);
+	return expression;
+};
+
 export const getRequestData = ({
 	query,
 	stagedQueryData,
@@ -26,7 +36,9 @@ export const getRequestData = ({
 	page,
 	pageSize = INITIAL_PAGE_SIZE,
 }: GetRequestDataProps): Query | null => {
-	if (!query) return null;
+	if (!query) {
+		return null;
+	}
 
 	const paginateData = getPaginationQueryData({
 		filters: stagedQueryData?.filters || initialFilters,
@@ -43,6 +55,9 @@ export const getRequestData = ({
 			queryData: query.builder.queryData?.map((item) => ({
 				...item,
 				...paginateData,
+				filter: {
+					expression: getQueryExpression(paginateData.filters),
+				},
 				pageSize,
 				orderBy: [orderByTimestamp],
 			})),

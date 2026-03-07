@@ -9,15 +9,15 @@ import { Spin } from 'antd';
 
 export function getDeploymentStage(value: string): string {
 	switch (value) {
-		case 'IN_PROGRESS':
+		case 'in_progress':
 			return 'In Progress';
-		case 'DEPLOYED':
+		case 'deployed':
 			return 'Deployed';
-		case 'DIRTY':
+		case 'dirty':
 			return 'Dirty';
-		case 'FAILED':
+		case 'failed':
 			return 'Failed';
-		case 'UNKNOWN':
+		case 'unknown':
 			return 'Unknown';
 		default:
 			return '';
@@ -26,17 +26,17 @@ export function getDeploymentStage(value: string): string {
 
 export function getDeploymentStageIcon(value: string): JSX.Element {
 	switch (value) {
-		case 'IN_PROGRESS':
+		case 'in_progress':
 			return (
 				<Spin indicator={<LoadingOutlined style={{ fontSize: 15 }} spin />} />
 			);
-		case 'DEPLOYED':
+		case 'deployed':
 			return <CheckCircleFilled />;
-		case 'DIRTY':
+		case 'dirty':
 			return <ExclamationCircleFilled />;
-		case 'FAILED':
+		case 'failed':
 			return <CloseCircleFilled />;
-		case 'UNKNOWN':
+		case 'unknown':
 			return <MinusCircleFilled />;
 		default:
 			return <span />;

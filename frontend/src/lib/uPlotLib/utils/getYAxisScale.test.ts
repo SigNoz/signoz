@@ -11,8 +11,8 @@ describe('getYAxisScale', () => {
 			keyIndex: 1,
 			thresholdValue: 10,
 			thresholdUnit: 'percentunit',
-			moveThreshold(dragIndex, hoverIndex): void {
-				console.log(dragIndex, hoverIndex);
+			moveThreshold(): void {
+				// no-op
 			},
 			selectedGraph: PANEL_TYPES.TIME_SERIES,
 		},
@@ -21,8 +21,8 @@ describe('getYAxisScale', () => {
 			keyIndex: 2,
 			thresholdValue: 20,
 			thresholdUnit: 'percentunit',
-			moveThreshold(dragIndex, hoverIndex): void {
-				console.log(dragIndex, hoverIndex);
+			moveThreshold(): void {
+				// no-op
 			},
 			selectedGraph: PANEL_TYPES.TIME_SERIES,
 		},

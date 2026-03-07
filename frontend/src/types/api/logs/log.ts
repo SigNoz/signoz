@@ -3,7 +3,8 @@ export interface ILog {
 	timestamp: number | string;
 	id: string;
 	traceId: string;
-	spanId: string;
+	spanID: string;
+	span_id?: string;
 	traceFlags: number;
 	severityText: string;
 	severityNumber: number;
@@ -16,6 +17,7 @@ export interface ILog {
 	attributesFloat: Record<string, never>;
 	severity_text: string;
 	severity_number: number;
+	trace_id?: string;
 }
 
 type OmitAttributesResources = Pick<

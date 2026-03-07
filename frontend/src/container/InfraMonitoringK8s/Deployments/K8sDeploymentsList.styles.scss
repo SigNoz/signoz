@@ -1,0 +1,57 @@
+.infra-monitoring-container {
+	.deployments-list-table {
+		.expanded-table-container {
+			padding-left: 20px;
+		}
+
+		.ant-table-row-expand-icon-cell {
+			min-width: 30px !important;
+			max-width: 30px !important;
+		}
+	}
+}
+
+.ant-table-cell {
+	&:has(.deployment-name-header) {
+		min-width: 250px !important;
+		max-width: 250px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.namespace-name-header) {
+		min-width: 220px !important;
+		max-width: 220px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.med-col) {
+		min-width: 200px !important;
+		max-width: 200px !important;
+	}
+}
+
+.ant-table-cell {
+	&:has(.small-col) {
+		min-width: 120px !important;
+		max-width: 120px !important;
+	}
+}
+
+.progress-container {
+	display: flex !important;
+	justify-content: start !important;
+}
+
+.expanded-deployments-list-table {
+	.ant-table-cell {
+		min-width: 180px !important;
+		max-width: 180px !important;
+	}
+
+	.ant-table-row-expand-icon-cell {
+		min-width: 30px !important;
+		max-width: 30px !important;
+	}
+}

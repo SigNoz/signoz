@@ -5,7 +5,7 @@ export interface Props {
 }
 
 export interface GettableAlert extends AlertDef {
-	id: number;
+	id: string;
 	alert: string;
 	state: string;
 	disabled: boolean;
@@ -13,6 +13,7 @@ export interface GettableAlert extends AlertDef {
 	createBy: string;
 	updateAt: string;
 	updateBy: string;
+	schemaVersion: string;
 }
 
 export type PayloadProps = {

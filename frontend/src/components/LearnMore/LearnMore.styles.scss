@@ -1,0 +1,15 @@
+.learn-more {
+	display: flex;
+	align-items: center;
+	gap: 4px;
+	padding: 0;
+	font-family: Inter;
+	font-size: 14px;
+	font-weight: 500;
+	line-height: 18px; /* 128.571% */
+	letter-spacing: -0.07px;
+	&,
+	&:hover {
+		color: var(--bg-robin-400) !important;
+	}
+}

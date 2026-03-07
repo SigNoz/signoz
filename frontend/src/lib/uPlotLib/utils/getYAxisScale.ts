@@ -33,9 +33,13 @@ function findMinMaxThresholdValues(
 
 	thresholds.forEach((entry) => {
 		const { thresholdValue, thresholdUnit } = entry;
-		if (thresholdValue === undefined) return;
+		if (thresholdValue === undefined) {
+			return;
+		}
 		const compareValue = convertValue(thresholdValue, thresholdUnit, yAxisUnit);
-		if (compareValue === null) return;
+		if (compareValue === null) {
+			return;
+		}
 		minThresholdValue = Math.min(minThresholdValue, compareValue);
 		maxThresholdValue = Math.max(maxThresholdValue, compareValue);
 	});
@@ -67,7 +71,9 @@ function getRange(
 
 function areAllSeriesEmpty(series: QueryDataV3[]): boolean {
 	return series.every((entry) => {
-		if (!entry.series) return true;
+		if (!entry.series) {
+			return true;
+		}
 		return entry.series.every((series) => series.values.length === 0);
 	});
 }

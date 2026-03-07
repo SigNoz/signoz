@@ -20,7 +20,6 @@ import {
 	QBShortcutsName,
 } from 'constants/shortcuts/QBShortcuts';
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export const ALL_SHORTCUTS: Record<string, Record<string, string>> = {
 	'Global Shortcuts': GlobalShortcuts,
 	'Logs Explorer Shortcuts': LogsExplorerShortcuts,
@@ -51,11 +50,13 @@ export const shortcutColumns = [
 		dataIndex: 'shortcutKey',
 		key: 'shortcutKey',
 		width: '30%',
+		className: 'shortcut-key',
 	},
 	{
 		title: 'Description',
 		dataIndex: 'shortcutDescription',
 		key: 'shortcutDescription',
+		className: 'shortcut-description',
 	},
 ];
 

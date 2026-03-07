@@ -1,5 +1,6 @@
 import { Tooltip, Typography } from 'antd';
 import { navigateToTrace } from 'container/MetricsApplication/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { RowData } from 'lib/query/createTableColumnsFromQuery';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { v4 as uuid } from 'uuid';
@@ -14,6 +15,7 @@ function ColumnWithLink({
 	record,
 }: LinkColumnProps): JSX.Element {
 	const text = record.toString();
+	const { safeNavigate } = useSafeNavigate();
 
 	const apmToTraceQuery = useGetAPMToTracesQueries({
 		servicename,
@@ -24,8 +26,6 @@ function ColumnWithLink({
 					key: 'name',
 					dataType: DataTypes.String,
 					type: 'tag',
-					isColumn: true,
-					isJSON: false,
 					id: 'name--string--tag--true',
 				},
 				op: 'in',
@@ -34,7 +34,7 @@ function ColumnWithLink({
 		],
 	});
 
-	const handleOnClick = (operation: string) => (): void => {
+	const handleOnClick = (operation: string, openInNewTab: boolean): void => {
 		navigateToTrace({
 			servicename,
 			operation,
@@ -42,12 +42,18 @@ function ColumnWithLink({
 			maxTime,
 			selectedTraceTags,
 			apmToTraceQuery,
+			safeNavigate,
+			openInNewTab,
 		});
 	};
 
 	return (
 		<Tooltip placement="topLeft" title={text}>
-			<Typography.Link onClick={handleOnClick(text)}>{text}</Typography.Link>
+			<Typography.Link
+				onClick={(e): void => handleOnClick(text, e.metaKey || e.ctrlKey)}
+			>
+				{text}
+			</Typography.Link>
 		</Tooltip>
 	);
 }

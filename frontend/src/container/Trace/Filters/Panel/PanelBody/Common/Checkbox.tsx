@@ -1,9 +1,11 @@
+import { useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
 import { Checkbox, Tooltip, Typography } from 'antd';
 import getFilters from 'api/trace/getFilters';
 import { AxiosError } from 'axios';
 import { useNotifications } from 'hooks/useNotifications';
-import { useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { getFilter, updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';

@@ -1,18 +1,19 @@
-import './AutoRefreshV2.styles.scss';
-
+import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import { useLocation } from 'react-router-dom';
+import { useInterval } from 'react-use';
 import { CaretDownFilled } from '@ant-design/icons';
 import { Button, Checkbox, Popover, Typography } from 'antd';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
-import { useInterval } from 'react-use';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -23,8 +24,12 @@ import {
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { getMinMax, options } from './config';
+import { refreshIntervalOptions } from './constants';
 import { ButtonContainer } from './styles';
+
+import './AutoRefreshV2.styles.scss';
+
+const DEFAULT_REFRESH_INTERVAL = '30s';
 
 function AutoRefresh({
 	disabled = false,
@@ -67,16 +72,24 @@ function AutoRefresh({
 
 	const params = useUrlQuery();
 
+	const defaultOption = useMemo(
+		() =>
+			refreshIntervalOptions.find(
+				(option) => option.key === DEFAULT_REFRESH_INTERVAL,
+			),
+		[],
+	);
+
 	const [selectedOption, setSelectedOption] = useState<string>(
-		localStorageValue || options[0].key,
+		localStorageValue || refreshIntervalOptions[0].key,
 	);
 
 	useEffect(() => {
-		setSelectedOption(localStorageValue || options[0].key);
-	}, [localStorageValue, params]);
+		setSelectedOption(localStorageValue || refreshIntervalOptions[0].key);
+	}, [localStorageValue, params, defaultOption]);
 
 	const getOption = useMemo(
-		() => options.find((option) => option.key === selectedOption),
+		() => refreshIntervalOptions.find((option) => option.key === selectedOption),
 		[selectedOption],
 	);
 
@@ -88,7 +101,7 @@ function AutoRefresh({
 		}
 
 		if (selectedOption !== 'off' && selectedValue) {
-			const { maxTime, minTime } = getMinMax(
+			const { maxTime, minTime } = getMinMaxForSelectedTime(
 				globalTime.selectedTime,
 				globalTime.minTime,
 				globalTime.maxTime,
@@ -127,14 +140,21 @@ function AutoRefresh({
 					DASHBOARD_TIME_IN_DURATION,
 					JSON.stringify(_omit(localStorageData, pathname)),
 				);
+			} else {
+				// When enabling auto-refresh, set to DEFAULT_REFRESH_INTERVAL if no previous preference
+				const refreshInterval = localStorageValue || defaultOption?.key;
+				set(
+					DASHBOARD_TIME_IN_DURATION,
+					JSON.stringify({ ...localStorageData, [pathname]: refreshInterval }),
+				);
+				setSelectedOption(refreshInterval);
 			}
 			setIsAutoRefreshfreshEnabled(checked);
 		},
-		[localStorageData, pathname],
+		[localStorageData, pathname, localStorageValue, defaultOption],
 	);
 
 	if (globalTime.selectedTime === 'custom') {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
@@ -160,7 +180,7 @@ function AutoRefresh({
 					>
 						Refresh Interval
 					</Typography.Paragraph>
-					{options
+					{refreshIntervalOptions
 						.filter((e) => e.label !== 'off')
 						.map((option) => (
 							<Button

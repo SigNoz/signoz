@@ -1,0 +1,17 @@
+.top-nav-container {
+	padding: 8px;
+	border-bottom: 1px solid var(--bg-slate-500);
+
+	display: flex;
+	align-items: center;
+	justify-content: end;
+	gap: 16px;
+
+	margin-bottom: 8px;
+}
+
+.lightMode {
+	.top-nav-container {
+		border-bottom: 1px solid var(--bg-vanilla-300);
+	}
+}

@@ -1,4 +1,5 @@
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TelemetryFieldKey } from 'api/v5/v5';
+import { DataSource } from 'types/common/queryBuilder';
 
 import { FontSize, OptionsQuery } from './types';
 
@@ -6,55 +7,63 @@ export const URL_OPTIONS = 'options';
 
 export const defaultOptionsQuery: OptionsQuery = {
 	selectColumns: [],
-	maxLines: 2,
+	maxLines: 1,
 	format: 'raw',
 	fontSize: FontSize.SMALL,
 };
 
-export const defaultTraceSelectedColumns = [
+export const EXCLUDED_COLUMNS: Record<DataSource, string[]> = {
+	[DataSource.TRACES]: ['body', 'isRoot', 'isEntryPoint'],
+	[DataSource.METRICS]: ['body'],
+	[DataSource.LOGS]: [],
+};
+
+export const defaultLogsSelectedColumns: TelemetryFieldKey[] = [
 	{
-		key: 'serviceName',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'serviceName--string--tag--true',
+		name: 'timestamp',
+		signal: 'logs',
+		fieldContext: 'log',
+		fieldDataType: '',
 		isIndexed: false,
 	},
 	{
-		key: 'name',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'name--string--tag--true',
+		name: 'body',
+		signal: 'logs',
+		fieldContext: 'log',
+		fieldDataType: '',
 		isIndexed: false,
 	},
+];
+
+export const defaultTraceSelectedColumns: TelemetryFieldKey[] = [
 	{
-		key: 'durationNano',
-		dataType: DataTypes.Float64,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'durationNano--float64--tag--true',
-		isIndexed: false,
+		name: 'service.name',
+		signal: 'traces',
+		fieldContext: 'resource',
+		fieldDataType: 'string',
 	},
 	{
-		key: 'httpMethod',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'httpMethod--string--tag--true',
-		isIndexed: false,
+		name: 'name',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: 'string',
 	},
 	{
-		key: 'responseStatusCode',
-		dataType: DataTypes.String,
-		type: 'tag',
-		isColumn: true,
-		isJSON: false,
-		id: 'responseStatusCode--string--tag--true',
-		isIndexed: false,
+		name: 'duration_nano',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
+	},
+	{
+		name: 'http_method',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
+	},
+	{
+		name: 'response_status_code',
+		signal: 'traces',
+		fieldContext: 'span',
+		fieldDataType: '',
 	},
 ];

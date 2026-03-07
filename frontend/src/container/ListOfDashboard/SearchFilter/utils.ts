@@ -1,5 +1,3 @@
-/* eslint-disable no-param-reassign */
-/* eslint-disable no-restricted-syntax */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { decode, encode } from 'js-base64';
 import { flattenDeep, map, uniqWith } from 'lodash-es';
@@ -55,16 +53,18 @@ export const executeSearchQueries = (
 			try {
 				const searchSpace =
 					flattenDeep([searchPayload[categoryLowercase]]).filter(Boolean) || null;
-				if (!searchSpace || !searchSpace.length)
+				if (!searchSpace || !searchSpace.length) {
 					return resolveOperator(false, operator);
+				}
 
 				for (const searchSpaceItem of searchSpace) {
-					if (searchSpaceItem)
+					if (searchSpaceItem) {
 						for (const queryValue of value) {
 							if (searchSpaceItem.match(escapeRegExp(queryValue))) {
 								return resolveOperator(true, operator);
 							}
 						}
+					}
 				}
 			} catch (error) {
 				console.error(error);
@@ -136,7 +136,6 @@ export function OptionsValueResolution(
 			options: uniqWith(
 				map(
 					flattenDeep(
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						map(searchData, (searchItem) => searchItem.data.tags).filter(Boolean),
 					),

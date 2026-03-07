@@ -1,6 +1,14 @@
-import { TableProps, Tag, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import { HTMLAttributes } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useDispatch, useSelector } from 'react-redux';
+import {
+	TableColumnsType as ColumnsType,
+	TableProps,
+	Tag,
+	Typography,
+} from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
 import {
 	getSpanOrder,
@@ -11,8 +19,7 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
-import { HTMLAttributes } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';
@@ -78,7 +85,11 @@ function TraceTable(): JSX.Element {
 			sorter: true,
 			render: (value: TableType['timestamp']): JSX.Element => {
 				const day = dayjs(value);
-				return <Typography>{day.format('YYYY/MM/DD HH:mm:ss')}</Typography>;
+				return (
+					<Typography>
+						{day.format(DATE_TIME_FORMATS.SLASH_DATETIME_SECONDS)}
+					</Typography>
+				);
 			},
 		},
 		{

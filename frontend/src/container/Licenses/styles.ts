@@ -3,8 +3,7 @@ import styled from 'styled-components';
 
 export const ApplyFormContainer = styled.div`
 	&&& {
-		padding-top: 1em;
-		padding-bottom: 1em;
+		padding: 16px;
 	}
 `;
 
