@@ -45,8 +45,8 @@ export interface K8sJobsListResponse {
 		records: K8sJobsData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

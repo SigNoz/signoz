@@ -319,6 +319,17 @@ func (d *JobsRepo) getTopJobGroups(ctx context.Context, orgID valuer.UUID, req m
 	return topJobGroups, allJobGroups, nil
 }
 
+func (d *JobsRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForWorkloads {
+		names = append(names, metricName)
+	}
+	for _, metricName := range metricNamesForJobs {
+		names = append(names, metricName)
+	}
+	return d.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.JobListRequest) (model.JobListResponse, error) {
 	resp := model.JobListResponse{}
 
@@ -335,6 +346,22 @@ func (d *JobsRepo) GetJobList(ctx context.Context, orgID valuer.UUID, req model.
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := d.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.JobListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.JobListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
