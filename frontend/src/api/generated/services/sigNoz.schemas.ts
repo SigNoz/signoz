@@ -2340,63 +2340,6 @@ export interface TypesChangePasswordRequestDTO {
 	userId?: string;
 }
 
-export interface TypesGettableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	createdByUser?: TypesUserDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresAt?: number;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	lastUsed?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	updatedByUser?: TypesUserDTO;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
 export interface TypesGettableGlobalConfigDTO {
 	/**
 	 * @type string
@@ -2490,22 +2433,6 @@ export interface TypesOrganizationDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesPostableAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresInDays?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableAcceptInviteDTO {
 	/**
 	 * @type string
@@ -2588,51 +2515,6 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesStorableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
 }
 
 export interface TypesUserDTO {
@@ -3094,31 +2976,6 @@ export type GetOrgPreference200 = {
 
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
-};
-export type ListAPIKeys200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesGettableAPIKeyDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAPIKey201 = {
-	data: TypesGettableAPIKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type RevokeAPIKeyPathParameters = {
-	id: string;
-};
-export type UpdateAPIKeyPathParameters = {
-	id: string;
 };
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
