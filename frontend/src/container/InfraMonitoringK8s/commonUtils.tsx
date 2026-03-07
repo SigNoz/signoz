@@ -1,6 +1,7 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { useMemo } from 'react';
+import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, Table, Tooltip, Typography } from 'antd';
 import type { ColumnsType } from 'antd/lib/table';
@@ -254,6 +255,19 @@ export const filterDuplicateFilters = (
 	return uniqueFilters;
 };
 
+export const safeParseJSON = <T,>(value: string): T | null => {
+	if (!value) {
+		return null;
+	}
+	try {
+		return JSON.parse(value) as T;
+	} catch (e) {
+		console.error('Error parsing JSON from URL parameter:', e);
+		// TODO: Should we capture this error in Sentry?
+		return null;
+	}
+};
+
 export const getOrderByFromParams = (
 	searchParams: URLSearchParams,
 	returnNullAsDefault = false,
@@ -265,9 +279,12 @@ export const getOrderByFromParams = (
 		INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY,
 	);
 	if (orderByFromParams) {
-		const decoded = decodeURIComponent(orderByFromParams);
-		const parsed = JSON.parse(decoded);
-		return parsed as { columnName: string; order: 'asc' | 'desc' };
+		const parsed = safeParseJSON<{ columnName: string; order: 'asc' | 'desc' }>(
+			orderByFromParams,
+		);
+		if (parsed) {
+			return parsed;
+		}
 	}
 	if (returnNullAsDefault) {
 		return null;
@@ -281,13 +298,7 @@ export const getFiltersFromParams = (
 ): IBuilderQuery['filters'] | null => {
 	const filtersFromParams = searchParams.get(queryKey);
 	if (filtersFromParams) {
-		try {
-			const decoded = decodeURIComponent(filtersFromParams);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['filters'];
-		} catch (error) {
-			return null;
-		}
+		return safeParseJSON<IBuilderQuery['filters']>(filtersFromParams);
 	}
 	return null;
 };
