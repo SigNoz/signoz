@@ -301,6 +301,21 @@ export function createAggregation(
 		);
 	}
 
+	// For TRACES/LOGS queries, if aggregations array is not present but aggregateAttribute and aggregateOperator/spaceAggregation exist,
+	// construct the aggregation expression from these fields
+	if (queryData.aggregateAttribute?.key) {
+		const aggregateOperator =
+			queryData.aggregateOperator || queryData.spaceAggregation;
+		if (aggregateOperator) {
+			// Convert aggregateOperator to lowercase for the expression (e.g., P50 -> p50)
+			const operator = aggregateOperator.toLowerCase();
+			const fieldKey = queryData.aggregateAttribute.key;
+			// Construct expression like "p50(duration_nano)"
+			const expression = `${operator}(${fieldKey})`;
+			return [{ expression }];
+		}
+	}
+
 	return [{ expression: 'count()' }];
 }
 
