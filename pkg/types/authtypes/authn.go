@@ -79,11 +79,13 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email) *Identity {
+func NewIdentity(userID valuer.UUID, serviceAccountID valuer.UUID, principal Principal, orgID valuer.UUID, email valuer.Email) *Identity {
 	return &Identity{
-		UserID: userID,
-		OrgID:  orgID,
-		Email:  email,
+		UserID:           userID,
+		ServiceAccountID: serviceAccountID,
+		Principal:        principal,
+		OrgID:            orgID,
+		Email:            email,
 	}
 }
 

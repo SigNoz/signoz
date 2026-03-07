@@ -30,5 +30,5 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
-	return authtypes.NewIdentity(user.ID, orgID, user.Email), nil
+	return authtypes.NewIdentity(user.ID, valuer.UUID{}, authtypes.PrincipalUser, orgID, user.Email), nil
 }

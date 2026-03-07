@@ -21,11 +21,11 @@ func (typeableServiceAccount *typeableServiceAccount) Tuples(subject string, rel
 }
 
 func (typeableServiceAccount *typeableServiceAccount) Type() Type {
-	return TypeUser
+	return TypeServiceAccount
 }
 
 func (typeableServiceAccount *typeableServiceAccount) Name() Name {
-	return MustNewName("user")
+	return MustNewName("serviceaccount")
 }
 
 // example: serviceaccount:organization/0199c47d-f61b-7833-bc5f-c0730f12f046/serviceaccount
