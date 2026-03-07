@@ -252,4 +252,23 @@
 			}
 		}
 	}
+
+	.alert-details-v2 {
+		.tabs-and-filters {
+			.ant-tabs {
+				.ant-tabs-tab {
+					.ant-tabs-tab-btn {
+						border: 1px solid var(--bg-vanilla-300);
+						background: var(--bg-vanilla-100);
+						color: var(--text-ink-400) !important;
+
+						&[aria-selected='true'] {
+							background: var(--bg-vanilla-200);
+							color: var(--text-robin-500) !important;
+						}
+					}
+				}
+			}
+		}
+	}
 }
