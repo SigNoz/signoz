@@ -93,7 +93,14 @@ func (p *NamespacesRepo) getMetadataAttributes(ctx context.Context, req model.Na
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherNamespaceMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForPods {
+		if metric != metricToUseForNamespaces {
+			otherNamespaceMetricsForMetadata = append(otherNamespaceMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherNamespaceMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}
