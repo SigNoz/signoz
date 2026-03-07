@@ -113,7 +113,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, err
 	}
 
-	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email)), nil
+	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.UUID{}, authtypes.PrincipalUser, valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email)), nil
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
