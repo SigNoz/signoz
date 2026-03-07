@@ -54,7 +54,7 @@ type PostableInvite struct {
 }
 
 type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
+	Invites []PostableInvite `json:"invites" required:"true"`
 }
 
 type GettableCreateInviteResponse struct {

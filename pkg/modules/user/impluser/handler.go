@@ -149,16 +149,11 @@ func (h *handler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
-
-	if err := h.module.DeleteInvite(ctx, claims.OrgID, uuid); err != nil {
+	if err := h.module.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
 	}
+
 	render.Success(w, http.StatusNoContent, nil)
 }
 

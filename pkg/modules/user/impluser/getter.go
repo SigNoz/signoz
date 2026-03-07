@@ -86,6 +86,15 @@ func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int6
 	return count, nil
 }
 
+func (module *getter) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
+	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, statuses)
+	if err != nil {
+		return nil, err
+	}
+
+	return counts, nil
+}
+
 func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valuer.UUID) (*types.FactorPassword, error) {
 	factorPassword, err := module.store.GetPasswordByUserID(ctx, userID)
 	if err != nil {
