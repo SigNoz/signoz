@@ -60,6 +60,8 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 			handler.set.Logger.ErrorContext(ctx, "panic in QueryRange",
 				"error", r,
 				"user", claims.UserID,
+				"service_account", claims.ServiceAccountID,
+				"principal", claims.Principal,
 				"payload", string(queryJSON),
 				"stacktrace", stackTrace,
 			)
@@ -160,6 +162,8 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 			handler.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
 				"error", r,
 				"user", claims.UserID,
+				"service_account", claims.ServiceAccountID,
+				"principal", claims.Principal,
 				"payload", string(queryJSON),
 				"stacktrace", stackTrace,
 			)
@@ -309,9 +313,9 @@ func (handler *handler) logEvent(ctx context.Context, referrer string, event *qb
 	}
 
 	if !event.HasData {
-		handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		handler.analytics.TrackUser(ctx, claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Empty", properties)
 		return
 	}
 
-	handler.analytics.TrackUser(ctx, claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+	handler.analytics.TrackUser(ctx, claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Results", properties)
 }

@@ -148,17 +148,33 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 
 func (middleware *AuthZ) SelfAccess(next http.HandlerFunc) http.HandlerFunc {
 	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
-		claims, err := authtypes.ClaimsFromContext(req.Context())
+		ctx := req.Context()
+		claims, err := authtypes.ClaimsFromContext(ctx)
 		if err != nil {
 			render.Error(rw, err)
 			return
 		}
 
-		id := mux.Vars(req)["id"]
-		if err := claims.IsSelfAccess(id); err != nil {
-			middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
-			render.Error(rw, err)
-			return
+		selectors := []authtypes.Selector{
+			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAdminRoleName),
+		}
+
+		err = middleware.authzService.CheckWithTupleCreation(
+			ctx,
+			claims,
+			valuer.MustNewUUID(claims.OrgID),
+			authtypes.RelationAssignee,
+			authtypes.TypeableRole,
+			selectors,
+			selectors,
+		)
+		if err != nil {
+			id := mux.Vars(req)["id"]
+			if err := claims.IsSelfAccess(id); err != nil {
+				middleware.logger.WarnContext(req.Context(), authzDeniedMessage, "claims", claims)
+				render.Error(rw, err)
+				return
+			}
 		}
 
 		next(rw, req)
