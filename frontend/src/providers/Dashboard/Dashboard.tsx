@@ -46,6 +46,10 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../constants/queryCacheTime';
 import { useDashboardVariablesSelector } from '../../hooks/dashboard/useDashboardVariables';
 import {
 	setDashboardVariablesStore,
@@ -272,7 +276,12 @@ export function DashboardProvider({
 		return data;
 	};
 	const dashboardResponse = useQuery(
-		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params, dashboardId],
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			isDashboardPage?.params,
+			dashboardId,
+			globalTime.isAutoRefreshDisabled,
+		],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: async () => {
@@ -289,6 +298,9 @@ export function DashboardProvider({
 				}
 			},
 			refetchOnWindowFocus: false,
+			cacheTime: globalTime.isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onError: (error) => {
 				showErrorModal(error as APIError);
 			},
