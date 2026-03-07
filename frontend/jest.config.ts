@@ -23,29 +23,7 @@ const config: Config.InitialOptions = {
 			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
-		'^@signozhq/sonner$':
-			'<rootDir>/node_modules/@signozhq/sonner/dist/sonner.js',
-		'^@signozhq/button$':
-			'<rootDir>/node_modules/@signozhq/button/dist/button.js',
-		'^@signozhq/calendar$':
-			'<rootDir>/node_modules/@signozhq/calendar/dist/calendar.js',
-		'^@signozhq/badge': '<rootDir>/node_modules/@signozhq/badge/dist/badge.js',
-		'^@signozhq/checkbox':
-			'<rootDir>/node_modules/@signozhq/checkbox/dist/checkbox.js',
-		'^@signozhq/switch': '<rootDir>/node_modules/@signozhq/switch/dist/switch.js',
-		'^@signozhq/callout':
-			'<rootDir>/node_modules/@signozhq/callout/dist/callout.js',
-		'^@signozhq/combobox':
-			'<rootDir>/node_modules/@signozhq/combobox/dist/combobox.js',
-		'^@signozhq/input': '<rootDir>/node_modules/@signozhq/input/dist/input.js',
-		'^@signozhq/command':
-			'<rootDir>/node_modules/@signozhq/command/dist/command.js',
-		'^@signozhq/radio-group':
-			'<rootDir>/node_modules/@signozhq/radio-group/dist/radio-group.js',
-		'^@signozhq/toggle-group$':
-			'<rootDir>/node_modules/@signozhq/toggle-group/dist/toggle-group.js',
-		'^@signozhq/dialog$':
-			'<rootDir>/node_modules/@signozhq/dialog/dist/dialog.js',
+		'^@signozhq/([^/]+)$': '<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
 	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],

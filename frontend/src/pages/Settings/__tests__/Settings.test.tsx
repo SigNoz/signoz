@@ -52,8 +52,9 @@ describe('SettingsPage nav sections', () => {
 			'notification-channels',
 			'billing',
 			'roles',
+			'members',
 			'api-keys',
-			'members-sso',
+			'sso',
 			'integrations',
 			'ingestion',
 		])('renders "%s" element', (id) => {
@@ -98,7 +99,7 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['roles', 'api-keys', 'integrations', 'members-sso', 'ingestion'])(
+		it.each(['roles', 'members', 'api-keys', 'integrations', 'sso', 'ingestion'])(
 			'renders "%s" element',
 			(id) => {
 				expect(screen.getByTestId(id)).toBeInTheDocument();

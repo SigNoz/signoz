@@ -71,3 +71,5 @@ export function buildAbsolutePath({
 
 	return urlQueryString ? `${absolutePath}?${urlQueryString}` : absolutePath;
 }
+
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;

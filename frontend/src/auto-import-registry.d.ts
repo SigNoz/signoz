@@ -19,6 +19,7 @@ import '@signozhq/combobox';
 import '@signozhq/command';
 import '@signozhq/design-tokens';
 import '@signozhq/dialog';
+import '@signozhq/drawer';
 import '@signozhq/icons';
 import '@signozhq/input';
 import '@signozhq/popover';
