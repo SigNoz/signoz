@@ -132,6 +132,14 @@ func GroupByKeys(keys []qbtypes.GroupByKey) []string {
 	return k
 }
 
+func OrderByKeys(keys []qbtypes.OrderBy) []string {
+	k := []string{}
+	for _, key := range keys {
+		k = append(k, "`"+key.Key.Name+"`")
+	}
+	return k
+}
+
 func FormatValueForContains(value any) string {
 	if value == nil {
 		return ""
