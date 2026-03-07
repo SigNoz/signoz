@@ -63,7 +63,7 @@ func (a *AuthN) Wrap(next http.Handler) http.Handler {
 			for _, header := range a.serviceAccountHeaders {
 				saHeaderValues = append(saHeaderValues, r.Header.Get(header))
 			}
-			ctx, authType, activeTokenizer, err = a.authenticateServiceAccount(r.Context(), saHeaderValues...)
+			ctx, authType, activeTokenizer, err = a.authenticateServiceAccount(ctx, saHeaderValues...)
 		}
 
 		if err != nil {
