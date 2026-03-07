@@ -4,7 +4,6 @@ import (
 	"context"
 	"encoding/json"
 	"net/http"
-	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -13,7 +12,6 @@ import (
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -343,175 +341,6 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 
 	err := h.module.ForgotPassword(ctx, req.OrgID, req.Email, req.FrontendBaseURL)
 	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusNoContent, nil)
-}
-
-func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	req := new(types.PostableAPIKey)
-	if err := json.NewDecoder(r.Body).Decode(req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
-		return
-	}
-
-	apiKey, err := types.NewStorableAPIKey(
-		req.Name,
-		valuer.MustNewUUID(claims.UserID),
-		req.Role,
-		req.ExpiresInDays,
-	)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	err = h.module.CreateAPIKey(ctx, apiKey)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	createdApiKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), apiKey.ID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// just corrected the status code, response is same,
-	render.Success(w, http.StatusCreated, createdApiKey)
-}
-
-func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	apiKeys, err := h.module.ListAPIKeys(ctx, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// for backward compatibility
-	if len(apiKeys) == 0 {
-		render.Success(w, http.StatusOK, []types.GettableAPIKey{})
-		return
-	}
-
-	result := make([]*types.GettableAPIKey, len(apiKeys))
-	for i, apiKey := range apiKeys {
-		result[i] = types.NewGettableAPIKeyFromStorableAPIKey(apiKey)
-	}
-
-	render.Success(w, http.StatusOK, result)
-
-}
-
-func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	req := types.StorableAPIKey{}
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "failed to decode api key"))
-		return
-	}
-
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
-		return
-	}
-
-	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// get the user
-	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
-		return
-	}
-
-	err = h.module.UpdateAPIKey(ctx, id, &req, valuer.MustNewUUID(claims.UserID))
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	render.Success(w, http.StatusNoContent, nil)
-}
-
-func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
-	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
-	defer cancel()
-
-	claims, err := authtypes.ClaimsFromContext(ctx)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	idStr := mux.Vars(r)["id"]
-	id, err := valuer.NewUUID(idStr)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "id is not a valid uuid-v7"))
-		return
-	}
-
-	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	// get the user
-	createdByUser, err := h.getter.Get(ctx, existingAPIKey.UserID)
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
-		return
-	}
-
-	if err := h.module.RevokeAPIKey(ctx, id, valuer.MustNewUUID(claims.UserID)); err != nil {
 		render.Error(w, err)
 		return
 	}

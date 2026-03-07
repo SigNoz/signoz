@@ -115,20 +115,19 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		_ = tx.Rollback()
 	}()
 
-	// Step 1: Read all old API keys (skip revoked ones).
+	// get all the api keys
 	oldKeys := make([]*oldFactorAPIKey68, 0)
 	err = tx.NewSelect().Model(&oldKeys).Where("revoked = ?", false).Scan(ctx)
 	if err != nil && err != sql.ErrNoRows {
 		return err
 	}
 
-	// Step 2: Collect unique user IDs from old keys.
+	// get all the unique users
 	userIDs := make(map[string]struct{})
 	for _, key := range oldKeys {
 		userIDs[key.UserID] = struct{}{}
 	}
 
-	// Step 3: Load users that own API keys.
 	userIDList := make([]string, 0, len(userIDs))
 	for uid := range userIDs {
 		userIDList = append(userIDList, uid)
@@ -146,8 +145,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// Step 4: Load managed roles to map old role names to role IDs.
-	// Build a lookup of (org_id, role_name) -> role_id.
+	// get the role ids
 	type orgRoleKey struct {
 		OrgID    string
 		RoleName string
@@ -173,47 +171,29 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// Step 5: Create a service account per user that has API keys, and collect migrated data.
-	// One service account per user, all their API keys point to it.
-	userIDToServiceAccountID := make(map[string]string)
 	serviceAccounts := make([]*newServiceAccount68, 0)
 	serviceAccountRoles := make([]*newServiceAccountRole68, 0)
 	newKeys := make([]*newFactorAPIKey68, 0)
 
-	// Track which (serviceAccountID, roleID) pairs we've already added.
-	type saRoleKey struct {
-		ServiceAccountID string
-		RoleID           string
-	}
-	addedRoles := make(map[saRoleKey]struct{})
-
 	now := time.Now()
-
 	for _, oldKey := range oldKeys {
 		user, ok := userMap[oldKey.UserID]
 		if !ok {
-			// User not found — skip this key.
+			// this should never happen as a key cannot exist without a user
 			continue
 		}
 
-		// Create service account for this user if not already created.
-		saID, exists := userIDToServiceAccountID[oldKey.UserID]
-		if !exists {
-			saID = valuer.GenerateUUID().String()
-			userIDToServiceAccountID[oldKey.UserID] = saID
+		saID := valuer.GenerateUUID()
+		serviceAccounts = append(serviceAccounts, &newServiceAccount68{
+			Identifiable: types.Identifiable{ID: saID},
+			CreatedAt:    now,
+			UpdatedAt:    now,
+			Name:         oldKey.Name,
+			Email:        user.Email,
+			Status:       "active",
+			OrgID:        user.OrgID,
+		})
 
-			serviceAccounts = append(serviceAccounts, &newServiceAccount68{
-				Identifiable: types.Identifiable{ID: valuer.MustNewUUID(saID)},
-				CreatedAt:    now,
-				UpdatedAt:    now,
-				Name:         oldKey.Name,
-				Email:        user.Email,
-				Status:       "active",
-				OrgID:        user.OrgID,
-			})
-		}
-
-		// Map the old role (ADMIN, EDITOR, VIEWER) to the managed role name.
 		managedRoleName, ok := roletypes.ExistingRoleToSigNozManagedRoleMap[types.Role(oldKey.Role)]
 		if !ok {
 			managedRoleName = roletypes.SigNozViewerRoleName
@@ -221,20 +201,15 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 
 		roleID, ok := roleMap[orgRoleKey{OrgID: user.OrgID, RoleName: managedRoleName}]
 		if ok {
-			key := saRoleKey{ServiceAccountID: saID, RoleID: roleID}
-			if _, added := addedRoles[key]; !added {
-				addedRoles[key] = struct{}{}
-				serviceAccountRoles = append(serviceAccountRoles, &newServiceAccountRole68{
-					Identifiable:     types.Identifiable{ID: valuer.GenerateUUID()},
-					CreatedAt:        now,
-					UpdatedAt:        now,
-					ServiceAccountID: saID,
-					RoleID:           roleID,
-				})
-			}
+			serviceAccountRoles = append(serviceAccountRoles, &newServiceAccountRole68{
+				Identifiable:     types.Identifiable{ID: valuer.GenerateUUID()},
+				CreatedAt:        now,
+				UpdatedAt:        now,
+				ServiceAccountID: saID.String(),
+				RoleID:           roleID,
+			})
 		}
 
-		// Convert expires_at from time.Time to unix seconds (0 = never expires).
 		var expiresAtUnix uint64
 		if !oldKey.ExpiresAt.IsZero() && oldKey.ExpiresAt.Unix() > 0 {
 			expiresAtUnix = uint64(oldKey.ExpiresAt.Unix())
@@ -254,11 +229,10 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 			Key:              oldKey.Token,
 			ExpiresAt:        expiresAtUnix,
 			LastObservedAt:   lastObservedAt,
-			ServiceAccountID: saID,
+			ServiceAccountID: saID.String(),
 		})
 	}
 
-	// Step 6: Insert migrated service accounts and roles.
 	if len(serviceAccounts) > 0 {
 		if _, err := tx.NewInsert().Model(&serviceAccounts).Exec(ctx); err != nil {
 			return err
@@ -271,9 +245,7 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// Step 7: Drop old table, create new table, and insert migrated keys.
 	sqls := [][]byte{}
-
 	deprecatedFactorAPIKey, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("factor_api_key"))
 	if err != nil {
 		return err
@@ -319,7 +291,6 @@ func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// Step 8: Insert migrated keys into the new table.
 	if len(newKeys) > 0 {
 		if _, err := tx.NewInsert().Model(&newKeys).Exec(ctx); err != nil {
 			return err

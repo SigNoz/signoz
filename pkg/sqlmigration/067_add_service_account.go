@@ -69,6 +69,9 @@ func (migration *addServiceAccount) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "service_account", ColumnNames: []sqlschema.ColumnName{"name", "org_id"}})
+	sqls = append(sqls, indexSQLs...)
+
 	tableSQLs = migration.sqlschema.Operator().CreateTable(&sqlschema.Table{
 		Name: "service_account_role",
 		Columns: []*sqlschema.Column{
@@ -96,7 +99,7 @@ func (migration *addServiceAccount) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "service_account_role", ColumnNames: []sqlschema.ColumnName{"service_account_id", "role_id"}})
+	indexSQLs = migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "service_account_role", ColumnNames: []sqlschema.ColumnName{"service_account_id", "role_id"}})
 	sqls = append(sqls, indexSQLs...)
 
 	for _, sql := range sqls {

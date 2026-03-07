@@ -661,26 +661,6 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	return user, nil
 }
 
-func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	return m.store.CreateAPIKey(ctx, apiKey)
-}
-
-func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
-	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
-}
-
-func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
-	return m.store.ListAPIKeys(ctx, orgID)
-}
-
-func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
-	return m.store.GetAPIKey(ctx, orgID, id)
-}
-
-func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
-	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
-}
-
 func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
 	user, err := types.NewRootUser(name, email, organization.ID)
 	if err != nil {
@@ -732,11 +712,6 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 		stats["user.count.active"] = counts[types.UserStatusActive]
 		stats["user.count.deleted"] = counts[types.UserStatusDeleted]
 		stats["user.count.pending_invite"] = counts[types.UserStatusPendingInvite]
-	}
-
-	count, err := module.store.CountAPIKeyByOrgID(ctx, orgID)
-	if err == nil {
-		stats["factor.api_key.count"] = count
 	}
 
 	return stats, nil
