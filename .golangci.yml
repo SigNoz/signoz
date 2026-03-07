@@ -12,6 +12,8 @@ linters:
     - misspell
     - nilnil
     - sloglint
+    - staticcheck
+    - godot
     - wastedassign
     - unparam
     - unused
