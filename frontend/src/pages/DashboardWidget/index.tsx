@@ -9,7 +9,7 @@ import NewWidget from 'container/NewWidget';
 import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
@@ -66,4 +66,13 @@ export interface DashboardWidgetPageParams {
 	dashboardId: string;
 }
 
-export default DashboardWidget;
+function DashboardWidgetWithProvider(): JSX.Element | null {
+	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	return (
+		<DashboardProvider dashboardId={dashboardId}>
+			<DashboardWidget />
+		</DashboardProvider>
+	);
+}
+
+export default DashboardWidgetWithProvider;

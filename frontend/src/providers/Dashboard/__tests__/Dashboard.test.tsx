@@ -6,7 +6,6 @@ import { render, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ROUTES from 'constants/routes';
 import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
@@ -18,13 +17,6 @@ import { normalizeUrlValueForVariable } from '../normalizeUrlValue';
 jest.mock('api/v1/dashboards/id/get');
 jest.mock('api/v1/dashboards/id/lock');
 const mockGetDashboard = jest.mocked(getDashboard);
-
-// Mock useRouteMatch to simulate different route scenarios
-const mockUseRouteMatch = jest.fn();
-jest.mock('react-router-dom', () => ({
-	...jest.requireActual('react-router-dom'),
-	useRouteMatch: (): any => mockUseRouteMatch(),
-}));
 
 // Mock other dependencies
 jest.mock('hooks/useSafeNavigate', () => ({
@@ -93,28 +85,14 @@ function createTestQueryClient(): QueryClient {
 }
 
 // Helper to render with dashboard provider
-function renderWithDashboardProvider(
-	initialRoute = '/dashboard/test-dashboard-id',
-	routeMatchParams?: { dashboardId: string } | null,
-): any {
+function renderWithDashboardProvider(dashboardId = 'test-dashboard-id'): any {
 	const queryClient = createTestQueryClient();
-
-	// Mock the route match
-	mockUseRouteMatch.mockReturnValue(
-		routeMatchParams
-			? {
-					path: ROUTES.DASHBOARD,
-					url: `/dashboard/${routeMatchParams.dashboardId}`,
-					isExact: true,
-					params: routeMatchParams,
-			  }
-			: null,
-	);
+	const initialRoute = dashboardId ? `/dashboard/${dashboardId}` : '/dashboard';
 
 	return render(
 		<QueryClientProvider client={queryClient}>
 			<MemoryRouter initialEntries={[initialRoute]}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId={dashboardId}>
 					<TestComponent />
 				</DashboardProvider>
 			</MemoryRouter>
@@ -188,7 +166,7 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 	describe('Query Key Behavior', () => {
 		it('should include route params in query key when on dashboard page', async () => {
 			const dashboardId = 'test-dashboard-id';
-			renderWithDashboardProvider(`/dashboard/${dashboardId}`, { dashboardId });
+			renderWithDashboardProvider(dashboardId);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: dashboardId });
@@ -203,30 +181,17 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 			const newDashboardId = 'new-dashboard-id';
 
 			// First render with initial dashboard ID
-			const { rerender } = renderWithDashboardProvider(
-				`/dashboard/${initialDashboardId}`,
-				{
-					dashboardId: initialDashboardId,
-				},
-			);
+			const { rerender } = renderWithDashboardProvider(initialDashboardId);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: initialDashboardId });
 			});
 
-			// Change route params to simulate navigation
-			mockUseRouteMatch.mockReturnValue({
-				path: ROUTES.DASHBOARD,
-				url: `/dashboard/${newDashboardId}`,
-				isExact: true,
-				params: { dashboardId: newDashboardId },
-			});
-
-			// Rerender with new route
+			// Rerender with new dashboard ID prop
 			rerender(
 				<QueryClientProvider client={createTestQueryClient()}>
 					<MemoryRouter initialEntries={[`/dashboard/${newDashboardId}`]}>
-						<DashboardProvider>
+						<DashboardProvider dashboardId={newDashboardId}>
 							<TestComponent />
 						</DashboardProvider>
 					</MemoryRouter>
@@ -241,50 +206,24 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 			expect(mockGetDashboard).toHaveBeenCalledTimes(2);
 		});
 
-		it('should not fetch when not on dashboard page', () => {
-			// Mock no route match (not on dashboard page)
-			mockUseRouteMatch.mockReturnValue(null);
-
-			renderWithDashboardProvider('/some-other-page', null);
+		it('should not fetch when no dashboardId is provided', () => {
+			renderWithDashboardProvider('');
 
 			// Should not call the API
-			expect(mockGetDashboard).not.toHaveBeenCalled();
-		});
-
-		it('should handle undefined route params gracefully', async () => {
-			// Mock route match with undefined params
-			mockUseRouteMatch.mockReturnValue({
-				path: ROUTES.DASHBOARD,
-				url: '/dashboard/undefined',
-				isExact: true,
-				params: undefined,
-			});
-
-			renderWithDashboardProvider('/dashboard/undefined');
-
-			// Should not call API when params are undefined
 			expect(mockGetDashboard).not.toHaveBeenCalled();
 		});
 	});
 
 	describe('Cache Behavior', () => {
-		it('should create separate cache entries for different route params', async () => {
+		it('should create separate cache entries for different dashboardIds', async () => {
 			const queryClient = createTestQueryClient();
 			const dashboardId1 = 'dashboard-1';
 			const dashboardId2 = 'dashboard-2';
 
-			// First dashboard
-			mockUseRouteMatch.mockReturnValue({
-				path: ROUTES.DASHBOARD,
-				url: `/dashboard/${dashboardId1}`,
-				isExact: true,
-				params: { dashboardId: dashboardId1 },
-			});
-
 			const { rerender } = render(
 				<QueryClientProvider client={queryClient}>
 					<MemoryRouter initialEntries={[`/dashboard/${dashboardId1}`]}>
-						<DashboardProvider>
+						<DashboardProvider dashboardId={dashboardId1}>
 							<TestComponent />
 						</DashboardProvider>
 					</MemoryRouter>
@@ -295,18 +234,10 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: dashboardId1 });
 			});
 
-			// Second dashboard
-			mockUseRouteMatch.mockReturnValue({
-				path: ROUTES.DASHBOARD,
-				url: `/dashboard/${dashboardId2}`,
-				isExact: true,
-				params: { dashboardId: dashboardId2 },
-			});
-
 			rerender(
 				<QueryClientProvider client={queryClient}>
 					<MemoryRouter initialEntries={[`/dashboard/${dashboardId2}`]}>
-						<DashboardProvider>
+						<DashboardProvider dashboardId={dashboardId2}>
 							<TestComponent />
 						</DashboardProvider>
 					</MemoryRouter>
@@ -325,13 +256,11 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 			expect(cacheKeys).toHaveLength(2);
 			expect(cacheKeys[0]).toEqual([
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
-				{ dashboardId: dashboardId1 },
 				dashboardId1,
 				true, // globalTime.isAutoRefreshDisabled
 			]);
 			expect(cacheKeys[1]).toEqual([
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
-				{ dashboardId: dashboardId2 },
 				dashboardId2,
 				true, // globalTime.isAutoRefreshDisabled
 			]);
@@ -437,9 +366,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 			// Empty URL variables - tests initialization flow
 			mockGetUrlVariables.mockReturnValue({});
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -493,9 +420,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 				.mockReturnValueOnce('development')
 				.mockReturnValueOnce(['db', 'cache']);
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -555,9 +480,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 
 			mockGetUrlVariables.mockReturnValue(urlVariables);
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -593,9 +516,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 				.mockReturnValueOnce('development')
 				.mockReturnValueOnce(['api']);
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				// Verify normalization was called with the specific values and variable configs
@@ -662,9 +583,7 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -706,9 +625,7 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -751,9 +668,7 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
@@ -795,9 +710,7 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 			} as any);
 			/* eslint-enable @typescript-eslint/no-explicit-any */
 
-			renderWithDashboardProvider(`/dashboard/${DASHBOARD_ID}`, {
-				dashboardId: DASHBOARD_ID,
-			});
+			renderWithDashboardProvider(DASHBOARD_ID);
 
 			await waitFor(() => {
 				expect(mockGetDashboard).toHaveBeenCalledWith({ id: DASHBOARD_ID });
