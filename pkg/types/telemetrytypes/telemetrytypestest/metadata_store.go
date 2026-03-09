@@ -101,9 +101,7 @@ func (m *MockMetadataStore) GetKeysMulti(ctx context.Context, fieldKeySelectors 
 
 	// fetch and add evolutions
 	for _, v := range result {
-		if _, err := m.updateColumnEvolutionMetadataForKeys(ctx, v); err != nil {
-			return nil, false, err
-		}
+		m.updateColumnEvolutionMetadataForKeys(ctx, v)
 	}
 
 	return result, true, nil
@@ -342,7 +340,7 @@ func (m *MockMetadataStore) ListLogsJSONIndexes(ctx context.Context, filters ...
 	return m.LogsJSONIndexesMap, nil
 }
 
-func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) map[string][]*telemetrytypes.EvolutionEntry {
 
 	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
 	for _, keySelector := range keysToUpdate {
@@ -370,7 +368,7 @@ func (m *MockMetadataStore) updateColumnEvolutionMetadataForKeys(_ context.Conte
 			result[key] = entries
 		}
 	}
-	return result, nil
+	return result
 }
 
 func (m *MockMetadataStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
