@@ -41,6 +41,7 @@ func onConfigFailure(orgId valuer.UUID, agentId string, hash string, errorMessag
 	notifySubscribers(orgId, agentId, key, errors.New(errorMessage))
 }
 
+// OnSuccess listens to config changes and notifies subscribers
 func notifySubscribers(orgId valuer.UUID, agentId string, key string, err error) {
 	// this method currently does not handle multi-agent scenario.
 	// as soon as a message is delivered, we release all the subscribers
