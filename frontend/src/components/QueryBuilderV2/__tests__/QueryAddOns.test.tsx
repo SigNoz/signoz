@@ -275,4 +275,59 @@ describe('QueryAddOns', () => {
 			});
 		});
 	});
+
+	it('auto-generates legend from all groupBy keys when enabling Legend format with empty legend', async () => {
+		const user = userEvent.setup();
+		const query = baseQuery({
+			groupBy: [{ key: 'service.name' }, { key: 'operation' }],
+		});
+
+		render(
+			<QueryAddOns
+				query={query}
+				version="v5"
+				isListViewPanel={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		const legendTab = screen.getByTestId('query-add-on-legend_format');
+		await user.click(legendTab);
+
+		expect(mockHandleChangeQueryData).toHaveBeenCalledWith(
+			'legend',
+			'service.name = {{service.name}}, operation = {{operation}}',
+		);
+	});
+
+	it('does not override existing legend when enabling Legend format', async () => {
+		const user = userEvent.setup();
+		const query = baseQuery({
+			legend: 'existing legend',
+			groupBy: [{ key: 'service.name' }],
+		});
+
+		render(
+			<QueryAddOns
+				query={query}
+				version="v5"
+				isListViewPanel={false}
+				showReduceTo={false}
+				panelType={PANEL_TYPES.TIME_SERIES}
+				index={0}
+				isForTraceOperator={false}
+			/>,
+		);
+
+		const legendTab = screen.getByTestId('query-add-on-legend_format');
+		await user.click(legendTab);
+
+		expect(mockHandleChangeQueryData).not.toHaveBeenCalledWith(
+			'legend',
+			expect.anything(),
+		);
+	});
 });
