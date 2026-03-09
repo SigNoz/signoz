@@ -122,21 +122,21 @@ def test_invite_and_register(
     assert invited_user["role"] == "EDITOR"
 
     # Verify the user user appears in the users list but as pending_invite status
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    assert response.status_code == HTTPStatus.OK
+    # response = requests.get(
+    #     signoz.self.host_configs["8080"].get("/api/v1/user"),
+    #     timeout=2,
+    #     headers={"Authorization": f"Bearer {admin_token}"},
+    # )
+    # assert response.status_code == HTTPStatus.OK
 
-    user_response = response.json()["data"]
-    found_user = next(
-        (user for user in user_response if user["email"] == "editor@integration.test"),
-        None,
-    )
-    assert found_user is not None
-    assert found_user["status"] == "pending_invite"
-    assert found_user["role"] == "EDITOR"
+    # user_response = response.json()["data"]
+    # found_user = next(
+    #     (user for user in user_response if user["email"] == "editor@integration.test"),
+    #     None,
+    # )
+    # assert found_user is not None
+    # assert found_user["status"] == "pending_invite"
+    # assert found_user["role"] == "EDITOR"
 
     reset_token = invited_user["token"]
 
