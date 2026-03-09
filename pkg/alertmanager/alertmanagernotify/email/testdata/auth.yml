@@ -1,0 +1,4 @@
+smarthost: maildev-auth:1025
+server: http://maildev-auth:1080/
+username: user
+password: pass
