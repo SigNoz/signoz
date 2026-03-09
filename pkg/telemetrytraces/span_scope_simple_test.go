@@ -1,6 +1,7 @@
 package telemetrytraces
 
 import (
+	"context"
 	"testing"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
@@ -75,13 +76,16 @@ func TestSpanScopeFilterExpression(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextSpan,
 			}}
 
-            whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+			whereClause, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Context:          context.Background(),
 				Logger:           instrumentationtest.New().Logger(),
 				FieldMapper:      fm,
 				ConditionBuilder: cb,
 				FieldKeys:        fieldKeys,
 				Builder:          sb,
-            }, tt.startNs, 1761458708000000000)
+				StartNs:          tt.startNs,
+				EndNs:            1761458708000000000,
+			})
 
 			if tt.expectError {
 				assert.Error(t, err)
@@ -142,13 +146,16 @@ func TestSpanScopeWithResourceFilter(t *testing.T) {
 				FieldContext: telemetrytypes.FieldContextResource,
 			}}
 
-            _, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+			_, err := querybuilder.PrepareWhereClause(tt.expression, querybuilder.FilterExprVisitorOpts{
+				Context:            context.Background(),
 				Logger:             instrumentationtest.New().Logger(),
 				FieldMapper:        fm,
 				ConditionBuilder:   cb,
 				FieldKeys:          fieldKeys,
 				SkipResourceFilter: false, // This would be set by the statement builder
-            }, 1761437108000000000, 1761458708000000000)
+				StartNs:            1761437108000000000,
+				EndNs:              1761458708000000000,
+			})
 
 			assert.NoError(t, err)
 		})
