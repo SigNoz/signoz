@@ -3,6 +3,7 @@ package implserviceaccount
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -15,15 +16,16 @@ import (
 )
 
 type module struct {
-	store    serviceaccounttypes.Store
-	authz    authz.AuthZ
-	emailing emailing.Emailing
-	settings factory.ScopedProviderSettings
+	store     serviceaccounttypes.Store
+	authz     authz.AuthZ
+	emailing  emailing.Emailing
+	analytics analytics.Analytics
+	settings  factory.ScopedProviderSettings
 }
 
-func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, emailing emailing.Emailing, providerSettings factory.ProviderSettings) serviceaccount.Module {
+func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, emailing emailing.Emailing, analytics analytics.Analytics, providerSettings factory.ProviderSettings) serviceaccount.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount")
-	return &module{store: store, authz: authz, emailing: emailing, settings: settings}
+	return &module{store: store, authz: authz, emailing: emailing, analytics: analytics, settings: settings}
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAccount *serviceaccounttypes.ServiceAccount) error {
@@ -58,6 +60,8 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 		return err
 	}
 
+	module.analytics.IdentifyUser(ctx, orgID.String(), serviceAccount.ID.String(), serviceAccount.Traits())
+	module.analytics.TrackUser(ctx, orgID.String(), serviceAccount.ID.String(), "Service Account Created", serviceAccount.Traits())
 	return nil
 }
 
@@ -76,6 +80,8 @@ func (module *module) GetOrCreate(ctx context.Context, serviceAccount *serviceac
 		return nil, err
 	}
 
+	module.analytics.IdentifyUser(ctx, serviceAccount.OrgID.String(), serviceAccount.ID.String(), serviceAccount.Traits())
+	module.analytics.TrackUser(ctx, serviceAccount.OrgID.String(), serviceAccount.ID.String(), "Service Account Created", serviceAccount.Traits())
 	return serviceAccount, nil
 }
 
@@ -186,6 +192,8 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serv
 		return err
 	}
 
+	module.analytics.IdentifyUser(ctx, orgID.String(), input.ID.String(), input.Traits())
+	module.analytics.TrackUser(ctx, orgID.String(), input.ID.String(), "Service Account Updated", input.Traits())
 	return nil
 }
 
@@ -214,6 +222,7 @@ func (module *module) UpdateStatus(ctx context.Context, orgID valuer.UUID, input
 		return err
 	}
 
+	module.analytics.TrackUser(ctx, orgID.String(), input.ID.String(), "Service Account Deleted", map[string]any{})
 	return nil
 }
 
@@ -276,6 +285,7 @@ func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serv
 		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
 	}
 
+	module.analytics.TrackUser(ctx, serviceAccount.OrgID, serviceAccount.ID.String(), "API Key created", factorAPIKey.Traits())
 	return nil
 }
 
@@ -297,12 +307,13 @@ func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID val
 	return serviceaccounttypes.NewFactorAPIKeyFromStorables(storables), nil
 }
 
-func (module *module) UpdateFactorAPIKey(ctx context.Context, _ valuer.UUID, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+func (module *module) UpdateFactorAPIKey(ctx context.Context, orgID valuer.UUID, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
 	err := module.store.UpdateFactorAPIKey(ctx, serviceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
 	if err != nil {
 		return err
 	}
 
+	module.analytics.TrackUser(ctx, orgID.String(), serviceAccountID.String(), "API Key updated", factorAPIKey.Traits())
 	return nil
 }
 
@@ -329,6 +340,65 @@ func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID v
 		"KeyCreatedAt": factorAPIKey.CreatedAt.String(),
 	}); err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
+	}
+
+	module.analytics.TrackUser(ctx, serviceAccount.OrgID, serviceAccountID.String(), "API Key revoked", factorAPIKey.Traits())
+	return nil
+}
+
+func (module *module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+	stats := make(map[string]any)
+
+	count, err := module.store.CountByOrgID(ctx, orgID)
+	if err == nil {
+		stats["serviceaccount.count"] = count
+	}
+
+	count, err = module.store.CountFactorAPIKeysByOrgID(ctx, orgID)
+	if err == nil {
+		stats["serviceaccount.keys.count"] = count
+	}
+
+	return stats, nil
+}
+
+func (module *module) disableServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, input.ID.String(), orgID, nil))
+	if err != nil {
+		return err
+	}
+
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// revoke all the API keys on disable
+		err := module.store.RevokeAllFactorAPIKeys(ctx, input.ID)
+		if err != nil {
+			return err
+		}
+
+		// update the status but do not delete the role mappings as we will reuse them on activation.
+		err = module.Update(ctx, orgID, input)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
+func (module *module) activateServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
+	err := module.authz.Grant(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, input.ID.String(), orgID, nil))
+	if err != nil {
+		return err
+	}
+
+	err = module.Update(ctx, orgID, input)
+	if err != nil {
+		return err
 	}
 
 	return nil

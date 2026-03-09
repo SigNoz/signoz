@@ -43,7 +43,7 @@ type Module interface {
 
 	Update(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, data dashboardtypes.UpdatableDashboard, diff int) (*dashboardtypes.Dashboard, error)
 
-	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedByUserID valuer.UUID, lock bool) error
+	LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error
 
 	Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUID) error
 

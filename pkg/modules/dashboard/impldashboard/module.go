@@ -102,18 +102,13 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedByUserID valuer.UUID, lock bool) error {
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	user, err := module.userGetter.GetByOrgIDAndID(ctx, orgID, updatedByUserID)
-	if err != nil {
-		return err
-	}
-
-	err = dashboard.LockUnlock(lock, user.Role, user.Email.String())
+	err = dashboard.LockUnlock(lock, updatedBy)
 	if err != nil {
 		return err
 	}

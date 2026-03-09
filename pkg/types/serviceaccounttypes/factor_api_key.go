@@ -192,3 +192,10 @@ func (key FactorAPIKey) MarshalBinary() ([]byte, error) {
 func (key *FactorAPIKey) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, key)
 }
+
+func (key *FactorAPIKey) Traits() map[string]any {
+	return map[string]any{
+		"name":       key.Name,
+		"expires_at": key.ExpiresAt,
+	}
+}

@@ -183,6 +183,23 @@ func (store *store) GetServiceAccountRoles(ctx context.Context, id valuer.UUID) 
 	return storables, nil
 }
 
+func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	storable := new(serviceaccounttypes.StorableServiceAccount)
+
+	count, err := store.
+		sqlstore.
+		BunDB().
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(count), nil
+}
+
 func (store *store) ListServiceAccountRolesByOrgID(ctx context.Context, orgID valuer.UUID) ([]*serviceaccounttypes.StorableServiceAccountRole, error) {
 	storables := make([]*serviceaccounttypes.StorableServiceAccountRole, 0)
 
@@ -300,6 +317,25 @@ func (store *store) ListFactorAPIKeyByOrgID(ctx context.Context, orgID valuer.UU
 	}
 
 	return storables, nil
+}
+
+func (store *store) CountFactorAPIKeysByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
+	storable := new(serviceaccounttypes.StorableFactorAPIKey)
+
+	count, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Join("JOIN service_account").
+		JoinOn("service_account.id = factor_api_key.service_account_id").
+		Where("service_account.org_id = ?", orgID).
+		Count(ctx)
+	if err != nil {
+		return 0, err
+	}
+
+	return int64(count), nil
 }
 
 func (store *store) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, storable *serviceaccounttypes.StorableFactorAPIKey) error {

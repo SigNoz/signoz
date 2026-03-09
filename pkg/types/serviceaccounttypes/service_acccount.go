@@ -294,3 +294,12 @@ func (sa *StorableServiceAccount) ToIdentity() *authtypes.Identity {
 		Email:            valuer.MustNewEmail(sa.Email),
 	}
 }
+
+func (sa *ServiceAccount) Traits() map[string]any {
+	return map[string]any{
+		"name":       sa.Name,
+		"roles":      sa.Roles,
+		"email":      sa.Email.String(),
+		"created_at": sa.CreatedAt,
+	}
+}
