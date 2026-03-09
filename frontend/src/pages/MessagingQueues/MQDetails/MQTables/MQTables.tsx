@@ -37,6 +37,7 @@ import './MQTables.styles.scss';
 
 const INITIAL_PAGE_SIZE = 10;
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function getColumns(
 	data: MessagingQueuesPayloadProps['payload'],
 	history: History<unknown>,
