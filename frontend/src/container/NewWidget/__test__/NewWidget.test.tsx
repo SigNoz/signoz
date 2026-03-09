@@ -310,7 +310,7 @@ describe('Stacking bar in new panel', () => {
 
 		const { container, getByText } = render(
 			<I18nextProvider i18n={i18n}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId="">
 					<PreferenceContextProvider>
 						<NewWidget
 							selectedGraph={PANEL_TYPES.BAR}
@@ -356,7 +356,7 @@ describe('when switching to BAR panel type', () => {
 
 	it('should preserve saved stacking value of true', async () => {
 		const { getByTestId, getByText, container } = render(
-			<DashboardProvider>
+			<DashboardProvider dashboardId="">
 				<NewWidget
 					selectedGraph={PANEL_TYPES.BAR}
 					fillSpans={undefined}

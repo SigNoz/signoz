@@ -104,7 +104,7 @@ describe('LogsPanelComponent', () => {
 	const renderComponent = async (): Promise<void> => {
 		render(
 			<I18nextProvider i18n={i18n}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId="">
 					<PreferenceContextProvider>
 						<NewWidget
 							selectedGraph={PANEL_TYPES.LIST}

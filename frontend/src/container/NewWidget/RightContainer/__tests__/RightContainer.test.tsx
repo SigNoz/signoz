@@ -96,7 +96,7 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 				<Provider store={createMockStore()}>
 					<AppContext.Provider value={createMockAppContext() as IAppContext}>
 						<ErrorModalProvider>
-							<DashboardProvider>
+							<DashboardProvider dashboardId="">
 								<QueryBuilderProvider>{ui}</QueryBuilderProvider>
 							</DashboardProvider>
 						</ErrorModalProvider>
