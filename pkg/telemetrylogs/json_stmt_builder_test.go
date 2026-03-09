@@ -893,7 +893,7 @@ func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
 	enable := func() {
 		querybuilder.BodyJSONQueryEnabled = true
 		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
-		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		// IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
 	}
 
 	disable := func() {

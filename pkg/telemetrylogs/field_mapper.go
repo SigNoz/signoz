@@ -30,6 +30,7 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
+		"body.message":       {Name: "body.message", Type: schema.ColumnTypeString},
 		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
 			MaxDynamicTypes: utils.ToPointer(uint(32)),
 			MaxDynamicPaths: utils.ToPointer(uint(0)),
@@ -67,6 +68,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+	fmt.Println("key.Name", key.Name, "key.FieldContext", key.FieldContext)
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
 		return logsV2Columns["resource"], nil
@@ -108,6 +110,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 				return logsV2Columns["body"], nil
 			}
 			return nil, qbtypes.ErrColumnNotFound
+		}
+		if key.Name == "body" && querybuilder.BodyJSONQueryEnabled {
+			return logsV2Columns["body.message"], nil
 		}
 		return col, nil
 	}
@@ -236,6 +241,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern
 func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
+	fmt.Println("buildFieldForJSON")
 	plan := key.JSONPlan
 	if len(plan) == 0 {
 		return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,

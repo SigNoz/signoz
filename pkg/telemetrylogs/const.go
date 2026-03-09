@@ -155,6 +155,6 @@ func init() {
 
 	if querybuilder.BodyJSONQueryEnabled {
 		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
-		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		// IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
 	}
 }
