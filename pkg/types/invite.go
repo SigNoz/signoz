@@ -54,7 +54,7 @@ type PostableInvite struct {
 }
 
 type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites" required:"true"`
+	Invites []PostableInvite `json:"invites" required:"true" nullable:"false"`
 }
 
 func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
