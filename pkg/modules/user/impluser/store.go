@@ -438,7 +438,7 @@ func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*t
 		Where("token = ?", token).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist", token)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist")
 	}
 
 	return resetPasswordRequest, nil

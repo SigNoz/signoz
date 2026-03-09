@@ -213,6 +213,9 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// temp code - show only active users
+	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusActive })
+
 	render.Success(w, http.StatusOK, users)
 }
 
