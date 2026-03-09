@@ -20,6 +20,7 @@ describe('navigation utilities', () => {
 			({
 				metaKey: false,
 				ctrlKey: false,
+				button: 0,
 				...overrides,
 			} as MouseEvent);
 
@@ -49,6 +50,11 @@ describe('navigation utilities', () => {
 				altKey: true,
 			} as Partial<MouseEvent>);
 			expect(isModifierKeyPressed(event)).toBe(false);
+		});
+
+		it('returns true when middle mouse button is used', () => {
+			const event = createMouseEvent({ button: 1 });
+			expect(isModifierKeyPressed(event)).toBe(true);
 		});
 	});
 
@@ -92,6 +98,14 @@ describe('navigation utilities', () => {
 
 		it('opens new tab when ctrlKey is pressed', () => {
 			const event = { metaKey: false, ctrlKey: true } as MouseEvent;
+			navigateToPage('/services', mockNavigate, event);
+
+			expect(window.open).toHaveBeenCalledWith('/services', '_blank');
+			expect(mockNavigate).not.toHaveBeenCalled();
+		});
+
+		it('opens new tab when middle mouse button is used', () => {
+			const event = { metaKey: false, ctrlKey: false, button: 1 } as MouseEvent;
 			navigateToPage('/services', mockNavigate, event);
 
 			expect(window.open).toHaveBeenCalledWith('/services', '_blank');
