@@ -10,21 +10,21 @@ from sqlalchemy.exc import IntegrityError
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import SigNoz
 
-PARTIAL_INDEX_USER_EMAIL = "partialindex@integration.test"
+UNIQUE_INDEX_USER_EMAIL = "useruniqueindex@integration.test"
 
 
-def test_partial_index_allows_multiple_deleted_rows(
+def test_unique_index_allows_multiple_deleted_rows(
     signoz: SigNoz,
     get_token: Callable[[str, str], str],
 ):
     """
-    Verify that the partial unique index on (email, org_id) WHERE status != 'deleted'
-    allows multiple deleted rows for the same (email, org_id) while still enforcing
-    uniqueness among non-deleted rows.
+    Verify that the composite unique index on (org_id, email, deleted_at) allows multiple
+    deleted rows for the same (org_id, email) while still enforcing uniqueness among
+    non-deleted rows.
 
-    A regular unique index would reject a second invite after deletion because the
-    deleted row still occupies the (email, org_id) slot. The partial index limits
-    enforcement to non-deleted rows only.
+    Non-deleted users share deleted_at=zero-time, so the unique index prevents duplicates.
+    Soft-deleted users each have a distinct deleted_at timestamp, so the index allows
+    multiple deleted rows for the same (org_id, email).
 
     Steps:
     1. Invite and soft-delete a user via the API (first deleted row).
@@ -32,9 +32,9 @@ def test_partial_index_allows_multiple_deleted_rows(
     3. Assert via SQL that exactly two deleted rows exist for the email.
     4. Assert via SQL that inserting one active row succeeds (no conflict — only
        deleted rows exist), then inserting a second active row for the same
-       (email, org_id) fails with a unique constraint error.
-    5. Assert via SQL that inserting a third deleted row for the same (email, org_id)
-       succeeds — confirming the partial index does not cover deleted rows.
+       (org_id, email) fails with a unique constraint error (both have deleted_at=zero-time).
+    5. Assert via SQL that inserting a third deleted row for the same (org_id, email)
+       with a unique deleted_at succeeds — confirming the index does not cover deleted rows.
     6. Assert via SQL that the final count of deleted rows is 3.
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
@@ -42,7 +42,7 @@ def test_partial_index_allows_multiple_deleted_rows(
     # Step 1: invite and delete the first user
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": PARTIAL_INDEX_USER_EMAIL, "role": "EDITOR", "name": "partial index user v1"},
+        json={"email": UNIQUE_INDEX_USER_EMAIL, "role": "EDITOR", "name": "unique index user v1"},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -59,7 +59,7 @@ def test_partial_index_allows_multiple_deleted_rows(
     # Step 2: re-invite and delete the same email (second deleted row)
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": PARTIAL_INDEX_USER_EMAIL, "role": "EDITOR", "name": "partial index user v2"},
+        json={"email": UNIQUE_INDEX_USER_EMAIL, "role": "EDITOR", "name": "unique index user v2"},
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -78,15 +78,15 @@ def test_partial_index_allows_multiple_deleted_rows(
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
             sql.text(
-                "SELECT id, status FROM users"
-                " WHERE email = :email AND status = 'deleted'"
+                "SELECT id, deleted_at FROM users"
+                " WHERE email = :email AND deleted_at != :zero_time"
             ),
-            {"email": PARTIAL_INDEX_USER_EMAIL},
+            {"email": UNIQUE_INDEX_USER_EMAIL, "zero_time": "0001-01-01 00:00:00"},
         )
         deleted_rows = result.fetchall()
 
     assert len(deleted_rows) == 2, (
-        f"expected 2 deleted rows for {PARTIAL_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
+        f"expected 2 deleted rows for {UNIQUE_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
     )
     deleted_ids = {row[0] for row in deleted_rows}
     assert first_user_id in deleted_ids
@@ -100,24 +100,26 @@ def test_partial_index_allows_multiple_deleted_rows(
         )
         org_id = result.fetchone()[0]
 
-    # Step 4: the partial index must still block a duplicate non-deleted row.
-    # First insert one active row — must succeed (only deleted rows exist so far).
-    # Then insert a second active row for the same (email, org_id) — must fail.
+    # Step 4: the unique index must still block a duplicate non-deleted row.
+    # Both active rows have deleted_at=zero-time, so they share the same (org_id, email, zero-time)
+    # tuple. First insert must succeed (only deleted rows exist so far).
+    # Second insert for the same (org_id, email) with deleted_at=zero-time must fail.
     active_id = str(uuid.uuid4())
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
             sql.text(
                 "INSERT INTO users"
-                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at)"
+                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
                 " VALUES (:id, :display_name, :email, :role, :org_id,"
-                "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :zero_time)"
             ),
             {
                 "id": active_id,
                 "display_name": "first active row",
-                "email": PARTIAL_INDEX_USER_EMAIL,
+                "email": UNIQUE_INDEX_USER_EMAIL,
                 "role": "EDITOR",
                 "org_id": org_id,
+                "zero_time": "0001-01-01 00:00:00",
             },
         )
         conn.commit()
@@ -127,32 +129,33 @@ def test_partial_index_allows_multiple_deleted_rows(
             conn.execute(
                 sql.text(
                     "INSERT INTO users"
-                    " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at)"
+                    " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
                     " VALUES (:id, :display_name, :email, :role, :org_id,"
-                    "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                    "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :zero_time)"
                 ),
                 {
                     "id": str(uuid.uuid4()),
                     "display_name": "should violate index",
-                    "email": PARTIAL_INDEX_USER_EMAIL,
+                    "email": UNIQUE_INDEX_USER_EMAIL,
                     "role": "EDITOR",
                     "org_id": org_id,
+                    "zero_time": "0001-01-01 00:00:00",
                 },
             )
 
-    # Step 5: a third deleted row for the same (email, org_id) must be accepted
+    # Step 5: a third deleted row with a unique deleted_at must be accepted
     with signoz.sqlstore.conn.connect() as conn:
         conn.execute(
             sql.text(
                 "INSERT INTO users"
-                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at)"
+                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
                 " VALUES (:id, :display_name, :email, :role, :org_id,"
-                "         false, 'deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
+                "         false, 'deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ),
             {
                 "id": str(uuid.uuid4()),
                 "display_name": "third deleted row",
-                "email": PARTIAL_INDEX_USER_EMAIL,
+                "email": UNIQUE_INDEX_USER_EMAIL,
                 "role": "EDITOR",
                 "org_id": org_id,
             },
@@ -164,9 +167,9 @@ def test_partial_index_allows_multiple_deleted_rows(
         result = conn.execute(
             sql.text(
                 "SELECT COUNT(*) FROM users"
-                " WHERE email = :email AND status = 'deleted'"
+                " WHERE email = :email AND deleted_at != :zero_time"
             ),
-            {"email": PARTIAL_INDEX_USER_EMAIL},
+            {"email": UNIQUE_INDEX_USER_EMAIL, "zero_time": "0001-01-01 00:00:00"},
         )
         count = result.fetchone()[0]
 

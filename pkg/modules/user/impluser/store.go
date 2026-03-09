@@ -330,10 +330,12 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	}
 
 	// soft delete user
+	now := time.Now()
 	_, err = tx.NewUpdate().
 		Model(new(types.User)).
 		Set("status = ?", types.UserStatusDeleted).
-		Set("updated_at = ?", time.Now()).
+		Set("deleted_at = ?", now).
+		Set("updated_at = ?", now).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)

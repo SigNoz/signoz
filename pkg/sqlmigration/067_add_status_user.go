@@ -2,6 +2,7 @@ package sqlmigration
 
 import (
 	"context"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
@@ -54,18 +55,26 @@ func (migration *addStatusUser) Up(ctx context.Context, db *bun.DB) error {
 		return err
 	}
 
-	column := &sqlschema.Column{
+	statusColumn := &sqlschema.Column{
 		Name:     sqlschema.ColumnName("status"),
 		DataType: sqlschema.DataTypeText,
 		Nullable: false,
 	}
 
-	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, column, "active")
+	sqls := migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, statusColumn, "active")
+
+	// add deleted_at (zero time = not deleted, non-zero = deletion timestamp) to enable the
+	// composite unique index that replaces the partial index approach
+	deletedAtColumn := &sqlschema.Column{
+		Name:     sqlschema.ColumnName("deleted_at"),
+		DataType: sqlschema.DataTypeTimestamp,
+		Nullable: false,
+	}
+
+	sqls = append(sqls, migration.sqlschema.Operator().AddColumn(table, uniqueConstraints, deletedAtColumn, time.Time{})...)
 
 	// we need to drop the unique index on (email, org_id)
-	indexSqls := migration.sqlschema.Operator().DropIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})
-
-	sqls = append(sqls, indexSqls...)
+	sqls = append(sqls, migration.sqlschema.Operator().DropIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"email", "org_id"}})...)
 
 	for _, sql := range sqls {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
@@ -73,11 +82,15 @@ func (migration *addStatusUser) Up(ctx context.Context, db *bun.DB) error {
 		}
 	}
 
-	// add a partial unique index to enforce uniqueness of (email, org_id) for non-deleted users
-	// replaces the full unique index dropped above, while still allowing multiple deleted
-	// rows for the same (email, org_id) so that users can be re-invited after deletion.
-	if _, err := tx.ExecContext(ctx, `CREATE UNIQUE INDEX IF NOT EXISTS uq_users_email_org_id_non_deleted ON users (email, org_id) WHERE status != 'deleted'`); err != nil {
-		return err
+	// add a composite unique index on (org_id, email, deleted_at).
+	// active and pending users have deleted_at=time.Time{} (zero), forming a unique (org_id, email, zero) tuple.
+	// soft-deleted users have deleted_at set to the deletion timestamp, making each deleted row unique
+	// and allowing the same email to be re-invited after deletion without a constraint violation.
+	newIndexSqls := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "users", ColumnNames: []sqlschema.ColumnName{"org_id", "email", "deleted_at"}})
+	for _, sql := range newIndexSqls {
+		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
+			return err
+		}
 	}
 
 	if err := tx.Commit(); err != nil {

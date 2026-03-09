@@ -42,6 +42,7 @@ type pendingInviteUser struct {
 	Status      string    `bun:"status"`
 	CreatedAt   time.Time `bun:"created_at"`
 	UpdatedAt   time.Time `bun:"updated_at"`
+	DeletedAt   time.Time `bun:"deleted_at"`
 }
 
 func NewDeprecateUserInviteFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
@@ -110,6 +111,7 @@ func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error 
 			Status:      "pending_invite",
 			CreatedAt:   invite.CreatedAt,
 			UpdatedAt:   time.Now(),
+			DeletedAt:   time.Time{},
 		}
 
 		users = append(users, user)
