@@ -255,14 +255,6 @@ function MembersSettings(): JSX.Element {
 				onComplete={handleMemberEditComplete}
 				onRefetch={handleInviteComplete}
 			/>
-
-			<EditMemberDrawer
-				member={selectedMember}
-				open={selectedMember !== null}
-				onClose={handleDrawerClose}
-				onComplete={handleMemberEditComplete}
-				onRefetch={handleInviteComplete}
-			/>
 		</>
 	);
 }
