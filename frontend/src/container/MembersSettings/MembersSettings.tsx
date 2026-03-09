@@ -119,7 +119,7 @@ function MembersSettings(): JSX.Element {
 			return;
 		}
 		const maxPage = Math.ceil(filteredMembers.length / PAGE_SIZE);
-		if (currentPage > maxPage) {
+		if (currentPage > maxPage || currentPage < 1) {
 			setPage(maxPage);
 		}
 	}, [filteredMembers.length, currentPage, setPage]);

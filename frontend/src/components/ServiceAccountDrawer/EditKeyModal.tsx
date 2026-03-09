@@ -11,10 +11,11 @@ import {
 	useUpdateServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
 import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { format } from 'date-fns';
-import dayjs, { type Dayjs } from 'dayjs';
+import type { Dayjs } from 'dayjs';
+import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
+
+import { formatLastUsed } from './utils';
 
 import './EditKeyModal.styles.scss';
 
@@ -28,6 +29,7 @@ interface EditKeyModalProps {
 
 type ExpiryMode = 'none' | 'date';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function EditKeyModal({
 	open,
 	accountId,
@@ -68,7 +70,9 @@ function EditKeyModal({
 	const { mutateAsync: revokeKey } = useRevokeServiceAccountKey();
 
 	const handleSave = useCallback(async (): Promise<void> => {
-		if (!keyItem || !isDirty) {return;}
+		if (!keyItem || !isDirty) {
+			return;
+		}
 		setIsSaving(true);
 		try {
 			await updateKey({
@@ -82,10 +86,20 @@ function EditKeyModal({
 		} finally {
 			setIsSaving(false);
 		}
-	}, [keyItem, isDirty, localName, currentExpiresAt, accountId, updateKey, onSuccess]);
+	}, [
+		keyItem,
+		isDirty,
+		localName,
+		currentExpiresAt,
+		accountId,
+		updateKey,
+		onSuccess,
+	]);
 
 	const handleRevoke = useCallback(async (): Promise<void> => {
-		if (!keyItem) {return;}
+		if (!keyItem) {
+			return;
+		}
 		setIsRevoking(true);
 		try {
 			await revokeKey({
@@ -101,25 +115,18 @@ function EditKeyModal({
 		}
 	}, [keyItem, accountId, revokeKey, onSuccess]);
 
-	const formatLastUsed = useCallback(
-		(lastUsed: Date | null | undefined): string => {
-			if (!lastUsed) {return '—';}
-			try {
-				return formatTimezoneAdjustedTimestamp(
-					String(lastUsed),
-					DATE_TIME_FORMATS.DASH_DATETIME,
-				);
-			} catch {
-				return '—';
-			}
-		},
+	const handleFormatLastUsed = useCallback(
+		(lastUsed: Date | null | undefined): string =>
+			formatLastUsed(lastUsed, formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
 
 	const expiryDisplayLabel = (): string => {
-		if (expiryMode === 'none' || !localDate) {return 'Never';}
+		if (expiryMode === 'none' || !localDate) {
+			return 'Never';
+		}
 		try {
-			return format(localDate.toDate(), 'MMM d, yyyy');
+			return localDate.format('MMM D, YYYY');
 		} catch {
 			return 'Never';
 		}
@@ -153,24 +160,33 @@ function EditKeyModal({
 
 					{/* Key (read-only masked) */}
 					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label">Key</label>
-						<div className="edit-key-modal__key-display">
-							<span className="edit-key-modal__key-text">
-								{keyItem?.key ?? '—'}
-							</span>
+						<label className="edit-key-modal__label" htmlFor="edit-key-display">
+							Key
+						</label>
+						<div id="edit-key-display" className="edit-key-modal__key-display">
+							<span className="edit-key-modal__key-text">{keyItem?.key ?? '—'}</span>
 							<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
 						</div>
 					</div>
 
 					{/* Expiration toggle */}
 					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label">Expiration</label>
-						<div className="edit-key-modal__expiry-toggle">
+						<label className="edit-key-modal__label" htmlFor="edit-key-expiry-toggle">
+							Expiration
+						</label>
+						<div
+							id="edit-key-expiry-toggle"
+							className="edit-key-modal__expiry-toggle"
+						>
 							<Button
 								variant={expiryMode === 'none' ? 'solid' : 'ghost'}
 								color="secondary"
 								size="sm"
-								className={`edit-key-modal__expiry-toggle-btn${expiryMode === 'none' ? ' edit-key-modal__expiry-toggle-btn--active' : ''}`}
+								className={`edit-key-modal__expiry-toggle-btn${
+									expiryMode === 'none'
+										? ' edit-key-modal__expiry-toggle-btn--active'
+										: ''
+								}`}
 								onClick={(): void => {
 									setExpiryMode('none');
 									setLocalDate(null);
@@ -182,7 +198,11 @@ function EditKeyModal({
 								variant={expiryMode === 'date' ? 'solid' : 'ghost'}
 								color="secondary"
 								size="sm"
-								className={`edit-key-modal__expiry-toggle-btn${expiryMode === 'date' ? ' edit-key-modal__expiry-toggle-btn--active' : ''}`}
+								className={`edit-key-modal__expiry-toggle-btn${
+									expiryMode === 'date'
+										? ' edit-key-modal__expiry-toggle-btn--active'
+										: ''
+								}`}
 								onClick={(): void => setExpiryMode('date')}
 							>
 								Set Expiration Date
@@ -192,8 +212,10 @@ function EditKeyModal({
 
 					{expiryMode === 'date' && (
 						<div className="edit-key-modal__field">
-							<label className="edit-key-modal__label">Expiration Date</label>
-							<div className="edit-key-modal__datepicker">
+							<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
+								Expiration Date
+							</label>
+							<div id="edit-key-datepicker" className="edit-key-modal__datepicker">
 								<DatePicker
 									value={localDate}
 									onChange={(date): void => setLocalDate(date)}
@@ -213,7 +235,7 @@ function EditKeyModal({
 					<div className="edit-key-modal__meta">
 						<span className="edit-key-modal__meta-label">Last Used</span>
 						<Badge color="vanilla">
-							{formatLastUsed(keyItem?.last_used ?? null)}
+							{handleFormatLastUsed(keyItem?.last_used ?? null)}
 						</Badge>
 					</div>
 
@@ -228,12 +250,7 @@ function EditKeyModal({
 							Revoke Key
 						</button>
 						<div className="edit-key-modal__footer-right">
-							<Button
-								variant="solid"
-								color="secondary"
-								size="sm"
-								onClick={onClose}
-							>
+							<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
 								<X size={12} />
 								Cancel
 							</Button>
@@ -255,7 +272,9 @@ function EditKeyModal({
 			<DialogWrapper
 				open={isRevokeConfirmOpen}
 				onOpenChange={(isOpen): void => {
-					if (!isOpen) {setIsRevokeConfirmOpen(false);}
+					if (!isOpen) {
+						setIsRevokeConfirmOpen(false);
+					}
 				}}
 				title={`Revoke ${keyItem?.name ?? 'key'}?`}
 				width="narrow"

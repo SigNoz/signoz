@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
@@ -11,7 +11,7 @@ import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccount
 import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 
-import { FilterMode, ServiceAccountRow } from './utils';
+import { FilterMode, ServiceAccountRow, ServiceAccountStatus } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 
@@ -27,7 +27,10 @@ function ServiceAccountsSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const [selectedAccount, setSelectedAccount] = useState<ServiceAccountRow | null>(null);
+	const [
+		selectedAccount,
+		setSelectedAccount,
+	] = useState<ServiceAccountRow | null>(null);
 
 	const {
 		data: serviceAccountsData,
@@ -50,12 +53,18 @@ function ServiceAccountsSettings(): JSX.Element {
 	);
 
 	const activeCount = useMemo(
-		() => allAccounts.filter((a) => a.status?.toUpperCase() === 'ACTIVE').length,
+		() =>
+			allAccounts.filter(
+				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Active,
+			).length,
 		[allAccounts],
 	);
 
 	const disabledCount = useMemo(
-		() => allAccounts.filter((a) => a.status?.toUpperCase() !== 'ACTIVE').length,
+		() =>
+			allAccounts.filter(
+				(a) => a.status?.toUpperCase() !== ServiceAccountStatus.Active,
+			).length,
 		[allAccounts],
 	);
 
@@ -63,16 +72,22 @@ function ServiceAccountsSettings(): JSX.Element {
 		let result = allAccounts;
 
 		if (filterMode === FilterMode.Active) {
-			result = result.filter((a) => a.status?.toUpperCase() === 'ACTIVE');
+			result = result.filter(
+				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Active,
+			);
 		} else if (filterMode === FilterMode.Disabled) {
-			result = result.filter((a) => a.status?.toUpperCase() !== 'ACTIVE');
+			result = result.filter(
+				(a) => a.status?.toUpperCase() !== ServiceAccountStatus.Active,
+			);
 		}
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
 				(a) =>
-					a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q),
+					a.name?.toLowerCase().includes(q) ||
+					a.email?.toLowerCase().includes(q) ||
+					a.roles?.some((role: string) => role.toLowerCase().includes(q)),
 			);
 		}
 
@@ -91,6 +106,17 @@ function ServiceAccountsSettings(): JSX.Element {
 		},
 		[history, urlQuery],
 	);
+
+	useEffect(() => {
+		if (filteredAccounts.length === 0) {
+			return;
+		}
+
+		const maxPage = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
+		if (currentPage > maxPage || currentPage < 1) {
+			setPage(maxPage);
+		}
+	}, [filteredAccounts.length, currentPage, setPage]);
 
 	const totalCount = allAccounts.length;
 
@@ -167,15 +193,15 @@ function ServiceAccountsSettings(): JSX.Element {
 					<h1 className="sa-settings__title">Service Accounts</h1>
 					<p className="sa-settings__subtitle">
 						Service accounts are used for machine-to-machine authentication via API
-						keys.{' '}
-						<a
+						keys. {/* Todo: to add doc links */}
+						{/* <a
 							href="https://signoz.io/docs/service-accounts"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="sa-settings__learn-more"
 						>
 							Learn more
-						</a>
+						</a> */}
 					</p>
 				</div>
 

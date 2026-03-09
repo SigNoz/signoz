@@ -17,6 +17,7 @@ import {
 	useUpdateServiceAccount,
 	useUpdateServiceAccountStatus,
 } from 'api/generated/services/serviceaccount';
+import { useRoles } from 'components/RolesSelect';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 
 import AddKeyModal from './AddKeyModal';
@@ -65,6 +66,13 @@ function ServiceAccountDrawer({
 		(localName !== (account.name ?? '') ||
 			JSON.stringify(localRoles) !== JSON.stringify(account.roles ?? []));
 
+	const {
+		roles: availableRoles,
+		isLoading: rolesLoading,
+		isError: rolesError,
+		error: rolesErrorObj,
+		refetch: refetchRoles,
+	} = useRoles();
 	const { mutateAsync: updateAccount } = useUpdateServiceAccount();
 	const { mutateAsync: updateStatus } = useUpdateServiceAccountStatus();
 
@@ -182,6 +190,11 @@ function ServiceAccountDrawer({
 						localRoles={localRoles}
 						onRolesChange={setLocalRoles}
 						isDisabled={isDisabled}
+						availableRoles={availableRoles}
+						rolesLoading={rolesLoading}
+						rolesError={rolesError}
+						rolesErrorObj={rolesErrorObj}
+						onRefetchRoles={refetchRoles}
 					/>
 				)}
 				{activeTab === 'keys' && account && (
