@@ -1,10 +1,12 @@
 import datetime
 import json
 from abc import ABC
+from http import HTTPStatus
 from typing import Any, Callable, Generator, List, Literal, Optional
 
 import numpy as np
 import pytest
+import requests
 from ksuid import KsuidMs
 
 from fixtures import types
@@ -496,6 +498,54 @@ def insert_logs(
     clickhouse.conn.query(
         f"TRUNCATE TABLE signoz_logs.logs_resource_keys ON CLUSTER '{clickhouse.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' SYNC"
     )
+
+
+@pytest.fixture(name="materialize_log_field", scope="function")
+def materialize_log_field(
+    signoz: types.SigNoz,
+) -> Generator[Callable[[str, str, str, str], None], None, None]:
+    mat_fields: List[tuple[str, str, str]] = []
+
+    def _materialize_log_field(
+        token: str,
+        name: str,
+        data_type: str,
+        field_type: str,
+    ) -> None:
+        response = requests.post(
+            signoz.self.host_configs["8080"].get("/api/v1/logs/fields"),
+            headers={"authorization": f"Bearer {token}"},
+            json={
+                "name": name,
+                "dataType": data_type,
+                "type": field_type,
+                "selected": True,
+            },
+            timeout=10,
+        )
+        assert response.status_code == HTTPStatus.OK, (
+            f"Failed to materialize log field {name}: "
+            f"{response.status_code} {response.text}"
+        )
+        mat_fields.append((field_type, data_type, name))
+
+    yield _materialize_log_field
+
+    for mat_field_type, mat_field_data_type, mat_field_name in mat_fields:
+        mat_field_name = mat_field_name.replace(".", "$$")
+        if mat_field_type == "resources":
+            mat_field_type = "resource"
+        field = f"{mat_field_type}_{mat_field_data_type}_{mat_field_name}"
+        signoz.telemetrystore.conn.query(
+            f"ALTER TABLE signoz_logs.logs_v2 ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP INDEX IF EXISTS {field}_idx"
+        )
+        for table in ["logs_v2", "distributed_logs_v2"]:
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}"
+            )
+            signoz.telemetrystore.conn.query(
+                f"ALTER TABLE signoz_logs.{table} ON CLUSTER '{signoz.telemetrystore.env['SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER']}' DROP COLUMN IF EXISTS {field}_exists"
+            )
 
 
 @pytest.fixture(name="ttl_legacy_logs_v2_table_setup", scope="function")

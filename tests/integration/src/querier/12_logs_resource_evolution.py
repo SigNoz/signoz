@@ -115,10 +115,9 @@ def _assert_grouped_series(
         assert actual_values == expected_values
 
 
-def test_logs_group_by_resource_across_column_evolution(
+def _test_logs_resource_evolution(
     signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
+    token: str,
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     """
@@ -165,8 +164,6 @@ def test_logs_group_by_resource_across_column_evolution(
             ),
         ]
     )
-
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     before_series = _query_grouped_log_series(
         signoz, token, before_2 - timedelta(minutes=1), before_1 + timedelta(minutes=1)
@@ -238,4 +235,30 @@ def test_logs_group_by_resource_across_column_evolution(
                 int(after_2.timestamp() * 1000): 1,
             },
         },
+    )
+
+
+def test_logs_resource_evolution(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    _test_logs_resource_evolution(
+        signoz, token, insert_logs
+    )
+
+
+def test_logs_materialized_resource_evolution(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    materialize_log_field: Callable[[str, str, str, str], None],
+) -> None:
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    materialize_log_field(token, "service.name", "string", "resources")
+    _test_logs_resource_evolution(
+        signoz, token, insert_logs
     )
