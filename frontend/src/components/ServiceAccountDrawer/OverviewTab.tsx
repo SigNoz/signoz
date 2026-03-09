@@ -1,12 +1,13 @@
 import { useCallback } from 'react';
 import { Badge } from '@signozhq/badge';
-import { ChevronDown, LockKeyhole } from '@signozhq/icons';
+import { LockKeyhole } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { Select } from 'antd';
+import type { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
-import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
+import APIError from 'types/api/error';
 
 interface OverviewTabProps {
 	account: ServiceAccountRow;
@@ -15,6 +16,11 @@ interface OverviewTabProps {
 	localRoles: string[];
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
+	availableRoles: RoletypesRoleDTO[];
+	rolesLoading?: boolean;
+	rolesError?: boolean;
+	rolesErrorObj?: APIError | undefined;
+	onRefetchRoles?: () => void;
 }
 
 function OverviewTab({
@@ -24,6 +30,11 @@ function OverviewTab({
 	localRoles,
 	onRolesChange,
 	isDisabled,
+	availableRoles,
+	rolesLoading,
+	rolesError,
+	rolesErrorObj,
+	onRefetchRoles,
 }: OverviewTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -86,7 +97,7 @@ function OverviewTab({
 							{localRoles.length > 0 ? (
 								localRoles.map((r) => (
 									<Badge key={r} color="vanilla">
-										{capitalize(r)}
+										{r}
 									</Badge>
 								))
 							) : (
@@ -96,22 +107,22 @@ function OverviewTab({
 						<LockKeyhole size={14} className="sa-drawer__lock-icon" />
 					</div>
 				) : (
-					<Select
+					<RolesSelect
 						id="sa-roles"
 						mode="multiple"
+						roles={availableRoles}
+						loading={rolesLoading}
+						isError={rolesError}
+						error={rolesErrorObj}
+						onRefetch={onRefetchRoles}
 						value={localRoles}
-						onChange={(roles): void => onRolesChange(roles as string[])}
-						className="sa-drawer__role-select"
-						suffixIcon={<ChevronDown size={14} />}
+						onChange={onRolesChange}
 						placeholder="Select roles"
+						className="sa-drawer__role-select"
 						getPopupContainer={(triggerNode): HTMLElement =>
 							(triggerNode?.closest('.sa-drawer') as HTMLElement) || document.body
 						}
-					>
-						<Select.Option value="ADMIN">{capitalize('ADMIN')}</Select.Option>
-						<Select.Option value="EDITOR">{capitalize('EDITOR')}</Select.Option>
-						<Select.Option value="VIEWER">{capitalize('VIEWER')}</Select.Option>
-					</Select>
+					/>
 				)}
 			</div>
 

@@ -46,13 +46,21 @@ function RolesCell({ roles }: { roles: string[] }): JSX.Element {
 	}
 	const first = roles[0];
 	const overflow = roles.length - 1;
+	const tooltipContent = roles.slice(1).join(', ');
+
 	return (
 		<div className="sa-roles-cell">
 			<Badge color="vanilla">{first}</Badge>
 			{overflow > 0 && (
-				<Badge color="vanilla" variant="outline">
-					+{overflow}
-				</Badge>
+				<Tooltip
+					title={tooltipContent}
+					overlayClassName="sa-tooltip"
+					overlayStyle={{ maxWidth: '600px' }}
+				>
+					<Badge color="vanilla" variant="outline" className="sa-status-badge">
+						+{overflow}
+					</Badge>
+				</Tooltip>
 			)}
 		</div>
 	);
@@ -67,7 +75,7 @@ function StatusBadge({ status }: { status: string }): JSX.Element {
 		);
 	}
 	return (
-		<Badge color="vanilla" variant="outline">
+		<Badge color="vanilla" variant="outline" className="sa-status-badge">
 			DISABLED
 		</Badge>
 	);
@@ -80,8 +88,8 @@ function ServiceAccountsEmptyState({
 }): JSX.Element {
 	return (
 		<div className="sa-empty-state">
-			<span className="sa-empty-state__emoji" role="img" aria-label="robot">
-				🤖
+			<span className="sa-empty-state__emoji" role="img" aria-label="monocle face">
+				🧐
 			</span>
 			{searchQuery ? (
 				<p className="sa-empty-state__text">
@@ -132,27 +140,14 @@ function ServiceAccountsTable({
 			title: 'Roles',
 			dataIndex: 'roles',
 			key: 'roles',
-			width: 200,
+			width: 420,
 			render: (roles: string[]): JSX.Element => <RolesCell roles={roles} />,
-		},
-		{
-			title: 'Permissions',
-			key: 'permissions',
-			width: 240,
-			render: (): JSX.Element => <span className="sa-dash">—</span>,
-		},
-		{
-			title: 'Keys',
-			key: 'keys',
-			width: 96,
-			align: 'right' as const,
-			render: (): JSX.Element => <span className="sa-dash">—</span>,
 		},
 		{
 			title: 'Status',
 			dataIndex: 'status',
 			key: 'status',
-			width: 96,
+			width: 120,
 			align: 'right' as const,
 			className: 'sa-status-cell',
 			render: (status: string): JSX.Element => <StatusBadge status={status} />,

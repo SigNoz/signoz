@@ -9,7 +9,6 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { DatePicker } from 'antd';
 import { useCreateServiceAccountKey } from 'api/generated/services/serviceaccount';
 import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import { format } from 'date-fns';
 import type { Dayjs } from 'dayjs';
 
 import './AddKeyModal.styles.scss';
@@ -105,7 +104,7 @@ function AddKeyModal({
 			return 'Never';
 		}
 		try {
-			return format(expiryDate.toDate(), 'MMM d, yyyy');
+			return expiryDate.format('MMM D, YYYY');
 		} catch {
 			return 'Never';
 		}
@@ -143,7 +142,7 @@ function AddKeyModal({
 					</div>
 
 					<div className="add-key-modal__field">
-						<label className="add-key-modal__label">Expiration</label>
+						<span className="add-key-modal__label">Expiration</span>
 						<ToggleGroup
 							type="single"
 							value={expiryMode}
@@ -174,9 +173,12 @@ function AddKeyModal({
 
 					{expiryMode === 'date' && (
 						<div className="add-key-modal__field">
-							<label className="add-key-modal__label">Expiration Date</label>
+							<label className="add-key-modal__label" htmlFor="expiry-date">
+								Expiration Date
+							</label>
 							<div className="add-key-modal__datepicker">
 								<DatePicker
+									id="expiry-date"
 									value={expiryDate}
 									onChange={(date): void => setExpiryDate(date)}
 									style={{ width: '100%', height: 32 }}
@@ -222,7 +224,7 @@ function AddKeyModal({
 			{phase === 'created' && createdKey && (
 				<div className="add-key-modal__form">
 					<div className="add-key-modal__field">
-						<label className="add-key-modal__label">API Key</label>
+						<span className="add-key-modal__label">API Key</span>
 						<div className="add-key-modal__key-display">
 							<span className="add-key-modal__key-text">{createdKey.key}</span>
 							<Button
@@ -252,12 +254,7 @@ function AddKeyModal({
 					<div className="add-key-modal__footer">
 						<span />
 						<div className="add-key-modal__footer-right">
-							<Button
-								variant="solid"
-								color="primary"
-								size="sm"
-								onClick={handleClose}
-							>
+							<Button variant="solid" color="primary" size="sm" onClick={handleClose}>
 								Done
 							</Button>
 						</div>

@@ -9,11 +9,11 @@ import {
 	useRevokeServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
 import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import { format } from 'date-fns';
+import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 
 import EditKeyModal from './EditKeyModal';
+import { formatLastUsed } from './utils';
 
 interface KeysTabProps {
 	accountId: string;
@@ -25,15 +25,15 @@ function formatExpiry(expiresAt: number): JSX.Element {
 	if (expiresAt === 0) {
 		return <span className="keys-tab__expiry--never">Never</span>;
 	}
-	const expiryDate = new Date(expiresAt * 1000);
-	if (expiryDate < new Date()) {
+	const expiryDate = dayjs.unix(expiresAt);
+	if (expiryDate.isBefore(dayjs())) {
 		return (
 			<span className="keys-tab__expiry--expired">
-				{format(expiryDate, 'MMM d, yyyy')}
+				{expiryDate.format('MMM D, YYYY')}
 			</span>
 		);
 	}
-	return <span>{format(expiryDate, 'MMM d, yyyy')}</span>;
+	return <span>{expiryDate.format('MMM D, YYYY')}</span>;
 }
 
 function KeysTab({
@@ -88,20 +88,9 @@ function KeysTab({
 		refetch();
 	}, [refetch]);
 
-	const formatLastUsed = useCallback(
-		(lastUsed: Date | null | undefined): string => {
-			if (!lastUsed) {
-				return '—';
-			}
-			try {
-				return formatTimezoneAdjustedTimestamp(
-					String(lastUsed),
-					DATE_TIME_FORMATS.DASH_DATETIME,
-				);
-			} catch {
-				return '—';
-			}
-		},
+	const handleFormatLastUsed = useCallback(
+		(lastUsed: Date | null | undefined): string =>
+			formatLastUsed(lastUsed, formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
 
@@ -157,7 +146,7 @@ function KeysTab({
 							{formatExpiry(keyItem.expires_at)}
 						</span>
 						<span className="keys-tab__col-last-used">
-							{formatLastUsed(keyItem.last_used ?? null)}
+							{handleFormatLastUsed(keyItem.last_used ?? null)}
 						</span>
 						<span className="keys-tab__col-action">
 							<Tooltip title="Revoke Key">
@@ -201,8 +190,8 @@ function KeysTab({
 				disableOutsideClick={false}
 			>
 				<p className="delete-dialog__body">
-					Revoking this key will permanently invalidate it. Any systems using
-					this key will lose access immediately.
+					Revoking this key will permanently invalidate it. Any systems using this
+					key will lose access immediately.
 				</p>
 				<DialogFooter className="delete-dialog__footer">
 					<Button

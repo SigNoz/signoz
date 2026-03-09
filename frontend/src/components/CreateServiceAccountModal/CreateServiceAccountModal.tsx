@@ -1,10 +1,11 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
-import { ChevronDown, X } from '@signozhq/icons';
+import { X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
-import { Form, Input, Select } from 'antd';
+import { Form, Input } from 'antd';
 import { useCreateServiceAccount } from 'api/generated/services/serviceaccount';
+import RolesSelect, { useRoles } from 'components/RolesSelect';
 
 import './CreateServiceAccountModal.styles.scss';
 
@@ -16,7 +17,7 @@ interface CreateServiceAccountModalProps {
 
 interface FormValues {
 	name: string;
-	email?: string;
+	email: string;
 	roles: string[];
 }
 
@@ -27,8 +28,25 @@ function CreateServiceAccountModal({
 }: CreateServiceAccountModalProps): JSX.Element {
 	const [form] = Form.useForm<FormValues>();
 	const [isSubmitting, setIsSubmitting] = useState(false);
+	const [submittable, setSubmittable] = useState(false);
+
+	const values = Form.useWatch([], form);
+
+	useEffect(() => {
+		form
+			.validateFields({ validateOnly: true })
+			.then(() => setSubmittable(true))
+			.catch(() => setSubmittable(false));
+	}, [values, form]);
 
 	const { mutateAsync: createServiceAccount } = useCreateServiceAccount();
+	const {
+		roles,
+		isLoading: rolesLoading,
+		isError: rolesError,
+		error: rolesErrorObj,
+		refetch: refetchRoles,
+	} = useRoles();
 
 	const handleClose = useCallback((): void => {
 		form.resetFields();
@@ -42,8 +60,8 @@ function CreateServiceAccountModal({
 			await createServiceAccount({
 				data: {
 					name: values.name.trim(),
-					email: values.email?.trim() ?? '',
-					roles: values.roles ?? [],
+					email: values.email.trim(),
+					roles: values.roles,
 				},
 			});
 			toast.success('Service account created successfully', { richColors: true });
@@ -93,6 +111,10 @@ function CreateServiceAccountModal({
 					<Form.Item
 						name="email"
 						label="Email Address"
+						rules={[
+							{ required: true, message: 'Email Address is required' },
+							{ type: 'email', message: 'Please enter a valid email address' },
+						]}
 						className="create-sa-form__item"
 					>
 						<Input
@@ -106,21 +128,26 @@ function CreateServiceAccountModal({
 						authentication.
 					</p>
 
-					<Form.Item name="roles" label="Roles" className="create-sa-form__item">
-						<Select
+					<Form.Item
+						name="roles"
+						label="Roles"
+						rules={[{ required: true, message: 'At least one role is required' }]}
+						className="create-sa-form__item"
+					>
+						<RolesSelect
 							mode="multiple"
+							roles={roles}
+							loading={rolesLoading}
+							isError={rolesError}
+							error={rolesErrorObj}
+							onRefetch={refetchRoles}
 							placeholder="Select roles"
-							suffixIcon={<ChevronDown size={14} />}
 							className="create-sa-form__select"
 							getPopupContainer={(triggerNode): HTMLElement =>
 								(triggerNode?.closest('.create-sa-modal') as HTMLElement) ||
 								document.body
 							}
-						>
-							<Select.Option value="VIEWER">Viewer</Select.Option>
-							<Select.Option value="EDITOR">Editor</Select.Option>
-							<Select.Option value="ADMIN">Admin</Select.Option>
-						</Select>
+						/>
 					</Form.Item>
 				</Form>
 			</div>
@@ -142,7 +169,7 @@ function CreateServiceAccountModal({
 					color="primary"
 					size="sm"
 					onClick={handleSubmit}
-					disabled={isSubmitting}
+					disabled={isSubmitting || !submittable}
 				>
 					{isSubmitting ? 'Creating...' : 'Create Service Account'}
 				</Button>

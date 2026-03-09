@@ -1,0 +1,25 @@
+.roles-select-error {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 6px;
+	padding: 4px 8px;
+	color: var(--bg-cherry-500);
+	font-size: 12px;
+
+	&__msg {
+		display: flex;
+		align-items: center;
+		gap: 6px;
+	}
+
+	&__retry-btn {
+		display: flex;
+		align-items: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		color: var(--bg-cherry-500);
+	}
+}
