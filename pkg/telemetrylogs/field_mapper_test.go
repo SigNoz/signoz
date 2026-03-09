@@ -545,7 +545,38 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		errorStr        string
 	}{
 		{
-			name: "New evolutions after tsStartTime - should include all",
+			name: "New evolutions at tsStartTime - should include latest evolution",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      0,
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      1,
+					ReleaseTime:  time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 30, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resource"},
+			expectedEvols:   []string{"resource"},
+		},
+		{
+			name: "New evolutions after tsStartTime but less than tsEndTime - should include both",
 			columns: []*schema.Column{
 				logsV2Columns["resources_string"],
 				logsV2Columns["resource"],
@@ -599,7 +630,38 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			expectedEvols:   []string{"resources_string"},
 		},
 		{
-			name: "New evolutions after tsEndTime - should exclude all",
+			name: "New evolutions at tsEndTime - should not include new evolution",
+			columns: []*schema.Column{
+				logsV2Columns["resources_string"],
+				logsV2Columns["resource"],
+			},
+			evolutions: []*telemetrytypes.EvolutionEntry{
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resources_string",
+					ColumnType:   "Map(LowCardinality(String), String)",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      0,
+					ReleaseTime:  time.Date(0, 0, 0, 0, 0, 0, 0, time.UTC),
+				},
+				{
+					Signal:       telemetrytypes.SignalLogs,
+					ColumnName:   "resource",
+					ColumnType:   "JSON()",
+					FieldContext: telemetrytypes.FieldContextResource,
+					FieldName:    "__all__",
+					Version:      1,
+					ReleaseTime:  time.Date(2024, 2, 30, 0, 0, 0, 0, time.UTC),
+				},
+			},
+			tsStart:         uint64(time.Date(2024, 2, 25, 0, 0, 0, 0, time.UTC).UnixNano()),
+			tsEnd:           uint64(time.Date(2024, 2, 30, 0, 0, 0, 0, time.UTC).UnixNano()),
+			expectedColumns: []string{"resources_string"},
+			expectedEvols:   []string{"resources_string"},
+		},
+		{
+			name: "New evolutions after tsEndTime - should exclude new",
 			columns: []*schema.Column{
 				logsV2Columns["resources_string"],
 				logsV2Columns["resource"],

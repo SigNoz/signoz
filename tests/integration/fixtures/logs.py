@@ -1,7 +1,7 @@
 import datetime
 import json
 from abc import ABC
-from typing import Any, Callable, Generator, List, Optional
+from typing import Any, Callable, Generator, List, Literal, Optional
 
 import numpy as np
 import pytest
@@ -104,6 +104,7 @@ class Logs(ABC):
     attributes_number: dict[str, np.float64]
     attributes_bool: dict[str, bool]
     resources_string: dict[str, str]
+    resource_json: dict[str, str]
     scope_name: str
     scope_version: str
     scope_string: dict[str, str]
@@ -126,6 +127,7 @@ class Logs(ABC):
         scope_name: str = "",
         scope_version: str = "",
         scope_attributes: dict[str, str] = {},
+        resource_write_mode: Literal["legacy_only", "dual_write"] = "dual_write",
     ) -> None:
         if timestamp is None:
             timestamp = datetime.datetime.now()
@@ -165,6 +167,9 @@ class Logs(ABC):
 
         # Process resources and attributes
         self.resources_string = {k: str(v) for k, v in resources.items()}
+        self.resource_json = (
+            {} if resource_write_mode == "legacy_only" else dict(self.resources_string)
+        )
         for k, v in self.resources_string.items():
             self.tag_attributes.append(
                 LogsTagAttributes(
@@ -326,7 +331,7 @@ class Logs(ABC):
                 self.scope_name,
                 self.scope_version,
                 self.scope_string,
-                self.resources_string,
+                self.resource_json,
             ]
         )
 
