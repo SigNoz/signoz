@@ -63,8 +63,11 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 		return nil, err
 	}
 
-	// mark the user as active
-	user.Status = types.UserStatusActive
+	// query the user again
+	user, err = m.store.GetByOrgIDAndID(ctx, user.OrgID, user.ID)
+	if err != nil {
+		return nil, err
+	}
 
 	return user, nil
 }
@@ -103,17 +106,10 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	}
 
 	// validate all emails to be invited
-	emails := make([]string, 0, len(bulkInvites.Invites))
-	seen := make(map[string]struct{}, len(bulkInvites.Invites))
-	for _, invite := range bulkInvites.Invites {
-		email := invite.Email.StringValue()
-		if _, exists := seen[email]; exists {
-			return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Duplicate email in request: %s", email)
-		}
-		seen[email] = struct{}{}
-		emails = append(emails, email)
+	emails := make([]string, len(bulkInvites.Invites))
+	for idx, invite := range bulkInvites.Invites {
+		emails[idx] = invite.Email.StringValue()
 	}
-
 	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
