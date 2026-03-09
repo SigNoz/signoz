@@ -13,6 +13,9 @@ export interface UserResponse {
 	displayName: string;
 	orgId: string;
 	organization: string;
+	/**
+	 * @deprecated This will be removed in the future releases in favor of new AuthZ framework
+	 */
 	role: ROLES;
 	updatedAt?: number;
 }
