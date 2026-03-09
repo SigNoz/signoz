@@ -97,11 +97,7 @@ func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, 
 	}
 
 	if len(roles) != len(names) {
-		return nil, store.sqlstore.WrapNotFoundErrf(
-			nil,
-			roletypes.ErrCodeRoleNotFound,
-			"not all roles found for the provided names: %v", names,
-		)
+		return nil, errors.Newf(errors.TypeInvalidInput, roletypes.ErrCodeRoleNotFound, "not all roles found for the provided names: %v", names)
 	}
 
 	return roles, nil
@@ -122,11 +118,7 @@ func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, id
 	}
 
 	if len(roles) != len(ids) {
-		return nil, store.sqlstore.WrapNotFoundErrf(
-			nil,
-			roletypes.ErrCodeRoleNotFound,
-			"not all roles found for the provided ids: %v", ids,
-		)
+		return nil, errors.Newf(errors.TypeInvalidInput, roletypes.ErrCodeRoleNotFound, "not all roles found for the provided ids: %v", ids)
 	}
 
 	return roles, nil
