@@ -5,6 +5,7 @@ import (
 	"database/sql"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -66,6 +67,14 @@ func (migration *deprecateUserInvite) Register(migrations *migrate.Migrations) e
 }
 
 func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error {
+	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("user_invite"))
+	if err != nil {
+		if err == sql.ErrNoRows || errors.Ast(err, errors.TypeNotFound) {
+			return nil
+		}
+		return err
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -125,11 +134,6 @@ func (migration *deprecateUserInvite) Up(ctx context.Context, db *bun.DB) error 
 	}
 
 	// finally drop the user_invite table
-	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("user_invite"))
-	if err != nil {
-		return err
-	}
-
 	dropTableSqls := migration.sqlschema.Operator().DropTable(table)
 
 	for _, sql := range dropTableSqls {
