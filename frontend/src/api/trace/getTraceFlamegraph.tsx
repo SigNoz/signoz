@@ -1,5 +1,5 @@
 import { ApiV2Instance as axios } from 'api';
-import { omit } from 'lodash-es';
+import { isUndefined, omit, omitBy } from 'lodash-es';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	GetTraceFlamegraphPayloadProps,
@@ -11,9 +11,10 @@ const getTraceFlamegraph = async (
 ): Promise<
 	SuccessResponse<GetTraceFlamegraphSuccessResponse> | ErrorResponse
 > => {
+	const body = omitBy(omit(props, 'traceId'), isUndefined);
 	const response = await axios.post<GetTraceFlamegraphSuccessResponse>(
 		`/traces/flamegraph/${props.traceId}`,
-		omit(props, 'traceId'),
+		body,
 	);
 
 	return {

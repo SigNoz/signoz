@@ -13,7 +13,7 @@ import {
 	useState,
 } from 'react';
 import { useHistory, useLocation } from 'react-router-dom';
-import { Button } from 'antd';
+import { Button, Spin } from 'antd';
 import Color from 'color';
 import TimelineV2 from 'components/TimelineV2/TimelineV2';
 import { themeColors } from 'constants/theme';
@@ -35,6 +35,8 @@ interface ISuccessProps {
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	traceMetadata: ITraceMetadata;
 	selectedSpan: Span | undefined;
+	onViewWindowChange?: (viewStart: number, viewEnd: number, topVisibleSpanId: string) => void;
+	isZoomFetching?: boolean;
 }
 
 // // Constants for rendering
@@ -129,6 +131,8 @@ function Success(props: ISuccessProps): JSX.Element {
 		traceMetadata,
 		firstSpanAtFetchLevel,
 		selectedSpan,
+		onViewWindowChange,
+		isZoomFetching,
 	} = props;
 	const { search } = useLocation();
 	const history = useHistory();
@@ -174,6 +178,34 @@ function Success(props: ISuccessProps): JSX.Element {
 		viewStartRef.current = viewStartTs;
 		viewEndRef.current = viewEndTs;
 	}, [viewStartTs, viewEndTs]);
+
+	// --- Report view window changes to parent for zoom-based API re-fetch ---
+	useEffect(() => {
+		if (!onViewWindowChange) return;
+
+		// Find topmost visible span in the current time window
+		const firstVisibleLevel = Math.max(
+			0,
+			Math.floor(scrollTopRef.current / ROW_HEIGHT),
+		);
+		const midTs = (viewStartTs + viewEndTs) / 2;
+		let topSpanId = firstSpanAtFetchLevel;
+
+		// Walk from first visible level downward to find a span in the time window
+		for (
+			let level = firstVisibleLevel;
+			level < Math.min(firstVisibleLevel + 5, spans.length);
+			level++
+		) {
+			const span = getClosestSpanAtLevel(spans[level], midTs);
+			if (span) {
+				topSpanId = span.spanId;
+				break;
+			}
+		}
+
+		onViewWindowChange(viewStartTs, viewEndTs, topSpanId);
+	}, [viewStartTs, viewEndTs]); // intentionally sparse deps — fire only on view window change
 
 	// Drag state in refs to avoid re-renders during drag
 	const isDraggingRef = useRef(false);
@@ -1093,6 +1125,12 @@ function Success(props: ISuccessProps): JSX.Element {
 					>
 						Reset View
 					</Button>
+				)}
+				{isZoomFetching && (
+					<div className="flamegraph-zoom-loading">
+						<Spin size="small" />
+						<span>Loading detail...</span>
+					</div>
 				)}
 				<canvas
 					ref={canvasRef}

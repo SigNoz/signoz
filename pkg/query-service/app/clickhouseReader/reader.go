@@ -1241,6 +1241,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		if boundaryEnd == 0 {
 			boundaryEnd = endTime
 		}
+		fmt.Printf("start: %d, end: %d, old start: %d, old end: %d", boundaryStart, boundaryEnd, startTime, endTime)
 		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
 	zap.L().Info("getFlamegraphSpansForTrace: processing post cache", zap.Duration("duration", time.Since(processingPostCache)), zap.String("traceID", traceID),
@@ -3246,8 +3247,8 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
-		`SELECT DISTINCT metric_name 
-		 FROM %s.%s 
+		`SELECT DISTINCT metric_name
+		 FROM %s.%s
 		 WHERE metric_name ILIKE $1 AND __normalized = $2`,
 		signozMetricDBName, signozTSTableNameV41Day)
 
@@ -3319,8 +3320,8 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 	var response v3.AggregateAttributeResponse
 	// Query all relevant metric names from time_series_v4, but leave metadata retrieval to cache/db
 	query := fmt.Sprintf(
-		`SELECT metric_name,type,temporality,is_monotonic 
-		 FROM %s.%s 
+		`SELECT metric_name,type,temporality,is_monotonic
+		 FROM %s.%s
 		 WHERE metric_name ILIKE $1
 		 GROUP BY metric_name,type,temporality,is_monotonic`,
 		signozMeterDBName, signozMeterSamplesName)
@@ -4853,7 +4854,7 @@ func (r *ClickHouseReader) GetOverallStateTransitions(ctx context.Context, ruleI
         state,
         unix_milli AS firing_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateFiring.String() + `' 
+    WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -4864,7 +4865,7 @@ resolution_events AS (
         state,
         unix_milli AS resolution_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateInactive.String() + `' 
+    WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -4981,7 +4982,7 @@ WITH firing_events AS (
         state,
         unix_milli AS firing_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateFiring.String() + `' 
+    WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -4992,7 +4993,7 @@ resolution_events AS (
         state,
         unix_milli AS resolution_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateInactive.String() + `' 
+    WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -5038,7 +5039,7 @@ WITH firing_events AS (
         state,
         unix_milli AS firing_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateFiring.String() + `' 
+    WHERE overall_state = '` + model.StateFiring.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -5049,7 +5050,7 @@ resolution_events AS (
         state,
         unix_milli AS resolution_time
     FROM %s.%s
-    WHERE overall_state = '` + model.StateInactive.String() + `' 
+    WHERE overall_state = '` + model.StateInactive.String() + `'
       AND overall_state_changed = true
       AND rule_id IN ('%s')
 	  AND unix_milli >= %d AND unix_milli <= %d
@@ -5277,7 +5278,7 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 }
 
 func (r *ClickHouseReader) GetMetricsDataPoints(ctx context.Context, metricName string) (uint64, *model.ApiError) {
-	query := fmt.Sprintf(`SELECT 
+	query := fmt.Sprintf(`SELECT
     sum(count) as data_points
 FROM %s.%s
 WHERE metric_name = ?
@@ -5292,7 +5293,7 @@ WHERE metric_name = ?
 }
 
 func (r *ClickHouseReader) GetMetricsLastReceived(ctx context.Context, metricName string) (int64, *model.ApiError) {
-	query := fmt.Sprintf(`SELECT 
+	query := fmt.Sprintf(`SELECT
     MAX(unix_milli) AS last_received_time
 FROM %s.%s
 WHERE metric_name = ?
@@ -5303,7 +5304,7 @@ WHERE metric_name = ?
 	if err != nil {
 		return 0, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
-	query = fmt.Sprintf(`SELECT 
+	query = fmt.Sprintf(`SELECT
     MAX(unix_milli) AS last_received_time
 FROM %s.%s
 WHERE metric_name = ? and unix_milli > ?
@@ -5317,7 +5318,7 @@ WHERE metric_name = ? and unix_milli > ?
 }
 
 func (r *ClickHouseReader) GetTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, *model.ApiError) {
-	query := fmt.Sprintf(`SELECT 
+	query := fmt.Sprintf(`SELECT
     uniq(fingerprint) AS timeSeriesCount
 FROM %s.%s
 WHERE metric_name = ?;`, signozMetricDBName, signozTSTableNameV41Week)
@@ -5344,7 +5345,7 @@ func (r *ClickHouseReader) GetAttributesForMetricName(ctx context.Context, metri
 	}
 
 	const baseQueryTemplate = `
-SELECT 
+SELECT
     kv.1 AS key,
     arrayMap(x -> trim(BOTH '"' FROM x), groupUniqArray(1000)(kv.2)) AS values,
     length(groupUniqArray(10000)(kv.2)) AS valueCount
@@ -5443,7 +5444,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	sampleTable, countExp := utils.WhichSampleTableToUse(req.Start, req.End)
 
 	metricsQuery := fmt.Sprintf(
-		`SELECT 
+		`SELECT
 		    t.metric_name AS metric_name,
 		    ANY_VALUE(t.description) AS description,
 		    ANY_VALUE(t.type) AS metric_type,
@@ -5508,11 +5509,11 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 
 	if whereClause != "" {
 		sb.WriteString(fmt.Sprintf(
-			`SELECT 
+			`SELECT
 				s.samples,
 				s.metric_name
 			FROM (
-				SELECT 
+				SELECT
 					dm.metric_name,
 					%s AS samples
 				FROM %s.%s AS dm
@@ -5542,11 +5543,11 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	} else {
 		// If no filters, it is a simpler query.
 		sb.WriteString(fmt.Sprintf(
-			`SELECT 
+			`SELECT
         s.samples,
         s.metric_name
     FROM (
-        SELECT 
+        SELECT
             metric_name,
             %s AS samples
         FROM %s.%s
@@ -5646,16 +5647,16 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 
 	// Construct the query without backticks
 	query := fmt.Sprintf(`
-		SELECT 
+		SELECT
 			metric_name,
 			total_value,
 			(total_value * 100.0 / total_time_series) AS percentage
 		FROM (
-			SELECT 
+			SELECT
 					metric_name,
 					uniq(fingerprint) AS total_value,
-					(SELECT uniq(fingerprint) 
-					 FROM %s.%s 
+					(SELECT uniq(fingerprint)
+					 FROM %s.%s
 					 WHERE unix_milli BETWEEN ? AND ? AND __normalized = ?) AS total_time_series
 				FROM %s.%s
 				WHERE unix_milli BETWEEN ? AND ? AND NOT startsWith(metric_name, 'signoz') AND __normalized = ? %s
@@ -5726,7 +5727,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 
 	queryLimit := 50 + req.Limit
 	metricsQuery := fmt.Sprintf(
-		`SELECT 
+		`SELECT
 		    ts.metric_name AS metric_name,
 		    uniq(ts.fingerprint) AS timeSeries
 		FROM %s.%s AS ts
@@ -5783,13 +5784,13 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 			FROM %s.%s
 			WHERE unix_milli BETWEEN ? AND ?
 		)
-		SELECT 
+		SELECT
 			s.samples,
 			s.metric_name,
 			COALESCE((s.samples * 100.0 / t.total_samples), 0) AS percentage
-		FROM 
+		FROM
 		(
-			SELECT 
+			SELECT
 				dm.metric_name,
 				%s AS samples
 			FROM %s.%s AS dm`,
@@ -5810,7 +5811,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	if whereClause != "" {
 		sb.WriteString(fmt.Sprintf(
 			` AND dm.fingerprint IN (
-				SELECT ts.fingerprint 
+				SELECT ts.fingerprint
 				FROM %s.%s AS ts
 				WHERE ts.metric_name IN (%s)
 				AND unix_milli BETWEEN ? AND ?
@@ -5876,7 +5877,7 @@ func (r *ClickHouseReader) GetNameSimilarity(ctx context.Context, req *metrics_e
 	}
 
 	query := fmt.Sprintf(`
-		SELECT 
+		SELECT
 			metric_name,
 			any(type) as type,
 		    any(temporality) as temporality,
@@ -5930,7 +5931,7 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 
 	// Get target labels
 	extractedLabelsQuery := fmt.Sprintf(`
-		SELECT 
+		SELECT
 			kv.1 AS label_key,
 			topK(10)(JSONExtractString(kv.2)) AS label_values
 		FROM %s.%s
@@ -5974,12 +5975,12 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 	priorityListString := strings.Join(priorityList, ", ")
 
 	candidateLabelsQuery := fmt.Sprintf(`
-		WITH 
-			arrayDistinct([%s]) AS filter_keys,     
+		WITH
+			arrayDistinct([%s]) AS filter_keys,
 			arrayDistinct([%s]) AS filter_values,
 			[%s] AS priority_pairs_input,
 			%d AS priority_multiplier
-		SELECT 
+		SELECT
 			metric_name,
 			any(type) as type,
 			any(temporality) as temporality,
@@ -6080,17 +6081,17 @@ func (r *ClickHouseReader) GetAttributeSimilarity(ctx context.Context, req *metr
 
 func (r *ClickHouseReader) GetMetricsAllResourceAttributes(ctx context.Context, start int64, end int64) (map[string]uint64, *model.ApiError) {
 	start, end, attTable, _ := utils.WhichAttributesTableToUse(start, end)
-	query := fmt.Sprintf(`SELECT 
-    key, 
+	query := fmt.Sprintf(`SELECT
+    key,
     count(distinct value) AS distinct_value_count
 FROM (
     SELECT key, value
     FROM %s.%s
-    ARRAY JOIN 
+    ARRAY JOIN
         arrayConcat(mapKeys(resource_attributes)) AS key,
         arrayConcat(mapValues(resource_attributes)) AS value
     WHERE unix_milli between ? and ?
-) 
+)
 GROUP BY key
 ORDER BY distinct_value_count DESC;`, signozMetadataDbName, attTable)
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
@@ -6227,11 +6228,11 @@ func (r *ClickHouseReader) GetInspectMetricsFingerprints(ctx context.Context, at
 
 	start, end, tsTable, _ := utils.WhichTSTableToUse(req.Start, req.End)
 	query := fmt.Sprintf(`
-        SELECT 
+        SELECT
     arrayDistinct(groupArray(toString(fingerprint))) AS fingerprints
 FROM
 (
-    SELECT 
+    SELECT
         metric_name, labels, fingerprint,
         %s
     FROM %s.%s
@@ -6387,14 +6388,14 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	var stillMissing []string
 	if len(missingMetrics) > 0 {
 		metricList := "'" + strings.Join(missingMetrics, "', '") + "'"
-		query := fmt.Sprintf(`SELECT 
+		query := fmt.Sprintf(`SELECT
 						metric_name,
 						argMax(type, created_at) AS type,
 						argMax(description, created_at) AS description,
 						argMax(temporality, created_at) AS temporality,
 						argMax(is_monotonic, created_at) AS is_monotonic,
 						argMax(unit, created_at) AS unit
-					FROM %s.%s 
+					FROM %s.%s
 					WHERE metric_name IN (%s)
 					GROUP BY metric_name;`,
 			signozMetricDBName,
@@ -6442,7 +6443,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 	if len(stillMissing) > 0 {
 		metricList := "'" + strings.Join(stillMissing, "', '") + "'"
 		query := fmt.Sprintf(`SELECT DISTINCT metric_name, type, description, temporality, is_monotonic, unit
-			FROM %s.%s 
+			FROM %s.%s
 			WHERE metric_name IN (%s)`, signozMetricDBName, signozTSTableNameV4, metricList)
 		valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 		rows, err := r.db.Query(valueCtx, query)

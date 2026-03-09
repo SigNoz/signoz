@@ -8,8 +8,8 @@ import (
 
 var (
 	flamegraphSpanLevelLimit      float64 = 50
-	flamegraphSpanLimitPerLevel   int     = 1000
-	flamegraphSamplingBucketCount int     = 500
+	flamegraphSpanLimitPerLevel   int     = 100
+	flamegraphSamplingBucketCount int     = 50
 
 	MaxLimitWithoutSampling uint = 120_000
 )
@@ -103,7 +103,7 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 	})
 
 	// pick the top 5 latency spans
-	for idx := range 100 {
+	for idx := range 5 {
 		sampledSpans = append(sampledSpans, spans[idx])
 	}
 

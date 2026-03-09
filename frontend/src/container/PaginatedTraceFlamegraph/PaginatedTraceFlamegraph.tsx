@@ -1,12 +1,13 @@
 // @ts-nocheck
 /* eslint-disable */
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import { Progress, Skeleton, Tooltip, Typography } from 'antd';
 import { AxiosError } from 'axios';
 import Spinner from 'components/Spinner';
 import { themeColors } from 'constants/theme';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
+import useDebounce from 'hooks/useDebounce';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
@@ -23,6 +24,12 @@ import Success from './TraceFlamegraphStates/Success/Success_zoom';
 // import Success from './TraceFlamegraphStates/Success/SuccessCursor';
 // import Success from './TraceFlamegraphStates/Success/Success';
 import './PaginatedTraceFlamegraph.styles.scss';
+
+interface ViewWindow {
+	viewStart: number;
+	viewEnd: number;
+	topSpanId: string;
+}
 
 interface ITraceFlamegraphProps {
 	serviceExecTime: Record<string, number>;
@@ -49,13 +56,86 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		setFirstSpanAtFetchLevel(urlQuery.get('spanId') || '');
 	}, [urlQuery]);
 
+	// --- Zoom-based API re-fetch orchestration ---
+
+	// Raw view window from the canvas child (updated on every zoom/drag frame)
+	const [rawViewWindow, setRawViewWindow] = useState<ViewWindow | null>(null);
+
+	// Debounced view window — settles 300ms after the last zoom/drag interaction
+	const debouncedViewWindow = useDebounce(rawViewWindow, 300);
+
+	// Store trace extents from data in a ref to break the circular dependency
+	// (apiParams depends on extents, data depends on apiParams)
+	const traceExtentsRef = useRef({ fullStart: 0, fullEnd: 0 });
+
+	// Callback for the canvas child to report its current visible window
+	const handleViewWindowChange = useCallback(
+		(viewStart: number, viewEnd: number, topSpanId: string) => {
+			setRawViewWindow({ viewStart, viewEnd, topSpanId });
+		},
+		[],
+	);
+
+	// Derive API params from the debounced view window
+	const apiParams = useMemo(() => {
+		const { fullStart, fullEnd } = traceExtentsRef.current;
+		const fullSpan = fullEnd - fullStart;
+
+		if (!debouncedViewWindow || fullSpan <= 0) {
+			return {
+				selectedSpanId: firstSpanAtFetchLevel,
+				boundaryStartTsMilli: undefined,
+				boundarEndTsMilli: undefined,
+			};
+		}
+
+		const { viewStart, viewEnd, topSpanId } = debouncedViewWindow;
+		const viewSpan = viewEnd - viewStart;
+		const ratio = viewSpan / fullSpan;
+
+		// Only send boundaries when zoomed in past 80% threshold
+		if (ratio < 0.8) {
+			const padding = viewSpan * 0.5; // 2x fetch width (50% padding each side)
+			return {
+				// CRITICAL: always use firstSpanAtFetchLevel (never topSpanId) so the
+				// backend's lowerLimit/upperLimit stays constant across all zoom fetches.
+				// Changing selectedSpanId shifts lowerLimit → Spans[i] represents a
+				// different absolute level → wrong canvas Y-positions → spans don't appear.
+				selectedSpanId: firstSpanAtFetchLevel,
+				boundaryStartTsMilli: Math.floor(Math.max(fullStart, viewStart - padding)),
+				boundarEndTsMilli: Math.ceil(Math.min(fullEnd, viewEnd + padding)),
+			};
+		}
+
+		// Not zoomed enough — use default params (no boundaries)
+		return {
+			selectedSpanId: firstSpanAtFetchLevel,
+			boundaryStartTsMilli: undefined,
+			boundarEndTsMilli: undefined,
+		};
+	}, [debouncedViewWindow, firstSpanAtFetchLevel]);
+
+	// Single query with dynamic params
 	const { data, isFetching, error } = useGetTraceFlamegraph({
 		traceId,
-		selectedSpanId: firstSpanAtFetchLevel,
+		selectedSpanId: apiParams.selectedSpanId,
 		limit: 10001,
-		// boundaryStartTsMilli: 0,
-		// boundarEndTsMilli: 10000,
+		boundaryStartTsMilli: apiParams.boundaryStartTsMilli,
+		boundarEndTsMilli: apiParams.boundarEndTsMilli,
 	});
+
+	// Update trace extents ref when data arrives (breaks circular dep)
+	useEffect(() => {
+		if (data?.payload) {
+			traceExtentsRef.current = {
+				fullStart: data.payload.startTimestampMillis,
+				fullEnd: data.payload.endTimestampMillis,
+			};
+		}
+	}, [data?.payload]);
+
+	// Is this a zoom-triggered fetch (vs initial load)?
+	const isZoomFetching = isFetching && apiParams.boundaryStartTsMilli !== undefined;
 
 	// get the current state of trace flamegraph based on the API lifecycle
 	const traceFlamegraphState = useMemo(() => {
@@ -115,6 +195,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 							endTime: data?.payload?.endTimestampMillis || 0,
 						}}
 						selectedSpan={selectedSpan}
+						onViewWindowChange={handleViewWindowChange}
+						isZoomFetching={isZoomFetching}
 					/>
 				);
 			default:
@@ -125,6 +207,8 @@ function TraceFlamegraph(props: ITraceFlamegraphProps): JSX.Element {
 		data?.payload?.startTimestampMillis,
 		error,
 		firstSpanAtFetchLevel,
+		handleViewWindowChange,
+		isZoomFetching,
 		selectedSpan,
 		spans,
 		traceFlamegraphState,

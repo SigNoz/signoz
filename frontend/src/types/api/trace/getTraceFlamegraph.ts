@@ -6,8 +6,8 @@ export interface GetTraceFlamegraphPayloadProps {
 	traceId: string;
 	selectedSpanId: string;
 	limit: number;
-	boundaryStartTsMilli: number;
-	boundarEndTsMilli: number;
+	boundaryStartTsMilli?: number;
+	boundarEndTsMilli?: number;
 }
 
 export interface Event {

@@ -8,6 +8,23 @@
 		position: relative;
 	}
 
+	.flamegraph-zoom-loading {
+		position: absolute;
+		top: 8px;
+		right: 8px;
+		z-index: 10;
+		display: flex;
+		align-items: center;
+		gap: 6px;
+		padding: 4px 10px;
+		border-radius: 4px;
+		background-color: var(--bg-ink-300, rgba(0, 0, 0, 0.45));
+		color: var(--text-vanilla-100, #fff);
+		font-size: 11px;
+		opacity: 0.85;
+		pointer-events: none;
+	}
+
 	.trace-flamegraph-virtuoso {
 		overflow-x: hidden;
 
