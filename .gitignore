@@ -229,4 +229,9 @@ cython_debug/
 # LSP config files
 pyrightconfig.json
 
-
+# SSL certificates and private keys
+*.pem
+*.key
+*.crt
+*.cert
+deploy/docker/ssl/

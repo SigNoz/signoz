@@ -202,9 +202,11 @@ docker compose -f docker-compose.nginx.yaml down -v
 ## Security Considerations
 
 1. **Production Certificates**: Always use valid CA-signed certificates in production
-2. **Strong Ciphers**: Configure Nginx with strong SSL/TLS ciphers
-3. **HSTS**: Enable HTTP Strict Transport Security for production
-4. **Firewall**: Ensure only necessary ports are exposed
+2. **Never Commit Private Keys**: The `ssl/` directory is gitignored. Never commit `.pem`, `.key`, or `.crt` files to version control
+3. **Regenerate Certificates**: Always generate new certificates for each deployment. Never reuse the same private key across environments
+4. **Strong Ciphers**: Configure Nginx with strong SSL/TLS ciphers
+5. **HSTS**: Enable HTTP Strict Transport Security for production
+6. **Firewall**: Ensure only necessary ports are exposed
 
 ## Contributing
 
