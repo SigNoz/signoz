@@ -65,7 +65,7 @@ func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
 		return err
 	}
 
-	emails := make([]string, 0, len(temp.Invites))
+	// check for duplicate emails in the same request
 	seen := make(map[string]struct{}, len(temp.Invites))
 	for _, invite := range temp.Invites {
 		email := invite.Email.StringValue()
@@ -73,7 +73,6 @@ func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Duplicate email in request: %s", email)
 		}
 		seen[email] = struct{}{}
-		emails = append(emails, email)
 	}
 
 	*request = PostableBulkInviteRequest(temp)
