@@ -134,11 +134,6 @@ func (ta *MockAgentConfigProvider) GetDeployStatusByHash(_ context.Context, _ va
 }
 
 // AgentConfigProvider interface
-func (ta *MockAgentConfigProvider) GetPendingDeployments(_ context.Context) ([]PendingDeployment, error) {
-	return nil, nil
-}
-
-// AgentConfigProvider interface
 func (ta *MockAgentConfigProvider) SubscribeToConfigUpdates(callback func()) func() {
 	subscriberId := uuid.NewString()
 	ta.ConfigUpdateSubscribers[subscriberId] = callback

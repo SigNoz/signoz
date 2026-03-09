@@ -183,25 +183,6 @@ func (m *Manager) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, 
 	return m.Repo.GetDeployStatusByHash(ctx, orgId, configHash)
 }
 
-// Implements opamp.AgentConfigProvider
-func (m *Manager) GetPendingDeployments(ctx context.Context) ([]opamp.PendingDeployment, error) {
-	versions, err := m.Repo.GetPendingDeployments(ctx)
-	if err != nil {
-		return nil, err
-	}
-	result := make([]opamp.PendingDeployment, 0, len(versions))
-	for _, v := range versions {
-		rawHash := strings.TrimPrefix(v.Hash, v.OrgID.String())
-		if rawHash == "" {
-			continue
-		}
-		result = append(result, opamp.PendingDeployment{
-			OrgID:         v.OrgID,
-			RawConfigHash: rawHash,
-		})
-	}
-	return result, nil
-}
 
 func GetLatestVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,

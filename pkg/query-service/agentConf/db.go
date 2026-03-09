@@ -246,36 +246,6 @@ func (r *Repo) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, con
 	return version.DeployStatus, nil
 }
 
-// GetPendingDeployments returns all config versions with in_progress deploy status.
-// Used on server startup to rehydrate coordinator subscribers that were lost on crash/restart.
-func (r *Repo) GetPendingDeployments(ctx context.Context) ([]opamptypes.AgentConfigVersion, error) {
-	var versions []opamptypes.AgentConfigVersion
-	err := r.store.BunDB().NewSelect().
-		Model(&versions).
-		ColumnExpr("org_id, hash").
-		// Only consider non-terminal deployment states (i.e. anything except failed or deployed).
-		Where("deploy_status NOT IN (?, ?)",
-			opamptypes.DeployFailed.StringValue(),
-			opamptypes.Deployed.StringValue(),
-		).
-		// For each org, keep only the latest pending version.
-		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE org_id = acv.org_id AND deploy_status NOT IN (?, ?))",
-			opamptypes.DeployFailed.StringValue(),
-			opamptypes.Deployed.StringValue(),
-		).
-		// Exclude any pending version that is before a terminal (deployed/failed) version for the same org.
-		Where("NOT EXISTS (SELECT 1 FROM agent_config_version acv2 WHERE acv2.org_id = acv.org_id AND acv2.version > acv.version AND acv2.deploy_status IN (?, ?))",
-			opamptypes.Deployed.StringValue(),
-			opamptypes.DeployFailed.StringValue(),
-		).
-		Where("hash IS NOT NULL AND hash != ''").
-		Scan(ctx)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to query pending deployments")
-	}
-	return versions, nil
-}
-
 func (r *Repo) updateDeployStatusByHash(
 	ctx context.Context, orgId valuer.UUID, confighash string, status string, result string,
 ) error {

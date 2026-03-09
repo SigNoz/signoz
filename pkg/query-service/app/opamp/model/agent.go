@@ -127,6 +127,15 @@ func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer, c
 		if err == nil {
 			// Set the agent config status to the status from the database
 			agent.Status.RemoteConfigStatus.Status = opamptypes.DeployStatusToProtoStatus[deployStatus]
+
+			// If the deployment is still pending, register a subscriber now so that
+			// when the status-change check below fires onConfigSuccess/onConfigFailure,
+			// notifySubscribers finds the callback and updates the DB.
+			// we rehydrate lazily, per-agent, for exactly the hash the agent reports.
+			if deployStatus != opamptypes.Deployed &&
+				deployStatus != opamptypes.DeployFailed {
+				ListenToConfigUpdate(agent.OrgID, agent.AgentID, rawHash, configProvider.ReportConfigDeploymentStatus)
+			}
 		}
 
 		// First message from this agent instance (new connect or server restart).
