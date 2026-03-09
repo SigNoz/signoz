@@ -11,8 +11,17 @@ export default {
 				name: 'dashboards',
 				type: 'metaresources',
 			},
+			{
+				name: 'role',
+				type: 'role',
+			},
+			{
+				name: 'roles',
+				type: 'metaresources',
+			},
 		],
 		relations: {
+			assignee: ['role'],
 			create: ['metaresources'],
 			delete: ['user', 'role', 'organization', 'metaresource'],
 			list: ['metaresources'],
