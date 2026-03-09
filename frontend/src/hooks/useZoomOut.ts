@@ -62,13 +62,6 @@ export function useZoomOut(options: UseZoomOutOptions = {}): () => void {
 			urlQuery.set(QueryParams.startTime, String(newStartMs));
 			urlQuery.set(QueryParams.endTime, String(newEndMs));
 			urlQuery.delete(QueryParams.relativeTime);
-			persistTimeDurationForRoute(
-				location.pathname,
-				JSON.stringify({
-					startTime: newStartMs,
-					endTime: newEndMs,
-				}),
-			);
 		}
 		for (const param of urlParamsToDeleteRef.current) {
 			urlQuery.delete(param);
