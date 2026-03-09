@@ -176,6 +176,7 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 		typeables = append(typeables, register.MustGetTypeables()...)
 	}
 
+	typeables = append(typeables, provider.MustGetTypeables()...)
 	resources := make([]*authtypes.Resource, 0)
 	for _, typeable := range typeables {
 		resources = append(resources, &authtypes.Resource{Name: typeable.Name(), Type: typeable.Type()})
