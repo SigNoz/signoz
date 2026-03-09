@@ -1,11 +1,9 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import { isAxiosError } from 'axios';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { QueryParams } from 'constants/query';
 import { initialQueryMeterWithType, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import EmptyMetricsSearch from 'container/MetricsExplorer/Explorer/EmptyMetricsSearch';
@@ -13,8 +11,7 @@ import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsF
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
@@ -26,28 +23,12 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 function TimeSeries(): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
-	const urlQuery = useUrlQuery();
-	const location = useLocation();
-	const { safeNavigate } = useSafeNavigate();
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	// yAxisUnit from URL query param only (no compositeQuery.unit)
-	const yAxisUnitFromUrl = urlQuery.get(QueryParams.yAxisUnit) ?? '';
-	const [yAxisUnit, setYAxisUnit] = useState<string>(yAxisUnitFromUrl);
-
-	// Sync yAxisUnit when URL param changes (e.g. browser back or shared link)
-	useEffect(() => {
-		const fromUrl = urlQuery.get(QueryParams.yAxisUnit) ?? '';
-		if (fromUrl !== yAxisUnit) {
-			setYAxisUnit(fromUrl);
-		}
-		// Only react to URL param changes
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.search]);
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -131,23 +112,6 @@ function TimeSeries(): JSX.Element {
 		[data, isValidToConvertToMs],
 	);
 
-	const onUnitChangeHandler = useCallback(
-		(value: string): void => {
-			setYAxisUnit(value);
-			const params = new URLSearchParams(urlQuery);
-			if (value) {
-				params.set(QueryParams.yAxisUnit, value);
-			} else {
-				params.delete(QueryParams.yAxisUnit);
-			}
-			safeNavigate({
-				pathname: location.pathname,
-				search: `?${params.toString()}`,
-			});
-		},
-		[location.pathname, safeNavigate, urlQuery],
-	);
-
 	const hasMetricSelected = useMemo(
 		() => currentQuery.builder.queryData.some((q) => q.aggregateAttribute?.key),
 		[currentQuery],
@@ -155,7 +119,7 @@ function TimeSeries(): JSX.Element {
 
 	return (
 		<div className="meter-time-series-container">
-			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
 				{!hasMetricSelected && <EmptyMetricsSearch />}
 				{hasMetricSelected &&

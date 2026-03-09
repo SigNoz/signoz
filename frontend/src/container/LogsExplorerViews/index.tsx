@@ -11,7 +11,6 @@ import {
 } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useLocation } from 'react-router-dom';
 import getFromLocalstorage from 'api/browser/localstorage/get';
 import setToLocalstorage from 'api/browser/localstorage/set';
 import logEvent from 'api/common/logEvent';
@@ -39,8 +38,8 @@ import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import useUrlQuery from 'hooks/useUrlQuery';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { UpdateTimeInterval } from 'store/actions';
@@ -79,8 +78,6 @@ function LogsExplorerViewsContainer({
 }): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const dispatch = useDispatch();
-	const urlQuery = useUrlQuery();
-	const location = useLocation();
 
 	const [showFrequencyChart, setShowFrequencyChart] = useState(
 		() => getFromLocalstorage(LOCALSTORAGE.SHOW_FREQUENCY_CHART) === 'true',
@@ -114,19 +111,7 @@ function LogsExplorerViewsContainer({
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
-	// yAxisUnit from URL query param only (no compositeQuery.unit)
-	const yAxisUnitFromUrl = urlQuery.get(QueryParams.yAxisUnit) ?? '';
-	const [yAxisUnit, setYAxisUnit] = useState<string>(yAxisUnitFromUrl);
-
-	// Sync yAxisUnit when URL param changes (e.g. browser back or shared link)
-	useEffect(() => {
-		const fromUrl = urlQuery.get(QueryParams.yAxisUnit) ?? '';
-		if (fromUrl !== yAxisUnit) {
-			setYAxisUnit(fromUrl);
-		}
-		// Only react to URL param changes
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [location.search]);
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
 	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
 		stagedQuery,
@@ -384,23 +369,6 @@ function LogsExplorerViewsContainer({
 		orderBy,
 	]);
 
-	const onUnitChangeHandler = useCallback(
-		(value: string): void => {
-			setYAxisUnit(value);
-			const params = new URLSearchParams(urlQuery);
-			if (value) {
-				params.set(QueryParams.yAxisUnit, value);
-			} else {
-				params.delete(QueryParams.yAxisUnit);
-			}
-			safeNavigate({
-				pathname: location.pathname,
-				search: `?${params.toString()}`,
-			});
-		},
-		[location.pathname, safeNavigate, urlQuery],
-	);
-
 	const chartData = useMemo(() => {
 		if (!stagedQuery) {
 			return [];
@@ -518,10 +486,7 @@ function LogsExplorerViewsContainer({
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
 							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter
-									onChange={onUnitChangeHandler}
-									yAxisUnit={yAxisUnit}
-								/>
+								<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 							</div>
 							<TimeSeriesView
 								isLoading={isLoading || isFetching}
