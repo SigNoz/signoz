@@ -15,5 +15,6 @@
 	"logs_to_metrics": "Logs To Metrics",
 	"roles": "Roles",
 	"role_details": "Role Details",
-	"members": "Members"
+	"members": "Members",
+	"service_accounts": "Service Accounts"
 }

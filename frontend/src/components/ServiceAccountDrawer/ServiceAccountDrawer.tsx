@@ -370,15 +370,15 @@ function ServiceAccountDrawer({
 				}}
 				title={`Disable service account ${account?.name ?? ''}?`}
 				width="narrow"
-				className="alert-dialog delete-dialog"
+				className="alert-dialog sa-disable-dialog"
 				showCloseButton={false}
 				disableOutsideClick={false}
 			>
-				<p className="delete-dialog__body">
+				<p className="sa-disable-dialog__body">
 					Disabling this service account will revoke access for all its keys. Any
 					systems using this account will lose access immediately.
 				</p>
-				<DialogFooter className="delete-dialog__footer">
+				<DialogFooter className="sa-disable-dialog__footer">
 					<Button
 						variant="solid"
 						color="secondary"
