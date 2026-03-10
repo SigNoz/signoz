@@ -198,7 +198,7 @@ func TestNotifier_Notify_WithReason(t *testing.T) {
 					resp.Header().Add("Content-Type", "application/json; charset=utf-8")
 				}
 				resp.WriteHeader(tt.statusCode)
-				resp.WriteString(tt.responseBody)
+				_, _ = resp.WriteString(tt.responseBody)
 				return resp.Result(), nil
 			}
 			ctx := context.Background()
@@ -258,7 +258,7 @@ func TestSlackTimeout(t *testing.T) {
 					resp := httptest.NewRecorder()
 					resp.Header().Set("Content-Type", "application/json; charset=utf-8")
 					resp.WriteHeader(http.StatusOK)
-					resp.WriteString(`{"ok":true}`)
+					_, _ = resp.WriteString(`{"ok":true}`)
 
 					return resp.Result(), nil
 				}
@@ -304,7 +304,7 @@ func TestSlackMessageField(t *testing.T) {
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(http.StatusOK)
-		w.Write([]byte(`{"ok": true}`))
+		_, _ = w.Write([]byte(`{"ok": true}`))
 	}))
 	defer server.Close()
 

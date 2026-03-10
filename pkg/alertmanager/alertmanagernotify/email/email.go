@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"crypto/tls"
-	"errors"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -20,6 +19,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -57,12 +57,12 @@ func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
 }
 
 // auth resolves a string of authentication mechanisms.
-func (n *Email) auth(mechs string) (smtp.Auth, error) {
+func (n *Email) auth(ctx context.Context, mechs string) (smtp.Auth, error) {
 	username := n.conf.AuthUsername
 
 	// If no username is set, keep going without authentication.
 	if n.conf.AuthUsername == "" {
-		n.logger.Debug("smtp_auth_username is not configured. Attempting to send email without authenticating")
+		n.logger.DebugContext(ctx, "smtp_auth_username is not configured. Attempting to send email without authenticating")
 		return nil, nil
 	}
 
@@ -76,7 +76,7 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 				continue
 			}
 			if secret == "" {
-				err.Add(errors.New("missing secret for CRAM-MD5 auth mechanism"))
+				err.Add(errors.NewInternalf(errors.CodeInternal, "missing secret for CRAM-MD5 auth mechanism"))
 				continue
 			}
 			return smtp.CRAMMD5Auth(username, secret), nil
@@ -88,7 +88,7 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 				continue
 			}
 			if password == "" {
-				err.Add(errors.New("missing password for PLAIN auth mechanism"))
+				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for PLAIN auth mechanism"))
 				continue
 			}
 			identity := n.conf.AuthIdentity
@@ -101,14 +101,14 @@ func (n *Email) auth(mechs string) (smtp.Auth, error) {
 				continue
 			}
 			if password == "" {
-				err.Add(errors.New("missing password for LOGIN auth mechanism"))
+				err.Add(errors.NewInternalf(errors.CodeInternal, "missing password for LOGIN auth mechanism"))
 				continue
 			}
 			return LoginAuth(username, password), nil
 		}
 	}
 	if err.Len() == 0 {
-		err.Add(errors.New("unknown auth mechanism: " + mechs))
+		err.Add(errors.NewInternalf(errors.CodeInternal, "unknown auth mechanism: %s", mechs))
 	}
 	return nil, err
 }
@@ -133,7 +133,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	if useImplicitTLS {
 		tlsConfig, err := commoncfg.NewTLSConfig(n.conf.TLSConfig)
 		if err != nil {
-			return false, fmt.Errorf("parse TLS configuration: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "parse TLS configuration")
 		}
 		if tlsConfig.ServerName == "" {
 			tlsConfig.ServerName = n.conf.Smarthost.Host
@@ -141,7 +141,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 
 		conn, err = tls.Dial("tcp", n.conf.Smarthost.String(), tlsConfig)
 		if err != nil {
-			return true, fmt.Errorf("establish TLS connection to server: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "establish TLS connection to server")
 		}
 	} else {
 		var (
@@ -150,55 +150,55 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 		)
 		conn, err = d.DialContext(ctx, "tcp", n.conf.Smarthost.String())
 		if err != nil {
-			return true, fmt.Errorf("establish connection to server: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "establish connection to server")
 		}
 	}
 	c, err = smtp.NewClient(conn, n.conf.Smarthost.Host)
 	if err != nil {
 		conn.Close()
-		return true, fmt.Errorf("create SMTP client: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "create SMTP client")
 	}
 	defer func() {
 		// Try to clean up after ourselves but don't log anything if something has failed.
 		if err := c.Quit(); success && err != nil {
-			n.logger.Warn("failed to close SMTP connection", "err", err)
+			n.logger.WarnContext(ctx, "failed to close SMTP connection", "err", err)
 		}
 	}()
 
 	if n.conf.Hello != "" {
 		err = c.Hello(n.conf.Hello)
 		if err != nil {
-			return true, fmt.Errorf("send EHLO command: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "send EHLO command")
 		}
 	}
 
 	// Global Config guarantees RequireTLS is not nil.
 	if *n.conf.RequireTLS && !useImplicitTLS {
 		if ok, _ := c.Extension("STARTTLS"); !ok {
-			return true, fmt.Errorf("'require_tls' is true (default) but %q does not advertise the STARTTLS extension", n.conf.Smarthost)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "'require_tls' is true (default) but %q does not advertise the STARTTLS extension", n.conf.Smarthost)
 		}
 
 		tlsConf, err := commoncfg.NewTLSConfig(n.conf.TLSConfig)
 		if err != nil {
-			return false, fmt.Errorf("parse TLS configuration: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "parse TLS configuration")
 		}
 		if tlsConf.ServerName == "" {
 			tlsConf.ServerName = n.conf.Smarthost.Host
 		}
 
 		if err := c.StartTLS(tlsConf); err != nil {
-			return true, fmt.Errorf("send STARTTLS command: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "send STARTTLS command")
 		}
 	}
 
 	if ok, mech := c.Extension("AUTH"); ok {
-		auth, err := n.auth(mech)
+		auth, err := n.auth(ctx, mech)
 		if err != nil {
-			return true, fmt.Errorf("find auth mechanism: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
 		}
 		if auth != nil {
 			if err := c.Auth(auth); err != nil {
-				return true, fmt.Errorf("%T auth: %w", auth, err)
+				return true, errors.WrapInternalf(err, errors.CodeInternal, "%T auth", auth)
 			}
 		}
 	}
@@ -210,37 +210,37 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	)
 	from := tmpl(n.conf.From)
 	if tmplErr != nil {
-		return false, fmt.Errorf("execute 'from' template: %w", tmplErr)
+		return false, errors.WrapInternalf(tmplErr, errors.CodeInternal, "execute 'from' template")
 	}
 	to := tmpl(n.conf.To)
 	if tmplErr != nil {
-		return false, fmt.Errorf("execute 'to' template: %w", tmplErr)
+		return false, errors.WrapInternalf(tmplErr, errors.CodeInternal, "execute 'to' template")
 	}
 
 	addrs, err := mail.ParseAddressList(from)
 	if err != nil {
-		return false, fmt.Errorf("parse 'from' addresses: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "parse 'from' addresses")
 	}
 	if len(addrs) != 1 {
-		return false, fmt.Errorf("must be exactly one 'from' address (got: %d)", len(addrs))
+		return false, errors.NewInternalf(errors.CodeInternal, "must be exactly one 'from' address (got: %d)", len(addrs))
 	}
 	if err = c.Mail(addrs[0].Address); err != nil {
-		return true, fmt.Errorf("send MAIL command: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "send MAIL command")
 	}
 	addrs, err = mail.ParseAddressList(to)
 	if err != nil {
-		return false, fmt.Errorf("parse 'to' addresses: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "parse 'to' addresses")
 	}
 	for _, addr := range addrs {
 		if err = c.Rcpt(addr.Address); err != nil {
-			return true, fmt.Errorf("send RCPT command: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "send RCPT command")
 		}
 	}
 
 	// Send the email headers and body.
 	message, err := c.Data()
 	if err != nil {
-		return true, fmt.Errorf("send DATA command: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "send DATA command")
 	}
 	closeOnce := sync.OnceValue(func() error {
 		return message.Close()
@@ -256,7 +256,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	for header, t := range n.conf.Headers {
 		value, err := n.tmpl.ExecuteTextString(t, data)
 		if err != nil {
-			return false, fmt.Errorf("execute %q header template: %w", header, err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "execute %q header template", header)
 		}
 		fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", value))
 	}
@@ -301,7 +301,7 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	// and active/resolved.
 	_, err = message.Write(buffer.Bytes())
 	if err != nil {
-		return false, fmt.Errorf("write headers: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "write headers")
 	}
 
 	if len(n.conf.Text) > 0 {
@@ -311,20 +311,20 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 			"Content-Type":              {"text/plain; charset=UTF-8"},
 		})
 		if err != nil {
-			return false, fmt.Errorf("create part for text template: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "create part for text template")
 		}
 		body, err := n.tmpl.ExecuteTextString(n.conf.Text, data)
 		if err != nil {
-			return false, fmt.Errorf("execute text template: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "execute text template")
 		}
 		qw := quotedprintable.NewWriter(w)
 		_, err = qw.Write([]byte(body))
 		if err != nil {
-			return true, fmt.Errorf("write text part: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "write text part")
 		}
 		err = qw.Close()
 		if err != nil {
-			return true, fmt.Errorf("close text part: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "close text part")
 		}
 	}
 
@@ -337,36 +337,36 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 			"Content-Type":              {"text/html; charset=UTF-8"},
 		})
 		if err != nil {
-			return false, fmt.Errorf("create part for html template: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "create part for html template")
 		}
 		body, err := n.tmpl.ExecuteHTMLString(n.conf.HTML, data)
 		if err != nil {
-			return false, fmt.Errorf("execute html template: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "execute html template")
 		}
 		qw := quotedprintable.NewWriter(w)
 		_, err = qw.Write([]byte(body))
 		if err != nil {
-			return true, fmt.Errorf("write HTML part: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "write HTML part")
 		}
 		err = qw.Close()
 		if err != nil {
-			return true, fmt.Errorf("close HTML part: %w", err)
+			return true, errors.WrapInternalf(err, errors.CodeInternal, "close HTML part")
 		}
 	}
 
 	err = multipartWriter.Close()
 	if err != nil {
-		return false, fmt.Errorf("close multipartWriter: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "close multipartWriter")
 	}
 
 	_, err = message.Write(multipartBuffer.Bytes())
 	if err != nil {
-		return false, fmt.Errorf("write body buffer: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "write body buffer")
 	}
 
 	// Complete the message and await response.
 	if err = closeOnce(); err != nil {
-		return true, fmt.Errorf("delivery failure: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "delivery failure")
 	}
 
 	success = true
@@ -394,7 +394,7 @@ func (a *loginAuth) Next(fromServer []byte, more bool) ([]byte, error) {
 		case "password:":
 			return []byte(a.password), nil
 		default:
-			return nil, errors.New("unexpected server challenge")
+			return nil, errors.NewInternalf(errors.CodeInternal, "unexpected server challenge")
 		}
 	}
 	return nil, nil
@@ -404,7 +404,7 @@ func (n *Email) getPassword() (string, error) {
 	if len(n.conf.AuthPasswordFile) > 0 {
 		content, err := os.ReadFile(n.conf.AuthPasswordFile)
 		if err != nil {
-			return "", fmt.Errorf("could not read %s: %w", n.conf.AuthPasswordFile, err)
+			return "", errors.WrapInternalf(err, errors.CodeInternal, "could not read %s", n.conf.AuthPasswordFile)
 		}
 		return strings.TrimSpace(string(content)), nil
 	}
@@ -415,7 +415,7 @@ func (n *Email) getAuthSecret() (string, error) {
 	if len(n.conf.AuthSecretFile) > 0 {
 		content, err := os.ReadFile(n.conf.AuthSecretFile)
 		if err != nil {
-			return "", fmt.Errorf("could not read %s: %w", n.conf.AuthSecretFile, err)
+			return "", errors.WrapInternalf(err, errors.CodeInternal, "could not read %s", n.conf.AuthSecretFile)
 		}
 		return string(content), nil
 	}

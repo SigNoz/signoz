@@ -4,13 +4,13 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -87,7 +87,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 	logger := n.logger.With("group_key", key)
-	logger.Debug("extracted group key")
+	logger.DebugContext(ctx, "extracted group key")
 
 	var (
 		data     = notify.GetTemplateData(ctx, n.tmpl, as, logger)
@@ -103,7 +103,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	title, truncated := notify.TruncateInRunes(tmplText(n.conf.Title), maxTitleLenRunes)
 	if truncated {
-		logger.Warn("Truncated title", "max_runes", maxTitleLenRunes)
+		logger.WarnContext(ctx, "Truncated title", "max_runes", maxTitleLenRunes)
 	}
 	att := &attachment{
 		Title:      title,
@@ -198,15 +198,15 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	if n.conf.Timeout > 0 {
-		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, fmt.Errorf("configured slack timeout reached (%s)", n.conf.Timeout))
+		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeInternal, "configured slack timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = postCtx
 	}
 
-	resp, err := n.postJSONFunc(ctx, n.client, u, &buf)
+	resp, err := n.postJSONFunc(ctx, n.client, u, &buf) //nolint:bodyclose
 	if err != nil {
 		if ctx.Err() != nil {
-			err = fmt.Errorf("%w: %w", err, context.Cause(ctx))
+			err = errors.NewInternalf(errors.CodeInternal, "failed to post JSON to slack: %v", context.Cause(ctx))
 		}
 		return true, notify.RedactURL(err)
 	}
@@ -216,7 +216,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	// classify them as retriable or not.
 	retry, err := n.retrier.Check(resp.StatusCode, resp.Body)
 	if err != nil {
-		err = fmt.Errorf("channel %q: %w", req.Channel, err)
+		err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
 		return retry, notify.NewErrorWithReason(notify.GetFailureReasonFromStatusCode(resp.StatusCode), err)
 	}
 
@@ -224,7 +224,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	// https://slack.dev/node-slack-sdk/web-api#handle-errors
 	retry, err = checkResponseError(resp)
 	if err != nil {
-		err = fmt.Errorf("channel %q: %w", req.Channel, err)
+		err = errors.NewInternalf(errors.CodeInternal, "channel %q: %v", req.Channel, err)
 		return retry, notify.NewErrorWithReason(notify.ClientErrorReason, err)
 	}
 
@@ -235,7 +235,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 func checkResponseError(resp *http.Response) (bool, error) {
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return true, fmt.Errorf("could not read response body: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "could not read response body")
 	}
 
 	if strings.HasPrefix(resp.Header.Get("Content-Type"), "application/json") {
@@ -250,7 +250,7 @@ func checkResponseError(resp *http.Response) (bool, error) {
 // (https://api.slack.com/messaging/webhooks#handling_errors)
 func checkTextResponseError(body []byte) (bool, error) {
 	if !bytes.Equal(body, []byte("ok")) {
-		return false, fmt.Errorf("received an error response from Slack: %s", string(body))
+		return false, errors.NewInternalf(errors.CodeInternal, "received an error response from Slack: %s", string(body))
 	}
 	return false, nil
 }
@@ -265,10 +265,10 @@ func checkJSONResponseError(body []byte) (bool, error) {
 
 	var data response
 	if err := json.Unmarshal(body, &data); err != nil {
-		return true, fmt.Errorf("could not unmarshal JSON response %q: %w", string(body), err)
+		return true, errors.NewInternalf(errors.CodeInternal, "could not unmarshal JSON response %q: %v", string(body), err)
 	}
 	if !data.OK {
-		return false, fmt.Errorf("error response from Slack: %s", data.Error)
+		return false, errors.NewInternalf(errors.CodeInternal, "error response from Slack: %s", data.Error)
 	}
 	return false, nil
 }

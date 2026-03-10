@@ -255,7 +255,7 @@ func TestOpsGenie(t *testing.T) {
 			tc.cfg.APIKey = "{{ kaput "
 			_, _, err = notifier.createRequests(ctx, alert2)
 			require.Error(t, err)
-			require.Equal(t, "templating error: template: :1: function \"kaput\" not defined", err.Error())
+			require.Equal(t, "template: :1: function \"kaput\" not defined", err.Error())
 		})
 	}
 }

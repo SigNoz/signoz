@@ -4,13 +4,12 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 
 	"github.com/prometheus/alertmanager/config"
@@ -74,7 +73,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 
 	logger := n.logger.With("group_key", groupKey)
-	logger.Debug("extracted group key")
+	logger.DebugContext(ctx, "extracted group key")
 
 	msg := &Message{
 		Version:         "4",
@@ -97,29 +96,29 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	} else {
 		content, err := os.ReadFile(n.conf.URLFile)
 		if err != nil {
-			return false, fmt.Errorf("read url_file: %w", err)
+			return false, errors.WrapInternalf(err, errors.CodeInternal, "read url_file")
 		}
 		url = tmpl(strings.TrimSpace(string(content)))
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template webhook URL: %w", tmplErr)
+		return false, errors.NewInternalf(errors.CodeInternal, "failed to template webhook URL: %v", tmplErr)
 	}
 
 	if url == "" {
-		return false, errors.New("webhook URL is empty after templating")
+		return false, errors.NewInternalf(errors.CodeInternal, "webhook URL is empty after templating")
 	}
 
 	if n.conf.Timeout > 0 {
-		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, fmt.Errorf("configured webhook timeout reached (%s)", n.conf.Timeout))
+		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeInternal, "configured webhook timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = postCtx
 	}
 
-	resp, err := notify.PostJSON(ctx, n.client, url, &buf)
+	resp, err := notify.PostJSON(ctx, n.client, url, &buf) //nolint:bodyclose
 	if err != nil {
 		if ctx.Err() != nil {
-			err = fmt.Errorf("%w: %w", err, context.Cause(ctx))
+			err = errors.NewInternalf(errors.CodeInternal, "failed to post JSON to webhook: %v", context.Cause(ctx))
 		}
 		return true, notify.RedactURL(err)
 	}

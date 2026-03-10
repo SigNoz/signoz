@@ -11,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 
@@ -89,7 +90,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 
 	for _, req := range requests {
 		req.Header.Set("User-Agent", notify.UserAgentHeader)
-		resp, err := n.client.Do(req)
+		resp, err := n.client.Do(req) //nolint:bodyclose
 		if err != nil {
 			return true, err
 		}
@@ -121,7 +122,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 		return nil, false, err
 	}
 	logger := n.logger.With("group_key", key)
-	logger.Debug("extracted group key")
+	logger.DebugContext(ctx, "extracted group key")
 
 	data := notify.GetTemplateData(ctx, n.tmpl, as, logger)
 
@@ -161,7 +162,7 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	default:
 		message, truncated := notify.TruncateInRunes(tmpl(n.conf.Message), maxMessageLenRunes)
 		if truncated {
-			logger.Warn("Truncated message", "alert", key, "max_runes", maxMessageLenRunes)
+			logger.WarnContext(ctx, "Truncated message", "alert", key, "max_runes", maxMessageLenRunes)
 		}
 
 		createEndpointURL := n.conf.APIURL.Copy()
@@ -266,14 +267,14 @@ func (n *Notifier) createRequests(ctx context.Context, as ...*types.Alert) ([]*h
 	} else {
 		content, err := os.ReadFile(n.conf.APIKeyFile)
 		if err != nil {
-			return nil, false, fmt.Errorf("read key_file error: %w", err)
+			return nil, false, errors.WrapInternalf(err, errors.CodeInternal, "read key_file error")
 		}
 		apiKey = tmpl(string(content))
 		apiKey = strings.TrimSpace(string(apiKey))
 	}
 
 	if err != nil {
-		return nil, false, fmt.Errorf("templating error: %w", err)
+		return nil, false, errors.WrapInternalf(err, errors.CodeInternal, "templating error")
 	}
 
 	for _, req := range requests {

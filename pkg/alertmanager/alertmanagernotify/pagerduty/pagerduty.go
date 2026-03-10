@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log/slog"
@@ -12,6 +11,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/alecthomas/units"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -103,10 +103,10 @@ type pagerDutyPayload struct {
 	CustomDetails map[string]any `json:"custom_details,omitempty"`
 }
 
-func (n *Notifier) encodeMessage(msg *pagerDutyMessage) (bytes.Buffer, error) {
+func (n *Notifier) encodeMessage(ctx context.Context, msg *pagerDutyMessage) (bytes.Buffer, error) {
 	var buf bytes.Buffer
 	if err := json.NewEncoder(&buf).Encode(msg); err != nil {
-		return buf, fmt.Errorf("failed to encode PagerDuty message: %w", err)
+		return buf, errors.WrapInternalf(err, errors.CodeInternal, "failed to encode PagerDuty message")
 	}
 
 	if buf.Len() > maxEventSize {
@@ -118,12 +118,11 @@ func (n *Notifier) encodeMessage(msg *pagerDutyMessage) (bytes.Buffer, error) {
 			msg.Payload.CustomDetails = map[string]any{"error": truncatedMsg}
 		}
 
-		warningMsg := fmt.Sprintf("Truncated Details because message of size %s exceeds limit %s", units.MetricBytes(buf.Len()).String(), units.MetricBytes(maxEventSize).String())
-		n.logger.Warn(warningMsg)
+		n.logger.WarnContext(ctx, "Truncated Details because message of size exceeds limit", "message_size", units.MetricBytes(buf.Len()).String(), "max_size", units.MetricBytes(maxEventSize).String())
 
 		buf.Reset()
 		if err := json.NewEncoder(&buf).Encode(msg); err != nil {
-			return buf, fmt.Errorf("failed to encode PagerDuty message: %w", err)
+			return buf, errors.WrapInternalf(err, errors.CodeInternal, "failed to encode PagerDuty message")
 		}
 	}
 
@@ -142,14 +141,14 @@ func (n *Notifier) notifyV1(
 
 	description, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV1DescriptionLenRunes)
 	if truncated {
-		n.logger.Warn("Truncated description", "key", key, "max_runes", maxV1DescriptionLenRunes)
+		n.logger.WarnContext(ctx, "Truncated description", "key", key, "max_runes", maxV1DescriptionLenRunes)
 	}
 
 	serviceKey := string(n.conf.ServiceKey)
 	if serviceKey == "" {
 		content, fileErr := os.ReadFile(n.conf.ServiceKeyFile)
 		if fileErr != nil {
-			return false, fmt.Errorf("failed to read service key from file: %w", fileErr)
+			return false, errors.WrapInternalf(fileErr, errors.CodeInternal, "failed to read service key from file")
 		}
 		serviceKey = strings.TrimSpace(string(content))
 	}
@@ -168,22 +167,22 @@ func (n *Notifier) notifyV1(
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template PagerDuty v1 message: %w", tmplErr)
+		return false, errors.WrapInternalf(tmplErr, errors.CodeInternal, "failed to template PagerDuty v1 message")
 	}
 
 	// Ensure that the service key isn't empty after templating.
 	if msg.ServiceKey == "" {
-		return false, errors.New("service key cannot be empty")
+		return false, errors.NewInternalf(errors.CodeInternal, "service key cannot be empty")
 	}
 
-	encodedMsg, err := n.encodeMessage(msg)
+	encodedMsg, err := n.encodeMessage(ctx, msg)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := notify.PostJSON(ctx, n.client, n.apiV1, &encodedMsg)
+	resp, err := notify.PostJSON(ctx, n.client, n.apiV1, &encodedMsg) //nolint:bodyclose
 	if err != nil {
-		return true, fmt.Errorf("failed to post message to PagerDuty v1: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "failed to post message to PagerDuty v1")
 	}
 	defer notify.Drain(resp)
 
@@ -206,14 +205,14 @@ func (n *Notifier) notifyV2(
 
 	summary, truncated := notify.TruncateInRunes(tmpl(n.conf.Description), maxV2SummaryLenRunes)
 	if truncated {
-		n.logger.Warn("Truncated summary", "key", key, "max_runes", maxV2SummaryLenRunes)
+		n.logger.WarnContext(ctx, "Truncated summary", "key", key, "max_runes", maxV2SummaryLenRunes)
 	}
 
 	routingKey := string(n.conf.RoutingKey)
 	if routingKey == "" {
 		content, fileErr := os.ReadFile(n.conf.RoutingKeyFile)
 		if fileErr != nil {
-			return false, fmt.Errorf("failed to read routing key from file: %w", fileErr)
+			return false, errors.WrapInternalf(fileErr, errors.CodeInternal, "failed to read routing key from file")
 		}
 		routingKey = strings.TrimSpace(string(content))
 	}
@@ -261,22 +260,22 @@ func (n *Notifier) notifyV2(
 	}
 
 	if tmplErr != nil {
-		return false, fmt.Errorf("failed to template PagerDuty v2 message: %w", tmplErr)
+		return false, errors.WrapInternalf(tmplErr, errors.CodeInternal, "failed to template PagerDuty v2 message")
 	}
 
 	// Ensure that the routing key isn't empty after templating.
 	if msg.RoutingKey == "" {
-		return false, errors.New("routing key cannot be empty")
+		return false, errors.NewInternalf(errors.CodeInternal, "routing key cannot be empty")
 	}
 
-	encodedMsg, err := n.encodeMessage(msg)
+	encodedMsg, err := n.encodeMessage(ctx, msg)
 	if err != nil {
 		return false, err
 	}
 
-	resp, err := notify.PostJSON(ctx, n.client, n.conf.URL.String(), &encodedMsg)
+	resp, err := notify.PostJSON(ctx, n.client, n.conf.URL.String(), &encodedMsg) //nolint:bodyclose
 	if err != nil {
-		return true, fmt.Errorf("failed to post message to PagerDuty: %w", err)
+		return true, errors.WrapInternalf(err, errors.CodeInternal, "failed to post message to PagerDuty")
 	}
 	defer notify.Drain(resp)
 
@@ -305,15 +304,15 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		eventType = pagerDutyEventResolve
 	}
 
-	logger.Debug("extracted group key", "eventType", eventType)
+	logger.DebugContext(ctx, "extracted group key", "event_type", eventType)
 
 	details, err := n.renderDetails(data)
 	if err != nil {
-		return false, fmt.Errorf("failed to render details: %w", err)
+		return false, errors.WrapInternalf(err, errors.CodeInternal, "failed to render details: %v", err)
 	}
 
 	if n.conf.Timeout > 0 {
-		nfCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, fmt.Errorf("configured pagerduty timeout reached (%s)", n.conf.Timeout))
+		nfCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeInternal, "configured pagerduty timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = nfCtx
 	}
@@ -325,7 +324,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	retry, err := nf(ctx, eventType, key, data, details)
 	if err != nil {
 		if ctx.Err() != nil {
-			err = fmt.Errorf("%w: %w", err, context.Cause(ctx))
+			err = errors.WrapInternalf(err, errors.CodeInternal, "failed to notify PagerDuty: %v", context.Cause(ctx))
 		}
 		return retry, err
 	}

@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/emersion/go-smtp"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
@@ -75,7 +76,7 @@ func (m *mailDev) getLastEmail(t *testing.T) (*email, error) {
 		return nil, err
 	}
 	if code != http.StatusOK {
-		return nil, fmt.Errorf("expected status OK, got %d", code)
+		return nil, errors.NewInternalf(errors.CodeInternal, "expected status OK, got %d", code)
 	}
 
 	t.Logf("Raw email data (getLastEmail): %s", string(b))
@@ -168,7 +169,7 @@ func notifyEmailWithContext(ctx context.Context, t *testing.T, cfg *config.Email
 	if err != nil {
 		return nil, retry, err
 	} else if e == nil {
-		return nil, retry, fmt.Errorf("email not found")
+		return nil, retry, errors.NewInternalf(errors.CodeInternal, "email not found")
 	}
 	return e, retry, nil
 }
@@ -608,7 +609,7 @@ func TestEmailConfigNoAuthMechs(t *testing.T) {
 	email := &Email{
 		conf: &config.EmailConfig{AuthUsername: "test"}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	_, err := email.auth("")
+	_, err := email.auth(context.Background(), "")
 	require.Error(t, err)
 	require.Equal(t, "unknown auth mechanism: ", err.Error())
 }
@@ -618,19 +619,19 @@ func TestEmailConfigMissingAuthParam(t *testing.T) {
 	email := &Email{
 		conf: conf, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	_, err := email.auth("CRAM-MD5")
+	_, err := email.auth(context.Background(), "CRAM-MD5")
 	require.Error(t, err)
 	require.Equal(t, "missing secret for CRAM-MD5 auth mechanism", err.Error())
 
-	_, err = email.auth("PLAIN")
+	_, err = email.auth(context.Background(), "PLAIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for PLAIN auth mechanism", err.Error())
 
-	_, err = email.auth("LOGIN")
+	_, err = email.auth(context.Background(), "LOGIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for LOGIN auth mechanism", err.Error())
 
-	_, err = email.auth("PLAIN LOGIN")
+	_, err = email.auth(context.Background(), "PLAIN LOGIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for PLAIN auth mechanism; missing password for LOGIN auth mechanism", err.Error())
 }
@@ -639,7 +640,7 @@ func TestEmailNoUsernameStillOk(t *testing.T) {
 	email := &Email{
 		conf: &config.EmailConfig{}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	a, err := email.auth("CRAM-MD5")
+	a, err := email.auth(context.Background(), "CRAM-MD5")
 	require.NoError(t, err)
 	require.Nil(t, a)
 }
@@ -721,12 +722,12 @@ func mockSMTPServer(t *testing.T) (*smtp.Server, net.Listener, error) {
 	// Listen on the next available high port.
 	l, err := net.Listen("tcp", "localhost:0")
 	if err != nil {
-		return nil, nil, fmt.Errorf("connect: %w", err)
+		return nil, nil, errors.WrapInternalf(err, errors.CodeInternal, "connect")
 	}
 
 	addr, ok := l.Addr().(*net.TCPAddr)
 	if !ok {
-		return nil, nil, fmt.Errorf("unexpected address type: %T", l.Addr())
+		return nil, nil, errors.NewInternalf(errors.CodeInternal, "unexpected address type: %T", l.Addr())
 	}
 
 	s := smtp.NewServer(&rejectingBackend{})
@@ -888,7 +889,12 @@ func TestEmailGetPassword(t *testing.T) {
 			password, err := email.getPassword()
 			if len(tc.errMsg) > 0 {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
+				if errors.Asc(err, errors.CodeInternal) {
+					_, _, errMsg, _, _, _ := errors.Unwrapb(err)
+					require.Contains(t, errMsg, tc.errMsg)
+				} else {
+					require.Contains(t, err.Error(), tc.errMsg)
+				}
 				require.Empty(t, password)
 			} else {
 				require.NoError(t, err)

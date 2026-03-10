@@ -13,6 +13,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 	"github.com/prometheus/common/model"
 	"github.com/prometheus/common/promslog"
@@ -321,7 +322,12 @@ func TestPagerDutyTemplating(t *testing.T) {
 				require.NoError(t, err)
 			} else {
 				require.Error(t, err)
-				require.Contains(t, err.Error(), tc.errMsg)
+				if errors.Asc(err, errors.CodeInternal) {
+					_, _, errMsg, _, _, _ := errors.Unwrapb(err)
+					require.Contains(t, errMsg, tc.errMsg)
+				} else {
+					require.Contains(t, err.Error(), tc.errMsg)
+				}
 			}
 			require.Equal(t, tc.retry, ok)
 		})
@@ -392,7 +398,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	encodedV1, err := notifierV1.encodeMessage(msgV1)
+	encodedV1, err := notifierV1.encodeMessage(context.Background(), msgV1)
 	require.NoError(t, err)
 	require.Contains(t, encodedV1.String(), `"details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
 
@@ -415,7 +421,7 @@ func TestEventSizeEnforcement(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	encodedV2, err := notifierV2.encodeMessage(msgV2)
+	encodedV2, err := notifierV2.encodeMessage(context.Background(), msgV2)
 	require.NoError(t, err)
 	require.Contains(t, encodedV2.String(), `"custom_details":{"error":"Custom details have been removed because the original event exceeds the maximum size of 512KB"}`)
 }
