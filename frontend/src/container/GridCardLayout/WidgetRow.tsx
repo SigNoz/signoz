@@ -81,6 +81,7 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
 							icon={<Plus size={14} />}
 							onClick={(): void => {
+								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
 								if (!selectedDashboard?.id) {
 									return;
 								}
