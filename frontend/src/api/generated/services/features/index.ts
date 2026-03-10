@@ -14,12 +14,9 @@ import type {
 } from 'react-query';
 import { useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
+import type { ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
  * This endpoint returns the supported features and their details
@@ -34,12 +31,12 @@ export const getFeatures = (signal?: AbortSignal) => {
 };
 
 export const getGetFeaturesQueryKey = () => {
-	return ['getFeatures'] as const;
+	return [`/api/v2/features`] as const;
 };
 
 export const getGetFeaturesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,
@@ -65,7 +62,7 @@ export const getGetFeaturesQueryOptions = <
 export type GetFeaturesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getFeatures>>
 >;
-export type GetFeaturesQueryError = RenderErrorResponseDTO;
+export type GetFeaturesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get features
@@ -73,7 +70,7 @@ export type GetFeaturesQueryError = RenderErrorResponseDTO;
 
 export function useGetFeatures<
 	TData = Awaited<ReturnType<typeof getFeatures>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
 	query?: UseQueryOptions<
 		Awaited<ReturnType<typeof getFeatures>>,

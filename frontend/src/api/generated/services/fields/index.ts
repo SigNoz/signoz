@@ -14,7 +14,8 @@ import type {
 } from 'react-query';
 import { useQuery } from 'react-query';
 
-import { GeneratedAPIInstance } from '../../../index';
+import type { ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetFieldsKeys200,
 	GetFieldsKeysParams,
@@ -22,10 +23,6 @@ import type {
 	GetFieldsValuesParams,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
  * This endpoint returns field keys
@@ -44,12 +41,12 @@ export const getFieldsKeys = (
 };
 
 export const getGetFieldsKeysQueryKey = (params?: GetFieldsKeysParams) => {
-	return ['getFieldsKeys', ...(params ? [params] : [])] as const;
+	return [`/api/v1/fields/keys`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetFieldsKeysQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -78,7 +75,7 @@ export const getGetFieldsKeysQueryOptions = <
 export type GetFieldsKeysQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getFieldsKeys>>
 >;
-export type GetFieldsKeysQueryError = RenderErrorResponseDTO;
+export type GetFieldsKeysQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get field keys
@@ -86,7 +83,7 @@ export type GetFieldsKeysQueryError = RenderErrorResponseDTO;
 
 export function useGetFieldsKeys<
 	TData = Awaited<ReturnType<typeof getFieldsKeys>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	params?: GetFieldsKeysParams,
 	options?: {
@@ -141,12 +138,12 @@ export const getFieldsValues = (
 };
 
 export const getGetFieldsValuesQueryKey = (params?: GetFieldsValuesParams) => {
-	return ['getFieldsValues', ...(params ? [params] : [])] as const;
+	return [`/api/v1/fields/values`, ...(params ? [params] : [])] as const;
 };
 
 export const getGetFieldsValuesQueryOptions = <
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	params?: GetFieldsValuesParams,
 	options?: {
@@ -175,7 +172,7 @@ export const getGetFieldsValuesQueryOptions = <
 export type GetFieldsValuesQueryResult = NonNullable<
 	Awaited<ReturnType<typeof getFieldsValues>>
 >;
-export type GetFieldsValuesQueryError = RenderErrorResponseDTO;
+export type GetFieldsValuesQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get field values
@@ -183,7 +180,7 @@ export type GetFieldsValuesQueryError = RenderErrorResponseDTO;
 
 export function useGetFieldsValues<
 	TData = Awaited<ReturnType<typeof getFieldsValues>>,
-	TError = RenderErrorResponseDTO
+	TError = ErrorType<RenderErrorResponseDTO>
 >(
 	params?: GetFieldsValuesParams,
 	options?: {

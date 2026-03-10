@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { CSSProperties } from 'react';
 import { FontSize } from 'container/OptionsMenu/types';
 

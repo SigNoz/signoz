@@ -11,6 +11,8 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -78,11 +80,16 @@ func (q *builderQuery[T]) Fingerprint() string {
 			case qbtypes.LogAggregation:
 				aggParts = append(aggParts, a.Expression)
 			case qbtypes.MetricAggregation:
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s",
+				var spaceAggParamStr string
+				if a.ComparisonSpaceAggregationParam != nil {
+					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
+				}
+				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
+					spaceAggParamStr,
 				))
 			}
 		}
@@ -205,6 +212,11 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: q.spec.Signal.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
+	})
+
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)

@@ -120,7 +120,6 @@ function UplotPanelWrapper({
 		const sortedSeriesData = getSortedSeriesData(
 			queryResponse.data?.payload.data.result,
 		);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data.payload.data.result = sortedSeriesData;
 	}
 

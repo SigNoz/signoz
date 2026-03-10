@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-
 export const membersResponse = [
 	{
 		id: '3223a874-5678458745786',

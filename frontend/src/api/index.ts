@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
@@ -28,7 +26,7 @@ const queryClient = new QueryClient({
 	},
 });
 
-const interceptorsResponse = (
+export const interceptorsResponse = (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
 	if ((value.config as any)?.metadata) {
@@ -51,7 +49,7 @@ const interceptorsResponse = (
 	return Promise.resolve(value);
 };
 
-const interceptorsRequestResponse = (
+export const interceptorsRequestResponse = (
 	value: InternalAxiosRequestConfig,
 ): InternalAxiosRequestConfig => {
 	// Attach metadata safely (not sent with the request)
@@ -69,7 +67,7 @@ const interceptorsRequestResponse = (
 	return value;
 };
 
-const interceptorRejected = async (
+export const interceptorRejected = async (
 	value: AxiosResponse<any>,
 ): Promise<AxiosResponse<any>> => {
 	try {
@@ -96,19 +94,13 @@ const interceptorRejected = async (
 					afterLogin(response.data.accessToken, response.data.refreshToken, true);
 
 					try {
-						const reResponse = await axios(
-							`${value.config.baseURL}${value.config.url?.substring(1)}`,
-							{
-								method: value.config.method,
-								headers: {
-									...value.config.headers,
-									Authorization: `Bearer ${response.data.accessToken}`,
-								},
-								data: {
-									...JSON.parse(value.config.data || '{}'),
-								},
+						const reResponse = await axios({
+							...value.config,
+							headers: {
+								...value.config.headers,
+								Authorization: `Bearer ${response.data.accessToken}`,
 							},
-						);
+						});
 
 						return await Promise.resolve(reResponse);
 					} catch (error) {
@@ -202,17 +194,6 @@ LogEventAxiosInstance.interceptors.response.use(
 );
 LogEventAxiosInstance.interceptors.request.use(interceptorsRequestResponse);
 //
-
-// generated API Instance
-export const GeneratedAPIInstance = axios.create({
-	baseURL: ENVIRONMENT.baseURL,
-});
-
-GeneratedAPIInstance.interceptors.request.use(interceptorsRequestResponse);
-GeneratedAPIInstance.interceptors.response.use(
-	interceptorsResponse,
-	interceptorRejected,
-);
 
 AxiosAlertManagerInstance.interceptors.response.use(
 	interceptorsResponse,

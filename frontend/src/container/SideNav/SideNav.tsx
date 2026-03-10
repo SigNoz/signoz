@@ -1,6 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	MouseEvent,
 	useCallback,
@@ -10,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -71,6 +69,7 @@ import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
+	getUserSettingsDropdownMenuItems,
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
@@ -487,48 +486,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
 		() =>
-			[
-				{
-					key: 'label',
-					label: (
-						<div className="user-settings-dropdown-logged-in-section">
-							<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
-							<span className="user-settings-dropdown-label-email">{user.email}</span>
-						</div>
-					),
-					disabled: true,
-					dataTestId: 'logged-in-as-nav-item',
-				},
-				{ type: 'divider' as const },
-				{
-					key: 'account',
-					label: 'Account Settings',
-					dataTestId: 'account-settings-nav-item',
-				},
-				{
-					key: 'workspace',
-					label: 'Workspace Settings',
-					disabled: isWorkspaceBlocked,
-					dataTestId: 'workspace-settings-nav-item',
-				},
-				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
-					? [
-							{
-								key: 'license',
-								label: 'Manage License',
-								dataTestId: 'manage-license-nav-item',
-							},
-					  ]
-					: []),
-				{ type: 'divider' as const },
-				{
-					key: 'logout',
-					label: (
-						<span className="user-settings-dropdown-logout-section">Sign out</span>
-					),
-					dataTestId: 'logout-nav-item',
-				},
-			].filter(Boolean),
+			getUserSettingsDropdownMenuItems({
+				userEmail: user.email,
+				isWorkspaceBlocked,
+				isEnterpriseSelfHostedUser,
+				isCommunityEnterpriseUser,
+			}),
 		[
 			isEnterpriseSelfHostedUser,
 			isCommunityEnterpriseUser,
@@ -858,16 +821,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			});
 
 			switch (item.key) {
-				case ROUTES.SHORTCUTS:
-					history.push(ROUTES.SHORTCUTS);
-					break;
 				case 'invite-collaborators':
 					history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
 					break;
 				case 'chat-support':
 					if (window.pylon) {
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						window.Pylon('show');
 					}
 					break;
@@ -882,7 +840,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 	};
 
 	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-		const item = userSettingsDropdownMenuItems.find(
+		const item = (userSettingsDropdownMenuItems ?? []).find(
 			(item) => item?.key === info.key,
 		);
 		let menuLabel = '';
@@ -907,6 +865,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				break;
 			case 'license':
 				history.push(ROUTES.LIST_LICENSES);
+				break;
+			case 'keyboard-shortcuts':
+				history.push(ROUTES.SHORTCUTS);
 				break;
 			case 'logout':
 				Logout();
@@ -954,7 +915,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="brand-company-meta">
 							<div
 								className="brand-logo"
-								// eslint-disable-next-line react/no-unknown-property
 								onClick={(event: MouseEvent): void => {
 									// Current home page
 									onClickHandler(ROUTES.HOME, event);

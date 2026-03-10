@@ -1,5 +1,4 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable react/jsx-props-no-spreading */
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
@@ -54,7 +53,7 @@ describe('GraphView', () => {
 		setExpandedViewOptions: jest.fn(),
 		resetInspection: jest.fn(),
 		showExpandedView: false,
-		metricInspectionOptions: {
+		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 			spaceAggregationLabels: ['host_name'],

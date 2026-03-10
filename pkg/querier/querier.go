@@ -16,6 +16,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"golang.org/x/exp/maps"
@@ -276,15 +278,17 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 	// Fetch temporality for all metrics at once
 	var metricTemporality map[string]metrictypes.Temporality
+	var metricTypes map[string]metrictypes.Type
 	if len(metricNames) > 0 {
 		var err error
-		metricTemporality, err = q.metadataStore.FetchTemporalityMulti(ctx, req.Start, req.End, metricNames...)
+		metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
 		if err != nil {
 			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
 			// Continue without temporality - statement builder will handle unspecified
 			metricTemporality = make(map[string]metrictypes.Temporality)
+			metricTypes = make(map[string]metrictypes.Type)
 		}
-		q.logger.DebugContext(ctx, "fetched metric temporalities", "metric_temporality", metricTemporality)
+		q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
 	}
 
 	queries := make(map[string]qbtypes.Query)
@@ -379,6 +383,12 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					// TODO(srikanthccv): warn when the metric is missing
 					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						spec.Aggregations[i].Temporality = metrictypes.Unspecified
+					}
+
+					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
+						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
+							spec.Aggregations[i].Type = foundMetricType
+						}
 					}
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
@@ -518,6 +528,11 @@ func (q *querier) run(
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
 ) (*qbtypes.QueryRangeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.PanelType: qbEvent.PanelType,
+		instrumentationtypes.QueryType: qbEvent.QueryType,
+	})
+
 	results := make(map[string]any)
 	warnings := make([]string, 0)
 	warningsDocURL := ""

@@ -12,14 +12,21 @@ import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interface
 import DateTimeSelector from 'container/TopNav/DateTimeSelectionV2';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
+import {
+	ICurrentQueryData,
+	useHandleExplorerTabChange,
+} from 'hooks/useHandleExplorerTabChange';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
+import { ExplorerViews } from 'pages/LogsExplorer/utils';
 import { Warning } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
+import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { generateExportToDashboardLink } from 'utils/dashboard/generateExportToDashboardLink';
+import { explorerViewToPanelType } from 'utils/explorerUtils';
 import { v4 as uuid } from 'uuid';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
@@ -42,15 +49,20 @@ function Explorer(): JSX.Element {
 		stagedQuery,
 		updateAllQueriesOperators,
 		currentQuery,
+		handleSetConfig,
 	} = useQueryBuilder();
 	const { safeNavigate } = useSafeNavigate();
+	const { handleExplorerTabChange } = useHandleExplorerTabChange();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(false);
 
 	const metricNames = useMemo(() => {
 		const currentMetricNames: string[] = [];
 		stagedQuery?.builder.queryData.forEach((query) => {
-			if (query.aggregateAttribute?.key) {
-				currentMetricNames.push(query.aggregateAttribute?.key);
+			const metricName =
+				query.aggregateAttribute?.key ||
+				(query.aggregations?.[0] as MetricAggregation | undefined)?.metricName;
+			if (metricName) {
+				currentMetricNames.push(metricName);
 			}
 		});
 		return currentMetricNames;
@@ -69,7 +81,7 @@ function Explorer(): JSX.Element {
 			!isMetricUnitsLoading &&
 			!isMetricUnitsError &&
 			units.length > 0 &&
-			units.every((unit) => unit && unit === units[0]),
+			units.every((unit) => unit === units[0]),
 		[units, isMetricUnitsLoading, isMetricUnitsError],
 	);
 
@@ -87,7 +99,7 @@ function Explorer(): JSX.Element {
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
-	const firstUnit = useMemo(() => units?.[0], [units]);
+	const firstUnit = useMemo(() => units[0], [units]);
 
 	useEffect(() => {
 		// Set the y axis unit to the first metric unit if
@@ -175,6 +187,16 @@ function Explorer(): JSX.Element {
 	}, [currentQuery, updateAllQueriesOperators, yAxisUnit]);
 
 	useShareBuilderUrl({ defaultValue: defaultQuery });
+
+	const handleChangeSelectedView = useCallback(
+		(view: ExplorerViews, querySearchParameters?: ICurrentQueryData): void => {
+			const nextPanelType =
+				explorerViewToPanelType[view] || PANEL_TYPES.TIME_SERIES;
+			handleSetConfig(nextPanelType, DataSource.METRICS);
+			handleExplorerTabChange(nextPanelType, querySearchParameters);
+		},
+		[handleSetConfig, handleExplorerTabChange],
+	);
 
 	const handleExport = useCallback(
 		(
@@ -348,8 +370,9 @@ function Explorer(): JSX.Element {
 				onExport={handleExport}
 				isOneChartPerQuery={showOneChartPerQuery}
 				splitedQueries={splitedQueries}
+				handleChangeSelectedView={handleChangeSelectedView}
 			/>
-			{isMetricDetailsOpen && (
+			{isMetricDetailsOpen && selectedMetricName && (
 				<MetricDetails
 					metricName={selectedMetricName}
 					isOpen={isMetricDetailsOpen}

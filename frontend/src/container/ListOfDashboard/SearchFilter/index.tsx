@@ -6,9 +6,9 @@ import {
 	useState,
 } from 'react';
 import { CloseCircleFilled } from '@ant-design/icons';
+// eslint-disable-next-line no-restricted-imports
 import { useMachine } from '@xstate/react';
-import { Button, Select } from 'antd';
-import { RefSelectProps } from 'antd/lib/select';
+import { Button, RefSelectProps, Select } from 'antd';
 import history from 'lib/history';
 import { filter, map } from 'lodash-es';
 import { Dashboard } from 'types/api/dashboard/getAll';

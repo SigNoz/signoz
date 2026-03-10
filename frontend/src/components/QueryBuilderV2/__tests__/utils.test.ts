@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable import/no-unresolved */
 import { negateOperator, OPERATORS } from 'constants/antlrQueryConstants';
 import {
 	BaseAutocompleteData,

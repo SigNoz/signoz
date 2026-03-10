@@ -17,7 +17,6 @@ import './ComponentSlider.styles.scss';
 function DashboardGraphSlider(): JSX.Element {
 	const { handleToggleDashboardSlider, isDashboardSliderOpen } = useDashboard();
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const onClickHandler = (name: PANEL_TYPES) => (): void => {
 		const id = uuid();
 		handleToggleDashboardSlider(false);

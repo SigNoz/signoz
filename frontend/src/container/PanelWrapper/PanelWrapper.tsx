@@ -24,13 +24,13 @@ function PanelWrapper({
 	customOnRowClick,
 	panelMode,
 	enableDrillDown = false,
+	onColumnWidthsChange,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
 	] as FC<PanelWrapperProps>;
 
 	if (!Component) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
@@ -59,6 +59,7 @@ function PanelWrapper({
 			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
 			enableDrillDown={enableDrillDown}
+			onColumnWidthsChange={onColumnWidthsChange}
 		/>
 	);
 }

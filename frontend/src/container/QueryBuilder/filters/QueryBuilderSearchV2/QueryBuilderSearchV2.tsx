@@ -100,6 +100,17 @@ interface QueryBuilderSearchV2Props {
 	// Determines whether to call onChange when a tag is closed
 	triggerOnChangeOnClose?: boolean;
 	skipQueryBuilderRedirect?: boolean;
+	/** Additional props passed through to the underlying Ant Design Select (e.g. listHeight, listItemHeight) */
+	selectProps?: Partial<
+		Pick<
+			React.ComponentProps<typeof Select>,
+			| 'listHeight'
+			| 'listItemHeight'
+			| 'popupClassName'
+			| 'dropdownMatchSelectWidth'
+			| 'popupMatchSelectWidth'
+		>
+	>;
 }
 
 export interface Option {
@@ -142,6 +153,7 @@ function QueryBuilderSearchV2(
 		hideSpanScopeSelector,
 		triggerOnChangeOnClose,
 		skipQueryBuilderRedirect,
+		selectProps,
 	} = props;
 
 	const { registerShortcut, deregisterShortcut } = useKeyboardHotkeys();
@@ -328,7 +340,6 @@ function QueryBuilderSearchV2(
 								key: 'body',
 								dataType: DataTypes.String,
 								type: '',
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								id: 'body--string----true',
 							},
 							op: OPERATORS.CONTAINS,
@@ -973,10 +984,10 @@ function QueryBuilderSearchV2(
 	return (
 		<div className="query-builder-search-v2">
 			<Select
+				{...selectProps}
+				data-testid={'qb-search-select'}
 				ref={selectRef}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(hasPopupContainer ? { getPopupContainer: popupContainer } : {})}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...(maxTagCount ? { maxTagCount } : {})}
 				key={queryTags.join('.')}
 				virtual={false}
@@ -988,7 +999,6 @@ function QueryBuilderSearchV2(
 				autoFocus={isOpen}
 				open={isOpen}
 				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
 					!isUndefined(suffixIcon) ? (
 						suffixIcon
 					) : isOpen ? (
@@ -1018,7 +1028,6 @@ function QueryBuilderSearchV2(
 				notFoundContent={loading ? <Spin size="small" /> : null}
 				showAction={['focus']}
 				onBlur={handleOnBlur}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				dropdownRender={(menu): ReactElement => (
 					<QueryBuilderSearchDropdown
 						menu={menu}
@@ -1081,6 +1090,7 @@ QueryBuilderSearchV2.defaultProps = {
 	hideSpanScopeSelector: true,
 	triggerOnChangeOnClose: false,
 	skipQueryBuilderRedirect: false,
+	selectProps: undefined,
 };
 
 export default QueryBuilderSearchV2;

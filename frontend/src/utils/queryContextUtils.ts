@@ -1,9 +1,8 @@
-/* eslint-disable */
-
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
+import { analyzeQuery } from 'parser/analyzeQuery';
 import FilterQueryLexer from 'parser/FilterQueryLexer';
 import { IQueryContext, IQueryPair, IToken } from 'types/antlrQueryTypes';
-import { analyzeQuery } from 'parser/analyzeQuery';
+
 import {
 	isBracketToken,
 	isConjunctionToken,
@@ -13,7 +12,6 @@ import {
 	isNonValueOperator,
 	isNonValueOperatorToken,
 	isOperatorToken,
-	isQueryPairComplete,
 	isValueToken,
 } from './tokenUtils';
 
@@ -64,13 +62,13 @@ function determineTokenContext(
 	isInConjunction: boolean;
 	isInParenthesis: boolean;
 } {
-	let isInKey: boolean = false;
-	let isInNegation: boolean = false;
-	let isInOperator: boolean = false;
-	let isInValue: boolean = false;
-	let isInFunction: boolean = false;
-	let isInConjunction: boolean = false;
-	let isInParenthesis: boolean = false;
+	let isInKey = false;
+	let isInNegation = false;
+	let isInOperator = false;
+	let isInValue = false;
+	let isInFunction = false;
+	let isInConjunction = false;
+	let isInParenthesis = false;
 
 	const tokenType = token.type;
 	const currentTokenContext = analyzeQuery(query, token);
@@ -130,7 +128,9 @@ export function getCurrentValueIndexAtCursor(
 	}[],
 	cursorIndex: number,
 ): number | null {
-	if (!valuesPosition || valuesPosition.length === 0) return null;
+	if (!valuesPosition || valuesPosition.length === 0) {
+		return null;
+	}
 
 	// Find the value that contains the cursor index
 	for (let i = 0; i < valuesPosition.length; i++) {
@@ -150,6 +150,7 @@ export function getCurrentValueIndexAtCursor(
 }
 
 // Function to determine token context boundaries more precisely
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function determineContextBoundaries(
 	query: string,
 	cursorIndex: number,
@@ -184,7 +185,9 @@ function determineContextBoundaries(
 		const token = tokens[i];
 
 		// Skip tokens on hidden channel
-		if (token.channel !== 0) continue;
+		if (token.channel !== 0) {
+			continue;
+		}
 
 		// Track opening brackets
 		if (
@@ -198,7 +201,9 @@ function determineContextBoundaries(
 			if (i > 0) {
 				for (let j = i - 1; j >= 0; j--) {
 					const prevToken = tokens[j];
-					if (prevToken.channel !== 0) continue; // Skip hidden channel tokens
+					if (prevToken.channel !== 0) {
+						continue;
+					} // Skip hidden channel tokens
 
 					if (
 						prevToken.type === FilterQueryLexer.IN ||
@@ -271,7 +276,9 @@ function determineContextBoundaries(
 				// Look back to see if this bracket follows an IN operator
 				for (let j = i - 1; j >= 0; j--) {
 					const prevToken = tokens[j];
-					if (prevToken.channel !== 0) continue; // Skip hidden channel tokens
+					if (prevToken.channel !== 0) {
+						continue;
+					} // Skip hidden channel tokens
 
 					if (
 						prevToken.type === FilterQueryLexer.IN ||
@@ -499,6 +506,7 @@ function determineContextBoundaries(
  * @param cursorIndex The position of the cursor in the query
  * @returns The query context at the cursor position
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function getQueryContextAtCursor(
 	query: string,
 	cursorIndex: number,
@@ -535,8 +543,6 @@ export function getQueryContextAtCursor(
 		const isAtSpace = cursorIndex < query.length && query[cursorIndex] === ' ';
 		const isAfterSpace = cursorIndex > 0 && query[cursorIndex - 1] === ' ';
 		const isAfterToken = cursorIndex > 0 && query[cursorIndex - 1] !== ' ';
-		const isBeforeToken =
-			cursorIndex < query.length && query[cursorIndex] !== ' ';
 
 		// Check if cursor is right after a token and at the start of a space
 		// FIXED: Consider the cursor to be at a transition point if it's at the end of a token
@@ -566,7 +572,9 @@ export function getQueryContextAtCursor(
 		let lastTokenBeforeCursor: IToken | null = null;
 		for (let i = 0; i < allTokens.length; i++) {
 			const token = allTokens[i];
-			if (token.type === FilterQueryLexer.EOF) continue;
+			if (token.type === FilterQueryLexer.EOF) {
+				continue;
+			}
 
 			// FIXED: Consider a token to be the lastTokenBeforeCursor if the cursor is
 			// exactly at the end of the token (including the last character)
@@ -963,7 +971,6 @@ export function getQueryContextAtCursor(
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
 			const operatorFromPair = currentPair?.operator || '';
-			const valueFromPair = currentPair?.value || '';
 
 			return {
 				tokenType: exactToken.type,
@@ -996,7 +1003,6 @@ export function getQueryContextAtCursor(
 			// Get relevant tokens based on current pair
 			const keyFromPair = currentPair?.key || '';
 			const operatorFromPair = currentPair?.operator || '';
-			const valueFromPair = currentPair?.value || '';
 
 			// CRITICAL FIX: Check if the last meaningful token is an operator
 			// If so, we're always in the value context regardless of spaces
@@ -1136,6 +1142,7 @@ export function getQueryContextAtCursor(
  * @param query The query string to parse
  * @returns An array of IQueryPair objects representing the key-operator-value triplets
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function extractQueryPairs(query: string): IQueryPair[] {
 	try {
 		// Guard against infinite recursion by checking call stack
@@ -1442,6 +1449,7 @@ function getEndIndexAfterSpaces(pair: IQueryPair, query: string): number {
  * @param cursorIndex The position of the cursor in the query
  * @returns The query pair at the cursor position, or null if not found
  */
+// eslint-disable-next-line sonarjs/cognitive-complexity
 export function getCurrentQueryPair(
 	queryPairs: IQueryPair[],
 	query: string,

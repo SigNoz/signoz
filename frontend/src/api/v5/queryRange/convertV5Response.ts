@@ -274,7 +274,6 @@ function convertDistributionData(
 	distributionData: DistributionData,
 	legendMap: Record<string, string>,
 ): any {
-	// eslint-disable-line @typescript-eslint/no-explicit-any
 	// Convert V5 distribution format to legacy histogram format
 	return {
 		...distributionData,
@@ -415,7 +414,6 @@ export function convertV5ResponseToLegacy(
 	if (legacyResponse.payload?.data?.result) {
 		legacyResponse.payload.data.result = legacyResponse.payload.data.result.map(
 			(queryData: any) => {
-				// eslint-disable-line @typescript-eslint/no-explicit-any
 				const newQueryData = cloneDeep(queryData);
 				newQueryData.legend = legendMap[queryData.queryName];
 

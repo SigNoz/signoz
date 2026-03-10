@@ -9,7 +9,6 @@ import ExplorerCard from '../ExplorerCard';
 
 const historyReplace = jest.fn();
 
-// eslint-disable-next-line sonarjs/no-duplicate-string
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: (): { pathname: string } => ({

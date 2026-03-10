@@ -1,9 +1,7 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
 import { Tag, Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import {
@@ -278,7 +276,6 @@ export const getK8sPodsListColumns = (
 ): ColumnType<K8sPodsRowData>[] => {
 	const updatedColumnsConfig = [...columnsConfig];
 
-	// eslint-disable-next-line no-restricted-syntax
 	for (const column of addedColumns) {
 		const config = columnConfigMap[column.id as keyof typeof columnConfigMap];
 		if (config) {

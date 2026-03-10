@@ -169,15 +169,19 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddAnonymousPublicDashboardTransactionFactory(sqlstore),
 		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
+		sqlmigration.NewAddStatusUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
 	)
 }
 
 func NewTelemetryStoreProviderFactories() factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]] {
 	return factory.MustNewNamedMap(
 		clickhousetelemetrystore.NewFactory(
-			telemetrystorehook.NewSettingsFactory(),
 			telemetrystorehook.NewLoggingFactory(),
+			// adding instrumentation factory before settings as we are starting the query span here
 			telemetrystorehook.NewInstrumentationFactory(),
+			telemetrystorehook.NewSettingsFactory(),
 		),
 	)
 }
@@ -254,6 +258,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.AuthzHandler,
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
+			handlers.ServiceAccountHandler,
 		),
 	)
 }

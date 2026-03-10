@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Input } from '@signozhq/input';
@@ -88,16 +87,11 @@ function OrgQuestions({ orgDetails, onNext }: OrgQuestionsProps): JSX.Element {
 			return false;
 		}
 
-		// eslint-disable-next-line sonarjs/prefer-single-boolean-return
-		if (
+		return !(
 			!observabilityTool?.includes('None') &&
 			observabilityTool === 'Others' &&
 			otherTool === ''
-		) {
-			return false;
-		}
-
-		return true;
+		);
 	};
 
 	useEffect(() => {

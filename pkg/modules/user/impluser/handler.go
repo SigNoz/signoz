@@ -13,6 +13,7 @@ import (
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -148,16 +149,11 @@ func (h *handler) DeleteInvite(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	uuid, err := valuer.NewUUID(id)
-	if err != nil {
-		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgId is invalid"))
-		return
-	}
-
-	if err := h.module.DeleteInvite(ctx, claims.OrgID, uuid); err != nil {
+	if err := h.module.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
 	}
+
 	render.Success(w, http.StatusNoContent, nil)
 }
 
@@ -216,6 +212,9 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		render.Error(w, err)
 		return
 	}
+
+	// temp code - show only active users
+	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusActive })
 
 	render.Success(w, http.StatusOK, users)
 }
@@ -462,7 +461,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email.String())) {
+	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}
@@ -507,7 +506,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if slices.Contains(types.AllIntegrationUserEmails, types.IntegrationUserEmail(createdByUser.Email.String())) {
+	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(createdByUser.Email.String())) {
 		render.Error(w, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "API Keys for integration users cannot be revoked"))
 		return
 	}

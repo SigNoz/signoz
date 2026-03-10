@@ -11,29 +11,22 @@ func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 		return nil
 	}
 
-	toRemove := make(map[string]struct{}, len(labelsToRemove))
-	for _, l := range labelsToRemove {
-		toRemove[l] = struct{}{}
-	}
-
-	dropLabels := func(metric labels.Labels) labels.Labels {
-		b := labels.NewBuilder(metric)
-		for name := range toRemove {
-			b.Del(name)
-		}
-		return b.Labels()
-	}
-
 	switch res.Value.(type) {
 	case promql.Vector:
 		value := res.Value.(promql.Vector)
 		for i := range value {
-			(value)[i].Metric = dropLabels((value)[i].Metric)
+			b := labels.NewBuilder(value[i].Metric)
+			b.Del(labelsToRemove...)
+			newLabels := b.Labels()
+			value[i].Metric = newLabels
 		}
 	case promql.Matrix:
 		value := res.Value.(promql.Matrix)
 		for i := range value {
-			(value)[i].Metric = dropLabels((value)[i].Metric)
+			b := labels.NewBuilder(value[i].Metric)
+			b.Del(labelsToRemove...)
+			newLabels := b.Labels()
+			value[i].Metric = newLabels
 		}
 	case promql.Scalar:
 		return nil

@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { Radio } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import { History, Table } from 'lucide-react';
 
 import { ALERT_TABS } from '../constants';
