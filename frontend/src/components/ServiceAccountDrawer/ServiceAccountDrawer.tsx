@@ -13,10 +13,14 @@ import {
 } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
+	useListServiceAccountKeys,
 	useUpdateServiceAccount,
 	useUpdateServiceAccountStatus,
 } from 'api/generated/services/serviceaccount';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { useRoles } from 'components/RolesSelect';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 
@@ -41,7 +45,6 @@ function ServiceAccountDrawer({
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState<'overview' | 'keys'>('overview');
-	const [keyCount, setKeyCount] = useState(0);
 	const [isActivateConfirmOpen, setIsActivateConfirmOpen] = useState(false);
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
@@ -73,6 +76,17 @@ function ServiceAccountDrawer({
 		error: rolesErrorObj,
 		refetch: refetchRoles,
 	} = useRoles();
+
+	const {
+		data: keysData,
+		isLoading: keysLoading,
+		refetch: refetchKeys,
+	} = useListServiceAccountKeys(
+		{ id: account?.id ?? '' },
+		{ query: { enabled: !!account?.id } },
+	);
+	const keys = keysData?.data ?? [];
+
 	const { mutateAsync: updateAccount } = useUpdateServiceAccount();
 	const { mutateAsync: updateStatus } = useUpdateServiceAccountStatus();
 
@@ -88,8 +102,12 @@ function ServiceAccountDrawer({
 			});
 			toast.success('Service account updated successfully', { richColors: true });
 			onSuccess();
-		} catch {
-			toast.error('Failed to update service account', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to update service account';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsSaving(false);
 		}
@@ -106,9 +124,14 @@ function ServiceAccountDrawer({
 				data: { status: 'DISABLED' },
 			});
 			toast.success('Service account disabled', { richColors: true });
+			setIsDisableConfirmOpen(false);
 			onSuccess();
-		} catch {
-			toast.error('Failed to disable service account', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to disable service account';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsDisabling(false);
 		}
@@ -127,8 +150,12 @@ function ServiceAccountDrawer({
 			toast.success('Service account activated', { richColors: true });
 			setIsActivateConfirmOpen(false);
 			onSuccess();
-		} catch {
-			toast.error('Failed to activate service account', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to activate service account';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsActivating(false);
 		}
@@ -142,8 +169,9 @@ function ServiceAccountDrawer({
 	}, [onClose]);
 
 	const handleKeySuccess = useCallback((): void => {
-		// Keys tab will refetch internally; just update count if needed
-	}, []);
+		setIsAddKeyOpen(false);
+		refetchKeys();
+	}, [refetchKeys]);
 
 	const drawerContent = (
 		<div className="sa-drawer__layout">
@@ -165,14 +193,17 @@ function ServiceAccountDrawer({
 					<ToggleGroupItem value="keys" className="sa-drawer__tab">
 						<Key size={14} />
 						Keys
-						{keyCount > 0 && <span className="sa-drawer__tab-count">{keyCount}</span>}
+						{keys.length > 0 && (
+							<span className="sa-drawer__tab-count">{keys.length}</span>
+						)}
 					</ToggleGroupItem>
 				</ToggleGroup>
 				{activeTab === 'keys' && (
 					<Button
-						variant="solid"
+						variant="outlined"
 						size="sm"
-						color="primary"
+						color="secondary"
+						disabled={isDisabled}
 						onClick={(): void => setIsAddKeyOpen(true)}
 					>
 						<Plus size={12} />
@@ -181,7 +212,11 @@ function ServiceAccountDrawer({
 				)}
 			</div>
 
-			<div className="sa-drawer__body">
+			<div
+				className={`sa-drawer__body${
+					activeTab === 'keys' ? ' sa-drawer__body--keys' : ''
+				}`}
+			>
 				{activeTab === 'overview' && account && (
 					<OverviewTab
 						account={account}
@@ -200,33 +235,44 @@ function ServiceAccountDrawer({
 				{activeTab === 'keys' && account && (
 					<KeysTab
 						accountId={account.id}
-						onKeyCountChange={setKeyCount}
+						keys={keys}
+						isLoading={keysLoading}
+						isDisabled={isDisabled}
+						onRefetch={refetchKeys}
 						onAddKeyClick={(): void => setIsAddKeyOpen(true)}
 					/>
 				)}
 			</div>
 
 			<div className="sa-drawer__footer">
-				{isDisabled ? (
-					<button
-						type="button"
-						className="sa-drawer__footer-btn sa-drawer__footer-btn--primary"
-						onClick={(): void => setIsActivateConfirmOpen(true)}
-					>
-						<Check size={12} />
-						Activate Service Account
-					</button>
+				{activeTab === 'keys' ? (
+					<span className="sa-drawer__pagination">
+						{keys.length > 0 ? `1 \u2014 ${keys.length} of ${keys.length}` : ''}
+					</span>
 				) : (
 					<>
-						<button
-							type="button"
-							className="sa-drawer__footer-btn sa-drawer__footer-btn--danger"
-							onClick={(): void => setIsDisableConfirmOpen(true)}
-						>
-							<PowerOff size={12} />
-							Disable Service Account
-						</button>
-						{activeTab === 'overview' && (
+						{isDisabled ? (
+							<Button
+								variant="ghost"
+								color="primary"
+								className="sa-drawer__footer-btn"
+								onClick={(): void => setIsActivateConfirmOpen(true)}
+							>
+								<Check size={12} />
+								Activate Service Account
+							</Button>
+						) : (
+							<Button
+								variant="ghost"
+								color="destructive"
+								className="sa-drawer__footer-btn"
+								onClick={(): void => setIsDisableConfirmOpen(true)}
+							>
+								<PowerOff size={12} />
+								Disable Service Account
+							</Button>
+						)}
+						{!isDisabled && (
 							<div className="sa-drawer__footer-right">
 								<Button
 									variant="solid"

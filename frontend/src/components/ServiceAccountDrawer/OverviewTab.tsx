@@ -54,7 +54,6 @@ function OverviewTab({
 
 	return (
 		<>
-			{/* Name */}
 			<div className="sa-drawer__field">
 				<label className="sa-drawer__label" htmlFor="sa-name">
 					Name
@@ -75,7 +74,6 @@ function OverviewTab({
 				)}
 			</div>
 
-			{/* Email (always locked) */}
 			<div className="sa-drawer__field">
 				<label className="sa-drawer__label" htmlFor="sa-email">
 					Email Address
@@ -86,7 +84,6 @@ function OverviewTab({
 				</div>
 			</div>
 
-			{/* Roles */}
 			<div className="sa-drawer__field">
 				<label className="sa-drawer__label" htmlFor="sa-roles">
 					Roles
@@ -126,7 +123,6 @@ function OverviewTab({
 				)}
 			</div>
 
-			{/* Meta */}
 			<div className="sa-drawer__meta">
 				<div className="sa-drawer__meta-item">
 					<span className="sa-drawer__meta-label">Status</span>
@@ -135,7 +131,7 @@ function OverviewTab({
 							ACTIVE
 						</Badge>
 					) : (
-						<Badge color="vanilla" variant="outline">
+						<Badge color="vanilla" variant="outline" className="sa-status-badge">
 							DISABLED
 						</Badge>
 					)}

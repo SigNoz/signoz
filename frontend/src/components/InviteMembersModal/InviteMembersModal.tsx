@@ -243,56 +243,60 @@ function InviteMembersModal({
 						<div className="table-header-cell role-header">Roles</div>
 						<div className="table-header-cell action-header" />
 					</div>
-					<div className="invite-members-modal__container">
-						{rows.map(
-							(row): JSX.Element => (
-								<div key={row.id} className="team-member-row">
-									<div className="team-member-cell email-cell">
-										<Input
-											type="email"
-											placeholder="john@signoz.io"
-											value={row.email}
-											onChange={(e): void => updateEmail(row.id, e.target.value)}
-											className="team-member-email-input"
-										/>
-										{emailValidity[row.id] === false && row.email.trim() !== '' && (
-											<span className="email-error-message">Invalid email address</span>
-										)}
-									</div>
-									<div className="team-member-cell role-cell">
-										<Select
-											value={row.role || undefined}
-											onChange={(role): void => updateRole(row.id, role as ROLES)}
-											className="team-member-role-select"
-											placeholder="Select roles"
-											suffixIcon={<ChevronDown size={14} />}
-											getPopupContainer={(triggerNode): HTMLElement =>
-												(triggerNode?.closest('.invite-members-modal') as HTMLElement) ||
-												document.body
-											}
-										>
-											<Select.Option value="VIEWER">Viewer</Select.Option>
-											<Select.Option value="EDITOR">Editor</Select.Option>
-											<Select.Option value="ADMIN">Admin</Select.Option>
-										</Select>
-									</div>
-									<div className="team-member-cell action-cell">
-										{rows.length > 1 && (
-											<Button
-												variant="ghost"
-												color="destructive"
-												className="remove-team-member-button"
-												onClick={(): void => removeRow(row.id)}
-												aria-label="Remove row"
+					<form onSubmit={(e): void => e.preventDefault()}>
+						<div className="invite-members-modal__container">
+							{rows.map(
+								(row): JSX.Element => (
+									<div key={row.id} className="team-member-row">
+										<div className="team-member-cell email-cell">
+											<Input
+												type="email"
+												placeholder="john@signoz.io"
+												value={row.email}
+												onChange={(e): void => updateEmail(row.id, e.target.value)}
+												className="team-member-email-input"
+												name={`invite-email-${row.id}`}
+												autoComplete="email"
+											/>
+											{emailValidity[row.id] === false && row.email.trim() !== '' && (
+												<span className="email-error-message">Invalid email address</span>
+											)}
+										</div>
+										<div className="team-member-cell role-cell">
+											<Select
+												value={row.role || undefined}
+												onChange={(role): void => updateRole(row.id, role as ROLES)}
+												className="team-member-role-select"
+												placeholder="Select roles"
+												suffixIcon={<ChevronDown size={14} />}
+												getPopupContainer={(triggerNode): HTMLElement =>
+													(triggerNode?.closest('.invite-members-modal') as HTMLElement) ||
+													document.body
+												}
 											>
-												<Trash2 size={12} />
-											</Button>
-										)}
+												<Select.Option value="VIEWER">Viewer</Select.Option>
+												<Select.Option value="EDITOR">Editor</Select.Option>
+												<Select.Option value="ADMIN">Admin</Select.Option>
+											</Select>
+										</div>
+										<div className="team-member-cell action-cell">
+											{rows.length > 1 && (
+												<Button
+													variant="ghost"
+													color="destructive"
+													className="remove-team-member-button"
+													onClick={(): void => removeRow(row.id)}
+													aria-label="Remove row"
+												>
+													<Trash2 size={12} />
+												</Button>
+											)}
+										</div>
 									</div>
-								</div>
-							),
-						)}
-					</div>
+								),
+							)}
+						</div>
+					</form>
 				</div>
 
 				{(hasInvalidEmails || hasInvalidRoles) && (

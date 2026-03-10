@@ -1,14 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
-import { Tooltip } from 'antd';
-import {
-	useListServiceAccountKeys,
-	useRevokeServiceAccountKey,
-} from 'api/generated/services/serviceaccount';
-import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { Skeleton, Tooltip } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useRevokeServiceAccountKey } from 'api/generated/services/serviceaccount';
+import type {
+	RenderErrorResponseDTO,
+	ServiceaccounttypesFactorAPIKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 
@@ -17,7 +19,10 @@ import { formatLastUsed } from './utils';
 
 interface KeysTabProps {
 	accountId: string;
-	onKeyCountChange: (n: number) => void;
+	keys: ServiceaccounttypesFactorAPIKeyDTO[];
+	isLoading: boolean;
+	isDisabled?: boolean;
+	onRefetch: () => void;
 	onAddKeyClick: () => void;
 }
 
@@ -27,18 +32,17 @@ function formatExpiry(expiresAt: number): JSX.Element {
 	}
 	const expiryDate = dayjs.unix(expiresAt);
 	if (expiryDate.isBefore(dayjs())) {
-		return (
-			<span className="keys-tab__expiry--expired">
-				{expiryDate.format('MMM D, YYYY')}
-			</span>
-		);
+		return <span className="keys-tab__expiry--expired">Expired</span>;
 	}
 	return <span>{expiryDate.format('MMM D, YYYY')}</span>;
 }
 
 function KeysTab({
 	accountId,
-	onKeyCountChange,
+	keys,
+	isLoading,
+	isDisabled = false,
+	onRefetch,
 	onAddKeyClick,
 }: KeysTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
@@ -51,16 +55,6 @@ function KeysTab({
 		setRevokeTarget,
 	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
 	const [isRevoking, setIsRevoking] = useState(false);
-
-	const { data: keysData, refetch } = useListServiceAccountKeys({
-		id: accountId,
-	});
-
-	const keys = keysData?.data ?? [];
-
-	useEffect(() => {
-		onKeyCountChange(keys.length);
-	}, [keys.length, onKeyCountChange]);
 
 	const { mutateAsync: revokeKey } = useRevokeServiceAccountKey();
 
@@ -75,24 +69,36 @@ function KeysTab({
 			});
 			toast.success('Key revoked successfully', { richColors: true });
 			setRevokeTarget(null);
-			refetch();
-		} catch {
-			toast.error('Failed to revoke key', { richColors: true });
+			onRefetch();
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to revoke key';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsRevoking(false);
 		}
-	}, [revokeTarget, revokeKey, accountId, refetch]);
+	}, [revokeTarget, revokeKey, accountId, onRefetch]);
 
 	const handleKeySuccess = useCallback((): void => {
 		setEditKey(null);
-		refetch();
-	}, [refetch]);
+		onRefetch();
+	}, [onRefetch]);
 
 	const handleFormatLastUsed = useCallback(
 		(lastUsed: Date | null | undefined): string =>
 			formatLastUsed(lastUsed, formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
+
+	if (isLoading) {
+		return (
+			<div className="keys-tab__loading">
+				<Skeleton active paragraph={{ rows: 4 }} />
+			</div>
+		);
+	}
 
 	if (keys.length === 0) {
 		return (
@@ -101,13 +107,14 @@ function KeysTab({
 					🧐
 				</span>
 				<p className="keys-tab__empty-text">No keys. Start by creating one.</p>
-				<button
+				<Button
 					type="button"
 					className="keys-tab__learn-more"
 					onClick={onAddKeyClick}
+					disabled={isDisabled}
 				>
 					+ Add your first key
-				</button>
+				</Button>
 			</div>
 		);
 	}
@@ -115,7 +122,6 @@ function KeysTab({
 	return (
 		<>
 			<div className="keys-tab__table-wrap">
-				{/* Header row */}
 				<div className="keys-tab__table-header">
 					<span className="keys-tab__col-name">Name</span>
 					<span className="keys-tab__col-expiry">Expiry</span>
@@ -123,18 +129,21 @@ function KeysTab({
 					<span className="keys-tab__col-action" />
 				</div>
 
-				{/* Data rows */}
 				{keys.map((keyItem, idx) => (
 					<div
 						key={keyItem.id}
 						className={`keys-tab__table-row${
-							idx % 2 === 1 ? ' keys-tab__table-row--alt' : ''
-						}`}
-						onClick={(): void => setEditKey(keyItem)}
+							idx % 2 === 0 ? ' keys-tab__table-row--alt' : ''
+						}${isDisabled ? ' keys-tab__table-row--disabled' : ''}`}
+						onClick={(): void => {
+							if (!isDisabled) {
+								setEditKey(keyItem);
+							}
+						}}
 						role="button"
 						tabIndex={0}
 						onKeyDown={(e): void => {
-							if (e.key === 'Enter') {
+							if (e.key === 'Enter' && !isDisabled) {
 								setEditKey(keyItem);
 							}
 						}}
@@ -146,36 +155,29 @@ function KeysTab({
 							{formatExpiry(keyItem.expires_at)}
 						</span>
 						<span className="keys-tab__col-last-used">
-							{handleFormatLastUsed(keyItem.last_used ?? null)}
+							{handleFormatLastUsed(keyItem?.last_used ?? null)}
 						</span>
 						<span className="keys-tab__col-action">
-							<Tooltip title="Revoke Key">
+							<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
 								<Button
 									variant="ghost"
 									size="xs"
 									color="destructive"
+									disabled={isDisabled}
 									onClick={(e): void => {
 										e.stopPropagation();
 										setRevokeTarget(keyItem);
 									}}
 									className="keys-tab__revoke-btn"
 								>
-									<X size={14} />
+									<X size={12} />
 								</Button>
 							</Tooltip>
 						</span>
 					</div>
 				))}
-
-				{/* Count footer */}
-				<div className="keys-tab__table-footer">
-					<span className="keys-tab__count">
-						1 — {keys.length} of {keys.length}
-					</span>
-				</div>
 			</div>
 
-			{/* Revoke confirm dialog */}
 			<DialogWrapper
 				open={revokeTarget !== null}
 				onOpenChange={(isOpen): void => {

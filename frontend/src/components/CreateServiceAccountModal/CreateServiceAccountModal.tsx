@@ -4,7 +4,10 @@ import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { Form, Input } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useCreateServiceAccount } from 'api/generated/services/serviceaccount';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
 
 import './CreateServiceAccountModal.styles.scss';
@@ -69,13 +72,14 @@ function CreateServiceAccountModal({
 			onSuccess();
 			onClose();
 		} catch (err: unknown) {
-			// If it's a form validation error (no message property typical of AntD), skip
 			if (err && typeof err === 'object' && 'errorFields' in err) {
 				return;
 			}
-			const errorMessage =
-				err instanceof Error ? err.message : 'An error occurred';
-			toast.error(`Failed to create service account: ${errorMessage}`, {
+			const errMessage =
+				convertToApiError(
+					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'An error occurred';
+			toast.error(`Failed to create service account: ${errMessage}`, {
 				richColors: true,
 			});
 		} finally {

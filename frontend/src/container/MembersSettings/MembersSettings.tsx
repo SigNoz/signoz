@@ -209,6 +209,7 @@ function MembersSettings(): JSX.Element {
 
 					<div className="members-settings__search">
 						<Input
+							type="search"
 							placeholder="Search by name, email, or role..."
 							value={searchQuery}
 							onChange={(e): void => {
@@ -217,6 +218,7 @@ function MembersSettings(): JSX.Element {
 							}}
 							className="members-search-input"
 							color="secondary"
+							name="members-search"
 						/>
 					</div>
 

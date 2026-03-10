@@ -1,15 +1,24 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
+import { Callout } from '@signozhq/callout';
 import { DialogWrapper } from '@signozhq/dialog';
-import { ArrowUpRight, Check, Copy, Info } from '@signozhq/icons';
+import { Check, Copy } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { DatePicker } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useCreateServiceAccountKey } from 'api/generated/services/serviceaccount';
-import type { ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import type { Dayjs } from 'dayjs';
+import { popupContainer } from 'utils/selectPopupContainer';
+
+import { disabledDate } from './utils';
 
 import './AddKeyModal.styles.scss';
 
@@ -71,8 +80,12 @@ function AddKeyModal({
 				setCreatedKey(keyData);
 				setPhase('created');
 			}
-		} catch {
-			toast.error('Failed to create key', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to create key';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -127,77 +140,71 @@ function AddKeyModal({
 			disableOutsideClick={false}
 		>
 			{phase === 'form' && (
-				<div className="add-key-modal__form">
-					<div className="add-key-modal__field">
-						<label className="add-key-modal__label" htmlFor="key-name">
-							Name <span style={{ color: 'var(--destructive)' }}>*</span>
-						</label>
-						<Input
-							id="key-name"
-							value={keyName}
-							onChange={(e): void => setKeyName(e.target.value)}
-							placeholder="Enter key name e.g.: Service Owner"
-							className="add-key-modal__input"
-						/>
-					</div>
-
-					<div className="add-key-modal__field">
-						<span className="add-key-modal__label">Expiration</span>
-						<ToggleGroup
-							type="single"
-							value={expiryMode}
-							onValueChange={(val): void => {
-								if (val) {
-									setExpiryMode(val as ExpiryMode);
-									if (val === 'none') {
-										setExpiryDate(null);
-									}
-								}
-							}}
-							className="add-key-modal__expiry-toggle"
-						>
-							<ToggleGroupItem
-								value="none"
-								className="add-key-modal__expiry-toggle-btn"
-							>
-								No Expiration
-							</ToggleGroupItem>
-							<ToggleGroupItem
-								value="date"
-								className="add-key-modal__expiry-toggle-btn"
-							>
-								Set Expiration Date
-							</ToggleGroupItem>
-						</ToggleGroup>
-					</div>
-
-					{expiryMode === 'date' && (
+				<>
+					<div className="add-key-modal__form">
 						<div className="add-key-modal__field">
-							<label className="add-key-modal__label" htmlFor="expiry-date">
-								Expiration Date
+							<label className="add-key-modal__label" htmlFor="key-name">
+								Name <span style={{ color: 'var(--destructive)' }}>*</span>
 							</label>
-							<div className="add-key-modal__datepicker">
-								<DatePicker
-									id="expiry-date"
-									value={expiryDate}
-									onChange={(date): void => setExpiryDate(date)}
-									style={{ width: '100%', height: 32 }}
-									popupClassName="add-key-modal__datepicker-popup"
-								/>
-							</div>
+							<Input
+								id="key-name"
+								value={keyName}
+								onChange={(e): void => setKeyName(e.target.value)}
+								placeholder="Enter key name e.g.: Service Owner"
+								className="add-key-modal__input"
+							/>
 						</div>
-					)}
+
+						<div className="add-key-modal__field">
+							<span className="add-key-modal__label">Expiration</span>
+							<ToggleGroup
+								type="single"
+								value={expiryMode}
+								onValueChange={(val): void => {
+									if (val) {
+										setExpiryMode(val as ExpiryMode);
+										if (val === 'none') {
+											setExpiryDate(null);
+										}
+									}
+								}}
+								className="add-key-modal__expiry-toggle"
+							>
+								<ToggleGroupItem
+									value="none"
+									className="add-key-modal__expiry-toggle-btn"
+								>
+									No Expiration
+								</ToggleGroupItem>
+								<ToggleGroupItem
+									value="date"
+									className="add-key-modal__expiry-toggle-btn"
+								>
+									Set Expiration Date
+								</ToggleGroupItem>
+							</ToggleGroup>
+						</div>
+
+						{expiryMode === 'date' && (
+							<div className="add-key-modal__field">
+								<label className="add-key-modal__label" htmlFor="expiry-date">
+									Expiration Date
+								</label>
+								<div className="add-key-modal__datepicker">
+									<DatePicker
+										id="expiry-date"
+										value={expiryDate}
+										onChange={(date): void => setExpiryDate(date)}
+										popupClassName="add-key-modal-datepicker-popup"
+										getPopupContainer={popupContainer}
+										disabledDate={disabledDate}
+									/>
+								</div>
+							</div>
+						)}
+					</div>
 
 					<div className="add-key-modal__footer">
-						<a
-							href="https://signoz.io/docs/service-accounts"
-							target="_blank"
-							rel="noopener noreferrer"
-							className="add-key-modal__learn-more"
-						>
-							Learn more about Service Account Keys
-							<ArrowUpRight size={12} />
-						</a>
 						<div className="add-key-modal__footer-right">
 							<Button
 								variant="solid"
@@ -218,48 +225,40 @@ function AddKeyModal({
 							</Button>
 						</div>
 					</div>
-				</div>
+				</>
 			)}
 
 			{phase === 'created' && createdKey && (
-				<div className="add-key-modal__form">
-					<div className="add-key-modal__field">
-						<span className="add-key-modal__label">API Key</span>
-						<div className="add-key-modal__key-display">
-							<span className="add-key-modal__key-text">{createdKey.key}</span>
-							<Button
-								variant="outlined"
-								color="secondary"
-								size="sm"
-								onClick={handleCopy}
-								className="add-key-modal__copy-btn"
-							>
-								{hasCopied ? <Check size={12} /> : <Copy size={12} />}
-							</Button>
+				<>
+					<div className="add-key-modal__form">
+						<div className="add-key-modal__field">
+							<span className="add-key-modal__label">Key</span>
+							<div className="add-key-modal__key-display">
+								<span className="add-key-modal__key-text">{createdKey.key}</span>
+								<Button
+									variant="outlined"
+									color="secondary"
+									size="sm"
+									onClick={handleCopy}
+									className="add-key-modal__copy-btn"
+								>
+									{hasCopied ? <Check size={12} /> : <Copy size={12} />}
+								</Button>
+							</div>
 						</div>
-					</div>
 
-					<div className="add-key-modal__expiry-meta">
-						<span className="add-key-modal__expiry-label">Expiration</span>
-						<Badge color="vanilla">{expiryLabel()}</Badge>
-					</div>
-
-					<div className="add-key-modal__callout">
-						<Info size={12} className="add-key-modal__callout-icon" />
-						<span>
-							Store the key securely. This is the only time it will be displayed.
-						</span>
-					</div>
-
-					<div className="add-key-modal__footer">
-						<span />
-						<div className="add-key-modal__footer-right">
-							<Button variant="solid" color="primary" size="sm" onClick={handleClose}>
-								Done
-							</Button>
+						<div className="add-key-modal__expiry-meta">
+							<span className="add-key-modal__expiry-label">Expiration</span>
+							<Badge color="vanilla">{expiryLabel()}</Badge>
 						</div>
+
+						<Callout
+							type="info"
+							showIcon
+							message="Store the key securely. This is the only time it will be displayed."
+						/>
 					</div>
-				</div>
+				</>
 			)}
 		</DialogWrapper>
 	);
