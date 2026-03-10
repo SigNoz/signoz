@@ -21,7 +21,7 @@ func New(store authtypes.AuthNStore) *AuthN {
 }
 
 func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
-	user, factorPassword, err := a.store.GetUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	user, factorPassword, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}

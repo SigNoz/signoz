@@ -17,7 +17,7 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyJSONColumn          = constants.BodyJSONColumn
+	LogsV2BodyJSONColumn          = constants.BodyV2Column
 	LogsV2BodyPromotedColumn      = constants.BodyPromotedColumn
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
@@ -34,7 +34,7 @@ const (
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
 
-	BodyJSONColumnPrefix     = constants.BodyJSONColumnPrefix
+	BodyJSONColumnPrefix     = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
 )
 

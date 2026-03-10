@@ -1,4 +1,6 @@
 import { RocketOutlined } from '@ant-design/icons';
+import { Style } from '@signozhq/design-tokens';
+import { MenuProps } from 'antd';
 import ROUTES from 'constants/routes';
 import {
 	ArrowUpRight,
@@ -8,6 +10,7 @@ import {
 	Book,
 	Boxes,
 	BugIcon,
+	Building2,
 	ChartArea,
 	Cloudy,
 	DraftingCompass,
@@ -20,21 +23,26 @@ import {
 	Layers2,
 	LayoutGrid,
 	ListMinus,
+	LogOut,
 	MessageSquareText,
 	Plus,
 	Receipt,
 	Route,
 	ScrollText,
-	Search,
 	Settings,
 	Shield,
 	Slack,
 	Unplug,
 	User,
 	UserPlus,
+	Users,
 } from 'lucide-react';
 
-import { SecondaryMenuItemKey, SidebarItem } from './sideNav.types';
+import {
+	SecondaryMenuItemKey,
+	SettingsNavSection,
+	SidebarItem,
+} from './sideNav.types';
 
 export const getStartedMenuItem = {
 	key: ROUTES.GET_STARTED,
@@ -189,12 +197,6 @@ export const primaryMenuItems: SidebarItem[] = [
 		itemKey: 'home',
 	},
 	{
-		key: 'quick-search',
-		label: 'Search',
-		icon: <Search size={16} />,
-		itemKey: 'quick-search',
-	},
-	{
 		key: ROUTES.LIST_ALL_ALERT,
 		label: 'Alerts',
 		icon: <BellDot size={16} />,
@@ -296,77 +298,107 @@ export const defaultMoreMenuItems: SidebarItem[] = [
 	},
 ];
 
-export const settingsMenuItems: SidebarItem[] = [
+export const settingsNavSections: SettingsNavSection[] = [
 	{
-		key: ROUTES.SETTINGS,
-		label: 'General',
-		icon: <Settings size={16} />,
-		isEnabled: true,
-		itemKey: 'general',
-	},
-	{
-		key: ROUTES.BILLING,
-		label: 'Billing',
-		icon: <Receipt size={16} />,
-		isEnabled: false,
-		itemKey: 'billing',
-	},
-	{
-		key: ROUTES.ROLES_SETTINGS,
-		label: 'Roles',
-		icon: <Shield size={16} />,
-		isEnabled: false,
-		itemKey: 'roles',
-	},
-	{
-		key: ROUTES.ORG_SETTINGS,
-		label: 'Members & SSO',
-		icon: <User size={16} />,
-		isEnabled: false,
-		itemKey: 'members-sso',
+		key: 'general',
+		items: [
+			{
+				key: ROUTES.SETTINGS,
+				label: 'Workspace',
+				icon: <Settings size={16} />,
+				isEnabled: true,
+				itemKey: 'workspace',
+			},
+			{
+				key: ROUTES.MY_SETTINGS,
+				label: 'Account',
+				icon: <User size={16} />,
+				isEnabled: true,
+				itemKey: 'account',
+			},
+			{
+				key: ROUTES.ALL_CHANNELS,
+				label: 'Notification Channels',
+				icon: <FileKey2 size={16} />,
+				isEnabled: true,
+				itemKey: 'notification-channels',
+			},
+			{
+				key: ROUTES.BILLING,
+				label: 'Billing',
+				icon: <Receipt size={16} />,
+				isEnabled: false,
+				itemKey: 'billing',
+			},
+			{
+				key: ROUTES.INTEGRATIONS,
+				label: 'Integrations',
+				icon: <Unplug size={16} />,
+				isEnabled: false,
+				itemKey: 'integrations',
+			},
+		],
 	},
 
 	{
-		key: ROUTES.INTEGRATIONS,
-		label: 'Integrations',
-		icon: <Unplug size={16} />,
-		isEnabled: false,
-		itemKey: 'integrations',
+		key: 'identity-access',
+		title: 'Identity & Access',
+		items: [
+			{
+				key: ROUTES.ROLES_SETTINGS,
+				label: 'Roles',
+				icon: <Shield size={16} />,
+				isEnabled: false,
+				itemKey: 'roles',
+			},
+			{
+				key: ROUTES.MEMBERS_SETTINGS,
+				label: 'Members',
+				icon: <Users size={16} />,
+				isEnabled: false,
+				itemKey: 'members',
+			},
+			{
+				key: ROUTES.API_KEYS,
+				label: 'API Keys',
+				icon: <Key size={16} />,
+				isEnabled: false,
+				itemKey: 'api-keys',
+			},
+			{
+				key: ROUTES.INGESTION_SETTINGS,
+				label: 'Ingestion',
+				icon: <RocketOutlined rotate={45} />,
+				isEnabled: false,
+				itemKey: 'ingestion',
+			},
+		],
 	},
 	{
-		key: ROUTES.ALL_CHANNELS,
-		label: 'Notification Channels',
-		icon: <FileKey2 size={16} />,
-		isEnabled: true,
-		itemKey: 'notification-channels',
+		key: 'authentication',
+		title: 'Authentication',
+		items: [
+			{
+				key: ROUTES.ORG_SETTINGS,
+				label: 'Single Sign-on',
+				icon: <User size={16} />,
+				isEnabled: false,
+				itemKey: 'sso',
+			},
+		],
 	},
 	{
-		key: ROUTES.API_KEYS,
-		label: 'API Keys',
-		icon: <Key size={16} />,
-		isEnabled: false,
-		itemKey: 'api-keys',
-	},
-	{
-		key: ROUTES.INGESTION_SETTINGS,
-		label: 'Ingestion',
-		icon: <RocketOutlined rotate={45} />,
-		isEnabled: false,
-		itemKey: 'ingestion',
-	},
-	{
-		key: ROUTES.MY_SETTINGS,
-		label: 'Account Settings',
-		icon: <User size={16} />,
-		isEnabled: true,
-		itemKey: 'account-settings',
-	},
-	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Layers2 size={16} />,
-		isEnabled: true,
-		itemKey: 'keyboard-shortcuts',
+		key: 'shortcuts',
+		hasDivider: true,
+		items: [
+			{
+				key: ROUTES.SHORTCUTS,
+				label: 'Keyboard Shortcuts',
+				icon: <Keyboard size={16} />,
+				isEnabled: true,
+				itemKey: 'keyboard-shortcuts',
+			},
+		],
 	},
 ];
 
@@ -418,18 +450,84 @@ export const helpSupportDropdownMenuItems: SidebarItem[] = [
 		itemKey: 'chat-support',
 	},
 	{
-		key: ROUTES.SHORTCUTS,
-		label: 'Keyboard Shortcuts',
-		icon: <Keyboard size={14} />,
-		itemKey: 'keyboard-shortcuts',
-	},
-	{
 		key: 'invite-collaborators',
 		label: 'Invite a Team Member',
 		icon: <Plus size={14} />,
 		itemKey: 'invite-collaborators',
 	},
 ];
+
+export interface UserSettingsMenuItemsParams {
+	userEmail: string;
+	isWorkspaceBlocked: boolean;
+	isEnterpriseSelfHostedUser: boolean;
+	isCommunityEnterpriseUser: boolean;
+}
+
+export const getUserSettingsDropdownMenuItems = ({
+	userEmail,
+	isWorkspaceBlocked,
+	isEnterpriseSelfHostedUser,
+	isCommunityEnterpriseUser,
+}: UserSettingsMenuItemsParams): MenuProps['items'] =>
+	[
+		{
+			key: 'label',
+			label: (
+				<div className="user-settings-dropdown-logged-in-section">
+					<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
+					<span className="user-settings-dropdown-label-email">{userEmail}</span>
+				</div>
+			),
+			disabled: true,
+			dataTestId: 'logged-in-as-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'workspace',
+			label: 'Workspace Settings',
+			icon: <Building2 size={14} color={Style.L1_FOREGROUND} />,
+			disabled: isWorkspaceBlocked,
+			dataTestId: 'workspace-settings-nav-item',
+		},
+		{
+			key: 'account',
+			label: 'Account Settings',
+			icon: <User size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'account-settings-nav-item',
+		},
+		...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
+			? [
+					{
+						key: 'license',
+						label: 'Manage License',
+						icon: <Shield size={14} color={Style.L1_FOREGROUND} />,
+						dataTestId: 'manage-license-nav-item',
+					},
+			  ]
+			: []),
+		{
+			key: 'keyboard-shortcuts',
+			label: 'Keyboard Shortcuts',
+			icon: <Keyboard size={14} color={Style.L1_FOREGROUND} />,
+			dataTestId: 'keyboard-shortcuts-nav-item',
+		},
+		{ type: 'divider' as const },
+		{
+			key: 'logout',
+			label: (
+				<span className="user-settings-dropdown-logout-section">Sign out</span>
+			),
+			icon: (
+				<LogOut
+					size={14}
+					className="user-settings-dropdown-logout-section"
+					color={Style.DANGER_BACKGROUND}
+				/>
+			),
+			dataTestId: 'logout-nav-item',
+		},
+	].filter(Boolean);
 
 /** Mapping of some newly added routes and their corresponding active sidebar menu key */
 export const NEW_ROUTES_MENU_ITEM_KEY_MAP: Record<string, string> = {

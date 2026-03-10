@@ -56,6 +56,7 @@ const ROUTES = {
 	BILLING: '/settings/billing',
 	ROLES_SETTINGS: '/settings/roles',
 	ROLE_DETAILS: '/settings/roles/:roleId',
+	MEMBERS_SETTINGS: '/settings/members',
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
