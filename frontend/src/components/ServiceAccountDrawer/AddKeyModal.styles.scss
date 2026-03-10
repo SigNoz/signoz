@@ -1,8 +1,13 @@
 .add-key-modal {
+	[data-slot='dialog-description'] {
+		padding: 0;
+	}
+
 	&__form {
 		display: flex;
 		flex-direction: column;
 		gap: var(--spacing-8);
+		padding: var(--padding-4);
 	}
 
 	&__field {
@@ -31,8 +36,8 @@
 		}
 	}
 
-	// Expiry segmented toggle using ToggleGroup
 	&__expiry-toggle {
+		width: 60%;
 		display: flex;
 		border: 1px solid var(--border);
 		border-radius: 2px;
@@ -40,12 +45,18 @@
 		padding: 0;
 		gap: 0;
 
+		[data-slot='toggle-group'] {
+			width: 100%;
+			display: flex;
+		}
+
 		&-btn {
 			flex: 1;
 			height: 32px;
 			border-radius: 0;
-			font-size: var(--font-size-sm);
-			font-weight: var(--font-weight-normal);
+			font-size: var(--label-small-400-font-size);
+			font-weight: var(--label-small-400-font-weight);
+			line-height: var(--label-small-400-line-height);
 			justify-content: center;
 			background: transparent;
 			border: none;
@@ -82,10 +93,13 @@
 			.ant-picker-suffix {
 				color: var(--foreground);
 			}
+		}
 
-			&:hover {
-				border-color: var(--foreground);
-			}
+		.add-key-modal-datepicker-popup {
+			border-radius: 4px;
+			border: 1px solid var(--secondary);
+			background: var(--popover);
+			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 		}
 	}
 
@@ -122,25 +136,6 @@
 		min-width: 40px;
 	}
 
-	&__callout {
-		display: flex;
-		align-items: flex-start;
-		gap: var(--spacing-3);
-		background: rgba(78, 116, 248, 0.1);
-		border: 1px solid rgba(78, 116, 248, 0.2);
-		border-radius: 4px;
-		padding: var(--padding-3) var(--padding-4);
-		font-size: var(--font-size-sm);
-		color: var(--foreground);
-		line-height: 1.5;
-	}
-
-	&__callout-icon {
-		color: var(--primary);
-		flex-shrink: 0;
-		margin-top: 2px;
-	}
-
 	&__expiry-meta {
 		display: flex;
 		flex-direction: column;
@@ -158,10 +153,9 @@
 	&__footer {
 		display: flex;
 		align-items: center;
-		justify-content: space-between;
-		padding-top: var(--padding-4);
-		border-top: 1px solid var(--border);
-		margin-top: var(--margin-2);
+		justify-content: flex-end;
+		padding: var(--padding-4);
+		border-top: 1px solid var(--secondary);
 	}
 
 	&__footer-right {

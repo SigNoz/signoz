@@ -5,17 +5,24 @@ import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { DatePicker, Modal } from 'antd';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { DatePicker } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useRevokeServiceAccountKey,
 	useUpdateServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
-import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type {
+	RenderErrorResponseDTO,
+	ServiceaccounttypesFactorAPIKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
+import { popupContainer } from 'utils/selectPopupContainer';
 
-import { formatLastUsed } from './utils';
+import { disabledDate, formatLastUsed } from './utils';
 
 import './EditKeyModal.styles.scss';
 
@@ -81,8 +88,12 @@ function EditKeyModal({
 			});
 			toast.success('Key updated successfully', { richColors: true });
 			onSuccess();
-		} catch {
-			toast.error('Failed to update key', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to update key';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsSaving(false);
 		}
@@ -108,147 +119,163 @@ function EditKeyModal({
 			toast.success('Key revoked successfully', { richColors: true });
 			setIsRevokeConfirmOpen(false);
 			onSuccess();
-		} catch {
-			toast.error('Failed to revoke key', { richColors: true });
+		} catch (error: unknown) {
+			const errMessage =
+				convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				)?.getErrorMessage() || 'Failed to revoke key';
+			toast.error(errMessage, { richColors: true });
 		} finally {
 			setIsRevoking(false);
 		}
 	}, [keyItem, accountId, revokeKey, onSuccess]);
 
-	const handleFormatLastUsed = useCallback(
-		(lastUsed: Date | null | undefined): string =>
-			formatLastUsed(lastUsed, formatTimezoneAdjustedTimestamp),
-		[formatTimezoneAdjustedTimestamp],
-	);
-
-	const expiryDisplayLabel = (): string => {
-		if (expiryMode === 'none' || !localDate) {
-			return 'Never';
-		}
-		try {
-			return localDate.format('MMM D, YYYY');
-		} catch {
-			return 'Never';
-		}
-	};
-
 	return (
-		<>
-			<Modal
-				open={open}
-				onCancel={onClose}
-				title="Edit Key"
-				width={530}
-				footer={null}
-				className="edit-key-modal"
-				destroyOnClose
-			>
-				<div className="edit-key-modal__form">
-					{/* Name */}
-					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label" htmlFor="edit-key-name">
-							Name
-						</label>
-						<Input
-							id="edit-key-name"
-							value={localName}
-							onChange={(e): void => setLocalName(e.target.value)}
-							className="edit-key-modal__input"
-							placeholder="Enter key name"
-						/>
-					</div>
-
-					{/* Key (read-only masked) */}
-					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label" htmlFor="edit-key-display">
-							Key
-						</label>
-						<div id="edit-key-display" className="edit-key-modal__key-display">
-							<span className="edit-key-modal__key-text">{keyItem?.key ?? '—'}</span>
-							<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
-						</div>
-					</div>
-
-					{/* Expiration toggle */}
-					<div className="edit-key-modal__field">
-						<label className="edit-key-modal__label" htmlFor="edit-key-expiry-toggle">
-							Expiration
-						</label>
-						<div
-							id="edit-key-expiry-toggle"
-							className="edit-key-modal__expiry-toggle"
+		<DialogWrapper
+			open={open}
+			onOpenChange={(isOpen): void => {
+				if (!isOpen) {
+					if (isRevokeConfirmOpen) {
+						setIsRevokeConfirmOpen(false);
+					} else {
+						onClose();
+					}
+				}
+			}}
+			title={
+				isRevokeConfirmOpen
+					? `Revoke ${keyItem?.name ?? 'key'}?`
+					: 'Edit Key Details'
+			}
+			width={isRevokeConfirmOpen ? 'narrow' : 'base'}
+			className={
+				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
+			}
+			showCloseButton={!isRevokeConfirmOpen}
+			disableOutsideClick={false}
+		>
+			{isRevokeConfirmOpen ? (
+				<>
+					<p className="delete-dialog__body">
+						Revoking this key will permanently invalidate it. Any systems using this
+						key will lose access immediately.
+					</p>
+					<DialogFooter className="delete-dialog__footer">
+						<Button
+							variant="solid"
+							color="secondary"
+							size="sm"
+							onClick={(): void => setIsRevokeConfirmOpen(false)}
 						>
-							<Button
-								variant={expiryMode === 'none' ? 'solid' : 'ghost'}
-								color="secondary"
-								size="sm"
-								className={`edit-key-modal__expiry-toggle-btn${
-									expiryMode === 'none'
-										? ' edit-key-modal__expiry-toggle-btn--active'
-										: ''
-								}`}
-								onClick={(): void => {
-									setExpiryMode('none');
-									setLocalDate(null);
-								}}
-							>
-								No Expiration
-							</Button>
-							<Button
-								variant={expiryMode === 'date' ? 'solid' : 'ghost'}
-								color="secondary"
-								size="sm"
-								className={`edit-key-modal__expiry-toggle-btn${
-									expiryMode === 'date'
-										? ' edit-key-modal__expiry-toggle-btn--active'
-										: ''
-								}`}
-								onClick={(): void => setExpiryMode('date')}
-							>
-								Set Expiration Date
-							</Button>
-						</div>
-					</div>
-
-					{expiryMode === 'date' && (
+							<X size={12} />
+							Cancel
+						</Button>
+						<Button
+							variant="solid"
+							color="destructive"
+							size="sm"
+							disabled={isRevoking}
+							onClick={handleRevoke}
+						>
+							<Trash2 size={12} />
+							{isRevoking ? 'Revoking...' : 'Revoke Key'}
+						</Button>
+					</DialogFooter>
+				</>
+			) : (
+				<>
+					<div className="edit-key-modal__form">
 						<div className="edit-key-modal__field">
-							<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
-								Expiration Date
+							<label className="edit-key-modal__label" htmlFor="edit-key-name">
+								Name
 							</label>
-							<div id="edit-key-datepicker" className="edit-key-modal__datepicker">
-								<DatePicker
-									value={localDate}
-									onChange={(date): void => setLocalDate(date)}
-									style={{ width: '100%', height: 32 }}
-								/>
+							<Input
+								id="edit-key-name"
+								value={localName}
+								onChange={(e): void => setLocalName(e.target.value)}
+								className="edit-key-modal__input"
+								placeholder="Enter key name"
+							/>
+						</div>
+
+						<div className="edit-key-modal__field">
+							<label className="edit-key-modal__label" htmlFor="edit-key-display">
+								Key
+							</label>
+							<div id="edit-key-display" className="edit-key-modal__key-display">
+								<span className="edit-key-modal__key-text">********************</span>
+								<LockKeyhole size={12} className="edit-key-modal__lock-icon" />
 							</div>
 						</div>
-					)}
 
-					{/* Expiry meta */}
-					<div className="edit-key-modal__meta">
-						<span className="edit-key-modal__meta-label">Expiry</span>
-						<Badge color="vanilla">{expiryDisplayLabel()}</Badge>
+						<div className="edit-key-modal__field">
+							<span className="edit-key-modal__label">Expiration</span>
+							<ToggleGroup
+								type="single"
+								value={expiryMode}
+								onValueChange={(val): void => {
+									if (val) {
+										setExpiryMode(val as ExpiryMode);
+										if (val === 'none') {
+											setLocalDate(null);
+										}
+									}
+								}}
+								className="edit-key-modal__expiry-toggle"
+							>
+								<ToggleGroupItem
+									value="none"
+									className="edit-key-modal__expiry-toggle-btn"
+								>
+									No Expiration
+								</ToggleGroupItem>
+								<ToggleGroupItem
+									value="date"
+									className="edit-key-modal__expiry-toggle-btn"
+								>
+									Set Expiration Date
+								</ToggleGroupItem>
+							</ToggleGroup>
+						</div>
+
+						{expiryMode === 'date' && (
+							<div className="edit-key-modal__field">
+								<label className="edit-key-modal__label" htmlFor="edit-key-datepicker">
+									Expiration Date
+								</label>
+								<div className="edit-key-modal__datepicker">
+									<DatePicker
+										value={localDate}
+										id="edit-key-datepicker"
+										onChange={(date): void => setLocalDate(date)}
+										popupClassName="edit-key-modal-datepicker-popup"
+										getPopupContainer={popupContainer}
+										disabledDate={disabledDate}
+									/>
+								</div>
+							</div>
+						)}
+
+						<div className="edit-key-modal__meta">
+							<span className="edit-key-modal__meta-label">Last Used</span>
+							<Badge color="vanilla">
+								{formatLastUsed(
+									keyItem?.last_used ?? null,
+									formatTimezoneAdjustedTimestamp,
+								)}
+							</Badge>
+						</div>
 					</div>
 
-					{/* Last used meta */}
-					<div className="edit-key-modal__meta">
-						<span className="edit-key-modal__meta-label">Last Used</span>
-						<Badge color="vanilla">
-							{handleFormatLastUsed(keyItem?.last_used ?? null)}
-						</Badge>
-					</div>
-
-					{/* Footer */}
 					<div className="edit-key-modal__footer">
-						<button
+						<Button
 							type="button"
 							className="edit-key-modal__footer-danger"
 							onClick={(): void => setIsRevokeConfirmOpen(true)}
 						>
 							<Trash2 size={12} />
 							Revoke Key
-						</button>
+						</Button>
 						<div className="edit-key-modal__footer-right">
 							<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
 								<X size={12} />
@@ -265,50 +292,9 @@ function EditKeyModal({
 							</Button>
 						</div>
 					</div>
-				</div>
-			</Modal>
-
-			{/* Revoke confirm dialog */}
-			<DialogWrapper
-				open={isRevokeConfirmOpen}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setIsRevokeConfirmOpen(false);
-					}
-				}}
-				title={`Revoke ${keyItem?.name ?? 'key'}?`}
-				width="narrow"
-				className="alert-dialog delete-dialog"
-				showCloseButton={false}
-				disableOutsideClick={false}
-			>
-				<p className="delete-dialog__body">
-					Revoking this key will permanently invalidate it. Any systems using this
-					key will lose access immediately.
-				</p>
-				<DialogFooter className="delete-dialog__footer">
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={(): void => setIsRevokeConfirmOpen(false)}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						variant="solid"
-						color="destructive"
-						size="sm"
-						disabled={isRevoking}
-						onClick={handleRevoke}
-					>
-						<Trash2 size={12} />
-						{isRevoking ? 'Revoking...' : 'Revoke Key'}
-					</Button>
-				</DialogFooter>
-			</DialogWrapper>
-		</>
+				</>
+			)}
+		</DialogWrapper>
 	);
 }
 
