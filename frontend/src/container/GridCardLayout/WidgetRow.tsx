@@ -5,6 +5,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { setSelectedRowWidgetId } from 'providers/Dashboard/selectedRowWidgetId';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -37,7 +38,6 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		handleToggleDashboardSlider,
 		selectedDashboard,
 		isDashboardLocked,
-		setSelectedRowWidgetId,
 	} = useDashboard();
 
 	const permissions: ComponentTypes[] = ['add_panel'];
@@ -81,7 +81,11 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
 							icon={<Plus size={14} />}
 							onClick={(): void => {
-								setSelectedRowWidgetId(id);
+								if (!selectedDashboard?.id) {
+									return;
+								}
+
+								setSelectedRowWidgetId(selectedDashboard.id, id);
 								handleToggleDashboardSlider(true);
 							}}
 						>
