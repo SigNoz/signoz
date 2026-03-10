@@ -63,6 +63,7 @@ function ServiceAccountDrawer({
 			setLocalName(account.name ?? '');
 			setLocalRoles(account.roles ?? []);
 			setActiveTab('overview');
+			setKeysPage(1);
 		}
 	}, [account]);
 
@@ -90,6 +91,16 @@ function ServiceAccountDrawer({
 		{ query: { enabled: !!account?.id } },
 	);
 	const keys = keysData?.data ?? [];
+
+	useEffect(() => {
+		if (keysLoading) {
+			return;
+		}
+		const maxPage = Math.max(1, Math.ceil(keys.length / PAGE_SIZE));
+		if (keysPage > maxPage) {
+			setKeysPage(maxPage);
+		}
+	}, [keysLoading, keys.length, keysPage]);
 
 	const { mutateAsync: updateAccount } = useUpdateServiceAccount();
 	const { mutateAsync: updateStatus } = useUpdateServiceAccountStatus();
