@@ -661,9 +661,19 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	} else if hasGroupBy {
 		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
 		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
-		sb.OrderBy(groupByKeys...)
-		sb.OrderBy("ts ASC")
 	}
+
+	// add any group-by keys not already in the order-by as tiebreakers
+	orderKeySet := make(map[string]struct{})
+	for _, o := range query.Order {
+		orderKeySet[o.Key.Name] = struct{}{}
+	}
+	for _, g := range groupByKeys {
+		if _, exists := orderKeySet[g]; !exists {
+			sb.OrderBy(g)
+		}
+	}
+
 	sb.OrderBy("ts ASC")
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
