@@ -646,7 +646,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
 		}
 		sb.OrderBy("ts ASC")
-	} else if hasLimit && hasGroupBy { // has issues
+	} else if hasLimit && hasGroupBy {
 		// limit without order by: default ordering by avg(value)
 		subSb := sqlbuilder.NewSelectBuilder()
 		subSb.Select(groupByKeys[0])
