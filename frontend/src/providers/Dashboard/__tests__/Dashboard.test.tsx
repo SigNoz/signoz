@@ -58,8 +58,9 @@ jest.mock('react-redux', () => ({
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
-	const { dashboardResponse, dashboardId, selectedDashboard } = useDashboard();
+	const { dashboardResponse, selectedDashboard } = useDashboard();
 	const { dashboardVariables } = useDashboardVariables();
+	const dashboardId = selectedDashboard?.id;
 
 	return (
 		<div>

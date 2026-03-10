@@ -15,7 +15,6 @@ export interface IDashboardContext {
 	handleDashboardLockToggle: (value: boolean) => void;
 	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;
-	dashboardId: string;
 	layouts: Layout[];
 	panelMap: Record<string, { widgets: Layout[]; collapsed: boolean }>;
 	setPanelMap: React.Dispatch<React.SetStateAction<Record<string, any>>>;
