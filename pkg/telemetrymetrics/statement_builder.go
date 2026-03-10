@@ -27,10 +27,6 @@ const (
 	OthersMultiTemporality = `IF(LOWER(temporality) LIKE LOWER('delta'), %s, %s) AS per_series_value`
 )
 
-const (
-	FINAL_VALUE_VARNAME = "value"
-)
-
 type MetricQueryStatementBuilder struct {
 	logger        *slog.Logger
 	metadataStore telemetrytypes.MetadataStore
@@ -242,7 +238,7 @@ func (b *MetricQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		aggCol = fmt.Sprintf("quantilesDDMerge(0.01, %f)(sketch)[1]", query.Aggregations[0].SpaceAggregation.Percentile())
 	}
 
-	sb.SelectMore(fmt.Sprintf("%s AS %s", aggCol, FINAL_VALUE_VARNAME))
+	sb.SelectMore(fmt.Sprintf("%s AS value", aggCol))
 
 	tbl := WhichSamplesTableToUse(start, end, query.Aggregations[0].Type, query.Aggregations[0].TimeAggregation, query.Aggregations[0].TableHints)
 	sb.From(fmt.Sprintf("%s.%s AS points", DBName, tbl))
@@ -530,7 +526,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	for _, g := range query.GroupBy {
 		sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 	}
-	sb.SelectMore(fmt.Sprintf("%s(per_series_value) AS %s", query.Aggregations[0].SpaceAggregation.StringValue(), FINAL_VALUE_VARNAME))
+	sb.SelectMore(fmt.Sprintf("%s(per_series_value) AS value", query.Aggregations[0].SpaceAggregation.StringValue()))
 	sb.From("__temporal_aggregation_cte")
 	sb.Where(sb.EQ("isNaN(per_series_value)", 0))
 	if query.Aggregations[0].ValueFilter != nil {
@@ -567,10 +563,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
 		}
 		sb.SelectMore(fmt.Sprintf(
-			"histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(%s), %.3f) AS %s",
-			FINAL_VALUE_VARNAME,
+			"histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) AS value",
 			quantile,
-			FINAL_VALUE_VARNAME,
 		))
 		sb.From("__spatial_aggregation_cte")
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
@@ -613,29 +607,10 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.Where(rewrittenExpr)
 		}
 	}
-	if len(query.Order) > 0 {
-		config := query.Aggregations[0]
-		spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
-		timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
-		timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
-
-		for idx := range query.Order {
-			if query.Order[idx].Key.Name == spaceAggOrderBy ||
-				query.Order[idx].Key.Name == timeAggOrderBy ||
-				query.Order[idx].Key.Name == timeSpaceAggOrderBy {
-				query.Order[idx].Key.Name = FINAL_VALUE_VARNAME
-			}
-		}
-		sb.OrderBy(querybuilder.OrderByKeys(query.Order)...)
-	} else {
-		sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
-	}
+	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	sb.OrderBy("ts")
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
-	}
-	if query.Limit > 0 {
-		sb.Limit(query.Limit)
 	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
