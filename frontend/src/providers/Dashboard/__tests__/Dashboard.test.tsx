@@ -56,7 +56,7 @@ function TestComponent(): JSX.Element {
 
 	return (
 		<div>
-			<div data-testid="dashboard-id">{dashboardId}</div>
+			<div data-testid="dashboard-id">{selectedDashboard?.id}</div>
 			<div data-testid="query-status">{dashboardResponse.status}</div>
 			<div data-testid="is-loading">{dashboardResponse.isLoading.toString()}</div>
 			<div data-testid="is-fetching">
@@ -277,17 +277,10 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 			const queryClient = createTestQueryClient();
 			const dashboardId = 'auto-refresh-dashboard';
 
-			mockUseRouteMatch.mockReturnValue({
-				path: ROUTES.DASHBOARD,
-				url: `/dashboard/${dashboardId}`,
-				isExact: true,
-				params: { dashboardId },
-			});
-
 			render(
 				<QueryClientProvider client={queryClient}>
 					<MemoryRouter initialEntries={[`/dashboard/${dashboardId}`]}>
-						<DashboardProvider>
+						<DashboardProvider dashboardId={dashboardId}>
 							<TestComponent />
 						</DashboardProvider>
 					</MemoryRouter>
