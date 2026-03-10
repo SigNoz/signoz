@@ -37,7 +37,7 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
 	clearSelectedRowWidgetId,
 	getSelectedRowWidgetId,
-} from 'providers/Dashboard/selectedRowWidgetId';
+} from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
 import {
 	getNextWidgets,
 	getPreviousWidgets,

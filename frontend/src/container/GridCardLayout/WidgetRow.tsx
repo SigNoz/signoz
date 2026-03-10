@@ -5,7 +5,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { setSelectedRowWidgetId } from 'providers/Dashboard/selectedRowWidgetId';
+import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
