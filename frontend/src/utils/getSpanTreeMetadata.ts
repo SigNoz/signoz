@@ -1,4 +1,3 @@
-/* eslint-disable no-param-reassign */
 import { themeColors } from 'constants/theme';
 import { ITraceForest, ITraceTree } from 'types/api/trace/getTraceItem';
 /**

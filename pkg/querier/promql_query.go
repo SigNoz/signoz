@@ -14,6 +14,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/prometheus/prometheus/promql"
@@ -187,6 +189,11 @@ func (q *promqlQuery) renderVars(query string, vars map[string]qbv5.VariableItem
 
 func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.tr.From, q.tr.To),
+	})
+
 	start := int64(querybuilder.ToNanoSecs(q.tr.From))
 	end := int64(querybuilder.ToNanoSecs(q.tr.To))
 
@@ -237,11 +244,21 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		return nil, errors.WrapInternalf(promErr, errors.CodeInternal, "error getting matrix from promql query %q", query)
 	}
 
+	excludeLabel := func(labelName string) bool {
+		if labelName == "__name__" {
+			return false
+		}
+		return strings.HasPrefix(labelName, "__") || labelName == "fingerprint"
+	}
+
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
 		lbls := make([]*qbv5.Label, 0, len(v.Metric))
 		for name, value := range v.Metric.Copy().Map() {
+			if excludeLabel(name) {
+				continue
+			}
 			lbls = append(lbls, &qbv5.Label{
 				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
 				Value: value,

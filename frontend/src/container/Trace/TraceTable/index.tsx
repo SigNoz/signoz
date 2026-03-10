@@ -1,7 +1,12 @@
 import { HTMLAttributes } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { TableProps, Tag, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import {
+	TableColumnsType as ColumnsType,
+	TableProps,
+	Tag,
+	Typography,
+} from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';
@@ -14,6 +19,7 @@ import dayjs from 'dayjs';
 import duration from 'dayjs/plugin/duration';
 import history from 'lib/history';
 import omit from 'lodash-es/omit';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { updateURL } from 'store/actions/trace/util';
 import { AppState } from 'store/reducers';

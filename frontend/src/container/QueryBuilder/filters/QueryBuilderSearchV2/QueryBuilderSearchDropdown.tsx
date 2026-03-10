@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { Typography } from 'antd';
 import cx from 'classnames';
 import {

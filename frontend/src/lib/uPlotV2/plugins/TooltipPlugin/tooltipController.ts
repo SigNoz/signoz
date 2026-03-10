@@ -10,12 +10,18 @@ import {
 
 const WINDOW_OFFSET = 16;
 
+/** Get the plot instance from the controller; returns null if never set or cleared. */
+export function getPlot(controller: TooltipControllerState): uPlot | null {
+	return controller.plot ?? null;
+}
+
 export function createInitialControllerState(): TooltipControllerState {
 	return {
 		plot: null,
 		hoverActive: false,
 		isAnySeriesActive: false,
 		pinned: false,
+		clickData: null,
 		style: { transform: '', pointerEvents: 'none' },
 		horizontalOffset: 0,
 		verticalOffset: 0,
@@ -46,12 +52,13 @@ export function updateWindowSize(controller: TooltipControllerState): void {
  * This is used to decide if a synced tooltip should be shown at all.
  */
 export function updatePlotVisibility(controller: TooltipControllerState): void {
-	if (!controller.plot) {
+	const plot = getPlot(controller);
+	if (!plot) {
 		controller.plotWithinViewport = false;
 		return;
 	}
 	controller.plotWithinViewport = isPlotInViewport(
-		controller.plot.rect,
+		plot.rect,
 		controller.windowWidth,
 		controller.windowHeight,
 	);
@@ -66,10 +73,11 @@ export function isScrollEventInPlot(
 	event: Event,
 	controller: TooltipControllerState,
 ): boolean {
+	const plot = getPlot(controller);
 	return (
 		event.target instanceof Node &&
-		controller.plot !== null &&
-		event.target.contains(controller.plot.root)
+		plot !== null &&
+		event.target.contains(plot.root)
 	);
 }
 
@@ -165,11 +173,12 @@ export function createSetLegendHandler(
 ): (u: uPlot) => void {
 	return (u: uPlot): void => {
 		const { controller } = ctx;
-		if (!controller.plot?.cursor?.idxs) {
+		const plot = getPlot(controller);
+		if (!plot?.cursor?.idxs) {
 			return;
 		}
 
-		const newSeriesIndexes = controller.plot.cursor.idxs.slice();
+		const newSeriesIndexes = plot.cursor.idxs.slice();
 		const isAnySeriesActive = newSeriesIndexes.some((v, i) => i > 0 && v != null);
 
 		const previousCursorDrivenBySync = controller.cursorDrivenBySync;

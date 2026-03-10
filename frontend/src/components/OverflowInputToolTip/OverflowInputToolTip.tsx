@@ -1,6 +1,3 @@
-/* eslint-disable react/require-default-props */
-/* eslint-disable react/jsx-props-no-spreading */
-
 import { useEffect, useRef, useState } from 'react';
 import { Input, InputProps, InputRef, Tooltip } from 'antd';
 import cx from 'classnames';

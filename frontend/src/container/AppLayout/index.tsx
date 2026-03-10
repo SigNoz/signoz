@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/anchor-is-valid */
 import {
 	ReactNode,
 	useCallback,
@@ -12,6 +9,7 @@ import {
 import { Helmet } from 'react-helmet-async';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
@@ -50,6 +48,7 @@ import history from 'lib/history';
 import { isNull } from 'lodash-es';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { useAppContext } from 'providers/App/App';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -250,7 +249,7 @@ function AppLayout(props: AppLayoutProps): JSX.Element {
 		}
 
 		return (): void => {
-			clearInterval(timer);
+			clearTimeout(timer);
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [

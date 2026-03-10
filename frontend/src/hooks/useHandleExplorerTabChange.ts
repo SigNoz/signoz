@@ -20,6 +20,7 @@ export const useHandleExplorerTabChange = (): {
 		type: string,
 		querySearchParameters?: ICurrentQueryData,
 		redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+		newTab?: boolean,
 	) => void;
 } => {
 	const {
@@ -63,6 +64,7 @@ export const useHandleExplorerTabChange = (): {
 			type: string,
 			currentQueryData?: ICurrentQueryData,
 			redirectToUrl?: typeof ROUTES[keyof typeof ROUTES],
+			newTab?: boolean,
 		) => {
 			const newPanelType = type as PANEL_TYPES;
 
@@ -81,13 +83,21 @@ export const useHandleExplorerTabChange = (): {
 						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
 					},
 					redirectToUrl,
+					undefined,
+					newTab,
 				);
 			} else {
-				redirectWithQueryBuilderData(query, {
-					[QueryParams.panelTypes]: newPanelType,
-					[QueryParams.viewName]: currentQueryData?.name || viewName,
-					[QueryParams.viewKey]: currentQueryData?.id || viewKey,
-				});
+				redirectWithQueryBuilderData(
+					query,
+					{
+						[QueryParams.panelTypes]: newPanelType,
+						[QueryParams.viewName]: currentQueryData?.name || viewName,
+						[QueryParams.viewKey]: currentQueryData?.id || viewKey,
+					},
+					undefined,
+					undefined,
+					newTab,
+				);
 			}
 		},
 		[panelType, getUpdateQuery, redirectWithQueryBuilderData, viewName, viewKey],

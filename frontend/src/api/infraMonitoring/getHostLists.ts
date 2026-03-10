@@ -51,6 +51,7 @@ export interface HostListResponse {
 		total: number;
 		sentAnyHostMetricsData: boolean;
 		isSendingK8SAgentMetrics: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useMemo } from 'react';
+import React, {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useMemo,
+} from 'react';
 import useUrlQuery from 'hooks/useUrlQuery';
 import {
 	PreferenceContextValue,

@@ -51,10 +51,6 @@ import type {
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint changes the password by id
  * @summary Change password

@@ -26,7 +26,6 @@ interface CustomTableRowProps {
 	activeLogId: string;
 }
 
-// eslint-disable-next-line react/function-component-definition
 const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 	children,
 	context,
@@ -47,7 +46,6 @@ const CustomTableRow: TableComponents<ILog>['TableRow'] = ({
 				(context as CustomTableRowProps).activeLogId === props.item.id
 			}
 			$logType={logType}
-			// eslint-disable-next-line react/jsx-props-no-spreading
 			{...props}
 		>
 			{children}
@@ -148,7 +146,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									$isDragColumn={isDragColumn}
 									key={column.key}
 									fontSize={tableViewProps?.fontSize}
-									// eslint-disable-next-line react/jsx-props-no-spreading
 									{...(isDragColumn && { className: `dragHandler ${column.key}` })}
 									columnKey={column.key as string}
 								>
@@ -171,11 +168,8 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 					data={dataSource}
 					components={{
-						// eslint-disable-next-line react/jsx-props-no-spreading
 						Table: LogsCustomTable({ isLoading, handleDragEnd }),
 						// TODO: fix it in the future
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						TableRow: (props): any =>
 							CustomTableRow({
 								...props,
@@ -188,7 +182,6 @@ const InfinityTable = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					itemContent={itemContent}
 					fixedHeaderContent={tableHeader}
 					totalCount={dataSource.length}
-					// eslint-disable-next-line react/jsx-props-no-spreading
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: infitiyTableProps.onEndReached }
 						: {})}

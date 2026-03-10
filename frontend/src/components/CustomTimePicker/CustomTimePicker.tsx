@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
 import {
 	ChangeEvent,
 	Dispatch,
@@ -107,6 +104,10 @@ function CustomTimePicker({
 	const location = useLocation();
 
 	const inputRef = useRef<InputRef>(null);
+	const initialInputValueOnOpenRef = useRef<string>('');
+	const hasChangedSinceOpenRef = useRef<boolean>(false);
+	// Tracks if the last pointer down was on the input so we don't close the popover when user clicks the input again
+	const isClickFromInputRef = useRef(false);
 
 	const [activeView, setActiveView] = useState<ViewType>(DEFAULT_VIEW);
 
@@ -241,6 +242,21 @@ function CustomTimePicker({
 	};
 
 	const handleOpenChange = (newOpen: boolean): void => {
+		// Don't close when the user clicked the input (trigger); Ant Design treats trigger as "outside" overlay
+		if (!newOpen && isClickFromInputRef.current) {
+			isClickFromInputRef.current = false;
+			return;
+		}
+		isClickFromInputRef.current = false;
+
+		// If the popover is trying to close and the value changed since opening,
+		// treat it as if the user pressed Enter (attempt to apply the value)
+		if (!newOpen && hasChangedSinceOpenRef.current) {
+			hasChangedSinceOpenRef.current = false;
+			handleInputPressEnter();
+			return;
+		}
+
 		setOpen(newOpen);
 
 		if (!newOpen) {
@@ -409,10 +425,18 @@ function CustomTimePicker({
 	const handleOpen = (e?: React.SyntheticEvent): void => {
 		e?.stopPropagation?.();
 
+		// If the popover is already open, avoid resetting the input value
+		// so that any in-progress edits are preserved.
+		if (open) {
+			return;
+		}
+
 		if (showLiveLogs) {
 			setOpen(true);
 			setSelectedTimePlaceholderValue('Live');
 			setInputValue('Live');
+			initialInputValueOnOpenRef.current = 'Live';
+			hasChangedSinceOpenRef.current = false;
 			return;
 		}
 
@@ -427,11 +451,21 @@ function CustomTimePicker({
 			.tz(timezone.value)
 			.format(DATE_TIME_FORMATS.UK_DATETIME_SECONDS);
 
-		setInputValue(`${startTime} - ${endTime}`);
+		const nextValue = `${startTime} - ${endTime}`;
+		setInputValue(nextValue);
+		initialInputValueOnOpenRef.current = nextValue;
+		hasChangedSinceOpenRef.current = false;
 	};
 
 	const handleClose = (e: React.MouseEvent): void => {
 		e.stopPropagation();
+		// If the value changed since opening, treat this like pressing Enter
+		if (hasChangedSinceOpenRef.current) {
+			hasChangedSinceOpenRef.current = false;
+			handleInputPressEnter();
+			return;
+		}
+
 		setOpen(false);
 		setCustomDTPickerVisible?.(false);
 
@@ -453,6 +487,9 @@ function CustomTimePicker({
 	}, [location.pathname]);
 
 	const handleInputBlur = (): void => {
+		// Track whether the value was changed since the input was opened for editing
+		hasChangedSinceOpenRef.current =
+			inputValue !== initialInputValueOnOpenRef.current;
 		resetErrorStatus();
 	};
 
@@ -555,6 +592,12 @@ function CustomTimePicker({
 						readOnly={!open || showLiveLogs}
 						placeholder={selectedTimePlaceholderValue}
 						value={inputValue}
+						onMouseDown={(e): void => {
+							// Only treat as "click from input" when the actual input element is clicked (not suffix/chevron)
+							if (e.target === inputRef.current?.input) {
+								isClickFromInputRef.current = true;
+							}
+						}}
 						onFocus={handleOpen}
 						onClick={handleOpen}
 						onChange={handleInputChange}

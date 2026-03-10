@@ -2,7 +2,7 @@ import { Dispatch, SetStateAction } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag, Tooltip, Typography } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import {
 	HostData,
 	HostListPayload,
@@ -108,6 +108,17 @@ export interface HostsListTableProps {
 	setPageSize: (pageSize: number) => void;
 }
 
+export interface EmptyOrLoadingViewProps {
+	isError: boolean;
+	errorMessage: string;
+	showHostsEmptyState: boolean;
+	sentAnyHostMetricsData: boolean;
+	isSendingIncorrectK8SAgentMetrics: boolean;
+	showEndTimeBeforeRetentionMessage: boolean;
+	showNoRecordsInSelectedTimeRangeMessage: boolean;
+	showTableLoadingState: boolean;
+}
+
 export const getHostListsQuery = (): HostListPayload => ({
 	filters: {
 		items: [],
@@ -136,7 +147,14 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		),
 	},
 	{
-		title: 'Status',
+		title: (
+			<div className="status-header">
+				Status
+				<Tooltip title="Sent system metrics in last 10 mins">
+					<InfoCircleOutlined />
+				</Tooltip>
+			</div>
+		),
 		dataIndex: 'active',
 		key: 'active',
 		width: 100,

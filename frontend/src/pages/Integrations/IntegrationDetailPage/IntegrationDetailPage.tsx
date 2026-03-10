@@ -1,6 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
-/* eslint-disable no-nested-ternary */
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Skeleton, Typography } from 'antd';
 import { useGetIntegration } from 'hooks/Integrations/useGetIntegration';

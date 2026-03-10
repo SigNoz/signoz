@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom-v5-compat';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Skeleton } from 'antd';
-import { SelectProps } from 'antd/lib';
+import type { SelectProps } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { useAwsAccounts } from 'hooks/integration/aws/useAwsAccounts';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -36,7 +36,6 @@ function AccountOptionItem({
 }
 
 function renderOption(
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	option: any,
 	activeAccountId: string | undefined,
 ): JSX.Element {
