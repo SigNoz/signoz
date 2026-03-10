@@ -10,112 +10,10 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
+from fixtures.querier import make_query_request, get_column_data_from_response
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 FILTER_EXPRESSIONS_FILE = os.path.join(TESTDATA_DIR, "filter_expressions_10000.txt")
-
-
-def _make_raw_logs_query(
-    signoz: types.SigNoz,
-    token: str,
-    filter_expression: str,
-) -> requests.Response:
-    """Helper to query raw logs with a filter expression over the last 30 seconds."""
-    now = datetime.now(tz=timezone.utc)
-    return requests.post(
-        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
-        timeout=10,
-        headers={"authorization": f"Bearer {token}"},
-        json={
-            "schemaVersion": "v1",
-            "start": int((now - timedelta(seconds=30)).timestamp() * 1000),
-            "end": int(now.timestamp() * 1000),
-            "requestType": "raw",
-            "compositeQuery": {
-                "queries": [
-                    {
-                        "type": "builder_query",
-                        "spec": {
-                            "name": "A",
-                            "signal": "logs",
-                            "disabled": False,
-                            "limit": 100,
-                            "offset": 0,
-                            "filter": {"expression": filter_expression},
-                            "order": [
-                                {"key": {"name": "timestamp"}, "direction": "desc"},
-                                {"key": {"name": "id"}, "direction": "desc"},
-                            ],
-                            "having": {"expression": ""},
-                            "aggregations": [{"expression": "count()"}],
-                        },
-                    }
-                ]
-            },
-            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
-        },
-    )
-
-
-def _log_bodies_from_response(response_json: dict) -> Set[str]:
-    """Extract the set of log bodies from a raw query response.
-    Returns an empty set when the result set is empty."""
-    results = response_json.get("data", {}).get("data", {}).get("results", [])
-    if not results:
-        return set()
-    rows = results[0].get("rows", [])
-    if rows is None:
-        return set()
-    return {row["data"]["body"] for row in rows}
-
-
-def _insert_two_logs(
-    insert_logs: Callable[[List[Logs]], None],
-) -> None:
-    """Insert the two canonical test logs used by all valid-expression test cases.
-
-    alpha-log: resources f1="v10", f2="v20", f3="v30"
-               attributes f4=40,   f5=50,   f6=60  (numbers)
-    beta-log:  resources f4="v41", f5="v51", f6="v61"
-               attributes f1=11,   f2=21,   f3=31  (numbers)
-
-    f1-f3 are present as resource on alpha and as attribute on beta.
-    f4-f6 are present as attribute on alpha and as resource on beta.
-    This intentional overlap exercises context-prefix disambiguation.
-    """
-    now = datetime.now(tz=timezone.utc)
-    insert_logs(
-        [
-            Logs(
-                timestamp=now - timedelta(seconds=5),
-                body="alpha-log",
-                resources={
-                    "f1": "v10",
-                    "f2": "v20",
-                    "f3": "v30",
-                },
-                attributes={
-                    "f4": 40,
-                    "f5": 50,
-                    "f6": 60,
-                },
-            ),
-            Logs(
-                timestamp=now - timedelta(seconds=3),
-                body="beta-log",
-                resources={
-                    "f4": "v41",
-                    "f5": "v51",
-                    "f6": "v61",
-                },
-                attributes={
-                    "f1": 11,
-                    "f2": 21,
-                    "f3": 31,
-                },
-            ),
-        ]
-    )
 
 
 @pytest.mark.parametrize(
@@ -204,23 +102,90 @@ def test_not_filter_expression(
     """
     Verifies that valid NOT filter expressions return the correct set of logs.
 
-    Two logs are inserted per run:
-    - alpha-log: resources f1-f3 (strings), attributes f4-f6 (numbers)
-    - beta-log:  resources f4-f6 (strings), attributes f1-f3 (numbers)
+    Insert the two canonical test logs used by all valid-expression test cases.
+
+    alpha-log: resources f1="v10", f2="v20", f3="v30"
+               attributes f4=40,   f5=50,   f6=60  (numbers)
+    beta-log:  resources f4="v41", f5="v51", f6="v61"
+               attributes f1=11,   f2=21,   f3=31  (numbers)
+
+    f1-f3 are present as resource on alpha and as attribute on beta.
+    f4-f6 are present as attribute on alpha and as resource on beta.
+    This intentional overlap exercises context-prefix disambiguation.
     """
-    _insert_two_logs(insert_logs)
+    now = datetime.now(tz=timezone.utc)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=5),
+                body="alpha-log",
+                resources={
+                    "f1": "v10",
+                    "f2": "v20",
+                    "f3": "v30",
+                },
+                attributes={
+                    "f4": 40,
+                    "f5": 50,
+                    "f6": 60,
+                },
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                body="beta-log",
+                resources={
+                    "f4": "v41",
+                    "f5": "v51",
+                    "f6": "v61",
+                },
+                attributes={
+                    "f1": 11,
+                    "f2": 21,
+                    "f3": 31,
+                },
+            ),
+        ]
+    )
+
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _make_raw_logs_query(signoz, token, expression)
+    now = datetime.now(tz=timezone.utc)
+
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        request_type="raw",
+        queries=[
+            {
+                "type": "builder_query",
+                "spec": {
+                    "name": "A",
+                    "signal": "logs",
+                    "disabled": False,
+                    "limit": 100,
+                    "offset": 0,
+                    "filter": {"expression": expression},
+                    "order": [
+                        {"key": {"name": "timestamp"}, "direction": "desc"},
+                        {"key": {"name": "id"}, "direction": "desc"},
+                    ],
+                    "having": {"expression": ""},
+                    "aggregations": [{"expression": "count()"}],
+                },
+            }
+        ],
+    )
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
-    assert _log_bodies_from_response(response.json()) == expected_logs
+    assert set(get_column_data_from_response(response.json(), "body")) == expected_logs
 
 
 def test_filter_expressions_no_server_error(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
-    insert_logs: Callable[[List[Logs]], None],  # pylint: disable=unused-argument
+    insert_logs,
     get_token: Callable[[str, str], str],
 ) -> None:
     """
@@ -235,6 +200,74 @@ def test_filter_expressions_no_server_error(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
+    now = datetime.now(tz=timezone.utc)
+    insert_logs(
+        [
+            Logs(
+                timestamp=now - timedelta(seconds=5),
+                body="alpha-log",
+                resources={
+                    "f1": "v10",
+                    "f2": "v20",
+                    "f3": "v30",
+                },
+                attributes={
+                    "f4": 40,
+                    "f5": 50,
+                    "f6": 60,
+                },
+            ),
+            Logs(
+                timestamp=now - timedelta(seconds=3),
+                body="beta-log",
+                resources={
+                    "f4": "v41",
+                    "f5": "v51",
+                    "f6": "v61",
+                },
+                attributes={
+                    "f1": 11,
+                    "f2": 21,
+                    "f3": 31,
+                },
+            ),
+        ]
+    )
+
+    def _make_raw_logs_query(
+        signoz: types.SigNoz,
+        token: str,
+        filter_expression: str,
+    ) -> requests.Response:
+        """Helper to query raw logs with a filter expression over the last 30 seconds."""
+        now = datetime.now(tz=timezone.utc)
+        return make_query_request(
+            signoz,
+            token,
+            start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+            end_ms=int(now.timestamp() * 1000),
+            request_type="raw",
+            queries=[
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "logs",
+                        "disabled": False,
+                        "limit": 100,
+                        "offset": 0,
+                        "filter": {"expression": filter_expression},
+                        "order": [
+                            {"key": {"name": "timestamp"}, "direction": "desc"},
+                            {"key": {"name": "id"}, "direction": "desc"},
+                        ],
+                        "having": {"expression": ""},
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                }
+            ],
+        )
+    
     failures: List[str] = []
     with ThreadPoolExecutor(max_workers=40) as executor:
         with open(FILTER_EXPRESSIONS_FILE, encoding="utf-8") as f:
@@ -250,7 +283,7 @@ def test_filter_expressions_no_server_error(
                     failures.append(expr)
 
     assert (
-        len(failures) < 200
+        len(failures) <= 0
     ), f"{len(failures)} expression(s) caused HTTP 500:\n" + "\n".join(
         f"  {expr!r}" for expr in failures
     )
