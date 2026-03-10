@@ -80,8 +80,6 @@ export const DashboardContext = createContext<IDashboardContext>({
 	updateLocalStorageDashboardVariables: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
-	selectedRowWidgetId: '',
-	setSelectedRowWidgetId: () => {},
 	isDashboardFetching: false,
 	columnWidths: {},
 	setColumnWidths: () => {},
@@ -100,10 +98,6 @@ export function DashboardProvider({
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
-
-	const [selectedRowWidgetId, setSelectedRowWidgetId] = useState<string | null>(
-		null,
-	);
 
 	const [
 		dashboardQueryRangeCalled,
@@ -467,8 +461,6 @@ export function DashboardProvider({
 			updateLocalStorageDashboardVariables,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,
@@ -487,8 +479,6 @@ export function DashboardProvider({
 			currentDashboard,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,

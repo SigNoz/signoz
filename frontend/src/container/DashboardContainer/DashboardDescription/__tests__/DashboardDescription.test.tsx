@@ -204,8 +204,6 @@ describe('Dashboard landing page actions header tests', () => {
 			updateLocalStorageDashboardVariables: jest.fn(),
 			dashboardQueryRangeCalled: false,
 			setDashboardQueryRangeCalled: jest.fn(),
-			selectedRowWidgetId: null,
-			setSelectedRowWidgetId: jest.fn(),
 			isDashboardFetching: false,
 			columnWidths: {},
 			setColumnWidths: jest.fn(),
