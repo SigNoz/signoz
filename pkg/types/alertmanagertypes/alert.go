@@ -91,7 +91,7 @@ func NewDeprecatedGettableAlertsFromGettableAlerts(gettableAlerts GettableAlerts
 }
 
 // Converts a slice of PostableAlert to a slice of Alert.
-func NewAlertsFromPostableAlerts(postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time, ctx context.Context) ([]*types.Alert, []error) {
+func NewAlertsFromPostableAlerts(ctx context.Context, postableAlerts PostableAlerts, resolveTimeout time.Duration, now time.Time) ([]*types.Alert, []error) {
 	alerts := v2.OpenAPIAlertsToAlerts(ctx, postableAlerts)
 
 	for _, alert := range alerts {

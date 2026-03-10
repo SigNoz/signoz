@@ -14,5 +14,6 @@
 	"archives": "Archives",
 	"logs_to_metrics": "Logs To Metrics",
 	"roles": "Roles",
-	"role_details": "Role Details"
+	"role_details": "Role Details",
+	"members": "Members"
 }

@@ -25,6 +25,7 @@ import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import { showErrorNotification } from '../../utils/error';
 import {
 	formatDateTime,
 	getAlertOptionsFromIds,
@@ -359,7 +360,7 @@ export function PlannedDowntimeList({
 
 	useEffect(() => {
 		if (downtimeSchedules.isError) {
-			notifications.error(downtimeSchedules.error);
+			showErrorNotification(notifications, downtimeSchedules.error);
 		}
 	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 

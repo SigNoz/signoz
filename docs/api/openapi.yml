@@ -2108,6 +2108,15 @@ components:
         token:
           type: string
       type: object
+    TypesPostableBulkInviteRequest:
+      properties:
+        invites:
+          items:
+            $ref: '#/components/schemas/TypesPostableInvite'
+          type: array
+      required:
+      - invites
+      type: object
     TypesPostableForgotPassword:
       properties:
         email:
@@ -2195,6 +2204,8 @@ components:
         orgId:
           type: string
         role:
+          type: string
+        status:
           type: string
         updatedAt:
           format: date-time
@@ -3538,9 +3549,7 @@ paths:
         content:
           application/json:
             schema:
-              items:
-                $ref: '#/components/schemas/TypesPostableInvite'
-              type: array
+              $ref: '#/components/schemas/TypesPostableBulkInviteRequest'
       responses:
         "201":
           description: Created

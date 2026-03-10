@@ -2525,6 +2525,13 @@ export interface TypesPostableAcceptInviteDTO {
 	token?: string;
 }
 
+export interface TypesPostableBulkInviteRequestDTO {
+	/**
+	 * @type array
+	 */
+	invites: TypesPostableInviteDTO[];
+}
+
 export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
@@ -2665,6 +2672,10 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
 	/**
 	 * @type string
 	 * @format date-time

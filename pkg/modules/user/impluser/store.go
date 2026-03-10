@@ -25,77 +25,6 @@ func NewStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSettings) typ
 	return &store{sqlstore: sqlstore, settings: settings}
 }
 
-// CreateBulkInvite implements types.InviteStore.
-func (store *store) CreateBulkInvite(ctx context.Context, invites []*types.Invite) error {
-	_, err := store.sqlstore.BunDB().NewInsert().
-		Model(&invites).
-		Exec(ctx)
-
-	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, types.ErrInviteAlreadyExists, "invite with email: %s already exists in org: %s", invites[0].Email, invites[0].OrgID)
-	}
-	return nil
-}
-
-// Delete implements types.InviteStore.
-func (store *store) DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error {
-	_, err := store.sqlstore.BunDB().NewDelete().
-		Model(&types.Invite{}).
-		Where("org_id = ?", orgID).
-		Where("id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with id: %s does not exist in org: %s", id.StringValue(), orgID)
-	}
-	return nil
-}
-
-func (store *store) GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.Invite, error) {
-	invite := new(types.Invite)
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).NewSelect().
-		Model(invite).
-		Where("email = ?", email).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with email %s does not exist in org %s", email, orgID)
-	}
-
-	return invite, nil
-}
-
-func (store *store) GetInviteByToken(ctx context.Context, token string) (*types.GettableInvite, error) {
-	invite := new(types.Invite)
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(invite).
-		Where("token = ?", token).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite does not exist", token)
-	}
-
-	return invite, nil
-}
-
-func (store *store) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	invites := new([]*types.Invite)
-	err := store.sqlstore.BunDB().NewSelect().
-		Model(invites).
-		Where("org_id = ?", orgID).
-		Scan(ctx)
-	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrInviteNotFound, "invite with org id: %s does not exist", orgID)
-	}
-	return *invites, nil
-}
-
 func (store *store) CreatePassword(ctx context.Context, password *types.FactorPassword) error {
 	_, err := store.
 		sqlstore.
@@ -175,24 +104,25 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 	return user, nil
 }
 
-func (store *store) GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	user := new(types.User)
+func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
+	var users []*types.User
+
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		Model(user).
+		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("email = ?", email).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s does not exist in org %s", email, orgID)
+		return nil, err
 	}
 
-	return user, nil
+	return users, nil
 }
 
-func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
+func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
 	var users []*types.User
 
 	err := store.
@@ -202,6 +132,7 @@ func (store *store) GetUsersByRoleAndOrgID(ctx context.Context, role types.Role,
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("role = ?", role).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -221,6 +152,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Column("role").
 		Column("is_root").
 		Column("updated_at").
+		Column("status").
 		Where("org_id = ?", orgID).
 		Where("id = ?", user.ID).
 		Exec(ctx)
@@ -331,10 +263,98 @@ func (store *store) DeleteUser(ctx context.Context, orgID string, id string) err
 	return nil
 }
 
+func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string) error {
+	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to start transaction")
+	}
+
+	defer func() {
+		_ = tx.Rollback()
+	}()
+
+	// get the password id
+
+	var password types.FactorPassword
+	err = tx.NewSelect().
+		Model(&password).
+		Where("user_id = ?", id).
+		Scan(ctx)
+	if err != nil && err != sql.ErrNoRows {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete password")
+	}
+
+	// delete reset password request
+	_, err = tx.NewDelete().
+		Model(new(types.ResetPasswordToken)).
+		Where("password_id = ?", password.ID.String()).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete reset password request")
+	}
+
+	// delete factor password
+	_, err = tx.NewDelete().
+		Model(new(types.FactorPassword)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
+	}
+
+	// delete api keys
+	_, err = tx.NewDelete().
+		Model(&types.StorableAPIKey{}).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
+	}
+
+	// delete user_preference
+	_, err = tx.NewDelete().
+		Model(new(preferencetypes.StorableUserPreference)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user preferences")
+	}
+
+	// delete tokens
+	_, err = tx.NewDelete().
+		Model(new(authtypes.StorableToken)).
+		Where("user_id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete tokens")
+	}
+
+	// soft delete user
+	now := time.Now()
+	_, err = tx.NewUpdate().
+		Model(new(types.User)).
+		Set("status = ?", types.UserStatusDeleted).
+		Set("deleted_at = ?", now).
+		Set("updated_at = ?", now).
+		Where("org_id = ?", orgID).
+		Where("id = ?", id).
+		Exec(ctx)
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete user")
+	}
+
+	err = tx.Commit()
+	if err != nil {
+		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to commit transaction")
+	}
+
+	return nil
+}
+
 func (store *store) CreateResetPasswordToken(ctx context.Context, resetPasswordToken *types.ResetPasswordToken) error {
 	_, err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewInsert().
 		Model(resetPasswordToken).
 		Exec(ctx)
@@ -367,7 +387,7 @@ func (store *store) GetPasswordByUserID(ctx context.Context, userID valuer.UUID)
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(password).
 		Where("user_id = ?", userID).
@@ -383,7 +403,7 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 
 	err := store.
 		sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(resetPasswordToken).
 		Where("password_id = ?", passwordID).
@@ -396,7 +416,7 @@ func (store *store) GetResetPasswordTokenByPasswordID(ctx context.Context, passw
 }
 
 func (store *store) DeleteResetPasswordTokenByPasswordID(ctx context.Context, passwordID valuer.UUID) error {
-	_, err := store.sqlstore.BunDB().NewDelete().
+	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().
 		Model(&types.ResetPasswordToken{}).
 		Where("password_id = ?", passwordID).
 		Exec(ctx)
@@ -418,43 +438,20 @@ func (store *store) GetResetPasswordToken(ctx context.Context, token string) (*t
 		Where("token = ?", token).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist", token)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrResetPasswordTokenNotFound, "reset password token does not exist")
 	}
 
 	return resetPasswordRequest, nil
 }
 
 func (store *store) UpdatePassword(ctx context.Context, factorPassword *types.FactorPassword) error {
-	tx, err := store.sqlstore.BunDB().BeginTx(ctx, nil)
-	if err != nil {
-		return err
-	}
-
-	defer func() {
-		_ = tx.Rollback()
-	}()
-
-	_, err = tx.
+	_, err := store.sqlstore.BunDBCtx(ctx).
 		NewUpdate().
 		Model(factorPassword).
 		Where("user_id = ?", factorPassword.UserID).
 		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapNotFoundErrf(err, types.ErrPasswordNotFound, "password for user %s does not exist", factorPassword.UserID)
-	}
-
-	_, err = tx.
-		NewDelete().
-		Model(&types.ResetPasswordToken{}).
-		Where("password_id = ?", factorPassword.ID).
-		Exec(ctx)
-	if err != nil {
-		return err
-	}
-
-	err = tx.Commit()
-	if err != nil {
-		return err
 	}
 
 	return nil
@@ -582,6 +579,36 @@ func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64,
 	return int64(count), nil
 }
 
+func (store *store) CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error) {
+	user := new(types.User)
+	var results []struct {
+		Status valuer.String `bun:"status"`
+		Count  int64         `bun:"count"`
+	}
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		ColumnExpr("status").
+		ColumnExpr("COUNT(*) AS count").
+		Where("org_id = ?", orgID.StringValue()).
+		Where("status IN (?)", bun.In(statuses)).
+		GroupExpr("status").
+		Scan(ctx, &results)
+	if err != nil {
+		return nil, err
+	}
+
+	counts := make(map[valuer.String]int64, len(results))
+	for _, r := range results {
+		counts[r.Status] = r.Count
+	}
+
+	return counts, nil
+}
+
 func (store *store) CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
 	apiKey := new(types.StorableAPIKey)
 
@@ -631,6 +658,44 @@ func (store *store) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.
 		Model(&users).
 		Where("email = ?", email).
 		Where("org_id IN (?)", bun.In(orgIDs)).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
+
+func (store *store) GetUserByResetPasswordToken(ctx context.Context, token string) (*types.User, error) {
+	user := new(types.User)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(user).
+		Join(`JOIN factor_password ON factor_password.user_id = "user".id`).
+		Join("JOIN reset_password_token ON reset_password_token.password_id = factor_password.id").
+		Where("reset_password_token.token = ?", token).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user not found for reset password token")
+	}
+
+	return user, nil
+}
+
+func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, emails []string, statuses []string) ([]*types.User, error) {
+	users := []*types.User{}
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Where("email IN (?)", bun.In(emails)).
+		Where("org_id = ?", orgID).
+		Where("status in (?)", bun.In(statuses)).
 		Scan(ctx)
 	if err != nil {
 		return nil, err

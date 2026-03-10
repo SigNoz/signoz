@@ -7,26 +7,14 @@ on:
   pull_request_target:
     types:
       - labeled
+  merge_group:
+    types:
+      - checks_requested
 
 jobs:
   tsc:
     if: |
-      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
-      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
-    runs-on: ubuntu-latest
-    steps:
-      - name: checkout
-        uses: actions/checkout@v4
-      - name: setup node
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-      - name: install
-        run: cd frontend && yarn install
-      - name: tsc
-        run: cd frontend && yarn tsc
-  tsc2:
-    if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/js-tsc.yaml@main
@@ -36,6 +24,7 @@ jobs:
       JS_SRC: frontend
   test:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/js-test.yaml@main
@@ -45,6 +34,7 @@ jobs:
       JS_SRC: frontend
   fmt:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/js-fmt.yaml@main
@@ -54,6 +44,7 @@ jobs:
       JS_SRC: frontend
   lint:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/js-lint.yaml@main
@@ -63,6 +54,7 @@ jobs:
       JS_SRC: frontend
   md-languages:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
@@ -73,6 +65,7 @@ jobs:
         run: bash frontend/scripts/validate-md-languages.sh
   authz:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest

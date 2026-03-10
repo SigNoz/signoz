@@ -674,7 +674,7 @@ function GeneralSettings({
 	return (
 		<div className="general-settings-page">
 			<div className="general-settings-header">
-				<span className="general-settings-title">General</span>
+				<span className="general-settings-title">Workspace</span>
 				<span className="general-settings-subtitle">
 					Manage your workspace settings.
 				</span>

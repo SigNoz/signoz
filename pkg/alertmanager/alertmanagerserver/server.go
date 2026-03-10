@@ -209,7 +209,7 @@ func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.Ge
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now(), ctx)
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(ctx, postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
 	// Notification sending alert takes precedence over validation errors.
 	if err := server.alerts.Put(ctx, alerts...); err != nil {
 		return err
@@ -340,10 +340,10 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	}
 
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(
+		ctx,
 		postableAlerts,
 		time.Duration(server.srvConfig.Global.ResolveTimeout),
 		time.Now(),
-		ctx,
 	)
 	if err != nil {
 		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput,
