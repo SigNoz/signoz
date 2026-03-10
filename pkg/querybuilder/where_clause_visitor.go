@@ -247,7 +247,7 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 	}
 
 	if len(andExpressionConditions) == 0 {
-		return ""
+		return TrueConditionLiteral
 	}
 
 	if len(andExpressionConditions) == 1 {
@@ -331,7 +331,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 	// Handle standalone key/value as a full text search term
 	if ctx.GetChildCount() == 1 {
 		if v.skipFullTextFilter {
-			return ""
+			return TrueConditionLiteral
 		}
 
 		if v.fullTextColumn == nil {
@@ -380,7 +380,11 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 	keys := v.Visit(ctx.Key()).([]*telemetrytypes.TelemetryFieldKey)
 
 	// if key is missing and can be ignored, the condition is ignored
-	if len(keys) == 0 && v.ignoreNotFoundKeys {
+	if len(keys) == 0 {
+		if v.ignoreNotFoundKeys {
+			return TrueConditionLiteral
+		}
+		v.errors = append(v.errors, "Key not found")
 		return ""
 	}
 
@@ -456,7 +460,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					if varItem.Type == qbtypes.DynamicVariableType {
 						// check if it is special value to skip entire filter, if so skip it
 						if all_, ok := varItem.Value.(string); ok && all_ == "__all__" {
-							return ""
+							return TrueConditionLiteral
 						}
 					}
 					switch varValues := varItem.Value.(type) {
@@ -676,7 +680,10 @@ func (v *filterExpressionVisitor) VisitValueList(ctx *grammar.ValueListContext) 
 func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) any {
 
 	if v.skipFullTextFilter {
-		return ""
+		// A skipped FT term must be treated as TrueConditionLiteral, not "".
+		// Returning "" would silently drop this branch from an OR, incorrectly
+		// excluding rows that could match the FT condition on the real table.
+		return TrueConditionLiteral
 	}
 
 	var text string
@@ -702,7 +709,7 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 // VisitFunctionCall handles function calls like has(), hasAny(), etc.
 func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallContext) any {
 	if v.skipFunctionCalls {
-		return ""
+		return TrueConditionLiteral
 	}
 
 	// Get function name based on which token is present
