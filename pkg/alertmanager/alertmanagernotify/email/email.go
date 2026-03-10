@@ -36,6 +36,8 @@ type Email struct {
 	hostname string
 }
 
+var errNoAuthUserNameConfigured = errors.NewInternalf(errors.CodeInternal, "no auth username configured")
+
 // New returns a new Email notifier.
 func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
 	if _, ok := c.Headers["Subject"]; !ok {
@@ -57,13 +59,12 @@ func New(c *config.EmailConfig, t *template.Template, l *slog.Logger) *Email {
 }
 
 // auth resolves a string of authentication mechanisms.
-func (n *Email) auth(ctx context.Context, mechs string) (smtp.Auth, error) {
+func (n *Email) auth(mechs string) (smtp.Auth, error) {
 	username := n.conf.AuthUsername
 
-	// If no username is set, keep going without authentication.
+	// If no username is set, return custom error which can be ignored if needed.
 	if n.conf.AuthUsername == "" {
-		n.logger.DebugContext(ctx, "smtp_auth_username is not configured. Attempting to send email without authenticating")
-		return nil, nil
+		return nil, errNoAuthUserNameConfigured
 	}
 
 	err := &types.MultiError{}
@@ -192,9 +193,11 @@ func (n *Email) Notify(ctx context.Context, as ...*types.Alert) (bool, error) {
 	}
 
 	if ok, mech := c.Extension("AUTH"); ok {
-		auth, err := n.auth(ctx, mech)
-		if err != nil {
+		auth, err := n.auth(mech)
+		if err != nil && err != errNoAuthUserNameConfigured {
 			return true, errors.WrapInternalf(err, errors.CodeInternal, "find auth mechanism")
+		} else if err == errNoAuthUserNameConfigured {
+			n.logger.DebugContext(ctx, "no auth username configured. Attempting to send email without authenticating")
 		}
 		if auth != nil {
 			if err := c.Auth(auth); err != nil {
@@ -404,7 +407,7 @@ func (n *Email) getPassword() (string, error) {
 	if len(n.conf.AuthPasswordFile) > 0 {
 		content, err := os.ReadFile(n.conf.AuthPasswordFile)
 		if err != nil {
-			return "", errors.WrapInternalf(err, errors.CodeInternal, "could not read %s", n.conf.AuthPasswordFile)
+			return "", errors.NewInternalf(errors.CodeInternal, "could not read %s: %v", n.conf.AuthPasswordFile, err)
 		}
 		return strings.TrimSpace(string(content)), nil
 	}
@@ -415,7 +418,7 @@ func (n *Email) getAuthSecret() (string, error) {
 	if len(n.conf.AuthSecretFile) > 0 {
 		content, err := os.ReadFile(n.conf.AuthSecretFile)
 		if err != nil {
-			return "", errors.WrapInternalf(err, errors.CodeInternal, "could not read %s", n.conf.AuthSecretFile)
+			return "", errors.NewInternalf(errors.CodeInternal, "could not read %s: %v", n.conf.AuthSecretFile, err)
 		}
 		return string(content), nil
 	}

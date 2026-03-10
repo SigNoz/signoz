@@ -86,7 +86,7 @@ func (m *mailDev) getLastEmail(t *testing.T) (*email, error) {
 		return nil, err
 	}
 	if len(emails) == 0 {
-		return nil, nil
+		return nil, errors.NewInternalf(errors.CodeInternal, "email not found")
 	}
 	return &emails[len(emails)-1], nil
 }
@@ -609,7 +609,7 @@ func TestEmailConfigNoAuthMechs(t *testing.T) {
 	email := &Email{
 		conf: &config.EmailConfig{AuthUsername: "test"}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	_, err := email.auth(context.Background(), "")
+	_, err := email.auth("")
 	require.Error(t, err)
 	require.Equal(t, "unknown auth mechanism: ", err.Error())
 }
@@ -619,19 +619,19 @@ func TestEmailConfigMissingAuthParam(t *testing.T) {
 	email := &Email{
 		conf: conf, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	_, err := email.auth(context.Background(), "CRAM-MD5")
+	_, err := email.auth("CRAM-MD5")
 	require.Error(t, err)
 	require.Equal(t, "missing secret for CRAM-MD5 auth mechanism", err.Error())
 
-	_, err = email.auth(context.Background(), "PLAIN")
+	_, err = email.auth("PLAIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for PLAIN auth mechanism", err.Error())
 
-	_, err = email.auth(context.Background(), "LOGIN")
+	_, err = email.auth("LOGIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for LOGIN auth mechanism", err.Error())
 
-	_, err = email.auth(context.Background(), "PLAIN LOGIN")
+	_, err = email.auth("PLAIN LOGIN")
 	require.Error(t, err)
 	require.Equal(t, "missing password for PLAIN auth mechanism; missing password for LOGIN auth mechanism", err.Error())
 }
@@ -640,8 +640,8 @@ func TestEmailNoUsernameStillOk(t *testing.T) {
 	email := &Email{
 		conf: &config.EmailConfig{}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}
-	a, err := email.auth(context.Background(), "CRAM-MD5")
-	require.NoError(t, err)
+	a, err := email.auth("CRAM-MD5")
+	require.ErrorIs(t, err, errNoAuthUserNameConfigured)
 	require.Nil(t, a)
 }
 
