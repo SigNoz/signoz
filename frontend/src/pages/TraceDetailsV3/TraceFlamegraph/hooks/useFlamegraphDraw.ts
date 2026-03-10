@@ -160,12 +160,15 @@ export function useFlamegraphDraw(
 		// ---- Vertical clipping window ----
 		const viewportHeight = container.clientHeight;
 
+		//starts drawing OVERSCAN_ROWS(4) rows above the visible area.
 		const firstLevel = Math.max(
 			0,
 			Math.floor(scrollTop / metrics.ROW_HEIGHT) - OVERSCAN_ROWS,
 		);
+		// adds 2*OVERSCAN_ROWS extra rows above and below the visible area.
 		const visibleLevelCount =
 			Math.ceil(viewportHeight / metrics.ROW_HEIGHT) + 2 * OVERSCAN_ROWS;
+
 		const lastLevel = Math.min(spans.length - 1, firstLevel + visibleLevelCount);
 
 		ctx.clearRect(0, 0, cssWidth, viewportHeight);
