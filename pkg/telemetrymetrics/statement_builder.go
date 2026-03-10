@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -607,8 +608,68 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			sb.Where(rewrittenExpr)
 		}
 	}
-	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
-	sb.OrderBy("ts")
+	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
+	hasOrder := len(query.Order) > 0
+	hasLimit := query.Limit > 0
+	hasGroupBy := len(groupByKeys) > 0
+
+	if hasOrder && hasLimit {
+		// order by with limit: add WHERE subquery to restrict to top N distinct key combinations
+		orderByKeys := querybuilder.OrderByKeys(query.Order)
+		var orderByClauses []string
+		for _, o := range query.Order {
+			orderByClauses = append(orderByClauses, fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
+		}
+
+		subSb := sqlbuilder.NewSelectBuilder()
+		subSb.Select(fmt.Sprintf("DISTINCT %s", orderByKeys[0]))
+		if len(orderByKeys) > 1 {
+			subSb.SelectMore(orderByKeys[1:]...)
+		}
+		subSb.From("__spatial_aggregation_cte")
+		subSb.OrderBy(orderByClauses...)
+		subSb.Limit(query.Limit)
+
+		subQ, _ := subSb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(orderByKeys, ", "), subQ))
+
+		sb.OrderBy(orderByClauses...)
+		sb.OrderBy("ts ASC")
+	} else if hasOrder {
+		// order by without limit: apply order by clauses directly
+		for _, o := range query.Order {
+			key := o.Key.Name
+			if strings.Contains(key, query.Aggregations[0].MetricName) {
+				sb.OrderBy(fmt.Sprintf("avg(value) %s", o.Direction.StringValue()))
+				continue // has issues
+			}
+			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
+		}
+		sb.OrderBy("ts ASC")
+	} else if hasLimit && hasGroupBy { // has issues
+		// limit without order by: default ordering by avg(value)
+		subSb := sqlbuilder.NewSelectBuilder()
+		subSb.Select(groupByKeys[0])
+		if len(groupByKeys) > 1 {
+			subSb.SelectMore(groupByKeys[1:]...)
+		}
+		subSb.From("__spatial_aggregation_cte")
+		subSb.GroupBy(groupByKeys...)
+		subSb.OrderBy("avg(value)")
+		subSb.Limit(query.Limit)
+
+		subQ, _ := subSb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), subQ))
+
+		sb.OrderBy("ts ASC")
+	} else if hasGroupBy {
+		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
+		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
+		sb.OrderBy(groupByKeys...)
+		sb.OrderBy("ts ASC")
+	} else {
+		sb.OrderBy("ts ASC")
+	}
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
 	}
