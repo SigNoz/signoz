@@ -206,14 +206,13 @@ export const mySettings = (t: TFunction): RouteTabProps['routes'] => [
 ];
 
 export const serviceAccountsSettings = (
-	// eslint-disable-next-line @typescript-eslint/no-unused-vars
-	_t: TFunction,
+	t: TFunction,
 ): RouteTabProps['routes'] => [
 	{
 		Component: ServiceAccountsSettings,
 		name: (
 			<div className="periscope-tab">
-				<Bot size={16} /> Service Accounts
+				<Bot size={16} /> {t('routes:service_accounts').toString()}
 			</div>
 		),
 		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,

@@ -2,9 +2,7 @@ import React from 'react';
 import { Badge } from '@signozhq/badge';
 import { Pagination, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
-import { useTimezone } from 'providers/Timezone';
 
 import './ServiceAccountsTable.styles.scss';
 
@@ -114,19 +112,6 @@ function ServiceAccountsTable({
 	onPageChange,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-
-	const formatCreatedAt = (date: string | null): string => {
-		if (!date) {
-			return '—';
-		}
-		const d = new Date(date);
-		if (Number.isNaN(d.getTime())) {
-			return '—';
-		}
-		return formatTimezoneAdjustedTimestamp(date, DATE_TIME_FORMATS.DASH_DATETIME);
-	};
-
 	const columns: ColumnsType<ServiceAccountRow> = [
 		{
 			title: 'Name / Email',
@@ -162,9 +147,6 @@ function ServiceAccountsTable({
 			<span className="sa-pagination-total"> of {_total}</span>
 		</>
 	);
-
-	// Silence unused import warning — formatCreatedAt used by future columns
-	void formatCreatedAt;
 
 	return (
 		<div className="sa-table-wrapper">
