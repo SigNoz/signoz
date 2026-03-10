@@ -68,7 +68,6 @@ export const DashboardContext = createContext<IDashboardContext>({
 		APIError
 	>,
 	selectedDashboard: {} as Dashboard,
-	dashboardId: '',
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
