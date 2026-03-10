@@ -58,6 +58,7 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
+		MessageSubColumn: {Name: MessageSubColumn, Type: schema.ColumnTypeString},
 	}
 )
 
@@ -147,6 +148,8 @@ func (m *fieldMapper) FieldFor(ctx context.Context, key *telemetrytypes.Telemetr
 			}
 
 			return m.buildFieldForJSON(key)
+		case telemetrytypes.FieldContextLog:
+			return column.Name, nil
 		default:
 			return "", errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "only resource/body context fields are supported for json columns, got %s", key.FieldContext.String)
 		}
