@@ -292,15 +292,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete factor password")
 	}
 
-	// delete api keys
-	_, err = tx.NewDelete().
-		Model(&types.StorableAPIKey{}).
-		Where("user_id = ?", id).
-		Exec(ctx)
-	if err != nil {
-		return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to delete API keys")
-	}
-
 	// delete user_preference
 	_, err = tx.NewDelete().
 		Model(new(preferencetypes.StorableUserPreference)).
