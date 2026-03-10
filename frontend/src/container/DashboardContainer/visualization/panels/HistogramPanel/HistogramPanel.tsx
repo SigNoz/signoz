@@ -6,7 +6,6 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { DashboardCursorSync } from 'lib/uPlotV2/plugins/TooltipPlugin/types';
 import { useTimezone } from 'providers/Timezone';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import Histogram from '../../charts/Histogram/Histogram';
@@ -39,7 +38,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 		return prepareHistogramPanelConfig({
 			widget,
 			isDarkMode,
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			apiResponse: queryResponse?.data?.payload,
 			panelMode,
 		});
 	}, [widget, isDarkMode, queryResponse?.data?.payload, panelMode]);
@@ -49,7 +48,7 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 			return [];
 		}
 		return prepareHistogramPanelData({
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			apiResponse: queryResponse?.data?.payload,
 			bucketWidth: widget?.bucketWidth,
 			bucketCount: widget?.bucketCount,
 			mergeAllActiveQueries: widget?.mergeAllActiveQueries,
