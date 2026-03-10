@@ -640,8 +640,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		for _, o := range query.Order {
 			key := o.Key.Name
 			if strings.Contains(key, query.Aggregations[0].MetricName) {
-				sb.OrderBy(fmt.Sprintf("avg(value) %s", o.Direction.StringValue()))
-				continue // has issues
+				sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue()))
+				continue
 			}
 			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
 		}
