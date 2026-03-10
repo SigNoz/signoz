@@ -628,9 +628,9 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		}
 		subSb.From("__spatial_aggregation_cte")
 		subSb.OrderBy(orderByClauses...)
-		subSb.Limit(query.Limit)
 
 		subQ, _ := subSb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		subQ = fmt.Sprintf("%s LIMIT %d", subQ, query.Limit)
 		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(orderByKeys, ", "), subQ))
 
 		sb.OrderBy(orderByClauses...)
@@ -656,9 +656,9 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		subSb.From("__spatial_aggregation_cte")
 		subSb.GroupBy(groupByKeys...)
 		subSb.OrderBy("avg(value)")
-		subSb.Limit(query.Limit)
 
 		subQ, _ := subSb.BuildWithFlavor(sqlbuilder.ClickHouse)
+		subQ = fmt.Sprintf("%s LIMIT %d", subQ, query.Limit)
 		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), subQ))
 
 		sb.OrderBy("ts ASC")
