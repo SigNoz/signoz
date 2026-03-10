@@ -1,0 +1,2 @@
+smarthost: maildev-noauth:1025
+server: http://maildev-noauth:1080/

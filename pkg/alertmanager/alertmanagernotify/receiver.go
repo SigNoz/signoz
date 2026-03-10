@@ -2,14 +2,38 @@ package alertmanagernotify
 
 import (
 	"log/slog"
+	"slices"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/email"
 	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/msteamsv2"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/opsgenie"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/pagerduty"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/slack"
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/webhook"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/config/receiver"
 	"github.com/prometheus/alertmanager/notify"
 	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
+
+const (
+	WebhookIntegration   = "webhook"
+	EmailIntegration     = "email"
+	PagerdutyIntegration = "pagerduty"
+	OpsGenieIntegration  = "opsgenie"
+	SlackIntegration     = "slack"
+	MsTeamsV2Integration = "msteamsv2"
+)
+
+var customNotifierIntegrations = []string{
+	WebhookIntegration,
+	EmailIntegration,
+	PagerdutyIntegration,
+	OpsGenieIntegration,
+	SlackIntegration,
+	MsTeamsV2Integration,
+}
 
 func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Template, logger *slog.Logger) ([]notify.Integration, error) {
 	upstreamIntegrations, err := receiver.BuildReceiverIntegrations(nc, tmpl, logger)
@@ -31,14 +55,29 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 	)
 
 	for _, integration := range upstreamIntegrations {
-		// skip upstream msteamsv2 integration
-		if integration.Name() != "msteamsv2" {
+		// skip upstream integration if we support custom integration for it
+		if !slices.Contains(customNotifierIntegrations, integration.Name()) {
 			integrations = append(integrations, integration)
 		}
 	}
 
+	for i, c := range nc.WebhookConfigs {
+		add(WebhookIntegration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return webhook.New(c, tmpl, l) })
+	}
+	for i, c := range nc.EmailConfigs {
+		add(EmailIntegration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return email.New(c, tmpl, l), nil })
+	}
+	for i, c := range nc.PagerdutyConfigs {
+		add(PagerdutyIntegration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return pagerduty.New(c, tmpl, l) })
+	}
+	for i, c := range nc.OpsGenieConfigs {
+		add(OpsGenieIntegration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return opsgenie.New(c, tmpl, l) })
+	}
+	for i, c := range nc.SlackConfigs {
+		add(SlackIntegration, i, c, func(l *slog.Logger) (notify.Notifier, error) { return slack.New(c, tmpl, l) })
+	}
 	for i, c := range nc.MSTeamsV2Configs {
-		add("msteamsv2", i, c, func(l *slog.Logger) (notify.Notifier, error) {
+		add(MsTeamsV2Integration, i, c, func(l *slog.Logger) (notify.Notifier, error) {
 			return msteamsv2.New(c, tmpl, `{{ template "msteamsv2.default.titleLink" . }}`, l)
 		})
 	}
