@@ -634,7 +634,6 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(orderByKeys, ", "), subQ))
 
 		sb.OrderBy(orderByClauses...)
-		sb.OrderBy("ts ASC")
 	} else if hasOrder {
 		// order by without limit: apply order by clauses directly
 		for _, o := range query.Order {
@@ -645,7 +644,6 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			}
 			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
 		}
-		sb.OrderBy("ts ASC")
 	} else if hasLimit && hasGroupBy {
 		// limit without order by: default ordering by avg(value)
 		subSb := sqlbuilder.NewSelectBuilder()
@@ -660,16 +658,13 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		subQ, _ := subSb.BuildWithFlavor(sqlbuilder.ClickHouse)
 		subQ = fmt.Sprintf("%s LIMIT %d", subQ, query.Limit)
 		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), subQ))
-
-		sb.OrderBy("ts ASC")
 	} else if hasGroupBy {
 		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
 		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
 		sb.OrderBy(groupByKeys...)
 		sb.OrderBy("ts ASC")
-	} else {
-		sb.OrderBy("ts ASC")
 	}
+	sb.OrderBy("ts ASC")
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
 	}
