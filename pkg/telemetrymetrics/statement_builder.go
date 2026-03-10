@@ -666,7 +666,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	// add any group-by keys not already in the order-by as tiebreakers
 	orderKeySet := make(map[string]struct{})
 	for _, o := range query.Order {
-		orderKeySet[o.Key.Name] = struct{}{}
+		orderKeySet[fmt.Sprintf("`%s`", o.Key.Name)] = struct{}{}
 	}
 	for _, g := range groupByKeys {
 		if _, exists := orderKeySet[g]; !exists {
