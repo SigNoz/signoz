@@ -75,35 +75,38 @@ export function prepareBarPanelConfig({
 		stepInterval: minStepInterval,
 	});
 
-	if (apiResponse && apiResponse?.data?.result && widget.stackedBarChart) {
+	if (!(apiResponse && apiResponse?.data?.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
+
+	if (widget.stackedBarChart) {
 		const seriesCount = (apiResponse.data.result.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
-	if (apiResponse && apiResponse?.data?.result) {
-		apiResponse.data.result.forEach((series) => {
-			const baseLabelName = getLabelName(
-				series.metric,
-				series.queryName || '', // query
-				series.legend || '',
-			);
+	apiResponse.data.result.forEach((series) => {
+		const baseLabelName = getLabelName(
+			series.metric,
+			series.queryName || '', // query
+			series.legend || '',
+		);
 
-			const label = currentQuery
-				? getLegend(series, currentQuery, baseLabelName)
-				: baseLabelName;
+		const label = currentQuery
+			? getLegend(series, currentQuery, baseLabelName)
+			: baseLabelName;
 
-			const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
 
-			builder.addSeries({
-				scaleKey: 'y',
-				drawStyle: DrawStyle.Bar,
-				label: label,
-				colorMapping: widget.customLegendColors ?? {},
-				isDarkMode,
-				stepInterval: currentStepInterval,
-			});
+		builder.addSeries({
+			scaleKey: 'y',
+			drawStyle: DrawStyle.Bar,
+			label: label,
+			colorMapping: widget.customLegendColors ?? {},
+			isDarkMode,
+			stepInterval: currentStepInterval,
 		});
-	}
+	});
 
 	return builder;
 }

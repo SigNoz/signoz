@@ -101,35 +101,38 @@ export const prepareUPlotConfig = ({
 		stepInterval: minStepInterval,
 	});
 
-	if (apiResponse && apiResponse.data.result) {
-		apiResponse.data.result.forEach((series) => {
-			const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
-			const baseLabelName = getLabelName(
-				series.metric,
-				series.queryName || '', // query
-				series.legend || '',
-			);
-
-			const label = currentQuery
-				? getLegend(series, currentQuery, baseLabelName)
-				: baseLabelName;
-
-			builder.addSeries({
-				scaleKey: 'y',
-				drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
-				label: label,
-				colorMapping: widget.customLegendColors ?? {},
-				spanGaps: true,
-				lineStyle: LineStyle.Solid,
-				lineInterpolation: LineInterpolation.Spline,
-				showPoints: hasSingleValidPoint
-					? VisibilityMode.Always
-					: VisibilityMode.Never,
-				pointSize: 5,
-				isDarkMode,
-			});
-		});
+	if (!(apiResponse && apiResponse.data.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
 	}
+
+	apiResponse.data.result.forEach((series) => {
+		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
+		const baseLabelName = getLabelName(
+			series.metric,
+			series.queryName || '', // query
+			series.legend || '',
+		);
+
+		const label = currentQuery
+			? getLegend(series, currentQuery, baseLabelName)
+			: baseLabelName;
+
+		builder.addSeries({
+			scaleKey: 'y',
+			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
+			label: label,
+			colorMapping: widget.customLegendColors ?? {},
+			spanGaps: true,
+			lineStyle: LineStyle.Solid,
+			lineInterpolation: LineInterpolation.Spline,
+			showPoints: hasSingleValidPoint
+				? VisibilityMode.Always
+				: VisibilityMode.Never,
+			pointSize: 5,
+			isDarkMode,
+		});
+	});
 
 	return builder;
 };
