@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
 import { FlamegraphSpan } from 'types/api/trace/getTraceFlamegraph';
-import { Span } from 'types/api/trace/getTraceV2';
 
 export interface ITraceMetadata {
 	startTime: number;
@@ -13,7 +12,6 @@ export interface FlamegraphCanvasProps {
 	setFirstSpanAtFetchLevel: Dispatch<SetStateAction<string>>;
 	onSpanClick: (spanId: string) => void;
 	traceMetadata: ITraceMetadata;
-	selectedSpan: Span | undefined;
 }
 
 export interface SpanRect {

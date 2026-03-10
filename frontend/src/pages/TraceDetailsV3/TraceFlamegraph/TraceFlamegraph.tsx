@@ -3,7 +3,6 @@ import { useHistory, useLocation, useParams } from 'react-router-dom';
 import useGetTraceFlamegraph from 'hooks/trace/useGetTraceFlamegraph';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { TraceDetailFlamegraphURLProps } from 'types/api/trace/getTraceFlamegraph';
-import { Span } from 'types/api/trace/getTraceV2';
 
 import FlamegraphCanvas from './FlamegraphCanvas';
 
@@ -16,15 +15,7 @@ enum TraceFlamegraphState {
 	FETCHING_WITH_OLD_DATA = 'FETCHING_WITH_OLD_DATA',
 }
 
-interface TraceFlamegraphProps {
-	serviceExecTime: Record<string, number>;
-	startTime: number;
-	endTime: number;
-	selectedSpan: Span | undefined;
-}
-
-function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
-	const { selectedSpan } = props;
+function TraceFlamegraph(): JSX.Element {
 	const { id: traceId } = useParams<TraceDetailFlamegraphURLProps>();
 	const urlQuery = useUrlQuery();
 	const history = useHistory();
@@ -95,7 +86,6 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 							startTime: data?.payload?.startTimestampMillis || 0,
 							endTime: data?.payload?.endTimestampMillis || 0,
 						}}
-						selectedSpan={selectedSpan}
 					/>
 				);
 			default:
@@ -106,7 +96,6 @@ function TraceFlamegraph(props: TraceFlamegraphProps): JSX.Element {
 		data?.payload?.startTimestampMillis,
 		firstSpanAtFetchLevel,
 		flamegraphState,
-		selectedSpan,
 		spans,
 		traceId,
 		handleSpanClick,
