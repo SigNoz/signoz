@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
@@ -22,6 +22,8 @@ interface KeysTabProps {
 	keys: ServiceaccounttypesFactorAPIKeyDTO[];
 	isLoading: boolean;
 	isDisabled?: boolean;
+	currentPage: number;
+	pageSize: number;
 	onRefetch: () => void;
 	onAddKeyClick: () => void;
 }
@@ -42,6 +44,8 @@ function KeysTab({
 	keys,
 	isLoading,
 	isDisabled = false,
+	currentPage,
+	pageSize,
 	onRefetch,
 	onAddKeyClick,
 }: KeysTabProps): JSX.Element {
@@ -92,6 +96,11 @@ function KeysTab({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
+	const paginatedKeys = useMemo(() => {
+		const start = (currentPage - 1) * pageSize;
+		return keys.slice(start, start + pageSize);
+	}, [keys, currentPage, pageSize]);
+
 	if (isLoading) {
 		return (
 			<div className="keys-tab__loading">
@@ -129,53 +138,55 @@ function KeysTab({
 					<span className="keys-tab__col-action" />
 				</div>
 
-				{keys.map((keyItem, idx) => (
-					<div
-						key={keyItem.id}
-						className={`keys-tab__table-row${
-							idx % 2 === 0 ? ' keys-tab__table-row--alt' : ''
-						}${isDisabled ? ' keys-tab__table-row--disabled' : ''}`}
-						onClick={(): void => {
-							if (!isDisabled) {
-								setEditKey(keyItem);
-							}
-						}}
-						role="button"
-						tabIndex={0}
-						onKeyDown={(e): void => {
-							if (e.key === 'Enter' && !isDisabled) {
-								setEditKey(keyItem);
-							}
-						}}
-					>
-						<span className="keys-tab__col-name keys-tab__name-text">
-							{keyItem.name ?? '—'}
-						</span>
-						<span className="keys-tab__col-expiry">
-							{formatExpiry(keyItem.expires_at)}
-						</span>
-						<span className="keys-tab__col-last-used">
-							{handleFormatLastUsed(keyItem?.last_used ?? null)}
-						</span>
-						<span className="keys-tab__col-action">
-							<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
-								<Button
-									variant="ghost"
-									size="xs"
-									color="destructive"
-									disabled={isDisabled}
-									onClick={(e): void => {
-										e.stopPropagation();
-										setRevokeTarget(keyItem);
-									}}
-									className="keys-tab__revoke-btn"
-								>
-									<X size={12} />
-								</Button>
-							</Tooltip>
-						</span>
-					</div>
-				))}
+				<div className="keys-tab__scroll">
+					{paginatedKeys.map((keyItem, idx) => (
+						<div
+							key={keyItem.id}
+							className={`keys-tab__table-row${
+								idx % 2 === 0 ? ' keys-tab__table-row--alt' : ''
+							}${isDisabled ? ' keys-tab__table-row--disabled' : ''}`}
+							onClick={(): void => {
+								if (!isDisabled) {
+									setEditKey(keyItem);
+								}
+							}}
+							role="button"
+							tabIndex={0}
+							onKeyDown={(e): void => {
+								if (e.key === 'Enter' && !isDisabled) {
+									setEditKey(keyItem);
+								}
+							}}
+						>
+							<span className="keys-tab__col-name keys-tab__name-text">
+								{keyItem.name ?? '—'}
+							</span>
+							<span className="keys-tab__col-expiry">
+								{formatExpiry(keyItem.expires_at)}
+							</span>
+							<span className="keys-tab__col-last-used">
+								{handleFormatLastUsed(keyItem?.last_used ?? null)}
+							</span>
+							<span className="keys-tab__col-action">
+								<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
+									<Button
+										variant="ghost"
+										size="xs"
+										color="destructive"
+										disabled={isDisabled}
+										onClick={(e): void => {
+											e.stopPropagation();
+											setRevokeTarget(keyItem);
+										}}
+										className="keys-tab__revoke-btn"
+									>
+										<X size={12} />
+									</Button>
+								</Tooltip>
+							</span>
+						</div>
+					))}
+				</div>
 			</div>
 
 			<DialogWrapper
