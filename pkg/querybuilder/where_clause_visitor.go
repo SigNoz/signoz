@@ -384,7 +384,6 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		if v.ignoreNotFoundKeys {
 			return TrueConditionLiteral
 		}
-		v.errors = append(v.errors, "Key not found")
 		return ""
 	}
 

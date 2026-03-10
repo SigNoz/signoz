@@ -480,7 +480,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT with value",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// using not with full text search
 					Expression: "NOT 'error'",
@@ -496,7 +496,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT with unknown key should not generate not()",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// unknown.key is not in the metadata store, so with IgnoreNotFoundKeys=true
 					// the condition returns empty, and NOT should also return empty (not "not()")
@@ -513,7 +513,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT EQUAL with unknown key should not generate not()",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// unknown.key is not in the metadata store, so with IgnoreNotFoundKeys=true
 					// the condition returns empty, and NOT should also return empty (not "not()")
@@ -530,7 +530,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT with attribute field should not generate NOT (true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
@@ -547,7 +547,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT with multiple attribute fields should not generate NOT (true and true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
@@ -564,7 +564,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		{
 			name: "NOT with multiple attribute fields and values should not generate NOT (true and true)",
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-				Signal: telemetrytypes.SignalTraces,
+				Signal: telemetrytypes.SignalLogs,
 				Filter: &qbtypes.Filter{
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
