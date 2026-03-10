@@ -11,7 +11,6 @@ import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
 import { AlignedData } from 'uplot';
 
 import { PanelMode } from '../types';
@@ -44,7 +43,7 @@ export function prepareBarPanelConfig({
 	currentQuery: Query;
 	onClick: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
@@ -76,34 +75,35 @@ export function prepareBarPanelConfig({
 		stepInterval: minStepInterval,
 	});
 
-	if (widget.stackedBarChart) {
-		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
+	if (apiResponse && apiResponse?.data?.result && widget.stackedBarChart) {
+		const seriesCount = (apiResponse.data.result.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
-	const seriesList: QueryData[] = apiResponse?.data?.result || [];
-	seriesList.forEach((series) => {
-		const baseLabelName = getLabelName(
-			series.metric,
-			series.queryName || '', // query
-			series.legend || '',
-		);
+	if (apiResponse && apiResponse?.data?.result) {
+		apiResponse.data.result.forEach((series) => {
+			const baseLabelName = getLabelName(
+				series.metric,
+				series.queryName || '', // query
+				series.legend || '',
+			);
 
-		const label = currentQuery
-			? getLegend(series, currentQuery, baseLabelName)
-			: baseLabelName;
+			const label = currentQuery
+				? getLegend(series, currentQuery, baseLabelName)
+				: baseLabelName;
 
-		const currentStepInterval = get(stepIntervals, series.queryName, undefined);
+			const currentStepInterval = get(stepIntervals, series.queryName, undefined);
 
-		builder.addSeries({
-			scaleKey: 'y',
-			drawStyle: DrawStyle.Bar,
-			label: label,
-			colorMapping: widget.customLegendColors ?? {},
-			isDarkMode,
-			stepInterval: currentStepInterval,
+			builder.addSeries({
+				scaleKey: 'y',
+				drawStyle: DrawStyle.Bar,
+				label: label,
+				colorMapping: widget.customLegendColors ?? {},
+				isDarkMode,
+				stepInterval: currentStepInterval,
+			});
 		});
-	});
+	}
 
 	return builder;
 }

@@ -68,11 +68,12 @@ export const prepareUPlotConfig = ({
 	currentQuery: Query;
 	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): UPlotConfigBuilder => {
 	const stepIntervals: ExecStats['stepIntervals'] = get(
 		apiResponse,
@@ -100,33 +101,35 @@ export const prepareUPlotConfig = ({
 		stepInterval: minStepInterval,
 	});
 
-	apiResponse.data?.result?.forEach((series) => {
-		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
-		const baseLabelName = getLabelName(
-			series.metric,
-			series.queryName || '', // query
-			series.legend || '',
-		);
+	if (apiResponse && apiResponse.data.result) {
+		apiResponse.data.result.forEach((series) => {
+			const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
+			const baseLabelName = getLabelName(
+				series.metric,
+				series.queryName || '', // query
+				series.legend || '',
+			);
 
-		const label = currentQuery
-			? getLegend(series, currentQuery, baseLabelName)
-			: baseLabelName;
+			const label = currentQuery
+				? getLegend(series, currentQuery, baseLabelName)
+				: baseLabelName;
 
-		builder.addSeries({
-			scaleKey: 'y',
-			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
-			label: label,
-			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: true,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: hasSingleValidPoint
-				? VisibilityMode.Always
-				: VisibilityMode.Never,
-			pointSize: 5,
-			isDarkMode,
+			builder.addSeries({
+				scaleKey: 'y',
+				drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
+				label: label,
+				colorMapping: widget.customLegendColors ?? {},
+				spanGaps: true,
+				lineStyle: LineStyle.Solid,
+				lineInterpolation: LineInterpolation.Spline,
+				showPoints: hasSingleValidPoint
+					? VisibilityMode.Always
+					: VisibilityMode.Never,
+				pointSize: 5,
+				isDarkMode,
+			});
 		});
-	});
+	}
 
 	return builder;
 };
