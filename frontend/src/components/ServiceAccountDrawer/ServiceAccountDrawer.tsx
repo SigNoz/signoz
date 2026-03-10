@@ -13,6 +13,7 @@ import {
 } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Pagination } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useListServiceAccountKeys,
@@ -37,6 +38,8 @@ export interface ServiceAccountDrawerProps {
 	onSuccess: () => void;
 }
 
+const PAGE_SIZE = 15;
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ServiceAccountDrawer({
 	account,
@@ -53,6 +56,7 @@ function ServiceAccountDrawer({
 	const [isDisabling, setIsDisabling] = useState(false);
 	const [isActivating, setIsActivating] = useState(false);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
+	const [keysPage, setKeysPage] = useState(1);
 
 	useEffect(() => {
 		if (account) {
@@ -238,6 +242,8 @@ function ServiceAccountDrawer({
 						keys={keys}
 						isLoading={keysLoading}
 						isDisabled={isDisabled}
+						currentPage={keysPage}
+						pageSize={PAGE_SIZE}
 						onRefetch={refetchKeys}
 						onAddKeyClick={(): void => setIsAddKeyOpen(true)}
 					/>
@@ -246,9 +252,23 @@ function ServiceAccountDrawer({
 
 			<div className="sa-drawer__footer">
 				{activeTab === 'keys' ? (
-					<span className="sa-drawer__pagination">
-						{keys.length > 0 ? `1 \u2014 ${keys.length} of ${keys.length}` : ''}
-					</span>
+					<Pagination
+						current={keysPage}
+						pageSize={PAGE_SIZE}
+						total={keys.length}
+						showTotal={(total: number, range: number[]): JSX.Element => (
+							<>
+								<span className="sa-drawer__pagination-range">
+									{range[0]} &#8212; {range[1]}
+								</span>
+								<span className="sa-drawer__pagination-total"> of {total}</span>
+							</>
+						)}
+						showSizeChanger={false}
+						hideOnSinglePage
+						onChange={(page): void => setKeysPage(page)}
+						className="sa-drawer__keys-pagination"
+					/>
 				) : (
 					<>
 						{isDisabled ? (

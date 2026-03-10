@@ -117,6 +117,8 @@ function ServiceAccountsTable({
 			title: 'Name / Email',
 			dataIndex: 'name',
 			key: 'name',
+			className: 'sa-name-column',
+			sorter: (a, b): number => a.email.localeCompare(b.email),
 			render: (_, record): JSX.Element => (
 				<NameEmailCell name={record.name} email={record.email} />
 			),
@@ -135,6 +137,9 @@ function ServiceAccountsTable({
 			width: 120,
 			align: 'right' as const,
 			className: 'sa-status-cell',
+			sorter: (a, b): number =>
+				(a.status?.toUpperCase() === 'ACTIVE' ? 0 : 1) -
+				(b.status?.toUpperCase() === 'ACTIVE' ? 0 : 1),
 			render: (status: string): JSX.Element => <StatusBadge status={status} />,
 		},
 	];
