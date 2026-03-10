@@ -918,8 +918,6 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		for keyName, keys := range mapOfLogKeys {
 			mapOfKeys[keyName] = append(mapOfKeys[keyName], keys...)
 		}
-		complete = complete && logsComplete
-
 		// get metrics keys
 		metricsKeys, metricsComplete, err := t.getMetricsKeys(ctx, selectors)
 		if err != nil {
