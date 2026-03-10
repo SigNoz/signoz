@@ -37,7 +37,6 @@ import type {
 	RenderErrorResponseDTO,
 	TypesChangePasswordRequestDTO,
 	TypesPostableAcceptInviteDTO,
-	TypesPostableAPIKeyDTO,
 	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
