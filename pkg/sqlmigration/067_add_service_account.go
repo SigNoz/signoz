@@ -51,6 +51,7 @@ func (migration *addServiceAccount) Up(ctx context.Context, db *bun.DB) error {
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "created_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "updated_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
+			{Name: "deleted_at", DataType: sqlschema.DataTypeTimestamp, Nullable: false},
 			{Name: "name", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "email", DataType: sqlschema.DataTypeText, Nullable: false},
 			{Name: "status", DataType: sqlschema.DataTypeText, Nullable: false},
@@ -69,7 +70,7 @@ func (migration *addServiceAccount) Up(ctx context.Context, db *bun.DB) error {
 	})
 	sqls = append(sqls, tableSQLs...)
 
-	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "service_account", ColumnNames: []sqlschema.ColumnName{"name", "org_id"}})
+	indexSQLs := migration.sqlschema.Operator().CreateIndex(&sqlschema.UniqueIndex{TableName: "service_account", ColumnNames: []sqlschema.ColumnName{"name", "org_id", "deleted_at"}})
 	sqls = append(sqls, indexSQLs...)
 
 	tableSQLs = migration.sqlschema.Operator().CreateTable(&sqlschema.Table{

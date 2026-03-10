@@ -13,7 +13,9 @@ type Module interface {
 	// Creates a new service account for an organization.
 	Create(context.Context, valuer.UUID, *serviceaccounttypes.ServiceAccount) error
 
+	// Gets or creates a service account by name
 	GetOrCreate(context.Context, *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error)
+
 	// Gets a service account by id.
 	Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
 

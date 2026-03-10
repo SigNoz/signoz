@@ -94,6 +94,7 @@ func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, na
 		Model(storable).
 		Where("org_id = ?", orgID).
 		Where("name = ?", name).
+		Where("status = ?", serviceaccounttypes.StatusActive).
 		Scan(ctx)
 	if err != nil {
 		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with name: %s doesn't exist in org: %s", name, orgID.String())
