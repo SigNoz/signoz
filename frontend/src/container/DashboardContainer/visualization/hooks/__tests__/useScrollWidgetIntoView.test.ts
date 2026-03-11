@@ -22,21 +22,31 @@ describe('useScrollWidgetIntoView', () => {
 		typeof useScrollToWidgetIdStore
 	>;
 
+	let mockElement: MockHTMLElement;
+	let ref: React.RefObject<HTMLDivElement>;
+	let setToScrollWidgetId: jest.Mock;
+
+	function mockStore(toScrollWidgetId: string): void {
+		const storeState = { toScrollWidgetId, setToScrollWidgetId };
+		mockedUseScrollToWidgetIdStore.mockImplementation(
+			(selector) =>
+				selector(
+					(storeState as unknown) as Parameters<typeof selector>[0],
+				) as ReturnType<typeof useScrollToWidgetIdStore>,
+		);
+	}
+
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockElement = createMockElement();
+		ref = ({
+			current: mockElement,
+		} as unknown) as React.RefObject<HTMLDivElement>;
+		setToScrollWidgetId = jest.fn();
 	});
 
 	it('scrolls into view and focuses when toScrollWidgetId matches widget id', () => {
-		const setToScrollWidgetId = jest.fn();
-		const mockElement = createMockElement();
-		const ref = ({
-			current: mockElement,
-		} as unknown) as React.RefObject<HTMLDivElement>;
-
-		mockedUseScrollToWidgetIdStore.mockReturnValue(({
-			toScrollWidgetId: 'widget-id',
-			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useScrollToWidgetIdStore>);
+		mockStore('widget-id');
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 
@@ -49,16 +59,7 @@ describe('useScrollWidgetIntoView', () => {
 	});
 
 	it('does nothing when toScrollWidgetId does not match widget id', () => {
-		const setToScrollWidgetId = jest.fn();
-		const mockElement = createMockElement();
-		const ref = ({
-			current: mockElement,
-		} as unknown) as React.RefObject<HTMLDivElement>;
-
-		mockedUseScrollToWidgetIdStore.mockReturnValue(({
-			toScrollWidgetId: 'other-widget',
-			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useScrollToWidgetIdStore>);
+		mockStore('other-widget');
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 
