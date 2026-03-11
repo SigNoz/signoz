@@ -707,19 +707,6 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 	defer disable()
 
 	statementBuilder := buildJSONTestStatementBuilder(t)
-	indexed := []*telemetrytypes.TelemetryFieldKey{
-		{
-			Name: "message",
-			Indexes: []telemetrytypes.JSONDataTypeIndex{
-				{
-					Type:             telemetrytypes.String,
-					ColumnExpression: "body_promoted.message",
-					IndexExpression:  "(lower(assumeNotNull(dynamicElement(body_promoted.message, 'String'))))",
-				},
-			},
-		},
-	}
-	testAddIndexedPaths(t, statementBuilder, indexed...)
 	cases := []struct {
 		name        string
 		requestType qbtypes.RequestType
@@ -732,7 +719,7 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.message Exists"},
+				Filter: &qbtypes.Filter{Expression: "message Exists"},
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
@@ -770,11 +757,11 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "body.message contains 'Iron Award'",
+			name:        "message contains 'Iron Award'",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
-				Filter: &qbtypes.Filter{Expression: "body.message Contains 'Iron Award'"},
+				Filter: &qbtypes.Filter{Expression: "message Contains 'Iron Award'"},
 				Limit:  10,
 			},
 			expected: qbtypes.Statement{
@@ -864,19 +851,6 @@ func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQu
 	)
 
 	return statementBuilder
-}
-
-func testAddIndexedPaths(t *testing.T, statementBuilder *logQueryStatementBuilder, telemetryFieldKeys ...*telemetrytypes.TelemetryFieldKey) {
-	mockMetadataStore := statementBuilder.metadataStore.(*telemetrytypestest.MockMetadataStore)
-	for _, key := range telemetryFieldKeys {
-		if strings.Contains(key.Name, telemetrytypes.ArraySep) || strings.Contains(key.Name, telemetrytypes.ArrayAnyIndex) {
-			t.Fatalf("array paths are not supported: %s", key.Name)
-		}
-
-		for _, storedKey := range mockMetadataStore.KeysMap[key.Name] {
-			storedKey.Indexes = append(storedKey.Indexes, key.Indexes...)
-		}
-	}
 }
 
 func jsonQueryTestUtil(_ *testing.T) (func(), func()) {

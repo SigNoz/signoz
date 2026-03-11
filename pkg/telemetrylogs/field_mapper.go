@@ -58,7 +58,6 @@ var (
 			KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 			ValueType: schema.ColumnTypeString,
 		}},
-		MessageSubColumn: {Name: MessageSubColumn, Type: schema.ColumnTypeString},
 	}
 )
 
@@ -89,6 +88,12 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			return logsV2Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextBody:
+		// Type hints (Materialized=true) have a direct physical sub-column in body_v2.
+		// Return a synthetic String column so the condition builder uses the direct path
+		// instead of the JSON condition builder (which expects a JSONPlan).
+		if key.Materialized {
+			return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
+		}
 		// Body context is for JSON body fields
 		// Use body_v2 if feature flag is enabled
 		if querybuilder.BodyJSONQueryEnabled {
@@ -249,34 +254,9 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 		node := plan[0]
 
 		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
-		if key.Materialized {
-			if len(plan) < 2 {
-				return "", errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
-					"plan length is less than 2 for promoted path: %s", key.Name)
-			}
-
-			node := plan[1]
-			promotedExpr := fmt.Sprintf(
-				"dynamicElement(%s, '%s')",
-				node.FieldPath(),
-				node.TerminalConfig.ElemType.StringValue(),
-			)
-
-			// dynamicElement returns NULL for scalar types or an empty array for array types.
-			if node.TerminalConfig.ElemType.IsArray {
-				expr = fmt.Sprintf(
-					"if(length(%s) > 0, %s, %s)",
-					promotedExpr,
-					promotedExpr,
-					expr,
-				)
-			} else {
-				// promoted column first then body_json column
-				// TODO(Piyush): Change this in future for better performance
-				expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
-			}
-
-		}
+		// TODO(Piyush): Promoted path logic commented out. Materialized now means type hint
+		// (direct sub-column access), not a promoted body_promoted.* column.
+		// if key.Materialized { ... coalesce(body_promoted.x, body_v2.x) ... }
 
 		return expr, nil
 	}

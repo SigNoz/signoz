@@ -18,7 +18,7 @@ import (
 func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggregation] {
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	keysMap := buildCompleteFieldKeyMap()
 	for _, keys := range keysMap {
 		for _, key := range keys {
@@ -196,7 +196,7 @@ func TestStatementBuilderTimeSeries(t *testing.T) {
 		},
 	}
 
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -316,7 +316,7 @@ func TestStatementBuilderListQuery(t *testing.T) {
 		},
 	}
 
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -456,7 +456,7 @@ func TestStatementBuilderListQueryResourceTests(t *testing.T) {
 		},
 	}
 
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -532,7 +532,7 @@ func TestStatementBuilderTimeSeriesBodyGroupBy(t *testing.T) {
 		},
 	}
 
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -627,7 +627,7 @@ func TestStatementBuilderListQueryServiceCollision(t *testing.T) {
 		},
 	}
 
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
@@ -850,7 +850,7 @@ func TestAdjustKey(t *testing.T) {
 	}
 
 	fm := NewFieldMapper()
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMapCollision()
 	cb := NewConditionBuilder(fm)
 
@@ -1005,7 +1005,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 				disable()
 			}
 			// build the key map after enabling/disabling body JSON query
-			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
 			mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
 			aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
