@@ -3,6 +3,7 @@ import { Button } from '@signozhq/button';
 import { Copy, KeyRound } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { useAppContext } from 'providers/App/App';
+import { getMaskedKey } from 'utils/maskedKey';
 
 import './LicenseKeyRow.styles.scss';
 
@@ -13,13 +14,6 @@ function LicenseKeyRow(): JSX.Element | null {
 	if (!activeLicense?.key) {
 		return null;
 	}
-
-	const getMaskedKey = (key: string): string => {
-		if (!key || key.length < 4) {
-			return key || 'N/A';
-		}
-		return `${key.substring(0, 2)}·······${key.slice(-2).trim()}`;
-	};
 
 	const handleCopyLicenseKey = (text: string): void => {
 		copyToClipboard(text);

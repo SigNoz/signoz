@@ -30,14 +30,15 @@ export default function CustomDomainEditModal({
 	onClearError,
 	onSubmit,
 }: CustomDomainEditModalProps): JSX.Element {
-	const [value, setValue] = useState(customDomainSubdomain ?? '');
+	const initialSubdomain = customDomainSubdomain ?? '';
+	const [value, setValue] = useState(initialSubdomain);
 	const [validationError, setValidationError] = useState<string | null>(null);
 
 	useEffect(() => {
 		if (isOpen) {
-			setValue(customDomainSubdomain ?? '');
+			setValue(initialSubdomain);
 		}
-	}, [isOpen, customDomainSubdomain]);
+	}, [isOpen, initialSubdomain]);
 
 	const handleClose = (): void => {
 		setValidationError(null);
@@ -58,6 +59,11 @@ export default function CustomDomainEditModal({
 	};
 
 	const handleSubmit = (): void => {
+		if (value === initialSubdomain) {
+			setValidationError('Input is unchanged');
+			return;
+		}
+
 		if (!value) {
 			setValidationError('This field is required');
 			return;
@@ -191,7 +197,7 @@ export default function CustomDomainEditModal({
 							color="primary"
 							className="edit-modal-apply-btn"
 							onClick={handleSubmit}
-							disabled={isLoading}
+							disabled={isLoading || value === initialSubdomain}
 							loading={isLoading}
 						>
 							Apply Changes
