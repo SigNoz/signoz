@@ -39,19 +39,20 @@ const (
 
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
-	MessageSubColumn         = "message"
+	MessageSubColumn         = "body_v2.message"
 	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
 	// mapping for body logical field to message sub column
+	// Here field context is log since message is a type hint and
+	// in a sense it is a direct column of log table and doesn't need any lambda expressions
 	// TODO(Piyush): Add description for detailed explanation of remapping of body to message
 	BodyLogicalFieldJSONMapping = &telemetrytypes.TelemetryFieldKey{
 		Name:          MessageSubColumn,
 		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextBody,
+		FieldContext:  telemetrytypes.FieldContextLog,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
-		JSONDataType:  &telemetrytypes.String,
 	}
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
@@ -141,20 +142,14 @@ func bodyAliasExpression() string {
 	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
 }
 
-func init() {
-	// body logical field is mapped to message field in the body context that too only with String data type
-	err := BodyLogicalFieldJSONMapping.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
-		BaseColumn:     LogsV2BodyV2Column,
-		PromotedColumn: LogsV2BodyPromotedColumn,
-	}, map[string][]telemetrytypes.JSONDataType{
-		MessageSubColumn: {telemetrytypes.String},
-	})
-	if err != nil {
-		panic(err)
-	}
-
+func enrichMapsForJSONBodyEnabled() {
 	if querybuilder.BodyJSONQueryEnabled {
 		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
 		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		IntrinsicFields[MessageSubColumn] = *BodyLogicalFieldJSONMapping
 	}
+}
+
+func init() {
+	enrichMapsForJSONBodyEnabled()
 }
