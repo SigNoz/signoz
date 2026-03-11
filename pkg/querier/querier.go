@@ -4,7 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	maps0 "maps"
+	gomaps "maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -634,7 +634,7 @@ func (q *querier) run(
 		}
 	}
 
-	maps0.Copy(results, preseededResults)
+	gomaps.Copy(results, preseededResults)
 
 	processedResults, err := q.postProcessResults(ctx, results, req)
 	if err != nil {
