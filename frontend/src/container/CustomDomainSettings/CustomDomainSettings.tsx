@@ -1,15 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import {
 	Check,
 	ChevronDown,
 	Clock,
-	Copy,
 	ExternalLink,
 	FilePenLine,
-	KeyRound,
 	Link2,
 	SolidAlertCircle,
 	X,
@@ -72,31 +69,8 @@ function DomainUpdateToast({
 }
 
 export default function CustomDomainSettings(): JSX.Element {
-	const { org, activeLicense } = useAppContext();
+	const { org } = useAppContext();
 	const { timezone } = useTimezone();
-	const [, copyToClipboard] = useCopyToClipboard();
-
-	const getMaskedKey = (key: string): string => {
-		if (!key || key.length < 4) {
-			return key || 'N/A';
-		}
-
-		return `${key.substring(0, 2)}·······${key.slice(-2).trim()}`;
-	};
-
-	const handleCopyLicenseKey = (text: string): void => {
-		copyToClipboard(text);
-
-		if (!navigator.clipboard) {
-			toast.error('Failed to copy license key.', {
-				richColors: true,
-			});
-			return;
-		}
-		toast.success('License key copied to clipboard.', {
-			richColors: true,
-		});
-	};
 
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
@@ -219,124 +193,93 @@ export default function CustomDomainSettings(): JSX.Element {
 
 	return (
 		<>
-			<div className="custom-domain-card">
-				<div className="custom-domain-card-top">
-					<div className="custom-domain-card-info">
-						{workspaceName && (
-							<div className="custom-domain-card-name-row">
-								<span className="beacon" />
-								<span className="custom-domain-card-org-name">{workspaceName}</span>
-							</div>
-						)}
-
-						<div className="custom-domain-card-meta-row">
-							<Dropdown
-								trigger={['click']}
-								dropdownRender={(): JSX.Element => (
-									<div className="workspace-url-dropdown">
-										<span className="workspace-url-dropdown-header">
-											All Workspace URLs
-										</span>
-										<div className="workspace-url-dropdown-divider" />
-										{sortedHosts.map((host) => {
-											const isActive = host.name === activeHost?.name;
-											return (
-												<a
-													key={host.name}
-													href={host.url}
-													target="_blank"
-													rel="noopener noreferrer"
-													className={`workspace-url-dropdown-item${
-														isActive ? ' workspace-url-dropdown-item--active' : ''
-													}`}
-												>
-													<span className="workspace-url-dropdown-item-label">
-														{stripProtocol(host.url ?? '')}
-													</span>
-													{isActive ? (
-														<Check size={14} className="workspace-url-dropdown-item-check" />
-													) : (
-														<ExternalLink
-															size={12}
-															className="workspace-url-dropdown-item-external"
-														/>
-													)}
-												</a>
-											);
-										})}
-									</div>
-								)}
-							>
-								<Button
-									type="button"
-									size="xs"
-									className="workspace-url-trigger"
-									disabled={isFetchingHosts}
-								>
-									<Link2 size={12} />
-									<span>{stripProtocol(activeHost?.url ?? '')}</span>
-									<ChevronDown size={12} />
-								</Button>
-							</Dropdown>
-							<span className="custom-domain-card-meta-timezone">
-								<Clock size={11} />
-								{timezone.offset}
-							</span>
+			<div className="custom-domain-card-top">
+				<div className="custom-domain-card-info">
+					{workspaceName && (
+						<div className="custom-domain-card-name-row">
+							<span className="beacon" />
+							<span className="custom-domain-card-org-name">{workspaceName}</span>
 						</div>
-					</div>
+					)}
 
-					<Button
-						variant="solid"
-						size="sm"
-						className="custom-domain-edit-button"
-						prefixIcon={<FilePenLine size={12} />}
-						disabled={isFetchingHosts || isPollingEnabled}
-						onClick={(): void => setIsEditModalOpen(true)}
-					>
-						Edit workspace link
-					</Button>
+					<div className="custom-domain-card-meta-row">
+						<Dropdown
+							trigger={['click']}
+							dropdownRender={(): JSX.Element => (
+								<div className="workspace-url-dropdown">
+									<span className="workspace-url-dropdown-header">
+										All Workspace URLs
+									</span>
+									<div className="workspace-url-dropdown-divider" />
+									{sortedHosts.map((host) => {
+										const isActive = host.name === activeHost?.name;
+										return (
+											<a
+												key={host.name}
+												href={host.url}
+												target="_blank"
+												rel="noopener noreferrer"
+												className={`workspace-url-dropdown-item${
+													isActive ? ' workspace-url-dropdown-item--active' : ''
+												}`}
+											>
+												<span className="workspace-url-dropdown-item-label">
+													{stripProtocol(host.url ?? '')}
+												</span>
+												{isActive ? (
+													<Check size={14} className="workspace-url-dropdown-item-check" />
+												) : (
+													<ExternalLink
+														size={12}
+														className="workspace-url-dropdown-item-external"
+													/>
+												)}
+											</a>
+										);
+									})}
+								</div>
+							)}
+						>
+							<Button
+								type="button"
+								size="xs"
+								className="workspace-url-trigger"
+								disabled={isFetchingHosts}
+							>
+								<Link2 size={12} />
+								<span>{stripProtocol(activeHost?.url ?? '')}</span>
+								<ChevronDown size={12} />
+							</Button>
+						</Dropdown>
+						<span className="custom-domain-card-meta-timezone">
+							<Clock size={11} />
+							{timezone.offset}
+						</span>
+					</div>
 				</div>
 
-				{isPollingEnabled && (
-					<Callout
-						type="info"
-						showIcon
-						className="custom-domain-callout"
-						size="small"
-						icon={<SolidAlertCircle size={13} color="primary" />}
-						message={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
-					/>
-				)}
-
-				{activeLicense?.key && (
-					<>
-						<div className="custom-domain-card-divider" />
-						<div className="custom-domain-card-bottom">
-							<span className="custom-domain-card-license-left">
-								<KeyRound size={14} />
-								<span className="custom-domain-card-license-label">
-									SigNoz License Key
-								</span>
-							</span>
-							<span className="custom-domain-card-license-value">
-								<code className="custom-domain-license-key-code">
-									{getMaskedKey(activeLicense.key)}
-								</code>
-								<Button
-									type="button"
-									size="xs"
-									aria-label="Copy license key"
-									data-testid="custom-domain-license-key-copy-btn"
-									className="custom-domain-license-key-copy-btn"
-									onClick={(): void => handleCopyLicenseKey(activeLicense.key)}
-								>
-									<Copy size={12} />
-								</Button>
-							</span>
-						</div>
-					</>
-				)}
+				<Button
+					variant="solid"
+					size="sm"
+					className="custom-domain-edit-button"
+					prefixIcon={<FilePenLine size={12} />}
+					disabled={isFetchingHosts || isPollingEnabled}
+					onClick={(): void => setIsEditModalOpen(true)}
+				>
+					Edit workspace link
+				</Button>
 			</div>
+
+			{isPollingEnabled && (
+				<Callout
+					type="info"
+					showIcon
+					className="custom-domain-callout"
+					size="small"
+					icon={<SolidAlertCircle size={13} color="primary" />}
+					message={`Updating your URL to ⎯ ${customDomainSubdomain}.${dnsSuffix}. This may take a few mins.`}
+				/>
+			)}
 
 			<CustomDomainEditModal
 				isOpen={isEditModalOpen}
