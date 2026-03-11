@@ -9,7 +9,6 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -68,7 +67,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 			currentQuery: widget.query,
 			onClick: clickHandlerWithContextMenu,
 			onDragSelect,
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			apiResponse: queryResponse?.data?.payload,
 			timezone,
 			panelMode,
 			minTimeScale: minTimeScale,

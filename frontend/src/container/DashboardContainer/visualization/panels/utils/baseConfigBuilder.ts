@@ -18,7 +18,7 @@ import { PanelMode } from '../types';
 export interface BaseConfigBuilderProps {
 	id: string;
 	thresholds?: ThresholdProps[];
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	isDarkMode: boolean;
 	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect?: (startTime: number, endTime: number) => void;
