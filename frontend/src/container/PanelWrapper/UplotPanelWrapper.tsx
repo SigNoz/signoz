@@ -15,7 +15,6 @@ import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
 import { cloneDeep, isEqual, isUndefined } from 'lodash-es';
 import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useTimezone } from 'providers/Timezone';
 import { DataSource } from 'types/common/queryBuilder';
 import uPlot from 'uplot';
@@ -41,7 +40,6 @@ function UplotPanelWrapper({
 	customSeries,
 	enableDrillDown = false,
 }: PanelWrapperProps): JSX.Element {
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const lineChartRef = useRef<ToggleGraphProps>();
 	const graphRef = useRef<HTMLDivElement>(null);
@@ -57,17 +55,6 @@ function UplotPanelWrapper({
 	const { currentQuery } = useQueryBuilder();
 
 	const [hiddenGraph, setHiddenGraph] = useState<{ [key: string]: boolean }>();
-
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);

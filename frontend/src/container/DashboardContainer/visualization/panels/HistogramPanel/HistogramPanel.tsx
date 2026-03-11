@@ -1,5 +1,4 @@
 import { useMemo, useRef } from 'react';
-import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
@@ -31,8 +30,6 @@ function HistogramPanel(props: PanelWrapperProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
-
-	useScrollWidgetIntoView(widget.id, graphRef);
 
 	const config = useMemo(() => {
 		return prepareHistogramPanelConfig({

@@ -10,7 +10,6 @@ import { useResizeObserver } from 'hooks/useDimensions';
 import { getUplotHistogramChartOptions } from 'lib/uPlotLib/getUplotHistogramChartOptions';
 import _noop from 'lodash-es/noop';
 import { ContextMenu, useCoordinates } from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 
 import { buildHistogramData } from './histogram';
 import { PanelWrapperProps } from './panelWrapper.types';
@@ -27,7 +26,6 @@ function HistogramPanelWrapper({
 }: PanelWrapperProps): JSX.Element {
 	const graphRef = useRef<HTMLDivElement>(null);
 	const legendScrollPositionRef = useRef<number>(0);
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
 	const isDarkMode = useIsDarkMode();
 	const containerDimensions = useResizeObserver(graphRef);
 	const {
@@ -87,16 +85,6 @@ function HistogramPanelWrapper({
 		widget?.mergeAllActiveQueries,
 	);
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
 	const lineChartRef = useRef<ToggleGraphProps>();
 
 	useEffect(() => {

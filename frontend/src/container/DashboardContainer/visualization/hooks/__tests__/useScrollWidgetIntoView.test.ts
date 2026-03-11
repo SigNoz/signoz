@@ -1,9 +1,9 @@
 import { renderHook } from '@testing-library/react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 
 import { useScrollWidgetIntoView } from '../useScrollWidgetIntoView';
 
-jest.mock('providers/Dashboard/Dashboard');
+jest.mock('providers/Dashboard/helpers/scrollToWidgetIdHelper');
 
 type MockHTMLElement = {
 	scrollIntoView: jest.Mock;
@@ -18,8 +18,8 @@ function createMockElement(): MockHTMLElement {
 }
 
 describe('useScrollWidgetIntoView', () => {
-	const mockedUseDashboard = useDashboard as jest.MockedFunction<
-		typeof useDashboard
+	const mockedUseScrollToWidgetIdStore = useScrollToWidgetIdStore as jest.MockedFunction<
+		typeof useScrollToWidgetIdStore
 	>;
 
 	beforeEach(() => {
@@ -33,10 +33,10 @@ describe('useScrollWidgetIntoView', () => {
 			current: mockElement,
 		} as unknown) as React.RefObject<HTMLDivElement>;
 
-		mockedUseDashboard.mockReturnValue(({
+		mockedUseScrollToWidgetIdStore.mockReturnValue(({
 			toScrollWidgetId: 'widget-id',
 			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useDashboard>);
+		} as unknown) as ReturnType<typeof useScrollToWidgetIdStore>);
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 
@@ -55,10 +55,10 @@ describe('useScrollWidgetIntoView', () => {
 			current: mockElement,
 		} as unknown) as React.RefObject<HTMLDivElement>;
 
-		mockedUseDashboard.mockReturnValue(({
+		mockedUseScrollToWidgetIdStore.mockReturnValue(({
 			toScrollWidgetId: 'other-widget',
 			setToScrollWidgetId,
-		} as unknown) as ReturnType<typeof useDashboard>);
+		} as unknown) as ReturnType<typeof useScrollToWidgetIdStore>);
 
 		renderHook(() => useScrollWidgetIntoView('widget-id', ref));
 
