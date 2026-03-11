@@ -26,6 +26,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import LogsQuickFilterEmptyState from './LogsQuickFilterEmptyState';
+import { isKeyMatch } from './utils';
 
 import './Checkbox.styles.scss';
 
@@ -33,48 +34,6 @@ const SELECTED_OPERATORS = [OPERATORS['='], 'in'];
 const NON_SELECTED_OPERATORS = [OPERATORS['!='], 'not in'];
 
 const SOURCES_WITH_EMPTY_STATE_ENABLED = [QuickFiltersSource.LOGS_EXPLORER];
-
-/**
- * These prefixes are added to attribute keys based on their context.
- */
-const FIELD_CONTEXT_PREFIXES = [
-	'metric',
-	'log',
-	'span',
-	'trace',
-	'resource',
-	'scope',
-	'attribute',
-	'event',
-	'body',
-];
-
-/**
- * Removes the field context prefix from a key to get the base key name.
- * Example: 'resource.service.name' -> 'service.name'
- * Example: 'attribute.http.method' -> 'http.method'
- */
-function getKeyWithoutPrefix(key: string | undefined): string {
-	if (!key) {
-		return '';
-	}
-	const prefixPattern = new RegExp(
-		`^(${FIELD_CONTEXT_PREFIXES.join('|')})\\.`,
-		'i',
-	);
-	return key.replace(prefixPattern, '').trim();
-}
-
-/**
- * Compares two keys by their base name (without prefix).
- * This ensures that 'service.name' matches 'resource.service.name'
- */
-function isKeyMatch(
-	itemKey: string | undefined,
-	filterKey: string | undefined,
-): boolean {
-	return getKeyWithoutPrefix(itemKey) === getKeyWithoutPrefix(filterKey);
-}
 
 function setDefaultValues(
 	values: string[],
