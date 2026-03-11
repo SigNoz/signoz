@@ -295,8 +295,8 @@ function drawSpanLabel(args: DrawSpanLabelArgs): void {
 	ctx.fillStyle = isSelectedOrHovered
 		? color
 		: isDarkMode
-		? 'rgba(0, 0, 0, 0.9)'
-		: 'rgba(255, 255, 255, 0.9)';
+		? 'rgba(255, 255, 255, 0.9)'
+		: 'rgba(0, 0, 0, 0.9)';
 	ctx.textBaseline = 'middle';
 
 	const textY = y + spanBarHeight / 2;
