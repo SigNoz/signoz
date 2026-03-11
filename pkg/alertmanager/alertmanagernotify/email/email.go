@@ -28,6 +28,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+const (
+	Integration = "email"
+)
+
 // Email implements a Notifier for email notifications.
 type Email struct {
 	conf     *config.EmailConfig

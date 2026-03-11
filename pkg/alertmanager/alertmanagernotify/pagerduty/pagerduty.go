@@ -23,6 +23,10 @@ import (
 )
 
 const (
+	Integration = "pagerduty"
+)
+
+const (
 	maxEventSize int = 512000
 	// https://developer.pagerduty.com/docs/ZG9jOjExMDI5NTc4-send-a-v1-event - 1024 characters or runes.
 	maxV1DescriptionLenRunes = 1024
@@ -42,7 +46,7 @@ type Notifier struct {
 
 // New returns a new PagerDuty notifier.
 func New(c *config.PagerdutyConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := notify.NewClientWithTracing(*c.HTTPConfig, "pagerduty", httpOpts...)
+	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

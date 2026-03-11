@@ -21,6 +21,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+const (
+	Integration = "opsgenie"
+)
+
 // https://docs.opsgenie.com/docs/alert-api - 130 characters meaning runes.
 const maxMessageLenRunes = 130
 
@@ -35,7 +39,7 @@ type Notifier struct {
 
 // New returns a new OpsGenie notifier.
 func New(c *config.OpsGenieConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := notify.NewClientWithTracing(*c.HTTPConfig, "opsgenie", httpOpts...)
+	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

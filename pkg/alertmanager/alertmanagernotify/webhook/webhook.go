@@ -18,6 +18,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+const (
+	Integration = "webhook"
+)
+
 // Notifier implements a Notifier for generic webhooks.
 type Notifier struct {
 	conf    *config.WebhookConfig
@@ -29,7 +33,7 @@ type Notifier struct {
 
 // New returns a new Webhook.
 func New(conf *config.WebhookConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, "webhook", httpOpts...)
+	client, err := notify.NewClientWithTracing(*conf.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

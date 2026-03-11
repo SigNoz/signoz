@@ -19,6 +19,10 @@ import (
 	"github.com/prometheus/alertmanager/types"
 )
 
+const (
+	Integration = "slack"
+)
+
 // https://api.slack.com/reference/messaging/attachments#legacy_fields - 1024, no units given, assuming runes or characters.
 const maxTitleLenRunes = 1024
 
@@ -35,7 +39,7 @@ type Notifier struct {
 
 // New returns a new Slack notification handler.
 func New(c *config.SlackConfig, t *template.Template, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := notify.NewClientWithTracing(*c.HTTPConfig, "slack", httpOpts...)
+	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}

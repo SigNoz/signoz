@@ -27,6 +27,10 @@ const (
 	colorGrey  = "Warning"
 )
 
+const (
+	Integration = "msteamsv2"
+)
+
 type Notifier struct {
 	conf         *config.MSTeamsV2Config
 	titleLink    string
@@ -87,7 +91,7 @@ type teamsMessage struct {
 
 // New returns a new notifier that uses the Microsoft Teams Power Platform connector.
 func New(c *config.MSTeamsV2Config, t *template.Template, titleLink string, l *slog.Logger, httpOpts ...commoncfg.HTTPClientOption) (*Notifier, error) {
-	client, err := commoncfg.NewClientFromConfig(*c.HTTPConfig, "msteamsv2", httpOpts...)
+	client, err := notify.NewClientWithTracing(*c.HTTPConfig, Integration, httpOpts...)
 	if err != nil {
 		return nil, err
 	}
