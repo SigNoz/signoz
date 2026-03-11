@@ -259,15 +259,14 @@ func (c *conditionBuilder) ConditionFor(
 		// immidiately return
 		return condition, nil
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
-		buildExistCondition = buildExistCondition && true
+		// pass; buildExistCondition already has the correct value
 	case telemetrytypes.FieldContextBody:
 		// Querying JSON fields already account for Nullability of fields
 		// so additional exists checks are not needed
 		if querybuilder.BodyJSONQueryEnabled {
 			return condition, nil
 		}
-
-		buildExistCondition = buildExistCondition && true
+		// pass; buildExistCondition already has the correct value
 	}
 
 	if buildExistCondition {
