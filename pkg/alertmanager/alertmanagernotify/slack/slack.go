@@ -10,6 +10,7 @@ import (
 	"os"
 	"strings"
 
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagertemplate"
 	"github.com/SigNoz/signoz/pkg/errors"
 	commoncfg "github.com/prometheus/common/config"
 
@@ -97,6 +98,18 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		data     = notify.GetTemplateData(ctx, n.tmpl, as, logger)
 		tmplText = notify.TmplText(n.tmpl, data, &err)
 	)
+
+	titleTmpl, bodyTmpl := alertmanagertemplate.ExtractTemplatesFromAnnotations(as)
+	expanded, expandErr := alertmanagertemplate.ExpandAlertTemplates(ctx, n.tmpl, alertmanagertemplate.TemplateInput{
+		TitleTemplate:        titleTmpl,
+		BodyTemplate:         bodyTmpl,
+		DefaultTitleTemplate: n.conf.Title,
+		DefaultBodyTemplate:  n.conf.Text,
+	}, as, logger)
+	if expandErr != nil {
+		return false, expandErr
+	}
+
 	var markdownIn []string
 
 	if len(n.conf.MrkdwnIn) == 0 {
@@ -105,15 +118,15 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		markdownIn = n.conf.MrkdwnIn
 	}
 
-	title, truncated := notify.TruncateInRunes(tmplText(n.conf.Title), maxTitleLenRunes)
+	expandedTitle, truncated := notify.TruncateInRunes(expanded.Title, maxTitleLenRunes)
 	if truncated {
 		logger.WarnContext(ctx, "Truncated title", "max_runes", maxTitleLenRunes)
 	}
 	att := &attachment{
-		Title:      title,
+		Title:      expandedTitle,
 		TitleLink:  tmplText(n.conf.TitleLink),
 		Pretext:    tmplText(n.conf.Pretext),
-		Text:       tmplText(n.conf.Text),
+		Text:       expanded.Body,
 		Fallback:   tmplText(n.conf.Fallback),
 		CallbackID: tmplText(n.conf.CallbackID),
 		ImageURL:   tmplText(n.conf.ImageURL),

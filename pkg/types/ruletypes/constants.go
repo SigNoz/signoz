@@ -9,4 +9,15 @@ const (
 	LabelSeverityName     = "severity"
 	LabelLastSeen         = "lastSeen"
 	LabelRuleId           = "ruleId"
+	LabelRuleSource       = "ruleSource"
+	LabelNoData           = "nodata"
+	LabelTestAlert        = "testalert"
+	LabelAlertName        = "alertname"
+)
+
+const (
+	AnnotationRelatedLogs   = "related_logs"
+	AnnotationRelatedTraces = "related_traces"
+	AnnotationTitleTemplate = "title_template"
+	AnnotationBodyTemplate  = "body_template"
 )
