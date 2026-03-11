@@ -6,6 +6,7 @@ import { Provider } from 'react-redux';
 import AppRoutes from 'AppRoutes';
 import { AxiosError } from 'axios';
 import { ThemeProvider } from 'hooks/useDarkMode';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppProvider } from 'providers/App/App';
 import TimezoneProvider from 'providers/Timezone';
 import store from 'store';
@@ -45,17 +46,19 @@ if (container) {
 
 	root.render(
 		<HelmetProvider>
-			<ThemeProvider>
-				<TimezoneProvider>
-					<QueryClientProvider client={queryClient}>
-						<Provider store={store}>
-							<AppProvider>
-								<AppRoutes />
-							</AppProvider>
-						</Provider>
-					</QueryClientProvider>
-				</TimezoneProvider>
-			</ThemeProvider>
+			<NuqsAdapter>
+				<ThemeProvider>
+					<TimezoneProvider>
+						<QueryClientProvider client={queryClient}>
+							<Provider store={store}>
+								<AppProvider>
+									<AppRoutes />
+								</AppProvider>
+							</Provider>
+						</QueryClientProvider>
+					</TimezoneProvider>
+				</ThemeProvider>
+			</NuqsAdapter>
 		</HelmetProvider>,
 	);
 }
