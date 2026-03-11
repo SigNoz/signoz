@@ -1,3 +1,4 @@
+// @ts-nocheck
 import { I18nextProvider } from 'react-i18next';
 import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';

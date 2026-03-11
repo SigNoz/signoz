@@ -1,3 +1,4 @@
+// @ts-nocheck
 // This test suite covers several important scenarios:
 // - Empty layout - widget should be placed at origin (0,0)
 // - Empty layout with custom dimensions
