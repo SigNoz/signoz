@@ -1735,8 +1735,6 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 	temporalities := make(map[string][]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
 
-	adjustedStartTs, adjustedEndTs, tsTableName, _ := telemetrymetrics.WhichTSTableToUse(queryTimeRangeStartTs, queryTimeRangeEndTs, nil)
-
 	// Build query to fetch temporality for all metrics
 	// We use attr_string_value where attr_name = '__temporality__'
 	// Note: The columns are mixed in the current data - temporality column contains metric_name
@@ -1746,14 +1744,14 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 		"temporality",
 		"any(type) AS type",
 		"any(is_monotonic) as is_monotonic",
+		"max(unix_milli) AS last_seen_at",
+		"min(unix_milli) AS first_seen_at",
 	).
-		From(t.metricsDBName + "." + tsTableName)
+		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV41weekTableName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
 	sb.Where(
 		sb.In("metric_name", metricNames),
-		sb.GTE("unix_milli", adjustedStartTs),
-		sb.LT("unix_milli", adjustedEndTs),
 	)
 
 	sb.GroupBy("metric_name", "temporality")
@@ -1774,16 +1772,23 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 		var temporality metrictypes.Temporality
 		var metricType metrictypes.Type
 		var isMonotonic bool
-		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic); err != nil {
+		var lastSeenAt int64
+		var firstSeenAt int64
+		if err := rows.Scan(&metricName, &temporality, &metricType, &isMonotonic, &lastSeenAt, &firstSeenAt); err != nil {
 			return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan temporality result")
 		}
-		if temporality != metrictypes.Unknown {
-			temporalities[metricName] = append(temporalities[metricName], temporality)
-		}
+		// always pick the metric type, regardless of when it was seen
 		if metricType == metrictypes.SumType && !isMonotonic {
 			metricType = metrictypes.GaugeType
 		}
 		types[metricName] = metricType
+		// if the temporality was seen between the time range, only then consider it
+		if lastSeenAt < int64(queryTimeRangeStartTs) || firstSeenAt > int64(queryTimeRangeEndTs) {
+			continue
+		}
+		if temporality != metrictypes.Unknown {
+			temporalities[metricName] = append(temporalities[metricName], temporality)
+		}
 	}
 	if err := rows.Err(); err != nil {
 		return nil, nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")

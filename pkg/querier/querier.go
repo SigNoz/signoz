@@ -382,7 +382,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 					// TODO(srikanthccv): warn when the metric is missing
 					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						spec.Aggregations[i].Temporality = metrictypes.Unspecified
+						spec.Aggregations[i].Temporality = metrictypes.Unspecified // is this needed?
 					}
 
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
