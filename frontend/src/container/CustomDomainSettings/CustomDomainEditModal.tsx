@@ -84,7 +84,7 @@ export default function CustomDomainEditModal({
 
 	const hasError = Boolean(errorMessage);
 
-	const statusIcon = ((): JSX.Element => {
+	const statusIcon = ((): JSX.Element | null => {
 		if (isLoading) {
 			return (
 				<LoaderCircle size={16} className="animate-spin edit-modal-status-icon" />
@@ -95,7 +95,9 @@ export default function CustomDomainEditModal({
 			return <CircleAlert size={16} color={Color.BG_CHERRY_500} />;
 		}
 
-		return <CircleCheck size={16} color={Color.BG_FOREST_500} />;
+		return value && value.length >= 3 ? (
+			<CircleCheck size={16} color={Color.BG_FOREST_500} />
+		) : null;
 	})();
 
 	return (

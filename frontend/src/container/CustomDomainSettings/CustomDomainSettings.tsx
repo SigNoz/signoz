@@ -1,12 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import {
 	Check,
 	ChevronDown,
 	Clock,
+	Copy,
 	ExternalLink,
 	FilePenLine,
+	KeyRound,
 	Link2,
 	SolidAlertCircle,
 	X,
@@ -71,6 +74,30 @@ function DomainUpdateToast({
 export default function CustomDomainSettings(): JSX.Element {
 	const { org, activeLicense } = useAppContext();
 	const { timezone } = useTimezone();
+	const [, copyToClipboard] = useCopyToClipboard();
+
+	const getMaskedKey = (key: string): string => {
+		if (!key || key.length < 4) {
+			return key || 'N/A';
+		}
+
+		return `${key.substring(0, 2)}·······${key.slice(-2).trim()}`;
+	};
+
+	const handleCopyLicenseKey = (text: string): void => {
+		copyToClipboard(text);
+
+		if (!navigator.clipboard) {
+			toast.error('Failed to copy license key.', {
+				richColors: true,
+			});
+			return;
+		}
+		toast.success('License key copied to clipboard.', {
+			richColors: true,
+		});
+	};
+
 	const [isEditModalOpen, setIsEditModalOpen] = useState(false);
 	const [isPollingEnabled, setIsPollingEnabled] = useState(false);
 	const [hosts, setHosts] = useState<ZeustypesHostDTO[] | null>(null);
@@ -175,7 +202,8 @@ export default function CustomDomainSettings(): JSX.Element {
 		[hosts, activeHost],
 	);
 
-	const planName = activeLicense?.plan?.name;
+	const workspaceName =
+		org?.[0]?.displayName || customDomainSubdomain || activeHost?.name;
 
 	if (isLoadingHosts) {
 		return (
@@ -194,12 +222,12 @@ export default function CustomDomainSettings(): JSX.Element {
 			<div className="custom-domain-card">
 				<div className="custom-domain-card-top">
 					<div className="custom-domain-card-info">
-						<div className="custom-domain-card-name-row">
-							<span className="beacon" />
-							<span className="custom-domain-card-org-name">
-								{org?.[0]?.displayName ? org?.[0]?.displayName : customDomainSubdomain}
-							</span>
-						</div>
+						{workspaceName && (
+							<div className="custom-domain-card-name-row">
+								<span className="beacon" />
+								<span className="custom-domain-card-org-name">{workspaceName}</span>
+							</div>
+						)}
 
 						<div className="custom-domain-card-meta-row">
 							<Dropdown
@@ -280,15 +308,34 @@ export default function CustomDomainSettings(): JSX.Element {
 					/>
 				)}
 
-				<div className="custom-domain-card-divider" />
-
-				<div className="custom-domain-card-bottom">
-					<span className="beacon" />
-					<span className="custom-domain-card-license">
-						{planName && <code className="custom-domain-plan-badge">{planName}</code>}{' '}
-						license is currently active
-					</span>
-				</div>
+				{activeLicense?.key && (
+					<>
+						<div className="custom-domain-card-divider" />
+						<div className="custom-domain-card-bottom">
+							<span className="custom-domain-card-license-left">
+								<KeyRound size={14} />
+								<span className="custom-domain-card-license-label">
+									SigNoz License Key
+								</span>
+							</span>
+							<span className="custom-domain-card-license-value">
+								<code className="custom-domain-license-key-code">
+									{getMaskedKey(activeLicense.key)}
+								</code>
+								<Button
+									type="button"
+									size="xs"
+									aria-label="Copy license key"
+									data-testid="custom-domain-license-key-copy-btn"
+									className="custom-domain-license-key-copy-btn"
+									onClick={(): void => handleCopyLicenseKey(activeLicense.key)}
+								>
+									<Copy size={12} />
+								</Button>
+							</span>
+						</div>
+					</>
+				)}
 			</div>
 
 			<CustomDomainEditModal
