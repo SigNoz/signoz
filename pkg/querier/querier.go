@@ -276,21 +276,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 
-	// Fetch temporality for all metrics at once
-	var metricTemporality map[string]metrictypes.Temporality
-	var metricTypes map[string]metrictypes.Type
-	if len(metricNames) > 0 {
-		var err error
-		metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
-		if err != nil {
-			q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
-			// Continue without temporality - statement builder will handle unspecified
-			metricTemporality = make(map[string]metrictypes.Temporality)
-			metricTypes = make(map[string]metrictypes.Type)
-		}
-		q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
-	}
-
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 
@@ -374,6 +359,19 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				queries[spec.Name] = bq
 				steps[spec.Name] = spec.StepInterval
 			case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+				var metricTemporality map[string]metrictypes.Temporality
+				var metricTypes map[string]metrictypes.Type
+				if len(metricNames) > 0 {
+					var err error
+					metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
+					if err != nil {
+						q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
+						// Continue without temporality - statement builder will handle unspecified
+						metricTemporality = make(map[string]metrictypes.Temporality)
+						metricTypes = make(map[string]metrictypes.Type)
+					}
+					q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
+				}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
