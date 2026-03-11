@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -153,6 +154,10 @@ func enrichMapsForJSONBodyEnabled() {
 		// QB can look them up directly: bare "message" and qualified "body_v2.message".
 		IntrinsicFields[MessageSubColumn] = *BodyLogicalFieldJSONMapping
 		IntrinsicFields[MessageBodyField] = *BodyLogicalFieldJSONMapping
+		logsV2Columns[MessageSubColumn] = &schema.Column{
+			Name: MessageSubColumn,
+			Type: schema.ColumnTypeString,
+		}
 	}
 }
 

@@ -92,6 +92,7 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		// Return a synthetic String column so the condition builder uses the direct path
 		// instead of the JSON condition builder (which expects a JSONPlan).
 		if key.Materialized {
+			// Type hints have a direct physical sub-column in body_v2 (e.g. body_v2.message).
 			return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
 		}
 		// Body context is for JSON body fields
