@@ -1,11 +1,10 @@
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
-import { KeyRound } from '@signozhq/icons';
-import { Copy } from '@signozhq/icons';
+import { Copy, KeyRound } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { useAppContext } from 'providers/App/App';
 
-import './CustomDomainSettings.styles.scss';
+import './LicenseKeyRow.styles.scss';
 
 function LicenseKeyRow(): JSX.Element | null {
 	const { activeLicense } = useAppContext();
@@ -32,13 +31,13 @@ function LicenseKeyRow(): JSX.Element | null {
 	};
 
 	return (
-		<div className="custom-domain-card-bottom">
-			<span className="custom-domain-card-license-left">
+		<div className="license-key-row">
+			<span className="license-key-row__left">
 				<KeyRound size={14} />
-				<span className="custom-domain-card-license-label">SigNoz License Key</span>
+				<span className="license-key-row__label">SigNoz License Key</span>
 			</span>
-			<span className="custom-domain-card-license-value">
-				<code className="custom-domain-license-key-code">
+			<span className="license-key-row__value">
+				<code className="license-key-row__code">
 					{getMaskedKey(activeLicense.key)}
 				</code>
 				<Button
@@ -46,7 +45,7 @@ function LicenseKeyRow(): JSX.Element | null {
 					size="xs"
 					aria-label="Copy license key"
 					data-testid="license-key-row-copy-btn"
-					className="custom-domain-license-key-copy-btn"
+					className="license-key-row__copy-btn"
 					onClick={(): void => handleCopyLicenseKey(activeLicense.key)}
 				>
 					<Copy size={12} />
