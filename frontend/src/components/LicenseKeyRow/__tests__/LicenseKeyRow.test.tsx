@@ -10,12 +10,10 @@ jest.mock('react-use', () => ({
 }));
 
 const mockToastSuccess = jest.fn();
-const mockToastError = jest.fn();
 
 jest.mock('@signozhq/sonner', () => ({
 	toast: {
 		success: (...args: unknown[]): unknown => mockToastSuccess(...args),
-		error: (...args: unknown[]): unknown => mockToastError(...args),
 	},
 }));
 
@@ -59,32 +57,5 @@ describe('LicenseKeyRow', () => {
 				},
 			);
 		});
-	});
-
-	it('shows error toast when clipboard API is unavailable', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		const originalClipboard = Object.getOwnPropertyDescriptor(
-			navigator,
-			'clipboard',
-		);
-		Object.defineProperty(navigator, 'clipboard', {
-			value: undefined,
-			configurable: true,
-		});
-
-		render(<LicenseKeyRow />);
-
-		await user.click(screen.getByRole('button', { name: /copy license key/i }));
-
-		await waitFor(() => {
-			expect(mockToastError).toHaveBeenCalledWith('Failed to copy license key.', {
-				richColors: true,
-			});
-		});
-
-		if (originalClipboard) {
-			Object.defineProperty(navigator, 'clipboard', originalClipboard);
-		}
 	});
 });

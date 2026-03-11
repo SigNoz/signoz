@@ -681,13 +681,15 @@ function GeneralSettings({
 				</span>
 			</div>
 
-			<div className="custom-domain-card">
-				{showCustomDomainSettings && <CustomDomainSettings />}
-				{showCustomDomainSettings && activeLicense?.key && (
-					<div className="custom-domain-card-divider" />
-				)}
-				{activeLicense?.key && <LicenseKeyRow />}
-			</div>
+			{(showCustomDomainSettings || activeLicense?.key) && (
+				<div className="custom-domain-card">
+					{showCustomDomainSettings && <CustomDomainSettings />}
+					{showCustomDomainSettings && activeLicense?.key && (
+						<div className="custom-domain-card-divider" />
+					)}
+					{activeLicense?.key && <LicenseKeyRow />}
+				</div>
+			)}
 
 			<div className="retention-controls-container">
 				<div className="retention-controls-header">
