@@ -44,4 +44,5 @@
         <shard>01</shard>
         <replica>01</replica>
     </macros>
+    <user_defined_executable_functions_config>*function.xml</user_defined_executable_functions_config>
 </clickhouse>
