@@ -8,6 +8,7 @@ export interface UserResponse {
 	orgId: string;
 	organization: string;
 	role: ROLES;
+	updatedAt?: number;
 }
 export interface PayloadProps {
 	data: UserResponse[];

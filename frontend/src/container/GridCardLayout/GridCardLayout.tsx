@@ -71,7 +71,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		isDashboardLocked,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
-		setSelectedRowWidgetId,
 		isDashboardFetching,
 		columnWidths,
 	} = useDashboard();
@@ -195,7 +194,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				setSelectedRowWidgetId(null);
 				if (updatedDashboard.data) {
 					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));

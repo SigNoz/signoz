@@ -35,6 +35,10 @@ import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
 import {
+	clearSelectedRowWidgetId,
+	getSelectedRowWidgetId,
+} from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
+import {
 	getNextWidgets,
 	getPreviousWidgets,
 	getSelectedWidgetIndex,
@@ -86,8 +90,6 @@ function NewWidget({
 		selectedDashboard,
 		setSelectedDashboard,
 		setToScrollWidgetId,
-		selectedRowWidgetId,
-		setSelectedRowWidgetId,
 		columnWidths,
 	} = useDashboard();
 
@@ -450,6 +452,8 @@ function NewWidget({
 		const widgetId = query.get('widgetId') || '';
 		let updatedLayout = selectedDashboard.data.layout || [];
 
+		const selectedRowWidgetId = getSelectedRowWidgetId(dashboardId);
+
 		if (isNewDashboard && isEmpty(selectedRowWidgetId)) {
 			const newLayoutItem = placeWidgetAtBottom(widgetId, updatedLayout);
 			updatedLayout = [...updatedLayout, newLayoutItem];
@@ -554,7 +558,6 @@ function NewWidget({
 
 		updateDashboardMutation.mutateAsync(dashboard, {
 			onSuccess: (updatedDashboard) => {
-				setSelectedRowWidgetId(null);
 				setSelectedDashboard(updatedDashboard.data);
 				setToScrollWidgetId(selectedWidget?.id || '');
 				safeNavigate({
@@ -566,7 +569,6 @@ function NewWidget({
 		selectedDashboard,
 		query,
 		isNewDashboard,
-		selectedRowWidgetId,
 		afterWidgets,
 		selectedWidget,
 		selectedTime.enum,
@@ -577,7 +579,6 @@ function NewWidget({
 		widgets,
 		setSelectedDashboard,
 		setToScrollWidgetId,
-		setSelectedRowWidgetId,
 		safeNavigate,
 		dashboardId,
 	]);
@@ -681,6 +682,10 @@ function NewWidget({
 		 * on mount here with the currentQuery in the begining itself
 		 */
 		setSupersetQuery(currentQuery);
+
+		return (): void => {
+			clearSelectedRowWidgetId(dashboardId);
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
