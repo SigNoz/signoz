@@ -183,9 +183,8 @@ def clickhouse(
             ],
         )
         if exit_code != 0:
-            logger.warning(
-                "Failed to install histogramQuantile binary: %s",
-                output.decode(),
+            raise RuntimeError(
+                f"Failed to install histogramQuantile binary: {output.decode()}"
             )
 
         connection = clickhouse_connect.get_client(
