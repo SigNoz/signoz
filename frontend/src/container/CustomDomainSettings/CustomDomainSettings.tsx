@@ -195,14 +195,18 @@ export default function CustomDomainSettings(): JSX.Element {
 		<>
 			<div className="custom-domain-card-top">
 				<div className="custom-domain-card-info">
-					{workspaceName && (
+					{!!workspaceName && (
 						<div className="custom-domain-card-name-row">
 							<span className="beacon" />
 							<span className="custom-domain-card-org-name">{workspaceName}</span>
 						</div>
 					)}
 
-					<div className="custom-domain-card-meta-row">
+					<div
+						className={`custom-domain-card-meta-row ${
+							!workspaceName ? 'workspace-name-hidden' : ''
+						}`}
+					>
 						<Dropdown
 							trigger={['click']}
 							dropdownRender={(): JSX.Element => (
