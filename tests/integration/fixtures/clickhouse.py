@@ -76,6 +76,7 @@ def clickhouse(
             </remote_servers>
 
             <user_defined_executable_functions_config>*function.xml</user_defined_executable_functions_config>
+            <user_scripts_path>/var/lib/clickhouse/user_scripts/</user_scripts_path>
 
             <distributed_ddl>
                 <path>/clickhouse/task_queue/ddl</path>
