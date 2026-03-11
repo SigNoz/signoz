@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	maps0 "maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -278,6 +279,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
+	missingMetricQueries := make(map[string]struct{})
 
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
@@ -372,23 +374,33 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 					q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
 				}
+				var presentAggregations []qbtypes.MetricAggregation
 				for i := range spec.Aggregations {
-					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
-							spec.Aggregations[i].Temporality = temp
+					if spec.Aggregations[i].MetricName == "" {
+						continue
+					}
+					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
+						if foundMetricTemporality, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && foundMetricTemporality != metrictypes.Unknown {
+							spec.Aggregations[i].Temporality = foundMetricTemporality
 						}
 					}
-					// TODO(srikanthccv): warn when the metric is missing
-					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						spec.Aggregations[i].Temporality = metrictypes.Unspecified
-					}
-
-					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
+					if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
+					// If metric is still unknown after lookup, it was not found in the time range
+					if spec.Aggregations[i].Temporality == metrictypes.Unknown && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
+						continue
+					}
+					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 				}
+				if len(presentAggregations) == 0 {
+					missingMetricQueries[spec.Name] = struct{}{}
+					steps[spec.Name] = spec.StepInterval
+					continue
+				}
+				spec.Aggregations = presentAggregations
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
@@ -407,7 +419,18 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 		}
 	}
-	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
+	preseededResults := make(map[string]any)
+	for name := range missingMetricQueries {
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
+			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
+		case qbtypes.RequestTypeScalar:
+			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
+		case qbtypes.RequestTypeRaw:
+			preseededResults[name] = &qbtypes.RawData{QueryName: name}
+		}
+	}
+	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
@@ -496,7 +519,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 			})
 			queries[spec.Name] = bq
 
-			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event, nil)
 			if qbErr != nil {
 				client.Error <- qbErr
 				return
@@ -525,6 +548,7 @@ func (q *querier) run(
 	req *qbtypes.QueryRangeRequest,
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
+	preseededResults map[string]any,
 ) (*qbtypes.QueryRangeResponse, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.PanelType: qbEvent.PanelType,
@@ -609,6 +633,8 @@ func (q *querier) run(
 			stats.DurationMS += result.Stats.DurationMS
 		}
 	}
+
+	maps0.Copy(results, preseededResults)
 
 	processedResults, err := q.postProcessResults(ctx, results, req)
 	if err != nil {
