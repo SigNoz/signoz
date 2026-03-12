@@ -97,9 +97,9 @@ func (c *conditionBuilder) ConditionFor(
 			return "true", nil
 		}
 		if operator == qbtypes.FilterOperatorExists {
-			return fmt.Sprintf("has(JSONExtractKeys(labels), '%s')", key.Name), nil
+			return fmt.Sprintf("has(JSONExtractKeys(labels), %s)", sb.Var(key.Name)), nil
 		}
-		return fmt.Sprintf("not has(JSONExtractKeys(labels), '%s')", key.Name), nil
+		return fmt.Sprintf("not has(JSONExtractKeys(labels), %s)", sb.Var(key.Name)), nil
 	}
 
 	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported operator: %v", operator)
