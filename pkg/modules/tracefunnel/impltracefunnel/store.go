@@ -66,7 +66,6 @@ func (store *store) Get(ctx context.Context, uuid valuer.UUID, orgID valuer.UUID
 		BunDB().
 		NewSelect().
 		Model(funnel).
-		Relation("CreatedByUser").
 		Where("?TableAlias.id = ? AND ?TableAlias.org_id = ?", uuid.String(), orgID.String()).
 		Scan(ctx)
 	if err != nil {
@@ -127,7 +126,6 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*traceFunnel
 		BunDB().
 		NewSelect().
 		Model(&funnels).
-		Relation("CreatedByUser").
 		Where("?TableAlias.org_id = ?", orgID.String()).
 		Scan(ctx)
 	if err != nil {
