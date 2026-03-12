@@ -39,6 +39,7 @@ func (r *Repo) GetConfigHistory(
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("COALESCE(created_by, '') as created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
@@ -50,9 +51,12 @@ func (r *Repo) GetConfigHistory(
 		return nil, errors.WrapInternalf(err, CodeConfigHistoryGetFailed, "failed to get config history")
 	}
 
+	for idx := range c {
+		c[idx].CreatedByName = c[idx].CreatedBy
+	}
+
 	incompleteStatuses := []opamptypes.DeployStatus{opamptypes.DeployInitiated, opamptypes.Deploying}
 	for idx := 1; idx < len(c); idx++ {
-		c[idx].CreatedByName = c[idx].CreatedBy
 		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
 			c[idx].DeployStatus = opamptypes.DeployStatusUnknown
 		}
@@ -68,6 +72,7 @@ func (r *Repo) GetConfigVersion(
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("COALESCE(created_by, '') as created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.version = ?", v).
@@ -92,6 +97,7 @@ func (r *Repo) GetLatestVersion(
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
 		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("COALESCE(created_by, '') as created_by").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE acv.element_type = ?)", typ).
