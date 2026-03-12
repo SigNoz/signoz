@@ -8,7 +8,14 @@ import (
 	"text/template/parse"
 
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 )
+
+// maxAggregatedValues is the maximum number of unique values to include
+// when aggregating non-common label/annotation values across alerts.
+const maxAggregatedValues = 5
 
 // bareVariableRegex matches bare $variable references including dotted paths like $service.name.
 var bareVariableRegex = regexp.MustCompile(`\$(\w+(?:\.\w+)*)`)
@@ -99,4 +106,40 @@ func walkAndWrapTextNodes(node parse.Node) {
 
 		// Support for `with` can be added later when we start supporting it in editor block
 	}
+}
+
+// AggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV
+// the result is used to populate the labels and annotations in the notification template data.
+// this is done to avoid blank values in the template when labels and annotations used are not common throughout the alerts
+func AggregateKV(alerts []*types.Alert, extractFn func(*types.Alert) model.LabelSet) template.KV {
+	// track unique values per key in order of first appearance
+	valuesPerKey := make(map[string][]string)
+	// track which values have been seen for deduplication
+	seenValues := make(map[string]map[string]bool)
+
+	for _, alert := range alerts {
+		kvPairs := extractFn(alert)
+		for k, v := range kvPairs {
+			key := string(k)
+			value := string(v)
+
+			if seenValues[key] == nil {
+				seenValues[key] = make(map[string]bool)
+			}
+
+			// only add if not already seen and under the limit of maxAggregatedValues
+			if !seenValues[key][value] && len(valuesPerKey[key]) < maxAggregatedValues {
+				seenValues[key][value] = true
+				valuesPerKey[key] = append(valuesPerKey[key], value)
+			}
+		}
+	}
+
+	// build the result by joining values
+	result := make(template.KV, len(valuesPerKey))
+	for key, values := range valuesPerKey {
+		result[key] = strings.Join(values, ", ")
+	}
+
+	return result
 }

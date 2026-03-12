@@ -3,6 +3,9 @@ package alertmanagertemplate
 import (
 	"testing"
 
+	"github.com/prometheus/alertmanager/template"
+	"github.com/prometheus/alertmanager/types"
+	"github.com/prometheus/common/model"
 	"github.com/stretchr/testify/require"
 )
 
@@ -129,6 +132,79 @@ func TestWrapBareVars(t *testing.T) {
 				require.NoError(t, err)
 				require.Equal(t, tc.expected, result)
 			}
+		})
+	}
+}
+
+func TestAggregateKV(t *testing.T) {
+	extractLabels := func(a *types.Alert) model.LabelSet { return a.Labels }
+
+	testCases := []struct {
+		name      string
+		alerts    []*types.Alert
+		extractFn func(*types.Alert) model.LabelSet
+		expected  template.KV
+	}{
+		{
+			name:      "empty alerts slice",
+			alerts:    []*types.Alert{},
+			extractFn: extractLabels,
+			expected:  template.KV{},
+		},
+		{
+			name: "single alert",
+			alerts: []*types.Alert{
+				{
+					Alert: model.Alert{
+						Labels: model.LabelSet{
+							"env":     "production",
+							"service": "backend",
+						},
+					},
+				},
+			},
+			extractFn: extractLabels,
+			expected: template.KV{
+				"env":     "production",
+				"service": "backend",
+			},
+		},
+		{
+			name: "varying values with duplicates deduped",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "production", "service": "backend"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "production", "service": "api"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "production", "service": "frontend"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "production", "service": "api"}}},
+			},
+			extractFn: extractLabels,
+			expected: template.KV{
+				"env":     "production",
+				"service": "backend, api, frontend",
+			},
+		},
+		{
+			name: "more than 5 unique values truncates to 5",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc1"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc2"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc3"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc4"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc5"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc6"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "svc7"}}},
+			},
+			extractFn: extractLabels,
+			expected: template.KV{
+				"service": "svc1, svc2, svc3, svc4, svc5",
+			},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := AggregateKV(tc.alerts, tc.extractFn)
+			require.Equal(t, tc.expected, result)
 		})
 	}
 }

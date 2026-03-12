@@ -4,7 +4,6 @@ import (
 	"context"
 	"log/slog"
 	"strings"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/prometheus/alertmanager/notify"
@@ -12,71 +11,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"github.com/prometheus/common/model"
 )
-
-// TemplateInput carries the title/body templates
-// and their defaults to apply in case the custom templates
-// are result in empty strings.
-type TemplateInput struct {
-	TitleTemplate        string
-	BodyTemplate         string
-	DefaultTitleTemplate string
-	DefaultBodyTemplate  string
-}
-
-// ExpandedTemplates is the result of ExpandAlertTemplates.
-type ExpandedTemplates struct {
-	Title string
-	Body  string
-}
-
-// AlertData holds per-alert data used when expanding body templates.
-type AlertData struct {
-	Status       string      `json:"status"`
-	Labels       template.KV `json:"labels"`
-	Annotations  template.KV `json:"annotations"`
-	StartsAt     time.Time   `json:"starts_at"`
-	EndsAt       time.Time   `json:"ends_at"`
-	GeneratorURL string      `json:"generator_url"`
-	Fingerprint  string      `json:"fingerprint"`
-
-	// Convenience fields extracted from well-known labels/annotations.
-	AlertName string `json:"rule_name"`
-	RuleID    string `json:"rule_id"`
-	RuleLink  string `json:"rule_link"`
-	Severity  string `json:"severity"`
-
-	// Link annotations added by the rule evaluator.
-	LogLink   string `json:"log_link"`
-	TraceLink string `json:"trace_link"`
-
-	// Status booleans for easy conditional templating.
-	IsFiring      bool `json:"is_firing"`
-	IsResolved    bool `json:"is_resolved"`
-	IsMissingData bool `json:"is_missing_data"`
-	IsRecovering  bool `json:"is_recovering"`
-}
-
-// NotificationTemplateData is the top-level data struct provided to custom templates.
-type NotificationTemplateData struct {
-	Receiver string `json:"receiver"`
-	Status   string `json:"status"`
-
-	// Convenience fields for title templates.
-	AlertName     string `json:"rule_name"`
-	RuleID        string `json:"rule_id"`
-	RuleLink      string `json:"rule_link"`
-	TotalFiring   int    `json:"total_firing"`
-	TotalResolved int    `json:"total_resolved"`
-
-	// Per-alert data, also available as filtered sub-slices.
-	Alerts []AlertData `json:"alerts"`
-
-	// Cross-alert aggregates, computed as intersection across all alerts.
-	GroupLabels       template.KV `json:"group_labels"`
-	CommonLabels      template.KV `json:"common_labels"`
-	CommonAnnotations template.KV `json:"common_annotations"`
-	ExternalURL       string      `json:"external_url"`
-}
 
 // ExtractTemplatesFromAnnotations computes the common annotations across all alerts
 // and returns the values for the title_template and body_template annotation keys.
@@ -124,7 +58,11 @@ func expandTitle(
 	logger *slog.Logger,
 ) (string, error) {
 	if input.TitleTemplate != "" {
-		result, err := tmpl.ExecuteTextString(input.TitleTemplate, ntd)
+		processedTmpl, mapData, err := PreProcessTemplateAndData(input.TitleTemplate, ntd)
+		if err != nil {
+			return "", err
+		}
+		result, err := tmpl.ExecuteTextString(processedTmpl, mapData)
 		if err != nil {
 			return "", err
 		}
@@ -151,10 +89,14 @@ func expandBody(
 	ntd *NotificationTemplateData,
 	logger *slog.Logger,
 ) (string, error) {
-	if input.BodyTemplate != "" && len(ntd.Alerts) > 0 {
+	if input.BodyTemplate != "" {
 		var parts []string
 		for i := range ntd.Alerts {
-			part, err := tmpl.ExecuteTextString(input.BodyTemplate, &ntd.Alerts[i])
+			processedTmpl, mapData, err := PreProcessTemplateAndData(input.BodyTemplate, ntd.Alerts[i])
+			if err != nil {
+				return "", err
+			}
+			part, err := tmpl.ExecuteTextString(processedTmpl, mapData)
 			if err != nil {
 				return "", err
 			}
@@ -202,10 +144,14 @@ func buildNotificationTemplateData(
 	commonAnnotations := computeCommonAnnotations(alerts)
 	commonLabels := computeCommonLabels(alerts)
 
+	// aggregate labels and annotations from all alerts
+	labels := AggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
+	annotations := AggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
+
 	// build the alert data slice
 	alertDataSlice := make([]AlertData, 0, len(alerts))
 	for _, a := range alerts {
-		ad := buildAlertData(a)
+		ad := buildAlertData(a, receiver)
 		alertDataSlice = append(alertDataSlice, ad)
 	}
 
@@ -244,11 +190,13 @@ func buildNotificationTemplateData(
 		CommonLabels:      commonLabels,
 		CommonAnnotations: commonAnnotations,
 		ExternalURL:       externalURL,
+		Labels:            labels,
+		Annotations:       annotations,
 	}
 }
 
 // buildAlertData converts a single *types.Alert into an AlertData.
-func buildAlertData(a *types.Alert) AlertData {
+func buildAlertData(a *types.Alert, receiver string) AlertData {
 	labels := make(template.KV, len(a.Labels))
 	for k, v := range a.Labels {
 		labels[string(k)] = string(v)
@@ -265,6 +213,7 @@ func buildAlertData(a *types.Alert) AlertData {
 	isMissingData := labels[ruletypes.LabelNoData] == "true"
 
 	return AlertData{
+		Receiver:      receiver,
 		Status:        status,
 		Labels:        labels,
 		Annotations:   annotations,
@@ -278,6 +227,10 @@ func buildAlertData(a *types.Alert) AlertData {
 		Severity:      labels[ruletypes.LabelSeverityName],
 		LogLink:       annotations[ruletypes.AnnotationRelatedLogs],
 		TraceLink:     annotations[ruletypes.AnnotationRelatedTraces],
+		Value:         annotations[ruletypes.AnnotationValue],
+		Threshold:     annotations[ruletypes.AnnotationThreshold],
+		CompareOp:     annotations[ruletypes.AnnotationCompareOp],
+		MatchType:     annotations[ruletypes.AnnotationMatchType],
 		IsFiring:      isFiring,
 		IsResolved:    isResolved,
 		IsMissingData: isMissingData,
