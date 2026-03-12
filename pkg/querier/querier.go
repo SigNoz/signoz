@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+	"github.com/dustin/go-humanize"
 	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -279,6 +280,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
+	missingMetrics := []string{}
 
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
@@ -371,7 +373,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 					q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
 				}
-				missingMetrics := []string{}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
@@ -388,11 +389,6 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
-				}
-				if len(missingMetrics) == 1 {
-					return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the metric %s in the query time range", missingMetrics[0])
-				} else if len(missingMetrics) > 1 {
-					return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the following metrics in the query time range: %s", strings.Join(missingMetrics, ", "))
 				}
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
@@ -411,6 +407,24 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported builder spec type %T", query.Spec)
 			}
 		}
+	}
+	if len(missingMetrics) > 0 {
+		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
+		lastSeenStr := func(name string) string {
+			if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
+				ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
+				return fmt.Sprintf("%s (last seen %s)", name, ago)
+			}
+			return name
+		}
+		if len(missingMetrics) == 1 {
+			return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+		}
+		parts := make([]string, len(missingMetrics))
+		for i, m := range missingMetrics {
+			parts[i] = lastSeenStr(m)
+		}
+		return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
 	}
 	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
 	if qbResp != nil {
