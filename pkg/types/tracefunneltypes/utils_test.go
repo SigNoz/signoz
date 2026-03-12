@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/stretchr/testify/assert"
 )
@@ -419,12 +418,10 @@ func TestConstructFunnelResponse(t *testing.T) {
 	now := time.Now()
 	funnelID := valuer.GenerateUUID()
 	orgID := valuer.GenerateUUID()
-	userID := valuer.GenerateUUID()
 
 	tests := []struct {
 		name     string
 		funnel   *StorableFunnel
-		claims   *authtypes.Claims
 		expected GettableFunnel
 	}{
 		{
@@ -438,17 +435,11 @@ func TestConstructFunnelResponse(t *testing.T) {
 					UpdatedAt: now,
 				},
 				UserAuditable: types.UserAuditable{
-					CreatedBy: userID.String(),
-					UpdatedBy: userID.String(),
+					CreatedBy: valuer.MustNewEmail("funnel@example.com").String(),
+					UpdatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				},
 				Name:  "test-funnel",
 				OrgID: orgID,
-				CreatedByUser: &types.User{
-					Identifiable: types.Identifiable{
-						ID: userID,
-					},
-					Email: valuer.MustNewEmail("funnel@example.com"),
-				},
 				Steps: []*FunnelStep{
 					{
 						ID:          valuer.GenerateUUID(),
@@ -458,11 +449,6 @@ func TestConstructFunnelResponse(t *testing.T) {
 						Order:       1,
 					},
 				},
-			},
-			claims: &authtypes.Claims{
-				UserID: userID.String(),
-				OrgID:  orgID.String(),
-				Email:  "claims@example.com",
 			},
 			expected: GettableFunnel{
 				FunnelName: "test-funnel",
@@ -476,11 +462,11 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 				CreatedAt: now.UnixNano() / 1000000,
-				CreatedBy: userID.String(),
+				CreatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				UpdatedAt: now.UnixNano() / 1000000,
-				UpdatedBy: userID.String(),
+				UpdatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				OrgID:     orgID.String(),
-				UserEmail: "funnel@example.com",
+				UserEmail: valuer.MustNewEmail("funnel@example.com").String(),
 			},
 		},
 		{
@@ -494,8 +480,8 @@ func TestConstructFunnelResponse(t *testing.T) {
 					UpdatedAt: now,
 				},
 				UserAuditable: types.UserAuditable{
-					CreatedBy: userID.String(),
-					UpdatedBy: userID.String(),
+					CreatedBy: valuer.MustNewEmail("funnel@example.com").String(),
+					UpdatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				},
 				Name:  "test-funnel",
 				OrgID: orgID,
@@ -509,11 +495,6 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 			},
-			claims: &authtypes.Claims{
-				UserID: userID.String(),
-				OrgID:  orgID.String(),
-				Email:  "claims@example.com",
-			},
 			expected: GettableFunnel{
 				FunnelName: "test-funnel",
 				FunnelID:   funnelID.String(),
@@ -526,18 +507,18 @@ func TestConstructFunnelResponse(t *testing.T) {
 					},
 				},
 				CreatedAt: now.UnixNano() / 1000000,
-				CreatedBy: userID.String(),
+				CreatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				UpdatedAt: now.UnixNano() / 1000000,
-				UpdatedBy: userID.String(),
+				UpdatedBy: valuer.MustNewEmail("funnel@example.com").String(),
 				OrgID:     orgID.String(),
-				UserEmail: "claims@example.com",
+				UserEmail: valuer.MustNewEmail("funnel@example.com").String(),
 			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result := ConstructFunnelResponse(tt.funnel, tt.claims)
+			result := ConstructFunnelResponse(tt.funnel)
 
 			// Compare top-level fields
 			assert.Equal(t, tt.expected.FunnelName, result.FunnelName)

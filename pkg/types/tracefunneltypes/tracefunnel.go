@@ -1,6 +1,8 @@
 package tracefunneltypes
 
 import (
+	"time"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -23,7 +25,6 @@ type StorableFunnel struct {
 	OrgID         valuer.UUID   `json:"org_id" bun:"org_id,type:varchar,notnull"`
 	Steps         []*FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
 	Tags          string        `json:"tags" bun:"tags,type:text"`
-	CreatedByUser *types.User   `json:"user" bun:"rel:belongs-to,join:created_by=id"`
 }
 
 type FunnelStep struct {
@@ -83,16 +84,48 @@ type StepTransitionRequest struct {
 	StepEnd   int64 `json:"step_end,omitempty"`
 }
 
-// UserInfo represents basic user information
-type UserInfo struct {
-	ID    string `json:"id"`
-	Email string `json:"email"`
-}
-
 type FunnelStepFilter struct {
 	StepNumber     int
 	ServiceName    string
 	SpanName       string
 	LatencyPointer string // "start" or "end"
 	CustomFilters  *v3.FilterSet
+}
+
+func NewStorableFunnel(name string, description string, steps []*FunnelStep, tags string, createdBy string, orgID valuer.UUID) *StorableFunnel {
+	return &StorableFunnel{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		UserAuditable: types.UserAuditable{
+			CreatedBy: createdBy,
+			UpdatedBy: createdBy,
+		},
+		Name:        name,
+		Description: description,
+		Steps:       steps,
+		Tags:        tags,
+		OrgID:       orgID,
+	}
+}
+
+func (tf *StorableFunnel) Update(name string, description string, steps []*FunnelStep, updatedBy string) {
+	if name != "" {
+		tf.Name = name
+	}
+
+	if description != "" {
+		tf.Description = description
+	}
+
+	if steps != nil {
+		tf.Steps = steps
+	}
+
+	tf.UpdatedBy = updatedBy
+	tf.UpdatedAt = time.Now()
 }

@@ -21,7 +21,7 @@ func NewHandler(module tracefunnel.Module) tracefunnel.Handler {
 	return &handler{module: module}
 }
 
-func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
+func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 	var req tf.PostableFunnel
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		render.Error(rw, err)
@@ -34,7 +34,7 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel, err := handler.module.Create(r.Context(), req.Timestamp, req.Name, valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID))
+	funnel, err := handler.module.Create(r.Context(), req.Name, claims.Email, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
@@ -42,7 +42,7 @@ func (handler *handler) New(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := tf.ConstructFunnelResponse(funnel, &claims)
+	response := tf.ConstructFunnelResponse(funnel)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -54,12 +54,6 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
-	updatedAt, err := tf.ValidateAndConvertTimestamp(req.Timestamp)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -79,33 +73,15 @@ func (handler *handler) UpdateSteps(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel.Steps = steps
-	funnel.UpdatedAt = updatedAt
-	funnel.UpdatedBy = claims.UserID
-
-	if req.Name != "" {
-		funnel.Name = req.Name
-	}
-	if req.Description != "" {
-		funnel.Description = req.Description
-	}
-
-	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.UserID)); err != nil {
+	funnel.Update(req.Name, req.Description, steps, claims.Email)
+	if err := handler.module.Update(r.Context(), funnel); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"failed to get updated funnel: %v", err))
-		return
-	}
-
-	response := tf.ConstructFunnelResponse(updatedFunnel, &claims)
+	response := tf.ConstructFunnelResponse(funnel)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -122,12 +98,6 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatedAt, err := tf.ValidateAndConvertTimestamp(req.Timestamp)
-	if err != nil {
-		render.Error(rw, err)
-		return
-	}
-
 	vars := mux.Vars(r)
 	funnelID := vars["funnel_id"]
 
@@ -139,32 +109,15 @@ func (handler *handler) UpdateFunnel(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	funnel.UpdatedAt = updatedAt
-	funnel.UpdatedBy = claims.UserID
-
-	if req.Name != "" {
-		funnel.Name = req.Name
-	}
-	if req.Description != "" {
-		funnel.Description = req.Description
-	}
-
-	if err := handler.module.Update(r.Context(), funnel, valuer.MustNewUUID(claims.UserID)); err != nil {
+	funnel.Update(req.Name, req.Description, nil, claims.Email)
+	if err := handler.module.Update(r.Context(), funnel); err != nil {
 		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
 			errors.CodeInvalidInput,
 			"failed to update funnel in database: %v", err))
 		return
 	}
 
-	updatedFunnel, err := handler.module.Get(r.Context(), funnel.ID, valuer.MustNewUUID(claims.OrgID))
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"failed to get updated funnel: %v", err))
-		return
-	}
-
-	response := tf.ConstructFunnelResponse(updatedFunnel, &claims)
+	response := tf.ConstructFunnelResponse(funnel)
 	render.Success(rw, http.StatusOK, response)
 }
 
@@ -185,7 +138,7 @@ func (handler *handler) List(rw http.ResponseWriter, r *http.Request) {
 
 	var response []tf.GettableFunnel
 	for _, f := range funnels {
-		response = append(response, tf.ConstructFunnelResponse(f, &claims))
+		response = append(response, tf.ConstructFunnelResponse(f))
 	}
 
 	render.Success(rw, http.StatusOK, response)
@@ -209,7 +162,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 			"funnel not found: %v", err))
 		return
 	}
-	response := tf.ConstructFunnelResponse(funnel, &claims)
+	response := tf.ConstructFunnelResponse(funnel)
 	render.Success(rw, http.StatusOK, response)
 }
 

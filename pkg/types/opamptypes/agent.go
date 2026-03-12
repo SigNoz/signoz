@@ -81,10 +81,7 @@ var (
 type AgentConfigVersion struct {
 	bun.BaseModel `bun:"table:agent_config_version,alias:acv"`
 
-	// this is only for reading
-	// keeping it here since we query the actual data from users table
 	CreatedByName string `json:"createdByName" bun:"created_by_name,scanonly"`
-
 	types.Identifiable
 	types.TimeAuditable
 	types.UserAuditable
@@ -98,13 +95,13 @@ type AgentConfigVersion struct {
 	Config         string       `json:"config" bun:"config,type:text"`
 }
 
-func NewAgentConfigVersion(orgId valuer.UUID, userId valuer.UUID, elementType ElementType) *AgentConfigVersion {
+func NewAgentConfigVersion(orgId valuer.UUID, createdBy string, elementType ElementType) *AgentConfigVersion {
 	return &AgentConfigVersion{
 		TimeAuditable: types.TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
 		},
-		UserAuditable: types.UserAuditable{CreatedBy: userId.String(), UpdatedBy: userId.String()},
+		UserAuditable: types.UserAuditable{CreatedBy: createdBy, UpdatedBy: createdBy},
 		OrgID:         orgId,
 		Identifiable:  types.Identifiable{ID: valuer.GenerateUUID()},
 		ElementType:   elementType,

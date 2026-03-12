@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -94,7 +93,7 @@ func ValidateAndConvertTimestamp(timestamp int64) (time.Time, error) {
 	return time.Unix(0, timestamp*1000000), nil // Convert to nanoseconds
 }
 
-func ConstructFunnelResponse(funnel *StorableFunnel, claims *authtypes.Claims) GettableFunnel {
+func ConstructFunnelResponse(funnel *StorableFunnel) GettableFunnel {
 	resp := GettableFunnel{
 		FunnelName:  funnel.Name,
 		FunnelID:    funnel.ID.String(),
@@ -105,12 +104,7 @@ func ConstructFunnelResponse(funnel *StorableFunnel, claims *authtypes.Claims) G
 		UpdatedBy:   funnel.UpdatedBy,
 		UpdatedAt:   funnel.UpdatedAt.UnixNano() / 1000000,
 		Description: funnel.Description,
-	}
-
-	if funnel.CreatedByUser != nil {
-		resp.UserEmail = funnel.CreatedByUser.Email.String()
-	} else if claims != nil {
-		resp.UserEmail = claims.Email
+		UserEmail:   funnel.CreatedBy,
 	}
 
 	return resp

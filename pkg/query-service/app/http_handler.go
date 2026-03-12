@@ -4237,14 +4237,8 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		render.Error(w, errv2)
 		return
 	}
-	userID, errv2 := valuer.NewUUID(claims.UserID)
-	if errv2 != nil {
-		render.Error(w, errv2)
-		return
-	}
 
 	req := pipelinetypes.PostablePipelines{}
-
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
 		RespondError(w, model.BadRequest(err), nil)
 		return
@@ -4263,7 +4257,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 			return nil, err
 		}
 
-		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, userID, postable)
+		return aH.LogsParsingPipelineController.ApplyPipelines(ctx, orgID, claims.Email, postable)
 	}
 
 	res, err := createPipeline(r.Context(), req.Pipelines)
@@ -5138,7 +5132,7 @@ func (aH *APIHandler) RegisterTraceFunnelsRoutes(router *mux.Router, am *middlew
 
 	// API endpoints
 	traceFunnelsRouter.HandleFunc("/new",
-		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.New)).
+		am.EditAccess(aH.Signoz.Handlers.TraceFunnel.Create)).
 		Methods(http.MethodPost)
 	traceFunnelsRouter.HandleFunc("/list",
 		am.ViewAccess(aH.Signoz.Handlers.TraceFunnel.List)).
