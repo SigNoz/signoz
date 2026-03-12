@@ -92,6 +92,130 @@ def test_with_steady_values_and_reset(
         ), f"{time_aggregation} should not be negative: {v['value']}"
 
 
+def _assert_endpoint_group_values(  # pylint: disable=too-many-arguments
+    endpoint_values: dict,
+    stable_health_value: float,
+    stable_products_value: float,
+    stable_checkout_value: float,
+    spike_checkout_value: float,
+    stable_orders_value: float,
+    spike_users_value: float,
+    time_aggregation: str,
+) -> None:
+    # /health: 60 data points (t01-t60), steady +10/min
+    if "/health" in endpoint_values:
+        health_values = endpoint_values["/health"]
+        assert (
+            len(health_values) >= 58
+        ), f"Expected >= 58 values for /health, got {len(health_values)}"
+        count_steady_health = sum(
+            1 for v in health_values if v["value"] == stable_health_value
+        )
+        assert (
+            count_steady_health >= 57
+        ), f"Expected >= 57 steady rate values ({stable_health_value}) for /health, got {count_steady_health}"
+        # all /health rates should be stable except possibly first/last due to boundaries
+        for v in health_values[1:-1]:
+            assert (
+                v["value"] == stable_health_value
+            ), f"Expected /health rate {stable_health_value}, got {v['value']}"
+
+    # /products: 51 data points with 10-minute gap (t20-t29 missing), steady +20/min
+    if "/products" in endpoint_values:
+        products_values = endpoint_values["/products"]
+        assert (
+            len(products_values) >= 49
+        ), f"Expected >= 49 values for /products, got {len(products_values)}"
+        count_steady_products = sum(
+            1 for v in products_values if v["value"] == stable_products_value
+        )
+        # most values should be stable, some boundary values differ due to 10-min gap
+        assert (
+            count_steady_products >= 46
+        ), f"Expected >= 46 steady rate values ({stable_products_value}) for /products, got {count_steady_products}"
+        # check that non-stable values are due to gap averaging (should be lower)
+        gap_boundary_values = [
+            v["value"] for v in products_values if v["value"] != stable_products_value
+        ]
+        for val in gap_boundary_values:
+            assert (
+                0 < val < stable_products_value
+            ), f"Gap boundary values should be between 0 and {stable_products_value}, got {val}"
+
+    # /checkout: 61 data points (t00-t60), +1/min normal, +50/min spike at t40-t44
+    if "/checkout" in endpoint_values:
+        checkout_values = endpoint_values["/checkout"]
+        assert (
+            len(checkout_values) >= 59
+        ), f"Expected >= 59 values for /checkout, got {len(checkout_values)}"
+        count_steady_checkout = sum(
+            1 for v in checkout_values if v["value"] == stable_checkout_value
+        )
+        assert (
+            count_steady_checkout >= 53
+        ), f"Expected >= 53 steady {time_aggregation} values ({stable_checkout_value}) for /checkout, got {count_steady_checkout}"
+        # check that spike values exist (traffic spike +50/min at t40-t44)
+        count_spike_checkout = sum(
+            1 for v in checkout_values if v["value"] == spike_checkout_value
+        )
+        assert (
+            count_spike_checkout >= 4
+        ), f"Expected >= 4 spike {time_aggregation} values ({spike_checkout_value}) for /checkout, got {count_spike_checkout}"
+        # spike values should be consecutive
+        spike_indices = [
+            i for i, v in enumerate(checkout_values) if v["value"] == spike_checkout_value
+        ]
+        assert len(spike_indices) >= 4, f"Expected >= 4 spike indices, got {spike_indices}"
+        for i in range(1, len(spike_indices)):
+            assert (
+                spike_indices[i] == spike_indices[i - 1] + 1
+            ), f"Spike indices should be consecutive, got {spike_indices}"
+
+    # /orders: 60 data points (t00-t60) with gap at t30, counter reset at t31 (150->2)
+    # reset at t31 causes: rate/increase at t30 includes gap (lower), t31 has high rate after reset
+    if "/orders" in endpoint_values:
+        orders_values = endpoint_values["/orders"]
+        assert (
+            len(orders_values) >= 58
+        ), f"Expected >= 58 values for /orders, got {len(orders_values)}"
+        count_steady_orders = sum(
+            1 for v in orders_values if v["value"] == stable_orders_value
+        )
+        assert (
+            count_steady_orders >= 55
+        ), f"Expected >= 55 steady {time_aggregation} values ({stable_orders_value}) for /orders, got {count_steady_orders}"
+        # check for counter reset effects - there should be some non-standard values
+        non_standard_orders = [
+            v["value"] for v in orders_values if v["value"] != stable_orders_value
+        ]
+        assert (
+            len(non_standard_orders) >= 2
+        ), f"Expected >= 2 non-standard values due to counter reset, got {non_standard_orders}"
+        # post-reset value should be higher (new counter value / interval)
+        high_rate_orders = [v for v in non_standard_orders if v > stable_orders_value]
+        assert (
+            len(high_rate_orders) >= 1
+        ), f"Expected at least one high {time_aggregation} value after counter reset, got {non_standard_orders}"
+
+    # /users: 56 data points (t05-t60), sparse +1 every 5 minutes
+    if "/users" in endpoint_values:
+        users_values = endpoint_values["/users"]
+        assert (
+            len(users_values) >= 54
+        ), f"Expected >= 54 values for /users, got {len(users_values)}"
+        count_zero_users = sum(1 for v in users_values if v["value"] == 0)
+        # most values should be 0 (flat periods between increments)
+        assert (
+            count_zero_users >= 40
+        ), f"Expected >= 40 zero {time_aggregation} values for /users (sparse data), got {count_zero_users}"
+        # non-zero values should be stable increment rate
+        non_zero_users = [v["value"] for v in users_values if v["value"] != 0]
+        count_increment_rate = sum(1 for v in non_zero_users if v == spike_users_value)
+        assert (
+            count_increment_rate >= 8
+        ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
+
+
 @pytest.mark.parametrize(
     "order_suffix,order_by,limit,expected_count,expected_endpoints",
     [
@@ -217,118 +341,16 @@ def test_group_by_endpoint(
                 v["value"] >= 0
             ), f"Rate for {endpoint} should not be negative: {v['value']}"
 
-    # /health: 60 data points (t01-t60), steady +10/min
-    if "/health" in endpoint_values:
-        health_values = endpoint_values["/health"]
-        assert (
-            len(health_values) >= 58
-        ), f"Expected >= 58 values for /health, got {len(health_values)}"
-        count_steady_health = sum(
-            1 for v in health_values if v["value"] == stable_health_value
-        )
-        assert (
-            count_steady_health >= 57
-        ), f"Expected >= 57 steady rate values ({stable_health_value}) for /health, got {count_steady_health}"
-        # all /health rates should be stable except possibly first/last due to boundaries
-        for v in health_values[1:-1]:
-            assert (
-                v["value"] == stable_health_value
-            ), f"Expected /health rate {stable_health_value}, got {v['value']}"
-
-    # /products: 51 data points with 10-minute gap (t20-t29 missing), steady +20/min
-    if "/products" in endpoint_values:
-        products_values = endpoint_values["/products"]
-        assert (
-            len(products_values) >= 49
-        ), f"Expected >= 49 values for /products, got {len(products_values)}"
-        count_steady_products = sum(
-            1 for v in products_values if v["value"] == stable_products_value
-        )
-        # most values should be stable, some boundary values differ due to 10-min gap
-        assert (
-            count_steady_products >= 46
-        ), f"Expected >= 46 steady rate values ({stable_products_value}) for /products, got {count_steady_products}"
-        # check that non-stable values are due to gap averaging (should be lower)
-        gap_boundary_values = [
-            v["value"] for v in products_values if v["value"] != stable_products_value
-        ]
-        for val in gap_boundary_values:
-            assert (
-                0 < val < stable_products_value
-            ), f"Gap boundary values should be between 0 and {stable_products_value}, got {val}"
-
-    # /checkout: 61 data points (t00-t60), +1/min normal, +50/min spike at t40-t44
-    if "/checkout" in endpoint_values:
-        checkout_values = endpoint_values["/checkout"]
-        assert (
-            len(checkout_values) >= 59
-        ), f"Expected >= 59 values for /checkout, got {len(checkout_values)}"
-        count_steady_checkout = sum(
-            1 for v in checkout_values if v["value"] == stable_checkout_value
-        )
-        assert (
-            count_steady_checkout >= 53
-        ), f"Expected >= 53 steady {time_aggregation} values ({stable_checkout_value}) for /checkout, got {count_steady_checkout}"
-        # check that spike values exist (traffic spike +50/min at t40-t44)
-        count_spike_checkout = sum(
-            1 for v in checkout_values if v["value"] == spike_checkout_value
-        )
-        assert (
-            count_spike_checkout >= 4
-        ), f"Expected >= 4 spike {time_aggregation} values ({spike_checkout_value}) for /checkout, got {count_spike_checkout}"
-        # spike values should be consecutive
-        spike_indices = [
-            i for i, v in enumerate(checkout_values) if v["value"] == spike_checkout_value
-        ]
-        assert len(spike_indices) >= 4, f"Expected >= 4 spike indices, got {spike_indices}"
-        for i in range(1, len(spike_indices)):
-            assert (
-                spike_indices[i] == spike_indices[i - 1] + 1
-            ), f"Spike indices should be consecutive, got {spike_indices}"
-
-    # /orders: 60 data points (t00-t60) with gap at t30, counter reset at t31 (150->2)
-    # reset at t31 causes: rate/increase at t30 includes gap (lower), t31 has high rate after reset
-    if "/orders" in endpoint_values:
-        orders_values = endpoint_values["/orders"]
-        assert (
-            len(orders_values) >= 58
-        ), f"Expected >= 58 values for /orders, got {len(orders_values)}"
-        count_steady_orders = sum(
-            1 for v in orders_values if v["value"] == stable_orders_value
-        )
-        assert (
-            count_steady_orders >= 55
-        ), f"Expected >= 55 steady {time_aggregation} values ({stable_orders_value}) for /orders, got {count_steady_orders}"
-        # check for counter reset effects - there should be some non-standard values
-        non_standard_orders = [
-            v["value"] for v in orders_values if v["value"] != stable_orders_value
-        ]
-        assert (
-            len(non_standard_orders) >= 2
-        ), f"Expected >= 2 non-standard values due to counter reset, got {non_standard_orders}"
-        # post-reset value should be higher (new counter value / interval)
-        high_rate_orders = [v for v in non_standard_orders if v > stable_orders_value]
-        assert (
-            len(high_rate_orders) >= 1
-        ), f"Expected at least one high {time_aggregation} value after counter reset, got {non_standard_orders}"
-
-    # /users: 56 data points (t05-t60), sparse +1 every 5 minutes
-    if "/users" in endpoint_values:
-        users_values = endpoint_values["/users"]
-        assert (
-            len(users_values) >= 54
-        ), f"Expected >= 54 values for /users, got {len(users_values)}"
-        count_zero_users = sum(1 for v in users_values if v["value"] == 0)
-        # most values should be 0 (flat periods between increments)
-        assert (
-            count_zero_users >= 40
-        ), f"Expected >= 40 zero {time_aggregation} values for /users (sparse data), got {count_zero_users}"
-        # non-zero values should be stable increment rate
-        non_zero_users = [v["value"] for v in users_values if v["value"] != 0]
-        count_increment_rate = sum(1 for v in non_zero_users if v == spike_users_value)
-        assert (
-            count_increment_rate >= 8
-        ), f"Expected >= 8 increment {time_aggregation} values ({spike_users_value}) for /users, got {count_increment_rate}"
+    _assert_endpoint_group_values(
+        endpoint_values,
+        stable_health_value,
+        stable_products_value,
+        stable_checkout_value,
+        spike_checkout_value,
+        stable_orders_value,
+        spike_users_value,
+        time_aggregation,
+    )
 
 
 @pytest.mark.parametrize(
