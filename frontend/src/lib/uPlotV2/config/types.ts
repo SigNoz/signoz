@@ -160,6 +160,12 @@ export interface PointsConfig {
 	showPoints?: boolean;
 }
 
+export enum FillMode {
+	Solid = 'solid',
+	Gradient = 'gradient',
+	None = 'none',
+}
+
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
@@ -171,6 +177,7 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	show?: boolean;
 	spanGaps?: boolean;
 	fillColor?: string;
+	fillMode?: FillMode;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 }

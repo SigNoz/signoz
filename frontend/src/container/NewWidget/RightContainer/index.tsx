@@ -27,7 +27,11 @@ import GraphTypes, {
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { LineInterpolation } from 'lib/uPlotV2/config/types';
+import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
 import {
 	Antenna,
 	Axis3D,
@@ -61,11 +65,15 @@ import {
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
 	panelTypeVsDecimalPrecision,
+	panelTypeVsFillMode,
 	panelTypeVsFillSpan,
 	panelTypeVsLegendColors,
 	panelTypeVsLegendPosition,
+	panelTypeVsLineInterpolation,
+	panelTypeVsLineStyle,
 	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
+	panelTypeVsShowPoints,
 	panelTypeVsSoftMinMax,
 	panelTypeVsStackingChartPreferences,
 	panelTypeVsThreshold,
@@ -73,8 +81,10 @@ import {
 } from './constants';
 import ContextLinks from './ContextLinks';
 import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
+import { FillModeSelector } from './FillModeSelector';
 import LegendColors from './LegendColors/LegendColors';
 import { LineInterpolationSelector } from './LineInterpolationSelector';
+import { LineStyleSelector } from './LineStyleSelector';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
@@ -103,6 +113,10 @@ function RightContainer({
 	selectedGraph,
 	lineInterpolation,
 	setLineInterpolation,
+	fillMode,
+	setFillMode,
+	lineStyle,
+	setLineStyle,
 	showPoints,
 	setShowPoints,
 	bucketCount,
@@ -181,6 +195,11 @@ function RightContainer({
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
 
+	const allowLineInterpolation = panelTypeVsLineInterpolation[selectedGraph];
+	const allowLineStyle = panelTypeVsLineStyle[selectedGraph];
+	const allowFillMode = panelTypeVsFillMode[selectedGraph];
+	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
+
 	const { currentQuery } = useQueryBuilder();
 
 	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
@@ -200,6 +219,12 @@ function RightContainer({
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
 		[allowLegendPosition, allowLegendColors],
+	);
+
+	const isChartAppearanceSectionVisible = useMemo(
+		() =>
+			allowFillMode || allowLineStyle || allowLineInterpolation || allowShowPoints,
+		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
 	const updateCursorAndDropdown = (value: string, pos: number): void => {
@@ -449,23 +474,35 @@ function RightContainer({
 					)}
 				</SettingsSection>
 
-				<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
-					<LineInterpolationSelector
-						value={lineInterpolation}
-						onChange={setLineInterpolation}
-					/>
-					<section className="show-points toggle-card">
-						<div className="toggle-card-text-container">
-							<Typography.Text className="section-heading">
-								Show points
-							</Typography.Text>
-							<Typography.Text className="toggle-card-description">
-								Display individual data points on the chart
-							</Typography.Text>
-						</div>
-						<Switch size="small" checked={showPoints} onChange={setShowPoints} />
-					</section>
-				</SettingsSection>
+				{isChartAppearanceSectionVisible && (
+					<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
+						{allowFillMode && (
+							<FillModeSelector value={fillMode} onChange={setFillMode} />
+						)}
+						{allowLineStyle && (
+							<LineStyleSelector value={lineStyle} onChange={setLineStyle} />
+						)}
+						{allowLineInterpolation && (
+							<LineInterpolationSelector
+								value={lineInterpolation}
+								onChange={setLineInterpolation}
+							/>
+						)}
+						{allowShowPoints && (
+							<section className="show-points toggle-card">
+								<div className="toggle-card-text-container">
+									<Typography.Text className="section-heading">
+										Show points
+									</Typography.Text>
+									<Typography.Text className="toggle-card-description">
+										Display individual data points on the chart
+									</Typography.Text>
+								</div>
+								<Switch size="small" checked={showPoints} onChange={setShowPoints} />
+							</section>
+						)}
+					</SettingsSection>
+				)}
 
 				{isAxisSectionVisible && (
 					<SettingsSection title="Axes" icon={<Axis3D size={14} />}>
@@ -708,6 +745,10 @@ export interface RightContainerProps {
 	isNewDashboard: boolean;
 	lineInterpolation: LineInterpolation;
 	setLineInterpolation: Dispatch<SetStateAction<LineInterpolation>>;
+	fillMode: FillMode;
+	setFillMode: Dispatch<SetStateAction<FillMode>>;
+	lineStyle: LineStyle;
+	setLineStyle: Dispatch<SetStateAction<LineStyle>>;
 	showPoints: boolean;
 	setShowPoints: Dispatch<SetStateAction<boolean>>;
 }

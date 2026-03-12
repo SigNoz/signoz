@@ -30,7 +30,11 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
-import { LineInterpolation } from 'lib/uPlotV2/config/types';
+import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -215,6 +219,12 @@ function NewWidget({
 	const [lineInterpolation, setLineInterpolation] = useState<LineInterpolation>(
 		selectedWidget?.lineInterpolation || LineInterpolation.Spline,
 	);
+	const [fillMode, setFillMode] = useState<FillMode>(
+		selectedWidget?.fillMode || FillMode.None,
+	);
+	const [lineStyle, setLineStyle] = useState<LineStyle>(
+		selectedWidget?.lineStyle || LineStyle.Solid,
+	);
 	const [showPoints, setShowPoints] = useState<boolean>(
 		selectedWidget?.showPoints ?? false,
 	);
@@ -284,6 +294,8 @@ function NewWidget({
 				softMax,
 				fillSpans: isFillSpans,
 				lineInterpolation,
+				fillMode,
+				lineStyle,
 				showPoints,
 				columnUnits,
 				bucketCount,
@@ -322,6 +334,8 @@ function NewWidget({
 		isLogScale,
 		legendPosition,
 		lineInterpolation,
+		fillMode,
+		lineStyle,
 		showPoints,
 		customLegendColors,
 		columnWidths,
@@ -849,6 +863,10 @@ function NewWidget({
 							setStackedBarChart={setStackedBarChart}
 							lineInterpolation={lineInterpolation}
 							setLineInterpolation={setLineInterpolation}
+							fillMode={fillMode}
+							setFillMode={setFillMode}
+							lineStyle={lineStyle}
+							setLineStyle={setLineStyle}
 							showPoints={showPoints}
 							setShowPoints={setShowPoints}
 							opacity={opacity}

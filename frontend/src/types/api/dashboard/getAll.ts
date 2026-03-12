@@ -5,7 +5,11 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { timePreferenceType } from 'container/NewWidget/RightContainer/timeItems';
 import { QueryTableProps } from 'container/QueryTable/QueryTable.intefaces';
-import { LineInterpolation } from 'lib/uPlotV2/config/types';
+import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
 import { IField } from '../logs/fields';
@@ -135,6 +139,8 @@ export interface IBaseWidget {
 	contextLinks?: ContextLinksData;
 	lineInterpolation?: LineInterpolation;
 	showPoints?: boolean;
+	lineStyle?: LineStyle;
+	fillMode?: FillMode;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;
