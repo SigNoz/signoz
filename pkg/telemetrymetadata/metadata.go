@@ -527,7 +527,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
-		key, ok := setOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
+		key, ok := setOfKeys[fieldContext.StringValue()+"."+name+":"+fieldDataType.StringValue()]
 
 		// if there is no materialised column, create a key with the field context and data type
 		if !ok {
