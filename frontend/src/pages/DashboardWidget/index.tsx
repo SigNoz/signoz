@@ -14,7 +14,6 @@ import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtil
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { parseAsStringEnum, useQueryState } from 'nuqs';
 import { setDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
-import { Widgets } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
 	const { dashboardId } = useParams<{
@@ -81,8 +80,6 @@ function DashboardWidgetInternal({
 	const selectedDashboard = useMemo(() => dashboardResponse?.data, [
 		dashboardResponse?.data,
 	]);
-	const widgets = selectedDashboard?.data?.widgets || [];
-	const selectedWidget = widgets.find((e) => e.id === widgetId) as Widgets;
 
 	if (isFetchingDashboardResponse) {
 		return <Spinner tip="Loading.." />;
@@ -99,9 +96,7 @@ function DashboardWidgetInternal({
 	return (
 		<NewWidget
 			dashboardId={dashboardId}
-			yAxisUnit={selectedWidget?.yAxisUnit}
 			selectedGraph={graphType}
-			fillSpans={selectedWidget?.fillSpans}
 			enableDrillDown={isDrilldownEnabled()}
 			selectedDashboard={selectedDashboard}
 		/>

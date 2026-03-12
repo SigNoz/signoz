@@ -81,10 +81,10 @@ import {
 import './NewWidget.styles.scss';
 
 function NewWidget({
+	selectedDashboard,
 	dashboardId,
 	selectedGraph,
 	enableDrillDown = false,
-	selectedDashboard,
 }: NewWidgetProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
 	const setToScrollWidgetId = useScrollToWidgetIdStore(
@@ -620,22 +620,25 @@ function NewWidget({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query]);
 
-	const onSaveDashboard = useCallback((): void => {
+	const isNewPanel = useMemo(() => {
 		const widgetId = query.get('widgetId');
-		const selectWidget = widgets?.find((e) => e.id === widgetId);
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		return isUndefined(selectedWidget);
+	}, [query, widgets]);
 
+	const onSaveDashboard = useCallback((): void => {
 		logEvent('Panel Edit: Save changes', {
 			panelType: selectedWidget.panelTypes,
 			dashboardId: selectedDashboard?.id,
 			widgetId: selectedWidget.id,
 			dashboardName: selectedDashboard?.data.title,
 			queryType: currentQuery.queryType,
-			isNewPanel: isUndefined(selectWidget),
+			isNewPanel,
 			dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 		});
 		setSaveModal(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isNewPanel]);
 
 	const isNewTraceLogsAvailable =
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
@@ -812,6 +815,7 @@ function NewWidget({
 								setQueryResponse={setQueryResponse}
 								enableDrillDown={enableDrillDown}
 								selectedDashboard={selectedDashboard}
+								isNewPanel={isNewPanel}
 							/>
 						)}
 					</OverlayScrollbar>

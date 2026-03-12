@@ -11,11 +11,9 @@ import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
 	dashboardId: string;
-	selectedGraph: PANEL_TYPES;
-	yAxisUnit: Widgets['yAxisUnit'];
-	fillSpans: Widgets['fillSpans'];
-	enableDrillDown?: boolean;
 	selectedDashboard: IDashboardContext['selectedDashboard'];
+	selectedGraph: PANEL_TYPES;
+	enableDrillDown?: boolean;
 }
 
 export interface WidgetGraphProps {
@@ -38,6 +36,7 @@ export interface WidgetGraphProps {
 	>;
 	enableDrillDown?: boolean;
 	selectedDashboard: IDashboardContext['selectedDashboard'];
+	isNewPanel?: boolean;
 }
 
 export type WidgetGraphContainerProps = {

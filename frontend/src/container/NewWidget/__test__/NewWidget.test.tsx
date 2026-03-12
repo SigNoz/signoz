@@ -316,8 +316,6 @@ describe('Stacking bar in new panel', () => {
 							dashboardId=""
 							selectedDashboard={undefined}
 							selectedGraph={PANEL_TYPES.BAR}
-							fillSpans={undefined}
-							yAxisUnit={undefined}
 						/>
 					</PreferenceContextProvider>
 				</DashboardProvider>
@@ -363,8 +361,6 @@ describe('when switching to BAR panel type', () => {
 					dashboardId=""
 					selectedDashboard={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
-					fillSpans={undefined}
-					yAxisUnit={undefined}
 				/>
 			</DashboardProvider>,
 		);

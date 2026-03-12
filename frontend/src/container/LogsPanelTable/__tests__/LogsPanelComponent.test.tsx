@@ -108,8 +108,6 @@ describe('LogsPanelComponent', () => {
 						dashboardId=""
 						selectedDashboard={undefined}
 						selectedGraph={PANEL_TYPES.LIST}
-						fillSpans={undefined}
-						yAxisUnit={undefined}
 					/>
 				</PreferenceContextProvider>
 			</I18nextProvider>,

@@ -10,7 +10,6 @@ import { PANEL_TYPES } from 'constants/queryBuilder';
 import { QBShortcuts } from 'constants/shortcuts/QBShortcuts';
 import { PANEL_TYPE_TO_QUERY_TYPES } from 'container/NewWidget/utils';
 import RunQueryBtn from 'container/QueryBuilder/components/RunQueryBtn/RunQueryBtn';
-// import { QueryBuilder } from 'container/QueryBuilder';
 import { QueryBuilderProps } from 'container/QueryBuilder/QueryBuilder.interfaces';
 import { useKeyboardHotkeys } from 'hooks/hotkeys/useKeyboardHotkeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -32,6 +31,7 @@ function QuerySection({
 	dashboardVersion,
 	dashboardId,
 	dashboardName,
+	isNewPanel,
 }: QueryProps): JSX.Element {
 	const {
 		currentQuery,
@@ -45,10 +45,6 @@ function QuerySection({
 	const { query } = selectedWidget;
 
 	useShareBuilderUrl({ defaultValue: query });
-
-	const handleStageQuery = useCallback((): void => {
-		handleRunQueryFromQueryBuilder();
-	}, [handleRunQueryFromQueryBuilder]);
 
 	const handleQueryCategoryChange = useCallback(
 		(qCategory: string): void => {
@@ -69,8 +65,9 @@ function QuerySection({
 			widgetId: selectedWidget.id,
 			dashboardId,
 			dashboardName,
+			isNewPanel,
 		});
-		handleStageQuery();
+		handleRunQueryFromQueryBuilder();
 	};
 
 	const filterConfigs: QueryBuilderProps['filterConfigs'] = useMemo(() => {
@@ -200,6 +197,7 @@ interface QueryProps {
 	dashboardVersion?: string;
 	dashboardId?: string;
 	dashboardName?: string;
+	isNewPanel?: boolean;
 }
 
 export default QuerySection;

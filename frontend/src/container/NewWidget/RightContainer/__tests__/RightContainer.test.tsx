@@ -8,7 +8,6 @@ import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
@@ -96,9 +95,7 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 				<Provider store={createMockStore()}>
 					<AppContext.Provider value={createMockAppContext() as IAppContext}>
 						<ErrorModalProvider>
-							<DashboardProvider dashboardId="">
-								<QueryBuilderProvider>{ui}</QueryBuilderProvider>
-							</DashboardProvider>
+							<QueryBuilderProvider>{ui}</QueryBuilderProvider>
 						</ErrorModalProvider>
 					</AppContext.Provider>
 				</Provider>
