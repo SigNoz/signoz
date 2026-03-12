@@ -18,10 +18,6 @@ func NewModule(store rulestatehistorytypes.Store) rulestatehistory.Module {
 	return &module{store: store}
 }
 
-func (m *module) AddRuleStateHistory(ctx context.Context, entries []rulestatehistorytypes.RuleStateHistory) error {
-	return m.store.AddRuleStateHistory(ctx, entries)
-}
-
 func (m *module) GetLastSavedRuleStateHistory(ctx context.Context, ruleID string) ([]rulestatehistorytypes.RuleStateHistory, error) {
 	return m.store.GetLastSavedRuleStateHistory(ctx, ruleID)
 }
