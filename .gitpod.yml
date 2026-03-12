@@ -1,19 +1,21 @@
 # Please adjust to your needs (see https://www.gitpod.io/docs/config-gitpod-file)
 # and commit this file to your remote git repository to share the goodness with others.
 
-
 tasks:
   - name: Run Docker Images
     init: |
       cd ./deploy/docker
       sudo docker compose up -d
 
+  - name: Install pnpm
+    init: |
+      npm i -g pnpm
+
   - name: Run Frontend
     init: |
       cd ./frontend
-      yarn install
-    command:
-      yarn dev
+      pnpm install
+    command: pnpm dev
 
 ports:
   - port: 8080

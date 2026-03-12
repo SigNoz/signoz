@@ -13,13 +13,12 @@ Before diving in, make sure you have these tools installed:
   - Download from [go.dev/dl](https://go.dev/dl/)
   - Check [go.mod](../../go.mod#L3) for the minimum version
 
-
 - **Node** - Powers our frontend
   - Download from [nodejs.org](https://nodejs.org)
   - Check [.nvmrc](../../frontend/.nvmrc) for the version
 
-- **Yarn** - Our frontend package manager
-  - Follow the [installation guide](https://yarnpkg.com/getting-started/install)
+- **Pnpm** - Our frontend package manager
+  - Follow the [installation guide](https://pnpm.io/installation)
 
 - **Docker** - For running Clickhouse and Postgres locally
   - Get it from [docs.docker.com/get-docker](https://docs.docker.com/get-docker/)
@@ -95,7 +94,7 @@ This command:
 
 2. Install dependencies:
    ```bash
-   yarn install
+   pnpm install
    ```
 
 3. Create a `.env` file in this directory:
@@ -105,10 +104,10 @@ This command:
 
 4. Start the development server:
    ```bash
-   yarn dev
+   pnpm dev
    ```
 
-> 💡 **Tip**: `yarn dev` will automatically rebuild when you make changes to the code
+> 💡 **Tip**: `pnpm dev` will automatically rebuild when you make changes to the code
 
 Now you're all set to start developing! Happy coding! 🎉
 

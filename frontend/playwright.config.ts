@@ -1,9 +1,11 @@
 import { defineConfig, devices } from '@playwright/test';
 import dotenv from 'dotenv';
 import path from 'path';
+import { fileURLToPath } from 'url';
 
 // Read from ".env" file.
-dotenv.config({ path: path.resolve(__dirname, '.env') });
+const dirname = path.dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: path.resolve(dirname, '.env') });
 
 /**
  * Read environment variables from file.

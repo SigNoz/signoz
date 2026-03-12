@@ -1,7 +1,7 @@
 #!/bin/sh
 . "$(dirname "$0")/_/husky.sh"
 
-cd frontend && yarn run commitlint --edit $1
+cd frontend && pnpm run commitlint --edit $1
 
 branch="$(git rev-parse --abbrev-ref HEAD)"
 
