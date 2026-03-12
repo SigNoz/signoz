@@ -210,6 +210,15 @@ function RightContainer({
 		}, 0);
 	};
 
+	const decimapPrecisionOptions = useMemo(() => {
+		return [
+			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
+			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
+			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
+			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
+		];
+	}, []);
+
 	const handleInputCursor = (): void => {
 		const pos = inputRef.current?.input?.selectionStart ?? 0;
 		updateCursorAndDropdown(inputValue, pos);
@@ -423,17 +432,7 @@ function RightContainer({
 									Decimal Precision
 								</Typography.Text>
 								<Select
-									options={[
-										{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
-										{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
-										{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
-										{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
-										{ label: '4 decimals', value: PrecisionOptionsEnum.FOUR },
-										{
-											label: 'Full Precision',
-											value: PrecisionOptionsEnum.FULL,
-										},
-									]}
+									options={decimapPrecisionOptions}
 									value={decimalPrecision}
 									style={{ width: '100%' }}
 									className="panel-type-select"
