@@ -10,8 +10,9 @@ type Store interface {
 	// Service Account
 	Create(context.Context, *StorableServiceAccount) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableServiceAccount, error)
-	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*StorableServiceAccount, error)
+	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
+	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 	List(context.Context, valuer.UUID) ([]*StorableServiceAccount, error)
 	Update(context.Context, valuer.UUID, *StorableServiceAccount) error
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
@@ -25,8 +26,12 @@ type Store interface {
 	// Service Account Factor API Key
 	CreateFactorAPIKey(context.Context, *StorableFactorAPIKey) error
 	GetFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) (*StorableFactorAPIKey, error)
+	GetFactorAPIKeyByKey(context.Context, string) (*StorableFactorAPIKey, error)
+	CountFactorAPIKeysByOrgID(context.Context, valuer.UUID) (int64, error)
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*StorableFactorAPIKey, error)
+	ListFactorAPIKeyByOrgID(context.Context, valuer.UUID) ([]*StorableFactorAPIKey, error)
 	UpdateFactorAPIKey(context.Context, valuer.UUID, *StorableFactorAPIKey) error
+	UpdateLastObservedAtByKey(context.Context, []map[string]any) error
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
 	RevokeAllFactorAPIKeys(context.Context, valuer.UUID) error
 

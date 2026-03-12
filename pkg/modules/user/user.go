@@ -45,13 +45,6 @@ type Module interface {
 	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
 	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
 
-	// API KEY
-	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error
-	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
-	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
-
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
 	statsreporter.StatsCollector
@@ -106,10 +99,4 @@ type Handler interface {
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
-
-	// API KEY
-	CreateAPIKey(http.ResponseWriter, *http.Request)
-	ListAPIKeys(http.ResponseWriter, *http.Request)
-	UpdateAPIKey(http.ResponseWriter, *http.Request)
-	RevokeAPIKey(http.ResponseWriter, *http.Request)
 }

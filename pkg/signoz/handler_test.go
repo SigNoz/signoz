@@ -43,14 +43,13 @@ func TestNewHandlers(t *testing.T) {
 	emailing := emailingtest.New()
 	queryParser := queryparser.New(providerSettings)
 	require.NoError(t, err)
-	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
 
 	flagger, err := flagger.New(context.Background(), instrumentationtest.New().ToProviderSettings(), flagger.Config{}, flagger.MustNewRegistry())
 	require.NoError(t, err)
-
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
+	dashboardModule := impldashboard.NewModule(impldashboard.NewStore(sqlstore), providerSettings, nil, orgGetter, queryParser)
 
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter)
+	modules := NewModules(sqlstore, tokenizer, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)
 	handlers := NewHandlers(modules, providerSettings, nil, querierHandler, nil, nil, nil, nil, nil, nil, nil)

@@ -3,20 +3,20 @@ package authtypes
 import (
 	"context"
 	"log/slog"
-	"slices"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 )
 
 type claimsKey struct{}
 type accessTokenKey struct{}
+type serviceAccountAPIKeyKey struct{}
 
 type Claims struct {
-	UserID string
-	Email  string
-	Role   types.Role
-	OrgID  string
+	UserID           string
+	ServiceAccountID string
+	Principal        string
+	Email            string
+	OrgID            string
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -47,45 +47,39 @@ func AccessTokenFromContext(ctx context.Context) (string, error) {
 	return accessToken, nil
 }
 
+func NewContextWithServiceAccountAPIKey(ctx context.Context, apiKey string) context.Context {
+	return context.WithValue(ctx, serviceAccountAPIKeyKey{}, apiKey)
+}
+
+func ServiceAccountAPIKeyFromContext(ctx context.Context) (string, error) {
+	apiKey, ok := ctx.Value(serviceAccountAPIKeyKey{}).(string)
+	if !ok {
+		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return apiKey, nil
+}
+
 func (c *Claims) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("user_id", c.UserID),
+		slog.String("service_account_id", c.ServiceAccountID),
+		slog.String("principal", c.Principal),
 		slog.String("email", c.Email),
-		slog.String("role", c.Role.String()),
 		slog.String("org_id", c.OrgID),
 	)
 }
 
-func (c *Claims) IsViewer() error {
-	if slices.Contains([]types.Role{types.RoleViewer, types.RoleEditor, types.RoleAdmin}, c.Role) {
-		return nil
+func (c *Claims) GetIdentityID() string {
+	if c.Principal == PrincipalUser.StringValue() {
+		return c.UserID
 	}
 
-	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only viewers/editors/admins can access this resource")
-}
-
-func (c *Claims) IsEditor() error {
-	if slices.Contains([]types.Role{types.RoleEditor, types.RoleAdmin}, c.Role) {
-		return nil
-	}
-
-	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only editors/admins can access this resource")
-}
-
-func (c *Claims) IsAdmin() error {
-	if c.Role == types.RoleAdmin {
-		return nil
-	}
-
-	return errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can access this resource")
+	return c.ServiceAccountID
 }
 
 func (c *Claims) IsSelfAccess(id string) error {
 	if c.UserID == id {
-		return nil
-	}
-
-	if c.Role == types.RoleAdmin {
 		return nil
 	}
 

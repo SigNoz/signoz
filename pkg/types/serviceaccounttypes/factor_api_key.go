@@ -11,9 +11,9 @@ import (
 )
 
 var (
-	ErrCodeAPIkeyInvalidInput        = errors.MustNewCode("service_account_factor_api_key_invalid_input")
-	ErrCodeAPIKeyAlreadyExists       = errors.MustNewCode("service_account_factor_api_key_already_exists")
-	ErrCodeAPIKeytNotFound           = errors.MustNewCode("service_account_factor_api_key_not_found")
+	ErrCodeAPIkeyInvalidInput        = errors.MustNewCode("api_key_invalid_input")
+	ErrCodeAPIKeyAlreadyExists       = errors.MustNewCode("api_key_already_exists")
+	ErrCodeAPIKeytNotFound           = errors.MustNewCode("api_key_not_found")
 	ErrCodeAPIKeyExpired             = errors.MustNewCode("api_key_expired")
 	ErrCodeAPIkeyOlderLastObservedAt = errors.MustNewCode("api_key_older_last_observed_at")
 )
@@ -183,4 +183,19 @@ func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
 
 	*key = UpdatableFactorAPIKey(temp)
 	return nil
+}
+
+func (key FactorAPIKey) MarshalBinary() ([]byte, error) {
+	return json.Marshal(key)
+}
+
+func (key *FactorAPIKey) UnmarshalBinary(data []byte) error {
+	return json.Unmarshal(data, key)
+}
+
+func (key *FactorAPIKey) Traits() map[string]any {
+	return map[string]any{
+		"name":       key.Name,
+		"expires_at": key.ExpiresAt,
+	}
 }

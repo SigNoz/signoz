@@ -63,6 +63,8 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 			h.set.Logger.ErrorContext(ctx, "panic in QueryRange",
 				"error", r,
 				"user", claims.UserID,
+				"principal", claims.Principal,
+				"service_account", claims.ServiceAccountID,
 				"payload", string(queryJSON),
 				"stacktrace", stackTrace,
 			)

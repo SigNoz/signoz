@@ -512,7 +512,7 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Update)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.EditAccess(aH.Signoz.Handlers.Dashboard.Delete)).Methods(http.MethodDelete)
-	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.EditAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
+	router.HandleFunc("/api/v1/dashboards/{id}/lock", am.AdminAccess(aH.Signoz.Handlers.Dashboard.LockUnlock)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v2/variables/query", am.ViewAccess(aH.queryDashboardVarsV2)).Methods(http.MethodPost)
 
 	router.HandleFunc("/api/v1/explorer/views", am.ViewAccess(aH.Signoz.Handlers.SavedView.List)).Methods(http.MethodGet)
@@ -1565,7 +1565,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if errv2 == nil {
 		switch request.EventType {
 		case model.TrackEvent:
-			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, request.EventName, request.Attributes)
+			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.GetIdentityID(), request.EventName, request.Attributes)
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
@@ -4669,7 +4669,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 
 	// Check if result is empty or has no data
 	if len(result) == 0 {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Empty", properties)
 		return
 	}
 
@@ -4679,18 +4679,18 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		if len(result[0].List) == 0 {
 			// Check if first result has no table data
 			if result[0].Table == nil {
-				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Empty", properties)
 				return
 			}
 
 			if len(result[0].Table.Rows) == 0 {
-				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Empty", properties)
 				return
 			}
 		}
 	}
 
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.GetIdentityID(), "Telemetry Query Returned Results", properties)
 
 }
 

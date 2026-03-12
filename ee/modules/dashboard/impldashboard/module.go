@@ -214,8 +214,8 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return module.pkgDashboardModule.Update(ctx, orgID, id, updatedBy, data, diff)
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
-	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, role, lock)
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, lock bool) error {
+	return module.pkgDashboardModule.LockUnlock(ctx, orgID, id, updatedBy, lock)
 }
 
 func (module *module) MustGetTypeables() []authtypes.Typeable {

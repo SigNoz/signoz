@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -47,6 +48,8 @@ type Module interface {
 
 	// Revokes an existing API key for a service account
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

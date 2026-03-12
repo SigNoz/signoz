@@ -28,7 +28,7 @@ func NewModule(
 	}
 }
 
-func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
+func (m *module) GetSpanPercentile(ctx context.Context, orgID valuer.UUID, req *spanpercentiletypes.SpanPercentileRequest) (*spanpercentiletypes.SpanPercentileResponse, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.CodeNamespace:    "spanpercentile",
 		instrumentationtypes.CodeFunctionName: "GetSpanPercentile",

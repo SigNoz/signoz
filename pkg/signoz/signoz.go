@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -38,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/serviceaccounttokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -48,29 +50,30 @@ import (
 
 type SigNoz struct {
 	*factory.Registry
-	Instrumentation        instrumentation.Instrumentation
-	Analytics              analytics.Analytics
-	Cache                  cache.Cache
-	Web                    web.Web
-	SQLStore               sqlstore.SQLStore
-	TelemetryStore         telemetrystore.TelemetryStore
-	TelemetryMetadataStore telemetrytypes.MetadataStore
-	Prometheus             prometheus.Prometheus
-	Alertmanager           alertmanager.Alertmanager
-	Querier                querier.Querier
-	APIServer              apiserver.APIServer
-	Zeus                   zeus.Zeus
-	Licensing              licensing.Licensing
-	Emailing               emailing.Emailing
-	Sharder                sharder.Sharder
-	StatsReporter          statsreporter.StatsReporter
-	Tokenizer              pkgtokenizer.Tokenizer
-	Authz                  authz.AuthZ
-	Modules                Modules
-	Handlers               Handlers
-	QueryParser            queryparser.QueryParser
-	Flagger                flagger.Flagger
-	Gateway                gateway.Gateway
+	Instrumentation         instrumentation.Instrumentation
+	Analytics               analytics.Analytics
+	Cache                   cache.Cache
+	Web                     web.Web
+	SQLStore                sqlstore.SQLStore
+	TelemetryStore          telemetrystore.TelemetryStore
+	TelemetryMetadataStore  telemetrytypes.MetadataStore
+	Prometheus              prometheus.Prometheus
+	Alertmanager            alertmanager.Alertmanager
+	Querier                 querier.Querier
+	APIServer               apiserver.APIServer
+	Zeus                    zeus.Zeus
+	Licensing               licensing.Licensing
+	Emailing                emailing.Emailing
+	Sharder                 sharder.Sharder
+	StatsReporter           statsreporter.StatsReporter
+	Tokenizer               pkgtokenizer.Tokenizer
+	ServiceAccountTokenizer pkgtokenizer.Tokenizer
+	Authz                   authz.AuthZ
+	Modules                 Modules
+	Handlers                Handlers
+	QueryParser             queryparser.QueryParser
+	Flagger                 flagger.Flagger
+	Gateway                 gateway.Gateway
 }
 
 func New(
@@ -279,6 +282,12 @@ func New(
 		return nil, err
 	}
 
+	apiKeyStore := implserviceaccount.NewStore(sqlstore)
+	serviceAccountTokenizer, err := serviceaccounttokenizer.New(ctx, providerSettings, config.Tokenizer, cache, apiKeyStore, orgGetter)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 
@@ -388,7 +397,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
+	modules := NewModules(sqlstore, tokenizer, serviceAccountTokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
@@ -421,6 +430,7 @@ func New(
 		tokenizer,
 		config,
 		modules.AuthDomain,
+		modules.ServiceAccount,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories
@@ -443,6 +453,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
+		factory.NewNamedService(factory.MustNewName("serviceaccounttokenizer"), serviceAccountTokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
 		factory.NewNamedService(factory.MustNewName("user"), userService),
 	)
@@ -451,28 +462,29 @@ func New(
 	}
 
 	return &SigNoz{
-		Registry:               registry,
-		Analytics:              analytics,
-		Instrumentation:        instrumentation,
-		Cache:                  cache,
-		Web:                    web,
-		SQLStore:               sqlstore,
-		TelemetryStore:         telemetrystore,
-		TelemetryMetadataStore: telemetryMetadataStore,
-		Prometheus:             prometheus,
-		Alertmanager:           alertmanager,
-		Querier:                querier,
-		APIServer:              apiserver,
-		Zeus:                   zeus,
-		Licensing:              licensing,
-		Emailing:               emailing,
-		Sharder:                sharder,
-		Tokenizer:              tokenizer,
-		Authz:                  authz,
-		Modules:                modules,
-		Handlers:               handlers,
-		QueryParser:            queryParser,
-		Flagger:                flagger,
-		Gateway:                gateway,
+		Registry:                registry,
+		Analytics:               analytics,
+		Instrumentation:         instrumentation,
+		Cache:                   cache,
+		Web:                     web,
+		SQLStore:                sqlstore,
+		TelemetryStore:          telemetrystore,
+		TelemetryMetadataStore:  telemetryMetadataStore,
+		Prometheus:              prometheus,
+		Alertmanager:            alertmanager,
+		Querier:                 querier,
+		APIServer:               apiserver,
+		Zeus:                    zeus,
+		Licensing:               licensing,
+		Emailing:                emailing,
+		Sharder:                 sharder,
+		Tokenizer:               tokenizer,
+		ServiceAccountTokenizer: serviceAccountTokenizer,
+		Authz:                   authz,
+		Modules:                 modules,
+		Handlers:                handlers,
+		QueryParser:             queryParser,
+		Flagger:                 flagger,
+		Gateway:                 gateway,
 	}, nil
 }
