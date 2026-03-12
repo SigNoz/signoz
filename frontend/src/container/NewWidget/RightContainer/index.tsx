@@ -37,6 +37,7 @@ import {
 	Link,
 	Pencil,
 	Plus,
+	SlidersHorizontal,
 	Spline,
 	SquareArrowOutUpRight,
 } from 'lucide-react';
@@ -184,11 +185,10 @@ function RightContainer({
 		}));
 	}, [dashboardVariables]);
 
-	const isAxisSectionVisible = useMemo(
-		() =>
-			allowYAxisUnit || allowDecimalPrecision || allowSoftMinMax || allowLogScale,
-		[allowYAxisUnit, allowDecimalPrecision, allowSoftMinMax, allowLogScale],
-	);
+	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
+		allowSoftMinMax,
+		allowLogScale,
+	]);
 
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
@@ -292,11 +292,7 @@ function RightContainer({
 				<Typography.Text className="header-text">Panel Settings</Typography.Text>
 			</section>
 
-			<SettingsSection
-				title="Panel Details"
-				defaultOpen
-				icon={<Pencil size={14} />}
-			>
+			<SettingsSection title="General" defaultOpen icon={<Pencil size={14} />}>
 				<section className="name-description control-container">
 					<Typography.Text className="typography">Name</Typography.Text>
 					<AutoComplete
@@ -343,7 +339,6 @@ function RightContainer({
 						<Select
 							onChange={setGraphHandler}
 							value={selectedGraph}
-							style={{ width: '100%' }}
 							className="panel-type-select"
 							data-testid="panel-change-select"
 							data-stacking-state={stackedBarChart ? 'true' : 'false'}
@@ -358,6 +353,20 @@ function RightContainer({
 							))}
 						</Select>
 					</section>
+
+					{allowPanelTimePreference && (
+						<section className="panel-time-preference control-container">
+							<Typography.Text className="panel-time-text">
+								Panel Time Preference
+							</Typography.Text>
+							<TimePreference
+								{...{
+									selectedTime,
+									setSelectedTime,
+								}}
+							/>
+						</section>
+					)}
 
 					{allowStackingBarChart && (
 						<section className="stack-chart control-container">
@@ -385,17 +394,39 @@ function RightContainer({
 							/>
 						</section>
 					)}
+				</SettingsSection>
 
-					{allowPanelTimePreference && (
-						<section className="panel-time-preference control-container">
-							<Typography.Text className="panel-time-text">
-								Panel Time Preference
+				<SettingsSection
+					title="Formatting & Units"
+					icon={<SlidersHorizontal size={14} />}
+				>
+					{allowYAxisUnit && (
+						<DashboardYAxisUnitSelectorWrapper
+							onSelect={setYAxisUnit}
+							value={yAxisUnit || ''}
+							fieldLabel={
+								selectedGraphType === PanelDisplay.VALUE ||
+								selectedGraphType === PanelDisplay.PIE
+									? 'Unit'
+									: 'Y Axis Unit'
+							}
+							// Only update the y-axis unit value automatically in create mode
+							shouldUpdateYAxisUnit={isNewDashboard}
+						/>
+					)}
+
+					{allowDecimalPrecision && (
+						<section className="decimal-precision-selector control-container">
+							<Typography.Text className="typography">
+								Decimal Precision
 							</Typography.Text>
-							<TimePreference
-								{...{
-									selectedTime,
-									setSelectedTime,
-								}}
+							<Select
+								options={decimapPrecisionOptions}
+								value={decimalPrecision}
+								style={{ width: '100%' }}
+								className="panel-type-select"
+								defaultValue={PrecisionOptionsEnum.TWO}
+								onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
 							/>
 						</section>
 					)}
@@ -410,38 +441,7 @@ function RightContainer({
 				</SettingsSection>
 
 				{isAxisSectionVisible && (
-					<SettingsSection title="Axis" icon={<Axis3D size={14} />}>
-						{allowYAxisUnit && (
-							<DashboardYAxisUnitSelectorWrapper
-								onSelect={setYAxisUnit}
-								value={yAxisUnit || ''}
-								fieldLabel={
-									selectedGraphType === PanelDisplay.VALUE ||
-									selectedGraphType === PanelDisplay.PIE
-										? 'Unit'
-										: 'Y Axis Unit'
-								}
-								// Only update the y-axis unit value automatically in create mode
-								shouldUpdateYAxisUnit={isNewDashboard}
-							/>
-						)}
-
-						{allowDecimalPrecision && (
-							<section className="decimal-precision-selector control-container">
-								<Typography.Text className="typography">
-									Decimal Precision
-								</Typography.Text>
-								<Select
-									options={decimapPrecisionOptions}
-									value={decimalPrecision}
-									style={{ width: '100%' }}
-									className="panel-type-select"
-									defaultValue={PrecisionOptionsEnum.TWO}
-									onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
-								/>
-							</section>
-						)}
-
+					<SettingsSection title="Axes" icon={<Axis3D size={14} />}>
 						{allowSoftMinMax && (
 							<section className="soft-min-max">
 								<section className="container">
