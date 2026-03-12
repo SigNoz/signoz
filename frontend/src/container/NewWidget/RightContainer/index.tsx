@@ -184,6 +184,17 @@ function RightContainer({
 		}));
 	}, [dashboardVariables]);
 
+	const isAxisSectionVisible = useMemo(
+		() =>
+			allowYAxisUnit || allowDecimalPrecision || allowSoftMinMax || allowLogScale,
+		[allowYAxisUnit, allowDecimalPrecision, allowSoftMinMax, allowLogScale],
+	);
+
+	const isLegendSectionVisible = useMemo(
+		() => allowLegendPosition || allowLegendColors,
+		[allowLegendPosition, allowLegendColors],
+	);
+
 	const updateCursorAndDropdown = (value: string, pos: number): void => {
 		setCursorPos(pos);
 		const lastDollar = value.lastIndexOf('$', pos - 1);
@@ -313,7 +324,11 @@ function RightContainer({
 			</SettingsSection>
 
 			<section className="panel-config">
-				<SettingsSection title="Visualization" icon={<LayoutDashboard size={14} />}>
+				<SettingsSection
+					title="Visualization"
+					defaultOpen
+					icon={<LayoutDashboard size={14} />}
+				>
 					<section className="panel-type control-container">
 						<Typography.Text className="typography">Panel Type</Typography.Text>
 						<Select
@@ -385,10 +400,7 @@ function RightContainer({
 					)}
 				</SettingsSection>
 
-				{(allowYAxisUnit ||
-					allowDecimalPrecision ||
-					allowSoftMinMax ||
-					allowLogScale) && (
+				{isAxisSectionVisible && (
 					<SettingsSection title="Axis" icon={<Axis3D size={14} />}>
 						{allowYAxisUnit && (
 							<DashboardYAxisUnitSelectorWrapper
@@ -488,7 +500,7 @@ function RightContainer({
 					</SettingsSection>
 				)}
 
-				{(allowLegendPosition || allowLegendColors) && (
+				{isLegendSectionVisible && (
 					<SettingsSection title="Legend" icon={<Layers size={14} />}>
 						{allowLegendPosition && (
 							<section className="legend-position control-container">
