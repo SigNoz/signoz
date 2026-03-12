@@ -46,6 +46,10 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../constants/queryCacheTime';
 import { useDashboardVariablesSelector } from '../../hooks/dashboard/useDashboardVariables';
 import {
 	setDashboardVariablesStore,
@@ -64,7 +68,6 @@ export const DashboardContext = createContext<IDashboardContext>({
 		APIError
 	>,
 	selectedDashboard: {} as Dashboard,
-	dashboardId: '',
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
@@ -72,13 +75,9 @@ export const DashboardContext = createContext<IDashboardContext>({
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
-	toScrollWidgetId: '',
-	setToScrollWidgetId: () => {},
 	updateLocalStorageDashboardVariables: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
-	selectedRowWidgetId: '',
-	setSelectedRowWidgetId: () => {},
 	isDashboardFetching: false,
 	columnWidths: {},
 	setColumnWidths: () => {},
@@ -94,13 +93,7 @@ export function DashboardProvider({
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
-	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
-
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
-
-	const [selectedRowWidgetId, setSelectedRowWidgetId] = useState<string | null>(
-		null,
-	);
 
 	const [
 		dashboardQueryRangeCalled,
@@ -272,7 +265,12 @@ export function DashboardProvider({
 		return data;
 	};
 	const dashboardResponse = useQuery(
-		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params, dashboardId],
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			isDashboardPage?.params,
+			dashboardId,
+			globalTime.isAutoRefreshDisabled,
+		],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: async () => {
@@ -289,6 +287,9 @@ export function DashboardProvider({
 				}
 			},
 			refetchOnWindowFocus: false,
+			cacheTime: globalTime.isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onError: (error) => {
 				showErrorModal(error as APIError);
 			},
@@ -438,7 +439,6 @@ export function DashboardProvider({
 
 	const value: IDashboardContext = useMemo(
 		() => ({
-			toScrollWidgetId,
 			isDashboardSliderOpen,
 			isDashboardLocked,
 			handleToggleDashboardSlider,
@@ -452,12 +452,9 @@ export function DashboardProvider({
 			setPanelMap,
 			setSelectedDashboard,
 			updatedTimeRef,
-			setToScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,
@@ -471,13 +468,10 @@ export function DashboardProvider({
 			dashboardId,
 			layouts,
 			panelMap,
-			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			currentDashboard,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,

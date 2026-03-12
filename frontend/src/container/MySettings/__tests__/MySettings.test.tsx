@@ -271,7 +271,7 @@ describe('MySettings Flows', () => {
 				},
 			});
 
-			expect(within(container).getByText('ab********cd')).toBeInTheDocument();
+			expect(within(container).getByText('ab·······cd')).toBeInTheDocument();
 		});
 
 		it('Should not mask license key if it is too short', () => {

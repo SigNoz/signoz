@@ -34,6 +34,11 @@ import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
+import {
+	clearSelectedRowWidgetId,
+	getSelectedRowWidgetId,
+} from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
 import {
 	getNextWidgets,
 	getPreviousWidgets,
@@ -82,12 +87,12 @@ function NewWidget({
 	enableDrillDown = false,
 }: NewWidgetProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const setToScrollWidgetId = useScrollToWidgetIdStore(
+		(s) => s.setToScrollWidgetId,
+	);
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
-		setToScrollWidgetId,
-		selectedRowWidgetId,
-		setSelectedRowWidgetId,
 		columnWidths,
 	} = useDashboard();
 
@@ -450,6 +455,8 @@ function NewWidget({
 		const widgetId = query.get('widgetId') || '';
 		let updatedLayout = selectedDashboard.data.layout || [];
 
+		const selectedRowWidgetId = getSelectedRowWidgetId(dashboardId);
+
 		if (isNewDashboard && isEmpty(selectedRowWidgetId)) {
 			const newLayoutItem = placeWidgetAtBottom(widgetId, updatedLayout);
 			updatedLayout = [...updatedLayout, newLayoutItem];
@@ -554,7 +561,6 @@ function NewWidget({
 
 		updateDashboardMutation.mutateAsync(dashboard, {
 			onSuccess: (updatedDashboard) => {
-				setSelectedRowWidgetId(null);
 				setSelectedDashboard(updatedDashboard.data);
 				setToScrollWidgetId(selectedWidget?.id || '');
 				safeNavigate({
@@ -566,7 +572,6 @@ function NewWidget({
 		selectedDashboard,
 		query,
 		isNewDashboard,
-		selectedRowWidgetId,
 		afterWidgets,
 		selectedWidget,
 		selectedTime.enum,
@@ -577,7 +582,6 @@ function NewWidget({
 		widgets,
 		setSelectedDashboard,
 		setToScrollWidgetId,
-		setSelectedRowWidgetId,
 		safeNavigate,
 		dashboardId,
 	]);
@@ -681,6 +685,10 @@ function NewWidget({
 		 * on mount here with the currentQuery in the begining itself
 		 */
 		setSupersetQuery(currentQuery);
+
+		return (): void => {
+			clearSelectedRowWidgetId(dashboardId);
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 

@@ -22,50 +22,17 @@ def test_change_password(
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-
     assert response.status_code == HTTPStatus.CREATED
+    invited_user = response.json()["data"]
+    reset_token = invited_user["token"]
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-
-    invite_response = response.json()["data"]
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "admin+password@integration.test"
-        ),
-        None,
-    )
-
-    # Accept the invite with a bad password which should fail
+    # Reset password to activate user
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "password",
-            "displayName": "admin password",
-            "token": f"{found_invite['token']}",
-        },
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": reset_token},
         timeout=2,
     )
-
-    assert response.status_code == HTTPStatus.BAD_REQUEST
-
-    # Accept the invite with a good password
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "password123Z$",
-            "displayName": "admin password",
-            "token": f"{found_invite['token']}",
-        },
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Get the user id
     response = requests.get(
@@ -301,33 +268,16 @@ def test_forgot_password_creates_reset_token(
     )
     assert response.status_code == HTTPStatus.CREATED
 
-    # Get the invite token
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={"Authorization": f"Bearer {admin_token}"},
-    )
-    invite_response = response.json()["data"]
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "forgot@integration.test"
-        ),
-        None,
-    )
+    invited_user = response.json()["data"]
+    reset_token = invited_user["token"]
 
-    # Accept the invite to create the user
+    # Activate user via reset password
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "originalPassword123Z$",
-            "displayName": "forgotpassword user",
-            "token": f"{found_invite['token']}",
-        },
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "originalPassword123Z$", "token": reset_token},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Get org ID
     response = requests.get(

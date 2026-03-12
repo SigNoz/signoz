@@ -14,6 +14,7 @@ import { MetricAggregation } from 'types/api/v5/queryRange';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 
 import HavingFilter from './HavingFilter/HavingFilter';
+import { buildDefaultLegendFromGroupBy } from './utils';
 
 import './QueryAddOns.styles.scss';
 
@@ -202,8 +203,8 @@ function QueryAddOns({
 		} else {
 			filteredAddOns = Object.values(ADD_ONS);
 
-			// Filter out group_by for metrics data source
 			if (query.dataSource === DataSource.METRICS) {
+				// Filter out group_by for metrics data source (handled in MetricsAggregateSection)
 				filteredAddOns = filteredAddOns.filter(
 					(addOn) => addOn.key !== ADD_ONS_KEYS.GROUP_BY,
 				);
@@ -250,12 +251,33 @@ function QueryAddOns({
 	}, [panelType, isListViewPanel, query, showReduceTo]);
 
 	const handleOptionClick = (e: RadioChangeEvent): void => {
-		if (selectedViews.find((view) => view.key === e.target.value.key)) {
-			setSelectedViews(
-				selectedViews.filter((view) => view.key !== e.target.value.key),
+		const clickedAddOn = e.target.value as AddOn;
+		const isAlreadySelected = selectedViews.some(
+			(view) => view.key === clickedAddOn.key,
+		);
+
+		if (isAlreadySelected) {
+			setSelectedViews((prev) =>
+				prev.filter((view) => view.key !== clickedAddOn.key),
 			);
 		} else {
-			setSelectedViews([...selectedViews, e.target.value]);
+			// When enabling Legend format for the first time with an empty legend
+			// and existing group-by keys, prefill the legend using all group-by keys.
+			// This keeps existing custom legends intact and only helps seed a sensible default.
+			if (
+				clickedAddOn.key === ADD_ONS_KEYS.LEGEND_FORMAT &&
+				isEmpty(query?.legend) &&
+				Array.isArray(query.groupBy) &&
+				query.groupBy.length > 0
+			) {
+				const defaultLegend = buildDefaultLegendFromGroupBy(query.groupBy);
+
+				if (defaultLegend) {
+					handleChangeQueryLegend(defaultLegend);
+				}
+			}
+
+			setSelectedViews((prev) => [...prev, clickedAddOn]);
 		}
 	};
 
@@ -288,12 +310,9 @@ function QueryAddOns({
 		[handleSetQueryData, index, query],
 	);
 
-	const handleRemoveView = useCallback(
-		(key: string): void => {
-			setSelectedViews(selectedViews.filter((view) => view.key !== key));
-		},
-		[selectedViews],
-	);
+	const handleRemoveView = useCallback((key: string): void => {
+		setSelectedViews((prev) => prev.filter((view) => view.key !== key));
+	}, []);
 
 	const handleChangeQueryLegend = useCallback(
 		(value: string) => {
@@ -379,8 +398,8 @@ function QueryAddOns({
 								<div className="input">
 									<HavingFilter
 										onClose={(): void => {
-											setSelectedViews(
-												selectedViews.filter((view) => view.key !== 'having'),
+											setSelectedViews((prev) =>
+												prev.filter((view) => view.key !== 'having'),
 											);
 										}}
 										onChange={handleChangeHaving}
@@ -399,7 +418,9 @@ function QueryAddOns({
 								initialValue={query?.limit ?? undefined}
 								placeholder="Enter limit"
 								onClose={(): void => {
-									setSelectedViews(selectedViews.filter((view) => view.key !== 'limit'));
+									setSelectedViews((prev) =>
+										prev.filter((view) => view.key !== 'limit'),
+									);
 								}}
 								closeIcon={<ChevronUp size={16} />}
 							/>
@@ -482,8 +503,8 @@ function QueryAddOns({
 								onChange={handleChangeQueryLegend}
 								initialValue={isEmpty(query?.legend) ? undefined : query?.legend}
 								onClose={(): void => {
-									setSelectedViews(
-										selectedViews.filter((view) => view.key !== 'legend_format'),
+									setSelectedViews((prev) =>
+										prev.filter((view) => view.key !== 'legend_format'),
 									);
 								}}
 								closeIcon={<ChevronUp size={16} />}

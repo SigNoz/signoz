@@ -7,11 +7,12 @@ import {
 	Button,
 	Spin,
 	Table,
+	TableColumnType as ColumnType,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { ColumnType, SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sStatefulSetsListPayload } from 'api/infraMonitoring/getsK8sStatefulSetsList';
 import classNames from 'classnames';

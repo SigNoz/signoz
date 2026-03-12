@@ -41,6 +41,7 @@ import type {
 	TypesChangePasswordRequestDTO,
 	TypesPostableAcceptInviteDTO,
 	TypesPostableAPIKeyDTO,
+	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
@@ -50,10 +51,6 @@ import type {
 	UpdateUser200,
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
-
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
 
 /**
  * This endpoint changes the password by id
@@ -675,14 +672,14 @@ export const useAcceptInvite = <
  * @summary Create bulk invite
  */
 export const createBulkInvite = (
-	typesPostableInviteDTO: BodyType<TypesPostableInviteDTO[]>,
+	typesPostableBulkInviteRequestDTO: BodyType<TypesPostableBulkInviteRequestDTO>,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v1/invite/bulk`,
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableInviteDTO,
+		data: typesPostableBulkInviteRequestDTO,
 		signal,
 	});
 };
@@ -694,13 +691,13 @@ export const getCreateBulkInviteMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableInviteDTO[]> },
+		{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableInviteDTO[]> },
+	{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
 	TContext
 > => {
 	const mutationKey = ['createBulkInvite'];
@@ -714,7 +711,7 @@ export const getCreateBulkInviteMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof createBulkInvite>>,
-		{ data: BodyType<TypesPostableInviteDTO[]> }
+		{ data: BodyType<TypesPostableBulkInviteRequestDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -727,7 +724,7 @@ export const getCreateBulkInviteMutationOptions = <
 export type CreateBulkInviteMutationResult = NonNullable<
 	Awaited<ReturnType<typeof createBulkInvite>>
 >;
-export type CreateBulkInviteMutationBody = BodyType<TypesPostableInviteDTO[]>;
+export type CreateBulkInviteMutationBody = BodyType<TypesPostableBulkInviteRequestDTO>;
 export type CreateBulkInviteMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -740,13 +737,13 @@ export const useCreateBulkInvite = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof createBulkInvite>>,
 		TError,
-		{ data: BodyType<TypesPostableInviteDTO[]> },
+		{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof createBulkInvite>>,
 	TError,
-	{ data: BodyType<TypesPostableInviteDTO[]> },
+	{ data: BodyType<TypesPostableBulkInviteRequestDTO> },
 	TContext
 > => {
 	const mutationOptions = getCreateBulkInviteMutationOptions(options);
