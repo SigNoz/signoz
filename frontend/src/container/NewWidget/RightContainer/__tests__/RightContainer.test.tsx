@@ -6,6 +6,7 @@ import { MemoryRouter } from 'react-router-dom';
 import { render as rtlRender, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { LineInterpolation } from 'lib/uPlotV2/config/types';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { DashboardProvider } from 'providers/Dashboard/Dashboard';
@@ -168,6 +169,10 @@ describe('RightContainer - Alerts Section', () => {
 		setContextLinks: jest.fn(),
 		enableDrillDown: false,
 		isNewDashboard: false,
+		lineInterpolation: LineInterpolation.Spline,
+		setLineInterpolation: jest.fn(),
+		showPoints: false,
+		setShowPoints: jest.fn(),
 	};
 
 	beforeEach(() => {

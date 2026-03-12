@@ -12,7 +12,6 @@ import {
 	DrawStyle,
 	LineInterpolation,
 	LineStyle,
-	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
@@ -125,10 +124,9 @@ export const prepareUPlotConfig = ({
 			colorMapping: widget.customLegendColors ?? {},
 			spanGaps: true,
 			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: hasSingleValidPoint
-				? VisibilityMode.Always
-				: VisibilityMode.Never,
+			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
+			showPoints:
+				widget.showPoints || hasSingleValidPoint ? true : !!widget.showPoints,
 			pointSize: 5,
 			isDarkMode,
 		});

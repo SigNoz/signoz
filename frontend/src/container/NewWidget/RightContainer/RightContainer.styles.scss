@@ -1,6 +1,17 @@
 .right-container {
 	display: flex;
 	flex-direction: column;
+	font-family: 'Space Mono';
+
+	.section-heading {
+		color: var(--bg-vanilla-400);
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 138.462% */
+		letter-spacing: 0.52px;
+		text-transform: uppercase;
+	}
 
 	.header {
 		display: flex;
@@ -32,17 +43,6 @@
 
 	.name-description {
 		padding: 0 0 4px 0;
-
-		.typography {
-			color: var(--bg-vanilla-400);
-			font-family: 'Space Mono';
-			font-size: 13px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 18px; /* 138.462% */
-			letter-spacing: 0.52px;
-			text-transform: uppercase;
-		}
 
 		.name-input {
 			display: flex;
@@ -89,15 +89,21 @@
 		display: flex;
 		flex-direction: column;
 
-		.typography {
-			color: var(--bg-vanilla-400);
-			font-family: 'Space Mono';
-			font-size: 13px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 18px; /* 138.462% */
-			letter-spacing: 0.52px;
-			text-transform: uppercase;
+		.toggle-card {
+			display: flex;
+			flex-direction: row;
+			justify-content: space-between;
+			align-items: center;
+			padding: 12px;
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-400);
+		}
+
+		.toggle-card-text-container {
+			display: flex;
+			flex-direction: column;
+			gap: 4px;
 		}
 
 		.panel-type-select {
@@ -113,72 +119,22 @@
 				border: 1px solid var(--bg-slate-400);
 				background: var(--bg-ink-300);
 			}
-
-			.select-option {
-				display: flex;
-				align-items: center;
-				gap: 6px;
-				.icon {
-					display: flex;
-					align-items: center;
-				}
-
-				.display {
-					color: var(--bg-vanilla-100);
-					font-family: Inter;
-					font-size: 12px;
-					font-style: normal;
-					font-weight: 400;
-					line-height: 16px; /* 133.333% */
-				}
-			}
 		}
 
-		.fill-gaps {
-			display: flex;
-			padding: 12px;
-			justify-content: space-between;
-			align-items: center;
-			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-400);
-
-			.fill-gaps-text {
-				color: var(--bg-vanilla-400);
-				font-family: 'Space Mono';
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px; /* 138.462% */
-				letter-spacing: 0.52px;
-				text-transform: uppercase;
-			}
-			.fill-gaps-text-description {
-				color: var(--bg-vanilla-400);
-				font-family: Inter;
-				font-size: 12px;
-				font-style: normal;
-				font-weight: 400;
-				opacity: 0.6;
-				line-height: 16px; /* 133.333% */
-			}
+		.toggle-card-description {
+			color: var(--bg-vanilla-400);
+			font-family: Inter;
+			font-size: 12px;
+			font-style: normal;
+			font-weight: 400;
+			opacity: 0.6;
+			line-height: 16px; /* 133.333% */
 		}
 
 		.log-scale,
 		.decimal-precision-selector,
 		.legend-position {
 			justify-content: space-between;
-		}
-
-		.panel-time-text {
-			color: var(--bg-vanilla-400);
-			font-family: 'Space Mono';
-			font-size: 13px;
-			font-style: normal;
-			font-weight: 400;
-			line-height: 18px; /* 138.462% */
-			letter-spacing: 0.52px;
-			text-transform: uppercase;
 		}
 
 		.y-axis-unit-selector,
@@ -188,14 +144,7 @@
 			gap: 8px;
 
 			.heading {
-				color: var(--bg-vanilla-400);
-				font-family: 'Space Mono';
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px; /* 138.462% */
-				letter-spacing: 0.52px;
-				text-transform: uppercase;
+				@extend .section-heading;
 			}
 
 			.input {
@@ -248,7 +197,6 @@
 
 				.text {
 					color: var(--bg-vanilla-400);
-					font-family: 'Space Mono';
 					font-size: 12px;
 					font-style: normal;
 					font-weight: 400;
@@ -269,30 +217,9 @@
 		.stack-chart {
 			flex-direction: row;
 			justify-content: space-between;
-			.label {
-				color: var(--bg-vanilla-400);
-				font-family: 'Space Mono';
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px; /* 138.462% */
-				letter-spacing: 0.52px;
-				text-transform: uppercase;
-			}
 		}
 
 		.bucket-config {
-			.label {
-				color: var(--bg-vanilla-400);
-				font-family: 'Space Mono';
-				font-size: 13px;
-				font-style: normal;
-				font-weight: 400;
-				line-height: 18px; /* 138.462% */
-				letter-spacing: 0.52px;
-				text-transform: uppercase;
-			}
-
 			.bucket-size-label {
 				margin-top: 8px;
 			}
@@ -321,7 +248,6 @@
 
 				.label {
 					color: var(--bg-vanilla-400);
-					font-family: 'Space Mono';
 					font-size: 13px;
 					font-style: normal;
 					font-weight: 400;
@@ -353,7 +279,6 @@
 
 			.alerts-text {
 				color: var(--bg-vanilla-400);
-				font-family: Inter;
 				font-size: 14px;
 				font-style: normal;
 				font-weight: 400;
@@ -399,6 +324,9 @@
 .lightMode {
 	.right-container {
 		background-color: var(--bg-vanilla-100);
+		.section-heading {
+			color: var(--bg-ink-400);
+		}
 		.header {
 			.header-text {
 				color: var(--bg-ink-400);
@@ -408,10 +336,6 @@
 		.name-description {
 			border-top: 1px solid var(--bg-vanilla-300);
 			border-bottom: 1px solid var(--bg-vanilla-300);
-
-			.typography {
-				color: var(--bg-ink-400);
-			}
 
 			.name-input {
 				border: 1px solid var(--bg-vanilla-300);
@@ -429,10 +353,6 @@
 		}
 
 		.panel-config {
-			.typography {
-				color: var(--bg-ink-400);
-			}
-
 			.panel-type-select {
 				.ant-select-selector {
 					border: 1px solid var(--bg-vanilla-300);
@@ -457,14 +377,14 @@
 				}
 			}
 
-			.fill-gaps {
+			.toggle-card {
 				border: 1px solid var(--bg-vanilla-300);
 				background: var(--bg-vanilla-300);
 
 				.fill-gaps-text {
 					color: var(--bg-ink-400);
 				}
-				.fill-gaps-text-description {
+				.toggle-card-description {
 					color: var(--bg-ink-400);
 				}
 			}

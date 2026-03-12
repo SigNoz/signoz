@@ -10,7 +10,6 @@ import {
 	LineInterpolation,
 	LineStyle,
 	SeriesProps,
-	VisibilityMode,
 } from './types';
 
 /**
@@ -159,12 +158,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			pointsConfig.show = pointsBuilder;
 		} else if (drawStyle === DrawStyle.Points) {
 			pointsConfig.show = true;
-		} else if (showPoints === VisibilityMode.Never) {
-			pointsConfig.show = false;
-		} else if (showPoints === VisibilityMode.Always) {
-			pointsConfig.show = true;
 		} else {
-			pointsConfig.show = false; // default to hidden
+			pointsConfig.show = !!showPoints;
 		}
 
 		return pointsConfig;
