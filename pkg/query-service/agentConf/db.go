@@ -38,7 +38,7 @@ func (r *Repo) GetConfigHistory(
 	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
@@ -67,7 +67,7 @@ func (r *Repo) GetConfigVersion(
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.version = ?", v).
@@ -91,7 +91,7 @@ func (r *Repo) GetLatestVersion(
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE acv.element_type = ?)", typ).
