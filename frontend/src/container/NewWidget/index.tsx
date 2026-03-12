@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { generatePath, useParams } from 'react-router-dom';
+import { generatePath } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -32,8 +32,6 @@ import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
-import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 import {
 	clearSelectedRowWidgetId,
@@ -83,6 +81,8 @@ import {
 import './NewWidget.styles.scss';
 
 function NewWidget({
+	selectedDashboard,
+	dashboardId,
 	selectedGraph,
 	enableDrillDown = false,
 }: NewWidgetProps): JSX.Element {
@@ -90,11 +90,6 @@ function NewWidget({
 	const setToScrollWidgetId = useScrollToWidgetIdStore(
 		(s) => s.setToScrollWidgetId,
 	);
-	const {
-		selectedDashboard,
-		setSelectedDashboard,
-		columnWidths,
-	} = useDashboard();
 
 	const { dashboardVariables } = useDashboardVariables();
 
@@ -138,8 +133,6 @@ function NewWidget({
 	const { widgets = [] } = selectedDashboard?.data || {};
 
 	const query = useUrlQuery();
-
-	const { dashboardId } = useParams<DashboardWidgetPageParams>();
 
 	const [isNewDashboard, setIsNewDashboard] = useState<boolean>(false);
 
@@ -286,11 +279,10 @@ function NewWidget({
 				isLogScale,
 				legendPosition,
 				customLegendColors,
-				columnWidths: columnWidths?.[selectedWidget?.id],
+				columnWidths: selectedWidget.columnWidths,
 				contextLinks,
 			};
 		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [
 		columnUnits,
 		currentQuery,
@@ -313,8 +305,8 @@ function NewWidget({
 		isLogScale,
 		legendPosition,
 		customLegendColors,
-		columnWidths,
 		contextLinks,
+		selectedWidget.columnWidths,
 	]);
 
 	const closeModal = (): void => {
@@ -560,8 +552,7 @@ function NewWidget({
 		};
 
 		updateDashboardMutation.mutateAsync(dashboard, {
-			onSuccess: (updatedDashboard) => {
-				setSelectedDashboard(updatedDashboard.data);
+			onSuccess: () => {
 				setToScrollWidgetId(selectedWidget?.id || '');
 				safeNavigate({
 					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
@@ -580,7 +571,6 @@ function NewWidget({
 		preWidgets,
 		updateDashboardMutation,
 		widgets,
-		setSelectedDashboard,
 		setToScrollWidgetId,
 		safeNavigate,
 		dashboardId,
@@ -630,22 +620,25 @@ function NewWidget({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [query]);
 
-	const onSaveDashboard = useCallback((): void => {
+	const isNewPanel = useMemo(() => {
 		const widgetId = query.get('widgetId');
-		const selectWidget = widgets?.find((e) => e.id === widgetId);
+		const selectedWidget = widgets?.find((e) => e.id === widgetId);
+		return isUndefined(selectedWidget);
+	}, [query, widgets]);
 
+	const onSaveDashboard = useCallback((): void => {
 		logEvent('Panel Edit: Save changes', {
 			panelType: selectedWidget.panelTypes,
 			dashboardId: selectedDashboard?.id,
 			widgetId: selectedWidget.id,
 			dashboardName: selectedDashboard?.data.title,
 			queryType: currentQuery.queryType,
-			isNewPanel: isUndefined(selectWidget),
+			isNewPanel,
 			dataSource: currentQuery?.builder?.queryData?.[0]?.dataSource,
 		});
 		setSaveModal(true);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [isNewPanel]);
 
 	const isNewTraceLogsAvailable =
 		currentQuery.queryType === EQueryType.QUERY_BUILDER &&
@@ -821,6 +814,8 @@ function NewWidget({
 								isLoadingPanelData={isLoadingPanelData}
 								setQueryResponse={setQueryResponse}
 								enableDrillDown={enableDrillDown}
+								selectedDashboard={selectedDashboard}
+								isNewPanel={isNewPanel}
 							/>
 						)}
 					</OverlayScrollbar>
