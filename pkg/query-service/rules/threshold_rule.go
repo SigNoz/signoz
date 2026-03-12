@@ -39,6 +39,7 @@ import (
 
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
@@ -513,6 +514,9 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 
 	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
 	if err != nil {
+		if errors.Asc(err, errors.CodeNotFound) {
+			return nil, err
+		}
 		r.logger.ErrorContext(ctx, "failed to get alert query result", "rule_name", r.Name(), "error", err)
 		return nil, fmt.Errorf("internal error while querying")
 	}
