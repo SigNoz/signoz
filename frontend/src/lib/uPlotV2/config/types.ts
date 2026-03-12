@@ -122,12 +122,6 @@ export enum LineInterpolation {
 	StepBefore = 'stepBefore',
 }
 
-export enum VisibilityMode {
-	Always = 'always',
-	Auto = 'auto',
-	Never = 'never',
-}
-
 /**
  * Props for configuring lines
  */
@@ -163,7 +157,13 @@ export interface BarConfig {
 export interface PointsConfig {
 	pointColor?: string;
 	pointSize?: number;
-	showPoints?: VisibilityMode;
+	showPoints?: boolean;
+}
+
+export enum FillMode {
+	Solid = 'solid',
+	Gradient = 'gradient',
+	None = 'none',
 }
 
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
@@ -186,6 +186,7 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	 */
 	spanGaps?: boolean | number;
 	fillColor?: string;
+	fillMode?: FillMode;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 }

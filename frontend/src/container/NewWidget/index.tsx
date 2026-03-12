@@ -30,6 +30,11 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import createQueryParams from 'lib/createQueryParams';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
+import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
 import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
@@ -211,6 +216,18 @@ function NewWidget({
 	const [legendPosition, setLegendPosition] = useState<LegendPosition>(
 		selectedWidget?.legendPosition || LegendPosition.BOTTOM,
 	);
+	const [lineInterpolation, setLineInterpolation] = useState<LineInterpolation>(
+		selectedWidget?.lineInterpolation || LineInterpolation.Spline,
+	);
+	const [fillMode, setFillMode] = useState<FillMode>(
+		selectedWidget?.fillMode || FillMode.None,
+	);
+	const [lineStyle, setLineStyle] = useState<LineStyle>(
+		selectedWidget?.lineStyle || LineStyle.Solid,
+	);
+	const [showPoints, setShowPoints] = useState<boolean>(
+		selectedWidget?.showPoints ?? false,
+	);
 	const [customLegendColors, setCustomLegendColors] = useState<
 		Record<string, string>
 	>(selectedWidget?.customLegendColors || {});
@@ -276,6 +293,10 @@ function NewWidget({
 				softMin,
 				softMax,
 				fillSpans: isFillSpans,
+				lineInterpolation,
+				fillMode,
+				lineStyle,
+				showPoints,
 				columnUnits,
 				bucketCount,
 				stackedBarChart,
@@ -312,6 +333,10 @@ function NewWidget({
 		stackedBarChart,
 		isLogScale,
 		legendPosition,
+		lineInterpolation,
+		fillMode,
+		lineStyle,
+		showPoints,
 		customLegendColors,
 		columnWidths,
 		contextLinks,
@@ -836,6 +861,14 @@ function NewWidget({
 							setDescription={setDescription}
 							stackedBarChart={stackedBarChart}
 							setStackedBarChart={setStackedBarChart}
+							lineInterpolation={lineInterpolation}
+							setLineInterpolation={setLineInterpolation}
+							fillMode={fillMode}
+							setFillMode={setFillMode}
+							lineStyle={lineStyle}
+							setLineStyle={setLineStyle}
+							showPoints={showPoints}
+							setShowPoints={setShowPoints}
 							opacity={opacity}
 							yAxisUnit={yAxisUnit}
 							columnUnits={columnUnits}
