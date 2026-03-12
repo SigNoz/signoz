@@ -343,14 +343,14 @@ def export_json_types(
             # List of JSON strings - parse and extract paths
             path_types = _parse_json_bodies_and_extract_paths(data)  # type: ignore
         else:
-            # Assume it's a list of Logs objects - extract body_json
+            # Assume it's a list of Logs objects - extract body_v2
             json_bodies: List[str] = []
             for log in data:  # type: ignore
-                # Try to get body_json attribute
-                if hasattr(log, "body_json") and log.body_json:
-                    json_bodies.append(log.body_json)
+                # Try to get body_v2 attribute
+                if hasattr(log, "body_v2") and log.body_v2:
+                    json_bodies.append(log.body_v2)
                 elif hasattr(log, "body") and log.body:
-                    # Fallback to body if body_json not available
+                    # Fallback to body if body_v2 not available
                     try:
                         # Try to parse as JSON
                         json.loads(log.body)

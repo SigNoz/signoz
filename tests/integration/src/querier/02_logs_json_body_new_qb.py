@@ -113,15 +113,15 @@ def _labels_to_map(labels: Any) -> Dict[str, Any]:
 # ============================================================================
 # NEW QB TESTS - Comprehensive integration tests for new JSON Query Builder
 # ============================================================================
-# These tests use body_json and body_json_promoted columns and require
+# These tests use body_v2 and body_promoted columns and require
 # BODY_JSON_QUERY_ENABLED=true environment variable
 # Breadcrumbs for promoted-path tests:
 # - body is empty for JSON logs; the API returns a merged view from JSON columns
-# - body_json contains only non-promoted fields for post-promotion logs
-#   (pre-promotion logs may still carry the full JSON in body_json)
-# - body_json_promoted contains only promoted paths (no full JSON duplication)
+# - body_v2 contains only non-promoted fields for post-promotion logs
+#   (pre-promotion logs still carry the full JSON in body_v2)
+# - body_promoted contains only promoted paths (no full JSON duplication)
 # - export_json_types is fed full JSON payloads so metadata paths/types exist
-#   even if a log only stores promoted fields in body_json_promoted
+#   even if a log only stores promoted fields in body_promoted
 # - export_promoted_paths seeds signoz_metadata.distributed_json_promoted_paths
 # ============================================================================
 
@@ -135,7 +135,7 @@ def test_logs_json_body_new_qb_simple_searches(
 ) -> None:
     """
     Setup:
-    Insert logs with JSON bodies using new QB columns (body_json, body_json_promoted)
+    Insert logs with JSON bodies using new QB columns (body_v2, body_promoted)
     Export JSON type metadata
 
     Tests:
@@ -144,7 +144,7 @@ def test_logs_json_body_new_qb_simple_searches(
     3. Search by body.active = true (boolean)
     4. Search by body.level = "error" with CONTAINS
     5. Search by body.code > 100 (comparison)
-    6. Search with body_json_promoted column
+    6. Search with body_promoted column
     """
     now = datetime.now(tz=timezone.utc)
 
@@ -184,24 +184,24 @@ def test_logs_json_body_new_qb_simple_searches(
             timestamp=now - timedelta(seconds=3),
             resources={"service.name": "auth-service"},
             attributes={},
-            body_json=log1_body,
-            body_json_promoted="",
+            body_v2=log1_body,
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "auth-service"},
             attributes={},
-            body_json=log2_body,
-            body_json_promoted="",
+            body_v2=log2_body,
+            body_promoted="",
             severity_text="ERROR",
         ),
         Logs(
             timestamp=now - timedelta(seconds=1),
             resources={"service.name": "db-service"},
             attributes={},
-            body_json=log3_body,
-            body_json_promoted="",
+            body_v2=log3_body,
+            body_promoted="",
             severity_text="INFO",
         ),
     ]
@@ -294,7 +294,7 @@ def test_logs_json_body_new_qb_simple_searches(
     for case in cases:
         _run_query_case(signoz, token, now, case)
 
-    # Test 6: Search with promoted column (body_json_promoted)
+    # Test 6: Search with promoted column (body_promoted)
     # Insert a log where message is only in promoted JSON
     log4_body = json.dumps({})
     log4_promoted = json.dumps({"message": "Promoted message"})
@@ -305,8 +305,8 @@ def test_logs_json_body_new_qb_simple_searches(
                 timestamp=now,
                 resources={"service.name": "promoted-service"},
                 attributes={},
-                body_json=log4_body,
-                body_json_promoted=log4_promoted,
+                body_v2=log4_body,
+                body_promoted=log4_promoted,
                 severity_text="INFO",
             ),
         ]
@@ -401,16 +401,16 @@ def test_logs_json_body_new_qb_nested_keys(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=log1_body,
-            body_json_promoted="",
+            body_v2=log1_body,
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=1),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=log2_body,
-            body_json_promoted="",
+            body_v2=log2_body,
+            body_promoted="",
             severity_text="INFO",
         ),
     ]
@@ -564,16 +564,16 @@ def test_logs_json_body_new_qb_array_paths(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=log1_body,
-            body_json_promoted="",
+            body_v2=log1_body,
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=1),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=log2_body,
-            body_json_promoted="",
+            body_v2=log2_body,
+            body_promoted="",
             severity_text="INFO",
         ),
     ]
@@ -666,7 +666,7 @@ def test_logs_json_body_new_qb_promoted_time_windows(
     """
     Setup:
     Insert logs before/after a promotion timestamp so some fields are read
-    from body_json (before) and body_json_promoted (after).
+    from body_v2 (before) and body_promoted (after).
 
     Tests:
     1. startMs/endMs before promotion timestamp
@@ -758,32 +758,32 @@ def test_logs_json_body_new_qb_promoted_time_windows(
             timestamp=promotion_ts - timedelta(minutes=15),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(log1_full),
-            body_json_promoted="",
+            body_v2=json.dumps(log1_full),
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts - timedelta(minutes=5),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(log2_full),
-            body_json_promoted="",
+            body_v2=json.dumps(log2_full),
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts + timedelta(minutes=2),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(log3_full),
-            body_json_promoted=json.dumps(_promoted_part(log3_full)),
+            body_v2=json.dumps(log3_full),
+            body_promoted=json.dumps(_promoted_part(log3_full)),
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts + timedelta(minutes=10),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(log4_full),
-            body_json_promoted=json.dumps(_promoted_part(log4_full)),
+            body_v2=json.dumps(log4_full),
+            body_promoted=json.dumps(_promoted_part(log4_full)),
             severity_text="INFO",
         ),
     ]
@@ -955,8 +955,8 @@ def test_logs_json_body_new_qb_groupby_timeseries(
             timestamp=now - timedelta(seconds=5 - i),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(log_data),
-            body_json_promoted="",
+            body_v2=json.dumps(log_data),
+            body_promoted="",
             severity_text="INFO",
         )
         for i, log_data in enumerate(logs_data)
@@ -1069,7 +1069,7 @@ def test_logs_json_body_new_qb_groupby_timeseries_promoted(
     """
     Setup:
     Insert logs before/after a promotion timestamp so group-by values are
-    present in body_json (before) and body_json_promoted (after).
+    present in body_v2 (before) and body_promoted (after).
 
     Tests:
     1. startMs/endMs before promotion timestamp
@@ -1097,32 +1097,32 @@ def test_logs_json_body_new_qb_groupby_timeseries_promoted(
             timestamp=promotion_ts - timedelta(minutes=15),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(log1_full),
-            body_json_promoted="",
+            body_v2=json.dumps(log1_full),
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts - timedelta(minutes=5),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(log2_full),
-            body_json_promoted="",
+            body_v2=json.dumps(log2_full),
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts + timedelta(minutes=2),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(log3_full),
-            body_json_promoted=json.dumps(_promoted_part(log3_full)),
+            body_v2=json.dumps(log3_full),
+            body_promoted=json.dumps(_promoted_part(log3_full)),
             severity_text="INFO",
         ),
         Logs(
             timestamp=promotion_ts + timedelta(minutes=10),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(log4_full),
-            body_json_promoted=json.dumps(_promoted_part(log4_full)),
+            body_v2=json.dumps(log4_full),
+            body_promoted=json.dumps(_promoted_part(log4_full)),
             severity_text="INFO",
         ),
     ]
@@ -1316,24 +1316,22 @@ def test_logs_json_body_array_membership(
             timestamp=now - timedelta(seconds=3),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=log1_body,
-            body_json_promoted="",
+            body_v2=log1_body,
+            body_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=2),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=log2_body,
-            body_json_promoted="",
             severity_text="INFO",
         ),
         Logs(
             timestamp=now - timedelta(seconds=1),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=log3_body,
-            body_json_promoted="",
+            body_v2=log3_body,
+            body_promoted="",
             severity_text="INFO",
         ),
     ]
