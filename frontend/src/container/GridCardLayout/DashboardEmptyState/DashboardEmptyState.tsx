@@ -9,17 +9,18 @@ import DashboardSettings from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
 import './DashboardEmptyState.styles.scss';
 
 export default function DashboardEmptyState(): JSX.Element {
-	const {
-		selectedDashboard,
-		isDashboardLocked,
-		handleToggleDashboardSlider,
-	} = useDashboard();
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
+
+	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(
@@ -41,14 +42,14 @@ export default function DashboardEmptyState(): JSX.Element {
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
-		handleToggleDashboardSlider(true);
+		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleToggleDashboardSlider]);
+	}, [setIsPanelTypeSelectionModalOpen]);
 
 	const onConfigureClick = useCallback((): void => {
 		setIsSettingsDrawerOpen(true);

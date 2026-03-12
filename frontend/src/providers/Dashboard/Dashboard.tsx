@@ -57,9 +57,7 @@ import { IDashboardContext, WidgetColumnWidths } from './types';
 import { sortLayout } from './util';
 
 export const DashboardContext = createContext<IDashboardContext>({
-	isDashboardSliderOpen: false,
 	isDashboardLocked: false,
-	handleToggleDashboardSlider: () => {},
 	handleDashboardLockToggle: () => {},
 	dashboardResponse: {} as UseQueryResult<
 		SuccessResponseV2<Dashboard>,
@@ -86,8 +84,6 @@ export function DashboardProvider({
 	children,
 	dashboardId,
 }: PropsWithChildren<{ dashboardId: string }>): JSX.Element {
-	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
-
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
 
 	const [
@@ -383,13 +379,8 @@ export function DashboardProvider({
 		}
 	}, [isVisible]);
 
-	const handleToggleDashboardSlider = (value: boolean): void => {
-		setIsDashboardSlider(value);
-	};
-
 	const { mutate: lockDashboard } = useMutation(locked, {
 		onSuccess: (_, props) => {
-			setIsDashboardSlider(false);
 			setIsDashboardLocked(props.lock);
 		},
 		onError: (error) => {
@@ -414,9 +405,7 @@ export function DashboardProvider({
 
 	const value: IDashboardContext = useMemo(
 		() => ({
-			isDashboardSliderOpen,
 			isDashboardLocked,
-			handleToggleDashboardSlider,
 			handleDashboardLockToggle,
 			dashboardResponse,
 			selectedDashboard,
@@ -436,7 +425,6 @@ export function DashboardProvider({
 		}),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[
-			isDashboardSliderOpen,
 			isDashboardLocked,
 			dashboardResponse,
 			selectedDashboard,

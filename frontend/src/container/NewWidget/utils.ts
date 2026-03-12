@@ -10,12 +10,10 @@ import {
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import {
 	initialQueryBuilderFormValuesMap,
-	PANEL_TYPES,
-} from 'constants/queryBuilder';
-import {
 	listViewInitialLogQuery,
+	PANEL_TYPES,
 	PANEL_TYPES_INITIAL_QUERY,
-} from 'container/DashboardContainer/ComponentsSlider/constants';
+} from 'constants/queryBuilder';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,

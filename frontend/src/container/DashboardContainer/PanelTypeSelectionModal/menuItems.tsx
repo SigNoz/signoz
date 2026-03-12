@@ -9,7 +9,7 @@ import {
 	Table,
 } from 'lucide-react';
 
-const Items: ItemsProps[] = [
+export const PanelTypesWithData: ItemsProps[] = [
 	{
 		name: PANEL_TYPES.TIME_SERIES,
 		icon: <LineChart size={16} color={Color.BG_ROBIN_400} />,
@@ -52,5 +52,3 @@ export interface ItemsProps {
 	icon: JSX.Element;
 	display: string;
 }
-
-export default Items;
