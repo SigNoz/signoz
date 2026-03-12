@@ -2,6 +2,7 @@
 Look at the cumulative_counters_1h.jsonl file for the relevant data
 """
 
+import logging
 import os
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
@@ -19,6 +20,8 @@ from fixtures.querier import (
     get_series_values,
     make_query_request,
 )
+
+logger = logging.getLogger(__name__)
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 CUMULATIVE_COUNTERS_FILE = os.path.join(TESTDATA_DIR, "cumulative_counters_1h.jsonl")
@@ -183,10 +186,17 @@ def _assert_endpoint_rate_values(endpoint_values: dict) -> None:
     [
         (
             "no_order",
-            None,
+            None, # this is equivalent to sum(metric_name)
             None,
             5,
-            {"/products", "/health", "/checkout", "/orders", "/users"},
+            ["/products", "/health", "/checkout", "/orders", "/users"],
+        ),
+        (
+            "only_limit",
+            None, # this is equivalent to sum(metric_name)
+            3,
+            3,
+            ["/products", "/health", "/checkout"],
         ),
         (
             "asc",
@@ -215,6 +225,34 @@ def _assert_endpoint_rate_values(endpoint_values: dict) -> None:
             3,
             3,
             ["/users", "/products", "/orders"],
+        ),
+        (
+            "asc_metric_name",
+            [build_order_by("sum(test_rate_groupby_asc_metric_name)", "asc")],
+            None,
+            5,
+            ["/users", "/orders", "/checkout", "/health", "/products"],
+        ),
+        (
+            "asc_metric_name_lim3",
+            [build_order_by("sum(test_rate_groupby_asc_metric_name_lim3)", "asc")],
+            3,
+            3,
+            ["/users", "/orders", "/checkout"],
+        ),
+        (
+            "desc_metric_name",
+            [build_order_by("sum(test_rate_groupby_desc_metric_name)", "desc")],
+            None,
+            5,
+            ["/products", "/health", "/checkout", "/orders", "/users"],
+        ),
+        (
+            "desc_metric_name_lim3",
+            [build_order_by("sum(test_rate_groupby_desc_metric_name_lim3)", "desc")],
+            3,
+            3,
+            ["/products", "/health", "/checkout"],
         ),
     ],
 )
@@ -262,6 +300,15 @@ def test_rate_group_by_endpoint(
     assert (
         len(all_series) == expected_count
     ), f"Expected {expected_count} series, got {len(all_series)}"
+
+    for series in all_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        values = series.get("values", [])
+        if values:
+            avg = sum(v["value"] for v in values) / len(values)
+        else:
+            avg = 0.0
+        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
 
     endpoint_labels = [
         series.get("labels", [{}])[0].get("value", "unknown")

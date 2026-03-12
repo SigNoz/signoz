@@ -632,6 +632,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		labelSelectorSubQuery = fmt.Sprintf("%s LIMIT %d", labelSelectorSubQuery, query.Limit)
 
 		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), labelSelectorSubQuery))
+		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
 	} else {
 		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
 		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))

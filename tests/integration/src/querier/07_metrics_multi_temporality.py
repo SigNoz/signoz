@@ -217,42 +217,70 @@ def _assert_endpoint_group_values(  # pylint: disable=too-many-arguments
 
 
 @pytest.mark.parametrize(
-    "order_suffix,order_by,limit,expected_count,expected_endpoints",
+    "order_suffix,order_by_spec,limit,expected_count,expected_endpoints",
     [
         (
             "no_order",
             None,
             None,
             5,
-            {"/products", "/health", "/checkout", "/orders", "/users"},
+            ["/products", "/health", "/checkout", "/orders", "/users"],
         ),
         (
             "asc",
-            [build_order_by("endpoint", "asc")],
+            ("endpoint", "asc"),
             None,
             5,
             ["/checkout", "/health", "/orders", "/products", "/users"],
         ),
         (
             "asc_lim3",
-            [build_order_by("endpoint", "asc")],
+            ("endpoint", "asc"),
             3,
             3,
             ["/checkout", "/health", "/orders"],
         ),
         (
             "desc",
-            [build_order_by("endpoint", "desc")],
+            ("endpoint", "desc"),
             None,
             5,
             ["/users", "/products", "/orders", "/health", "/checkout"],
         ),
         (
             "desc_lim3",
-            [build_order_by("endpoint", "desc")],
+            ("endpoint", "desc"),
             3,
             3,
             ["/users", "/products", "/orders"],
+        ),
+        (
+            "asc_metric_name",
+            ("sum_metric", "asc"),
+            None,
+            5,
+            ["/users", "/orders", "/checkout", "/health", "/products"],
+        ),
+        (
+            "asc_metric_name_lim3",
+            ("sum_metric", "asc"),
+            3,
+            3,
+            ["/users", "/orders", "/checkout"],
+        ),
+        (
+            "desc_metric_name",
+            ("sum_metric", "desc"),
+            None,
+            5,
+            ["/products", "/health", "/checkout", "/orders", "/users"],
+        ),
+        (
+            "desc_metric_name_lim3",
+            ("sum_metric", "desc"),
+            3,
+            3,
+            ["/products", "/health", "/checkout"],
         ),
     ],
 )
@@ -276,7 +304,7 @@ def test_group_by_endpoint(
     stable_orders_value: float,
     spike_users_value: float,
     order_suffix: str,
-    order_by: Optional[List],
+    order_by_spec: Optional[tuple],
     limit: Optional[int],
     expected_count: int,
     expected_endpoints: Union[set, List[str]],
@@ -285,6 +313,14 @@ def test_group_by_endpoint(
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
     metric_name = f"test_{time_aggregation}_groupby_{order_suffix}"
+
+    # Build order_by at runtime so metric name reflects actual time_aggregation
+    order_by = None
+    if order_by_spec is not None:
+        key, direction = order_by_spec
+        if key == "sum_metric":
+            key = f"sum({metric_name})"
+        order_by = [build_order_by(key, direction)]
 
     metrics = Metrics.load_from_file(
         MULTI_TEMPORALITY_FILE,
