@@ -81,6 +81,10 @@
 		padding-left: 26px;
 	}
 
+	.custom-domain-card-meta-row.workspace-name-hidden {
+		padding-left: 0;
+	}
+
 	.custom-domain-card-meta-timezone {
 		display: inline-flex;
 		align-items: center;
@@ -116,32 +120,6 @@
 		height: 1px;
 		background: var(--l2-border);
 		margin: 0;
-	}
-
-	.custom-domain-card-bottom {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-5);
-		padding: var(--padding-3);
-	}
-
-	.custom-domain-card-license {
-		color: var(--l1-foreground);
-		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
-		letter-spacing: -0.07px;
-	}
-
-	.custom-domain-plan-badge {
-		display: inline-flex;
-		align-items: center;
-		padding: 0 2px;
-		border-radius: 2px;
-		background: var(--l2-background);
-		color: var(--l2-foreground);
-		font-family: 'SF Mono', 'Fira Code', monospace;
-		font-size: var(--paragraph-base-400-font-size);
-		line-height: var(--line-height-20);
 	}
 }
 
