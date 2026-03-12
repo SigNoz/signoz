@@ -114,7 +114,7 @@ func (n *Notifier) Notify(ctx context.Context, alerts ...*types.Alert) (bool, er
 	}
 
 	if n.conf.Timeout > 0 {
-		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeInternal, "configured webhook timeout reached (%s)", n.conf.Timeout))
+		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeTimeout, "configured webhook timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = postCtx
 	}

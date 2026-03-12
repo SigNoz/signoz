@@ -636,7 +636,7 @@ func TestEmailConfigMissingAuthParam(t *testing.T) {
 	require.Equal(t, "missing password for PLAIN auth mechanism; missing password for LOGIN auth mechanism", err.Error())
 }
 
-func TestEmailNoUsernameStillOk(t *testing.T) {
+func TestEmailNoUsernameCustomError(t *testing.T) {
 	email := &Email{
 		conf: &config.EmailConfig{}, tmpl: &template.Template{}, logger: promslog.NewNopLogger(),
 	}

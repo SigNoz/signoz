@@ -202,7 +202,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 	}
 
 	if n.conf.Timeout > 0 {
-		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeInternal, "configured slack timeout reached (%s)", n.conf.Timeout))
+		postCtx, cancel := context.WithTimeoutCause(ctx, n.conf.Timeout, errors.NewInternalf(errors.CodeTimeout, "configured slack timeout reached (%s)", n.conf.Timeout))
 		defer cancel()
 		ctx = postCtx
 	}
