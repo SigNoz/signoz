@@ -236,12 +236,16 @@ func GetDashboardsFromAssets(
 	svcId string,
 	orgID valuer.UUID,
 	cloudProvider CloudProviderType,
-	createdAt *time.Time,
+	createdAt time.Time,
 	assets Assets,
 ) []*dashboardtypes.Dashboard {
 	dashboards := make([]*dashboardtypes.Dashboard, 0)
 
 	for _, d := range assets.Dashboards {
+		if d.Definition == nil {
+			continue
+		}
+
 		author := fmt.Sprintf("%s-integration", cloudProvider)
 		dashboards = append(dashboards, &dashboardtypes.Dashboard{
 			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
@@ -249,8 +253,8 @@ func GetDashboardsFromAssets(
 			OrgID:  orgID,
 			Data:   *d.Definition,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: *createdAt,
-				UpdatedAt: *createdAt,
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
 			},
 			UserAuditable: types.UserAuditable{
 				CreatedBy: author,
