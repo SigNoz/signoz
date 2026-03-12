@@ -172,12 +172,13 @@ class Logs(ABC):
         if body_json is not None:
             self.body_json = body_json
         else:
-            # Try to parse body as JSON, if successful use it, otherwise use empty string
+            # Try to parse body as JSON; if successful use it directly,
+            # otherwise wrap as {"message": body} matching the normalize operator behavior.
             try:
                 json.loads(body)
                 self.body_json = body
             except (json.JSONDecodeError, TypeError):
-                self.body_json = ""
+                self.body_json = json.dumps({"message": body})
         
         # Set body_json_promoted - must be valid JSON
         # Tests will explicitly pass promoted column's content, but we validate it

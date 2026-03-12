@@ -45,50 +45,37 @@ ARRAY_SEPARATOR = "[]."  # Used in paths like "education[].name"
 ARRAY_SUFFIX = "[]"      # Used when traversing into array element objects
 
 
-def _infer_array_type(elements: List[Any]) -> Optional[str]:
+def _infer_array_type_from_type_strings(types: List[str]) -> Optional[str]:
     """
-    Infer array type from array elements, matching jsontypeexporter's inferArrayMask logic.
-    Returns None if no valid type can be inferred.
+    Infer array type from a list of pre-classified type strings.
+    Matches jsontypeexporter's inferArrayMask logic (v0.144.2+).
+
+    Type strings are: "JSON", "String", "Bool", "Float64", "Int64"
+
+    SuperTyping rules (matching Go inferArrayMask):
+    - JSON alone → Array(JSON)
+    - JSON + any primitive → Array(Dynamic)
+    - String alone → Array(Nullable(String)); String + other → Array(Dynamic)
+    - Float64 wins over Int64 and Bool
+    - Int64 wins over Bool
+    - Bool alone → Array(Nullable(Bool))
     """
-    if len(elements) == 0:
-        return None
-
-    # Collect element types (matching Go: types := make([]pcommon.ValueType, 0, s.Len()))
-    types = []
-    for elem in elements:
-        if elem is None:
-            continue
-        if isinstance(elem, dict):
-            types.append("JSON")
-        elif isinstance(elem, str):
-            types.append("String")
-        elif isinstance(elem, bool):
-            types.append("Bool")
-        elif isinstance(elem, float):
-            types.append("Float64")
-        elif isinstance(elem, int):
-            types.append("Int64")
-
     if len(types) == 0:
         return None
 
-    # Get unique types (matching Go: unique := make(map[pcommon.ValueType]struct{}, len(types)))
     unique = set(types)
 
-    # Classify types (matching Go logic)
     has_json = "JSON" in unique
-    has_primitive = any(t in unique for t in ["String", "Bool", "Float64", "Int64"])
+    # hasPrimitive mirrors Go: (hasJSON && len(unique) > 1) || (!hasJSON && len(unique) > 0)
+    has_primitive = (has_json and len(unique) > 1) or (not has_json and len(unique) > 0)
 
     if has_json:
-        # If only JSON → Array(JSON) (no primitive types)
         if not has_primitive:
             return "Array(JSON)"
-        # If there's JSON + any primitive → Dynamic
         return "Array(Dynamic)"
 
-    # ---- Primitive Type Resolution ----
+    # ---- Primitive Type Resolution (Float > Int > Bool) ----
     if "String" in unique:
-        # Strings cannot coerce with any other primitive
         if len(unique) > 1:
             return "Array(Dynamic)"
         return "Array(Nullable(String))"
@@ -101,6 +88,32 @@ def _infer_array_type(elements: List[Any]) -> Optional[str]:
         return "Array(Nullable(Bool))"
 
     return "Array(Dynamic)"
+
+
+def _infer_array_type(elements: List[Any]) -> Optional[str]:
+    """
+    Infer array type from raw Python list elements.
+    Classifies each element then delegates to _infer_array_type_from_type_strings.
+    """
+    if len(elements) == 0:
+        return None
+
+    types = []
+    for elem in elements:
+        if elem is None:
+            continue
+        if isinstance(elem, dict):
+            types.append("JSON")
+        elif isinstance(elem, str):
+            types.append("String")
+        elif isinstance(elem, bool):  # must be before int (bool is subclass of int)
+            types.append("Bool")
+        elif isinstance(elem, float):
+            types.append("Float64")
+        elif isinstance(elem, int):
+            types.append("Int64")
+
+    return _infer_array_type_from_type_strings(types)
 
 
 def _python_type_to_clickhouse_type(value: Any) -> str:
@@ -213,7 +226,7 @@ def _extract_json_paths(
         
         # Infer array type from collected types (matching Go: if mask := inferArrayMask(types); mask != 0)
         if len(types) > 0:
-            array_type = _infer_array_type(obj)
+            array_type = _infer_array_type_from_type_strings(types)
             if array_type and current_path:
                 if current_path not in path_types:
                     path_types[current_path] = set()

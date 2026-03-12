@@ -3,6 +3,7 @@ from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Any, Callable, Dict, List
 
+import pytest
 import requests
 
 from fixtures import types
@@ -653,6 +654,7 @@ def test_logs_json_body_new_qb_array_paths(
         _run_query_case(signoz, token, now, case)
 
 
+@pytest.mark.skip(reason="Promotion is temporarily not supported; uncomment when promotion is back")
 def test_logs_json_body_new_qb_promoted_time_windows(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -751,12 +753,6 @@ def test_logs_json_body_new_qb_promoted_time_windows(
             "education": payload["education"],
         }
 
-    def _non_promoted_part(payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "id": payload["id"],
-            "status": payload["status"],
-        }
-
     logs_list = [
         Logs(
             timestamp=promotion_ts - timedelta(minutes=15),
@@ -778,7 +774,7 @@ def test_logs_json_body_new_qb_promoted_time_windows(
             timestamp=promotion_ts + timedelta(minutes=2),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(_non_promoted_part(log3_full)),
+            body_json=json.dumps(log3_full),
             body_json_promoted=json.dumps(_promoted_part(log3_full)),
             severity_text="INFO",
         ),
@@ -786,7 +782,7 @@ def test_logs_json_body_new_qb_promoted_time_windows(
             timestamp=promotion_ts + timedelta(minutes=10),
             resources={"service.name": "app-service"},
             attributes={},
-            body_json=json.dumps(_non_promoted_part(log4_full)),
+            body_json=json.dumps(log4_full),
             body_json_promoted=json.dumps(_promoted_part(log4_full)),
             severity_text="INFO",
         ),
@@ -1061,6 +1057,7 @@ def test_logs_json_body_new_qb_groupby_timeseries(
 
 
 
+@pytest.mark.skip(reason="Promotion is temporarily not supported; uncomment when promotion is back")
 def test_logs_json_body_new_qb_groupby_timeseries_promoted(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
@@ -1095,12 +1092,6 @@ def test_logs_json_body_new_qb_groupby_timeseries_promoted(
     def _promoted_part(payload: Dict[str, Any]) -> Dict[str, Any]:
         return {"user": payload["user"]}
 
-    def _non_promoted_part(payload: Dict[str, Any]) -> Dict[str, Any]:
-        return {
-            "id": payload["id"],
-            "status": payload["status"],
-        }
-
     logs_list = [
         Logs(
             timestamp=promotion_ts - timedelta(minutes=15),
@@ -1122,7 +1113,7 @@ def test_logs_json_body_new_qb_groupby_timeseries_promoted(
             timestamp=promotion_ts + timedelta(minutes=2),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(_non_promoted_part(log3_full)),
+            body_json=json.dumps(log3_full),
             body_json_promoted=json.dumps(_promoted_part(log3_full)),
             severity_text="INFO",
         ),
@@ -1130,7 +1121,7 @@ def test_logs_json_body_new_qb_groupby_timeseries_promoted(
             timestamp=promotion_ts + timedelta(minutes=10),
             resources={"service.name": "api-service"},
             attributes={},
-            body_json=json.dumps(_non_promoted_part(log4_full)),
+            body_json=json.dumps(log4_full),
             body_json_promoted=json.dumps(_promoted_part(log4_full)),
             severity_text="INFO",
         ),
@@ -1399,6 +1390,233 @@ def test_logs_json_body_array_membership(
                     True in json.loads(row["data"]["body"])["flags"]
                     for row in _get_rows(response)
                 )
+            ),
+        },
+    ]
+
+    for case in cases:
+        _run_query_case(signoz, token, now, case)
+
+
+def test_logs_json_body_new_qb_message_searches(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_logs: Callable[[List[Logs]], None],
+    export_json_types: Callable[[List[Logs]], None],
+) -> None:
+    """
+    Verifies that full text search (body), body.message, and message key all
+    resolve to body_v2.message when BodyJSONQueryEnabled=true.
+
+    When a log has a plain-text body the normalize operator wraps it as
+    {"message": <text>}, so all four search variants must be able to find it.
+
+    Setup:
+    - log1: plain-text body "Payment processed successfully"
+            -> body_json = {"message": "Payment processed successfully"}
+    - log2: JSON body {"message": "Payment failed with error", "code": 500}
+    - log3: control JSON body {"message": "Database connection established"}
+            (does NOT contain "Payment")
+
+    Tests:
+    1.  body CONTAINS "Payment"          - full text search / body logical key
+    2.  body.message CONTAINS "Payment"  - explicit body.message path
+    3.  message CONTAINS "Payment"       - bare message key
+    4.  body = "Payment processed ..."   - FTS exact match on text-body log
+    5.  body.message = "Payment proc..." - body.message exact match
+    6.  message = "Payment proc..."      - message key exact match
+    7.  body NOT CONTAINS "Payment"      - negative: only control log returned
+    8.  body.message NOT CONTAINS "Pay"  - same negative via body.message
+    9.  message NOT CONTAINS "Payment"   - same negative via message key
+    """
+    now = datetime.now(tz=timezone.utc)
+
+    # Plain-text body: Logs.__init__ sets body_json = {"message": <text>}
+    # because "Payment processed successfully" is not valid JSON.
+    text_log = Logs(
+        timestamp=now - timedelta(seconds=3),
+        resources={"service.name": "payment-service"},
+        body="Payment processed successfully",
+        severity_text="INFO",
+    )
+
+    # JSON body with an explicit message field
+    json_log = Logs(
+        timestamp=now - timedelta(seconds=2),
+        resources={"service.name": "payment-service"},
+        body_json=json.dumps({"message": "Payment failed with error", "code": 500}),
+        body_json_promoted="",
+        severity_text="ERROR",
+    )
+
+    # Control log - message does NOT contain "Payment"
+    control_log = Logs(
+        timestamp=now - timedelta(seconds=1),
+        resources={"service.name": "db-service"},
+        body_json=json.dumps({"message": "Database connection established", "code": 200}),
+        body_json_promoted="",
+        severity_text="INFO",
+    )
+
+    logs_list = [text_log, json_log, control_log]
+    export_json_types(logs_list)
+    insert_logs(logs_list)
+
+    token = get_token(email=USER_ADMIN_EMAIL, password=USER_ADMIN_PASSWORD)
+
+    def _body_messages(response: requests.Response) -> List[str]:
+        """Return the 'message' values from every row's body JSON."""
+        return [
+            json.loads(row["data"]["body"]).get("message", "")
+            for row in _get_rows(response)
+        ]
+
+    payment_messages = {
+        "Payment processed successfully",
+        "Payment failed with error",
+    }
+
+    cases = [
+        # 1. Full text search / body logical key: body resolves to body_v2.message
+        #    when BodyJSONQueryEnabled=true.
+        {
+            "name": "msg_search.fts_body_contains",
+            "requestType": "raw",
+            "expression": 'body CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 2
+                and set(_body_messages(response)) == payment_messages
+            ),
+        },
+        # 2. body.message CONTAINS
+        {
+            "name": "msg_search.body_message_contains",
+            "requestType": "raw",
+            "expression": 'body.message CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 2
+                and set(_body_messages(response)) == payment_messages
+            ),
+        },
+        # 3. message CONTAINS (bare key - also maps to body_v2.message)
+        {
+            "name": "msg_search.message_key_contains",
+            "requestType": "raw",
+            "expression": 'message CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 2
+                and set(_body_messages(response)) == payment_messages
+            ),
+        },
+        # 4. FTS exact match - text-body log (normalized to {"message": <text>})
+        {
+            "name": "msg_search.fts_body_exact",
+            "requestType": "raw",
+            "expression": '"Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Payment processed successfully"
+            ),
+        },
+         # 5. FTS exact match - text-body log (normalized to {"message": <text>})
+        {
+            "name": "msg_search.fts_body_exact",
+            "requestType": "raw",
+            "expression": 'Payment',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Payment processed successfully"
+            ),
+        },
+        # 5. body.message exact match
+        {
+            "name": "msg_search.body_message_exact",
+            "requestType": "raw",
+            "expression": 'body.message = "Payment processed successfully"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Payment processed successfully"
+            ),
+        },
+        # 6. message key exact match
+        {
+            "name": "msg_search.message_key_exact",
+            "requestType": "raw",
+            "expression": 'message = "Payment processed successfully"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Payment processed successfully"
+            ),
+        },
+        # 7. Negative: body NOT CONTAINS -> only control log
+        {
+            "name": "msg_search.fts_body_not_contains",
+            "requestType": "raw",
+            "expression": 'body NOT CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Database connection established"
+            ),
+        },
+        # 8. Negative: body.message NOT CONTAINS
+        {
+            "name": "msg_search.body_message_not_contains",
+            "requestType": "raw",
+            "expression": 'body.message NOT CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Database connection established"
+            ),
+        },
+        # 9. Negative: message NOT CONTAINS
+        {
+            "name": "msg_search.message_key_not_contains",
+            "requestType": "raw",
+            "expression": 'message NOT CONTAINS "Payment"',
+            "groupBy": None,
+            "limit": 100,
+            "aggregation": "count()",
+            "stepInterval": None,
+            "validate": lambda response: (
+                len(_get_rows(response)) == 1
+                and _body_messages(response)[0] == "Database connection established"
             ),
         },
     ]

@@ -21,7 +21,7 @@ def migrator(
 
     def create() -> None:
         # Hardcode version for new QB tests
-        version = "v0.129.13-rc.1"
+        version = "v0.144.3-rc.1"
         client = docker.from_env()
 
         container = client.containers.run(
