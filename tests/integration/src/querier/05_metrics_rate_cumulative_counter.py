@@ -21,8 +21,6 @@ from fixtures.querier import (
     make_query_request,
 )
 
-logger = logging.getLogger(__name__)
-
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 CUMULATIVE_COUNTERS_FILE = os.path.join(TESTDATA_DIR, "cumulative_counters_1h.jsonl")
 
@@ -300,15 +298,6 @@ def test_rate_group_by_endpoint(
     assert (
         len(all_series) == expected_count
     ), f"Expected {expected_count} series, got {len(all_series)}"
-
-    for series in all_series:
-        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
-        values = series.get("values", [])
-        if values:
-            avg = sum(v["value"] for v in values) / len(values)
-        else:
-            avg = 0.0
-        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
 
     endpoint_labels = [
         series.get("labels", [{}])[0].get("value", "unknown")
