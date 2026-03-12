@@ -14,13 +14,11 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
@@ -83,14 +81,11 @@ export const DashboardContext = createContext<IDashboardContext>({
 	setColumnWidths: () => {},
 });
 
-interface Props {
-	dashboardId: string;
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function DashboardProvider({
 	children,
-}: PropsWithChildren): JSX.Element {
+	dashboardId,
+}: PropsWithChildren<{ dashboardId: string }>): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
@@ -99,11 +94,6 @@ export function DashboardProvider({
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
 	] = useState<boolean>(false);
-
-	const isDashboardPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD,
-		exact: true,
-	});
 
 	const { showErrorModal } = useErrorModal();
 
@@ -115,11 +105,6 @@ export function DashboardProvider({
 
 	const [onModal, Content] = Modal.useModal();
 
-	const isDashboardWidgetPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD_WIDGET,
-		exact: true,
-	});
-
 	const [layouts, setLayouts] = useState<Layout[]>([]);
 
 	const [panelMap, setPanelMap] = useState<
@@ -127,11 +112,6 @@ export function DashboardProvider({
 	>({});
 
 	const { isLoggedIn } = useAppContext();
-
-	const dashboardId =
-		(isDashboardPage
-			? isDashboardPage.params.dashboardId
-			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
@@ -267,12 +247,11 @@ export function DashboardProvider({
 	const dashboardResponse = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
-			isDashboardPage?.params,
 			dashboardId,
 			globalTime.isAutoRefreshDisabled,
 		],
 		{
-			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
+			enabled: !!dashboardId && isLoggedIn,
 			queryFn: async () => {
 				setIsDashboardFetching(true);
 				try {
@@ -392,11 +371,7 @@ export function DashboardProvider({
 
 	useEffect(() => {
 		// make the call on tab visibility only if the user is on dashboard / widget page
-		if (
-			isVisible &&
-			updatedTimeRef.current &&
-			(!!isDashboardPage || !!isDashboardWidgetPage)
-		) {
+		if (isVisible && updatedTimeRef.current && !!dashboardId) {
 			dashboardResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
