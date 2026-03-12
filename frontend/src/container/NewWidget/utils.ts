@@ -10,7 +10,6 @@ import {
 import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import {
 	initialQueryBuilderFormValuesMap,
-	listViewInitialLogQuery,
 	PANEL_TYPES,
 	PANEL_TYPES_INITIAL_QUERY,
 } from 'constants/queryBuilder';
@@ -547,10 +546,7 @@ export const getDefaultWidgetData = (
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
-	query:
-		name === PANEL_TYPES.LIST
-			? listViewInitialLogQuery
-			: PANEL_TYPES_INITIAL_QUERY[name],
+	query: PANEL_TYPES_INITIAL_QUERY[name],
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,

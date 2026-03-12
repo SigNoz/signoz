@@ -6,7 +6,6 @@ import { PANEL_TYPES, PANEL_TYPES_INITIAL_QUERY } from 'constants/queryBuilder';
 import createQueryParams from 'lib/createQueryParams';
 import history from 'lib/history';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
-import { LogsAggregatorOperator } from 'types/common/queryBuilder';
 import { v4 as uuid } from 'uuid';
 
 import { PanelTypesWithData } from './menuItems';
@@ -27,45 +26,17 @@ function PanelTypeSelectionModal(): JSX.Element {
 			widgetId: id,
 		});
 
-		if (name === PANEL_TYPES.LIST) {
-			const queryParamsForLogPanel = {
-				graphType: name,
-				widgetId: id,
-				[QueryParams.compositeQuery]: JSON.stringify({
-					...PANEL_TYPES_INITIAL_QUERY[name],
-					builder: {
-						...PANEL_TYPES_INITIAL_QUERY[name].builder,
-						queryData: [
-							{
-								...PANEL_TYPES_INITIAL_QUERY[name].builder.queryData[0],
-								aggregateOperator: LogsAggregatorOperator.NOOP,
-								orderBy: [{ columnName: 'timestamp', order: 'desc' }],
-								offset: 0,
-								pageSize: 100,
-							},
-						],
-					},
-				}),
-			};
+		const queryParams = {
+			graphType: name,
+			widgetId: id,
+			[QueryParams.compositeQuery]: JSON.stringify(
+				PANEL_TYPES_INITIAL_QUERY[name],
+			),
+		};
 
-			history.push(
-				`${history.location.pathname}/new?${createQueryParams(
-					queryParamsForLogPanel,
-				)}`,
-			);
-		} else {
-			const queryParams = {
-				graphType: name,
-				widgetId: id,
-				[QueryParams.compositeQuery]: JSON.stringify(
-					PANEL_TYPES_INITIAL_QUERY[name],
-				),
-			};
-
-			history.push(
-				`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
-			);
-		}
+		history.push(
+			`${history.location.pathname}/new?${createQueryParams(queryParams)}`,
+		);
 	};
 
 	const handleCardClick = (panelType: PANEL_TYPES): void => {
@@ -78,7 +49,7 @@ function PanelTypeSelectionModal(): JSX.Element {
 			onCancel={(): void => {
 				setIsPanelTypeSelectionModalOpen(false);
 			}}
-			rootClassName="new-panel-type-selection-modal"
+			rootClassName="panel-type-selection-modal"
 			footer={null}
 			title="New Panel"
 		>
