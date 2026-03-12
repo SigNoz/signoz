@@ -23,11 +23,12 @@ var (
 )
 
 var (
-	typeUserSelectorRegex         = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
-	typeRoleSelectorRegex         = regexp.MustCompile(`^([a-z-]{1,50}|\*)$`)
-	typeAnonymousSelectorRegex    = regexp.MustCompile(`^\*$`)
-	typeOrganizationSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
-	typeMetaResourceSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
+	typeUserSelectorRegex           = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
+	typeServiceAccountSelectorRegex = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
+	typeRoleSelectorRegex           = regexp.MustCompile(`^([a-z-]{1,50}|\*)$`)
+	typeAnonymousSelectorRegex      = regexp.MustCompile(`^\*$`)
+	typeOrganizationSelectorRegex   = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
+	typeMetaResourceSelectorRegex   = regexp.MustCompile(`^(^[0-9a-f]{8}(?:\-[0-9a-f]{4}){3}-[0-9a-f]{12}$|\*)$`)
 	// metaresources selectors are used to select either all or none until we introduce some hierarchy here.
 	typeMetaResourcesSelectorRegex = regexp.MustCompile(`^\*$`)
 )
@@ -96,6 +97,11 @@ func IsValidSelector(typed Type, selector string) error {
 	case TypeUser:
 		if !typeUserSelectorRegex.MatchString(selector) {
 			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeUserSelectorRegex.String())
+		}
+		return nil
+	case TypeServiceAccount:
+		if !typeServiceAccountSelectorRegex.MatchString(selector) {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeAuthZInvalidSelector, "selector must conform to regex %s", typeServiceAccountSelectorRegex.String())
 		}
 		return nil
 	case TypeRole:
