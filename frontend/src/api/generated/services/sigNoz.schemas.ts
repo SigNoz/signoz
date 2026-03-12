@@ -2113,7 +2113,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	last_used: Date;
+	last_observed_at: Date;
 	/**
 	 * @type string
 	 */
@@ -2173,6 +2173,11 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	 * @format date-time
 	 */
 	createdAt?: Date;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	deletedAt: Date;
 	/**
 	 * @type string
 	 */

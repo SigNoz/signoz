@@ -1775,7 +1775,7 @@ components:
           type: string
         key:
           type: string
-        last_used:
+        last_observed_at:
           format: date-time
           type: string
         name:
@@ -1789,7 +1789,7 @@ components:
       - id
       - key
       - expires_at
-      - last_used
+      - last_observed_at
       - service_account_id
       type: object
     ServiceaccounttypesGettableFactorAPIKeyWithKey:
@@ -1833,6 +1833,9 @@ components:
         createdAt:
           format: date-time
           type: string
+        deletedAt:
+          format: date-time
+          type: string
         email:
           type: string
         id:
@@ -1857,6 +1860,7 @@ components:
       - roles
       - status
       - orgID
+      - deletedAt
       type: object
     ServiceaccounttypesUpdatableFactorAPIKey:
       properties:
