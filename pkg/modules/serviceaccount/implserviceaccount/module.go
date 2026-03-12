@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
@@ -20,12 +21,13 @@ type module struct {
 	authz     authz.AuthZ
 	emailing  emailing.Emailing
 	analytics analytics.Analytics
+	tokenizer tokenizer.Tokenizer
 	settings  factory.ScopedProviderSettings
 }
 
-func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, emailing emailing.Emailing, analytics analytics.Analytics, providerSettings factory.ProviderSettings) serviceaccount.Module {
+func NewModule(store serviceaccounttypes.Store, authz authz.AuthZ, emailing emailing.Emailing, analytics analytics.Analytics, providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer) serviceaccount.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount")
-	return &module{store: store, authz: authz, emailing: emailing, analytics: analytics, settings: settings}
+	return &module{store: store, authz: authz, emailing: emailing, analytics: analytics, settings: settings, tokenizer: tokenizer}
 }
 
 func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAccount *serviceaccounttypes.ServiceAccount) error {
@@ -218,6 +220,11 @@ func (module *module) UpdateStatus(ctx context.Context, orgID valuer.UUID, input
 
 		return nil
 	})
+	if err != nil {
+		return err
+	}
+
+	err = module.tokenizer.DeleteIdentity(ctx, input.ID)
 	if err != nil {
 		return err
 	}

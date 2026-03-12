@@ -127,7 +127,10 @@ func (ah *APIHandler) getOrCreateCloudIntegrationAPIKey(ctx context.Context, org
 
 	for _, key := range keys {
 		if key.Name == integrationPATName {
-			return key.Key, nil
+			err := key.IsExpired()
+			if err == nil {
+				return key.Key, nil
+			}
 		}
 	}
 

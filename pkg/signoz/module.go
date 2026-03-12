@@ -74,6 +74,7 @@ type Modules struct {
 func NewModules(
 	sqlstore sqlstore.SQLStore,
 	tokenizer tokenizer.Tokenizer,
+	serviceAccountTokenizer tokenizer.Tokenizer,
 	emailing emailing.Emailing,
 	providerSettings factory.ProviderSettings,
 	orgGetter organization.Getter,
@@ -113,6 +114,6 @@ func NewModules(
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, analytics, providerSettings),
+		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, analytics, providerSettings, serviceAccountTokenizer),
 	}
 }

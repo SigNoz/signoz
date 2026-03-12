@@ -84,7 +84,7 @@ func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccoun
 	return storable, nil
 }
 
-func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.StorableServiceAccount, error) {
+func (store *store) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.StorableServiceAccount, error) {
 	storable := new(serviceaccounttypes.StorableServiceAccount)
 
 	err := store.

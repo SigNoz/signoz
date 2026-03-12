@@ -12,7 +12,7 @@ type Store interface {
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableServiceAccount, error)
 	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*StorableServiceAccount, error)
-	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
+	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
 	List(context.Context, valuer.UUID) ([]*StorableServiceAccount, error)
 	Update(context.Context, valuer.UUID, *StorableServiceAccount) error
