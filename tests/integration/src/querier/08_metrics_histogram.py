@@ -2,7 +2,6 @@
 Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
-import logging
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List, Optional, Union
@@ -580,6 +579,34 @@ def _assert_series_endpoint_labels(
             2,
             ["/orders", "/health"],
         ),
+        (
+            "asc_metric_name",
+            [build_order_by("count(test_histogram_count_groupby_asc_metric_name)", "asc")],
+            None,
+            3,
+            ["/health", "/orders", "/checkout"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+        ),
+        (
+            "asc_metric_name_lim2",
+            [build_order_by("count(test_histogram_count_groupby_asc_metric_name_lim2)", "asc")],
+            2,
+            2,
+            ["/health", "/orders"],
+        ),
+        (
+            "desc_metric_name",
+            [build_order_by("count(test_histogram_count_groupby_desc_metric_name)", "desc")],
+            None,
+            3,
+            ["/checkout", "/health", "/orders"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+        ),
+        (
+            "desc_metric_name_lim2",
+            [build_order_by("count(test_histogram_count_groupby_desc_metric_name_lim2)", "desc")],
+            2,
+            2,
+            ["/checkout", "/health"],
+        ),
     ],
 )
 def test_histogram_count_group_by_endpoint(
@@ -622,16 +649,6 @@ def test_histogram_count_group_by_endpoint(
 
     data = response.json()
     count_all_series = get_all_series(data, "A")
-
-    logger = logging.getLogger(__name__)
-    for series in count_all_series:
-        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
-        values = series.get("values", [])
-        if values:
-            avg = sum(v["value"] for v in values) / len(values)
-        else:
-            avg = 0.0
-        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
 
     assert (
         len(count_all_series) == expected_count
@@ -708,6 +725,34 @@ def test_histogram_count_group_by_endpoint(
             2,
             ["/orders", "/health"],
         ),
+        (
+            "asc_metric_name",
+            [build_order_by("p90(test_histogram_p90_groupby_asc_metric_name)", "asc")],
+            None,
+            3,
+            ["/checkout", "/health", "/orders"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+        ),
+        (
+            "asc_metric_name_lim2",
+            [build_order_by("p90(test_histogram_p90_groupby_asc_metric_name_lim2)", "asc")],
+            2,
+            2,
+            ["/checkout", "/health"],
+        ),
+        (
+            "desc_metric_name",
+            [build_order_by("p90(test_histogram_p90_groupby_desc_metric_name)", "desc")],
+            None,
+            3,
+            ["/health", "/orders", "/checkout"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+        ),
+        (
+            "desc_metric_name_lim2",
+            [build_order_by("p90(test_histogram_p90_groupby_desc_metric_name_lim2)", "desc")],
+            2,
+            2,
+            ["/health", "/orders"],
+        ),
     ],
 )
 def test_histogram_percentile_group_by_endpoint(
@@ -749,16 +794,6 @@ def test_histogram_percentile_group_by_endpoint(
 
     data = response.json()
     p90_series = get_all_series(data, "A")
-
-    logger = logging.getLogger(__name__)
-    for series in p90_series:
-        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
-        values = series.get("values", [])
-        if values:
-            avg = sum(v["value"] for v in values) / len(values)
-        else:
-            avg = 0.0
-        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
 
     assert (
         len(p90_series) == expected_count
