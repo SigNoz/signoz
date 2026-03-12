@@ -3,20 +3,20 @@ package cloudintegrations
 import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 )
 
 type ServiceSummary struct {
 	services.Metadata
 
-	Config *types.CloudServiceConfig `json:"config"`
+	Config *integrationtypes.CloudServiceConfig `json:"config"`
 }
 
 type ServiceDetails struct {
 	services.Definition
 
-	Config           *types.CloudServiceConfig `json:"config"`
-	ConnectionStatus *ServiceConnectionStatus  `json:"status,omitempty"`
+	Config           *integrationtypes.CloudServiceConfig `json:"config"`
+	ConnectionStatus *ServiceConnectionStatus             `json:"status,omitempty"`
 }
 
 type AccountStatus struct {
@@ -61,7 +61,7 @@ func NewCompiledCollectionStrategy(provider string) (*CompiledCollectionStrategy
 
 // Helper for accumulating strategies for enabled services.
 func AddServiceStrategy(serviceType string, cs *CompiledCollectionStrategy,
-	definitionStrat *services.CollectionStrategy, config *types.CloudServiceConfig) error {
+	definitionStrat *services.CollectionStrategy, config *integrationtypes.CloudServiceConfig) error {
 	if definitionStrat.Provider != cs.Provider {
 		return errors.NewInternalf(CodeMismatchCloudProvider, "can't add %s service strategy to compiled strategy for %s",
 			definitionStrat.Provider, cs.Provider)

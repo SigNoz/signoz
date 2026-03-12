@@ -3,6 +3,7 @@ package types
 import (
 	"context"
 	"encoding/json"
+	"slices"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -21,6 +22,15 @@ var (
 	ErrAPIKeyAlreadyExists              = errors.MustNewCode("api_key_already_exists")
 	ErrAPIKeyNotFound                   = errors.MustNewCode("api_key_not_found")
 	ErrCodeRootUserOperationUnsupported = errors.MustNewCode("root_user_operation_unsupported")
+	ErrCodeUserStatusDeleted            = errors.MustNewCode("user_status_deleted")
+	ErrCodeUserStatusPendingInvite      = errors.MustNewCode("user_status_pending_invite")
+)
+
+var (
+	UserStatusPendingInvite = valuer.NewString("pending_invite")
+	UserStatusActive        = valuer.NewString("active")
+	UserStatusDeleted       = valuer.NewString("deleted")
+	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
 )
 
 type GettableUser = User
@@ -29,11 +39,13 @@ type User struct {
 	bun.BaseModel `bun:"table:users"`
 
 	Identifiable
-	DisplayName string       `bun:"display_name" json:"displayName"`
-	Email       valuer.Email `bun:"email" json:"email"`
-	Role        Role         `bun:"role" json:"role"`
-	OrgID       valuer.UUID  `bun:"org_id" json:"orgId"`
-	IsRoot      bool         `bun:"is_root" json:"isRoot"`
+	DisplayName string        `bun:"display_name" json:"displayName"`
+	Email       valuer.Email  `bun:"email" json:"email"`
+	Role        Role          `bun:"role" json:"role"`
+	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
+	IsRoot      bool          `bun:"is_root" json:"isRoot"`
+	Status      valuer.String `bun:"status" json:"status"`
+	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
 	TimeAuditable
 }
 
@@ -45,7 +57,7 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -58,6 +70,10 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is required")
 	}
 
+	if !slices.Contains(ValidUserStatus, status) {
+		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid status: %s, allowed status are: %v", status, ValidUserStatus)
+	}
+
 	return &User{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -67,6 +83,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		Role:        role,
 		OrgID:       orgID,
 		IsRoot:      false,
+		Status:      status,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -92,6 +109,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 		Role:        RoleAdmin,
 		OrgID:       orgID,
 		IsRoot:      true,
+		Status:      UserStatusActive,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),
 			UpdatedAt: time.Now(),
@@ -109,6 +127,23 @@ func (u *User) Update(displayName string, role Role) {
 		u.Role = role
 	}
 	u.UpdatedAt = time.Now()
+}
+
+func (u *User) UpdateStatus(status valuer.String) error {
+	// no updates allowed if user is in delete state
+	if err := u.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
+	}
+
+	// not udpates allowed from active to pending state
+	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot move user to pending state from active state")
+	}
+
+	u.Status = status
+	u.UpdatedAt = time.Now()
+
+	return nil
 }
 
 // PromoteToRoot promotes the user to a root user with admin role.
@@ -133,12 +168,31 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
+// ErrIfDeleted returns an error if the user is in deleted state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *User) ErrIfDeleted() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
+// ErrIfPending returns an error if the user is in pending invite state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *User) ErrIfPending() error {
+	if u.Status == UserStatusPendingInvite {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")
+	}
+	return nil
+}
+
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
 		"role":         user.Role,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
+		"status":       user.Status,
 		"created_at":   user.CreatedAt,
 	}
 }
@@ -160,17 +214,6 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 }
 
 type UserStore interface {
-	// invite
-	CreateBulkInvite(ctx context.Context, invites []*Invite) error
-	ListInvite(ctx context.Context, orgID string) ([]*Invite, error)
-	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
-
-	// Get invite by token.
-	GetInviteByToken(ctx context.Context, token string) (*Invite, error)
-
-	// Get invite by email and org.
-	GetInviteByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*Invite, error)
-
 	// Creates a user.
 	CreateUser(ctx context.Context, user *User) error
 
@@ -181,13 +224,13 @@ type UserStore interface {
 	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
 
 	// Get user by email and orgID.
-	GetUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*User, error)
+	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*User, error)
 
 	// Get users by email.
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
 
 	// Get users by role and org.
-	GetUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
@@ -195,8 +238,12 @@ type UserStore interface {
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
 
+	// Get users for an org id using emails and statuses
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
+
 	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
+	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
 	// Creates a password.
 	CreatePassword(ctx context.Context, password *FactorPassword) error
@@ -217,9 +264,13 @@ type UserStore interface {
 	CountAPIKeyByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
 
 	CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error)
+	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
 	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
+
+	// Get user by reset password token
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

@@ -10,11 +10,11 @@ import (
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/bytedance/sonic"
 )
 
 type builderQuery[T any] struct {
@@ -80,11 +80,16 @@ func (q *builderQuery[T]) Fingerprint() string {
 			case qbtypes.LogAggregation:
 				aggParts = append(aggParts, a.Expression)
 			case qbtypes.MetricAggregation:
-				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s",
+				var spaceAggParamStr string
+				if a.ComparisonSpaceAggregationParam != nil {
+					spaceAggParamStr = a.ComparisonSpaceAggregationParam.StringValue()
+				}
+				aggParts = append(aggParts, fmt.Sprintf("%s:%s:%s:%s:%s",
 					a.MetricName,
 					a.Temporality.StringValue(),
 					a.TimeAggregation.StringValue(),
 					a.SpaceAggregation.StringValue(),
+					spaceAggParamStr,
 				))
 			}
 		}
@@ -207,6 +212,11 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 
 // executeWithContext executes the query with query window and step context for partial value detection
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal: q.spec.Signal.StringValue(),
+		instrumentationtypes.QueryDuration:   instrumentationtypes.DurationBucket(q.fromMS, q.toMS),
+	})
+
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	elapsed := time.Duration(0)
@@ -248,40 +258,6 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 	payload, err := consume(rows, kind, queryWindow, q.spec.StepInterval, q.spec.Name)
 	if err != nil {
 		return nil, err
-	}
-
-	// merge body_json and promoted into body
-	if q.spec.Signal == telemetrytypes.SignalLogs {
-		switch typedPayload := payload.(type) {
-		case *qbtypes.RawData:
-			for _, rr := range typedPayload.Rows {
-				seeder := func() error {
-					body, ok := rr.Data[telemetrylogs.LogsV2BodyJSONColumn].(map[string]any)
-					if !ok {
-						return nil
-					}
-					promoted, ok := rr.Data[telemetrylogs.LogsV2BodyPromotedColumn].(map[string]any)
-					if !ok {
-						return nil
-					}
-					seed(promoted, body)
-					str, err := sonic.MarshalString(body)
-					if err != nil {
-						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
-					}
-					rr.Data["body"] = str
-					return nil
-				}
-				err := seeder()
-				if err != nil {
-					return nil, err
-				}
-
-				delete(rr.Data, telemetrylogs.LogsV2BodyJSONColumn)
-				delete(rr.Data, telemetrylogs.LogsV2BodyPromotedColumn)
-			}
-			payload = typedPayload
-		}
 	}
 
 	return &qbtypes.Result{
@@ -410,19 +386,4 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
-}
-
-func seed(promoted map[string]any, body map[string]any) {
-	for key, fromValue := range promoted {
-		if toValue, ok := body[key]; !ok {
-			body[key] = fromValue
-		} else {
-			if fromValue, ok := fromValue.(map[string]any); ok {
-				if toValue, ok := toValue.(map[string]any); ok {
-					seed(fromValue, toValue)
-					body[key] = toValue
-				}
-			}
-		}
-	}
 }

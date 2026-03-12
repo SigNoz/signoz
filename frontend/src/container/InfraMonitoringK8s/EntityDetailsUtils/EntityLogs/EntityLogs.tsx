@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useCallback, useEffect, useMemo, useRef } from 'react';
 import { useQuery } from 'react-query';
 import { Virtuoso, VirtuosoHandle } from 'react-virtuoso';
@@ -135,7 +134,6 @@ function EntityLogs({
 
 	const renderFooter = useCallback(
 		(): JSX.Element | null => (
-			// eslint-disable-next-line react/jsx-no-useless-fragment
 			<>
 				{isFetching ? (
 					<div className="logs-loading-skeleton"> Loading more logs ... </div>

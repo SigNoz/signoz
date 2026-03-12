@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
@@ -80,7 +81,18 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const {
+		selectedDashboard,
+		isDashboardLocked,
+		setColumnWidths,
+	} = useDashboard();
+
+	const onColumnWidthsChange = useCallback(
+		(widths: Record<string, number>) => {
+			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
+		},
+		[setColumnWidths, widget.id],
+	);
 	const { dashboardVariables } = useDashboardVariables();
 	const { user } = useAppContext();
 
@@ -241,7 +253,6 @@ function FullView({
 
 	if (response.data && selectedPanelType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(response?.data);
-		// eslint-disable-next-line no-param-reassign
 		response.data = transformedData;
 	}
 
@@ -381,6 +392,7 @@ function FullView({
 								onClickHandler={onClickHandler}
 								enableDrillDown={enableDrillDown}
 								selectedGraph={selectedPanelType}
+								onColumnWidthsChange={onColumnWidthsChange}
 							/>
 						</GraphContainer>
 					</div>

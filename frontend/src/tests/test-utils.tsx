@@ -1,6 +1,6 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
@@ -31,13 +31,10 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 // Mock ResizeObserver
 class ResizeObserverMock {
-	// eslint-disable-next-line class-methods-use-this
 	observe(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	unobserve(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	disconnect(): void {}
 }
 
@@ -248,6 +245,7 @@ export function getAppContextMock(
 			ee: 'Y',
 			setupCompleted: true,
 		},
+
 		...appContextOverrides,
 	};
 }
@@ -344,8 +342,6 @@ const customRender = (
 	});
 };
 
-// eslint-disable-next-line import/export -- re-exporting custom render alongside @testing-library/react
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
-// eslint-disable-next-line import/export -- custom render wraps the original
 export { customRender as render };

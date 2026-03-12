@@ -62,8 +62,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
@@ -2412,7 +2414,12 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "onboardKafka",
+	})
+
+	results, errQueriesByName, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2524,7 +2531,12 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getNetworkData",
+	})
+
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2560,7 +2572,7 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2616,7 +2628,11 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerData",
+	})
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
@@ -2634,7 +2650,7 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2687,7 +2703,11 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2741,7 +2761,11 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getPartitionOverviewLatencyData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2795,7 +2819,11 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerPartitionLatencyData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2852,7 +2880,11 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputOverview",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2886,7 +2918,7 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2963,7 +2995,11 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputDetails",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3017,7 +3053,11 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputOverview",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3071,7 +3111,11 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputDetails",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3131,7 +3175,11 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerConsumerEval",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3392,6 +3440,10 @@ func (aH *APIHandler) calculateLogsConnectionStatus(ctx context.Context, orgID v
 			},
 		},
 	}
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
+	})
 	queryRes, _, err := aH.querier.QueryRange(ctx, orgID, qrParams)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -3944,6 +3996,10 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 			},
 		},
 	}
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
+	})
 	queryRes, _, err := aH.querier.QueryRange(
 		ctx, orgID, qrParams,
 	)
@@ -4492,6 +4548,10 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
+	})
 	result, errQueriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
@@ -4886,7 +4946,11 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRangeV4",
+	})
+	aH.queryRangeV4(ctx, queryRangeParams, w, r)
 }
 
 func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
@@ -4979,8 +5043,12 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainList",
+	})
 	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		zap.L().Error("Query execution failed", zap.Error(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
@@ -5035,8 +5103,12 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainInfo",
+	})
 	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
 		zap.L().Error("Query execution failed", zap.Error(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())

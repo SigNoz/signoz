@@ -1,14 +1,13 @@
-import { memo, useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo } from 'react';
 import { Select } from 'antd';
 import {
 	initialQueriesMap,
 	initialQueryMeterWithType,
 	PANEL_TYPES,
 } from 'constants/queryBuilder';
-import { AggregatorFilter } from 'container/QueryBuilder/filters';
+import { MetricNameSelector } from 'container/QueryBuilder/filters';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { SelectOption } from 'types/common/select';
@@ -44,20 +43,11 @@ export const MetricsSelect = memo(function MetricsSelect({
 	signalSourceChangeEnabled: boolean;
 	savePreviousQuery: boolean;
 }): JSX.Element {
-	const [attributeKeys, setAttributeKeys] = useState<BaseAutocompleteData[]>([]);
-
 	const { handleChangeAggregatorAttribute } = useQueryOperations({
 		index,
 		query,
 		entityVersion: version,
 	});
-
-	const handleAggregatorAttributeChange = useCallback(
-		(value: BaseAutocompleteData, isEditMode?: boolean) => {
-			handleChangeAggregatorAttribute(value, isEditMode, attributeKeys || []);
-		},
-		[handleChangeAggregatorAttribute, attributeKeys],
-	);
 
 	const {
 		updateAllQueriesOperators,
@@ -164,12 +154,10 @@ export const MetricsSelect = memo(function MetricsSelect({
 				/>
 			)}
 
-			<AggregatorFilter
-				onChange={handleAggregatorAttributeChange}
+			<MetricNameSelector
+				onChange={handleChangeAggregatorAttribute}
 				query={query}
-				index={index}
 				signalSource={signalSource || ''}
-				setAttributeKeys={setAttributeKeys}
 			/>
 		</div>
 	);

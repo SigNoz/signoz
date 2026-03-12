@@ -1,7 +1,8 @@
-/* eslint-disable no-nested-ternary */
 import {
+	// eslint-disable-next-line no-restricted-imports
 	createContext,
 	PropsWithChildren,
+	// eslint-disable-next-line no-restricted-imports
 	useContext,
 	useEffect,
 	useMemo,
@@ -11,6 +12,7 @@ import {
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
@@ -22,9 +24,7 @@ import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useTabVisibility from 'hooks/useTabFocus';
-import useUrlQuery from 'hooks/useUrlQuery';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { defaultTo, isEmpty } from 'lodash-es';
@@ -35,6 +35,7 @@ import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -45,19 +46,19 @@ import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { v4 as generateUUID } from 'uuid';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../constants/queryCacheTime';
 import { useDashboardVariablesSelector } from '../../hooks/dashboard/useDashboardVariables';
 import {
 	setDashboardVariablesStore,
 	updateDashboardVariablesStore,
 } from './store/dashboardVariables/dashboardVariablesStore';
-import {
-	DashboardSortOrder,
-	IDashboardContext,
-	WidgetColumnWidths,
-} from './types';
+import { IDashboardContext, WidgetColumnWidths } from './types';
 import { sortLayout } from './util';
 
-const DashboardContext = createContext<IDashboardContext>({
+export const DashboardContext = createContext<IDashboardContext>({
 	isDashboardSliderOpen: false,
 	isDashboardLocked: false,
 	handleToggleDashboardSlider: () => {},
@@ -71,13 +72,7 @@ const DashboardContext = createContext<IDashboardContext>({
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
-	listSortOrder: {
-		columnKey: 'createdAt',
-		order: 'descend',
-		pagination: '1',
-		search: '',
-	},
-	setListSortOrder: () => {},
+
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
@@ -101,7 +96,6 @@ interface Props {
 export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
-	const { safeNavigate } = useSafeNavigate();
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
 	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
@@ -122,51 +116,7 @@ export function DashboardProvider({
 		exact: true,
 	});
 
-	const isDashboardListPage = useRouteMatch<Props>({
-		path: ROUTES.ALL_DASHBOARD,
-		exact: true,
-	});
-
 	const { showErrorModal } = useErrorModal();
-
-	// added extra checks here in case wrong values appear use the default values rather than empty dashboards
-	const supportedOrderColumnKeys = ['createdAt', 'updatedAt'];
-
-	const supportedOrderKeys = ['ascend', 'descend'];
-
-	const params = useUrlQuery();
-	// since the dashboard provider is wrapped at the very top of the application hence it initialises these values from other pages as well.
-	// pick the below params from URL only if the user is on the dashboards list page.
-	const orderColumnParam = isDashboardListPage && params.get('columnKey');
-	const orderQueryParam = isDashboardListPage && params.get('order');
-	const paginationParam = isDashboardListPage && params.get('page');
-	const searchParam = isDashboardListPage && params.get('search');
-
-	const [listSortOrder, setListOrder] = useState({
-		columnKey: orderColumnParam
-			? supportedOrderColumnKeys.includes(orderColumnParam)
-				? orderColumnParam
-				: 'updatedAt'
-			: 'updatedAt',
-		order: orderQueryParam
-			? supportedOrderKeys.includes(orderQueryParam)
-				? orderQueryParam
-				: 'descend'
-			: 'descend',
-		pagination: paginationParam || '1',
-		search: searchParam || '',
-	});
-
-	function setListSortOrder(sortOrder: DashboardSortOrder): void {
-		if (!isEqual(sortOrder, listSortOrder)) {
-			setListOrder(sortOrder);
-		}
-		params.set('columnKey', sortOrder.columnKey as string);
-		params.set('order', sortOrder.order as string);
-		params.set('page', sortOrder.pagination || '1');
-		params.set('search', sortOrder.search || '');
-		safeNavigate({ search: params.toString() });
-	}
 
 	const dispatch = useDispatch<Dispatch<AppActions>>();
 
@@ -293,7 +243,6 @@ export function DashboardProvider({
 			const { variables } = clonedDashboardData.data;
 			const existingOrders: Set<number> = new Set();
 
-			// eslint-disable-next-line no-restricted-syntax
 			for (const key in variables) {
 				// eslint-disable-next-line no-prototype-builtins
 				if (variables.hasOwnProperty(key)) {
@@ -327,7 +276,12 @@ export function DashboardProvider({
 		return data;
 	};
 	const dashboardResponse = useQuery(
-		[REACT_QUERY_KEY.DASHBOARD_BY_ID, isDashboardPage?.params, dashboardId],
+		[
+			REACT_QUERY_KEY.DASHBOARD_BY_ID,
+			isDashboardPage?.params,
+			dashboardId,
+			globalTime.isAutoRefreshDisabled,
+		],
 		{
 			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
 			queryFn: async () => {
@@ -344,6 +298,9 @@ export function DashboardProvider({
 				}
 			},
 			refetchOnWindowFocus: false,
+			cacheTime: globalTime.isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onError: (error) => {
 				showErrorModal(error as APIError);
 			},
@@ -502,8 +459,6 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
-			listSortOrder,
-			setListSortOrder,
 			panelMap,
 			setLayouts,
 			setPanelMap,
@@ -527,8 +482,6 @@ export function DashboardProvider({
 			selectedDashboard,
 			dashboardId,
 			layouts,
-			listSortOrder,
-			setListSortOrder,
 			panelMap,
 			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,

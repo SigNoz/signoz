@@ -1006,6 +1006,18 @@ export interface MetricsexplorertypesUpdateMetricMetadataRequestDTO {
 	unit: string;
 }
 
+export interface MetrictypesComparisonSpaceAggregationParamDTO {
+	/**
+	 * @type string
+	 */
+	operator: string;
+	/**
+	 * @type number
+	 * @format double
+	 */
+	threshold: number;
+}
+
 export enum MetrictypesSpaceAggregationDTO {
 	sum = 'sum',
 	avg = 'avg',
@@ -1367,6 +1379,7 @@ export interface Querybuildertypesv5LogAggregationDTO {
 }
 
 export interface Querybuildertypesv5MetricAggregationDTO {
+	comparisonSpaceAggregationParam?: MetrictypesComparisonSpaceAggregationParamDTO;
 	/**
 	 * @type string
 	 */
@@ -2077,6 +2090,154 @@ export interface RoletypesRoleDTO {
 	updatedAt?: Date;
 }
 
+export interface ServiceaccounttypesFactorAPIKeyDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expires_at: number;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	last_used: Date;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	service_account_id: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO {
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	key: string;
+}
+
+export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expires_at: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ServiceaccounttypesPostableServiceAccountDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+}
+
+export interface ServiceaccounttypesServiceAccountDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgID: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
+	/**
+	 * @type integer
+	 * @minimum 0
+	 */
+	expires_at: number;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
+export interface ServiceaccounttypesUpdatableServiceAccountDTO {
+	/**
+	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type array
+	 */
+	roles: string[];
+}
+
+export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
+	/**
+	 * @type string
+	 */
+	status: string;
+}
+
 export enum TelemetrytypesFieldContextDTO {
 	metric = 'metric',
 	log = 'log',
@@ -2364,6 +2525,13 @@ export interface TypesPostableAcceptInviteDTO {
 	token?: string;
 }
 
+export interface TypesPostableBulkInviteRequestDTO {
+	/**
+	 * @type array
+	 */
+	invites: TypesPostableInviteDTO[];
+}
+
 export interface TypesPostableForgotPasswordDTO {
 	/**
 	 * @type string
@@ -2504,6 +2672,10 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3037,6 +3209,78 @@ export type PatchObjectsPathParameters = {
 	id: string;
 	relation: string;
 };
+export type ListServiceAccounts200 = {
+	/**
+	 * @type array
+	 */
+	data: ServiceaccounttypesServiceAccountDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccount201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteServiceAccountPathParameters = {
+	id: string;
+};
+export type GetServiceAccountPathParameters = {
+	id: string;
+};
+export type GetServiceAccount200 = {
+	data: ServiceaccounttypesServiceAccountDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateServiceAccountPathParameters = {
+	id: string;
+};
+export type ListServiceAccountKeysPathParameters = {
+	id: string;
+};
+export type ListServiceAccountKeys200 = {
+	/**
+	 * @type array
+	 */
+	data: ServiceaccounttypesFactorAPIKeyDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccountKeyPathParameters = {
+	id: string;
+};
+export type CreateServiceAccountKey201 = {
+	data: ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type RevokeServiceAccountKeyPathParameters = {
+	id: string;
+	fid: string;
+};
+export type UpdateServiceAccountKeyPathParameters = {
+	id: string;
+	fid: string;
+};
+export type UpdateServiceAccountStatusPathParameters = {
+	id: string;
+};
 export type ListUsers200 = {
 	/**
 	 * @type array
@@ -3218,6 +3462,11 @@ export type ListMetricsParams = {
 	 * @description undefined
 	 */
 	searchText?: string;
+	/**
+	 * @type string
+	 * @description undefined
+	 */
+	source?: string;
 };
 
 export type ListMetrics200 = {

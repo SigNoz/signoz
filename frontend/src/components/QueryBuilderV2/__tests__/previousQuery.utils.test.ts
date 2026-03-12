@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 import '@testing-library/jest-dom';

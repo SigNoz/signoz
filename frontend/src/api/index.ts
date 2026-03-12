@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-param-reassign */
-/* eslint-disable @typescript-eslint/no-explicit-any */
 import { QueryClient } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import post from 'api/v2/sessions/rotate/post';
@@ -96,19 +94,13 @@ export const interceptorRejected = async (
 					afterLogin(response.data.accessToken, response.data.refreshToken, true);
 
 					try {
-						const reResponse = await axios(
-							`${value.config.baseURL}${value.config.url?.substring(1)}`,
-							{
-								method: value.config.method,
-								headers: {
-									...value.config.headers,
-									Authorization: `Bearer ${response.data.accessToken}`,
-								},
-								data: {
-									...JSON.parse(value.config.data || '{}'),
-								},
+						const reResponse = await axios({
+							...value.config,
+							headers: {
+								...value.config.headers,
+								Authorization: `Bearer ${response.data.accessToken}`,
 							},
-						);
+						});
 
 						return await Promise.resolve(reResponse);
 					} catch (error) {

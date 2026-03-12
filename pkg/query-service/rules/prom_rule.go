@@ -9,7 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -18,7 +17,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/prometheus/prometheus/model/labels"
 	"github.com/prometheus/prometheus/promql"
 )
 
@@ -185,7 +186,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
-	valueFormatter := formatter.FromUnit(r.Unit())
+	valueFormatter := units.FormatterFromUnit(r.Unit())
 
 	// prepare query, run query get data and filter the data based on the threshold
 	results, err := r.buildAndRunQuery(ctx, ts)
@@ -461,12 +462,12 @@ func toCommonSeries(series promql.Series) v3.Series {
 		Points:      make([]v3.Point, 0),
 	}
 
-	for _, lbl := range series.Metric {
+	series.Metric.Range(func(lbl labels.Label) {
 		commonSeries.Labels[lbl.Name] = lbl.Value
 		commonSeries.LabelsArray = append(commonSeries.LabelsArray, map[string]string{
 			lbl.Name: lbl.Value,
 		})
-	}
+	})
 
 	for _, f := range series.Floats {
 		commonSeries.Points = append(commonSeries.Points, v3.Point{

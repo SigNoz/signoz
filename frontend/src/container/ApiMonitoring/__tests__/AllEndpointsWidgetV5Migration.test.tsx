@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable sonarjs/no-duplicate-string */
 /**
  * V5 Migration Tests for All Endpoints Widget (Endpoint Overview)
  *

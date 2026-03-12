@@ -5,12 +5,7 @@ import { getInitialStackedBands } from 'container/DashboardContainer/visualizati
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import {
-	DrawStyle,
-	LineInterpolation,
-	LineStyle,
-	VisibilityMode,
-} from 'lib/uPlotV2/config/types';
+import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -63,7 +58,12 @@ export function prepareBarPanelConfig({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const builder = buildBaseConfig({
-		widget,
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		onClick,
 		onDragSelect,
@@ -98,14 +98,8 @@ export function prepareBarPanelConfig({
 		builder.addSeries({
 			scaleKey: 'y',
 			drawStyle: DrawStyle.Bar,
-			panelType: PANEL_TYPES.BAR,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: false,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: VisibilityMode.Never,
-			pointSize: 5,
 			isDarkMode,
 			stepInterval: currentStepInterval,
 		});

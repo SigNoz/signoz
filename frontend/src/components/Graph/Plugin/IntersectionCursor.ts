@@ -142,7 +142,6 @@ export const createIntersectionCursorPlugin = (): Plugin<
 				const { top, bottom, left, right } = chart.chartArea;
 
 				chart.ctx.beginPath();
-				/* eslint-disable-next-line no-param-reassign */
 				chart.ctx.strokeStyle = pluginOptions.color;
 				chart.ctx.setLineDash(lineDashData);
 				chart.ctx.moveTo(left, positionY);
@@ -151,7 +150,6 @@ export const createIntersectionCursorPlugin = (): Plugin<
 
 				chart.ctx.beginPath();
 				chart.ctx.setLineDash(lineDashData);
-				/* eslint-disable-next-line no-param-reassign */
 				chart.ctx.strokeStyle = pluginOptions.color;
 				chart.ctx.moveTo(positionX, top);
 				chart.ctx.lineTo(positionX, bottom);

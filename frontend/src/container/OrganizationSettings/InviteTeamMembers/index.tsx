@@ -11,7 +11,7 @@ import {
 } from 'antd';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
-import { InviteMemberFormValues } from '../PendingInvitesContainer/index';
+import { InviteMemberFormValues } from '../utils';
 import { SelectDrawer, SpaceContainer, TitleWrapper } from './styles';
 
 function InviteTeamMembers({ form, onFinish }: Props): JSX.Element {

@@ -30,7 +30,7 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
 }
 
-// BuildCondition builds the full WHERE condition for body_json JSON paths
+// BuildCondition builds the full WHERE condition for body_v2 JSON paths
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	conditions := []string{}
 	for _, node := range c.key.JSONPlan {
@@ -40,6 +40,7 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 		}
 		conditions = append(conditions, condition)
 	}
+
 	return sb.Or(conditions...), nil
 }
 
@@ -288,9 +289,9 @@ func (c *jsonConditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, field
 		}
 		return sb.NotIn(fieldExpr, values...), nil
 	case qbtypes.FilterOperatorExists:
-		return fmt.Sprintf("%s IS NOT NULL", fieldExpr), nil
+		return sb.IsNotNull(fieldExpr), nil
 	case qbtypes.FilterOperatorNotExists:
-		return fmt.Sprintf("%s IS NULL", fieldExpr), nil
+		return sb.IsNull(fieldExpr), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween, qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)

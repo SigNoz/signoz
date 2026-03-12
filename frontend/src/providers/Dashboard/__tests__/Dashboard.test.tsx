@@ -1,8 +1,10 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
+import { DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
@@ -48,6 +50,7 @@ jest.mock('react-redux', () => ({
 		selectedTime: 'GLOBAL_TIME',
 		minTime: '2023-01-01T00:00:00Z',
 		maxTime: '2023-01-01T01:00:00Z',
+		isAutoRefreshDisabled: true,
 	})),
 	useDispatch: jest.fn(() => jest.fn()),
 }));
@@ -323,12 +326,67 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
 				{ dashboardId: dashboardId1 },
 				dashboardId1,
+				true, // globalTime.isAutoRefreshDisabled
 			]);
 			expect(cacheKeys[1]).toEqual([
 				REACT_QUERY_KEY.DASHBOARD_BY_ID,
 				{ dashboardId: dashboardId2 },
 				dashboardId2,
+				true, // globalTime.isAutoRefreshDisabled
 			]);
+		});
+
+		it('should not store dashboard in cache when autoRefresh is enabled (isAutoRefreshDisabled=false)', async () => {
+			jest.mocked(useSelector).mockImplementation(() => ({
+				selectedTime: 'GLOBAL_TIME',
+				minTime: '2023-01-01T00:00:00Z',
+				maxTime: '2023-01-01T01:00:00Z',
+				isAutoRefreshDisabled: false,
+			}));
+
+			const queryClient = createTestQueryClient();
+			const dashboardId = 'auto-refresh-dashboard';
+
+			mockUseRouteMatch.mockReturnValue({
+				path: ROUTES.DASHBOARD,
+				url: `/dashboard/${dashboardId}`,
+				isExact: true,
+				params: { dashboardId },
+			});
+
+			render(
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter initialEntries={[`/dashboard/${dashboardId}`]}>
+						<DashboardProvider>
+							<TestComponent />
+						</DashboardProvider>
+					</MemoryRouter>
+				</QueryClientProvider>,
+			);
+
+			await waitFor(() => {
+				expect(mockGetDashboard).toHaveBeenCalledWith({ id: dashboardId });
+			});
+
+			const dashboardQuery = queryClient
+				.getQueryCache()
+				.getAll()
+				.find(
+					(query) =>
+						query.queryKey[0] === REACT_QUERY_KEY.DASHBOARD_BY_ID &&
+						query.queryKey[3] === false,
+				);
+			expect(dashboardQuery).toBeDefined();
+			expect((dashboardQuery as { cacheTime: number }).cacheTime).toBe(
+				DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+			);
+
+			jest.mocked(useSelector).mockImplementation(() => ({
+				selectedTime: 'GLOBAL_TIME',
+				minTime: '2023-01-01T00:00:00Z',
+				maxTime: '2023-01-01T01:00:00Z',
+				isAutoRefreshDisabled: true,
+			}));
 		});
 	});
 });
@@ -338,7 +396,6 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 
 	beforeEach(() => {
 		jest.clearAllMocks();
-		/* eslint-disable @typescript-eslint/no-explicit-any */
 		mockGetDashboard.mockResolvedValue({
 			httpStatusCode: 200,
 			data: {
@@ -569,7 +626,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		mockGetUrlVariables.mockReturnValue({});
-		// eslint-disable-next-line sonarjs/no-identical-functions
 		mockNormalizeUrlValueForVariable.mockImplementation((urlValue) => {
 			if (urlValue === undefined || urlValue === null) {
 				return urlValue;
@@ -582,7 +638,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 		it('should set defaultValue from textboxValue for TEXTBOX variables without defaultValue (BWC)', async () => {
 			// Mock dashboard with TEXTBOX variable that has textboxValue but no defaultValue
 			// This simulates old data format before the migration
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -627,7 +682,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should not override existing defaultValue for TEXTBOX variables', async () => {
 			// Mock dashboard with TEXTBOX variable that already has defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -673,7 +727,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should set empty defaultValue when textboxValue is also empty for TEXTBOX variables', async () => {
 			// Mock dashboard with TEXTBOX variable with empty textboxValue and no defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {
@@ -717,7 +770,6 @@ describe('Dashboard Provider - Textbox Variable Backward Compatibility', () => {
 
 		it('should not apply BWC logic to non-TEXTBOX variables', async () => {
 			// Mock dashboard with QUERY variable that has no defaultValue
-			/* eslint-disable @typescript-eslint/no-explicit-any */
 			mockGetDashboard.mockResolvedValue({
 				httpStatusCode: 200,
 				data: {

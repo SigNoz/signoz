@@ -41,7 +41,6 @@ function Integrations(): JSX.Element {
 
 	useEffect(() => {
 		logEvent(INTEGRATION_TELEMETRY_EVENTS.INTEGRATIONS_LIST_VISITED, {});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	return (

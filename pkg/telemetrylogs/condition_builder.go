@@ -3,14 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"golang.org/x/exp/maps"
 
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -35,7 +33,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && !key.Materialized {
 		valueType, value := InferDataType(value, operator, key)
 		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {
@@ -54,7 +52,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// Check if this is a body JSON search - either by FieldContext
-	if key.FieldContext == telemetrytypes.FieldContextBody {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
@@ -108,7 +106,6 @@ func (c *conditionBuilder) conditionFor(
 		return sb.ILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
 	case qbtypes.FilterOperatorNotContains:
 		return sb.NotILike(tblFieldName, fmt.Sprintf("%%%s%%", value)), nil
-
 	case qbtypes.FilterOperatorRegexp:
 		// Note: Escape $$ to $$$$ to avoid sqlbuilder interpreting materialized $ signs
 		// Only needed because we are using sprintf instead of sb.Match (not implemented in sqlbuilder)
@@ -176,9 +173,16 @@ func (c *conditionBuilder) conditionFor(
 		var value any
 		switch column.Type.GetType() {
 		case schema.ColumnTypeEnumJSON:
-			if operator == qbtypes.FilterOperatorExists {
-				return sb.IsNotNull(tblFieldName), nil
-			} else {
+			switch key.FieldDataType {
+			case telemetrytypes.FieldDataTypeJSON:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), false), nil
+				}
+				return sb.EQ(fmt.Sprintf("empty(%s)", tblFieldName), true), nil
+			default:
+				if operator == qbtypes.FilterOperatorExists {
+					return sb.IsNotNull(tblFieldName), nil
+				}
 				return sb.IsNull(tblFieldName), nil
 			}
 		case schema.ColumnTypeEnumLowCardinality:
@@ -247,19 +251,32 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
-		// skip adding exists filter for intrinsic fields
-		// with an exception for body json search
-		field, _ := c.fm.FieldFor(ctx, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), field) && key.FieldContext != telemetrytypes.FieldContextBody {
+	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields
+	buildExistCondition := operator.AddDefaultExistsFilter()
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
+		// pass; No need to build exist condition for top level columns
+		// immidiately return
+		return condition, nil
+	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
+		buildExistCondition = buildExistCondition && true
+	case telemetrytypes.FieldContextBody:
+		// Querying JSON fields already account for Nullability of fields
+		// so additional exists checks are not needed
+		if querybuilder.BodyJSONQueryEnabled {
 			return condition, nil
 		}
 
+		buildExistCondition = buildExistCondition && true
+	}
+
+	if buildExistCondition {
 		existsCondition, err := c.conditionFor(ctx, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
 		return sb.And(condition, existsCondition), nil
 	}
+
 	return condition, nil
 }

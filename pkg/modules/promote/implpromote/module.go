@@ -11,6 +11,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/promotetypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -76,7 +78,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 
 	// add the paths that are not promoted but have indexes
 	for path, indexes := range aggr {
-		path := strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
+		path := strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
 		path = telemetrytypes.BodyJSONStringSearchPrefix + path
 		response = append(response, promotetypes.PromotePath{
 			Path:    path,
@@ -87,7 +89,7 @@ func (m *module) ListPromotedAndIndexedPaths(ctx context.Context) ([]promotetype
 }
 
 func (m *module) listPromotedPaths(ctx context.Context) ([]string, error) {
-	paths, err := m.metadataStore.ListPromotedPaths(ctx)
+	paths, err := m.metadataStore.GetPromotedPaths(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -105,6 +107,11 @@ func (m *module) PromotePaths(ctx context.Context, paths []string) error {
 
 // createIndexes creates string ngram + token filter indexes on JSON path subcolumns for LIKE queries.
 func (m *module) createIndexes(ctx context.Context, indexes []schemamigrator.Index) error {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "promote",
+		instrumentationtypes.CodeFunctionName: "createIndexes",
+	})
 	if len(indexes) == 0 {
 		return nil
 	}
@@ -142,7 +149,7 @@ func (m *module) PromoteAndIndexPaths(
 		pathsStr = append(pathsStr, path.Path)
 	}
 
-	existingPromotedPaths, err := m.metadataStore.ListPromotedPaths(ctx, pathsStr...)
+	existingPromotedPaths, err := m.metadataStore.GetPromotedPaths(ctx, pathsStr...)
 	if err != nil {
 		return err
 	}
@@ -156,7 +163,7 @@ func (m *module) PromoteAndIndexPaths(
 			}
 		}
 		if len(it.Indexes) > 0 {
-			parentColumn := telemetrylogs.LogsV2BodyJSONColumn
+			parentColumn := telemetrylogs.LogsV2BodyV2Column
 			// if the path is already promoted or is being promoted, add it to the promoted column
 			if _, promoted := existingPromotedPaths[it.Path]; promoted || it.Promote {
 				parentColumn = telemetrylogs.LogsV2BodyPromotedColumn

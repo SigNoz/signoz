@@ -1,4 +1,5 @@
 import { memo, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
@@ -24,6 +25,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../../constants/queryCacheTime';
+import { REACT_QUERY_KEY } from '../../../constants/reactQueryKeys';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
@@ -67,10 +73,12 @@ function GridCardGraph({
 		setDashboardQueryRangeCalled,
 	} = useDashboard();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+		isAutoRefreshDisabled,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -209,8 +217,10 @@ function GridCardGraph({
 		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
+				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 				maxTime,
 				minTime,
+				isAutoRefreshDisabled,
 				globalSelectedInterval,
 				widget?.query,
 				widget?.panelTypes,
@@ -240,6 +250,9 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
@@ -282,7 +295,6 @@ function GridCardGraph({
 
 	if (queryResponse.data && widget.panelTypes === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(queryResponse?.data);
-		// eslint-disable-next-line no-param-reassign
 		queryResponse.data = transformedData;
 	}
 
