@@ -51,7 +51,7 @@ type ServiceAccount struct {
 	Email     valuer.Email  `json:"email" required:"true"`
 	Roles     []string      `json:"roles" required:"true" nullable:"false"`
 	Status    valuer.String `json:"status" required:"true"`
-	OrgID     valuer.UUID   `json:"orgID" required:"true"`
+	OrgID     valuer.UUID   `json:"orgId" required:"true"`
 	DeletedAt time.Time     `json:"deletedAt" required:"true"`
 }
 

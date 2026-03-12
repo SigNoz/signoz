@@ -35,9 +35,9 @@ type FactorAPIKey struct {
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
 	Key              string      `json:"key" required:"true"`
-	ExpiresAt        uint64      `json:"expires_at" required:"true"`
-	LastObservedAt   time.Time   `json:"last_observed_at" required:"true"`
-	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
+	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
+	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
+	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`
 }
 
 type GettableFactorAPIKeyWithKey struct {
@@ -49,19 +49,19 @@ type GettableFactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
 	Name             string      `json:"name" requrired:"true"`
-	ExpiresAt        uint64      `json:"expires_at" required:"true"`
-	LastObservedAt   time.Time   `json:"last_observed_at" required:"true"`
-	ServiceAccountID valuer.UUID `json:"service_account_id" required:"true"`
+	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
+	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
+	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`
 }
 
 type PostableFactorAPIKey struct {
 	Name      string `json:"name" required:"true"`
-	ExpiresAt uint64 `json:"expires_at" required:"true"`
+	ExpiresAt uint64 `json:"expiresAt" required:"true"`
 }
 
 type UpdatableFactorAPIKey struct {
 	Name      string `json:"name" required:"true"`
-	ExpiresAt uint64 `json:"expires_at" required:"true"`
+	ExpiresAt uint64 `json:"expiresAt" required:"true"`
 }
 
 func NewFactorAPIKeyFromStorable(storable *StorableFactorAPIKey) *FactorAPIKey {
