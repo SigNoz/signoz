@@ -613,28 +613,28 @@ def test_histogram_group_by_endpoint(
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
-    all_series = get_all_series(data, "A")
+    count_all_series = get_all_series(data, "A")
 
     assert (
-        len(all_series) == expected_count
-    ), f"Expected {expected_count} series, got {len(all_series)}"
+        len(count_all_series) == expected_count
+    ), f"Expected {expected_count} series, got {len(count_all_series)}"
 
-    endpoint_labels = [
+    endpoint_labels_in_count = [
         series.get("labels", [{}])[0].get("value", "unknown")
-        for series in all_series
+        for series in count_all_series
     ]
 
     if isinstance(expected_endpoints, set):
         assert (
-            set(endpoint_labels) == expected_endpoints
-        ), f"Expected endpoints {expected_endpoints}, got {set(endpoint_labels)}"
+            set(endpoint_labels_in_count) == expected_endpoints
+        ), f"Expected endpoints {expected_endpoints}, got {set(endpoint_labels_in_count)}"
     else:
-        assert endpoint_labels == expected_endpoints, (
-            f"Expected endpoints in order {expected_endpoints}, got {endpoint_labels}"
+        assert endpoint_labels_in_count == expected_endpoints, (
+            f"Expected endpoints in order {expected_endpoints}, got {endpoint_labels_in_count}"
         )
 
     count_values = {}
-    for series in all_series:
+    for series in count_all_series:
         endpoint = series.get("labels", [{}])[0].get("value", "unknown")
         count_values[endpoint] = sorted(
             series.get("values", []), key=lambda x: x["timestamp"]
