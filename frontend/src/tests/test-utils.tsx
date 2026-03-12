@@ -7,6 +7,7 @@ import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
@@ -280,23 +281,25 @@ export function AllTheProviders({
 
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
-			<QueryClientProvider client={queryClient}>
-				<Provider store={mockStored(roleValue)}>
-					<AppContext.Provider
-						value={getAppContextMock(roleValue, appContextOverridesValue)}
-					>
-						<ResourceProvider>
-							<ErrorModalProvider>
-								<TimezoneProvider>
-									<PreferenceContextProvider>
-										{queryBuilderContent}
-									</PreferenceContextProvider>
-								</TimezoneProvider>
-							</ErrorModalProvider>
-						</ResourceProvider>
-					</AppContext.Provider>
-				</Provider>
-			</QueryClientProvider>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={mockStored(roleValue)}>
+						<AppContext.Provider
+							value={getAppContextMock(roleValue, appContextOverridesValue)}
+						>
+							<ResourceProvider>
+								<ErrorModalProvider>
+									<TimezoneProvider>
+										<PreferenceContextProvider>
+											{queryBuilderContent}
+										</PreferenceContextProvider>
+									</TimezoneProvider>
+								</ErrorModalProvider>
+							</ResourceProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</NuqsAdapter>
 		</MemoryRouter>
 	);
 }

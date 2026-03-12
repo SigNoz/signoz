@@ -23,8 +23,6 @@ export interface IDashboardContext {
 		React.SetStateAction<Dashboard | undefined>
 	>;
 	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
-	toScrollWidgetId: string;
-	setToScrollWidgetId: React.Dispatch<React.SetStateAction<string>>;
 	updateLocalStorageDashboardVariables: (
 		id: string,
 		selectedValue:

@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -11,6 +11,7 @@ import { BuilderUnitsFilter } from 'container/QueryBuilder/filters/BuilderUnitsF
 import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { GetMetricQueryRange } from 'lib/dashboard/getQueryResults';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import { AppState } from 'store/reducers';
@@ -22,13 +23,12 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 
 function TimeSeries(): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
-
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -112,10 +112,6 @@ function TimeSeries(): JSX.Element {
 		[data, isValidToConvertToMs],
 	);
 
-	const onUnitChangeHandler = (value: string): void => {
-		setYAxisUnit(value);
-	};
-
 	const hasMetricSelected = useMemo(
 		() => currentQuery.builder.queryData.some((q) => q.aggregateAttribute?.key),
 		[currentQuery],
@@ -123,7 +119,7 @@ function TimeSeries(): JSX.Element {
 
 	return (
 		<div className="meter-time-series-container">
-			<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+			<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			<div className="time-series-container">
 				{!hasMetricSelected && <EmptyMetricsSearch />}
 				{hasMetricSelected &&
