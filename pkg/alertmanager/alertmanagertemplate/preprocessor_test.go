@@ -28,7 +28,7 @@ func TestExtractFieldMappings(t *testing.T) {
 	}{
 		{
 			name: "struct with mixed field types",
-			data: TestStruct{Name: "test", Count: 5},
+			data: TestStruct{Name: "test", Count: 5, unexported: ""},
 			expected: []fieldMapping{
 				{VarName: "name", FieldName: "Name"},
 				{VarName: "status", FieldName: "Status"},

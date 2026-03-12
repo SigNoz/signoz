@@ -2,7 +2,6 @@ package alertmanagertemplate
 
 import (
 	"context"
-	"io"
 	"log/slog"
 	"testing"
 	"time"
@@ -25,7 +24,7 @@ func testSetup(t *testing.T) (*template.Template, context.Context, *slog.Logger)
 	ctx = notify.WithGroupKey(ctx, "test-group")
 	ctx = notify.WithReceiverName(ctx, "slack")
 	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "HighCPU", "severity": "critical"})
-	logger := slog.New(slog.NewTextHandler(io.Discard, nil))
+	logger := slog.New(slog.DiscardHandler)
 	return tmpl, ctx, logger
 }
 
