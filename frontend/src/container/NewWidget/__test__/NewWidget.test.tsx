@@ -1,4 +1,3 @@
-// @ts-nocheck
 // This test suite covers several important scenarios:
 // - Empty layout - widget should be placed at origin (0,0)
 // - Empty layout with custom dimensions
@@ -314,6 +313,8 @@ describe('Stacking bar in new panel', () => {
 				<DashboardProvider dashboardId="">
 					<PreferenceContextProvider>
 						<NewWidget
+							dashboardId=""
+							selectedDashboard={undefined}
 							selectedGraph={PANEL_TYPES.BAR}
 							fillSpans={undefined}
 							yAxisUnit={undefined}
@@ -359,6 +360,8 @@ describe('when switching to BAR panel type', () => {
 		const { getByTestId, getByText, container } = render(
 			<DashboardProvider dashboardId="">
 				<NewWidget
+					dashboardId=""
+					selectedDashboard={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
 					fillSpans={undefined}
 					yAxisUnit={undefined}

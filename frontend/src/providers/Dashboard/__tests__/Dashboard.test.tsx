@@ -2,7 +2,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { render, screen, waitFor } from '@testing-library/react';
+import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -20,21 +20,26 @@ const mockGetDashboard = jest.mocked(getDashboard);
 
 // Mock other dependencies
 jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
+	useSafeNavigate: (): { safeNavigate: jest.Mock } => ({
 		safeNavigate: jest.fn(),
 	}),
 }));
 
 // Mock only the essential dependencies for Dashboard provider
 jest.mock('providers/App/App', () => ({
-	useAppContext: (): any => ({
+	useAppContext: (): {
+		isLoggedIn: boolean;
+		user: { email: string; role: string };
+	} => ({
 		isLoggedIn: true,
 		user: { email: 'test@example.com', role: 'ADMIN' },
 	}),
 }));
 
 jest.mock('providers/ErrorModalProvider', () => ({
-	useErrorModal: (): any => ({ showErrorModal: jest.fn() }),
+	useErrorModal: (): { showErrorModal: jest.Mock } => ({
+		showErrorModal: jest.fn(),
+	}),
 }));
 
 jest.mock('react-redux', () => ({
@@ -52,7 +57,6 @@ jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 function TestComponent(): JSX.Element {
 	const { dashboardResponse, selectedDashboard } = useDashboard();
 	const { dashboardVariables } = useDashboardVariables();
-	const dashboardId = selectedDashboard?.id;
 
 	return (
 		<div>
@@ -85,7 +89,9 @@ function createTestQueryClient(): QueryClient {
 }
 
 // Helper to render with dashboard provider
-function renderWithDashboardProvider(dashboardId = 'test-dashboard-id'): any {
+function renderWithDashboardProvider(
+	dashboardId = 'test-dashboard-id',
+): RenderResult {
 	const queryClient = createTestQueryClient();
 	const initialRoute = dashboardId ? `/dashboard/${dashboardId}` : '/dashboard';
 
@@ -297,7 +303,7 @@ describe('Dashboard Provider - Query Key with Route Params', () => {
 				.find(
 					(query) =>
 						query.queryKey[0] === REACT_QUERY_KEY.DASHBOARD_BY_ID &&
-						query.queryKey[3] === false,
+						query.queryKey[2] === false,
 				);
 			expect(dashboardQuery).toBeDefined();
 			expect((dashboardQuery as { cacheTime: number }).cacheTime).toBe(

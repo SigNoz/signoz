@@ -1,4 +1,3 @@
-// @ts-nocheck
 import { I18nextProvider } from 'react-i18next';
 import { ENVIRONMENT } from 'constants/env';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -106,6 +105,8 @@ describe('LogsPanelComponent', () => {
 			<I18nextProvider i18n={i18n}>
 				<PreferenceContextProvider>
 					<NewWidget
+						dashboardId=""
+						selectedDashboard={undefined}
 						selectedGraph={PANEL_TYPES.LIST}
 						fillSpans={undefined}
 						yAxisUnit={undefined}
