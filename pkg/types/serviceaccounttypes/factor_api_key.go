@@ -19,7 +19,7 @@ var (
 )
 
 type StorableFactorAPIKey struct {
-	bun.BaseModel `bun:"table:factor_api_key,alias:factor_api_key""`
+	bun.BaseModel `bun:"table:factor_api_key,alias:factor_api_key"`
 
 	types.Identifiable
 	types.TimeAuditable
