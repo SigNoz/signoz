@@ -50,7 +50,7 @@ func NewMockMetadataStore(intrinsicFields map[string]telemetrytypes.TelemetryFie
 
 // GetKeys returns a map of field keys types.TelemetryFieldKey by name
 func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-
+	setOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// If selector is nil, return all keys
@@ -61,14 +61,13 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 	// Apply selector logic from KeysMap
 	for name, keys := range m.KeysMap {
 		if matchesName(fieldKeySelector, name) {
-			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 			for _, key := range keys {
 				if matchesKey(fieldKeySelector, key) {
-					filteredKeys = append(filteredKeys, key)
+					if _, exists := setOfKeys[key.Text()]; !exists {
+						result[name] = append(result[name], key)
+						setOfKeys[key.Text()] = key
+					}
 				}
-			}
-			if len(filteredKeys) > 0 {
-				result[name] = filteredKeys
 			}
 		}
 	}
@@ -78,24 +77,21 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 	// Each logical key always gets its own entry (so "message" and "body.message" both
 	// resolve to the IntrinsicField independently). The physical name is registered
 	// only once to avoid duplicate entries in that slot.
-	injectedPhysKeys := make(map[string]bool)
 	for key, field := range m.StaticFields {
 		if !matchesName(fieldKeySelector, key) {
 			continue
 		}
-		fieldCopy := field
 
-		// Always register the logical key (override any KeysMap entries).
-		result[key] = []*telemetrytypes.TelemetryFieldKey{&fieldCopy}
-
-		// Register by physical name only once when it differs from the logical key.
-		if key != fieldCopy.Name {
-			physKey := fieldCopy.Name + ";" + fieldCopy.FieldContext.StringValue() + ";" + fieldCopy.FieldDataType.StringValue()
-			if !injectedPhysKeys[physKey] {
-				injectedPhysKeys[physKey] = true
-				result[fieldCopy.Name] = append(result[fieldCopy.Name], &fieldCopy)
-			}
+		// Register by physical name only once and only when it differs from the
+		// logical key — if they are the same, the always-register below covers it.
+		if _, exists := setOfKeys[field.Text()]; !exists {
+			result[field.Text()] = append(result[field.Text()], &field)
+			setOfKeys[field.Text()] = &field
 		}
+		// Always register the logical key so that every alias in IntrinsicFields
+		// (e.g. "message", "body_v2.message") independently resolves to the same
+		// physical field in the keys map.
+		result[key] = append(result[key], &field)
 	}
 
 	return result, true, nil
