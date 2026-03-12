@@ -2,6 +2,7 @@
 Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
+import logging
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List, Optional, Union
@@ -541,42 +542,6 @@ def _assert_series_endpoint_labels(
         )
 
 
-def _assert_histogram_endpoint_count_p90(
-    count_values: dict, p90_values: dict
-) -> None:
-    # /health (cumulative, service=api): 59 points, increase starts at 11/min → 69/min
-    if "/health" in count_values:
-        vals = count_values["/health"]
-        assert vals[0]["value"] == 11, f"Expected /health count first=11, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 69, f"Expected /health count last=69, got {vals[-1]['value']}"
-    if "/health" in p90_values:
-        vals = p90_values["/health"]
-        assert vals[0]["value"] == 6400, f"Expected /health p90 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /health p90 last=991.304, got {vals[-1]['value']}"
-
-    # /orders (cumulative, service=api): same distribution as /health
-    if "/orders" in count_values:
-        vals = count_values["/orders"]
-        assert vals[0]["value"] == 11, f"Expected /orders count first=11, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 69, f"Expected /orders count last=69, got {vals[-1]['value']}"
-    if "/orders" in p90_values:
-        vals = p90_values["/orders"]
-        assert vals[0]["value"] == 6400, f"Expected /orders p90 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /orders p90 last=991.304, got {vals[-1]['value']}"
-
-    # /checkout (delta, service=web): 60 points, zeroth=12345 (raw delta), then 11/min → 69/min
-    if "/checkout" in count_values:
-        vals = count_values["/checkout"]
-        assert vals[0]["value"] == 12345, f"Expected /checkout count zeroth=12345, got {vals[0]['value']}"
-        assert vals[1]["value"] == 11, f"Expected /checkout count first=11, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 69, f"Expected /checkout count last=69, got {vals[-1]['value']}"
-    if "/checkout" in p90_values:
-        vals = p90_values["/checkout"]
-        assert vals[0]["value"] == 900, f"Expected /checkout p90 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 6400, f"Expected /checkout p90 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /checkout p90 last=991.304, got {vals[-1]['value']}"
-
-
 @pytest.mark.parametrize(
     "order_suffix,order_by,limit,expected_count,expected_endpoints",
     [
@@ -585,7 +550,7 @@ def _assert_histogram_endpoint_count_p90(
             None,
             None,
             3,
-            {"/checkout", "/health", "/orders"},
+            ["/checkout", "/health", "/orders"],
         ),
         (
             "asc",
@@ -617,7 +582,7 @@ def _assert_histogram_endpoint_count_p90(
         ),
     ],
 )
-def test_histogram_group_by_endpoint(
+def test_histogram_count_group_by_endpoint(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
@@ -631,7 +596,7 @@ def test_histogram_group_by_endpoint(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_histogram_groupby_{order_suffix}"
+    metric_name = f"test_histogram_count_groupby_{order_suffix}"
 
     metrics = Metrics.load_from_file(
         FILE,
@@ -651,21 +616,22 @@ def test_histogram_group_by_endpoint(
         order_by=order_by,
         limit=limit,
     )
-    query_p90 = build_builder_query(
-        "B",
-        metric_name,
-        "doesnotreallymatter",
-        "p90",
-        group_by=["endpoint"],
-        order_by=order_by,
-        limit=limit,
-    )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query_count, query_p90])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query_count])
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
     count_all_series = get_all_series(data, "A")
+
+    logger = logging.getLogger(__name__)
+    for series in count_all_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        values = series.get("values", [])
+        if values:
+            avg = sum(v["value"] for v in values) / len(values)
+        else:
+            avg = 0.0
+        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
 
     assert (
         len(count_all_series) == expected_count
@@ -680,7 +646,120 @@ def test_histogram_group_by_endpoint(
             series.get("values", []), key=lambda x: x["timestamp"]
         )
 
-    p90_series = get_all_series(data, "B")
+    for endpoint, values in count_values.items():
+        for v in values:
+            assert v["value"] >= 0, f"Count for {endpoint} should not be negative: {v['value']}"
+
+    # /health (cumulative, service=api): 59 points, increase starts at 11/min → 69/min
+    if "/health" in count_values:
+        vals = count_values["/health"]
+        assert vals[0]["value"] == 11, f"Expected /health count first=11, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 69, f"Expected /health count last=69, got {vals[-1]['value']}"
+
+    # /orders (cumulative, service=api): same distribution as /health
+    if "/orders" in count_values:
+        vals = count_values["/orders"]
+        assert vals[0]["value"] == 11, f"Expected /orders count first=11, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 69, f"Expected /orders count last=69, got {vals[-1]['value']}"
+
+    # /checkout (delta, service=web): 60 points, zeroth=12345 (raw delta), then 11/min → 69/min
+    if "/checkout" in count_values:
+        vals = count_values["/checkout"]
+        assert vals[0]["value"] == 12345, f"Expected /checkout count zeroth=12345, got {vals[0]['value']}"
+        assert vals[1]["value"] == 11, f"Expected /checkout count first=11, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 69, f"Expected /checkout count last=69, got {vals[-1]['value']}"
+
+
+@pytest.mark.parametrize(
+    "order_suffix,order_by,limit,expected_count,expected_endpoints",
+    [
+        (
+            "no_order",
+            None,
+            None,
+            3,
+            [ "/health", "/orders","/checkout"],
+        ),
+        (
+            "asc",
+            [build_order_by("endpoint", "asc")],
+            None,
+            3,
+            ["/checkout", "/health", "/orders"],
+        ),
+        (
+            "asc_lim2",
+            [build_order_by("endpoint", "asc")],
+            2,
+            2,
+            ["/checkout", "/health"],
+        ),
+        (
+            "desc",
+            [build_order_by("endpoint", "desc")],
+            None,
+            3,
+            ["/orders", "/health", "/checkout"],
+        ),
+        (
+            "desc_lim2",
+            [build_order_by("endpoint", "desc")],
+            2,
+            2,
+            ["/orders", "/health"],
+        ),
+    ],
+)
+def test_histogram_percentile_group_by_endpoint(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    order_suffix: str,
+    order_by: Optional[List],
+    limit: Optional[int],
+    expected_count: int,
+    expected_endpoints: Union[set, List[str]],
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_histogram_p90_groupby_{order_suffix}"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query_p90 = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        "p90",
+        group_by=["endpoint"],
+        order_by=order_by,
+        limit=limit,
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query_p90])
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    p90_series = get_all_series(data, "A")
+
+    logger = logging.getLogger(__name__)
+    for series in p90_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        values = series.get("values", [])
+        if values:
+            avg = sum(v["value"] for v in values) / len(values)
+        else:
+            avg = 0.0
+        logger.warning("Endpoint: %s, Average rate: %s", endpoint, avg)
+
     assert (
         len(p90_series) == expected_count
     ), f"Expected {expected_count} p90 series, got {len(p90_series)}"
@@ -694,12 +773,25 @@ def test_histogram_group_by_endpoint(
             series.get("values", []), key=lambda x: x["timestamp"]
         )
 
-    # values should be non-negative
-    for endpoint, values in count_values.items():
-        for v in values:
-            assert v["value"] >= 0, f"Count for {endpoint} should not be negative: {v['value']}"
     for endpoint, values in p90_values.items():
         for v in values:
             assert v["value"] >= 0, f"p90 for {endpoint} should not be negative: {v['value']}"
 
-    _assert_histogram_endpoint_count_p90(count_values, p90_values)
+    # /health (cumulative, service=api)
+    if "/health" in p90_values:
+        vals = p90_values["/health"]
+        assert vals[0]["value"] == 6400, f"Expected /health p90 first=6400, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 991.304, f"Expected /health p90 last=991.304, got {vals[-1]['value']}"
+
+    # /orders (cumulative, service=api): same distribution as /health
+    if "/orders" in p90_values:
+        vals = p90_values["/orders"]
+        assert vals[0]["value"] == 6400, f"Expected /orders p90 first=6400, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 991.304, f"Expected /orders p90 last=991.304, got {vals[-1]['value']}"
+
+    # /checkout (delta, service=web): 60 points
+    if "/checkout" in p90_values:
+        vals = p90_values["/checkout"]
+        assert vals[0]["value"] == 900, f"Expected /checkout p90 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 6400, f"Expected /checkout p90 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 991.304, f"Expected /checkout p90 last=991.304, got {vals[-1]['value']}"
