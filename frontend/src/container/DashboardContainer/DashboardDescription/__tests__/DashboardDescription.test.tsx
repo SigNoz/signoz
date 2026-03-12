@@ -199,8 +199,6 @@ describe('Dashboard landing page actions header tests', () => {
 			setLayouts: jest.fn(),
 			setSelectedDashboard: jest.fn(),
 			updatedTimeRef: { current: null },
-			toScrollWidgetId: '',
-			setToScrollWidgetId: jest.fn(),
 			updateLocalStorageDashboardVariables: jest.fn(),
 			dashboardQueryRangeCalled: false,
 			setDashboardQueryRangeCalled: jest.fn(),

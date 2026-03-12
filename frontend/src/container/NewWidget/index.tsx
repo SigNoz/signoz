@@ -34,6 +34,7 @@ import { cloneDeep, defaultTo, isEmpty, isUndefined } from 'lodash-es';
 import { Check, X } from 'lucide-react';
 import { DashboardWidgetPageParams } from 'pages/DashboardWidget';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 import {
 	clearSelectedRowWidgetId,
 	getSelectedRowWidgetId,
@@ -86,10 +87,12 @@ function NewWidget({
 	enableDrillDown = false,
 }: NewWidgetProps): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
+	const setToScrollWidgetId = useScrollToWidgetIdStore(
+		(s) => s.setToScrollWidgetId,
+	);
 	const {
 		selectedDashboard,
 		setSelectedDashboard,
-		setToScrollWidgetId,
 		columnWidths,
 	} = useDashboard();
 

@@ -1,5 +1,5 @@
 import { RefObject, useEffect } from 'react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useScrollToWidgetIdStore } from 'providers/Dashboard/helpers/scrollToWidgetIdHelper';
 
 /**
  * Scrolls the given widget container into view when the dashboard
@@ -11,7 +11,10 @@ export function useScrollWidgetIntoView<T extends HTMLElement>(
 	widgetId: string,
 	widgetContainerRef: RefObject<T>,
 ): void {
-	const { toScrollWidgetId, setToScrollWidgetId } = useDashboard();
+	const toScrollWidgetId = useScrollToWidgetIdStore((s) => s.toScrollWidgetId);
+	const setToScrollWidgetId = useScrollToWidgetIdStore(
+		(s) => s.setToScrollWidgetId,
+	);
 
 	useEffect(() => {
 		if (toScrollWidgetId === widgetId) {

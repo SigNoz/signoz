@@ -75,8 +75,6 @@ export const DashboardContext = createContext<IDashboardContext>({
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
-	toScrollWidgetId: '',
-	setToScrollWidgetId: () => {},
 	updateLocalStorageDashboardVariables: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
@@ -94,8 +92,6 @@ export function DashboardProvider({
 	children,
 }: PropsWithChildren): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
-
-	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
 
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
 
@@ -443,7 +439,6 @@ export function DashboardProvider({
 
 	const value: IDashboardContext = useMemo(
 		() => ({
-			toScrollWidgetId,
 			isDashboardSliderOpen,
 			isDashboardLocked,
 			handleToggleDashboardSlider,
@@ -457,7 +452,6 @@ export function DashboardProvider({
 			setPanelMap,
 			setSelectedDashboard,
 			updatedTimeRef,
-			setToScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
@@ -474,7 +468,6 @@ export function DashboardProvider({
 			dashboardId,
 			layouts,
 			panelMap,
-			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			currentDashboard,
 			dashboardQueryRangeCalled,
