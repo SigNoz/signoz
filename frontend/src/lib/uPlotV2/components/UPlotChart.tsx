@@ -7,6 +7,7 @@ import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFall
 import uPlot, { AlignedData, Options } from 'uplot';
 
 import { usePlotContext } from '../context/PlotContext';
+import { applySpanGapsToAlignedData } from '../utils/dataUtils';
 import { UPlotChartProps } from './types';
 
 /**
@@ -84,7 +85,13 @@ export default function UPlotChart({
 		} as Options;
 
 		// Create new plot instance
-		const plot = new uPlot(plotConfig, data as AlignedData, containerRef.current);
+		const seriesSpanGaps = config.getSeriesSpanGapsOptions();
+		const preparedData =
+			seriesSpanGaps.length > 0
+				? applySpanGapsToAlignedData(data as AlignedData, seriesSpanGaps)
+				: (data as AlignedData);
+
+		const plot = new uPlot(plotConfig, preparedData, containerRef.current);
 
 		if (plotRef) {
 			plotRef(plot);
@@ -162,7 +169,13 @@ export default function UPlotChart({
 		}
 		// Update data if only data changed
 		else if (!sameData(prevProps, currentProps) && plotInstanceRef.current) {
-			plotInstanceRef.current.setData(data as AlignedData);
+			const seriesSpanGaps = config.getSeriesSpanGapsOptions?.() ?? [];
+			const preparedData =
+				seriesSpanGaps.length > 0
+					? applySpanGapsToAlignedData(data as AlignedData, seriesSpanGaps)
+					: (data as AlignedData);
+
+			plotInstanceRef.current.setData(preparedData as AlignedData);
 		}
 
 		prevPropsRef.current = currentProps;

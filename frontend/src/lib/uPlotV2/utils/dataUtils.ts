@@ -1,3 +1,5 @@
+import { nullToUndefThreshold } from './nullHandling';
+
 /**
  * Checks if a value is invalid for plotting
  *
@@ -50,4 +52,53 @@ export function normalizePlotValue(
 
 	// Already a valid number
 	return value as number;
+}
+
+export interface SeriesSpanGapsOption {
+	spanGaps?: boolean | number;
+}
+
+/**
+ * Apply per-series spanGaps (boolean | threshold) handling to an aligned dataset.
+ *
+ * The input data is expected to be of the form:
+ * [xValues, series1Values, series2Values, ...]
+ */
+export function applySpanGapsToAlignedData(
+	data: uPlot.AlignedData,
+	seriesOptions: SeriesSpanGapsOption[],
+): uPlot.AlignedData {
+	const [xValues, ...seriesValues] = data;
+
+	if (!Array.isArray(xValues) || seriesValues.length === 0) {
+		return data;
+	}
+
+	const transformedSeries = seriesValues.map((ys, idx) => {
+		const { spanGaps } = seriesOptions[idx] || {};
+
+		if (spanGaps === undefined) {
+			return ys;
+		}
+
+		if (typeof spanGaps === 'boolean') {
+			if (!spanGaps) {
+				return ys;
+			}
+
+			// spanGaps === true -> treat nulls as soft gaps (convert to undefined)
+			return (ys as Array<number | null | undefined>).map((v) =>
+				v === null ? undefined : v,
+			) as uPlot.AlignedData[0];
+		}
+
+		// Numeric spanGaps: threshold-based null handling
+		return nullToUndefThreshold(
+			xValues as uPlot.AlignedData[0],
+			ys as Array<number | null | undefined>,
+			spanGaps,
+		);
+	});
+
+	return [xValues, ...transformedSeries] as uPlot.AlignedData;
 }

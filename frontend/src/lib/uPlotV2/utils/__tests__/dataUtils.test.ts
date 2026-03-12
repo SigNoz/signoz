@@ -1,4 +1,11 @@
-import { isInvalidPlotValue, normalizePlotValue } from '../dataUtils';
+import uPlot from 'uplot';
+
+import {
+	applySpanGapsToAlignedData,
+	isInvalidPlotValue,
+	normalizePlotValue,
+	SeriesSpanGapsOption,
+} from '../dataUtils';
 
 describe('dataUtils', () => {
 	describe('isInvalidPlotValue', () => {
@@ -57,6 +64,58 @@ describe('dataUtils', () => {
 			expect(normalizePlotValue(0)).toBe(0);
 			expect(normalizePlotValue(123)).toBe(123);
 			expect(normalizePlotValue(42.5)).toBe(42.5);
+		});
+	});
+
+	describe('applyspanGapsToAlignedData', () => {
+		const xs: uPlot.AlignedData[0] = [0, 10, 20, 30];
+
+		it('returns original data when there are no series', () => {
+			const data: uPlot.AlignedData = [xs];
+			const result = applySpanGapsToAlignedData(data, []);
+
+			expect(result).toBe(data);
+		});
+
+		it('leaves data unchanged when spanGaps is undefined', () => {
+			const ys = [1, null, 2, null];
+			const data: uPlot.AlignedData = [xs, ys];
+			const options: SeriesSpanGapsOption[] = [{}];
+
+			const result = applySpanGapsToAlignedData(data, options);
+
+			expect(result[1]).toEqual(ys);
+		});
+
+		it('converts nulls to undefined when spanGaps is true', () => {
+			const ys = [1, null, 2, null];
+			const data: uPlot.AlignedData = [xs, ys];
+			const options: SeriesSpanGapsOption[] = [{ spanGaps: true }];
+
+			const result = applySpanGapsToAlignedData(data, options);
+
+			expect(result[1]).toEqual([1, undefined, 2, undefined]);
+		});
+
+		it('leaves data unchanged when spanGaps is false', () => {
+			const ys = [1, null, 2, null];
+			const data: uPlot.AlignedData = [xs, ys];
+			const options: SeriesSpanGapsOption[] = [{ spanGaps: false }];
+
+			const result = applySpanGapsToAlignedData(data, options);
+
+			expect(result[1]).toEqual(ys);
+		});
+
+		it('runs threshold-based null handling when spanGaps is numeric', () => {
+			const ys = [1, null, null, 2];
+			const data: uPlot.AlignedData = [xs, ys];
+			const options: SeriesSpanGapsOption[] = [{ spanGaps: 25 }];
+
+			const result = applySpanGapsToAlignedData(data, options);
+
+			// gap between x=0 and x=30 is 30, so with threshold 25 it should stay null
+			expect(result[1]).toEqual([1, null, null, 2]);
 		});
 	});
 });
