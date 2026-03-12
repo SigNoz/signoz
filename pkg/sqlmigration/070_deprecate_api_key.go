@@ -106,6 +106,22 @@ func (migration *deprecateAPIKey) Register(migrations *migrate.Migrations) error
 }
 
 func (migration *deprecateAPIKey) Up(ctx context.Context, db *bun.DB) error {
+	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("factor_api_key"))
+	if err != nil {
+		return err
+	}
+
+	hasOldSchema := false
+	for _, col := range table.Columns {
+		if col.Name == "user_id" {
+			hasOldSchema = true
+			break
+		}
+	}
+	if !hasOldSchema {
+		return nil
+	}
+
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
