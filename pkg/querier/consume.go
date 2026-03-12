@@ -69,6 +69,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		key string // deterministic join of label values
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
+	var keyOrder []sKey // preserves ClickHouse row-arrival order
 
 	stepMs := uint64(step.Duration.Milliseconds())
 
@@ -219,6 +220,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			if !ok {
 				series = &qbtypes.TimeSeries{Labels: lblObjs}
 				seriesMap[key] = series
+				keyOrder = append(keyOrder, key)
 			}
 			series.Values = append(series.Values, &qbtypes.TimeSeriesValue{
 				Timestamp: ts,
@@ -250,8 +252,8 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			Alias: "__result_" + strconv.Itoa(i),
 		}
 	}
-	for k, s := range seriesMap {
-		buckets[k.agg].Series = append(buckets[k.agg].Series, s)
+	for _, k := range keyOrder {
+		buckets[k.agg].Series = append(buckets[k.agg].Series, seriesMap[k])
 	}
 
 	var nonEmpty []*qbtypes.AggregationBucket
