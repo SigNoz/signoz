@@ -36,7 +36,7 @@ const checkStackSeriesState = (
 	expect(getByTextUtil(container, 'Stack series')).toBeInTheDocument();
 
 	const stackSeriesSection = container.querySelector(
-		'section > .stack-chart',
+		'.stack-chart',
 	) as HTMLElement;
 	expect(stackSeriesSection).toBeInTheDocument();
 
@@ -326,7 +326,7 @@ describe('Stacking bar in new panel', () => {
 		expect(getByText('Stack series')).toBeInTheDocument();
 
 		// Verify section exists
-		const section = container.querySelector('section > .stack-chart');
+		const section = container.querySelector('.stack-chart');
 		expect(section).toBeInTheDocument();
 
 		// Verify switch is present and enabled (ant-switch-checked)
