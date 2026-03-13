@@ -29,12 +29,7 @@ type MockMetadataStore struct {
 }
 
 // NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps.
-// Pass the signal-specific intrinsic fields (e.g. telemetrylogs.IntrinsicFields) so the mock
-// mirrors what the real metadata store does when injecting those definitions into key results.
-func NewMockMetadataStore(intrinsicFields map[string]telemetrytypes.TelemetryFieldKey) *MockMetadataStore {
-	if intrinsicFields == nil {
-		intrinsicFields = make(map[string]telemetrytypes.TelemetryFieldKey)
-	}
+func NewMockMetadataStore() *MockMetadataStore {
 	return &MockMetadataStore{
 		KeysMap:            make(map[string][]*telemetrytypes.TelemetryFieldKey),
 		RelatedValuesMap:   make(map[string][]string),
@@ -44,7 +39,7 @@ func NewMockMetadataStore(intrinsicFields map[string]telemetrytypes.TelemetryFie
 		PromotedPathsMap:   make(map[string]bool),
 		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
 		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
-		StaticFields:       intrinsicFields,
+		StaticFields:       make(map[string]telemetrytypes.TelemetryFieldKey),
 	}
 }
 
@@ -95,6 +90,13 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 	}
 
 	return result, true, nil
+}
+
+// SetStaticFields sets the static fields for the mock metadata store.
+// Pass the signal-specific intrinsic fields (e.g. telemetrylogs.IntrinsicFields) so the mock
+// mirrors what the real metadata store does when injecting those definitions into key results.
+func (m *MockMetadataStore) SetStaticFields(intrinsicFields map[string]telemetrytypes.TelemetryFieldKey) {
+	m.StaticFields = intrinsicFields
 }
 
 // GetKeysMulti applies multiple selectors and returns combined results

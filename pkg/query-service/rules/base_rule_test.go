@@ -658,7 +658,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 			// Setup mock metadata store
-			mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
+			mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
 			// Create query parser
 			queryParser := queryparser.New(settings)

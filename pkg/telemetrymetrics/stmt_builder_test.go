@@ -221,7 +221,7 @@ func TestStatementBuilder(t *testing.T) {
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	keys, err := telemetrytypestest.LoadFieldKeysFromJSON("testdata/keys_map.json")
 	if err != nil {
 		t.Fatalf("failed to load field keys: %v", err)

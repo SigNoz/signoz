@@ -19,7 +19,7 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
-	mockMetadataStore := telemetrytypestest.NewMockMetadataStore(nil)
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	mockMetadataStore.KeysMap["trace_id"] = []*telemetrytypes.TelemetryFieldKey{{
