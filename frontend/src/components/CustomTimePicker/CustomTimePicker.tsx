@@ -297,7 +297,11 @@ function CustomTimePicker({
 		resetErrorStatus();
 	};
 
-	const handleInputPressEnter = (): void => {
+	const handleInputPressEnter = (
+		event?: React.KeyboardEvent<HTMLInputElement>,
+	): void => {
+		event?.preventDefault();
+		event?.stopPropagation();
 		// check if the entered time is in the format of 1m, 2h, 3d, 4w
 		const isTimeDurationShortHandFormat = /^(\d+)([mhdw])$/.test(inputValue);
 
