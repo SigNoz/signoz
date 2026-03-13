@@ -216,6 +216,7 @@ function KeysTab({
 					onKeyDown: (e: React.KeyboardEvent) => void;
 					role: string;
 					tabIndex: number;
+					'aria-label': string;
 				} => ({
 					onClick: (): void => {
 						if (!isDisabled) {
@@ -232,6 +233,7 @@ function KeysTab({
 					},
 					role: 'button',
 					tabIndex: 0,
+					'aria-label': `Edit key ${record.name || 'options'}`,
 				})}
 			/>
 

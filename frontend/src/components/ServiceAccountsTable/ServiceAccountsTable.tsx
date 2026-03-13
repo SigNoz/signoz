@@ -177,6 +177,7 @@ function ServiceAccountsTable({
 					style?: React.CSSProperties;
 					tabIndex?: number;
 					role?: string;
+					'aria-label'?: string;
 				} => {
 					if (!onRowClick) {
 						return {};
@@ -192,6 +193,8 @@ function ServiceAccountsTable({
 						},
 						style: { cursor: 'pointer' },
 						tabIndex: 0,
+						role: 'button',
+						'aria-label': `View service account ${record.name || record.email}`,
 					};
 				}}
 			/>

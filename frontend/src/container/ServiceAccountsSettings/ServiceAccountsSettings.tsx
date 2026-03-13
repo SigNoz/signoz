@@ -7,9 +7,12 @@ import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
 import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { toISOString } from 'utils/app';
+import { toAPIError } from 'utils/errorUtils';
 
 import { FilterMode, ServiceAccountRow, ServiceAccountStatus } from './utils';
 
@@ -35,6 +38,8 @@ function ServiceAccountsSettings(): JSX.Element {
 	const {
 		data: serviceAccountsData,
 		isLoading,
+		isError,
+		error,
 		refetch,
 	} = useListServiceAccounts();
 
@@ -46,8 +51,8 @@ function ServiceAccountsSettings(): JSX.Element {
 				email: sa.email,
 				roles: sa.roles,
 				status: sa.status,
-				createdAt: sa.createdAt ? String(sa.createdAt) : null,
-				updatedAt: sa.updatedAt ? String(sa.updatedAt) : null,
+				createdAt: toISOString(sa.createdAt),
+				updatedAt: toISOString(sa.updatedAt),
 			})),
 		[serviceAccountsData],
 	);
@@ -273,16 +278,25 @@ function ServiceAccountsSettings(): JSX.Element {
 				</div>
 			</div>
 
-			<ServiceAccountsTable
-				data={paginatedAccounts}
-				loading={isLoading}
-				total={filteredAccounts.length}
-				currentPage={currentPage}
-				pageSize={PAGE_SIZE}
-				searchQuery={searchQuery}
-				onPageChange={setPage}
-				onRowClick={handleRowClick}
-			/>
+			{isError ? (
+				<ErrorInPlace
+					error={toAPIError(
+						error,
+						'An unexpected error occurred while fetching service accounts.',
+					)}
+				/>
+			) : (
+				<ServiceAccountsTable
+					data={paginatedAccounts}
+					loading={isLoading}
+					total={filteredAccounts.length}
+					currentPage={currentPage}
+					pageSize={PAGE_SIZE}
+					searchQuery={searchQuery}
+					onPageChange={setPage}
+					onRowClick={handleRowClick}
+				/>
+			)}
 
 			<CreateServiceAccountModal
 				open={isCreateModalOpen}
