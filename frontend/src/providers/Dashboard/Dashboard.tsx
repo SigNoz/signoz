@@ -19,7 +19,6 @@ import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import dayjs, { Dayjs } from 'dayjs';
-import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
@@ -134,9 +133,6 @@ export function DashboardProvider({
 	const {
 		currentDashboard,
 		updateLocalStorageDashboardVariables,
-	} = useDashboardVariablesFromLocalStorage(dashboardId);
-
-	const {
 		getUrlVariables,
 		updateUrlVariable,
 		transformDashboardVariables,
