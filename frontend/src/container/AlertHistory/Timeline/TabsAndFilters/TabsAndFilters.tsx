@@ -63,6 +63,10 @@ function TimelineFilters(): JSX.Element {
 			label: 'Fired',
 		},
 		{
+			value: TimelineFilter.RECOVERING,
+			label: 'Recovering',
+		},
+		{
 			value: TimelineFilter.RESOLVED,
 			label: 'Resolved',
 		},

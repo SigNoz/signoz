@@ -12,4 +12,9 @@ export enum TimelineFilter {
 	ALL = 'ALL',
 	FIRED = 'FIRED',
 	RESOLVED = 'RESOLVED',
+	RECOVERING = 'RECOVERING',
 }
+
+export type TimeLineFilterState = `${TimelineFilter}`;
+
+export type FilterStateReturn = 'normal' | 'firing' | 'recovering';

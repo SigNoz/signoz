@@ -9,6 +9,7 @@ export interface BasicThreshold {
 	op: string;
 	channels: string[];
 	targetUnit: string;
+	recoveryTarget?: number;
 }
 
 export interface PostableAlertRuleV2 {
