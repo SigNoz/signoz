@@ -178,13 +178,14 @@ export function DashboardProvider({
 			},
 
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
-				// if the url variable is not set for any variable, set it to the default value
-				const variables = data?.data?.data?.variables;
+				const updatedDashboardData = transformDashboardVariables(data?.data);
+
+				// initialize URL variables after dashboard state is set to avoid race conditions
+				const variables = updatedDashboardData?.data?.variables;
 				if (variables) {
 					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 				}
 
-				const updatedDashboardData = transformDashboardVariables(data?.data);
 				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
