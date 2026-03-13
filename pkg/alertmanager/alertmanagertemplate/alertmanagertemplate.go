@@ -12,6 +12,22 @@ import (
 	"github.com/prometheus/common/model"
 )
 
+// AlertTemplater expands alert notification templates.
+type AlertTemplater interface {
+	ExpandTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
+}
+
+// alertTemplater is the private implementation of AlertTemplater.
+type alertTemplater struct {
+	tmpl   *template.Template
+	logger *slog.Logger
+}
+
+// New returns a new AlertTemplater with the given template and logger.
+func New(tmpl *template.Template, logger *slog.Logger) AlertTemplater {
+	return &alertTemplater{tmpl: tmpl, logger: logger}
+}
+
 // ExtractTemplatesFromAnnotations computes the common annotations across all alerts
 // and returns the values for the title_template and body_template annotation keys.
 func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, bodyTemplate string) {
@@ -23,122 +39,128 @@ func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, body
 	return commonAnnotations[ruletypes.AnnotationTitleTemplate], commonAnnotations[ruletypes.AnnotationBodyTemplate]
 }
 
-// ExpandAlertTemplates expands the title and body templates from input
+// ExpandTemplates expands the title and body templates from input
 // against the provided alerts and returns the expanded templates.
-func ExpandAlertTemplates(
+func (at *alertTemplater) ExpandTemplates(
 	ctx context.Context,
-	tmpl *template.Template,
 	input TemplateInput,
 	alerts []*types.Alert,
-	logger *slog.Logger,
 ) (*ExpandedTemplates, error) {
-	ntd := buildNotificationTemplateData(ctx, tmpl, alerts, logger)
+	ntd := at.buildNotificationTemplateData(ctx, alerts)
 
-	title, err := expandTitle(ctx, tmpl, input, alerts, ntd, logger)
+	title, titleMissingVars, err := at.expandTitle(ctx, input, alerts, ntd)
 	if err != nil {
 		return nil, err
 	}
 
-	body, err := expandBody(ctx, tmpl, input, alerts, ntd, logger)
+	body, bodyMissingVars, err := at.expandBody(ctx, input, alerts, ntd)
 	if err != nil {
 		return nil, err
 	}
 
-	return &ExpandedTemplates{Title: title, Body: body}, nil
+	missingVars := make(map[string]bool)
+	for k := range titleMissingVars {
+		missingVars[k] = true
+	}
+	for k := range bodyMissingVars {
+		missingVars[k] = true
+	}
+
+	return &ExpandedTemplates{Title: title, Body: body, MissingVars: missingVars}, nil
 }
 
 // expandTitle expands the title template. Falls back to the default if the custom template
 // result in empty string.
-func expandTitle(
+func (at *alertTemplater) expandTitle(
 	ctx context.Context,
-	tmpl *template.Template,
 	input TemplateInput,
 	alerts []*types.Alert,
 	ntd *NotificationTemplateData,
-	logger *slog.Logger,
-) (string, error) {
+) (string, map[string]bool, error) {
 	if input.TitleTemplate != "" {
 		processRes, err := PreProcessTemplateAndData(input.TitleTemplate, ntd)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
-		result, err := tmpl.ExecuteTextString(processRes.Template, processRes.Data)
+		result, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 		if err != nil {
-			return "", err
+			return "", nil, err
 		}
 		if strings.TrimSpace(result) != "" {
-			return result, nil
+			return result, processRes.UnknownVars, nil
 		}
 	}
 
 	// Fall back to the notifier's default title template using standard template.Data.
 	if input.DefaultTitleTemplate == "" {
-		return "", nil
+		return "", nil, nil
 	}
-	data := notify.GetTemplateData(ctx, tmpl, alerts, logger)
-	return tmpl.ExecuteTextString(input.DefaultTitleTemplate, data)
+	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
+	result, err := at.tmpl.ExecuteTextString(input.DefaultTitleTemplate, data)
+	return result, nil, err
 }
 
 // expandBody expands the body template once per alert, concatenates the results
 // and falls back to the default if the custom template result in empty string.
-func expandBody(
+func (at *alertTemplater) expandBody(
 	ctx context.Context,
-	tmpl *template.Template,
 	input TemplateInput,
 	alerts []*types.Alert,
 	ntd *NotificationTemplateData,
-	logger *slog.Logger,
-) (string, error) {
+) (string, map[string]bool, error) {
 	if input.BodyTemplate != "" {
 		var parts []string
+		missingVars := make(map[string]bool)
 		for i := range ntd.Alerts {
 			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, ntd.Alerts[i])
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
-			part, err := tmpl.ExecuteTextString(processRes.Template, processRes.Data)
+			for k := range processRes.UnknownVars {
+				missingVars[k] = true
+			}
+			part, err := at.tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 			if err != nil {
-				return "", err
+				return "", nil, err
 			}
 			parts = append(parts, part)
 		}
 		result := strings.Join(parts, "<br><br>") // markdown uses html for line breaks
 		if strings.TrimSpace(result) != "" {
-			return result, nil
+			return result, missingVars, nil
 		}
 	}
 
 	// Fall back to the notifier's default body template using standard template.Data.
 	if input.DefaultBodyTemplate == "" {
-		return "", nil
+		return "", nil, nil
 	}
-	data := notify.GetTemplateData(ctx, tmpl, alerts, logger)
-	return tmpl.ExecuteTextString(input.DefaultBodyTemplate, data)
+	data := notify.GetTemplateData(ctx, at.tmpl, alerts, at.logger)
+	result, err := at.tmpl.ExecuteTextString(input.DefaultBodyTemplate, data)
+	return result, nil, err
 }
 
 // buildNotificationTemplateData derives a NotificationTemplateData from
 // the context, template, and the raw alerts.
-func buildNotificationTemplateData(
+func (at *alertTemplater) buildNotificationTemplateData(
 	ctx context.Context,
-	tmpl *template.Template,
 	alerts []*types.Alert,
-	logger *slog.Logger,
 ) *NotificationTemplateData {
 	// extract the required data from the context
 	receiver, ok := notify.ReceiverName(ctx)
 	if !ok {
-		logger.WarnContext(ctx, "missing receiver name in context")
+		at.logger.WarnContext(ctx, "missing receiver name in context")
 	}
 
 	groupLabels, ok := notify.GroupLabels(ctx)
 	if !ok {
-		logger.WarnContext(ctx, "missing group labels in context")
+		at.logger.WarnContext(ctx, "missing group labels in context")
 	}
 
 	// extract the external URL from the template
 	externalURL := ""
-	if tmpl.ExternalURL != nil {
-		externalURL = tmpl.ExternalURL.String()
+	if at.tmpl.ExternalURL != nil {
+		externalURL = at.tmpl.ExternalURL.String()
 	}
 
 	commonAnnotations := computeCommonAnnotations(alerts)

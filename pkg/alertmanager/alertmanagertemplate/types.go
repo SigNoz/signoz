@@ -16,10 +16,11 @@ type TemplateInput struct {
 	DefaultBodyTemplate  string
 }
 
-// ExpandedTemplates is the result of ExpandAlertTemplates.
+// ExpandedTemplates is the result of ExpandTemplates.
 type ExpandedTemplates struct {
-	Title string
-	Body  string
+	Title       string
+	Body        string
+	MissingVars map[string]bool // union of unknown vars from title + body templates
 }
 
 // AlertData holds per-alert data used when expanding body templates

@@ -12,20 +12,20 @@ import (
 	"github.com/stretchr/testify/require"
 
 	"github.com/prometheus/alertmanager/notify"
-	"github.com/prometheus/alertmanager/template"
 	"github.com/prometheus/alertmanager/types"
 )
 
-// testSetup returns template, context, and logger for tests.
-func testSetup(t *testing.T) (*template.Template, context.Context, *slog.Logger) {
+// testSetup returns an AlertTemplater and a context pre-populated with group key,
+// receiver name, and group labels for use in tests.
+func testSetup(t *testing.T) (AlertTemplater, context.Context) {
 	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()
 	ctx = notify.WithGroupKey(ctx, "test-group")
 	ctx = notify.WithReceiverName(ctx, "slack")
-	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "HighCPU", "severity": "critical"})
+	ctx = notify.WithGroupLabels(ctx, model.LabelSet{"alertname": "TestAlert", "severity": "critical"})
 	logger := slog.New(slog.DiscardHandler)
-	return tmpl, ctx, logger
+	return New(tmpl, logger), ctx
 }
 
 // firingAlert returns a firing alert with the given labels/annotations.
@@ -49,98 +49,227 @@ func firingAlert(labels, annotations map[string]string) *types.Alert {
 	}
 }
 
-// TestExpandAlertTemplates_BothCustomTitleAndBody verifies that when both custom
-// title and body templates are provided, both expand correctly (main happy path).
-func TestExpandAlertTemplates_BothCustomTitleAndBody(t *testing.T) {
-	tmpl, ctx, logger := testSetup(t)
-	alerts := []*types.Alert{
-		firingAlert(
-			map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelRuleId: "rule-1", ruletypes.LabelSeverityName: "critical"},
-			nil,
-		),
+// resolvedAlert returns a resolved alert (EndsAt in the past) with the given labels/annotations.
+func resolvedAlert(labels, annotations map[string]string) *types.Alert {
+	ls := model.LabelSet{}
+	for k, v := range labels {
+		ls[model.LabelName(k)] = model.LabelValue(v)
 	}
-	input := TemplateInput{
-		TitleTemplate:        "[{{$status}}] $rule_name",
-		BodyTemplate:         `Alert {{$rule_name}} ({{$status}})`,
-		DefaultTitleTemplate: "{{ .CommonLabels.rule_name }}",
-		DefaultBodyTemplate:  "{{ .status }}",
+	ann := model.LabelSet{}
+	for k, v := range annotations {
+		ann[model.LabelName(k)] = model.LabelValue(v)
 	}
-	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
-	require.NoError(t, err)
-	require.Equal(t, "[firing] HighCPU", got.Title)
-	require.Equal(t, "Alert HighCPU (firing)", got.Body)
+	now := time.Now()
+	return &types.Alert{
+		Alert: model.Alert{
+			Labels:      ls,
+			Annotations: ann,
+			StartsAt:    now.Add(-2 * time.Hour),
+			EndsAt:      now.Add(-time.Hour),
+		},
+	}
 }
 
-// TestExpandAlertTemplates_CustomTitleExpands verifies that a custom title
-// template expands against NotificationTemplateData (rule-level fields).
-func TestExpandAlertTemplates_CustomTitleExpands(t *testing.T) {
-	tmpl, ctx, logger := testSetup(t)
-	alerts := []*types.Alert{
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelRuleId: "r1"}, nil),
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelRuleId: "r1"}, nil),
-	}
-	input := TemplateInput{
-		TitleTemplate:        "{{$rule_name}}: {{$total_firing}} firing",
-		DefaultTitleTemplate: "fallback",
-	}
-	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
-	require.NoError(t, err)
-	require.Equal(t, "HighCPU: 2 firing", got.Title)
-	require.Equal(t, "", got.Body)
-}
+func TestExpandTemplates(t *testing.T) {
+	at, ctx := testSetup(t)
 
-// TestExpandAlertTemplates_CustomBodySingleAlert verifies that a custom body
-// template is expanded once per alert; with one alert, body is that expansion.
-func TestExpandAlertTemplates_CustomBodySingleAlert(t *testing.T) {
-	tmpl, ctx, logger := testSetup(t)
-	alerts := []*types.Alert{
-		firingAlert(
-			map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"},
-			map[string]string{"description": "CPU > 80%"},
-		),
-	}
-	input := TemplateInput{
-		BodyTemplate: "{{$rule_name}} ({{$severity}}): {{$annotations.description}}",
-	}
-	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
-	require.NoError(t, err)
-	require.Equal(t, "", got.Title)
-	require.Equal(t, "HighCPU (critical): CPU > 80%", got.Body)
-}
+	tests := []struct {
+		name            string
+		alerts          []*types.Alert
+		input           TemplateInput
+		wantTitle       string
+		wantBody        string
+		wantMissingVars []string
+	}{
+		{
+			// High request throughput on a service — service is a custom label.
+			// $labels.service extracts the label value; $annotations.description pulls the annotation.
+			name: "new template: high request throughput for a service",
+			alerts: []*types.Alert{
+				firingAlert(
+					map[string]string{
+						ruletypes.LabelAlertName:    "HighRequestThroughput",
+						ruletypes.LabelSeverityName: "warning",
+						"service":                   "payment-service",
+					},
+					map[string]string{"description": "Request rate exceeded 10k/s"},
+				),
+			},
+			input: TemplateInput{
+				TitleTemplate: "High request throughput for $labels.service",
+				BodyTemplate: `The service $labels.service is getting high request. Please investigate.
+Severity: $severity
+Status: $status
+Description: $annotations.description`,
+			},
+			wantTitle: "High request throughput for payment-service",
+			wantBody: `The service payment-service is getting high request. Please investigate.
+Severity: warning
+Status: firing
+Description: Request rate exceeded 10k/s`,
+		},
+		{
+			// Disk usage alert using old Go template syntax throughout.
+			// No custom templates — both title and body use the default fallback path.
+			name: "old template: disk usage high on database host",
+			alerts: []*types.Alert{
+				firingAlert(
+					map[string]string{ruletypes.LabelAlertName: "DiskUsageHigh",
+						ruletypes.LabelSeverityName: "critical",
+						"instance":                  "db-primary-01",
+					},
+					map[string]string{
+						"summary":        "Disk usage high on database host",
+						"description":    "Disk usage is high on the database host",
+						"related_logs":   "https://logs.example.com/search?q=DiskUsageHigh",
+						"related_traces": "https://traces.example.com/search?q=DiskUsageHigh",
+					},
+				),
+			},
+			input: TemplateInput{
+				DefaultTitleTemplate: `[{{ .Status | toUpper }}{{ if eq .Status "firing" }}:{{ .Alerts.Firing | len }}{{ end }}] {{ .CommonLabels.alertname }} for {{ .CommonLabels.job }}
+     {{- if gt (len .CommonLabels) (len .GroupLabels) -}}
+       {{" "}}(
+       {{- with .CommonLabels.Remove .GroupLabels.Names }}
+         {{- range $index, $label := .SortedPairs -}}
+           {{ if $index }}, {{ end }}
+           {{- $label.Name }}="{{ $label.Value -}}"
+         {{- end }}
+       {{- end -}}
+       )
+     {{- end }}`,
+				DefaultBodyTemplate: `{{ range .Alerts -}}
+     *Alert:* {{ .Labels.alertname }}{{ if .Labels.severity }} - {{ .Labels.severity }}{{ end }}
 
-// TestExpandAlertTemplates_CustomBodyMultipleAlerts verifies that body template
-// is expanded per alert and results are concatenated with "<br><br>".
-func TestExpandAlertTemplates_CustomBodyMultipleAlerts(t *testing.T) {
-	tmpl, ctx, logger := testSetup(t)
-	alerts := []*types.Alert{
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "A"}, nil),
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "B"}, nil),
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "C"}, nil),
-	}
-	input := TemplateInput{
-		BodyTemplate: "{{$rule_name}}",
-	}
-	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
-	require.NoError(t, err)
-	require.Equal(t, "A<br><br>B<br><br>C", got.Body)
-}
+     *Summary:* {{ .Annotations.summary }}
+     *Description:* {{ .Annotations.description }}
+     *RelatedLogs:* {{ if gt (len .Annotations.related_logs) 0 -}} View in <{{ .Annotations.related_logs }}|logs explorer> {{- end}}
+     *RelatedTraces:* {{ if gt (len .Annotations.related_traces) 0 -}} View in <{{ .Annotations.related_traces }}|traces explorer> {{- end}}
 
-// TestExpandAlertTemplates_BothDefaultTitleAndBody verifies that when no custom
-// templates are set, both title and body fall back to default templates
-// (executed against Prometheus template.Data).
-func TestExpandAlertTemplates_BothDefaultTitleAndBody(t *testing.T) {
-	tmpl, ctx, logger := testSetup(t)
-	alerts := []*types.Alert{
-		firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+     *Details:*
+       {{ range .Labels.SortedPairs }} • *{{ .Name }}:* {{ .Value }}
+       {{ end }}
+     {{ end }}`,
+			},
+			wantTitle: "[FIRING:1] DiskUsageHigh for  (instance=\"db-primary-01\")",
+			wantBody: `*Alert:* DiskUsageHigh - critical
+
+     *Summary:* Disk usage high on database host
+     *Description:* Disk usage is high on the database host
+     *RelatedLogs:* View in <https://logs.example.com/search?q=DiskUsageHigh|logs explorer>
+     *RelatedTraces:* View in <https://traces.example.com/search?q=DiskUsageHigh|traces explorer>
+
+     *Details:*
+        • *alertname:* DiskUsageHigh
+        • *instance:* db-primary-01
+        • *severity:* critical
+       
+     `,
+		},
+		{
+			// Pod crash loop on multiple pods — body is expanded once per alert
+			// and joined with "<br><br>", with the pod name pulled from labels.
+			name: "new template: pod crash loop on multiple pods, body per-alert",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-1"}, nil),
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-2"}, nil),
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodCrashLoop", "pod": "api-worker-3"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate: "$rule_name: $total_firing pods affected",
+				BodyTemplate:  "$labels.pod is crash looping",
+			},
+			wantTitle: "PodCrashLoop: 3 pods affected",
+			wantBody:  "api-worker-1 is crash looping<br><br>api-worker-2 is crash looping<br><br>api-worker-3 is crash looping",
+		},
+		{
+			// Incident partially resolved — one service still down, one recovered.
+			// Title shows the aggregate counts; body shows per-service status.
+			name: "new template: service degradation with mixed firing and resolved alerts",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "auth-service"}, nil),
+				resolvedAlert(map[string]string{ruletypes.LabelAlertName: "ServiceDown", "service": "payment-service"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate: "$total_firing firing, $total_resolved resolved",
+				BodyTemplate:  "$labels.service ($status)",
+			},
+			wantTitle: "1 firing, 1 resolved",
+			wantBody:  "auth-service (firing)<br><br>payment-service (resolved)",
+		},
+		{
+			// $environment is not a known AlertData or NotificationTemplateData field,
+			// so it lands in MissingVars and renders as "<no value>" in the output.
+			name: "missing vars: unknown $environment variable in title",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate: "[$environment] $rule_name",
+			},
+			wantTitle:       "[<no value>] HighCPU",
+			wantMissingVars: []string{"environment"},
+		},
+		{
+			// $runbook_url is not a known field — someone tried to embed a runbook link
+			// directly as a variable instead of via annotations.
+			name: "missing vars: unknown $runbook_url variable in body",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "PodOOMKilled", ruletypes.LabelSeverityName: "warning"}, nil),
+			},
+			input: TemplateInput{
+				BodyTemplate: "$rule_name: see runbook at $runbook_url",
+			},
+			wantBody:        "PodOOMKilled: see runbook at <no value>",
+			wantMissingVars: []string{"runbook_url"},
+		},
+		{
+			// Both title and body use unknown variables; MissingVars is the union of both.
+			name: "missing vars: unknown variables in both title and body",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighMemory", ruletypes.LabelSeverityName: "critical"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate: "[$environment] $rule_name",
+				BodyTemplate:  "$rule_name: see runbook at $runbook_url",
+			},
+			wantTitle:       "[<no value>] HighMemory",
+			wantBody:        "HighMemory: see runbook at <no value>",
+			wantMissingVars: []string{"environment", "runbook_url"},
+		},
+		{
+			// Custom title template that expands to only whitespace triggers the fallback,
+			// so the default title template is used instead.
+			name: "fallback: whitespace-only custom title falls back to default",
+			alerts: []*types.Alert{
+				firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelSeverityName: "critical"}, nil),
+			},
+			input: TemplateInput{
+				TitleTemplate:        "   ",
+				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
+				BodyTemplate:         "$rule_name ($severity)",
+			},
+			wantTitle: "HighCPU",
+			wantBody:  "HighCPU (critical)",
+		},
 	}
-	input := TemplateInput{
-		TitleTemplate:        "",
-		BodyTemplate:         "",
-		DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
-		DefaultBodyTemplate:  "{{ .Status }}: {{ .CommonLabels.alertname }}",
+
+	for _, tc := range tests {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := at.ExpandTemplates(ctx, tc.input, tc.alerts)
+			require.NoError(t, err)
+
+			if tc.wantTitle != "" {
+				require.Equal(t, tc.wantTitle, got.Title)
+			}
+			if tc.wantBody != "" {
+				require.Equal(t, tc.wantBody, got.Body)
+			}
+
+			require.Len(t, got.MissingVars, len(tc.wantMissingVars))
+			for _, v := range tc.wantMissingVars {
+				require.True(t, got.MissingVars[v], "expected %q in MissingVars", v)
+			}
+		})
 	}
-	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
-	require.NoError(t, err)
-	require.Equal(t, "HighCPU", got.Title)
-	require.Equal(t, "firing: HighCPU", got.Body)
 }

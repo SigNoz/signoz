@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -218,7 +219,7 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				return
 			}
 
-			goTmpl, _, _ := testSetup(t)
+			goTmpl := test.CreateTmpl(t)
 			res, err := goTmpl.ExecuteTextString(result.Template, result.Data)
 			if err != nil {
 				t.Fatal(err)
