@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
-	"slices"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -14,7 +13,6 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -73,41 +71,6 @@ func (b *traceQueryStatementBuilder) Build(
 	if err != nil {
 		return nil, err
 	}
-
-	/*
-		Adding a tech debt note here:
-		This piece of code is a hot fix and should be removed once we close issue: engineering-pod/issues/3622
-	*/
-	/*
-		-------------------------------- Start of tech debt ----------------------------
-	*/
-	if requestType == qbtypes.RequestTypeRaw {
-
-		selectedFields := query.SelectFields
-
-		if len(selectedFields) == 0 {
-			sortedKeys := maps.Keys(DefaultFields)
-			slices.Sort(sortedKeys)
-			for _, key := range sortedKeys {
-				selectedFields = append(selectedFields, DefaultFields[key])
-			}
-			query.SelectFields = selectedFields
-		}
-
-		selectFieldKeys := []string{}
-		for _, field := range selectedFields {
-			selectFieldKeys = append(selectFieldKeys, field.Name)
-		}
-
-		for _, x := range []string{"timestamp", "span_id", "trace_id"} {
-			if !slices.Contains(selectFieldKeys, x) {
-				query.SelectFields = append(query.SelectFields, DefaultFields[x])
-			}
-		}
-	}
-	/*
-		-------------------------------- End of tech debt ----------------------------
-	*/
 
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
@@ -311,13 +274,53 @@ func (b *traceQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// TODO: should we deprecate `SelectFields` and return everything from a span like we do for logs?
-	for _, field := range query.SelectFields {
-		colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
-		if err != nil {
-			return nil, err
+	sb.SelectMore(SpanTimestampColumn)
+	sb.SelectMore(SpanTraceIDColumn)
+	sb.SelectMore(SpanSpanIDColumn)
+	// By default select all
+	if len(query.SelectFields) == 0 {
+		// Select all intrinsic columns
+		sb.SelectMore(SpanTraceStateColumn)
+		sb.SelectMore(SpanParentSpanIDColumn)
+		sb.SelectMore(SpanFlagsColumn)
+		sb.SelectMore(SpanNameColumn)
+		sb.SelectMore(SpanKindColumn)
+		sb.SelectMore(SpanKindStringColumn)
+		sb.SelectMore(SpanDurationNanoColumn)
+		sb.SelectMore(SpanStatusCodeColumn)
+		sb.SelectMore(SpanStatusMessageColumn)
+		sb.SelectMore(SpanStatusCodeStringColumn)
+		sb.SelectMore(SpanEventsColumn)
+		sb.SelectMore(SpanLinksColumn)
+
+		// select all calculated columns
+		sb.SelectMore(SpanResponseStatusCodeColumn)
+		sb.SelectMore(SpanExternalHTTPURLColumn)
+		sb.SelectMore(SpanHTTPURLColumn)
+		sb.SelectMore(SpanExternalHTTPMethodColumn)
+		sb.SelectMore(SpanHTTPMethodColumn)
+		sb.SelectMore(SpanHTTPHostColumn)
+		sb.SelectMore(SpanDBNameColumn)
+		sb.SelectMore(SpanDBOperationColumn)
+		sb.SelectMore(SpanHasErrorColumn)
+		sb.SelectMore(SpanIsRemoteColumn)
+
+		// select all contextual columns
+		sb.SelectMore(SpanAttributesStringColumn)
+		sb.SelectMore(SpanAttributesNumberColumn)
+		sb.SelectMore(SpanAttributesBoolColumn)
+		sb.SelectMore(SpanResourcesStringColumn)
+	} else {
+		for _, field := range query.SelectFields {
+			if field.Name == SpanTimestampColumn || field.Name == SpanTraceIDColumn || field.Name == SpanSpanIDColumn {
+				continue
+			}
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, &field, keys)
+			if err != nil {
+				return nil, err
+			}
+			sb.SelectMore(colExpr)
 		}
-		sb.SelectMore(colExpr)
 	}
 
 	// From table
