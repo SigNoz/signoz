@@ -162,25 +162,49 @@ function ServiceAccountsSettings(): JSX.Element {
 		},
 	];
 
-	const filterLabel =
-		filterMode === FilterMode.Active
-			? `Active ⎯ ${activeCount}`
-			: filterMode === FilterMode.Disabled
-			? `Disabled ⎯ ${disabledCount}`
-			: `All accounts ⎯ ${totalCount}`;
+	function getFilterLabel(): string {
+		switch (filterMode) {
+			case FilterMode.Active:
+				return `Active ⎯ ${activeCount}`;
+			case FilterMode.Disabled:
+				return `Disabled ⎯ ${disabledCount}`;
+			default:
+				return `All accounts ⎯ ${totalCount}`;
+		}
+	}
+	const filterLabel = getFilterLabel();
 
 	const handleRowClick = useCallback((row: ServiceAccountRow): void => {
 		setSelectedAccount(row);
 	}, []);
 
+	useEffect(() => {
+		if (!selectedAccount) {
+			return;
+		}
+		const updated = allAccounts.find((a) => a.id === selectedAccount.id);
+		if (!updated) {
+			setSelectedAccount(null);
+			return;
+		}
+		if (JSON.stringify(updated) !== JSON.stringify(selectedAccount)) {
+			setSelectedAccount(updated);
+		}
+	}, [allAccounts, selectedAccount]);
+
 	const handleDrawerClose = useCallback((): void => {
 		setSelectedAccount(null);
 	}, []);
 
-	const handleDrawerSuccess = useCallback((): void => {
-		refetch();
-		setSelectedAccount(null);
-	}, [refetch]);
+	const handleDrawerSuccess = useCallback(
+		(options?: { closeDrawer?: boolean }): void => {
+			if (options?.closeDrawer) {
+				setSelectedAccount(null);
+			}
+			refetch();
+		},
+		[refetch],
+	);
 
 	const handleCreateSuccess = useCallback((): void => {
 		refetch();
@@ -224,6 +248,8 @@ function ServiceAccountsSettings(): JSX.Element {
 
 					<div className="sa-settings__search">
 						<Input
+							type="search"
+							name="service-accounts-search"
 							placeholder="Search by name or email..."
 							value={searchQuery}
 							onChange={(e): void => {

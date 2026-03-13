@@ -35,7 +35,7 @@ export interface ServiceAccountDrawerProps {
 	account: ServiceAccountRow | null;
 	open: boolean;
 	onClose: () => void;
-	onSuccess: () => void;
+	onSuccess: (options?: { closeDrawer?: boolean }) => void;
 }
 
 const PAGE_SIZE = 15;
@@ -116,7 +116,7 @@ function ServiceAccountDrawer({
 				data: { name: localName, email: account.email, roles: localRoles },
 			});
 			toast.success('Service account updated successfully', { richColors: true });
-			onSuccess();
+			onSuccess({ closeDrawer: false });
 		} catch (error: unknown) {
 			const errMessage =
 				convertToApiError(
@@ -140,7 +140,7 @@ function ServiceAccountDrawer({
 			});
 			toast.success('Service account disabled', { richColors: true });
 			setIsDisableConfirmOpen(false);
-			onSuccess();
+			onSuccess({ closeDrawer: true });
 		} catch (error: unknown) {
 			const errMessage =
 				convertToApiError(
@@ -164,7 +164,7 @@ function ServiceAccountDrawer({
 			});
 			toast.success('Service account activated', { richColors: true });
 			setIsActivateConfirmOpen(false);
-			onSuccess();
+			onSuccess({ closeDrawer: true });
 		} catch (error: unknown) {
 			const errMessage =
 				convertToApiError(

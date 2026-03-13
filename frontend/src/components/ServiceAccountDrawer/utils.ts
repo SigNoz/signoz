@@ -22,4 +22,4 @@ export function formatLastUsed(
 }
 
 export const disabledDate = (current: Dayjs): boolean =>
-	!!current && current < dayjs().endOf('day');
+	!!current && current < dayjs().startOf('day');
