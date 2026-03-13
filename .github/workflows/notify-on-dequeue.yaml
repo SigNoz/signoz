@@ -1,8 +1,9 @@
-name: Notify Merge Queue Dequeued
+name: Notify on Dequeue from Merge Queue
 
 on:
   pull_request:
-    types: [dequeued]
+    types:
+      - dequeued
 
 jobs:
   notify:
