@@ -56,6 +56,9 @@ describe('ContextLinks Component', () => {
 				/>,
 			);
 
+			// Check that the component renders
+			expect(screen.getByText('Context Links')).toBeInTheDocument();
+
 			// Check that the add button is present
 			expect(
 				screen.getByRole('button', { name: /context link/i }),

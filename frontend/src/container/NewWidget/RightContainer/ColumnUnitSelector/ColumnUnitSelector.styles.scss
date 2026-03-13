@@ -1,7 +1,5 @@
 .column-unit-selector {
-	display: flex;
-	flex-direction: column;
-	gap: 8px;
+	margin-top: 16px;
 
 	.heading {
 		color: var(--bg-vanilla-400);
@@ -31,11 +29,6 @@
 		.y-axis-unit-selector-component {
 			width: 100%;
 		}
-	}
-	&-content {
-		display: flex;
-		flex-direction: column;
-		gap: 12px;
 	}
 }
 

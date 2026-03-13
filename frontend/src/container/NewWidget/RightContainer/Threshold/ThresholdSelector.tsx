@@ -1,10 +1,10 @@
 import { useCallback } from 'react';
 import { DndProvider } from 'react-dnd';
 import { HTML5Backend } from 'react-dnd-html5-backend';
-import { Button } from 'antd';
+import { Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useGetQueryLabels } from 'hooks/useGetQueryLabels';
-import { Plus } from 'lucide-react';
+import { Antenna, Plus } from 'lucide-react';
 import { v4 as uuid } from 'uuid';
 
 import Threshold from './Threshold';
@@ -68,14 +68,11 @@ function ThresholdSelector({
 		<DndProvider backend={HTML5Backend}>
 			<div className="threshold-selector-container">
 				<div className="threshold-select" onClick={addThresholdHandler}>
-					<Button
-						type="default"
-						icon={<Plus size={14} />}
-						style={{ width: '100%' }}
-						onClick={addThresholdHandler}
-					>
-						Add Threshold
-					</Button>
+					<div className="left-section">
+						<Antenna size={14} className="icon" />
+						<Typography.Text className="text">Thresholds</Typography.Text>
+					</div>
+					<Plus size={14} onClick={addThresholdHandler} className="icon" />
 				</div>
 				{thresholds.map((threshold, idx) => (
 					<Threshold
