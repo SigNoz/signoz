@@ -2,15 +2,15 @@
 	display: flex;
 	align-items: center;
 	justify-content: space-between;
-	gap: 6px;
-	padding: 4px 8px;
-	color: var(--bg-cherry-500);
-	font-size: 12px;
+	gap: var(--spacing-3);
+	padding: var(--padding-1) var(--padding-2);
+	color: var(--destructive);
+	font-size: var(--font-size-xs);
 
 	&__msg {
 		display: flex;
 		align-items: center;
-		gap: 6px;
+		gap: var(--spacing-3);
 	}
 
 	&__retry-btn {
@@ -20,6 +20,6 @@
 		border: none;
 		cursor: pointer;
 		padding: 2px;
-		color: var(--bg-cherry-500);
+		color: var(--destructive);
 	}
 }

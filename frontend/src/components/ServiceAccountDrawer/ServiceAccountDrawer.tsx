@@ -20,6 +20,7 @@ import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import AddKeyModal from './AddKeyModal';
 import KeysTab from './KeysTab';
 import OverviewTab from './OverviewTab';
+import { ServiceAccountDrawerTab } from './utils';
 
 import './ServiceAccountDrawer.styles.scss';
 
@@ -39,7 +40,9 @@ function ServiceAccountDrawer({
 	onClose,
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
-	const [activeTab, setActiveTab] = useState<'overview' | 'keys'>('overview');
+	const [activeTab, setActiveTab] = useState<ServiceAccountDrawerTab>(
+		ServiceAccountDrawerTab.Overview,
+	);
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
@@ -52,7 +55,7 @@ function ServiceAccountDrawer({
 		if (account) {
 			setLocalName(account.name ?? '');
 			setLocalRoles(account.roles ?? []);
-			setActiveTab('overview');
+			setActiveTab(ServiceAccountDrawerTab.Overview);
 			setKeysPage(1);
 		}
 	}, [account]);
@@ -161,16 +164,22 @@ function ServiceAccountDrawer({
 					value={activeTab}
 					onValueChange={(val): void => {
 						if (val) {
-							setActiveTab(val as 'overview' | 'keys');
+							setActiveTab(val as ServiceAccountDrawerTab);
 						}
 					}}
 					className="sa-drawer__tab-group"
 				>
-					<ToggleGroupItem value="overview" className="sa-drawer__tab">
+					<ToggleGroupItem
+						value={ServiceAccountDrawerTab.Overview}
+						className="sa-drawer__tab"
+					>
 						<LayoutGrid size={14} />
 						Overview
 					</ToggleGroupItem>
-					<ToggleGroupItem value="keys" className="sa-drawer__tab">
+					<ToggleGroupItem
+						value={ServiceAccountDrawerTab.Keys}
+						className="sa-drawer__tab"
+					>
 						<Key size={14} />
 						Keys
 						{keys.length > 0 && (
@@ -178,7 +187,7 @@ function ServiceAccountDrawer({
 						)}
 					</ToggleGroupItem>
 				</ToggleGroup>
-				{activeTab === 'keys' && (
+				{activeTab === ServiceAccountDrawerTab.Keys && (
 					<Button
 						variant="outlined"
 						size="sm"
@@ -194,10 +203,10 @@ function ServiceAccountDrawer({
 
 			<div
 				className={`sa-drawer__body${
-					activeTab === 'keys' ? ' sa-drawer__body--keys' : ''
+					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
 				}`}
 			>
-				{activeTab === 'overview' && account && (
+				{activeTab === ServiceAccountDrawerTab.Overview && account && (
 					<OverviewTab
 						account={account}
 						localName={localName}
@@ -212,7 +221,7 @@ function ServiceAccountDrawer({
 						onRefetchRoles={refetchRoles}
 					/>
 				)}
-				{activeTab === 'keys' && account && (
+				{activeTab === ServiceAccountDrawerTab.Keys && account && (
 					<KeysTab
 						accountId={account.id}
 						keys={keys}
@@ -227,7 +236,7 @@ function ServiceAccountDrawer({
 			</div>
 
 			<div className="sa-drawer__footer">
-				{activeTab === 'keys' ? (
+				{activeTab === ServiceAccountDrawerTab.Keys ? (
 					<Pagination
 						current={keysPage}
 						pageSize={PAGE_SIZE}

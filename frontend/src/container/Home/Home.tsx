@@ -15,6 +15,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
+import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import history from 'lib/history';
@@ -291,15 +292,17 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			<AnnouncementBanner
-				type="warning"
-				storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-				message={`<strong>API Keys</strong> have been deprecated and replaced by <strong>Service Accounts</strong>. Please migrate to Service Accounts for programmatic API access.`}
-				action={{
-					label: 'Go to Service Accounts',
-					onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-				}}
-			/>
+			{IS_SERVICE_ACCOUNTS_ENABLED && (
+				<AnnouncementBanner
+					type="warning"
+					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
+					message={`<strong>API Keys</strong> have been deprecated and replaced by <strong>Service Accounts</strong>. Please migrate to Service Accounts for programmatic API access.`}
+					action={{
+						label: 'Go to Service Accounts',
+						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+					}}
+				/>
+			)}
 
 			<div className="sticky-header">
 				<Header

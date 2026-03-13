@@ -2,6 +2,11 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
+export enum ServiceAccountDrawerTab {
+	Overview = 'overview',
+	Keys = 'keys',
+}
+
 export function formatLastObservedAt(
 	lastObservedAt: string | Date | null | undefined,
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string,
