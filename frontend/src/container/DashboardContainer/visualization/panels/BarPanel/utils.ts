@@ -11,7 +11,6 @@ import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
 import { AlignedData } from 'uplot';
 
 import { PanelMode } from '../types';
@@ -44,7 +43,7 @@ export function prepareBarPanelConfig({
 	currentQuery: Query;
 	onClick: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
@@ -76,13 +75,17 @@ export function prepareBarPanelConfig({
 		stepInterval: minStepInterval,
 	});
 
+	if (!(apiResponse && apiResponse?.data?.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
+
 	if (widget.stackedBarChart) {
-		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
+		const seriesCount = (apiResponse.data.result.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
-	const seriesList: QueryData[] = apiResponse?.data?.result || [];
-	seriesList.forEach((series) => {
+	apiResponse.data.result.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query

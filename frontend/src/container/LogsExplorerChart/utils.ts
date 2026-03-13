@@ -79,7 +79,7 @@ export function getColorsForSeverityLabels(
 	const trimmed = label.trim();
 
 	if (!trimmed) {
-		return Color.BG_SLATE_300;
+		return Color.BG_VANILLA_400; // Default color for empty labels
 	}
 
 	const variantColor = SEVERITY_VARIANT_COLORS[trimmed];
@@ -119,6 +119,6 @@ export function getColorsForSeverityLabels(
 
 	return (
 		SAFE_FALLBACK_COLORS[index % SAFE_FALLBACK_COLORS.length] ||
-		Color.BG_SLATE_400
+		Color.BG_VANILLA_400
 	);
 }

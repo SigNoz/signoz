@@ -14,26 +14,21 @@ import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { useRouteMatch } from 'react-router-dom';
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
-import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import ROUTES from 'constants/routes';
 import dayjs, { Dayjs } from 'dayjs';
-import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
-import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
+import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
-import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
@@ -41,10 +36,9 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { SuccessResponseV2 } from 'types/api';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as generateUUID } from 'uuid';
 
 import {
 	DASHBOARD_CACHE_TIME,
@@ -68,7 +62,6 @@ export const DashboardContext = createContext<IDashboardContext>({
 		APIError
 	>,
 	selectedDashboard: {} as Dashboard,
-	dashboardId: '',
 	layouts: [],
 	panelMap: {},
 	setPanelMap: () => {},
@@ -76,45 +69,27 @@ export const DashboardContext = createContext<IDashboardContext>({
 	setLayouts: () => {},
 	setSelectedDashboard: () => {},
 	updatedTimeRef: {} as React.MutableRefObject<Dayjs | null>,
-	toScrollWidgetId: '',
-	setToScrollWidgetId: () => {},
 	updateLocalStorageDashboardVariables: () => {},
 	dashboardQueryRangeCalled: false,
 	setDashboardQueryRangeCalled: () => {},
-	selectedRowWidgetId: '',
-	setSelectedRowWidgetId: () => {},
 	isDashboardFetching: false,
 	columnWidths: {},
 	setColumnWidths: () => {},
 });
 
-interface Props {
-	dashboardId: string;
-}
-
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export function DashboardProvider({
 	children,
-}: PropsWithChildren): JSX.Element {
+	dashboardId,
+}: PropsWithChildren<{ dashboardId: string }>): JSX.Element {
 	const [isDashboardSliderOpen, setIsDashboardSlider] = useState<boolean>(false);
 
-	const [toScrollWidgetId, setToScrollWidgetId] = useState<string>('');
-
 	const [isDashboardLocked, setIsDashboardLocked] = useState<boolean>(false);
-
-	const [selectedRowWidgetId, setSelectedRowWidgetId] = useState<string | null>(
-		null,
-	);
 
 	const [
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
 	] = useState<boolean>(false);
-
-	const isDashboardPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD,
-		exact: true,
-	});
 
 	const { showErrorModal } = useErrorModal();
 
@@ -126,11 +101,6 @@ export function DashboardProvider({
 
 	const [onModal, Content] = Modal.useModal();
 
-	const isDashboardWidgetPage = useRouteMatch<Props>({
-		path: ROUTES.DASHBOARD_WIDGET,
-		exact: true,
-	});
-
 	const [layouts, setLayouts] = useState<Layout[]>([]);
 
 	const [panelMap, setPanelMap] = useState<
@@ -138,11 +108,6 @@ export function DashboardProvider({
 	>({});
 
 	const { isLoggedIn } = useAppContext();
-
-	const dashboardId =
-		(isDashboardPage
-			? isDashboardPage.params.dashboardId
-			: isDashboardWidgetPage?.params.dashboardId) || '';
 
 	const [selectedDashboard, setSelectedDashboard] = useState<Dashboard>();
 	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
@@ -168,9 +133,10 @@ export function DashboardProvider({
 	const {
 		currentDashboard,
 		updateLocalStorageDashboardVariables,
-	} = useDashboardVariablesFromLocalStorage(dashboardId);
-
-	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
+		getUrlVariables,
+		updateUrlVariable,
+		transformDashboardVariables,
+	} = useTransformDashboardVariables(dashboardId);
 
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
@@ -182,108 +148,14 @@ export function DashboardProvider({
 
 	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
 
-	const mergeDBWithLocalStorage = (
-		data: Dashboard,
-		localStorageVariables: any,
-	): Dashboard => {
-		const updatedData = data;
-		if (data && localStorageVariables) {
-			const updatedVariables = data.data.variables;
-			const variablesFromUrl = getUrlVariables();
-			Object.keys(data.data.variables).forEach((variable) => {
-				const variableData = data.data.variables[variable];
-
-				// values from url
-				const urlVariable = variableData?.name
-					? variablesFromUrl[variableData?.name] || variablesFromUrl[variableData.id]
-					: variablesFromUrl[variableData.id];
-
-				let updatedVariable = {
-					...data.data.variables[variable],
-					...localStorageVariables[variableData.name as any],
-				};
-
-				// respect the url variable if it is set, override the others
-				if (!isEmpty(urlVariable)) {
-					if (urlVariable === ALL_SELECTED_VALUE) {
-						updatedVariable = {
-							...updatedVariable,
-							allSelected: true,
-						};
-					} else {
-						// Normalize URL value to match variable's multiSelect configuration
-						const normalizedValue = normalizeUrlValueForVariable(
-							urlVariable,
-							variableData,
-						);
-
-						updatedVariable = {
-							...updatedVariable,
-							selectedValue: normalizedValue,
-							// Only set allSelected to false if showALLOption is available
-							...(updatedVariable?.showALLOption && { allSelected: false }),
-						};
-					}
-				}
-
-				updatedVariables[variable] = updatedVariable;
-			});
-			updatedData.data.variables = updatedVariables;
-		}
-		return updatedData;
-	};
-	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const transformDashboardVariables = (data: Dashboard): Dashboard => {
-		if (data && data.data && data.data.variables) {
-			const clonedDashboardData = mergeDBWithLocalStorage(
-				JSON.parse(JSON.stringify(data)),
-				currentDashboard,
-			);
-			const { variables } = clonedDashboardData.data;
-			const existingOrders: Set<number> = new Set();
-
-			for (const key in variables) {
-				// eslint-disable-next-line no-prototype-builtins
-				if (variables.hasOwnProperty(key)) {
-					const variable: IDashboardVariable = variables[key];
-
-					// Check if 'order' property doesn't exist or is undefined
-					if (variable.order === undefined) {
-						// Find a unique order starting from 0
-						let order = 0;
-						while (existingOrders.has(order)) {
-							order += 1;
-						}
-
-						variable.order = order;
-						existingOrders.add(order);
-						// ! BWC - Specific case for backward compatibility where textboxValue was used instead of defaultValue
-						if (variable.type === 'TEXTBOX' && !variable.defaultValue) {
-							variable.defaultValue = variable.textboxValue || '';
-						}
-					}
-
-					if (variable.id === undefined) {
-						variable.id = generateUUID();
-					}
-				}
-			}
-
-			return clonedDashboardData;
-		}
-
-		return data;
-	};
 	const dashboardResponse = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
-			isDashboardPage?.params,
 			dashboardId,
 			globalTime.isAutoRefreshDisabled,
 		],
 		{
-			enabled: (!!isDashboardPage || !!isDashboardWidgetPage) && isLoggedIn,
+			enabled: !!dashboardId && isLoggedIn,
 			queryFn: async () => {
 				setIsDashboardFetching(true);
 				try {
@@ -306,13 +178,14 @@ export function DashboardProvider({
 			},
 
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
-				// if the url variable is not set for any variable, set it to the default value
-				const variables = data?.data?.data?.variables;
+				const updatedDashboardData = transformDashboardVariables(data?.data);
+
+				// initialize URL variables after dashboard state is set to avoid race conditions
+				const variables = updatedDashboardData?.data?.variables;
 				if (variables) {
 					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
 				}
 
-				const updatedDashboardData = transformDashboardVariables(data?.data);
 				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
 				setIsDashboardLocked(updatedDashboardData?.locked || false);
@@ -403,11 +276,7 @@ export function DashboardProvider({
 
 	useEffect(() => {
 		// make the call on tab visibility only if the user is on dashboard / widget page
-		if (
-			isVisible &&
-			updatedTimeRef.current &&
-			(!!isDashboardPage || !!isDashboardWidgetPage)
-		) {
+		if (isVisible && updatedTimeRef.current && !!dashboardId) {
 			dashboardResponse.refetch();
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
@@ -450,7 +319,6 @@ export function DashboardProvider({
 
 	const value: IDashboardContext = useMemo(
 		() => ({
-			toScrollWidgetId,
 			isDashboardSliderOpen,
 			isDashboardLocked,
 			handleToggleDashboardSlider,
@@ -464,12 +332,9 @@ export function DashboardProvider({
 			setPanelMap,
 			setSelectedDashboard,
 			updatedTimeRef,
-			setToScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,
@@ -483,13 +348,10 @@ export function DashboardProvider({
 			dashboardId,
 			layouts,
 			panelMap,
-			toScrollWidgetId,
 			updateLocalStorageDashboardVariables,
 			currentDashboard,
 			dashboardQueryRangeCalled,
 			setDashboardQueryRangeCalled,
-			selectedRowWidgetId,
-			setSelectedRowWidgetId,
 			isDashboardFetching,
 			columnWidths,
 			setColumnWidths,

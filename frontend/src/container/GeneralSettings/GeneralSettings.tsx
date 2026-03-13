@@ -10,6 +10,7 @@ import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import CustomDomainSettings from 'container/CustomDomainSettings';
+import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -81,7 +82,7 @@ function GeneralSettings({
 		logsTtlValuesPayload,
 	);
 
-	const { user } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
@@ -680,7 +681,15 @@ function GeneralSettings({
 				</span>
 			</div>
 
-			{showCustomDomainSettings && <CustomDomainSettings />}
+			{(showCustomDomainSettings || activeLicense?.key) && (
+				<div className="custom-domain-card">
+					{showCustomDomainSettings && <CustomDomainSettings />}
+					{showCustomDomainSettings && activeLicense?.key && (
+						<div className="custom-domain-card-divider" />
+					)}
+					{activeLicense?.key && <LicenseKeyRow />}
+				</div>
+			)}
 
 			<div className="retention-controls-container">
 				<div className="retention-controls-header">

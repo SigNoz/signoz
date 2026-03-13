@@ -239,4 +239,87 @@ describe('CustomDomainSettings', () => {
 		const { container } = render(toastRenderer('test-id'));
 		expect(container).toHaveTextContent(/myteam\.test\.cloud/i);
 	});
+
+	describe('Workspace Name rendering', () => {
+		it('renders org displayName when available from appContext', async () => {
+			server.use(
+				rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json(mockHostsResponse)),
+				),
+			);
+
+			render(<CustomDomainSettings />, undefined, {
+				appContextOverrides: {
+					org: [{ id: 'xyz', displayName: 'My Org Name', createdAt: 0 }],
+				},
+			});
+
+			expect(await screen.findByText('My Org Name')).toBeInTheDocument();
+		});
+
+		it('falls back to customDomainSubdomain when org displayName is missing', async () => {
+			server.use(
+				rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json(mockHostsResponse)),
+				),
+			);
+
+			render(<CustomDomainSettings />, undefined, {
+				appContextOverrides: { org: [] },
+			});
+
+			expect(await screen.findByText('custom-host')).toBeInTheDocument();
+		});
+
+		it('falls back to activeHost.name when neither org name nor custom domain exists', async () => {
+			const onlyDefaultHostResponse = {
+				...mockHostsResponse,
+				data: {
+					...mockHostsResponse.data,
+					hosts: mockHostsResponse.data.hosts
+						? [mockHostsResponse.data.hosts[0]]
+						: [],
+				},
+			};
+
+			server.use(
+				rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json(onlyDefaultHostResponse)),
+				),
+			);
+
+			render(<CustomDomainSettings />, undefined, {
+				appContextOverrides: { org: [] },
+			});
+
+			// 'accepted-starfish' is the default host's name
+			expect(await screen.findByText('accepted-starfish')).toBeInTheDocument();
+		});
+
+		it('does not render the card name row if workspaceName is totally falsy', async () => {
+			const emptyHostsResponse = {
+				...mockHostsResponse,
+				data: {
+					...mockHostsResponse.data,
+					hosts: [],
+				},
+			};
+
+			server.use(
+				rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
+					res(ctx.status(200), ctx.json(emptyHostsResponse)),
+				),
+			);
+
+			const { container } = render(<CustomDomainSettings />, undefined, {
+				appContextOverrides: { org: [] },
+			});
+
+			await screen.findByRole('button', { name: /edit workspace link/i });
+
+			expect(
+				container.querySelector('.custom-domain-card-name-row'),
+			).not.toBeInTheDocument();
+		});
+	});
 });
