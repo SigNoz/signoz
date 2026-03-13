@@ -112,3 +112,13 @@ jobs:
         run: |
           cd frontend && yarn generate:api
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)
+  notify:
+    if: failure()
+    needs: [test, fmt, lint, deps, build, openapi]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack alert
+        run: |
+          curl -X POST ${{ secrets.SLACK_MERGE_QUEUE_WEBHOOK }} \
+          -H 'Content-type: application/json' \
+          --data '{"text": "❌ Merge queue CI failed (goci)"}'

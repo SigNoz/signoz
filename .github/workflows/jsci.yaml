@@ -111,3 +111,13 @@ jobs:
             echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: npm run generate:permissions-type (from the frontend directory)"
             exit 1
           fi
+  notify:
+    if: failure()
+    needs: [tsc, test, fmt, lint, md-languages, authz]
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send Slack alert
+        run: |
+          curl -X POST ${{ secrets.SLACK_MERGE_QUEUE_WEBHOOK }} \
+          -H 'Content-type: application/json' \
+          --data '{"text": "❌ Merge queue CI failed (jsci)"}'
