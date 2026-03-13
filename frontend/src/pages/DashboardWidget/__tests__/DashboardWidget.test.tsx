@@ -1,4 +1,5 @@
 import { Route } from 'react-router-dom';
+import * as getDashboardModule from 'api/v1/dashboards/id/get';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, waitFor } from 'tests/test-utils';
@@ -47,35 +48,33 @@ jest.mock('container/NewWidget', () => ({
 	default: (): JSX.Element => <div data-testid="new-widget">NewWidget</div>,
 }));
 
-// nuqs's useQueryState doesn't read from MemoryRouter, so we mock it to return
-// controlled values via the `mockQueryState` map below.
-const mockQueryState: Record<string, string | null> = {};
-
-jest.mock('nuqs', () => ({
-	...jest.requireActual('nuqs'),
-	useQueryState: (key: string): [string | null, jest.Mock] => [
-		mockQueryState[key] ?? null,
-		jest.fn(),
-	],
-}));
-
-// Wrap component in a Route so useParams can resolve dashboardId
+// Wrap component in a Route so useParams can resolve dashboardId.
+// Query params are passed via the URL so useUrlQuery (react-router) can read them.
 function renderAtRoute(
 	queryState: Record<string, string | null> = {},
 ): ReturnType<typeof render> {
-	Object.assign(mockQueryState, queryState);
+	const params = new URLSearchParams();
+	Object.entries(queryState).forEach(([k, v]) => {
+		if (v !== null) {
+			params.set(k, v);
+		}
+	});
+	const search = params.toString() ? `?${params.toString()}` : '';
 	return render(
 		<Route path="/dashboard/:dashboardId/new">
 			<DashboardWidget />
 		</Route>,
 		undefined,
-		{ initialRoute: `/dashboard/${DASHBOARD_ID}/new` },
+		{ initialRoute: `/dashboard/${DASHBOARD_ID}/new${search}` },
 	);
 }
 
 beforeEach(() => {
 	mockSafeNavigate.mockClear();
-	Object.keys(mockQueryState).forEach((k) => delete mockQueryState[k]);
+});
+
+afterEach(() => {
+	jest.restoreAllMocks();
 });
 
 describe('DashboardWidget', () => {
@@ -102,12 +101,10 @@ describe('DashboardWidget', () => {
 	});
 
 	it('shows spinner while dashboard is loading', () => {
-		server.use(
-			rest.get(
-				`http://localhost/api/v1/dashboards/${DASHBOARD_ID}`,
-				(_req, res, ctx) => res(ctx.delay('infinite')),
-			),
-		);
+		// Spy instead of MSW delay('infinite') to avoid leaving an open network handle.
+		jest
+			.spyOn(getDashboardModule, 'default')
+			.mockReturnValue(new Promise(() => {}));
 
 		renderAtRoute({ widgetId: WIDGET_ID, graphType: PANEL_TYPES.TIME_SERIES });
 
