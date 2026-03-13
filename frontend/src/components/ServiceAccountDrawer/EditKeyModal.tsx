@@ -67,7 +67,7 @@ function EditKeyModal({
 
 	const originalExpiresAt = keyItem?.expires_at ?? 0;
 	const currentExpiresAt =
-		expiryMode === 'none' || !localDate ? 0 : localDate.unix();
+		expiryMode === 'none' || !localDate ? 0 : localDate.endOf('day').unix();
 	const isDirty =
 		keyItem !== null &&
 		(localName !== (keyItem.name ?? '') ||
@@ -260,7 +260,7 @@ function EditKeyModal({
 							<span className="edit-key-modal__meta-label">Last Used</span>
 							<Badge color="vanilla">
 								{formatLastUsed(
-									keyItem?.last_used ?? null,
+									keyItem?.last_observed_at ?? null,
 									formatTimezoneAdjustedTimestamp,
 								)}
 							</Badge>

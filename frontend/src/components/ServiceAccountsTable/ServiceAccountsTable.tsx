@@ -169,10 +169,31 @@ function ServiceAccountsTable({
 					emptyText: <ServiceAccountsEmptyState searchQuery={searchQuery} />,
 				}}
 				className="sa-table"
-				onRow={(record): { onClick: () => void; style?: React.CSSProperties } => ({
-					onClick: (): void => onRowClick?.(record),
-					style: onRowClick ? { cursor: 'pointer' } : undefined,
-				})}
+				onRow={(
+					record,
+				): {
+					onClick?: () => void;
+					onKeyDown?: (e: React.KeyboardEvent<HTMLElement>) => void;
+					style?: React.CSSProperties;
+					tabIndex?: number;
+					role?: string;
+				} => {
+					if (!onRowClick) {
+						return {};
+					}
+
+					return {
+						onClick: (): void => onRowClick(record),
+						onKeyDown: (e: React.KeyboardEvent<HTMLElement>): void => {
+							if (e.key === 'Enter' || e.key === ' ') {
+								e.preventDefault();
+								onRowClick(record);
+							}
+						},
+						style: { cursor: 'pointer' },
+						tabIndex: 0,
+					};
+				}}
 			/>
 			{total > pageSize && (
 				<Pagination
