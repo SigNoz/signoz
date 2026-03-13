@@ -88,16 +88,15 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			return logsV2Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextBody:
-		// Type hints (Materialized=true) have a direct physical sub-column in body_v2.
-		// Return a synthetic String column so the condition builder uses the direct path
-		// instead of the JSON condition builder (which expects a JSONPlan).
-		if key.Materialized {
-			// Type hints have a direct physical sub-column in body_v2 (e.g. body_v2.message).
-			return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
-		}
-		// Body context is for JSON body fields
-		// Use body_v2 if feature flag is enabled
+		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
 		if querybuilder.BodyJSONQueryEnabled {
+			// (Materialized=true) have a direct physical sub-column in body_v2.
+			// No lambda expressions (which expects a JSONPlan).
+			if key.Materialized {
+				// return direct physical sub-column in body_v2 (e.g. body_v2.message).
+				return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
+			}
+
 			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column

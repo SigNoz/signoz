@@ -185,10 +185,6 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(orClauses...))
-	// mesasge field is skipped; since it is a type hint and is handled by the field mapper
-	// TODO(Piyush): If typehints increases in future, use aftership parser to skip type hints here
-	sb.Where(sb.NotEqual("path", telemetrylogs.MessageBodyField))
-
 	// Group by path to get unique paths with aggregated types
 	sb.GroupBy("path")
 

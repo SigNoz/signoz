@@ -46,10 +46,8 @@ const (
 )
 
 var (
-	// BodyFieldMessageMapping is the canonical key for the "message" type hint.
-	// It lives under body (FieldContextBody) but Materialized=true signals the field
-	// mapper to access it as a direct sub-column (body_v2.message) rather than via
-	// dynamicElement(). Its name is the bare field name ("message"), not the column path.
+	// Mapping to access it as a direct sub-column (body_v2.message) rather than via
+	// dynamicElement() lambda expressions.
 	BodyFieldMessageMapping = &telemetrytypes.TelemetryFieldKey{
 		Name:          MessageBodyField,
 		Signal:        telemetrytypes.SignalLogs,
