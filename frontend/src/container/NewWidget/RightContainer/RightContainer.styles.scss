@@ -13,6 +13,17 @@
 		text-transform: uppercase;
 	}
 
+	.section-heading-small {
+		font-family: 'Space Mono';
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		word-break: initial;
+		line-height: 16px; /* 133.333% */
+		letter-spacing: 0.48px;
+	}
+
 	.header {
 		display: flex;
 		padding: 14px 14px 14px 12px;

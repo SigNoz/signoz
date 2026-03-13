@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Select, Switch, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -10,6 +9,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { LayoutDashboard } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
 
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import { timePreferance } from '../../timeItems';
 
 const { Option } = Select;

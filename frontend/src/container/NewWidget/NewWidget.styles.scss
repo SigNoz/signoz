@@ -65,6 +65,22 @@
 	}
 }
 
+.new-widget-container {
+	.resizable-panel-left-container {
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
+	.resizable-panel-right-container {
+		overflow-y: auto;
+		min-width: 350px;
+	}
+
+	.widget-resizable-handle {
+		height: 100vh;
+	}
+}
+
 .lightMode {
 	.edit-header {
 		border-bottom: 1px solid var(--bg-vanilla-300);

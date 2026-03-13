@@ -1768,19 +1768,19 @@ components:
         createdAt:
           format: date-time
           type: string
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         id:
           type: string
         key:
           type: string
-        last_used:
+        lastObservedAt:
           format: date-time
           type: string
         name:
           type: string
-        service_account_id:
+        serviceAccountId:
           type: string
         updatedAt:
           format: date-time
@@ -1788,9 +1788,9 @@ components:
       required:
       - id
       - key
-      - expires_at
-      - last_used
-      - service_account_id
+      - expiresAt
+      - lastObservedAt
+      - serviceAccountId
       type: object
     ServiceaccounttypesGettableFactorAPIKeyWithKey:
       properties:
@@ -1804,14 +1804,14 @@ components:
       type: object
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         name:
           type: string
       required:
       - name
-      - expires_at
+      - expiresAt
       type: object
     ServiceaccounttypesPostableServiceAccount:
       properties:
@@ -1833,13 +1833,16 @@ components:
         createdAt:
           format: date-time
           type: string
+        deletedAt:
+          format: date-time
+          type: string
         email:
           type: string
         id:
           type: string
         name:
           type: string
-        orgID:
+        orgId:
           type: string
         roles:
           items:
@@ -1856,18 +1859,19 @@ components:
       - email
       - roles
       - status
-      - orgID
+      - orgId
+      - deletedAt
       type: object
     ServiceaccounttypesUpdatableFactorAPIKey:
       properties:
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         name:
           type: string
       required:
       - name
-      - expires_at
+      - expiresAt
       type: object
     ServiceaccounttypesUpdatableServiceAccount:
       properties:

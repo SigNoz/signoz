@@ -1,12 +1,12 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { Select, Typography } from 'antd';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { PanelDisplay } from 'constants/queryBuilder';
 import { SlidersHorizontal } from 'lucide-react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
 import { ColumnUnitSelector } from '../../ColumnUnitSelector/ColumnUnitSelector';
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import DashboardYAxisUnitSelectorWrapper from '../../DashboardYAxisUnitSelectorWrapper';
 
 interface FormattingUnitsSectionProps {

@@ -36,16 +36,17 @@
 }
 
 .settings-section-content {
-	padding: 0 12px 24px 12px;
+	padding: 0 12px 0 12px;
 	display: flex;
 	flex-direction: column;
 	gap: 20px;
 	max-height: 0;
 	overflow: hidden;
 	opacity: 0;
-	transition: max-height 0.25s ease, opacity 0.25s ease;
+	transition: max-height 0.25s ease, opacity 0.25s ease, padding 0.25s ease;
 
 	&.open {
+		padding-bottom: 24px;
 		max-height: 1000px;
 		opacity: 1;
 	}

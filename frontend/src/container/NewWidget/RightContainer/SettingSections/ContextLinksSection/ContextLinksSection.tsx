@@ -1,8 +1,8 @@
 import { Dispatch, SetStateAction } from 'react';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { Link as LinkIcon } from 'lucide-react';
 import { ContextLinksData, Widgets } from 'types/api/dashboard/getAll';
 
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import ContextLinks from '../../ContextLinks';
 
 import './ContextLinksSection.styles.scss';

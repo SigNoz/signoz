@@ -10,8 +10,7 @@ export const Container = styled.div`
 
 export const RightContainerWrapper = styled(Col)`
 	&&& {
-		max-width: 400px;
-		width: 30%;
+		width: 100%;
 		overflow-y: auto;
 	}
 	&::-webkit-scrollbar {

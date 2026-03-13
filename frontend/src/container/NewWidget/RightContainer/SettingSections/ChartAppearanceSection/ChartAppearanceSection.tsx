@@ -1,6 +1,5 @@
 import { Dispatch, SetStateAction } from 'react';
 import { Switch, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import {
 	FillMode,
 	LineInterpolation,
@@ -11,6 +10,7 @@ import { Paintbrush } from 'lucide-react';
 import { FillModeSelector } from '../../components/FillModeSelector/FillModeSelector';
 import { LineInterpolationSelector } from '../../components/LineInterpolationSelector/LineInterpolationSelector';
 import { LineStyleSelector } from '../../components/LineStyleSelector/LineStyleSelector';
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
 interface ChartAppearanceSectionProps {
 	fillMode: FillMode;

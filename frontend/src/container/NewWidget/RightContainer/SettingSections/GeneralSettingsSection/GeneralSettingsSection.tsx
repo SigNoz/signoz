@@ -8,8 +8,9 @@ import {
 } from 'react';
 import type { InputRef } from 'antd';
 import { AutoComplete, Input, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { popupContainer } from 'utils/selectPopupContainer';
+
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
 import './GeneralSettingsSection.styles.scss';
 

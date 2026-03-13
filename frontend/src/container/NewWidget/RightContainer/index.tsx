@@ -143,6 +143,11 @@ function RightContainer({
 		allowLogScale,
 	]);
 
+	const isFormattingSectionVisible = useMemo(
+		() => allowYAxisUnit || allowDecimalPrecision || allowPanelColumnPreference,
+		[allowYAxisUnit, allowDecimalPrecision, allowPanelColumnPreference],
+	);
+
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
 		[allowLegendPosition, allowLegendColors],
@@ -150,7 +155,17 @@ function RightContainer({
 
 	const isChartAppearanceSectionVisible = useMemo(
 		() =>
-			allowFillMode || allowLineStyle || allowLineInterpolation || allowShowPoints,
+			/**
+			 * Disabled for now as we are not done with other settings in chart appearance section
+			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
+			 */
+
+			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			false &&
+			(allowFillMode ||
+				allowLineStyle ||
+				allowLineInterpolation ||
+				allowShowPoints),
 		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
@@ -184,19 +199,21 @@ function RightContainer({
 					allowFillSpans={allowFillSpans}
 				/>
 
-				<FormattingUnitsSection
-					selectedGraphType={selectedGraphType}
-					yAxisUnit={yAxisUnit}
-					setYAxisUnit={setYAxisUnit}
-					isNewDashboard={isNewDashboard}
-					decimalPrecision={decimalPrecision}
-					setDecimalPrecision={setDecimalPrecision}
-					columnUnits={columnUnits}
-					setColumnUnits={setColumnUnits}
-					allowYAxisUnit={allowYAxisUnit}
-					allowDecimalPrecision={allowDecimalPrecision}
-					allowPanelColumnPreference={allowPanelColumnPreference}
-				/>
+				{isFormattingSectionVisible && (
+					<FormattingUnitsSection
+						selectedGraphType={selectedGraphType}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						isNewDashboard={isNewDashboard}
+						decimalPrecision={decimalPrecision}
+						setDecimalPrecision={setDecimalPrecision}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+						allowYAxisUnit={allowYAxisUnit}
+						allowDecimalPrecision={allowDecimalPrecision}
+						allowPanelColumnPreference={allowPanelColumnPreference}
+					/>
+				)}
 
 				{isChartAppearanceSectionVisible && (
 					<ChartAppearanceSection
