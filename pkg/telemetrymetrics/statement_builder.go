@@ -586,6 +586,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		labelSelectorSubQueryBuilder.Select(groupByKeys...)
 		labelSelectorSubQueryBuilder.From(finalCTE)
 		labelSelectorOrderClauses := []string{}
+		orderedKeys := map[string]struct{}{} // this will be used to add the remaining keys as tie breakers in the end
 		for _, o := range query.Order {
 			key := o.Key.Name
 			var clause string
@@ -593,8 +594,14 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 				clause = fmt.Sprintf("avg(value) %s", o.Direction.StringValue())
 			} else {
 				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
+				orderedKeys[fmt.Sprintf("`%s`", key)] = struct{}{}
 			}
 			labelSelectorOrderClauses = append(labelSelectorOrderClauses, clause)
+		}
+		for _, gk := range groupByKeys { // keys that haven't been added via order by keys will be added at the end as tie breakers
+			if _, ok := orderedKeys[gk]; !ok {
+				labelSelectorOrderClauses = append(labelSelectorOrderClauses, fmt.Sprintf("%s ASC", gk))
+			}
 		}
 		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
 		labelSelectorSubQueryBuilder.OrderBy(labelSelectorOrderClauses...)

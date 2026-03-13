@@ -2,9 +2,12 @@
 Look at the histogram_data_1h.jsonl file for the relevant data
 """
 
+import logging
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List, Optional, Union
+
+logger = logging.getLogger(__name__)
 
 import pytest
 
@@ -21,6 +24,7 @@ from fixtures.querier import (
 from fixtures.utils import get_testdata_file_path
 
 FILE = get_testdata_file_path("histogram_data_1h.jsonl")
+FILE_WITH_MANY_GROUPS = get_testdata_file_path("histogram_data_1h_many_groups.jsonl")
 
 
 @pytest.mark.parametrize(
@@ -694,29 +698,36 @@ def test_histogram_count_group_by_endpoint(
             "no_order",
             None,
             None,
-            3,
-            [ "/health", "/orders","/checkout"],
+            4,
+            [ "/checkout", "/health", "/orders", "/coupon"],
+        ),
+        (
+            "only_limit",
+            None,
+            1,
+            1,
+            [ "/checkout"], ##health and checkout have the same size so they are then sorted endpoint as a tiebreaker, and only checkout makes the limit
         ),
         (
             "asc",
             [build_order_by("endpoint", "asc")],
             None,
-            3,
-            ["/checkout", "/health", "/orders"],
+            4,
+            [ "/checkout", "/coupon", "/health", "/orders"],
         ),
         (
             "asc_lim2",
             [build_order_by("endpoint", "asc")],
             2,
             2,
-            ["/checkout", "/health"],
+            ["/checkout", "/coupon"],
         ),
         (
             "desc",
             [build_order_by("endpoint", "desc")],
             None,
-            3,
-            ["/orders", "/health", "/checkout"],
+            4,
+            ["/orders", "/health", "/coupon", "/checkout"],
         ),
         (
             "desc_lim2",
@@ -727,31 +738,45 @@ def test_histogram_count_group_by_endpoint(
         ),
         (
             "asc_metric_name",
-            [build_order_by("p90(test_histogram_p90_groupby_asc_metric_name)", "asc")],
+            [build_order_by("p75(test_histogram_p75_groupby_asc_metric_name)", "asc")],
             None,
-            3,
-            ["/checkout", "/health", "/orders"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+            4,
+            ["/coupon", "/orders", "/checkout", "/health"], ## health and checkout have the same size so they are then sorted endpoint as a tiebreaker
         ),
         (
             "asc_metric_name_lim2",
-            [build_order_by("p90(test_histogram_p90_groupby_asc_metric_name_lim2)", "asc")],
+            [build_order_by("p75(test_histogram_p75_groupby_asc_metric_name_lim2)", "asc")],
             2,
             2,
-            ["/checkout", "/health"],
+            ["/coupon", "/orders"],
+        ),
+        (
+            "asc_metric_name_lim3",
+            [build_order_by("p75(test_histogram_p75_groupby_asc_metric_name_lim3)", "asc")],
+            3,
+            3,
+            ["/coupon", "/orders", "/checkout"], ##health and checkout have the same size so they are then sorted endpoint as a tiebreaker, and only checkout makes the limit
         ),
         (
             "desc_metric_name",
-            [build_order_by("p90(test_histogram_p90_groupby_desc_metric_name)", "desc")],
+            [build_order_by("p75(test_histogram_p75_groupby_desc_metric_name)", "desc")],
             None,
-            3,
-            ["/health", "/orders", "/checkout"], ## health and orders have the same size so they are then sorted endpoint as a tiebreaker
+            4,
+            [ "/checkout", "/health", "/orders", "/coupon"],
         ),
         (
             "desc_metric_name_lim2",
-            [build_order_by("p90(test_histogram_p90_groupby_desc_metric_name_lim2)", "desc")],
+            [build_order_by("p75(test_histogram_p75_groupby_desc_metric_name_lim2)", "desc")],
             2,
             2,
-            ["/health", "/orders"],
+            [ "/checkout", "/health"],
+        ),
+        (
+            "desc_metric_name_lim2",
+            [build_order_by("p75(test_histogram_p75_groupby_desc_metric_name_lim2)", "desc")],
+            1,
+            1,
+            [ "/checkout"], ##health and checkout have the same size so they are then sorted endpoint as a tiebreaker, and only checkout makes the limit
         ),
     ],
 )
@@ -769,64 +794,300 @@ def test_histogram_percentile_group_by_endpoint(
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
-    metric_name = f"test_histogram_p90_groupby_{order_suffix}"
+    metric_name = f"test_histogram_p75_groupby_{order_suffix}"
 
     metrics = Metrics.load_from_file(
-        FILE,
+        FILE_WITH_MANY_GROUPS,
         base_time=now - timedelta(minutes=60),
         metric_name_override=metric_name,
     )
     insert_metrics(metrics)
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    query_p90 = build_builder_query(
+    query_p75 = build_builder_query(
         "A",
         metric_name,
         "doesnotreallymatter",
-        "p90",
+        "p75",
         group_by=["endpoint"],
         order_by=order_by,
         limit=limit,
     )
 
-    response = make_query_request(signoz, token, start_ms, end_ms, [query_p90])
+    response = make_query_request(signoz, token, start_ms, end_ms, [query_p75])
     assert response.status_code == HTTPStatus.OK
 
     data = response.json()
-    p90_series = get_all_series(data, "A")
+    p75_series = get_all_series(data, "A")
+
+    for series in p75_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        values = series.get("values", [])
 
     assert (
-        len(p90_series) == expected_count
-    ), f"Expected {expected_count} p90 series, got {len(p90_series)}"
+        len(p75_series) == expected_count
+    ), f"Expected {expected_count} p75 series, got {len(p75_series)}"
 
-    _assert_series_endpoint_labels(p90_series, expected_endpoints, "p90")
+    _assert_series_endpoint_labels(p75_series, expected_endpoints, "p75")
 
-    p90_values = {}
-    for series in p90_series:
+    p75_values = {}
+    for series in p75_series:
         endpoint = series.get("labels", [{}])[0].get("value", "unknown")
-        p90_values[endpoint] = sorted(
+        p75_values[endpoint] = sorted(
             series.get("values", []), key=lambda x: x["timestamp"]
         )
 
-    for endpoint, values in p90_values.items():
+    for endpoint, values in p75_values.items():
         for v in values:
-            assert v["value"] >= 0, f"p90 for {endpoint} should not be negative: {v['value']}"
+            assert v["value"] >= 0, f"p75 for {endpoint} should not be negative: {v['value']}"
 
     # /health (cumulative, service=api)
-    if "/health" in p90_values:
-        vals = p90_values["/health"]
-        assert vals[0]["value"] == 6400, f"Expected /health p90 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /health p90 last=991.304, got {vals[-1]['value']}"
+    if "/health" in p75_values:
+        vals = p75_values["/health"]
+        assert vals[0]["value"] == 6000, f"Expected /health p75 first=8000, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=991.304, got {vals[-1]['value']}"
 
     # /orders (cumulative, service=api): same distribution as /health
-    if "/orders" in p90_values:
-        vals = p90_values["/orders"]
-        assert vals[0]["value"] == 6400, f"Expected /orders p90 first=6400, got {vals[0]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /orders p90 last=991.304, got {vals[-1]['value']}"
+    if "/orders" in p75_values:
+        vals = p75_values["/orders"]
+        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=6400, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=991.304, got {vals[-1]['value']}"
 
     # /checkout (delta, service=web): 60 points
-    if "/checkout" in p90_values:
-        vals = p90_values["/checkout"]
-        assert vals[0]["value"] == 900, f"Expected /checkout p90 zeroth=900, got {vals[0]['value']}"
-        assert vals[1]["value"] == 6400, f"Expected /checkout p90 first=6400, got {vals[1]['value']}"
-        assert vals[-1]["value"] == 991.304, f"Expected /checkout p90 last=991.304, got {vals[-1]['value']}"
+    if "/checkout" in p75_values:
+        vals = p75_values["/checkout"]
+        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=991.304, got {vals[-1]['value']}"
+
+    # /coupon (delta, service=web): 60 points
+    if "/coupon" in p75_values:
+        vals = p75_values["/coupon"]
+        assert vals[0]["value"] == 1125, f"Expected /coupon p75 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 1125, f"Expected /coupon p75 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 1125, f"Expected /coupon p75 last=991.304, got {vals[-1]['value']}"
+
+
+@pytest.mark.parametrize(
+    "order_suffix,order_by,limit,expected_count,expected_endpoints, expected_status_codes",
+    [
+        (
+            "no_order",
+            None,
+            None,
+            5,
+            [ "/checkout", "/health", "/orders", "/coupon", "/coupon"], ## coupon has 200 and 500 status codes so it will appear twice
+            [ "200", "200", "200", "200", "500"],
+        ),
+        (
+            "only_limit",
+            None,
+            1,
+            1,
+            [ "/checkout"], ##health and checkout have the same size so they are then sorted endpoint as a tiebreaker, and only checkout makes the limit
+            [ "200"]
+        ),
+        (
+            "asc_endpoint",
+            [build_order_by("endpoint", "asc")],
+            None,
+            5,
+            [ "/checkout", "/coupon", "/coupon", "/health", "/orders"],
+            [ "200", "200", "500", "200", "200"],
+        ),
+        (
+            "asc_endpoint_status_code",
+            [build_order_by("endpoint", "asc"), build_order_by("status_code", "asc")],
+            None,
+            5,
+            [ "/checkout", "/coupon", "/coupon", "/health", "/orders"],
+            [ "200", "200", "500", "200", "200"],
+        ),
+        (
+            "asc_status_code_endpoint",
+            [build_order_by("status_code", "asc"), build_order_by("endpoint", "asc")],
+            None,
+            5,
+            [ "/checkout", "/coupon", "/health", "/orders", "/coupon"],
+            [ "200", "200", "200", "200", "500"],
+        ),
+        (
+            "asc_endpoint_limit_2",
+            [build_order_by("endpoint", "asc")],
+            2,
+            2,
+            [ "/checkout", "/coupon"],
+            [ "200", "200"],
+        ),
+        (
+            "asc_endpoint_status_code_limit_2",
+            [build_order_by("endpoint", "asc"), build_order_by("status_code", "asc")],
+            2,
+            2,
+            [ "/checkout", "/coupon"],
+            [ "200", "200"],
+        ),
+        (
+            "asc_status_code_endpoint_limit_4",
+            [build_order_by("status_code", "asc"), build_order_by("endpoint", "asc")],
+            4,
+            4,
+            [ "/checkout", "/coupon", "/health", "/orders"],
+            [ "200", "200", "200", "200"],
+        ),
+        (
+            "desc_endpoint",
+            [build_order_by("endpoint", "desc")],
+            None,
+            5,
+            ["/orders", "/health", "/coupon", "/coupon", "/checkout"],
+            [ "200", "200", "200", "500", "200"],
+        ),
+        (
+            "desc_endpoint_status_code",
+            [build_order_by("endpoint", "desc"), build_order_by("status_code", "desc")],
+            None,
+            5,
+            ["/orders", "/health", "/coupon", "/coupon", "/checkout"],
+            [ "200", "200", "500", "200", "200"],
+        ),
+        (
+            "desc_status_code_endpoint",
+            [build_order_by("status_code", "desc"), build_order_by("endpoint", "desc")],
+            None,
+            5,
+            ["/coupon", "/orders", "/health", "/coupon", "/checkout"],
+            [ "500", "200", "200", "200", "200"],
+        ),
+        (
+            "desc_endpoint_limit2",
+            [build_order_by("endpoint", "desc")],
+            3,
+            3,
+            ["/orders", "/health", "/coupon"],
+            [ "200", "200", "200"],
+        ),
+        (
+            "desc_endpoint_status_code_limit3",
+            [build_order_by("endpoint", "desc"), build_order_by("status_code", "desc")],
+            3,
+            3,
+            ["/orders", "/health", "/coupon"],
+            [ "200", "200", "500"],
+        ),
+        (
+            "desc_status_code_endpoint_limit2",
+            [build_order_by("status_code", "desc"), build_order_by("endpoint", "desc")],
+            2,
+            2,
+            ["/coupon", "/orders"],
+            [ "500", "200"],
+        ),
+    ],
+)
+def test_histogram_percentile_group_by_endpoint_and_status_code(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    order_suffix: str,
+    order_by: Optional[List],
+    limit: Optional[int],
+    expected_count: int,
+    expected_endpoints: Union[set, List[str]],
+    expected_status_codes: Union[set, List[str]],
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_histogram_p75_groupby_{order_suffix}"
+
+    metrics = Metrics.load_from_file(
+        FILE_WITH_MANY_GROUPS,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query_p75 = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        "p75",
+        group_by=["endpoint", "status_code"],
+        order_by=order_by,
+        limit=limit,
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query_p75])
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    p75_series = get_all_series(data, "A")
+
+    for series in p75_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        status_code = series.get("labels", [{}])[1].get("value", "unknown")
+        values = series.get("values", [])
+        avg = sum(v["value"] for v in values) / len(values) if values else 0
+        logger.warning("endpoint=%s status_code=%s average_p75=%.3f", endpoint, status_code, avg)
+
+    assert (
+        len(p75_series) == expected_count
+    ), f"Expected {expected_count} p75 series, got {len(p75_series)}"
+
+    _assert_series_endpoint_labels(p75_series, expected_endpoints, "p75")
+    
+    endpoints = [s.get("labels", [{}])[0].get("value", "unknown") for s in p75_series]
+    assert endpoints == expected_endpoints, (
+        f"Expected p75 endpoints in order {expected_endpoints}, got {endpoints}"
+    )
+    status_codes = [s.get("labels", [{}])[1].get("value", "unknown") for s in p75_series]
+    assert status_codes == expected_status_codes, (
+        f"Expected p75 endpoints in order {expected_status_codes}, got {status_codes}"
+    )
+
+    p75_values = {}
+    for series in p75_series:
+        endpoint = series.get("labels", [{}])[0].get("value", "unknown")
+        status_code = series.get("labels", [{}])[1].get("value", "unknown")
+        p75_values[endpoint+status_code] = sorted(
+            series.get("values", []), key=lambda x: x["timestamp"]
+        )
+
+    for endpoint, values in p75_values.items():
+        for v in values:
+            assert v["value"] >= 0, f"p75 for {endpoint} should not be negative: {v['value']}"
+
+    # /health (cumulative, service=api)
+    if "/health200" in p75_values:
+        vals = p75_values["/health200"]
+        assert vals[0]["value"] == 6000, f"Expected /health p75 first=8000, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /health p75 last=991.304, got {vals[-1]['value']}"
+
+    # /orders (cumulative, service=api): same distribution as /health
+    if "/orders200" in p75_values:
+        vals = p75_values["/orders200"]
+        assert vals[0]["value"] == 4500, f"Expected /orders p75 first=6400, got {vals[0]['value']}"
+        assert vals[-1]["value"] == 4500, f"Expected /orders p75 last=991.304, got {vals[-1]['value']}"
+
+    # /checkout (delta, service=web): 60 points
+    if "/checkout200" in p75_values:
+        vals = p75_values["/checkout200"]
+        assert vals[0]["value"] == 6000, f"Expected /checkout p75 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 6000, f"Expected /checkout p75 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 6000, f"Expected /checkout p75 last=991.304, got {vals[-1]['value']}"
+
+    # /coupon (delta, service=web): 60 points
+    if "/coupon200" in p75_values:
+        vals = p75_values["/coupon200"]
+        assert vals[0]["value"] == 1250, f"Expected /coupon200 p75 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 1250, f"Expected /coupon200 p75 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 1250, f"Expected /coupon200 p75 last=991.304, got {vals[-1]['value']}"
+    
+    if "/coupon500" in p75_values:
+        vals = p75_values["/coupon500"]
+        assert vals[0]["value"] == 750, f"Expected /coupon500 p75 zeroth=900, got {vals[0]['value']}"
+        assert vals[1]["value"] == 750, f"Expected /coupon500 p75 first=6400, got {vals[1]['value']}"
+        assert vals[-1]["value"] == 750, f"Expected /coupon500 p75 last=991.304, got {vals[-1]['value']}"
