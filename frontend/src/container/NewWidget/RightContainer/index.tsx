@@ -18,7 +18,6 @@ import {
 	Typography,
 } from 'antd';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import GraphTypes, {
@@ -53,6 +52,7 @@ import { DataSource } from 'types/common/queryBuilder';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
+import SettingsSection from './components/SettingsSection/SettingsSection';
 import {
 	panelTypeVsBucketConfig,
 	panelTypeVsColumnUnitPreferences,
