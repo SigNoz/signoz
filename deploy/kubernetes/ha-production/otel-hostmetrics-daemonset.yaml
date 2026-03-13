@@ -1,0 +1,279 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: otel-hostmetrics-config
+  namespace: signoz
+data:
+  otel-collector-hostmetrics.yaml: |
+    receivers:
+      hostmetrics:
+        collection_interval: 60s
+        scrapers:
+          cpu:
+            metrics:
+              system.cpu.utilization:
+                enabled: true
+              system.cpu.time:
+                enabled: true
+          memory:
+            metrics:
+              system.memory.utilization:
+                enabled: true
+              system.memory.usage:
+                enabled: true
+          disk:
+          filesystem:
+            exclude_mount_points:
+              mount_points: ["/dev/*", "/proc/*", "/sys/*", "/var/lib/docker/*", "/var/lib/containerd/*", "/snap/*"]
+              match_type: regexp
+            exclude_fs_types:
+              fs_types: ["autofs", "binfmt_misc", "bpf", "cgroup2", "configfs", "debugfs", "devpts", "devtmpfs", "fusectl", "hugetlbfs", "iso9660", "mqueue", "nsfs", "overlay", "proc", "procfs", "pstore", "rpc_pipefs", "securityfs", "selinuxfs", "squashfs", "sysfs", "tracefs"]
+              match_type: strict
+            metrics:
+              system.filesystem.utilization:
+                enabled: true
+              system.filesystem.usage:
+                enabled: true
+          network:
+            exclude:
+              interfaces: ["lo"]
+              match_type: strict
+            metrics:
+              system.network.dropped:
+                enabled: true
+              system.network.errors:
+                enabled: true
+          load:
+            metrics:
+              system.cpu.load_average.1m:
+                enabled: true
+              system.cpu.load_average.5m:
+                enabled: true
+              system.cpu.load_average.15m:
+                enabled: true
+          processes:
+            metrics:
+              system.processes.count:
+                enabled: true
+              system.processes.created:
+                enabled: true
+          paging:
+            metrics:
+              system.paging.usage:
+                enabled: true
+              system.paging.faults:
+                enabled: true
+
+      k8s_cluster:
+        auth_type: serviceAccount
+        collection_interval: 60s
+        node_conditions_to_report: [Ready, MemoryPressure, DiskPressure, PIDPressure, NetworkUnavailable]
+        allocatable_types_to_report: [cpu, memory, storage, ephemeral-storage]
+
+      kubeletstats:
+        collection_interval: 60s
+        auth_type: "serviceAccount"
+        endpoint: "https://${K8S_NODE_IP}:10250"
+        insecure_skip_verify: true
+        metric_groups:
+          - node
+          - pod
+          - container
+          - volume
+        extra_metadata_labels:
+          - container.id
+          - k8s.volume.type
+        k8s_api_config:
+          auth_type: serviceAccount
+
+    processors:
+      batch:
+        send_batch_size: 1024
+        timeout: 1s
+
+      resourcedetection:
+        detectors: [env, system, k8snode]
+        timeout: 2s
+        override: false
+
+      resource:
+        attributes:
+        - key: host.name
+          value: ${K8S_NODE_NAME}
+          action: upsert
+        - key: k8s.cluster.name
+          value: "signoz-prod"
+          action: upsert
+
+      metricstransform:
+        transforms:
+        - include: k8s.pod.memory.usage
+          match_type: strict
+          action: insert
+          new_name: k8s.pod.memory_usage
+        - include: k8s.pod.cpu.usage
+          match_type: strict  
+          action: insert
+          new_name: k8s.pod.cpu_usage
+
+    exporters:
+      otlp:
+        endpoint: signoz-otel-collector:4317
+        tls:
+          insecure: true
+
+
+    extensions:
+      health_check:
+        endpoint: 0.0.0.0:13133
+
+    service:
+      extensions: [health_check]
+      pipelines:
+        metrics:
+          receivers: [hostmetrics, k8s_cluster, kubeletstats]
+          processors: [resourcedetection, resource, metricstransform, batch]
+          exporters: [otlp]
+      telemetry:
+        logs:
+          level: info
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: otel-hostmetrics-collector
+  namespace: signoz
+  labels:
+    app: otel-hostmetrics-collector
+spec:
+  selector:
+    matchLabels:
+      app: otel-hostmetrics-collector
+  template:
+    metadata:
+      labels:
+        app: otel-hostmetrics-collector
+    spec:
+      serviceAccountName: otel-hostmetrics-collector
+      hostPID: true
+      containers:
+      - name: otel-collector
+        image: otel/opentelemetry-collector-contrib:0.104.0
+        command:
+        - "/otelcol-contrib"
+        - "--config=/conf/otel-collector-hostmetrics.yaml"
+        env:
+        - name: K8S_NODE_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: spec.nodeName
+        - name: K8S_NODE_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.hostIP
+        - name: K8S_POD_IP
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: status.podIP
+        - name: K8S_POD_NAME
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.name
+        - name: K8S_POD_UID
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.uid
+        - name: K8S_NAMESPACE
+          valueFrom:
+            fieldRef:
+              apiVersion: v1
+              fieldPath: metadata.namespace
+        resources:
+          limits:
+            cpu: 200m
+            memory: 200Mi
+          requests:
+            cpu: 100m
+            memory: 100Mi
+        ports:
+        - containerPort: 13133
+          name: health-check
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 10
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 13133
+          initialDelaySeconds: 5
+          periodSeconds: 5
+        volumeMounts:
+        - name: otel-hostmetrics-config-vol
+          mountPath: /conf
+        - name: proc
+          mountPath: /hostfs/proc
+          readOnly: true
+        - name: sys
+          mountPath: /hostfs/sys
+          readOnly: true
+        - name: rootfs
+          mountPath: /hostfs
+          readOnly: true
+      volumes:
+      - name: otel-hostmetrics-config-vol
+        configMap:
+          name: otel-hostmetrics-config
+      - name: proc
+        hostPath:
+          path: /proc
+      - name: sys
+        hostPath:
+          path: /sys
+      - name: rootfs
+        hostPath:
+          path: /
+      tolerations:
+      - key: node-role.kubernetes.io/master
+        operator: Exists
+        effect: NoSchedule
+      - key: node-role.kubernetes.io/control-plane
+        operator: Exists
+        effect: NoSchedule
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: otel-hostmetrics-collector
+  namespace: signoz
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: otel-hostmetrics-collector
+rules:
+- apiGroups: ["*"]
+  resources: ["*"]
+  verbs: ["*"]
+- nonResourceURLs: ["*"]
+  verbs: ["*"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: otel-hostmetrics-collector
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: otel-hostmetrics-collector
+subjects:
+- kind: ServiceAccount
+  name: otel-hostmetrics-collector
+  namespace: signoz
