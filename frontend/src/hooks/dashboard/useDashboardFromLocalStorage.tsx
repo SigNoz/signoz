@@ -15,7 +15,7 @@ interface DashboardLocalStorageVariables {
 	[id: string]: LocalStoreDashboardVariables;
 }
 
-interface UseDashboardVariablesFromLocalStorageReturn {
+export interface UseDashboardVariablesFromLocalStorageReturn {
 	currentDashboard: LocalStoreDashboardVariables;
 	updateLocalStorageDashboardVariables: (
 		id: string,
