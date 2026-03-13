@@ -138,11 +138,48 @@ jobs:
               "text": ":x: Merge queue CI failed (goci)",
               "blocks": [
                 {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":x: Merge Queue CI Failed"
+                  }
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": ":x: *Merge queue CI failed* (goci)\n*<${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}: ${{ steps.pr.outputs.title }}>*\nAuthor: @${{ steps.pr.outputs.author }}\n<${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View failed run>"
+                    "text": "*<${{ steps.pr.outputs.url }}|PR #${{ steps.pr.outputs.number }}: ${{ steps.pr.outputs.title }}>*"
                   }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Workflow*\ngoci"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author*\n@${{ steps.pr.outputs.author }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Failed Run"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+                      "style": "danger"
+                    }
+                  ]
                 }
               ]
             }
@@ -154,4 +191,6 @@ jobs:
           RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: |
           gh api repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
-            -f body=":x: Merge queue CI failed (**goci**). @$PR_AUTHOR — [view run]($RUN_URL)"
+            -f body="> :x: **Merge queue CI failed** — \`goci\`
+          >
+          > @$PR_AUTHOR your PR was removed from the merge queue. Please check the [failed run]($RUN_URL), fix the issue, and re-queue."
