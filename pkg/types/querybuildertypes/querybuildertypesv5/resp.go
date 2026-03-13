@@ -94,6 +94,7 @@ type AggregationBucket struct {
 type TimeSeries struct {
 	Labels []*Label           `json:"labels,omitempty"`
 	Values []*TimeSeriesValue `json:"values"`
+	Bounds []float64          `json:"bounds,omitempty"`
 }
 
 type Label struct {
@@ -161,11 +162,7 @@ type TimeSeriesValue struct {
 
 	// for the heatmap type chart
 	Values []float64 `json:"values,omitempty"`
-	Bucket *Bucket   `json:"bucket,omitempty"`
-}
-
-type Bucket struct {
-	Step float64 `json:"step"`
+	Bounds []float64 `json:"bounds,omitempty"`
 }
 
 type ColumnType struct {

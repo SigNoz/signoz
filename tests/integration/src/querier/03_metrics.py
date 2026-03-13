@@ -580,3 +580,167 @@ def test_metrics_fill_formula_with_group_by(
             expected_by_ts=expectations[group],
             context=f"metrics/{fill_mode}/F1/{group}",
         )
+
+
+
+def test_metrics_heatmap(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+) -> None:
+    """
+    Test heatmap query with metrics.
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    metric_name = "test_heatmap_multi_bucket"
+
+    metrics: List[Metrics] = []
+    
+    # t-3: First histogram
+    # Distribution: 10 in 0-10, 10 in 10-50, 10 in 50-100, 20 in 100+
+    for le, value in [("10", 10.0), ("50", 20.0), ("100", 30.0), ("+Inf", 50.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=3),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    # t-2: Second histogram
+    # Total: 30 in 0-10, 40 in 10-50, 50 in 50-100, 90 in 100+
+    for le, value in [("10", 30.0), ("50", 60.0), ("100", 90.0), ("+Inf", 150.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=2),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    # t-1: Third histogram
+    # Total: 40 in 0-10, 70 in 10-50, 100 in 50-100, 170 in 100+
+    for le, value in [("10", 40.0), ("50", 80.0), ("100", 120.0), ("+Inf", 200.0)]:
+        metrics.append(
+            Metrics(
+                metric_name=metric_name,
+                labels={"service": "test", "le": le},
+                timestamp=now - timedelta(minutes=1),
+                value=value,
+                temporality="Cumulative",
+                type_="Histogram",
+            )
+        )
+    
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=4)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "heatmap",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "metrics",
+                            "aggregations": [
+                                {
+                                    "metricName": metric_name,
+                                    "temporality": "cumulative",
+                                    "timeAggregation": "increase",
+                                    "spaceAggregation": "sum",
+                                }
+                            ],
+                            "stepInterval": 60,
+                            "disabled": False,
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+    
+    response_data = response.json()
+    assert response_data["status"] == "success", f"Query failed: {response_data}"
+
+    results = response_data["data"]["data"]["results"]
+    assert len(results) == 1, f"Expected 1 result, got {len(results)}"
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1, f"Expected 1 aggregation, got {len(aggregations)}"
+
+    series = aggregations[0]["series"]
+    # Heatmap returns one series with time points
+    assert len(series) == 1, f"Expected 1 series for heatmap, got {len(series)}: {series}"
+
+    # Verify the series has proper structure
+    s = series[0]
+    assert "values" in s, f"Series missing 'values': {s}"
+    
+    values = s["values"]
+    assert isinstance(values, list), f"Values should be a list, got {type(values)}"
+    
+    # Should have exactly 3 time points (t-3, t-2, t-1)
+    assert len(values) == 3
+
+    # Verify structure and basic invariants
+    for val in values:
+        assert isinstance(val, dict)
+        assert "timestamp" in val
+        assert "bucket" in val
+        assert "values" in val
+
+        bucket = val["bucket"]
+        assert "bounds" in bucket
+        bounds = bucket["bounds"]
+        assert isinstance(bounds, list)
+        assert len(bounds) == 4  # 10, 50, 100, +Inf
+
+        counts = val["values"]
+        assert isinstance(counts, list)
+        assert len(counts) == len(bounds) - 1
+
+        for count in counts:
+            assert isinstance(count, (int, float))
+            assert count >= 0
+
+    # Verify bucket bounds
+    assert values[0]["bucket"]["bounds"] == [0, 10, 50, 100]
+
+    # Verify expected counts per timestamp
+    ts_min_3 = int((now - timedelta(minutes=3)).timestamp() * 1000)
+    ts_min_2 = int((now - timedelta(minutes=2)).timestamp() * 1000)
+    ts_min_1 = int((now - timedelta(minutes=1)).timestamp() * 1000)
+
+    expected_by_ts = {
+        ts_min_3: [10.0, 10.0, 10.0],
+        ts_min_2: [20.0, 20.0, 20.0],
+        ts_min_1: [10.0, 10.0, 10.0],
+    }
+
+    for val in values:
+        if val["timestamp"] in expected_by_ts:
+            assert val["values"] == expected_by_ts[val["timestamp"]]
+
