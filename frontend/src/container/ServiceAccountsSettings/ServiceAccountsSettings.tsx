@@ -221,8 +221,8 @@ function ServiceAccountsSettings(): JSX.Element {
 				<div className="sa-settings__header">
 					<h1 className="sa-settings__title">Service Accounts</h1>
 					<p className="sa-settings__subtitle">
-						Service accounts are used for machine-to-machine authentication via API
-						keys. {/* Todo: to add doc links */}
+						Overview of service accounts added to this workspace.{' '}
+						{/* Todo: to add doc links */}
 						{/* <a
 							href="https://signoz.io/docs/service-accounts"
 							target="_blank"
