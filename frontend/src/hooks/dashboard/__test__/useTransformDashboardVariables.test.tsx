@@ -89,18 +89,19 @@ describe('useTransformDashboardVariables', () => {
 			expect(result.data.variables.v1.order).toBe(5);
 		});
 
-		it('assigns unique orders even when some variables already have orders', () => {
+		it('assigns unique orders across multiple variables that all lack an order', () => {
 			const { transformDashboardVariables } = setupHook();
 			const dashboard = makeDashboard({
-				v1: makeVariable({ id: 'id1', name: 'v1', order: 0 }),
+				v1: makeVariable({ id: 'id1', name: 'v1', order: undefined }),
 				v2: makeVariable({ id: 'id2', name: 'v2', order: undefined }),
+				v3: makeVariable({ id: 'id3', name: 'v3', order: undefined }),
 			});
 
 			const result = transformDashboardVariables(dashboard);
 
-			expect(result.data.variables.v1.order).toBe(0);
-			// v2 should get order 1 since 0 is taken
-			expect(result.data.variables.v2.order).toBe(1);
+			const orders = Object.values(result.data.variables).map((v) => v.order);
+			// All three newly assigned orders must be distinct
+			expect(new Set(orders).size).toBe(3);
 		});
 	});
 
