@@ -1,0 +1,21 @@
+name: Notify Merge Queue Failures
+
+on:
+  workflow_run:
+    workflows: ["goci", "jsci"]
+    types: [completed]
+
+jobs:
+  notify:
+    if: github.event.workflow_run.conclusion == 'failure'
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Send Slack alert
+        run: |
+          curl -X POST ${{ secrets.SLACK_MERGE_QUEUE_WEBHOOK }} \
+          -H 'Content-type: application/json' \
+          --data '{
+            "text": "❌ Merge queue CI failed"
+          }'
