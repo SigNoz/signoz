@@ -16,7 +16,7 @@ import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 
 import EditKeyModal from './EditKeyModal';
-import { formatLastUsed } from './utils';
+import { formatLastObservedAt } from './utils';
 
 interface KeysTabProps {
 	accountId: string;
@@ -91,9 +91,9 @@ function KeysTab({
 		onRefetch();
 	}, [onRefetch]);
 
-	const handleFormatLastUsed = useCallback(
-		(lastUsed: Date | null | undefined): string =>
-			formatLastUsed(lastUsed, formatTimezoneAdjustedTimestamp),
+	const handleformatLastObservedAt = useCallback(
+		(lastObservedAt: Date | null | undefined): string =>
+			formatLastObservedAt(lastObservedAt, formatTimezoneAdjustedTimestamp),
 		[formatTimezoneAdjustedTimestamp],
 	);
 
@@ -110,34 +110,34 @@ function KeysTab({
 		},
 		{
 			title: 'Expiry',
-			dataIndex: 'expires_at',
+			dataIndex: 'expiresAt',
 			key: 'expiry',
 			width: 160,
 			align: 'right' as const,
 			sorter: (a, b): number => {
-				const aVal = a.expires_at === 0 ? Infinity : a.expires_at;
-				const bVal = b.expires_at === 0 ? Infinity : b.expires_at;
+				const aVal = a.expiresAt === 0 ? Infinity : a.expiresAt;
+				const bVal = b.expiresAt === 0 ? Infinity : b.expiresAt;
 				return aVal - bVal;
 			},
 			render: (expiresAt: number): JSX.Element => formatExpiry(expiresAt),
 		},
 		{
-			title: 'Last Used',
-			dataIndex: 'last_observed_at',
-			key: 'lastUsed',
+			title: 'Last Observed At',
+			dataIndex: 'lastObservedAt',
+			key: 'lastObservedAt',
 			width: 220,
 			align: 'right' as const,
 			sorter: (a, b): number => {
-				const aVal = a.last_observed_at
-					? new Date(a.last_observed_at).getTime()
+				const aVal = a.lastObservedAt
+					? new Date(a.lastObservedAt).getTime()
 					: -Infinity;
-				const bVal = b.last_observed_at
-					? new Date(b.last_observed_at).getTime()
+				const bVal = b.lastObservedAt
+					? new Date(b.lastObservedAt).getTime()
 					: -Infinity;
 				return aVal - bVal;
 			},
-			render: (lastUsed: Date | null | undefined): string =>
-				handleFormatLastUsed(lastUsed),
+			render: (lastObservedAt: Date | null | undefined): string =>
+				handleformatLastObservedAt(lastObservedAt),
 		},
 		{
 			title: '',

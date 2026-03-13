@@ -73,7 +73,7 @@ function AddKeyModal({
 				expiryMode === 'date' && expiryDate ? expiryDate.endOf('day').unix() : 0;
 			const response = await createKey({
 				pathParams: { id: accountId },
-				data: { name: keyName.trim(), expires_at: expiresAt },
+				data: { name: keyName.trim(), expiresAt },
 			});
 			const keyData = response?.data;
 			if (keyData) {

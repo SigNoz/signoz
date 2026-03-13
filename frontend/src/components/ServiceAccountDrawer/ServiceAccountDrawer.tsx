@@ -2,15 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { DrawerWrapper } from '@signozhq/drawer';
-import {
-	Check,
-	Key,
-	LayoutGrid,
-	Plus,
-	PowerOff,
-	Trash2,
-	X,
-} from '@signozhq/icons';
+import { Key, LayoutGrid, Plus, PowerOff, Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination } from 'antd';
@@ -48,13 +40,11 @@ function ServiceAccountDrawer({
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
 	const [activeTab, setActiveTab] = useState<'overview' | 'keys'>('overview');
-	const [isActivateConfirmOpen, setIsActivateConfirmOpen] = useState(false);
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [isDisabling, setIsDisabling] = useState(false);
-	const [isActivating, setIsActivating] = useState(false);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
 	const [keysPage, setKeysPage] = useState(1);
 
@@ -152,32 +142,7 @@ function ServiceAccountDrawer({
 		}
 	}, [account, updateStatus, onSuccess]);
 
-	const handleActivate = useCallback(async (): Promise<void> => {
-		if (!account) {
-			return;
-		}
-		setIsActivating(true);
-		try {
-			await updateStatus({
-				pathParams: { id: account.id },
-				data: { status: 'ACTIVE' },
-			});
-			toast.success('Service account activated', { richColors: true });
-			setIsActivateConfirmOpen(false);
-			onSuccess({ closeDrawer: true });
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to activate service account';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsActivating(false);
-		}
-	}, [account, updateStatus, onSuccess]);
-
 	const handleClose = useCallback((): void => {
-		setIsActivateConfirmOpen(false);
 		setIsDisableConfirmOpen(false);
 		setIsAddKeyOpen(false);
 		onClose();
@@ -282,17 +247,7 @@ function ServiceAccountDrawer({
 					/>
 				) : (
 					<>
-						{isDisabled ? (
-							<Button
-								variant="ghost"
-								color="primary"
-								className="sa-drawer__footer-btn"
-								onClick={(): void => setIsActivateConfirmOpen(true)}
-							>
-								<Check size={12} />
-								Activate Service Account
-							</Button>
-						) : (
+						{!isDisabled && (
 							<Button
 								variant="ghost"
 								color="destructive"
@@ -350,48 +305,6 @@ function ServiceAccountDrawer({
 				className="sa-drawer"
 			/>
 
-			{/* Activate confirm dialog */}
-			<DialogWrapper
-				open={isActivateConfirmOpen}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setIsActivateConfirmOpen(false);
-					}
-				}}
-				title={`Activate service account ${account?.name ?? ''}?`}
-				width="narrow"
-				className="alert-dialog sa-activate-dialog"
-				showCloseButton={false}
-				disableOutsideClick={false}
-			>
-				<p className="sa-activate-dialog__body">
-					Reactivating this service account will restore access for all its keys and
-					any systems using them.
-				</p>
-				<DialogFooter className="sa-activate-dialog__footer">
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={(): void => setIsActivateConfirmOpen(false)}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						variant="solid"
-						color="primary"
-						size="sm"
-						disabled={isActivating}
-						onClick={handleActivate}
-					>
-						<Check size={12} />
-						{isActivating ? 'Activating...' : 'Activate'}
-					</Button>
-				</DialogFooter>
-			</DialogWrapper>
-
-			{/* Disable confirm dialog */}
 			<DialogWrapper
 				open={isDisableConfirmOpen}
 				onOpenChange={(isOpen): void => {
