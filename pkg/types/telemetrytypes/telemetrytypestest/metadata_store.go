@@ -22,9 +22,6 @@ type MockMetadataStore struct {
 	LogsJSONIndexesMap map[string][]schemamigrator.Index
 	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
 	// StaticFields holds signal-specific intrinsic field definitions (e.g. telemetrylogs.IntrinsicFields).
-	// It is injected into GetKeys / GetKey results, mirroring what the real metadata store does when
-	// it reads telemetrylogs.IntrinsicFields directly. Callers pass their package's IntrinsicFields
-	// map at construction time to avoid a circular import.
 	StaticFields map[string]telemetrytypes.TelemetryFieldKey
 }
 
@@ -75,8 +72,6 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 	}
 
 	// StaticFields (e.g. IntrinsicFields), mirroring the real metadata store.
-	// Each intrisic key always gets its own entry (so "message" and "body" both
-	// resolve to the IntrinsicField independently).
 	for key, field := range m.StaticFields {
 		if !matchesName(fieldKeySelector, key) {
 			continue
