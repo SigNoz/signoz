@@ -527,7 +527,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
-		key, ok := setOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
+		key, ok := setOfKeys[fieldContext.StringValue()+"."+name+":"+fieldDataType.StringValue()]
 
 		// if there is no materialised column, create a key with the field context and data type
 		if !ok {
@@ -540,7 +540,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		}
 
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
-		setOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
+		setOfKeys[key.Text()] = key
 	}
 
 	if rows.Err() != nil {
@@ -566,12 +566,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-				if _, added := setOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
+				// Register by field name once if it doesn't exists from before
+				if _, added := setOfKeys[field.Text()]; !added {
 					mapOfKeys[field.Name] = append(mapOfKeys[field.Name], &field)
-					// intrinsic field can be a logical field mapped to a different physical location
+				}
+				// Register the field key for alias as well; IntrinsicFields has alias of "body" to "message" field
+				if key != field.Name {
 					mapOfKeys[key] = append(mapOfKeys[key], &field)
 				}
-				continue
 			}
 		}
 	}

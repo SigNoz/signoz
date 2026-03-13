@@ -54,6 +54,7 @@ func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "fetchBodyJSONPaths",
 	})
+
 	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -184,7 +185,6 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(orClauses...))
-
 	// Group by path to get unique paths with aggregated types
 	sb.GroupBy("path")
 

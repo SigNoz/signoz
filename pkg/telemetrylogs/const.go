@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"fmt"
 
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -39,20 +40,20 @@ const (
 
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+	MessageBodyField         = "message"
 	MessageSubColumn         = "body_v2.message"
 	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
-	// mapping for body logical field to message sub column
-	// Here field context is log since message is a type hint and
-	// in a sense it is a direct column of log table and doesn't need any lambda expressions
-	// TODO(Piyush): Add description for detailed explanation of remapping of body to message
-	BodyLogicalFieldJSONMapping = &telemetrytypes.TelemetryFieldKey{
-		Name:          MessageSubColumn,
+	// Mapping to access it as a direct sub-column (body_v2.message) rather than via
+	// dynamicElement() lambda expressions.
+	BodyFieldMessageMapping = &telemetrytypes.TelemetryFieldKey{
+		Name:          MessageBodyField,
 		Signal:        telemetrytypes.SignalLogs,
-		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldContext:  telemetrytypes.FieldContextBody,
 		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
 	}
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
@@ -144,9 +145,17 @@ func bodyAliasExpression() string {
 
 func enrichMapsForJSONBodyEnabled() {
 	if querybuilder.BodyJSONQueryEnabled {
-		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
-		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
-		IntrinsicFields[MessageSubColumn] = *BodyLogicalFieldJSONMapping
+		DefaultFullTextColumn = BodyFieldMessageMapping
+		IntrinsicFields["body"] = *BodyFieldMessageMapping
+
+		// Register all key names that should resolve to the message type-hint column so
+		// QB can look them up directly: bare "message" and qualified "body_v2.message".
+		IntrinsicFields[MessageSubColumn] = *BodyFieldMessageMapping
+		IntrinsicFields[MessageBodyField] = *BodyFieldMessageMapping
+		logsV2Columns[MessageSubColumn] = &schema.Column{
+			Name: MessageSubColumn,
+			Type: schema.ColumnTypeString,
+		}
 	}
 }
 

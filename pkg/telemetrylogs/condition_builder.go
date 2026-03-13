@@ -33,7 +33,7 @@ func (c *conditionBuilder) conditionFor(
 		return "", err
 	}
 
-	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && key.FieldContext != telemetrytypes.FieldContextLog {
+	if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && !key.Materialized {
 		valueType, value := InferDataType(value, operator, key)
 		cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 		if err != nil {
@@ -52,7 +52,7 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// Check if this is a body JSON search - either by FieldContext
-	if key.FieldContext == telemetrytypes.FieldContextBody {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
 		tblFieldName, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
