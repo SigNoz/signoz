@@ -63,6 +63,9 @@
 			margin-inline-end: 0px !important;
 		}
 	}
+}
+
+.new-widget-container {
 	.resizable-panel-left-container {
 		overflow-x: hidden;
 		overflow-y: auto;
@@ -71,6 +74,10 @@
 	.resizable-panel-right-container {
 		overflow-y: auto;
 		min-width: 350px;
+	}
+
+	.widget-resizable-handle {
+		height: 100vh;
 	}
 }
 

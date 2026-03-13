@@ -781,7 +781,7 @@ function NewWidget({
 	}, [query, safeNavigate, dashboardId, currentQuery]);
 
 	return (
-		<Container>
+		<Container className="new-widget-container">
 			<div className="edit-header">
 				<div className="left-header">
 					<X
@@ -863,7 +863,7 @@ function NewWidget({
 							</LeftContainerWrapper>
 						</OverlayScrollbar>
 					</ResizablePanel>
-					<ResizableHandle withHandle />
+					<ResizableHandle withHandle className="widget-resizable-handle" />
 					<ResizablePanel
 						minSize={20}
 						maxSize={30}
