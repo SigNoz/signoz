@@ -12,20 +12,22 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// AlertTemplater expands alert notification templates.
-type AlertTemplater interface {
-	ExpandTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
+// AlertManagerTemplater processes alert notification templates.
+type AlertManagerTemplater interface {
+	// ProcessTemplates expands the title and body templates from input
+	// against the provided alerts and returns the expanded templates.
+	ProcessTemplates(ctx context.Context, input TemplateInput, alerts []*types.Alert) (*ExpandedTemplates, error)
 }
 
-// alertTemplater is the private implementation of AlertTemplater.
-type alertTemplater struct {
+// alertManagerTemplater is the private implementation of AlertTemplater.
+type alertManagerTemplater struct {
 	tmpl   *template.Template
 	logger *slog.Logger
 }
 
 // New returns a new AlertTemplater with the given template and logger.
-func New(tmpl *template.Template, logger *slog.Logger) AlertTemplater {
-	return &alertTemplater{tmpl: tmpl, logger: logger}
+func New(tmpl *template.Template, logger *slog.Logger) AlertManagerTemplater {
+	return &alertManagerTemplater{tmpl: tmpl, logger: logger}
 }
 
 // ExtractTemplatesFromAnnotations computes the common annotations across all alerts
@@ -39,9 +41,9 @@ func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, body
 	return commonAnnotations[ruletypes.AnnotationTitleTemplate], commonAnnotations[ruletypes.AnnotationBodyTemplate]
 }
 
-// ExpandTemplates expands the title and body templates from input
+// ProcessTemplates expands the title and body templates from input
 // against the provided alerts and returns the expanded templates.
-func (at *alertTemplater) ExpandTemplates(
+func (at *alertManagerTemplater) ProcessTemplates(
 	ctx context.Context,
 	input TemplateInput,
 	alerts []*types.Alert,
@@ -71,7 +73,7 @@ func (at *alertTemplater) ExpandTemplates(
 
 // expandTitle expands the title template. Falls back to the default if the custom template
 // result in empty string.
-func (at *alertTemplater) expandTitle(
+func (at *alertManagerTemplater) expandTitle(
 	ctx context.Context,
 	input TemplateInput,
 	alerts []*types.Alert,
@@ -102,7 +104,7 @@ func (at *alertTemplater) expandTitle(
 
 // expandBody expands the body template once per alert, concatenates the results
 // and falls back to the default if the custom template result in empty string.
-func (at *alertTemplater) expandBody(
+func (at *alertManagerTemplater) expandBody(
 	ctx context.Context,
 	input TemplateInput,
 	alerts []*types.Alert,
@@ -142,7 +144,7 @@ func (at *alertTemplater) expandBody(
 
 // buildNotificationTemplateData derives a NotificationTemplateData from
 // the context, template, and the raw alerts.
-func (at *alertTemplater) buildNotificationTemplateData(
+func (at *alertManagerTemplater) buildNotificationTemplateData(
 	ctx context.Context,
 	alerts []*types.Alert,
 ) *NotificationTemplateData {

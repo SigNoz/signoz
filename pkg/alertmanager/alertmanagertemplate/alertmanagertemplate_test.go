@@ -17,7 +17,7 @@ import (
 
 // testSetup returns an AlertTemplater and a context pre-populated with group key,
 // receiver name, and group labels for use in tests.
-func testSetup(t *testing.T) (AlertTemplater, context.Context) {
+func testSetup(t *testing.T) (AlertManagerTemplater, context.Context) {
 	t.Helper()
 	tmpl := test.CreateTmpl(t)
 	ctx := context.Background()
@@ -258,7 +258,7 @@ Description: Request rate exceeded 10k/s`,
 
 	for _, tc := range tests {
 		t.Run(tc.name, func(t *testing.T) {
-			got, err := at.ExpandTemplates(ctx, tc.input, tc.alerts)
+			got, err := at.ProcessTemplates(ctx, tc.input, tc.alerts)
 			require.NoError(t, err)
 
 			if tc.wantTitle != "" {
