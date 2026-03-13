@@ -1,51 +1,16 @@
-import {
-	Dispatch,
-	SetStateAction,
-	useCallback,
-	useEffect,
-	useMemo,
-	useRef,
-	useState,
-} from 'react';
+import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
-import type { InputRef } from 'antd';
-import {
-	AutoComplete,
-	Input,
-	InputNumber,
-	Select,
-	Switch,
-	Typography,
-} from 'antd';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import TimePreference from 'components/TimePreferenceDropDown';
+import { Typography } from 'antd';
+import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import GraphTypes, {
-	ItemsProps,
-} from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import GraphTypes from 'container/DashboardContainer/ComponentsSlider/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
-import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
 	FillMode,
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
-import {
-	Antenna,
-	Axis3D,
-	ConciergeBell,
-	Layers,
-	LayoutDashboard,
-	LineChart,
-	Link,
-	Paintbrush,
-	Pencil,
-	Plus,
-	SlidersHorizontal,
-	Spline,
-	SquareArrowOutUpRight,
-} from 'lucide-react';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -54,11 +19,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
-import { DataSource } from 'types/common/queryBuilder';
-import { popupContainer } from 'utils/selectPopupContainer';
 
-import { ColumnUnitSelector } from './ColumnUnitSelector/ColumnUnitSelector';
-import SettingsSection from './components/SettingsSection/SettingsSection';
 import {
 	panelTypeVsBucketConfig,
 	panelTypeVsColumnUnitPreferences,
@@ -79,32 +40,20 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
-import ContextLinks from './ContextLinks';
-import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
-import { FillModeSelector } from './FillModeSelector';
-import LegendColors from './LegendColors/LegendColors';
-import { LineInterpolationSelector } from './LineInterpolationSelector';
-import { LineStyleSelector } from './LineStyleSelector';
-import ThresholdSelector from './Threshold/ThresholdSelector';
+import { AlertsSection } from './SettingSections/AlertsSection/AlertsSection';
+import { AxesSection } from './SettingSections/AxesSection/AxesSection';
+import { ChartAppearanceSection } from './SettingSections/ChartAppearanceSection/ChartAppearanceSection';
+import { ContextLinksSection } from './SettingSections/ContextLinksSection/ContextLinksSection';
+import { FormattingUnitsSection } from './SettingSections/FormattingUnitsSection/FormattingUnitsSection';
+import { GeneralSettingsSection } from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
+import { HistogramBucketsSection } from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
+import { LegendSection } from './SettingSections/LegendSection/LegendSection';
+import { ThresholdsSection } from './SettingSections/ThresholdsSection/ThresholdsSection';
+import { VisualizationSettingsSection } from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 
 import './RightContainer.styles.scss';
-
-const { TextArea } = Input;
-const { Option } = Select;
-
-enum LogScale {
-	LINEAR = 'linear',
-	LOGARITHMIC = 'logarithmic',
-}
-
-interface VariableOption {
-	value: string;
-	label: string;
-}
-
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function RightContainer({
 	description,
 	setDescription,
@@ -158,20 +107,9 @@ function RightContainer({
 	isNewDashboard,
 }: RightContainerProps): JSX.Element {
 	const { dashboardVariables } = useDashboardVariables();
-	const [inputValue, setInputValue] = useState(title);
-	const [autoCompleteOpen, setAutoCompleteOpen] = useState(false);
-	const [cursorPos, setCursorPos] = useState(0);
-	const inputRef = useRef<InputRef>(null);
 
-	const onChangeHandler = useCallback(
-		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
-			setFunc(value);
-		},
-		[],
-	);
-
-	const selectedGraphType =
-		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+	const selectedGraphType = GraphTypes.find((e) => e.name === selectedGraph)
+		?.display as PanelDisplay;
 
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
@@ -199,17 +137,6 @@ function RightContainer({
 	const allowLineStyle = panelTypeVsLineStyle[selectedGraph];
 	const allowFillMode = panelTypeVsFillMode[selectedGraph];
 	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
-
-	const { currentQuery } = useQueryBuilder();
-
-	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
-
-	const dashboardVariableOptions = useMemo<VariableOption[]>(() => {
-		return Object.entries(dashboardVariables).map(([, value]) => ({
-			value: value.name || '',
-			label: value.name || '',
-		}));
-	}, [dashboardVariables]);
 
 	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
 		allowSoftMinMax,
@@ -242,96 +169,6 @@ function RightContainer({
 		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
-	const updateCursorAndDropdown = (value: string, pos: number): void => {
-		setCursorPos(pos);
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		setAutoCompleteOpen(lastDollar !== -1 && pos >= lastDollar + 1);
-	};
-
-	const onInputChange = (value: string): void => {
-		setInputValue(value);
-		onChangeHandler(setTitle, value);
-		setTimeout(() => {
-			const pos = inputRef.current?.input?.selectionStart ?? 0;
-			updateCursorAndDropdown(value, pos);
-		}, 0);
-	};
-
-	const decimapPrecisionOptions = useMemo(() => {
-		return [
-			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
-			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
-			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
-			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
-		];
-	}, []);
-
-	const handleInputCursor = (): void => {
-		const pos = inputRef.current?.input?.selectionStart ?? 0;
-		updateCursorAndDropdown(inputValue, pos);
-	};
-
-	const onSelect = (selectedValue: string): void => {
-		const pos = cursorPos;
-		const value = inputValue;
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		const textBeforeDollar = value.substring(0, lastDollar);
-		const textAfterDollar = value.substring(lastDollar + 1);
-		const match = textAfterDollar.match(/^([a-zA-Z0-9_.]*)/);
-		const rest = textAfterDollar.substring(match ? match[1].length : 0);
-		const newValue = `${textBeforeDollar}$${selectedValue}${rest}`;
-		setInputValue(newValue);
-		onChangeHandler(setTitle, newValue);
-		setAutoCompleteOpen(false);
-		setTimeout(() => {
-			const newCursor = `${textBeforeDollar}$${selectedValue}`.length;
-			inputRef.current?.input?.setSelectionRange(newCursor, newCursor);
-			setCursorPos(newCursor);
-		}, 0);
-	};
-
-	const filterOption = (
-		inputValue: string,
-		option?: VariableOption,
-	): boolean => {
-		const pos = cursorPos;
-		const value = inputValue;
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		if (lastDollar === -1) {
-			return false;
-		}
-		const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
-		return option?.value.toLowerCase().startsWith(afterDollar) || false;
-	};
-
-	useEffect(() => {
-		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
-			(query) => query.dataSource === DataSource.METRICS,
-		);
-
-		if (queryContainsMetricsDataSource) {
-			setGraphTypes((prev) =>
-				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
-			);
-		} else {
-			setGraphTypes(GraphTypes);
-		}
-	}, [currentQuery]);
-
-	const softMinHandler = useCallback(
-		(value: number | null) => {
-			setSoftMin(value);
-		},
-		[setSoftMin],
-	);
-
-	const softMaxHandler = useCallback(
-		(value: number | null) => {
-			setSoftMax(value);
-		},
-		[setSoftMax],
-	);
-
 	return (
 		<div className="right-container">
 			<section className="header">
@@ -339,372 +176,119 @@ function RightContainer({
 				<Typography.Text className="header-text">Panel Settings</Typography.Text>
 			</section>
 
-			<SettingsSection title="General" defaultOpen icon={<Pencil size={14} />}>
-				<section className="name-description control-container">
-					<Typography.Text className="section-heading">Name</Typography.Text>
-					<AutoComplete
-						options={dashboardVariableOptions}
-						value={inputValue}
-						onChange={onInputChange}
-						onSelect={onSelect}
-						filterOption={filterOption}
-						style={{ width: '100%' }}
-						getPopupContainer={popupContainer}
-						placeholder="Enter the panel name here..."
-						open={autoCompleteOpen}
-					>
-						<Input
-							rootClassName="name-input"
-							ref={inputRef}
-							onSelect={handleInputCursor}
-							onClick={handleInputCursor}
-							onBlur={(): void => setAutoCompleteOpen(false)}
-						/>
-					</AutoComplete>
-					<Typography.Text className="section-heading">Description</Typography.Text>
-					<TextArea
-						placeholder="Enter the panel description here..."
-						bordered
-						allowClear
-						value={description}
-						onChange={(event): void =>
-							onChangeHandler(setDescription, event.target.value)
-						}
-						rootClassName="description-input"
-					/>
-				</section>
-			</SettingsSection>
+			<GeneralSettingsSection
+				title={title}
+				setTitle={setTitle}
+				description={description}
+				setDescription={setDescription}
+				dashboardVariables={dashboardVariables}
+			/>
 
 			<section className="panel-config">
-				<SettingsSection
-					title="Visualization"
-					defaultOpen
-					icon={<LayoutDashboard size={14} />}
-				>
-					<section className="panel-type control-container">
-						<Typography.Text className="section-heading">Panel Type</Typography.Text>
-						<Select
-							onChange={setGraphHandler}
-							value={selectedGraph}
-							className="panel-type-select"
-							data-testid="panel-change-select"
-							data-stacking-state={stackedBarChart ? 'true' : 'false'}
-						>
-							{graphTypes.map((item) => (
-								<Option key={item.name} value={item.name}>
-									<div className="select-option">
-										<div className="icon">{item.icon}</div>
-										<Typography.Text className="display">{item.display}</Typography.Text>
-									</div>
-								</Option>
-							))}
-						</Select>
-					</section>
-
-					{allowPanelTimePreference && (
-						<section className="panel-time-preference control-container">
-							<Typography.Text className="section-heading">
-								Panel Time Preference
-							</Typography.Text>
-							<TimePreference
-								{...{
-									selectedTime,
-									setSelectedTime,
-								}}
-							/>
-						</section>
-					)}
-
-					{allowStackingBarChart && (
-						<section className="stack-chart control-container">
-							<Typography.Text className="section-heading">
-								Stack series
-							</Typography.Text>
-							<Switch
-								checked={stackedBarChart}
-								size="small"
-								onChange={(checked): void => setStackedBarChart(checked)}
-							/>
-						</section>
-					)}
-
-					{allowFillSpans && (
-						<section className="fill-gaps toggle-card">
-							<div className="toggle-card-text-container">
-								<Typography className="section-heading">Fill gaps</Typography>
-								<Typography.Text className="toggle-card-description">
-									Fill gaps in data with 0 for continuity
-								</Typography.Text>
-							</div>
-							<Switch
-								checked={isFillSpans}
-								size="small"
-								onChange={(checked): void => setIsFillSpans(checked)}
-							/>
-						</section>
-					)}
-				</SettingsSection>
+				<VisualizationSettingsSection
+					selectedGraph={selectedGraph}
+					setGraphHandler={setGraphHandler}
+					selectedTime={selectedTime}
+					setSelectedTime={setSelectedTime}
+					stackedBarChart={stackedBarChart}
+					setStackedBarChart={setStackedBarChart}
+					isFillSpans={isFillSpans}
+					setIsFillSpans={setIsFillSpans}
+					allowPanelTimePreference={allowPanelTimePreference}
+					allowStackingBarChart={allowStackingBarChart}
+					allowFillSpans={allowFillSpans}
+				/>
 
 				{isFormattingSectionVisible && (
-					<SettingsSection
-						title="Formatting & Units"
-						icon={<SlidersHorizontal size={14} />}
-					>
-						{allowYAxisUnit && (
-							<DashboardYAxisUnitSelectorWrapper
-								onSelect={setYAxisUnit}
-								value={yAxisUnit || ''}
-								fieldLabel={
-									selectedGraphType === PanelDisplay.VALUE ||
-									selectedGraphType === PanelDisplay.PIE
-										? 'Unit'
-										: 'Y Axis Unit'
-								}
-								// Only update the y-axis unit value automatically in create mode
-								shouldUpdateYAxisUnit={isNewDashboard}
-							/>
-						)}
-
-						{allowDecimalPrecision && (
-							<section className="decimal-precision-selector control-container">
-								<Typography.Text className="typography">
-									Decimal Precision
-								</Typography.Text>
-								<Select
-									options={decimapPrecisionOptions}
-									value={decimalPrecision}
-									style={{ width: '100%' }}
-									className="panel-type-select"
-									defaultValue={PrecisionOptionsEnum.TWO}
-									onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
-								/>
-							</section>
-						)}
-
-						{allowPanelColumnPreference && (
-							<ColumnUnitSelector
-								columnUnits={columnUnits}
-								setColumnUnits={setColumnUnits}
-								isNewDashboard={isNewDashboard}
-							/>
-						)}
-					</SettingsSection>
+					<FormattingUnitsSection
+						selectedGraphType={selectedGraphType}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						isNewDashboard={isNewDashboard}
+						decimalPrecision={decimalPrecision}
+						setDecimalPrecision={setDecimalPrecision}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+						allowYAxisUnit={allowYAxisUnit}
+						allowDecimalPrecision={allowDecimalPrecision}
+						allowPanelColumnPreference={allowPanelColumnPreference}
+					/>
 				)}
 
 				{isChartAppearanceSectionVisible && (
-					<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
-						{allowFillMode && (
-							<FillModeSelector value={fillMode} onChange={setFillMode} />
-						)}
-						{allowLineStyle && (
-							<LineStyleSelector value={lineStyle} onChange={setLineStyle} />
-						)}
-						{allowLineInterpolation && (
-							<LineInterpolationSelector
-								value={lineInterpolation}
-								onChange={setLineInterpolation}
-							/>
-						)}
-						{allowShowPoints && (
-							<section className="show-points toggle-card">
-								<div className="toggle-card-text-container">
-									<Typography.Text className="section-heading">
-										Show points
-									</Typography.Text>
-									<Typography.Text className="toggle-card-description">
-										Display individual data points on the chart
-									</Typography.Text>
-								</div>
-								<Switch size="small" checked={showPoints} onChange={setShowPoints} />
-							</section>
-						)}
-					</SettingsSection>
+					<ChartAppearanceSection
+						fillMode={fillMode}
+						setFillMode={setFillMode}
+						lineStyle={lineStyle}
+						setLineStyle={setLineStyle}
+						lineInterpolation={lineInterpolation}
+						setLineInterpolation={setLineInterpolation}
+						showPoints={showPoints}
+						setShowPoints={setShowPoints}
+						allowFillMode={allowFillMode}
+						allowLineStyle={allowLineStyle}
+						allowLineInterpolation={allowLineInterpolation}
+						allowShowPoints={allowShowPoints}
+					/>
 				)}
 
 				{isAxisSectionVisible && (
-					<SettingsSection title="Axes" icon={<Axis3D size={14} />}>
-						{allowSoftMinMax && (
-							<section className="soft-min-max">
-								<section className="container">
-									<Typography.Text className="text">Soft Min</Typography.Text>
-									<InputNumber
-										type="number"
-										value={softMin}
-										onChange={softMinHandler}
-										rootClassName="input"
-									/>
-								</section>
-								<section className="container">
-									<Typography.Text className="text">Soft Max</Typography.Text>
-									<InputNumber
-										value={softMax}
-										type="number"
-										rootClassName="input"
-										onChange={softMaxHandler}
-									/>
-								</section>
-							</section>
-						)}
-
-						{allowLogScale && (
-							<section className="log-scale control-container">
-								<Typography.Text className="section-heading">
-									Y Axis Scale
-								</Typography.Text>
-								<Select
-									onChange={(value): void =>
-										setIsLogScale(value === LogScale.LOGARITHMIC)
-									}
-									value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
-									style={{ width: '100%' }}
-									className="panel-type-select"
-									defaultValue={LogScale.LINEAR}
-								>
-									<Option value={LogScale.LINEAR}>
-										<div className="select-option">
-											<div className="icon">
-												<LineChart size={16} />
-											</div>
-											<Typography.Text className="display">Linear</Typography.Text>
-										</div>
-									</Option>
-									<Option value={LogScale.LOGARITHMIC}>
-										<div className="select-option">
-											<div className="icon">
-												<Spline size={16} />
-											</div>
-											<Typography.Text className="display">Logarithmic</Typography.Text>
-										</div>
-									</Option>
-								</Select>
-							</section>
-						)}
-					</SettingsSection>
+					<AxesSection
+						allowSoftMinMax={allowSoftMinMax}
+						allowLogScale={allowLogScale}
+						softMin={softMin}
+						softMax={softMax}
+						setSoftMin={setSoftMin}
+						setSoftMax={setSoftMax}
+						isLogScale={isLogScale}
+						setIsLogScale={setIsLogScale}
+					/>
 				)}
 
 				{isLegendSectionVisible && (
-					<SettingsSection title="Legend" icon={<Layers size={14} />}>
-						{allowLegendPosition && (
-							<section className="legend-position control-container">
-								<Typography.Text className="section-heading">Position</Typography.Text>
-								<Select
-									onChange={(value: LegendPosition): void => setLegendPosition(value)}
-									value={legendPosition}
-									style={{ width: '100%' }}
-									className="panel-type-select"
-									defaultValue={LegendPosition.BOTTOM}
-								>
-									<Option value={LegendPosition.BOTTOM}>
-										<div className="select-option">
-											<Typography.Text className="display">Bottom</Typography.Text>
-										</div>
-									</Option>
-									<Option value={LegendPosition.RIGHT}>
-										<div className="select-option">
-											<Typography.Text className="display">Right</Typography.Text>
-										</div>
-									</Option>
-								</Select>
-							</section>
-						)}
-
-						{allowLegendColors && (
-							<section className="legend-colors">
-								<LegendColors
-									customLegendColors={customLegendColors}
-									setCustomLegendColors={setCustomLegendColors}
-									queryResponse={queryResponse}
-								/>
-							</section>
-						)}
-					</SettingsSection>
+					<LegendSection
+						allowLegendPosition={allowLegendPosition}
+						allowLegendColors={allowLegendColors}
+						legendPosition={legendPosition}
+						setLegendPosition={setLegendPosition}
+						customLegendColors={customLegendColors}
+						setCustomLegendColors={setCustomLegendColors}
+						queryResponse={queryResponse}
+					/>
 				)}
 
 				{allowBucketConfig && (
-					<SettingsSection title="Histogram / Buckets">
-						<section className="bucket-config control-container">
-							<Typography.Text className="section-heading">
-								Number of buckets
-							</Typography.Text>
-							<InputNumber
-								value={bucketCount || null}
-								type="number"
-								min={0}
-								rootClassName="bucket-input"
-								placeholder="Default: 30"
-								onChange={(val): void => {
-									setBucketCount(val || 0);
-								}}
-							/>
-							<Typography.Text className="section-heading bucket-size-label">
-								Bucket width
-							</Typography.Text>
-							<InputNumber
-								value={bucketWidth || null}
-								type="number"
-								precision={2}
-								placeholder="Default: Auto"
-								step={0.1}
-								min={0.0}
-								rootClassName="bucket-input"
-								onChange={(val): void => {
-									setBucketWidth(val || 0);
-								}}
-							/>
-							<section className="combine-hist">
-								<Typography.Text className="section-heading">
-									Merge all series into one
-								</Typography.Text>
-								<Switch
-									checked={combineHistogram}
-									size="small"
-									onChange={(checked): void => setCombineHistogram(checked)}
-								/>
-							</section>
-						</section>
-					</SettingsSection>
+					<HistogramBucketsSection
+						bucketCount={bucketCount}
+						setBucketCount={setBucketCount}
+						bucketWidth={bucketWidth}
+						setBucketWidth={setBucketWidth}
+						combineHistogram={combineHistogram}
+						setCombineHistogram={setCombineHistogram}
+					/>
 				)}
 			</section>
 
 			{allowCreateAlerts && (
-				<section className="alerts" onClick={onCreateAlertsHandler}>
-					<div className="left-section">
-						<ConciergeBell size={14} className="bell-icon" />
-						<Typography.Text className="alerts-text">Alerts</Typography.Text>
-						<SquareArrowOutUpRight size={10} className="info-icon" />
-					</div>
-					<Plus size={14} className="plus-icon" />
-				</section>
+				<AlertsSection onCreateAlertsHandler={onCreateAlertsHandler} />
 			)}
 
 			{allowContextLinks && (
-				<SettingsSection
-					title="Context Links"
-					icon={<Link size={14} />}
-					defaultOpen={!!contextLinks.linksData.length}
-				>
-					<ContextLinks
-						contextLinks={contextLinks}
-						setContextLinks={setContextLinks}
-						selectedWidget={selectedWidget}
-					/>
-				</SettingsSection>
+				<ContextLinksSection
+					contextLinks={contextLinks}
+					setContextLinks={setContextLinks}
+					selectedWidget={selectedWidget}
+				/>
 			)}
 
 			{allowThreshold && (
-				<SettingsSection
-					title="Thresholds"
-					icon={<Antenna size={14} />}
-					defaultOpen={!!thresholds.length}
-				>
-					<ThresholdSelector
-						thresholds={thresholds}
-						setThresholds={setThresholds}
-						yAxisUnit={yAxisUnit}
-						selectedGraph={selectedGraph}
-						columnUnits={columnUnits}
-					/>
-				</SettingsSection>
+				<ThresholdsSection
+					thresholds={thresholds}
+					setThresholds={setThresholds}
+					yAxisUnit={yAxisUnit}
+					selectedGraph={selectedGraph}
+					columnUnits={columnUnits}
+				/>
 			)}
 		</div>
 	);
