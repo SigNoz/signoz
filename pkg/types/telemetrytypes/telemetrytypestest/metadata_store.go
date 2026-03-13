@@ -67,26 +67,24 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 		}
 	}
 
-	// Inject StaticFields (e.g. IntrinsicFields), mirroring the real metadata store.
-	// StaticFields take precedence over KeysMap entries for the same logical key.
-	// Each logical key always gets its own entry (so "message" and "body.message" both
-	// resolve to the IntrinsicField independently). The physical name is registered
-	// only once to avoid duplicate entries in that slot.
+	// StaticFields (e.g. IntrinsicFields), mirroring the real metadata store.
+	// Each intrisic key always gets its own entry (so "message" and "body" both
+	// resolve to the IntrinsicField independently).
 	for key, field := range m.StaticFields {
 		if !matchesName(fieldKeySelector, key) {
 			continue
 		}
 
-		// Register by physical name only once and only when it differs from the
-		// logical key — if they are the same, the always-register below covers it.
+		// Register by field name once if it doesn't exists from before
 		if _, exists := setOfKeys[field.Text()]; !exists {
-			result[field.Text()] = append(result[field.Text()], &field)
+			result[field.Name] = append(result[field.Name], &field)
 			setOfKeys[field.Text()] = &field
 		}
-		// Always register the logical key so that every alias in IntrinsicFields
-		// (e.g. "message", "body_v2.message") independently resolves to the same
-		// physical field in the keys map.
-		result[key] = append(result[key], &field)
+
+		// Register the field key for alias as well; IntrinsicFields has alias of "body" to "message" field
+		if key != field.Name {
+			result[key] = append(result[key], &field)
+		}
 	}
 
 	return result, true, nil

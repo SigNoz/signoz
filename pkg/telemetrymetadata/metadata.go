@@ -566,15 +566,14 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-				// Register by physical name only once and only when it differs from the
-				// logical key — if they are the same, the always-register below covers it.
+				// Register by field name once if it doesn't exists from before
 				if _, added := setOfKeys[field.Text()]; !added {
-					mapOfKeys[field.Text()] = append(mapOfKeys[field.Text()], &field)
+					mapOfKeys[field.Name] = append(mapOfKeys[field.Name], &field)
 				}
-				// Always register the logical key so that every alias in IntrinsicFields
-				// (e.g. "message", "body_v2.message") independently resolves to the same
-				// physical field in the keys map.
-				mapOfKeys[key] = append(mapOfKeys[key], &field)
+				// Register the field key for alias as well; IntrinsicFields has alias of "body" to "message" field
+				if key != field.Name {
+					mapOfKeys[key] = append(mapOfKeys[key], &field)
+				}
 			}
 		}
 	}

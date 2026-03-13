@@ -46,11 +46,11 @@ const (
 )
 
 var (
-	// BodyLogicalFieldJSONMapping is the canonical key for the "message" type hint.
+	// BodyFieldMessageMapping is the canonical key for the "message" type hint.
 	// It lives under body (FieldContextBody) but Materialized=true signals the field
 	// mapper to access it as a direct sub-column (body_v2.message) rather than via
 	// dynamicElement(). Its name is the bare field name ("message"), not the column path.
-	BodyLogicalFieldJSONMapping = &telemetrytypes.TelemetryFieldKey{
+	BodyFieldMessageMapping = &telemetrytypes.TelemetryFieldKey{
 		Name:          MessageBodyField,
 		Signal:        telemetrytypes.SignalLogs,
 		FieldContext:  telemetrytypes.FieldContextBody,
@@ -147,13 +147,13 @@ func bodyAliasExpression() string {
 
 func enrichMapsForJSONBodyEnabled() {
 	if querybuilder.BodyJSONQueryEnabled {
-		DefaultFullTextColumn = BodyLogicalFieldJSONMapping
-		IntrinsicFields["body"] = *BodyLogicalFieldJSONMapping
+		DefaultFullTextColumn = BodyFieldMessageMapping
+		IntrinsicFields["body"] = *BodyFieldMessageMapping
 
 		// Register all key names that should resolve to the message type-hint column so
 		// QB can look them up directly: bare "message" and qualified "body_v2.message".
-		IntrinsicFields[MessageSubColumn] = *BodyLogicalFieldJSONMapping
-		IntrinsicFields[MessageBodyField] = *BodyLogicalFieldJSONMapping
+		IntrinsicFields[MessageSubColumn] = *BodyFieldMessageMapping
+		IntrinsicFields[MessageBodyField] = *BodyFieldMessageMapping
 		logsV2Columns[MessageSubColumn] = &schema.Column{
 			Name: MessageSubColumn,
 			Type: schema.ColumnTypeString,
