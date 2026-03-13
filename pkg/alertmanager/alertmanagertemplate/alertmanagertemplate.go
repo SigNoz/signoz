@@ -112,7 +112,7 @@ func (at *alertTemplater) expandBody(
 		var parts []string
 		missingVars := make(map[string]bool)
 		for i := range ntd.Alerts {
-			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, ntd.Alerts[i])
+			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, &ntd.Alerts[i])
 			if err != nil {
 				return "", nil, err
 			}
@@ -258,4 +258,3 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 		IsMissingData: isMissingData,
 	}
 }
-

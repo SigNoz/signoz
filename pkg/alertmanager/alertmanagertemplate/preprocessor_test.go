@@ -4,6 +4,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/prometheus/alertmanager/template"
 	"github.com/stretchr/testify/require"
 )
 
@@ -58,11 +59,6 @@ func TestExtractFieldMappings(t *testing.T) {
 }
 
 func TestBuildVariableDefinitions(t *testing.T) {
-	type SimpleStruct struct {
-		Name   string `json:"name"`
-		Status string `json:"status"`
-	}
-
 	testCases := []struct {
 		name         string
 		tmpl         string
@@ -73,35 +69,51 @@ func TestBuildVariableDefinitions(t *testing.T) {
 		{
 			name: "empty template still returns struct field definitions",
 			tmpl: "",
-			data: SimpleStruct{Name: "test"},
+			data: &NotificationTemplateData{Receiver: "test"},
 			expectedVars: []string{
-				"{{ $name := .Name }}",
-				"{{ $status := .Status }}",
-			},
-		},
-		{
-			name: "only known vars — no fallback definitions",
-			tmpl: "$name is $status",
-			data: SimpleStruct{Name: "test", Status: "ok"},
-			expectedVars: []string{
-				"{{ $name := .Name }}",
-				"{{ $status := .Status }}",
+				"{{ $receiver := .receiver }}",
+				"{{ $status := .status }}",
 			},
 		},
 		{
 			name: "mix of known and unknown vars",
-			tmpl: "$name: $custom_label",
-			data: SimpleStruct{Name: "test", Status: "ok"},
+			tmpl: "$rule_name: $custom_label",
+			data: &AlertData{AlertName: "test", Status: "ok", Severity: "critical"},
 			expectedVars: []string{
-				"{{ $name := .Name }}",
-				"{{ $status := .Status }}",
+				"{{ $rule_name := .rule_name }}",
+				"{{ $status := .status }}",
+				"{{ $severity := .severity }}",
 				`{{ $custom_label := "<no value>" }}`,
+			},
+		},
+		{
+			name: "nested fields definitions coming from NotificationTemplateData",
+			tmpl: "$severity for $service",
+			data: &NotificationTemplateData{Labels: template.KV{
+				"severity": "critical",
+				"service":  "test",
+			}},
+			expectedVars: []string{
+				"{{ $severity := index .labels \"severity\" }}",
+				"{{ $service := index .labels \"service\" }}",
+			},
+		},
+		{
+			name: "nested fields definitions coming from AlertData",
+			tmpl: "$severity for $service",
+			data: &AlertData{Labels: template.KV{
+				"severity": "critical",
+				"service":  "test",
+			}},
+			expectedVars: []string{
+				"{{ $severity := index .labels \"severity\" }}",
+				"{{ $service := index .labels \"service\" }}",
 			},
 		},
 		{
 			name:        "invalid template syntax returns error",
 			tmpl:        "{{invalid",
-			data:        SimpleStruct{},
+			data:        &NotificationTemplateData{},
 			expectError: true,
 		},
 	}
@@ -125,7 +137,7 @@ func TestBuildVariableDefinitions(t *testing.T) {
 	}
 }
 
-func TestPreProcessTemplateAndDataA(t *testing.T) {
+func TestPreProcessTemplateAndData(t *testing.T) {
 	testCases := []struct {
 		name                     string
 		tmpl                     string
@@ -137,12 +149,15 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 	}{
 		{
 			name: "NotificationTemplateData with dollar variables",
-			tmpl: "[$status] $rule_name (ID: $rule_id) - Firing: $total_firing, Resolved: $total_resolved",
-			data: NotificationTemplateData{
-				Receiver:      "pagerduty",
-				Status:        "firing",
-				AlertName:     "HighMemory",
-				RuleID:        "rule-123",
+			tmpl: "[$status] $rule_name (ID: $rule_id) - Firing: $total_firing, Resolved: $total_resolved, Severity: $severity",
+			data: &NotificationTemplateData{
+				Receiver:  "pagerduty",
+				Status:    "firing",
+				AlertName: "HighMemory",
+				RuleID:    "rule-123",
+				Labels: template.KV{
+					"severity": "critical",
+				},
 				TotalFiring:   3,
 				TotalResolved: 1,
 			},
@@ -152,6 +167,7 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				"{{$rule_id := .rule_id}}",
 				"{{$total_firing := .total_firing}}",
 				"{{$total_resolved := .total_resolved}}",
+				"{{$severity := index .labels \"severity\"}}",
 				"[{{ .status }}] {{ .rule_name }} (ID: {{ .rule_id }}) - Firing: {{ .total_firing }}, Resolved: {{ .total_resolved }}",
 			},
 			expectedData: map[string]any{
@@ -160,18 +176,22 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				"rule_id":        "rule-123",
 				"total_firing":   3,
 				"total_resolved": 1,
+				"severity":       "critical",
 			},
 			expectedUnknownVars: map[string]bool{},
 		},
 		{
 			name: "AlertData with dollar variables",
-			tmpl: "$rule_name: Value $value exceeded $threshold (Status: $status, Severity: $severity)",
-			data: AlertData{
-				Receiver:   "webhook",
-				Status:     "resolved",
-				AlertName:  "DiskFull",
-				RuleID:     "disk-001",
-				Severity:   "warning",
+			tmpl: "$rule_name: Value $value exceeded $threshold (Status: $status, Severity: $severity, Description: $description)",
+			data: &AlertData{
+				Receiver:  "webhook",
+				Status:    "resolved",
+				AlertName: "DiskFull",
+				RuleID:    "disk-001",
+				Severity:  "warning",
+				Annotations: template.KV{
+					"description": "Disk full and cannot be written to",
+				},
 				Value:      "85%",
 				Threshold:  "80%",
 				IsFiring:   false,
@@ -183,50 +203,60 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				"{{$threshold := .threshold}}",
 				"{{$status := .status}}",
 				"{{$severity := .severity}}",
-				"{{ .rule_name }}: Value {{ .value }} exceeded {{ .threshold }} (Status: {{ .status }}, Severity: {{ .severity }})",
+				"{{$description := index .annotations \"description\"}}",
+				"{{ .rule_name }}: Value {{ .value }} exceeded {{ .threshold }} (Status: {{ .status }}, Severity: {{ .severity }}, Description: {{ .description }})",
 			},
 			expectedData: map[string]any{
-				"status":    "resolved",
-				"rule_name": "DiskFull",
-				"rule_id":   "disk-001",
-				"severity":  "warning",
-				"value":     "85%",
-				"threshold": "80%",
+				"status":      "resolved",
+				"rule_name":   "DiskFull",
+				"rule_id":     "disk-001",
+				"severity":    "warning",
+				"value":       "85%",
+				"threshold":   "80%",
+				"description": "Disk full and cannot be written to",
 			},
 			expectedUnknownVars: map[string]bool{},
 		},
 		{
-			name: "mixed dollar and dot notation",
+			name: "mixed dollar and dot notation with both labels and annotations",
 			tmpl: "Alert $rule_name has {{.total_firing}} firing alerts",
-			data: NotificationTemplateData{
+			data: &NotificationTemplateData{
 				AlertName:   "HighCPU",
 				TotalFiring: 5,
+				Labels: template.KV{
+					"value": "<MASKED VALUE>",
+				},
+				Annotations: template.KV{
+					"value": "85%",
+				},
 			},
 			expectedTemplateContains: []string{
 				"{{$rule_name := .rule_name}}",
+				"{{$value := index .labels \"value\"}}",
 				"Alert {{ .rule_name }} has {{.total_firing}} firing alerts",
 			},
 			expectedData: map[string]any{
 				"rule_name":    "HighCPU",
 				"total_firing": 5,
+				"value":        "<MASKED VALUE>",
 			},
 			expectedUnknownVars: map[string]bool{},
 		},
 		{
 			name: "empty template",
 			tmpl: "",
-			data: NotificationTemplateData{Receiver: "slack"},
+			data: &NotificationTemplateData{Receiver: "slack"},
 		},
 		{
 			name:        "invalid template syntax",
 			tmpl:        "{{invalid",
-			data:        NotificationTemplateData{},
+			data:        &NotificationTemplateData{},
 			expectError: true,
 		},
 		{
 			name: "unknown dollar var in text renders empty",
 			tmpl: "alert $custom_note fired",
-			data: NotificationTemplateData{AlertName: "HighCPU"},
+			data: &NotificationTemplateData{AlertName: "HighCPU"},
 			expectedTemplateContains: []string{
 				`{{$custom_note := "<no value>"}}`,
 				"alert {{ .custom_note }} fired",
@@ -236,7 +266,7 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 		{
 			name: "unknown dollar var in action block renders empty",
 			tmpl: "alert {{ $custom_note }} fired",
-			data: NotificationTemplateData{AlertName: "HighCPU"},
+			data: &NotificationTemplateData{AlertName: "HighCPU"},
 			expectedTemplateContains: []string{
 				`{{$custom_note := "<no value>"}}`,
 				`alert {{$custom_note}} fired`,
@@ -246,7 +276,7 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 		{
 			name: "mix of known and unknown vars",
 			tmpl: "$rule_name: $custom_label",
-			data: NotificationTemplateData{AlertName: "HighCPU"},
+			data: &NotificationTemplateData{AlertName: "HighCPU"},
 			expectedTemplateContains: []string{
 				"{{$rule_name := .rule_name}}",
 				`{{$custom_label := "<no value>"}}`,

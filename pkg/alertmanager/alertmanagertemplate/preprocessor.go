@@ -74,6 +74,64 @@ func extractFieldMappings(data any) []fieldMapping {
 	return mappings
 }
 
+// extractNestedFieldsDefinitions extracts the labels, annotations map and adds their keys to template variable definitions
+func extractNestedFieldsDefinitions(data any) map[string]string {
+	variables := make(map[string]string)
+
+	addLabelsAndAnnotations := func(labels, annotations map[string]string) {
+		for k := range annotations {
+			variables[k] = fmt.Sprintf("index .annotations \"%s\"", k)
+		}
+		for k := range labels {
+			variables[k] = fmt.Sprintf("index .labels \"%s\"", k)
+		}
+	}
+
+	switch data := data.(type) {
+	case *NotificationTemplateData:
+		addLabelsAndAnnotations(data.Labels, data.Annotations)
+	case *AlertData:
+		addLabelsAndAnnotations(data.Labels, data.Annotations)
+	default:
+		return variables
+	}
+
+	return variables
+}
+
+// prepareDataForTemplating prepares the data for templating by adding the labels and annotations values to the resulting map
+// so they can be accessed directly from root level, the default values takes precedence over the labels and annotations values
+func prepareDataForTemplating(data any) (map[string]interface{}, error) {
+	var result map[string]interface{}
+	if err := mapstructure.Decode(data, &result); err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare data for templating")
+	}
+
+	addLabelsAndAnnotationsValues := func(labels, annotations map[string]string) {
+		for k, v := range labels {
+			if _, ok := result[k]; !ok {
+				result[k] = v
+			}
+		}
+		for k, v := range annotations {
+			if _, ok := result[k]; !ok {
+				result[k] = v
+			}
+		}
+	}
+
+	switch data := data.(type) {
+	case *NotificationTemplateData:
+		addLabelsAndAnnotationsValues(data.Labels, data.Annotations)
+	case *AlertData:
+		addLabelsAndAnnotationsValues(data.Labels, data.Annotations)
+	default:
+		return result, nil
+	}
+
+	return result, nil
+}
+
 // generateVariableDefinitions creates `{{ $varname := "" }}` declarations for each variable name.
 func generateVariableDefinitions(varNames map[string]string) string {
 	if len(varNames) == 0 {
@@ -91,12 +149,20 @@ func generateVariableDefinitions(varNames map[string]string) string {
 // populate them with "<no value>" in template so go-text-template don't throw errors
 // when these variables are used in the template.
 func buildVariableDefinitions(tmpl string, data any) (string, map[string]bool, error) {
+	// Extract the inital fields from the data struct and add to the definitions
 	mappings := extractFieldMappings(data)
 
-	// prepare the variables and their values to use in defintions
 	variables := make(map[string]string)
 	for _, m := range mappings {
 		variables[m.VarName] = fmt.Sprintf(".%s", m.FieldName)
+	}
+
+	// Extract the nested fields definitions from the data struct
+	// nested fields are all maps that are present in data like labels, annotations, etc.
+	// once extracted we add them to the variables map along with the field address
+	nestedVariables := extractNestedFieldsDefinitions(data)
+	for k, v := range nestedVariables {
+		variables[k] = v
 	}
 
 	// variables that are used throughout the template
@@ -138,9 +204,9 @@ func PreProcessTemplateAndData(tmpl string, data any) (*ProcessingResult, error)
 	// Handle empty template
 	unknownVars := make(map[string]bool)
 	if tmpl == "" {
-		var result map[string]interface{}
-		if err := mapstructure.Decode(data, &result); err != nil {
-			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare data for templating")
+		result, err := prepareDataForTemplating(data)
+		if err != nil {
+			return nil, err
 		}
 		return &ProcessingResult{Data: result, UnknownVars: unknownVars}, nil
 	}
@@ -162,9 +228,9 @@ func PreProcessTemplateAndData(tmpl string, data any) (*ProcessingResult, error)
 	}
 
 	// Convert struct to map using mapstructure to be used for template execution
-	var result map[string]interface{}
-	if err := mapstructure.Decode(data, &result); err != nil {
-		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare data for templating")
+	result, err := prepareDataForTemplating(data)
+	if err != nil {
+		return nil, err
 	}
 
 	return &ProcessingResult{Template: wrappedTmpl, Data: result, UnknownVars: unknownVars}, nil

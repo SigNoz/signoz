@@ -96,16 +96,18 @@ func TestExpandTemplates(t *testing.T) {
 				),
 			},
 			input: TemplateInput{
-				TitleTemplate: "High request throughput for $labels.service",
-				BodyTemplate: `The service $labels.service is getting high request. Please investigate.
+				TitleTemplate: "High request throughput for $service",
+				BodyTemplate: `The service $service is getting high request. Please investigate.
 Severity: $severity
 Status: $status
-Description: $annotations.description`,
+Service: $service
+Description: $description`,
 			},
 			wantTitle: "High request throughput for payment-service",
 			wantBody: `The service payment-service is getting high request. Please investigate.
 Severity: warning
 Status: firing
+Service: payment-service
 Description: Request rate exceeded 10k/s`,
 		},
 		{
@@ -247,10 +249,10 @@ Description: Request rate exceeded 10k/s`,
 			input: TemplateInput{
 				TitleTemplate:        "   ",
 				DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
-				BodyTemplate:         "$rule_name ($severity)",
+				BodyTemplate:         "$rule_name ($severity) for $alertname",
 			},
 			wantTitle: "HighCPU",
-			wantBody:  "HighCPU (critical)",
+			wantBody:  "HighCPU (critical) for HighCPU",
 		},
 	}
 
