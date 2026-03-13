@@ -92,10 +92,7 @@ func (b *logQueryStatementBuilder) Build(
 		return nil, err
 	}
 
-	if stmt != nil && len(warnings) > 0 {
-		stmt.Warnings = append(stmt.Warnings, warnings...)
-	}
-
+	stmt.Warnings = append(stmt.Warnings, warnings...)
 	return stmt, nil
 }
 
