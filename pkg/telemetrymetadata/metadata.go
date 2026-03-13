@@ -102,7 +102,7 @@ func NewTelemetryMetaStore(
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
 					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
 				},
 			},
@@ -351,7 +351,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 }
 
 // getLogsKeys returns the keys from the spans that match the field selection criteria
-func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
 		instrumentationtypes.CodeNamespace:    "metadata",
@@ -367,9 +367,10 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	if err != nil {
 		return nil, false, err
 	}
-	mapOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
+	// setOfKeys to reuse the same key object for qualified names
+	setOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range matKeys {
-		mapOfKeys[key.Name+";"+key.FieldContext.StringValue()+";"+key.FieldDataType.StringValue()] = key
+		setOfKeys[key.Text()] = key
 	}
 
 	// queries for both attribute and resource keys tables
@@ -470,7 +471,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 	if len(queries) == 0 {
 		// No matching contexts, return empty result
-		return []*telemetrytypes.TelemetryFieldKey{}, true, nil
+		return nil, true, nil
 	}
 
 	// Combine queries with UNION ALL
@@ -498,7 +499,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	}
 	defer rows.Close()
 
-	keys := []*telemetrytypes.TelemetryFieldKey{}
+	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	rowCount := 0
 	searchTexts := []string{}
 	dataTypes := []telemetrytypes.FieldDataType{}
@@ -526,7 +527,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if err != nil {
 			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetLogsKeys.Error())
 		}
-		key, ok := mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()]
+		key, ok := setOfKeys[fieldContext.StringValue()+"."+name+":"+fieldDataType.StringValue()]
 
 		// if there is no materialised column, create a key with the field context and data type
 		if !ok {
@@ -538,8 +539,8 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 			}
 		}
 
-		keys = append(keys, key)
-		mapOfKeys[name+";"+fieldContext.StringValue()+";"+fieldDataType.StringValue()] = key
+		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
+		setOfKeys[key.Text()] = key
 	}
 
 	if rows.Err() != nil {
@@ -565,17 +566,15 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 
 		if found {
 			if field, exists := telemetrylogs.IntrinsicFields[key]; exists {
-				if _, added := mapOfKeys[field.Name+";"+field.FieldContext.StringValue()+";"+field.FieldDataType.StringValue()]; !added {
-					keys = append(keys, &field)
+				// Register by field name once if it doesn't exists from before
+				if _, added := setOfKeys[field.Text()]; !added {
+					mapOfKeys[field.Name] = append(mapOfKeys[field.Name], &field)
 				}
-				continue
+				// Register the field key for alias as well; IntrinsicFields has alias of "body" to "message" field
+				if key != field.Name {
+					mapOfKeys[key] = append(mapOfKeys[key], &field)
+				}
 			}
-
-			keys = append(keys, &telemetrytypes.TelemetryFieldKey{
-				Name:         key,
-				FieldContext: telemetrytypes.FieldContextLog,
-				Signal:       telemetrytypes.SignalLogs,
-			})
 		}
 	}
 
@@ -584,10 +583,13 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 		if err != nil {
 			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
 		}
-		keys = append(keys, bodyJSONPaths...)
+		for _, key := range bodyJSONPaths {
+			mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
+		}
 		complete = complete && finished
 	}
-	return keys, complete, nil
+
+	return mapOfKeys, complete, nil
 }
 
 func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
@@ -882,12 +884,20 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 	if fieldKeySelector != nil {
 		selectors = []*telemetrytypes.FieldKeySelector{fieldKeySelector}
 	}
+	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	switch fieldKeySelector.Signal {
 	case telemetrytypes.SignalTraces:
 		keys, complete, err = t.getTracesKeys(ctx, selectors)
 	case telemetrytypes.SignalLogs:
-		keys, complete, err = t.getLogsKeys(ctx, selectors)
+		mapOfLogKeys, logsComplete, err := t.getLogsKeys(ctx, selectors)
+		if err != nil {
+			return nil, false, err
+		}
+		for keyName, keys := range mapOfLogKeys {
+			mapOfKeys[keyName] = append(mapOfKeys[keyName], keys...)
+		}
+		complete = complete && logsComplete
 	case telemetrytypes.SignalMetrics:
 		if fieldKeySelector.Source == telemetrytypes.SourceMeter {
 			keys, complete, err = t.getMeterSourceMetricKeys(ctx, selectors)
@@ -903,12 +913,13 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		keys = append(keys, tracesKeys...)
 
 		// get logs keys
-		logsKeys, logsComplete, err := t.getLogsKeys(ctx, selectors)
+		mapOfLogKeys, logsComplete, err := t.getLogsKeys(ctx, selectors)
 		if err != nil {
 			return nil, false, err
 		}
-		keys = append(keys, logsKeys...)
-
+		for keyName, keys := range mapOfLogKeys {
+			mapOfKeys[keyName] = append(mapOfKeys[keyName], keys...)
+		}
 		// get metrics keys
 		metricsKeys, metricsComplete, err := t.getMetricsKeys(ctx, selectors)
 		if err != nil {
@@ -922,7 +933,6 @@ func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *tele
 		return nil, false, err
 	}
 
-	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 	for _, key := range keys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
 	}
@@ -959,7 +969,7 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 		}
 	}
 
-	logsKeys, logsComplete, err := t.getLogsKeys(ctx, logsSelectors)
+	mapOfLogKeys, logsComplete, err := t.getLogsKeys(ctx, logsSelectors)
 	if err != nil {
 		return nil, false, err
 	}
@@ -980,8 +990,8 @@ func (t *telemetryMetaStore) GetKeysMulti(ctx context.Context, fieldKeySelectors
 	complete := logsComplete && tracesComplete && metricsComplete
 
 	mapOfKeys := make(map[string][]*telemetrytypes.TelemetryFieldKey)
-	for _, key := range logsKeys {
-		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)
+	for keyName, keys := range mapOfLogKeys {
+		mapOfKeys[keyName] = append(mapOfKeys[keyName], keys...)
 	}
 	for _, key := range tracesKeys {
 		mapOfKeys[key.Name] = append(mapOfKeys[key.Name], key)

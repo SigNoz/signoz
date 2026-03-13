@@ -30,7 +30,7 @@ var (
 		"severity_text":      {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
 		"severity_number":    {Name: "severity_number", Type: schema.ColumnTypeUInt8},
 		"body":               {Name: "body", Type: schema.ColumnTypeString},
-		LogsV2BodyJSONColumn: {Name: LogsV2BodyJSONColumn, Type: schema.JSONColumnType{
+		LogsV2BodyV2Column: {Name: LogsV2BodyV2Column, Type: schema.JSONColumnType{
 			MaxDynamicTypes: utils.ToPointer(uint(32)),
 			MaxDynamicPaths: utils.ToPointer(uint(0)),
 		}},
@@ -88,10 +88,16 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 			return logsV2Columns["attributes_bool"], nil
 		}
 	case telemetrytypes.FieldContextBody:
-		// Body context is for JSON body fields
-		// Use body_json if feature flag is enabled
+		// Body context is for JSON body fields. Use body_v2 if feature flag is enabled.
 		if querybuilder.BodyJSONQueryEnabled {
-			return logsV2Columns[LogsV2BodyJSONColumn], nil
+			// (Materialized=true) have a direct physical sub-column in body_v2.
+			// No lambda expressions (which expects a JSONPlan).
+			if key.Materialized {
+				// return direct physical sub-column in body_v2 (e.g. body_v2.message).
+				return logsV2Columns[fmt.Sprintf("%s.%s", LogsV2BodyV2Column, key.Name)], nil
+			}
+
+			return logsV2Columns[LogsV2BodyV2Column], nil
 		}
 		// Fall back to legacy body column
 		return logsV2Columns["body"], nil
@@ -100,9 +106,9 @@ func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.Telemetry
 		if !ok {
 			// check if the key has body JSON search
 			if strings.HasPrefix(key.Name, telemetrytypes.BodyJSONStringSearchPrefix) {
-				// Use body_json if feature flag is enabled and we have a body condition builder
+				// Use body_v2 if feature flag is enabled and we have a body condition builder
 				if querybuilder.BodyJSONQueryEnabled {
-					return logsV2Columns[LogsV2BodyJSONColumn], nil
+					return logsV2Columns[LogsV2BodyV2Column], nil
 				}
 				// Fall back to legacy body column
 				return logsV2Columns["body"], nil
@@ -246,34 +252,37 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 		node := plan[0]
 
 		expr := fmt.Sprintf("dynamicElement(%s, '%s')", node.FieldPath(), node.TerminalConfig.ElemType.StringValue())
-		if key.Materialized {
-			if len(plan) < 2 {
-				return "", errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
-					"plan length is less than 2 for promoted path: %s", key.Name)
-			}
+		// TODO(Piyush): Promoted path logic commented out. Materialized now means type hint
+		// promotion will be extracted from key field evolution
+		// (direct sub-column access), not a promoted body_promoted.* column.
+		// if key.Materialized {
+		// 	if len(plan) < 2 {
+		// 		return "", errors.Newf(errors.TypeUnexpected, CodePromotedPlanMissing,
+		// 			"plan length is less than 2 for promoted path: %s", key.Name)
+		// 	}
 
-			node := plan[1]
-			promotedExpr := fmt.Sprintf(
-				"dynamicElement(%s, '%s')",
-				node.FieldPath(),
-				node.TerminalConfig.ElemType.StringValue(),
-			)
+		// 	node := plan[1]
+		// 	promotedExpr := fmt.Sprintf(
+		// 		"dynamicElement(%s, '%s')",
+		// 		node.FieldPath(),
+		// 		node.TerminalConfig.ElemType.StringValue(),
+		// 	)
 
-			// dynamicElement returns NULL for scalar types or an empty array for array types.
-			if node.TerminalConfig.ElemType.IsArray {
-				expr = fmt.Sprintf(
-					"if(length(%s) > 0, %s, %s)",
-					promotedExpr,
-					promotedExpr,
-					expr,
-				)
-			} else {
-				// promoted column first then body_json column
-				// TODO(Piyush): Change this in future for better performance
-				expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
-			}
+		// 	// dynamicElement returns NULL for scalar types or an empty array for array types.
+		// 	if node.TerminalConfig.ElemType.IsArray {
+		// 		expr = fmt.Sprintf(
+		// 			"if(length(%s) > 0, %s, %s)",
+		// 			promotedExpr,
+		// 			promotedExpr,
+		// 			expr,
+		// 		)
+		// 	} else {
+		// 		// promoted column first then body_json column
+		// 		// TODO(Piyush): Change this in future for better performance
+		// 		expr = fmt.Sprintf("coalesce(%s, %s)", promotedExpr, expr)
+		// 	}
 
-		}
+		// }
 
 		return expr, nil
 	}

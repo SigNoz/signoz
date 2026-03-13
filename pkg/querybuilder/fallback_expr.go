@@ -204,7 +204,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	// While we expect user not to send the mixed data types, it inevitably happens
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
-	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString:
+	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString, telemetrytypes.FieldDataTypeJSON:
+		if key.FieldDataType == telemetrytypes.FieldDataTypeJSON {
+			tblFieldName = fmt.Sprintf("toString(%s)", tblFieldName)
+		}
 		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
@@ -219,7 +222,26 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
-
+	case telemetrytypes.FieldDataTypeJSON:
+		// for JSON fields, we need to convert the value to a string
+		// 
+		// Note: though the conversion ahead won't lead to any results because 
+		// toString() results in a stringified JSON
+		tblFieldName = fmt.Sprintf("toString(%s)", tblFieldName)
+		switch v := value.(type) {
+		case float64:
+			// try to convert the string value to to number
+			tblFieldName = castFloat(tblFieldName)
+		case []any:
+			if allFloats(v) {
+				tblFieldName = castFloat(tblFieldName)
+			} else if hasString(v) {
+				_, value = castString(tblFieldName), toStrings(v)
+			}
+		case bool:
+			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
+			value = fmt.Sprintf("%t", v)
+		}
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,
