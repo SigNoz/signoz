@@ -19,7 +19,7 @@ func TestWrapBareVars(t *testing.T) {
 		{
 			name:     "mixed variables with actions",
 			input:    "$name is {{.Status}}",
-			expected: "{{ $name }} is {{.Status}}",
+			expected: "{{ .name }} is {{.Status}}",
 		},
 		{
 			name: "nested variables in range",
@@ -27,13 +27,13 @@ func TestWrapBareVars(t *testing.T) {
 				$title
 				{{end}}`,
 			expected: `{{range .items}}
-				{{ $title }}
+				{{ .title }}
 				{{end}}`,
 		},
 		{
 			name:     "nested variables in if else",
 			input:    "{{if .ok}}$a{{else}}$b{{end}}",
-			expected: "{{if .ok}}{{ $a }}{{else}}{{ $b }}{{end}}",
+			expected: "{{if .ok}}{{ .a }}{{else}}{{ .b }}{{end}}",
 		},
 		// Labels prefix: index into .labels map
 		{
@@ -77,7 +77,7 @@ func TestWrapBareVars(t *testing.T) {
 		{
 			name:     "hybrid - all variables types",
 			input:    "Alert: $alert_name Labels: $labels.severity Annotations: $annotations.desc Service: $service.name Count: $error_count",
-			expected: `Alert: {{ $alert_name }} Labels: {{ index .labels "severity" }} Annotations: {{ index .annotations "desc" }} Service: {{ index . "service.name" }} Count: {{ $error_count }}`,
+			expected: `Alert: {{ .alert_name }} Labels: {{ index .labels "severity" }} Annotations: {{ index .annotations "desc" }} Service: {{ index . "service.name" }} Count: {{ .error_count }}`,
 		},
 		{
 			name:     "already wrapped should not be changed",
@@ -97,7 +97,7 @@ func TestWrapBareVars(t *testing.T) {
 		{
 			name:     "deeply nested",
 			input:    "{{range .items}}{{if .ok}}$deep{{end}}{{end}}",
-			expected: "{{range .items}}{{if .ok}}{{ $deep }}{{end}}{{end}}",
+			expected: "{{range .items}}{{if .ok}}{{ .deep }}{{end}}{{end}}",
 		},
 		{
 			name: "complex example",
@@ -105,15 +105,15 @@ func TestWrapBareVars(t *testing.T) {
 				{{if .isAdmin}}
 					Welcome back $name, you have {{.unreadCount}} messages.
 				{{end}}`,
-			expected: `Hello {{ $name }}, your score is {{ $score }}.
+			expected: `Hello {{ .name }}, your score is {{ .score }}.
 				{{if .isAdmin}}
-					Welcome back {{ $name }}, you have {{.unreadCount}} messages.
+					Welcome back {{ .name }}, you have {{.unreadCount}} messages.
 				{{end}}`,
 		},
 		{
 			name:     "with custom function",
 			input:    "$name triggered at {{urlescape .url}}",
-			expected: "{{ $name }} triggered at {{urlescape .url}}",
+			expected: "{{ .name }} triggered at {{urlescape .url}}",
 		},
 		{
 			name:        "invalid template",
@@ -128,6 +128,74 @@ func TestWrapBareVars(t *testing.T) {
 
 			if tc.expectError {
 				require.Error(t, err, "should error on invalid template syntax")
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, tc.expected, result)
+			}
+		})
+	}
+}
+
+func TestExtractUsedVariables(t *testing.T) {
+	testCases := []struct {
+		name        string
+		input       string
+		expected    map[string]bool
+		expectError bool
+	}{
+		{
+			name:     "simple usage in text",
+			input:    "$name is $status",
+			expected: map[string]bool{"name": true, "status": true},
+		},
+		{
+			name:     "declared in action block",
+			input:    "{{ $name := .name }}",
+			expected: map[string]bool{"name": true},
+		},
+		{
+			name:     "range loop vars",
+			input:    "{{ range $i, $v := .items }}{{ end }}",
+			expected: map[string]bool{"i": true, "v": true},
+		},
+		{
+			name:     "mixed text and action",
+			input:    "$x and {{ $y }}",
+			expected: map[string]bool{"x": true, "y": true},
+		},
+		{
+			name:     "dotted path in text extracts base only",
+			input:    "$labels.severity",
+			expected: map[string]bool{"labels": true},
+		},
+		{
+			name:     "nested if else",
+			input:    "{{ if .ok }}{{ $a }}{{ else }}{{ $b }}{{ end }}",
+			expected: map[string]bool{"a": true, "b": true},
+		},
+		{
+			name:     "empty string",
+			input:    "",
+			expected: map[string]bool{},
+		},
+		{
+			name:     "no variables",
+			input:    "Hello world",
+			expected: map[string]bool{},
+		},
+		{
+			name:        "invalid template returns error",
+			input:       "{{invalid",
+			expectError: true,
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result, err := ExtractUsedVariables(tc.input)
+
+			if tc.expectError {
+				require.Error(t, err)
 			} else {
 				require.NoError(t, err)
 				require.Equal(t, tc.expected, result)

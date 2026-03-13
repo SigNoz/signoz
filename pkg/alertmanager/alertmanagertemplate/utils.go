@@ -20,6 +20,10 @@ const maxAggregatedValues = 5
 // bareVariableRegex matches bare $variable references including dotted paths like $service.name.
 var bareVariableRegex = regexp.MustCompile(`\$(\w+(?:\.\w+)*)`)
 
+// bareVariableRegexFirstSeg matches only the base $variable name, stopping before any dotted path.
+// e.g. "$labels.severity" matches "$labels", "$name" matches "$name".
+var bareVariableRegexFirstSeg = regexp.MustCompile(`\$\w+`)
+
 // WrapDollarVariables wraps bare $variable references in Go template syntax.
 // Example transformations:
 //   - "$name is $status" -> "{{ $name }} is {{ $status }}"
@@ -87,8 +91,9 @@ func walkAndWrapTextNodes(node parse.Node) {
 				return []byte(fmt.Sprintf(`{{ index . "%s" }}`, varName))
 			}
 
-			// Simple variables: use dollar syntax
-			return []byte(fmt.Sprintf("{{ $%s }}", varName))
+			// Simple variables: use dot notation to directly access the field
+			// without raising any error due to missing variables
+			return []byte(fmt.Sprintf("{{ .%s }}", varName))
 		})
 
 	case *parse.IfNode:
@@ -106,6 +111,41 @@ func walkAndWrapTextNodes(node parse.Node) {
 
 		// Support for `with` can be added later when we start supporting it in editor block
 	}
+}
+
+// ExtractUsedVariables returns the set of all $variable referenced in template
+// — text nodes, action blocks, branch conditions, and loop declarations — regardless of scope.
+// After finding all variables we find the ones which are not part of our alert data and handle them so
+// Go-text-template parser doesn't rejects undefined $variables
+func ExtractUsedVariables(src string) (map[string]bool, error) {
+	if src == "" {
+		return map[string]bool{}, nil
+	}
+
+	// Regex-scan raw template string to collect all $var base names.
+	// bareVariableRegexFirstSeg stops before dots, so "$labels.severity" yields "$labels".
+	used := make(map[string]bool)
+	for _, m := range bareVariableRegexFirstSeg.FindAll([]byte(src), -1) {
+		used[string(m[1:])] = true // strip leading "$"
+	}
+
+	// Build a preamble that pre-declares every found variable.
+	// This prevents "undefined variable" parse errors for $vars used in action
+	// blocks while still letting genuine syntax errors propagate.
+	var preamble strings.Builder
+	for name := range used {
+		fmt.Fprintf(&preamble, `{{$%s := ""}}`, name)
+	}
+
+	// Validate template syntax.
+	funcMap := alertmanagertypes.AdditionalFuncMap()
+	tree := parse.New("template")
+	tree.Mode = parse.SkipFuncCheck
+	if _, err := tree.Parse(preamble.String()+src, "{{", "}}", make(map[string]*parse.Tree), funcMap); err != nil {
+		return nil, err
+	}
+
+	return used, nil
 }
 
 // AggregateKV aggregates key-value pairs (labels or annotations) from all alerts into a single template.KV

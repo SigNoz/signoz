@@ -48,6 +48,10 @@ func extractFieldMappings(data any) []fieldMapping {
 		if varName == "" {
 			continue
 		}
+		varFieldName := field.Tag.Get("mapstructure")
+		if varFieldName == "" {
+			varFieldName = field.Name
+		}
 		// Skip complex types: slices and interfaces
 		kind := field.Type.Kind()
 		if kind == reflect.Slice || kind == reflect.Interface {
@@ -63,64 +67,105 @@ func extractFieldMappings(data any) []fieldMapping {
 
 		mappings = append(mappings, fieldMapping{
 			VarName:   varName,
-			FieldName: field.Name,
+			FieldName: varFieldName,
 		})
 	}
 
 	return mappings
 }
 
-// generateVariableDefinitions creates a Go template prefix string that defines
-// variables for each field mapping. For example:
-// "{{ $receiver := .Receiver }}{{ $status := .Status }}"
-func generateVariableDefinitions(mappings []fieldMapping) string {
-	if len(mappings) == 0 {
+// generateVariableDefinitions creates `{{ $varname := "" }}` declarations for each variable name.
+func generateVariableDefinitions(varNames map[string]string) string {
+	if len(varNames) == 0 {
 		return ""
 	}
-
 	var sb strings.Builder
-	for _, m := range mappings {
-		sb.WriteString(fmt.Sprintf("{{ $%s := .%s }}", m.VarName, m.FieldName))
+	for name := range varNames {
+		fmt.Fprintf(&sb, `{{ $%s := %s }}`, name, varNames[name])
 	}
 	return sb.String()
+}
+
+// buildVariableDefinitions constructs the full variable definition preamble for a template.
+// containing all known and unknown variables, the reason to include unknown variables is to
+// populate them with "<no value>" in template so go-text-template don't throw errors
+// when these variables are used in the template.
+func buildVariableDefinitions(tmpl string, data any) (string, map[string]bool, error) {
+	mappings := extractFieldMappings(data)
+
+	// prepare the variables and their values to use in defintions
+	variables := make(map[string]string)
+	for _, m := range mappings {
+		variables[m.VarName] = fmt.Sprintf(".%s", m.FieldName)
+	}
+
+	// variables that are used throughout the template
+	usedVars, err := ExtractUsedVariables(tmpl)
+	if err != nil {
+		return "", nil, err
+	}
+
+	// Compute unknown variables: used in template but not covered by a field mapping
+	probableUnknownVars := make(map[string]bool)
+	for name := range usedVars {
+		_, ok := variables[name]
+		if !ok {
+			probableUnknownVars[name] = true
+		}
+	}
+
+	// Add the remaining variables to the definitions with missing values
+	// as "<no value>" indicating that the variable is not available in the data
+	for name := range probableUnknownVars {
+		variables[name] = `"<no value>"`
+	}
+
+	return generateVariableDefinitions(variables), probableUnknownVars, nil
+}
+
+type ProcessingResult struct {
+	Template string
+	Data     map[string]interface{}
+	// UnknownVars is the set of possible unknown variables exptracted using regex
+	UnknownVars map[string]bool
 }
 
 // PreProcessTemplateAndData prepares a template string and struct data for Go template execution.
 //
 //	Input:  "$receiver has $rule_name in $status state"
 //	Output: "{{ $receiver := .Receiver }}...{{ $receiver }} has {{ $rule_name }} in {{ $status }} state"
-func PreProcessTemplateAndData(tmpl string, data any) (string, map[string]interface{}, error) {
+func PreProcessTemplateAndData(tmpl string, data any) (*ProcessingResult, error) {
 	// Handle empty template
+	unknownVars := make(map[string]bool)
 	if tmpl == "" {
 		var result map[string]interface{}
 		if err := mapstructure.Decode(data, &result); err != nil {
-			return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to decode data to map")
+			return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare data for templating")
 		}
-		return "", result, nil
+		return &ProcessingResult{Data: result, UnknownVars: unknownVars}, nil
 	}
 
-	// Extract field mappings from the struct
-	mappings := extractFieldMappings(data)
+	// Build variable definitions: known struct fields + fallback empty-string declarations
+	definitions, unknownVars, err := buildVariableDefinitions(tmpl, data)
+	if err != nil {
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to build template definitions")
+	}
 
-	// Use mapping to generate variable definitions prefix
-	definitions := generateVariableDefinitions(mappings)
-
-	// attach the definitions to the provided template so WrapDollarVariables does not
-	// error due to missing variables when parsing go-text-template AST
+	// Attach definitions prefix so WrapDollarVariables can parse the AST without "undefined variable" errors.
 	finalTmpl := definitions + tmpl
 
 	// Call WrapDollarVariables to transform bare $variable references to go-text-template format
 	// with {{ $variable }} syntax from $variable syntax
 	wrappedTmpl, err := WrapDollarVariables(finalTmpl)
 	if err != nil {
-		return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to wrap dollar variables")
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare template for templating")
 	}
 
 	// Convert struct to map using mapstructure to be used for template execution
 	var result map[string]interface{}
 	if err := mapstructure.Decode(data, &result); err != nil {
-		return "", nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to convert data to map")
+		return nil, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to prepare data for templating")
 	}
 
-	return wrappedTmpl, result, nil
+	return &ProcessingResult{Template: wrappedTmpl, Data: result, UnknownVars: unknownVars}, nil
 }

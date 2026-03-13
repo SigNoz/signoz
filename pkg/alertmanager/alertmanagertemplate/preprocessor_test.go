@@ -57,44 +57,75 @@ func TestExtractFieldMappings(t *testing.T) {
 	}
 }
 
-func TestGenerateVariableDefinitions(t *testing.T) {
+func TestBuildVariableDefinitions(t *testing.T) {
+	type SimpleStruct struct {
+		Name   string `json:"name"`
+		Status string `json:"status"`
+	}
+
 	testCases := []struct {
-		name     string
-		mappings []fieldMapping
-		expected string
+		name         string
+		tmpl         string
+		data         any
+		expectedVars []string // substrings that must appear in result
+		expectError  bool
 	}{
 		{
-			name:     "empty mappings",
-			mappings: nil,
-			expected: "",
+			name: "empty template still returns struct field definitions",
+			tmpl: "",
+			data: SimpleStruct{Name: "test"},
+			expectedVars: []string{
+				"{{ $name := .Name }}",
+				"{{ $status := .Status }}",
+			},
 		},
 		{
-			name: "single mapping",
-			mappings: []fieldMapping{
-				{VarName: "name", FieldName: "Name"},
+			name: "only known vars — no fallback definitions",
+			tmpl: "$name is $status",
+			data: SimpleStruct{Name: "test", Status: "ok"},
+			expectedVars: []string{
+				"{{ $name := .Name }}",
+				"{{ $status := .Status }}",
 			},
-			expected: "{{ $name := .Name }}",
 		},
 		{
-			name: "multiple mappings",
-			mappings: []fieldMapping{
-				{VarName: "receiver", FieldName: "Receiver"},
-				{VarName: "status", FieldName: "Status"},
-				{VarName: "rule_name", FieldName: "AlertName"},
+			name: "mix of known and unknown vars",
+			tmpl: "$name: $custom_label",
+			data: SimpleStruct{Name: "test", Status: "ok"},
+			expectedVars: []string{
+				"{{ $name := .Name }}",
+				"{{ $status := .Status }}",
+				`{{ $custom_label := "<no value>" }}`,
 			},
-			expected: "{{ $receiver := .Receiver }}{{ $status := .Status }}{{ $rule_name := .AlertName }}",
+		},
+		{
+			name:        "invalid template syntax returns error",
+			tmpl:        "{{invalid",
+			data:        SimpleStruct{},
+			expectError: true,
 		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			result := generateVariableDefinitions(tc.mappings)
-			require.Equal(t, tc.expected, result)
+			result, _, err := buildVariableDefinitions(tc.tmpl, tc.data)
+			if tc.expectError {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			if len(tc.expectedVars) == 0 {
+				require.Empty(t, result)
+				return
+			}
+			for _, expected := range tc.expectedVars {
+				require.Contains(t, result, expected)
+			}
 		})
 	}
 }
 
-func TestPreProcessTemplateAndData(t *testing.T) {
+func TestPreProcessTemplateAndDataA(t *testing.T) {
 	testCases := []struct {
 		name        string
 		tmpl        string
@@ -133,7 +164,7 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 		},
 		{
 			name: "mixed dollar and dot notation",
-			tmpl: "Alert $rule_name has {{.TotalFiring}} firing alerts",
+			tmpl: "Alert $rule_name has {{.total_firing}} firing alerts",
 			data: NotificationTemplateData{
 				AlertName:   "HighCPU",
 				TotalFiring: 5,
@@ -152,11 +183,29 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 			data:        NotificationTemplateData{},
 			expectError: true,
 		},
+		{
+			name:     "unknown dollar var in text renders empty",
+			tmpl:     "alert $custom_note fired",
+			data:     NotificationTemplateData{AlertName: "HighCPU"},
+			expected: "alert <no value> fired",
+		},
+		{
+			name:     "unknown dollar var in action block renders empty",
+			tmpl:     "alert {{ $custom_note }} fired",
+			data:     NotificationTemplateData{AlertName: "HighCPU"},
+			expected: "alert <no value> fired",
+		},
+		{
+			name:     "mix of known and unknown vars",
+			tmpl:     "$rule_name: $custom_label",
+			data:     NotificationTemplateData{AlertName: "HighCPU"},
+			expected: "HighCPU: <no value>",
+		},
 	}
 
 	for _, tc := range testCases {
 		t.Run(tc.name, func(t *testing.T) {
-			processedTmpl, mapData, err := PreProcessTemplateAndData(tc.tmpl, tc.data)
+			result, err := PreProcessTemplateAndData(tc.tmpl, tc.data)
 
 			if tc.expectError {
 				require.Error(t, err)
@@ -165,14 +214,14 @@ func TestPreProcessTemplateAndData(t *testing.T) {
 			require.NoError(t, err)
 
 			if tc.tmpl == "" {
-				require.Equal(t, "", processedTmpl)
+				require.Equal(t, "", result.Template)
 				return
 			}
 
 			goTmpl, _, _ := testSetup(t)
-			res, err := goTmpl.ExecuteTextString(processedTmpl, mapData)
+			res, err := goTmpl.ExecuteTextString(result.Template, result.Data)
 			if err != nil {
-				require.Error(t, err)
+				t.Fatal(err)
 				return
 			}
 

@@ -60,10 +60,10 @@ func TestExpandAlertTemplates_BothCustomTitleAndBody(t *testing.T) {
 		),
 	}
 	input := TemplateInput{
-		TitleTemplate:        "[{{.Status}}] {{.AlertName}}",
-		BodyTemplate:         "Alert {{.AlertName}} ({{.Status}})",
-		DefaultTitleTemplate: "{{ .CommonLabels.alertname }}",
-		DefaultBodyTemplate:  "{{ .Status }}",
+		TitleTemplate:        "[{{$status}}] $rule_name",
+		BodyTemplate:         `Alert {{$rule_name}} ({{$status}})`,
+		DefaultTitleTemplate: "{{ .CommonLabels.rule_name }}",
+		DefaultBodyTemplate:  "{{ .status }}",
 	}
 	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
 	require.NoError(t, err)
@@ -80,7 +80,7 @@ func TestExpandAlertTemplates_CustomTitleExpands(t *testing.T) {
 		firingAlert(map[string]string{ruletypes.LabelAlertName: "HighCPU", ruletypes.LabelRuleId: "r1"}, nil),
 	}
 	input := TemplateInput{
-		TitleTemplate:        "{{.AlertName}}: {{.TotalFiring}} firing",
+		TitleTemplate:        "{{$rule_name}}: {{$total_firing}} firing",
 		DefaultTitleTemplate: "fallback",
 	}
 	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
@@ -100,7 +100,7 @@ func TestExpandAlertTemplates_CustomBodySingleAlert(t *testing.T) {
 		),
 	}
 	input := TemplateInput{
-		BodyTemplate: "{{.AlertName}} ({{.Severity}}): {{.Annotations.description}}",
+		BodyTemplate: "{{$rule_name}} ({{$severity}}): {{$annotations.description}}",
 	}
 	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
 	require.NoError(t, err)
@@ -118,7 +118,7 @@ func TestExpandAlertTemplates_CustomBodyMultipleAlerts(t *testing.T) {
 		firingAlert(map[string]string{ruletypes.LabelAlertName: "C"}, nil),
 	}
 	input := TemplateInput{
-		BodyTemplate: "{{.AlertName}}",
+		BodyTemplate: "{{$rule_name}}",
 	}
 	got, err := ExpandAlertTemplates(ctx, tmpl, input, alerts, logger)
 	require.NoError(t, err)

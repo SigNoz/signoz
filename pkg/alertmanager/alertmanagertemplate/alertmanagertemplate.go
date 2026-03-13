@@ -58,11 +58,11 @@ func expandTitle(
 	logger *slog.Logger,
 ) (string, error) {
 	if input.TitleTemplate != "" {
-		processedTmpl, mapData, err := PreProcessTemplateAndData(input.TitleTemplate, ntd)
+		processRes, err := PreProcessTemplateAndData(input.TitleTemplate, ntd)
 		if err != nil {
 			return "", err
 		}
-		result, err := tmpl.ExecuteTextString(processedTmpl, mapData)
+		result, err := tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 		if err != nil {
 			return "", err
 		}
@@ -92,11 +92,11 @@ func expandBody(
 	if input.BodyTemplate != "" {
 		var parts []string
 		for i := range ntd.Alerts {
-			processedTmpl, mapData, err := PreProcessTemplateAndData(input.BodyTemplate, ntd.Alerts[i])
+			processRes, err := PreProcessTemplateAndData(input.BodyTemplate, ntd.Alerts[i])
 			if err != nil {
 				return "", err
 			}
-			part, err := tmpl.ExecuteTextString(processedTmpl, mapData)
+			part, err := tmpl.ExecuteTextString(processRes.Template, processRes.Data)
 			if err != nil {
 				return "", err
 			}
