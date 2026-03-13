@@ -9,7 +9,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
-import { Layut } from 'react-grid-layout';
+import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery, UseQueryResult } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
