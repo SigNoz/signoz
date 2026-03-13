@@ -15,7 +15,14 @@ export const RightContainerWrapper = styled(Col)`
 		overflow-y: auto;
 	}
 	&::-webkit-scrollbar {
-		width: 0rem;
+		width: 0.3rem;
+	}
+	&::-webkit-scrollbar-thumb {
+		background: rgb(136, 136, 136);
+		border-radius: 0.625rem;
+	}
+	&::-webkit-scrollbar-track {
+		background: transparent;
 	}
 `;
 
