@@ -1,7 +1,11 @@
 package telemetrylogs
 
 import (
+	"fmt"
+
+	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -17,7 +21,7 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyJSONColumn          = constants.BodyV2Column
+	LogsV2BodyV2Column            = constants.BodyV2Column
 	LogsV2BodyPromotedColumn      = constants.BodyPromotedColumn
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
@@ -34,11 +38,23 @@ const (
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
 
-	BodyJSONColumnPrefix     = constants.BodyV2ColumnPrefix
+	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+	MessageBodyField         = "message"
+	MessageSubColumn         = "body_v2.message"
+	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
+	// Mapping to access it as a direct sub-column (body_v2.message) rather than via
+	// dynamicElement() lambda expressions.
+	BodyFieldMessageMapping = &telemetrytypes.TelemetryFieldKey{
+		Name:          MessageBodyField,
+		Signal:        telemetrytypes.SignalLogs,
+		FieldContext:  telemetrytypes.FieldContextBody,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+		Materialized:  true,
+	}
 	DefaultFullTextColumn = &telemetrytypes.TelemetryFieldKey{
 		Name:          "body",
 		Signal:        telemetrytypes.SignalLogs,
@@ -118,3 +134,31 @@ var (
 		},
 	}
 )
+
+func bodyAliasExpression() string {
+	if !querybuilder.BodyJSONQueryEnabled {
+		return LogsV2BodyColumn
+	}
+
+	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
+}
+
+func enrichMapsForJSONBodyEnabled() {
+	if querybuilder.BodyJSONQueryEnabled {
+		DefaultFullTextColumn = BodyFieldMessageMapping
+		IntrinsicFields["body"] = *BodyFieldMessageMapping
+
+		// Register all key names that should resolve to the message type-hint column so
+		// QB can look them up directly: bare "message" and qualified "body_v2.message".
+		IntrinsicFields[MessageSubColumn] = *BodyFieldMessageMapping
+		IntrinsicFields[MessageBodyField] = *BodyFieldMessageMapping
+		logsV2Columns[MessageSubColumn] = &schema.Column{
+			Name: MessageSubColumn,
+			Type: schema.ColumnTypeString,
+		}
+	}
+}
+
+func init() {
+	enrichMapsForJSONBodyEnabled()
+}

@@ -40,7 +40,7 @@ type TelemetryFieldKey struct {
 	JSONDataType *JSONDataType       `json:"-"`
 	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
-	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+	Materialized bool                `json:"-"` // refers to type hint in case of JSON column fields
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
