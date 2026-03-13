@@ -24,3 +24,25 @@
 		}
 	}
 }
+
+.lightMode {
+	.service-route-tab {
+		.ant-tabs-nav {
+			&::before {
+				border-bottom: 1px solid var(--bg-vanilla-300);
+			}
+
+			.ant-tabs-nav-wrap {
+				.ant-tabs-nav-list {
+					.ant-tabs-tab {
+						color: var(--text-ink-400);
+					}
+
+					.ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+						color: var(--text-robin-500);
+					}
+				}
+			}
+		}
+	}
+}

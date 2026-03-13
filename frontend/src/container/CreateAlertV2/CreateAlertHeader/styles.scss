@@ -179,6 +179,19 @@
 		&__input.description {
 			color: var(--text-ink-300);
 		}
+
+		.ant-btn {
+			color: var(--text-ink-400);
+			background: var(--bg-vanilla-100);
+			border: 1px solid var(--bg-vanilla-300);
+
+			&:hover,
+			&:focus {
+				color: var(--text-ink-500);
+				background: var(--bg-vanilla-200);
+				border-color: var(--bg-vanilla-400);
+			}
+		}
 	}
 
 	.edit-alert-header {
