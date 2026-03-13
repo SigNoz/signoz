@@ -6,6 +6,11 @@ import { UseQueryResult } from 'react-query';
 import { useSelector } from 'react-redux';
 import { generatePath, useParams } from 'react-router-dom';
 import { WarningOutlined } from '@ant-design/icons';
+import {
+	ResizableHandle,
+	ResizablePanel,
+	ResizablePanelGroup,
+} from '@signozhq/resizable';
 import { Button, Flex, Modal, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
@@ -830,87 +835,103 @@ function NewWidget({
 			</div>
 
 			<PanelContainer>
-				<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
-					<OverlayScrollbar>
-						{selectedWidget && (
-							<LeftContainer
-								selectedGraph={graphType}
-								selectedLogFields={selectedLogFields}
-								setSelectedLogFields={setSelectedLogFields}
-								selectedTracesFields={selectedTracesFields}
-								setSelectedTracesFields={setSelectedTracesFields}
-								selectedWidget={selectedWidget}
-								selectedTime={selectedTime}
-								requestData={requestData}
-								setRequestData={setRequestData}
-								isLoadingPanelData={isLoadingPanelData}
-								setQueryResponse={setQueryResponse}
-								enableDrillDown={enableDrillDown}
-							/>
-						)}
-					</OverlayScrollbar>
-				</LeftContainerWrapper>
-
-				<RightContainerWrapper>
-					<OverlayScrollbar>
-						<RightContainer
-							setGraphHandler={setGraphHandler}
-							title={title}
-							setTitle={setTitle}
-							description={description}
-							setDescription={setDescription}
-							stackedBarChart={stackedBarChart}
-							setStackedBarChart={setStackedBarChart}
-							lineInterpolation={lineInterpolation}
-							setLineInterpolation={setLineInterpolation}
-							fillMode={fillMode}
-							setFillMode={setFillMode}
-							lineStyle={lineStyle}
-							setLineStyle={setLineStyle}
-							showPoints={showPoints}
-							setShowPoints={setShowPoints}
-							opacity={opacity}
-							yAxisUnit={yAxisUnit}
-							columnUnits={columnUnits}
-							setColumnUnits={setColumnUnits}
-							bucketCount={bucketCount}
-							bucketWidth={bucketWidth}
-							combineHistogram={combineHistogram}
-							setCombineHistogram={setCombineHistogram}
-							setBucketWidth={setBucketWidth}
-							setBucketCount={setBucketCount}
-							setOpacity={setOpacity}
-							selectedNullZeroValue={selectedNullZeroValue}
-							setSelectedNullZeroValue={setSelectedNullZeroValue}
-							selectedGraph={graphType}
-							setSelectedTime={setSelectedTime}
-							selectedTime={selectedTime}
-							setYAxisUnit={setYAxisUnit}
-							decimalPrecision={decimalPrecision}
-							setDecimalPrecision={setDecimalPrecision}
-							thresholds={thresholds}
-							setThresholds={setThresholds}
-							selectedWidget={selectedWidget}
-							isFillSpans={isFillSpans}
-							setIsFillSpans={setIsFillSpans}
-							isLogScale={isLogScale}
-							setIsLogScale={setIsLogScale}
-							legendPosition={legendPosition}
-							setLegendPosition={setLegendPosition}
-							customLegendColors={customLegendColors}
-							setCustomLegendColors={setCustomLegendColors}
-							queryResponse={queryResponse}
-							softMin={softMin}
-							setSoftMin={setSoftMin}
-							softMax={softMax}
-							setSoftMax={setSoftMax}
-							contextLinks={contextLinks}
-							setContextLinks={setContextLinks}
-							enableDrillDown={enableDrillDown}
-							isNewDashboard={isNewDashboard}
-						/>
-					</OverlayScrollbar>
-				</RightContainerWrapper>
+				<ResizablePanelGroup direction="horizontal" autoSaveId="new-widget">
+					<ResizablePanel
+						minSize={70}
+						maxSize={80}
+						defaultSize={80}
+						className="resizable-panel-left-container"
+					>
+						<OverlayScrollbar>
+							<LeftContainerWrapper isDarkMode={useIsDarkMode()}>
+								{selectedWidget && (
+									<LeftContainer
+										selectedGraph={graphType}
+										selectedLogFields={selectedLogFields}
+										setSelectedLogFields={setSelectedLogFields}
+										selectedTracesFields={selectedTracesFields}
+										setSelectedTracesFields={setSelectedTracesFields}
+										selectedWidget={selectedWidget}
+										selectedTime={selectedTime}
+										requestData={requestData}
+										setRequestData={setRequestData}
+										isLoadingPanelData={isLoadingPanelData}
+										setQueryResponse={setQueryResponse}
+										enableDrillDown={enableDrillDown}
+									/>
+								)}
+							</LeftContainerWrapper>
+						</OverlayScrollbar>
+					</ResizablePanel>
+					<ResizableHandle withHandle />
+					<ResizablePanel
+						minSize={20}
+						maxSize={30}
+						defaultSize={20}
+						className="resizable-panel-right-container"
+					>
+						<OverlayScrollbar>
+							<RightContainerWrapper>
+								<RightContainer
+									setGraphHandler={setGraphHandler}
+									title={title}
+									setTitle={setTitle}
+									description={description}
+									setDescription={setDescription}
+									stackedBarChart={stackedBarChart}
+									setStackedBarChart={setStackedBarChart}
+									lineInterpolation={lineInterpolation}
+									setLineInterpolation={setLineInterpolation}
+									fillMode={fillMode}
+									setFillMode={setFillMode}
+									lineStyle={lineStyle}
+									setLineStyle={setLineStyle}
+									showPoints={showPoints}
+									setShowPoints={setShowPoints}
+									opacity={opacity}
+									yAxisUnit={yAxisUnit}
+									columnUnits={columnUnits}
+									setColumnUnits={setColumnUnits}
+									bucketCount={bucketCount}
+									bucketWidth={bucketWidth}
+									combineHistogram={combineHistogram}
+									setCombineHistogram={setCombineHistogram}
+									setBucketWidth={setBucketWidth}
+									setBucketCount={setBucketCount}
+									setOpacity={setOpacity}
+									selectedNullZeroValue={selectedNullZeroValue}
+									setSelectedNullZeroValue={setSelectedNullZeroValue}
+									selectedGraph={graphType}
+									setSelectedTime={setSelectedTime}
+									selectedTime={selectedTime}
+									setYAxisUnit={setYAxisUnit}
+									decimalPrecision={decimalPrecision}
+									setDecimalPrecision={setDecimalPrecision}
+									thresholds={thresholds}
+									setThresholds={setThresholds}
+									selectedWidget={selectedWidget}
+									isFillSpans={isFillSpans}
+									setIsFillSpans={setIsFillSpans}
+									isLogScale={isLogScale}
+									setIsLogScale={setIsLogScale}
+									legendPosition={legendPosition}
+									setLegendPosition={setLegendPosition}
+									customLegendColors={customLegendColors}
+									setCustomLegendColors={setCustomLegendColors}
+									queryResponse={queryResponse}
+									softMin={softMin}
+									setSoftMin={setSoftMin}
+									softMax={softMax}
+									setSoftMax={setSoftMax}
+									contextLinks={contextLinks}
+									setContextLinks={setContextLinks}
+									enableDrillDown={enableDrillDown}
+									isNewDashboard={isNewDashboard}
+								/>
+							</RightContainerWrapper>
+						</OverlayScrollbar>
+					</ResizablePanel>
+				</ResizablePanelGroup>
 			</PanelContainer>
 			<Modal
 				title={

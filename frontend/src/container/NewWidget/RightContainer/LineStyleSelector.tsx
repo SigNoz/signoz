@@ -15,7 +15,7 @@ export function LineStyleSelector({
 }: LineStyleSelectorProps): JSX.Element {
 	return (
 		<section className="line-style-selector control-container">
-			<Typography.Text className="line-style-label">Line style</Typography.Text>
+			<Typography.Text className="section-heading">Line style</Typography.Text>
 			<ToggleGroup
 				type="single"
 				value={value}
@@ -39,7 +39,7 @@ export function LineStyleSelector({
 					>
 						<path d="M8 24 L40 24" />
 					</svg>
-					Solid
+					<Typography.Text className="section-heading-small">Solid</Typography.Text>
 				</ToggleGroupItem>
 				<ToggleGroupItem
 					value={LineStyle.Dashed}
@@ -58,7 +58,7 @@ export function LineStyleSelector({
 					>
 						<path d="M8 24 L40 24" />
 					</svg>
-					Dashed
+					<Typography.Text className="section-heading-small">Dashed</Typography.Text>
 				</ToggleGroupItem>
 			</ToggleGroup>
 		</section>

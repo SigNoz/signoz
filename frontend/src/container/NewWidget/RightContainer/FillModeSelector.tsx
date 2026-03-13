@@ -15,7 +15,7 @@ export function FillModeSelector({
 }: FillModeSelectorProps): JSX.Element {
 	return (
 		<section className="fill-mode-selector control-container">
-			<Typography.Text className="fill-mode-label">Fill mode</Typography.Text>
+			<Typography.Text className="section-heading">Fill mode</Typography.Text>
 			<ToggleGroup
 				type="single"
 				value={value}
@@ -39,7 +39,7 @@ export function FillModeSelector({
 					>
 						<rect x="8" y="16" width="32" height="16" stroke="#888" fill="none" />
 					</svg>
-					None
+					<Typography.Text className="section-heading-small">None</Typography.Text>
 				</ToggleGroupItem>
 				<ToggleGroupItem value={FillMode.Solid} aria-label="Solid" title="Solid">
 					<svg
@@ -53,7 +53,7 @@ export function FillModeSelector({
 					>
 						<rect x="8" y="16" width="32" height="16" fill="#888" />
 					</svg>
-					Solid
+					<Typography.Text className="section-heading-small">Solid</Typography.Text>
 				</ToggleGroupItem>
 				<ToggleGroupItem
 					value={FillMode.Gradient}
@@ -84,7 +84,9 @@ export function FillModeSelector({
 							stroke="#888"
 						/>
 					</svg>
-					Gradient
+					<Typography.Text className="section-heading-small">
+						Gradient
+					</Typography.Text>
 				</ToggleGroupItem>
 			</ToggleGroup>
 		</section>

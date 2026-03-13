@@ -15,7 +15,7 @@ export function LineInterpolationSelector({
 }: LineInterpolationSelectorProps): JSX.Element {
 	return (
 		<section className="line-interpolation-selector control-container">
-			<Typography.Text className="line-interpolation-label">
+			<Typography.Text className="section-heading">
 				Line interpolation
 			</Typography.Text>
 			<ToggleGroup

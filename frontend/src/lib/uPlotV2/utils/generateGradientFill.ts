@@ -11,8 +11,8 @@ export function generateGradientFill(
 		0,
 		uPlotInstance.bbox.height,
 	);
-	g.addColorStop(0, startColor);
-	g.addColorStop(0.4, startColor);
+	g.addColorStop(0, `${startColor}70`);
+	g.addColorStop(0.6, `${startColor}40`);
 	g.addColorStop(1, endColor);
 	return g;
 }

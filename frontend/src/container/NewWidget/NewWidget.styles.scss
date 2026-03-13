@@ -63,6 +63,15 @@
 			margin-inline-end: 0px !important;
 		}
 	}
+	.resizable-panel-left-container {
+		overflow-x: hidden;
+		overflow-y: auto;
+	}
+
+	.resizable-panel-right-container {
+		overflow-y: auto;
+		min-width: 350px;
+	}
 }
 
 .lightMode {
