@@ -224,7 +224,7 @@ describe('TimeSeriesPanel utils', () => {
 			});
 		});
 
-		it('uses DrawStyle.Line and VisibilityMode.Never when series has multiple valid points', () => {
+		it('uses DrawStyle.Line and showPoints false when series has multiple valid points', () => {
 			const apiResponse = createApiResponse([
 				{
 					metric: {},

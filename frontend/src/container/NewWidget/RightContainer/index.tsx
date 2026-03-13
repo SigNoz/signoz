@@ -27,6 +27,11 @@ import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import {
+	FillMode,
+	LineInterpolation,
+	LineStyle,
+} from 'lib/uPlotV2/config/types';
+import {
 	Antenna,
 	Axis3D,
 	ConciergeBell,
@@ -34,6 +39,7 @@ import {
 	LayoutDashboard,
 	LineChart,
 	Link,
+	Paintbrush,
 	Pencil,
 	Plus,
 	SlidersHorizontal,
@@ -59,11 +65,15 @@ import {
 	panelTypeVsContextLinks,
 	panelTypeVsCreateAlert,
 	panelTypeVsDecimalPrecision,
+	panelTypeVsFillMode,
 	panelTypeVsFillSpan,
 	panelTypeVsLegendColors,
 	panelTypeVsLegendPosition,
+	panelTypeVsLineInterpolation,
+	panelTypeVsLineStyle,
 	panelTypeVsLogScale,
 	panelTypeVsPanelTimePreferences,
+	panelTypeVsShowPoints,
 	panelTypeVsSoftMinMax,
 	panelTypeVsStackingChartPreferences,
 	panelTypeVsThreshold,
@@ -71,7 +81,10 @@ import {
 } from './constants';
 import ContextLinks from './ContextLinks';
 import DashboardYAxisUnitSelectorWrapper from './DashboardYAxisUnitSelectorWrapper';
+import { FillModeSelector } from './FillModeSelector';
 import LegendColors from './LegendColors/LegendColors';
+import { LineInterpolationSelector } from './LineInterpolationSelector';
+import { LineStyleSelector } from './LineStyleSelector';
 import ThresholdSelector from './Threshold/ThresholdSelector';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
@@ -98,6 +111,14 @@ function RightContainer({
 	setTitle,
 	title,
 	selectedGraph,
+	lineInterpolation,
+	setLineInterpolation,
+	fillMode,
+	setFillMode,
+	lineStyle,
+	setLineStyle,
+	showPoints,
+	setShowPoints,
 	bucketCount,
 	bucketWidth,
 	stackedBarChart,
@@ -174,6 +195,11 @@ function RightContainer({
 		panelTypeVsContextLinks[selectedGraph] && enableDrillDown;
 	const allowDecimalPrecision = panelTypeVsDecimalPrecision[selectedGraph];
 
+	const allowLineInterpolation = panelTypeVsLineInterpolation[selectedGraph];
+	const allowLineStyle = panelTypeVsLineStyle[selectedGraph];
+	const allowFillMode = panelTypeVsFillMode[selectedGraph];
+	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
+
 	const { currentQuery } = useQueryBuilder();
 
 	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
@@ -198,6 +224,22 @@ function RightContainer({
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
 		[allowLegendPosition, allowLegendColors],
+	);
+
+	const isChartAppearanceSectionVisible = useMemo(
+		() =>
+			/**
+			 * Disabled for now as we are not done with other settings in chart appearance section
+			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
+			 */
+
+			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			false &&
+			(allowFillMode ||
+				allowLineStyle ||
+				allowLineInterpolation ||
+				allowShowPoints),
+		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
 	const updateCursorAndDropdown = (value: string, pos: number): void => {
@@ -299,7 +341,7 @@ function RightContainer({
 
 			<SettingsSection title="General" defaultOpen icon={<Pencil size={14} />}>
 				<section className="name-description control-container">
-					<Typography.Text className="typography">Name</Typography.Text>
+					<Typography.Text className="section-heading">Name</Typography.Text>
 					<AutoComplete
 						options={dashboardVariableOptions}
 						value={inputValue}
@@ -319,7 +361,7 @@ function RightContainer({
 							onBlur={(): void => setAutoCompleteOpen(false)}
 						/>
 					</AutoComplete>
-					<Typography.Text className="typography">Description</Typography.Text>
+					<Typography.Text className="section-heading">Description</Typography.Text>
 					<TextArea
 						placeholder="Enter the panel description here..."
 						bordered
@@ -340,7 +382,7 @@ function RightContainer({
 					icon={<LayoutDashboard size={14} />}
 				>
 					<section className="panel-type control-container">
-						<Typography.Text className="typography">Panel Type</Typography.Text>
+						<Typography.Text className="section-heading">Panel Type</Typography.Text>
 						<Select
 							onChange={setGraphHandler}
 							value={selectedGraph}
@@ -361,7 +403,7 @@ function RightContainer({
 
 					{allowPanelTimePreference && (
 						<section className="panel-time-preference control-container">
-							<Typography.Text className="panel-time-text">
+							<Typography.Text className="section-heading">
 								Panel Time Preference
 							</Typography.Text>
 							<TimePreference
@@ -375,7 +417,9 @@ function RightContainer({
 
 					{allowStackingBarChart && (
 						<section className="stack-chart control-container">
-							<Typography.Text className="label">Stack series</Typography.Text>
+							<Typography.Text className="section-heading">
+								Stack series
+							</Typography.Text>
 							<Switch
 								checked={stackedBarChart}
 								size="small"
@@ -385,10 +429,10 @@ function RightContainer({
 					)}
 
 					{allowFillSpans && (
-						<section className="fill-gaps">
-							<div className="fill-gaps-text-container">
-								<Typography className="fill-gaps-text">Fill gaps</Typography>
-								<Typography.Text className="fill-gaps-text-description">
+						<section className="fill-gaps toggle-card">
+							<div className="toggle-card-text-container">
+								<Typography className="section-heading">Fill gaps</Typography>
+								<Typography.Text className="toggle-card-description">
 									Fill gaps in data with 0 for continuity
 								</Typography.Text>
 							</div>
@@ -447,6 +491,36 @@ function RightContainer({
 					</SettingsSection>
 				)}
 
+				{isChartAppearanceSectionVisible && (
+					<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
+						{allowFillMode && (
+							<FillModeSelector value={fillMode} onChange={setFillMode} />
+						)}
+						{allowLineStyle && (
+							<LineStyleSelector value={lineStyle} onChange={setLineStyle} />
+						)}
+						{allowLineInterpolation && (
+							<LineInterpolationSelector
+								value={lineInterpolation}
+								onChange={setLineInterpolation}
+							/>
+						)}
+						{allowShowPoints && (
+							<section className="show-points toggle-card">
+								<div className="toggle-card-text-container">
+									<Typography.Text className="section-heading">
+										Show points
+									</Typography.Text>
+									<Typography.Text className="toggle-card-description">
+										Display individual data points on the chart
+									</Typography.Text>
+								</div>
+								<Switch size="small" checked={showPoints} onChange={setShowPoints} />
+							</section>
+						)}
+					</SettingsSection>
+				)}
+
 				{isAxisSectionVisible && (
 					<SettingsSection title="Axes" icon={<Axis3D size={14} />}>
 						{allowSoftMinMax && (
@@ -474,7 +548,9 @@ function RightContainer({
 
 						{allowLogScale && (
 							<section className="log-scale control-container">
-								<Typography.Text className="typography">Y Axis Scale</Typography.Text>
+								<Typography.Text className="section-heading">
+									Y Axis Scale
+								</Typography.Text>
 								<Select
 									onChange={(value): void =>
 										setIsLogScale(value === LogScale.LOGARITHMIC)
@@ -510,7 +586,7 @@ function RightContainer({
 					<SettingsSection title="Legend" icon={<Layers size={14} />}>
 						{allowLegendPosition && (
 							<section className="legend-position control-container">
-								<Typography.Text className="typography">Position</Typography.Text>
+								<Typography.Text className="section-heading">Position</Typography.Text>
 								<Select
 									onChange={(value: LegendPosition): void => setLegendPosition(value)}
 									value={legendPosition}
@@ -547,7 +623,9 @@ function RightContainer({
 				{allowBucketConfig && (
 					<SettingsSection title="Histogram / Buckets">
 						<section className="bucket-config control-container">
-							<Typography.Text className="label">Number of buckets</Typography.Text>
+							<Typography.Text className="section-heading">
+								Number of buckets
+							</Typography.Text>
 							<InputNumber
 								value={bucketCount || null}
 								type="number"
@@ -558,7 +636,7 @@ function RightContainer({
 									setBucketCount(val || 0);
 								}}
 							/>
-							<Typography.Text className="label bucket-size-label">
+							<Typography.Text className="section-heading bucket-size-label">
 								Bucket width
 							</Typography.Text>
 							<InputNumber
@@ -574,7 +652,7 @@ function RightContainer({
 								}}
 							/>
 							<section className="combine-hist">
-								<Typography.Text className="label">
+								<Typography.Text className="section-heading">
 									Merge all series into one
 								</Typography.Text>
 								<Switch
@@ -682,6 +760,14 @@ export interface RightContainerProps {
 	setContextLinks: Dispatch<SetStateAction<ContextLinksData>>;
 	enableDrillDown?: boolean;
 	isNewDashboard: boolean;
+	lineInterpolation: LineInterpolation;
+	setLineInterpolation: Dispatch<SetStateAction<LineInterpolation>>;
+	fillMode: FillMode;
+	setFillMode: Dispatch<SetStateAction<FillMode>>;
+	lineStyle: LineStyle;
+	setLineStyle: Dispatch<SetStateAction<LineStyle>>;
+	showPoints: boolean;
+	setShowPoints: Dispatch<SetStateAction<boolean>>;
 }
 
 RightContainer.defaultProps = {

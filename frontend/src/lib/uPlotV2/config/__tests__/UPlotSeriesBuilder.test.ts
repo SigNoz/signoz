@@ -2,12 +2,7 @@ import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
 import type { SeriesProps } from '../types';
-import {
-	DrawStyle,
-	LineInterpolation,
-	LineStyle,
-	VisibilityMode,
-} from '../types';
+import { DrawStyle, LineInterpolation, LineStyle } from '../types';
 import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
@@ -168,17 +163,17 @@ describe('UPlotSeriesBuilder', () => {
 		expect(config.points?.show).toBe(pointsBuilder);
 	});
 
-	it('respects VisibilityMode for point visibility when no custom pointsBuilder is given', () => {
+	it('respects showPoints for point visibility when no custom pointsBuilder is given', () => {
 		const neverPointsBuilder = new UPlotSeriesBuilder(
 			createBaseProps({
 				drawStyle: DrawStyle.Line,
-				showPoints: VisibilityMode.Never,
+				showPoints: false,
 			}),
 		);
 		const alwaysPointsBuilder = new UPlotSeriesBuilder(
 			createBaseProps({
 				drawStyle: DrawStyle.Line,
-				showPoints: VisibilityMode.Always,
+				showPoints: true,
 			}),
 		);
 
