@@ -228,7 +228,17 @@ function RightContainer({
 
 	const isChartAppearanceSectionVisible = useMemo(
 		() =>
-			allowFillMode || allowLineStyle || allowLineInterpolation || allowShowPoints,
+			/**
+			 * Disabled for now as we are not done with other settings in chart appearance section
+			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
+			 */
+
+			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			false &&
+			(allowFillMode ||
+				allowLineStyle ||
+				allowLineInterpolation ||
+				allowShowPoints),
 		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
