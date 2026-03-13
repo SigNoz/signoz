@@ -35,7 +35,7 @@ func ExtractTemplatesFromAnnotations(alerts []*types.Alert) (titleTemplate, body
 		return "", ""
 	}
 
-	commonAnnotations := computeCommonAnnotations(alerts)
+	commonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
 	return commonAnnotations[ruletypes.AnnotationTitleTemplate], commonAnnotations[ruletypes.AnnotationBodyTemplate]
 }
 
@@ -163,8 +163,8 @@ func (at *alertTemplater) buildNotificationTemplateData(
 		externalURL = at.tmpl.ExternalURL.String()
 	}
 
-	commonAnnotations := computeCommonAnnotations(alerts)
-	commonLabels := computeCommonLabels(alerts)
+	commonAnnotations := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Annotations })
+	commonLabels := extractCommonKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
 
 	// aggregate labels and annotations from all alerts
 	labels := AggregateKV(alerts, func(a *types.Alert) model.LabelSet { return a.Labels })
@@ -259,53 +259,3 @@ func buildAlertData(a *types.Alert, receiver string) AlertData {
 	}
 }
 
-// computeCommonAnnotations returns the intersection of annotations across all alerts as a template.KV.
-// An annotation key/value pair is included only if it appears identically on every alert.
-func computeCommonAnnotations(alerts []*types.Alert) template.KV {
-	if len(alerts) == 0 {
-		return template.KV{}
-	}
-
-	common := make(template.KV, len(alerts[0].Annotations))
-	for k, v := range alerts[0].Annotations {
-		common[string(k)] = string(v)
-	}
-
-	for _, a := range alerts[1:] {
-		for k := range common {
-			if string(a.Annotations[model.LabelName(k)]) != common[k] {
-				delete(common, k)
-			}
-		}
-		if len(common) == 0 {
-			break
-		}
-	}
-
-	return common
-}
-
-// computeCommonLabels returns the intersection of labels across all alerts as a template.KV.
-func computeCommonLabels(alerts []*types.Alert) template.KV {
-	if len(alerts) == 0 {
-		return template.KV{}
-	}
-
-	common := make(template.KV, len(alerts[0].Labels))
-	for k, v := range alerts[0].Labels {
-		common[string(k)] = string(v)
-	}
-
-	for _, a := range alerts[1:] {
-		for k := range common {
-			if string(a.Labels[model.LabelName(k)]) != common[k] {
-				delete(common, k)
-			}
-		}
-		if len(common) == 0 {
-			break
-		}
-	}
-
-	return common
-}

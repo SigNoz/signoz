@@ -276,3 +276,73 @@ func TestAggregateKV(t *testing.T) {
 		})
 	}
 }
+
+func TestExtractCommonKV(t *testing.T) {
+	extractLabels := func(a *types.Alert) model.LabelSet { return a.Labels }
+	extractAnnotations := func(a *types.Alert) model.LabelSet { return a.Annotations }
+
+	testCases := []struct {
+		name      string
+		alerts    []*types.Alert
+		extractFn func(*types.Alert) model.LabelSet
+		expected  template.KV
+	}{
+		{
+			name:      "empty alerts slice",
+			alerts:    []*types.Alert{},
+			extractFn: extractLabels,
+			expected:  template.KV{},
+		},
+		{
+			name: "single alert returns all labels",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "prod", "service": "api"}}},
+			},
+			extractFn: extractLabels,
+			expected:  template.KV{"env": "prod", "service": "api"},
+		},
+		{
+			name: "multiple alerts with fully common labels",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "prod", "region": "us-east"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "prod", "region": "us-east"}}},
+			},
+			extractFn: extractLabels,
+			expected:  template.KV{"env": "prod", "region": "us-east"},
+		},
+		{
+			name: "multiple alerts with partially common labels",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "prod", "service": "api"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"env": "prod", "service": "worker"}}},
+			},
+			extractFn: extractLabels,
+			expected:  template.KV{"env": "prod"},
+		},
+		{
+			name: "multiple alerts with no common labels",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "api"}}},
+				{Alert: model.Alert{Labels: model.LabelSet{"service": "worker"}}},
+			},
+			extractFn: extractLabels,
+			expected:  template.KV{},
+		},
+		{
+			name: "annotations extract common annotations",
+			alerts: []*types.Alert{
+				{Alert: model.Alert{Annotations: model.LabelSet{"summary": "high cpu", "runbook": "http://x"}}},
+				{Alert: model.Alert{Annotations: model.LabelSet{"summary": "high cpu", "runbook": "http://y"}}},
+			},
+			extractFn: extractAnnotations,
+			expected:  template.KV{"summary": "high cpu"},
+		},
+	}
+
+	for _, tc := range testCases {
+		t.Run(tc.name, func(t *testing.T) {
+			result := extractCommonKV(tc.alerts, tc.extractFn)
+			require.Equal(t, tc.expected, result)
+		})
+	}
+}

@@ -183,3 +183,30 @@ func AggregateKV(alerts []*types.Alert, extractFn func(*types.Alert) model.Label
 
 	return result
 }
+
+// extractCommonKV returns the intersection of key-value pairs across all alerts.
+// A key/value pair is included only if it appears identically on every alert.
+func extractCommonKV(alerts []*types.Alert, extractFn func(*types.Alert) model.LabelSet) template.KV {
+	if len(alerts) == 0 {
+		return template.KV{}
+	}
+
+	common := make(template.KV, len(extractFn(alerts[0])))
+	for k, v := range extractFn(alerts[0]) {
+		common[string(k)] = string(v)
+	}
+
+	for _, a := range alerts[1:] {
+		kv := extractFn(a)
+		for k := range common {
+			if string(kv[model.LabelName(k)]) != common[k] {
+				delete(common, k)
+			}
+		}
+		if len(common) == 0 {
+			break
+		}
+	}
+
+	return common
+}
