@@ -190,6 +190,11 @@ function RightContainer({
 		allowLogScale,
 	]);
 
+	const isFormattingSectionVisible = useMemo(
+		() => allowYAxisUnit || allowDecimalPrecision || allowPanelColumnPreference,
+		[allowYAxisUnit, allowDecimalPrecision, allowPanelColumnPreference],
+	);
+
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
 		[allowLegendPosition, allowLegendColors],
@@ -396,49 +401,51 @@ function RightContainer({
 					)}
 				</SettingsSection>
 
-				<SettingsSection
-					title="Formatting & Units"
-					icon={<SlidersHorizontal size={14} />}
-				>
-					{allowYAxisUnit && (
-						<DashboardYAxisUnitSelectorWrapper
-							onSelect={setYAxisUnit}
-							value={yAxisUnit || ''}
-							fieldLabel={
-								selectedGraphType === PanelDisplay.VALUE ||
-								selectedGraphType === PanelDisplay.PIE
-									? 'Unit'
-									: 'Y Axis Unit'
-							}
-							// Only update the y-axis unit value automatically in create mode
-							shouldUpdateYAxisUnit={isNewDashboard}
-						/>
-					)}
-
-					{allowDecimalPrecision && (
-						<section className="decimal-precision-selector control-container">
-							<Typography.Text className="typography">
-								Decimal Precision
-							</Typography.Text>
-							<Select
-								options={decimapPrecisionOptions}
-								value={decimalPrecision}
-								style={{ width: '100%' }}
-								className="panel-type-select"
-								defaultValue={PrecisionOptionsEnum.TWO}
-								onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
+				{isFormattingSectionVisible && (
+					<SettingsSection
+						title="Formatting & Units"
+						icon={<SlidersHorizontal size={14} />}
+					>
+						{allowYAxisUnit && (
+							<DashboardYAxisUnitSelectorWrapper
+								onSelect={setYAxisUnit}
+								value={yAxisUnit || ''}
+								fieldLabel={
+									selectedGraphType === PanelDisplay.VALUE ||
+									selectedGraphType === PanelDisplay.PIE
+										? 'Unit'
+										: 'Y Axis Unit'
+								}
+								// Only update the y-axis unit value automatically in create mode
+								shouldUpdateYAxisUnit={isNewDashboard}
 							/>
-						</section>
-					)}
+						)}
 
-					{allowPanelColumnPreference && (
-						<ColumnUnitSelector
-							columnUnits={columnUnits}
-							setColumnUnits={setColumnUnits}
-							isNewDashboard={isNewDashboard}
-						/>
-					)}
-				</SettingsSection>
+						{allowDecimalPrecision && (
+							<section className="decimal-precision-selector control-container">
+								<Typography.Text className="typography">
+									Decimal Precision
+								</Typography.Text>
+								<Select
+									options={decimapPrecisionOptions}
+									value={decimalPrecision}
+									style={{ width: '100%' }}
+									className="panel-type-select"
+									defaultValue={PrecisionOptionsEnum.TWO}
+									onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}
+								/>
+							</section>
+						)}
+
+						{allowPanelColumnPreference && (
+							<ColumnUnitSelector
+								columnUnits={columnUnits}
+								setColumnUnits={setColumnUnits}
+								isNewDashboard={isNewDashboard}
+							/>
+						)}
+					</SettingsSection>
+				)}
 
 				{isAxisSectionVisible && (
 					<SettingsSection title="Axes" icon={<Axis3D size={14} />}>
