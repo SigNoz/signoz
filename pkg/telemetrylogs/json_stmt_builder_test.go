@@ -736,48 +736,48 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
-		// {
-		// 	name:        "body.message equals to empty string",
-		// 	requestType: qbtypes.RequestTypeRaw,
-		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-		// 		Signal: telemetrytypes.SignalLogs,
-		// 		Filter: &qbtypes.Filter{Expression: "body.message = ''"},
-		// 		Limit:  10,
-		// 	},
-		// 	expected: qbtypes.Statement{
-		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body_v2.message = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-		// 		Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-		// 	},
-		// 	expectedErr: nil,
-		// },
-		// {
-		// 	name:        "body.message equals to 'Iron Award'",
-		// 	requestType: qbtypes.RequestTypeRaw,
-		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-		// 		Signal: telemetrytypes.SignalLogs,
-		// 		Filter: &qbtypes.Filter{Expression: "body.message = 'Iron Award'"},
-		// 		Limit:  10,
-		// 	},
-		// 	expected: qbtypes.Statement{
-		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body_v2.message = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-		// 		Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-		// 	},
-		// 	expectedErr: nil,
-		// },
-		// {
-		// 	name:        "message contains 'Iron Award'",
-		// 	requestType: qbtypes.RequestTypeRaw,
-		// 	query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
-		// 		Signal: telemetrytypes.SignalLogs,
-		// 		Filter: &qbtypes.Filter{Expression: "message Contains 'Iron Award'"},
-		// 		Limit:  10,
-		// 	},
-		// 	expected: qbtypes.Statement{
-		// 		Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND LOWER(body_v2.message) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-		// 		Args:  []any{uint64(1747945619), uint64(1747983448), "%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
-		// 	},
-		// 	expectedErr: nil,
-		// },
+		{
+			name:        "body.message equals to empty string",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.message = ''"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body_v2.message = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "body.message equals to 'Iron Award'",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "body.message = 'Iron Award'"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND body_v2.message = ? AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "Iron Award", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
+		{
+			name:        "message contains 'Iron Award'",
+			requestType: qbtypes.RequestTypeRaw,
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal: telemetrytypes.SignalLogs,
+				Filter: &qbtypes.Filter{Expression: "message Contains 'Iron Award'"},
+				Limit:  10,
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body_v2 as body, attributes_string, attributes_number, attributes_bool, resources_string, scope_string FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND LOWER(body_v2.message) LIKE LOWER(?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{uint64(1747945619), uint64(1747983448), "%Iron Award%", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	for _, c := range cases {
