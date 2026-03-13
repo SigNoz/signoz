@@ -14,7 +14,7 @@ export interface ServiceAccountRow {
 	name: string;
 	email: string;
 	roles: string[];
-	status: ServiceAccountStatus | string;
+	status: string;
 	createdAt: string | null;
 	updatedAt: string | null;
 }

@@ -243,7 +243,7 @@ function InviteMembersModal({
 						<div className="table-header-cell role-header">Roles</div>
 						<div className="table-header-cell action-header" />
 					</div>
-					<form onSubmit={(e): void => e.preventDefault()}>
+					<form noValidate onSubmit={(e): void => e.preventDefault()}>
 						<div className="invite-members-modal__container">
 							{rows.map(
 								(row): JSX.Element => (
