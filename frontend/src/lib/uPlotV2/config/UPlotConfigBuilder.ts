@@ -14,6 +14,7 @@ import {
 	STEP_INTERVAL_MULTIPLIER,
 } from '../constants';
 import { calculateWidthBasedOnStepInterval } from '../utils';
+import { SeriesSpanGapsOption } from '../utils/dataUtils';
 import {
 	ConfigBuilder,
 	ConfigBuilderProps,
@@ -159,6 +160,13 @@ export class UPlotConfigBuilder extends ConfigBuilder<
 	 */
 	addSeries(props: SeriesProps): void {
 		this.series.push(new UPlotSeriesBuilder(props));
+	}
+
+	getSeriesSpanGapsOptions(): SeriesSpanGapsOption[] {
+		return this.series.map((s) => {
+			const { spanGaps } = s.props;
+			return { spanGaps };
+		});
 	}
 
 	/**

@@ -40,6 +40,37 @@ describe('UPlotSeriesBuilder', () => {
 		expect(typeof config.value).toBe('function');
 	});
 
+	it('maps boolean spanGaps directly to uPlot spanGaps', () => {
+		const trueBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: true,
+			}),
+		);
+		const falseBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: false,
+			}),
+		);
+
+		const trueConfig = trueBuilder.getConfig();
+		const falseConfig = falseBuilder.getConfig();
+
+		expect(trueConfig.spanGaps).toBe(true);
+		expect(falseConfig.spanGaps).toBe(false);
+	});
+
+	it('disables uPlot spanGaps when spanGaps is a number', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: 10000,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.spanGaps).toBe(false);
+	});
+
 	it('uses explicit lineColor when provided, regardless of mapping', () => {
 		const builder = new UPlotSeriesBuilder(
 			createBaseProps({
