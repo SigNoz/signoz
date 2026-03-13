@@ -127,7 +127,8 @@ func TestConditionFor(t *testing.T) {
 		{
 			name: "Contains operator - body",
 			key: telemetrytypes.TelemetryFieldKey{
-				Name: "body",
+				Name:         "body",
+				FieldContext: telemetrytypes.FieldContextLog,
 			},
 			operator:      qbtypes.FilterOperatorContains,
 			value:         521509198310,
