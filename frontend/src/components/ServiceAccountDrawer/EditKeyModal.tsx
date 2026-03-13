@@ -22,7 +22,7 @@ import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 import { popupContainer } from 'utils/selectPopupContainer';
 
-import { disabledDate, formatLastUsed } from './utils';
+import { disabledDate, formatLastObservedAt } from './utils';
 
 import './EditKeyModal.styles.scss';
 
@@ -55,17 +55,17 @@ function EditKeyModal({
 	useEffect(() => {
 		if (keyItem) {
 			setLocalName(keyItem.name ?? '');
-			if (keyItem.expires_at === 0) {
+			if (keyItem.expiresAt === 0) {
 				setExpiryMode('none');
 				setLocalDate(null);
 			} else {
 				setExpiryMode('date');
-				setLocalDate(dayjs.unix(keyItem.expires_at));
+				setLocalDate(dayjs.unix(keyItem.expiresAt));
 			}
 		}
 	}, [keyItem]);
 
-	const originalExpiresAt = keyItem?.expires_at ?? 0;
+	const originalExpiresAt = keyItem?.expiresAt ?? 0;
 	const currentExpiresAt =
 		expiryMode === 'none' || !localDate ? 0 : localDate.endOf('day').unix();
 	const isDirty =
@@ -84,7 +84,7 @@ function EditKeyModal({
 		try {
 			await updateKey({
 				pathParams: { id: accountId, fid: keyItem.id },
-				data: { name: localName, expires_at: currentExpiresAt },
+				data: { name: localName, expiresAt: currentExpiresAt },
 			});
 			toast.success('Key updated successfully', { richColors: true });
 			onSuccess();
@@ -257,10 +257,10 @@ function EditKeyModal({
 						)}
 
 						<div className="edit-key-modal__meta">
-							<span className="edit-key-modal__meta-label">Last Used</span>
+							<span className="edit-key-modal__meta-label">Last Observed At</span>
 							<Badge color="vanilla">
-								{formatLastUsed(
-									keyItem?.last_observed_at ?? null,
+								{formatLastObservedAt(
+									keyItem?.lastObservedAt ?? null,
 									formatTimezoneAdjustedTimestamp,
 								)}
 							</Badge>

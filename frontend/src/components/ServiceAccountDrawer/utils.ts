@@ -2,14 +2,17 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
 
-export function formatLastUsed(
-	lastUsed: string | Date | null | undefined,
+export function formatLastObservedAt(
+	lastObservedAt: string | Date | null | undefined,
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string,
 ): string {
-	if (!lastUsed) {
+	if (!lastObservedAt) {
 		return '—';
 	}
-	const str = typeof lastUsed === 'string' ? lastUsed : lastUsed.toISOString();
+	const str =
+		typeof lastObservedAt === 'string'
+			? lastObservedAt
+			: lastObservedAt.toISOString();
 	// Go zero time means the key has never been used
 	if (str.startsWith('0001-01-01')) {
 		return '—';
