@@ -58,6 +58,8 @@ def build_builder_query(
     step_interval: int = DEFAULT_STEP_INTERVAL,
     group_by: Optional[List[str]] = None,
     filter_expression: Optional[str] = None,
+    order_by: Optional[List[Dict]] = None,
+    limit: Optional[int] = None,
     functions: Optional[List[Dict]] = None,
     disabled: bool = False,
 ) -> Dict:
@@ -92,6 +94,12 @@ def build_builder_query(
 
     if filter_expression:
         spec["filter"] = {"expression": filter_expression}
+
+    if order_by:
+        spec["order"] = order_by
+
+    if limit is not None:
+        spec["limit"] = limit
 
     if functions:
         spec["functions"] = functions

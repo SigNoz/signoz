@@ -185,22 +185,6 @@ func postProcessMetricQuery(
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	req *qbtypes.QueryRangeRequest,
 ) *qbtypes.Result {
-
-	config := query.Aggregations[0]
-	spaceAggOrderBy := fmt.Sprintf("%s(%s)", config.SpaceAggregation.StringValue(), config.MetricName)
-	timeAggOrderBy := fmt.Sprintf("%s(%s)", config.TimeAggregation.StringValue(), config.MetricName)
-	timeSpaceAggOrderBy := fmt.Sprintf("%s(%s(%s))", config.SpaceAggregation.StringValue(), config.TimeAggregation.StringValue(), config.MetricName)
-
-	for idx := range query.Order {
-		if query.Order[idx].Key.Name == spaceAggOrderBy ||
-			query.Order[idx].Key.Name == timeAggOrderBy ||
-			query.Order[idx].Key.Name == timeSpaceAggOrderBy {
-			query.Order[idx].Key.Name = qbtypes.DefaultOrderByKey
-		}
-	}
-
-	result = q.applySeriesLimit(result, query.Limit, query.Order)
-
 	if len(query.Functions) > 0 {
 		step := query.StepInterval.Duration.Milliseconds()
 		functions := q.prepareFillZeroArgsWithStep(query.Functions, req, step)

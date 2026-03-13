@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -546,6 +547,16 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 ) (*qbtypes.Statement, error) {
 	metricType := query.Aggregations[0].Type
 	spaceAgg := query.Aggregations[0].SpaceAggregation
+	finalCTE := "__spatial_aggregation_cte"
+	if metricType == metrictypes.HistogramType {
+		histogramCTE, histogramCTEArgs, err := b.buildHistogramCTE(query)
+		if err != nil {
+			return nil, err
+		}
+		cteFragments = append(cteFragments, histogramCTE)
+		cteArgs = append(cteArgs, histogramCTEArgs)
+		finalCTE = "__histogram_cte"
+	}
 
 	combined := querybuilder.CombineCTEs(cteFragments)
 
@@ -555,64 +566,143 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	}
 
 	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("*")
+	sb.From(finalCTE)
+	if query.Having != nil && query.Having.Expression != "" {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+		sb.Where(rewrittenExpr)
+	}
 
-	if metricType == metrictypes.HistogramType && spaceAgg.IsPercentile() {
-		quantile := query.Aggregations[0].SpaceAggregation.Percentile()
-		sb.Select("ts")
-		for _, g := range query.GroupBy {
-			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+	groupByKeys := querybuilder.GroupByKeys(query.GroupBy)
+	hasOrder := len(query.Order) > 0
+	hasLimit := query.Limit > 0
+	hasGroupBy := len(groupByKeys) > 0
+
+	if !hasGroupBy {
+		// do nothing, limits and orders don't mean anything
+	} else if hasOrder && hasLimit {
+		labelSelectorSubQueryBuilder := sqlbuilder.NewSelectBuilder()
+		labelSelectorSubQueryBuilder.Select(groupByKeys...)
+		labelSelectorSubQueryBuilder.From(finalCTE)
+		labelSelectorOrderClauses := []string{}
+		orderedKeys := map[string]struct{}{} // this will be used to add the remaining keys as tie breakers in the end
+		for _, o := range query.Order {
+			key := o.Key.Name
+			var clause string
+			if strings.Contains(key, query.Aggregations[0].MetricName) {
+				clause = fmt.Sprintf("avg(value) %s", o.Direction.StringValue())
+			} else {
+				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
+				orderedKeys[fmt.Sprintf("`%s`", key)] = struct{}{}
+			}
+			labelSelectorOrderClauses = append(labelSelectorOrderClauses, clause)
 		}
-		sb.SelectMore(fmt.Sprintf(
-			"histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) AS value",
-			quantile,
-		))
-		sb.From("__spatial_aggregation_cte")
-		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
-		sb.GroupBy("ts")
-		if query.Having != nil && query.Having.Expression != "" {
-			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
-			sb.Having(rewrittenExpr)
+		for _, gk := range groupByKeys { // keys that haven't been added via order by keys will be added at the end as tie breakers
+			if _, ok := orderedKeys[gk]; !ok {
+				labelSelectorOrderClauses = append(labelSelectorOrderClauses, fmt.Sprintf("%s ASC", gk))
+			}
 		}
-	} else if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam != nil {
-		sb.Select("ts")
+		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
+		labelSelectorSubQueryBuilder.OrderBy(labelSelectorOrderClauses...)
+		labelSelectorSubQuery, _ := labelSelectorSubQueryBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
+		labelSelectorSubQuery = fmt.Sprintf("%s LIMIT %d", labelSelectorSubQuery, query.Limit)
 
-		for _, g := range query.GroupBy {
-			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), labelSelectorSubQuery))
+		for _, o := range query.Order {
+			key := o.Key.Name
+			var clause string
+			if strings.Contains(key, query.Aggregations[0].MetricName) {
+				clause = fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue())
+			} else {
+				clause = fmt.Sprintf("`%s` %s", key, o.Direction.StringValue())
+			}
+			sb.OrderBy(clause)
 		}
-
-		aggQuery, err := AggregationQueryForHistogramCountWithParams(query.Aggregations[0].ComparisonSpaceAggregationParam)
-		if err != nil {
-			return nil, err
+	} else if hasOrder {
+		// order by without limit: apply order by clauses directly
+		for _, o := range query.Order {
+			key := o.Key.Name
+			if strings.Contains(key, query.Aggregations[0].MetricName) {
+				sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) %s", strings.Join(groupByKeys, ", "), o.Direction.StringValue()))
+				continue
+			}
+			sb.OrderBy(fmt.Sprintf("`%s` %s", o.Key.Name, o.Direction.StringValue()))
 		}
-		sb.SelectMore(aggQuery)
+	} else if hasLimit {
+		labelSelectorSubQueryBuilder := sqlbuilder.NewSelectBuilder()
+		labelSelectorSubQueryBuilder.Select(groupByKeys...)
+		labelSelectorSubQueryBuilder.From(finalCTE)
+		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
+		labelSelectorSubQueryBuilder.OrderBy("avg(value) DESC")
+		labelSelectorSubQuery, _ := labelSelectorSubQueryBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
+		labelSelectorSubQuery = fmt.Sprintf("%s LIMIT %d", labelSelectorSubQuery, query.Limit)
 
-		sb.From("__spatial_aggregation_cte")
-
-		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
-		sb.GroupBy("ts")
-
-		if query.Having != nil && query.Having.Expression != "" {
-			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
-			sb.Having(rewrittenExpr)
-		}
+		sb.Where(fmt.Sprintf("(%s) IN (%s)", strings.Join(groupByKeys, ", "), labelSelectorSubQuery))
+		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
 	} else {
-		// for count aggregation on histograms with no params, the exact result of spatial aggregation can be sent forward
-		sb.Select("*")
-		sb.From("__spatial_aggregation_cte")
-		if query.Having != nil && query.Having.Expression != "" {
-			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
-			sb.Where(rewrittenExpr)
+		// grouping without order by or limit: sort by avg(value) DESC with labels as tiebreakers
+		sb.OrderBy(fmt.Sprintf("avg(value) OVER (PARTITION BY %s) DESC", strings.Join(groupByKeys, ", ")))
+	}
+
+	// add any group-by keys not already in the order-by as tiebreakers
+	orderKeySet := make(map[string]struct{})
+	for _, o := range query.Order {
+		orderKeySet[fmt.Sprintf("`%s`", o.Key.Name)] = struct{}{}
+	}
+	for _, g := range groupByKeys {
+		if _, exists := orderKeySet[g]; !exists {
+			sb.OrderBy(g)
 		}
 	}
-	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
-	sb.OrderBy("ts")
+
+	sb.OrderBy("ts ASC")
 	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
 		sb.OrderBy("toFloat64(le)")
 	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil
+}
+
+func (b *MetricQueryStatementBuilder) buildHistogramCTE(
+	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
+) (string, []any, error) {
+	spaceAgg := query.Aggregations[0].SpaceAggregation
+	histogramCTEQueryBuilder := sqlbuilder.NewSelectBuilder()
+	if spaceAgg.IsPercentile() {
+		histogramCTEQueryBuilder.Select("ts")
+		for _, g := range query.GroupBy {
+			histogramCTEQueryBuilder.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+		quantile := spaceAgg.Percentile()
+		histogramCTEQueryBuilder.SelectMore(fmt.Sprintf(
+			"histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), %.3f) AS value",
+			quantile,
+		))
+		histogramCTEQueryBuilder.From("__spatial_aggregation_cte")
+		histogramCTEQueryBuilder.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		histogramCTEQueryBuilder.GroupBy("ts")
+	} else if spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam != nil {
+		histogramCTEQueryBuilder.Select("ts")
+		for _, g := range query.GroupBy {
+			histogramCTEQueryBuilder.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+		aggQuery, err := AggregationQueryForHistogramCountWithParams(query.Aggregations[0].ComparisonSpaceAggregationParam)
+		if err != nil {
+			return "", nil, err
+		}
+		histogramCTEQueryBuilder.SelectMore(aggQuery)
+		histogramCTEQueryBuilder.From("__spatial_aggregation_cte")
+		histogramCTEQueryBuilder.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		histogramCTEQueryBuilder.GroupBy("ts")
+	} else {
+		// for count aggregation on histograms with no params, the exact result of spatial aggregation can be sent forward
+		histogramCTEQueryBuilder.Select("*")
+		histogramCTEQueryBuilder.From("__spatial_aggregation_cte")
+	}
+	histogramQueryCTE, histogramQueryCTEArgs := histogramCTEQueryBuilder.BuildWithFlavor(sqlbuilder.ClickHouse)
+	histogramCTE := fmt.Sprintf("__histogram_cte AS (%s)", histogramQueryCTE)
+
+	return histogramCTE, histogramQueryCTEArgs, nil
 }
