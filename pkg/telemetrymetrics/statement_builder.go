@@ -631,7 +631,7 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 		}
 	} else if hasLimit {
 		labelSelectorSubQueryBuilder := sqlbuilder.NewSelectBuilder()
-		labelSelectorSubQueryBuilder.Select(groupByKeys...).Distinct()
+		labelSelectorSubQueryBuilder.Select(groupByKeys...)
 		labelSelectorSubQueryBuilder.From(finalCTE)
 		labelSelectorSubQueryBuilder.GroupBy(groupByKeys...)
 		labelSelectorSubQueryBuilder.OrderBy("avg(value) DESC")
