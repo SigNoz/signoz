@@ -17,21 +17,19 @@ import { useDispatch, useSelector } from 'react-redux';
 import { Modal } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import locked from 'api/v1/dashboards/id/lock';
-import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import dayjs, { Dayjs } from 'dayjs';
 import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
-import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
+import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
-import { defaultTo, isEmpty } from 'lodash-es';
+import { defaultTo } from 'lodash-es';
 import isEqual from 'lodash-es/isEqual';
 import isUndefined from 'lodash-es/isUndefined';
 import omitBy from 'lodash-es/omitBy';
 import { useAppContext } from 'providers/App/App';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
-import { normalizeUrlValueForVariable } from 'providers/Dashboard/normalizeUrlValue';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
@@ -39,10 +37,9 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { UPDATE_TIME_INTERVAL } from 'types/actions/globalTime';
 import { SuccessResponseV2 } from 'types/api';
-import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
+import { Dashboard } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { v4 as generateUUID } from 'uuid';
 
 import {
 	DASHBOARD_CACHE_TIME,
@@ -139,7 +136,11 @@ export function DashboardProvider({
 		updateLocalStorageDashboardVariables,
 	} = useDashboardVariablesFromLocalStorage(dashboardId);
 
-	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
+	const {
+		getUrlVariables,
+		updateUrlVariable,
+		transformDashboardVariables,
+	} = useTransformDashboardVariables(dashboardId);
 
 	const updatedTimeRef = useRef<Dayjs | null>(null); // Using ref to store the updated time
 	const modalRef = useRef<any>(null);
@@ -151,99 +152,6 @@ export function DashboardProvider({
 
 	const [isDashboardFetching, setIsDashboardFetching] = useState<boolean>(false);
 
-	const mergeDBWithLocalStorage = (
-		data: Dashboard,
-		localStorageVariables: any,
-	): Dashboard => {
-		const updatedData = data;
-		if (data && localStorageVariables) {
-			const updatedVariables = data.data.variables;
-			const variablesFromUrl = getUrlVariables();
-			Object.keys(data.data.variables).forEach((variable) => {
-				const variableData = data.data.variables[variable];
-
-				// values from url
-				const urlVariable = variableData?.name
-					? variablesFromUrl[variableData?.name] || variablesFromUrl[variableData.id]
-					: variablesFromUrl[variableData.id];
-
-				let updatedVariable = {
-					...data.data.variables[variable],
-					...localStorageVariables[variableData.name as any],
-				};
-
-				// respect the url variable if it is set, override the others
-				if (!isEmpty(urlVariable)) {
-					if (urlVariable === ALL_SELECTED_VALUE) {
-						updatedVariable = {
-							...updatedVariable,
-							allSelected: true,
-						};
-					} else {
-						// Normalize URL value to match variable's multiSelect configuration
-						const normalizedValue = normalizeUrlValueForVariable(
-							urlVariable,
-							variableData,
-						);
-
-						updatedVariable = {
-							...updatedVariable,
-							selectedValue: normalizedValue,
-							// Only set allSelected to false if showALLOption is available
-							...(updatedVariable?.showALLOption && { allSelected: false }),
-						};
-					}
-				}
-
-				updatedVariables[variable] = updatedVariable;
-			});
-			updatedData.data.variables = updatedVariables;
-		}
-		return updatedData;
-	};
-	// As we do not have order and ID's in the variables object, we have to process variables to add order and ID if they do not exist in the variables object
-	// eslint-disable-next-line sonarjs/cognitive-complexity
-	const transformDashboardVariables = (data: Dashboard): Dashboard => {
-		if (data && data.data && data.data.variables) {
-			const clonedDashboardData = mergeDBWithLocalStorage(
-				JSON.parse(JSON.stringify(data)),
-				currentDashboard,
-			);
-			const { variables } = clonedDashboardData.data;
-			const existingOrders: Set<number> = new Set();
-
-			for (const key in variables) {
-				// eslint-disable-next-line no-prototype-builtins
-				if (variables.hasOwnProperty(key)) {
-					const variable: IDashboardVariable = variables[key];
-
-					// Check if 'order' property doesn't exist or is undefined
-					if (variable.order === undefined) {
-						// Find a unique order starting from 0
-						let order = 0;
-						while (existingOrders.has(order)) {
-							order += 1;
-						}
-
-						variable.order = order;
-						existingOrders.add(order);
-						// ! BWC - Specific case for backward compatibility where textboxValue was used instead of defaultValue
-						if (variable.type === 'TEXTBOX' && !variable.defaultValue) {
-							variable.defaultValue = variable.textboxValue || '';
-						}
-					}
-
-					if (variable.id === undefined) {
-						variable.id = generateUUID();
-					}
-				}
-			}
-
-			return clonedDashboardData;
-		}
-
-		return data;
-	};
 	const dashboardResponse = useQuery(
 		[
 			REACT_QUERY_KEY.DASHBOARD_BY_ID,
