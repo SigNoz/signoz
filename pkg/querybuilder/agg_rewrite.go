@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 
 	chparser "github.com/AfterShip/clickhouse-sql-parser/parser"
@@ -13,6 +14,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/huandu/go-sqlbuilder"
+)
+
+const (
+	// DefaultHeatmapBucketCount is the default number of buckets for heatmap visualization.
+	DefaultHeatmapBucketCount = 20
+	// This is limited by ClickHouse's histogram function.
+	MaxHeatmapBuckets = 250
 )
 
 type aggExprRewriter struct {
@@ -227,6 +235,22 @@ func (v *exprVisitor) VisitFunctionExpr(fn *chparser.FunctionExpr) error {
 		}
 	} else {
 		// Non-If functions: map every argument as a column/value
+		if name == AggrFuncDistribution.Name.StringValue() {
+			buckets := strconv.Itoa(DefaultHeatmapBucketCount)
+			if len(args) == 2 {
+				buckets = args[1].String()
+				val, err := strconv.Atoi(buckets)
+				if err != nil {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid bucket count '%s': must be a number", buckets)
+				}
+				if val <= 0 || val > MaxHeatmapBuckets {
+					return errors.NewInvalidInputf(errors.CodeInvalidInput, "buckets count %d outside range [1, %d]", val, MaxHeatmapBuckets)
+				}
+				args = args[:1]
+				fn.Params.Items.Items = args
+			}
+			fn.Name.Name = fmt.Sprintf("histogram(%s)", buckets)
+		}
 		for i, arg := range args {
 			orig := arg.String()
 			fieldKey := telemetrytypes.GetFieldKeyFromKeyText(orig)
