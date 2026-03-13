@@ -149,7 +149,7 @@ func generateVariableDefinitions(varNames map[string]string) string {
 // populate them with "<no value>" in template so go-text-template don't throw errors
 // when these variables are used in the template.
 func buildVariableDefinitions(tmpl string, data any) (string, map[string]bool, error) {
-	// Extract the inital fields from the data struct and add to the definitions
+	// Extract the initial fields from the data struct and add to the definitions
 	mappings := extractFieldMappings(data)
 
 	variables := make(map[string]string)
