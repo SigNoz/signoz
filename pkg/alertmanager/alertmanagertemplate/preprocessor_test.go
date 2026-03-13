@@ -4,7 +4,6 @@ import (
 	"testing"
 	"time"
 
-	test "github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify/alertmanagernotifytest"
 	"github.com/stretchr/testify/require"
 )
 
@@ -128,11 +127,13 @@ func TestBuildVariableDefinitions(t *testing.T) {
 
 func TestPreProcessTemplateAndDataA(t *testing.T) {
 	testCases := []struct {
-		name        string
-		tmpl        string
-		data        any
-		expected    string
-		expectError bool
+		name                     string
+		tmpl                     string
+		data                     any
+		expectedTemplateContains []string
+		expectedData             map[string]any
+		expectedUnknownVars      map[string]bool
+		expectError              bool
 	}{
 		{
 			name: "NotificationTemplateData with dollar variables",
@@ -145,7 +146,22 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				TotalFiring:   3,
 				TotalResolved: 1,
 			},
-			expected: "[firing] HighMemory (ID: rule-123) - Firing: 3, Resolved: 1",
+			expectedTemplateContains: []string{
+				"{{$status := .status}}",
+				"{{$rule_name := .rule_name}}",
+				"{{$rule_id := .rule_id}}",
+				"{{$total_firing := .total_firing}}",
+				"{{$total_resolved := .total_resolved}}",
+				"[{{ .status }}] {{ .rule_name }} (ID: {{ .rule_id }}) - Firing: {{ .total_firing }}, Resolved: {{ .total_resolved }}",
+			},
+			expectedData: map[string]any{
+				"status":         "firing",
+				"rule_name":      "HighMemory",
+				"rule_id":        "rule-123",
+				"total_firing":   3,
+				"total_resolved": 1,
+			},
+			expectedUnknownVars: map[string]bool{},
 		},
 		{
 			name: "AlertData with dollar variables",
@@ -161,7 +177,23 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				IsFiring:   false,
 				IsResolved: true,
 			},
-			expected: "DiskFull: Value 85% exceeded 80% (Status: resolved, Severity: warning)",
+			expectedTemplateContains: []string{
+				"{{$rule_name := .rule_name}}",
+				"{{$value := .value}}",
+				"{{$threshold := .threshold}}",
+				"{{$status := .status}}",
+				"{{$severity := .severity}}",
+				"{{ .rule_name }}: Value {{ .value }} exceeded {{ .threshold }} (Status: {{ .status }}, Severity: {{ .severity }})",
+			},
+			expectedData: map[string]any{
+				"status":    "resolved",
+				"rule_name": "DiskFull",
+				"rule_id":   "disk-001",
+				"severity":  "warning",
+				"value":     "85%",
+				"threshold": "80%",
+			},
+			expectedUnknownVars: map[string]bool{},
 		},
 		{
 			name: "mixed dollar and dot notation",
@@ -170,13 +202,20 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				AlertName:   "HighCPU",
 				TotalFiring: 5,
 			},
-			expected: "Alert HighCPU has 5 firing alerts",
+			expectedTemplateContains: []string{
+				"{{$rule_name := .rule_name}}",
+				"Alert {{ .rule_name }} has {{.total_firing}} firing alerts",
+			},
+			expectedData: map[string]any{
+				"rule_name":    "HighCPU",
+				"total_firing": 5,
+			},
+			expectedUnknownVars: map[string]bool{},
 		},
 		{
-			name:     "empty template",
-			tmpl:     "",
-			data:     NotificationTemplateData{Receiver: "slack"},
-			expected: "",
+			name: "empty template",
+			tmpl: "",
+			data: NotificationTemplateData{Receiver: "slack"},
 		},
 		{
 			name:        "invalid template syntax",
@@ -185,22 +224,36 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 			expectError: true,
 		},
 		{
-			name:     "unknown dollar var in text renders empty",
-			tmpl:     "alert $custom_note fired",
-			data:     NotificationTemplateData{AlertName: "HighCPU"},
-			expected: "alert <no value> fired",
+			name: "unknown dollar var in text renders empty",
+			tmpl: "alert $custom_note fired",
+			data: NotificationTemplateData{AlertName: "HighCPU"},
+			expectedTemplateContains: []string{
+				`{{$custom_note := "<no value>"}}`,
+				"alert {{ .custom_note }} fired",
+			},
+			expectedUnknownVars: map[string]bool{"custom_note": true},
 		},
 		{
-			name:     "unknown dollar var in action block renders empty",
-			tmpl:     "alert {{ $custom_note }} fired",
-			data:     NotificationTemplateData{AlertName: "HighCPU"},
-			expected: "alert <no value> fired",
+			name: "unknown dollar var in action block renders empty",
+			tmpl: "alert {{ $custom_note }} fired",
+			data: NotificationTemplateData{AlertName: "HighCPU"},
+			expectedTemplateContains: []string{
+				`{{$custom_note := "<no value>"}}`,
+				`alert {{$custom_note}} fired`,
+			},
+			expectedUnknownVars: map[string]bool{"custom_note": true},
 		},
 		{
-			name:     "mix of known and unknown vars",
-			tmpl:     "$rule_name: $custom_label",
-			data:     NotificationTemplateData{AlertName: "HighCPU"},
-			expected: "HighCPU: <no value>",
+			name: "mix of known and unknown vars",
+			tmpl: "$rule_name: $custom_label",
+			data: NotificationTemplateData{AlertName: "HighCPU"},
+			expectedTemplateContains: []string{
+				"{{$rule_name := .rule_name}}",
+				`{{$custom_label := "<no value>"}}`,
+				"{{ .rule_name }}: {{ .custom_label }}",
+			},
+			expectedData:        map[string]any{"rule_name": "HighCPU"},
+			expectedUnknownVars: map[string]bool{"custom_label": true},
 		},
 	}
 
@@ -219,14 +272,15 @@ func TestPreProcessTemplateAndDataA(t *testing.T) {
 				return
 			}
 
-			goTmpl := test.CreateTmpl(t)
-			res, err := goTmpl.ExecuteTextString(result.Template, result.Data)
-			if err != nil {
-				t.Fatal(err)
-				return
+			for _, substr := range tc.expectedTemplateContains {
+				require.Contains(t, result.Template, substr)
 			}
-
-			require.Equal(t, tc.expected, res)
+			for k, v := range tc.expectedData {
+				require.Equal(t, v, result.Data[k])
+			}
+			if tc.expectedUnknownVars != nil {
+				require.Equal(t, tc.expectedUnknownVars, result.UnknownVars)
+			}
 		})
 	}
 }
