@@ -2,7 +2,6 @@
 	display: flex;
 	flex-direction: column;
 	gap: 16px;
-	margin: 12px;
 }
 
 .context-links-text {
@@ -110,10 +109,7 @@
 }
 
 .add-context-link-button {
-	display: flex;
-	align-items: center;
-	margin: auto;
-	width: fit-content;
+	width: 100%;
 }
 
 .lightMode {

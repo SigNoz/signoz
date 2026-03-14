@@ -381,6 +381,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 							multiSelect: false,
 							allSelected: false,
 							showALLOption: true,
+							order: 0,
 						},
 						services: {
 							id: 'svc-id',
@@ -388,6 +389,7 @@ describe('Dashboard Provider - URL Variables Integration', () => {
 							multiSelect: true,
 							allSelected: false,
 							showALLOption: true,
+							order: 1,
 						},
 					},
 					mockGetUrlVariables,

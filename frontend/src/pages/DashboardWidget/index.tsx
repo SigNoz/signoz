@@ -1,29 +1,34 @@
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { generatePath, useParams } from 'react-router-dom';
 import { Card, Typography } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { DASHBOARD_CACHE_TIME } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
 import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
+import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
-import { parseAsStringEnum, useQueryState } from 'nuqs';
+import useUrlQuery from 'hooks/useUrlQuery';
 import { setDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
+import { Dashboard } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
 	const { dashboardId } = useParams<{
 		dashboardId: string;
 	}>();
-	const [widgetId] = useQueryState('widgetId');
-	const [graphType] = useQueryState(
-		'graphType',
-		parseAsStringEnum<PANEL_TYPES>(Object.values(PANEL_TYPES)),
-	);
+	const query = useUrlQuery();
+	const { graphType, widgetId } = useMemo(() => {
+		return {
+			graphType: query.get(QueryParams.graphType) as PANEL_TYPES,
+			widgetId: query.get(QueryParams.widgetId),
+		};
+	}, [query]);
 
 	const { safeNavigate } = useSafeNavigate();
 
@@ -57,8 +62,15 @@ function DashboardWidgetInternal({
 	widgetId: string;
 	graphType: PANEL_TYPES;
 }): JSX.Element | null {
+	const [selectedDashboard, setSelectedDashboard] = useState<
+		Dashboard | undefined
+	>(undefined);
+
+	const { transformDashboardVariables } = useTransformDashboardVariables(
+		dashboardId,
+	);
+
 	const {
-		data: dashboardResponse,
 		isFetching: isFetchingDashboardResponse,
 		isError: isErrorDashboardResponse,
 	} = useQuery([REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId, widgetId], {
@@ -70,16 +82,14 @@ function DashboardWidgetInternal({
 		refetchOnWindowFocus: false,
 		cacheTime: DASHBOARD_CACHE_TIME,
 		onSuccess: (response) => {
+			const updatedDashboardData = transformDashboardVariables(response.data);
+			setSelectedDashboard(updatedDashboardData);
 			setDashboardVariablesStore({
 				dashboardId,
-				variables: response.data.data.variables,
+				variables: updatedDashboardData.data.variables,
 			});
 		},
 	});
-
-	const selectedDashboard = useMemo(() => dashboardResponse?.data, [
-		dashboardResponse?.data,
-	]);
 
 	if (isFetchingDashboardResponse) {
 		return <Spinner tip="Loading.." />;

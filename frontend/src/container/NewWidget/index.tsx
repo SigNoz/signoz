@@ -439,6 +439,19 @@ function NewWidget({
 		globalSelectedInterval,
 	]);
 
+	const navigateToDashboardPage = useCallback(() => {
+		const params = new URLSearchParams();
+
+		const urlVariablesQueryString = query.get(QueryParams.variables);
+		if (urlVariablesQueryString) {
+			params.set(QueryParams.variables, urlVariablesQueryString);
+		}
+
+		const search = params.toString() ? `?${params.toString()}` : '';
+
+		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }) + search);
+	}, [dashboardId, query, safeNavigate]);
+
 	const onClickSaveHandler = useCallback(() => {
 		if (!selectedDashboard) {
 			return;
@@ -554,9 +567,7 @@ function NewWidget({
 		updateDashboardMutation.mutateAsync(dashboard, {
 			onSuccess: () => {
 				setToScrollWidgetId(selectedWidget?.id || '');
-				safeNavigate({
-					pathname: generatePath(ROUTES.DASHBOARD, { dashboardId }),
-				});
+				navigateToDashboardPage();
 			},
 		});
 	}, [
@@ -572,7 +583,7 @@ function NewWidget({
 		updateDashboardMutation,
 		widgets,
 		setToScrollWidgetId,
-		safeNavigate,
+		navigateToDashboardPage,
 		dashboardId,
 	]);
 
@@ -581,12 +592,12 @@ function NewWidget({
 			setDiscardModal(true);
 			return;
 		}
-		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, isQueryModified, safeNavigate]);
+		navigateToDashboardPage();
+	}, [isQueryModified, navigateToDashboardPage]);
 
 	const discardChanges = useCallback(() => {
-		safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-	}, [dashboardId, safeNavigate]);
+		navigateToDashboardPage();
+	}, [navigateToDashboardPage]);
 
 	const setGraphHandler = (type: PANEL_TYPES): void => {
 		setIsLoadingPanelData(true);
@@ -728,12 +739,14 @@ function NewWidget({
 		}
 		const widgetId = query.get('widgetId') || '';
 		const graphType = query.get('graphType') || '';
+		const variables = query.get(QueryParams.variables) || '';
 		const queryParams = {
 			[QueryParams.expandedWidgetId]: widgetId,
 			[QueryParams.graphType]: graphType,
 			[QueryParams.compositeQuery]: encodeURIComponent(
 				JSON.stringify(currentQuery),
 			),
+			[QueryParams.variables]: variables,
 		};
 
 		const updatedSearch = createQueryParams(queryParams);
@@ -822,56 +835,54 @@ function NewWidget({
 				</LeftContainerWrapper>
 
 				<RightContainerWrapper>
-					<OverlayScrollbar>
-						<RightContainer
-							setGraphHandler={setGraphHandler}
-							title={title}
-							setTitle={setTitle}
-							description={description}
-							setDescription={setDescription}
-							stackedBarChart={stackedBarChart}
-							setStackedBarChart={setStackedBarChart}
-							opacity={opacity}
-							yAxisUnit={yAxisUnit}
-							columnUnits={columnUnits}
-							setColumnUnits={setColumnUnits}
-							bucketCount={bucketCount}
-							bucketWidth={bucketWidth}
-							combineHistogram={combineHistogram}
-							setCombineHistogram={setCombineHistogram}
-							setBucketWidth={setBucketWidth}
-							setBucketCount={setBucketCount}
-							setOpacity={setOpacity}
-							selectedNullZeroValue={selectedNullZeroValue}
-							setSelectedNullZeroValue={setSelectedNullZeroValue}
-							selectedGraph={graphType}
-							setSelectedTime={setSelectedTime}
-							selectedTime={selectedTime}
-							setYAxisUnit={setYAxisUnit}
-							decimalPrecision={decimalPrecision}
-							setDecimalPrecision={setDecimalPrecision}
-							thresholds={thresholds}
-							setThresholds={setThresholds}
-							selectedWidget={selectedWidget}
-							isFillSpans={isFillSpans}
-							setIsFillSpans={setIsFillSpans}
-							isLogScale={isLogScale}
-							setIsLogScale={setIsLogScale}
-							legendPosition={legendPosition}
-							setLegendPosition={setLegendPosition}
-							customLegendColors={customLegendColors}
-							setCustomLegendColors={setCustomLegendColors}
-							queryResponse={queryResponse}
-							softMin={softMin}
-							setSoftMin={setSoftMin}
-							softMax={softMax}
-							setSoftMax={setSoftMax}
-							contextLinks={contextLinks}
-							setContextLinks={setContextLinks}
-							enableDrillDown={enableDrillDown}
-							isNewDashboard={isNewDashboard}
-						/>
-					</OverlayScrollbar>
+					<RightContainer
+						setGraphHandler={setGraphHandler}
+						title={title}
+						setTitle={setTitle}
+						description={description}
+						setDescription={setDescription}
+						stackedBarChart={stackedBarChart}
+						setStackedBarChart={setStackedBarChart}
+						opacity={opacity}
+						yAxisUnit={yAxisUnit}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+						bucketCount={bucketCount}
+						bucketWidth={bucketWidth}
+						combineHistogram={combineHistogram}
+						setCombineHistogram={setCombineHistogram}
+						setBucketWidth={setBucketWidth}
+						setBucketCount={setBucketCount}
+						setOpacity={setOpacity}
+						selectedNullZeroValue={selectedNullZeroValue}
+						setSelectedNullZeroValue={setSelectedNullZeroValue}
+						selectedGraph={graphType}
+						setSelectedTime={setSelectedTime}
+						selectedTime={selectedTime}
+						setYAxisUnit={setYAxisUnit}
+						decimalPrecision={decimalPrecision}
+						setDecimalPrecision={setDecimalPrecision}
+						thresholds={thresholds}
+						setThresholds={setThresholds}
+						selectedWidget={selectedWidget}
+						isFillSpans={isFillSpans}
+						setIsFillSpans={setIsFillSpans}
+						isLogScale={isLogScale}
+						setIsLogScale={setIsLogScale}
+						legendPosition={legendPosition}
+						setLegendPosition={setLegendPosition}
+						customLegendColors={customLegendColors}
+						setCustomLegendColors={setCustomLegendColors}
+						queryResponse={queryResponse}
+						softMin={softMin}
+						setSoftMin={setSoftMin}
+						softMax={softMax}
+						setSoftMax={setSoftMax}
+						contextLinks={contextLinks}
+						setContextLinks={setContextLinks}
+						enableDrillDown={enableDrillDown}
+						isNewDashboard={isNewDashboard}
+					/>
 				</RightContainerWrapper>
 			</PanelContainer>
 			<Modal
