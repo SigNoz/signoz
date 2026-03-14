@@ -48,7 +48,7 @@ type StorableCloudIntegrationService struct {
 	Type valuer.String `bun:"type,type:text,notnull,unique:cloud_integration_id_type"`
 	// Config is cloud provider's service specific data in JSON string format
 	Config             string      `bun:"config,type:text"`
-	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
+	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integration(id),on_delete:cascade"`
 }
 
 // Scan scans value from DB

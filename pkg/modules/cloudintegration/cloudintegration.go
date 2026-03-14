@@ -42,7 +42,7 @@ type Module interface {
 
 	// GetService returns service definition details for a serviceId. This returns config and
 	// other details required to show in service details page on web client.
-	GetService(ctx context.Context, orgID valuer.UUID, serviceID, string, accountID *valuer.UUID) (*cloudintegrationtypes.Service, error)
+	GetService(ctx context.Context, orgID valuer.UUID, serviceID string, accountID *valuer.UUID) (*cloudintegrationtypes.Service, error)
 
 	// UpdateServiceConfig updates cloud integration service config
 	UpdateServiceConfig(
