@@ -80,32 +80,9 @@ Do not define an interface before you have at least two concrete implementations
 
 The exception is interfaces required for testing (e.g., for mocking an external dependency). In that case, define the interface in the **consuming** package, not the providing package, following the Go convention of [accepting interfaces and returning structs](https://go.dev/wiki/CodeReviewComments#interfaces).
 
-### 6. Wrappers must add semantics, not just rename
-
-A wrapper type is justified when it adds meaning, validation, or invariants that the underlying type does not carry. It is not justified when it merely renames fields or reorganizes the same data into a different shape.
-
-```go
-// Justified: adds validation that the underlying string does not carry.
-type OrgID struct{ value string }
-func NewOrgID(s string) (OrgID, error) { /* validates format */ }
-
-// Not justified: renames fields with no new invariant or behavior.
-type UserInfo struct {
-    Name  string // same as source.Name
-    Email string // same as source.Email
-}
-```
-
-Ask: what does the wrapper guarantee that the underlying type does not? If the answer is nothing, use the underlying type directly.
-
 ## When a new type IS warranted
 
-A new type earns its place when it meets **at least one** of these criteria:
-
-- **Serialization boundary**: It must be persisted, sent over the wire, or written to config. The source type is unsuitable (unexported fields, function pointers, cycles).
-- **Invariant enforcement**: The constructor or methods enforce constraints that raw data does not carry (e.g., non-empty, validated format, bounded range).
-- **Multiple distinct consumers**: Three or more call sites use the type in meaningfully different ways. The type is the shared vocabulary between them.
-- **Dependency firewall**: The type lives in a lightweight package so that consumers avoid importing a heavy dependency.
+See [Types](types.md#when-a-new-type-is-warranted) for the criteria that justify introducing a new type.
 
 ## What should I remember?
 
