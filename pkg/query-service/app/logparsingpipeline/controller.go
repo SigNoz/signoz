@@ -58,7 +58,7 @@ type PipelinesResponse struct {
 func (ic *LogParsingPipelineController) ApplyPipelines(
 	ctx context.Context,
 	orgID valuer.UUID,
-	userID valuer.UUID,
+	createdBy string,
 	postable []pipelinetypes.PostablePipeline,
 ) (*PipelinesResponse, error) {
 	var pipelines []pipelinetypes.GettablePipeline
@@ -89,7 +89,7 @@ func (ic *LogParsingPipelineController) ApplyPipelines(
 		elements[i] = p.ID.StringValue()
 	}
 
-	cfg, err := agentConf.StartNewVersion(ctx, orgID, userID, opamptypes.ElementTypeLogPipelines, elements)
+	cfg, err := agentConf.StartNewVersion(ctx, orgID, createdBy, opamptypes.ElementTypeLogPipelines, elements)
 	if err != nil || cfg == nil {
 		return nil, model.InternalError(fmt.Errorf("failed to start new version: %w", err))
 	}

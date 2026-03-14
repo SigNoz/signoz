@@ -38,9 +38,7 @@ func (r *Repo) GetConfigHistory(
 	var c []opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
-		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
@@ -54,6 +52,7 @@ func (r *Repo) GetConfigHistory(
 
 	incompleteStatuses := []opamptypes.DeployStatus{opamptypes.DeployInitiated, opamptypes.Deploying}
 	for idx := 1; idx < len(c); idx++ {
+		c[idx].CreatedByName = c[idx].CreatedBy
 		if slices.Contains(incompleteStatuses, c[idx].DeployStatus) {
 			c[idx].DeployStatus = opamptypes.DeployStatusUnknown
 		}
@@ -68,9 +67,7 @@ func (r *Repo) GetConfigVersion(
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
-		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		ColumnExpr("COALESCE(hash, '') as hash, COALESCE(config, '{}') as config").
 		Where("acv.element_type = ?", typ).
 		Where("acv.version = ?", v).
@@ -84,6 +81,7 @@ func (r *Repo) GetConfigVersion(
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get config version")
 	}
 
+	c.CreatedByName = c.CreatedBy
 	return &c, nil
 }
 
@@ -93,9 +91,7 @@ func (r *Repo) GetLatestVersion(
 	var c opamptypes.AgentConfigVersion
 	err := r.store.BunDB().NewSelect().
 		Model(&c).
-		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at").
-		ColumnExpr("COALESCE(created_by, '') as created_by").
-		ColumnExpr(`COALESCE((SELECT display_name FROM users WHERE users.id = acv.created_by), 'unknown') as created_by_name`).
+		ColumnExpr("id, version, element_type, deploy_status, deploy_result, created_at,created_by").
 		Where("acv.element_type = ?", typ).
 		Where("acv.org_id = ?", orgId).
 		Where("version = (SELECT MAX(version) FROM agent_config_version WHERE acv.element_type = ?)", typ).
@@ -108,11 +104,12 @@ func (r *Repo) GetLatestVersion(
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get latest config version")
 	}
 
+	c.CreatedByName = c.CreatedBy
 	return &c, nil
 }
 
 func (r *Repo) insertConfig(
-	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
+	ctx context.Context, orgId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
 ) error {
 
 	if c.ElementType.StringValue() == "" {

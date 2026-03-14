@@ -198,14 +198,14 @@ func GetConfigHistory(
 
 // StartNewVersion launches a new config version for given set of elements
 func StartNewVersion(
-	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, eleType opamptypes.ElementType, elementIds []string,
+	ctx context.Context, orgId valuer.UUID, createdBy string, eleType opamptypes.ElementType, elementIds []string,
 ) (*opamptypes.AgentConfigVersion, error) {
 
 	// create a new version
-	cfg := opamptypes.NewAgentConfigVersion(orgId, userId, eleType)
+	cfg := opamptypes.NewAgentConfigVersion(orgId, createdBy, eleType)
 
 	// insert new config and elements into database
-	err := m.insertConfig(ctx, orgId, userId, cfg, elementIds)
+	err := m.insertConfig(ctx, orgId, cfg, elementIds)
 	if err != nil {
 		return nil, err
 	}
