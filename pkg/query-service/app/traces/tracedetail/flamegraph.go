@@ -7,9 +7,11 @@ import (
 )
 
 var (
-	SPAN_LIMIT_PER_REQUEST_FOR_FLAMEGRAPH float64 = 50
-	SPAN_LIMIT_PER_LEVEL                  int     = 100
-	TIMESTAMP_SAMPLING_BUCKET_COUNT       int     = 50
+	flamegraphSpanLevelLimit      float64 = 50
+	flamegraphSpanLimitPerLevel   int     = 1000
+	flamegraphSamplingBucketCount int     = 500
+
+	MaxLimitWithoutSampling uint = 120_000
 )
 
 func ContainsFlamegraphSpan(slice []*model.FlamegraphSpan, item *model.FlamegraphSpan) bool {
@@ -52,7 +54,8 @@ func FindIndexForSelectedSpan(spans [][]*model.FlamegraphSpan, selectedSpanId st
 	return selectedSpanLevel
 }
 
-func GetSelectedSpansForFlamegraph(traceRoots []*model.FlamegraphSpan, spanIdToSpanNodeMap map[string]*model.FlamegraphSpan) [][]*model.FlamegraphSpan {
+// GetAllSpansForFlamegraph groups all spans as per their level
+func GetAllSpansForFlamegraph(traceRoots []*model.FlamegraphSpan, spanIdToSpanNodeMap map[string]*model.FlamegraphSpan) [][]*model.FlamegraphSpan {
 
 	var traceIdLevelledFlamegraph = map[string]map[int64][]*model.FlamegraphSpan{}
 	selectedSpans := [][]*model.FlamegraphSpan{}
@@ -100,7 +103,7 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 	})
 
 	// pick the top 5 latency spans
-	for idx := range 5 {
+	for idx := range 100 {
 		sampledSpans = append(sampledSpans, spans[idx])
 	}
 
@@ -110,6 +113,7 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 		for _idx, span := range spans {
 			if span.SpanID == selectedSpanID {
 				idx = _idx
+				break
 			}
 		}
 		if idx != -1 {
@@ -117,17 +121,17 @@ func getLatencyAndTimestampBucketedSpans(spans []*model.FlamegraphSpan, selected
 		}
 	}
 
-	bucketSize := (endTime - startTime) / uint64(TIMESTAMP_SAMPLING_BUCKET_COUNT)
+	bucketSize := (endTime - startTime) / uint64(flamegraphSamplingBucketCount)
 	if bucketSize == 0 {
 		bucketSize = 1
 	}
 
-	bucketedSpans := make([][]*model.FlamegraphSpan, 50)
+	bucketedSpans := make([][]*model.FlamegraphSpan, flamegraphSamplingBucketCount)
 
 	for _, span := range spans {
 		if span.TimeUnixNano >= startTime && span.TimeUnixNano <= endTime {
 			bucketIndex := int((span.TimeUnixNano - startTime) / bucketSize)
-			if bucketIndex >= 0 && bucketIndex < 50 {
+			if bucketIndex >= 0 && bucketIndex < flamegraphSamplingBucketCount {
 				bucketedSpans[bucketIndex] = append(bucketedSpans[bucketIndex], span)
 			}
 		}
@@ -156,8 +160,8 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 		selectedIndex = FindIndexForSelectedSpan(selectedSpans, selectedSpanID)
 	}
 
-	lowerLimit := selectedIndex - int(SPAN_LIMIT_PER_REQUEST_FOR_FLAMEGRAPH*0.4)
-	upperLimit := selectedIndex + int(SPAN_LIMIT_PER_REQUEST_FOR_FLAMEGRAPH*0.6)
+	lowerLimit := selectedIndex - int(flamegraphSpanLevelLimit*0.4)
+	upperLimit := selectedIndex + int(flamegraphSpanLevelLimit*0.6)
 
 	if lowerLimit < 0 {
 		upperLimit = upperLimit - lowerLimit
@@ -174,7 +178,7 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 	}
 
 	for i := lowerLimit; i < upperLimit; i++ {
-		if len(selectedSpans[i]) > SPAN_LIMIT_PER_LEVEL {
+		if len(selectedSpans[i]) > flamegraphSpanLimitPerLevel {
 			_spans := getLatencyAndTimestampBucketedSpans(selectedSpans[i], selectedSpanID, i == selectedIndex, startTime, endTime)
 			selectedSpansForRequest = append(selectedSpansForRequest, _spans)
 		} else {
@@ -183,4 +187,13 @@ func GetSelectedSpansForFlamegraphForRequest(selectedSpanID string, selectedSpan
 	}
 
 	return selectedSpansForRequest
+}
+
+func GetTotalSpanCount(spans [][]*model.FlamegraphSpan) uint64 {
+	levelCount := len(spans)
+	spanCount := uint64(0)
+	for i := range levelCount {
+		spanCount += uint64(len(spans[i]))
+	}
+	return spanCount
 }

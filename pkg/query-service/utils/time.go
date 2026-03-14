@@ -17,3 +17,7 @@ func Elapsed(funcName string, args map[string]interface{}) func() {
 		zap.L().Info("Elapsed time", zapFields...)
 	}
 }
+
+func MilliToNano(milliTS uint64) uint64 {
+	return milliTS * 1000_000
+}
