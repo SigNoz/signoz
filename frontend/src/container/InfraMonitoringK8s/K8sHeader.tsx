@@ -10,6 +10,7 @@ import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteRe
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { safeParseJSON } from './commonUtils';
 import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategory } from './constants';
 import K8sFiltersSidePanel from './K8sFiltersSidePanel/K8sFiltersSidePanel';
 import { IEntityColumn } from './utils';
@@ -58,9 +59,10 @@ function K8sHeader({
 		const urlFilters = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS);
 		let { filters } = currentQuery.builder.queryData[0];
 		if (urlFilters) {
-			const decoded = decodeURIComponent(urlFilters);
-			const parsed = JSON.parse(decoded);
-			filters = parsed;
+			const parsed = safeParseJSON<IBuilderQuery['filters']>(urlFilters);
+			if (parsed) {
+				filters = parsed;
+			}
 		}
 		return {
 			...currentQuery,
