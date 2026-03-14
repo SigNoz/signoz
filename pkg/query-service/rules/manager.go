@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
@@ -99,6 +100,8 @@ type ManagerOptions struct {
 
 	EvalDelay valuer.TextDuration
 
+	RuleStateHistoryModule rulestatehistory.Module
+
 	PrepareTaskFunc     func(opts PrepareTaskOptions) (Task, error)
 	PrepareTestRuleFunc func(opts PrepareTestRuleOptions) (int, *model.ApiError)
 	Alertmanager        alertmanager.Alertmanager
@@ -174,6 +177,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -198,6 +202,7 @@ func defaultPrepareTaskFunc(opts PrepareTaskOptions) (Task, error) {
 			WithSQLStore(opts.SQLStore),
 			WithQueryParser(opts.ManagerOpts.QueryParser),
 			WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {

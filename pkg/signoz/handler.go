@@ -22,6 +22,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
@@ -44,6 +46,7 @@ type Handlers struct {
 	QuickFilter           quickfilter.Handler
 	TraceFunnel           tracefunnel.Handler
 	RawDataExport         rawdataexport.Handler
+	RuleStateHistory      rulestatehistory.Handler
 	SpanPercentile        spanpercentile.Handler
 	Services              services.Handler
 	MetricsExplorer       metricsexplorer.Handler
@@ -77,6 +80,7 @@ func NewHandlers(
 		QuickFilter:           implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:           impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:         implrawdataexport.NewHandler(modules.RawDataExport),
+		RuleStateHistory:      implrulestatehistory.NewHandler(modules.RuleStateHistory),
 		Services:              implservices.NewHandler(modules.Services),
 		MetricsExplorer:       implmetricsexplorer.NewHandler(modules.MetricsExplorer),
 		SpanPercentile:        implspanpercentile.NewHandler(modules.SpanPercentile),
