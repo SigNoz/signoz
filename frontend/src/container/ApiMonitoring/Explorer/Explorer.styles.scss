@@ -138,10 +138,12 @@
 
 			.table-row-light {
 				background: none;
+				cursor: pointer;
 			}
 
 			.table-row-dark {
 				background: var(--bg-ink-300);
+				cursor: pointer;
 			}
 
 			.error-rate {
@@ -259,10 +261,12 @@
 
 			.table-row-light {
 				background: none;
+				cursor: pointer;
 			}
 
 			.table-row-dark {
 				background: none;
+				cursor: pointer;
 			}
 
 			.round-metric-tag {
