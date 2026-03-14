@@ -1,6 +1,50 @@
 package telemetrytraces
 
-import "github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+import (
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
+)
+
+const (
+
+	// Internal Columns
+	SpanTimestampBucketStartColumn = "ts_bucket_start"
+	SpanResourceFingerPrintColumn  = "resource_fingerprint"
+
+	// Intrinsic Columns
+	SpanTimestampColumn        = "timestamp"
+	SpanTraceIDColumn          = "trace_id"
+	SpanSpanIDColumn           = "span_id"
+	SpanTraceStateColumn       = "trace_state"
+	SpanParentSpanIDColumn     = "parent_span_id"
+	SpanFlagsColumn            = "flags"
+	SpanNameColumn             = "name"
+	SpanKindColumn             = "kind"
+	SpanKindStringColumn       = "kind_string"
+	SpanDurationNanoColumn     = "duration_nano"
+	SpanStatusCodeColumn       = "status_code"
+	SpanStatusMessageColumn    = "status_message"
+	SpanStatusCodeStringColumn = "status_code_string"
+	SpanEventsColumn           = "events"
+	SpanLinksColumn            = "links"
+
+	// Calculated Columns
+	SpanResponseStatusCodeColumn = "response_status_code"
+	SpanExternalHTTPURLColumn    = "external_http_url"
+	SpanHTTPURLColumn            = "http_url"
+	SpanExternalHTTPMethodColumn = "external_http_method"
+	SpanHTTPMethodColumn         = "http_method"
+	SpanHTTPHostColumn           = "http_host"
+	SpanDBNameColumn             = "db_name"
+	SpanDBOperationColumn        = "db_operation"
+	SpanHasErrorColumn           = "has_error"
+	SpanIsRemoteColumn           = "is_remote"
+
+	// Contextual Columns
+	SpanAttributesStringColumn = "attributes_string"
+	SpanAttributesNumberColumn = "attributes_number"
+	SpanAttributesBoolColumn   = "attributes_bool"
+	SpanResourcesStringColumn  = "resources_string"
+)
 
 var (
 	IntrinsicFields = map[string]telemetrytypes.TelemetryFieldKey{
