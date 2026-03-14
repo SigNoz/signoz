@@ -204,7 +204,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 	// While we expect user not to send the mixed data types, it inevitably happens
 	// So we handle the data type collisions here
 	switch key.FieldDataType {
-	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString:
+	case telemetrytypes.FieldDataTypeString, telemetrytypes.FieldDataTypeArrayString, telemetrytypes.FieldDataTypeJSON:
+		if key.FieldDataType == telemetrytypes.FieldDataTypeJSON {
+			tblFieldName = fmt.Sprintf("toString(%s)", tblFieldName)
+		}
 		switch v := value.(type) {
 		case float64:
 			// try to convert the string value to to number
@@ -219,7 +222,6 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
-
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,

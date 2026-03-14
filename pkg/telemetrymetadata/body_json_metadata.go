@@ -54,6 +54,7 @@ func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "fetchBodyJSONPaths",
 	})
+
 	query, args, limit := buildGetBodyJSONPathsQuery(fieldKeySelectors)
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -184,6 +185,9 @@ func buildGetBodyJSONPathsQuery(fieldKeySelectors []*telemetrytypes.FieldKeySele
 		limit += fieldKeySelector.Limit
 	}
 	sb.Where(sb.Or(orClauses...))
+	// mesasge field is skipped; since it is a type hint and is handled by the field mapper
+	// TODO(Piyush): If typehints increases in future, use aftership parser to skip type hints here
+	sb.Where(sb.NotEqual("path", telemetrylogs.MessageBodyField))
 
 	// Group by path to get unique paths with aggregated types
 	sb.GroupBy("path")
@@ -319,7 +323,7 @@ func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, li
 	if promoted {
 		path = telemetrylogs.BodyPromotedColumnPrefix + path
 	} else {
-		path = telemetrylogs.BodyJSONColumnPrefix + path
+		path = telemetrylogs.BodyV2ColumnPrefix + path
 	}
 
 	from := fmt.Sprintf("%s.%s", telemetrylogs.DBName, telemetrylogs.LogsV2TableName)
@@ -522,7 +526,7 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 // TODO(Piyush): Remove this function
 func CleanPathPrefixes(path string) string {
 	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
-	path = strings.TrimPrefix(path, telemetrylogs.BodyJSONColumnPrefix)
+	path = strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyPromotedColumnPrefix)
 	return path
 }

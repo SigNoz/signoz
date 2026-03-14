@@ -18,11 +18,15 @@ type responseerroradditional struct {
 
 func AsJSON(cause error) *JSON {
 	// See if this is an instance of the base error or not
-	_, c, m, _, u, a := Unwrapb(cause)
+	_, c, m, err, u, a := Unwrapb(cause)
 
 	rea := make([]responseerroradditional, len(a))
 	for k, v := range a {
 		rea[k] = responseerroradditional{v}
+	}
+
+	if err != nil {
+		rea = append(rea, responseerroradditional{err.Error()})
 	}
 
 	return &JSON{

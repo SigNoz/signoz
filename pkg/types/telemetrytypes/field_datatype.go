@@ -21,6 +21,7 @@ var (
 	// int64 and number are synonyms for float64
 	FieldDataTypeInt64       = FieldDataType{valuer.NewString("int64")}
 	FieldDataTypeNumber      = FieldDataType{valuer.NewString("number")}
+	FieldDataTypeJSON        = FieldDataType{valuer.NewString("json")}
 	FieldDataTypeUnspecified = FieldDataType{valuer.NewString("")}
 
 	FieldDataTypeArrayString  = FieldDataType{valuer.NewString("[]string")}
