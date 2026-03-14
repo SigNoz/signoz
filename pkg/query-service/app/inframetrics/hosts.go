@@ -63,11 +63,13 @@ var (
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
 	metricToUseForHostAttributes = GetDotMetrics("system_cpu_load_average_15m")
-	hostNameAttrKey              = GetDotMetrics("host_name")
-	agentNameToIgnore            = "k8s-infra-otel-agent"
-	hostAttrsToEnrich            = []string{
+
+	hostNameAttrKey   = GetDotMetrics("host_name")
+	agentNameToIgnore = "k8s-infra-otel-agent"
+	hostAttrsToEnrich = []string{
 		GetDotMetrics("os_type"),
 	}
+
 	metricNamesForHosts = map[string]string{
 		"filesystem": GetDotMetrics("system_filesystem_usage"),
 		"cpu":        GetDotMetrics("system_cpu_time"),
@@ -211,7 +213,14 @@ func (h *HostsRepo) getMetadataAttributes(ctx context.Context, req model.HostLis
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherHostMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForHosts {
+		if metric != metricToUseForHostAttributes {
+			otherHostMetricsForMetadata = append(otherHostMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherHostMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}

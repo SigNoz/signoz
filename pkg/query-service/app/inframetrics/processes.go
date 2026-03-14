@@ -28,10 +28,12 @@ var (
 		"cpu":    GetDotMetrics("process_cpu_time"),
 		"memory": GetDotMetrics("process_memory_usage"),
 	}
+
 	metricToUseForProcessAttributes = GetDotMetrics("process_memory_usage")
-	processNameAttrKey              = GetDotMetrics("process_executable_name")
-	processCMDAttrKey               = GetDotMetrics("process_command")
-	processCMDLineAttrKey           = GetDotMetrics("process_command_line")
+
+	processNameAttrKey    = GetDotMetrics("process_executable_name")
+	processCMDAttrKey     = GetDotMetrics("process_command")
+	processCMDLineAttrKey = GetDotMetrics("process_command_line")
 )
 
 type ProcessesRepo struct {
@@ -110,7 +112,14 @@ func (p *ProcessesRepo) getMetadataAttributes(ctx context.Context,
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherMetricsForProcessMetadata := make([]string, 0)
+	for _, metric := range metricNamesForProcesses {
+		if metric != metricToUseForProcessAttributes {
+			otherMetricsForProcessMetadata = append(otherMetricsForProcessMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherMetricsForProcessMetadata)
 	if err != nil {
 		return nil, err
 	}

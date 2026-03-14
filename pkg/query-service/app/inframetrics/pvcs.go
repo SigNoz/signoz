@@ -126,7 +126,14 @@ func (p *PvcsRepo) getMetadataAttributes(ctx context.Context, req model.VolumeLi
 		GroupBy:     req.GroupBy,
 	}
 
-	query, err := helpers.PrepareTimeseriesFilterQuery(req.Start, req.End, &mq)
+	otherVolumeMetricsForMetadata := make([]string, 0)
+	for _, metric := range metricNamesForVolumes {
+		if metric != metricToUseForVolumes {
+			otherVolumeMetricsForMetadata = append(otherVolumeMetricsForMetadata, metric)
+		}
+	}
+
+	query, err := helpers.PrepareTimeseriesFilterQueryWithMultipleMetrics(req.Start, req.End, &mq, otherVolumeMetricsForMetadata)
 	if err != nil {
 		return nil, err
 	}
