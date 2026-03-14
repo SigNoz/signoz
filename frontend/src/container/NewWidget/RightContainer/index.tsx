@@ -20,9 +20,10 @@ import {
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import GraphTypes, {
+import {
 	ItemsProps,
-} from 'container/DashboardContainer/ComponentsSlider/menuItems';
+	PanelTypesWithData,
+} from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
@@ -150,7 +151,7 @@ function RightContainer({
 	);
 
 	const selectedGraphType =
-		GraphTypes.find((e) => e.name === selectedGraph)?.display || '';
+		PanelTypesWithData.find((e) => e.name === selectedGraph)?.display || '';
 
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
@@ -176,7 +177,7 @@ function RightContainer({
 
 	const { currentQuery } = useQueryBuilder();
 
-	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
+	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(PanelTypesWithData);
 
 	const dashboardVariableOptions = useMemo<VariableOption[]>(() => {
 		return Object.entries(dashboardVariables).map(([, value]) => ({
@@ -272,7 +273,7 @@ function RightContainer({
 				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
 			);
 		} else {
-			setGraphTypes(GraphTypes);
+			setGraphTypes(PanelTypesWithData);
 		}
 	}, [currentQuery]);
 
