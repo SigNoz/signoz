@@ -1,6 +1,5 @@
 import { Layout } from 'react-grid-layout';
 import { UseQueryResult } from 'react-query';
-import dayjs from 'dayjs';
 import { SuccessResponseV2 } from 'types/api';
 import { Dashboard } from 'types/api/dashboard/getAll';
 
@@ -22,7 +21,6 @@ export interface IDashboardContext {
 	setSelectedDashboard: React.Dispatch<
 		React.SetStateAction<Dashboard | undefined>
 	>;
-	updatedTimeRef: React.MutableRefObject<dayjs.Dayjs | null>;
 	updateLocalStorageDashboardVariables: (
 		id: string,
 		selectedValue:
