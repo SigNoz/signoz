@@ -54,9 +54,8 @@ type (
 	PostableAgentCheckInRequest struct {
 		AgentCheckInRequest
 		// following are backward compatible fields for older running agents
-		CloudIntegrationId string         `json:"cloud_integration_id"`
-		CloudAccountId     string         `json:"cloud_account_id"`
-		Data               map[string]any `json:"data,omitempty"`
+		CloudIntegrationId string `json:"cloud_integration_id"`
+		CloudAccountId     string `json:"cloud_account_id"`
 	}
 
 	GettableAgentCheckInResponse struct {
