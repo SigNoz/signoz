@@ -53,9 +53,9 @@ export const queryKOVPair = (): QueryFields[] => [
 ];
 
 export const initQueryKOVPair = (
-	name?: string = null,
-	op?: string = null,
-	value?: string | string[] = null,
+	name: string = null,
+	op: string = null,
+	value: string | string[] = null,
 ): QueryFields[] => [
 	{
 		type: QueryTypes.QUERY_KEY,
@@ -72,7 +72,7 @@ export const initQueryKOVPair = (
 ];
 
 export const prepareConditionOperator = (
-	op?: string = ConditionalOperators.AND,
+	op: string = ConditionalOperators.AND,
 ): QueryFields => {
 	return {
 		type: QueryTypes.CONDITIONAL_OPERATOR,
