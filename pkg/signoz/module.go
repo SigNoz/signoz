@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
@@ -51,24 +52,25 @@ import (
 )
 
 type Modules struct {
-	OrgGetter       organization.Getter
-	OrgSetter       organization.Setter
-	Preference      preference.Module
-	User            user.Module
-	UserGetter      user.Getter
-	SavedView       savedview.Module
-	Apdex           apdex.Module
-	Dashboard       dashboard.Module
-	QuickFilter     quickfilter.Module
-	TraceFunnel     tracefunnel.Module
-	RawDataExport   rawdataexport.Module
-	AuthDomain      authdomain.Module
-	Session         session.Module
-	Services        services.Module
-	SpanPercentile  spanpercentile.Module
-	MetricsExplorer metricsexplorer.Module
-	Promote         promote.Module
-	ServiceAccount  serviceaccount.Module
+	OrgGetter        organization.Getter
+	OrgSetter        organization.Setter
+	Preference       preference.Module
+	User             user.Module
+	UserGetter       user.Getter
+	SavedView        savedview.Module
+	Apdex            apdex.Module
+	Dashboard        dashboard.Module
+	QuickFilter      quickfilter.Module
+	TraceFunnel      tracefunnel.Module
+	RawDataExport    rawdataexport.Module
+	AuthDomain       authdomain.Module
+	Session          session.Module
+	Services         services.Module
+	SpanPercentile   spanpercentile.Module
+	MetricsExplorer  metricsexplorer.Module
+	Promote          promote.Module
+	ServiceAccount   serviceaccount.Module
+	CloudIntegration cloudintegration.Module
 }
 
 func NewModules(
@@ -89,6 +91,7 @@ func NewModules(
 	config Config,
 	dashboard dashboard.Module,
 	userGetter user.Getter,
+	cloudIntegration cloudintegration.Module,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
@@ -96,23 +99,24 @@ func NewModules(
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
-		OrgGetter:       orgGetter,
-		OrgSetter:       orgSetter,
-		Preference:      implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
-		SavedView:       implsavedview.NewModule(sqlstore),
-		Apdex:           implapdex.NewModule(sqlstore),
-		Dashboard:       dashboard,
-		User:            user,
-		UserGetter:      userGetter,
-		QuickFilter:     quickfilter,
-		TraceFunnel:     impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
-		RawDataExport:   implrawdataexport.NewModule(querier),
-		AuthDomain:      implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
-		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
-		Services:        implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
-		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		OrgGetter:        orgGetter,
+		OrgSetter:        orgSetter,
+		Preference:       implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
+		SavedView:        implsavedview.NewModule(sqlstore),
+		Apdex:            implapdex.NewModule(sqlstore),
+		Dashboard:        dashboard,
+		User:             user,
+		UserGetter:       userGetter,
+		QuickFilter:      quickfilter,
+		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		RawDataExport:    implrawdataexport.NewModule(querier),
+		AuthDomain:       implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
+		Session:          implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
+		Services:         implservices.NewModule(querier, telemetryStore),
+		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		CloudIntegration: cloudIntegration,
 	}
 }
