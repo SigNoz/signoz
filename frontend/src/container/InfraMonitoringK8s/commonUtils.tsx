@@ -2,9 +2,8 @@
 
 import { useMemo } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Table, Tooltip, Typography } from 'antd';
-import { Progress } from 'antd/lib';
-import { ColumnsType } from 'antd/lib/table';
+import { Progress, Table, Tooltip, Typography } from 'antd';
+import type { ColumnsType } from 'antd/lib/table';
 import { ResizeTable } from 'components/ResizeTable';
 import FieldRenderer from 'container/LogDetailedView/FieldRenderer';
 import { DataType } from 'container/LogDetailedView/TableView';

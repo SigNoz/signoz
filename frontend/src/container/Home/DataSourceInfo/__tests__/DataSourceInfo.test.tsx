@@ -30,7 +30,7 @@ const mockHostsResponse: GetHosts200 = {
 describe('DataSourceInfo', () => {
 	afterEach(() => server.resetHandlers());
 
-	it('renders the default workspace URL with protocol stripped', async () => {
+	it('renders the active workspace URL with protocol stripped', async () => {
 		server.use(
 			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockHostsResponse)),
@@ -39,7 +39,7 @@ describe('DataSourceInfo', () => {
 
 		render(<DataSourceInfo dataSentToSigNoz={false} isLoading={false} />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 	});
 
 	it('does not render workspace URL when GET /zeus/hosts fails', async () => {
@@ -55,7 +55,7 @@ describe('DataSourceInfo', () => {
 		expect(screen.queryByText(/signoz\.cloud/i)).not.toBeInTheDocument();
 	});
 
-	it('renders workspace URL in the data-received view when telemetry is flowing', async () => {
+	it('renders active workspace URL in the data-received view when telemetry is flowing', async () => {
 		server.use(
 			rest.get(ZEUS_HOSTS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json(mockHostsResponse)),
@@ -64,6 +64,6 @@ describe('DataSourceInfo', () => {
 
 		render(<DataSourceInfo dataSentToSigNoz={true} isLoading={false} />);
 
-		await screen.findByText(/accepted-starfish\.test\.cloud/i);
+		await screen.findByText(/custom-host\.test\.cloud/i);
 	});
 });

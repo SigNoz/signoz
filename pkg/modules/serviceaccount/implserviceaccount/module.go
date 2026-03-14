@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -33,7 +34,7 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 	}
 
 	// authz actions cannot run in sql transactions
-	err = module.authz.Grant(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.Grant(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -58,6 +59,24 @@ func (module *module) Create(ctx context.Context, orgID valuer.UUID, serviceAcco
 	}
 
 	return nil
+}
+
+func (module *module) GetOrCreate(ctx context.Context, serviceAccount *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error) {
+	existingServiceAccount, err := module.store.GetActiveByOrgIDAndName(ctx, serviceAccount.OrgID, serviceAccount.Name)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
+
+	if existingServiceAccount != nil {
+		return serviceAccount, nil
+	}
+
+	err = module.Create(ctx, serviceAccount.OrgID, serviceAccount)
+	if err != nil {
+		return nil, err
+	}
+
+	return serviceAccount, nil
 }
 
 func (module *module) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*serviceaccounttypes.ServiceAccount, error) {
@@ -138,7 +157,7 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serv
 
 	// gets the role diff if any to modify grants.
 	grants, revokes := serviceAccount.PatchRoles(input)
-	err = module.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.ModifyGrant(ctx, orgID, revokes, grants, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -171,26 +190,28 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, input *serv
 }
 
 func (module *module) UpdateStatus(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
-	serviceAccount, err := module.Get(ctx, orgID, input.ID)
+	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, input.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	if input.Status == serviceAccount.Status {
-		return nil
-	}
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		// revoke all the API keys on disable
+		err := module.store.RevokeAllFactorAPIKeys(ctx, input.ID)
+		if err != nil {
+			return err
+		}
 
-	switch input.Status {
-	case serviceaccounttypes.StatusActive:
-		err := module.activateServiceAccount(ctx, orgID, input)
+		// update the status but do not delete the role mappings as we will use them for audits
+		err = module.store.Update(ctx, orgID, serviceaccounttypes.NewStorableServiceAccount(input))
 		if err != nil {
 			return err
 		}
-	case serviceaccounttypes.StatusDisabled:
-		err := module.disableServiceAccount(ctx, orgID, input)
-		if err != nil {
-			return err
-		}
+
+		return nil
+	})
+	if err != nil {
+		return err
 	}
 
 	return nil
@@ -203,7 +224,7 @@ func (module *module) Delete(ctx context.Context, orgID valuer.UUID, id valuer.U
 	}
 
 	// revoke from authz first as this cannot run in sql transaction
-	err = module.authz.Revoke(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, serviceAccount.ID.String(), orgID, nil))
+	err = module.authz.Revoke(ctx, orgID, serviceAccount.Roles, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, serviceAccount.ID.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
@@ -276,8 +297,13 @@ func (module *module) ListFactorAPIKey(ctx context.Context, serviceAccountID val
 	return serviceaccounttypes.NewFactorAPIKeyFromStorables(storables), nil
 }
 
-func (module *module) UpdateFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
-	return module.store.UpdateFactorAPIKey(ctx, serviceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
+func (module *module) UpdateFactorAPIKey(ctx context.Context, _ valuer.UUID, serviceAccountID valuer.UUID, factorAPIKey *serviceaccounttypes.FactorAPIKey) error {
+	err := module.store.UpdateFactorAPIKey(ctx, serviceAccountID, serviceaccounttypes.NewStorableFactorAPIKey(factorAPIKey))
+	if err != nil {
+		return err
+	}
+
+	return nil
 }
 
 func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID valuer.UUID, id valuer.UUID) error {
@@ -303,48 +329,6 @@ func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID v
 		"KeyCreatedAt": factorAPIKey.CreatedAt.String(),
 	}); err != nil {
 		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
-	}
-
-	return nil
-}
-
-func (module *module) disableServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
-	err := module.authz.Revoke(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, nil))
-	if err != nil {
-		return err
-	}
-
-	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		// revoke all the API keys on disable
-		err := module.store.RevokeAllFactorAPIKeys(ctx, input.ID)
-		if err != nil {
-			return err
-		}
-
-		// update the status but do not delete the role mappings as we will reuse them on activation.
-		err = module.Update(ctx, orgID, input)
-		if err != nil {
-			return err
-		}
-
-		return nil
-	})
-	if err != nil {
-		return err
-	}
-
-	return nil
-}
-
-func (module *module) activateServiceAccount(ctx context.Context, orgID valuer.UUID, input *serviceaccounttypes.ServiceAccount) error {
-	err := module.authz.Grant(ctx, orgID, input.Roles, authtypes.MustNewSubject(authtypes.TypeableUser, input.ID.String(), orgID, nil))
-	if err != nil {
-		return err
-	}
-
-	err = module.Update(ctx, orgID, input)
-	if err != nil {
-		return err
 	}
 
 	return nil

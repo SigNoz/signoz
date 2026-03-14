@@ -143,7 +143,7 @@ func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) erro
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingUser, err := s.store.GetUserByEmailAndOrgID(ctx, s.config.Email, orgID)
+	existingUser, err := s.module.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}

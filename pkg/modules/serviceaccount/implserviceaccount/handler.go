@@ -111,7 +111,12 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount.Update(req.Name, req.Email, req.Roles)
+	err = serviceAccount.Update(req.Name, req.Email, req.Roles)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.module.Update(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
@@ -147,7 +152,12 @@ func (handler *handler) UpdateStatus(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	serviceAccount.UpdateStatus(req.Status)
+	err = serviceAccount.UpdateStatus(req.Status)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	err = handler.module.UpdateStatus(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount)
 	if err != nil {
 		render.Error(rw, err)
@@ -290,7 +300,7 @@ func (handler *handler) UpdateFactorAPIKey(rw http.ResponseWriter, r *http.Reque
 	}
 
 	factorAPIKey.Update(req.Name, req.ExpiresAt)
-	err = handler.module.UpdateFactorAPIKey(ctx, serviceAccount.ID, factorAPIKey)
+	err = handler.module.UpdateFactorAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), serviceAccount.ID, factorAPIKey)
 	if err != nil {
 		render.Error(rw, err)
 		return

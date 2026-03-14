@@ -1,9 +1,17 @@
 import { ReactNode, useEffect } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
-import { Collapse, Flex, Space, Table, Tag, Tooltip, Typography } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
-import { TableProps } from 'antd/lib';
+import {
+	Collapse,
+	Flex,
+	Space,
+	Table,
+	TableProps,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
+import type { DefaultOptionType } from 'antd/es/select';
 import {
 	DowntimeSchedules,
 	PayloadProps,
@@ -17,6 +25,7 @@ import { CalendarClock, PenLine, Trash2 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
 
+import { showErrorNotification } from '../../utils/error';
 import {
 	formatDateTime,
 	getAlertOptionsFromIds,
@@ -351,7 +360,7 @@ export function PlannedDowntimeList({
 
 	useEffect(() => {
 		if (downtimeSchedules.isError) {
-			notifications.error(downtimeSchedules.error);
+			showErrorNotification(notifications, downtimeSchedules.error);
 		}
 	}, [downtimeSchedules.error, downtimeSchedules.isError, notifications]);
 

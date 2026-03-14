@@ -34,11 +34,6 @@ const mockSafeNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: jest.fn(),
-	useRouteMatch: jest.fn().mockReturnValue({
-		params: {
-			dashboardId: 4,
-		},
-	}),
 }));
 
 jest.mock(
@@ -69,7 +64,7 @@ describe('Dashboard landing page actions header tests', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -110,7 +105,7 @@ describe('Dashboard landing page actions header tests', () => {
 		);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -149,7 +144,7 @@ describe('Dashboard landing page actions header tests', () => {
 
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardProvider dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -193,20 +188,15 @@ describe('Dashboard landing page actions header tests', () => {
 			handleDashboardLockToggle: jest.fn(),
 			dashboardResponse: {} as IDashboardContext['dashboardResponse'],
 			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,
-			dashboardId: '4',
 			layouts: [],
 			panelMap: {},
 			setPanelMap: jest.fn(),
 			setLayouts: jest.fn(),
 			setSelectedDashboard: jest.fn(),
 			updatedTimeRef: { current: null },
-			toScrollWidgetId: '',
-			setToScrollWidgetId: jest.fn(),
 			updateLocalStorageDashboardVariables: jest.fn(),
 			dashboardQueryRangeCalled: false,
 			setDashboardQueryRangeCalled: jest.fn(),
-			selectedRowWidgetId: null,
-			setSelectedRowWidgetId: jest.fn(),
 			isDashboardFetching: false,
 			columnWidths: {},
 			setColumnWidths: jest.fn(),

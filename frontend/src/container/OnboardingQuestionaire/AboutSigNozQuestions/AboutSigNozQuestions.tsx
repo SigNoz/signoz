@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Checkbox } from '@signozhq/checkbox';
 import { Input } from '@signozhq/input';
-import TextArea from 'antd/lib/input/TextArea';
+import { Input as AntdInput } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ArrowRight } from 'lucide-react';
 
@@ -101,7 +101,7 @@ export function AboutSigNozQuestions({
 					<div className="form-group">
 						<div className="question">How did you first come across SigNoz?</div>
 
-						<TextArea
+						<AntdInput.TextArea
 							className="discover-signoz-input"
 							placeholder={`e.g., googling "datadog alternative", a post on r/devops, from a friend/colleague, a LinkedIn post, ChatGPT, etc.`}
 							value={discoverSignoz}

@@ -29,7 +29,6 @@ import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { CmdKProvider } from 'providers/cmdKProvider';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
@@ -218,9 +217,9 @@ function App(): JSX.Element {
 			pathname === ROUTES.ONBOARDING ||
 			pathname.startsWith('/public/dashboard/')
 		) {
-			window.Pylon('hideChatBubble');
+			window.Pylon?.('hideChatBubble');
 		} else {
-			window.Pylon('showChatBubble');
+			window.Pylon?.('showChatBubble');
 		}
 	}, [pathname]);
 
@@ -321,6 +320,19 @@ function App(): JSX.Element {
 					// Session Replay
 					replaysSessionSampleRate: 0.1, // This sets the sample rate at 10%. You may want to change it to 100% while in development and then sample at a lower rate in production.
 					replaysOnErrorSampleRate: 1.0, // If you're not already sampling the entire session, change the sample rate to 100% when sampling sessions where errors occur.
+					beforeSend(event) {
+						const sessionReplayUrl = posthog.get_session_replay_url?.({
+							withTimestamp: true,
+						});
+						if (sessionReplayUrl) {
+							// eslint-disable-next-line no-param-reassign
+							event.contexts = {
+								...event.contexts,
+								posthog: { session_replay_url: sessionReplayUrl },
+							};
+						}
+						return event;
+					},
 				});
 
 				setIsSentryInitialized(true);
@@ -371,28 +383,26 @@ function App(): JSX.Element {
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AppLayout>
-															<PreferenceContextProvider>
-																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																	<Switch>
-																		{routes.map(({ path, component, exact }) => (
-																			<Route
-																				key={`${path}`}
-																				exact={exact}
-																				path={path}
-																				component={component}
-																			/>
-																		))}
-																		<Route exact path="/" component={Home} />
-																		<Route path="*" component={NotFound} />
-																	</Switch>
-																</Suspense>
-															</PreferenceContextProvider>
-														</AppLayout>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
+												<KeyboardHotkeysProvider>
+													<AppLayout>
+														<PreferenceContextProvider>
+															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																<Switch>
+																	{routes.map(({ path, component, exact }) => (
+																		<Route
+																			key={`${path}`}
+																			exact={exact}
+																			path={path}
+																			component={component}
+																		/>
+																	))}
+																	<Route exact path="/" component={Home} />
+																	<Route path="*" component={NotFound} />
+																</Switch>
+															</Suspense>
+														</PreferenceContextProvider>
+													</AppLayout>
+												</KeyboardHotkeysProvider>
 											</QueryBuilderProvider>
 										</ResourceProvider>
 									</PrivateRoute>

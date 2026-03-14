@@ -2,41 +2,34 @@ package cloudintegrationtypes
 
 import (
 	"context"
-	"time"
+
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type CloudIntegrationAccountStore interface {
-	ListConnected(ctx context.Context, orgId string, provider string) ([]CloudIntegration, error)
+type Store interface {
+	// GetAccountByID returns a cloud integration account by id
+	GetAccountByID(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) (*StorableCloudIntegration, error)
 
-	Get(ctx context.Context, orgId string, provider string, id string) (*CloudIntegration, error)
+	// UpsertAccount creates or updates a cloud integration account
+	UpsertAccount(ctx context.Context, account *StorableCloudIntegration) error
 
-	GetConnectedCloudAccount(ctx context.Context, orgId, provider string, accountID string) (*CloudIntegration, error)
+	// RemoveAccount marks a cloud integration account as removed by setting the RemovedAt field
+	RemoveAccount(ctx context.Context, orgID, id valuer.UUID, provider CloudProviderType) error
 
-	// Insert an account or update it by (cloudProvider, id)
-	// for specified non-empty fields
-	Upsert(
-		ctx context.Context,
-		orgId string,
-		provider string,
-		id *string,
-		config []byte,
-		accountId *string,
-		agentReport *AgentReport,
-		removedAt *time.Time,
-	) (*CloudIntegration, error)
-}
+	// GetConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
+	GetConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
 
-type CloudIntegrationServiceStore interface {
-	Get(ctx context.Context, orgID, cloudAccountId, serviceType string) ([]byte, error)
+	// GetConnectedAccount for given provider
+	GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, providerAccountID string) (*StorableCloudIntegration, error)
 
-	Upsert(
-		ctx context.Context,
-		orgID,
-		cloudProvider,
-		cloudAccountId,
-		serviceId string,
-		config []byte,
-	) ([]byte, error)
+	// cloud_integration_service related methods
 
-	GetAllForAccount(ctx context.Context, orgID, cloudAccountId string) (map[string][]byte, error)
+	// GetServiceByType returns the cloud integration service for the given cloud integration id and service type
+	GetServiceByType(ctx context.Context, cloudIntegrationID valuer.UUID, serviceType string) (*StorableCloudIntegrationService, error)
+
+	// UpsertService creates or updates a cloud integration service for the given cloud integration id and service type
+	UpsertService(ctx context.Context, service *StorableCloudIntegrationService) error
+
+	// GetServices returns all the cloud integration services for the given cloud integration id
+	GetServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
 }

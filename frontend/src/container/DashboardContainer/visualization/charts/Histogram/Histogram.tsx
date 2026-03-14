@@ -11,15 +11,16 @@ import { HistogramChartProps } from '../types';
 export default function Histogram(props: HistogramChartProps): JSX.Element {
 	const {
 		children,
-		renderTooltip: customRenderTooltip,
+		customTooltip,
 		isQueriesMerged,
+		pinnedTooltipElement,
 		...rest
 	} = props;
 
 	const renderTooltip = useCallback(
 		(props: TooltipRenderArgs): React.ReactNode => {
-			if (customRenderTooltip) {
-				return customRenderTooltip(props);
+			if (customTooltip) {
+				return customTooltip(props);
 			}
 			const tooltipProps: HistogramTooltipProps = {
 				...props,
@@ -29,14 +30,15 @@ export default function Histogram(props: HistogramChartProps): JSX.Element {
 			};
 			return <HistogramTooltip {...tooltipProps} />;
 		},
-		[customRenderTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
+		[customTooltip, rest.timezone, rest.yAxisUnit, rest.decimalPrecision],
 	);
 
 	return (
 		<ChartWrapper
 			showLegend={!isQueriesMerged}
 			{...rest}
-			renderTooltip={renderTooltip}
+			customTooltip={renderTooltip}
+			pinnedTooltipElement={pinnedTooltipElement}
 		>
 			{children}
 		</ChartWrapper>
