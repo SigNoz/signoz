@@ -12,25 +12,30 @@ import (
 var S3Sync = valuer.NewString("s3sync")
 
 type (
-	ServiceSummaries struct {
+	ServicesSummary struct {
 		Services []*ServiceSummary `json:"services"`
 	}
 
 	ServiceSummary struct {
 		ServiceDefinitionMetadata
-		ServiceConfig *ServiceConfig `json:"service_config"`
+		ServiceConfig *ServiceConfig `json:"serviceConfig"`
 	}
 
 	GettableServiceSummary = ServiceSummary
 
-	GettableServiceSummaries = ServiceSummaries
+	GettableServicesSummary = ServicesSummary
 
 	Service struct {
 		ServiceDefinition
-		ServiceConfig *ServiceConfig `json:"service_config"`
+		ServiceConfig *ServiceConfig `json:"serviceConfig"`
 	}
 
 	GettableService = Service
+
+	UpdateServiceConfigRequest struct {
+		ProviderAccountID string         `json:"providerAccountId"`
+		ServiceConfig     *ServiceConfig `json:"serviceConfig"`
+	}
 )
 
 type ServiceConfig struct {
@@ -42,6 +47,8 @@ type AWSServiceConfig struct {
 	Metrics *AWSServiceMetricsConfig `json:"metrics"`
 }
 
+// AWSServiceLogsConfig is AWS specific logs config for a service
+// NOTE: the JSON keys are snake case for backward compatibility with existing agents
 type AWSServiceLogsConfig struct {
 	Enabled   bool                `json:"enabled"`
 	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
@@ -63,8 +70,8 @@ type ServiceDefinition struct {
 	Overview         string              `json:"overview"` // markdown
 	Assets           Assets              `json:"assets"`
 	SupportedSignals SupportedSignals    `json:"supported_signals"`
-	DataCollected    DataCollected       `json:"data_collected"`
-	Strategy         *CollectionStrategy `json:"telemetry_collection_strategy"`
+	DataCollected    DataCollected       `json:"dataCollected"`
+	Strategy         *CollectionStrategy `json:"telemetryCollectionStrategy"`
 }
 
 // CollectionStrategy is cloud provider specific configuration for signal collection,
@@ -108,6 +115,8 @@ type CollectedMetric struct {
 
 // AWSCollectionStrategy represents signal collection strategy for AWS services.
 // this is AWS specific.
+// NOTE: this structure is still using snake case, for backward compatibility,
+// with existing agents
 type AWSCollectionStrategy struct {
 	Metrics   *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	Logs      *AWSLogsStrategy    `json:"aws_logs,omitempty"`
@@ -116,6 +125,8 @@ type AWSCollectionStrategy struct {
 
 // AWSMetricsStrategy represents metrics collection strategy for AWS services.
 // this is AWS specific.
+// NOTE: this structure is still using snake case, for backward compatibility,
+// with existing agents
 type AWSMetricsStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	StreamFilters []struct {
@@ -128,6 +139,8 @@ type AWSMetricsStrategy struct {
 
 // AWSLogsStrategy represents logs collection strategy for AWS services.
 // this is AWS specific.
+// NOTE: this structure is still using snake case, for backward compatibility,
+// with existing agents
 type AWSLogsStrategy struct {
 	Subscriptions []struct {
 		// subscribe to all logs groups with specified prefix.

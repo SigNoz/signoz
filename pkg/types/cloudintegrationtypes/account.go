@@ -7,11 +7,17 @@ import (
 )
 
 type (
-	ConnectedAccountsList struct {
+	ConnectedAccounts struct {
 		Accounts []*Account `json:"accounts"`
 	}
 
-	GettableConnectedAccountsList = ConnectedAccountsList
+	GettableConnectedAccounts = ConnectedAccounts
+
+	UpdateAccountConfigRequest struct {
+		AWS *AWSAccountConfig `json:"aws"`
+	}
+
+	UpdatableAccountConfig = UpdateAccountConfigRequest
 )
 
 type (
@@ -28,6 +34,7 @@ type (
 	GettableAccount = Account
 )
 
+// AgentReport represents heartbeats sent by the agent.
 type AgentReport struct {
 	TimestampMillis int64          `json:"timestampMillis"`
 	Data            map[string]any `json:"data"`

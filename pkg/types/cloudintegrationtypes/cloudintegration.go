@@ -1,16 +1,19 @@
 package cloudintegrationtypes
 
 import (
-	"context"
 	"database/sql/driver"
 	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/uptrace/bun"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
+)
+
+var (
+	ErrCodeCloudIntegrationNotFound = errors.MustNewCode("cloud_integration_not_found")
 )
 
 // StorableCloudIntegration represents a cloud integration stored in the database.
@@ -29,7 +32,7 @@ type StorableCloudIntegration struct {
 	OrgID           valuer.UUID          `bun:"org_id,type:text"`
 }
 
-// AgentReport represents the last heartbeat and arbitrary data sent by the agent
+// StorableAgentReport represents the last heartbeat and arbitrary data sent by the agent
 // as of now there is no use case for Data field, but keeping it for backwards compatibility with older structure.
 type StorableAgentReport struct {
 	TimestampMillis int64          `json:"timestamp_millis"`
@@ -48,35 +51,7 @@ type StorableCloudIntegrationService struct {
 	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integrations(id),on_delete:cascade"`
 }
 
-type CloudIntegrationStore interface {
-	// GetAccountByID returns a cloud integration account by id
-	GetAccountByID(ctx context.Context, id, orgID valuer.UUID, provider CloudProviderType) (*StorableCloudIntegration, error)
-
-	// UpsertAccount creates or updates a cloud integration account
-	UpsertAccount(ctx context.Context, account *StorableCloudIntegration) error
-
-	// RemoveAccount marks a cloud integration account as removed by setting the RemovedAt field
-	RemoveAccount(ctx context.Context, id, orgID valuer.UUID, provider CloudProviderType) error
-
-	// ListAllConnectedAccounts returns all the cloud integration accounts for the org and cloud provider
-	GetAllConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
-
-	// Get connected integration account for given provider
-	GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider CloudProviderType, providerAccountID string) (*StorableCloudIntegration, error)
-
-	// cloud_integration_service related methods
-
-	// GetServiceByType returns the cloud integration service for the given cloud integration id and service type
-	GetServiceByType(ctx context.Context, serviceType string, cloudIntegrationID valuer.UUID) (*StorableCloudIntegrationService, error)
-
-	// UpsertService creates or updates a cloud integration service for the given cloud integration id and service type
-	UpsertService(ctx context.Context, service *StorableCloudIntegrationService) error
-
-	// GetAllServicesForIntegration returns all the cloud integration services for the given cloud integration id
-	GetAllServicesForIntegration(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
-}
-
-// For serializing from db
+// Scan scans value from DB
 func (r *StorableAgentReport) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -87,11 +62,10 @@ func (r *StorableAgentReport) Scan(src any) error {
 	default:
 		return errors.NewInternalf(errors.CodeInternal, "tried to scan from %T instead of string or bytes", src)
 	}
-
 	return json.Unmarshal(data, r)
 }
 
-// For serializing to db
+// Value creates value to be stored in DB
 func (r *StorableAgentReport) Value() (driver.Value, error) {
 	if r == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")

@@ -40,9 +40,9 @@ type (
 
 type (
 	AgentCheckInRequest struct {
-		// Older fields for backward compatibility
-		CloudIntegrationId string `json:"cloudIntegrationId"`
-		AccountId          string `json:"accountId"`
+		// older backward compatible fields are mapped to new fields
+		// CloudIntegrationId string `json:"cloudIntegrationId"`
+		// AccountId          string `json:"accountId"`
 
 		// New fields
 		ProviderAccountId string `json:"providerAccountId"`
@@ -51,14 +51,25 @@ type (
 		Data map[string]any `json:"data,omitempty"`
 	}
 
-	PostableAgentCheckInRequest = AgentCheckInRequest
+	PostableAgentCheckInRequest struct {
+		AgentCheckInRequest
+		// following are backward compatible fields for older running agents
+		CloudIntegrationId string         `json:"cloud_integration_id"`
+		CloudAccountId     string         `json:"cloud_account_id"`
+		Data               map[string]any `json:"data,omitempty"`
+	}
 
-	GettableAgentCheckInResponse = AgentCheckInResponse
+	GettableAgentCheckInResponse struct {
+		AgentCheckInResponse
+
+		CloudIntegrationId string `json:"cloud_integration_id"`
+		AccountId          string `json:"account_id"`
+	}
 
 	AgentCheckInResponse struct {
-		// Older fields for backward compatibility
-		CloudIntegrationId string `json:"cloudIntegrationId"`
-		AccountId          string `json:"accountId"`
+		// Older fields for backward compatibility are mapped to new fields below
+		// CloudIntegrationId string `json:"cloud_integration_id"`
+		// AccountId          string `json:"account_id"`
 
 		// New fields
 		ProviderAccountId string `json:"providerAccountId"`
@@ -66,7 +77,8 @@ type (
 
 		// IntegrationConfig populates data related to integration that is required for an agent
 		// to start collecting telemetry data
-		IntegrationConfig *IntegrationConfig `json:"integrationConfig,omitempty"`
+		// keeping JSON key snake_case for backward compatibility
+		IntegrationConfig *IntegrationConfig `json:"integration_config,omitempty"`
 	}
 
 	IntegrationConfig struct {
