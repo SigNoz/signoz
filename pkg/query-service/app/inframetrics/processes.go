@@ -216,6 +216,14 @@ func (p *ProcessesRepo) getTopProcessGroups(ctx context.Context, orgID valuer.UU
 	return topProcessGroups, allProcessGroups, nil
 }
 
+func (p *ProcessesRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForProcesses {
+		names = append(names, metricName)
+	}
+	return p.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, req model.ProcessListRequest) (model.ProcessListResponse, error) {
 	resp := model.ProcessListResponse{}
 	if req.Limit == 0 {
@@ -233,6 +241,22 @@ func (p *ProcessesRepo) GetProcessList(ctx context.Context, orgID valuer.UUID, r
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := p.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.ProcessListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.ProcessListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))

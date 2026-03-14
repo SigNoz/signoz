@@ -37,8 +37,8 @@ export interface K8sClustersListResponse {
 		records: K8sClustersData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

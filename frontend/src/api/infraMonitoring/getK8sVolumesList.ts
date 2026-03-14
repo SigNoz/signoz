@@ -44,8 +44,8 @@ export interface K8sVolumesListResponse {
 		records: K8sVolumesData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

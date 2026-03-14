@@ -35,8 +35,8 @@ export interface K8sNamespacesListResponse {
 		records: K8sNamespacesData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 
