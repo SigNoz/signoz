@@ -1,0 +1,4 @@
+smarthost: 127.0.0.1:1026
+server: http://127.0.0.1:1081/
+username: user
+password: pass
