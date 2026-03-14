@@ -11,12 +11,15 @@ import (
 
 type claimsKey struct{}
 type accessTokenKey struct{}
+type apiKeyKey struct{}
 
 type Claims struct {
-	UserID string
-	Email  string
-	Role   types.Role
-	OrgID  string
+	UserID           string
+	ServiceAccountID string
+	Principal        string
+	Email            string
+	Role             types.Role
+	OrgID            string
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -47,13 +50,36 @@ func AccessTokenFromContext(ctx context.Context) (string, error) {
 	return accessToken, nil
 }
 
+func NewContextWithAPIKey(ctx context.Context, apiKey string) context.Context {
+	return context.WithValue(ctx, apiKeyKey{}, apiKey)
+}
+
+func APIKeyFromContext(ctx context.Context) (string, error) {
+	apiKey, ok := ctx.Value(apiKeyKey{}).(string)
+	if !ok {
+		return "", errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "unauthenticated")
+	}
+
+	return apiKey, nil
+}
+
 func (c *Claims) LogValue() slog.Value {
 	return slog.GroupValue(
 		slog.String("user_id", c.UserID),
+		slog.String("service_account_id", c.ServiceAccountID),
+		slog.String("principal", c.Principal),
 		slog.String("email", c.Email),
 		slog.String("role", c.Role.String()),
 		slog.String("org_id", c.OrgID),
 	)
+}
+
+func (c *Claims) GetIdentityID() string {
+	if c.Principal == PrincipalUser.StringValue() {
+		return c.UserID
+	}
+
+	return c.ServiceAccountID
 }
 
 func (c *Claims) IsViewer() error {

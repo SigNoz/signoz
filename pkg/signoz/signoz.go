@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -38,6 +39,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
+	"github.com/SigNoz/signoz/pkg/tokenizer/apikeytokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -65,6 +67,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
+	APIKeyTokenizer        pkgtokenizer.Tokenizer
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -279,6 +282,13 @@ func New(
 		return nil, err
 	}
 
+	// Initialize api key tokenizer
+	apiKeyStore := implserviceaccount.NewStore(sqlstore)
+	apiKeyTokenizer, err := apikeytokenizer.New(ctx, providerSettings, config.Tokenizer, cache, apiKeyStore, orgGetter)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize user getter
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
 
@@ -443,6 +453,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
+		factory.NewNamedService(factory.MustNewName("apikeytokenizer"), apiKeyTokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
 		factory.NewNamedService(factory.MustNewName("user"), userService),
 	)
@@ -468,6 +479,7 @@ func New(
 		Emailing:               emailing,
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
+		APIKeyTokenizer:        apiKeyTokenizer,
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,
