@@ -10,7 +10,112 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/antlr4-go/antlr/v4"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"github.com/stretchr/testify/assert"
 )
+
+// TestInterpolateVariablesInString tests the embedded variable interpolation feature (GitHub issue #10008)
+func TestInterpolateVariablesInString(t *testing.T) {
+	tests := []struct {
+		name      string
+		input     string
+		variables map[string]qbtypes.VariableItem
+		expected  string
+	}{
+		{
+			name:  "pure variable reference - not interpolated",
+			input: "$service",
+			variables: map[string]qbtypes.VariableItem{
+				"service": {Value: "auth-service"},
+			},
+			expected: "$service", // Pure variables are handled by existing code
+		},
+		{
+			name:  "variable composed with suffix",
+			input: "$environment-xyz",
+			variables: map[string]qbtypes.VariableItem{
+				"environment": {Value: "prod"},
+			},
+			expected: "prod-xyz",
+		},
+		{
+			name:  "variable in quoted string with suffix",
+			input: "$env-cluster",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: "staging"},
+			},
+			expected: "staging-cluster",
+		},
+		{
+			name:  "variable with prefix and suffix",
+			input: "prefix-$var-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"var": {Value: "middle"},
+			},
+			expected: "prefix-middle-suffix",
+		},
+		{
+			name:  "multiple variables in one string",
+			input: "$region-$env-cluster",
+			variables: map[string]qbtypes.VariableItem{
+				"region": {Value: "us-west"},
+				"env":    {Value: "prod"},
+			},
+			expected: "us-west-prod-cluster",
+		},
+		{
+			name:  "similar variable names - longer matches first",
+			input: "$env-$environment",
+			variables: map[string]qbtypes.VariableItem{
+				"env":         {Value: "dev"},
+				"environment": {Value: "production"},
+			},
+			expected: "dev-production",
+		},
+		{
+			name:      "unknown variable - preserved as-is",
+			input:     "$unknown-suffix",
+			variables: map[string]qbtypes.VariableItem{},
+			expected:  "$unknown-suffix",
+		},
+		{
+			name:  "variable with underscore",
+			input: "$my_var-test",
+			variables: map[string]qbtypes.VariableItem{
+				"my_var": {Value: "hello"},
+			},
+			expected: "hello-test",
+		},
+		{
+			name:  "__all__ value returns skip marker",
+			input: "$env-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {
+					Type:  qbtypes.DynamicVariableType,
+					Value: "__all__",
+				},
+			},
+			expected: specialSkipConditionMarker,
+		},
+		{
+			name:  "multi-select takes first value",
+			input: "$env-suffix",
+			variables: map[string]qbtypes.VariableItem{
+				"env": {Value: []any{"prod", "staging", "dev"}},
+			},
+			expected: "prod-suffix",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			visitor := &filterExpressionVisitor{
+				variables: tt.variables,
+			}
+			result := visitor.interpolateVariablesInString(tt.input)
+			assert.Equal(t, tt.expected, result)
+		})
+	}
+}
 
 // TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value
 func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
@@ -42,7 +147,7 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	}
 
 	keys := map[string][]*telemetrytypes.TelemetryFieldKey{
-		"service": []*telemetrytypes.TelemetryFieldKey{
+		"service": {
 			{
 				Name:          "service",
 				Signal:        telemetrytypes.SignalLogs,
@@ -154,7 +259,7 @@ func TestVisitKey(t *testing.T) {
 			name:    "Key not found",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": []*telemetrytypes.TelemetryFieldKey{
+				"service": {
 					{
 						Name:          "service",
 						Signal:        telemetrytypes.SignalLogs,
@@ -335,7 +440,7 @@ func TestVisitKey(t *testing.T) {
 			name:    "Unknown key with ignoreNotFoundKeys=false",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": []*telemetrytypes.TelemetryFieldKey{
+				"service": {
 					{
 						Name:          "service",
 						Signal:        telemetrytypes.SignalLogs,
@@ -355,7 +460,7 @@ func TestVisitKey(t *testing.T) {
 			name:    "Unknown key with ignoreNotFoundKeys=true",
 			keyText: "unknown_key",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
-				"service": []*telemetrytypes.TelemetryFieldKey{
+				"service": {
 					{
 						Name:          "service",
 						Signal:        telemetrytypes.SignalLogs,
@@ -467,7 +572,7 @@ func TestVisitKey(t *testing.T) {
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
-				{
+		{
 			name:    "only attribute.custom_field is selected",
 			keyText: "attribute.attribute.custom_field",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
