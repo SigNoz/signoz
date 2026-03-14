@@ -158,6 +158,7 @@ func newProvider(
 		cache,
 		cfg.CacheTTL,
 		cfg.FluxInterval,
+		cfg.HeatmapCacheRounding,
 	)
 
 	// Create and return the querier

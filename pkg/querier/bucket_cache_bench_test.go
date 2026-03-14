@@ -201,7 +201,7 @@ func BenchmarkBucketCache_FindMissingRangesWithStep(b *testing.B) {
 			b.ReportAllocs()
 
 			for i := 0; i < b.N; i++ {
-				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs)
+				missing := bc.findMissingRangesWithStep(buckets, startMs, endMs, stepMs, qbtypes.RequestTypeTimeSeries)
 				_ = missing
 			}
 		})
@@ -345,7 +345,7 @@ func createBenchmarkBucketCache(tb testing.TB) BucketCache {
 	}
 	memCache, err := cachetest.New(config)
 	require.NoError(tb, err)
-	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, time.Hour, 5*time.Minute)
+	return NewBucketCache(instrumentationtest.New().ToProviderSettings(), memCache, time.Hour, 5*time.Minute, 5*time.Minute)
 }
 
 // Helper function to create benchmark result

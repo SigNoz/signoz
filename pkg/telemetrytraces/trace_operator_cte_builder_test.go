@@ -384,6 +384,48 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 			},
 			expectedErr: nil,
 		},
+		{
+			name:        "bucket query with trace operator",
+			requestType: qbtypes.RequestTypeHeatmap,
+			operator: qbtypes.QueryBuilderTraceOperator{
+				Expression:   "A => B",
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.TraceAggregation{
+					{
+						Expression: "heatmap(duration_nano, 25)",
+					},
+				},
+			},
+			compositeQuery: &qbtypes.CompositeQuery{
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "A",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &qbtypes.Filter{
+								Expression: "service.name = 'frontend'",
+							},
+						},
+					},
+					{
+						Type: qbtypes.QueryTypeBuilder,
+						Spec: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
+							Name:   "B",
+							Signal: telemetrytypes.SignalTraces,
+							Filter: &qbtypes.Filter{
+								Expression: "service.name = 'backend'",
+							},
+						},
+					},
+				},
+			},
+			expected: qbtypes.Statement{
+				Query: "WITH toDateTime64(1747947419000000000, 9) AS t_from, toDateTime64(1747983448000000000, 9) AS t_to, 1747945619 AS bucket_from, 1747983448 AS bucket_to, all_spans AS (SELECT *, resource_string_service$$name AS `service.name` FROM signoz_traces.distributed_signoz_index_v3 WHERE timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ?), __resource_filter_A AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), A AS (SELECT * FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter_A) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND true), __resource_filter_B AS (SELECT fingerprint FROM signoz_traces.distributed_traces_v3_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), B AS (SELECT * FROM signoz_traces.distributed_signoz_index_v3 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter_B) AND timestamp >= ? AND timestamp < ? AND ts_bucket_start >= ? AND ts_bucket_start <= ? AND true), A_DIR_DESC_B AS (SELECT p.* FROM A AS p INNER JOIN B AS c ON p.trace_id = c.trace_id AND p.span_id = c.parent_span_id), __histogram_op_0 AS (SELECT histogram(25)(multiIf(duration_nano <> ?, duration_nano, NULL)) AS buckets_0 FROM A_DIR_DESC_B), __buckets_op_0 AS (SELECT arrayJoin(arrayMap(i -> (i, buckets_0[i].1, buckets_0[i].2), range(1, length(buckets_0) + 1))) AS bucket_0 FROM __histogram_op_0), __counts_op_0 AS (SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts, bucket_0.1 AS bucket_idx_0, count() AS cnt_0 FROM A_DIR_DESC_B CROSS JOIN __buckets_op_0 WHERE duration_nano >= bucket_0.2 AND duration_nano < bucket_0.3 GROUP BY ts, bucket_idx_0), __timestamps_op AS (SELECT toStartOfInterval(timestamp, INTERVAL 60 SECOND) AS ts FROM A_DIR_DESC_B GROUP BY ts) SELECT t.ts, arrayMap(x -> (x.2, x.3, x.4), arraySort(x -> x.1, groupArray((b_0.bucket_0.1, b_0.bucket_0.2, b_0.bucket_0.3, ifNull(c_0.cnt_0, 0))))) AS __result_0 FROM __timestamps_op t CROSS JOIN __buckets_op_0 b_0 LEFT JOIN __counts_op_0 c_0 ON c_0.ts = t.ts AND c_0.bucket_idx_0 = b_0.bucket_0.1 GROUP BY t.ts ORDER BY t.ts SETTINGS distributed_product_mode='allow', max_memory_usage=10000000000",
+				Args:  []any{"1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "frontend", "%service.name%", "%service.name\":\"frontend%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), "backend", "%service.name%", "%service.name\":\"backend%", uint64(1747945619), uint64(1747983448), "1747947419000000000", "1747983448000000000", uint64(1747945619), uint64(1747983448), 0},
+			},
+			expectedErr: nil,
+		},
 	}
 
 	fm := NewFieldMapper()
