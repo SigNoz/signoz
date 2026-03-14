@@ -55,10 +55,11 @@ var (
 	}
 
 	queryNamesForTopHosts = map[string][]string{
-		"cpu":    {"A", "B", "F1"},
-		"memory": {"C", "D", "F2"},
-		"wait":   {"E", "F", "F3"},
-		"load15": {"G"},
+		"cpu":        {"A", "B", "F1"},
+		"memory":     {"C", "D", "F2"},
+		"wait":       {"E", "F", "F3"},
+		"load15":     {"G"},
+		"filesystem": {"H", "I", "F4"},
 	}
 
 	// TODO(srikanthccv): remove hardcoded metric name and support keys from any system metric
@@ -75,6 +76,7 @@ var (
 		"load15":     GetDotMetrics("system_cpu_load_average_15m"),
 		"wait":       GetDotMetrics("system_cpu_time"),
 	}
+
 	uniqueMetricNamesForHosts = []string{
 		GetDotMetrics("system_uptime"),
 		GetDotMetrics("system_cpu_time"),
@@ -507,10 +509,11 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 	for _, result := range formattedResponse {
 		for _, row := range result.Table.Rows {
 			record := model.HostListRecord{
-				CPU:    -1,
-				Memory: -1,
-				Wait:   -1,
-				Load15: -1,
+				CPU:        -1,
+				Memory:     -1,
+				Wait:       -1,
+				Load15:     -1,
+				Filesystem: -1,
 			}
 
 			if hostName, ok := row.Data[hostNameAttrKey].(string); ok {
@@ -528,6 +531,9 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 			}
 			if load15, ok := row.Data["G"].(float64); ok {
 				record.Load15 = load15
+			}
+			if filesystem, ok := row.Data["F4"].(float64); ok {
+				record.Filesystem = filesystem
 			}
 			record.Meta = map[string]string{}
 			if _, ok := hostAttrs[record.HostName]; ok {

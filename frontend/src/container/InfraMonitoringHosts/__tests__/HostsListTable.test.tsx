@@ -8,20 +8,20 @@ import { HostsListTableProps } from '../utils';
 
 const EMPTY_STATE_CONTAINER_CLASS = '.hosts-empty-state-container';
 
-const createMockHost = (): HostData =>
-	({
-		hostName: 'test-host-1',
-		active: true,
-		cpu: 0.75,
-		memory: 0.65,
-		wait: 0.03,
-		load15: 1.5,
-		os: 'linux',
-		cpuTimeSeries: { labels: {}, labelsArray: [], values: [] },
-		memoryTimeSeries: { labels: {}, labelsArray: [], values: [] },
-		waitTimeSeries: { labels: {}, labelsArray: [], values: [] },
-		load15TimeSeries: { labels: {}, labelsArray: [], values: [] },
-	} as HostData);
+const createMockHost = (): HostData => ({
+	hostName: 'test-host-1',
+	active: true,
+	cpu: 0.75,
+	memory: 0.65,
+	wait: 0.03,
+	load15: 1.5,
+	os: 'linux',
+	cpuTimeSeries: { labels: {}, labelsArray: [], values: [] },
+	memoryTimeSeries: { labels: {}, labelsArray: [], values: [] },
+	waitTimeSeries: { labels: {}, labelsArray: [], values: [] },
+	load15TimeSeries: { labels: {}, labelsArray: [], values: [] },
+	filesystem: 0.5,
+});
 
 const createMockTableData = (
 	overrides: Partial<HostListResponse['data']> = {},
