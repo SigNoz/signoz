@@ -1,5 +1,4 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
@@ -9,8 +8,15 @@ import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
-import ServiceAccountsTable from 'components/ServiceAccountsTable/ServiceAccountsTable';
-import useUrlQuery from 'hooks/useUrlQuery';
+import ServiceAccountsTable, {
+	PAGE_SIZE,
+} from 'components/ServiceAccountsTable/ServiceAccountsTable';
+import {
+	parseAsInteger,
+	parseAsString,
+	parseAsStringEnum,
+	useQueryState,
+} from 'nuqs';
 import { toISOString } from 'utils/app';
 import { toAPIError } from 'utils/errorUtils';
 
@@ -18,22 +24,23 @@ import { FilterMode, ServiceAccountRow, ServiceAccountStatus } from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 
-const PAGE_SIZE = 20;
-
 function ServiceAccountsSettings(): JSX.Element {
-	const history = useHistory();
-	const urlQuery = useUrlQuery();
-
-	const pageParam = parseInt(urlQuery.get('page') ?? '1', 10);
-	const currentPage = Number.isNaN(pageParam) || pageParam < 1 ? 1 : pageParam;
-
-	const [searchQuery, setSearchQuery] = useState('');
-	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
+	const [currentPage, setPage] = useQueryState(
+		'page',
+		parseAsInteger.withDefault(1),
+	);
+	const [searchQuery, setSearchQuery] = useQueryState(
+		'search',
+		parseAsString.withDefault(''),
+	);
+	const [filterMode, setFilterMode] = useQueryState(
+		'filter',
+		parseAsStringEnum<FilterMode>(Object.values(FilterMode)).withDefault(
+			FilterMode.All,
+		),
+	);
+	const [selectedAccountId, setSelectedAccountId] = useQueryState('account');
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
-	const [
-		selectedAccount,
-		setSelectedAccount,
-	] = useState<ServiceAccountRow | null>(null);
 
 	const {
 		data: serviceAccountsData,
@@ -99,14 +106,6 @@ function ServiceAccountsSettings(): JSX.Element {
 		return result;
 	}, [allAccounts, filterMode, searchQuery]);
 
-	const setPage = useCallback(
-		(page: number): void => {
-			urlQuery.set('page', String(page));
-			history.replace({ search: urlQuery.toString() });
-		},
-		[history, urlQuery],
-	);
-
 	useEffect(() => {
 		if (filteredAccounts.length === 0) {
 			return;
@@ -115,11 +114,15 @@ function ServiceAccountsSettings(): JSX.Element {
 		const maxPage = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
 		if (currentPage > maxPage) {
 			setPage(maxPage);
-		}
-		if (currentPage < 1) {
+		} else if (currentPage < 1) {
 			setPage(1);
 		}
 	}, [filteredAccounts.length, currentPage, setPage]);
+
+	const selectedAccount = useMemo(
+		() => allAccounts.find((a) => a.id === selectedAccountId) ?? null,
+		[allAccounts, selectedAccountId],
+	);
 
 	const totalCount = allAccounts.length;
 
@@ -177,36 +180,21 @@ function ServiceAccountsSettings(): JSX.Element {
 	}
 	const filterLabel = getFilterLabel();
 
-	const handleRowClick = useCallback((row: ServiceAccountRow): void => {
-		setSelectedAccount(row);
-	}, []);
-
-	useEffect(() => {
-		if (!selectedAccount) {
-			return;
-		}
-		const updated = allAccounts.find((a) => a.id === selectedAccount.id);
-		if (!updated) {
-			setSelectedAccount(null);
-			return;
-		}
-		if (JSON.stringify(updated) !== JSON.stringify(selectedAccount)) {
-			setSelectedAccount(updated);
-		}
-	}, [allAccounts, selectedAccount]);
-
-	const handleDrawerClose = useCallback((): void => {
-		setSelectedAccount(null);
-	}, []);
+	const handleRowClick = useCallback(
+		(row: ServiceAccountRow): void => {
+			setSelectedAccountId(row.id);
+		},
+		[setSelectedAccountId],
+	);
 
 	const handleDrawerSuccess = useCallback(
 		(options?: { closeDrawer?: boolean }): void => {
 			if (options?.closeDrawer) {
-				setSelectedAccount(null);
+				setSelectedAccountId(null);
 			}
 			handleCreateSuccess();
 		},
-		[handleCreateSuccess],
+		[handleCreateSuccess, setSelectedAccountId],
 	);
 
 	return (
@@ -283,11 +271,6 @@ function ServiceAccountsSettings(): JSX.Element {
 				<ServiceAccountsTable
 					data={filteredAccounts}
 					loading={isLoading}
-					total={filteredAccounts.length}
-					currentPage={currentPage}
-					pageSize={PAGE_SIZE}
-					searchQuery={searchQuery}
-					onPageChange={setPage}
 					onRowClick={handleRowClick}
 				/>
 			)}
@@ -300,8 +283,6 @@ function ServiceAccountsSettings(): JSX.Element {
 
 			<ServiceAccountDrawer
 				account={selectedAccount}
-				open={selectedAccount !== null}
-				onClose={handleDrawerClose}
 				onSuccess={handleDrawerSuccess}
 			/>
 		</>

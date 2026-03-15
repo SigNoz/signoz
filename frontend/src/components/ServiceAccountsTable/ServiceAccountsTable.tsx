@@ -1,6 +1,7 @@
 import React from 'react';
 import { Table } from 'antd';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
 import {
 	columns,
@@ -10,27 +11,25 @@ import {
 
 import './ServiceAccountsTable.styles.scss';
 
+export const PAGE_SIZE = 20;
+
 interface ServiceAccountsTableProps {
 	data: ServiceAccountRow[];
 	loading: boolean;
-	total: number;
-	currentPage: number;
-	pageSize: number;
-	searchQuery: string;
-	onPageChange: (page: number) => void;
 	onRowClick?: (row: ServiceAccountRow) => void;
 }
 
 function ServiceAccountsTable({
 	data,
 	loading,
-	total,
-	currentPage,
-	pageSize,
-	searchQuery,
-	onPageChange,
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
+	const [currentPage, setPage] = useQueryState(
+		'page',
+		parseAsInteger.withDefault(1),
+	);
+	const [searchQuery] = useQueryState('search', parseAsString.withDefault(''));
+
 	return (
 		<div className="sa-table-wrapper">
 			{/* Todo: use new table component from periscope when ready */}
@@ -40,14 +39,14 @@ function ServiceAccountsTable({
 				rowKey="id"
 				loading={loading}
 				pagination={
-					total > pageSize
+					data.length > PAGE_SIZE
 						? {
 								current: currentPage,
-								pageSize,
-								total,
+								pageSize: PAGE_SIZE,
+								total: data.length,
 								showTotal: showPaginationTotal,
 								showSizeChanger: false,
-								onChange: onPageChange,
+								onChange: (page: number): void => void setPage(page),
 								className: 'sa-table-pagination',
 						  }
 						: false

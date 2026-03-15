@@ -15,6 +15,7 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { useRoles } from 'components/RolesSelect';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
 
 import AddKeyModal from './AddKeyModal';
 import DisableAccountModal from './DisableAccountModal';
@@ -26,8 +27,6 @@ import './ServiceAccountDrawer.styles.scss';
 
 export interface ServiceAccountDrawerProps {
 	account: ServiceAccountRow | null;
-	open: boolean;
-	onClose: () => void;
 	onSuccess: (options?: { closeDrawer?: boolean }) => void;
 }
 
@@ -36,26 +35,34 @@ const PAGE_SIZE = 15;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ServiceAccountDrawer({
 	account,
-	open,
-	onClose,
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
-	const [activeTab, setActiveTab] = useState<ServiceAccountDrawerTab>(
-		ServiceAccountDrawerTab.Overview,
+	const [, setSelectedAccountId] = useQueryState('account');
+	const open = account !== null;
+	const onClose = useCallback((): void => void setSelectedAccountId(null), [
+		setSelectedAccountId,
+	]);
+	const [activeTab, setActiveTab] = useQueryState(
+		'tab',
+		parseAsStringEnum<ServiceAccountDrawerTab>(
+			Object.values(ServiceAccountDrawerTab),
+		).withDefault(ServiceAccountDrawerTab.Overview),
+	);
+	const [keysPage, setKeysPage] = useQueryState(
+		'keysPage',
+		parseAsInteger.withDefault(1),
 	);
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
-	const [keysPage, setKeysPage] = useState(1);
-
 	useEffect(() => {
 		if (account) {
 			setLocalName(account.name ?? '');
 			setLocalRoles(account.roles ?? []);
-			setActiveTab(ServiceAccountDrawerTab.Overview);
 			setKeysPage(1);
 		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [account]);
 
 	const isDisabled = account?.status?.toUpperCase() !== 'ACTIVE';
@@ -91,7 +98,7 @@ function ServiceAccountDrawer({
 		if (keysPage > maxPage) {
 			setKeysPage(maxPage);
 		}
-	}, [keysLoading, keys.length, keysPage]);
+	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
 	const {
 		mutate: updateAccount,
@@ -261,7 +268,9 @@ function ServiceAccountDrawer({
 						)}
 						showSizeChanger={false}
 						hideOnSinglePage
-						onChange={(page): void => setKeysPage(page)}
+						onChange={(page): void => {
+							void setKeysPage(page);
+						}}
 						className="sa-drawer__keys-pagination"
 					/>
 				) : (

@@ -1,6 +1,7 @@
 import { toast } from '@signozhq/sonner';
 import { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import KeysTab from '../KeysTab';
@@ -43,6 +44,16 @@ const defaultProps = {
 	onAddKeyClick: jest.fn(),
 };
 
+function renderKeysTab(
+	props: Partial<typeof defaultProps> = {},
+): ReturnType<typeof render> {
+	return render(
+		<NuqsTestingAdapter>
+			<KeysTab {...defaultProps} {...props} />
+		</NuqsTestingAdapter>,
+	);
+}
+
 describe('KeysTab', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -58,14 +69,14 @@ describe('KeysTab', () => {
 	});
 
 	it('renders loading state', () => {
-		render(<KeysTab {...defaultProps} isLoading={true} />);
+		renderKeysTab({ isLoading: true });
 		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
 	});
 
 	it('renders empty state when no keys', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onAddKeyClick = jest.fn();
-		render(<KeysTab {...defaultProps} keys={[]} onAddKeyClick={onAddKeyClick} />);
+		renderKeysTab({ keys: [], onAddKeyClick });
 
 		expect(
 			screen.getByText(/No keys. Start by creating one./i),
@@ -76,7 +87,7 @@ describe('KeysTab', () => {
 	});
 
 	it('renders table with keys', () => {
-		render(<KeysTab {...defaultProps} />);
+		renderKeysTab();
 
 		expect(screen.getByText('Production Key')).toBeInTheDocument();
 		expect(screen.getByText('Staging Key')).toBeInTheDocument();
@@ -86,7 +97,7 @@ describe('KeysTab', () => {
 
 	it('clicking a row opens EditKeyModal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<KeysTab {...defaultProps} />);
+		renderKeysTab();
 
 		const row = screen.getByText('Production Key').closest('tr');
 		if (!row) {
@@ -100,7 +111,7 @@ describe('KeysTab', () => {
 
 	it('clicking revoke icon opens confirmation dialog', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<KeysTab {...defaultProps} />);
+		renderKeysTab();
 
 		const revokeBtns = screen
 			.getAllByRole('button')
@@ -114,7 +125,7 @@ describe('KeysTab', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const onRefetch = jest.fn();
 
-		render(<KeysTab {...defaultProps} onRefetch={onRefetch} />);
+		renderKeysTab({ onRefetch });
 
 		const revokeBtns = screen
 			.getAllByRole('button')
@@ -134,7 +145,7 @@ describe('KeysTab', () => {
 	});
 
 	it('disables actions when isDisabled is true', () => {
-		render(<KeysTab {...defaultProps} isDisabled={true} />);
+		renderKeysTab({ isDisabled: true });
 
 		const revokeBtns = screen
 			.getAllByRole('button')
