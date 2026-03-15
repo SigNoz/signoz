@@ -15,6 +15,7 @@ import ROUTES from 'constants/routes';
 import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence } from 'motion/react';
@@ -43,6 +44,7 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const isDarkMode = useIsDarkMode();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
@@ -680,7 +682,11 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src="/Images/allInOne.svg"
+														src={
+															isDarkMode
+																? '/Images/allInOne.svg'
+																: '/Images/allInOneLightMode.svg'
+														}
 														alt="checklist-img"
 														className="checklist-img"
 													/>
