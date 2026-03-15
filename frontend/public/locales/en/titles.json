@@ -75,5 +75,6 @@
 	"METER_EXPLORER_VIEWS": "SigNoz | Meter Explorer Views",
 	"METER": "SigNoz | Meter",
 	"ROLES_SETTINGS": "SigNoz | Roles",
-	"MEMBERS_SETTINGS": "SigNoz | Members"
+	"MEMBERS_SETTINGS": "SigNoz | Members",
+	"SERVICE_ACCOUNTS_SETTINGS": "SigNoz | Service Accounts"
 }

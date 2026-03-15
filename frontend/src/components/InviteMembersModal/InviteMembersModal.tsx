@@ -254,6 +254,8 @@ function InviteMembersModal({
 											value={row.email}
 											onChange={(e): void => updateEmail(row.id, e.target.value)}
 											className="team-member-email-input"
+											name={`invite-email-${row.id}`}
+											autoComplete="email"
 										/>
 										{emailValidity[row.id] === false && row.email.trim() !== '' && (
 											<span className="email-error-message">Invalid email address</span>

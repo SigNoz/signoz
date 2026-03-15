@@ -17,6 +17,7 @@ import { TFunction } from 'i18next';
 import {
 	Backpack,
 	BellDot,
+	Bot,
 	Building,
 	Cpu,
 	CreditCard,
@@ -30,6 +31,7 @@ import {
 } from 'lucide-react';
 import ChannelsEdit from 'pages/ChannelsEdit';
 import MembersSettings from 'pages/MembersSettings';
+import ServiceAccountsSettings from 'pages/ServiceAccountsSettings';
 import Shortcuts from 'pages/Shortcuts';
 
 export const organizationSettings = (t: TFunction): RouteTabProps['routes'] => [
@@ -200,6 +202,21 @@ export const mySettings = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.MY_SETTINGS,
 		key: ROUTES.MY_SETTINGS,
+	},
+];
+
+export const serviceAccountsSettings = (
+	t: TFunction,
+): RouteTabProps['routes'] => [
+	{
+		Component: ServiceAccountsSettings,
+		name: (
+			<div className="periscope-tab">
+				<Bot size={16} /> {t('routes:service_accounts').toString()}
+			</div>
+		),
+		route: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+		key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 	},
 ];
 
