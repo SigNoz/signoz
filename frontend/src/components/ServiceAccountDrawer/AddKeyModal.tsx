@@ -218,10 +218,11 @@ function AddKeyModal({
 								variant="solid"
 								color="primary"
 								size="sm"
-								disabled={!keyName.trim() || isSubmitting}
+								loading={isSubmitting}
+								disabled={!keyName.trim()}
 								onClick={handleCreate}
 							>
-								{isSubmitting ? 'Creating...' : 'Create Key'}
+								Create Key
 							</Button>
 						</div>
 					</div>

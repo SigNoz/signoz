@@ -75,20 +75,9 @@
 	}
 
 	&__action {
-		display: flex;
-		align-items: center;
-		gap: var(--spacing-3);
 		height: 24px;
-		padding: 0 var(--padding-2);
-		border: none;
-		border-radius: 2px;
-		cursor: pointer;
 		font-size: var(--label-small-500-font-size);
-		font-family: var(--font-sans), sans-serif;
-		font-weight: var(--label-small-500-font-weight);
 		color: currentColor;
-		white-space: nowrap;
-		flex-shrink: 0;
 
 		&:hover {
 			opacity: 0.8;
@@ -96,17 +85,10 @@
 	}
 
 	&__dismiss {
-		display: flex;
-		align-items: center;
-		justify-content: center;
 		width: 24px;
 		height: 24px;
-		border: none;
-		border-radius: 2px;
 		padding: 0;
-		cursor: pointer;
 		color: currentColor;
-		flex-shrink: 0;
 
 		&:hover {
 			opacity: 0.8;

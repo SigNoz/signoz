@@ -1,4 +1,5 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode } from 'react';
+import { Button } from '@signozhq/button';
 import {
 	CircleAlert,
 	CircleCheckBig,
@@ -22,9 +23,7 @@ export interface AnnouncementBannerProps {
 	type?: AnnouncementBannerType;
 	icon?: ReactNode | null;
 	action?: AnnouncementBannerAction;
-	dismissible?: boolean;
-	storageKey?: string;
-	onDismiss?: () => void;
+	onClose?: () => void;
 	className?: string;
 }
 
@@ -35,37 +34,14 @@ const DEFAULT_ICONS: Record<AnnouncementBannerType, ReactNode> = {
 	success: <CircleCheckBig size={14} />,
 };
 
-function isDismissed(storageKey?: string): boolean {
-	if (!storageKey) {
-		return false;
-	}
-	return localStorage.getItem(storageKey) === 'true';
-}
-
 export default function AnnouncementBanner({
 	message,
 	type = 'warning',
 	icon,
 	action,
-	dismissible = true,
-	storageKey,
-	onDismiss,
+	onClose,
 	className,
-}: AnnouncementBannerProps): JSX.Element | null {
-	const [visible, setVisible] = useState(() => !isDismissed(storageKey));
-
-	if (!visible) {
-		return null;
-	}
-
-	const handleDismiss = (): void => {
-		if (storageKey) {
-			localStorage.setItem(storageKey, 'true');
-		}
-		setVisible(false);
-		onDismiss?.();
-	};
-
+}: AnnouncementBannerProps): JSX.Element {
 	const resolvedIcon = icon === null ? null : icon ?? DEFAULT_ICONS[type];
 
 	return (
@@ -81,34 +57,27 @@ export default function AnnouncementBanner({
 				{resolvedIcon && (
 					<span className="announcement-banner__icon">{resolvedIcon}</span>
 				)}
-				{typeof message === 'string' ? (
-					<span
-						className="announcement-banner__message"
-						dangerouslySetInnerHTML={{ __html: message }}
-					/>
-				) : (
-					<span className="announcement-banner__message">{message}</span>
-				)}
+				<span className="announcement-banner__message">{message}</span>
 				{action && (
-					<button
+					<Button
 						type="button"
 						className="announcement-banner__action"
 						onClick={action.onClick}
 					>
 						{action.label}
-					</button>
+					</Button>
 				)}
 			</div>
 
-			{dismissible && (
-				<button
+			{onClose && (
+				<Button
 					type="button"
 					aria-label="Dismiss"
 					className="announcement-banner__dismiss"
-					onClick={handleDismiss}
+					onClick={onClose}
 				>
 					<X size={14} />
-				</button>
+				</Button>
 			)}
 		</div>
 	);

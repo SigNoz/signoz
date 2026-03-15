@@ -40,7 +40,7 @@ function ServiceAccountsSettings(): JSX.Element {
 		isLoading,
 		isError,
 		error,
-		refetch,
+		refetch: handleCreateSuccess,
 	} = useListServiceAccounts();
 
 	const allAccounts = useMemo(
@@ -87,7 +87,7 @@ function ServiceAccountsSettings(): JSX.Element {
 		}
 
 		if (searchQuery.trim()) {
-			const q = searchQuery.toLowerCase();
+			const q = searchQuery.trim().toLowerCase();
 			result = result.filter(
 				(a) =>
 					a.name?.toLowerCase().includes(q) ||
@@ -98,11 +98,6 @@ function ServiceAccountsSettings(): JSX.Element {
 
 		return result;
 	}, [allAccounts, filterMode, searchQuery]);
-
-	const paginatedAccounts = useMemo((): ServiceAccountRow[] => {
-		const start = (currentPage - 1) * PAGE_SIZE;
-		return filteredAccounts.slice(start, start + PAGE_SIZE);
-	}, [filteredAccounts, currentPage]);
 
 	const setPage = useCallback(
 		(page: number): void => {
@@ -118,8 +113,11 @@ function ServiceAccountsSettings(): JSX.Element {
 		}
 
 		const maxPage = Math.max(1, Math.ceil(filteredAccounts.length / PAGE_SIZE));
-		if (currentPage > maxPage || currentPage < 1) {
+		if (currentPage > maxPage) {
 			setPage(maxPage);
+		}
+		if (currentPage < 1) {
+			setPage(1);
 		}
 	}, [filteredAccounts.length, currentPage, setPage]);
 
@@ -206,14 +204,10 @@ function ServiceAccountsSettings(): JSX.Element {
 			if (options?.closeDrawer) {
 				setSelectedAccount(null);
 			}
-			refetch();
+			handleCreateSuccess();
 		},
-		[refetch],
+		[handleCreateSuccess],
 	);
-
-	const handleCreateSuccess = useCallback((): void => {
-		refetch();
-	}, [refetch]);
 
 	return (
 		<>
@@ -287,7 +281,7 @@ function ServiceAccountsSettings(): JSX.Element {
 				/>
 			) : (
 				<ServiceAccountsTable
-					data={paginatedAccounts}
+					data={filteredAccounts}
 					loading={isLoading}
 					total={filteredAccounts.length}
 					currentPage={currentPage}

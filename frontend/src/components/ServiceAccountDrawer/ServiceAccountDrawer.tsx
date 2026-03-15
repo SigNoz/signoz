@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { DrawerWrapper } from '@signozhq/drawer';
-import { Key, LayoutGrid, Plus, PowerOff, Trash2, X } from '@signozhq/icons';
+import { Key, LayoutGrid, Plus, PowerOff, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination } from 'antd';
@@ -18,6 +17,7 @@ import { useRoles } from 'components/RolesSelect';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 
 import AddKeyModal from './AddKeyModal';
+import DisableAccountModal from './DisableAccountModal';
 import KeysTab from './KeysTab';
 import OverviewTab from './OverviewTab';
 import { ServiceAccountDrawerTab } from './utils';
@@ -46,8 +46,6 @@ function ServiceAccountDrawer({
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
-	const [isSaving, setIsSaving] = useState(false);
-	const [isDisabling, setIsDisabling] = useState(false);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
 	const [keysPage, setKeysPage] = useState(1);
 
@@ -95,55 +93,67 @@ function ServiceAccountDrawer({
 		}
 	}, [keysLoading, keys.length, keysPage]);
 
-	const { mutateAsync: updateAccount } = useUpdateServiceAccount();
-	const { mutateAsync: updateStatus } = useUpdateServiceAccountStatus();
+	const {
+		mutate: updateAccount,
+		isLoading: isSaving,
+	} = useUpdateServiceAccount();
+	const {
+		mutate: updateStatus,
+		isLoading: isDisabling,
+	} = useUpdateServiceAccountStatus();
 
-	const handleSave = useCallback(async (): Promise<void> => {
+	function handleSave(): void {
 		if (!account || !isDirty) {
 			return;
 		}
-		setIsSaving(true);
-		try {
-			await updateAccount({
+		updateAccount(
+			{
 				pathParams: { id: account.id },
 				data: { name: localName, email: account.email, roles: localRoles },
-			});
-			toast.success('Service account updated successfully', { richColors: true });
-			onSuccess({ closeDrawer: false });
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to update service account';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsSaving(false);
-		}
-	}, [account, isDirty, localName, localRoles, updateAccount, onSuccess]);
+			},
+			{
+				onSuccess: () => {
+					toast.success('Service account updated successfully', {
+						richColors: true,
+					});
+					onSuccess({ closeDrawer: false });
+				},
+				onError: (error) => {
+					const errMessage =
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						)?.getErrorMessage() || 'Failed to update service account';
+					toast.error(errMessage, { richColors: true });
+				},
+			},
+		);
+	}
 
-	const handleDisable = useCallback(async (): Promise<void> => {
+	function handleDisable(): void {
 		if (!account) {
 			return;
 		}
-		setIsDisabling(true);
-		try {
-			await updateStatus({
+		updateStatus(
+			{
 				pathParams: { id: account.id },
 				data: { status: 'DISABLED' },
-			});
-			toast.success('Service account disabled', { richColors: true });
-			setIsDisableConfirmOpen(false);
-			onSuccess({ closeDrawer: true });
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to disable service account';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsDisabling(false);
-		}
-	}, [account, updateStatus, onSuccess]);
+			},
+			{
+				onSuccess: () => {
+					toast.success('Service account disabled', { richColors: true });
+					setIsDisableConfirmOpen(false);
+					onSuccess({ closeDrawer: true });
+				},
+				onError: (error) => {
+					const errMessage =
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						)?.getErrorMessage() || 'Failed to disable service account';
+					toast.error(errMessage, { richColors: true });
+				},
+			},
+		);
+	}
 
 	const handleClose = useCallback((): void => {
 		setIsDisableConfirmOpen(false);
@@ -282,10 +292,11 @@ function ServiceAccountDrawer({
 									variant="solid"
 									color="primary"
 									size="sm"
-									disabled={!isDirty || isSaving}
+									loading={isSaving}
+									disabled={!isDirty}
 									onClick={handleSave}
 								>
-									{isSaving ? 'Saving...' : 'Save Changes'}
+									Save Changes
 								</Button>
 							</div>
 						)}
@@ -314,45 +325,13 @@ function ServiceAccountDrawer({
 				className="sa-drawer"
 			/>
 
-			<DialogWrapper
+			<DisableAccountModal
 				open={isDisableConfirmOpen}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setIsDisableConfirmOpen(false);
-					}
-				}}
-				title={`Disable service account ${account?.name ?? ''}?`}
-				width="narrow"
-				className="alert-dialog sa-disable-dialog"
-				showCloseButton={false}
-				disableOutsideClick={false}
-			>
-				<p className="sa-disable-dialog__body">
-					Disabling this service account will revoke access for all its keys. Any
-					systems using this account will lose access immediately.
-				</p>
-				<DialogFooter className="sa-disable-dialog__footer">
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={(): void => setIsDisableConfirmOpen(false)}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						variant="solid"
-						color="destructive"
-						size="sm"
-						disabled={isDisabling}
-						onClick={handleDisable}
-					>
-						<Trash2 size={12} />
-						{isDisabling ? 'Disabling...' : 'Disable'}
-					</Button>
-				</DialogFooter>
-			</DialogWrapper>
+				accountName={account?.name}
+				isDisabling={isDisabling}
+				onCancel={(): void => setIsDisableConfirmOpen(false)}
+				onConfirm={handleDisable}
+			/>
 
 			{account && (
 				<AddKeyModal

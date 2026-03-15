@@ -6,7 +6,7 @@ import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
-import AnnouncementBanner from 'components/AnnouncementBanner';
+import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -293,10 +293,16 @@ export default function Home(): JSX.Element {
 	return (
 		<div className="home-container">
 			{IS_SERVICE_ACCOUNTS_ENABLED && (
-				<AnnouncementBanner
+				<PersistedAnnouncementBanner
 					type="warning"
 					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					message={`<strong>API Keys</strong> have been deprecated and replaced by <strong>Service Accounts</strong>. Please migrate to Service Accounts for programmatic API access.`}
+					message={
+						<>
+							<strong>API Keys</strong> have been deprecated and replaced by{' '}
+							<strong>Service Accounts</strong>. Please migrate to Service Accounts for
+							programmatic API access.
+						</>
+					}
 					action={{
 						label: 'Go to Service Accounts',
 						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),

@@ -1,7 +1,6 @@
-import { useCallback, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
-import { Trash2, X } from '@signozhq/icons';
+import { X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
@@ -16,6 +15,7 @@ import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 
 import EditKeyModal from './EditKeyModal';
+import RevokeKeyModal from './RevokeKeyModal';
 import { formatLastObservedAt } from './utils';
 
 interface KeysTabProps {
@@ -29,6 +29,16 @@ interface KeysTabProps {
 	onAddKeyClick: () => void;
 }
 
+interface BuildColumnsParams {
+	isDisabled: boolean;
+	setRevokeTarget: React.Dispatch<
+		React.SetStateAction<ServiceaccounttypesFactorAPIKeyDTO | null>
+	>;
+	handleformatLastObservedAt: (
+		lastObservedAt: Date | null | undefined,
+	) => string;
+}
+
 function formatExpiry(expiresAt: number): JSX.Element {
 	if (expiresAt === 0) {
 		return <span className="keys-tab__expiry--never">Never</span>;
@@ -40,64 +50,12 @@ function formatExpiry(expiresAt: number): JSX.Element {
 	return <span>{expiryDate.format('MMM D, YYYY')}</span>;
 }
 
-function KeysTab({
-	accountId,
-	keys,
-	isLoading,
-	isDisabled = false,
-	currentPage,
-	pageSize,
-	onRefetch,
-	onAddKeyClick,
-}: KeysTabProps): JSX.Element {
-	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const [
-		editKey,
-		setEditKey,
-	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
-	const [
-		revokeTarget,
-		setRevokeTarget,
-	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
-	const [isRevoking, setIsRevoking] = useState(false);
-
-	const { mutateAsync: revokeKey } = useRevokeServiceAccountKey();
-
-	const handleRevoke = useCallback(async (): Promise<void> => {
-		if (!revokeTarget) {
-			return;
-		}
-		setIsRevoking(true);
-		try {
-			await revokeKey({
-				pathParams: { id: accountId, fid: revokeTarget.id },
-			});
-			toast.success('Key revoked successfully', { richColors: true });
-			setRevokeTarget(null);
-			onRefetch();
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to revoke key';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsRevoking(false);
-		}
-	}, [revokeTarget, revokeKey, accountId, onRefetch]);
-
-	const handleKeySuccess = useCallback((): void => {
-		setEditKey(null);
-		onRefetch();
-	}, [onRefetch]);
-
-	const handleformatLastObservedAt = useCallback(
-		(lastObservedAt: Date | null | undefined): string =>
-			formatLastObservedAt(lastObservedAt, formatTimezoneAdjustedTimestamp),
-		[formatTimezoneAdjustedTimestamp],
-	);
-
-	const columns: ColumnsType<ServiceaccounttypesFactorAPIKeyDTO> = [
+function buildColumns({
+	isDisabled,
+	setRevokeTarget,
+	handleformatLastObservedAt,
+}: BuildColumnsParams): ColumnsType<ServiceaccounttypesFactorAPIKeyDTO> {
+	return [
 		{
 			title: 'Name',
 			dataIndex: 'name',
@@ -163,6 +121,71 @@ function KeysTab({
 			),
 		},
 	];
+}
+
+function KeysTab({
+	accountId,
+	keys,
+	isLoading,
+	isDisabled = false,
+	currentPage,
+	pageSize,
+	onRefetch,
+	onAddKeyClick,
+}: KeysTabProps): JSX.Element {
+	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const [
+		editKey,
+		setEditKey,
+	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
+	const [
+		revokeTarget,
+		setRevokeTarget,
+	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
+	const {
+		mutate: revokeKey,
+		isLoading: isRevoking,
+	} = useRevokeServiceAccountKey();
+
+	function handleRevoke(): void {
+		if (!revokeTarget) {
+			return;
+		}
+		revokeKey(
+			{ pathParams: { id: accountId, fid: revokeTarget.id } },
+			{
+				onSuccess: () => {
+					toast.success('Key revoked successfully', { richColors: true });
+					setRevokeTarget(null);
+					onRefetch();
+				},
+				onError: (error) => {
+					const errMessage =
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						)?.getErrorMessage() || 'Failed to revoke key';
+					toast.error(errMessage, { richColors: true });
+				},
+			},
+		);
+	}
+
+	const handleKeySuccess = useCallback((): void => {
+		setEditKey(null);
+		onRefetch();
+	}, [onRefetch]);
+
+	const handleformatLastObservedAt = useCallback(
+		(lastObservedAt: Date | null | undefined): string =>
+			formatLastObservedAt(lastObservedAt, formatTimezoneAdjustedTimestamp),
+		[formatTimezoneAdjustedTimestamp],
+	);
+
+	const columns = useMemo(
+		() =>
+			buildColumns({ isDisabled, setRevokeTarget, handleformatLastObservedAt }),
+		[isDisabled, setRevokeTarget, handleformatLastObservedAt],
+	);
 
 	if (isLoading) {
 		return (
@@ -193,6 +216,7 @@ function KeysTab({
 
 	return (
 		<>
+			{/* Todo: use new table component from periscope when ready */}
 			<Table<ServiceaccounttypesFactorAPIKeyDTO>
 				columns={columns}
 				dataSource={keys}
@@ -237,45 +261,13 @@ function KeysTab({
 				})}
 			/>
 
-			<DialogWrapper
+			<RevokeKeyModal
 				open={revokeTarget !== null}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setRevokeTarget(null);
-					}
-				}}
-				title={`Revoke ${revokeTarget?.name ?? 'key'}?`}
-				width="narrow"
-				className="alert-dialog delete-dialog"
-				showCloseButton={false}
-				disableOutsideClick={false}
-			>
-				<p className="delete-dialog__body">
-					Revoking this key will permanently invalidate it. Any systems using this
-					key will lose access immediately.
-				</p>
-				<DialogFooter className="delete-dialog__footer">
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={(): void => setRevokeTarget(null)}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						variant="solid"
-						color="destructive"
-						size="sm"
-						disabled={isRevoking}
-						onClick={handleRevoke}
-					>
-						<Trash2 size={12} />
-						{isRevoking ? 'Revoking...' : 'Revoke Key'}
-					</Button>
-				</DialogFooter>
-			</DialogWrapper>
+				keyName={revokeTarget?.name}
+				isRevoking={isRevoking}
+				onCancel={(): void => setRevokeTarget(null)}
+				onConfirm={handleRevoke}
+			/>
 
 			<EditKeyModal
 				open={editKey !== null}

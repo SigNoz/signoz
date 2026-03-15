@@ -9,6 +9,20 @@ const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
+jest.mock('@signozhq/drawer', () => ({
+	DrawerWrapper: ({
+		content,
+		open,
+	}: {
+		content?: ReactNode;
+		open: boolean;
+	}): JSX.Element | null => (open ? <div>{content}</div> : null),
+}));
+
+jest.mock('@signozhq/sonner', () => ({
+	toast: { success: jest.fn(), error: jest.fn() },
+}));
+
 const mockServiceAccountsAPI = [
 	{
 		id: 'sa-1',
@@ -38,61 +52,6 @@ const mockServiceAccountsAPI = [
 		updatedAt: 1700000005,
 	},
 ];
-
-jest.mock('@signozhq/toggle-group', () => ({
-	ToggleGroup: ({
-		children,
-		className,
-	}: {
-		children: ReactNode;
-		onValueChange?: (val: string) => void;
-		value?: string;
-		type?: string;
-		className?: string;
-	}): JSX.Element => <div className={className}>{children}</div>,
-	ToggleGroupItem: ({
-		children,
-		className,
-	}: {
-		children: ReactNode;
-		value: string;
-		className?: string;
-	}): JSX.Element => <span className={className}>{children}</span>,
-}));
-
-jest.mock('@signozhq/drawer', () => ({
-	DrawerWrapper: ({
-		content,
-		open,
-	}: {
-		content?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
-}));
-
-jest.mock('@signozhq/dialog', () => ({
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
-jest.mock('@signozhq/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
-}));
 
 describe('ServiceAccountsSettings (integration)', () => {
 	beforeEach(() => {
@@ -188,6 +147,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		await screen.findByRole('dialog', { name: /New Service Account/i });
 		expect(screen.getByPlaceholderText('Enter a name')).toBeInTheDocument();
 	});
+
 	it('shows error state when API fails', async () => {
 		server.use(
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
