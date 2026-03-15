@@ -88,7 +88,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(sqlstore sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]] {
 			existingFactories := signoz.NewSQLSchemaProviderFactories(sqlstore)
 			if err := existingFactories.Add(postgressqlschema.NewFactory(sqlstore)); err != nil {
-				panic(err)
+				logger.ErrorContext(ctx, "failed to add PostgreSQL schema factory", "error", err)
+				return existingFactories
 			}
 
 			return existingFactories
