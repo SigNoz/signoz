@@ -88,6 +88,8 @@ func (e *SyntaxErr) Error() string {
 	exp := ""
 	if len(e.Expected) > 0 {
 		exp = "expecting one of {" + strings.Join(e.Expected, ", ") + "}" + " but got " + e.TokenTxt
+	} else if e.Msg != "" {
+		exp = e.Msg
 	}
 	return fmt.Sprintf("line %d:%d %s", e.Line, e.Col, exp)
 }
