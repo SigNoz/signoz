@@ -115,7 +115,6 @@ function OverviewTab({
 						value={localRoles}
 						onChange={onRolesChange}
 						placeholder="Select roles"
-						className="sa-drawer__role-select"
 						getPopupContainer={(triggerNode): HTMLElement =>
 							(triggerNode?.closest('.sa-drawer') as HTMLElement) || document.body
 						}
