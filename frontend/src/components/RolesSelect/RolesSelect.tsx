@@ -3,6 +3,7 @@ import { Checkbox, Select } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
 import type { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import cx from 'classnames';
 import APIError from 'types/api/error';
 
 import './RolesSelect.styles.scss';
@@ -135,7 +136,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 				value={value}
 				onChange={onChange}
 				placeholder={placeholder}
-				className={className}
+				className={cx('roles-select', className)}
 				loading={loading}
 				notFoundContent={notFoundContent}
 				options={options}
@@ -159,7 +160,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 			value={value}
 			onChange={onChange}
 			placeholder={placeholder}
-			className={className}
+			className={cx('roles-select', className)}
 			loading={loading}
 			notFoundContent={notFoundContent}
 			options={options}

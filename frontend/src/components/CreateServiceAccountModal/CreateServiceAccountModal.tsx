@@ -178,7 +178,6 @@ function CreateServiceAccountModal({
 									error={rolesErrorObj}
 									onRefetch={refetchRoles}
 									placeholder="Select roles"
-									className="create-sa-form__select"
 									value={field.value}
 									onChange={field.onChange}
 									getPopupContainer={(triggerNode): HTMLElement =>
