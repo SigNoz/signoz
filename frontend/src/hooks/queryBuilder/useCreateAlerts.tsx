@@ -107,7 +107,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation,
 		dashboardVariables,
 		dashboardDynamicVariables,
-		selectedDashboard?.data.version,
 		widget,
 	]);
 };

@@ -61,7 +61,7 @@ var (
 	}
 )
 
-type fieldMapper struct {}
+type fieldMapper struct{}
 
 func NewFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}

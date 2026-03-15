@@ -11,6 +11,10 @@ import { AppState } from 'store/reducers';
 import { VariableResponseProps } from 'types/api/dashboard/variables/query';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../../constants/queryCacheTime';
 import { variablePropsToPayloadVariables } from '../utils';
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
@@ -33,9 +37,10 @@ function QueryVariableInput({
 	);
 	const [errorMessage, setErrorMessage] = useState<null | string>(null);
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, minTime, isAutoRefreshDisabled } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const {
 		variableFetchCycleId,
@@ -197,6 +202,9 @@ function QueryVariableInput({
 					signal,
 				),
 			refetchOnWindowFocus: false,
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			onSuccess: (response) => {
 				getOptions(response.payload);
 				settleVariableFetch(variableData.name, 'complete');

@@ -7,7 +7,6 @@ import { useLocation } from 'react-router-dom';
 import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
-import { useForm } from 'antd/es/form/Form';
 import logEvent from 'api/common/logEvent';
 import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -72,7 +71,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		isDashboardLocked,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
-		setSelectedRowWidgetId,
 		isDashboardFetching,
 		columnWidths,
 	} = useDashboard();
@@ -106,7 +104,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setCurrentPanelMap(panelMap);
 	}, [panelMap]);
 
-	const [form] = useForm<{
+	const [form] = Form.useForm<{
 		title: string;
 	}>();
 
@@ -196,7 +194,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 
 		updateDashboardMutation.mutate(updatedDashboard, {
 			onSuccess: (updatedDashboard) => {
-				setSelectedRowWidgetId(null);
 				if (updatedDashboard.data) {
 					if (updatedDashboard.data.data.layout) {
 						setLayouts(sortLayout(updatedDashboard.data.data.layout));

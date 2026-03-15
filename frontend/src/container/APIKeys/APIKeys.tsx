@@ -8,6 +8,7 @@ import {
 	Button,
 	Col,
 	Collapse,
+	CollapseProps,
 	Flex,
 	Form,
 	Input,
@@ -20,8 +21,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
-import { CollapseProps } from 'antd/lib';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import createAPIKeyApi from 'api/v1/pats/create';
 import deleteAPIKeyApi from 'api/v1/pats/delete';
 import updateAPIKeyApi from 'api/v1/pats/update';

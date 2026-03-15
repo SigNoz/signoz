@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { toast } from '@signozhq/sonner';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { usePutProfile } from 'api/generated/services/zeus';
@@ -12,7 +12,7 @@ import { SOMETHING_WENT_WRONG } from 'constants/api';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import ROUTES from 'constants/routes';
-import { InviteTeamMembersProps } from 'container/OrganizationSettings/PendingInvitesContainer';
+import { InviteTeamMembersProps } from 'container/OrganizationSettings/utils';
 import { useNotifications } from 'hooks/useNotifications';
 import history from 'lib/history';
 import { useAppContext } from 'providers/App/App';

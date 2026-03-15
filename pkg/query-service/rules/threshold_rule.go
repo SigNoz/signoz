@@ -17,6 +17,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/transition"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -433,7 +435,10 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 
 	var results []*v3.Result
 	var queryErrors map[string]error
-
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "buildAndRunQuery",
+	})
 	if r.version == "v4" {
 		results, queryErrors, err = r.querierV2.QueryRange(ctx, orgID, params)
 	} else {
@@ -500,6 +505,11 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 	}
 
 	var results []*v3.Result
+
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "rules",
+		instrumentationtypes.CodeFunctionName: "buildAndRunQueryV5",
+	})
 
 	v5Result, err := r.querierV5.QueryRange(ctx, orgID, params)
 	if err != nil {

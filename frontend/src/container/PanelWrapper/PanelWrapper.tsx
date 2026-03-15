@@ -24,6 +24,7 @@ function PanelWrapper({
 	customOnRowClick,
 	panelMode,
 	enableDrillDown = false,
+	onColumnWidthsChange,
 }: PanelWrapperProps): JSX.Element {
 	const Component = PanelTypeVsPanelWrapper[
 		selectedGraph || widget.panelTypes
@@ -58,6 +59,7 @@ function PanelWrapper({
 			customOnRowClick={customOnRowClick}
 			customSeries={customSeries}
 			enableDrillDown={enableDrillDown}
+			onColumnWidthsChange={onColumnWidthsChange}
 		/>
 	);
 }

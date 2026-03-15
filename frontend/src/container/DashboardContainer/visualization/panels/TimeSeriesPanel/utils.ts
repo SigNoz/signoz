@@ -66,13 +66,14 @@ export const prepareUPlotConfig = ({
 	widget: Widgets;
 	isDarkMode: boolean;
 	currentQuery: Query;
-	onClick: OnClickPluginOpts['onClick'];
+	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): UPlotConfigBuilder => {
 	const stepIntervals: ExecStats['stepIntervals'] = get(
 		apiResponse,
@@ -100,7 +101,12 @@ export const prepareUPlotConfig = ({
 		stepInterval: minStepInterval,
 	});
 
-	apiResponse.data?.result?.forEach((series) => {
+	if (!(apiResponse && apiResponse.data.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
+
+	apiResponse.data.result.forEach((series) => {
 		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
 		const baseLabelName = getLabelName(
 			series.metric,

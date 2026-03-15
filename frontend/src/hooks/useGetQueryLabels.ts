@@ -11,7 +11,7 @@ export const useGetQueryLabels = (
 			const queryLabels = getQueryLabelWithAggregation(
 				currentQuery?.builder?.queryData || [],
 			);
-			const formulaLabels = currentQuery?.builder?.queryFormulas?.map(
+			const formulaLabels = (currentQuery?.builder?.queryFormulas ?? []).map(
 				(formula) => ({
 					label: formula.queryName,
 					value: formula.queryName,
@@ -20,10 +20,13 @@ export const useGetQueryLabels = (
 			return [...queryLabels, ...formulaLabels];
 		}
 		if (currentQuery?.queryType === EQueryType.CLICKHOUSE) {
-			return currentQuery?.clickhouse_sql?.map((q) => ({
+			return (currentQuery?.clickhouse_sql ?? []).map((q) => ({
 				label: q.name,
 				value: q.name,
 			}));
 		}
-		return currentQuery?.promql?.map((q) => ({ label: q.name, value: q.name }));
+		return (currentQuery?.promql ?? []).map((q) => ({
+			label: q.name,
+			value: q.name,
+		}));
 	}, [currentQuery]);

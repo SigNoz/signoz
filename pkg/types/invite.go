@@ -54,7 +54,29 @@ type PostableInvite struct {
 }
 
 type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
+	Invites []PostableInvite `json:"invites" required:"true" nullable:"false"`
+}
+
+func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
+	type Alias PostableBulkInviteRequest
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// check for duplicate emails in the same request
+	seen := make(map[string]struct{}, len(temp.Invites))
+	for _, invite := range temp.Invites {
+		email := invite.Email.StringValue()
+		if _, exists := seen[email]; exists {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Duplicate email in request: %s", email)
+		}
+		seen[email] = struct{}{}
+	}
+
+	*request = PostableBulkInviteRequest(temp)
+	return nil
 }
 
 type GettableCreateInviteResponse struct {

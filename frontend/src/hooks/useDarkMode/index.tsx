@@ -11,8 +11,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { theme as antdTheme } from 'antd';
-import { ThemeConfig } from 'antd/es/config-provider/context';
+import { theme as antdTheme, ThemeConfig } from 'antd';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { LOCALSTORAGE } from 'constants/localStorage';

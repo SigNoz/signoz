@@ -7,14 +7,15 @@ import {
 	apiKeys,
 	billingSettings,
 	createAlertChannels,
-	customDomainSettings,
 	editAlertChannels,
 	generalSettings,
 	ingestionSettings,
 	keyboardShortcuts,
+	membersSettings,
 	multiIngestionSettings,
 	mySettings,
 	organizationSettings,
+	roleDetails,
 	rolesSettings,
 } from './config';
 
@@ -35,6 +36,7 @@ export const getRoutes = (
 	if (isWorkspaceBlocked && isAdmin) {
 		settings.push(
 			...organizationSettings(t),
+			...membersSettings(t),
 			...mySettings(t),
 			...billingSettings(t),
 			...keyboardShortcuts(t),
@@ -60,15 +62,12 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...apiKeys(t));
+		settings.push(...apiKeys(t), ...membersSettings(t));
 	}
 
+	// todo: Sagar - check the condition for role list and details page, to whom we want to serve
 	if ((isCloudUser || isEnterpriseSelfHostedUser) && isAdmin) {
-		settings.push(...customDomainSettings(t), ...billingSettings(t));
-	}
-
-	if (isAdmin) {
-		settings.push(...rolesSettings(t));
+		settings.push(...billingSettings(t), ...rolesSettings(t), ...roleDetails(t));
 	}
 
 	settings.push(
