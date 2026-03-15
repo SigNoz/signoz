@@ -1,15 +1,16 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { Form } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useCreateServiceAccount } from 'api/generated/services/serviceaccount';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
+import { EMAIL_REGEX } from 'utils/app';
 
 import './CreateServiceAccountModal.styles.scss';
 
@@ -30,18 +31,21 @@ function CreateServiceAccountModal({
 	onClose,
 	onSuccess,
 }: CreateServiceAccountModalProps): JSX.Element {
-	const [form] = Form.useForm<FormValues>();
+	const {
+		control,
+		handleSubmit,
+		reset,
+		formState: { isValid, errors },
+	} = useForm<FormValues>({
+		mode: 'onChange',
+		defaultValues: {
+			name: '',
+			email: '',
+			roles: [],
+		},
+	});
+
 	const [isSubmitting, setIsSubmitting] = useState(false);
-	const [submittable, setSubmittable] = useState(false);
-
-	const values = Form.useWatch([], form);
-
-	useEffect(() => {
-		form
-			.validateFields({ validateOnly: true })
-			.then(() => setSubmittable(true))
-			.catch(() => setSubmittable(false));
-	}, [values, form]);
 
 	const { mutateAsync: createServiceAccount } = useCreateServiceAccount();
 	const {
@@ -52,15 +56,14 @@ function CreateServiceAccountModal({
 		refetch: refetchRoles,
 	} = useRoles();
 
-	const handleClose = useCallback((): void => {
-		form.resetFields();
+	function handleClose(): void {
+		reset();
 		onClose();
-	}, [form, onClose]);
+	}
 
-	const handleSubmit = useCallback(async (): Promise<void> => {
+	async function onSubmit(values: FormValues): Promise<void> {
+		setIsSubmitting(true);
 		try {
-			const values = await form.validateFields();
-			setIsSubmitting(true);
 			await createServiceAccount({
 				data: {
 					name: values.name.trim(),
@@ -69,13 +72,10 @@ function CreateServiceAccountModal({
 				},
 			});
 			toast.success('Service account created successfully', { richColors: true });
-			form.resetFields();
+			reset();
 			onSuccess();
 			onClose();
 		} catch (err: unknown) {
-			if (err && typeof err === 'object' && 'errorFields' in err) {
-				return;
-			}
 			const errMessage =
 				convertToApiError(
 					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
@@ -86,7 +86,7 @@ function CreateServiceAccountModal({
 		} finally {
 			setIsSubmitting(false);
 		}
-	}, [form, createServiceAccount, onSuccess, onClose]);
+	}
 
 	return (
 		<DialogWrapper
@@ -103,58 +103,96 @@ function CreateServiceAccountModal({
 			disableOutsideClick={false}
 		>
 			<div className="create-sa-modal__content">
-				<Form form={form} layout="vertical" className="create-sa-form">
-					<Form.Item
-						name="name"
-						label="Name"
-						rules={[{ required: true, message: 'Name is required' }]}
-						className="create-sa-form__item"
-					>
-						<Input placeholder="Enter a name" className="create-sa-form__input" />
-					</Form.Item>
-
-					<Form.Item
-						name="email"
-						label="Email Address"
-						rules={[
-							{ required: true, message: 'Email Address is required' },
-							{ type: 'email', message: 'Please enter a valid email address' },
-						]}
-						className="create-sa-form__item"
-					>
-						<Input
-							type="email"
-							placeholder="email@example.com"
-							className="create-sa-form__input"
+				<form className="create-sa-form">
+					<div className="create-sa-form__item">
+						<label htmlFor="sa-name">Name</label>
+						<Controller
+							name="name"
+							control={control}
+							rules={{ required: 'Name is required' }}
+							render={({ field }): JSX.Element => (
+								<Input
+									id="sa-name"
+									placeholder="Enter a name"
+									className="create-sa-form__input"
+									value={field.value}
+									onChange={field.onChange}
+									onBlur={field.onBlur}
+								/>
+							)}
 						/>
-					</Form.Item>
+						{errors.name && (
+							<p className="create-sa-form__error">{errors.name.message}</p>
+						)}
+					</div>
+
+					<div className="create-sa-form__item">
+						<label htmlFor="sa-email">Email Address</label>
+						<Controller
+							name="email"
+							control={control}
+							rules={{
+								required: 'Email Address is required',
+								pattern: {
+									value: EMAIL_REGEX,
+									message: 'Please enter a valid email address',
+								},
+							}}
+							render={({ field }): JSX.Element => (
+								<Input
+									id="sa-email"
+									type="email"
+									placeholder="email@example.com"
+									className="create-sa-form__input"
+									value={field.value}
+									onChange={field.onChange}
+									onBlur={field.onBlur}
+								/>
+							)}
+						/>
+						{errors.email && (
+							<p className="create-sa-form__error">{errors.email.message}</p>
+						)}
+					</div>
 					<p className="create-sa-form__helper">
 						Used only for notifications about this service account. It is not used for
 						authentication.
 					</p>
 
-					<Form.Item
-						name="roles"
-						label="Roles"
-						rules={[{ required: true, message: 'At least one role is required' }]}
-						className="create-sa-form__item"
-					>
-						<RolesSelect
-							mode="multiple"
-							roles={roles}
-							loading={rolesLoading}
-							isError={rolesError}
-							error={rolesErrorObj}
-							onRefetch={refetchRoles}
-							placeholder="Select roles"
-							className="create-sa-form__select"
-							getPopupContainer={(triggerNode): HTMLElement =>
-								(triggerNode?.closest('.create-sa-modal') as HTMLElement) ||
-								document.body
-							}
+					<div className="create-sa-form__item">
+						<label htmlFor="sa-roles">Roles</label>
+						<Controller
+							name="roles"
+							control={control}
+							rules={{
+								validate: (value): string | true =>
+									value.length > 0 || 'At least one role is required',
+							}}
+							render={({ field }): JSX.Element => (
+								<RolesSelect
+									id="sa-roles"
+									mode="multiple"
+									roles={roles}
+									loading={rolesLoading}
+									isError={rolesError}
+									error={rolesErrorObj}
+									onRefetch={refetchRoles}
+									placeholder="Select roles"
+									className="create-sa-form__select"
+									value={field.value}
+									onChange={field.onChange}
+									getPopupContainer={(triggerNode): HTMLElement =>
+										(triggerNode?.closest('.create-sa-modal') as HTMLElement) ||
+										document.body
+									}
+								/>
+							)}
 						/>
-					</Form.Item>
-				</Form>
+						{errors.roles && (
+							<p className="create-sa-form__error">{errors.roles.message}</p>
+						)}
+					</div>
+				</form>
 			</div>
 
 			<DialogFooter className="create-sa-modal__footer">
@@ -173,10 +211,11 @@ function CreateServiceAccountModal({
 					variant="solid"
 					color="primary"
 					size="sm"
-					onClick={handleSubmit}
-					disabled={isSubmitting || !submittable}
+					onClick={handleSubmit(onSubmit)}
+					loading={isSubmitting}
+					disabled={!isValid}
 				>
-					{isSubmitting ? 'Creating...' : 'Create Service Account'}
+					Create Service Account
 				</Button>
 			</DialogFooter>
 		</DialogWrapper>

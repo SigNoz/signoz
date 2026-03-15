@@ -1,7 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { DialogWrapper } from '@signozhq/dialog';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
@@ -22,6 +22,7 @@ import dayjs from 'dayjs';
 import { useTimezone } from 'providers/Timezone';
 import { popupContainer } from 'utils/selectPopupContainer';
 
+import { RevokeKeyContent } from './RevokeKeyModal';
 import { disabledDate, formatLastObservedAt } from './utils';
 
 import './EditKeyModal.styles.scss';
@@ -49,8 +50,6 @@ function EditKeyModal({
 	const [expiryMode, setExpiryMode] = useState<ExpiryMode>('none');
 	const [localDate, setLocalDate] = useState<Dayjs | null>(null);
 	const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] = useState(false);
-	const [isSaving, setIsSaving] = useState(false);
-	const [isRevoking, setIsRevoking] = useState(false);
 
 	useEffect(() => {
 		if (keyItem) {
@@ -73,62 +72,64 @@ function EditKeyModal({
 		(localName !== (keyItem.name ?? '') ||
 			currentExpiresAt !== originalExpiresAt);
 
-	const { mutateAsync: updateKey } = useUpdateServiceAccountKey();
-	const { mutateAsync: revokeKey } = useRevokeServiceAccountKey();
+	const {
+		mutate: updateKey,
+		isLoading: isSaving,
+	} = useUpdateServiceAccountKey();
+	const {
+		mutate: revokeKey,
+		isLoading: isRevoking,
+	} = useRevokeServiceAccountKey();
 
-	const handleSave = useCallback(async (): Promise<void> => {
+	function handleSave(): void {
 		if (!keyItem || !isDirty) {
 			return;
 		}
-		setIsSaving(true);
-		try {
-			await updateKey({
+		updateKey(
+			{
 				pathParams: { id: accountId, fid: keyItem.id },
 				data: { name: localName, expiresAt: currentExpiresAt },
-			});
-			toast.success('Key updated successfully', { richColors: true });
-			onSuccess();
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to update key';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsSaving(false);
-		}
-	}, [
-		keyItem,
-		isDirty,
-		localName,
-		currentExpiresAt,
-		accountId,
-		updateKey,
-		onSuccess,
-	]);
+			},
+			{
+				onSuccess: () => {
+					toast.success('Key updated successfully', { richColors: true });
+					onSuccess();
+				},
+				onError: (error) => {
+					const errMessage =
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						)?.getErrorMessage() || 'Failed to update key';
+					toast.error(errMessage, { richColors: true });
+				},
+			},
+		);
+	}
 
-	const handleRevoke = useCallback(async (): Promise<void> => {
+	function handleRevoke(): void {
 		if (!keyItem) {
 			return;
 		}
-		setIsRevoking(true);
-		try {
-			await revokeKey({
+		revokeKey(
+			{
 				pathParams: { id: accountId, fid: keyItem.id },
-			});
-			toast.success('Key revoked successfully', { richColors: true });
-			setIsRevokeConfirmOpen(false);
-			onSuccess();
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to revoke key';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsRevoking(false);
-		}
-	}, [keyItem, accountId, revokeKey, onSuccess]);
+			},
+			{
+				onSuccess: () => {
+					toast.success('Key revoked successfully', { richColors: true });
+					setIsRevokeConfirmOpen(false);
+					onSuccess();
+				},
+				onError: (error) => {
+					const errMessage =
+						convertToApiError(
+							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+						)?.getErrorMessage() || 'Failed to revoke key';
+					toast.error(errMessage, { richColors: true });
+				},
+			},
+		);
+	}
 
 	return (
 		<DialogWrapper
@@ -155,33 +156,12 @@ function EditKeyModal({
 			disableOutsideClick={false}
 		>
 			{isRevokeConfirmOpen ? (
-				<>
-					<p className="delete-dialog__body">
-						Revoking this key will permanently invalidate it. Any systems using this
-						key will lose access immediately.
-					</p>
-					<DialogFooter className="delete-dialog__footer">
-						<Button
-							variant="solid"
-							color="secondary"
-							size="sm"
-							onClick={(): void => setIsRevokeConfirmOpen(false)}
-						>
-							<X size={12} />
-							Cancel
-						</Button>
-						<Button
-							variant="solid"
-							color="destructive"
-							size="sm"
-							disabled={isRevoking}
-							onClick={handleRevoke}
-						>
-							<Trash2 size={12} />
-							{isRevoking ? 'Revoking...' : 'Revoke Key'}
-						</Button>
-					</DialogFooter>
-				</>
+				<RevokeKeyContent
+					keyName={keyItem?.name}
+					isRevoking={isRevoking}
+					onCancel={(): void => setIsRevokeConfirmOpen(false)}
+					onConfirm={handleRevoke}
+				/>
 			) : (
 				<>
 					<div className="edit-key-modal__form">
@@ -285,10 +265,11 @@ function EditKeyModal({
 								variant="solid"
 								color="primary"
 								size="sm"
-								disabled={!isDirty || isSaving}
+								loading={isSaving}
+								disabled={!isDirty}
 								onClick={handleSave}
 							>
-								{isSaving ? 'Saving...' : 'Save Changes'}
+								Save Changes
 							</Button>
 						</div>
 					</div>

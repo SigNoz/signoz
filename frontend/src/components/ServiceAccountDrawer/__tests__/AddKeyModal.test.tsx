@@ -1,63 +1,16 @@
-import type { ReactNode } from 'react';
 import { toast } from '@signozhq/sonner';
-import { useCreateServiceAccountKey } from 'api/generated/services/serviceaccount';
+import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
-
-jest.mock('@signozhq/toggle-group', () => ({
-	ToggleGroup: ({
-		children,
-		className,
-	}: {
-		children: ReactNode;
-		onValueChange?: (val: string) => void;
-		value?: string;
-		type?: string;
-		className?: string;
-	}): JSX.Element => <div className={className}>{children}</div>,
-	ToggleGroupItem: ({
-		children,
-		className,
-	}: {
-		children: ReactNode;
-		value: string;
-		className?: string;
-	}): JSX.Element => <span className={className}>{children}</span>,
-}));
-
-jest.mock('@signozhq/dialog', () => ({
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-}));
-
-jest.mock('api/generated/services/serviceaccount');
 
 jest.mock('@signozhq/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-const mockCreateKey = jest.fn();
 const mockToast = jest.mocked(toast);
 
-const defaultProps = {
-	open: true,
-	accountId: 'sa-1',
-	onClose: jest.fn(),
-	onSuccess: jest.fn(),
-};
+const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys';
 
 const createdKeyResponse = {
 	data: {
@@ -69,20 +22,33 @@ const createdKeyResponse = {
 	},
 };
 
-describe('AddKeyModal', () => {
-	beforeEach(() => {
-		jest.clearAllMocks();
-		jest.mocked(useCreateServiceAccountKey).mockReturnValue(({
-			mutateAsync: mockCreateKey,
-		} as unknown) as ReturnType<typeof useCreateServiceAccountKey>);
-	});
+const defaultProps = {
+	open: true,
+	accountId: 'sa-1',
+	onClose: jest.fn(),
+	onSuccess: jest.fn(),
+};
 
+describe('AddKeyModal', () => {
 	beforeAll(() => {
 		Object.defineProperty(navigator, 'clipboard', {
 			value: { writeText: jest.fn().mockResolvedValue(undefined) },
 			configurable: true,
 			writable: true,
 		});
+	});
+
+	beforeEach(() => {
+		jest.clearAllMocks();
+		server.use(
+			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(201), ctx.json(createdKeyResponse)),
+			),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
 	});
 
 	it('"Create Key" is disabled when name is empty; enabled after typing a name', async () => {
@@ -104,8 +70,6 @@ describe('AddKeyModal', () => {
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		mockCreateKey.mockResolvedValue(createdKeyResponse);
-
 		render(<AddKeyModal {...defaultProps} />);
 
 		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'Deploy Key');
@@ -118,9 +82,7 @@ describe('AddKeyModal', () => {
 
 		await screen.findByText('snz_abc123xyz456secret');
 		expect(screen.getByText(/Store the key securely/i)).toBeInTheDocument();
-		expect(
-			screen.getByRole('dialog', { name: /Key Created Successfully/i }),
-		).toBeInTheDocument();
+		await screen.findByRole('dialog', { name: /Key Created Successfully/i });
 	});
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
@@ -128,8 +90,6 @@ describe('AddKeyModal', () => {
 		const writeTextSpy = jest
 			.spyOn(navigator.clipboard, 'writeText')
 			.mockResolvedValue(undefined);
-
-		mockCreateKey.mockResolvedValue(createdKeyResponse);
 
 		render(<AddKeyModal {...defaultProps} />);
 

@@ -1,57 +1,12 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
-import {
-	useCreateServiceAccountKey,
-	useListServiceAccountKeys,
-	useRevokeServiceAccountKey,
-	useUpdateServiceAccount,
-	useUpdateServiceAccountKey,
-	useUpdateServiceAccountStatus,
-} from 'api/generated/services/serviceaccount';
-import { useRoles } from 'components/RolesSelect';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
-import { managedRoles } from 'mocks-server/__mockdata__/roles';
+import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
+import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import ServiceAccountDrawer, {
 	ServiceAccountDrawerProps,
 } from '../ServiceAccountDrawer';
-
-let mockOnToggleGroupChange: ((val: string) => void) | undefined;
-
-jest.mock('@signozhq/toggle-group', () => ({
-	ToggleGroup: ({
-		children,
-		onValueChange,
-		className,
-	}: {
-		children: ReactNode;
-		onValueChange?: (val: string) => void;
-		value?: string;
-		type?: string;
-		className?: string;
-	}): JSX.Element => {
-		mockOnToggleGroupChange = onValueChange;
-		return <div className={className}>{children}</div>;
-	},
-	ToggleGroupItem: ({
-		children,
-		value,
-		className,
-	}: {
-		children: ReactNode;
-		value: string;
-		className?: string;
-	}): JSX.Element => (
-		<button
-			type="button"
-			className={className}
-			onClick={(): void => mockOnToggleGroupChange?.(value)}
-		>
-			{children}
-		</button>
-	),
-}));
 
 jest.mock('@signozhq/drawer', () => ({
 	DrawerWrapper: ({
@@ -63,79 +18,14 @@ jest.mock('@signozhq/drawer', () => ({
 	}): JSX.Element | null => (open ? <div>{content}</div> : null),
 }));
 
-jest.mock('@signozhq/dialog', () => ({
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
-
-jest.mock('api/generated/services/serviceaccount');
-
-jest.mock('components/RolesSelect', () => {
-	function MockRolesSelect({
-		value = [],
-		onChange,
-		roles = [],
-	}: {
-		value?: string[];
-		onChange?: (val: string[]) => void;
-		roles?: Array<{ id: string; name: string }>;
-		loading?: boolean;
-		isError?: boolean;
-		error?: unknown;
-		onRefetch?: () => void;
-		mode?: string;
-		placeholder?: string;
-		className?: string;
-		getPopupContainer?: (el: HTMLElement) => HTMLElement;
-	}): JSX.Element {
-		return (
-			<select
-				multiple
-				data-testid="roles-select"
-				value={value}
-				onChange={(e): void => {
-					const selected = Array.from(e.target.selectedOptions).map((o) => o.value);
-					onChange?.(selected);
-				}}
-			>
-				{roles.map((r: { id: string; name: string }) => (
-					<option key={r.id} value={r.name}>
-						{r.name}
-					</option>
-				))}
-			</select>
-		);
-	}
-	return {
-		__esModule: true,
-		default: MockRolesSelect,
-		useRoles: jest.fn(),
-	};
-});
-
 jest.mock('@signozhq/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
-const mockUpdate = jest.fn();
-const mockUpdateStatus = jest.fn();
-const mockToast = jest.mocked(toast);
-const mockUseRoles = jest.mocked(useRoles);
+const ROLES_ENDPOINT = '*/api/v1/roles';
+const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
+const SA_UPDATE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
+const SA_STATUS_ENDPOINT = '*/api/v1/service_accounts/sa-1/status';
 
 const activeAccount: ServiceAccountRow = {
 	id: 'sa-1',
@@ -170,41 +60,24 @@ function renderDrawer(
 describe('ServiceAccountDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockOnToggleGroupChange = undefined;
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.put(SA_UPDATE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.put(SA_STATUS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+	});
 
-		jest.mocked(useListServiceAccountKeys).mockReturnValue(({
-			data: { data: [] },
-			isLoading: false,
-			refetch: jest.fn(),
-		} as unknown) as ReturnType<typeof useListServiceAccountKeys>);
-
-		jest.mocked(useUpdateServiceAccount).mockReturnValue(({
-			mutateAsync: mockUpdate,
-		} as unknown) as ReturnType<typeof useUpdateServiceAccount>);
-
-		jest.mocked(useUpdateServiceAccountStatus).mockReturnValue(({
-			mutateAsync: mockUpdateStatus,
-		} as unknown) as ReturnType<typeof useUpdateServiceAccountStatus>);
-
-		jest.mocked(useCreateServiceAccountKey).mockReturnValue(({
-			mutateAsync: jest.fn(),
-		} as unknown) as ReturnType<typeof useCreateServiceAccountKey>);
-
-		jest.mocked(useRevokeServiceAccountKey).mockReturnValue(({
-			mutateAsync: jest.fn(),
-		} as unknown) as ReturnType<typeof useRevokeServiceAccountKey>);
-
-		jest.mocked(useUpdateServiceAccountKey).mockReturnValue(({
-			mutateAsync: jest.fn(),
-		} as unknown) as ReturnType<typeof useUpdateServiceAccountKey>);
-
-		mockUseRoles.mockReturnValue({
-			roles: managedRoles,
-			isLoading: false,
-			isError: false,
-			error: undefined,
-			refetch: jest.fn(),
-		});
+	afterEach(() => {
+		server.resetHandlers();
 	});
 
 	it('renders Overview tab by default: editable name input, locked email, Save disabled when not dirty', () => {
@@ -215,11 +88,17 @@ describe('ServiceAccountDrawer', () => {
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
 
-	it('editing name enables Save; clicking Save calls updateAccount with correct payload', async () => {
+	it('editing name enables Save; clicking Save sends correct payload and calls onSuccess', async () => {
 		const onSuccess = jest.fn();
+		const updateSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		mockUpdate.mockResolvedValue({});
+		server.use(
+			rest.put(SA_UPDATE_ENDPOINT, async (req, res, ctx) => {
+				updateSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
 
 		renderDrawer({ onSuccess });
 
@@ -232,50 +111,57 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdate).toHaveBeenCalledWith({
-				pathParams: { id: 'sa-1' },
-				data: {
+			expect(updateSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
 					name: 'CI Bot Updated',
 					email: 'ci-bot@signoz.io',
 					roles: ['signoz-admin'],
-				},
-			});
-			expect(mockToast.success).toHaveBeenCalled();
+				}),
+			);
 			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: false });
 		});
 	});
 
-	it('changing roles enables Save; clicking Save calls updateAccount with updated roles', async () => {
-		const onSuccess = jest.fn();
+	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
+		const updateSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		mockUpdate.mockResolvedValue({});
+		server.use(
+			rest.put(SA_UPDATE_ENDPOINT, async (req, res, ctx) => {
+				updateSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
 
-		renderDrawer({ onSuccess });
+		renderDrawer();
 
-		const rolesSelect = screen.getByTestId('roles-select');
-		await user.selectOptions(rolesSelect, ['signoz-viewer']);
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
 
 		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdate).toHaveBeenCalledWith(
+			expect(updateSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
-					data: expect.objectContaining({
-						roles: expect.arrayContaining(['signoz-admin', 'signoz-viewer']),
-					}),
+					roles: expect.arrayContaining(['signoz-admin', 'signoz-viewer']),
 				}),
 			);
 		});
 	});
 
-	it('"Disable Service Account" opens confirm dialog; confirming calls updateStatus and onSuccess({ closeDrawer: true })', async () => {
+	it('"Disable Service Account" opens confirm dialog; confirming sends correct status and calls onSuccess', async () => {
 		const onSuccess = jest.fn();
+		const statusSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		mockUpdateStatus.mockResolvedValue({});
+		server.use(
+			rest.put(SA_STATUS_ENDPOINT, async (req, res, ctx) => {
+				statusSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
 
 		renderDrawer({ onSuccess });
 
@@ -292,10 +178,7 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {
-			expect(mockUpdateStatus).toHaveBeenCalledWith({
-				pathParams: { id: 'sa-1' },
-				data: { status: 'DISABLED' },
-			});
+			expect(statusSpy).toHaveBeenCalledWith({ status: 'DISABLED' });
 			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: true });
 		});
 	});
@@ -318,7 +201,7 @@ describe('ServiceAccountDrawer', () => {
 
 		renderDrawer();
 
-		await user.click(screen.getByRole('button', { name: /Keys/i }));
+		await user.click(screen.getByRole('radio', { name: /Keys/i }));
 
 		await screen.findByText(/No keys/i);
 	});
