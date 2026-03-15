@@ -1,6 +1,7 @@
 import type { ReactNode } from 'react';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
@@ -74,7 +75,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 	});
 
 	it('loads and displays all accounts with correct ACTIVE and DISABLED badges', async () => {
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		await screen.findByText('CI Bot');
 		expect(screen.getByText('Monitoring Agent')).toBeInTheDocument();
@@ -86,7 +91,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('filter dropdown to "Active" hides DISABLED accounts', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		await screen.findByText('CI Bot');
 
@@ -102,7 +111,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('search by name filters accounts in real-time', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		await screen.findByText('CI Bot');
 
@@ -119,7 +132,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('clicking a row opens the drawer with account details visible', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		await user.click(
 			await screen.findByRole('button', {
@@ -136,7 +153,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 	it('"New Service Account" button opens the Create Service Account modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		await screen.findByText('CI Bot');
 
@@ -155,7 +176,11 @@ describe('ServiceAccountsSettings (integration)', () => {
 			),
 		);
 
-		render(<ServiceAccountsSettings />);
+		render(
+			<NuqsTestingAdapter>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
 
 		expect(
 			await screen.findByText(

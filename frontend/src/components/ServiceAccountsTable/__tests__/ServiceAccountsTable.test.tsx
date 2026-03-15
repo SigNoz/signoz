@@ -1,4 +1,5 @@
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import ServiceAccountsTable from '../ServiceAccountsTable';
@@ -25,11 +26,6 @@ const mockDisabledAccount: ServiceAccountRow = {
 
 const defaultProps = {
 	loading: false,
-	total: 1,
-	currentPage: 1,
-	pageSize: 20,
-	searchQuery: '',
-	onPageChange: jest.fn(),
 	onRowClick: jest.fn(),
 };
 
@@ -82,26 +78,16 @@ describe('ServiceAccountsTable', () => {
 	});
 
 	it('shows "No service accounts" empty state when data is empty and no search query', () => {
-		render(
-			<ServiceAccountsTable
-				{...defaultProps}
-				data={[]}
-				total={0}
-				searchQuery=""
-			/>,
-		);
+		render(<ServiceAccountsTable {...defaultProps} data={[]} />);
 
 		expect(screen.getByText(/No service accounts/i)).toBeInTheDocument();
 	});
 
 	it('shows "No results for {query}" empty state when search is active', () => {
 		render(
-			<ServiceAccountsTable
-				{...defaultProps}
-				data={[]}
-				total={0}
-				searchQuery="ghost"
-			/>,
+			<NuqsTestingAdapter searchParams={{ search: 'ghost' }}>
+				<ServiceAccountsTable {...defaultProps} data={[]} />
+			</NuqsTestingAdapter>,
 		);
 
 		expect(screen.getByText(/No results for/i)).toBeInTheDocument();

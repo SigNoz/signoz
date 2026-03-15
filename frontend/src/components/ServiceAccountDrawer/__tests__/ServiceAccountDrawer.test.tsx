@@ -49,8 +49,6 @@ function renderDrawer(
 	return render(
 		<ServiceAccountDrawer
 			account={activeAccount}
-			open
-			onClose={jest.fn()}
 			onSuccess={jest.fn()}
 			{...props}
 		/>,

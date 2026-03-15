@@ -12,6 +12,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
 
 import EditKeyModal from './EditKeyModal';
@@ -134,10 +135,11 @@ function KeysTab({
 	onAddKeyClick,
 }: KeysTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const [
-		editKey,
-		setEditKey,
-	] = useState<ServiceaccounttypesFactorAPIKeyDTO | null>(null);
+	const [editKeyId, setEditKeyId] = useQueryState(
+		'edit-key',
+		parseAsString.withDefault(''),
+	);
+	const editKey = keys.find((k) => k.id === editKeyId) ?? null;
 	const [
 		revokeTarget,
 		setRevokeTarget,
@@ -171,9 +173,9 @@ function KeysTab({
 	}
 
 	const handleKeySuccess = useCallback((): void => {
-		setEditKey(null);
+		void setEditKeyId(null);
 		onRefetch();
-	}, [onRefetch]);
+	}, [onRefetch, setEditKeyId]);
 
 	const handleformatLastObservedAt = useCallback(
 		(lastObservedAt: Date | null | undefined): string =>
@@ -244,7 +246,7 @@ function KeysTab({
 				} => ({
 					onClick: (): void => {
 						if (!isDisabled) {
-							setEditKey(record);
+							void setEditKeyId(record.id);
 						}
 					},
 					onKeyDown: (e: React.KeyboardEvent): void => {
@@ -252,7 +254,7 @@ function KeysTab({
 							if (e.key === ' ') {
 								e.preventDefault();
 							}
-							setEditKey(record);
+							void setEditKeyId(record.id);
 						}
 					},
 					role: 'button',
@@ -273,7 +275,7 @@ function KeysTab({
 				open={editKey !== null}
 				accountId={accountId}
 				keyItem={editKey}
-				onClose={(): void => setEditKey(null)}
+				onClose={(): void => void setEditKeyId(null)}
 				onSuccess={handleKeySuccess}
 			/>
 		</>
