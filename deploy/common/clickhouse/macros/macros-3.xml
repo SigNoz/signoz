@@ -1,0 +1,6 @@
+<?xml version="1.0"?>
+<clickhouse>
+    <macros>
+        <replica>replica_3</replica>
+    </macros>
+</clickhouse>
