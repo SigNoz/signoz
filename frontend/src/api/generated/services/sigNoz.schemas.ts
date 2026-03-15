@@ -2736,64 +2736,77 @@ export type HandleExportRawDataGETParams = {
 	/**
 	 * @enum csv,jsonl
 	 * @type string
-	 * @description undefined
+	 * @description The output format for the export.
 	 */
 	format?: HandleExportRawDataGETFormat;
 	/**
-	 * @enum logs,traces
-	 * @type string
-	 * @description undefined
+	 * @description The type of data to export.
 	 */
-	source?: HandleExportRawDataGETSource;
+	signal: TelemetrytypesSignalDTO;
+	/**
+	 * @type string
+	 * @description Deprecated: use signal instead.
+	 */
+	source?: string;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description undefined
+	 * @description The start time for the query in unix timestamp nanoseconds.
 	 */
 	start?: number;
 	/**
 	 * @type integer
 	 * @minimum 0
-	 * @description undefined
+	 * @description The end time for the query in unix timestamp nanoseconds.
 	 */
 	end?: number;
 	/**
 	 * @type integer
 	 * @maximum 50000
 	 * @minimum 1
-	 * @description undefined
+	 * @description The maximum number of rows to export.
 	 */
 	limit?: number;
 	/**
 	 * @type string
-	 * @description undefined
+	 * @description Deprecated: use filterExpression instead.
 	 */
 	filter?: string;
 	/**
+	 * @description The filter expression to apply to the query.
+	 */
+	filterExpression?: Querybuildertypesv5FilterDTO;
+	/**
 	 * @type array
-	 * @description undefined
+	 * @description Deprecated: use selectFields instead.
 	 */
 	columns?: string[];
 	/**
+	 * @type array
+	 * @description The columns to include in the export.
+	 */
+	selectFields?: TelemetrytypesTelemetryFieldKeyDTO[];
+	/**
 	 * @type string
-	 * @description undefined
+	 * @description Deprecated: use order instead.
 	 */
 	order_by?: string;
+	/**
+	 * @type array
+	 * @description The sorting order with keys and directions.
+	 */
+	order?: Querybuildertypesv5OrderByDTO[];
 };
 
 export enum HandleExportRawDataGETFormat {
 	csv = 'csv',
 	jsonl = 'jsonl',
 }
-export enum HandleExportRawDataGETSource {
-	logs = 'logs',
-	traces = 'traces',
-}
 export type HandleExportRawDataPOSTParams = {
 	/**
 	 * @enum csv,jsonl
 	 * @type string
-	 * @description undefined
+	 * @description The output format for the export.
 	 */
 	format?: HandleExportRawDataPOSTFormat;
 };

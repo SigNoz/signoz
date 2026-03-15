@@ -14,45 +14,47 @@ type ExportRawDataQueryParams struct {
 	ExportRawDataFormatQueryParam
 
 	// Signal specifies the type of data to export: "logs" or "traces"
-	Signal telemetrytypes.Signal `query:"signal" enum:"logs,traces" required:"true"`
+	Signal telemetrytypes.Signal `query:"signal" enum:"logs,traces" required:"true" description:"The type of data to export."`
 
 	// Source specifies the type of data to export: "logs" or "traces"
 	// Deprecated: Use Signal instead.
-	Source string `query:"source" deprecated:"true"`
+	Source string `query:"source" deprecated:"true" description:"Deprecated: use signal instead."`
 
 	// Start is the start time for the query (Unix timestamp in nanoseconds)
-	Start uint64 `query:"start"`
+	Start uint64 `query:"start" description:"The start time for the query in unix timestamp nanoseconds."`
 
 	// End is the end time for the query (Unix timestamp in nanoseconds)
-	End uint64 `query:"end"`
+	End uint64 `query:"end" description:"The end time for the query in unix timestamp nanoseconds."`
 
 	// Limit specifies the maximum number of rows to export
-	Limit int `query:"limit,default=10000" default:"10000" minimum:"1" maximum:"50000"`
+	Limit int `query:"limit,default=10000" default:"10000" minimum:"1" maximum:"50000" description:"The maximum number of rows to export."`
 
 	// Filter is a filter expression to apply to the query
-	FilterString string         `query:"filter"  deprecated:"true"`
-	Filter       qbtypes.Filter `query:"filterExpression"`
+	// Deprecated: Use FilterExpression instead.
+	FilterString string         `query:"filter"  deprecated:"true" description:"Deprecated: use filterExpression instead."`
+	Filter       qbtypes.Filter `query:"filterExpression" description:"The filter expression to apply to the query."`
 
 	// Columns specifies the columns to include in the export
 	// Format: ["context.field:type", "context.field", "field"]
-	Columns []string `query:"columns" deprecated:"true"`
+	// Deprecated: Use SelectFields instead.
+	Columns []string `query:"columns" deprecated:"true" description:"Deprecated: use selectFields instead."`
 
 	// SelectFields specifies the columns to include in the export
-	SelectFields []telemetrytypes.TelemetryFieldKey `query:"selectFields"`
+	SelectFields []telemetrytypes.TelemetryFieldKey `query:"selectFields" description:"The columns to include in the export."`
 
 	// OrderBy specifies the sorting order
 	// Format: "column:direction" or "context.field:type:direction"
 	// Direction can be "asc" or "desc"
-	// ** Deprecated **
-	OrderBy string `query:"order_by" deprecated:"true"`
+	// Deprecated: Use Order instead.
+	OrderBy string `query:"order_by" deprecated:"true" description:"Deprecated: use order instead."`
 
-	// order by keys and directions
-	Order []qbtypes.OrderBy `query:"order"`
+	// Order specifies the sorting order with keys and directions
+	Order []qbtypes.OrderBy `query:"order" description:"The sorting order with keys and directions."`
 }
 
 type ExportRawDataFormatQueryParam struct {
 	// Format specifies the output format: "csv" or "jsonl"
-	Format string `query:"format,default=csv" default:"csv" enum:"csv,jsonl"`
+	Format string `query:"format,default=csv" default:"csv" enum:"csv,jsonl" description:"The output format for the export."`
 }
 
 func (p *ExportRawDataQueryParams) Normalize() {
@@ -98,7 +100,7 @@ func parseExportQueryColumns(columnParams []string) []telemetrytypes.TelemetryFi
 }
 
 // parseExportQueryOrderBy converts a bound order_by string to an OrderBy slice.
-// The string should be in the format "column:direction" and is assumed already validated.
+// The string should be in the format "column:direction" and validation is handled by the downstream.
 func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
@@ -106,6 +108,10 @@ func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
 	}
 
 	parts := strings.Split(orderByParam, ":")
+	// Here we silently ignore the error as this is deprecated code path
+	if len(parts) < 2 {
+		return []qbtypes.OrderBy{}
+	}
 	column := strings.Join(parts[:len(parts)-1], ":")
 	direction := parts[len(parts)-1]
 

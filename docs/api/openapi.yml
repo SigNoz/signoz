@@ -2865,77 +2865,99 @@ paths:
         and logs
       operationId: HandleExportRawDataGET
       parameters:
-      - in: query
+      - description: The output format for the export.
+        in: query
         name: format
         schema:
           default: csv
+          description: The output format for the export.
           enum:
           - csv
           - jsonl
           type: string
-      - in: query
+      - description: The type of data to export.
+        in: query
         name: signal
         required: true
         schema:
           $ref: '#/components/schemas/TelemetrytypesSignal'
       - deprecated: true
+        description: 'Deprecated: use signal instead.'
         in: query
         name: source
         schema:
           deprecated: true
+          description: 'Deprecated: use signal instead.'
           type: string
-      - in: query
+      - description: The start time for the query in unix timestamp nanoseconds.
+        in: query
         name: start
         schema:
+          description: The start time for the query in unix timestamp nanoseconds.
           minimum: 0
           type: integer
-      - in: query
+      - description: The end time for the query in unix timestamp nanoseconds.
+        in: query
         name: end
         schema:
+          description: The end time for the query in unix timestamp nanoseconds.
           minimum: 0
           type: integer
-      - in: query
+      - description: The maximum number of rows to export.
+        in: query
         name: limit
         schema:
           default: 10000
+          description: The maximum number of rows to export.
           maximum: 50000
           minimum: 1
           type: integer
       - deprecated: true
+        description: 'Deprecated: use filterExpression instead.'
         in: query
         name: filter
         schema:
           deprecated: true
+          description: 'Deprecated: use filterExpression instead.'
           type: string
       - content:
           application/json:
             schema:
               $ref: '#/components/schemas/Querybuildertypesv5Filter'
+        description: The filter expression to apply to the query.
         in: query
         name: filterExpression
       - deprecated: true
+        description: 'Deprecated: use selectFields instead.'
         in: query
         name: columns
         schema:
           deprecated: true
+          description: 'Deprecated: use selectFields instead.'
           items:
             type: string
           type: array
-      - in: query
+      - description: The columns to include in the export.
+        in: query
         name: selectFields
         schema:
+          description: The columns to include in the export.
           items:
             $ref: '#/components/schemas/TelemetrytypesTelemetryFieldKey'
           type: array
       - deprecated: true
+        description: 'Deprecated: use order instead.'
         in: query
         name: order_by
         schema:
           deprecated: true
+          description: 'Deprecated: use order instead.'
           type: string
-      - in: query
+      - description: The sorting order with keys and directions.
+        in: query
         name: order
         schema:
+          description: The sorting order with keys and directions.
           items:
             $ref: '#/components/schemas/Querybuildertypesv5OrderBy'
           type: array
@@ -2985,10 +3007,12 @@ paths:
         and logs
       operationId: HandleExportRawDataPOST
       parameters:
-      - in: query
+      - description: The output format for the export.
+        in: query
         name: format
         schema:
           default: csv
+          description: The output format for the export.
           enum:
           - csv
           - jsonl

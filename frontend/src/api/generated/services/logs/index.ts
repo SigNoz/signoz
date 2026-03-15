@@ -37,7 +37,7 @@ type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
  * @summary Export raw data
  */
 export const handleExportRawDataGET = (
-	params?: HandleExportRawDataGETParams,
+	params: HandleExportRawDataGETParams,
 	signal?: AbortSignal,
 ) => {
 	return GeneratedAPIInstance<string>({
@@ -58,7 +58,7 @@ export const getHandleExportRawDataGETQueryOptions = <
 	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	params?: HandleExportRawDataGETParams,
+	params: HandleExportRawDataGETParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof handleExportRawDataGET>>,
@@ -96,7 +96,7 @@ export function useHandleExportRawDataGET<
 	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	params?: HandleExportRawDataGETParams,
+	params: HandleExportRawDataGETParams,
 	options?: {
 		query?: UseQueryOptions<
 			Awaited<ReturnType<typeof handleExportRawDataGET>>,
@@ -121,7 +121,7 @@ export function useHandleExportRawDataGET<
  */
 export const invalidateHandleExportRawDataGET = async (
 	queryClient: QueryClient,
-	params?: HandleExportRawDataGETParams,
+	params: HandleExportRawDataGETParams,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(

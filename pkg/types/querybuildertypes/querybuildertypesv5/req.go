@@ -393,56 +393,71 @@ func (r *QueryRangeRequest) HasOrderSpecified() bool {
 	return false
 }
 
-// UseDefaultOrderBy applies a default order unless query has an explicit order provided.
+// UseDefaultOrderBy applies UseDefaultOrderByForListQuery to every query in the
+// composite query when the request type is a list query (raw, raw_stream, trace).
 func (r *QueryRangeRequest) UseDefaultOrderBy() {
-	queries := r.CompositeQuery.Queries
-	for idx := range queries {
-		switch queries[idx].Spec.(type) {
-		case QueryBuilderQuery[TraceAggregation],
-			QueryBuilderTraceOperator:
-			if len(queries[idx].GetOrder()) == 0 {
-				queries[idx].SetOrder(
-					[]OrderBy{
-						{
-							Key: OrderByKey{
-								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
-									Name:          "timestamp",
-									Signal:        telemetrytypes.SignalTraces,
-									FieldContext:  telemetrytypes.FieldContextSpan,
-									FieldDataType: telemetrytypes.FieldDataTypeNumber,
-								},
-							},
-							Direction: OrderDirectionDesc,
+	if r.RequestType.IsAggregation() {
+		return
+	}
+	for idx := range r.CompositeQuery.Queries {
+		r.CompositeQuery.Queries[idx].UseDefaultOrderByForListQuery()
+	}
+}
+
+// UseDefaultOrderByForListQuery applies a default timestamp-descending order
+// for list/raw queries when no explicit order is specified. This is intended
+// for raw data listing endpoints (e.g. export, list views) where a sensible
+// default sort is needed, not for aggregation or timeseries queries.
+func (q *QueryEnvelope) UseDefaultOrderByForListQuery() {
+	if len(q.GetOrder()) > 0 {
+		return
+	}
+
+	switch q.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation],
+		QueryBuilderTraceOperator:
+		q.SetOrder(
+			[]OrderBy{
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						},
 					},
-				)
-			}
-		case QueryBuilderQuery[LogAggregation]:
-			if len(queries[idx].GetOrder()) == 0 {
-				queries[idx].SetOrder(
-					[]OrderBy{
-						{
-							Key: OrderByKey{
-								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "timestamp",
-									Signal:        telemetrytypes.SignalLogs,
-									FieldContext:  telemetrytypes.FieldContextLog,
-									FieldDataType: telemetrytypes.FieldDataTypeNumber},
-							},
-							Direction: OrderDirectionDesc,
-						},
-						{
-							Key: OrderByKey{
-								TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "id",
-									Signal:        telemetrytypes.SignalLogs,
-									FieldContext:  telemetrytypes.FieldContextLog,
-									FieldDataType: telemetrytypes.FieldDataTypeString},
-							},
-							Direction: OrderDirectionDesc,
+					Direction: OrderDirectionDesc,
+				},
+			},
+		)
+	case QueryBuilderQuery[LogAggregation]:
+		q.SetOrder(
+			[]OrderBy{
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalLogs,
+							FieldContext:  telemetrytypes.FieldContextLog,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
 						},
 					},
-				)
-			}
-		}
+					Direction: OrderDirectionDesc,
+				},
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "id",
+							Signal:        telemetrytypes.SignalLogs,
+							FieldContext:  telemetrytypes.FieldContextLog,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+					Direction: OrderDirectionDesc,
+				},
+			},
+		)
 	}
 }
 

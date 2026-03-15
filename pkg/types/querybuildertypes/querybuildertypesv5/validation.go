@@ -47,7 +47,7 @@ const (
 type ValidationOption func(*validationConfig)
 
 type validationConfig struct {
-	skipLimitValidation       bool
+	skipLimitOffsetValidation bool
 	skipAggregationValidation bool
 	skipHavingValidation      bool
 	skipAggregationOrderBy    bool
@@ -63,11 +63,11 @@ func applyValidationOptions(opts []ValidationOption) validationConfig {
 	return cfg
 }
 
-// SkipLimitValidation returns a ValidationOption that skips the limit range check.
-// Use this when the caller has already validated limits with different constraints.
-func WithSkipLimitValidation() ValidationOption {
+// SkipLimitOffsetValidation returns a ValidationOption that skips the limit and offset range checks.
+// Use this when the caller has already validated limits and offsets with different constraints.
+func WithSkipLimitOffsetValidation() ValidationOption {
 	return func(cfg *validationConfig) {
-		cfg.skipLimitValidation = true
+		cfg.skipLimitOffsetValidation = true
 	}
 }
 
@@ -283,24 +283,26 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 }
 
 func (q *QueryBuilderQuery[T]) validateLimitAndPagination(cfg validationConfig) error {
-	if !cfg.skipLimitValidation {
-		if q.Limit < 0 {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"limit must be non-negative, got %d",
-				q.Limit,
-			)
-		}
+	if cfg.skipLimitOffsetValidation {
+		return nil
+	}
 
-		if q.Limit > MaxQueryLimit {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"limit exceeds maximum allowed value of %d",
-				MaxQueryLimit,
-			).WithAdditional(
-				fmt.Sprintf("Provided limit: %d", q.Limit),
-			)
-		}
+	if q.Limit < 0 {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"limit must be non-negative, got %d",
+			q.Limit,
+		)
+	}
+
+	if q.Limit > MaxQueryLimit {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"limit exceeds maximum allowed value of %d",
+			MaxQueryLimit,
+		).WithAdditional(
+			fmt.Sprintf("Provided limit: %d", q.Limit),
+		)
 	}
 
 	// Validate offset
@@ -460,10 +462,8 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 
 	// Validate request type
 	switch r.RequestType {
-	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
-		opts = append(opts, getValidationOptions(false)...)
-	case RequestTypeTimeSeries, RequestTypeScalar:
-		opts = append(opts, getValidationOptions(true)...)
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
+		opts = append(opts, getValidationOptions(r.RequestType)...)
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -634,10 +634,13 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 	}
 }
 
-func getValidationOptions(isAggregationQuery bool) []ValidationOption {
-	if isAggregationQuery {
+func getValidationOptions(requestType RequestType) []ValidationOption {
+	switch requestType {
+	case RequestTypeTimeSeries, RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation()}
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+		return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
+	default:
+		return []ValidationOption{}
 	}
-	return []ValidationOption{WithSkipAggregationValidation(), WithSkipHavingValidation(), WithSkipAggregationOrderBy(), WithSkipGroupByValidation()}
-
 }

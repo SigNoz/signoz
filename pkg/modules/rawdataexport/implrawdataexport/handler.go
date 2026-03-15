@@ -75,7 +75,6 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Use default OrderBy if not specified
 	queryRangeRequest.UseDefaultOrderBy()
 
 	claims, err := authtypes.ClaimsFromContext(r.Context())
@@ -84,11 +83,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	orgID, err := valuer.NewUUID(claims.OrgID)
-	if err != nil {
-		render.Error(rw, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "orgID is invalid"))
-		return
-	}
+	orgID := valuer.MustNewUUID(claims.OrgID)
 
 	setExportResponseHeaders(rw, format)
 
@@ -125,7 +120,7 @@ func validateSpecForExport(req *qbtypes.QueryRangeRequest) error {
 		}
 	}
 
-	err := req.Validate(qbtypes.WithSkipLimitValidation())
+	err := req.Validate(qbtypes.WithSkipLimitOffsetValidation())
 	if err != nil {
 		return err
 	}

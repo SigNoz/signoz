@@ -1107,7 +1107,7 @@ func TestQueryRangeRequest_ValidateOrderByForAggregation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Validate(getValidationOptions(true)...)
+			err := tt.query.Validate(getValidationOptions(RequestTypeTimeSeries)...)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("validateOrderByForAggregation() expected error but got none")
@@ -1161,7 +1161,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}},
 			},
 		}
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for groupBy with raw request type, got: %v", err)
 		}
@@ -1178,7 +1178,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: ""}},
 			},
 		}
-		err := query.Validate(getValidationOptions(true)...)
+		err := query.Validate(getValidationOptions(RequestTypeTimeSeries)...)
 		if err == nil {
 			t.Errorf("expected error for empty groupBy key with timeseries request type")
 		}
@@ -1190,7 +1190,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			Signal: telemetrytypes.SignalLogs,
 			Having: &Having{Expression: "count() > 10"},
 		}
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for having with raw request type, got: %v", err)
 		}
@@ -1202,7 +1202,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			Signal: telemetrytypes.SignalTraces,
 			Having: &Having{Expression: "count() > 10"},
 		}
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeTrace)...)
 		if err != nil {
 			t.Errorf("expected no error for having with trace request type, got: %v", err)
 		}
@@ -1216,7 +1216,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{Expression: "count()"},
 			},
 		}
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for aggregations with raw request type, got: %v", err)
 		}
@@ -1230,7 +1230,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{Expression: "count()"},
 			},
 		}
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeRawStream)...)
 		if err != nil {
 			t.Errorf("expected no error for aggregations with raw_stream request type, got: %v", err)
 		}
@@ -1248,12 +1248,12 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			},
 		}
 		// Should error for raw (selectFields are validated)
-		err := query.Validate(getValidationOptions(false)...)
+		err := query.Validate(getValidationOptions(RequestTypeRaw)...)
 		if err == nil {
 			t.Errorf("expected error for isRoot in selectFields with raw request type")
 		}
 		// Should pass for timeseries (selectFields skipped)
-		err = query.Validate(getValidationOptions(true)...)
+		err = query.Validate(getValidationOptions(RequestTypeTimeSeries)...)
 		if err != nil {
 			t.Errorf("expected no error for isRoot in selectFields with timeseries request type, got: %v", err)
 		}
