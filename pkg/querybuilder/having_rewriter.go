@@ -2,8 +2,6 @@ package querybuilder
 
 import (
 	"fmt"
-	"regexp"
-	"slices"
 	"strings"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -25,11 +23,7 @@ func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregati
 		return "", nil
 	}
 	r.buildTraceColumnMap(aggregations)
-	rewritten := r.rewriteExpression(expression)
-	if err := r.validateWithANTLR(expression, rewritten); err != nil {
-		return "", err
-	}
-	return rewritten, nil
+	return r.rewriteAndValidate(expression)
 }
 
 func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
@@ -37,11 +31,7 @@ func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregation
 		return "", nil
 	}
 	r.buildLogColumnMap(aggregations)
-	rewritten := r.rewriteExpression(expression)
-	if err := r.validateWithANTLR(expression, rewritten); err != nil {
-		return "", err
-	}
-	return rewritten, nil
+	return r.rewriteAndValidate(expression)
 }
 
 func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
@@ -49,11 +39,7 @@ func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregat
 		return "", nil
 	}
 	r.buildMetricColumnMap(aggregations)
-	rewritten := r.rewriteExpression(expression)
-	if err := r.validateWithANTLR(expression, rewritten); err != nil {
-		return "", err
-	}
-	return rewritten, nil
+	return r.rewriteAndValidate(expression)
 }
 
 func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.TraceAggregation) {
@@ -123,51 +109,4 @@ func (r *HavingExpressionRewriter) buildMetricColumnMap(aggregations []qbtypes.M
 		r.columnMap["__result"] = sqlColumn
 		r.columnMap[fmt.Sprintf("__result%d", idx)] = sqlColumn
 	}
-}
-
-func (r *HavingExpressionRewriter) rewriteExpression(expression string) string {
-	expression = normalizeImplicitAND(expression)
-
-	quotedStrings := make(map[string]string)
-	quotePattern := regexp.MustCompile(`'[^']*'|"[^"]*"`)
-	quotedIdx := 0
-
-	expression = quotePattern.ReplaceAllStringFunc(expression, func(match string) string {
-		placeholder := fmt.Sprintf("__QUOTED_%d__", quotedIdx)
-		quotedStrings[placeholder] = match
-		quotedIdx++
-		return placeholder
-	})
-
-	type mapping struct {
-		from string
-		to   string
-	}
-
-	mappings := make([]mapping, 0, len(r.columnMap))
-	for from, to := range r.columnMap {
-		mappings = append(mappings, mapping{from: from, to: to})
-	}
-
-	slices.SortFunc(mappings, func(a, b mapping) int {
-		return len(b.from) - len(a.from)
-	})
-
-	for _, m := range mappings {
-		if strings.Contains(m.from, "(") {
-			// escape special regex characters in the function name
-			escapedFrom := regexp.QuoteMeta(m.from)
-			pattern := regexp.MustCompile(`\b` + escapedFrom)
-			expression = pattern.ReplaceAllString(expression, m.to)
-		} else {
-			pattern := regexp.MustCompile(`\b` + regexp.QuoteMeta(m.from) + `\b`)
-			expression = pattern.ReplaceAllString(expression, m.to)
-		}
-	}
-
-	for placeholder, original := range quotedStrings {
-		expression = strings.Replace(expression, placeholder, original, 1)
-	}
-
-	return expression
 }

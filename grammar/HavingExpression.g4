@@ -24,12 +24,13 @@ andExpression
     : primary ( AND primary | primary )*
     ;
 
-// Primary: an optionally negated parenthesized expression, or a comparison.
-// NOT is only allowed on grouped expressions, not on bare comparisons.
+// Primary: an optionally negated expression.
+// NOT can be applied to a parenthesized expression or a bare comparison.
 // E.g.: NOT (count() > 100 AND sum(bytes) < 500)
+//       NOT count() > 100
 primary
     : NOT? LPAREN orExpression RPAREN
-    | comparison
+    | NOT? comparison
     ;
 
 /*
