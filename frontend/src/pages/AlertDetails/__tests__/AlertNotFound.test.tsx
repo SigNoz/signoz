@@ -69,10 +69,9 @@ describe('AlertNotFound', () => {
 		const user = userEvent.setup();
 		render(<AlertNotFound isTestAlert={false} />);
 		await user.click(screen.getByText('Check all rules'));
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
-			ROUTES.LIST_ALL_ALERT,
-			expect.objectContaining({ event: expect.any(Object) }),
-		);
+		expect(mockSafeNavigate).toHaveBeenCalledWith(ROUTES.LIST_ALL_ALERT, {
+			newTab: false,
+		});
 	});
 
 	it('should navigate to the correct support page for cloud users when button is clicked', async () => {
