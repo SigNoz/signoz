@@ -53,7 +53,7 @@ describe('PipelinePage container test', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toBeCalledWith('Logs: Pipelines: Entered Edit Mode', {
+		expect(logEvent).toHaveBeenCalledWith('Logs: Pipelines: Entered Edit Mode', {
 			source: 'signoz-ui',
 		});
 	});
@@ -78,8 +78,11 @@ describe('PipelinePage container test', () => {
 		expect(editButton).toBeInTheDocument();
 		await userEvent.click(editButton);
 
-		expect(logEvent).toBeCalledWith('Logs: Pipelines: Clicked Add New Pipeline', {
-			source: 'signoz-ui',
-		});
+		expect(logEvent).toHaveBeenCalledWith(
+			'Logs: Pipelines: Clicked Add New Pipeline',
+			{
+				source: 'signoz-ui',
+			},
+		);
 	});
 });

@@ -1,5 +1,5 @@
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 
 import { ColumnsKeyAndDataIndex, ColumnsTitle } from '../contants';
 import { DataSetProps, ExtendedChartDataset } from '../types';

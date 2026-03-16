@@ -28,10 +28,6 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoints allows simple query exporting raw data for traces and logs
  * @summary Export raw data

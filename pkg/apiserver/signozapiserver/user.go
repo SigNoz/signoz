@@ -32,7 +32,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:               []string{"users"},
 		Summary:            "Create bulk invite",
 		Description:        "This endpoint creates a bulk invite for a user",
-		Request:            make([]*types.PostableInvite, 0),
+		Request:            new(types.PostableBulkInviteRequest),
 		RequestContentType: "application/json",
 		Response:           nil,
 		SuccessStatusCode:  http.StatusCreated,

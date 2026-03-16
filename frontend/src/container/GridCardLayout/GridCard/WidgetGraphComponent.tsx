@@ -101,7 +101,19 @@ function WidgetGraphComponent({
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 
-	const { setLayouts, selectedDashboard, setSelectedDashboard } = useDashboard();
+	const {
+		setLayouts,
+		selectedDashboard,
+		setSelectedDashboard,
+		setColumnWidths,
+	} = useDashboard();
+
+	const onColumnWidthsChange = useCallback(
+		(widths: Record<string, number>) => {
+			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
+		},
+		[setColumnWidths, widget.id],
+	);
 
 	const onToggleModal = useCallback(
 		(func: Dispatch<SetStateAction<boolean>>) => {
@@ -424,6 +436,7 @@ function WidgetGraphComponent({
 						customSeries={customSeries}
 						customOnRowClick={customOnRowClick}
 						enableDrillDown={enableDrillDown}
+						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</div>
 			)}

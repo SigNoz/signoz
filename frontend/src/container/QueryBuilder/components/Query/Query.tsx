@@ -24,6 +24,7 @@ import {
 	AggregatorFilter,
 	GroupByFilter,
 	HavingFilter,
+	MetricNameSelector,
 	OperatorsSelect,
 	OrderByFilter,
 	ReduceToFilter,
@@ -403,7 +404,7 @@ export const Query = memo(function Query({
 										)}
 
 										<Col flex="auto">
-											<AggregatorFilter
+											<MetricNameSelector
 												onChange={handleChangeAggregatorAttribute}
 												query={query}
 											/>

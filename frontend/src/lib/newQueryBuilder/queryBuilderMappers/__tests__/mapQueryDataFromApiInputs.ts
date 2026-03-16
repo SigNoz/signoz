@@ -54,7 +54,7 @@ export const stepIntervalUnchanged = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -177,7 +177,7 @@ export const replaceVariables = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -267,7 +267,7 @@ export const defaultOutput = {
 						reduceTo: ReduceOperators.AVG,
 						spaceAggregation: 'sum',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 					},
 				],
 				filter: { expression: '' },
@@ -392,7 +392,7 @@ export const outputWithFunctions = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},
@@ -429,7 +429,7 @@ export const outputWithFunctions = {
 					{
 						metricName: '',
 						temporality: '',
-						timeAggregation: 'count',
+						timeAggregation: 'avg',
 						spaceAggregation: 'sum',
 						reduceTo: ReduceOperators.AVG,
 					},

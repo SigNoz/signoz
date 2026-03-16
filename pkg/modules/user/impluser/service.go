@@ -143,7 +143,7 @@ func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) erro
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingUser, err := s.store.GetUserByEmailAndOrgID(ctx, s.config.Email, orgID)
+	existingUser, err := s.module.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
@@ -159,8 +159,8 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		if oldRole != types.RoleAdmin {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
-				roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole),
-				roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin),
+				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
+				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
 				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 			); err != nil {
 				return err

@@ -67,17 +67,18 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 							const oldVariables = prev?.data.variables;
 							// this is added to handle case where we have two different
 							// schemas for variable response
-							if (oldVariables?.[id]) {
-								oldVariables[id] = {
-									...oldVariables[id],
+							const updatedVariables = { ...oldVariables };
+							if (updatedVariables?.[id]) {
+								updatedVariables[id] = {
+									...updatedVariables[id],
 									selectedValue: value,
 									allSelected,
 									haveCustomValuesSelected,
 								};
 							}
-							if (oldVariables?.[name]) {
-								oldVariables[name] = {
-									...oldVariables[name],
+							if (updatedVariables?.[name]) {
+								updatedVariables[name] = {
+									...updatedVariables[name],
 									selectedValue: value,
 									allSelected,
 									haveCustomValuesSelected,
@@ -87,9 +88,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 								...prev,
 								data: {
 									...prev?.data,
-									variables: {
-										...oldVariables,
-									},
+									variables: updatedVariables,
 								},
 							};
 						}

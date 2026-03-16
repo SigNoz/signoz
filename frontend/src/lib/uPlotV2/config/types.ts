@@ -34,7 +34,7 @@ export enum SelectionPreferencesSource {
  * Props for configuring the uPlot config builder
  */
 export interface ConfigBuilderProps {
-	widgetId?: string;
+	id: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
 	selectionPreferencesSource?: SelectionPreferencesSource;
@@ -112,6 +112,7 @@ export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
 	Bar = 'bar',
+	Histogram = 'histogram',
 }
 
 export enum LineInterpolation {
@@ -168,7 +169,6 @@ export interface PointsConfig {
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
-	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;

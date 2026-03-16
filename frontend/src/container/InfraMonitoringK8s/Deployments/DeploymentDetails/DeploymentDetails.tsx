@@ -5,7 +5,7 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sDeploymentsData } from 'api/infraMonitoring/getK8sDeploymentsList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';

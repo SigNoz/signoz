@@ -5,11 +5,13 @@ import {
 	Querybuildertypesv5OrderByDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { Filter } from 'api/v5/v5';
+import APIError from 'types/api/error';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 export interface MetricsTableProps {
 	isLoading: boolean;
 	isError: boolean;
+	error?: APIError;
 	data: MetricsListItemRowData[];
 	pageSize: number;
 	currentPage: number;
@@ -33,6 +35,7 @@ export interface MetricsTreemapProps {
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	isLoading: boolean;
 	isError: boolean;
+	error?: APIError;
 	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;
 	setHeatmapView: (value: MetricsexplorertypesTreemapModeDTO) => void;
@@ -41,6 +44,7 @@ export interface MetricsTreemapProps {
 export interface MetricsTreemapInternalProps {
 	isLoading: boolean;
 	isError: boolean;
+	error?: APIError;
 	data: MetricsexplorertypesTreemapResponseDTO | undefined;
 	viewType: MetricsexplorertypesTreemapModeDTO;
 	openMetricDetails: (metricName: string, view: 'list' | 'treemap') => void;

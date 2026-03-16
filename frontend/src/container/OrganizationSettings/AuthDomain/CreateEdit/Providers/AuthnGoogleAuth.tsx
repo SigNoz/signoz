@@ -9,8 +9,7 @@ import {
 	TriangleAlert,
 } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { Collapse, Form, Tooltip } from 'antd';
-import TextArea from 'antd/lib/input/TextArea';
+import { Collapse, Form, Input as AntdInput, Tooltip } from 'antd';
 import { useCollapseSectionErrors } from 'hooks/useCollapseSectionErrors';
 
 import DomainMappingList from './components/DomainMappingList';
@@ -248,7 +247,7 @@ function ConfigureGoogleAuthAuthnProvider({
 												name={['googleAuthConfig', 'serviceAccountJson']}
 												className="authn-provider__form-item"
 											>
-												<TextArea
+												<AntdInput.TextArea
 													id="google-service-account-json"
 													rows={3}
 													placeholder="Paste service account JSON"

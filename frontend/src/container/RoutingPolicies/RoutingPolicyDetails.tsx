@@ -9,7 +9,6 @@ import {
 	Select,
 	Typography,
 } from 'antd';
-import { useForm } from 'antd/lib/form/Form';
 import ROUTES from 'constants/routes';
 import { ModalTitle } from 'container/PipelinePage/PipelineListsView/styles';
 import { Check, Loader, X } from 'lucide-react';
@@ -33,7 +32,7 @@ function RoutingPolicyDetails({
 	isPolicyDetailsModalActionLoading,
 	refreshChannels,
 }: RoutingPolicyDetailsProps): JSX.Element {
-	const [form] = useForm();
+	const [form] = Form.useForm();
 	const { user } = useAppContext();
 
 	const initialFormState = useMemo(() => {

@@ -134,7 +134,7 @@ describe('dashboardVariablesStore', () => {
 			expect(dependencyData).not.toBeNull();
 		});
 
-		it('should report doAllVariablesHaveValuesSelected as true when all variables have selectedValue', () => {
+		it('should report doAllQueryVariablesHaveValuesSelected as true when all query variables have values', () => {
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
 				variables: {
@@ -146,18 +146,46 @@ describe('dashboardVariablesStore', () => {
 					}),
 					region: createVariable({
 						name: 'region',
-						type: 'CUSTOM',
+						type: 'QUERY',
 						order: 1,
 						selectedValue: 'us-east',
 					}),
 				},
 			});
 
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(true);
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
-		it('should report doAllVariablesHaveValuesSelected as false when some variables lack selectedValue', () => {
+		it('should report doAllQueryVariablesHaveValuesSelected as false when a query variable lacks a selectedValue', () => {
+			setDashboardVariablesStore({
+				dashboardId: 'dash-1',
+				variables: {
+					env: createVariable({
+						name: 'env',
+						type: 'QUERY',
+						order: 0,
+						selectedValue: 'prod',
+					}),
+					region: createVariable({
+						name: 'region',
+						type: 'QUERY',
+						order: 1,
+						selectedValue: undefined,
+					}),
+				},
+			});
+
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
+		});
+
+		it('should ignore non-QUERY variables when computing doAllQueryVariablesHaveValuesSelected', () => {
+			// env (QUERY) has a value; region (CUSTOM) and dyn1 (DYNAMIC) do not — they are ignored
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
 				variables: {
@@ -173,62 +201,22 @@ describe('dashboardVariablesStore', () => {
 						order: 1,
 						selectedValue: undefined,
 					}),
-				},
-			});
-
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(false);
-		});
-
-		it('should treat DYNAMIC variable with allSelected=true and selectedValue=null as having a value', () => {
-			setDashboardVariablesStore({
-				dashboardId: 'dash-1',
-				variables: {
 					dyn1: createVariable({
 						name: 'dyn1',
 						type: 'DYNAMIC',
-						order: 0,
-						selectedValue: null as any,
-						allSelected: true,
-					}),
-					env: createVariable({
-						name: 'env',
-						type: 'QUERY',
-						order: 1,
-						selectedValue: 'prod',
+						order: 2,
+						selectedValue: '',
 					}),
 				},
 			});
 
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(true);
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
-		it('should treat DYNAMIC variable with allSelected=true and selectedValue=undefined as having a value', () => {
-			setDashboardVariablesStore({
-				dashboardId: 'dash-1',
-				variables: {
-					dyn1: createVariable({
-						name: 'dyn1',
-						type: 'DYNAMIC',
-						order: 0,
-						selectedValue: undefined,
-						allSelected: true,
-					}),
-					env: createVariable({
-						name: 'env',
-						type: 'QUERY',
-						order: 1,
-						selectedValue: 'prod',
-					}),
-				},
-			});
-
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(true);
-		});
-
-		it('should treat DYNAMIC variable with allSelected=true and empty string selectedValue as having a value', () => {
+		it('should return true for doAllQueryVariablesHaveValuesSelected when there are no query variables', () => {
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
 				variables: {
@@ -237,61 +225,72 @@ describe('dashboardVariablesStore', () => {
 						type: 'DYNAMIC',
 						order: 0,
 						selectedValue: '',
-						allSelected: true,
-					}),
-					env: createVariable({
-						name: 'env',
-						type: 'QUERY',
-						order: 1,
-						selectedValue: 'prod',
 					}),
 				},
 			});
 
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(true);
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
 
-		it('should treat DYNAMIC variable with allSelected=true and empty array selectedValue as having a value', () => {
+		// Any non-nil, non-empty-array selectedValue is treated as selected
+		it.each([
+			{ label: 'numeric 0', selectedValue: 0 as number },
+			{ label: 'boolean false', selectedValue: false as boolean },
+			// ideally not possible but till we have concrete schema, we should not block dynamic variables
+			{ label: 'empty string', selectedValue: '' },
+			{
+				label: 'non-empty array',
+				selectedValue: ['a', 'b'] as (string | number | boolean)[],
+			},
+		])('should return true when selectedValue is $label', ({ selectedValue }) => {
 			setDashboardVariablesStore({
 				dashboardId: 'dash-1',
 				variables: {
-					dyn1: createVariable({
-						name: 'dyn1',
-						type: 'DYNAMIC',
-						order: 0,
-						selectedValue: [] as any,
-						allSelected: true,
-					}),
 					env: createVariable({
 						name: 'env',
 						type: 'QUERY',
-						order: 1,
-						selectedValue: 'prod',
-					}),
-				},
-			});
-
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(true);
-		});
-
-		it('should report false when a DYNAMIC variable has empty selectedValue and allSelected is not true', () => {
-			setDashboardVariablesStore({
-				dashboardId: 'dash-1',
-				variables: {
-					dyn1: createVariable({
-						name: 'dyn1',
-						type: 'DYNAMIC',
 						order: 0,
-						selectedValue: '',
-						allSelected: false,
+						selectedValue,
 					}),
 				},
 			});
 
-			const { doAllVariablesHaveValuesSelected } = getVariableDependencyContext();
-			expect(doAllVariablesHaveValuesSelected).toBe(false);
+			const {
+				doAllQueryVariablesHaveValuesSelected,
+			} = getVariableDependencyContext();
+			expect(doAllQueryVariablesHaveValuesSelected).toBe(true);
 		});
+
+		// null/undefined (tested above) and empty array are treated as not selected
+		it.each([
+			{
+				label: 'null',
+				selectedValue: null as IDashboardVariable['selectedValue'],
+			},
+			{ label: 'empty array', selectedValue: [] as (string | number | boolean)[] },
+		])(
+			'should return false when selectedValue is $label',
+			({ selectedValue }) => {
+				setDashboardVariablesStore({
+					dashboardId: 'dash-1',
+					variables: {
+						env: createVariable({
+							name: 'env',
+							type: 'QUERY',
+							order: 0,
+							selectedValue,
+						}),
+					},
+				});
+
+				const {
+					doAllQueryVariablesHaveValuesSelected,
+				} = getVariableDependencyContext();
+				expect(doAllQueryVariablesHaveValuesSelected).toBe(false);
+			},
+		);
 	});
 });

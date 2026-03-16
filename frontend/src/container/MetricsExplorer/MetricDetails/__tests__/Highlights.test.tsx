@@ -48,7 +48,7 @@ describe('Highlights', () => {
 		).toBeInTheDocument();
 	});
 
-	it('should render loading state when data is loading', () => {
+	it('should show labels and loading text but not stale data values while loading', () => {
 		useGetMetricHighlightsMock.mockReturnValue(
 			getMockMetricHighlightsData(
 				{},
@@ -60,8 +60,19 @@ describe('Highlights', () => {
 
 		render(<Highlights metricName={MOCK_METRIC_NAME} />);
 
+		expect(screen.getByText('SAMPLES')).toBeInTheDocument();
+		expect(screen.getByText('TIME SERIES')).toBeInTheDocument();
+		expect(screen.getByText('LAST RECEIVED')).toBeInTheDocument();
+		expect(screen.getByText('Loading metric stats')).toBeInTheDocument();
+
 		expect(
-			screen.getByTestId('metric-highlights-loading-state'),
-		).toBeInTheDocument();
+			screen.queryByTestId('metric-highlights-data-points'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('metric-highlights-time-series-total'),
+		).not.toBeInTheDocument();
+		expect(
+			screen.queryByTestId('metric-highlights-last-received'),
+		).not.toBeInTheDocument();
 	});
 });

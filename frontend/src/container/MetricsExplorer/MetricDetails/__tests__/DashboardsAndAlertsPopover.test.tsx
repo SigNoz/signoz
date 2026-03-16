@@ -14,21 +14,8 @@ import {
 	MOCK_METRIC_NAME,
 } from './testUtlls';
 
-const mockSafeNavigate = jest.fn();
-jest.mock('hooks/useSafeNavigate', () => ({
-	useSafeNavigate: (): any => ({
-		safeNavigate: mockSafeNavigate,
-	}),
-}));
-const mockSetQuery = jest.fn();
-const mockUrlQuery = {
-	set: mockSetQuery,
-	toString: jest.fn(),
-};
-jest.mock('hooks/useUrlQuery', () => ({
-	__esModule: true,
-	default: jest.fn(() => mockUrlQuery),
-}));
+const mockWindowOpen = jest.fn();
+Object.defineProperty(window, 'open', { value: mockWindowOpen });
 
 const useGetMetricAlertsMock = jest.spyOn(
 	metricsExplorerHooks,
@@ -43,6 +30,7 @@ describe('DashboardsAndAlertsPopover', () => {
 	beforeEach(() => {
 		useGetMetricAlertsMock.mockReturnValue(getMockAlertsData());
 		useGetMetricDashboardsMock.mockReturnValue(getMockDashboardsData());
+		mockWindowOpen.mockClear();
 	});
 
 	it('renders the popover correctly with multiple dashboards and alerts', () => {
@@ -140,9 +128,10 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Click on the first dashboard
 		await userEvent.click(screen.getByText(MOCK_DASHBOARD_1.dashboardName));
 
-		// Should navigate to the dashboard
-		expect(mockSafeNavigate).toHaveBeenCalledWith(
+		// Should open dashboard in new tab
+		expect(mockWindowOpen).toHaveBeenCalledWith(
 			`/dashboard/${MOCK_DASHBOARD_1.dashboardId}`,
+			'_blank',
 		);
 	});
 
@@ -158,10 +147,9 @@ describe('DashboardsAndAlertsPopover', () => {
 		// Click on the first alert rule
 		await userEvent.click(screen.getByText(MOCK_ALERT_1.alertName));
 
-		// Should navigate to the alert rule
-		expect(mockSetQuery).toHaveBeenCalledWith(
-			QueryParams.ruleId,
-			MOCK_ALERT_1.alertId,
+		expect(mockWindowOpen).toHaveBeenCalledWith(
+			`/alerts/overview?${QueryParams.ruleId}=${MOCK_ALERT_1.alertId}`,
+			'_blank',
 		);
 	});
 

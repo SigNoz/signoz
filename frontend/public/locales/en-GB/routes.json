@@ -13,5 +13,7 @@
 	"pipelines": "Pipelines",
 	"archives": "Archives",
 	"logs_to_metrics": "Logs To Metrics",
-	"roles": "Roles"
+	"roles": "Roles",
+	"role_details": "Role Details",
+	"members": "Members"
 }

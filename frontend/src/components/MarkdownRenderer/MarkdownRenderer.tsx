@@ -2,13 +2,12 @@
 
 import ReactMarkdown from 'react-markdown';
 import { CodeProps } from 'react-markdown/lib/ast-to-react';
-import { Prism as SyntaxHighlighter } from 'react-syntax-highlighter';
-import { a11yDark } from 'react-syntax-highlighter/dist/cjs/styles/prism';
 import logEvent from 'api/common/logEvent';
 import { isEmpty } from 'lodash-es';
 import rehypeRaw from 'rehype-raw';
 
 import CodeCopyBtn from './CodeCopyBtn/CodeCopyBtn';
+import SyntaxHighlighter, { a11yDark } from './syntaxHighlighter';
 
 interface LinkProps {
 	href: string;

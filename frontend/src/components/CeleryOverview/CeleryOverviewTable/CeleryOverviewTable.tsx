@@ -16,7 +16,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
+import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {
 	getQueueOverview,

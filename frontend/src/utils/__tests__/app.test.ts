@@ -1,34 +1,26 @@
+import { getLocation } from 'utils/getLocation';
+
 import { buildAbsolutePath } from '../app';
+
+jest.mock('utils/getLocation');
 
 const BASE_PATH = '/some-base-path';
 
-describe('buildAbsolutePath', () => {
-	const originalLocation = window.location;
-
-	afterEach(() => {
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: originalLocation,
-		});
+const mockLocation = (pathname: string): void => {
+	(getLocation as jest.Mock).mockReturnValue({
+		pathname,
+		href: `http://localhost:8080${pathname}`,
+		origin: 'http://localhost:8080',
+		protocol: 'http:',
+		host: 'localhost',
+		hostname: 'localhost',
+		port: '',
+		search: '',
+		hash: '',
 	});
+};
 
-	const mockLocation = (pathname: string): void => {
-		Object.defineProperty(window, 'location', {
-			writable: true,
-			value: {
-				pathname,
-				href: `http://localhost:8080${pathname}`,
-				origin: 'http://localhost:8080',
-				protocol: 'http:',
-				host: 'localhost',
-				hostname: 'localhost',
-				port: '',
-				search: '',
-				hash: '',
-			},
-		});
-	};
-
+describe('buildAbsolutePath', () => {
 	describe('when base path ends with a forward slash', () => {
 		beforeEach(() => {
 			mockLocation(`${BASE_PATH}/`);

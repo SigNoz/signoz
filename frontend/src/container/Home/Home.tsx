@@ -1,13 +1,13 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
+import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
@@ -15,10 +15,9 @@ import ROUTES from 'constants/routes';
 import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
-import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
+import { useIsDarkMode } from 'hooks/useDarkMode';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
-import { CompassIcon, DotIcon, HomeIcon, Plus, Wrench, X } from 'lucide-react';
 import { AnimatePresence } from 'motion/react';
 import * as motion from 'motion/react-client';
 import Card from 'periscope/components/Card/Card';
@@ -45,13 +44,12 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const isDarkMode = useIsDarkMode();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
 	const [updatingUserPreferences, setUpdatingUserPreferences] = useState(false);
 	const [loadingUserPreferences, setLoadingUserPreferences] = useState(true);
-
-	const { isCommunityUser, isCommunityEnterpriseUser } = useGetTenantLicense();
 
 	const [checklistItems, setChecklistItems] = useState<ChecklistItem[]>(
 		defaultChecklistItemsState,
@@ -60,13 +58,6 @@ export default function Home(): JSX.Element {
 	const [isWelcomeChecklistSkipped, setIsWelcomeChecklistSkipped] = useState(
 		false,
 	);
-
-	const [isBannerDismissed, setIsBannerDismissed] = useState(false);
-
-	useEffect(() => {
-		const bannerDismissed = localStorage.getItem(LOCALSTORAGE.BANNER_DISMISSED);
-		setIsBannerDismissed(bannerDismissed === 'true');
-	}, []);
 
 	useEffect(() => {
 		const now = new Date();
@@ -298,44 +289,13 @@ export default function Home(): JSX.Element {
 		logEvent('Homepage: Visited', {});
 	}, []);
 
-	const hideBanner = (): void => {
-		localStorage.setItem(LOCALSTORAGE.BANNER_DISMISSED, 'true');
-		setIsBannerDismissed(true);
-	};
-
-	const showBanner = useMemo(
-		() => !isBannerDismissed && (isCommunityUser || isCommunityEnterpriseUser),
-		[isBannerDismissed, isCommunityUser, isCommunityEnterpriseUser],
-	);
-
 	return (
 		<div className="home-container">
 			<div className="sticky-header">
-				{showBanner && (
-					<div className="home-container-banner">
-						<div className="home-container-banner-content">
-							Big News: SigNoz Community Edition now available with SSO (Google OAuth)
-							and API keys -
-							<a
-								href="https://signoz.io/blog/open-source-signoz-now-available-with-sso-and-api-keys/"
-								target="_blank"
-								rel="noreferrer"
-								className="home-container-banner-link"
-							>
-								<i>read more</i>
-							</a>
-						</div>
-
-						<div className="home-container-banner-close">
-							<X size={16} onClick={hideBanner} />
-						</div>
-					</div>
-				)}
-
 				<Header
 					leftComponent={
 						<div className="home-header-left">
-							<HomeIcon size={14} /> Home
+							<House size={14} /> Home
 						</div>
 					}
 					rightComponent={
@@ -400,7 +360,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -427,7 +387,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Logs
 										</div>
 									</div>
@@ -441,7 +401,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -468,7 +428,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Traces
 										</div>
 									</div>
@@ -482,7 +442,7 @@ export default function Home(): JSX.Element {
 									<div className="active-ingestion-card-content-container">
 										<div className="active-ingestion-card-content">
 											<div className="active-ingestion-card-content-icon">
-												<DotIcon size={16} color={Color.BG_FOREST_500} />
+												<Dot size={16} color={Color.BG_FOREST_500} />
 											</div>
 
 											<div className="active-ingestion-card-content-description">
@@ -509,7 +469,7 @@ export default function Home(): JSX.Element {
 												}
 											}}
 										>
-											<CompassIcon size={12} />
+											<Compass size={12} />
 											Explore Metrics
 										</div>
 									</div>
@@ -722,7 +682,11 @@ export default function Home(): JSX.Element {
 
 												<div className="checklist-img-container">
 													<img
-														src="/Images/allInOne.svg"
+														src={
+															isDarkMode
+																? '/Images/allInOne.svg'
+																: '/Images/allInOneLightMode.svg'
+														}
 														alt="checklist-img"
 														className="checklist-img"
 													/>

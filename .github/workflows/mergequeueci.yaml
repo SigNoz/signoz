@@ -1,0 +1,59 @@
+name: mergequeueci
+
+on:
+  pull_request:
+    types:
+      - dequeued
+
+jobs:
+  notify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: alert
+        uses: slackapi/slack-github-action@v2.1.1
+        with:
+          webhook: ${{ secrets.SLACK_MERGE_QUEUE_WEBHOOK }}
+          webhook-type: incoming-webhook
+          payload: |
+            {
+              "text": ":x: PR removed from merge queue",
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": ":x: PR Removed from Merge Queue"
+                  }
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*<${{ github.event.pull_request.html_url }}|PR #${{ github.event.pull_request.number }}: ${{ github.event.pull_request.title }}>*"
+                  }
+                },
+                {
+                  "type": "divider"
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author*\n@${{ github.event.pull_request.user.login }}"
+                    }
+                  ]
+                }
+              ]
+            }
+      - name: comment
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          PR_AUTHOR: ${{ github.event.pull_request.user.login }}
+          PR_URL: ${{ github.event.pull_request.html_url }}
+        run: |
+          gh api repos/${{ github.repository }}/issues/$PR_NUMBER/comments \
+            -f body="> :x: **PR removed from merge queue**
+          >
+          > @$PR_AUTHOR your PR was removed from the merge queue. Fix the issue and re-queue when ready."

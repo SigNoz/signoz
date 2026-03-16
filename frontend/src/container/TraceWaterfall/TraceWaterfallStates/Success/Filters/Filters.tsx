@@ -160,6 +160,7 @@ function Filters({
 				onChange={handleFilterChange}
 				hideSpanScopeSelector={false}
 				skipQueryBuilderRedirect
+				selectProps={{ listHeight: 125 }}
 			/>
 			{filteredSpanIds.length > 0 && (
 				<div className="pre-next-toggle">

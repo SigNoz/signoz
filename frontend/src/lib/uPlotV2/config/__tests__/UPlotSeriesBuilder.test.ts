@@ -1,4 +1,3 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
@@ -9,7 +8,7 @@ import {
 	LineStyle,
 	VisibilityMode,
 } from '../types';
-import { UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
+import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
 
 const createBaseProps = (
 	overrides: Partial<SeriesProps> = {},
@@ -19,7 +18,6 @@ const createBaseProps = (
 	colorMapping: {},
 	drawStyle: DrawStyle.Line,
 	isDarkMode: false,
-	panelType: PANEL_TYPES.TIME_SERIES,
 	...overrides,
 });
 
@@ -137,7 +135,6 @@ describe('UPlotSeriesBuilder', () => {
 		const smallPointsBuilder = new UPlotSeriesBuilder(
 			createBaseProps({
 				lineWidth: 4,
-				pointSize: 2,
 			}),
 		);
 		const largePointsBuilder = new UPlotSeriesBuilder(
@@ -150,7 +147,7 @@ describe('UPlotSeriesBuilder', () => {
 		const smallConfig = smallPointsBuilder.getConfig();
 		const largeConfig = largePointsBuilder.getConfig();
 
-		expect(smallConfig.points?.size).toBeUndefined();
+		expect(smallConfig.points?.size).toBe(4 * POINT_SIZE_FACTOR); // should be lineWidth * POINT_SIZE_FACTOR, when pointSize is not provided
 		expect(largeConfig.points?.size).toBe(4);
 	});
 

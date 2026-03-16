@@ -257,7 +257,9 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+					dataSource === DataSource.METRICS && (
+						<EmptyMetricsSearch hasQueryResult={data !== undefined} />
+					)}
 
 				{!isLoading &&
 					!isError &&

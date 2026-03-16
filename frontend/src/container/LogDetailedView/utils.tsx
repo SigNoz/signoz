@@ -1,5 +1,5 @@
 import Convert from 'ansi-to-html';
-import { DataNode } from 'antd/es/tree';
+import type { DataNode } from 'antd/es/tree';
 import { MetricsType } from 'container/MetricsApplication/constant';
 import dompurify from 'dompurify';
 import { uniqueId } from 'lodash-es';

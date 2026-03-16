@@ -22,8 +22,8 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
-import { CollapseProps } from 'antd/lib';
+import type { NotificationInstance } from 'antd/es/notification/interface';
+import type { CollapseProps } from 'antd/lib';
 import {
 	useCreateIngestionKey,
 	useCreateIngestionKeyLimit,

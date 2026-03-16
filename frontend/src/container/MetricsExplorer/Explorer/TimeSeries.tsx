@@ -28,6 +28,7 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import EmptyMetricsSearch from './EmptyMetricsSearch';
 import { TimeSeriesProps } from './types';
 import {
 	buildUpdateMetricYAxisUnitPayload,
@@ -209,7 +210,7 @@ function TimeSeries({
 						{showSaveUnitButton && (
 							<div className="save-unit-container">
 								<Typography.Text>
-									Save the selected unit for this metric?
+									Set the selected unit as the metric unit?
 								</Typography.Text>
 								<Button
 									type="primary"
@@ -229,64 +230,71 @@ function TimeSeries({
 					'time-series-container': changeLayoutForOneChartPerQuery,
 				})}
 			>
-				{responseData.map((datapoint, index) => {
-					const isQueryDataItem = index < metricNames.length;
-					const metricName = isQueryDataItem ? metricNames[index] : undefined;
-					const metricUnit = isQueryDataItem ? metricUnits[index] : undefined;
+				{metricNames.length === 0 && <EmptyMetricsSearch />}
+				{metricNames.length > 0 &&
+					responseData.map((datapoint, index) => {
+						const isQueryDataItem = index < metricNames.length;
+						const metricName = isQueryDataItem ? metricNames[index] : undefined;
+						const metricUnit = isQueryDataItem ? metricUnits[index] : undefined;
 
-					// Show the no unit warning if -
-					// 1. The metric query is not loading
-					// 2. The metric units are not loading
-					// 3. There are more than one metric
-					// 4. The current metric unit is empty
-					// 5. Is a queryData item
-					const isMetricUnitEmpty =
-						isQueryDataItem &&
-						!queries[index].isLoading &&
-						!isMetricUnitsLoading &&
-						metricUnits.length > 1 &&
-						!metricUnit &&
-						metricName;
+						// Show the no unit warning if -
+						// 1. The metric query is not loading
+						// 2. The metric units are not loading
+						// 3. There are more than one metric
+						// 4. The current metric unit is empty
+						// 5. Is a queryData item
+						const isMetricUnitEmpty =
+							isQueryDataItem &&
+							!queries[index].isLoading &&
+							!isMetricUnitsLoading &&
+							metricUnits.length > 1 &&
+							!metricUnit &&
+							metricName;
 
-					const currentYAxisUnit = yAxisUnit || metricUnit;
+						const currentYAxisUnit = yAxisUnit || metricUnit;
 
-					return (
-						<div
-							className="time-series-view"
-							// eslint-disable-next-line react/no-array-index-key
-							key={index}
-						>
-							{isMetricUnitEmpty && metricName && (
-								<Tooltip
-									className="no-unit-warning"
-									title={
-										<Typography.Text>
-											This metric does not have a unit. Please set one for it in the{' '}
-											<Typography.Link
-												onClick={(): void => handleOpenMetricDetails(metricName)}
-											>
-												metric details
-											</Typography.Link>{' '}
-											page.
-										</Typography.Text>
-									}
-								>
-									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
-								</Tooltip>
-							)}
-							<TimeSeriesView
-								isFilterApplied={false}
-								isError={queries[index].isError}
-								isLoading={queries[index].isLoading || isMetricUnitsLoading}
-								data={datapoint}
-								yAxisUnit={currentYAxisUnit}
-								dataSource={DataSource.METRICS}
-								error={queries[index].error as APIError}
-								setWarning={setWarning}
-							/>
-						</div>
-					);
-				})}
+						return (
+							<div
+								className="time-series-view"
+								// eslint-disable-next-line react/no-array-index-key
+								key={index}
+							>
+								{isMetricUnitEmpty && metricName && (
+									<Tooltip
+										className="no-unit-warning"
+										title={
+											<Typography.Text>
+												No unit is set for this metric. You can assign one from the{' '}
+												<Typography.Link
+													onClick={(): void => handleOpenMetricDetails(metricName)}
+												>
+													metric details
+												</Typography.Link>{' '}
+												page.
+											</Typography.Text>
+										}
+									>
+										<AlertTriangle
+											size={16}
+											color={Color.BG_AMBER_400}
+											role="img"
+											aria-label="no unit warning"
+										/>
+									</Tooltip>
+								)}
+								<TimeSeriesView
+									isFilterApplied={false}
+									isError={queries[index].isError}
+									isLoading={queries[index].isLoading || isMetricUnitsLoading}
+									data={datapoint}
+									yAxisUnit={currentYAxisUnit}
+									dataSource={DataSource.METRICS}
+									error={queries[index].error as APIError}
+									setWarning={setWarning}
+								/>
+							</div>
+						);
+					})}
 			</div>
 		</>
 	);

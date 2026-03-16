@@ -9,7 +9,6 @@ import {
 } from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
 	enqueueDescendantsOfVariable,
@@ -30,7 +29,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 		updateLocalStorageDashboardVariables,
 	} = useDashboard();
 
-	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
+	const { updateUrlVariable } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardId = useDashboardVariablesSelector(
@@ -49,15 +48,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	useEffect(() => {
-		// Initialize variables with default values if not in URL
-		initializeDefaultVariables(
-			dashboardVariables,
-			getUrlVariables,
-			updateUrlVariable,
-		);
-	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	// Memoize the order key to avoid unnecessary triggers
 	const variableOrderKey = useMemo(() => {

@@ -42,10 +42,6 @@ import type {
 	UpdateMetricMetadataPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint returns a list of distinct metric names within the specified time range
  * @summary List metric names

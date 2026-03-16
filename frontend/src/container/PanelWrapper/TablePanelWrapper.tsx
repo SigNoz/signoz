@@ -14,6 +14,7 @@ function TablePanelWrapper({
 	onOpenTraceBtnClick,
 	customOnRowClick,
 	enableDrillDown = false,
+	onColumnWidthsChange,
 }: PanelWrapperProps): JSX.Element {
 	const panelData =
 		(queryResponse.data?.payload?.data?.result?.[0] as any)?.table || [];
@@ -34,6 +35,8 @@ function TablePanelWrapper({
 			onOpenTraceBtnClick={onOpenTraceBtnClick}
 			customOnRowClick={customOnRowClick}
 			widgetId={widget.id}
+			columnWidths={widget.columnWidths}
+			onColumnWidthsChange={onColumnWidthsChange}
 			renderColumnCell={widget.renderColumnCell}
 			customColTitles={widget.customColTitles}
 			contextLinks={widget.contextLinks}

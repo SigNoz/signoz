@@ -1,4 +1,4 @@
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 
 export const operatorOptions: DefaultOptionType[] = [

@@ -1,16 +1,12 @@
-import { QueryClient, QueryClientProvider } from 'react-query';
-// eslint-disable-next-line no-restricted-imports
-import { Provider } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import * as metricsHooks from 'api/generated/services/metrics';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import * as useGetMetricsListHooks from 'hooks/metricsExplorer/useGetMetricsList';
-import * as useGetMetricsTreeMapHooks from 'hooks/metricsExplorer/useGetMetricsTreeMap';
-import store from 'store';
-import { render, screen } from 'tests/test-utils';
+import * as useQueryBuilderHooks from 'hooks/queryBuilder/useQueryBuilder';
+import { render, screen, waitFor } from 'tests/test-utils';
+import { DataSource, QueryBuilderContextType } from 'types/common/queryBuilder';
 
 import Summary from '../Summary';
-import { TreemapViewType } from '../types';
 
 jest.mock('d3-hierarchy', () => ({
 	stratify: jest.fn().mockReturnValue({
@@ -44,58 +40,135 @@ jest.mock('react-router-dom', () => ({
 		pathname: `${ROUTES.METRICS_EXPLORER_BASE}`,
 	}),
 }));
+jest.mock('hooks/queryBuilder/useShareBuilderUrl', () => ({
+	useShareBuilderUrl: jest.fn(),
+}));
 
-const queryClient = new QueryClient();
-const mockMetricName = 'test-metric';
-jest.spyOn(useGetMetricsListHooks, 'useGetMetricsList').mockReturnValue({
-	data: {
-		payload: {
-			status: 'success',
-			data: {
-				metrics: [
-					{
-						metric_name: mockMetricName,
-						description: 'description for a test metric',
-						type: MetricType.GAUGE,
-						unit: 'count',
-						lastReceived: '1715702400',
-						[TreemapViewType.TIMESERIES]: 100,
-						[TreemapViewType.SAMPLES]: 100,
-					},
-				],
-			},
-		},
-	},
-	isError: false,
-	isLoading: false,
-} as any);
-jest.spyOn(useGetMetricsTreeMapHooks, 'useGetMetricsTreeMap').mockReturnValue({
-	data: {
-		payload: {
-			status: 'success',
-			data: {
-				[TreemapViewType.TIMESERIES]: [
-					{
-						metric_name: mockMetricName,
-						percentage: 100,
-						total_value: 100,
-					},
-				],
-				[TreemapViewType.SAMPLES]: [
-					{
-						metric_name: mockMetricName,
-						percentage: 100,
-					},
-				],
-			},
-		},
-	},
-	isError: false,
-	isLoading: false,
-} as any);
+// so filter expression assertions easy
+jest.mock('../MetricsSearch', () => {
+	return function MockMetricsSearch(props: {
+		currentQueryFilterExpression: string;
+	}): JSX.Element {
+		return (
+			<div data-testid="metrics-search-expression">
+				{props.currentQueryFilterExpression}
+			</div>
+		);
+	};
+});
+
 const mockSetSearchParams = jest.fn();
+const mockGetMetricsStats = jest.fn();
+const mockGetMetricsTreemap = jest.fn();
+
+const mockUseQueryBuilderData = {
+	handleRunQuery: jest.fn(),
+	stagedQuery: initialQueriesMap[DataSource.METRICS],
+	updateAllQueriesOperators: jest.fn(),
+	currentQuery: initialQueriesMap[DataSource.METRICS],
+	resetQuery: jest.fn(),
+	redirectWithQueryBuilderData: jest.fn(),
+	isStagedQueryUpdated: jest.fn(),
+	handleSetQueryData: jest.fn(),
+	handleSetFormulaData: jest.fn(),
+	handleSetQueryItemData: jest.fn(),
+	handleSetConfig: jest.fn(),
+	removeQueryBuilderEntityByIndex: jest.fn(),
+	removeQueryTypeItemByIndex: jest.fn(),
+	isDefaultQuery: jest.fn(),
+};
+
+const useGetMetricsStatsSpy = jest.spyOn(metricsHooks, 'useGetMetricsStats');
+const useGetMetricsTreemapSpy = jest.spyOn(
+	metricsHooks,
+	'useGetMetricsTreemap',
+);
+const useQueryBuilderSpy = jest.spyOn(useQueryBuilderHooks, 'useQueryBuilder');
 
 describe('Summary', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+
+		(useSearchParams as jest.Mock).mockReturnValue([
+			new URLSearchParams(),
+			mockSetSearchParams,
+		]);
+
+		useGetMetricsStatsSpy.mockReturnValue({
+			data: null,
+			mutate: mockGetMetricsStats,
+			isLoading: true,
+			isError: false,
+			error: null,
+			isIdle: true,
+			isSuccess: false,
+			reset: jest.fn(),
+			status: 'idle',
+		} as any);
+
+		useGetMetricsTreemapSpy.mockReturnValue({
+			data: null,
+			mutate: mockGetMetricsTreemap,
+			isLoading: true,
+			isError: false,
+			error: null,
+			isIdle: true,
+			isSuccess: false,
+			reset: jest.fn(),
+			status: 'idle',
+		} as any);
+
+		useQueryBuilderSpy.mockReturnValue(({
+			...mockUseQueryBuilderData,
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+	});
+
+	it('does not carry filter expression from a previous page', async () => {
+		const staleFilterExpression = "service.name = 'redis'";
+
+		// prev filter from logs explorer
+		const staleQuery = {
+			...initialQueriesMap[DataSource.METRICS],
+			builder: {
+				...initialQueriesMap[DataSource.METRICS].builder,
+				queryData: [
+					{
+						...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+						filter: { expression: staleFilterExpression },
+					},
+				],
+			},
+		};
+
+		// stagedQuery has stale filter (before QueryBuilder resets it)
+		useQueryBuilderSpy.mockReturnValue(({
+			...mockUseQueryBuilderData,
+			stagedQuery: staleQuery,
+			currentQuery: staleQuery,
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
+		const { rerender } = render(<Summary />);
+
+		expect(screen.getByTestId('metrics-search-expression')).toHaveTextContent(
+			staleFilterExpression,
+		);
+
+		// QB route change effect resets stagedQuery to null
+		useQueryBuilderSpy.mockReturnValue(({
+			...mockUseQueryBuilderData,
+			stagedQuery: null,
+			currentQuery: initialQueriesMap[DataSource.METRICS],
+		} as Partial<QueryBuilderContextType>) as QueryBuilderContextType);
+
+		rerender(<Summary />);
+
+		await waitFor(() => {
+			expect(
+				screen.getByTestId('metrics-search-expression'),
+			).toBeEmptyDOMElement();
+		});
+	});
+
 	it('persists inspect modal open state across page refresh', () => {
 		(useSearchParams as jest.Mock).mockReturnValue([
 			new URLSearchParams({
@@ -105,13 +178,7 @@ describe('Summary', () => {
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<Summary />
-				</Provider>
-			</QueryClientProvider>,
-		);
+		render(<Summary />);
 
 		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
 	});
@@ -120,18 +187,12 @@ describe('Summary', () => {
 		(useSearchParams as jest.Mock).mockReturnValue([
 			new URLSearchParams({
 				isMetricDetailsOpen: 'true',
-				selectedMetricName: mockMetricName,
+				selectedMetricName: 'test-metric',
 			}),
 			mockSetSearchParams,
 		]);
 
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<Summary />
-				</Provider>
-			</QueryClientProvider>,
-		);
+		render(<Summary />);
 
 		expect(screen.queryByText('Proportion View')).not.toBeInTheDocument();
 	});

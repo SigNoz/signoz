@@ -4,6 +4,7 @@ import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	useGetMetricsStats,
 	useGetMetricsTreemap,
@@ -15,13 +16,12 @@ import {
 	Querybuildertypesv5OrderByDTO,
 	Querybuildertypesv5OrderDirectionDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import {
-	convertExpressionToFilters,
-	convertFiltersToExpression,
-} from 'components/QueryBuilderV2/utils';
+import { convertExpressionToFilters } from 'components/QueryBuilderV2/utils';
+import { initialQueriesMap } from 'constants/queryBuilder';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import NoLogs from 'container/NoLogs/NoLogs';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import { useShareBuilderUrl } from 'hooks/queryBuilder/useShareBuilderUrl';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
@@ -61,13 +61,23 @@ function Summary(): JSX.Element {
 		heatmapView,
 		setHeatmapView,
 	] = useState<MetricsexplorertypesTreemapModeDTO>(
-		MetricsexplorertypesTreemapModeDTO.timeseries,
+		MetricsexplorertypesTreemapModeDTO.samples,
 	);
 
-	const { currentQuery, redirectWithQueryBuilderData } = useQueryBuilder();
-	const query = useMemo(() => currentQuery?.builder?.queryData[0], [
+	const {
 		currentQuery,
-	]);
+		stagedQuery,
+		redirectWithQueryBuilderData,
+	} = useQueryBuilder();
+
+	useShareBuilderUrl({ defaultValue: initialQueriesMap[DataSource.METRICS] });
+
+	const query = useMemo(
+		() =>
+			stagedQuery?.builder?.queryData?.[0] ||
+			initialQueriesMap[DataSource.METRICS].builder.queryData[0],
+		[stagedQuery],
+	);
 
 	const [searchParams, setSearchParams] = useSearchParams();
 	const [isMetricDetailsOpen, setIsMetricDetailsOpen] = useState(
@@ -84,10 +94,21 @@ function Summary(): JSX.Element {
 		(state) => state.globalTime,
 	);
 
+	const appliedFilterExpression = query?.filter?.expression || '';
+
 	const [
 		currentQueryFilterExpression,
 		setCurrentQueryFilterExpression,
-	] = useState<string>(query?.filter?.expression || '');
+	] = useState<string>(appliedFilterExpression);
+
+	useEffect(() => {
+		setCurrentQueryFilterExpression(appliedFilterExpression);
+	}, [appliedFilterExpression]);
+
+	const queryFilterExpression = useMemo(
+		() => ({ expression: appliedFilterExpression }),
+		[appliedFilterExpression],
+	);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.TabChanged, {
@@ -99,11 +120,6 @@ function Summary(): JSX.Element {
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
-
-	const queryFilterExpression = useMemo(() => {
-		const filters = query.filters || { items: [], op: 'AND' };
-		return convertFiltersToExpression(filters);
-	}, [query.filters]);
 
 	const metricsListQuery: MetricsexplorertypesStatsRequestDTO = useMemo(() => {
 		return {
@@ -144,6 +160,7 @@ function Summary(): JSX.Element {
 		mutate: getMetricsStats,
 		isLoading: isGetMetricsStatsLoading,
 		isError: isGetMetricsStatsError,
+		error: metricsStatsError,
 	} = useGetMetricsStats();
 
 	const {
@@ -151,7 +168,18 @@ function Summary(): JSX.Element {
 		mutate: getMetricsTreemap,
 		isLoading: isGetMetricsTreemapLoading,
 		isError: isGetMetricsTreemapError,
+		error: metricsTreemapError,
 	} = useGetMetricsTreemap();
+
+	const metricsStatsApiError = useMemo(
+		() => convertToApiError(metricsStatsError),
+		[metricsStatsError],
+	);
+
+	const metricsTreemapApiError = useMemo(
+		() => convertToApiError(metricsTreemapError),
+		[metricsTreemapError],
+	);
 
 	useEffect(() => {
 		getMetricsStats({
@@ -186,7 +214,6 @@ function Summary(): JSX.Element {
 					],
 				},
 			});
-			setCurrentQueryFilterExpression(expression);
 			setCurrentPage(1);
 			if (expression) {
 				logEvent(MetricsExplorerEvents.FilterApplied, {
@@ -283,10 +310,14 @@ function Summary(): JSX.Element {
 	};
 
 	const isMetricsListDataEmpty =
-		formattedMetricsData.length === 0 && !isGetMetricsStatsLoading;
+		formattedMetricsData.length === 0 &&
+		!isGetMetricsStatsLoading &&
+		!isGetMetricsStatsError;
 
 	const isMetricsTreeMapDataEmpty =
-		!treeMapData?.data[heatmapView]?.length && !isGetMetricsTreemapLoading;
+		!treeMapData?.data[heatmapView]?.length &&
+		!isGetMetricsTreemapLoading &&
+		!isGetMetricsTreemapError;
 
 	const showFullScreenLoading =
 		(isGetMetricsStatsLoading || isGetMetricsTreemapLoading) &&
@@ -305,7 +336,9 @@ function Summary(): JSX.Element {
 				/>
 				{showFullScreenLoading ? (
 					<MetricsLoading />
-				) : isMetricsListDataEmpty && isMetricsTreeMapDataEmpty ? (
+				) : isMetricsListDataEmpty &&
+				  isMetricsTreeMapDataEmpty &&
+				  !appliedFilterExpression ? (
 					<NoLogs dataSource={DataSource.METRICS} />
 				) : (
 					<>
@@ -313,6 +346,7 @@ function Summary(): JSX.Element {
 							data={treeMapData?.data}
 							isLoading={isGetMetricsTreemapLoading}
 							isError={isGetMetricsTreemapError}
+							error={metricsTreemapApiError}
 							viewType={heatmapView}
 							openMetricDetails={openMetricDetails}
 							setHeatmapView={handleSetHeatmapView}
@@ -320,6 +354,7 @@ function Summary(): JSX.Element {
 						<MetricsTable
 							isLoading={isGetMetricsStatsLoading}
 							isError={isGetMetricsStatsError}
+							error={metricsStatsApiError}
 							data={formattedMetricsData}
 							pageSize={pageSize}
 							currentPage={currentPage}

@@ -4,8 +4,7 @@ import { Checkbox } from '@signozhq/checkbox';
 import { Style } from '@signozhq/design-tokens';
 import { CircleHelp } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { Form, Tooltip } from 'antd';
-import TextArea from 'antd/lib/input/TextArea';
+import { Form, Input as AntdInput, Tooltip } from 'antd';
 
 import AttributeMappingSection from './components/AttributeMappingSection';
 import RoleMappingSection from './components/RoleMappingSection';
@@ -131,7 +130,7 @@ function ConfigureSAMLAuthnProvider({
 								},
 							]}
 						>
-							<TextArea
+							<AntdInput.TextArea
 								id="saml-certificate"
 								rows={3}
 								placeholder="Paste X.509 certificate"

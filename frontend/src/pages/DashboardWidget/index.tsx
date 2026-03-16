@@ -1,50 +1,101 @@
-import { useEffect, useState } from 'react';
-import { generatePath, useLocation, useParams } from 'react-router-dom';
+import { useEffect, useMemo, useState } from 'react';
+import { useQuery } from 'react-query';
+import { generatePath, useParams } from 'react-router-dom';
 import { Card, Typography } from 'antd';
+import getDashboard from 'api/v1/dashboards/id/get';
 import Spinner from 'components/Spinner';
 import { SOMETHING_WENT_WRONG } from 'constants/api';
+import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { DASHBOARD_CACHE_TIME } from 'constants/queryCacheTime';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import NewWidget from 'container/NewWidget';
 import { isDrilldownEnabled } from 'container/QueryTable/Drilldown/drilldownUtils';
+import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { setDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
+import { Dashboard } from 'types/api/dashboard/getAll';
 
 function DashboardWidget(): JSX.Element | null {
-	const { search } = useLocation();
-	const { dashboardId } = useParams<DashboardWidgetPageParams>();
+	const { dashboardId } = useParams<{
+		dashboardId: string;
+	}>();
+	const query = useUrlQuery();
+	const { graphType, widgetId } = useMemo(() => {
+		return {
+			graphType: query.get(QueryParams.graphType) as PANEL_TYPES,
+			widgetId: query.get(QueryParams.widgetId),
+		};
+	}, [query]);
+
 	const { safeNavigate } = useSafeNavigate();
 
-	const [selectedGraph, setSelectedGraph] = useState<PANEL_TYPES>();
-
-	const { selectedDashboard, dashboardResponse } = useDashboard();
-
-	const params = useUrlQuery();
-
-	const widgetId = params.get('widgetId');
-	const { data } = selectedDashboard || {};
-	const { widgets } = data || {};
-
-	const selectedWidget = widgets?.find((e) => e.id === widgetId) as Widgets;
-
 	useEffect(() => {
-		const params = new URLSearchParams(search);
-		const graphType = params.get('graphType') as PANEL_TYPES | null;
-
-		if (graphType === null) {
+		if (!graphType || !widgetId) {
 			safeNavigate(generatePath(ROUTES.DASHBOARD, { dashboardId }));
-		} else {
-			setSelectedGraph(graphType);
+		} else if (!dashboardId) {
+			safeNavigate(ROUTES.HOME);
 		}
-	}, [dashboardId, safeNavigate, search]);
+	}, [graphType, widgetId, dashboardId, safeNavigate]);
 
-	if (selectedGraph === undefined || dashboardResponse.isLoading) {
+	if (!widgetId || !graphType) {
+		return null;
+	}
+
+	return (
+		<DashboardWidgetInternal
+			dashboardId={dashboardId}
+			widgetId={widgetId}
+			graphType={graphType}
+		/>
+	);
+}
+
+function DashboardWidgetInternal({
+	dashboardId,
+	widgetId,
+	graphType,
+}: {
+	dashboardId: string;
+	widgetId: string;
+	graphType: PANEL_TYPES;
+}): JSX.Element | null {
+	const [selectedDashboard, setSelectedDashboard] = useState<
+		Dashboard | undefined
+	>(undefined);
+
+	const { transformDashboardVariables } = useTransformDashboardVariables(
+		dashboardId,
+	);
+
+	const {
+		isFetching: isFetchingDashboardResponse,
+		isError: isErrorDashboardResponse,
+	} = useQuery([REACT_QUERY_KEY.DASHBOARD_BY_ID, dashboardId, widgetId], {
+		enabled: true,
+		queryFn: async () =>
+			await getDashboard({
+				id: dashboardId,
+			}),
+		refetchOnWindowFocus: false,
+		cacheTime: DASHBOARD_CACHE_TIME,
+		onSuccess: (response) => {
+			const updatedDashboardData = transformDashboardVariables(response.data);
+			setSelectedDashboard(updatedDashboardData);
+			setDashboardVariablesStore({
+				dashboardId,
+				variables: updatedDashboardData.data.variables,
+			});
+		},
+	});
+
+	if (isFetchingDashboardResponse) {
 		return <Spinner tip="Loading.." />;
 	}
 
-	if (dashboardResponse.isError) {
+	if (isErrorDashboardResponse) {
 		return (
 			<Card>
 				<Typography>{SOMETHING_WENT_WRONG}</Typography>
@@ -54,16 +105,11 @@ function DashboardWidget(): JSX.Element | null {
 
 	return (
 		<NewWidget
-			yAxisUnit={selectedWidget?.yAxisUnit}
-			selectedGraph={selectedGraph}
-			fillSpans={selectedWidget?.fillSpans}
+			dashboardId={dashboardId}
+			selectedGraph={graphType}
 			enableDrillDown={isDrilldownEnabled()}
+			selectedDashboard={selectedDashboard}
 		/>
 	);
 }
-
-export interface DashboardWidgetPageParams {
-	dashboardId: string;
-}
-
 export default DashboardWidget;

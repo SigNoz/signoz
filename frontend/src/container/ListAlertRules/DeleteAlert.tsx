@@ -1,5 +1,5 @@
 import { Dispatch, SetStateAction, useState } from 'react';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import deleteAlerts from 'api/alerts/delete';
 import { State } from 'hooks/useFetch';
 import { PayloadProps as DeleteAlertPayloadProps } from 'types/api/alerts/delete';

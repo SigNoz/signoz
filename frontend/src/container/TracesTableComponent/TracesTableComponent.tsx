@@ -35,6 +35,7 @@ function TracesTableComponent({
 	widget,
 	queryResponse,
 	setRequestData,
+	onColumnWidthsChange,
 }: TracesTableComponentProps): JSX.Element {
 	const [pagination, setPagination] = useState<Pagination>({
 		offset: 0,
@@ -131,8 +132,8 @@ function TracesTableComponent({
 						columns={columns}
 						onRow={handleRow}
 						sticky
-						widgetId={widget.id}
-						shouldPersistColumnWidths
+						columnWidths={widget.columnWidths}
+						onColumnWidthsChange={onColumnWidthsChange}
 					/>
 				</OverlayScrollbar>
 			</div>
@@ -175,6 +176,7 @@ export type TracesTableComponentProps = {
 	>;
 	widget: Widgets;
 	setRequestData: Dispatch<SetStateAction<GetQueryResultsProps>>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export default TracesTableComponent;
