@@ -23,7 +23,7 @@ interface FormattingUnitsSectionProps {
 	allowPanelColumnPreference: boolean;
 }
 
-export function FormattingUnitsSection({
+export default function FormattingUnitsSection({
 	selectedPanelDisplay,
 	yAxisUnit,
 	setYAxisUnit,

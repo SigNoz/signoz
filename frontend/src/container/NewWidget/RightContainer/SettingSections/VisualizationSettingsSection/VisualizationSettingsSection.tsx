@@ -29,7 +29,7 @@ interface VisualizationSettingsSectionProps {
 	allowFillSpans: boolean;
 }
 
-export function VisualizationSettingsSection({
+export default function VisualizationSettingsSection({
 	selectedGraph,
 	setGraphHandler,
 	selectedTime,

@@ -24,7 +24,7 @@ interface LegendSectionProps {
 	>;
 }
 
-export function LegendSection({
+export default function LegendSection({
 	allowLegendPosition,
 	allowLegendColors,
 	legendPosition,

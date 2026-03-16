@@ -14,7 +14,7 @@ interface HistogramBucketsSectionProps {
 	setCombineHistogram: Dispatch<SetStateAction<boolean>>;
 }
 
-export function HistogramBucketsSection({
+export default function HistogramBucketsSection({
 	bucketCount,
 	setBucketCount,
 	bucketWidth,

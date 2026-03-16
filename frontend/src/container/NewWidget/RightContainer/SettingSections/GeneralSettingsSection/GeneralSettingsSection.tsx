@@ -29,7 +29,7 @@ interface GeneralSettingsSectionProps {
 	dashboardVariables: Record<string, { name?: string }>;
 }
 
-export function GeneralSettingsSection({
+export default function GeneralSettingsSection({
 	title,
 	setTitle,
 	description,
@@ -41,12 +41,12 @@ export function GeneralSettingsSection({
 	const [cursorPos, setCursorPos] = useState(0);
 	const inputRef = useRef<InputRef>(null);
 
-	const onChangeHandler = useCallback(
-		(setFunc: Dispatch<SetStateAction<string>>, value: string) => {
-			setFunc(value);
-		},
-		[],
-	);
+	const onChangeHandler = (
+		setFunc: Dispatch<SetStateAction<string>>,
+		value: string,
+	): void => {
+		setFunc(value);
+	};
 
 	const dashboardVariableOptions = useMemo<VariableOption[]>(() => {
 		return Object.entries(dashboardVariables).map(([, value]) => ({
@@ -55,58 +55,67 @@ export function GeneralSettingsSection({
 		}));
 	}, [dashboardVariables]);
 
-	const updateCursorAndDropdown = (value: string, pos: number): void => {
-		setCursorPos(pos);
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		setAutoCompleteOpen(lastDollar !== -1 && pos >= lastDollar + 1);
-	};
+	const updateCursorAndDropdown = useCallback(
+		(value: string, pos: number): void => {
+			setCursorPos(pos);
+			const lastDollar = value.lastIndexOf('$', pos - 1);
+			setAutoCompleteOpen(lastDollar !== -1 && pos >= lastDollar + 1);
+		},
+		[],
+	);
 
-	const onInputChange = (value: string): void => {
-		setInputValue(value);
-		onChangeHandler(setTitle, value);
-		setTimeout(() => {
-			const pos = inputRef.current?.input?.selectionStart ?? 0;
-			updateCursorAndDropdown(value, pos);
-		}, 0);
-	};
+	const onInputChange = useCallback(
+		(value: string): void => {
+			setInputValue(value);
+			onChangeHandler(setTitle, value);
+			setTimeout(() => {
+				const pos = inputRef.current?.input?.selectionStart ?? 0;
+				updateCursorAndDropdown(value, pos);
+			}, 0);
+		},
+		[setTitle, updateCursorAndDropdown],
+	);
 
-	const onSelect = (selectedValue: string): void => {
-		const pos = cursorPos;
-		const value = inputValue;
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		const textBeforeDollar = value.substring(0, lastDollar);
-		const textAfterDollar = value.substring(lastDollar + 1);
-		const match = textAfterDollar.match(/^([a-zA-Z0-9_.]*)/);
-		const rest = textAfterDollar.substring(match ? match[1].length : 0);
-		const newValue = `${textBeforeDollar}$${selectedValue}${rest}`;
-		setInputValue(newValue);
-		onChangeHandler(setTitle, newValue);
-		setAutoCompleteOpen(false);
-		setTimeout(() => {
-			const newCursor = `${textBeforeDollar}$${selectedValue}`.length;
-			inputRef.current?.input?.setSelectionRange(newCursor, newCursor);
-			setCursorPos(newCursor);
-		}, 0);
-	};
+	const onSelect = useCallback(
+		(selectedValue: string): void => {
+			const pos = cursorPos;
+			const value = inputValue;
+			const lastDollar = value.lastIndexOf('$', pos - 1);
+			const textBeforeDollar = value.substring(0, lastDollar);
+			const textAfterDollar = value.substring(lastDollar + 1);
+			const match = textAfterDollar.match(/^([a-zA-Z0-9_.]*)/);
+			const rest = textAfterDollar.substring(match ? match[1].length : 0);
+			const newValue = `${textBeforeDollar}$${selectedValue}${rest}`;
+			setInputValue(newValue);
+			onChangeHandler(setTitle, newValue);
+			setAutoCompleteOpen(false);
+			setTimeout(() => {
+				const newCursor = `${textBeforeDollar}$${selectedValue}`.length;
+				inputRef.current?.input?.setSelectionRange(newCursor, newCursor);
+				setCursorPos(newCursor);
+			}, 0);
+		},
+		[cursorPos, inputValue, setTitle],
+	);
 
-	const filterOption = (
-		currentInputValue: string,
-		option?: VariableOption,
-	): boolean => {
-		const pos = cursorPos;
-		const value = currentInputValue;
-		const lastDollar = value.lastIndexOf('$', pos - 1);
-		if (lastDollar === -1) {
-			return false;
-		}
-		const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
-		return option?.value.toLowerCase().startsWith(afterDollar) || false;
-	};
+	const filterOption = useCallback(
+		(currentInputValue: string, option?: VariableOption): boolean => {
+			const pos = cursorPos;
+			const value = currentInputValue;
+			const lastDollar = value.lastIndexOf('$', pos - 1);
+			if (lastDollar === -1) {
+				return false;
+			}
+			const afterDollar = value.substring(lastDollar + 1, pos).toLowerCase();
+			return option?.value.toLowerCase().startsWith(afterDollar) || false;
+		},
+		[cursorPos],
+	);
 
-	const handleInputCursor = (): void => {
+	const handleInputCursor = useCallback((): void => {
 		const pos = inputRef.current?.input?.selectionStart ?? 0;
 		updateCursorAndDropdown(inputValue, pos);
-	};
+	}, [inputValue, updateCursorAndDropdown]);
 
 	return (
 		<SettingsSection title="General" defaultOpen icon={null}>

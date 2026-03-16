@@ -22,7 +22,7 @@ interface AxesSectionProps {
 	setIsLogScale: Dispatch<SetStateAction<boolean>>;
 }
 
-export function AxesSection({
+export default function AxesSection({
 	allowSoftMinMax,
 	allowLogScale,
 	softMin,

@@ -27,7 +27,7 @@ interface ChartAppearanceSectionProps {
 	allowShowPoints: boolean;
 }
 
-export function ChartAppearanceSection({
+export default function ChartAppearanceSection({
 	fillMode,
 	setFillMode,
 	lineStyle,

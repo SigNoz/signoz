@@ -7,7 +7,7 @@ interface AlertsSectionProps {
 	onCreateAlertsHandler: () => void;
 }
 
-export function AlertsSection({
+export default function AlertsSection({
 	onCreateAlertsHandler,
 }: AlertsSectionProps): JSX.Element {
 	return (

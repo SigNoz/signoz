@@ -17,7 +17,7 @@ interface ThresholdsSectionProps {
 	columnUnits: ColumnUnit;
 }
 
-export function ThresholdsSection({
+export default function ThresholdsSection({
 	thresholds,
 	setThresholds,
 	yAxisUnit,

@@ -13,7 +13,7 @@ interface ContextLinksSectionProps {
 	selectedWidget?: Widgets;
 }
 
-export function ContextLinksSection({
+export default function ContextLinksSection({
 	contextLinks,
 	setContextLinks,
 	selectedWidget,

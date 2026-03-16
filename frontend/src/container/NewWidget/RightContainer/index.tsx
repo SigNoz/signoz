@@ -40,16 +40,16 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
-import { AlertsSection } from './SettingSections/AlertsSection/AlertsSection';
-import { AxesSection } from './SettingSections/AxesSection/AxesSection';
-import { ChartAppearanceSection } from './SettingSections/ChartAppearanceSection/ChartAppearanceSection';
-import { ContextLinksSection } from './SettingSections/ContextLinksSection/ContextLinksSection';
-import { FormattingUnitsSection } from './SettingSections/FormattingUnitsSection/FormattingUnitsSection';
-import { GeneralSettingsSection } from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
-import { HistogramBucketsSection } from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
-import { LegendSection } from './SettingSections/LegendSection/LegendSection';
-import { ThresholdsSection } from './SettingSections/ThresholdsSection/ThresholdsSection';
-import { VisualizationSettingsSection } from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
+import AlertsSection from './SettingSections/AlertsSection/AlertsSection';
+import AxesSection from './SettingSections/AxesSection/AxesSection';
+import ChartAppearanceSection from './SettingSections/ChartAppearanceSection/ChartAppearanceSection';
+import ContextLinksSection from './SettingSections/ContextLinksSection/ContextLinksSection';
+import FormattingUnitsSection from './SettingSections/FormattingUnitsSection/FormattingUnitsSection';
+import GeneralSettingsSection from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
+import HistogramBucketsSection from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
+import LegendSection from './SettingSections/LegendSection/LegendSection';
+import ThresholdsSection from './SettingSections/ThresholdsSection/ThresholdsSection';
+import VisualizationSettingsSection from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 
