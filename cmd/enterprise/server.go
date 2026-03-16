@@ -26,6 +26,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	pkgimplcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
@@ -132,8 +133,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-		func(store sqlstore.SQLStore) cloudintegration.Module {
-			return implcloudintegration.NewModule(pkgimplcloudintegration.NewStore(store))
+		func(store sqlstore.SQLStore, lic licensing.Licensing, z zeus.Zeus, gw gateway.Gateway, gc global.Config) cloudintegration.Module {
+			return implcloudintegration.NewModule(pkgimplcloudintegration.NewStore(store), store, lic, z, gw, gc)
 		},
 	)
 

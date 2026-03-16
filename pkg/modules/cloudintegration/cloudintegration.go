@@ -68,6 +68,17 @@ type Module interface {
 	GetAllDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 }
 
+// CloudProvider is the interface each cloud provider must implement.
+type CloudProvider interface {
+	CreateArtifact(
+		ctx context.Context,
+		orgID valuer.UUID,
+		request *cloudintegrationtypes.ConnectionArtifactRequest,
+		creds cloudintegrationtypes.SignozCredentials,
+		accountID valuer.UUID,
+	) (artifact *cloudintegrationtypes.ConnectionArtifact, err error)
+}
+
 type Handler interface {
 	AgentCheckIn(http.ResponseWriter, *http.Request)
 	GenerateConnectionArtifact(http.ResponseWriter, *http.Request)

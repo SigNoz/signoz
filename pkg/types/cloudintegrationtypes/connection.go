@@ -17,6 +17,14 @@ type (
 )
 
 type (
+	// SignozCredentials is used to configure Agents to connect with Signoz
+	SignozCredentials struct {
+		SigNozAPIUrl string
+		SigNozAPIKey string // PAT
+		IngestionUrl string
+		IngestionKey string
+	}
+
 	ConnectionArtifact struct {
 		Aws *AWSConnectionArtifact `json:"aws"`
 	}

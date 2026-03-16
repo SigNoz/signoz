@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/gateway/noopgateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -90,7 +91,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			return querier.NewHandler(ps, q, a)
 		},
-		func(_ sqlstore.SQLStore) cloudintegration.Module {
+		func(_ sqlstore.SQLStore, _ licensing.Licensing, _ zeus.Zeus, _ gateway.Gateway, _ global.Config) cloudintegration.Module {
 			return implcloudintegration.NewModule()
 		},
 	)

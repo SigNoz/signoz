@@ -1,8 +1,10 @@
 package zeustypes
 
 import (
+	"fmt"
 	"net/url"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/tidwall/gjson"
 )
 
@@ -33,6 +35,27 @@ type Host struct {
 	Name      string `json:"name" required:"true"`
 	IsDefault bool   `json:"is_default" required:"true"`
 	URL       string `json:"url" required:"true"`
+}
+
+// GettableDeployment represents the parsed deployment info from zeus.GetDeployment.
+type GettableDeployment struct {
+	Name         string
+	SignozAPIUrl string
+}
+
+// NewGettableDeployment parses raw GetDeployment bytes into a GettableDeployment.
+func NewGettableDeployment(data []byte) (*GettableDeployment, error) {
+	parsed := gjson.ParseBytes(data)
+	name := parsed.Get("name").String()
+	dns := parsed.Get("cluster.region.dns").String()
+	if name == "" || dns == "" {
+		return nil, errors.NewInternalf(errors.CodeInternal,
+			"deployment info response missing name or cluster region dns")
+	}
+	return &GettableDeployment{
+		Name:         name,
+		SignozAPIUrl: fmt.Sprintf("https://%s.%s", name, dns),
+	}, nil
 }
 
 func NewGettableHost(data []byte) *GettableHost {

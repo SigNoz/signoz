@@ -44,6 +44,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/web"
 )
 
@@ -92,7 +93,7 @@ func New(
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
-	cloudIntegrationModuleCallback func(sqlstore.SQLStore) cloudintegration.Module,
+	cloudIntegrationModuleCallback func(sqlstore.SQLStore, licensing.Licensing, zeus.Zeus, gateway.Gateway, global.Config) cloudintegration.Module,
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -390,7 +391,7 @@ func New(
 	}
 
 	// Initialize cloudintegration module via callback
-	cloudIntegrationModule := cloudIntegrationModuleCallback(sqlstore)
+	cloudIntegrationModule := cloudIntegrationModuleCallback(sqlstore, licensing, zeus, gateway, config.Global)
 
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, cloudIntegrationModule)
