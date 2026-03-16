@@ -1,10 +1,11 @@
 package postprocess
 
 import (
+	"log/slog"
+
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 )
 
 // postProcessResult applies having clause, metric limit, reduce function to the result
@@ -55,12 +56,12 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 			expression, err := govaluate.NewEvaluableExpressionWithFunctions(query.Expression, EvalFuncs())
 			// This shouldn't happen here, because it should have been caught earlier in validation
 			if err != nil {
-				zap.L().Error("error in expression", zap.Error(err))
+				slog.Error("error in expression", "error", err)
 				return nil, err
 			}
 			formulaResult, err := processResults(result, expression, canDefaultZero)
 			if err != nil {
-				zap.L().Error("error in expression", zap.Error(err))
+				slog.Error("error in expression", "error", err)
 				return nil, err
 			}
 			formulaResult.QueryName = query.QueryName

@@ -7,12 +7,13 @@ import (
 	"sync"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
-	"go.uber.org/zap"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -23,6 +24,7 @@ type RuleTask struct {
 	frequency          time.Duration
 	rules              []Rule
 	opts               *ManagerOptions
+	logger             *slog.Logger
 	mtx                sync.Mutex
 	evaluationDuration time.Duration
 	evaluationTime     time.Duration
@@ -46,7 +48,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 	if frequency == 0 {
 		frequency = DefaultFrequency
 	}
-	zap.L().Info("initiating a new rule task", zap.String("name", name), zap.Duration("frequency", frequency))
+	opts.Logger.Info("initiating a new rule task", "name", name, "frequency", frequency)
 
 	return &RuleTask{
 		name:             name,
@@ -55,6 +57,7 @@ func NewRuleTask(name, file string, frequency time.Duration, rules []Rule, opts 
 		frequency:        frequency,
 		rules:            rules,
 		opts:             opts,
+		logger:           opts.Logger,
 		done:             make(chan struct{}),
 		terminated:       make(chan struct{}),
 		notify:           notify,
@@ -98,7 +101,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 
 	// Wait an initial amount to have consistently slotted intervals.
 	evalTimestamp := g.EvalTimestamp(time.Now().UnixNano()).Add(g.frequency)
-	zap.L().Debug("group run to begin at", zap.Time("evalTimestamp", evalTimestamp))
+	g.logger.DebugContext(ctx, "group run to begin at", "eval_timestamp", evalTimestamp)
 	select {
 	case <-time.After(time.Until(evalTimestamp)):
 	case <-g.done:
@@ -304,16 +307,16 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("panic during threshold rule evaluation", zap.Any("panic", r))
+			g.logger.ErrorContext(ctx, "panic during threshold rule evaluation", "panic", r)
 		}
 	}()
 
-	zap.L().Debug("rule task eval started", zap.String("name", g.name), zap.Time("start time", ts))
+	g.logger.DebugContext(ctx, "rule task eval started", "name", g.name, "start_time", ts)
 
 	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
+		g.logger.ErrorContext(ctx, "error in processing sql query", "error", err)
 	}
 
 	for i, rule := range g.rules {
@@ -323,7 +326,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -331,7 +334,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
 			continue
 		}
 
@@ -363,7 +366,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), "error", err)
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

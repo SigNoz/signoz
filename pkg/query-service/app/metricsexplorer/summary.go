@@ -8,7 +8,7 @@ import (
 	"strings"
 	"time"
 
-	"go.uber.org/zap"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -173,14 +173,14 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		if data != nil {
 			jsonData, err := json.Marshal(data)
 			if err != nil {
-				zap.L().Error("Error marshalling data:", zap.Error(err))
+				slog.Error("error marshalling data", "error", err)
 				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 
 			var dashboards map[string][]metrics_explorer.Dashboard
 			err = json.Unmarshal(jsonData, &dashboards)
 			if err != nil {
-				zap.L().Error("Error unmarshalling data:", zap.Error(err))
+				slog.Error("error unmarshalling data", "error", err)
 				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
 			if _, ok := dashboards[metricName]; ok {
@@ -264,7 +264,7 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 	if err != nil {
 		// If we hit a deadline exceeded error, proceed with only name similarity
 		if errors.Is(err.Err, context.DeadlineExceeded) {
-			zap.L().Warn("Attribute similarity calculation timed out, proceeding with name similarity only")
+			slog.Warn("attribute similarity calculation timed out, proceeding with name similarity only")
 			attrSimilarityScores = make(map[string]metrics_explorer.RelatedMetricsScore)
 		} else {
 			return nil, err
@@ -350,12 +350,12 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if names != nil {
 			jsonData, err := json.Marshal(names)
 			if err != nil {
-				zap.L().Error("Error marshalling dashboard data", zap.Error(err))
+				slog.Error("error marshalling dashboard data", "error", err)
 				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 			err = json.Unmarshal(jsonData, &dashboardsRelatedData)
 			if err != nil {
-				zap.L().Error("Error unmarshalling dashboard data", zap.Error(err))
+				slog.Error("error unmarshalling dashboard data", "error", err)
 				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
 		}

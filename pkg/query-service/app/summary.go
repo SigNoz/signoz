@@ -11,8 +11,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 
+	"log/slog"
+
 	explorer "github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
-	"go.uber.org/zap"
 )
 
 func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Request) {
@@ -22,13 +23,13 @@ func (aH *APIHandler) FilterKeysSuggestion(w http.ResponseWriter, r *http.Reques
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	params, apiError := explorer.ParseFilterKeySuggestions(r)
 	if apiError != nil {
-		zap.L().Error("error parsing summary filter keys request", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing summary filter keys request", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 	keys, apiError := aH.SummaryService.FilterKeys(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting filter keys", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting filter keys", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -52,14 +53,14 @@ func (aH *APIHandler) FilterValuesSuggestion(w http.ResponseWriter, r *http.Requ
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	params, apiError := explorer.ParseFilterValueSuggestions(r)
 	if apiError != nil {
-		zap.L().Error("error parsing summary filter values request", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing summary filter values request", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 
 	values, apiError := aH.SummaryService.FilterValues(ctx, orgID, params)
 	if apiError != nil {
-		zap.L().Error("error getting filter values", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting filter values", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -82,7 +83,7 @@ func (aH *APIHandler) GetMetricsDetails(w http.ResponseWriter, r *http.Request) 
 	metricName := mux.Vars(r)["metric_name"]
 	metricsDetail, apiError := aH.SummaryService.GetMetricsSummary(ctx, orgID, metricName)
 	if apiError != nil {
-		zap.L().Error("error getting metrics summary error", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting metrics summary", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -106,14 +107,14 @@ func (aH *APIHandler) ListMetrics(w http.ResponseWriter, r *http.Request) {
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	params, apiErr := explorer.ParseSummaryListMetricsParams(r)
 	if apiErr != nil {
-		zap.L().Error("error parsing metric list metric summary api request", zap.Error(apiErr.Err))
+		slog.ErrorContext(ctx, "error parsing metric list metric summary api request", "error", apiErr.Err)
 		RespondError(w, model.BadRequest(apiErr), nil)
 		return
 	}
 
 	slmr, apiErr := aH.SummaryService.ListMetricsWithSummary(ctx, orgID, params)
 	if apiErr != nil {
-		zap.L().Error("error in getting list metrics summary", zap.Error(apiErr.Err))
+		slog.ErrorContext(ctx, "error in getting list metrics summary", "error", apiErr.Err)
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -126,13 +127,13 @@ func (aH *APIHandler) GetTreeMap(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	params, apiError := explorer.ParseTreeMapMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing tree map metric params", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing tree map metric params", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 	result, apiError := aH.SummaryService.GetMetricsTreemap(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting tree map data", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting tree map data", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -146,13 +147,13 @@ func (aH *APIHandler) GetRelatedMetrics(w http.ResponseWriter, r *http.Request) 
 	ctx := r.Context()
 	params, apiError := explorer.ParseRelatedMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing related metric params", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing related metric params", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 	result, apiError := aH.SummaryService.GetRelatedMetrics(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting related metrics", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting related metrics", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -166,13 +167,13 @@ func (aH *APIHandler) GetInspectMetricsData(w http.ResponseWriter, r *http.Reque
 	ctx := r.Context()
 	params, apiError := explorer.ParseInspectMetricsParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing inspect metric params", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing inspect metric params", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 	result, apiError := aH.SummaryService.GetInspectMetrics(ctx, params)
 	if apiError != nil {
-		zap.L().Error("error getting inspect metrics data", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error getting inspect metrics data", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
@@ -197,13 +198,13 @@ func (aH *APIHandler) UpdateMetricsMetadata(w http.ResponseWriter, r *http.Reque
 	r.Body = io.NopCloser(bytes.NewBuffer(bodyBytes))
 	params, apiError := explorer.ParseUpdateMetricsMetadataParams(r)
 	if apiError != nil {
-		zap.L().Error("error parsing update metrics metadata params", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error parsing update metrics metadata params", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
 	apiError = aH.SummaryService.UpdateMetricsMetadata(ctx, orgID, params)
 	if apiError != nil {
-		zap.L().Error("error updating metrics metadata", zap.Error(apiError.Err))
+		slog.ErrorContext(ctx, "error updating metrics metadata", "error", apiError.Err)
 		RespondError(w, apiError, nil)
 		return
 	}
