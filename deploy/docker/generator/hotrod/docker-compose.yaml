@@ -11,15 +11,15 @@ x-common: &common
   restart: unless-stopped
 services:
   hotrod:
-    <<: *common
+    !!merge <<: *common
     image: jaegertracing/example-hotrod:1.61.0
     container_name: hotrod
-    command: [ "all" ]
+    command: ["all"]
     environment:
-      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318  # In case of external SigNoz or cloud, update the endpoint and access token
+      - OTEL_EXPORTER_OTLP_ENDPOINT=http://host.docker.internal:4318 # In case of external SigNoz or cloud, update the endpoint and access token
       # - OTEL_OTLP_HEADERS=signoz-access-token=<your-access-token>
   load-hotrod:
-    <<: *common
+    !!merge <<: *common
     image: "signoz/locust:1.2.3"
     container_name: load-hotrod
     environment:

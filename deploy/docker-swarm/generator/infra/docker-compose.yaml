@@ -14,7 +14,7 @@ x-common: &common
       condition: on-failure
 services:
   otel-agent:
-    <<: *common
+    !!merge <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
     command:
       - --config=/etc/otel-collector-config.yaml
@@ -22,7 +22,7 @@ services:
       - ./otel-agent-config.yaml:/etc/otel-collector-config.yaml
       - /:/hostfs:ro
     environment:
-      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317 # In case of external SigNoz or cloud, update the endpoint and access token
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
       # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
     # Before exposing the ports, make sure the ports are not used by other services
@@ -30,16 +30,16 @@ services:
     #   - "4317:4317"
     #   - "4318:4318"
   otel-metrics:
-    <<: *common
+    !!merge <<: *common
     image: otel/opentelemetry-collector-contrib:0.111.0
-    user: 0:0   #  If you have security concerns, you can replace this with your `UID:GID` that has necessary permissions to docker.sock
+    user: 0:0 #  If you have security concerns, you can replace this with your `UID:GID` that has necessary permissions to docker.sock
     command:
       - --config=/etc/otel-collector-config.yaml
     volumes:
       - ./otel-metrics-config.yaml:/etc/otel-collector-config.yaml
       - /var/run/docker.sock:/var/run/docker.sock
     environment:
-      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317    # In case of external SigNoz or cloud, update the endpoint and access token
+      - SIGNOZ_COLLECTOR_ENDPOINT=http://host.docker.internal:4317 # In case of external SigNoz or cloud, update the endpoint and access token
       - OTEL_RESOURCE_ATTRIBUTES=host.name={{.Node.Hostname}},os.type={{.Node.Platform.OS}}
       # - SIGNOZ_ACCESS_TOKEN="<your-access-token>"
     # Before exposing the ports, make sure the ports are not used by other services
@@ -53,7 +53,7 @@ services:
         constraints:
           - node.role == manager
   logspout:
-    <<: *common
+    !!merge <<: *common
     image: "gliderlabs/logspout:v3.2.14"
     command: syslog+tcp://otel-agent:2255
     user: root
