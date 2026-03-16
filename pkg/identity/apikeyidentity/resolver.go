@@ -37,7 +37,7 @@ func (r *resolver) Name() string {
 }
 
 // Test checks if any of the configured headers contain a value.
-func (r *resolver) Test(_ context.Context, req *http.Request) bool {
+func (r *resolver) Test(req *http.Request) bool {
 	for _, header := range r.headers {
 		if req.Header.Get(header) != "" {
 			return true
@@ -48,7 +48,9 @@ func (r *resolver) Test(_ context.Context, req *http.Request) bool {
 
 // Authenticate extracts the API key, looks it up in the database,
 // validates expiration, resolves the user, and returns Claims.
-func (r *resolver) Authenticate(ctx context.Context, req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+	ctx := req.Context()
+
 	// Extract API key from headers
 	var apiKeyToken string
 	for _, header := range r.headers {

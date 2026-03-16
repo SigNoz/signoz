@@ -1,7 +1,6 @@
 package identity
 
 import (
-	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -9,17 +8,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 )
 
-// Chain tries multiple resolvers in declared order.
-// It calls Test() on each resolver, then Authenticate() on the first match.
-// If Authenticate() fails, the chain stops (credentials were found but invalid).
-type Chain struct {
+// chain is the default Identity implementation that tries multiple
+// resolvers in declared order.
+type chain struct {
 	resolvers []Resolver
 	settings  factory.ScopedProviderSettings
 }
 
-// NewChain creates a new resolver chain. Resolvers are tried in the order given.
-func NewChain(providerSettings factory.ProviderSettings, resolvers ...Resolver) *Chain {
-	return &Chain{
+// NewChain creates a new Identity that tries resolvers in the order given.
+func NewChain(providerSettings factory.ProviderSettings, resolvers ...Resolver) Identity {
+	return &chain{
 		resolvers: resolvers,
 		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identity"),
 	}
@@ -31,15 +29,15 @@ func NewChain(providerSettings factory.ProviderSettings, resolvers ...Resolver) 
 //   - Returns (claims, authType, resolver, nil) on success.
 //   - Returns (zero, zero, resolver, err) if credentials were found but invalid.
 //   - Returns (zero, zero, nil, nil) if no resolver matched (unauthenticated request).
-func (c *Chain) Authenticate(ctx context.Context, r *http.Request) (authtypes.Claims, ctxtypes.AuthType, Resolver, error) {
+func (c *chain) Authenticate(r *http.Request) (authtypes.Claims, ctxtypes.AuthType, Resolver, error) {
 	for _, resolver := range c.resolvers {
-		if !resolver.Test(ctx, r) {
+		if !resolver.Test(r) {
 			continue
 		}
 
-		c.settings.Logger().DebugContext(ctx, "identity resolver matched", "resolver", resolver.Name())
+		c.settings.Logger().DebugContext(r.Context(), "identity resolver matched", "resolver", resolver.Name())
 
-		claims, authType, err := resolver.Authenticate(ctx, r)
+		claims, authType, err := resolver.Authenticate(r)
 		if err != nil {
 			return authtypes.Claims{}, ctxtypes.AuthType{}, resolver, err
 		}

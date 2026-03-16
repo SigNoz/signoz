@@ -68,7 +68,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
-	IdentityChain          *identity.Chain
+	Identity               identity.Identity
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -397,7 +397,7 @@ func New(
 	// Initialize identity resolver chain
 	tokenResolver := tokenidentity.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
 	apiKeyResolver := apikeyidentity.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
-	identityChain := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
+	ident := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
@@ -477,7 +477,7 @@ func New(
 		Emailing:               emailing,
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
-		IdentityChain:          identityChain,
+		Identity:               ident,
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,

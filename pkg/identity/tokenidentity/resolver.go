@@ -36,7 +36,7 @@ func (r *resolver) Name() string {
 }
 
 // Test checks if any of the configured headers contain a value.
-func (r *resolver) Test(_ context.Context, req *http.Request) bool {
+func (r *resolver) Test(req *http.Request) bool {
 	for _, header := range r.headers {
 		if req.Header.Get(header) != "" {
 			return true
@@ -47,7 +47,9 @@ func (r *resolver) Test(_ context.Context, req *http.Request) bool {
 
 // Authenticate extracts the bearer token, validates it via the tokenizer,
 // and returns the resolved identity as Claims.
-func (r *resolver) Authenticate(ctx context.Context, req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+	ctx := req.Context()
+
 	// Extract token from headers
 	var value string
 	for _, header := range r.headers {
@@ -64,9 +66,6 @@ func (r *resolver) Authenticate(ctx context.Context, req *http.Request) (authtyp
 		accessToken = value
 	}
 
-	// Store access token in context for token rotation handler.
-	ctx = authtypes.NewContextWithAccessToken(ctx, accessToken)
-
 	// Resolve identity from token
 	authenticatedUser, err := r.tokenizer.GetIdentity(ctx, accessToken)
 	if err != nil {
@@ -77,7 +76,7 @@ func (r *resolver) Authenticate(ctx context.Context, req *http.Request) (authtyp
 }
 
 // PostAuth updates the last observed timestamp for the access token.
-func (r *resolver) PostAuth(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+func (r *resolver) PostAuth(ctx context.Context, req *http.Request, _ authtypes.Claims) {
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
 		return

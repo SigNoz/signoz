@@ -19,18 +19,18 @@ const (
 )
 
 type Identity struct {
-	chain   *identity.Chain
-	sharder sharder.Sharder
-	headers []string
-	logger  *slog.Logger
+	identity identity.Identity
+	sharder  sharder.Sharder
+	headers  []string
+	logger   *slog.Logger
 }
 
-func NewIdentity(chain *identity.Chain, sharder sharder.Sharder, headers []string, logger *slog.Logger) *Identity {
+func NewIdentity(identity identity.Identity, sharder sharder.Sharder, headers []string, logger *slog.Logger) *Identity {
 	return &Identity{
-		chain:   chain,
-		sharder: sharder,
-		headers: headers,
-		logger:  logger,
+		identity: identity,
+		sharder:  sharder,
+		headers:  headers,
+		logger:   logger,
 	}
 }
 
@@ -38,7 +38,7 @@ func (m *Identity) Wrap(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		ctx := r.Context()
 
-		claims, authType, resolver, err := m.chain.Authenticate(ctx, r)
+		claims, authType, resolver, err := m.identity.Authenticate(r)
 		if err != nil {
 			// Credentials found but invalid (expired, revoked, needs rotation, etc.).
 			// Store the access token in context so downstream handlers like
