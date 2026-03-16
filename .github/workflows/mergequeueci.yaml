@@ -8,6 +8,7 @@ on:
 jobs:
   notify:
     runs-on: ubuntu-latest
+    if: github.event.pull_request.merged == false
     steps:
       - name: alert
         uses: slackapi/slack-github-action@v2.1.1
