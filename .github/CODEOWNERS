@@ -1,8 +1,6 @@
 # CODEOWNERS info: https://help.github.com/en/articles/about-code-owners
 
-# Owners are automatically requested for review for PRs that changes code
-
-# that they own.
+# Owners are automatically requested for review for PRs that changes code that they own.
 
 /frontend/ @SigNoz/frontend-maintainers
 
@@ -11,8 +9,10 @@
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
-/deploy/ @SigNoz/devops
-.github @SigNoz/devops
+# CI
+/deploy/ @therealpandey
+.github @therealpandey
+go.mod @therealpandey
 
 # Scaffold Owners
 
