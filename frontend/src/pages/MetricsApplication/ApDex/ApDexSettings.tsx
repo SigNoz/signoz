@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
 import { Card, InputNumber } from 'antd';
 import Spinner from 'components/Spinner';
 import TextToolTip from 'components/TextToolTip';
@@ -22,6 +21,7 @@ import {
 } from '../styles';
 import { onSaveApDexSettings } from '../utils';
 import { ApDexSettingsProps } from './types';
+import { X } from '@signozhq/icons';
 
 function ApDexSettings({
 	servicename,
@@ -61,7 +61,7 @@ function ApDexSettings({
 	return (
 		<Card
 			title={APPLICATION_SETTINGS}
-			extra={<CloseOutlined width={10} height={10} onClick={handlePopOverClose} />}
+			extra={<X width={10} height={10} onClick={handlePopOverClose} />}
 			actions={[
 				<SaveAndCancelContainer key="SaveAndCancelContainer">
 					<Button onClick={handlePopOverClose}>Cancel</Button>

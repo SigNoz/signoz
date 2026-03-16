@@ -1,9 +1,9 @@
-import { LinkOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import { useCopySpanLink } from 'hooks/trace/useCopySpanLink';
 import { Span } from 'types/api/trace/getTraceV2';
 
 import './SpanLineActionButtons.styles.scss';
+import { Link } from '@signozhq/icons';
 
 export interface SpanLineActionButtonsProps {
 	span: Span;
@@ -18,7 +18,7 @@ export default function SpanLineActionButtons({
 			<Tooltip title="Copy Span Link">
 				<Button
 					size="small"
-					icon={<LinkOutlined size={14} />}
+					icon={<Link size={14} />}
 					onClick={onSpanCopy}
 					className="copy-span-btn"
 				/>

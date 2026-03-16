@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import {
-	DeleteOutlined,
 	MoreOutlined,
 	SaveOutlined,
 	ShareAltOutlined,
@@ -44,6 +43,7 @@ import {
 } from './styles';
 import { ExplorerCardProps } from './types';
 import { deleteViewHandler } from './utils';
+import { Trash } from '@signozhq/icons';
 
 function ExplorerCard({
 	sourcepage,
@@ -159,7 +159,7 @@ function ExplorerCard({
 				key: 'delete',
 				label: <Typography.Text strong>Delete</Typography.Text>,
 				onClick: onDeleteHandler,
-				icon: <DeleteOutlined />,
+				icon: <Trash />,
 			},
 		],
 	};

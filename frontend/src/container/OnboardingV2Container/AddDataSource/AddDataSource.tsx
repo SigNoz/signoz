@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useRef, useState } from 'react';
-import { SearchOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Flex,
@@ -27,6 +26,7 @@ import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
 import onboardingConfigWithLinks from '../onboarding-configs/onboarding-config-with-links.json';
 
 import '../OnboardingV2.styles.scss';
+import { Search } from '@signozhq/icons';
 
 const { Header } = Layout;
 
@@ -436,9 +436,8 @@ function OnboardingAddDataSource(): JSX.Element {
 				},
 				{
 					...setupStepItemsBase[1],
-					description: `${selectedDataSource?.label} ${
-						selectedFramework?.label ? `- ${selectedFramework?.label}` : ''
-					}`,
+					description: `${selectedDataSource?.label} ${selectedFramework?.label ? `- ${selectedFramework?.label}` : ''
+						}`,
 				},
 				...setupStepItemsBase.slice(2),
 			]);
@@ -686,9 +685,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 				<div className="onboarding-product-setup-container">
 					<div
-						className={`onboarding-product-setup-container_left-section ${
-							currentStep === 1 ? 'step-id-1' : 'step-id-2'
-						}`}
+						className={`onboarding-product-setup-container_left-section ${currentStep === 1 ? 'step-id-1' : 'step-id-2'
+							}`}
 					>
 						<div className="perlian-bg" />
 
@@ -711,9 +709,8 @@ function OnboardingAddDataSource(): JSX.Element {
 
 									<div className="questionnaire-container">
 										<div
-											className={`question-1 question-block data-sources-and-filters-container ${
-												selectedDataSource ? 'answered' : ''
-											}`}
+											className={`question-1 question-block data-sources-and-filters-container ${selectedDataSource ? 'answered' : ''
+												}`}
 										>
 											<div className="data-sources-container">
 												<div className="onboarding-data-source-search">
@@ -721,7 +718,7 @@ function OnboardingAddDataSource(): JSX.Element {
 														placeholder="Search"
 														maxLength={20}
 														onChange={handleSearch}
-														addonAfter={<SearchOutlined />}
+														addonAfter={<Search />}
 													/>
 												</div>
 
@@ -734,11 +731,10 @@ function OnboardingAddDataSource(): JSX.Element {
 															{groupedDataSources[tag].map((dataSource) => (
 																<Button
 																	key={dataSource.dataSource}
-																	className={`onboarding-data-source-button ${
-																		selectedDataSource?.label === dataSource.label
-																			? 'selected'
-																			: ''
-																	}`}
+																	className={`onboarding-data-source-button ${selectedDataSource?.label === dataSource.label
+																		? 'selected'
+																		: ''
+																		}`}
 																	type="primary"
 																	onClick={(): void => handleSelectDataSource(dataSource)}
 																>
@@ -785,9 +781,8 @@ function OnboardingAddDataSource(): JSX.Element {
 													>
 														<Typography.Title
 															level={5}
-															className={`onboarding-filters-item-title ${
-																selectedCategory === 'All' ? 'selected' : ''
-															}`}
+															className={`onboarding-filters-item-title ${selectedCategory === 'All' ? 'selected' : ''
+																}`}
 														>
 															All
 														</Typography.Title>
@@ -814,9 +809,8 @@ function OnboardingAddDataSource(): JSX.Element {
 														>
 															<Typography.Title
 																level={5}
-																className={`onboarding-filters-item-title ${
-																	selectedCategory === tag ? 'selected' : ''
-																}`}
+																className={`onboarding-filters-item-title ${selectedCategory === tag ? 'selected' : ''
+																	}`}
 															>
 																{tag}
 															</Typography.Title>
@@ -835,9 +829,8 @@ function OnboardingAddDataSource(): JSX.Element {
 											selectedDataSource?.question &&
 											!isEmpty(selectedDataSource?.question) && (
 												<div
-													className={`question-2 question-block ${
-														selectedFramework ? 'answered' : ''
-													}`}
+													className={`question-2 question-block ${selectedFramework ? 'answered' : ''
+														}`}
 													ref={question2Ref}
 												>
 													{selectedDataSource?.question?.desc && (
@@ -871,9 +864,8 @@ function OnboardingAddDataSource(): JSX.Element {
 																{selectedDataSource?.question?.options.map((option) => (
 																	<Button
 																		key={option.label}
-																		className={`onboarding-data-source-button ${
-																			selectedFramework?.label === option.label ? 'selected' : ''
-																		}`}
+																		className={`onboarding-data-source-button ${selectedFramework?.label === option.label ? 'selected' : ''
+																			}`}
 																		type="primary"
 																		onClick={(): void => {
 																			if (
@@ -905,9 +897,8 @@ function OnboardingAddDataSource(): JSX.Element {
 											selectedFramework?.question &&
 											!isEmpty(selectedFramework?.question) && (
 												<div
-													className={`question-3 question-block ${
-														selectedEnvironment ? 'answered' : ''
-													}`}
+													className={`question-3 question-block ${selectedEnvironment ? 'answered' : ''
+														}`}
 													ref={question3Ref}
 												>
 													{selectedFramework?.question?.desc && (
@@ -941,9 +932,8 @@ function OnboardingAddDataSource(): JSX.Element {
 																{selectedFramework?.question?.options.map((option) => (
 																	<Button
 																		key={option.label}
-																		className={`onboarding-data-source-button ${
-																			selectedEnvironment?.label === option.label ? 'selected' : ''
-																		}`}
+																		className={`onboarding-data-source-button ${selectedEnvironment?.label === option.label ? 'selected' : ''
+																			}`}
 																		type="primary"
 																		onClick={(): void =>
 																			handleSelectEnvironment(option, option.link)
@@ -1094,7 +1084,7 @@ function OnboardingAddDataSource(): JSX.Element {
 						<InviteTeamMembers
 							isLoading={false}
 							teamMembers={null}
-							setTeamMembers={(): void => {}}
+							setTeamMembers={(): void => { }}
 							onNext={(): void => setShowInviteTeamMembersModal(false)}
 							onClose={(): void => setShowInviteTeamMembersModal(false)}
 						/>

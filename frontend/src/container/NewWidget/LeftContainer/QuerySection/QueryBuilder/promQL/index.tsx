@@ -1,10 +1,10 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { IPromQLQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 
 import { QueryButton } from '../../styles';
 import PromQLQueryBuilder from './query';
+import { Plus } from '@signozhq/icons';
 
 function PromQLQueryContainer(): JSX.Element | null {
 	const { addNewQueryItem, currentQuery } = useQueryBuilder();
@@ -27,7 +27,7 @@ function PromQLQueryContainer(): JSX.Element | null {
 			)}
 			<QueryButton
 				onClick={addQueryHandler}
-				icon={<PlusOutlined />}
+				icon={<Plus />}
 				style={{ margin: '0.4rem 1rem' }}
 			>
 				Query

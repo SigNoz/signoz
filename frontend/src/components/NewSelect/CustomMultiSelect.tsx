@@ -8,7 +8,6 @@ import React, {
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
 import {
-	DownOutlined,
 	LoadingOutlined,
 	ReloadOutlined,
 } from '@ant-design/icons';
@@ -33,6 +32,7 @@ import {
 } from './utils';
 
 import './styles.scss';
+import { ChevronDown } from '@signozhq/icons';
 
 enum ToggleTagValue {
 	Only = 'Only',
@@ -1920,9 +1920,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						style={
 							isActive || isSelected
 								? {
-										borderColor: Color.BG_ROBIN_500,
-										backgroundColor: Color.BG_SLATE_400,
-								  }
+									borderColor: Color.BG_ROBIN_500,
+									backgroundColor: Color.BG_SLATE_400,
+								}
 								: undefined
 						}
 					>
@@ -1996,7 +1996,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 				popupMatchSelectWidth={dropdownMatchSelectWidth}
 				allowClear={allowClear}
 				getPopupContainer={getPopupContainer ?? popupContainer}
-				suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+				suffixIcon={<ChevronDown style={{ cursor: 'default' }} />}
 				dropdownRender={customDropdownRender}
 				menuItemSelectedIcon={null}
 				popupClassName={cx('custom-multiselect-dropdown-container', popupClassName)}

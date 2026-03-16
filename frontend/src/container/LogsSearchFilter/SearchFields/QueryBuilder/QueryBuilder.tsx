@@ -1,7 +1,7 @@
 import { useCallback, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { CloseOutlined, CloseSquareOutlined } from '@ant-design/icons';
+import { CloseSquareOutlined } from '@ant-design/icons';
 import { Button, Input, Select } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import {
@@ -16,6 +16,7 @@ import FieldKey from '../FieldKey';
 import { QueryFieldContainer } from '../styles';
 import { QueryFields } from '../utils';
 import { Container, QueryWrapper } from './styles';
+import { X } from '@signozhq/icons';
 
 const { Option } = Select;
 
@@ -133,9 +134,9 @@ function QueryField({
 			</Select>
 			<div style={{ flex: 2 }}>
 				{Array.isArray(query[2].value) ||
-				Object.values(QueryOperatorsMultiVal).some(
-					(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
-				) ? (
+					Object.values(QueryOperatorsMultiVal).some(
+						(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
+					) ? (
 					<Select
 						mode="tags"
 						style={{ width: '100%' }}
@@ -159,7 +160,7 @@ function QueryField({
 			</div>
 
 			<Button
-				icon={<CloseOutlined />}
+				icon={<X />}
 				type="text"
 				size="small"
 				onClick={handleClear}

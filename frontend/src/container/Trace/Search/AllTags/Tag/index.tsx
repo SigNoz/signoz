@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction } from 'react';
-import { CloseOutlined } from '@ant-design/icons';
 import { Select } from 'antd';
 import { TraceReducer } from 'types/reducer/trace';
 
@@ -7,6 +6,7 @@ import { Container, IconContainer, SelectComponent } from './styles';
 import TagsKey from './TagKey';
 import TagValue from './TagValue';
 import { mapOperators } from './utils';
+import { X } from '@signozhq/icons';
 
 const { Option } = Select;
 
@@ -162,7 +162,7 @@ function SingleTags(props: AllTagsProps): JSX.Element {
 			)}
 
 			<IconContainer role="button" onClick={(): void => onDeleteTagHandler(index)}>
-				<CloseOutlined />
+				<X />
 			</IconContainer>
 		</Container>
 	);

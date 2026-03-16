@@ -1,5 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { FilterOutlined } from '@ant-design/icons';
 import { Button, Col, Layout, Typography } from 'antd';
 import cx from 'classnames';
 import {
@@ -43,6 +42,7 @@ import {
 } from './utils';
 
 import './TraceDetails.styles.scss';
+import { Filter } from '@signozhq/icons';
 
 const { Sider } = Layout;
 
@@ -227,7 +227,7 @@ function TraceDetail({ response }: TraceDetailProps): JSX.Element {
 						<StyledSpace styledclass={[styles.floatRight]}>
 							<Button
 								onClick={onFocusSelectedSpanHandler}
-								icon={<FilterOutlined />}
+								icon={<Filter />}
 								data-testid="span-focus-btn"
 							>
 								Focus on selected span

@@ -2,7 +2,7 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -34,6 +34,7 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { formatNumericValue } from 'utils/numericUtils';
 
 import './CeleryOverviewTable.styles.scss';
+import { Search } from '@signozhq/icons';
 
 const INITIAL_PAGE_SIZE = 20;
 
@@ -107,7 +108,7 @@ const getColumnSearchProps = (
 					type="primary"
 					size="small"
 					onClick={(): void => handleSearch(selectedKeys as string[], confirm)}
-					icon={<SearchOutlined />}
+					icon={<Search />}
 				>
 					Search
 				</Button>
@@ -131,7 +132,7 @@ const getColumnSearchProps = (
 		</div>
 	),
 	filterIcon: (filtered: boolean): JSX.Element => (
-		<SearchOutlined
+		<Search
 			style={{ color: filtered ? Color.BG_ROBIN_500 : undefined }}
 		/>
 	),

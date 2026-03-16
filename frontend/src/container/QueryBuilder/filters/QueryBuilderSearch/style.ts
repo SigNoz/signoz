@@ -1,4 +1,4 @@
-import { CheckOutlined } from '@ant-design/icons';
+import { Check } from '@signozhq/icons';
 import { Tag, Typography } from 'antd';
 import styled from 'styled-components';
 
@@ -12,7 +12,7 @@ export const TypographyText = styled(Typography.Text)<{
 	pointer-events: ${({ $isEnabled }): string => ($isEnabled ? 'none' : 'auto')};
 `;
 
-export const StyledCheckOutlined = styled(CheckOutlined)`
+export const StyledCheckOutlined = styled(Check)`
 	float: right;
 `;
 

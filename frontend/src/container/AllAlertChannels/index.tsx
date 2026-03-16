@@ -1,7 +1,6 @@
 import { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
-import { PlusOutlined } from '@ant-design/icons';
 import { Tooltip, Typography } from 'antd';
 import getAll from 'api/channels/getAll';
 import logEvent from 'api/common/logEvent';
@@ -20,6 +19,7 @@ import AlertChannelsComponent from './AlertChannels';
 import { Button, ButtonContainer, RightActionContainer } from './styles';
 
 import './AllAlertChannels.styles.scss';
+import { Plus } from '@signozhq/icons';
 
 const { Paragraph } = Typography;
 
@@ -79,7 +79,7 @@ function AlertChannels(): JSX.Element {
 					>
 						<Button
 							onClick={onToggleHandler}
-							icon={<PlusOutlined />}
+							icon={<Plus />}
 							disabled={!addNewChannelPermission}
 						>
 							{t('button_new_channel')}

@@ -3,7 +3,6 @@ import { FullScreenHandle } from 'react-full-screen';
 import { Layout } from 'react-grid-layout';
 import { useTranslation } from 'react-i18next';
 import { useCopyToClipboard } from 'react-use';
-import { PlusOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Card,
@@ -61,6 +60,7 @@ import {
 } from './utils';
 
 import './Description.styles.scss';
+import { Plus } from '@signozhq/icons';
 
 interface DashboardDescriptionProps {
 	handle: FullScreenHandle;
@@ -92,9 +92,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const selectedData = selectedDashboard
 		? {
-				...selectedDashboard.data,
-				uuid: selectedDashboard.id,
-		  }
+			...selectedDashboard.data,
+			uuid: selectedDashboard.id,
+		}
 		: ({} as DashboardData);
 	const { dashboardVariables } = useDashboardVariables();
 
@@ -494,7 +494,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 						<Button
 							className="add-panel-btn"
 							onClick={onEmptyWidgetHandler}
-							icon={<PlusOutlined />}
+							icon={<Plus />}
 							type="primary"
 							data-testid="add-panel-header"
 						>

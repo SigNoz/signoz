@@ -1,9 +1,9 @@
-import { PlusOutlined } from '@ant-design/icons';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { EQueryType } from 'types/common/dashboard';
 
 import { QueryButton } from '../../styles';
 import ClickHouseQueryBuilder from './query';
+import { Plus } from '@signozhq/icons';
 
 function ClickHouseQueryContainer(): JSX.Element | null {
 	const { currentQuery, addNewQueryItem } = useQueryBuilder();
@@ -23,7 +23,7 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 			))}
 			<QueryButton
 				onClick={addQueryHandler}
-				icon={<PlusOutlined />}
+				icon={<Plus />}
 				style={{ margin: '0.4rem 1rem' }}
 			>
 				Query

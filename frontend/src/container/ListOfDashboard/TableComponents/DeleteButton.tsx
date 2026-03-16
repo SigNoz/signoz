@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
-import { DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { ExclamationCircleOutlined } from '@ant-design/icons';
 import { Modal, Tooltip, Typography } from 'antd';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
@@ -15,6 +15,7 @@ import { Data } from '../DashboardsList';
 import { TableLinkText } from './styles';
 
 import './DeleteButton.styles.scss';
+import { Trash } from '@signozhq/icons';
 
 interface DeleteButtonProps {
 	createdBy: string;
@@ -115,7 +116,7 @@ export function DeleteButton({
 					className="delete-btn"
 					disabled={isLocked || (user.role === USER_ROLES.VIEWER && !isAuthor)}
 				>
-					<DeleteOutlined /> Delete dashboard
+					<Trash /> Delete dashboard
 				</TableLinkText>
 			</Tooltip>
 

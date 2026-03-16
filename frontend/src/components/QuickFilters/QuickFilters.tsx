@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
 import {
-	FilterOutlined,
 	SyncOutlined,
 	VerticalAlignTopOutlined,
 } from '@ant-design/icons';
@@ -37,6 +36,7 @@ import QuickFiltersSettings from './QuickFiltersSettings/QuickFiltersSettings';
 import { FiltersType, IQuickFiltersProps, QuickFiltersSource } from './types';
 
 import './QuickFilters.styles.scss';
+import { Filter } from '@signozhq/icons';
 
 export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	const {
@@ -176,7 +176,7 @@ export default function QuickFilters(props: IQuickFiltersProps): JSX.Element {
 	// Helpers to reduce cognitive complexity in main render
 	const renderLeftActions = (): JSX.Element => (
 		<section className="left-actions">
-			<FilterOutlined />
+			<Filter />
 			<Typography.Text className="text">
 				{displayedQueryName ? 'Filters for' : 'Filters'}
 			</Typography.Text>

@@ -1,7 +1,6 @@
 import React, { ChangeEvent, useEffect, useState } from 'react';
 import { useQuery } from 'react-query';
 import { useHistory } from 'react-router-dom';
-import { PlusOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Flex, Form, Input, Tooltip, Typography } from 'antd';
 import getAll from 'api/alerts/getAll';
@@ -29,6 +28,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { Plus } from '@signozhq/icons';
 
 dayjs.locale('en');
 
@@ -140,7 +140,7 @@ export function PlannedDowntime(): JSX.Element {
 						}
 					>
 						<Button
-							icon={<PlusOutlined />}
+							icon={<Plus />}
 							type="primary"
 							onClick={(): void => {
 								setInitialValues({ ...defautlInitialValues, editMode: false });

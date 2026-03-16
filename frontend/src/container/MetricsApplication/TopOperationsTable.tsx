@@ -2,7 +2,6 @@ import { useRef } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
 import {
 	InputRef,
 	Switch,
@@ -33,6 +32,7 @@ import {
 } from './utils';
 
 import './TopOperationsTable.styles.scss';
+import { Search } from '@signozhq/icons';
 
 function TopOperationsTable({
 	data,
@@ -104,7 +104,7 @@ function TopOperationsTable({
 
 	const getSearchOption = (): ColumnType<TopOperationList> => ({
 		filterDropdown,
-		filterIcon: <SearchOutlined />,
+		filterIcon: <Search />,
 		onFilter: (value, record): boolean =>
 			record.name
 				.toString()

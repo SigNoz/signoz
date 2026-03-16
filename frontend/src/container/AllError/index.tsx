@@ -4,7 +4,6 @@ import { useQueries } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Card,
@@ -58,6 +57,7 @@ import {
 	getUpdatePageSize,
 	urlKey,
 } from './utils';
+import { Search } from '@signozhq/icons';
 
 type QueryParams = {
 	order: string;
@@ -187,7 +187,7 @@ function AllErrors(): JSX.Element {
 		</Typography>
 	);
 
-	const filterIcon = useCallback(() => <SearchOutlined />, []);
+	const filterIcon = useCallback(() => <Search />, []);
 
 	const handleSearch = useCallback(
 		(
@@ -262,7 +262,7 @@ function AllErrors(): JSX.Element {
 					<Button
 						type="primary"
 						onClick={handleSearch(confirm, String(selectedKeys[0]), filterKey)}
-						icon={<SearchOutlined />}
+						icon={<Search />}
 						size="small"
 					>
 						Search
@@ -325,9 +325,8 @@ function AllErrors(): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
-						to={`${ROUTES.ERROR_DETAIL}?groupId=${
-							record.groupID
-						}&timestamp=${getNanoSeconds(record.lastSeen)}`}
+						to={`${ROUTES.ERROR_DETAIL}?groupId=${record.groupID
+							}&timestamp=${getNanoSeconds(record.lastSeen)}`}
 					>
 						{value}
 					</Link>

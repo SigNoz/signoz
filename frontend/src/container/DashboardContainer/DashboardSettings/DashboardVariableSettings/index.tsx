@@ -1,6 +1,6 @@
 import React, { useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { HolderOutlined, PlusOutlined } from '@ant-design/icons';
+import { HolderOutlined } from '@ant-design/icons';
 import type { DragEndEvent, UniqueIdentifier } from '@dnd-kit/core';
 import {
 	DndContext,
@@ -27,6 +27,7 @@ import { TVariableMode } from './types';
 import VariableItem from './VariableItem/VariableItem';
 
 import '../DashboardSettings.styles.scss';
+import { Plus } from '@signozhq/icons';
 
 function TableRow({ children, ...props }: RowProps): JSX.Element {
 	const {
@@ -439,7 +440,7 @@ function VariablesSettings({
 								onVariableViewModeEnter('ADD', {} as IDashboardVariable)
 							}
 						>
-							<PlusOutlined /> Add Variable
+							<Plus /> Add Variable
 						</Button>
 					</Row>
 

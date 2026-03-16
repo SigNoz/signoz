@@ -1,7 +1,7 @@
 import { useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { connect, useSelector } from 'react-redux';
-import { CaretRightFilled, PlusOutlined } from '@ant-design/icons';
+import { CaretRightFilled } from '@ant-design/icons';
 import { Button, Space, Typography } from 'antd';
 // eslint-disable-next-line no-restricted-imports
 import { bindActionCreators } from 'redux';
@@ -20,6 +20,7 @@ import {
 	ErrorContainer,
 } from './styles';
 import Tags from './Tag';
+import { Plus } from '@signozhq/icons';
 
 const { Text } = Typography;
 
@@ -107,7 +108,7 @@ function AllTags({
 			</CurrentTagsContainer>
 
 			<Space wrap direction="horizontal">
-				<Button type="primary" onClick={onTagAddHandler} icon={<PlusOutlined />}>
+				<Button type="primary" onClick={onTagAddHandler} icon={<Plus />}>
 					Add Tags Filter
 				</Button>
 

@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { LinkOutlined, LoadingOutlined } from '@ant-design/icons';
+import { LoadingOutlined } from '@ant-design/icons';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -20,6 +20,7 @@ import { getDataLinks } from './dataLinksUtils';
 import { getAggregateColumnHeader, getViewQuery } from './drilldownUtils';
 import { getBaseContextConfig } from './menuOptions';
 import { AggregateData } from './useAggregateDrilldown';
+import { Link } from '@signozhq/icons';
 
 interface UseBaseAggregateOptionsProps {
 	query: Query;
@@ -113,7 +114,7 @@ const useBaseAggregateOptions = ({
 			return allLinks.map(({ id, label, url }) => (
 				<ContextMenu.Item
 					key={id}
-					icon={<LinkOutlined />}
+					icon={<Link />}
 					onClick={(): void => {
 						window.open(url, '_blank');
 						onClose?.();

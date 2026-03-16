@@ -7,8 +7,6 @@ import React, {
 	useState,
 } from 'react';
 import {
-	CloseOutlined,
-	DownOutlined,
 	LoadingOutlined,
 	ReloadOutlined,
 } from '@ant-design/icons';
@@ -32,6 +30,7 @@ import {
 } from './utils';
 
 import './styles.scss';
+import { ChevronDown, X } from '@signozhq/icons';
 
 /**
  * CustomSelect Component
@@ -254,7 +253,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 	 */
 	const clearIcon = useCallback(
 		() => (
-			<CloseOutlined
+			<X
 				onClick={(e): void => {
 					e.stopPropagation();
 					if (onChange) {
@@ -726,7 +725,7 @@ const CustomSelect: React.FC<CustomSelectProps> = ({
 			popupMatchSelectWidth={popupMatchSelectWidth}
 			allowClear={allowClear ? { clearIcon } : false}
 			getPopupContainer={getPopupContainer ?? popupContainer}
-			suffixIcon={<DownOutlined style={{ cursor: 'default' }} />}
+			suffixIcon={<ChevronDown style={{ cursor: 'default' }} />}
 			dropdownRender={customDropdownRender}
 			menuItemSelectedIcon={null}
 			popupClassName={cx('custom-select-dropdown-container', popupClassName)}

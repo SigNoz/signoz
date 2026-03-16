@@ -1,11 +1,11 @@
 import { useState } from 'react';
-import { CloudDownloadOutlined } from '@ant-design/icons';
 import { Button, Dropdown, MenuProps } from 'antd';
 import { unparse } from 'papaparse';
 
 import { DownloadProps } from './Download.types';
 
 import './Download.styles.scss';
+import { CloudDownload } from '@signozhq/icons';
 
 function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 	const [isDownloading, setIsDownloading] = useState(false);
@@ -74,7 +74,7 @@ function Download({ data, isLoading, fileName }: DownloadProps): JSX.Element {
 				size="small"
 				type="link"
 			>
-				<CloudDownloadOutlined />
+				<CloudDownload />
 				Download
 			</Button>
 		</Dropdown>

@@ -4,7 +4,6 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
-	SearchOutlined,
 	SyncOutlined,
 } from '@ant-design/icons';
 import { Button, Input, Spin } from 'antd';
@@ -53,6 +52,7 @@ import { GraphContainer, TimeContainer } from './styles';
 import { FullViewProps } from './types';
 
 import './WidgetFullView.styles.scss';
+import { Search } from '@signozhq/icons';
 
 function FullView({
 	widget,
@@ -338,8 +338,8 @@ function FullView({
 									version={selectedDashboard?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
-									// filterConfigs={filterConfigs}
-									// queryComponents={queryComponents}
+								// filterConfigs={filterConfigs}
+								// queryComponents={queryComponents}
 								/>
 								<RightToolbarActions
 									onStageRunQuery={(): void => {
@@ -367,7 +367,7 @@ function FullView({
 						>
 							{isTablePanel && (
 								<Input
-									addonBefore={<SearchOutlined size={14} />}
+									addonBefore={<Search size={14} />}
 									className="global-search"
 									placeholder="Search..."
 									allowClear

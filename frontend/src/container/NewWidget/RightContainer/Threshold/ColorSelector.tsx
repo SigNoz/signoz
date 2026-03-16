@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction, useEffect, useState } from 'react';
-import { DownOutlined } from '@ant-design/icons';
 import { Button, ColorPicker, Dropdown, MenuProps, Space } from 'antd';
 import type { Color } from 'antd/es/color-picker';
 import useDebounce from 'hooks/useDebounce';
@@ -7,6 +6,7 @@ import useDebounce from 'hooks/useDebounce';
 import CustomColor from './CustomColor';
 
 import './ColorSelector.styles.scss';
+import { ChevronDown } from '@signozhq/icons';
 
 function ColorSelector({
 	thresholdColor = 'Red',
@@ -69,7 +69,7 @@ function ColorSelector({
 			>
 				<Space className="color-selector-space">
 					<CustomColor color={thresholdColor} />
-					<DownOutlined />
+					<ChevronDown />
 				</Space>
 			</Button>
 		</Dropdown>

@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
-import { CheckCircleOutlined, CloudDownloadOutlined } from '@ant-design/icons';
+import { CheckCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Alert,
@@ -37,6 +37,7 @@ import { BillingUsageGraph } from './BillingUsageGraph/BillingUsageGraph';
 import { prepareCsvData } from './BillingUsageGraph/utils';
 
 import './BillingContainer.styles.scss';
+import { CloudDownload } from '@signozhq/icons';
 
 interface DataType {
 	key: string;
@@ -447,7 +448,7 @@ export default function BillingContainer(): JSX.Element {
 							loading={isLoadingBilling || isLoadingManageBilling}
 							disabled={isLoading || isFetchingBillingData}
 							onClick={handleCsvDownload}
-							icon={<CloudDownloadOutlined />}
+							icon={<CloudDownload />}
 							className="periscope-btn"
 						>
 							Download CSV
@@ -480,13 +481,13 @@ export default function BillingContainer(): JSX.Element {
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
-							<Alert
-								message={headerText}
-								type="info"
-								showIcon
-								style={{ marginTop: 12 }}
-							/>
-					  )
+						<Alert
+							message={headerText}
+							type="info"
+							showIcon
+							style={{ marginTop: 12 }}
+						/>
+					)
 					: null}
 
 				{isLoading || isFetchingBillingData ? (
@@ -494,10 +495,10 @@ export default function BillingContainer(): JSX.Element {
 				) : null}
 
 				{!isLoading &&
-				!isFetchingBillingData &&
-				billingData &&
-				trialInfo?.gracePeriodEnd &&
-				showGracePeriodMessage ? (
+					!isFetchingBillingData &&
+					billingData &&
+					trialInfo?.gracePeriodEnd &&
+					showGracePeriodMessage ? (
 					<Alert
 						message={`Your data is safe with us until ${getFormattedDate(
 							trialInfo?.gracePeriodEnd || Date.now(),

@@ -1,6 +1,5 @@
 import { ReactNode } from 'react';
 import { useTranslation } from 'react-i18next';
-import { PlusOutlined } from '@ant-design/icons';
 import { Select, Spin } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useNotifications } from 'hooks/useNotifications';
@@ -9,6 +8,7 @@ import { Channels } from 'types/api/channels/getAll';
 import APIError from 'types/api/error';
 
 import { StyledCreateChannelOption, StyledSelect } from './styles';
+import { Plus } from '@signozhq/icons';
 
 export interface ChannelSelectProps {
 	disabled?: boolean;
@@ -66,7 +66,7 @@ function ChannelSelect({
 			children.push(
 				<Select.Option key="add-new-channel" value="add-new-channel">
 					<StyledCreateChannelOption>
-						<PlusOutlined />
+						<Plus />
 						Create a new channel
 					</StyledCreateChannelOption>
 				</Select.Option>,

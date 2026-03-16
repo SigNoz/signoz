@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { generatePath } from 'react-router-dom';
-import { LinkOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import {
 	Button,
@@ -46,6 +45,7 @@ import {
 } from './utils';
 
 import './TableView.styles.scss';
+import { Link } from '@signozhq/icons';
 
 interface TableViewProps {
 	logData: ILog;
@@ -259,7 +259,7 @@ function TableView({
 											onTraceHandler(record, event);
 										}}
 									>
-										<LinkOutlined
+										<Link
 											style={{
 												width: '15px',
 											}}

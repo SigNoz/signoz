@@ -2,14 +2,11 @@ import { ReactNode, useCallback, useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
 import {
 	AlertOutlined,
-	CloudDownloadOutlined,
 	CopyOutlined,
-	DeleteOutlined,
 	EditFilled,
 	FullscreenOutlined,
 	InfoCircleOutlined,
 	MoreOutlined,
-	SearchOutlined,
 } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Dropdown, Input, MenuProps, Tooltip, Typography } from 'antd';
@@ -41,6 +38,7 @@ import { MenuItem } from './types';
 import { generateMenuList, isTWidgetOptions } from './utils';
 
 import './WidgetHeader.styles.scss';
+import { CloudDownload, Search, Trash } from '@signozhq/icons';
 
 interface IWidgetHeaderProps {
 	title: ReactNode;
@@ -169,14 +167,14 @@ function WidgetHeader({
 			},
 			{
 				key: MenuItemKeys.Download,
-				icon: <CloudDownloadOutlined />,
+				icon: <CloudDownload />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Download],
 				isVisible: widget.panelTypes === PANEL_TYPES.TABLE,
 				disabled: false,
 			},
 			{
 				key: MenuItemKeys.Delete,
-				icon: <DeleteOutlined />,
+				icon: <Trash />,
 				label: MENUITEM_KEYS_VS_LABELS[MenuItemKeys.Delete],
 				isVisible: headerMenuList?.includes(MenuItemKeys.Delete) || false,
 				disabled: !deleteWidget,
@@ -242,7 +240,7 @@ function WidgetHeader({
 		<div className="widget-header-container">
 			{showGlobalSearch ? (
 				<Input
-					addonBefore={<SearchOutlined size={14} />}
+					addonBefore={<Search size={14} />}
 					placeholder="Search..."
 					bordered={false}
 					data-testid="widget-header-search-input"
@@ -312,7 +310,7 @@ function WidgetHeader({
 							<WarningPopover warningData={queryResponse.data?.warning as Warning} />
 						)}
 						{globalSearchAvailable && (
-							<SearchOutlined
+							<Search
 								className="search-header-icons"
 								onClick={(): void => setShowGlobalSearch(true)}
 								data-testid="widget-header-search"
@@ -323,9 +321,8 @@ function WidgetHeader({
 							<Dropdown menu={menu} trigger={['hover']} placement="bottomRight">
 								<MoreOutlined
 									data-testid="widget-header-options"
-									className={`widget-header-more-options ${
-										globalSearchAvailable ? 'widget-header-more-options-visible' : ''
-									}`}
+									className={`widget-header-more-options ${globalSearchAvailable ? 'widget-header-more-options-visible' : ''
+										}`}
 								/>
 							</Dropdown>
 						)}

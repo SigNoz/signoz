@@ -1,10 +1,11 @@
-import { FilterOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
+import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import cx from 'classnames';
 import { Atom, Binoculars, SquareMousePointer, Terminal } from 'lucide-react';
 import { ExplorerViews } from 'pages/LogsExplorer/utils';
 
 import './ToolbarActions.styles.scss';
+import { Filter } from '@signozhq/icons';
 
 interface LeftToolbarActionsProps {
 	items: any;
@@ -30,7 +31,7 @@ export default function LeftToolbarActions({
 			{!showFilter && (
 				<Tooltip title="Show Filters">
 					<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-						<FilterOutlined />
+						<Filter />
 						<VerticalAlignTopOutlined rotate={90} />
 					</Button>
 				</Tooltip>

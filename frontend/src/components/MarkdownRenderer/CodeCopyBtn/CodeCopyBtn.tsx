@@ -1,8 +1,9 @@
 import React, { useState } from 'react';
-import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
+import { CopyOutlined } from '@ant-design/icons';
 import cx from 'classnames';
 
 import './CodeCopyBtn.scss';
+import { Check } from '@signozhq/icons';
 
 function CodeCopyBtn({
 	children,
@@ -32,14 +33,14 @@ function CodeCopyBtn({
 	return (
 		<div className={cx('code-copy-btn', isSnippetCopied ? 'copied' : '')}>
 			<button type="button" onClick={handleClick}>
-				{!isSnippetCopied ? <CopyOutlined /> : <CheckOutlined />}
+				{!isSnippetCopied ? <CopyOutlined /> : <Check />}
 			</button>
 		</div>
 	);
 }
 
 CodeCopyBtn.defaultProps = {
-	onCopyClick: (): void => {},
+	onCopyClick: (): void => { },
 };
 
 export default CodeCopyBtn;

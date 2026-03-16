@@ -1,5 +1,4 @@
 import { Dispatch, SetStateAction, useCallback, useMemo } from 'react';
-import { DownOutlined } from '@ant-design/icons';
 import { Button, Dropdown, Typography } from 'antd';
 import TimeItems, {
 	timePreferance,
@@ -10,6 +9,7 @@ import { Globe } from 'lucide-react';
 import { menuItems } from './config';
 
 import './TimePreference.styles.scss';
+import { ChevronDown } from '@signozhq/icons';
 
 function TimePreference({
 	setSelectedTime,
@@ -47,7 +47,7 @@ function TimePreference({
 						{selectedTime.name}
 					</Typography.Text>
 				</div>
-				<DownOutlined />
+				<ChevronDown />
 			</Button>
 		</Dropdown>
 	);

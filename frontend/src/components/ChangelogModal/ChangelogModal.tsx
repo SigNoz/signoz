@@ -1,6 +1,5 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
-import { CheckOutlined, CloseOutlined } from '@ant-design/icons';
 import { Button, Modal } from 'antd';
 import updateUserPreference from 'api/v1/user/preferences/name/update';
 import cx from 'classnames';
@@ -15,6 +14,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import ChangelogRenderer from './components/ChangelogRenderer';
 
 import './ChangelogModal.styles.scss';
+import { Check, X } from '@signozhq/icons';
 
 interface Props {
 	changelog: ChangelogSchema;
@@ -120,12 +120,12 @@ function ChangelogModal({ changelog, onClose }: Props): JSX.Element {
 				>
 					{!isCloudUser && (
 						<div className="changelog-modal-footer-ctas">
-							<Button type="default" icon={<CloseOutlined />} onClick={onClose}>
+							<Button type="default" icon={<X />} onClick={onClose}>
 								Skip for now
 							</Button>
 							<Button
 								type="primary"
-								icon={<CheckOutlined />}
+								icon={<Check />}
 								onClick={onClickUpdateWorkspace}
 							>
 								Update my workspace

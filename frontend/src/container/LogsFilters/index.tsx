@@ -1,7 +1,7 @@
 import { ChangeEvent, useCallback, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { CloseOutlined, PlusCircleFilled } from '@ant-design/icons';
+import { PlusCircleFilled } from '@ant-design/icons';
 import { Col, Input } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';
 import { fieldSearchFilter } from 'lib/logs/fieldSearch';
@@ -13,6 +13,7 @@ import FieldItem from './FieldItem';
 import { CategoryContainer, FieldContainer } from './styles';
 import { IHandleInterestProps, IHandleRemoveInterestProps } from './types';
 import { onHandleAddInterest, onHandleRemoveInterest } from './utils';
+import { X } from '@signozhq/icons';
 
 function LogsFilters(): JSX.Element {
 	const {
@@ -47,14 +48,14 @@ function LogsFilters(): JSX.Element {
 			fieldData,
 			fieldIndex,
 		}: IHandleRemoveInterestProps) => (): Promise<void> =>
-			onHandleRemoveInterest({
-				fieldData,
-				fieldIndex,
-				interesting,
-				interestingFieldLoading,
-				selected,
-				setSelectedFieldLoading,
-			}),
+				onHandleRemoveInterest({
+					fieldData,
+					fieldIndex,
+					interesting,
+					interestingFieldLoading,
+					selected,
+					setSelectedFieldLoading,
+				}),
 		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
 	);
 
@@ -79,7 +80,7 @@ function LogsFilters(): JSX.Element {
 								name={field.name}
 								fieldData={field}
 								fieldIndex={idx}
-								buttonIcon={<CloseOutlined style={ICON_STYLE.CLOSE} />}
+								buttonIcon={<X style={ICON_STYLE.CLOSE} />}
 								buttonOnClick={onHandleRemoveSelected({
 									fieldData: field,
 									fieldIndex: idx,

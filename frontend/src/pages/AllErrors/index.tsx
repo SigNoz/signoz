@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useLocation } from 'react-router-dom';
-import { FilterOutlined } from '@ant-design/icons';
 import { Button, Tooltip } from 'antd';
 import getLocalStorageKey from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
@@ -21,6 +20,7 @@ import { isNull } from 'lodash-es';
 import { routes } from './config';
 
 import './AllErrors.styles.scss';
+import { Filter } from '@signozhq/icons';
 
 function AllErrors(): JSX.Element {
 	const { pathname } = useLocation();
@@ -70,7 +70,7 @@ function AllErrors(): JSX.Element {
 								!showFilters ? (
 									<Tooltip title="Show Filters">
 										<Button onClick={handleFilterVisibilityChange} className="filter-btn">
-											<FilterOutlined />
+											<Filter />
 										</Button>
 									</Tooltip>
 								) : undefined

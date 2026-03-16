@@ -1,5 +1,4 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
-import { CheckOutlined } from '@ant-design/icons';
 import {
 	Button,
 	DatePicker,
@@ -49,6 +48,7 @@ import {
 } from './PlannedDowntimeutils';
 
 import './PlannedDowntime.styles.scss';
+import { Check } from '@signozhq/icons';
 
 dayjs.locale('en');
 dayjs.extend(utc);
@@ -117,7 +117,7 @@ export function PlannedDowntimeForm(
 
 	const [recurrenceType, setRecurrenceType] = useState<string | null>(
 		(initialValues.schedule?.recurrence?.repeatType as string) ||
-			recurrenceOptions.doesNotRepeat.value,
+		recurrenceOptions.doesNotRepeat.value,
 	);
 
 	const timezoneInitialValue = !isEmpty(initialValues.schedule?.timezone)
@@ -150,11 +150,11 @@ export function PlannedDowntimeForm(
 						timezone: values.timezone,
 						endTime: values.endTime
 							? handleTimeConversion(
-									values.endTime,
-									timezoneInitialValue,
-									values.timezone,
-									shouldKeepLocalTime,
-							  )
+								values.endTime,
+								timezoneInitialValue,
+								values.timezone,
+								shouldKeepLocalTime,
+							)
 							: undefined,
 						recurrence: values.recurrence as Recurrence,
 					},
@@ -202,28 +202,28 @@ export function PlannedDowntimeForm(
 			values?.recurrence?.repeatType === recurrenceOptions.doesNotRepeat.value
 				? undefined
 				: {
-						duration: values.recurrence?.duration
-							? `${values.recurrence?.duration}${durationUnit}`
-							: undefined,
-						endTime: !isEmpty(values.endTime)
-							? handleTimeConversion(
-									values.endTime,
-									timezoneInitialValue,
-									values.timezone,
-									!isEditMode,
-							  )
-							: undefined,
-						startTime: handleTimeConversion(
-							values.startTime,
+					duration: values.recurrence?.duration
+						? `${values.recurrence?.duration}${durationUnit}`
+						: undefined,
+					endTime: !isEmpty(values.endTime)
+						? handleTimeConversion(
+							values.endTime,
 							timezoneInitialValue,
 							values.timezone,
 							!isEditMode,
-						),
-						repeatOn: !values.recurrence?.repeatOn?.length
-							? undefined
-							: values.recurrence?.repeatOn,
-						repeatType: values.recurrence?.repeatType,
-				  };
+						)
+						: undefined,
+					startTime: handleTimeConversion(
+						values.startTime,
+						timezoneInitialValue,
+						values.timezone,
+						!isEditMode,
+					),
+					repeatOn: !values.recurrence?.repeatOn?.length
+						? undefined
+						: values.recurrence?.repeatOn,
+					repeatType: values.recurrence?.repeatType,
+				};
 
 		const payloadValues = { ...values, recurrence: recurrenceData };
 		await saveHanlder(payloadValues);
@@ -370,9 +370,8 @@ export function PlannedDowntimeForm(
 			case 'monthly':
 				return `Scheduled from ${formattedStartDate}, monthly on the ${ordinalFormat} starting at ${formattedStartTime}.`;
 			case 'weekly':
-				return `Scheduled from ${formattedStartDate}, weekly ${
-					formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
-				} starting at ${formattedStartTime}`;
+				return `Scheduled from ${formattedStartDate}, weekly ${formattedDaysOfWeek ? `on [${formattedDaysOfWeek}]` : ''
+					} starting at ${formattedStartTime}`;
 			default:
 				return `Scheduled for ${formattedStartDate} starting at ${formattedStartTime}.`;
 		}
@@ -601,7 +600,7 @@ export function PlannedDowntimeForm(
 							key="submit"
 							type="primary"
 							htmlType="submit"
-							icon={<CheckOutlined />}
+							icon={<Check />}
 							onClick={handleOk}
 							loading={saveLoading || isLoading}
 						>

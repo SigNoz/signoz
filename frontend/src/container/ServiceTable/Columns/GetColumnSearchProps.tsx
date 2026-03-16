@@ -1,5 +1,4 @@
 import { Link } from 'react-router-dom';
-import { SearchOutlined } from '@ant-design/icons';
 import type { ColumnType } from 'antd/es/table';
 import ROUTES from 'constants/routes';
 import { routeConfig } from 'container/SideNav/config';
@@ -8,13 +7,14 @@ import { ServicesList } from 'types/api/metrics/getService';
 
 import { filterDropdown } from '../Filter/FilterDropdown';
 import { Name } from '../styles';
+import { Search } from '@signozhq/icons';
 
 export const getColumnSearchProps = (
 	dataIndex: keyof ServicesList,
 	search: string,
 ): ColumnType<ServicesList> => ({
 	filterDropdown,
-	filterIcon: <SearchOutlined />,
+	filterIcon: <Search />,
 	onFilter: (
 		value: string | number | boolean,
 		record: ServicesList,

@@ -206,10 +206,10 @@ export function Filter(props: FilterProps): JSX.Element {
 							items: props?.resetAll
 								? []
 								: (unionTagFilterItems(item.filters?.items || [], preparePostData())
-										.map((item) =>
-											item.key?.key === props?.clearByType ? undefined : item,
-										)
-										.filter((i) => i) as TagFilterItem[]),
+									.map((item) =>
+										item.key?.key === props?.clearByType ? undefined : item,
+									)
+									.filter((i) => i) as TagFilterItem[]),
 							op: item.filters?.op || 'AND',
 						},
 					})),
