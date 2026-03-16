@@ -30,6 +30,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -234,20 +235,7 @@ function DateTimeSelection({
 
 	const updateLocalStorageForRoutes = useCallback(
 		(value: Time | string): void => {
-			const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-			if (preRoutes !== null) {
-				const preRoutesObject = JSON.parse(preRoutes);
-
-				const preRoute = {
-					...preRoutesObject,
-				};
-				preRoute[location.pathname] = value;
-
-				setLocalStorageKey(
-					LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-					JSON.stringify(preRoute),
-				);
-			}
+			persistTimeDurationForRoute(location.pathname, String(value));
 		},
 		[location.pathname],
 	);
@@ -738,6 +726,7 @@ function DateTimeSelection({
 						showRecentlyUsed={showRecentlyUsed}
 						minTime={minTimeForDateTimePicker}
 						maxTime={maxTimeForDateTimePicker}
+						isModalTimeSelection={isModalTimeSelection}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

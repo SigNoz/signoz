@@ -72,12 +72,25 @@
 	}
 
 	.resizable-panel-right-container {
-		overflow-y: auto;
+		overflow-y: auto !important;
 		min-width: 350px;
+
+		&::-webkit-scrollbar {
+			width: 0.3rem;
+		}
+		&::-webkit-scrollbar-thumb {
+			background: rgb(136, 136, 136);
+			border-radius: 0.625rem;
+		}
+		&::-webkit-scrollbar-track {
+			background: transparent;
+		}
 	}
 
-	.widget-resizable-handle {
-		height: 100vh;
+	.widget-resizable-panel-group {
+		.widget-resizable-handle {
+			height: 100vh;
+		}
 	}
 }
 
@@ -95,6 +108,13 @@
 				color: var(--bg-slate-300);
 				border-left: 1px solid var(--bg-vanilla-300);
 			}
+		}
+	}
+
+	.widget-resizable-panel-group {
+		.bg-border {
+			background: var(--bg-vanilla-300);
+			border-color: var(--bg-vanilla-300);
 		}
 	}
 }
