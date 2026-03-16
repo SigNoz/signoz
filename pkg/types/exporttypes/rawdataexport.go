@@ -14,7 +14,7 @@ type ExportRawDataQueryParams struct {
 	ExportRawDataFormatQueryParam
 
 	// Signal specifies the type of data to export: "logs" or "traces"
-	Signal telemetrytypes.Signal `query:"signal" enum:"logs,traces" required:"true" description:"The type of data to export."`
+	Signal telemetrytypes.Signal `query:"signal" enum:"logs,traces" description:"The type of data to export."`
 
 	// Source specifies the type of data to export: "logs" or "traces"
 	// Deprecated: Use Signal instead.
@@ -85,7 +85,7 @@ func (p *ExportRawDataQueryParams) Normalize() error {
 func (p *ExportRawDataQueryParams) Validate() error {
 
 	if p.Signal != telemetrytypes.SignalLogs && p.Signal != telemetrytypes.SignalTraces {
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal %s", p.Signal).WithAdditional("Allowed values: [logs, traces]")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid signal %s", p.Signal.String).WithAdditional("Allowed values: [logs, traces]")
 	}
 
 	return nil

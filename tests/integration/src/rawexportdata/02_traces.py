@@ -639,7 +639,6 @@ def test_export_traces_with_composite_query_trace_operator(
         },
     )
 
-    print(response.text)
     assert response.status_code == HTTPStatus.OK
     assert response.headers["Content-Type"] == "application/x-ndjson"
 

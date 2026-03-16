@@ -88,6 +88,7 @@ def test_export_logs_csv(
     params = {
         "start": start_ns,
         "end": end_ns,
+        "source": "logs", 
     }
 
     # Export logs as CSV (default format, no source needed)
