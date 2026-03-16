@@ -41,7 +41,7 @@ module.exports = {
 		'jsx-a11y', // Accessibility rules
 		'import', // Import/export linting
 		'sonarjs', // Code quality/complexity
-		// TODO: Uncomment after running: yarn add -D eslint-plugin-spellcheck
+		// TODO: Uncomment after running: pnpm add -D eslint-plugin-spellcheck
 		// 'spellcheck', // Correct spellings
 	],
 	settings: {

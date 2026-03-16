@@ -13,3 +13,5 @@ public/
 src/parser/**
 
 src/TraceOperator/parser/**
+
+pnpm-lock.yaml

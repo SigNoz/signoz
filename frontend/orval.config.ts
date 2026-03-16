@@ -80,7 +80,7 @@ export default defineConfig({
 				header: (info: { title: string; version: string }): string[] => [
 					`! Do not edit manually`,
 					`* The file has been auto-generated using Orval for SigNoz`,
-					`* regenerate with 'yarn generate:api'`,
+					`* regenerate with 'pnpm generate:api'`,
 					...(info.title ? [info.title] : []),
 					...(info.version ? [`OpenAPI spec version: ${info.version}`] : []),
 				],

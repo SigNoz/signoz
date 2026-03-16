@@ -27,6 +27,11 @@ jobs:
         with:
           node-version: lts/*
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Mask secrets and input
         run: |
           echo "::add-mask::${{ secrets.BASE_URL }}"
@@ -37,12 +42,11 @@ jobs:
       - name: Install dependencies
         working-directory: frontend
         run: |
-          npm install -g yarn
-          yarn
+          pnpm install
 
       - name: Install Playwright Browsers
         working-directory: frontend
-        run: yarn playwright install --with-deps
+        run: pnpm playwright install --with-deps
 
       - name: Run Playwright Tests
         working-directory: frontend
@@ -51,7 +55,7 @@ jobs:
           LOGIN_USERNAME="${{ secrets.LOGIN_USERNAME }}" \
           LOGIN_PASSWORD="${{ secrets.LOGIN_PASSWORD }}" \
           USER_ROLE="${{ github.event.inputs.userRole }}" \
-          yarn playwright test
+          pnpm playwright test
 
       - name: Upload Playwright Report
         uses: actions/upload-artifact@v4

@@ -77,6 +77,10 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: setup-pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - name: docker-community
         shell: bash
         run: |
@@ -106,9 +110,13 @@ jobs:
         uses: actions/setup-node@v5
         with:
           node-version: "22"
+      - name: setup-pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
       - name: install-frontend
-        run: cd frontend && yarn install
+        run: cd frontend && pnpm install
       - name: generate-api-clients
         run: |
-          cd frontend && yarn generate:api
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)
+          cd frontend && pnpm generate:api
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run pnpm generate:api in frontend/ locally and commit."; exit 1)

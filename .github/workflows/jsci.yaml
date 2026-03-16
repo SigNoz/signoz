@@ -78,10 +78,15 @@ jobs:
         with:
           node-version: "22"
 
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10
+
       - name: Install frontend dependencies
         working-directory: ./frontend
         run: |
-          yarn install
+          pnpm install
 
       - name: Install uv
         uses: astral-sh/setup-uv@v5
@@ -98,7 +103,7 @@ jobs:
       - name: Generate permissions.type.ts
         working-directory: ./frontend
         run: |
-          yarn generate:permissions-type
+          pnpm generate:permissions-type
 
       - name: Teardown test environment
         if: always()
@@ -108,6 +113,6 @@ jobs:
       - name: Check for changes
         run: |
           if ! git diff --exit-code frontend/src/hooks/useAuthZ/permissions.type.ts; then
-            echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: npm run generate:permissions-type (from the frontend directory)"
+            echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: pnpm generate:permissions-type (from the frontend directory)"
             exit 1
           fi

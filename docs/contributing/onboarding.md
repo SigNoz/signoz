@@ -18,40 +18,40 @@ The configuration file is a JSON array containing data source objects. Each obje
 
 ### Required Keys
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `dataSource` | `string` | Unique identifier for the data source (kebab-case, e.g., `"aws-ec2"`) |
-| `label` | `string` | Display name shown to users (e.g., `"AWS EC2"`) |
-| `tags` | `string[]` | Array of category tags for grouping (e.g., `["AWS"]`, `["database"]`) |
-| `module` | `string` | Destination module after onboarding completion |
-| `imgUrl` | `string` | Path to the logo/icon **(SVG required)** (e.g., `"/Logos/ec2.svg"`) |
+| Key          | Type       | Description                                                           |
+| ------------ | ---------- | --------------------------------------------------------------------- |
+| `dataSource` | `string`   | Unique identifier for the data source (kebab-case, e.g., `"aws-ec2"`) |
+| `label`      | `string`   | Display name shown to users (e.g., `"AWS EC2"`)                       |
+| `tags`       | `string[]` | Array of category tags for grouping (e.g., `["AWS"]`, `["database"]`) |
+| `module`     | `string`   | Destination module after onboarding completion                        |
+| `imgUrl`     | `string`   | Path to the logo/icon **(SVG required)** (e.g., `"/Logos/ec2.svg"`)   |
 
 ### Optional Keys
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `link` | `string` | Docs link to redirect to (e.g., `"/docs/aws-monitoring/ec2/"`) |
-| `relatedSearchKeywords` | `string[]` | Array of keywords for search functionality |
-| `question` | `object` | Nested question object for multi-step flows |
-| `internalRedirect` | `boolean` | When `true`, navigates within the app instead of showing docs |
+| Key                     | Type       | Description                                                    |
+| ----------------------- | ---------- | -------------------------------------------------------------- |
+| `link`                  | `string`   | Docs link to redirect to (e.g., `"/docs/aws-monitoring/ec2/"`) |
+| `relatedSearchKeywords` | `string[]` | Array of keywords for search functionality                     |
+| `question`              | `object`   | Nested question object for multi-step flows                    |
+| `internalRedirect`      | `boolean`  | When `true`, navigates within the app instead of showing docs  |
 
 ## Module Values
 
 The `module` key determines where users are redirected after completing onboarding:
 
-| Value | Destination |
-|-------|-------------|
-| `apm` | APM / Traces |
-| `logs` | Logs Explorer |
-| `metrics` | Metrics Explorer |
-| `dashboards` | Dashboards |
-| `infra-monitoring-hosts` | Infrastructure Monitoring - Hosts |
-| `infra-monitoring-k8s` | Infrastructure Monitoring - Kubernetes |
-| `messaging-queues-kafka` | Messaging Queues - Kafka |
-| `messaging-queues-celery` | Messaging Queues - Celery |
-| `integrations` | Integrations page |
-| `home` | Home page |
-| `api-monitoring` | API Monitoring |
+| Value                     | Destination                            |
+| ------------------------- | -------------------------------------- |
+| `apm`                     | APM / Traces                           |
+| `logs`                    | Logs Explorer                          |
+| `metrics`                 | Metrics Explorer                       |
+| `dashboards`              | Dashboards                             |
+| `infra-monitoring-hosts`  | Infrastructure Monitoring - Hosts      |
+| `infra-monitoring-k8s`    | Infrastructure Monitoring - Kubernetes |
+| `messaging-queues-kafka`  | Messaging Queues - Kafka               |
+| `messaging-queues-celery` | Messaging Queues - Celery              |
+| `integrations`            | Integrations page                      |
+| `home`                    | Home page                              |
+| `api-monitoring`          | API Monitoring                         |
 
 ## Question Object Structure
 
@@ -91,14 +91,14 @@ The `question` object enables multi-step selection flows:
 
 ### Question Keys
 
-| Key | Type | Description |
-|-----|------|-------------|
-| `desc` | `string` | Question text displayed to the user |
-| `type` | `string` | Currently only `"select"` is supported |
-| `helpText` | `string` | (Optional) Additional help text below the question |
-| `helpLink` | `string` | (Optional) Docs link for the help section |
+| Key            | Type     | Description                                                 |
+| -------------- | -------- | ----------------------------------------------------------- |
+| `desc`         | `string` | Question text displayed to the user                         |
+| `type`         | `string` | Currently only `"select"` is supported                      |
+| `helpText`     | `string` | (Optional) Additional help text below the question          |
+| `helpLink`     | `string` | (Optional) Docs link for the help section                   |
 | `helpLinkText` | `string` | (Optional) Text for the help link (default: "Learn more →") |
-| `options` | `array` | Array of option objects |
+| `options`      | `array`  | Array of option objects                                     |
 
 ## Option Object Structure
 
@@ -291,7 +291,7 @@ Options can be simple (direct link) or nested (with another question):
 
 1. Add your data source object to the JSON array
 2. Ensure the logo exists in `public/Logos/`
-3. Test the flow locally with `yarn dev`
+3. Test the flow locally with `pnpm dev`
 4. Validation:
    - Navigate to the [onboarding page](http://localhost:3301/get-started-with-signoz-cloud) on your local machine
    - Data source appears in the list

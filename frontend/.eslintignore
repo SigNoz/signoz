@@ -5,3 +5,4 @@ i18-generate-hash.js
 src/parser/TraceOperatorParser/**
 
 orval.config.ts
+pnpm-lock.yaml
