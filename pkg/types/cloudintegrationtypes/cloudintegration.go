@@ -51,7 +51,7 @@ type StorableCloudIntegrationService struct {
 	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text,notnull,unique:cloud_integration_id_type,references:cloud_integration(id),on_delete:cascade"`
 }
 
-// Scan scans value from DB
+// Scan scans value from DB.
 func (r *StorableAgentReport) Scan(src any) error {
 	var data []byte
 	switch v := src.(type) {
@@ -65,7 +65,7 @@ func (r *StorableAgentReport) Scan(src any) error {
 	return json.Unmarshal(data, r)
 }
 
-// Value creates value to be stored in DB
+// Value creates value to be stored in DB.
 func (r *StorableAgentReport) Value() (driver.Value, error) {
 	if r == nil {
 		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")

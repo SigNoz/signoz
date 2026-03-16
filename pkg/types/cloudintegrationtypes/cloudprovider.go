@@ -5,15 +5,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// CloudProviderType type alias
+// CloudProviderType type alias.
 type CloudProviderType struct{ valuer.String }
 
 var (
-	// cloud providers
+	// cloud providers.
 	CloudProviderTypeAWS   = CloudProviderType{valuer.NewString("aws")}
 	CloudProviderTypeAzure = CloudProviderType{valuer.NewString("azure")}
 
-	// errors
+	// errors.
 	ErrCodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provider")
 
 	AWSIntegrationUserEmail   = valuer.MustNewEmail("aws-integration@signoz.io")

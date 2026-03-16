@@ -2,7 +2,7 @@ package cloudintegrationtypes
 
 import "github.com/SigNoz/signoz/pkg/types/integrationtypes"
 
-// request for creating connection artifact
+// request for creating connection artifact.
 type (
 	PostableConnectionArtifact = ConnectionArtifactRequest
 
@@ -62,6 +62,7 @@ type (
 	PostableAgentCheckInRequest struct {
 		AgentCheckInRequest
 		// following are backward compatible fields for older running agents
+		// which gets mapped to new fields in AgentCheckInRequest
 		CloudIntegrationId string `json:"cloud_integration_id"`
 		CloudAccountId     string `json:"cloud_account_id"`
 	}

@@ -9,7 +9,7 @@ var (
 	CodeMismatchCloudProvider = errors.MustNewCode("cloud_provider_mismatch")
 )
 
-// List of all valid cloud regions on Amazon Web Services
+// List of all valid cloud regions on Amazon Web Services.
 var ValidAWSRegions = map[string]struct{}{
 	"af-south-1":     {}, // Africa (Cape Town).
 	"ap-east-1":      {}, // Asia Pacific (Hong Kong).
@@ -42,7 +42,7 @@ var ValidAWSRegions = map[string]struct{}{
 	"us-west-2":      {}, // US West (Oregon).
 }
 
-// List of all valid cloud regions for Microsoft Azure
+// List of all valid cloud regions for Microsoft Azure.
 var ValidAzureRegions = map[string]struct{}{
 	"australiacentral":   {}, // Australia Central
 	"australiacentral2":  {}, // Australia Central 2

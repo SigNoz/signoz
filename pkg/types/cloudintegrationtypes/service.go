@@ -12,18 +12,20 @@ import (
 var S3Sync = valuer.NewString("s3sync")
 
 type (
-	ServicesSummary struct {
-		Services []*ServiceSummary `json:"services"`
+	ServicesMetadata struct {
+		Services []*ServiceMetadata `json:"services"`
 	}
 
-	ServiceSummary struct {
+	// ServiceMetadata helps to quickly list available services and whether it is enabled or not.
+	// As getting complete service definition is a heavy operation and the response is also large,
+	// initial integration page load can be very slow.
+	ServiceMetadata struct {
 		ServiceDefinitionMetadata
-		ServiceConfig *ServiceConfig `json:"serviceConfig"`
+		// if the service is enabled for the account
+		Enabled bool `json:"enabled"`
 	}
 
-	GettableServiceSummary = ServiceSummary
-
-	GettableServicesSummary = ServicesSummary
+	GettableServicesMetadata = ServicesMetadata
 
 	Service struct {
 		ServiceDefinition
@@ -33,8 +35,14 @@ type (
 	GettableService = Service
 
 	UpdateServiceConfigRequest struct {
-		ProviderAccountID string         `json:"providerAccountId"`
-		ServiceConfig     *ServiceConfig `json:"serviceConfig"`
+		CloudIntegrationId valuer.UUID    `json:"cloudIntegrationId"`
+		ServiceConfig      *ServiceConfig `json:"serviceConfig"`
+	}
+
+	UpdateServiceConfigResponse struct {
+		Id                 string         `json:"id"` // service id
+		CloudIntegrationId valuer.UUID    `json:"cloudIntegrationId"`
+		ServiceConfig      *ServiceConfig `json:"serviceConfig"`
 	}
 )
 
@@ -48,7 +56,7 @@ type AWSServiceConfig struct {
 }
 
 // AWSServiceLogsConfig is AWS specific logs config for a service
-// NOTE: the JSON keys are snake case for backward compatibility with existing agents
+// NOTE: the JSON keys are snake case for backward compatibility with existing agents.
 type AWSServiceLogsConfig struct {
 	Enabled   bool                `json:"enabled"`
 	S3Buckets map[string][]string `json:"s3_buckets,omitempty"`
@@ -58,7 +66,7 @@ type AWSServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-// DefinitionMetadata represents service definition metadata. This is useful for showing service overview
+// DefinitionMetadata represents service definition metadata. This is useful for showing service overview.
 type ServiceDefinitionMetadata struct {
 	Id    string `json:"id"`
 	Title string `json:"title"`
@@ -80,32 +88,32 @@ type CollectionStrategy struct {
 	AWS *AWSCollectionStrategy `json:"aws,omitempty"`
 }
 
-// Assets represents the collection of dashboards
+// Assets represents the collection of dashboards.
 type Assets struct {
 	Dashboards []Dashboard `json:"dashboards"`
 }
 
-// SupportedSignals for cloud provider's service
+// SupportedSignals for cloud provider's service.
 type SupportedSignals struct {
 	Logs    bool `json:"logs"`
 	Metrics bool `json:"metrics"`
 }
 
-// DataCollected is curated static list of metrics and logs, this is shown as part of service overview
+// DataCollected is curated static list of metrics and logs, this is shown as part of service overview.
 type DataCollected struct {
 	Logs    []CollectedLogAttribute `json:"logs"`
 	Metrics []CollectedMetric       `json:"metrics"`
 }
 
 // CollectedLogAttribute represents a log attribute that is present in all log entries for a service,
-// this is shown as part of service overview
+// this is shown as part of service overview.
 type CollectedLogAttribute struct {
 	Name string `json:"name"`
 	Path string `json:"path"`
 	Type string `json:"type"`
 }
 
-// CollectedMetric represents a metric that is collected for a service, this is shown as part of service overview
+// CollectedMetric represents a metric that is collected for a service, this is shown as part of service overview.
 type CollectedMetric struct {
 	Name        string `json:"name"`
 	Type        string `json:"type"`
@@ -116,7 +124,7 @@ type CollectedMetric struct {
 // AWSCollectionStrategy represents signal collection strategy for AWS services.
 // this is AWS specific.
 // NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents
+// with existing agents.
 type AWSCollectionStrategy struct {
 	Metrics   *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
 	Logs      *AWSLogsStrategy    `json:"aws_logs,omitempty"`
@@ -126,7 +134,7 @@ type AWSCollectionStrategy struct {
 // AWSMetricsStrategy represents metrics collection strategy for AWS services.
 // this is AWS specific.
 // NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents
+// with existing agents.
 type AWSMetricsStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	StreamFilters []struct {
@@ -140,7 +148,7 @@ type AWSMetricsStrategy struct {
 // AWSLogsStrategy represents logs collection strategy for AWS services.
 // this is AWS specific.
 // NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents
+// with existing agents.
 type AWSLogsStrategy struct {
 	Subscriptions []struct {
 		// subscribe to all logs groups with specified prefix.
@@ -154,13 +162,15 @@ type AWSLogsStrategy struct {
 }
 
 // Dashboard represents a dashboard definition for cloud integration.
+// This is used to show available pre-made dashboards for a service,
+// hence has additional fields like name and description and url for redirection to the right dashboard on click.
 type Dashboard struct {
-	Id          string                                `json:"id"`
-	Url         string                                `json:"url"`
-	Title       string                                `json:"title"`
-	Description string                                `json:"description"`
-	Image       string                                `json:"image"`
-	Definition  *dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
+	Id          string                               `json:"id"`
+	Url         string                               `json:"url"`
+	Title       string                               `json:"title"`
+	Description string                               `json:"description"`
+	Image       string                               `json:"image"`
+	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
 // UTILS
@@ -171,12 +181,12 @@ func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcId, dash
 	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
 }
 
-// GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition
+// GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition.
 func GetDashboardsFromAssets(
 	svcId string,
 	orgID valuer.UUID,
 	cloudProvider CloudProviderType,
-	createdAt *time.Time,
+	createdAt time.Time,
 	assets Assets,
 ) []*dashboardtypes.Dashboard {
 	dashboards := make([]*dashboardtypes.Dashboard, 0)
@@ -187,10 +197,10 @@ func GetDashboardsFromAssets(
 			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
 			Locked: true,
 			OrgID:  orgID,
-			Data:   *d.Definition,
+			Data:   d.Definition,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: *createdAt,
-				UpdatedAt: *createdAt,
+				CreatedAt: createdAt,
+				UpdatedAt: createdAt,
 			},
 			UserAuditable: types.UserAuditable{
 				CreatedBy: author,

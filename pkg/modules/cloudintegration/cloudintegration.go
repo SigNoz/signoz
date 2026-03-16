@@ -31,40 +31,41 @@ type Module interface {
 	// UpdateAccountConfig updates the configuration of an existing cloud account for a specific organization.
 	UpdateAccountConfig(
 		ctx context.Context,
-		orgId,
-		accountId valuer.UUID,
+		orgID,
+		accountID valuer.UUID,
 		config *cloudintegrationtypes.UpdateAccountConfigRequest,
 	) (*cloudintegrationtypes.Account, error)
 
-	// ListServicesSummary return list of services for a cloud provider attached with the accountID.
+	// ListServicesMetadata returns list of services metadata for a cloud provider attached with the integrationID.
 	// This just returns a summary of the service and not the whole service definition
-	ListServicesSummary(ctx context.Context, orgID valuer.UUID, accountID *valuer.UUID) (*cloudintegrationtypes.ServicesSummary, error)
+	ListServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) (*cloudintegrationtypes.ServicesMetadata, error)
 
-	// GetService returns service definition details for a serviceId. This returns config and
+	// GetService returns service definition details for a serviceID. This returns config and
 	// other details required to show in service details page on web client.
-	GetService(ctx context.Context, orgID valuer.UUID, serviceID string, accountID *valuer.UUID) (*cloudintegrationtypes.Service, error)
+	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*cloudintegrationtypes.Service, error)
 
 	// UpdateServiceConfig updates cloud integration service config
 	UpdateServiceConfig(
 		ctx context.Context,
-		serviceId string,
 		orgID valuer.UUID,
+		serviceID string,
 		config *cloudintegrationtypes.UpdateServiceConfigRequest,
-	) (*cloudintegrationtypes.ServiceSummary, error)
+	) (*cloudintegrationtypes.UpdateServiceConfigResponse, error)
 
 	// AgentCheckIn is called by agent to heartbeat and get latest config in response.
 	AgentCheckIn(
 		ctx context.Context,
 		orgID valuer.UUID,
 		req *cloudintegrationtypes.AgentCheckInRequest,
-	) (cloudintegrationtypes.AgentCheckInResponse, error)
+	) (*cloudintegrationtypes.AgentCheckInResponse, error)
 
 	// GetDashboardByID returns dashboard JSON for a given dashboard id.
-	// this only returns the dashboard when the service (embedded in dashboard id) is enabled for
-	GetDashboardByID(ctx context.Context, id string, orgID valuer.UUID) (*dashboardtypes.Dashboard, error)
+	// this only returns the dashboard when the service (embedded in dashboard id) is enabled
+	// in the org for any cloud integration account
+	GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error)
 
 	// GetAllDashboards returns list of dashboards across all connected cloud integration accounts
-	// and enabled services in the org. This list gets added to dashboard list page
+	// for enabled services in the org. This list gets added to dashboard list page
 	GetAllDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
 }
 
