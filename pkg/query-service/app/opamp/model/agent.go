@@ -112,6 +112,13 @@ func ExtractLbFlag(agentDescr *protobufs.AgentDescription) bool {
 	return false
 }
 
+// agentDescriptionChanged returns true when the agent sends updated properties
+// (e.g. capability flag, version) mid-connection, signalling the server to
+// recompute and push a new RemoteConfig.
+//
+// On reconnect this always returns false: handleFirstStatus pre-copies
+// AgentDescription into agent.Status so no diff is detected, avoiding a
+// redundant config recompute.
 func (agent *Agent) agentDescriptionChanged(newStatus *protobufs.AgentToServer) bool {
 	// nil AgentDescription means no change per OpAMP protocol.
 	if newStatus.AgentDescription == nil {
@@ -134,12 +141,12 @@ func (agent *Agent) updateRemoteConfigStatus(newStatus *protobufs.AgentToServer)
 
 	// todo: need to address multiple agent scenario here
 	// for now, the first response will be sent back to the UI
-	hash := string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash)
-	switch agent.Status.RemoteConfigStatus.Status {
+	hash := string(newStatus.RemoteConfigStatus.LastRemoteConfigHash)
+	switch newStatus.RemoteConfigStatus.Status {
 	case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED:
 		onConfigSuccess(agent.OrgID, agent.AgentID, hash)
 	case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED:
-		onConfigFailure(agent.OrgID, agent.AgentID, hash, agent.Status.RemoteConfigStatus.ErrorMessage)
+		onConfigFailure(agent.OrgID, agent.AgentID, hash, newStatus.RemoteConfigStatus.ErrorMessage)
 	}
 }
 
@@ -162,6 +169,10 @@ func (agent *Agent) handleFirstStatus(newStatus *protobufs.AgentToServer, config
 		// Agent just started fresh — no prior deployment to reconcile with the DB.
 		return
 	}
+
+	// Since the server's connection is restarted;
+	// copy the agent description; so no change is detected by agentDescriptionChanged
+	agent.Status.AgentDescription = newStatus.AgentDescription
 
 	// Server reconnected while the agent was already running.
 	// Reconcile deployment status with DB; DB is the source of truth.
@@ -190,9 +201,10 @@ func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer, config
 	if newStatus.Health != nil && newStatus.Health.Healthy {
 		agent.TimeAuditable.UpdatedAt = time.Unix(0, int64(newStatus.Health.StartTimeUnixNano)).UTC()
 	}
-	// update local reference
-	agent.Status = newStatus
+	// notify subscribers first; this will update the status in the DB
 	agent.updateRemoteConfigStatus(newStatus)
+	// update local reference in last.
+	agent.Status = newStatus
 	return agentDescrChanged
 }
 
