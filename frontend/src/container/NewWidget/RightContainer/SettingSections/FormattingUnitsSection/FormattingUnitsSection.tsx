@@ -72,7 +72,6 @@ export default function FormattingUnitsSection({
 					<Select
 						options={decimapPrecisionOptions}
 						value={decimalPrecision}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={decimapPrecisionOptions[0]?.value}
 						onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}

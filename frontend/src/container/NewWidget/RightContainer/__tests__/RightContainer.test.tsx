@@ -189,7 +189,7 @@ describe('RightContainer - Alerts Section', () => {
 
 		const alertsSection = screen.getByText('Alerts').closest('section');
 		expect(alertsSection).toBeInTheDocument();
-		expect(alertsSection).toHaveClass('alerts');
+		expect(alertsSection).toHaveClass('alerts-section');
 	});
 
 	it('renders alerts section with correct text and SquareArrowOutUpRight icon', () => {

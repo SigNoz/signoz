@@ -41,7 +41,6 @@ export default function LegendSection({
 					<Select
 						onChange={(value: LegendPosition): void => setLegendPosition(value)}
 						value={legendPosition}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={LegendPosition.BOTTOM}
 					>

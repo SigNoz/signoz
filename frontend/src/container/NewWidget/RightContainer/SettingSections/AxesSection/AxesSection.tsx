@@ -71,7 +71,6 @@ export default function AxesSection({
 					<Select
 						onChange={(value): void => setIsLogScale(value === LogScale.LOGARITHMIC)}
 						value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={LogScale.LINEAR}
 					>

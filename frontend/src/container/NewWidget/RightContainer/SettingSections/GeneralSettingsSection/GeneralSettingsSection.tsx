@@ -127,7 +127,6 @@ export default function GeneralSettingsSection({
 					onChange={onInputChange}
 					onSelect={onSelect}
 					filterOption={filterOption}
-					style={{ width: '100%' }}
 					getPopupContainer={popupContainer}
 					placeholder="Enter the panel name here..."
 					open={autoCompleteOpen}
