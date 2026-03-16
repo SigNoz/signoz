@@ -497,14 +497,18 @@ function K8sPodsList({
 		}
 	}, [selectedRowData, fetchGroupedByRowData]);
 
+	const openPodInNewTab = (record: K8sPodsRowData): void => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
+		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+	};
+
 	const handleRowClick = (
 		record: K8sPodsRowData,
 		event: React.MouseEvent,
 	): void => {
 		if (event && isModifierKeyPressed(event)) {
-			const newParams = new URLSearchParams(searchParams);
-			newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
-			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			openPodInNewTab(record);
 			return;
 		}
 		if (groupBy.length === 0) {
@@ -629,9 +633,7 @@ function K8sPodsList({
 						onRow={(record: K8sPodsRowData): Record<string, unknown> => ({
 							onClick: (event: React.MouseEvent): void => {
 								if (isModifierKeyPressed(event)) {
-									const newParams = new URLSearchParams(searchParams);
-									newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
-									openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+									openPodInNewTab(record);
 									return;
 								}
 								setSelectedPodUID(record.podUID);

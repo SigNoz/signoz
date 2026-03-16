@@ -892,7 +892,11 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 				}
 				break;
 			case 'keyboard-shortcuts':
-				history.push(ROUTES.SHORTCUTS);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SHORTCUTS);
+				} else {
+					history.push(ROUTES.SHORTCUTS);
+				}
 				break;
 			case 'logout':
 				Logout();
