@@ -67,6 +67,13 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
+		/**
+		 * Configure area fill based on draw style and fill mode:
+		 * - bar charts always use a solid fill with the series color
+		 * - histogram uses the same color with a fixed alpha suffix for translucency
+		 * - for other series, an explicit fillMode controls whether we use a solid fill
+		 *   or a vertical gradient from the series color to transparent
+		 */
 		const finalFillColor = fillColor ?? resolvedLineColor;
 
 		if (this.props.drawStyle === DrawStyle.Bar) {
