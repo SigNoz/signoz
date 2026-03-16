@@ -3,7 +3,6 @@ interface SafeNavigateOptions {
 	replace?: boolean;
 	state?: unknown;
 	newTab?: boolean;
-	event?: MouseEvent | React.MouseEvent;
 }
 
 interface SafeNavigateTo {
