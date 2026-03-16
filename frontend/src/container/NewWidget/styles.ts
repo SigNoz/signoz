@@ -14,14 +14,7 @@ export const RightContainerWrapper = styled(Col)`
 		overflow-y: auto;
 	}
 	&::-webkit-scrollbar {
-		width: 0.3rem;
-	}
-	&::-webkit-scrollbar-thumb {
-		background: rgb(136, 136, 136);
-		border-radius: 0.625rem;
-	}
-	&::-webkit-scrollbar-track {
-		background: transparent;
+		width: 0rem;
 	}
 `;
 
@@ -33,10 +26,6 @@ export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
 	&&& {
 		width: 100%;
 		overflow-y: auto;
-		border-right: ${({ isDarkMode }): string =>
-			isDarkMode
-				? '1px solid var(--bg-slate-300)'
-				: '1px solid var(--bg-vanilla-300)'};
 	}
 	&::-webkit-scrollbar {
 		width: 0rem;

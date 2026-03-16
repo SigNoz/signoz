@@ -841,7 +841,11 @@ function NewWidget({
 			</div>
 
 			<PanelContainer>
-				<ResizablePanelGroup direction="horizontal" autoSaveId="panel-editor">
+				<ResizablePanelGroup
+					direction="horizontal"
+					className="widget-resizable-panel-group"
+					autoSaveId="panel-editor"
+				>
 					<ResizablePanel
 						minSize={70}
 						maxSize={80}
