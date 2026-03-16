@@ -57,9 +57,13 @@ type ExportRawDataFormatQueryParam struct {
 	Format string `query:"format,default=csv" default:"csv" enum:"csv,jsonl" description:"The output format for the export."`
 }
 
-func (p *ExportRawDataQueryParams) Normalize() {
+func (p *ExportRawDataQueryParams) Normalize() error {
 	if len(p.Order) == 0 && len(p.OrderBy) > 0 {
-		p.Order = parseExportQueryOrderBy(p.OrderBy)
+		order, err := parseExportQueryOrderBy(p.OrderBy)
+		if err != nil {
+			return err
+		}
+		p.Order = order
 	}
 
 	if len(p.SelectFields) == 0 && len(p.Columns) != 0 {
@@ -74,6 +78,8 @@ func (p *ExportRawDataQueryParams) Normalize() {
 	if p.Signal == telemetrytypes.SignalUnspecified && p.Source != "" {
 		p.Signal = telemetrytypes.Signal{String: valuer.NewString(p.Source)}
 	}
+
+	return nil
 }
 
 func (p *ExportRawDataQueryParams) Validate() error {
@@ -100,20 +106,23 @@ func parseExportQueryColumns(columnParams []string) []telemetrytypes.TelemetryFi
 }
 
 // parseExportQueryOrderBy converts a bound order_by string to an OrderBy slice.
-// The string should be in the format "column:direction" and validation is handled by the downstream.
-func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
+// The string should be in the format "column:direction" and additonal validation is handled by the downstream.
+func parseExportQueryOrderBy(orderByParam string) ([]qbtypes.OrderBy, error) {
 	orderByParam = strings.TrimSpace(orderByParam)
 	if orderByParam == "" {
-		return []qbtypes.OrderBy{}
+		return []qbtypes.OrderBy{}, nil
 	}
 
 	parts := strings.Split(orderByParam, ":")
-	// Here we silently ignore the error as this is deprecated code path
 	if len(parts) < 2 {
-		return []qbtypes.OrderBy{}
+		return []qbtypes.OrderBy{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid %s order by, should be of format <column>:<direction", orderByParam)
 	}
 	column := strings.Join(parts[:len(parts)-1], ":")
 	direction := parts[len(parts)-1]
+
+	if _, ok := qbtypes.OrderDirectionMap[direction]; !ok {
+		return []qbtypes.OrderBy{}, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid %s direction, should be of either asc or desc", direction)
+	}
 
 	return []qbtypes.OrderBy{
 		{
@@ -122,5 +131,5 @@ func parseExportQueryOrderBy(orderByParam string) []qbtypes.OrderBy {
 			},
 			Direction: qbtypes.OrderDirectionMap[direction],
 		},
-	}
+	}, nil
 }

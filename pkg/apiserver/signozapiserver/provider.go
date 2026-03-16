@@ -228,9 +228,9 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addRawDataExportRoutes(router); err != nil {
-    return err
-  }
-  
+		return err
+	}
+
 	if err := provider.addZeusRoutes(router); err != nil {
 		return err
 	}

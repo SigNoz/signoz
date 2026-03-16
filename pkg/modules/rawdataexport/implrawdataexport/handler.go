@@ -42,7 +42,10 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 			render.Error(rw, err)
 			return
 		}
-		params.Normalize()
+		if err := params.Normalize(); err != nil {
+			render.Error(rw, err)
+			return
+		}
 		if err := params.Validate(); err != nil {
 			render.Error(rw, err)
 			return
@@ -120,12 +123,8 @@ func validateSpecForExport(req *qbtypes.QueryRangeRequest) error {
 		}
 	}
 
-	err := req.Validate(qbtypes.WithSkipLimitOffsetValidation())
-	if err != nil {
-		return err
-	}
-
-	return nil
+	opts := append(qbtypes.GetValidationOptions(req.RequestType), qbtypes.WithSkipLimitOffsetValidation())
+	return req.Validate(opts...)
 }
 
 func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error {

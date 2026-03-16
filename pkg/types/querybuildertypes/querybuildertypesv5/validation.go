@@ -470,7 +470,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	// Validate request type
 	switch r.RequestType {
 	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace, RequestTypeTimeSeries, RequestTypeScalar:
-		opts = append(opts, getValidationOptions(r.RequestType)...)
+		opts = append(opts, GetValidationOptions(r.RequestType)...)
 	default:
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
@@ -641,7 +641,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 	}
 }
 
-func getValidationOptions(requestType RequestType) []ValidationOption {
+func GetValidationOptions(requestType RequestType) []ValidationOption {
 	switch requestType {
 	case RequestTypeTimeSeries, RequestTypeScalar:
 		return []ValidationOption{WithSkipSelectFieldValidation()}
