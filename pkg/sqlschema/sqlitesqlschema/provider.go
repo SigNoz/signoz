@@ -241,10 +241,3 @@ func isSQLiteIdentifierChar(ch byte) bool {
 		ch == '_'
 }
 
-func min(a, b int) int {
-	if a < b {
-		return a
-	}
-
-	return b
-}
