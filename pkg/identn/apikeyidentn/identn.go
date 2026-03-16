@@ -7,10 +7,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -23,11 +23,11 @@ type resolver struct {
 
 // New creates an API key identity resolver that validates API keys
 // from the configured headers against the factor_api_key table.
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) *resolver {
+func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentNWithPostHook {
 	return &resolver{
 		store:    store,
 		headers:  headers,
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identity/apikeyidentity"),
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentity"),
 		sfGroup:  &singleflight.Group{},
 	}
 }
@@ -46,9 +46,9 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
-// Authenticate extracts the API key, looks it up in the database,
+// GetIdentity extracts the API key, looks it up in the database,
 // validates expiration, resolves the user, and returns Claims.
-func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.AuthType, error) {
 	ctx := req.Context()
 
 	// Extract API key from headers
@@ -69,12 +69,12 @@ func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.A
 		Where("token = ?", apiKeyToken).
 		Scan(ctx)
 	if err != nil {
-		return authtypes.Claims{}, ctxtypes.AuthType{}, err
+		return authtypes.Claims{}, authtypes.AuthType{}, err
 	}
 
 	// Check expiration
 	if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(types.NEVER_EXPIRES) {
-		return authtypes.Claims{}, ctxtypes.AuthType{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
+		return authtypes.Claims{}, authtypes.AuthType{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
 	}
 
 	// Look up user
@@ -86,7 +86,7 @@ func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.A
 		Where("id = ?", apiKey.UserID).
 		Scan(ctx)
 	if err != nil {
-		return authtypes.Claims{}, ctxtypes.AuthType{}, err
+		return authtypes.Claims{}, authtypes.AuthType{}, err
 	}
 
 	claims := authtypes.Claims{
@@ -96,11 +96,11 @@ func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.A
 		OrgID:  user.OrgID.String(),
 	}
 
-	return claims, ctxtypes.AuthTypeAPIKey, nil
+	return claims, authtypes.AuthTypeAPIKey, nil
 }
 
-// PostAuth updates the last_used timestamp for the API key.
-func (r *resolver) PostAuth(ctx context.Context, req *http.Request, _ authtypes.Claims) {
+// Post updates the last_used timestamp for the API key.
+func (r *resolver) Post(ctx context.Context, req *http.Request, _ authtypes.Claims) {
 	var apiKeyToken string
 	for _, header := range r.headers {
 		if v := req.Header.Get(header); v != "" {

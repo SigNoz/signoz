@@ -16,6 +16,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	identity "github.com/SigNoz/signoz/pkg/identn"
+	apikeyidentn "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
+	tokenidentn "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -37,9 +40,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
-	"github.com/SigNoz/signoz/pkg/identity"
-	"github.com/SigNoz/signoz/pkg/identity/apikeyidentity"
-	"github.com/SigNoz/signoz/pkg/identity/tokenidentity"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -68,7 +68,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
-	Identity               identity.Identity
+	IdentNResolver         identity.IdentNResolver
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -395,9 +395,9 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	// Initialize identity resolver chain
-	tokenResolver := tokenidentity.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
-	apiKeyResolver := apikeyidentity.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
-	ident := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
+	tokenResolver := tokenidentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
+	apiKeyResolver := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
+	identNResolver := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
@@ -477,7 +477,7 @@ func New(
 		Emailing:               emailing,
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
-		Identity:               ident,
+		IdentNResolver:         identNResolver,
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,

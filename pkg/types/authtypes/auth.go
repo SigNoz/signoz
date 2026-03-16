@@ -1,4 +1,4 @@
-package ctxtypes
+package authtypes
 
 import (
 	"context"

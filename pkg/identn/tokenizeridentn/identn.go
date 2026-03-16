@@ -1,4 +1,4 @@
-package tokenidentity
+package tokenidentn
 
 import (
 	"context"
@@ -7,9 +7,9 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"golang.org/x/sync/singleflight"
 )
 
@@ -22,11 +22,11 @@ type resolver struct {
 
 // New creates a token identity resolver that validates user access tokens
 // via the Tokenizer interface.
-func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) *resolver {
+func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) identn.IdentNWithPostHook {
 	return &resolver{
 		tokenizer: tokenizer,
 		headers:   headers,
-		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identity/tokenidentity"),
+		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenidentity"),
 		sfGroup:   &singleflight.Group{},
 	}
 }
@@ -45,9 +45,9 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
-// Authenticate extracts the bearer token, validates it via the tokenizer,
+// GetIdentity extracts the bearer token, validates it via the tokenizer,
 // and returns the resolved identity as Claims.
-func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.AuthType, error) {
+func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.AuthType, error) {
 	ctx := req.Context()
 
 	// Extract token from headers
@@ -69,14 +69,14 @@ func (r *resolver) Authenticate(req *http.Request) (authtypes.Claims, ctxtypes.A
 	// Resolve identity from token
 	authenticatedUser, err := r.tokenizer.GetIdentity(ctx, accessToken)
 	if err != nil {
-		return authtypes.Claims{}, ctxtypes.AuthType{}, err
+		return authtypes.Claims{}, authtypes.AuthType{}, err
 	}
 
-	return authenticatedUser.ToClaims(), ctxtypes.AuthTypeTokenizer, nil
+	return authenticatedUser.ToClaims(), authtypes.AuthTypeTokenizer, nil
 }
 
-// PostAuth updates the last observed timestamp for the access token.
-func (r *resolver) PostAuth(ctx context.Context, req *http.Request, _ authtypes.Claims) {
+// Post updates the last observed timestamp for the access token.
+func (r *resolver) Post(ctx context.Context, req *http.Request, _ authtypes.Claims) {
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
 		return
