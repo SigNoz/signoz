@@ -508,7 +508,7 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 func (r *QueryRangeRequest) TraceOperatorQueryIndex() int {
 	for idx, query := range r.CompositeQuery.Queries {
 		switch query.Spec.(type) {
-		case TraceOperatorType:
+		case QueryBuilderTraceOperator:
 			return idx
 		}
 	}
