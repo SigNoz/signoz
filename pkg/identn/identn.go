@@ -7,31 +7,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
-// IdentN Resolver gets identity from an HTTP request by trying registered identNs.
 type IdentNResolver interface {
-	// Authenticate tries resolvers in order and returns the resolved identity.
-	GetIdentity(r *http.Request) (authtypes.Claims, authtypes.AuthType, IdentN, error)
+	// GetIdentity tries identNs in order and returns the resolved identity.
+	GetIdentity(r *http.Request) (*authtypes.Identity, IdentN, error)
 }
 
-// Resolver resolves the identity of an HTTP request caller.
-// Each implementation handles one authentication strategy
-// (e.g., user tokens, service account API keys, trusted headers).
 type IdentN interface {
-	// Test checks if this resolver can handle the request.
-	// This should be a cheap check (e.g., header presence) with no I/O.
+	// Test checks if this identn can handle the request. This should be a cheap check (e.g., header presence) with no I/O.
 	Test(r *http.Request) bool
 
-	// Authenticate validates the credentials and returns the resolved identity.
-	// Only called when Test() returns true.
-	// Errors mean credentials were found but invalid (expired, revoked, etc.).
-	GetIdentity(r *http.Request) (authtypes.Claims, authtypes.AuthType, error)
+	// GetIdentity returns the resolved identity. Only called when Test() returns true.
+	GetIdentity(r *http.Request) (*authtypes.Identity, error)
 
-	// Name returns the resolver name for logging/metrics.
-	Name() string
+	Name() authtypes.IdentNProvider
+
+	AuthType() authtypes.AuthType
 }
 
-// PostHook is implemented by idnetns that need
-// post-response side-effects (e.g., updating last_observed_at).
 type IdentNWithPostHook interface {
 	IdentN
 

@@ -21,8 +21,6 @@ type resolver struct {
 	sfGroup  *singleflight.Group
 }
 
-// New creates an API key identity resolver that validates API keys
-// from the configured headers against the factor_api_key table.
 func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentNWithPostHook {
 	return &resolver{
 		store:    store,
@@ -32,11 +30,14 @@ func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, hea
 	}
 }
 
-func (r *resolver) Name() string {
-	return "api_key"
+func (r *resolver) Name() authtypes.IdentNProvider {
+	return authtypes.IdentNProviderAPIkey
 }
 
-// Test checks if any of the configured headers contain a value.
+func (r *resolver) AuthType() authtypes.AuthType {
+	return authtypes.AuthTypeAPIKey
+}
+
 func (r *resolver) Test(req *http.Request) bool {
 	for _, header := range r.headers {
 		if req.Header.Get(header) != "" {
@@ -46,12 +47,9 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
-// GetIdentity extracts the API key, looks it up in the database,
-// validates expiration, resolves the user, and returns Claims.
-func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.AuthType, error) {
+func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
 
-	// Extract API key from headers
 	var apiKeyToken string
 	for _, header := range r.headers {
 		if v := req.Header.Get(header); v != "" {
@@ -60,7 +58,6 @@ func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.A
 		}
 	}
 
-	// Look up API key by token
 	var apiKey types.StorableAPIKey
 	err := r.store.
 		BunDB().
@@ -69,15 +66,13 @@ func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.A
 		Where("token = ?", apiKeyToken).
 		Scan(ctx)
 	if err != nil {
-		return authtypes.Claims{}, authtypes.AuthType{}, err
+		return nil, err
 	}
 
-	// Check expiration
 	if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(types.NEVER_EXPIRES) {
-		return authtypes.Claims{}, authtypes.AuthType{}, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
+		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
 	}
 
-	// Look up user
 	var user types.User
 	err = r.store.
 		BunDB().
@@ -86,20 +81,18 @@ func (r *resolver) GetIdentity(req *http.Request) (authtypes.Claims, authtypes.A
 		Where("id = ?", apiKey.UserID).
 		Scan(ctx)
 	if err != nil {
-		return authtypes.Claims{}, authtypes.AuthType{}, err
+		return nil, err
 	}
 
-	claims := authtypes.Claims{
-		UserID: user.ID.String(),
+	identity := authtypes.Identity{
+		UserID: user.ID,
 		Role:   apiKey.Role,
-		Email:  user.Email.String(),
-		OrgID:  user.OrgID.String(),
+		Email:  user.Email,
+		OrgID:  user.OrgID,
 	}
-
-	return claims, authtypes.AuthTypeAPIKey, nil
+	return &identity, nil
 }
 
-// Post updates the last_used timestamp for the API key.
 func (r *resolver) Post(ctx context.Context, req *http.Request, _ authtypes.Claims) {
 	var apiKeyToken string
 	for _, header := range r.headers {

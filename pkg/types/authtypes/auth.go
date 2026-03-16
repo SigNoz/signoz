@@ -11,11 +11,10 @@ type AuthType struct {
 }
 
 var (
-	AuthTypeTokenizer      = AuthType{valuer.NewString("tokenizer")}
-	AuthTypeAPIKey         = AuthType{valuer.NewString("api_key")}
-	AuthTypeServiceAccount = AuthType{valuer.NewString("service_account")}
-	AuthTypeInternal       = AuthType{valuer.NewString("internal")}
-	AuthTypeAnonymous      = AuthType{valuer.NewString("anonymous")}
+	AuthTypeTokenizer = AuthType{valuer.NewString("tokenizer")}
+	AuthTypeAPIKey    = AuthType{valuer.NewString("api_key")}
+	AuthTypeInternal  = AuthType{valuer.NewString("internal")}
+	AuthTypeAnonymous = AuthType{valuer.NewString("anonymous")}
 )
 
 type authTypeKey struct{}

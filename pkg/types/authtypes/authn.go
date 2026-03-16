@@ -25,10 +25,11 @@ var (
 type AuthNProvider struct{ valuer.String }
 
 type Identity struct {
-	UserID valuer.UUID  `json:"userId"`
-	OrgID  valuer.UUID  `json:"orgId"`
-	Email  valuer.Email `json:"email"`
-	Role   types.Role   `json:"role"`
+	UserID        valuer.UUID    `json:"userId"`
+	OrgID         valuer.UUID    `json:"orgId"`
+	IdenNProvider IdentNProvider `json:"identNProvider"`
+	Email         valuer.Email   `json:"email"`
+	Role          types.Role     `json:"role"`
 }
 
 type CallbackIdentity struct {
