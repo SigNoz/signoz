@@ -2,8 +2,9 @@ package loghandler
 
 import (
 	"context"
-	"errors"
 	"log/slog"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 type filtering struct{}
