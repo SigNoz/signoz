@@ -1171,7 +1171,7 @@ func TestOperatorDiffIndices(t *testing.T) {
 			},
 			expectedSQLs: [][]byte{
 				[]byte(`DROP INDEX IF EXISTS "uq_users_email"`),
-				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email" ON "users" ("email") WHERE "deleted_at" IS NULL`),
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_94610c77" ON "users" ("email") WHERE "deleted_at" IS NULL`),
 			},
 		},
 		{
@@ -1181,6 +1181,24 @@ func TestOperatorDiffIndices(t *testing.T) {
 					TableName:   "users",
 					ColumnNames: []ColumnName{"email"},
 					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			newIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			expectedSQLs: [][]byte{},
+		},
+		{
+			name: "PartialUnique_NormalizedWhere_NoOp",
+			oldIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `(deleted_at IS NULL)`,
 				},
 			},
 			newIndices: []Index{
@@ -1209,8 +1227,8 @@ func TestOperatorDiffIndices(t *testing.T) {
 				},
 			},
 			expectedSQLs: [][]byte{
-				[]byte(`DROP INDEX IF EXISTS "puq_users_email"`),
-				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email" ON "users" ("email") WHERE "active" = true`),
+				[]byte(`DROP INDEX IF EXISTS "puq_users_email_94610c77"`),
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_202121f8" ON "users" ("email") WHERE "active" = true`),
 			},
 		},
 	}

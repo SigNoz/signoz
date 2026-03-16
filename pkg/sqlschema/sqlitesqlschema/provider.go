@@ -154,16 +154,6 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 	return indices, nil
 }
 
-// extractWhereClause extracts the WHERE clause from a CREATE INDEX SQL statement.
-func extractWhereClause(sql string) string {
-	upper := strings.ToUpper(sql)
-	idx := strings.LastIndex(upper, ") WHERE ")
-	if idx == -1 {
-		return ""
-	}
-	return sql[idx+len(") WHERE "):]
-}
-
 func (provider *provider) ToggleFKEnforcement(ctx context.Context, db bun.IDB, on bool) error {
 	_, err := db.ExecContext(ctx, "PRAGMA foreign_keys = ?", on)
 	if err != nil {
@@ -180,4 +170,81 @@ func (provider *provider) ToggleFKEnforcement(ctx context.Context, db bun.IDB, o
 	}
 
 	return errors.NewInternalf(errors.CodeInternal, "foreign_keys(actual: %s, expected: %s), maybe a transaction is in progress?", strconv.FormatBool(val), strconv.FormatBool(on))
+}
+
+func extractWhereClause(sql string) string {
+	lastWhere := -1
+	inSingleQuotedLiteral := false
+	inDoubleQuotedIdentifier := false
+	inBacktickQuotedIdentifier := false
+	inBracketQuotedIdentifier := false
+
+	for i := 0; i < len(sql); i++ {
+		switch sql[i] {
+		case '\'':
+			if inDoubleQuotedIdentifier || inBacktickQuotedIdentifier || inBracketQuotedIdentifier {
+				continue
+			}
+			if inSingleQuotedLiteral && i+1 < len(sql) && sql[i+1] == '\'' {
+				i++
+				continue
+			}
+			inSingleQuotedLiteral = !inSingleQuotedLiteral
+		case '"':
+			if inSingleQuotedLiteral || inBacktickQuotedIdentifier || inBracketQuotedIdentifier {
+				continue
+			}
+			if inDoubleQuotedIdentifier && i+1 < len(sql) && sql[i+1] == '"' {
+				i++
+				continue
+			}
+			inDoubleQuotedIdentifier = !inDoubleQuotedIdentifier
+		case '`':
+			if inSingleQuotedLiteral || inDoubleQuotedIdentifier || inBracketQuotedIdentifier {
+				continue
+			}
+			inBacktickQuotedIdentifier = !inBacktickQuotedIdentifier
+		case '[':
+			if inSingleQuotedLiteral || inDoubleQuotedIdentifier || inBacktickQuotedIdentifier || inBracketQuotedIdentifier {
+				continue
+			}
+			inBracketQuotedIdentifier = true
+		case ']':
+			if inBracketQuotedIdentifier {
+				inBracketQuotedIdentifier = false
+			}
+		}
+
+		if inSingleQuotedLiteral || inDoubleQuotedIdentifier || inBacktickQuotedIdentifier || inBracketQuotedIdentifier {
+			continue
+		}
+
+		if strings.EqualFold(sql[i:min(i+5, len(sql))], "WHERE") &&
+			(i == 0 || !isSQLiteIdentifierChar(sql[i-1])) &&
+			(i+5 == len(sql) || !isSQLiteIdentifierChar(sql[i+5])) {
+			lastWhere = i
+			i += 4
+		}
+	}
+
+	if lastWhere == -1 {
+		return ""
+	}
+
+	return strings.TrimSpace(sql[lastWhere+len("WHERE"):])
+}
+
+func isSQLiteIdentifierChar(ch byte) bool {
+	return (ch >= 'a' && ch <= 'z') ||
+		(ch >= 'A' && ch <= 'Z') ||
+		(ch >= '0' && ch <= '9') ||
+		ch == '_'
+}
+
+func min(a, b int) int {
+	if a < b {
+		return a
+	}
+
+	return b
 }

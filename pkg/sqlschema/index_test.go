@@ -45,7 +45,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 				ColumnNames: []ColumnName{"email"},
 				Where:       `"deleted_at" IS NULL`,
 			},
-			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email" ON "users" ("email") WHERE "deleted_at" IS NULL`,
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_94610c77" ON "users" ("email") WHERE "deleted_at" IS NULL`,
 		},
 		{
 			name: "PartialUnique_2Columns",
@@ -54,7 +54,7 @@ func TestIndexToCreateSQL(t *testing.T) {
 				ColumnNames: []ColumnName{"org_id", "email"},
 				Where:       `"deleted_at" IS NULL`,
 			},
-			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_org_id_email" ON "users" ("org_id", "email") WHERE "deleted_at" IS NULL`,
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_org_id_email_94610c77" ON "users" ("org_id", "email") WHERE "deleted_at" IS NULL`,
 		},
 		{
 			name: "PartialUnique_Named",
@@ -65,6 +65,42 @@ func TestIndexToCreateSQL(t *testing.T) {
 				name:        "my_partial_index",
 			},
 			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "my_partial_index" ON "users" ("email") WHERE "deleted_at" IS NULL`,
+		},
+		{
+			name: "PartialUnique_WhereWithParentheses",
+			index: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email"},
+				Where:       `("deleted_at" IS NULL)`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_94610c77" ON "users" ("email") WHERE ("deleted_at" IS NULL)`,
+		},
+		{
+			name: "PartialUnique_WhereWithQuotedIdentifier",
+			index: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email"},
+				Where:       `"order" IS NULL`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_14c5f5f2" ON "users" ("email") WHERE "order" IS NULL`,
+		},
+		{
+			name: "PartialUnique_WhereWithQuotedLiteral",
+			index: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email"},
+				Where:       `status = 'somewhere'`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_9817c709" ON "users" ("email") WHERE status = 'somewhere'`,
+		},
+		{
+			name: "PartialUnique_WhereWith2Columns",
+			index: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email", "status"},
+				Where:       `email = 'test@example.com' AND status = 'active'`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_status_e70e78c3" ON "users" ("email", "status") WHERE email = 'test@example.com' AND status = 'active'`,
 		},
 	}
 
@@ -96,6 +132,20 @@ func TestIndexEquals(t *testing.T) {
 				TableName:   "users",
 				ColumnNames: []ColumnName{"email"},
 				Where:       `"deleted_at" IS NULL`,
+			},
+			equals: true,
+		},
+		{
+			name: "PartialUnique_NormalizedPostgresWhere",
+			a: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email"},
+				Where:       `"deleted_at" IS NULL`,
+			},
+			b: &PartialUniqueIndex{
+				TableName:   "users",
+				ColumnNames: []ColumnName{"email"},
+				Where:       `(deleted_at IS NULL)`,
 			},
 			equals: true,
 		},
@@ -146,4 +196,26 @@ func TestIndexEquals(t *testing.T) {
 			assert.Equal(t, testCase.equals, testCase.a.Equals(testCase.b))
 		})
 	}
+}
+
+func TestPartialUniqueIndexName(t *testing.T) {
+	a := &PartialUniqueIndex{
+		TableName:   "users",
+		ColumnNames: []ColumnName{"email"},
+		Where:       `"deleted_at" IS NULL`,
+	}
+	b := &PartialUniqueIndex{
+		TableName:   "users",
+		ColumnNames: []ColumnName{"email"},
+		Where:       `(deleted_at IS NULL)`,
+	}
+	c := &PartialUniqueIndex{
+		TableName:   "users",
+		ColumnNames: []ColumnName{"email"},
+		Where:       `"active" = true`,
+	}
+
+	assert.Equal(t, "puq_users_email_94610c77", a.Name())
+	assert.Equal(t, a.Name(), b.Name())
+	assert.NotEqual(t, a.Name(), c.Name())
 }
