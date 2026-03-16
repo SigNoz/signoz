@@ -37,6 +37,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/identity"
+	"github.com/SigNoz/signoz/pkg/identity/apikeyidentity"
+	"github.com/SigNoz/signoz/pkg/identity/tokenidentity"
 	pkgtokenizer "github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -65,6 +68,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
+	IdentityChain          *identity.Chain
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -390,6 +394,11 @@ func New(
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
+	// Initialize identity resolver chain
+	tokenResolver := tokenidentity.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
+	apiKeyResolver := apikeyidentity.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
+	identityChain := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
+
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
@@ -468,6 +477,7 @@ func New(
 		Emailing:               emailing,
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
+		IdentityChain:          identityChain,
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,
