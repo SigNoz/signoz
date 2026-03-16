@@ -47,7 +47,7 @@ import (
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 // Server runs HTTP, Mux and a grpc server
@@ -83,6 +83,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	}
 
 	reader := clickhouseReader.NewReader(
+		signoz.Instrumentation.Logger(),
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
@@ -278,7 +279,7 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
+	slog.Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
 	return nil
 }
@@ -298,31 +299,31 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.httpHostPort))
+		slog.Info("Starting HTTP server", "port", httpPort, "addr", s.httpHostPort)
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
 		default:
-			zap.L().Error("Could not start HTTP server", zap.Error(err))
+			slog.Error("Could not start HTTP server", "error", err)
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
 	}()
 
 	go func() {
-		zap.L().Info("Starting pprof server", zap.String("addr", baseconst.DebugHttpPort))
+		slog.Info("Starting pprof server", "addr", baseconst.DebugHttpPort)
 
 		err = http.ListenAndServe(baseconst.DebugHttpPort, nil)
 		if err != nil {
-			zap.L().Error("Could not start pprof server", zap.Error(err))
+			slog.Error("Could not start pprof server", "error", err)
 		}
 	}()
 
 	go func() {
-		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
+		slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
-			zap.L().Error("opamp ws server failed to start", zap.Error(err))
+			slog.Error("opamp ws server failed to start", "error", err)
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
@@ -358,10 +359,9 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		MetadataStore:       metadataStore,
 		Prometheus:          prometheus,
 		Context:             context.Background(),
-		Logger:              zap.L(),
 		Reader:              ch,
 		Querier:             querier,
-		SLogger:             providerSettings.Logger,
+		Logger:              providerSettings.Logger,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
@@ -380,7 +380,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		return nil, fmt.Errorf("rule manager error: %v", err)
 	}
 
-	zap.L().Info("rules manager is ready")
+	slog.Info("rules manager is ready")
 
 	return manager, nil
 }

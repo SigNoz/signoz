@@ -182,9 +182,7 @@ describe('Dashboard landing page actions header tests', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 
 		const mockContextValue: IDashboardContext = {
-			isDashboardSliderOpen: false,
 			isDashboardLocked: false,
-			handleToggleDashboardSlider: jest.fn(),
 			handleDashboardLockToggle: jest.fn(),
 			dashboardResponse: {} as IDashboardContext['dashboardResponse'],
 			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,

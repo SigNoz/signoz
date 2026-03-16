@@ -11,11 +11,8 @@ import { getYAxisCategories } from 'components/YAxisUnitSelector/utils';
 import {
 	initialQueryBuilderFormValuesMap,
 	PANEL_TYPES,
-} from 'constants/queryBuilder';
-import {
-	listViewInitialLogQuery,
 	PANEL_TYPES_INITIAL_QUERY,
-} from 'container/DashboardContainer/ComponentsSlider/constants';
+} from 'constants/queryBuilder';
 import {
 	defaultLogsSelectedColumns,
 	defaultTraceSelectedColumns,
@@ -549,10 +546,7 @@ export const getDefaultWidgetData = (
 	nullZeroValues: '',
 	opacity: '',
 	panelTypes: name,
-	query:
-		name === PANEL_TYPES.LIST
-			? listViewInitialLogQuery
-			: PANEL_TYPES_INITIAL_QUERY[name],
+	query: PANEL_TYPES_INITIAL_QUERY[name],
 	timePreferance: 'GLOBAL_TIME',
 	softMax: null,
 	softMin: null,

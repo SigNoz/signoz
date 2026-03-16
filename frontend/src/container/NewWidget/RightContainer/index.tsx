@@ -3,7 +3,7 @@ import { UseQueryResult } from 'react-query';
 import { Typography } from 'antd';
 import { PrecisionOption } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import GraphTypes from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import {
@@ -108,8 +108,9 @@ function RightContainer({
 }: RightContainerProps): JSX.Element {
 	const { dashboardVariables } = useDashboardVariables();
 
-	const selectedGraphType = GraphTypes.find((e) => e.name === selectedGraph)
-		?.display as PanelDisplay;
+	const selectedPanelDisplay = PanelTypesWithData.find(
+		(e) => e.name === selectedGraph,
+	)?.display as PanelDisplay;
 
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
@@ -201,7 +202,7 @@ function RightContainer({
 
 				{isFormattingSectionVisible && (
 					<FormattingUnitsSection
-						selectedGraphType={selectedGraphType}
+						selectedPanelDisplay={selectedPanelDisplay}
 						yAxisUnit={yAxisUnit}
 						setYAxisUnit={setYAxisUnit}
 						isNewDashboard={isNewDashboard}

@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 	"google.golang.org/protobuf/proto"
 
 	"github.com/open-telemetry/opamp-go/protobufs"
@@ -305,7 +304,7 @@ func (agent *Agent) processStatusUpdate(
 func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool {
 	recommendedConfig, confId, err := configProvider.RecommendAgentConfig(agent.OrgID, []byte(agent.Config))
 	if err != nil {
-		zap.L().Error("could not generate config recommendation for agent", zap.String("agentID", agent.AgentID), zap.Error(err))
+		agent.logger.Error("could not generate config recommendation for agent", "agent_id", agent.AgentID, "error", err)
 		return false
 	}
 
@@ -322,7 +321,7 @@ func (agent *Agent) updateRemoteConfig(configProvider AgentConfigProvider) bool 
 
 	if len(confId) < 1 {
 		// Should never happen. Handle gracefully if it does by some chance.
-		zap.L().Error("config provider recommended a config with empty confId. Using content hash for configId")
+		agent.logger.Error("config provider recommended a config with empty conf_id, using content hash for config_id")
 
 		hash := sha256.New()
 		for k, v := range cfg.Config.ConfigMap {

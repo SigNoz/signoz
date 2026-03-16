@@ -1,11 +1,11 @@
 package v3
 
 import (
+	"log/slog"
 	"strconv"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"go.uber.org/zap"
 )
 
 var TracesListViewDefaultSelectedColumns = []v3.AttributeKey{
@@ -68,7 +68,7 @@ func TraceIdFilterUsedWithEqual(params *v3.QueryRangeParamsV3) (bool, []string) 
 					val := item.Value
 					val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
 					if err != nil {
-						zap.L().Error("invalid value for key", zap.String("key", item.Key.Key), zap.Error(err))
+						slog.Error("invalid value for key", "key", item.Key.Key, "error", err)
 						return false, []string{}
 					}
 					if val != nil {
@@ -81,7 +81,7 @@ func TraceIdFilterUsedWithEqual(params *v3.QueryRangeParamsV3) (bool, []string) 
 
 	}
 
-	zap.L().Debug("traceIds", zap.Any("traceIds", traceIds))
+	slog.Debug("trace_ids", "trace_ids", traceIds)
 	return traceIdFilterUsed, traceIds
 }
 

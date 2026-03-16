@@ -10,7 +10,7 @@ import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import DashboardYAxisUnitSelectorWrapper from '../../DashboardYAxisUnitSelectorWrapper';
 
 interface FormattingUnitsSectionProps {
-	selectedGraphType: PanelDisplay | '';
+	selectedPanelDisplay: PanelDisplay | '';
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	isNewDashboard: boolean;
@@ -24,7 +24,7 @@ interface FormattingUnitsSectionProps {
 }
 
 export function FormattingUnitsSection({
-	selectedGraphType,
+	selectedPanelDisplay,
 	yAxisUnit,
 	setYAxisUnit,
 	isNewDashboard,
@@ -55,8 +55,8 @@ export function FormattingUnitsSection({
 					onSelect={setYAxisUnit}
 					value={yAxisUnit || ''}
 					fieldLabel={
-						selectedGraphType === PanelDisplay.VALUE ||
-						selectedGraphType === PanelDisplay.PIE
+						selectedPanelDisplay === PanelDisplay.VALUE ||
+						selectedPanelDisplay === PanelDisplay.PIE
 							? 'Unit'
 							: 'Y Axis Unit'
 					}

@@ -12,6 +12,8 @@ import {
 	ATTRIBUTE_TYPES,
 	initialAutocompleteData,
 	initialQueryBuilderFormValuesMap,
+	listViewInitialLogQuery,
+	listViewInitialTraceQuery,
 	mapOfFormulaToFilters,
 	mapOfQueryFilters,
 	PANEL_TYPES,
@@ -23,10 +25,6 @@ import {
 	metricsUnknownSpaceAggregateOperatorOptions,
 	metricsUnknownTimeAggregateOperatorOptions,
 } from 'constants/queryBuilderOperators';
-import {
-	listViewInitialLogQuery,
-	listViewInitialTraceQuery,
-} from 'container/DashboardContainer/ComponentsSlider/constants';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { getMetricsOperatorsByAttributeType } from 'lib/newQueryBuilder/getMetricsOperatorsByAttributeType';
 import { getOperatorsBySourceAndPanelType } from 'lib/newQueryBuilder/getOperatorsBySourceAndPanelType';

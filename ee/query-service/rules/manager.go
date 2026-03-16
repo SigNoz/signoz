@@ -13,7 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) {
@@ -34,7 +34,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
@@ -57,7 +57,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			ruleId,
 			opts.OrgID,
 			opts.Rule,
-			opts.SLogger,
+			opts.Logger,
 			opts.Reader,
 			opts.ManagerOpts.Prometheus,
 			baserules.WithSQLStore(opts.SQLStore),
@@ -82,7 +82,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			opts.Rule,
 			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
 			opts.Cache,
 			baserules.WithEvalDelay(opts.ManagerOpts.EvalDelay),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -142,7 +142,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			parsedRule,
 			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
 			baserules.WithSQLStore(opts.SQLStore),
@@ -151,7 +151,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new threshold rule for test", zap.String("name", alertname), zap.Error(err))
+			slog.Error("failed to prepare a new threshold rule for test", "name", alertname, "error", err)
 			return 0, basemodel.BadRequest(err)
 		}
 
@@ -162,7 +162,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			alertname,
 			opts.OrgID,
 			parsedRule,
-			opts.SLogger,
+			opts.Logger,
 			opts.Reader,
 			opts.ManagerOpts.Prometheus,
 			baserules.WithSendAlways(),
@@ -173,7 +173,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			zap.L().Error("failed to prepare a new promql rule for test", zap.String("name", alertname), zap.Error(err))
+			slog.Error("failed to prepare a new promql rule for test", "name", alertname, "error", err)
 			return 0, basemodel.BadRequest(err)
 		}
 	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
@@ -184,7 +184,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			parsedRule,
 			opts.Reader,
 			opts.Querier,
-			opts.SLogger,
+			opts.Logger,
 			opts.Cache,
 			baserules.WithSendAlways(),
 			baserules.WithSendUnmatched(),
@@ -193,7 +193,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
-			zap.L().Error("failed to prepare a new anomaly rule for test", zap.String("name", alertname), zap.Error(err))
+			slog.Error("failed to prepare a new anomaly rule for test", "name", alertname, "error", err)
 			return 0, basemodel.BadRequest(err)
 		}
 	} else {
@@ -205,7 +205,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		zap.L().Error("evaluating rule failed", zap.String("rule", rule.Name()), zap.Error(err))
+		slog.Error("evaluating rule failed", "rule", rule.Name(), "error", err)
 		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Minute, opts.NotifyFunc)

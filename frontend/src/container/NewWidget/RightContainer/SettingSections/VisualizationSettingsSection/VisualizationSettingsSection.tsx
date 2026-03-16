@@ -2,9 +2,10 @@ import { Dispatch, SetStateAction, useEffect, useState } from 'react';
 import { Select, Switch, Typography } from 'antd';
 import TimePreference from 'components/TimePreferenceDropDown';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GraphTypes, {
+import {
 	ItemsProps,
-} from 'container/DashboardContainer/ComponentsSlider/menuItems';
+	PanelTypesWithData,
+} from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { LayoutDashboard } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -42,7 +43,7 @@ export function VisualizationSettingsSection({
 	allowFillSpans,
 }: VisualizationSettingsSectionProps): JSX.Element {
 	const { currentQuery } = useQueryBuilder();
-	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(GraphTypes);
+	const [graphTypes, setGraphTypes] = useState<ItemsProps[]>(PanelTypesWithData);
 
 	useEffect(() => {
 		const queryContainsMetricsDataSource = currentQuery.builder.queryData.some(
@@ -54,7 +55,7 @@ export function VisualizationSettingsSection({
 				prev.filter((graph) => graph.name !== PANEL_TYPES.LIST),
 			);
 		} else {
-			setGraphTypes(GraphTypes);
+			setGraphTypes(PanelTypesWithData);
 		}
 	}, [currentQuery]);
 
