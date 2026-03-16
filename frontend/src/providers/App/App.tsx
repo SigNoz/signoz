@@ -49,7 +49,7 @@ export const AppContext = createContext<IAppContext | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// on load of the provider set the user defaults with access token , refresh token from local storage
-	const [defaultUser, setUser] = useState<IUser>(() => getUserDefaults());
+	const [defaultUser, setDefaultUser] = useState<IUser>(() => getUserDefaults());
 	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
 		null,
 	);
@@ -120,7 +120,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	useEffect(() => {
 		if (!isFetchingUser && userData && userData.data) {
 			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
-			setUser((prev) => ({
+			setDefaultUser((prev) => ({
 				...prev,
 				...userData.data,
 			}));
@@ -242,7 +242,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
 
 	function updateUser(user: IUser): void {
-		setUser((prev) => ({
+		setDefaultUser((prev) => ({
 			...prev,
 			...user,
 		}));
@@ -283,7 +283,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(orgIndex + 1, org.length),
 				];
 				setOrg(updatedOrg);
-				setUser((prev) => {
+				setDefaultUser((prev) => {
 					if (prev.orgId === orgId) {
 						return {
 							...prev,
@@ -311,7 +311,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
-			setUser((prev) => ({
+			setDefaultUser((prev) => ({
 				...prev,
 				accessJwt: event.detail.accessJWT,
 				refreshJwt: event.detail.refreshJWT,
@@ -326,7 +326,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// global event listener for LOGOUT event to clean the app context state
 	useGlobalEventListener('LOGOUT', () => {
 		setIsLoggedIn(false);
-		setUser(getUserDefaults());
+		setDefaultUser(getUserDefaults());
 		setActiveLicense(null);
 		setTrialInfo(null);
 		setFeatureFlags(null);

@@ -7,6 +7,7 @@ import {
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { LOCALSTORAGE } from 'constants/localStorage';
+import { SINGLE_FLIGHT_WAIT_TIME_MS } from 'hooks/useAuthZ/constants';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import { USER_ROLES } from 'types/roles';
@@ -18,6 +19,12 @@ const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
 jest.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
 }));
+
+/**
+ * Since we are mocking the check permissions, this is needed
+ */
+const waitForSinglePreflightToFinish = async (): Promise<void> =>
+	await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_TIME_MS));
 
 function authzMockResponse(
 	payload: AuthtypesTransactionDTO[],
@@ -32,8 +39,6 @@ function authzMockResponse(
 		status: 'success',
 	};
 }
-
-const SINGLE_FLIGHT_WAIT_MS = 60;
 
 const queryClient = new QueryClient({
 	defaultOptions: {
@@ -82,7 +87,7 @@ describe('AppProvider user.role from permissions', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {
@@ -107,7 +112,7 @@ describe('AppProvider user.role from permissions', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {
@@ -132,7 +137,7 @@ describe('AppProvider user.role from permissions', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {
@@ -157,7 +162,7 @@ describe('AppProvider user.role from permissions', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {
@@ -209,7 +214,7 @@ describe('AppProvider user.role from permissions', () => {
 			const wrapper = createWrapper();
 			const { result } = renderHook(() => useAppContext(), { wrapper });
 
-			await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+			await waitForSinglePreflightToFinish();
 
 			await waitFor(
 				() => {
@@ -238,7 +243,7 @@ describe('AppProvider when authz/check fails', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {
@@ -256,7 +261,7 @@ describe('AppProvider when authz/check fails', () => {
 		const wrapper = createWrapper();
 		const { result } = renderHook(() => useAppContext(), { wrapper });
 
-		await new Promise((r) => setTimeout(r, SINGLE_FLIGHT_WAIT_MS));
+		await waitForSinglePreflightToFinish();
 
 		await waitFor(
 			() => {

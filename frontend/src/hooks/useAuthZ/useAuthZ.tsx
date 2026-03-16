@@ -6,6 +6,7 @@ import type {
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
 
+import { AUTHZ_CACHE_TIME, SINGLE_FLIGHT_WAIT_TIME_MS } from './constants';
 import {
 	AuthZCheckResponse,
 	BrandedPermission,
@@ -19,8 +20,6 @@ import {
 
 let ctx: Promise<AuthZCheckResponse> | null;
 let pendingPermissions: BrandedPermission[] = [];
-const SINGLE_FLIGHT_WAIT_TIME_MS = 50;
-const AUTHZ_CACHE_TIME = 20_000;
 
 function dispatchPermission(
 	permission: BrandedPermission,
