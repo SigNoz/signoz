@@ -3,6 +3,7 @@ package sqlitesqlschema
 import (
 	"context"
 	"strconv"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -114,7 +115,29 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 			return nil, err
 		}
 
-		if unique {
+		if unique && partial {
+			var indexSQL string
+			if err := provider.
+				sqlstore.
+				BunDB().
+				NewRaw("SELECT sql FROM sqlite_master WHERE type = 'index' AND name = ?", name).
+				Scan(ctx, &indexSQL); err != nil {
+				return nil, err
+			}
+
+			where := extractWhereClause(indexSQL)
+			index := &sqlschema.PartialUniqueIndex{
+				TableName:   tableName,
+				ColumnNames: columns,
+				Where:       where,
+			}
+
+			if index.Name() == name {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(name))
+			}
+		} else if unique {
 			index := &sqlschema.UniqueIndex{
 				TableName:   tableName,
 				ColumnNames: columns,
@@ -129,6 +152,16 @@ func (provider *provider) GetIndices(ctx context.Context, tableName sqlschema.Ta
 	}
 
 	return indices, nil
+}
+
+// extractWhereClause extracts the WHERE clause from a CREATE INDEX SQL statement.
+func extractWhereClause(sql string) string {
+	upper := strings.ToUpper(sql)
+	idx := strings.LastIndex(upper, ") WHERE ")
+	if idx == -1 {
+		return ""
+	}
+	return sql[idx+len(") WHERE "):]
 }
 
 func (provider *provider) ToggleFKEnforcement(ctx context.Context, db bun.IDB, on bool) error {

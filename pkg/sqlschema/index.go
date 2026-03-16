@@ -8,8 +8,9 @@ import (
 )
 
 var (
-	IndexTypeUnique = IndexType{s: valuer.NewString("uq")}
-	IndexTypeIndex  = IndexType{s: valuer.NewString("ix")}
+	IndexTypeUnique        = IndexType{s: valuer.NewString("uq")}
+	IndexTypeIndex         = IndexType{s: valuer.NewString("ix")}
+	IndexTypePartialUnique = IndexType{s: valuer.NewString("puq")}
 )
 
 type IndexType struct{ s valuer.String }
@@ -126,6 +127,101 @@ func (index *UniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
 }
 
 func (index *UniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "DROP INDEX IF EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+
+	return sql
+}
+
+type PartialUniqueIndex struct {
+	TableName   TableName
+	ColumnNames []ColumnName
+	Where       string
+	name        string
+}
+
+func (index *PartialUniqueIndex) Name() string {
+	if index.name != "" {
+		return index.name
+	}
+
+	var b strings.Builder
+	b.WriteString(IndexTypePartialUnique.String())
+	b.WriteString("_")
+	b.WriteString(string(index.TableName))
+	b.WriteString("_")
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			b.WriteString("_")
+		}
+		b.WriteString(string(column))
+	}
+	return b.String()
+}
+
+func (index *PartialUniqueIndex) Named(name string) Index {
+	copyOfColumnNames := make([]ColumnName, len(index.ColumnNames))
+	copy(copyOfColumnNames, index.ColumnNames)
+
+	return &PartialUniqueIndex{
+		TableName:   index.TableName,
+		ColumnNames: copyOfColumnNames,
+		Where:       index.Where,
+		name:        name,
+	}
+}
+
+func (index *PartialUniqueIndex) IsNamed() bool {
+	return index.name != ""
+}
+
+func (*PartialUniqueIndex) Type() IndexType {
+	return IndexTypePartialUnique
+}
+
+func (index *PartialUniqueIndex) Columns() []ColumnName {
+	return index.ColumnNames
+}
+
+func (index *PartialUniqueIndex) Equals(other Index) bool {
+	if other.Type() != IndexTypePartialUnique {
+		return false
+	}
+
+	otherPartial, ok := other.(*PartialUniqueIndex)
+	if !ok {
+		return false
+	}
+
+	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns()) && index.Where == otherPartial.Where
+}
+
+func (index *PartialUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
+	sql := []byte{}
+
+	sql = append(sql, "CREATE UNIQUE INDEX IF NOT EXISTS "...)
+	sql = fmter.AppendIdent(sql, index.Name())
+	sql = append(sql, " ON "...)
+	sql = fmter.AppendIdent(sql, string(index.TableName))
+	sql = append(sql, " ("...)
+
+	for i, column := range index.ColumnNames {
+		if i > 0 {
+			sql = append(sql, ", "...)
+		}
+
+		sql = fmter.AppendIdent(sql, string(column))
+	}
+
+	sql = append(sql, ") WHERE "...)
+	sql = append(sql, index.Where...)
+
+	return sql
+}
+
+func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 	sql := []byte{}
 
 	sql = append(sql, "DROP INDEX IF EXISTS "...)
