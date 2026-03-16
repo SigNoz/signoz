@@ -435,6 +435,7 @@ function LogsExplorerViewsContainer({
 				{!showLiveLogs && (
 					<LogsActionsContainer
 						listQuery={listQuery}
+						stagedQuery={stagedQuery}
 						selectedPanelType={selectedPanelType}
 						showFrequencyChart={showFrequencyChart}
 						handleToggleFrequencyChart={handleToggleFrequencyChart}
@@ -444,8 +445,6 @@ function LogsExplorerViewsContainer({
 						isLoading={isLoading}
 						isError={isError}
 						isSuccess={isSuccess}
-						minTime={minTime}
-						maxTime={maxTime}
 					/>
 				)}
 

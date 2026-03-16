@@ -2,14 +2,17 @@ import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsM
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
-interface LogsDownloadOptionsMenuProps {
+interface TracesDownloadOptionsMenuProps {
 	stagedQuery: Query | null;
 }
 
-export default function LogsDownloadOptionsMenu({
+export default function TracesDownloadOptionsMenu({
 	stagedQuery,
-}: LogsDownloadOptionsMenuProps): JSX.Element {
+}: TracesDownloadOptionsMenuProps): JSX.Element {
 	return (
-		<DownloadOptionsMenu stagedQuery={stagedQuery} dataSource={DataSource.LOGS} />
+		<DownloadOptionsMenu
+			stagedQuery={stagedQuery}
+			dataSource={DataSource.TRACES}
+		/>
 	);
 }

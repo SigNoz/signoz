@@ -6,12 +6,14 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { ArrowUp10, Minus } from 'lucide-react';
+import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import QueryStatus from './QueryStatus';
 
 function LogsActionsContainer({
 	listQuery,
+	stagedQuery,
 	selectedPanelType,
 	showFrequencyChart,
 	handleToggleFrequencyChart,
@@ -21,10 +23,9 @@ function LogsActionsContainer({
 	isLoading,
 	isError,
 	isSuccess,
-	minTime,
-	maxTime,
 }: {
 	listQuery: any;
+	stagedQuery: Query | null;
 	selectedPanelType: PANEL_TYPES;
 	showFrequencyChart: boolean;
 	handleToggleFrequencyChart: () => void;
@@ -34,8 +35,6 @@ function LogsActionsContainer({
 	isLoading: boolean;
 	isError: boolean;
 	isSuccess: boolean;
-	minTime: number;
-	maxTime: number;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -96,13 +95,7 @@ function LogsActionsContainer({
 								/>
 							</div>
 							<div className="download-options-container">
-								<LogsDownloadOptionsMenu
-									startTime={minTime}
-									endTime={maxTime}
-									filter={listQuery?.filter?.expression || ''}
-									columns={config.addColumn?.value || []}
-									orderBy={orderBy}
-								/>
+								<LogsDownloadOptionsMenu stagedQuery={stagedQuery} />
 							</div>
 							<div className="format-options-container">
 								<LogsFormatOptionsMenu

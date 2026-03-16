@@ -1,4 +1,4 @@
-.logs-download-popover {
+.download-popover {
 	.ant-popover-inner {
 		border-radius: 4px;
 		border: 1px solid var(--bg-slate-400);
@@ -59,7 +59,7 @@
 }
 
 .lightMode {
-	.logs-download-popover {
+	.download-popover {
 		.ant-popover-inner {
 			border: 1px solid var(--bg-vanilla-300);
 			background: linear-gradient(
