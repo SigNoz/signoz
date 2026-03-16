@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
@@ -630,7 +629,9 @@ function K8sPodsList({
 							spinning: isFetchingGroupedByRowData || isLoadingGroupedByRowData,
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
-						onRow={(record: K8sPodsRowData): Record<string, unknown> => ({
+						onRow={(
+							record: K8sPodsRowData,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
 							onClick: (event: React.MouseEvent): void => {
 								if (isModifierKeyPressed(event)) {
 									openPodInNewTab(record);
@@ -771,7 +772,9 @@ function K8sPodsList({
 				scroll={{ x: true }}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record: K8sPodsRowData): Record<string, unknown> => ({
+				onRow={(
+					record: K8sPodsRowData,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
 					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}

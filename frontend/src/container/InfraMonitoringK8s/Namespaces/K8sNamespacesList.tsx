@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
@@ -461,17 +459,21 @@ function K8sNamespacesList({
 		nestedNamespacesData,
 	]);
 
+	const openNamespaceInNewTab = (record: K8sNamespacesRowData): void => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
+			record.namespaceUID,
+		);
+		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+	};
+
 	const handleRowClick = (
 		record: K8sNamespacesRowData,
 		event: React.MouseEvent,
 	): void => {
 		if (event && isModifierKeyPressed(event)) {
-			const newParams = new URLSearchParams(searchParams);
-			newParams.set(
-				INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
-				record.namespaceUID,
-			);
-			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			openNamespaceInNewTab(record);
 			return;
 		}
 		if (groupBy.length === 0) {
@@ -542,12 +544,7 @@ function K8sNamespacesList({
 						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
 							onClick: (event: React.MouseEvent): void => {
 								if (isModifierKeyPressed(event)) {
-									const newParams = new URLSearchParams(searchParams);
-									newParams.set(
-										INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
-										record.namespaceUID,
-									);
-									openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+									openNamespaceInNewTab(record);
 									return;
 								}
 								setselectedNamespaceUID(record.namespaceUID);

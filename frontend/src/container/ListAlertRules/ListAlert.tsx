@@ -1,4 +1,3 @@
-/* eslint-disable react/display-name */
 import React, { useCallback, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { UseQueryResult } from 'react-query';

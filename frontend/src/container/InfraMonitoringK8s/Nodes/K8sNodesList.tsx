@@ -1,5 +1,3 @@
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable @typescript-eslint/explicit-function-return-type */
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
@@ -440,14 +438,18 @@ function K8sNodesList({
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
 	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
+	const openNodeInNewTab = (record: K8sNodesRowData): void => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
+		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+	};
+
 	const handleRowClick = (
 		record: K8sNodesRowData,
 		event: React.MouseEvent,
 	): void => {
 		if (event && isModifierKeyPressed(event)) {
-			const newParams = new URLSearchParams(searchParams);
-			newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
-			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			openNodeInNewTab(record);
 			return;
 		}
 		if (groupBy.length === 0) {
@@ -519,12 +521,7 @@ function K8sNodesList({
 						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
 							onClick: (event: React.MouseEvent): void => {
 								if (isModifierKeyPressed(event)) {
-									const newParams = new URLSearchParams(searchParams);
-									newParams.set(
-										INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID,
-										record.nodeUID,
-									);
-									openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+									openNodeInNewTab(record);
 									return;
 								}
 								setSelectedNodeUID(record.nodeUID);
