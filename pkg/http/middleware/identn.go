@@ -25,7 +25,7 @@ type IdentN struct {
 	logger   *slog.Logger
 }
 
-func NewIdentity(resolver identity.IdentNResolver, sharder sharder.Sharder, headers []string, logger *slog.Logger) *IdentN {
+func NewIdentN(resolver identity.IdentNResolver, sharder sharder.Sharder, headers []string, logger *slog.Logger) *IdentN {
 	return &IdentN{
 		resolver: resolver,
 		sharder:  sharder,

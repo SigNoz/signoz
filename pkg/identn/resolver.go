@@ -15,7 +15,7 @@ type chain struct {
 }
 
 // NewChain creates a new IdentNResolver that tries resolvers in the order given.
-func NewChain(providerSettings factory.ProviderSettings, identNs ...IdentN) IdentNResolver {
+func NewIdentNResolver(providerSettings factory.ProviderSettings, identNs ...IdentN) IdentNResolver {
 	return &chain{
 		identNs:  identNs,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn"),

@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
-// Identity authenticates an HTTP request by trying registered resolvers.
+// IdentN Resolver gets identity from an HTTP request by trying registered identNs.
 type IdentNResolver interface {
 	// Authenticate tries resolvers in order and returns the resolved identity.
 	GetIdentity(r *http.Request) (authtypes.Claims, authtypes.AuthType, IdentN, error)

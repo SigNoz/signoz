@@ -16,9 +16,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
-	identity "github.com/SigNoz/signoz/pkg/identn"
-	apikeyidentn "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
-	tokenidentn "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
+	"github.com/SigNoz/signoz/pkg/identn"
+	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
+	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -68,7 +68,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
-	IdentNResolver         identity.IdentNResolver
+	IdentNResolver         identn.IdentNResolver
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -394,10 +394,10 @@ func New(
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
-	// Initialize identity resolver chain
-	tokenResolver := tokenidentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
-	apiKeyResolver := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
-	identNResolver := identity.NewChain(providerSettings, tokenResolver, apiKeyResolver)
+	// Initialize identN resolver
+	tokenizerIdentn := tokenizeridentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
+	apikeyIdentn := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
+	identNResolver := identn.NewIdentNResolver(providerSettings, tokenizerIdentn, apikeyIdentn)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
