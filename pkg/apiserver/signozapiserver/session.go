@@ -72,7 +72,7 @@ func (provider *provider) addSessionRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{http.StatusBadRequest},
 		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.AuthTypeTokenizer.StringValue()}},
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

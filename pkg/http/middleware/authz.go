@@ -44,7 +44,7 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.AuthTypeAPIKey.StringValue() || authtype == authtypes.AuthTypeAPIKey.StringValue()) {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsViewer(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -96,7 +96,7 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.AuthTypeAPIKey.StringValue() || authtype == authtypes.AuthTypeAPIKey.StringValue()) {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsEditor(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -147,7 +147,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.AuthTypeAPIKey.StringValue() || authtype == authtypes.AuthTypeAPIKey.StringValue()) {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsAdmin(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)

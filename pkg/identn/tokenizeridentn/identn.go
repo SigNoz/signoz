@@ -33,10 +33,6 @@ func (r *resolver) Name() authtypes.IdentNProvider {
 	return authtypes.IdentNProviderTokenizer
 }
 
-func (r *resolver) AuthType() authtypes.AuthType {
-	return authtypes.AuthTypeTokenizer
-}
-
 func (r *resolver) Test(req *http.Request) bool {
 	for _, header := range r.headers {
 		if req.Header.Get(header) != "" {

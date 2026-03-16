@@ -20,8 +20,6 @@ type IdentN interface {
 	GetIdentity(r *http.Request) (*authtypes.Identity, error)
 
 	Name() authtypes.IdentNProvider
-
-	AuthType() authtypes.AuthType
 }
 
 type IdentNWithPostHook interface {

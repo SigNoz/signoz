@@ -34,10 +34,6 @@ func (r *resolver) Name() authtypes.IdentNProvider {
 	return authtypes.IdentNProviderAPIkey
 }
 
-func (r *resolver) AuthType() authtypes.AuthType {
-	return authtypes.AuthTypeAPIKey
-}
-
 func (r *resolver) Test(req *http.Request) bool {
 	for _, header := range r.headers {
 		if req.Header.Get(header) != "" {

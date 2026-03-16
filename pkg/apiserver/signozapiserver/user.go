@@ -208,7 +208,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.AuthTypeTokenizer.StringValue()}},
+		SecuritySchemes:     []handler.OpenAPISecurityScheme{{Name: authtypes.IdentNProviderTokenizer.StringValue()}},
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}

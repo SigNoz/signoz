@@ -66,12 +66,8 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 			return
 		}
 
-		// Set context values
-		ctx = authtypes.NewContextWithClaims(ctx, claims)
-		ctx = authtypes.SetAuthType(ctx, identN.AuthType())
-
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("auth_type", identN.AuthType().StringValue())
+		comment.Set("identn_provider", claims.IdentNProvider)
 		comment.Set("user_id", claims.UserID)
 		comment.Set("org_id", claims.OrgID)
 		ctx = ctxtypes.NewContextWithComment(ctx, comment)

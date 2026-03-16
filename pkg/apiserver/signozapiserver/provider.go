@@ -238,13 +238,13 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: authtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderAPIkey.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
 	}
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: authtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
 	}
 }
