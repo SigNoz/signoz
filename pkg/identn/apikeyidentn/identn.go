@@ -14,6 +14,9 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
+// todo: will move this in types layer with service account integration
+type apiKeyTokenKey struct{}
+
 type resolver struct {
 	store    sqlstore.SQLStore
 	headers  []string
@@ -21,11 +24,11 @@ type resolver struct {
 	sfGroup  *singleflight.Group
 }
 
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentNWithPostHook {
+func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentN {
 	return &resolver{
 		store:    store,
 		headers:  headers,
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentity"),
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
 		sfGroup:  &singleflight.Group{},
 	}
 }
@@ -43,15 +46,22 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
+func (r *resolver) Pre(req *http.Request) *http.Request {
+	token := r.extractToken(req)
+	if token == "" {
+		return req
+	}
+
+	ctx := context.WithValue(req.Context(), apiKeyTokenKey{}, token)
+	return req.WithContext(ctx)
+}
+
 func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
 
-	var apiKeyToken string
-	for _, header := range r.headers {
-		if v := req.Header.Get(header); v != "" {
-			apiKeyToken = v
-			break
-		}
+	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
+	if !ok || apiKeyToken == "" {
+		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key")
 	}
 
 	var apiKey types.StorableAPIKey
@@ -89,15 +99,9 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	return &identity, nil
 }
 
-func (r *resolver) Post(ctx context.Context, req *http.Request, _ authtypes.Claims) {
-	var apiKeyToken string
-	for _, header := range r.headers {
-		if v := req.Header.Get(header); v != "" {
-			apiKeyToken = v
-			break
-		}
-	}
-	if apiKeyToken == "" {
+func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
+	if !ok || apiKeyToken == "" {
 		return
 	}
 
@@ -115,4 +119,13 @@ func (r *resolver) Post(ctx context.Context, req *http.Request, _ authtypes.Clai
 		}
 		return true, nil
 	})
+}
+
+func (r *resolver) extractToken(req *http.Request) string {
+	for _, header := range r.headers {
+		if v := req.Header.Get(header); v != "" {
+			return v
+		}
+	}
+	return ""
 }

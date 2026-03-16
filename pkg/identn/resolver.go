@@ -4,7 +4,6 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 type identNResolver struct {
@@ -19,19 +18,14 @@ func NewIdentNResolver(providerSettings factory.ProviderSettings, identNs ...Ide
 	}
 }
 
-func (c *identNResolver) GetIdentity(r *http.Request) (*authtypes.Identity, IdentN, error) {
-	for _, identN := range c.identNs {
-		if !identN.Test(r) {
-			continue
+// GetIdentN returns the first IdentN whose Test() returns true.
+// Returns nil if no resolver matched.
+func (c *identNResolver) GetIdentN(r *http.Request) IdentN {
+	for _, idn := range c.identNs {
+		if idn.Test(r) {
+			c.settings.Logger().DebugContext(r.Context(), "identn matched", "provider", idn.Name())
+			return idn
 		}
-
-		identity, err := identN.GetIdentity(r)
-		if err != nil {
-			return nil, identN, err
-		}
-
-		return identity, identN, nil
 	}
-
-	return nil, nil, nil
+	return nil
 }
