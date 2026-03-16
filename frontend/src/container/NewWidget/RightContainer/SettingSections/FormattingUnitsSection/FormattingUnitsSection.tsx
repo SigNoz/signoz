@@ -1,6 +1,6 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { Select, Typography } from 'antd';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
+import { PrecisionOption } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
 import { SlidersHorizontal } from 'lucide-react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
@@ -21,6 +21,7 @@ interface FormattingUnitsSectionProps {
 	allowYAxisUnit: boolean;
 	allowDecimalPrecision: boolean;
 	allowPanelColumnPreference: boolean;
+	decimapPrecisionOptions: { label: string; value: PrecisionOption }[];
 }
 
 export default function FormattingUnitsSection({
@@ -35,16 +36,8 @@ export default function FormattingUnitsSection({
 	allowYAxisUnit,
 	allowDecimalPrecision,
 	allowPanelColumnPreference,
+	decimapPrecisionOptions,
 }: FormattingUnitsSectionProps): JSX.Element {
-	const decimapPrecisionOptions = useMemo(
-		() => [
-			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
-			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
-			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
-			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
-		],
-		[],
-	);
 	return (
 		<SettingsSection
 			title="Formatting & Units"

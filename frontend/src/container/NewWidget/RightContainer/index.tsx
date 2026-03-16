@@ -1,7 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Typography } from 'antd';
-import { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
@@ -139,6 +139,16 @@ function RightContainer({
 	const allowFillMode = panelTypeVsFillMode[selectedGraph];
 	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
 
+	const decimapPrecisionOptions = useMemo(
+		() => [
+			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
+			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
+			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
+			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
+		],
+		[],
+	);
+
 	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
 		allowSoftMinMax,
 		allowLogScale,
@@ -213,6 +223,7 @@ function RightContainer({
 						allowYAxisUnit={allowYAxisUnit}
 						allowDecimalPrecision={allowDecimalPrecision}
 						allowPanelColumnPreference={allowPanelColumnPreference}
+						decimapPrecisionOptions={decimapPrecisionOptions}
 					/>
 				)}
 
