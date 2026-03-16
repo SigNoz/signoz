@@ -1,4 +1,4 @@
-import { Col, Tag as AntDTag } from 'antd';
+import { Tag as AntDTag } from 'antd';
 import styled from 'styled-components';
 
 export const Container = styled.div`
@@ -6,30 +6,6 @@ export const Container = styled.div`
 	display: flex;
 	flex-direction: column;
 	overflow-y: hidden;
-`;
-
-export const RightContainerWrapper = styled(Col)`
-	&&& {
-		width: 100%;
-		overflow-y: auto;
-	}
-	&::-webkit-scrollbar {
-		width: 0rem;
-	}
-`;
-
-interface LeftContainerWrapperProps {
-	isDarkMode: boolean;
-}
-
-export const LeftContainerWrapper = styled(Col)<LeftContainerWrapperProps>`
-	&&& {
-		width: 100%;
-		overflow-y: auto;
-	}
-	&::-webkit-scrollbar {
-		width: 0rem;
-	}
 `;
 
 export const ButtonContainer = styled.div`
