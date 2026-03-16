@@ -13,6 +13,10 @@ import { FieldValueResponse } from 'types/api/dynamicVariables/getFieldValues';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { isRetryableError as checkIfRetryableError } from 'utils/errorUtils';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../../constants/queryCacheTime';
 import SelectVariableInput from './SelectVariableInput';
 import { useDashboardVariableSelectHelper } from './useDashboardVariableSelectHelper';
 import {
@@ -101,9 +105,10 @@ function DynamicVariableInput({
 		return dynamicVars || 'no_dynamic_variables';
 	}, [existingVariables]);
 
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
+	const { maxTime, minTime, isAutoRefreshDisabled } = useSelector<
+		AppState,
+		GlobalReducer
+	>((state) => state.globalTime);
 
 	const {
 		variableFetchCycleId,
@@ -232,6 +237,9 @@ function DynamicVariableInput({
 				!!variableData.dynamicVariablesSource &&
 				!!variableData.dynamicVariablesAttribute &&
 				(isVariableFetching || (isVariableSettled && hasVariableFetchedOnce)),
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			queryFn: ({ signal }) =>
 				getFieldValues(
 					variableData.dynamicVariablesSource?.toLowerCase() === 'all telemetry'

@@ -273,6 +273,7 @@ Options can be simple (direct link) or nested (with another question):
 - Place logo files in `public/Logos/`
 - Use SVG format
 - Reference as `"/Logos/your-logo.svg"`
+- **Optimize new SVGs**: Run any newly downloaded SVGs through an optimizer like [SVGOMG (svgo)](https://svgomg.net/) or use `npx svgo public/Logos/your-logo.svg` to minimise their size before committing.
 
 ### 4. Links
 

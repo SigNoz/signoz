@@ -5,6 +5,7 @@ import logEvent from 'api/common/logEvent';
 import { DEFAULT_ENTITY_VERSION, ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { populateMultipleResults } from 'container/NewWidget/LeftContainer/WidgetGraph/util';
 import { CustomTimeType } from 'container/TopNav/DateTimeSelectionV2/types';
 import { useIsPanelWaitingOnVariable } from 'hooks/dashboard/useVariableFetchState';
@@ -25,6 +26,11 @@ import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
+import {
+	DASHBOARD_CACHE_TIME,
+	DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
+} from '../../../constants/queryCacheTime';
+import { REACT_QUERY_KEY } from '../../../constants/reactQueryKeys';
 import EmptyWidget from '../EmptyWidget';
 import { MenuItemKeys } from '../WidgetHeader/contants';
 import { GridCardGraphProps } from './types';
@@ -62,16 +68,14 @@ function GridCardGraph({
 	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
 		false,
 	);
-	const {
-		toScrollWidgetId,
-		setToScrollWidgetId,
-		setDashboardQueryRangeCalled,
-	} = useDashboard();
+	const { setDashboardQueryRangeCalled } = useDashboard();
 
-	const { minTime, maxTime, selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
+	const {
+		minTime,
+		maxTime,
+		selectedTime: globalSelectedInterval,
+		isAutoRefreshDisabled,
+	} = useSelector<AppState, GlobalReducer>((state) => state.globalTime);
 
 	const handleBackNavigation = (): void => {
 		const searchParams = new URLSearchParams(window.location.search);
@@ -102,20 +106,11 @@ function GridCardGraph({
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
-	const graphRef = useRef<HTMLDivElement>(null);
+	const widgetContainerRef = useRef<HTMLDivElement>(null);
 
-	const isVisible = useIntersectionObserver(graphRef, undefined, true);
+	const isVisible = useIntersectionObserver(widgetContainerRef, undefined, true);
 
-	useEffect(() => {
-		if (toScrollWidgetId === widget.id) {
-			graphRef.current?.scrollIntoView({
-				behavior: 'smooth',
-				block: 'center',
-			});
-			graphRef.current?.focus();
-			setToScrollWidgetId('');
-		}
-	}, [toScrollWidgetId, setToScrollWidgetId, widget.id]);
+	useScrollWidgetIntoView(widget?.id || '', widgetContainerRef);
 
 	const updatedQuery = widget?.query;
 
@@ -210,8 +205,10 @@ function GridCardGraph({
 		version || DEFAULT_ENTITY_VERSION,
 		{
 			queryKey: [
+				REACT_QUERY_KEY.DASHBOARD_GRID_CARD_QUERY_RANGE,
 				maxTime,
 				minTime,
+				isAutoRefreshDisabled,
 				globalSelectedInterval,
 				widget?.query,
 				widget?.panelTypes,
@@ -241,6 +238,9 @@ function GridCardGraph({
 				return failureCount < 2;
 			},
 			keepPreviousData: true,
+			cacheTime: isAutoRefreshDisabled
+				? DASHBOARD_CACHE_TIME
+				: DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED,
 			enabled: queryEnabledCondition,
 			refetchOnMount: false,
 			onError: (error) => {
@@ -294,7 +294,7 @@ function GridCardGraph({
 			: headerMenuList;
 
 	return (
-		<div style={{ height: '100%', width: '100%' }} ref={graphRef}>
+		<div style={{ height: '100%', width: '100%' }} ref={widgetContainerRef}>
 			{isEmptyLayout ? (
 				<EmptyWidget />
 			) : (

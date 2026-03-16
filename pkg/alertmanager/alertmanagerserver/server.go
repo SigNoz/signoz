@@ -190,7 +190,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		})
 	}()
 
-	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, nil, server.logger, signozRegisterer)
+	server.alerts, err = mem.NewAlerts(ctx, server.marker, server.srvConfig.Alerts.GCInterval, 0, nil, server.logger, signozRegisterer, nil)
 	if err != nil {
 		return nil, err
 	}
@@ -203,15 +203,15 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 
 func (server *Server) GetAlerts(ctx context.Context, params alertmanagertypes.GettableAlertsParams) (alertmanagertypes.GettableAlerts, error) {
 	return alertmanagertypes.NewGettableAlertsFromAlertProvider(server.alerts, server.alertmanagerConfig, server.marker.Status, func(labels model.LabelSet) {
-		server.inhibitor.Mutes(labels)
-		server.silencer.Mutes(labels)
+		server.inhibitor.Mutes(ctx, labels)
+		server.silencer.Mutes(ctx, labels)
 	}, params)
 }
 
 func (server *Server) PutAlerts(ctx context.Context, postableAlerts alertmanagertypes.PostableAlerts) error {
-	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
+	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(ctx, postableAlerts, time.Duration(server.srvConfig.Global.ResolveTimeout), time.Now())
 	// Notification sending alert takes precedence over validation errors.
-	if err := server.alerts.Put(alerts...); err != nil {
+	if err := server.alerts.Put(ctx, alerts...); err != nil {
 		return err
 	}
 
@@ -340,6 +340,7 @@ func (server *Server) TestAlert(ctx context.Context, receiversMap map[*alertmana
 	}
 
 	alerts, err := alertmanagertypes.NewAlertsFromPostableAlerts(
+		ctx,
 		postableAlerts,
 		time.Duration(server.srvConfig.Global.ResolveTimeout),
 		time.Now(),

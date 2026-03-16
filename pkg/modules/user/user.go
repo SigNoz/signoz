@@ -42,7 +42,6 @@ type Module interface {
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
-	DeleteInvite(ctx context.Context, orgID string, id valuer.UUID) error
 	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
 	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
 
@@ -52,6 +51,8 @@ type Module interface {
 	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
+
+	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
 	statsreporter.StatsCollector
 }
@@ -77,6 +78,9 @@ type Getter interface {
 
 	// Count users by org id.
 	CountByOrgID(context.Context, valuer.UUID) (int64, error)
+
+	// Count of users by org id and grouped by status.
+	CountByOrgIDAndStatuses(context.Context, valuer.UUID, []string) (map[valuer.String]int64, error)
 
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)

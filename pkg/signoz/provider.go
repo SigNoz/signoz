@@ -170,6 +170,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddRootUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserEmailOrgIDIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
+		sqlmigration.NewAddStatusUserFactory(sqlstore, sqlschema),
+		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
 	)
 }
 

@@ -11,7 +11,7 @@ export interface LocalStoreDashboardVariables {
 		| IDashboardVariable['selectedValue'];
 }
 
-interface UseVariablesFromUrlReturn {
+export interface UseVariablesFromUrlReturn {
 	getUrlVariables: () => LocalStoreDashboardVariables;
 	setUrlVariables: (variables: LocalStoreDashboardVariables) => void;
 	updateUrlVariable: (

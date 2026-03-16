@@ -626,6 +626,11 @@ function OnboardingAddDataSource(): JSX.Element {
 		);
 	};
 
+	const progressText = `Get Started (${Math.min(
+		currentStep + 1,
+		setupStepItems.length,
+	)}/${setupStepItems.length})`;
+
 	return (
 		<div className="onboarding-v2">
 			<Layout>
@@ -646,7 +651,7 @@ function OnboardingAddDataSource(): JSX.Element {
 									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
 								}}
 							/>
-							<Typography.Text>Get Started (2/4)</Typography.Text>
+							<Typography.Text>{progressText}</Typography.Text>
 						</div>
 
 						<div className="header-right-section">

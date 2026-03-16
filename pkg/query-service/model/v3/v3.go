@@ -9,9 +9,10 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -937,7 +938,7 @@ func (b *BuilderQuery) SetShiftByFromFunc() {
 					} else if shift, ok := function.Args[0].(string); ok {
 						shiftBy, err := strconv.ParseFloat(shift, 64)
 						if err != nil {
-							zap.L().Error("failed to parse time shift by", zap.String("shift", shift), zap.Error(err))
+							slog.Error("failed to parse time shift by", "shift", shift, "error", err)
 						}
 						timeShiftBy = int64(shiftBy)
 					}

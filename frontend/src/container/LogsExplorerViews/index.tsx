@@ -39,6 +39,7 @@ import { useGetExplorerQueryRange } from 'hooks/queryBuilder/useGetExplorerQuery
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQueryData from 'hooks/useUrlQueryData';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { isEmpty, isUndefined } from 'lodash-es';
 import LiveLogs from 'pages/LiveLogs';
 import { UpdateTimeInterval } from 'store/actions';
@@ -59,6 +60,7 @@ import LogsActionsContainer from './LogsActionsContainer';
 
 import './LogsExplorerViews.styles.scss';
 
+// eslint-disable-next-line sonarjs/cognitive-complexity
 function LogsExplorerViewsContainer({
 	setIsLoadingQueries,
 	listQueryKeyRef,
@@ -109,7 +111,7 @@ function LogsExplorerViewsContainer({
 
 	const [orderBy, setOrderBy] = useState<string>('timestamp:desc');
 
-	const [yAxisUnit, setYAxisUnit] = useState<string>('');
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit('');
 
 	const listQuery = useMemo(() => getListQuery(stagedQuery) || null, [
 		stagedQuery,
@@ -367,10 +369,6 @@ function LogsExplorerViewsContainer({
 		orderBy,
 	]);
 
-	const onUnitChangeHandler = useCallback((value: string): void => {
-		setYAxisUnit(value);
-	}, []);
-
 	const chartData = useMemo(() => {
 		if (!stagedQuery) {
 			return [];
@@ -488,10 +486,7 @@ function LogsExplorerViewsContainer({
 					{selectedPanelType === PANEL_TYPES.TIME_SERIES && !showLiveLogs && (
 						<div className="time-series-view-container">
 							<div className="time-series-view-container-header">
-								<BuilderUnitsFilter
-									onChange={onUnitChangeHandler}
-									yAxisUnit={yAxisUnit}
-								/>
+								<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 							</div>
 							<TimeSeriesView
 								isLoading={isLoading || isFetching}

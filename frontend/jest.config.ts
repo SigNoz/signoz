@@ -14,6 +14,7 @@ const config: Config.InitialOptions = {
 		'\\.(css|less|scss)$': '<rootDir>/__mocks__/cssMock.ts',
 		'\\.md$': '<rootDir>/__mocks__/cssMock.ts',
 		'^uplot$': '<rootDir>/__mocks__/uplotMock.ts',
+		'^@signozhq/resizable$': '<rootDir>/__mocks__/resizableMock.tsx',
 		'^hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^src/hooks/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
 		'^.*/useSafeNavigate$': USE_SAFE_NAVIGATE_MOCK_PATH,
@@ -39,7 +40,7 @@ const config: Config.InitialOptions = {
 		'^.+\\.(js|jsx)$': 'babel-jest',
 	},
 	transformIgnorePatterns: [
-		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|@signozhq/table|@signozhq/calendar|@signozhq/input|@signozhq/popover|@signozhq/button|@signozhq/sonner|@signozhq/*|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana)/)',
+		'node_modules/(?!(lodash-es|react-dnd|core-dnd|@react-dnd|dnd-core|react-dnd-html5-backend|axios|@signozhq/design-tokens|@signozhq/table|@signozhq/calendar|@signozhq/input|@signozhq/popover|@signozhq/button|@signozhq/sonner|@signozhq/*|date-fns|d3-interpolate|d3-color|api|@codemirror|@lezer|@marijn|@grafana|nuqs)/)',
 	],
 	setupFilesAfterEnv: ['<rootDir>/jest.setup.ts'],
 	testPathIgnorePatterns: ['/node_modules/', '/public/'],

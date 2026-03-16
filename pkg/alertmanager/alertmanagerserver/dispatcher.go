@@ -95,7 +95,7 @@ func (d *Dispatcher) Run() {
 	d.ctx, d.cancel = context.WithCancel(context.Background())
 	d.mtx.Unlock()
 
-	d.run(d.alerts.Subscribe())
+	d.run(d.alerts.Subscribe(fmt.Sprintf("dispatcher-%s", d.orgID)))
 	close(d.done)
 }
 
@@ -107,14 +107,15 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 
 	for {
 		select {
-		case alert, ok := <-it.Next():
-			if !ok {
+		case alertWrapper, ok := <-it.Next():
+			if !ok || alertWrapper == nil {
 				// Iterator exhausted for some reason.
 				if err := it.Err(); err != nil {
 					d.logger.ErrorContext(d.ctx, "Error on alert update", "err", err)
 				}
 				return
 			}
+			alert := alertWrapper.Data
 
 			d.logger.DebugContext(d.ctx, "SigNoz Custom Dispatcher: Received alert", "alert", alert)
 

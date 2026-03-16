@@ -36,6 +36,7 @@ export const getRoutes = (
 	if (isWorkspaceBlocked && isAdmin) {
 		settings.push(
 			...organizationSettings(t),
+			...membersSettings(t),
 			...mySettings(t),
 			...billingSettings(t),
 			...keyboardShortcuts(t),

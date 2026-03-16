@@ -48,6 +48,25 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 	return storable, nil
 }
 
+func (store *store) GetActiveByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*serviceaccounttypes.StorableServiceAccount, error) {
+	storable := new(serviceaccounttypes.StorableServiceAccount)
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(storable).
+		Where("org_id = ?", orgID).
+		Where("name = ?", name).
+		Where("status = ?", serviceaccounttypes.StatusActive).
+		Scan(ctx)
+	if err != nil {
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccountNotFound, "service account with name: %s doesn't exist in org: %s", name, orgID.String())
+	}
+
+	return storable, nil
+}
+
 func (store *store) GetByID(ctx context.Context, id valuer.UUID) (*serviceaccounttypes.StorableServiceAccount, error) {
 	storable := new(serviceaccounttypes.StorableServiceAccount)
 
@@ -188,7 +207,7 @@ func (store *store) CreateFactorAPIKey(ctx context.Context, storable *serviceacc
 		Model(storable).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeServiceAccountFactorAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
+		return store.sqlstore.WrapAlreadyExistsErrf(err, serviceaccounttypes.ErrCodeAPIKeyAlreadyExists, "api key with name: %s already exists for service account: %s", storable.Name, storable.ServiceAccountID)
 	}
 
 	return nil
@@ -206,7 +225,7 @@ func (store *store) GetFactorAPIKey(ctx context.Context, serviceAccountID valuer
 		Where("service_account_id = ?", serviceAccountID).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeServiceAccounFactorAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, serviceaccounttypes.ErrCodeAPIKeytNotFound, "api key with id: %s doesn't exist for service account: %s", id, serviceAccountID)
 	}
 
 	return storable, nil

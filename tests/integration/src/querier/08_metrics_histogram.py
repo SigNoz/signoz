@@ -372,3 +372,153 @@ def test_histogram_count_no_param(
             values[1]["value"] == first_values[le]
         )  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
         assert values[-1]["value"] == last_values[le]
+
+@pytest.mark.parametrize(
+    "space_agg, zeroth_value, first_value, last_value",
+    [
+        ("p50", 500, 818.182, 550.725),
+        ("p75", 750, 3000, 826.087),
+        ("p90", 900, 6400, 991.304),
+        ("p95", 950, 8000, 4200),
+        ("p99", 990, 8000, 8000),
+    ],
+)
+def test_histogram_percentile_for_all_services(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    space_agg: str,
+    zeroth_value: float,
+    first_value: float,
+    last_value: float,
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_{space_agg}_bucket"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        space_agg,
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
+    assert len(result_values) == 60
+    assert result_values[0]["value"] == zeroth_value
+    assert result_values[1]["value"] == first_value
+    assert result_values[-1]["value"] == last_value
+
+@pytest.mark.parametrize(
+    "space_agg, first_value, last_value",
+    [
+        ("p50", 818.182, 550.725),
+        ("p75", 3000, 826.087),
+        ("p90", 6400, 991.304),
+        ("p95", 8000, 4200),
+        ("p99", 8000, 8000),
+    ],
+)
+def test_histogram_percentile_for_cumulative_service(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    space_agg: str,
+    first_value: float,
+    last_value: float,
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_{space_agg}_cumulative_bucket"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        space_agg,
+        filter_expression='service = "api"',
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
+    assert len(result_values) == 59
+    assert result_values[0]["value"] == first_value
+    assert result_values[-1]["value"] == last_value
+
+@pytest.mark.parametrize(
+    "space_agg, zeroth_value, first_value, last_value",
+    [
+        ("p50", 500, 818.182, 550.725),
+        ("p75", 750, 3000, 826.087),
+        ("p90", 900, 6400, 991.304),
+        ("p95", 950, 8000, 4200),
+        ("p99", 990, 8000, 8000),
+    ],
+)
+def test_histogram_percentile_for_delta_service(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+    space_agg: str,
+    zeroth_value: float,
+    first_value: float,
+    last_value: float,
+) -> None:
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    metric_name = f"test_{space_agg}_bucket"
+
+    metrics = Metrics.load_from_file(
+        FILE,
+        base_time=now - timedelta(minutes=60),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        space_agg,
+        filter_expression='service = "web"',
+    )
+
+    response = make_query_request(signoz, token, start_ms, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK
+
+    data = response.json()
+    result_values = sorted(get_series_values(data, "A"), key=lambda x: x["timestamp"])
+    assert len(result_values) == 60
+    assert result_values[0]["value"] == zeroth_value
+    assert result_values[1]["value"] == first_value
+    assert result_values[-1]["value"] == last_value

@@ -3,14 +3,15 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
+import { generateGradientFill } from '../utils/generateGradientFill';
 import {
 	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
 	SeriesProps,
-	VisibilityMode,
 } from './types';
 
 /**
@@ -52,7 +53,7 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor, fillMode } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
 			width: lineWidth ?? DEFAULT_LINE_WIDTH,
@@ -66,12 +67,26 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
-		if (fillColor) {
-			lineConfig.fill = fillColor;
-		} else if (this.props.drawStyle === DrawStyle.Bar) {
-			lineConfig.fill = resolvedLineColor;
+		/**
+		 * Configure area fill based on draw style and fill mode:
+		 * - bar charts always use a solid fill with the series color
+		 * - histogram uses the same color with a fixed alpha suffix for translucency
+		 * - for other series, an explicit fillMode controls whether we use a solid fill
+		 *   or a vertical gradient from the series color to transparent
+		 */
+		const finalFillColor = fillColor ?? resolvedLineColor;
+
+		if (this.props.drawStyle === DrawStyle.Bar) {
+			lineConfig.fill = finalFillColor;
 		} else if (this.props.drawStyle === DrawStyle.Histogram) {
-			lineConfig.fill = `${resolvedLineColor}40`;
+			lineConfig.fill = `${finalFillColor}40`;
+		} else if (fillMode && fillMode !== FillMode.None) {
+			if (fillMode === FillMode.Solid) {
+				lineConfig.fill = finalFillColor;
+			} else if (fillMode === FillMode.Gradient) {
+				lineConfig.fill = (self: uPlot): CanvasGradient =>
+					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
+			}
 		}
 
 		return lineConfig;
@@ -159,12 +174,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			pointsConfig.show = pointsBuilder;
 		} else if (drawStyle === DrawStyle.Points) {
 			pointsConfig.show = true;
-		} else if (showPoints === VisibilityMode.Never) {
-			pointsConfig.show = false;
-		} else if (showPoints === VisibilityMode.Always) {
-			pointsConfig.show = true;
 		} else {
-			pointsConfig.show = false; // default to hidden
+			pointsConfig.show = !!showPoints;
 		}
 
 		return pointsConfig;

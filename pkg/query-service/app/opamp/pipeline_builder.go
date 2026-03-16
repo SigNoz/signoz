@@ -2,9 +2,8 @@ package opamp
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
-
-	"go.uber.org/zap"
 )
 
 var lockTracesPipelineSpec sync.RWMutex
@@ -89,7 +88,7 @@ func RemoveFromMetricsPipelineSpec(name string) {
 
 func checkDuplicates(pipeline []interface{}) bool {
 	exists := make(map[string]bool, len(pipeline))
-	zap.L().Debug("checking duplicate processors in the pipeline", zap.Any("pipeline", pipeline))
+	slog.Debug("checking duplicate processors in the pipeline", "pipeline", pipeline)
 	for _, processor := range pipeline {
 		name := processor.(string)
 		if _, ok := exists[name]; ok {
@@ -149,7 +148,7 @@ func buildPipeline(signal Signal, current []interface{}) ([]interface{}, error) 
 			currentPos := loc + inserts
 			// if disabled then remove from the pipeline
 			if !m.Enabled {
-				zap.L().Debug("build_pipeline: found a disabled item, removing from pipeline at position", zap.Int("position", currentPos-1), zap.String("processor", m.Name))
+				slog.Debug("build_pipeline: found a disabled item, removing from pipeline at position", "position", currentPos-1, "processor", m.Name)
 				if currentPos-1 <= 0 {
 					pipeline = pipeline[currentPos+1:]
 				} else {
@@ -170,10 +169,10 @@ func buildPipeline(signal Signal, current []interface{}) ([]interface{}, error) 
 				// right after last matched processsor (e.g. insert filters after tail_sampling for existing list of [batch, tail_sampling])
 
 				if lastMatched <= 0 {
-					zap.L().Debug("build_pipeline: found a new item to be inserted, inserting at position 0", zap.String("processor", m.Name))
+					slog.Debug("build_pipeline: found a new item to be inserted, inserting at position 0", "processor", m.Name)
 					pipeline = append([]interface{}{m.Name}, pipeline[lastMatched+1:]...)
 				} else {
-					zap.L().Debug("build_pipeline: found a new item to be inserted, inserting at position", zap.Int("position", lastMatched), zap.String("processor", m.Name))
+					slog.Debug("build_pipeline: found a new item to be inserted, inserting at position", "position", lastMatched, "processor", m.Name)
 					prior := make([]interface{}, len(pipeline[:lastMatched]))
 					next := make([]interface{}, len(pipeline[lastMatched:]))
 					copy(prior, pipeline[:lastMatched])

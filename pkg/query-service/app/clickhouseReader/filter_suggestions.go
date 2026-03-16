@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz-otel-collector/utils/fingerprint"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 )
 
 func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
@@ -79,7 +78,7 @@ func (r *ClickHouseReader) GetQBFilterSuggestionsForLogs(
 		)
 		if err != nil {
 			// Do not fail the entire request if only example query generation fails
-			zap.L().Error("could not find attribute values for creating example query", zap.Error(err))
+			r.logger.ErrorContext(ctx, "could not find attribute values for creating example query", "error", err)
 		} else {
 
 			// add example queries for as many attributes as possible.
@@ -159,10 +158,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 	*/
 
 	if len(attributes) > 10 {
-		zap.L().Error(
-			"log attribute values requested for too many attributes. This can lead to slow and costly queries",
-			zap.Int("count", len(attributes)),
-		)
+		r.logger.ErrorContext(ctx, "log attribute values requested for too many attributes. This can lead to slow and costly queries", "count", len(attributes))
 		attributes = attributes[:10]
 	}
 
@@ -187,7 +183,7 @@ func (r *ClickHouseReader) getValuesForLogAttributes(
 
 	rows, err := r.db.Query(ctx, query, tagKeyQueryArgs...)
 	if err != nil {
-		zap.L().Error("couldn't query attrib values for suggestions", zap.Error(err))
+		r.logger.ErrorContext(ctx, "couldn't query attrib values for suggestions", "error", err)
 		return nil, model.InternalError(fmt.Errorf(
 			"couldn't query attrib values for suggestions: %w", err,
 		))

@@ -2,14 +2,12 @@ import { useEffect, useMemo, useRef, useState } from 'react';
 import TimeSeries from 'container/DashboardContainer/visualization/charts/TimeSeries/TimeSeries';
 import ChartManager from 'container/DashboardContainer/visualization/components/ChartManager/ChartManager';
 import { usePanelContextMenu } from 'container/DashboardContainer/visualization/hooks/usePanelContextMenu';
-import { useScrollWidgetIntoView } from 'container/DashboardContainer/visualization/hooks/useScrollWidgetIntoView';
 import { PanelWrapperProps } from 'container/PanelWrapper/panelWrapper.types';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { ContextMenu } from 'periscope/components/ContextMenu';
 import { useTimezone } from 'providers/Timezone';
-import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 import { getTimeRange } from 'utils/getTimeRange';
 
@@ -33,8 +31,6 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 
 	const isDarkMode = useIsDarkMode();
 	const { timezone } = useTimezone();
-
-	useScrollWidgetIntoView(widget.id, graphRef);
 
 	useEffect((): void => {
 		const { startTime, endTime } = getTimeRange(queryResponse);
@@ -68,7 +64,7 @@ function TimeSeriesPanel(props: PanelWrapperProps): JSX.Element {
 			currentQuery: widget.query,
 			onClick: clickHandlerWithContextMenu,
 			onDragSelect,
-			apiResponse: queryResponse?.data?.payload as MetricRangePayloadProps,
+			apiResponse: queryResponse?.data?.payload,
 			timezone,
 			panelMode,
 			minTimeScale: minTimeScale,
