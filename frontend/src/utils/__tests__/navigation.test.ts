@@ -1,8 +1,4 @@
-import {
-	isModifierKeyPressed,
-	navigateToPage,
-	openInNewTab,
-} from '../navigation';
+import { isModifierKeyPressed, openInNewTab } from '../navigation';
 
 describe('navigation utilities', () => {
 	const originalWindowOpen = window.open;
@@ -78,60 +74,6 @@ describe('navigation utilities', () => {
 				'/alerts?tab=AlertRules&relativeTime=30m',
 				'_blank',
 			);
-		});
-	});
-
-	describe('navigateToPage', () => {
-		const mockNavigate = jest.fn() as jest.MockedFunction<(path: string) => void>;
-
-		beforeEach(() => {
-			mockNavigate.mockClear();
-		});
-
-		it('opens new tab when metaKey is pressed', () => {
-			const event = { metaKey: true, ctrlKey: false } as MouseEvent;
-			navigateToPage('/services', mockNavigate, event);
-
-			expect(window.open).toHaveBeenCalledWith('/services', '_blank');
-			expect(mockNavigate).not.toHaveBeenCalled();
-		});
-
-		it('opens new tab when ctrlKey is pressed', () => {
-			const event = { metaKey: false, ctrlKey: true } as MouseEvent;
-			navigateToPage('/services', mockNavigate, event);
-
-			expect(window.open).toHaveBeenCalledWith('/services', '_blank');
-			expect(mockNavigate).not.toHaveBeenCalled();
-		});
-
-		it('opens new tab when middle mouse button is used', () => {
-			const event = { metaKey: false, ctrlKey: false, button: 1 } as MouseEvent;
-			navigateToPage('/services', mockNavigate, event);
-
-			expect(window.open).toHaveBeenCalledWith('/services', '_blank');
-			expect(mockNavigate).not.toHaveBeenCalled();
-		});
-
-		it('calls navigate callback when no modifier key is pressed', () => {
-			const event = { metaKey: false, ctrlKey: false } as MouseEvent;
-			navigateToPage('/services', mockNavigate, event);
-
-			expect(mockNavigate).toHaveBeenCalledWith('/services');
-			expect(window.open).not.toHaveBeenCalled();
-		});
-
-		it('calls navigate callback when no event is provided', () => {
-			navigateToPage('/services', mockNavigate);
-
-			expect(mockNavigate).toHaveBeenCalledWith('/services');
-			expect(window.open).not.toHaveBeenCalled();
-		});
-
-		it('calls navigate callback when event is undefined', () => {
-			navigateToPage('/dashboard', mockNavigate, undefined);
-
-			expect(mockNavigate).toHaveBeenCalledWith('/dashboard');
-			expect(window.open).not.toHaveBeenCalled();
 		});
 	});
 });

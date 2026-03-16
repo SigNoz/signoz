@@ -5,6 +5,7 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LifeBuoy, List } from 'lucide-react';
 import { handleContactSupport } from 'pages/Integrations/utils';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import './AlertNotFound.styles.scss';
 
@@ -16,8 +17,8 @@ function AlertNotFound({ isTestAlert }: AlertNotFoundProps): JSX.Element {
 	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 	const { safeNavigate } = useSafeNavigate();
 
-	const checkAllRulesHandler = (e?: React.MouseEvent): void => {
-		safeNavigate(ROUTES.LIST_ALL_ALERT, { event: e });
+	const checkAllRulesHandler = (e: React.MouseEvent): void => {
+		safeNavigate(ROUTES.LIST_ALL_ALERT, { newTab: isModifierKeyPressed(e) });
 	};
 
 	const contactSupportHandler = (): void => {

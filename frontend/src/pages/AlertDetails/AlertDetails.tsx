@@ -11,6 +11,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -18,7 +19,7 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
@@ -56,6 +57,7 @@ function BreadCrumbItem({
 	isLast?: boolean;
 	route?: string;
 }): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	if (isLast) {
 		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
 	}
@@ -63,7 +65,7 @@ function BreadCrumbItem({
 		if (!route) {
 			return;
 		}
-		navigateToPage(ROUTES.LIST_ALL_ALERT, history.push, e);
+		safeNavigate(ROUTES.LIST_ALL_ALERT, { newTab: isModifierKeyPressed(e) });
 	};
 
 	return (

@@ -4,6 +4,7 @@ import { Button, Tooltip, Typography } from 'antd';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Check, Loader, Send, X } from 'lucide-react';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { useCreateAlertState } from '../context';
 import {
@@ -35,7 +36,7 @@ function Footer(): JSX.Element {
 
 	const handleDiscard = (e: React.MouseEvent): void => {
 		discardAlertRule();
-		safeNavigate('/alerts', { event: e });
+		safeNavigate('/alerts', { newTab: isModifierKeyPressed(e) });
 	};
 
 	const alertValidationMessage = useMemo(

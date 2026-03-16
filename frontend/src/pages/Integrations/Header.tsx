@@ -1,15 +1,16 @@
 import { Button, Flex, Typography } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 import { routePermission } from 'utils/permission';
 
 import './Integrations.styles.scss';
 
 function Header(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const isGetStartedWithCloudAllowed = routePermission.GET_STARTED_WITH_CLOUD.includes(
 		user.role,
@@ -31,7 +32,9 @@ function Header(): JSX.Element {
 						className="periscope-btn primary view-data-sources-btn"
 						type="primary"
 						onClick={(e): void =>
-							navigateToPage(ROUTES.GET_STARTED_WITH_CLOUD, history.push, e)
+							safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD, {
+								newTab: isModifierKeyPressed(e),
+							})
 						}
 					>
 						<span>View 150+ Data Sources</span>

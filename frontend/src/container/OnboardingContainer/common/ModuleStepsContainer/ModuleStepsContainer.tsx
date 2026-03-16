@@ -12,10 +12,10 @@ import ROUTES from 'constants/routes';
 import { stepsMap } from 'container/OnboardingContainer/constants/stepsConfig';
 import { DataSourceType } from 'container/OnboardingContainer/Steps/DataSource/DataSource';
 import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUtils';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
@@ -64,6 +64,7 @@ export default function ModuleStepsContainer({
 	selectedModuleSteps,
 	setIsInviteTeamMemberModalOpen,
 }: ModuleStepsContainerProps): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const {
 		activeStep,
 		serviceName,
@@ -153,7 +154,7 @@ export default function ModuleStepsContainer({
 		} else {
 			targetPath = ROUTES.APPLICATION;
 		}
-		navigateToPage(targetPath, history.push, event);
+		safeNavigate(targetPath, { newTab: !!event && isModifierKeyPressed(event) });
 	};
 
 	const handleNext = (event?: React.MouseEvent): void => {
@@ -371,7 +372,7 @@ export default function ModuleStepsContainer({
 	};
 
 	const handleLogoClick = (e: React.MouseEvent): void => {
-		navigateToPage('/home', history.push, e);
+		safeNavigate('/home', { newTab: isModifierKeyPressed(e) });
 	};
 
 	return (

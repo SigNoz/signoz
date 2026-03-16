@@ -17,11 +17,11 @@ import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -144,6 +144,7 @@ const allGroupedDataSources = groupDataSourcesByTags(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
 	}>(allGroupedDataSources);
@@ -485,7 +486,7 @@ function OnboardingAddDataSource(): JSX.Element {
 				default:
 					targetPath = ROUTES.APPLICATION;
 			}
-			navigateToPage(targetPath, history.push, event);
+			safeNavigate(targetPath, { newTab: !!event && isModifierKeyPressed(event) });
 		}
 	};
 
@@ -642,7 +643,7 @@ function OnboardingAddDataSource(): JSX.Element {
 										},
 									);
 
-									navigateToPage(ROUTES.HOME, history.push, e);
+									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
 								}}
 							/>
 							<Typography.Text>Get Started (2/4)</Typography.Text>
@@ -983,7 +984,9 @@ function OnboardingAddDataSource(): JSX.Element {
 															selectedEnvironment || selectedFramework || selectedDataSource;
 
 														if (currentEntity?.internalRedirect && currentEntity?.link) {
-															navigateToPage(currentEntity.link, history.push, e);
+															safeNavigate(currentEntity.link, {
+																newTab: isModifierKeyPressed(e),
+															});
 														} else {
 															handleUpdateCurrentStep(2);
 														}

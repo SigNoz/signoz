@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
+import { isModifierKeyPressed } from 'utils/navigation';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -42,10 +43,7 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
-	safeNavigate: (
-		url: string,
-		options?: { event?: React.MouseEvent | MouseEvent },
-	) => void;
+	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -54,10 +52,7 @@ interface OnViewAPIMonitoringPopupClickProps {
 	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-	safeNavigate: (
-		url: string,
-		options?: { event?: React.MouseEvent | MouseEvent },
-	) => void;
+	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
 }
 
 export function generateExplorerPath(
@@ -123,7 +118,7 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		safeNavigate(newPath, { event: e });
+		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 }
 
@@ -195,7 +190,7 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		safeNavigate(newPath, { event: e });
+		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 }
 

@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
-import { useHistory } from 'react-router-dom';
 import { LoadingOutlined } from '@ant-design/icons';
 import { Button, Card, Form, Input, Select, Space, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -19,9 +18,10 @@ import {
 	messagingQueueKakfaSupportedDataSources,
 } from 'container/OnboardingContainer/utils/dataSourceUtils';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { Blocks, Check } from 'lucide-react';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import './DataSource.styles.scss';
@@ -36,7 +36,7 @@ export interface DataSourceType {
 export default function DataSource(): JSX.Element {
 	const [form] = Form.useForm();
 	const { t } = useTranslation(['common']);
-	const history = useHistory();
+	const { safeNavigate } = useSafeNavigate();
 
 	const getStartedSource = useUrlQuery().get(QueryParams.getStartedSource);
 
@@ -146,7 +146,7 @@ export default function DataSource(): JSX.Element {
 			dataSource: selectedDataSource?.name,
 			framework: selectedFramework,
 		});
-		navigateToPage(ROUTES.INTEGRATIONS, history.push, e);
+		safeNavigate(ROUTES.INTEGRATIONS, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 
 	return (

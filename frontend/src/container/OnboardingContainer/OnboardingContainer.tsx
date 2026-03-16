@@ -14,10 +14,11 @@ import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -108,6 +109,7 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
+	const { safeNavigate } = useSafeNavigate();
 
 	const { featureFlags } = useAppContext();
 	const isOnboardingV3Enabled = featureFlags?.find(
@@ -255,11 +257,9 @@ export default function Onboarding(): JSX.Element {
 
 	const handleNext = (e?: React.MouseEvent): void => {
 		if (activeStep <= 3) {
-			navigateToPage(
-				moduleRouteMap[selectedModule.id as ModulesMap],
-				history.push,
-				e,
-			);
+			safeNavigate(moduleRouteMap[selectedModule.id as ModulesMap], {
+				newTab: !!e && isModifierKeyPressed(e),
+			});
 		}
 	};
 
@@ -324,7 +324,7 @@ export default function Onboarding(): JSX.Element {
 					<div
 						onClick={(e): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							navigateToPage(ROUTES.APPLICATION, history.push, e);
+							safeNavigate(ROUTES.APPLICATION, { newTab: isModifierKeyPressed(e) });
 						}}
 						className="skip-to-console"
 					>
@@ -404,7 +404,7 @@ export default function Onboarding(): JSX.Element {
 							const path = isOnboardingV3Enabled
 								? ROUTES.GET_STARTED_WITH_CLOUD
 								: ROUTES.GET_STARTED;
-							navigateToPage(path, history.push, e);
+							safeNavigate(path, { newTab: !!e && isModifierKeyPressed(e) });
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}

@@ -30,6 +30,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -289,7 +290,9 @@ function ServiceMetrics({
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, { event });
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
+				newTab: isModifierKeyPressed(event),
+			});
 		},
 		[safeNavigate],
 	);

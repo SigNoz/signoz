@@ -50,6 +50,7 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
@@ -236,7 +237,7 @@ function LogDetailInner({
 			),
 		};
 		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
-			event: e,
+			newTab: !!e && isModifierKeyPressed(e),
 		});
 	};
 

@@ -16,6 +16,7 @@ import ROUTES from 'constants/routes';
 import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence } from 'motion/react';
@@ -26,7 +27,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -45,6 +46,7 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
 	const [endTime, setEndTime] = useState<number | null>(null);
@@ -377,7 +379,9 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												navigateToPage(ROUTES.LOGS_EXPLORER, history.push, e);
+												safeNavigate(ROUTES.LOGS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -418,7 +422,9 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												navigateToPage(ROUTES.TRACES_EXPLORER, history.push, e);
+												safeNavigate(ROUTES.TRACES_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -459,7 +465,9 @@ export default function Home(): JSX.Element {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												navigateToPage(ROUTES.METRICS_EXPLORER, history.push, e);
+												safeNavigate(ROUTES.METRICS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -513,7 +521,9 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													navigateToPage(ROUTES.LOGS_EXPLORER, history.push, e);
+													safeNavigate(ROUTES.LOGS_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Logs Explorer
@@ -527,7 +537,9 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													navigateToPage(ROUTES.TRACES_EXPLORER, history.push, e);
+													safeNavigate(ROUTES.TRACES_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Traces Explorer
@@ -541,7 +553,9 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													navigateToPage(ROUTES.METRICS_EXPLORER_EXPLORER, history.push, e);
+													safeNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Metrics Explorer
@@ -582,7 +596,9 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													navigateToPage(ROUTES.ALL_DASHBOARD, history.push, e);
+													safeNavigate(ROUTES.ALL_DASHBOARD, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create dashboard
@@ -624,7 +640,9 @@ export default function Home(): JSX.Element {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													navigateToPage(ROUTES.ALERTS_NEW, history.push, e);
+													safeNavigate(ROUTES.ALERTS_NEW, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create an alert

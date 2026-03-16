@@ -2,9 +2,9 @@ import React, { useCallback, useMemo } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Undo } from 'lucide-react';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { buttonText, RIBBON_STYLES } from './config';
 
@@ -12,6 +12,7 @@ import './NewExplorerCTA.styles.scss';
 
 function NewExplorerCTA(): JSX.Element | null {
 	const location = useLocation();
+	const { safeNavigate } = useSafeNavigate();
 
 	const isTraceOrLogsExplorerPage = useMemo(
 		() =>
@@ -36,7 +37,7 @@ function NewExplorerCTA(): JSX.Element | null {
 			} else {
 				return;
 			}
-			navigateToPage(targetPath, history.push, e);
+			safeNavigate(targetPath, { newTab: !!e && isModifierKeyPressed(e) });
 		},
 		[location.pathname],
 	);

@@ -16,6 +16,7 @@ import { LicensePlatform } from 'types/api/licensesV3/getActive';
 import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { DOCS_LINKS } from '../constants';
 import { columns, TIME_PICKER_OPTIONS } from './constants';
@@ -179,7 +180,9 @@ export default function ServiceTraces({
 									serviceName: record.serviceName,
 								});
 
-								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, { event });
+								safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
+									newTab: isModifierKeyPressed(event),
+								});
 							},
 						})}
 					/>

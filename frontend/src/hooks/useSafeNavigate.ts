@@ -1,13 +1,11 @@
-import React, { useCallback } from 'react';
+import { useCallback } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom-v5-compat';
 import { cloneDeep, isEqual } from 'lodash-es';
-import { isModifierKeyPressed } from 'utils/navigation';
 
 interface NavigateOptions {
 	replace?: boolean;
 	state?: any;
 	newTab?: boolean;
-	event?: MouseEvent | React.MouseEvent;
 }
 
 interface SafeNavigateParams {
@@ -125,8 +123,7 @@ export const useSafeNavigate = (
 				);
 			}
 
-			const shouldOpenNewTab =
-				options?.newTab || (options?.event && isModifierKeyPressed(options.event));
+			const shouldOpenNewTab = options?.newTab;
 
 			if (shouldOpenNewTab) {
 				const targetPath =

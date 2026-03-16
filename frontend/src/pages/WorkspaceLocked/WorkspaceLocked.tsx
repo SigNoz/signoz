@@ -22,12 +22,13 @@ import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
-import { navigateToPage } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/navigation';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -50,6 +51,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { t } = useTranslation(['workspaceLocked']);
 
@@ -136,7 +138,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	const handleViewBilling = (e?: React.MouseEvent): void => {
 		logEvent('Workspace Blocked: User Clicked View Billing', {});
 
-		navigateToPage(ROUTES.BILLING, history.push, e);
+		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 
 	const renderCustomerStories = (

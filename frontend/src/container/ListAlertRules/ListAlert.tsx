@@ -31,6 +31,7 @@ import { useAppContext } from 'providers/App/App';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
 import { GettableAlert } from 'types/api/alerts/get';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import DeleteAlert from './DeleteAlert';
 import { ColumnButton, SearchContainer } from './styles';
@@ -106,7 +107,9 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				number: allAlertRules?.length,
 				layout: 'new',
 			});
-			safeNavigate(ROUTES.ALERT_TYPE_SELECTION, { event: e });
+			safeNavigate(ROUTES.ALERT_TYPE_SELECTION, {
+				newTab: isModifierKeyPressed(e),
+			});
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[],
@@ -114,7 +117,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 
 	const onEditHandler = (
 		record: GettableAlert,
-		options?: { event?: React.MouseEvent; newTab?: boolean },
+		options?: { newTab?: boolean },
 	): void => {
 		const compositeQuery = sanitizeDefaultAlertQuery(
 			mapQueryDataFromApi(record.condition.compositeQuery),
@@ -132,7 +135,6 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 		setEditLoader(false);
 
 		safeNavigate(`${ROUTES.ALERT_OVERVIEW}?${params.toString()}`, {
-			event: options?.event,
 			newTab: options?.newTab,
 		});
 	};
@@ -271,7 +273,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 				const onClickHandler = (e: React.MouseEvent<HTMLElement>): void => {
 					e.stopPropagation();
 					e.preventDefault();
-					onEditHandler(record, { event: e });
+					onEditHandler(record, { newTab: isModifierKeyPressed(e) });
 				};
 
 				return <Typography.Link onClick={onClickHandler}>{value}</Typography.Link>;
@@ -337,7 +339,7 @@ function ListAlert({ allAlertRules, refetch }: ListAlertProps): JSX.Element {
 							<ColumnButton
 								key="2"
 								onClick={(e: React.MouseEvent): void =>
-									onEditHandler(record, { event: e })
+									onEditHandler(record, { newTab: isModifierKeyPressed(e) })
 								}
 								type="link"
 								loading={editLoader}

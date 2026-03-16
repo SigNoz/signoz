@@ -45,6 +45,7 @@ import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';
@@ -337,7 +338,7 @@ function FormAlertRules({
 			urlQuery.delete(QueryParams.ruleId);
 			urlQuery.delete(QueryParams.relativeTime);
 			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`, {
-				event: e,
+				newTab: !!e && isModifierKeyPressed(e),
 			});
 		},
 		[safeNavigate, urlQuery],

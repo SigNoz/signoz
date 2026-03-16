@@ -51,6 +51,7 @@ import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
+import { isModifierKeyPressed } from 'utils/navigation';
 
 import { getLocalStorageGraphVisibilityState } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';
@@ -298,7 +299,9 @@ function FullView({
 												disabled={response.isFetching || response.isLoading}
 												onClick={(e: React.MouseEvent): void => {
 													if (dashboardEditView) {
-														safeNavigate(dashboardEditView, { event: e });
+														safeNavigate(dashboardEditView, {
+															newTab: isModifierKeyPressed(e),
+														});
 													}
 												}}
 											>
