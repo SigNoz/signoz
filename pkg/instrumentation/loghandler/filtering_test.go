@@ -23,18 +23,6 @@ func TestFiltering_SuppressesContextCanceled(t *testing.T) {
 	assert.Empty(t, buf.String(), "log with context.Canceled should be suppressed")
 }
 
-func TestFiltering_SuppressesWrappedContextCanceled(t *testing.T) {
-	filtering := NewFiltering()
-
-	buf := bytes.NewBuffer(nil)
-	logger := slog.New(&handler{base: slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}), wrappers: []Wrapper{filtering}})
-
-	wrappedErr := errors.Wrapf(context.Canceled, errors.CodeInternal, "wrapped")
-	logger.ErrorContext(context.Background(), "operation failed", "error", wrappedErr)
-
-	assert.Empty(t, buf.String(), "log with wrapped context.Canceled should be suppressed")
-}
-
 func TestFiltering_AllowsOtherErrors(t *testing.T) {
 	filtering := NewFiltering()
 

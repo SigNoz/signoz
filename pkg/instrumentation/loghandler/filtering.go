@@ -23,12 +23,6 @@ func (h *filtering) Wrap(next LogHandler) LogHandler {
 	})
 }
 
-// filterRecord determines whether a log record should be written.
-// Returns false if the record should be suppressed, true otherwise.
-//
-// Current filters:
-//   - context.Canceled: These are expected errors from cancelled operations,
-//     and create noise in logs.
 func filterRecord(record slog.Record) bool {
 	suppress := false
 	record.Attrs(func(a slog.Attr) bool {
@@ -42,5 +36,6 @@ func filterRecord(record slog.Record) bool {
 		}
 		return true
 	})
+
 	return !suppress
 }
