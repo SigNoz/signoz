@@ -112,111 +112,87 @@ func ExtractLbFlag(agentDescr *protobufs.AgentDescription) bool {
 	return false
 }
 
-func (agent *Agent) updateAgentDescription(newStatus *protobufs.AgentToServer, configProvider AgentConfigProvider) (agentDescrChanged bool) {
-	if agent.Status == nil {
-		// initialize the remote config status to unset
-		agent.Status = &protobufs.AgentToServer{
-			RemoteConfigStatus: &protobufs.RemoteConfigStatus{
-				Status: protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
-			},
-		}
-
-		rawHash := string(newStatus.RemoteConfigStatus.LastRemoteConfigHash)
-		dbHash := agent.OrgID.String() + rawHash
-		deployStatus, err := configProvider.GetDeployStatusByHash(context.Background(), agent.OrgID, dbHash)
-		if err == nil {
-			// Set the agent config status to the status from the database
-			agent.Status.RemoteConfigStatus.Status = opamptypes.DeployStatusToProtoStatus[deployStatus]
-
-			// If the deployment is still pending, register a subscriber now so that
-			// when the status-change check below fires onConfigSuccess/onConfigFailure,
-			// notifySubscribers finds the callback and updates the DB.
-			// we rehydrate lazily, per-agent, for exactly the hash the agent reports.
-			if deployStatus != opamptypes.Deployed &&
-				deployStatus != opamptypes.DeployFailed {
-				ListenToConfigUpdate(agent.OrgID, agent.AgentID, rawHash, configProvider.ReportConfigDeploymentStatus)
-			}
-		}
-
-		// First message from this agent instance (new connect or server restart).
-		// If the agent brings a RemoteConfigStatus, consult the DB to decide
-		// whether this resolves a pending deployment. This is the authoritative
-		// answer: if DB says in_progress and agent says APPLIED/FAILED, we notify.
-		// No mock status, no guessing — the DB IS the source of truth.
-		if newStatus.RemoteConfigStatus != nil {
-			// Agent just started, i.e. it doesn't have a remote config status yet.
-			if newStatus.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET {
-				agentDescrChanged = true
-				agent.Status.RemoteConfigStatus.Status = protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET
-			} else {
-				// else Agent was already running, Server just reconnected.
-				agent.Status.AgentDescription = newStatus.AgentDescription
-
-				// database has already recorded the final status of the deployment, So here we don't need to prepare status for the agent
-				// Instead we directly Copy it from newStatus
-				switch agent.Status.RemoteConfigStatus.Status {
-				case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED,
-					protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED:
-					agent.Status.RemoteConfigStatus.Status = newStatus.RemoteConfigStatus.Status
-				}
-			}
-		}
+func (agent *Agent) agentDescriptionChanged(newStatus *protobufs.AgentToServer) bool {
+	// nil AgentDescription means no change per OpAMP protocol.
+	if newStatus.AgentDescription == nil {
+		return false
 	}
-	// Subsequent message — update sequence number and diff fields.
-	agent.Status.SequenceNum = newStatus.SequenceNum
-
-	if newStatus.AgentDescription != nil {
-		if proto.Equal(agent.Status.AgentDescription, newStatus.AgentDescription) {
-			agentDescrChanged = false
-		} else {
-			agent.Status.AgentDescription = newStatus.AgentDescription
-			agentDescrChanged = true
-		}
+	if proto.Equal(agent.Status.AgentDescription, newStatus.AgentDescription) {
+		return false
 	}
-
-	// Notify subscribers when RemoteConfigStatus changes.
-	if newStatus.RemoteConfigStatus != nil &&
-		!proto.Equal(agent.Status.RemoteConfigStatus, newStatus.RemoteConfigStatus) {
-		agent.Status.RemoteConfigStatus = newStatus.RemoteConfigStatus
-		hash := string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash)
-		switch agent.Status.RemoteConfigStatus.Status {
-		case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED:
-			onConfigSuccess(agent.OrgID, agent.AgentID, hash)
-		case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED:
-			onConfigFailure(agent.OrgID, agent.AgentID, hash, agent.Status.RemoteConfigStatus.ErrorMessage)
-		}
-	}
-
-	if agentDescrChanged {
-		agent.CanLB = ExtractLbFlag(newStatus.AgentDescription)
-	}
-
-	return agentDescrChanged
+	agent.CanLB = ExtractLbFlag(newStatus.AgentDescription)
+	return true
 }
 
-func (agent *Agent) updateHealth(newStatus *protobufs.AgentToServer) {
-	if newStatus.Health == nil {
+// updateRemoteConfigStatus updates the stored RemoteConfigStatus and notifies
+// subscribers if the status has changed relative to what we have stored.
+func (agent *Agent) updateRemoteConfigStatus(newStatus *protobufs.AgentToServer) {
+	if newStatus.RemoteConfigStatus == nil ||
+		proto.Equal(agent.Status.RemoteConfigStatus, newStatus.RemoteConfigStatus) {
 		return
 	}
 
-	agent.Status.Health = newStatus.Health
-
-	if agent.Status != nil && agent.Status.Health != nil && agent.Status.Health.Healthy {
-		agent.TimeAuditable.UpdatedAt = time.Unix(0, int64(agent.Status.Health.StartTimeUnixNano)).UTC()
+	// todo: need to address multiple agent scenario here
+	// for now, the first response will be sent back to the UI
+	hash := string(agent.Status.RemoteConfigStatus.LastRemoteConfigHash)
+	switch agent.Status.RemoteConfigStatus.Status {
+	case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_APPLIED:
+		onConfigSuccess(agent.OrgID, agent.AgentID, hash)
+	case protobufs.RemoteConfigStatuses_RemoteConfigStatuses_FAILED:
+		onConfigFailure(agent.OrgID, agent.AgentID, hash, agent.Status.RemoteConfigStatus.ErrorMessage)
 	}
 }
 
-func (agent *Agent) updateRemoteConfigStatus(newStatus *protobufs.AgentToServer) {
-	// Update remote config status if it is included and is different from what we have.
-	if newStatus.RemoteConfigStatus != nil {
-		agent.Status.RemoteConfigStatus = newStatus.RemoteConfigStatus
+// handleFirstStatus initializes agent.Status on the first message received from
+// this agent instance. It is a no-op for all subsequent messages.
+func (agent *Agent) handleFirstStatus(newStatus *protobufs.AgentToServer, configProvider AgentConfigProvider) {
+	if agent.Status != nil {
+		return
+	}
+
+	// Initialize with a clean slate.
+	agent.Status = &protobufs.AgentToServer{
+		RemoteConfigStatus: &protobufs.RemoteConfigStatus{
+			Status: protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET,
+		},
+	}
+
+	if newStatus.RemoteConfigStatus == nil ||
+		newStatus.RemoteConfigStatus.Status == protobufs.RemoteConfigStatuses_RemoteConfigStatuses_UNSET {
+		// Agent just started fresh — no prior deployment to reconcile with the DB.
+		return
+	}
+
+	// Server reconnected while the agent was already running.
+	// Reconcile deployment status with DB; DB is the source of truth.
+	// If DB says in_progress but agent now reports APPLIED/FAILED,
+	// updateRemoteConfigStatus will detect the transition and notify subscribers.
+	rawHash := string(newStatus.RemoteConfigStatus.LastRemoteConfigHash)
+	deployStatus, err := configProvider.GetDeployStatusByHash(context.Background(), agent.OrgID, agent.OrgID.String()+rawHash)
+	if err != nil {
+		return
+	}
+
+	agent.Status.RemoteConfigStatus.Status = opamptypes.DeployStatusToProtoStatus[deployStatus]
+
+	// If the deployment is still in-flight, rehydrate the subscriber so that
+	// updateRemoteConfigStatus can fire onConfigSuccess/onConfigFailure when
+	// the agent next reports a terminal status.
+	if deployStatus != opamptypes.Deployed && deployStatus != opamptypes.DeployFailed {
+		ListenToConfigUpdate(agent.OrgID, agent.AgentID, rawHash, configProvider.ReportConfigDeploymentStatus)
 	}
 }
 
-func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer, configProvider AgentConfigProvider) (agentDescrChanged bool) {
-	agentDescrChanged = agent.updateAgentDescription(newStatus, configProvider)
+func (agent *Agent) updateStatusField(newStatus *protobufs.AgentToServer, configProvider AgentConfigProvider) bool {
+	agent.handleFirstStatus(newStatus, configProvider)
+	agentDescrChanged := agent.agentDescriptionChanged(newStatus)
+	// record healthy timestamp
+	if newStatus.Health != nil && newStatus.Health.Healthy {
+		agent.TimeAuditable.UpdatedAt = time.Unix(0, int64(newStatus.Health.StartTimeUnixNano)).UTC()
+	}
+	// update local reference
+	agent.Status = newStatus
 	agent.updateRemoteConfigStatus(newStatus)
-	agent.updateHealth(newStatus)
 	return agentDescrChanged
 }
 
