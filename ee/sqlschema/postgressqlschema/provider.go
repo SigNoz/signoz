@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -32,9 +33,9 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		fmter:    fmter,
 		settings: settings,
 		operator: sqlschema.NewOperator(fmter, sqlschema.OperatorSupport{
-			DropConstraint:          true,
-			ColumnIfNotExistsExists: true,
-			AlterColumnSetNotNull:   true,
+			SCreateAndDropConstraint:                        true,
+			SAlterTableAddAndDropColumnIfNotExistsAndExists: true,
+			SAlterTableAlterColumnSetAndDrop:                true,
 		}),
 	}, nil
 }
@@ -72,8 +73,9 @@ WHERE
 	if err != nil {
 		return nil, nil, err
 	}
+
 	if len(columns) == 0 {
-		return nil, nil, sql.ErrNoRows
+		return nil, nil, provider.sqlstore.WrapNotFoundErrf(sql.ErrNoRows, errors.CodeNotFound, "table (%s) not found", tableName)
 	}
 
 	sqlschemaColumns := make([]*sqlschema.Column, 0)
@@ -220,7 +222,8 @@ SELECT
     ci.relname AS index_name,
     i.indisunique AS unique,
     i.indisprimary AS primary,
-    a.attname AS column_name
+    a.attname AS column_name,
+    array_position(i.indkey, a.attnum) AS column_position
 FROM
     pg_index i
     LEFT JOIN pg_class ct ON ct.oid = i.indrelid
@@ -231,9 +234,10 @@ WHERE
     a.attnum = ANY(i.indkey)
     AND con.oid IS NULL
     AND ct.relkind = 'r'
-    AND ct.relname = ?`, string(name))
+    AND ct.relname = ?
+ORDER BY index_name, column_position`, string(name))
 	if err != nil {
-		return nil, err
+		return nil, provider.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "no indices for table (%s) found", name)
 	}
 
 	defer func() {
@@ -250,9 +254,11 @@ WHERE
 			unique     bool
 			primary    bool
 			columnName string
+			// starts from 0 and is unused in this function, this is to ensure that the column names are in the correct order
+			columnPosition int
 		)
 
-		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName); err != nil {
+		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition); err != nil {
 			return nil, err
 		}
 
@@ -269,8 +275,12 @@ WHERE
 	}
 
 	indices := make([]sqlschema.Index, 0)
-	for _, index := range uniqueIndicesMap {
-		indices = append(indices, index)
+	for indexName, index := range uniqueIndicesMap {
+		if index.Name() == indexName {
+			indices = append(indices, index)
+		} else {
+			indices = append(indices, index.Named(indexName))
+		}
 	}
 
 	return indices, nil

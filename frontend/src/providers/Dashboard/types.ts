@@ -9,9 +9,7 @@ export type WidgetColumnWidths = {
 };
 
 export interface IDashboardContext {
-	isDashboardSliderOpen: boolean;
 	isDashboardLocked: boolean;
-	handleToggleDashboardSlider: (value: boolean) => void;
 	handleDashboardLockToggle: (value: boolean) => void;
 	dashboardResponse: UseQueryResult<SuccessResponseV2<Dashboard>, unknown>;
 	selectedDashboard: Dashboard | undefined;

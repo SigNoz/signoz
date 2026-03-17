@@ -1,12 +1,12 @@
 import { Dispatch, SetStateAction } from 'react';
 import type { UseQueryResult } from 'react-query';
 import { Select, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { Layers } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import LegendColors from '../../LegendColors/LegendColors';
 
 const { Option } = Select;
@@ -24,7 +24,7 @@ interface LegendSectionProps {
 	>;
 }
 
-export function LegendSection({
+export default function LegendSection({
 	allowLegendPosition,
 	allowLegendColors,
 	legendPosition,
@@ -41,7 +41,6 @@ export function LegendSection({
 					<Select
 						onChange={(value: LegendPosition): void => setLegendPosition(value)}
 						value={legendPosition}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={LegendPosition.BOTTOM}
 					>

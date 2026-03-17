@@ -1,6 +1,34 @@
 .right-container {
 	display: flex;
 	flex-direction: column;
+	font-family: 'Space Mono';
+	padding-bottom: 48px;
+
+	.section-heading {
+		font-family: 'Space Mono';
+		color: var(--bg-vanilla-400);
+		font-size: 13px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 138.462% */
+		letter-spacing: 0.52px;
+		text-transform: uppercase;
+	}
+
+	.section-heading-small {
+		font-family: 'Space Mono';
+		color: var(--bg-vanilla-400);
+		font-size: 12px;
+		font-style: normal;
+		font-weight: 400;
+		word-break: initial;
+		line-height: 16px; /* 133.333% */
+		letter-spacing: 0.48px;
+	}
+
+	.panel-type-select {
+		width: 100%;
+	}
 
 	.section-heading {
 		font-family: 'Space Mono';

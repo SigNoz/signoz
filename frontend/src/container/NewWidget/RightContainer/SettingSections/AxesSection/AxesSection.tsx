@@ -1,7 +1,8 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InputNumber, Select, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { Axis3D, LineChart, Spline } from 'lucide-react';
+
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
 enum LogScale {
 	LINEAR = 'linear',
@@ -21,7 +22,7 @@ interface AxesSectionProps {
 	setIsLogScale: Dispatch<SetStateAction<boolean>>;
 }
 
-export function AxesSection({
+export default function AxesSection({
 	allowSoftMinMax,
 	allowLogScale,
 	softMin,
@@ -70,7 +71,6 @@ export function AxesSection({
 					<Select
 						onChange={(value): void => setIsLogScale(value === LogScale.LOGARITHMIC)}
 						value={isLogScale ? LogScale.LOGARITHMIC : LogScale.LINEAR}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={LogScale.LINEAR}
 					>

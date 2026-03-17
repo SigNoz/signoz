@@ -1,9 +1,9 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Typography } from 'antd';
-import { PrecisionOption } from 'components/Graph/types';
+import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
-import GraphTypes from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import useCreateAlerts from 'hooks/queryBuilder/useCreateAlerts';
 import {
@@ -40,16 +40,16 @@ import {
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
 } from './constants';
-import { AlertsSection } from './SettingSections/AlertsSection/AlertsSection';
-import { AxesSection } from './SettingSections/AxesSection/AxesSection';
-import { ChartAppearanceSection } from './SettingSections/ChartAppearanceSection/ChartAppearanceSection';
-import { ContextLinksSection } from './SettingSections/ContextLinksSection/ContextLinksSection';
-import { FormattingUnitsSection } from './SettingSections/FormattingUnitsSection/FormattingUnitsSection';
-import { GeneralSettingsSection } from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
-import { HistogramBucketsSection } from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
-import { LegendSection } from './SettingSections/LegendSection/LegendSection';
-import { ThresholdsSection } from './SettingSections/ThresholdsSection/ThresholdsSection';
-import { VisualizationSettingsSection } from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
+import AlertsSection from './SettingSections/AlertsSection/AlertsSection';
+import AxesSection from './SettingSections/AxesSection/AxesSection';
+import ChartAppearanceSection from './SettingSections/ChartAppearanceSection/ChartAppearanceSection';
+import ContextLinksSection from './SettingSections/ContextLinksSection/ContextLinksSection';
+import FormattingUnitsSection from './SettingSections/FormattingUnitsSection/FormattingUnitsSection';
+import GeneralSettingsSection from './SettingSections/GeneralSettingsSection/GeneralSettingsSection';
+import HistogramBucketsSection from './SettingSections/HistogramBucketsSection/HistogramBucketsSection';
+import LegendSection from './SettingSections/LegendSection/LegendSection';
+import ThresholdsSection from './SettingSections/ThresholdsSection/ThresholdsSection';
+import VisualizationSettingsSection from './SettingSections/VisualizationSettingsSection/VisualizationSettingsSection';
 import { ThresholdProps } from './Threshold/types';
 import { timePreferance } from './timeItems';
 
@@ -108,8 +108,9 @@ function RightContainer({
 }: RightContainerProps): JSX.Element {
 	const { dashboardVariables } = useDashboardVariables();
 
-	const selectedGraphType = GraphTypes.find((e) => e.name === selectedGraph)
-		?.display as PanelDisplay;
+	const selectedPanelDisplay = PanelTypesWithData.find(
+		(e) => e.name === selectedGraph,
+	)?.display as PanelDisplay;
 
 	const onCreateAlertsHandler = useCreateAlerts(selectedWidget, 'panelView');
 
@@ -138,10 +139,25 @@ function RightContainer({
 	const allowFillMode = panelTypeVsFillMode[selectedGraph];
 	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
 
+	const decimapPrecisionOptions = useMemo(
+		() => [
+			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
+			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
+			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
+			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
+		],
+		[],
+	);
+
 	const isAxisSectionVisible = useMemo(() => allowSoftMinMax || allowLogScale, [
 		allowSoftMinMax,
 		allowLogScale,
 	]);
+
+	const isFormattingSectionVisible = useMemo(
+		() => allowYAxisUnit || allowDecimalPrecision || allowPanelColumnPreference,
+		[allowYAxisUnit, allowDecimalPrecision, allowPanelColumnPreference],
+	);
 
 	const isLegendSectionVisible = useMemo(
 		() => allowLegendPosition || allowLegendColors,
@@ -150,7 +166,17 @@ function RightContainer({
 
 	const isChartAppearanceSectionVisible = useMemo(
 		() =>
-			allowFillMode || allowLineStyle || allowLineInterpolation || allowShowPoints,
+			/**
+			 * Disabled for now as we are not done with other settings in chart appearance section
+			 * TODO: @ahrefabhi Enable this after we are done other settings in chart appearance section
+			 */
+
+			// eslint-disable-next-line sonarjs/no-redundant-boolean
+			false &&
+			(allowFillMode ||
+				allowLineStyle ||
+				allowLineInterpolation ||
+				allowShowPoints),
 		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
 	);
 
@@ -184,19 +210,22 @@ function RightContainer({
 					allowFillSpans={allowFillSpans}
 				/>
 
-				<FormattingUnitsSection
-					selectedGraphType={selectedGraphType}
-					yAxisUnit={yAxisUnit}
-					setYAxisUnit={setYAxisUnit}
-					isNewDashboard={isNewDashboard}
-					decimalPrecision={decimalPrecision}
-					setDecimalPrecision={setDecimalPrecision}
-					columnUnits={columnUnits}
-					setColumnUnits={setColumnUnits}
-					allowYAxisUnit={allowYAxisUnit}
-					allowDecimalPrecision={allowDecimalPrecision}
-					allowPanelColumnPreference={allowPanelColumnPreference}
-				/>
+				{isFormattingSectionVisible && (
+					<FormattingUnitsSection
+						selectedPanelDisplay={selectedPanelDisplay}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						isNewDashboard={isNewDashboard}
+						decimalPrecision={decimalPrecision}
+						setDecimalPrecision={setDecimalPrecision}
+						columnUnits={columnUnits}
+						setColumnUnits={setColumnUnits}
+						allowYAxisUnit={allowYAxisUnit}
+						allowDecimalPrecision={allowDecimalPrecision}
+						allowPanelColumnPreference={allowPanelColumnPreference}
+						decimapPrecisionOptions={decimapPrecisionOptions}
+					/>
+				)}
 
 				{isChartAppearanceSectionVisible && (
 					<ChartAppearanceSection

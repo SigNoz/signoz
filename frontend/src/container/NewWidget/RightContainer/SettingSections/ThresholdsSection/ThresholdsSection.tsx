@@ -1,9 +1,9 @@
 import { Dispatch, SetStateAction } from 'react';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { Antenna } from 'lucide-react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import ThresholdSelector from '../../Threshold/ThresholdSelector';
 import { ThresholdProps } from '../../Threshold/types';
 
@@ -17,7 +17,7 @@ interface ThresholdsSectionProps {
 	columnUnits: ColumnUnit;
 }
 
-export function ThresholdsSection({
+export default function ThresholdsSection({
 	thresholds,
 	setThresholds,
 	yAxisUnit,

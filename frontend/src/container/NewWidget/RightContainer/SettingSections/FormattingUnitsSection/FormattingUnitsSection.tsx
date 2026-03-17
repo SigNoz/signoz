@@ -1,16 +1,16 @@
-import { Dispatch, SetStateAction, useMemo } from 'react';
+import { Dispatch, SetStateAction } from 'react';
 import { Select, Typography } from 'antd';
-import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
+import { PrecisionOption } from 'components/Graph/types';
 import { PanelDisplay } from 'constants/queryBuilder';
 import { SlidersHorizontal } from 'lucide-react';
 import { ColumnUnit } from 'types/api/dashboard/getAll';
 
 import { ColumnUnitSelector } from '../../ColumnUnitSelector/ColumnUnitSelector';
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 import DashboardYAxisUnitSelectorWrapper from '../../DashboardYAxisUnitSelectorWrapper';
 
 interface FormattingUnitsSectionProps {
-	selectedGraphType: PanelDisplay | '';
+	selectedPanelDisplay: PanelDisplay | '';
 	yAxisUnit: string;
 	setYAxisUnit: Dispatch<SetStateAction<string>>;
 	isNewDashboard: boolean;
@@ -21,10 +21,11 @@ interface FormattingUnitsSectionProps {
 	allowYAxisUnit: boolean;
 	allowDecimalPrecision: boolean;
 	allowPanelColumnPreference: boolean;
+	decimapPrecisionOptions: { label: string; value: PrecisionOption }[];
 }
 
-export function FormattingUnitsSection({
-	selectedGraphType,
+export default function FormattingUnitsSection({
+	selectedPanelDisplay,
 	yAxisUnit,
 	setYAxisUnit,
 	isNewDashboard,
@@ -35,16 +36,8 @@ export function FormattingUnitsSection({
 	allowYAxisUnit,
 	allowDecimalPrecision,
 	allowPanelColumnPreference,
+	decimapPrecisionOptions,
 }: FormattingUnitsSectionProps): JSX.Element {
-	const decimapPrecisionOptions = useMemo(
-		() => [
-			{ label: '0 decimals', value: PrecisionOptionsEnum.ZERO },
-			{ label: '1 decimal', value: PrecisionOptionsEnum.ONE },
-			{ label: '2 decimals', value: PrecisionOptionsEnum.TWO },
-			{ label: '3 decimals', value: PrecisionOptionsEnum.THREE },
-		],
-		[],
-	);
 	return (
 		<SettingsSection
 			title="Formatting & Units"
@@ -55,8 +48,8 @@ export function FormattingUnitsSection({
 					onSelect={setYAxisUnit}
 					value={yAxisUnit || ''}
 					fieldLabel={
-						selectedGraphType === PanelDisplay.VALUE ||
-						selectedGraphType === PanelDisplay.PIE
+						selectedPanelDisplay === PanelDisplay.VALUE ||
+						selectedPanelDisplay === PanelDisplay.PIE
 							? 'Unit'
 							: 'Y Axis Unit'
 					}
@@ -72,7 +65,6 @@ export function FormattingUnitsSection({
 					<Select
 						options={decimapPrecisionOptions}
 						value={decimalPrecision}
-						style={{ width: '100%' }}
 						className="panel-type-select"
 						defaultValue={decimapPrecisionOptions[0]?.value}
 						onChange={(val: PrecisionOption): void => setDecimalPrecision(val)}

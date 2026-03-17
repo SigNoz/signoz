@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InputNumber, Switch, Typography } from 'antd';
-import SettingsSection from 'components/SettingsSection/SettingsSection';
+
+import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
 import './HistogramBucketsSection.styles.scss';
 
@@ -13,7 +14,7 @@ interface HistogramBucketsSectionProps {
 	setCombineHistogram: Dispatch<SetStateAction<boolean>>;
 }
 
-export function HistogramBucketsSection({
+export default function HistogramBucketsSection({
 	bucketCount,
 	setBucketCount,
 	bucketWidth,

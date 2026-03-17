@@ -13,7 +13,6 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 import configureStore from 'redux-mock-store';
@@ -101,9 +100,7 @@ const render = (ui: React.ReactElement): ReturnType<typeof rtlRender> =>
 				<Provider store={createMockStore()}>
 					<AppContext.Provider value={createMockAppContext() as IAppContext}>
 						<ErrorModalProvider>
-							<DashboardProvider>
-								<QueryBuilderProvider>{ui}</QueryBuilderProvider>
-							</DashboardProvider>
+							<QueryBuilderProvider>{ui}</QueryBuilderProvider>
 						</ErrorModalProvider>
 					</AppContext.Provider>
 				</Provider>
@@ -192,7 +189,7 @@ describe('RightContainer - Alerts Section', () => {
 
 		const alertsSection = screen.getByText('Alerts').closest('section');
 		expect(alertsSection).toBeInTheDocument();
-		expect(alertsSection).toHaveClass('alerts');
+		expect(alertsSection).toHaveClass('alerts-section');
 	});
 
 	it('renders alerts section with correct text and SquareArrowOutUpRight icon', () => {

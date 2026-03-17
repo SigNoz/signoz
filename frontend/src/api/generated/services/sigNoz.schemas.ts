@@ -2100,7 +2100,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2113,7 +2113,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	last_used: Date;
+	lastObservedAt: Date;
 	/**
 	 * @type string
 	 */
@@ -2121,7 +2121,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	service_account_id: string;
+	serviceAccountId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2145,7 +2145,7 @@ export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2175,6 +2175,11 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 * @format date-time
+	 */
+	deletedAt: Date;
+	/**
+	 * @type string
 	 */
 	email: string;
 	/**
@@ -2188,7 +2193,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	orgID: string;
+	orgId: string;
 	/**
 	 * @type array
 	 */
@@ -2209,7 +2214,7 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */

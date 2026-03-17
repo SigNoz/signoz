@@ -1,4 +1,4 @@
-.graph-selection {
+.panel-type-selection-modal {
 	.ant-modal-content {
 		width: 515px;
 		max-height: 646px;
@@ -76,6 +76,11 @@
 						content: none;
 					}
 				}
+
+				.panel-type-text {
+					text-align: center;
+					margin-top: 1rem;
+				}
 			}
 		}
 
@@ -114,7 +119,7 @@
 }
 
 .lightMode {
-	.graph-selection {
+	.panel-type-selection-modal {
 		.ant-modal-content {
 			border: 1px solid var(--bg-vanilla-300);
 			background: var(--bg-vanilla-100);

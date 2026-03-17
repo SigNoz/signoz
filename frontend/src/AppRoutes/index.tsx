@@ -29,7 +29,6 @@ import posthog from 'posthog-js';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { CmdKProvider } from 'providers/cmdKProvider';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
@@ -384,28 +383,26 @@ function App(): JSX.Element {
 									<PrivateRoute>
 										<ResourceProvider>
 											<QueryBuilderProvider>
-												<DashboardProvider>
-													<KeyboardHotkeysProvider>
-														<AppLayout>
-															<PreferenceContextProvider>
-																<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
-																	<Switch>
-																		{routes.map(({ path, component, exact }) => (
-																			<Route
-																				key={`${path}`}
-																				exact={exact}
-																				path={path}
-																				component={component}
-																			/>
-																		))}
-																		<Route exact path="/" component={Home} />
-																		<Route path="*" component={NotFound} />
-																	</Switch>
-																</Suspense>
-															</PreferenceContextProvider>
-														</AppLayout>
-													</KeyboardHotkeysProvider>
-												</DashboardProvider>
+												<KeyboardHotkeysProvider>
+													<AppLayout>
+														<PreferenceContextProvider>
+															<Suspense fallback={<Spinner size="large" tip="Loading..." />}>
+																<Switch>
+																	{routes.map(({ path, component, exact }) => (
+																		<Route
+																			key={`${path}`}
+																			exact={exact}
+																			path={path}
+																			component={component}
+																		/>
+																	))}
+																	<Route exact path="/" component={Home} />
+																	<Route path="*" component={NotFound} />
+																</Switch>
+															</Suspense>
+														</PreferenceContextProvider>
+													</AppLayout>
+												</KeyboardHotkeysProvider>
 											</QueryBuilderProvider>
 										</ResourceProvider>
 									</PrivateRoute>
