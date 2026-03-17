@@ -104,13 +104,43 @@ func TestIndexToCreateSQL(t *testing.T) {
 		},
 		// postgres docs example
 		{
-			name: "PartialUnique_WhereWithPostgresDocsExample",
+			name: "PartialUnique_WhereWithPostgresDocsExample_1",
 			index: &PartialUniqueIndex{
 				TableName:   "access_log",
 				ColumnNames: []ColumnName{"client_ip"},
 				Where:       `NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255')`,
 			},
 			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_access_log_client_ip_5a596410" ON "access_log" ("client_ip") WHERE NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255')`,
+		},
+		// postgres docs example
+		{
+			name: "PartialUnique_WhereWithPostgresDocsExample_2",
+			index: &PartialUniqueIndex{
+				TableName:   "orders",
+				ColumnNames: []ColumnName{"order_nr"},
+				Where:       `billed is not true`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_orders_order_nr_6d31bb0e" ON "orders" ("order_nr") WHERE billed is not true`,
+		},
+		// sqlite docs example
+		{
+			name: "PartialUnique_WhereWithSqliteDocsExample_1",
+			index: &PartialUniqueIndex{
+				TableName:   "person",
+				ColumnNames: []ColumnName{"team_id"},
+				Where:       `is_team_leader`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_person_team_id_c8604a29" ON "person" ("team_id") WHERE is_team_leader`,
+		},
+		// sqlite docs example
+		{
+			name: "PartialUnique_WhereWithSqliteDocsExample_2",
+			index: &PartialUniqueIndex{
+				TableName:   "purchaseorder",
+				ColumnNames: []ColumnName{"parent_po"},
+				Where:       `parent_po IS NOT NULL`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_purchaseorder_parent_po_dbe2929d" ON "purchaseorder" ("parent_po") WHERE parent_po IS NOT NULL`,
 		},
 	}
 
