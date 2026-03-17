@@ -88,7 +88,7 @@ export default function UPlotChart({
 		const seriesSpanGaps = config.getSeriesSpanGapsOptions();
 		const preparedData =
 			seriesSpanGaps.length > 0
-				? applySpanGapsToAlignedData(data as AlignedData, seriesSpanGaps)
+				? applySpanGapsToAlignedData(data, seriesSpanGaps)
 				: (data as AlignedData);
 
 		const plot = new uPlot(plotConfig, preparedData, containerRef.current);
