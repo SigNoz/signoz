@@ -202,29 +202,30 @@ function createBaseSpec(
 						};
 					},
 			  ),
-		selectFields: isEmpty(nonEmptySelectColumns)
-			? undefined
-			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => {
-						const fieldName = column.name ?? column.key;
-						const isDeprecated = isDeprecatedField(fieldName);
+		selectFields:
+			nonEmptySelectColumns === undefined
+				? undefined
+				: nonEmptySelectColumns?.map(
+						(column: any): TelemetryFieldKey => {
+							const fieldName = column.name ?? column.key;
+							const isDeprecated = isDeprecatedField(fieldName);
 
-						const fieldObj: TelemetryFieldKey = {
-							name: fieldName,
-							fieldDataType:
-								column?.fieldDataType ?? (column?.dataType as FieldDataType),
-							signal: column?.signal ?? undefined,
-						};
+							const fieldObj: TelemetryFieldKey = {
+								name: fieldName,
+								fieldDataType:
+									column?.fieldDataType ?? (column?.dataType as FieldDataType),
+								signal: column?.signal ?? undefined,
+							};
 
-						// Only add fieldContext if the field is NOT deprecated
-						if (!isDeprecated && fieldName !== 'name') {
-							fieldObj.fieldContext =
-								column?.fieldContext ?? (column?.type as FieldContext);
-						}
+							// Only add fieldContext if the field is NOT deprecated
+							if (!isDeprecated && fieldName !== 'name') {
+								fieldObj.fieldContext =
+									column?.fieldContext ?? (column?.type as FieldContext);
+							}
 
-						return fieldObj;
-					},
-			  ),
+							return fieldObj;
+						},
+				  ),
 	};
 }
 
@@ -415,17 +416,18 @@ function createTraceOperatorBaseSpec(
 				: undefined,
 		legend: isEmpty(legend) ? undefined : legend,
 		having: isEmpty(having) ? undefined : (having as Having),
-		selectFields: isEmpty(nonEmptySelectColumns)
-			? undefined
-			: nonEmptySelectColumns?.map(
-					(column: any): TelemetryFieldKey => ({
-						name: column.name ?? column.key,
-						fieldDataType:
-							column?.fieldDataType ?? (column?.dataType as FieldDataType),
-						fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
-						signal: column?.signal ?? undefined,
-					}),
-			  ),
+		selectFields:
+			nonEmptySelectColumns === undefined
+				? undefined
+				: nonEmptySelectColumns?.map(
+						(column: any): TelemetryFieldKey => ({
+							name: column.name ?? column.key,
+							fieldDataType:
+								column?.fieldDataType ?? (column?.dataType as FieldDataType),
+							fieldContext: column?.fieldContext ?? (column?.type as FieldContext),
+							signal: column?.signal ?? undefined,
+						}),
+				  ),
 	};
 }
 
