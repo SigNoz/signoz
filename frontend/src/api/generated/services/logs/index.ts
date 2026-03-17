@@ -4,6 +4,7 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -15,12 +16,8 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
-import { useMutation, useQuery } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	HandleExportRawDataGETParams,
 	HandleExportRawDataPOSTParams,
 	ListPromotedAndIndexedPaths200,
 	PromotetypesPromotePathDTO,
@@ -28,105 +25,8 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-/**
- * This endpoints allows simple query exporting raw data for traces and logs
- * @summary Export raw data
- */
-export const handleExportRawDataGET = (
-	params: HandleExportRawDataGETParams,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<string>({
-		url: `/api/v1/export_raw_data`,
-		method: 'GET',
-		params,
-		signal,
-	});
-};
-
-export const getHandleExportRawDataGETQueryKey = (
-	params?: HandleExportRawDataGETParams,
-) => {
-	return [`/api/v1/export_raw_data`, ...(params ? [params] : [])] as const;
-};
-
-export const getHandleExportRawDataGETQueryOptions = <
-	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	params: HandleExportRawDataGETParams,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof handleExportRawDataGET>>,
-			TError,
-			TData
-		>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey =
-		queryOptions?.queryKey ?? getHandleExportRawDataGETQueryKey(params);
-
-	const queryFn: QueryFunction<
-		Awaited<ReturnType<typeof handleExportRawDataGET>>
-	> = ({ signal }) => handleExportRawDataGET(params, signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof handleExportRawDataGET>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type HandleExportRawDataGETQueryResult = NonNullable<
-	Awaited<ReturnType<typeof handleExportRawDataGET>>
->;
-export type HandleExportRawDataGETQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Export raw data
- */
-
-export function useHandleExportRawDataGET<
-	TData = Awaited<ReturnType<typeof handleExportRawDataGET>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	params: HandleExportRawDataGETParams,
-	options?: {
-		query?: UseQueryOptions<
-			Awaited<ReturnType<typeof handleExportRawDataGET>>,
-			TError,
-			TData
-		>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getHandleExportRawDataGETQueryOptions(params, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary Export raw data
- */
-export const invalidateHandleExportRawDataGET = async (
-	queryClient: QueryClient,
-	params: HandleExportRawDataGETParams,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getHandleExportRawDataGETQueryKey(params) },
-		options,
-	);
-
-	return queryClient;
-};
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoints allows complex query exporting raw data for traces and logs

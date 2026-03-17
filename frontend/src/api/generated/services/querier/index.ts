@@ -4,21 +4,22 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
+import { useMutation } from 'react-query';
 import type {
 	MutationFunction,
 	UseMutationOptions,
 	UseMutationResult,
 } from 'react-query';
-import { useMutation } from 'react-query';
 
-import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	Querybuildertypesv5QueryRangeRequestDTO,
 	QueryRangeV5200,
+	Querybuildertypesv5QueryRangeRequestDTO,
 	RenderErrorResponseDTO,
 	ReplaceVariables200,
 } from '../sigNoz.schemas';
+
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * Execute a composite query over a time range. Supports builder queries (traces, logs, metrics), formulas, trace operators, PromQL, and ClickHouse SQL.
