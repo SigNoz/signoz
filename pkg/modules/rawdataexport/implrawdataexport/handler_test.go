@@ -10,12 +10,11 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestExportRawDataQueryParams_BindingDefaults(t *testing.T) {
-	var params exporttypes.ExportRawDataQueryParams
+func TestExportRawDataFormatQueryParam_BindingDefaults(t *testing.T) {
+	var params exporttypes.ExportRawDataFormatQueryParam
 	err := binding.Query.BindQuery(url.Values{}, &params)
 	assert.NoError(t, err)
 	assert.Equal(t, "csv", params.Format)
-	assert.Equal(t, DefaultExportRowCountLimit, params.Limit)
 }
 
 func logQuery(limit int) qbtypes.QueryEnvelope {

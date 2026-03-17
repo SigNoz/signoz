@@ -110,9 +110,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {admin_token}"
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -139,9 +137,7 @@ def test_invite_and_register(
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {editor_token}"
-        },
+        headers={"Authorization": f"Bearer {editor_token}"},
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -194,7 +190,6 @@ def test_revoke_invite_and_register(
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-
     # Try to use the reset token — should fail (user deleted)
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
@@ -239,7 +234,11 @@ def test_old_invite_flow(signoz: types.SigNoz, get_token: Callable[[str, str], s
     # invite a new user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": "oldinviteflow@integration.test", "role": "VIEWER", "name": "old invite flow"},
+        json={
+            "email": "oldinviteflow@integration.test",
+            "role": "VIEWER",
+            "name": "old invite flow",
+        },
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
@@ -249,9 +248,7 @@ def test_old_invite_flow(signoz: types.SigNoz, get_token: Callable[[str, str], s
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {admin_token}"
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     invite_response = response.json()["data"]
@@ -297,15 +294,17 @@ def test_old_invite_flow(signoz: types.SigNoz, get_token: Callable[[str, str], s
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {admin_token}"
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == HTTPStatus.OK
 
     user_response = response.json()["data"]
     found_user = next(
-        (user for user in user_response if user["email"] == "oldinviteflow@integration.test"),
+        (
+            user
+            for user in user_response
+            if user["email"] == "oldinviteflow@integration.test"
+        ),
         None,
     )
 

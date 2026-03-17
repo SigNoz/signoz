@@ -4,13 +4,35 @@ import json
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
-from urllib.parse import urlencode
 
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
+from fixtures.model import BuilderQuery, OrderBy, QueryRangeRequest, TelemetryFieldKey
+
+
+def test_export_raw_data_get_not_allowed(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """
+    Tests:
+    1. GET request to export_raw_data is rejected with 405 Method Not Allowed
+    """
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data"),
+        timeout=10,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
 def test_export_logs_csv(
@@ -85,20 +107,20 @@ def test_export_logs_csv(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "source": "logs", 
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="logs", name="A")],
+    ).to_dict()
 
-    # Export logs as CSV (default format, no source needed)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    # Export logs as CSV (default format)
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data"),
+        json=body,
         timeout=30,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -181,21 +203,20 @@ def test_export_logs_jsonl(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "logs",
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="logs", name="A")],
+    ).to_dict()
 
     # Export logs as JSONL
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -277,22 +298,20 @@ def test_export_logs_with_filter(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "logs",
-        "filter": "severity_text = 'ERROR'",
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="logs", name="A", filter_expression="severity_text = 'ERROR'")],
+    ).to_dict()
 
     # Export logs with filter
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -350,22 +369,20 @@ def test_export_logs_with_limit(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "csv",
-        "source": "logs",
-        "limit": 3,
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="logs", name="A", limit=3)],
+    ).to_dict()
 
     # Export logs with limit
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=csv"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -420,23 +437,30 @@ def test_export_logs_with_columns(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # Request only specific columns
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "csv",
-        "source": "logs",
-        "columns": ["timestamp", "severity_text", "body"],
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                name="A",
+                select_fields=[
+                    TelemetryFieldKey("timestamp", "string", "log"),
+                    TelemetryFieldKey("severity_text", "string", "log"),
+                    TelemetryFieldKey("body", "string", "log"),
+                ],
+            )
+        ],
+    ).to_dict()
 
     # Export logs with specific columns
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params, doseq=True)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=csv"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -513,22 +537,20 @@ def test_export_logs_with_order_by(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "logs",
-        "order_by": "timestamp:asc",
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="logs", name="A", order=[OrderBy(TelemetryFieldKey("timestamp", "string", "log"), "asc")])],
+    ).to_dict()
 
     # Export logs with ascending order
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -600,23 +622,26 @@ def test_export_logs_with_complex_filter(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    # Filter for api-service AND ERROR severity
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "logs",
-        "filter": "service.name = 'api-service' AND severity_text = 'ERROR'",
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                name="A",
+                filter_expression="service.name = 'api-service' AND severity_text = 'ERROR'",
+            )
+        ],
+    ).to_dict()
 
     # Export logs with complex filter
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 

@@ -4,13 +4,35 @@ import json
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
-from urllib.parse import urlencode
 
 import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.model import BuilderQuery, TraceOperatorQuery, OrderBy, QueryRangeRequest, TelemetryFieldKey
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
+
+
+def test_export_raw_data_get_not_allowed(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """
+    Tests:
+    1. GET request to export_raw_data is rejected with 405 Method Not Allowed
+    """
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data"),
+        timeout=10,
+        headers={
+            "authorization": f"Bearer {token}",
+        },
+    )
+
+    assert response.status_code == HTTPStatus.METHOD_NOT_ALLOWED
 
 
 def test_export_traces_csv(
@@ -116,21 +138,20 @@ def test_export_traces_csv(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "source": "traces",
-        "limit": 1000,
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="traces", name="A", limit=1000)],
+    ).to_dict()
 
-    # Export traces as CSV (GET for simple queries)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    # Export traces as CSV
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data"),
+        json=body,
         timeout=30,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -229,22 +250,20 @@ def test_export_traces_jsonl(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "traces",
-        "limit": 1000,
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="traces", name="A", limit=1000)],
+    ).to_dict()
 
-    # Export traces as JSONL (GET for simple queries)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    # Export traces as JSONL
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -338,23 +357,20 @@ def test_export_traces_with_filter(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "jsonl",
-        "source": "traces",
-        "limit": 1000,
-        "filter": "service.name = 'service-a'",
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="service.name = 'service-a'")],
+    ).to_dict()
 
-    # Export traces with filter (GET supports filter param)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    # Export traces with filter
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -415,22 +431,20 @@ def test_export_traces_with_limit(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    params = {
-        "start": start_ns,
-        "end": end_ns,
-        "format": "csv",
-        "source": "traces",
-        "limit": 3,
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[BuilderQuery(signal="traces", name="A", limit=3)],
+    ).to_dict()
 
-    # Export traces with limit (GET supports limit param)
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(
-            f"/api/v1/export_raw_data?{urlencode(params)}"
-        ),
+    # Export traces with limit
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=csv"),
+        json=body,
         timeout=10,
         headers={
             "authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
         },
     )
 
@@ -461,32 +475,15 @@ def test_export_traces_multiple_queries_rejected(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    body = {
-        "start": start_ns,
-        "end": end_ns,
-        "compositeQuery": {
-            "queries": [
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "signal": "traces",
-                        "name": "A",
-                        "limit": 1000,
-                        "filter": {"expression": "service.name = 'service-a'"},
-                    },
-                },
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "signal": "traces",
-                        "name": "B",
-                        "limit": 1000,
-                        "filter": {"expression": "service.name = 'service-b'"},
-                    },
-                },
-            ]
-        },
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        request_type=None,
+        queries=[
+            BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="service.name = 'service-a'"),
+            BuilderQuery(signal="traces", name="B", limit=1000, filter_expression="service.name = 'service-b'"),
+        ],
+    ).to_dict()
 
     url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(
@@ -586,47 +583,25 @@ def test_export_traces_with_composite_query_trace_operator(
     end_ns = int(now.timestamp() * 1e9)
 
     # A: spans with operation.type = 'parent'
-    query_a = {
-        "type": "builder_query",
-        "spec": {
-            "signal": "traces",
-            "name": "A",
-            "limit": 1000,
-            "filter": {"expression": "operation.type = 'parent'"},
-        },
-    }
+    query_a = BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="operation.type = 'parent'")
 
     # B: spans with operation.type = 'child'
-    query_b = {
-        "type": "builder_query",
-        "spec": {
-            "signal": "traces",
-            "name": "B",
-            "limit": 1000,
-            "filter": {"expression": "operation.type = 'child'"},
-        },
-    }
+    query_b = BuilderQuery(signal="traces", name="B", limit=1000, filter_expression="operation.type = 'child'")
 
     # Trace operator: find traces where A has a direct descendant B
-    query_c = {
-        "type": "builder_trace_operator",
-        "spec": {
-            "name": "C",
-            "expression": "A => B",
-            "returnSpansFrom": "A",
-            "limit": 1000,
-            "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
-        },
-    }
+    query_c = TraceOperatorQuery(
+        name="C",
+        expression="A => B",
+        return_spans_from="A",
+        limit=1000,
+        order=[OrderBy(TelemetryFieldKey("timestamp", "string", "span"), "desc")],
+    )
 
-    body = {
-        "start": start_ns,
-        "end": end_ns,
-        "requestType": "raw",
-        "compositeQuery": {
-            "queries": [query_a, query_b, query_c],
-        },
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[query_a, query_b, query_c],
+    ).to_dict()
 
     url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(
@@ -707,49 +682,23 @@ def test_export_traces_with_select_fields(
     start_ns = int((now - timedelta(minutes=5)).timestamp() * 1e9)
     end_ns = int(now.timestamp() * 1e9)
 
-    body = {
-        "start": start_ns,
-        "end": end_ns,
-        "requestType": "raw",
-        "compositeQuery": {
-            "queries": [
-                {
-                    "type": "builder_query",
-                    "spec": {
-                        "signal": "traces",
-                        "name": "A",
-                        "limit": 1000,
-                        "selectFields": [
-                            {
-                                "name": "trace_id",
-                                "fieldDataType": "string",
-                                "fieldContext": "span",
-                                "signal": "traces",
-                            },
-                            {
-                                "name": "span_id",
-                                "fieldDataType": "string",
-                                "fieldContext": "span",
-                                "signal": "traces",
-                            },
-                            {
-                                "name": "name",
-                                "fieldDataType": "string",
-                                "fieldContext": "span",
-                                "signal": "traces",
-                            },
-                            {
-                                "name": "service.name",
-                                "fieldDataType": "string",
-                                "fieldContext": "resource",
-                                "signal": "traces",
-                            },
-                        ],
-                    },
-                }
-            ]
-        },
-    }
+    body = QueryRangeRequest(
+        start=start_ns,
+        end=end_ns,
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=1000,
+                select_fields=[
+                    TelemetryFieldKey("trace_id", "string", "span"),
+                    TelemetryFieldKey("span_id", "string", "span"),
+                    TelemetryFieldKey("name", "string", "span"),
+                    TelemetryFieldKey("service.name", "string", "resource"),
+                ],
+            )
+        ],
+    ).to_dict()
 
     url = signoz.self.host_configs["8080"].get("/api/v1/export_raw_data?format=jsonl")
     response = requests.post(

@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/exporttypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -33,38 +32,15 @@ func NewHandler(module rawdataexport.Module) rawdataexport.Handler {
 
 func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	var queryRangeRequest qbtypes.QueryRangeRequest
-	var format string
 
-	switch r.Method {
-	case http.MethodGet:
-		var params exporttypes.ExportRawDataQueryParams
-		if err := binding.Query.BindQuery(r.URL.Query(), &params); err != nil {
-			render.Error(rw, err)
-			return
-		}
-		if err := params.Normalize(); err != nil {
-			render.Error(rw, err)
-			return
-		}
-		if err := params.Validate(); err != nil {
-			render.Error(rw, err)
-			return
-		}
-		format = params.Format
-		queryRangeRequest = buildQueryRangeRequest(&params)
-	case http.MethodPost:
-		var formatParam exporttypes.ExportRawDataFormatQueryParam
-		if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
-			render.Error(rw, err)
-			return
-		}
-		format = formatParam.Format
-		if err := json.NewDecoder(r.Body).Decode(&queryRangeRequest); err != nil {
-			render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request body: %v", err))
-			return
-		}
-	default:
-		render.Error(rw, errors.Newf(errors.TypeMethodNotAllowed, errors.CodeMethodNotAllowed, "method not allowed, only GET/POST supported"))
+	var formatParam exporttypes.ExportRawDataFormatQueryParam
+	if err := binding.Query.BindQuery(r.URL.Query(), &formatParam); err != nil {
+		render.Error(rw, err)
+		return
+	}
+	format := formatParam.Format
+	if err := json.NewDecoder(r.Body).Decode(&queryRangeRequest); err != nil {
+		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request body: %v", err))
 		return
 	}
 
@@ -140,40 +116,6 @@ func validateAndApplyDefaultExportLimits(queries []qbtypes.QueryEnvelope) error 
 		queries[idx].SetLimit(limit)
 	}
 	return nil
-}
-
-// buildQueryEnvelope creates a QueryEnvelope with a QueryBuilderQuery for the given aggregation type.
-func buildQueryEnvelope[T any](signal telemetrytypes.Signal, filter *qbtypes.Filter, limit int, order []qbtypes.OrderBy, selectFields []telemetrytypes.TelemetryFieldKey) qbtypes.QueryEnvelope {
-	return qbtypes.QueryEnvelope{
-		Type: qbtypes.QueryTypeBuilder,
-		Spec: qbtypes.QueryBuilderQuery[T]{
-			Signal:       signal,
-			Filter:       filter,
-			Limit:        limit,
-			Order:        order,
-			SelectFields: selectFields,
-		},
-	}
-}
-
-// buildQueryRangeRequest builds a QueryRangeRequest from already-bound and validated GET query params.
-func buildQueryRangeRequest(params *exporttypes.ExportRawDataQueryParams) qbtypes.QueryRangeRequest {
-	var query qbtypes.QueryEnvelope
-	switch params.Signal {
-	case telemetrytypes.SignalLogs:
-		query = buildQueryEnvelope[qbtypes.LogAggregation](params.Signal, &params.Filter, params.Limit, params.Order, params.SelectFields)
-	case telemetrytypes.SignalTraces:
-		query = buildQueryEnvelope[qbtypes.TraceAggregation](params.Signal, &params.Filter, params.Limit, params.Order, params.SelectFields)
-	}
-
-	return qbtypes.QueryRangeRequest{
-		Start:       params.Start,
-		End:         params.End,
-		RequestType: qbtypes.RequestTypeRaw,
-		CompositeQuery: qbtypes.CompositeQuery{
-			Queries: []qbtypes.QueryEnvelope{query},
-		},
-	}
 }
 
 // setExportResponseHeaders sets common HTTP headers for export responses.
