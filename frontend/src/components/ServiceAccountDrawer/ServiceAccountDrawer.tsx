@@ -10,7 +10,6 @@ import {
 	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
-	useUpdateServiceAccountStatus,
 } from 'api/generated/services/serviceaccount';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
@@ -21,6 +20,7 @@ import {
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
 import {
+	parseAsBoolean,
 	parseAsInteger,
 	parseAsString,
 	parseAsStringEnum,
@@ -62,10 +62,16 @@ function ServiceAccountDrawer({
 		'edit-key',
 		parseAsString.withDefault(''),
 	);
-	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
+	const [, setIsAddKeyOpen] = useQueryState(
+		'add-key',
+		parseAsBoolean.withDefault(false),
+	);
+	const [, setIsDisableOpen] = useQueryState(
+		'disable-sa',
+		parseAsBoolean.withDefault(false),
+	);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
-	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
 
 	const {
 		data: accountData,
@@ -148,25 +154,6 @@ function ServiceAccountDrawer({
 			},
 		},
 	);
-	const {
-		mutate: updateStatus,
-		isLoading: isDisabling,
-	} = useUpdateServiceAccountStatus({
-		mutation: {
-			onSuccess: () => {
-				toast.success('Service account disabled', { richColors: true });
-				setIsDisableConfirmOpen(false);
-				onSuccess({ closeDrawer: true });
-			},
-			onError: (error) => {
-				const errMessage =
-					convertToApiError(
-						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to disable service account';
-				toast.error(errMessage, { richColors: true });
-			},
-		},
-	});
 
 	function handleSave(): void {
 		if (!account || !isDirty) {
@@ -178,29 +165,21 @@ function ServiceAccountDrawer({
 		});
 	}
 
-	function handleDisable(): void {
-		if (!account) {
-			return;
-		}
-		updateStatus({
-			pathParams: { id: account.id },
-			data: { status: 'DISABLED' },
-		});
-	}
-
 	const handleClose = useCallback((): void => {
-		setIsDisableConfirmOpen(false);
-		setIsAddKeyOpen(false);
+		setIsDisableOpen(null);
+		setIsAddKeyOpen(null);
 		setSelectedAccountId(null);
 		setActiveTab(null);
 		setKeysPage(null);
 		setEditKeyId(null);
-	}, [setSelectedAccountId, setActiveTab, setKeysPage, setEditKeyId]);
-
-	const handleKeySuccess = useCallback((): void => {
-		setIsAddKeyOpen(false);
-		refetchKeys();
-	}, [refetchKeys]);
+	}, [
+		setSelectedAccountId,
+		setActiveTab,
+		setKeysPage,
+		setEditKeyId,
+		setIsAddKeyOpen,
+		setIsDisableOpen,
+	]);
 
 	const drawerContent = (
 		<div className="sa-drawer__layout">
@@ -243,7 +222,9 @@ function ServiceAccountDrawer({
 						size="sm"
 						color="secondary"
 						disabled={isDisabled}
-						onClick={(): void => setIsAddKeyOpen(true)}
+						onClick={(): void => {
+							setIsAddKeyOpen(true);
+						}}
 					>
 						<Plus size={12} />
 						Add Key
@@ -291,7 +272,6 @@ function ServiceAccountDrawer({
 								currentPage={keysPage}
 								pageSize={PAGE_SIZE}
 								onRefetch={refetchKeys}
-								onAddKeyClick={(): void => setIsAddKeyOpen(true)}
 							/>
 						)}
 					</>
@@ -326,7 +306,9 @@ function ServiceAccountDrawer({
 								variant="ghost"
 								color="destructive"
 								className="sa-drawer__footer-btn"
-								onClick={(): void => setIsDisableConfirmOpen(true)}
+								onClick={(): void => {
+									setIsDisableOpen(true);
+								}}
 							>
 								<PowerOff size={12} />
 								Disable Service Account
@@ -380,22 +362,9 @@ function ServiceAccountDrawer({
 				className="sa-drawer"
 			/>
 
-			<DisableAccountModal
-				open={isDisableConfirmOpen}
-				accountName={account?.name}
-				isDisabling={isDisabling}
-				onCancel={(): void => setIsDisableConfirmOpen(false)}
-				onConfirm={handleDisable}
-			/>
+			<DisableAccountModal />
 
-			{selectedAccountId && (
-				<AddKeyModal
-					open={isAddKeyOpen}
-					accountId={selectedAccountId}
-					onClose={(): void => setIsAddKeyOpen(false)}
-					onSuccess={handleKeySuccess}
-				/>
-			)}
+			<AddKeyModal />
 		</>
 	);
 }

@@ -45,7 +45,7 @@ function renderDrawer(
 	searchParams: Record<string, string> = { account: 'sa-1' },
 ): ReturnType<typeof render> {
 	return render(
-		<NuqsTestingAdapter searchParams={searchParams}>
+		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
 			<ServiceAccountDrawer onSuccess={jest.fn()} />
 		</NuqsTestingAdapter>,
 	);
@@ -98,7 +98,7 @@ describe('ServiceAccountDrawer', () => {
 		);
 
 		render(
-			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }}>
+			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }} hasMemory>
 				<ServiceAccountDrawer onSuccess={onSuccess} />
 			</NuqsTestingAdapter>,
 		);
@@ -154,8 +154,7 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('"Disable Service Account" opens confirm dialog; confirming sends correct status and calls onSuccess', async () => {
-		const onSuccess = jest.fn();
+	it('"Disable Service Account" opens confirm dialog; confirming sends correct status payload', async () => {
 		const statusSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
@@ -166,11 +165,7 @@ describe('ServiceAccountDrawer', () => {
 			}),
 		);
 
-		render(
-			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }}>
-				<ServiceAccountDrawer onSuccess={onSuccess} />
-			</NuqsTestingAdapter>,
-		);
+		renderDrawer();
 
 		await screen.findByDisplayValue('CI Bot');
 
@@ -188,7 +183,6 @@ describe('ServiceAccountDrawer', () => {
 
 		await waitFor(() => {
 			expect(statusSpy).toHaveBeenCalledWith({ status: 'DISABLED' });
-			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: true });
 		});
 	});
 

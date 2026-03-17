@@ -30,10 +30,9 @@ function renderModal(
 		'edit-key': 'key-1',
 	},
 ): ReturnType<typeof render> {
-	const onSuccess = jest.fn();
 	return render(
 		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
-			<EditKeyModal keyItem={keyItem} onSuccess={onSuccess} />
+			<EditKeyModal keyItem={keyItem} />
 		</NuqsTestingAdapter>,
 	);
 }

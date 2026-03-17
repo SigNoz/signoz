@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useQueryClient } from 'react-query';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { DialogWrapper } from '@signozhq/dialog';
@@ -10,6 +11,7 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { DatePicker } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
+	invalidateListServiceAccountKeys,
 	useRevokeServiceAccountKey,
 	useUpdateServiceAccountKey,
 } from 'api/generated/services/serviceaccount';
@@ -39,10 +41,10 @@ interface FormValues {
 
 interface EditKeyModalProps {
 	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null;
-	onSuccess: () => void;
 }
 
-function EditKeyModal({ keyItem, onSuccess }: EditKeyModalProps): JSX.Element {
+function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
+	const queryClient = useQueryClient();
 	const [selectedAccountId] = useQueryState('account');
 	const [editKeyId, setEditKeyId] = useQueryState(
 		'edit-key',
@@ -81,8 +83,12 @@ function EditKeyModal({ keyItem, onSuccess }: EditKeyModalProps): JSX.Element {
 		mutation: {
 			onSuccess: () => {
 				toast.success('Key updated successfully', { richColors: true });
-				onSuccess();
 				void setEditKeyId(null);
+				if (selectedAccountId) {
+					void invalidateListServiceAccountKeys(queryClient, {
+						id: selectedAccountId,
+					});
+				}
 			},
 			onError: (error) => {
 				const errMessage =
@@ -101,8 +107,12 @@ function EditKeyModal({ keyItem, onSuccess }: EditKeyModalProps): JSX.Element {
 			onSuccess: () => {
 				toast.success('Key revoked successfully', { richColors: true });
 				setIsRevokeConfirmOpen(false);
-				onSuccess();
 				void setEditKeyId(null);
+				if (selectedAccountId) {
+					void invalidateListServiceAccountKeys(queryClient, {
+						id: selectedAccountId,
+					});
+				}
 			},
 			onError: (error) => {
 				const errMessage =

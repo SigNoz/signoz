@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
+import { useQueryClient } from 'react-query';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
@@ -10,25 +11,22 @@ import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { DatePicker } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { useCreateServiceAccountKey } from 'api/generated/services/serviceaccount';
+import {
+	invalidateListServiceAccountKeys,
+	useCreateServiceAccountKey,
+} from 'api/generated/services/serviceaccount';
 import type {
 	RenderErrorResponseDTO,
 	ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import type { Dayjs } from 'dayjs';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import { disabledDate } from './utils';
 
 import './AddKeyModal.styles.scss';
-
-interface AddKeyModalProps {
-	open: boolean;
-	accountId: string;
-	onClose: () => void;
-	onSuccess: () => void;
-}
 
 type Phase = 'form' | 'created';
 type ExpiryMode = 'none' | 'date';
@@ -39,12 +37,15 @@ interface FormValues {
 	expiryDate: Dayjs | null;
 }
 
-function AddKeyModal({
-	open,
-	accountId,
-	onClose,
-	onSuccess,
-}: AddKeyModalProps): JSX.Element {
+function AddKeyModal(): JSX.Element {
+	const queryClient = useQueryClient();
+	const [accountId] = useQueryState('account');
+	const [isAddKeyOpen, setIsAddKeyOpen] = useQueryState(
+		'add-key',
+		parseAsBoolean.withDefault(false),
+	);
+	const open = isAddKeyOpen && !!accountId;
+
 	const [phase, setPhase] = useState<Phase>('form');
 	const [
 		createdKey,
@@ -86,6 +87,9 @@ function AddKeyModal({
 				if (keyData) {
 					setCreatedKey(keyData);
 					setPhase('created');
+					if (accountId) {
+						void invalidateListServiceAccountKeys(queryClient, { id: accountId });
+					}
 				}
 			},
 			onError: (error) => {
@@ -103,6 +107,9 @@ function AddKeyModal({
 		expiryMode: mode,
 		expiryDate: date,
 	}: FormValues): void {
+		if (!accountId) {
+			return;
+		}
 		const expiresAt = mode === 'date' && date ? date.endOf('day').unix() : 0;
 		createKey({
 			pathParams: { id: accountId },
@@ -125,11 +132,8 @@ function AddKeyModal({
 	}, [createdKey]);
 
 	const handleClose = useCallback((): void => {
-		if (phase === 'created') {
-			onSuccess();
-		}
-		onClose();
-	}, [phase, onSuccess, onClose]);
+		setIsAddKeyOpen(null);
+	}, [setIsAddKeyOpen]);
 
 	const expiryLabel = (): string => {
 		if (expiryMode === 'none' || !expiryDate) {

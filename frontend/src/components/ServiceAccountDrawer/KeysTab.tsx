@@ -12,7 +12,7 @@ import type {
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import dayjs from 'dayjs';
-import { parseAsString, useQueryState } from 'nuqs';
+import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
 
 import EditKeyModal from './EditKeyModal';
@@ -27,7 +27,6 @@ interface KeysTabProps {
 	currentPage: number;
 	pageSize: number;
 	onRefetch: () => void;
-	onAddKeyClick: () => void;
 }
 
 interface BuildColumnsParams {
@@ -132,8 +131,11 @@ function KeysTab({
 	currentPage,
 	pageSize,
 	onRefetch,
-	onAddKeyClick,
 }: KeysTabProps): JSX.Element {
+	const [, setIsAddKeyOpen] = useQueryState(
+		'add-key',
+		parseAsBoolean.withDefault(false),
+	);
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const [editKeyId, setEditKeyId] = useQueryState(
 		'edit-key',
@@ -172,11 +174,6 @@ function KeysTab({
 		);
 	}
 
-	const handleKeySuccess = useCallback((): void => {
-		void setEditKeyId(null);
-		onRefetch();
-	}, [onRefetch, setEditKeyId]);
-
 	const handleformatLastObservedAt = useCallback(
 		(lastObservedAt: Date | null | undefined): string =>
 			formatLastObservedAt(lastObservedAt, formatTimezoneAdjustedTimestamp),
@@ -207,7 +204,9 @@ function KeysTab({
 				<Button
 					type="button"
 					className="keys-tab__learn-more"
-					onClick={onAddKeyClick}
+					onClick={(): void => {
+						void setIsAddKeyOpen(true);
+					}}
 					disabled={isDisabled}
 				>
 					+ Add your first key
@@ -271,7 +270,7 @@ function KeysTab({
 				onConfirm={handleRevoke}
 			/>
 
-			<EditKeyModal keyItem={editKey} onSuccess={handleKeySuccess} />
+			<EditKeyModal keyItem={editKey} />
 		</>
 	);
 }

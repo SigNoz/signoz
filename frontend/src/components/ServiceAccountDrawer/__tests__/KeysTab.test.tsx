@@ -41,14 +41,14 @@ const defaultProps = {
 	currentPage: 1,
 	pageSize: 10,
 	onRefetch: jest.fn(),
-	onAddKeyClick: jest.fn(),
 };
 
 function renderKeysTab(
 	props: Partial<typeof defaultProps> = {},
+	searchParams: Record<string, string> = { account: 'sa-1' },
 ): ReturnType<typeof render> {
 	return render(
-		<NuqsTestingAdapter>
+		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
 			<KeysTab {...defaultProps} {...props} />
 		</NuqsTestingAdapter>,
 	);
@@ -73,17 +73,28 @@ describe('KeysTab', () => {
 		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
 	});
 
-	it('renders empty state when no keys', async () => {
+	it('renders empty state when no keys and clicking add sets add-key param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onAddKeyClick = jest.fn();
-		renderKeysTab({ keys: [], onAddKeyClick });
+		const onUrlUpdate = jest.fn();
+		render(
+			<NuqsTestingAdapter
+				searchParams={{ account: 'sa-1' }}
+				onUrlUpdate={onUrlUpdate}
+			>
+				<KeysTab {...defaultProps} keys={[]} />
+			</NuqsTestingAdapter>,
+		);
 
 		expect(
 			screen.getByText(/No keys. Start by creating one./i),
 		).toBeInTheDocument();
 		const addBtn = screen.getByRole('button', { name: /\+ Add your first key/i });
 		await user.click(addBtn);
-		expect(onAddKeyClick).toHaveBeenCalled();
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('add-key=true'),
+			}),
+		);
 	});
 
 	it('renders table with keys', () => {

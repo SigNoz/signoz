@@ -1,5 +1,6 @@
 import { toast } from '@signozhq/sonner';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import AddKeyModal from '../AddKeyModal';
@@ -22,12 +23,16 @@ const createdKeyResponse = {
 	},
 };
 
-const defaultProps = {
-	open: true,
-	accountId: 'sa-1',
-	onClose: jest.fn(),
-	onSuccess: jest.fn(),
-};
+function renderModal(): ReturnType<typeof render> {
+	return render(
+		<NuqsTestingAdapter
+			searchParams={{ account: 'sa-1', 'add-key': 'true' }}
+			hasMemory
+		>
+			<AddKeyModal />
+		</NuqsTestingAdapter>,
+	);
+}
 
 describe('AddKeyModal', () => {
 	beforeAll(() => {
@@ -53,8 +58,7 @@ describe('AddKeyModal', () => {
 
 	it('"Create Key" is disabled when name is empty; enabled after typing a name', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(<AddKeyModal {...defaultProps} />);
+		renderModal();
 
 		expect(screen.getByRole('button', { name: /Create Key/i })).toBeDisabled();
 
@@ -69,8 +73,7 @@ describe('AddKeyModal', () => {
 
 	it('successful creation transitions to phase 2 with key displayed and security callout', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(<AddKeyModal {...defaultProps} />);
+		renderModal();
 
 		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'Deploy Key');
 		await waitFor(() =>
@@ -91,7 +94,7 @@ describe('AddKeyModal', () => {
 			.spyOn(navigator.clipboard, 'writeText')
 			.mockResolvedValue(undefined);
 
-		render(<AddKeyModal {...defaultProps} />);
+		renderModal();
 
 		await user.type(screen.getByPlaceholderText(/Enter key name/i), 'Deploy Key');
 		await waitFor(() =>
@@ -122,18 +125,15 @@ describe('AddKeyModal', () => {
 		writeTextSpy.mockRestore();
 	});
 
-	it('onSuccess called only when closing from phase 2, not from phase 1 (Cancel)', async () => {
-		const onSuccess = jest.fn();
-		const onClose = jest.fn();
+	it('Cancel button closes the modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderModal();
 
-		render(
-			<AddKeyModal {...defaultProps} onSuccess={onSuccess} onClose={onClose} />,
-		);
-
+		await screen.findByRole('dialog', { name: /Add a New Key/i });
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(onClose).toHaveBeenCalledTimes(1);
-		expect(onSuccess).not.toHaveBeenCalled();
+		expect(
+			screen.queryByRole('dialog', { name: /Add a New Key/i }),
+		).not.toBeInTheDocument();
 	});
 });
