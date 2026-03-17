@@ -402,6 +402,8 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		return b.buildTraceQuery(ctx, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
+	case qbtypes.RequestTypeDistribution:
+		return b.buildDistributionQuery(ctx, selectFromCTE)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -902,4 +904,84 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (b *traceOperatorCTEBuilder) buildDistributionQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+
+	sb.Select(fmt.Sprintf("%d AS ts", b.start))
+
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	var allGroupByArgs []any
+	for _, gb := range b.operator.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(
+			ctx,
+			&gb.TelemetryFieldKey,
+			b.stmtBuilder.fm,
+			b.stmtBuilder.cb,
+			keys,
+			telemetrytypes.FieldDataTypeString,
+			nil,
+		)
+		if err != nil {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"failed to map group by field '%s': %v",
+				gb.TelemetryFieldKey.Name,
+				err,
+			)
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		sb.SelectMore(colExpr)
+	}
+
+	// Add aggregations
+	var allChArgs []any
+	for i, aggExpr := range b.operator.Aggregations {
+		rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+			ctx,
+			aggExpr.Expression,
+			uint64(b.operator.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, errors.NewInvalidInputf(
+				errors.CodeInvalidInput,
+				"failed to rewrite aggregation expression '%s': %v",
+				aggExpr.Expression,
+				err,
+			)
+		}
+
+		sb.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
+		allChArgs = append(allChArgs, chArgs...)
+	}
+
+	sb.From(selectFromCTE)
+
+	// Add GROUP BY clause
+	if len(b.operator.GroupBy) > 0 {
+		groupByKeys := make([]string, len(b.operator.GroupBy))
+		for i, gb := range b.operator.GroupBy {
+			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
+		}
+		sb.GroupBy(groupByKeys...)
+	}
+
+	// Add HAVING clause if needed
+	b.addHavingClause(sb)
+
+	combinedArgs := append(allGroupByArgs, allChArgs...)
+	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+
+	return &qbtypes.Statement{
+		Query: sql,
+		Args:  args,
+	}, nil
 }

@@ -140,6 +140,8 @@ func (b *traceQueryStatementBuilder) Build(
 		return b.buildScalarQuery(ctx, q, query, start, end, keys, variables, false, false)
 	case qbtypes.RequestTypeTrace:
 		return b.buildTraceQuery(ctx, q, query, start, end, keys, variables)
+	case qbtypes.RequestTypeDistribution:
+		return b.buildDistributionQuery(ctx, q, query, start, end, keys, variables)
 	}
 
 	return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
@@ -830,4 +832,103 @@ func (b *traceQueryStatementBuilder) buildResourceFilterCTE(
 		query,
 		variables,
 	)
+}
+
+// buildDistributionQuery builds SQL query for distribution
+func (b *traceQueryStatementBuilder) buildDistributionQuery(
+	ctx context.Context,
+	_ *sqlbuilder.SelectBuilder,
+	query qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation],
+	start, end uint64,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+	variables map[string]qbtypes.VariableItem,
+) (*qbtypes.Statement, error) {
+	var (
+		cteFragments        []string
+		cteArgs             [][]any
+		preparedWhereClause *querybuilder.PreparedWhereClause
+	)
+
+	sb := sqlbuilder.NewSelectBuilder()
+
+	resourceFilterCTEName := ""
+	if frag, args, err := b.maybeAttachResourceFilter(ctx, sb, query, start, end, variables); err != nil {
+		return nil, err
+	} else if frag != "" {
+		cteFragments = append(cteFragments, frag)
+		cteArgs = append(cteArgs, args)
+		resourceFilterCTEName = "__resource_filter"
+	}
+
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select(fmt.Sprintf("%d AS ts", start))
+
+	// Add GROUP BY fields to SELECT
+	var allGroupByArgs []any
+	for _, gb := range query.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(ctx, &gb.TelemetryFieldKey, b.fm, b.cb, keys, telemetrytypes.FieldDataTypeString, nil)
+		if err != nil {
+			return nil, err
+		}
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		mainSB.SelectMore(colExpr)
+	}
+
+	// Add aggregations
+	var allChArgs []any
+	for i, aggExpr := range query.Aggregations {
+		rewritten, chArgs, err := b.aggExprRewriter.Rewrite(
+			ctx,
+			aggExpr.Expression,
+			uint64(query.StepInterval.Seconds()),
+			keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		mainSB.SelectMore(fmt.Sprintf("%s AS __result_%d", rewritten, i))
+		allChArgs = append(allChArgs, chArgs...)
+	}
+
+	mainSB.From(fmt.Sprintf("%s.%s", DBName, SpanIndexV3TableName))
+
+	if resourceFilterCTEName != "" {
+		mainSB.Where(fmt.Sprintf("resource_fingerprint GLOBAL IN (SELECT fingerprint FROM %s)", resourceFilterCTEName))
+	}
+
+	preparedWhereClause, err := b.addFilterCondition(ctx, mainSB, start, end, query, keys, variables)
+	if err != nil {
+		return nil, err
+	}
+
+	// Add GROUP BY clause
+	if len(query.GroupBy) > 0 {
+		mainSB.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	}
+
+	// Add HAVING clause if needed
+	if query.Having != nil && query.Having.Expression != "" {
+		rewriter := querybuilder.NewHavingExpressionRewriter()
+		rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		mainSB.Having(rewrittenExpr)
+	}
+
+	combinedArgs := append(allGroupByArgs, allChArgs...)
+	mainSQL, mainArgs := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
+
+	finalSQL := querybuilder.CombineCTEs(cteFragments) + mainSQL
+	finalArgs := querybuilder.PrependArgs(cteArgs, mainArgs)
+
+	stmt := &qbtypes.Statement{
+		Query: finalSQL,
+		Args:  finalArgs,
+	}
+	if preparedWhereClause != nil {
+		stmt.Warnings = preparedWhereClause.Warnings
+		stmt.WarningsDocURL = preparedWhereClause.WarningsDocURL
+	}
+
+	return stmt, nil
 }

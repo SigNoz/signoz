@@ -2026,3 +2026,142 @@ def test_traces_fill_zero_formula_with_group_by(
             expected_by_ts=expectations[service_name],
             context=f"traces/fillZero/F1/{service_name}",
         )
+
+
+def test_traces_distribution(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+) -> None:
+    """
+    Test distribution query for traces.
+    
+    Setup:
+    Insert traces with varying durations to create a distribution
+    
+    Tests:
+    1. Query distribution for duration_nano over time
+    2. Verify bucket structure and values
+    """
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    traces: List[Traces] = []
+
+    # Insert traces with different durations across 3 time buckets
+    # Bucket 1 (t-3): durations 100ms-200ms
+    for i in range(10):
+        traces.append(
+            Traces(
+                timestamp=now - timedelta(minutes=3, microseconds=i + 1),
+                duration=timedelta(milliseconds=100 + i * 10),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                parent_span_id="",
+                name=f"span-{i}",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={"service.name": "test-service"},
+                attributes={"http.method": "GET"},
+            )
+        )
+
+    # Bucket 2 (t-2): durations 300ms-500ms
+    for i in range(20):
+        traces.append(
+            Traces(
+                timestamp=now - timedelta(minutes=2, microseconds=i + 1),
+                duration=timedelta(milliseconds=300 + i * 10),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                parent_span_id="",
+                name=f"span-{i + 10}",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={"service.name": "test-service"},
+                attributes={"http.method": "POST"},
+            )
+        )
+
+    # Bucket 3 (t-1): durations 600ms-800ms
+    for i in range(15):
+        traces.append(
+            Traces(
+                timestamp=now - timedelta(minutes=1, microseconds=i + 1),
+                duration=timedelta(milliseconds=600 + i * 10),
+                trace_id=TraceIdGenerator.trace_id(),
+                span_id=TraceIdGenerator.span_id(),
+                parent_span_id="",
+                name=f"span-{i + 30}",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources={"service.name": "test-service"},
+                attributes={"http.method": "PUT"},
+            )
+        )
+
+    insert_traces(traces)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v5/query_range"),
+        timeout=5,
+        headers={"authorization": f"Bearer {token}"},
+        json={
+            "schemaVersion": "v1",
+            "start": start_ms,
+            "end": end_ms,
+            "requestType": "distribution",
+            "compositeQuery": {
+                "queries": [
+                    {
+                        "type": "builder_query",
+                        "spec": {
+                            "name": "A",
+                            "signal": "traces",
+                            "stepInterval": 60,
+                            "disabled": False,
+                            "having": {"expression": ""},
+                            "aggregations": [
+                                {"expression": "distribution(duration_nano, 10)"}
+                            ],
+                        },
+                    }
+                ]
+            },
+            "formatOptions": {"formatTableResultForUI": False, "fillGaps": False},
+        },
+    )
+
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    results = response.json()["data"]["data"]["results"]
+    assert len(results) == 1
+
+    aggregations = results[0]["aggregations"]
+    assert len(aggregations) == 1
+
+    buckets = aggregations[0]["buckets"]
+    assert len(buckets) == 10, f"Expected 10 buckets, got {len(buckets)}"
+
+    total_count = 0
+    for bucket in buckets:
+        assert isinstance(bucket, dict)
+        assert "lowerBound" in bucket
+        assert "upperBound" in bucket
+        assert "count" in bucket
+        assert isinstance(bucket["lowerBound"], (int, float))
+        assert isinstance(bucket["upperBound"], (int, float))
+        assert isinstance(bucket["count"], (int, float))
+        
+        total_count += bucket["count"]
+    
+    assert total_count == 45, f"Expected total count of 45, got {total_count}"
+ 
