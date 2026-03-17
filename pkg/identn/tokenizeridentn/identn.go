@@ -20,13 +20,19 @@ type resolver struct {
 	sfGroup   *singleflight.Group
 }
 
-func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) identn.IdentN {
+func NewFactory(tokenizer tokenizer.Tokenizer) factory.ProviderFactory[identn.IdentN, identn.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderTokenizer.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
+		return New(providerSettings, tokenizer, config.Tokenizer.Headers)
+	})
+}
+
+func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) (identn.IdentN, error) {
 	return &resolver{
 		tokenizer: tokenizer,
 		headers:   headers,
 		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"),
 		sfGroup:   &singleflight.Group{},
-	}
+	}, nil
 }
 
 func (r *resolver) Name() authtypes.IdentNProvider {

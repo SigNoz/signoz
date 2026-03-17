@@ -24,13 +24,19 @@ type resolver struct {
 	sfGroup  *singleflight.Group
 }
 
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentN {
+func NewFactory(store sqlstore.SQLStore) factory.ProviderFactory[identn.IdentN, identn.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIkey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
+		return New(providerSettings, store, config.APIKeyConfig.Headers)
+	})
+}
+
+func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) (identn.IdentN, error) {
 	return &resolver{
 		store:    store,
 		headers:  headers,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
 		sfGroup:  &singleflight.Group{},
-	}
+	}, nil
 }
 
 func (r *resolver) Name() authtypes.IdentNProvider {

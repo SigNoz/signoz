@@ -22,6 +22,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger/configflagger"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
+	"github.com/SigNoz/signoz/pkg/identn"
+	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
+	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -268,6 +271,13 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	return factory.MustNewNamedMap(
 		opaquetokenizer.NewFactory(cache, tokenStore, orgGetter),
 		jwttokenizer.NewFactory(cache, tokenStore),
+	)
+}
+
+func NewIdentNProviderFactories(sqlstore sqlstore.SQLStore, tokenizer tokenizer.Tokenizer) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
+	return factory.MustNewNamedMap(
+		tokenizeridentn.NewFactory(tokenizer),
+		apikeyidentn.NewFactory(sqlstore),
 	)
 }
 

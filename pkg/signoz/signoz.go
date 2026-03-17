@@ -17,8 +17,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
-	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -395,9 +393,16 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	// Initialize identN resolver
-	tokenizeridentN := tokenizeridentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
-	apikeyIdentN := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
-	identNResolver := identn.NewIdentNResolver(providerSettings, tokenizeridentN, apikeyIdentN)
+	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer)
+	identNs := []identn.IdentN{}
+	for _, identNFactory := range identNFactories.GetInOrder() {
+		identN, err := identNFactory.New(ctx, providerSettings, config.IdentN)
+		if err != nil {
+			return nil, err
+		}
+		identNs = append(identNs, identN)
+	}
+	identNResolver := identn.NewIdentNResolver(providerSettings, identNs...)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
