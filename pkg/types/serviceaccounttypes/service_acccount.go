@@ -9,7 +9,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -102,10 +102,10 @@ func NewServiceAccountFromStorables(storableServiceAccount *StorableServiceAccou
 	}
 }
 
-func NewServiceAccountsFromRoles(storableServiceAccounts []*StorableServiceAccount, roles []*roletypes.Role, serviceAccountIDToRoleIDsMap map[string][]valuer.UUID) []*ServiceAccount {
+func NewServiceAccountsFromRoles(storableServiceAccounts []*StorableServiceAccount, roles []*authtypes.Role, serviceAccountIDToRoleIDsMap map[string][]valuer.UUID) []*ServiceAccount {
 	serviceAccounts := make([]*ServiceAccount, 0, len(storableServiceAccounts))
 
-	roleIDToRole := make(map[string]*roletypes.Role, len(roles))
+	roleIDToRole := make(map[string]*authtypes.Role, len(roles))
 	for _, role := range roles {
 		roleIDToRole[role.ID.String()] = role
 	}
