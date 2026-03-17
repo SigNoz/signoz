@@ -8,7 +8,6 @@ import (
 
 type whereNormalizer struct {
 	input string
-	output strings.Builder
 }
 
 func (n *whereNormalizer) hash() string {
@@ -21,30 +20,31 @@ func (n *whereNormalizer) normalize() string {
 	where := strings.TrimSpace(n.input)
 	where = n.stripOuterParentheses(where)
 
-	n.output.Grow(len(where))
+	var output strings.Builder
+	output.Grow(len(where))
 
 	for i := 0; i < len(where); i++ {
 		switch where[i] {
 		case ' ', '\t', '\n', '\r':
-			if n.output.Len() > 0 {
-				last := n.output.String()[n.output.Len()-1]
+			if output.Len() > 0 {
+				last := output.String()[output.Len()-1]
 				if last != ' ' {
-					n.output.WriteByte(' ')
+					output.WriteByte(' ')
 				}
 			}
 		case '\'':
-			end := n.consumeSingleQuotedLiteral(where, i)
+			end := n.consumeSingleQuotedLiteral(where, i, &output)
 			i = end
 		case '"':
 			token, end := n.consumeDoubleQuotedToken(where, i)
-			n.output.WriteString(token)
+			output.WriteString(token)
 			i = end
 		default:
-			n.output.WriteByte(where[i])
+			output.WriteByte(where[i])
 		}
 	}
 
-	return strings.TrimSpace(n.output.String())
+	return strings.TrimSpace(output.String())
 }
 
 func (n *whereNormalizer) stripOuterParentheses(s string) string {
@@ -101,14 +101,14 @@ func (n *whereNormalizer) hasWrappingParentheses(s string) bool {
 	return depth == 0
 }
 
-func (n *whereNormalizer) consumeSingleQuotedLiteral(s string, start int) int {
-	n.output.WriteByte(s[start])
+func (n *whereNormalizer) consumeSingleQuotedLiteral(s string, start int, output *strings.Builder) int {
+	output.WriteByte(s[start])
 	for i := start + 1; i < len(s); i++ {
-		n.output.WriteByte(s[i])
+		output.WriteByte(s[i])
 		if s[i] == '\'' {
 			if i+1 < len(s) && s[i+1] == '\'' {
 				i++
-				n.output.WriteByte(s[i])
+				output.WriteByte(s[i])
 				continue
 			}
 			return i
