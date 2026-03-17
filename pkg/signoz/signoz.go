@@ -395,9 +395,9 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	// Initialize identN resolver
-	tokenizerIdentn := tokenizeridentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
-	apikeyIdentn := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
-	identNResolver := identn.NewIdentNResolver(providerSettings, tokenizerIdentn, apikeyIdentn)
+	tokenizeridentN := tokenizeridentn.New(providerSettings, tokenizer, []string{"Authorization", "Sec-WebSocket-Protocol"})
+	apikeyIdentN := apikeyidentn.New(providerSettings, sqlstore, []string{"SIGNOZ-API-KEY"})
+	identNResolver := identn.NewIdentNResolver(providerSettings, tokenizeridentN, apikeyIdentN)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 

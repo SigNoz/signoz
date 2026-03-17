@@ -14,7 +14,7 @@ type IdentNResolver interface {
 }
 
 type IdentN interface {
-	// Test checks if this identn can handle the request.
+	// Test checks if this identN can handle the request.
 	// This should be a cheap check (e.g., header presence) with no I/O.
 	Test(r *http.Request) bool
 

@@ -23,7 +23,7 @@ func NewIdentNResolver(providerSettings factory.ProviderSettings, identNs ...Ide
 func (c *identNResolver) GetIdentN(r *http.Request) IdentN {
 	for _, idn := range c.identNs {
 		if idn.Test(r) {
-			c.settings.Logger().DebugContext(r.Context(), "identn matched", "provider", idn.Name())
+			c.settings.Logger().DebugContext(r.Context(), "identN matched", "provider", idn.Name())
 			return idn
 		}
 	}
