@@ -337,31 +337,6 @@
 
 .login-submit-btn {
 	width: 100%;
-	height: 32px;
-	padding: 10px 16px;
-	background: var(--primary);
-	border: none;
-	border-radius: 2px;
-	font-family: Inter, sans-serif;
-	font-size: 11px;
-	font-weight: 500;
-	line-height: 1;
-	color: var(--bg-neutral-dark-50);
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: 8px;
-
-	&:hover:not(:disabled) {
-		background: var(--primary);
-		opacity: 0.9;
-	}
-
-	&:disabled {
-		background: var(--primary);
-		opacity: 0.6;
-		cursor: not-allowed;
-	}
 }
 
 .lightMode {
