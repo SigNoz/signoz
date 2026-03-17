@@ -1,9 +1,22 @@
+import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
+import { toast } from '@signozhq/sonner';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import {
+	getListServiceAccountKeysQueryKey,
+	invalidateListServiceAccountKeys,
+	useRevokeServiceAccountKey,
+} from 'api/generated/services/serviceaccount';
+import type {
+	RenderErrorResponseDTO,
+	ServiceaccounttypesFactorAPIKeyDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
+import { parseAsString, useQueryState } from 'nuqs';
 
 export interface RevokeKeyContentProps {
-	keyName: string | null | undefined;
 	isRevoking: boolean;
 	onCancel: () => void;
 	onConfirm: () => void;
@@ -40,23 +53,61 @@ export function RevokeKeyContent({
 	);
 }
 
-interface RevokeKeyModalProps extends RevokeKeyContentProps {
-	open: boolean;
-}
+function RevokeKeyModal(): JSX.Element {
+	const queryClient = useQueryClient();
+	const [accountId] = useQueryState('account');
+	const [revokeKeyId, setRevokeKeyId] = useQueryState(
+		'revoke-key',
+		parseAsString.withDefault(''),
+	);
+	const open = !!revokeKeyId && !!accountId;
 
-function RevokeKeyModal({
-	open,
-	keyName,
-	isRevoking,
-	onCancel,
-	onConfirm,
-}: RevokeKeyModalProps): JSX.Element {
+	const cachedKeys = accountId
+		? queryClient.getQueryData<{ data: ServiceaccounttypesFactorAPIKeyDTO[] }>(
+				getListServiceAccountKeysQueryKey({ id: accountId }),
+		  )
+		: null;
+	const keyName = cachedKeys?.data?.find((k) => k.id === revokeKeyId)?.name;
+
+	const {
+		mutate: revokeKey,
+		isLoading: isRevoking,
+	} = useRevokeServiceAccountKey({
+		mutation: {
+			onSuccess: () => {
+				toast.success('Key revoked successfully', { richColors: true });
+				void setRevokeKeyId(null);
+				if (accountId) {
+					void invalidateListServiceAccountKeys(queryClient, { id: accountId });
+				}
+			},
+			onError: (error) => {
+				const errMessage =
+					convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'Failed to revoke key';
+				toast.error(errMessage, { richColors: true });
+			},
+		},
+	});
+
+	function handleConfirm(): void {
+		if (!revokeKeyId || !accountId) {
+			return;
+		}
+		revokeKey({ pathParams: { id: accountId, fid: revokeKeyId } });
+	}
+
+	function handleCancel(): void {
+		void setRevokeKeyId(null);
+	}
+
 	return (
 		<DialogWrapper
 			open={open}
 			onOpenChange={(isOpen): void => {
 				if (!isOpen) {
-					onCancel();
+					handleCancel();
 				}
 			}}
 			title={`Revoke ${keyName ?? 'key'}?`}
@@ -66,10 +117,9 @@ function RevokeKeyModal({
 			disableOutsideClick={false}
 		>
 			<RevokeKeyContent
-				keyName={keyName}
 				isRevoking={isRevoking}
-				onCancel={onCancel}
-				onConfirm={onConfirm}
+				onCancel={handleCancel}
+				onConfirm={handleConfirm}
 			/>
 		</DialogWrapper>
 	);

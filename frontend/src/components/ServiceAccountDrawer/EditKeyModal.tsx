@@ -99,6 +99,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			},
 		},
 	});
+
 	const {
 		mutate: revokeKey,
 		isLoading: isRevoking,
@@ -176,7 +177,6 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 		>
 			{isRevokeConfirmOpen ? (
 				<RevokeKeyContent
-					keyName={keyItem?.name}
 					isRevoking={isRevoking}
 					onCancel={(): void => setIsRevokeConfirmOpen(false)}
 					onConfirm={handleRevoke}

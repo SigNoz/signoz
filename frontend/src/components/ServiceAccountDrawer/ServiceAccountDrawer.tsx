@@ -114,11 +114,7 @@ function ServiceAccountDrawer({
 		refetch: refetchRoles,
 	} = useRoles();
 
-	const {
-		data: keysData,
-		isLoading: keysLoading,
-		refetch: refetchKeys,
-	} = useListServiceAccountKeys(
+	const { data: keysData, isLoading: keysLoading } = useListServiceAccountKeys(
 		{ id: selectedAccountId ?? '' },
 		{ query: { enabled: !!selectedAccountId } },
 	);
@@ -265,13 +261,11 @@ function ServiceAccountDrawer({
 						)}
 						{activeTab === ServiceAccountDrawerTab.Keys && (
 							<KeysTab
-								accountId={selectedAccountId ?? ''}
 								keys={keys}
 								isLoading={keysLoading}
 								isDisabled={isDisabled}
 								currentPage={keysPage}
 								pageSize={PAGE_SIZE}
-								onRefetch={refetchKeys}
 							/>
 						)}
 					</>

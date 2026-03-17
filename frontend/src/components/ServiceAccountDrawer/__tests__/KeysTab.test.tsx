@@ -34,13 +34,11 @@ const keys: ServiceaccounttypesFactorAPIKeyDTO[] = [
 ];
 
 const defaultProps = {
-	accountId: 'sa-1',
 	keys,
 	isLoading: false,
 	isDisabled: false,
 	currentPage: 1,
 	pageSize: 10,
-	onRefetch: jest.fn(),
 };
 
 function renderKeysTab(
@@ -130,24 +128,34 @@ describe('KeysTab', () => {
 		);
 	});
 
-	it('clicking revoke icon opens confirmation dialog', async () => {
+	it('clicking revoke icon sets revoke-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		renderKeysTab();
+		const onUrlUpdate = jest.fn();
+
+		render(
+			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+				<KeysTab {...defaultProps} />
+			</NuqsTestingAdapter>,
+		);
 
 		const revokeBtns = screen
 			.getAllByRole('button')
 			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
 		await user.click(revokeBtns[0]);
 
-		await screen.findByRole('dialog', { name: /Revoke Production Key/i });
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('revoke-key=key-1'),
+			}),
+		);
 	});
 
-	it('handles successful key revocation', async () => {
+	it('handles successful key revocation via RevokeKeyModal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onRefetch = jest.fn();
 
-		renderKeysTab({ onRefetch });
+		renderKeysTab();
 
+		// Seed the keys cache so RevokeKeyModal can read the key name
 		const revokeBtns = screen
 			.getAllByRole('button')
 			.filter((btn) => btn.className.includes('keys-tab__revoke-btn'));
@@ -161,7 +169,6 @@ describe('KeysTab', () => {
 				'Key revoked successfully',
 				expect.anything(),
 			);
-			expect(onRefetch).toHaveBeenCalled();
 		});
 	});
 
