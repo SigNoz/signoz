@@ -51,7 +51,7 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 
 func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
 	// get the user by reset password token
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
+	storableUser, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
@@ -63,20 +63,22 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 	}
 
 	// query the user again
-	user, err = m.store.GetByOrgIDAndID(ctx, user.OrgID, user.ID)
+	storableUser, err = m.store.GetByOrgIDAndID(ctx, valuer.MustNewUUID(storableUser.OrgID), storableUser.ID)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return types.NewUserFromStorable(storableUser), nil
 }
 
 func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
 	// get the user
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
+	storableUser, err := m.store.GetUserByResetPasswordToken(ctx, token)
 	if err != nil {
 		return nil, err
 	}
+
+	user := types.NewUserFromStorable(storableUser)
 
 	// create a dummy invite obj for backward compatibility
 	invite := &types.Invite{
@@ -109,10 +111,11 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	for idx, invite := range bulkInvites.Invites {
 		emails[idx] = invite.Email.StringValue()
 	}
-	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	storableUsers, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
 	}
+	users := types.NewUsersFromStorables(storableUsers)
 
 	if len(users) > 0 {
 		if err := users[0].ErrIfRoot(); err != nil {
@@ -220,12 +223,13 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
 	// find all the users with pending_invite status
-	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
+	storableUsers, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
 	if err != nil {
 		return nil, err
 	}
 
-	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
+	pendingStorableUsers := slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.Status != types.UserStatusPendingInvite })
+	pendingUsers := types.NewUsersFromStorables(pendingStorableUsers)
 
 	var invites []*types.Invite
 
@@ -268,7 +272,7 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 	}
 
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, input); err != nil {
+		if err := module.store.CreateUser(ctx, types.NewStorableUser(input)); err != nil {
 			return err
 		}
 
@@ -291,10 +295,12 @@ func (module *Module) CreateUser(ctx context.Context, input *types.User, opts ..
 }
 
 func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error) {
-	existingUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
+	existingStorableUser, err := m.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
 	}
+
+	existingUser := types.NewUserFromStorable(existingStorableUser)
 
 	if err := existingUser.ErrIfRoot(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot update root user")
@@ -350,7 +356,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 }
 
 func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
-	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+	storableUser := types.NewStorableUser(user)
+	if err := module.store.UpdateUser(ctx, orgID, storableUser); err != nil {
 		return err
 	}
 
@@ -366,10 +373,12 @@ func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 }
 
 func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
+	storableUser, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
+
+	user := types.NewUserFromStorable(storableUser)
 
 	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete root user")
@@ -412,10 +421,12 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 }
 
 func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
-	user, err := module.store.GetUser(ctx, userID)
+	storableUser, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
+
+	user := types.NewUserFromStorable(storableUser)
 
 	if err := user.ErrIfRoot(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
@@ -541,10 +552,12 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
+	storableUser, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
 	if err != nil {
 		return err
 	}
+
+	user := types.NewUserFromStorable(storableUser)
 
 	// handle deleted user
 	if err := user.ErrIfDeleted(); err != nil {
@@ -576,7 +589,7 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
 				return err
 			}
-			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
+			if err := module.store.UpdateUser(ctx, user.OrgID, types.NewStorableUser(user)); err != nil {
 				return err
 			}
 		}
@@ -594,10 +607,12 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 }
 
 func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
-	user, err := module.store.GetUser(ctx, userID)
+	storableUser, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return err
 	}
+
+	user := types.NewUserFromStorable(storableUser)
 
 	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot change password for deleted user")
@@ -750,10 +765,12 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
 func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	existingStorableUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
+
+	existingUsers := types.NewUsersFromStorables(existingStorableUsers)
 
 	// filter out the deleted users
 	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
@@ -773,7 +790,7 @@ func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 func (module *Module) createUserWithoutGrant(ctx context.Context, input *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, input); err != nil {
+		if err := module.store.CreateUser(ctx, types.NewStorableUser(input)); err != nil {
 			return err
 		}
 
@@ -809,7 +826,7 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 	if err := user.UpdateStatus(types.UserStatusActive); err != nil {
 		return err
 	}
-	err = module.store.UpdateUser(ctx, user.OrgID, user)
+	err = module.store.UpdateUser(ctx, user.OrgID, types.NewStorableUser(user))
 	if err != nil {
 		return err
 	}

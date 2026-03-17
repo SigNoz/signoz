@@ -443,11 +443,11 @@ func TestConstructFunnelResponse(t *testing.T) {
 				},
 				Name:  "test-funnel",
 				OrgID: orgID,
-				CreatedByUser: &types.User{
+				CreatedByUser: &types.StorableUser{
 					Identifiable: types.Identifiable{
 						ID: userID,
 					},
-					Email: valuer.MustNewEmail("funnel@example.com"),
+					Email: "funnel@example.com",
 				},
 				Steps: []*FunnelStep{
 					{

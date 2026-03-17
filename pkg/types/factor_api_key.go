@@ -39,15 +39,15 @@ type OrgUserAPIKey struct {
 }
 
 type UserWithAPIKey struct {
-	*User   `bun:",extend"`
-	APIKeys []*StorableAPIKeyUser `bun:"rel:has-many,join:id=user_id"`
+	*StorableUser `bun:",extend"`
+	APIKeys       []*StorableAPIKeyUser `bun:"rel:has-many,join:id=user_id"`
 }
 
 type StorableAPIKeyUser struct {
 	StorableAPIKey `bun:",extend"`
 
-	CreatedByUser *User `json:"createdByUser" bun:"created_by_user,rel:belongs-to,join:created_by=id"`
-	UpdatedByUser *User `json:"updatedByUser" bun:"updated_by_user,rel:belongs-to,join:updated_by=id"`
+	CreatedByUser *StorableUser `json:"createdByUser" bun:"created_by_user,rel:belongs-to,join:created_by=id"`
+	UpdatedByUser *StorableUser `json:"updatedByUser" bun:"updated_by_user,rel:belongs-to,join:updated_by=id"`
 }
 
 type StorableAPIKey struct {
@@ -138,7 +138,7 @@ func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *Ge
 		LastUsed:      lastUsed,
 		Revoked:       storableAPIKey.Revoked,
 		UserID:        storableAPIKey.UserID.String(),
-		CreatedByUser: storableAPIKey.CreatedByUser,
-		UpdatedByUser: storableAPIKey.UpdatedByUser,
+		CreatedByUser: NewUserFromStorable(storableAPIKey.CreatedByUser),
+		UpdatedByUser: NewUserFromStorable(storableAPIKey.UpdatedByUser),
 	}
 }

@@ -34,7 +34,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 }
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
-	user := new(types.User)
+	user := new(types.StorableUser)
 
 	err := store.
 		sqlstore.
@@ -47,7 +47,7 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	return authtypes.NewIdentity(userID, user.OrgID, user.Email, types.Role(user.Role), authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewIdentity(userID, valuer.MustNewUUID(user.OrgID), valuer.MustNewEmail(user.Email), types.Role(user.Role), authtypes.IdentNProviderTokenizer), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {

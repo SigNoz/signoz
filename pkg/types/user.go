@@ -33,16 +33,26 @@ var (
 	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
 )
 
-type GettableUser = User
-
 type User struct {
+	Identifiable
+	DisplayName string        `json:"displayName"`
+	Email       valuer.Email  `json:"email"`
+	Role        Role          `json:"role"` // this will be moved to roles
+	OrgID       valuer.UUID   `json:"orgId"`
+	IsRoot      bool          `json:"isRoot"`
+	Status      valuer.String `json:"status"`
+	DeletedAt   time.Time     `json:"-"`
+	TimeAuditable
+}
+
+type StorableUser struct {
 	bun.BaseModel `bun:"table:users"`
 
 	Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
-	Email       valuer.Email  `bun:"email" json:"email"`
-	Role        Role          `bun:"role" json:"role"`
-	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
+	Email       string        `bun:"email" json:"email"`
+	Role        Role          `bun:"role" json:"role"` // this will be removed as column from here
+	OrgID       string        `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
 	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
@@ -55,6 +65,60 @@ type PostableRegisterOrgAndAdmin struct {
 	Password       string       `json:"password"`
 	OrgDisplayName string       `json:"orgDisplayName"`
 	OrgName        string       `json:"orgName"`
+}
+
+type UpdatableUser struct {
+	DisplayName string `json:"displayName" required:"true"`
+	Role        string `json:"role" required:"true" nullable:"false"`
+}
+
+func NewStorableUser(user *User) *StorableUser {
+	if user == nil {
+		return nil
+	}
+
+	return &StorableUser{
+		Identifiable:  user.Identifiable,
+		DisplayName:   user.DisplayName,
+		Email:         user.Email.String(),
+		Role:          user.Role,
+		OrgID:         user.OrgID.String(),
+		IsRoot:        user.IsRoot,
+		Status:        user.Status,
+		TimeAuditable: user.TimeAuditable,
+	}
+}
+
+func NewUserFromStorable(storableUser *StorableUser) *User {
+	if storableUser == nil {
+		return nil
+	}
+	return &User{
+		Identifiable:  storableUser.Identifiable,
+		DisplayName:   storableUser.DisplayName,
+		Email:         valuer.MustNewEmail(storableUser.Email),
+		Role:          storableUser.Role,
+		OrgID:         valuer.MustNewUUID(storableUser.OrgID),
+		IsRoot:        storableUser.IsRoot,
+		Status:        storableUser.Status,
+		TimeAuditable: storableUser.TimeAuditable,
+	}
+}
+
+func NewUsersFromStorables(storableUsers []*StorableUser) []*User {
+	users := make([]*User, len(storableUsers))
+	for i, s := range storableUsers {
+		users[i] = NewUserFromStorable(s)
+	}
+	return users
+}
+
+func NewStorableUsers(users []*User) []*StorableUser {
+	storableUsers := make([]*StorableUser, len(users))
+	for i, u := range users {
+		storableUsers[i] = NewStorableUser(u)
+	}
+	return storableUsers
 }
 
 func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
@@ -215,33 +279,33 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 
 type UserStore interface {
 	// Creates a user.
-	CreateUser(ctx context.Context, user *User) error
+	CreateUser(ctx context.Context, user *StorableUser) error
 
 	// Get user by id.
-	GetUser(context.Context, valuer.UUID) (*User, error)
+	GetUser(context.Context, valuer.UUID) (*StorableUser, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*StorableUser, error)
 
 	// Get user by email and orgID.
-	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*User, error)
+	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// Get users by email.
-	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
+	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*StorableUser, error)
 
 	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by org.
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
+	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*StorableUser, error)
 
 	// Get users for an org id using emails and statuses
-	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*StorableUser, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, user *StorableUser) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
@@ -267,10 +331,10 @@ type UserStore interface {
 	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
-	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
+	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*StorableUser, error)
 
 	// Get user by reset password token
-	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*StorableUser, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

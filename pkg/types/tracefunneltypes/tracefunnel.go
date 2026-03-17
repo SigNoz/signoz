@@ -18,12 +18,12 @@ type StorableFunnel struct {
 	types.TimeAuditable
 	types.UserAuditable
 	bun.BaseModel `bun:"table:trace_funnel"`
-	Name          string        `json:"funnel_name" bun:"name,type:text,notnull"`
-	Description   string        `json:"description" bun:"description,type:text"`
-	OrgID         valuer.UUID   `json:"org_id" bun:"org_id,type:varchar,notnull"`
-	Steps         []*FunnelStep `json:"steps" bun:"steps,type:text,notnull"`
-	Tags          string        `json:"tags" bun:"tags,type:text"`
-	CreatedByUser *types.User   `json:"user" bun:"rel:belongs-to,join:created_by=id"`
+	Name          string              `json:"funnel_name" bun:"name,type:text,notnull"`
+	Description   string              `json:"description" bun:"description,type:text"`
+	OrgID         valuer.UUID         `json:"org_id" bun:"org_id,type:varchar,notnull"`
+	Steps         []*FunnelStep       `json:"steps" bun:"steps,type:text,notnull"`
+	Tags          string              `json:"tags" bun:"tags,type:text"`
+	CreatedByUser *types.StorableUser `json:"user" bun:"rel:belongs-to,join:created_by=id"`
 }
 
 type FunnelStep struct {

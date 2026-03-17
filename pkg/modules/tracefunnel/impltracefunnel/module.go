@@ -30,7 +30,7 @@ func (module *module) Create(ctx context.Context, timestamp int64, name string, 
 	funnel.CreatedBy = userID.String()
 
 	// Set up the user relationship
-	funnel.CreatedByUser = &types.User{
+	funnel.CreatedByUser = &types.StorableUser{
 		Identifiable: types.Identifiable{
 			ID: userID,
 		},

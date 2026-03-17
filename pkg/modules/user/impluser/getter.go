@@ -21,11 +21,15 @@ func NewGetter(store types.UserStore, flagger flagger.Flagger) user.Getter {
 }
 
 func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
-	return module.store.GetRootUserByOrgID(ctx, orgID)
+	storableUser, err := module.store.GetRootUserByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+	return types.NewUserFromStorable(storableUser), nil
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
-	users, err := module.store.ListUsersByOrgID(ctx, orgID)
+	storableUsers, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -35,46 +39,46 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
 
 	if hideRootUsers {
-		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
+		storableUsers = slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.IsRoot })
 	}
 
-	return users, nil
+	return types.NewUsersFromStorables(storableUsers), nil
 }
 
 func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
-	users, err := module.store.GetUsersByEmail(ctx, email)
+	storableUsers, err := module.store.GetUsersByEmail(ctx, email)
 	if err != nil {
 		return nil, err
 	}
 
-	return users, nil
+	return types.NewUsersFromStorables(storableUsers), nil
 }
 
 func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.User, error) {
-	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
+	storableUser, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return types.NewUserFromStorable(storableUser), nil
 }
 
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.User, error) {
-	user, err := module.store.GetUser(ctx, id)
+	storableUser, err := module.store.GetUser(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return user, nil
+	return types.NewUserFromStorable(storableUser), nil
 }
 
 func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
-	users, err := module.store.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
+	storableUsers, err := module.store.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	return users, nil
+	return types.NewUsersFromStorables(storableUsers), nil
 }
 
 func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {

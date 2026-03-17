@@ -17,8 +17,8 @@ func NewStore(sqlstore sqlstore.SQLStore) authtypes.AuthNStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error) {
-	user := new(types.User)
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.StorableUser, *types.FactorPassword, error) {
+	user := new(types.StorableUser)
 	factorPassword := new(types.FactorPassword)
 
 	err := store.
