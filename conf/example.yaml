@@ -308,6 +308,9 @@ user:
       allow_self: true
       # The duration within which a user can reset their password.
       max_token_lifetime: 6h
+    invite:
+      # The duration within which a user can accept their invite.
+      max_token_lifetime: 48h
   root:
     # Whether to enable the root user. When enabled, a root user is provisioned
     # on startup using the email and password below. The root user cannot be
@@ -321,3 +324,19 @@ user:
     org:
       name: default
       id: 00000000-0000-0000-0000-000000000000
+
+##################### IdentN #####################
+identn:
+  tokenizer:
+    # toggle the identN resolver
+    enabled: true
+    # headers to use for tokenizer identN resolver
+    headers:
+      - Authorization
+      - Sec-WebSocket-Protocol
+  apikey:
+    # toggle the identN resolver
+    enabled: true
+    # headers to use for apikey identN resolver
+    headers:
+      - SIGNOZ-API-KEY

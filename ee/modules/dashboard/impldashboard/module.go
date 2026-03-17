@@ -19,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -224,7 +223,7 @@ func (module *module) MustGetTypeables() []authtypes.Typeable {
 
 func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
 	return map[string][]*authtypes.Transaction{
-		roletypes.SigNozAnonymousRoleName: {
+		authtypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
 				Relation: authtypes.RelationRead,

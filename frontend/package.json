@@ -11,6 +11,7 @@
     "prettify": "prettier --write .",
     "fmt": "prettier --check .",
     "lint": "eslint ./src",
+    "lint:generated": "eslint ./src/api/generated --fix",
     "lint:fix": "eslint ./src --fix",
     "jest": "jest",
     "jest:coverage": "jest --coverage",

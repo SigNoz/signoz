@@ -13,28 +13,34 @@ import (
 	"golang.org/x/sync/singleflight"
 )
 
-type resolver struct {
+type provider struct {
 	tokenizer tokenizer.Tokenizer
-	headers   []string
+	config    identn.Config
 	settings  factory.ScopedProviderSettings
 	sfGroup   *singleflight.Group
 }
 
-func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) identn.IdentN {
-	return &resolver{
-		tokenizer: tokenizer,
-		headers:   headers,
-		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"),
-		sfGroup:   &singleflight.Group{},
-	}
+func NewFactory(tokenizer tokenizer.Tokenizer) factory.ProviderFactory[identn.IdentN, identn.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderTokenizer.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
+		return New(providerSettings, tokenizer, config)
+	})
 }
 
-func (r *resolver) Name() authtypes.IdentNProvider {
+func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, config identn.Config) (identn.IdentN, error) {
+	return &provider{
+		tokenizer: tokenizer,
+		config:    config,
+		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"),
+		sfGroup:   &singleflight.Group{},
+	}, nil
+}
+
+func (provider *provider) Name() authtypes.IdentNProvider {
 	return authtypes.IdentNProviderTokenizer
 }
 
-func (r *resolver) Test(req *http.Request) bool {
-	for _, header := range r.headers {
+func (provider *provider) Test(req *http.Request) bool {
+	for _, header := range provider.config.Tokenizer.Headers {
 		if req.Header.Get(header) != "" {
 			return true
 		}
@@ -42,8 +48,12 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
-func (r *resolver) Pre(req *http.Request) *http.Request {
-	accessToken := r.extractToken(req)
+func (provider *provider) Enabled() bool {
+	return provider.config.Tokenizer.Enabled
+}
+
+func (provider *provider) Pre(req *http.Request) *http.Request {
+	accessToken := provider.extractToken(req)
 	if accessToken == "" {
 		return req
 	}
@@ -52,7 +62,7 @@ func (r *resolver) Pre(req *http.Request) *http.Request {
 	return req.WithContext(ctx)
 }
 
-func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
+func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
 
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
@@ -60,41 +70,45 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 		return nil, err
 	}
 
-	return r.tokenizer.GetIdentity(ctx, accessToken)
+	return provider.tokenizer.GetIdentity(ctx, accessToken)
 }
 
-func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+	if !provider.config.Tokenizer.Enabled {
+		return
+	}
+
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
 		return
 	}
 
-	_, _, _ = r.sfGroup.Do(accessToken, func() (any, error) {
-		if err := r.tokenizer.SetLastObservedAt(ctx, accessToken, time.Now()); err != nil {
-			r.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
+	_, _, _ = provider.sfGroup.Do(accessToken, func() (any, error) {
+		if err := provider.tokenizer.SetLastObservedAt(ctx, accessToken, time.Now()); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
 			return false, err
 		}
 		return true, nil
 	})
 }
 
-func (r *resolver) extractToken(req *http.Request) string {
+func (provider *provider) extractToken(req *http.Request) string {
 	var value string
-	for _, header := range r.headers {
+	for _, header := range provider.config.Tokenizer.Headers {
 		if v := req.Header.Get(header); v != "" {
 			value = v
 			break
 		}
 	}
 
-	accessToken, ok := r.parseBearerAuth(value)
+	accessToken, ok := provider.parseBearerAuth(value)
 	if !ok {
 		return value
 	}
 	return accessToken
 }
 
-func (r *resolver) parseBearerAuth(auth string) (string, bool) {
+func (provider *provider) parseBearerAuth(auth string) (string, bool) {
 	const prefix = "Bearer "
 	if len(auth) < len(prefix) || !strings.EqualFold(auth[:len(prefix)], prefix) {
 		return "", false

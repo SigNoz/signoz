@@ -17,28 +17,34 @@ import (
 // todo: will move this in types layer with service account integration
 type apiKeyTokenKey struct{}
 
-type resolver struct {
+type provider struct {
 	store    sqlstore.SQLStore
-	headers  []string
+	config   identn.Config
 	settings factory.ScopedProviderSettings
 	sfGroup  *singleflight.Group
 }
 
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) identn.IdentN {
-	return &resolver{
-		store:    store,
-		headers:  headers,
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
-		sfGroup:  &singleflight.Group{},
-	}
+func NewFactory(store sqlstore.SQLStore) factory.ProviderFactory[identn.IdentN, identn.Config] {
+	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIkey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
+		return New(providerSettings, store, config)
+	})
 }
 
-func (r *resolver) Name() authtypes.IdentNProvider {
+func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, config identn.Config) (identn.IdentN, error) {
+	return &provider{
+		store:    store,
+		config:   config,
+		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
+		sfGroup:  &singleflight.Group{},
+	}, nil
+}
+
+func (provider *provider) Name() authtypes.IdentNProvider {
 	return authtypes.IdentNProviderAPIkey
 }
 
-func (r *resolver) Test(req *http.Request) bool {
-	for _, header := range r.headers {
+func (provider *provider) Test(req *http.Request) bool {
+	for _, header := range provider.config.APIKeyConfig.Headers {
 		if req.Header.Get(header) != "" {
 			return true
 		}
@@ -46,8 +52,12 @@ func (r *resolver) Test(req *http.Request) bool {
 	return false
 }
 
-func (r *resolver) Pre(req *http.Request) *http.Request {
-	token := r.extractToken(req)
+func (provider *provider) Enabled() bool {
+	return provider.config.APIKeyConfig.Enabled
+}
+
+func (provider *provider) Pre(req *http.Request) *http.Request {
+	token := provider.extractToken(req)
 	if token == "" {
 		return req
 	}
@@ -56,16 +66,16 @@ func (r *resolver) Pre(req *http.Request) *http.Request {
 	return req.WithContext(ctx)
 }
 
-func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
+func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
-
 	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
 	if !ok || apiKeyToken == "" {
 		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key")
 	}
 
 	var apiKey types.StorableAPIKey
-	err := r.store.
+	err := provider.
+		store.
 		BunDB().
 		NewSelect().
 		Model(&apiKey).
@@ -80,7 +90,8 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	}
 
 	var user types.User
-	err = r.store.
+	err = provider.
+		store.
 		BunDB().
 		NewSelect().
 		Model(&user).
@@ -99,14 +110,15 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	return &identity, nil
 }
 
-func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
 	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
 	if !ok || apiKeyToken == "" {
 		return
 	}
 
-	_, _, _ = r.sfGroup.Do(apiKeyToken, func() (any, error) {
-		_, err := r.store.
+	_, _, _ = provider.sfGroup.Do(apiKeyToken, func() (any, error) {
+		_, err := provider.
+			store.
 			BunDB().
 			NewUpdate().
 			Model(new(types.StorableAPIKey)).
@@ -115,14 +127,14 @@ func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims
 			Where("revoked = false").
 			Exec(ctx)
 		if err != nil {
-			r.settings.Logger().ErrorContext(ctx, "failed to update last used of api key", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to update last used of api key", "error", err)
 		}
 		return true, nil
 	})
 }
 
-func (r *resolver) extractToken(req *http.Request) string {
-	for _, header := range r.headers {
+func (provider *provider) extractToken(req *http.Request) string {
+	for _, header := range provider.config.APIKeyConfig.Headers {
 		if v := req.Header.Get(header); v != "" {
 			return v
 		}
