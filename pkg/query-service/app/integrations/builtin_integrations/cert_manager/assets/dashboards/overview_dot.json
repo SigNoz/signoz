@@ -72,7 +72,7 @@
       "multiSelect": true,
       "name": "namespace",
       "order": 0,
-      "queryValue": "SELECT JSONExtractString(labels, 'namespace') AS namespace FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' GROUP BY namespace",
+      "queryValue": "SELECT JSONExtractString(labels, 'namespace') AS namespace FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager.certificate.expiration.timestamp.seconds' GROUP BY namespace",
       "selectedValue": [],
       "showALLOption": true,
       "sort": "ASC",
@@ -89,7 +89,7 @@
       "multiSelect": true,
       "name": "issuer_name",
       "order": 1,
-      "queryValue": "SELECT JSONExtractString(labels, 'issuer_name') AS issuer_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} GROUP BY issuer_name",
+      "queryValue": "SELECT JSONExtractString(labels, 'issuer_name') AS issuer_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager.certificate.expiration.timestamp.seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} GROUP BY issuer_name",
       "selectedValue": [],
       "showALLOption": true,
       "sort": "ASC",
@@ -106,7 +106,7 @@
       "multiSelect": true,
       "name": "certificate_name",
       "order": 2,
-      "queryValue": "SELECT JSONExtractString(labels, 'name') AS certificate_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager_certificate_expiration_timestamp_seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} AND JSONExtractString(labels, 'issuer_name') IN {{.issuer_name}} GROUP BY certificate_name",
+      "queryValue": "SELECT JSONExtractString(labels, 'name') AS certificate_name FROM signoz_metrics.distributed_time_series_v4_1day WHERE metric_name = 'certmanager.certificate.expiration.timestamp.seconds' AND JSONExtractString(labels, 'namespace') IN {{.namespace}} AND JSONExtractString(labels, 'issuer_name') IN {{.issuer_name}} GROUP BY certificate_name",
       "selectedValue": [],
       "showALLOption": true,
       "sort": "ASC",
@@ -130,7 +130,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_certificate_expiration_timestamp_seconds",
+                  "metricName": "certmanager.certificate.expiration.timestamp.seconds",
                   "reduceTo": "avg",
                   "spaceAggregation": "count",
                   "temporality": null,
@@ -206,7 +206,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_certificate_ready_status",
+                  "metricName": "certmanager.certificate.ready.status",
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
                   "temporality": null,
@@ -282,7 +282,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_issuer_ready_status",
+                  "metricName": "certmanager.issuer.ready.status",
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
                   "temporality": null,
@@ -358,7 +358,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_clusterissuer_ready_status",
+                  "metricName": "certmanager.clusterissuer.ready.status",
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
                   "temporality": null,
@@ -434,7 +434,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_certificate_challenge_status",
+                  "metricName": "certmanager.certificate.challenge.status",
                   "reduceTo": "avg",
                   "spaceAggregation": "sum",
                   "temporality": null,
@@ -510,7 +510,7 @@
             {
               "aggregations": [
                 {
-                  "metricName": "certmanager_http_acme_client_request_count",
+                  "metricName": "certmanager.http.acme.client.request.count",
                   "reduceTo": "sum",
                   "spaceAggregation": "sum",
                   "temporality": null,
