@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { DialogWrapper } from '@signozhq/dialog';
@@ -19,6 +20,7 @@ import type {
 import { AxiosError } from 'axios';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import { parseAsString, useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
 import { popupContainer } from 'utils/selectPopupContainer';
 
@@ -27,108 +29,115 @@ import { disabledDate, formatLastObservedAt } from './utils';
 
 import './EditKeyModal.styles.scss';
 
+type ExpiryMode = 'none' | 'date';
+
+interface FormValues {
+	name: string;
+	expiryMode: ExpiryMode;
+	expiresAt: Dayjs | null;
+}
+
 interface EditKeyModalProps {
-	open: boolean;
-	accountId: string;
 	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null;
-	onClose: () => void;
 	onSuccess: () => void;
 }
 
-type ExpiryMode = 'none' | 'date';
+function EditKeyModal({ keyItem, onSuccess }: EditKeyModalProps): JSX.Element {
+	const [selectedAccountId] = useQueryState('account');
+	const [editKeyId, setEditKeyId] = useQueryState(
+		'edit-key',
+		parseAsString.withDefault(''),
+	);
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
-function EditKeyModal({
-	open,
-	accountId,
-	keyItem,
-	onClose,
-	onSuccess,
-}: EditKeyModalProps): JSX.Element {
+	const open = !!editKeyId && !!selectedAccountId;
+
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
-	const [localName, setLocalName] = useState('');
-	const [expiryMode, setExpiryMode] = useState<ExpiryMode>('none');
-	const [localDate, setLocalDate] = useState<Dayjs | null>(null);
 	const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] = useState(false);
+
+	const {
+		register,
+		control,
+		reset,
+		watch,
+		formState: { isDirty },
+		handleSubmit,
+	} = useForm<FormValues>({
+		defaultValues: { name: '', expiryMode: 'none', expiresAt: null },
+	});
 
 	useEffect(() => {
 		if (keyItem) {
-			setLocalName(keyItem.name ?? '');
-			if (keyItem.expiresAt === 0) {
-				setExpiryMode('none');
-				setLocalDate(null);
-			} else {
-				setExpiryMode('date');
-				setLocalDate(dayjs.unix(keyItem.expiresAt));
-			}
+			reset({
+				name: keyItem.name ?? '',
+				expiryMode: keyItem.expiresAt === 0 ? 'none' : 'date',
+				expiresAt: keyItem.expiresAt === 0 ? null : dayjs.unix(keyItem.expiresAt),
+			});
 		}
-	}, [keyItem]);
+	}, [keyItem?.id, reset]); // eslint-disable-line react-hooks/exhaustive-deps
 
-	const originalExpiresAt = keyItem?.expiresAt ?? 0;
-	const currentExpiresAt =
-		expiryMode === 'none' || !localDate ? 0 : localDate.endOf('day').unix();
-	const isDirty =
-		keyItem !== null &&
-		(localName !== (keyItem.name ?? '') ||
-			currentExpiresAt !== originalExpiresAt);
+	const expiryMode = watch('expiryMode');
 
-	const {
-		mutate: updateKey,
-		isLoading: isSaving,
-	} = useUpdateServiceAccountKey();
+	const { mutate: updateKey, isLoading: isSaving } = useUpdateServiceAccountKey({
+		mutation: {
+			onSuccess: () => {
+				toast.success('Key updated successfully', { richColors: true });
+				onSuccess();
+				void setEditKeyId(null);
+			},
+			onError: (error) => {
+				const errMessage =
+					convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'Failed to update key';
+				toast.error(errMessage, { richColors: true });
+			},
+		},
+	});
 	const {
 		mutate: revokeKey,
 		isLoading: isRevoking,
-	} = useRevokeServiceAccountKey();
+	} = useRevokeServiceAccountKey({
+		mutation: {
+			onSuccess: () => {
+				toast.success('Key revoked successfully', { richColors: true });
+				setIsRevokeConfirmOpen(false);
+				onSuccess();
+				void setEditKeyId(null);
+			},
+			onError: (error) => {
+				const errMessage =
+					convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'Failed to revoke key';
+				toast.error(errMessage, { richColors: true });
+			},
+		},
+	});
 
-	function handleSave(): void {
-		if (!keyItem || !isDirty) {
-			return;
-		}
-		updateKey(
-			{
-				pathParams: { id: accountId, fid: keyItem.id },
-				data: { name: localName, expiresAt: currentExpiresAt },
-			},
-			{
-				onSuccess: () => {
-					toast.success('Key updated successfully', { richColors: true });
-					onSuccess();
-				},
-				onError: (error) => {
-					const errMessage =
-						convertToApiError(
-							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-						)?.getErrorMessage() || 'Failed to update key';
-					toast.error(errMessage, { richColors: true });
-				},
-			},
-		);
+	function handleClose(): void {
+		void setEditKeyId(null);
+		setIsRevokeConfirmOpen(false);
 	}
 
+	const onSubmit = handleSubmit(
+		({ name, expiryMode: mode, expiresAt }): void => {
+			if (!keyItem || !selectedAccountId) {
+				return;
+			}
+			const currentExpiresAt =
+				mode === 'none' || !expiresAt ? 0 : expiresAt.endOf('day').unix();
+			updateKey({
+				pathParams: { id: selectedAccountId, fid: keyItem.id },
+				data: { name, expiresAt: currentExpiresAt },
+			});
+		},
+	);
+
 	function handleRevoke(): void {
-		if (!keyItem) {
+		if (!keyItem || !selectedAccountId) {
 			return;
 		}
-		revokeKey(
-			{
-				pathParams: { id: accountId, fid: keyItem.id },
-			},
-			{
-				onSuccess: () => {
-					toast.success('Key revoked successfully', { richColors: true });
-					setIsRevokeConfirmOpen(false);
-					onSuccess();
-				},
-				onError: (error) => {
-					const errMessage =
-						convertToApiError(
-							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-						)?.getErrorMessage() || 'Failed to revoke key';
-					toast.error(errMessage, { richColors: true });
-				},
-			},
-		);
+		revokeKey({ pathParams: { id: selectedAccountId, fid: keyItem.id } });
 	}
 
 	return (
@@ -139,7 +148,7 @@ function EditKeyModal({
 					if (isRevokeConfirmOpen) {
 						setIsRevokeConfirmOpen(false);
 					} else {
-						onClose();
+						handleClose();
 					}
 				}
 			}}
@@ -171,10 +180,9 @@ function EditKeyModal({
 							</label>
 							<Input
 								id="edit-key-name"
-								value={localName}
-								onChange={(e): void => setLocalName(e.target.value)}
 								className="edit-key-modal__input"
 								placeholder="Enter key name"
+								{...register('name')}
 							/>
 						</div>
 
@@ -190,32 +198,35 @@ function EditKeyModal({
 
 						<div className="edit-key-modal__field">
 							<span className="edit-key-modal__label">Expiration</span>
-							<ToggleGroup
-								type="single"
-								value={expiryMode}
-								onValueChange={(val): void => {
-									if (val) {
-										setExpiryMode(val as ExpiryMode);
-										if (val === 'none') {
-											setLocalDate(null);
-										}
-									}
-								}}
-								className="edit-key-modal__expiry-toggle"
-							>
-								<ToggleGroupItem
-									value="none"
-									className="edit-key-modal__expiry-toggle-btn"
-								>
-									No Expiration
-								</ToggleGroupItem>
-								<ToggleGroupItem
-									value="date"
-									className="edit-key-modal__expiry-toggle-btn"
-								>
-									Set Expiration Date
-								</ToggleGroupItem>
-							</ToggleGroup>
+							<Controller
+								name="expiryMode"
+								control={control}
+								render={({ field }): JSX.Element => (
+									<ToggleGroup
+										type="single"
+										value={field.value}
+										onValueChange={(val): void => {
+											if (val) {
+												field.onChange(val);
+											}
+										}}
+										className="edit-key-modal__expiry-toggle"
+									>
+										<ToggleGroupItem
+											value="none"
+											className="edit-key-modal__expiry-toggle-btn"
+										>
+											No Expiration
+										</ToggleGroupItem>
+										<ToggleGroupItem
+											value="date"
+											className="edit-key-modal__expiry-toggle-btn"
+										>
+											Set Expiration Date
+										</ToggleGroupItem>
+									</ToggleGroup>
+								)}
+							/>
 						</div>
 
 						{expiryMode === 'date' && (
@@ -224,13 +235,19 @@ function EditKeyModal({
 									Expiration Date
 								</label>
 								<div className="edit-key-modal__datepicker">
-									<DatePicker
-										value={localDate}
-										id="edit-key-datepicker"
-										onChange={(date): void => setLocalDate(date)}
-										popupClassName="edit-key-modal-datepicker-popup"
-										getPopupContainer={popupContainer}
-										disabledDate={disabledDate}
+									<Controller
+										name="expiresAt"
+										control={control}
+										render={({ field }): JSX.Element => (
+											<DatePicker
+												value={field.value}
+												id="edit-key-datepicker"
+												onChange={field.onChange}
+												popupClassName="edit-key-modal-datepicker-popup"
+												getPopupContainer={popupContainer}
+												disabledDate={disabledDate}
+											/>
+										)}
 									/>
 								</div>
 							</div>
@@ -257,7 +274,12 @@ function EditKeyModal({
 							Revoke Key
 						</Button>
 						<div className="edit-key-modal__footer-right">
-							<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
+							<Button
+								variant="solid"
+								color="secondary"
+								size="sm"
+								onClick={handleClose}
+							>
 								<X size={12} />
 								Cancel
 							</Button>
@@ -267,7 +289,7 @@ function EditKeyModal({
 								size="sm"
 								loading={isSaving}
 								disabled={!isDirty}
-								onClick={handleSave}
+								onClick={onSubmit}
 							>
 								Save Changes
 							</Button>

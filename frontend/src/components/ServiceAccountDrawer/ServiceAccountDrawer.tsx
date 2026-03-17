@@ -20,7 +20,12 @@ import {
 	ServiceAccountRow,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
-import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
+import {
+	parseAsInteger,
+	parseAsString,
+	parseAsStringEnum,
+	useQueryState,
+} from 'nuqs';
 import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
@@ -43,9 +48,6 @@ function ServiceAccountDrawer({
 }: ServiceAccountDrawerProps): JSX.Element {
 	const [selectedAccountId, setSelectedAccountId] = useQueryState('account');
 	const open = !!selectedAccountId;
-	const onClose = useCallback((): void => void setSelectedAccountId(null), [
-		setSelectedAccountId,
-	]);
 	const [activeTab, setActiveTab] = useQueryState(
 		'tab',
 		parseAsStringEnum<ServiceAccountDrawerTab>(
@@ -55,6 +57,10 @@ function ServiceAccountDrawer({
 	const [keysPage, setKeysPage] = useQueryState(
 		'keysPage',
 		parseAsInteger.withDefault(1),
+	);
+	const [, setEditKeyId] = useQueryState(
+		'edit-key',
+		parseAsString.withDefault(''),
 	);
 	const [isDisableConfirmOpen, setIsDisableConfirmOpen] = useState(false);
 	const [localName, setLocalName] = useState('');
@@ -188,8 +194,11 @@ function ServiceAccountDrawer({
 	const handleClose = useCallback((): void => {
 		setIsDisableConfirmOpen(false);
 		setIsAddKeyOpen(false);
-		onClose();
-	}, [onClose]);
+		setSelectedAccountId(null);
+		setActiveTab(null);
+		setKeysPage(null);
+		setEditKeyId(null);
+	}, [setSelectedAccountId, setActiveTab, setKeysPage, setEditKeyId]);
 
 	const handleKeySuccess = useCallback((): void => {
 		setIsAddKeyOpen(false);
@@ -205,6 +214,10 @@ function ServiceAccountDrawer({
 					onValueChange={(val): void => {
 						if (val) {
 							setActiveTab(val as ServiceAccountDrawerTab);
+							if (val !== ServiceAccountDrawerTab.Keys) {
+								setKeysPage(null);
+								setEditKeyId(null);
+							}
 						}
 					}}
 					className="sa-drawer__tab-group"

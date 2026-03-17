@@ -95,9 +95,15 @@ describe('KeysTab', () => {
 		expect(screen.getByText('Dec 31, 2030')).toBeInTheDocument();
 	});
 
-	it('clicking a row opens EditKeyModal', async () => {
+	it('clicking a row sets the edit-key URL param', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		renderKeysTab();
+		const onUrlUpdate = jest.fn();
+
+		render(
+			<NuqsTestingAdapter onUrlUpdate={onUrlUpdate}>
+				<KeysTab {...defaultProps} />
+			</NuqsTestingAdapter>,
+		);
 
 		const row = screen.getByText('Production Key').closest('tr');
 		if (!row) {
@@ -106,7 +112,11 @@ describe('KeysTab', () => {
 
 		await user.click(row);
 
-		await screen.findByRole('dialog', { name: /Edit Key Details/i });
+		expect(onUrlUpdate).toHaveBeenCalledWith(
+			expect.objectContaining({
+				queryString: expect.stringContaining('edit-key=key-1'),
+			}),
+		);
 	});
 
 	it('clicking revoke icon opens confirmation dialog', async () => {

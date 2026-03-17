@@ -1,6 +1,7 @@
 import { toast } from '@signozhq/sonner';
-import { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditKeyModal from '../EditKeyModal';
@@ -13,7 +14,7 @@ const mockToast = jest.mocked(toast);
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/key-1';
 
-const keyItem: ServiceaccounttypesFactorAPIKeyDTO = {
+const mockKey: ServiceaccounttypesFactorAPIKeyDTO = {
 	id: 'key-1',
 	name: 'Original Key Name',
 	expiresAt: 0,
@@ -22,15 +23,22 @@ const keyItem: ServiceaccounttypesFactorAPIKeyDTO = {
 	serviceAccountId: 'sa-1',
 };
 
-const defaultProps = {
-	open: true,
-	accountId: 'sa-1',
-	keyItem,
-	onClose: jest.fn(),
-	onSuccess: jest.fn(),
-};
+function renderModal(
+	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null = mockKey,
+	searchParams: Record<string, string> = {
+		account: 'sa-1',
+		'edit-key': 'key-1',
+	},
+): ReturnType<typeof render> {
+	const onSuccess = jest.fn();
+	return render(
+		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
+			<EditKeyModal keyItem={keyItem} onSuccess={onSuccess} />
+		</NuqsTestingAdapter>,
+	);
+}
 
-describe('EditKeyModal', () => {
+describe('EditKeyModal (URL-controlled)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		server.use(
@@ -47,35 +55,30 @@ describe('EditKeyModal', () => {
 		server.resetHandlers();
 	});
 
-	it('renders correctly with initial values', () => {
-		render(<EditKeyModal {...defaultProps} />);
+	it('renders nothing when edit-key param is absent', () => {
+		renderModal(null, { account: 'sa-1' });
 
-		expect(screen.getByDisplayValue('Original Key Name')).toBeInTheDocument();
-		expect(screen.getByText('No Expiration')).toBeInTheDocument();
+		expect(
+			screen.queryByRole('dialog', { name: /Edit Key Details/i }),
+		).not.toBeInTheDocument();
+	});
+
+	it('renders key data from prop when edit-key param is set', async () => {
+		renderModal();
+
+		expect(
+			await screen.findByDisplayValue('Original Key Name'),
+		).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
 
-	it('enables save button when name is changed', async () => {
+	it('save calls update API, shows toast, and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		render(<EditKeyModal {...defaultProps} />);
+		renderModal();
 
-		const nameInput = screen.getByPlaceholderText(/Enter key name/i);
+		const nameInput = await screen.findByPlaceholderText(/Enter key name/i);
 		await user.clear(nameInput);
-		await user.type(nameInput, 'New Key Name');
-
-		expect(
-			screen.getByRole('button', { name: /Save Changes/i }),
-		).not.toBeDisabled();
-	});
-
-	it('calls updateKey API and onSuccess on save', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSuccess = jest.fn();
-
-		render(<EditKeyModal {...defaultProps} onSuccess={onSuccess} />);
-
-		const nameInput = screen.getByPlaceholderText(/Enter key name/i);
-		await user.type(nameInput, ' Updated');
+		await user.type(nameInput, 'Updated Key Name');
 
 		await user.click(screen.getByRole('button', { name: /Save Changes/i }));
 
@@ -84,41 +87,51 @@ describe('EditKeyModal', () => {
 				'Key updated successfully',
 				expect.anything(),
 			);
-			expect(onSuccess).toHaveBeenCalled();
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
+			).not.toBeInTheDocument();
 		});
 	});
 
-	it('opens revoke confirmation and handles revocation', async () => {
+	it('cancel clears edit-key param and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onSuccess = jest.fn();
+		renderModal();
 
-		render(<EditKeyModal {...defaultProps} onSuccess={onSuccess} />);
+		await screen.findByDisplayValue('Original Key Name');
+		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
+		expect(
+			screen.queryByRole('dialog', { name: /Edit Key Details/i }),
+		).not.toBeInTheDocument();
+	});
+
+	it('revoke flow completes and closes modal', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderModal();
+
+		await screen.findByDisplayValue('Original Key Name');
 		await user.click(screen.getByRole('button', { name: /Revoke Key/i }));
 
 		expect(
 			screen.getByText(/Revoking this key will permanently invalidate it/i),
 		).toBeInTheDocument();
 
-		const confirmRevokeBtn = screen.getByRole('button', { name: /Revoke Key/i });
-		await user.click(confirmRevokeBtn);
+		await user.click(screen.getByRole('button', { name: /^Revoke Key$/i }));
 
 		await waitFor(() => {
 			expect(mockToast.success).toHaveBeenCalledWith(
 				'Key revoked successfully',
 				expect.anything(),
 			);
-			expect(onSuccess).toHaveBeenCalled();
 		});
-	});
 
-	it('closes modal when clicking cancel', async () => {
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const onClose = jest.fn();
-		render(<EditKeyModal {...defaultProps} onClose={onClose} />);
-
-		await user.click(screen.getByRole('button', { name: /Cancel/i }));
-
-		expect(onClose).toHaveBeenCalled();
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /Edit Key Details/i }),
+			).not.toBeInTheDocument();
+		});
 	});
 });

@@ -271,13 +271,7 @@ function KeysTab({
 				onConfirm={handleRevoke}
 			/>
 
-			<EditKeyModal
-				open={editKey !== null}
-				accountId={accountId}
-				keyItem={editKey}
-				onClose={(): void => void setEditKeyId(null)}
-				onSuccess={handleKeySuccess}
-			/>
+			<EditKeyModal keyItem={editKey} onSuccess={handleKeySuccess} />
 		</>
 	);
 }
