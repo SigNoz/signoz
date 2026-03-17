@@ -9,7 +9,13 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.model import BuilderQuery, TraceOperatorQuery, OrderBy, QueryRangeRequest, TelemetryFieldKey
+from fixtures.querier import (
+    BuilderQuery,
+    OrderBy,
+    QueryRangeRequest,
+    TelemetryFieldKey,
+    TraceOperatorQuery,
+)
 from fixtures.traces import TraceIdGenerator, Traces, TracesKind, TracesStatusCode
 
 
@@ -360,7 +366,14 @@ def test_export_traces_with_filter(
     body = QueryRangeRequest(
         start=start_ns,
         end=end_ns,
-        queries=[BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="service.name = 'service-a'")],
+        queries=[
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=1000,
+                filter_expression="service.name = 'service-a'",
+            )
+        ],
     ).to_dict()
 
     # Export traces with filter
@@ -480,8 +493,18 @@ def test_export_traces_multiple_queries_rejected(
         end=end_ns,
         request_type=None,
         queries=[
-            BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="service.name = 'service-a'"),
-            BuilderQuery(signal="traces", name="B", limit=1000, filter_expression="service.name = 'service-b'"),
+            BuilderQuery(
+                signal="traces",
+                name="A",
+                limit=1000,
+                filter_expression="service.name = 'service-a'",
+            ),
+            BuilderQuery(
+                signal="traces",
+                name="B",
+                limit=1000,
+                filter_expression="service.name = 'service-b'",
+            ),
         ],
     ).to_dict()
 
@@ -583,10 +606,20 @@ def test_export_traces_with_composite_query_trace_operator(
     end_ns = int(now.timestamp() * 1e9)
 
     # A: spans with operation.type = 'parent'
-    query_a = BuilderQuery(signal="traces", name="A", limit=1000, filter_expression="operation.type = 'parent'")
+    query_a = BuilderQuery(
+        signal="traces",
+        name="A",
+        limit=1000,
+        filter_expression="operation.type = 'parent'",
+    )
 
     # B: spans with operation.type = 'child'
-    query_b = BuilderQuery(signal="traces", name="B", limit=1000, filter_expression="operation.type = 'child'")
+    query_b = BuilderQuery(
+        signal="traces",
+        name="B",
+        limit=1000,
+        filter_expression="operation.type = 'child'",
+    )
 
     # Trace operator: find traces where A has a direct descendant B
     query_c = TraceOperatorQuery(

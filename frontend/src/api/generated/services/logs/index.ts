@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -16,7 +15,10 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	HandleExportRawDataPOSTParams,
 	ListPromotedAndIndexedPaths200,
@@ -24,9 +26,6 @@ import type {
 	Querybuildertypesv5QueryRangeRequestDTO,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
-import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoints allows complex query exporting raw data for traces and logs

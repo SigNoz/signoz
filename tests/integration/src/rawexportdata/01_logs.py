@@ -10,7 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.model import BuilderQuery, OrderBy, QueryRangeRequest, TelemetryFieldKey
+from fixtures.querier import BuilderQuery, OrderBy, QueryRangeRequest, TelemetryFieldKey
 
 
 def test_export_raw_data_get_not_allowed(
@@ -301,7 +301,11 @@ def test_export_logs_with_filter(
     body = QueryRangeRequest(
         start=start_ns,
         end=end_ns,
-        queries=[BuilderQuery(signal="logs", name="A", filter_expression="severity_text = 'ERROR'")],
+        queries=[
+            BuilderQuery(
+                signal="logs", name="A", filter_expression="severity_text = 'ERROR'"
+            )
+        ],
     ).to_dict()
 
     # Export logs with filter
@@ -540,7 +544,13 @@ def test_export_logs_with_order_by(
     body = QueryRangeRequest(
         start=start_ns,
         end=end_ns,
-        queries=[BuilderQuery(signal="logs", name="A", order=[OrderBy(TelemetryFieldKey("timestamp", "string", "log"), "asc")])],
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                name="A",
+                order=[OrderBy(TelemetryFieldKey("timestamp", "string", "log"), "asc")],
+            )
+        ],
     ).to_dict()
 
     # Export logs with ascending order

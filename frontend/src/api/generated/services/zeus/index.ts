@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -16,16 +15,16 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetHosts200,
 	RenderErrorResponseDTO,
 	ZeustypesPostableHostDTO,
 	ZeustypesPostableProfileDTO,
 } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
-import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint gets the host info from zeus.

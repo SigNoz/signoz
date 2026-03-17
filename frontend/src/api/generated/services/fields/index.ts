@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -13,7 +12,10 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useQuery } from 'react-query';
 
+import type { ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	GetFieldsKeys200,
 	GetFieldsKeysParams,
@@ -21,9 +23,6 @@ import type {
 	GetFieldsValuesParams,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
-import type { ErrorType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint returns field keys

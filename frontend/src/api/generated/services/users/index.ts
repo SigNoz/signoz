@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useMutation, useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	MutationFunction,
@@ -16,7 +15,10 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useMutation, useQuery } from 'react-query';
 
+import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	AcceptInvite201,
 	ChangePasswordPathParameters,
@@ -37,8 +39,8 @@ import type {
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
-	TypesPostableAPIKeyDTO,
 	TypesPostableAcceptInviteDTO,
+	TypesPostableAPIKeyDTO,
 	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
@@ -49,9 +51,6 @@ import type {
 	UpdateUser200,
 	UpdateUserPathParameters,
 } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
-import type { ErrorType, BodyType } from '../../../generatedAPIInstance';
 
 /**
  * This endpoint changes the password by id

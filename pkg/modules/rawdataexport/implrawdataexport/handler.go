@@ -39,7 +39,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 	format := formatParam.Format
-	if err := json.NewDecoder(r.Body).Decode(&queryRangeRequest); err != nil {
+	if err := binding.JSON.BindBody(r.Body, &queryRangeRequest); err != nil {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid request body: %v", err))
 		return
 	}

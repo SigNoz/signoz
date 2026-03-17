@@ -4,7 +4,6 @@
  * * regenerate with 'yarn generate:api'
  * SigNoz
  */
-import { useQuery } from 'react-query';
 import type {
 	InvalidateOptions,
 	QueryClient,
@@ -13,11 +12,11 @@ import type {
 	UseQueryOptions,
 	UseQueryResult,
 } from 'react-query';
+import { useQuery } from 'react-query';
 
-import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
-
-import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type { ErrorType } from '../../../generatedAPIInstance';
+import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
+import type { GetFeatures200, RenderErrorResponseDTO } from '../sigNoz.schemas';
 
 /**
  * This endpoint returns the supported features and their details
