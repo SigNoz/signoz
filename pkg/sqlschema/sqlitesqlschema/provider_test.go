@@ -37,6 +37,11 @@ func TestExtractWhereClause(t *testing.T) {
 			sql:   `CREATE UNIQUE INDEX "idx" ON "users" ("email") WHERE status = 'somewhere'`,
 			where: `status = 'somewhere'`,
 		},
+		{
+			name:  "BooleanLiteral",
+			sql:   `CREATE UNIQUE INDEX "idx" ON "users" ("email") WHERE active = true`,
+			where: `active = true`,
+		},
 	}
 
 	for _, testCase := range testCases {

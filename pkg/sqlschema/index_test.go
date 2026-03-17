@@ -102,6 +102,16 @@ func TestIndexToCreateSQL(t *testing.T) {
 			},
 			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_status_e70e78c3" ON "users" ("email", "status") WHERE email = 'test@example.com' AND status = 'active'`,
 		},
+		// postgres docs example
+		{
+			name: "PartialUnique_WhereWithPostgresDocsExample",
+			index: &PartialUniqueIndex{
+				TableName:   "access_log",
+				ColumnNames: []ColumnName{"client_ip"},
+				Where:       `NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255')`,
+			},
+			sql: `CREATE UNIQUE INDEX IF NOT EXISTS "puq_access_log_client_ip_5a596410" ON "access_log" ("client_ip") WHERE NOT (client_ip > inet '192.168.100.0' AND client_ip < inet '192.168.100.255')`,
+		},
 	}
 
 	for _, testCase := range testCases {
@@ -194,6 +204,56 @@ func TestIndexEquals(t *testing.T) {
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			assert.Equal(t, testCase.equals, testCase.a.Equals(testCase.b))
+		})
+	}
+}
+
+func TestNormalizePartialIndexWhere(t *testing.T) {
+	testCases := []struct {
+		name   string
+		input  string
+		output string
+	}{
+		{
+			name:   "BooleanComparison",
+			input:  `"active" = true`,
+			output: `active = true`,
+		},
+		{
+			name:   "QuotedStringLiteralPreserved",
+			input:  `status = 'somewhere'`,
+			output: `status = 'somewhere'`,
+		},
+		{
+			name:   "EscapedStringLiteralPreserved",
+			input:  `status = 'it''s active'`,
+			output: `status = 'it''s active'`,
+		},
+		{
+			name:   "OuterParenthesesRemoved",
+			input:  `(("deleted_at" IS NULL))`,
+			output: `deleted_at IS NULL`,
+		},
+		{
+			name:   "InnerParenthesesPreserved",
+			input:  `("deleted_at" IS NULL OR ("active" = true AND "status" = 'open'))`,
+			output: `deleted_at IS NULL OR (active = true AND status = 'open')`,
+		},
+		{
+			name:   "MultipleClausesWhitespaceCollapsed",
+			input:  "  (  \"deleted_at\" IS NULL  \n AND\t\"active\" = true  AND status = 'open' )  ",
+			output: `deleted_at IS NULL AND active = true AND status = 'open'`,
+		},
+		{
+			name:   "ComplexBooleanClauses",
+			input:  `NOT ("deleted_at" IS NOT NULL AND ("active" = false OR "status" = 'archived'))`,
+			output: `NOT (deleted_at IS NOT NULL AND (active = false OR status = 'archived'))`,
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.output, (&whereNormalizer{input: testCase.input}).normalize())
 		})
 	}
 }

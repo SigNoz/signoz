@@ -1,8 +1,6 @@
 package sqlschema
 
 import (
-	"fmt"
-	"hash/fnv"
 	"slices"
 	"strings"
 
@@ -162,10 +160,7 @@ func (index *PartialUniqueIndex) Name() string {
 		b.WriteString(string(column))
 	}
 	b.WriteString("_")
-	hasher := fnv.New32a()
-	_, _ = hasher.Write([]byte(normalizePartialIndexWhere(index.Where)))
-
-	b.WriteString(fmt.Sprintf("%08x", hasher.Sum32()))
+	b.WriteString((&whereNormalizer{input: index.Where}).hash())
 	return b.String()
 }
 
@@ -203,7 +198,7 @@ func (index *PartialUniqueIndex) Equals(other Index) bool {
 		return false
 	}
 
-	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns()) && normalizePartialIndexWhere(index.Where) == normalizePartialIndexWhere(otherPartial.Where)
+	return index.Name() == other.Name() && slices.Equal(index.Columns(), other.Columns()) && (&whereNormalizer{input: index.Where}).normalize() == (&whereNormalizer{input: otherPartial.Where}).normalize()
 }
 
 func (index *PartialUniqueIndex) ToCreateSQL(fmter SQLFormatter) []byte {
@@ -238,147 +233,3 @@ func (index *PartialUniqueIndex) ToDropSQL(fmter SQLFormatter) []byte {
 	return sql
 }
 
-func normalizePartialIndexWhere(where string) string {
-	where = strings.TrimSpace(where)
-	where = stripOuterParentheses(where)
-
-	var b strings.Builder
-	b.Grow(len(where))
-
-	for i := 0; i < len(where); i++ {
-		switch where[i] {
-		case ' ', '\t', '\n', '\r':
-			if b.Len() > 0 {
-				last := b.String()[b.Len()-1]
-				if last != ' ' {
-					b.WriteByte(' ')
-				}
-			}
-		case '\'':
-			end := consumeSingleQuotedLiteral(where, i, &b)
-			i = end
-		case '"':
-			token, end := consumeDoubleQuotedToken(where, i)
-			b.WriteString(token)
-			i = end
-		default:
-			b.WriteByte(where[i])
-		}
-	}
-
-	return strings.TrimSpace(b.String())
-}
-
-func stripOuterParentheses(s string) string {
-	for {
-		s = strings.TrimSpace(s)
-		if len(s) < 2 || s[0] != '(' || s[len(s)-1] != ')' || !hasWrappingParentheses(s) {
-			return s
-		}
-		s = s[1 : len(s)-1]
-	}
-}
-
-func hasWrappingParentheses(s string) bool {
-	depth := 0
-	inSingleQuotedLiteral := false
-	inDoubleQuotedToken := false
-
-	for i := 0; i < len(s); i++ {
-		switch s[i] {
-		case '\'':
-			if inDoubleQuotedToken {
-				continue
-			}
-			if inSingleQuotedLiteral && i+1 < len(s) && s[i+1] == '\'' {
-				i++
-				continue
-			}
-			inSingleQuotedLiteral = !inSingleQuotedLiteral
-		case '"':
-			if inSingleQuotedLiteral {
-				continue
-			}
-			if inDoubleQuotedToken && i+1 < len(s) && s[i+1] == '"' {
-				i++
-				continue
-			}
-			inDoubleQuotedToken = !inDoubleQuotedToken
-		case '(':
-			if inSingleQuotedLiteral || inDoubleQuotedToken {
-				continue
-			}
-			depth++
-		case ')':
-			if inSingleQuotedLiteral || inDoubleQuotedToken {
-				continue
-			}
-			depth--
-			if depth == 0 && i != len(s)-1 {
-				return false
-			}
-		}
-	}
-
-	return depth == 0
-}
-
-func consumeSingleQuotedLiteral(s string, start int, b *strings.Builder) int {
-	b.WriteByte(s[start])
-	for i := start + 1; i < len(s); i++ {
-		b.WriteByte(s[i])
-		if s[i] == '\'' {
-			if i+1 < len(s) && s[i+1] == '\'' {
-				i++
-				b.WriteByte(s[i])
-				continue
-			}
-			return i
-		}
-	}
-
-	return len(s) - 1
-}
-
-func consumeDoubleQuotedToken(s string, start int) (string, int) {
-	var ident strings.Builder
-
-	for i := start + 1; i < len(s); i++ {
-		if s[i] == '"' {
-			if i+1 < len(s) && s[i+1] == '"' {
-				ident.WriteByte('"')
-				i++
-				continue
-			}
-
-			if isSimpleUnquotedIdentifier(ident.String()) {
-				return ident.String(), i
-			}
-
-			return s[start : i+1], i
-		}
-
-		ident.WriteByte(s[i])
-	}
-
-	return s[start:], len(s) - 1
-}
-
-func isSimpleUnquotedIdentifier(s string) bool {
-	if s == "" || strings.ToLower(s) != s {
-		return false
-	}
-
-	for i := 0; i < len(s); i++ {
-		ch := s[i]
-		if (ch >= 'a' && ch <= 'z') || ch == '_' {
-			continue
-		}
-		if i > 0 && ch >= '0' && ch <= '9' {
-			continue
-		}
-		return false
-	}
-
-	return true
-}
