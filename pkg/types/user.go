@@ -33,10 +33,6 @@ var (
 	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
 )
 
-var (
-	InviteTokenLifetime = 48 * time.Hour
-)
-
 type GettableUser = User
 
 type User struct {
