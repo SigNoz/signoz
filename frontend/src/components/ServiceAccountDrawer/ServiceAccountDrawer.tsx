@@ -1,21 +1,27 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { Key, LayoutGrid, Plus, PowerOff, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
-import { Pagination } from 'antd';
+import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
+	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
 	useUpdateServiceAccountStatus,
 } from 'api/generated/services/serviceaccount';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
+import {
+	ServiceAccountRow,
+	toServiceAccountRow,
+} from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsStringEnum, useQueryState } from 'nuqs';
+import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
 import DisableAccountModal from './DisableAccountModal';
@@ -26,7 +32,6 @@ import { ServiceAccountDrawerTab } from './utils';
 import './ServiceAccountDrawer.styles.scss';
 
 export interface ServiceAccountDrawerProps {
-	account: ServiceAccountRow | null;
 	onSuccess: (options?: { closeDrawer?: boolean }) => void;
 }
 
@@ -34,11 +39,10 @@ const PAGE_SIZE = 15;
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ServiceAccountDrawer({
-	account,
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
-	const [, setSelectedAccountId] = useQueryState('account');
-	const open = account !== null;
+	const [selectedAccountId, setSelectedAccountId] = useQueryState('account');
+	const open = !!selectedAccountId;
 	const onClose = useCallback((): void => void setSelectedAccountId(null), [
 		setSelectedAccountId,
 	]);
@@ -56,6 +60,24 @@ function ServiceAccountDrawer({
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isAddKeyOpen, setIsAddKeyOpen] = useState(false);
+
+	const {
+		data: accountData,
+		isLoading: isAccountLoading,
+		isError: isAccountError,
+		error: accountError,
+		refetch: refetchAccount,
+	} = useGetServiceAccount(
+		{ id: selectedAccountId ?? '' },
+		{ query: { enabled: !!selectedAccountId } },
+	);
+
+	const account = useMemo(
+		(): ServiceAccountRow | null =>
+			accountData?.data ? toServiceAccountRow(accountData.data) : null,
+		[accountData],
+	);
+
 	useEffect(() => {
 		if (account) {
 			setLocalName(account.name ?? '');
@@ -63,7 +85,7 @@ function ServiceAccountDrawer({
 			setKeysPage(1);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [account]);
+	}, [account?.id]);
 
 	const isDisabled = account?.status?.toUpperCase() !== 'ACTIVE';
 
@@ -85,8 +107,8 @@ function ServiceAccountDrawer({
 		isLoading: keysLoading,
 		refetch: refetchKeys,
 	} = useListServiceAccountKeys(
-		{ id: account?.id ?? '' },
-		{ query: { enabled: !!account?.id } },
+		{ id: selectedAccountId ?? '' },
+		{ query: { enabled: !!selectedAccountId } },
 	);
 	const keys = keysData?.data ?? [];
 
@@ -123,6 +145,7 @@ function ServiceAccountDrawer({
 					toast.success('Service account updated successfully', {
 						richColors: true,
 					});
+					refetchAccount();
 					onSuccess({ closeDrawer: false });
 				},
 				onError: (error) => {
@@ -223,32 +246,45 @@ function ServiceAccountDrawer({
 					activeTab === ServiceAccountDrawerTab.Keys ? ' sa-drawer__body--keys' : ''
 				}`}
 			>
-				{activeTab === ServiceAccountDrawerTab.Overview && account && (
-					<OverviewTab
-						account={account}
-						localName={localName}
-						onNameChange={setLocalName}
-						localRoles={localRoles}
-						onRolesChange={setLocalRoles}
-						isDisabled={isDisabled}
-						availableRoles={availableRoles}
-						rolesLoading={rolesLoading}
-						rolesError={rolesError}
-						rolesErrorObj={rolesErrorObj}
-						onRefetchRoles={refetchRoles}
+				{isAccountLoading && <Skeleton active paragraph={{ rows: 6 }} />}
+				{isAccountError && (
+					<ErrorInPlace
+						error={toAPIError(
+							accountError,
+							'An unexpected error occurred while fetching service account details.',
+						)}
 					/>
 				)}
-				{activeTab === ServiceAccountDrawerTab.Keys && account && (
-					<KeysTab
-						accountId={account.id}
-						keys={keys}
-						isLoading={keysLoading}
-						isDisabled={isDisabled}
-						currentPage={keysPage}
-						pageSize={PAGE_SIZE}
-						onRefetch={refetchKeys}
-						onAddKeyClick={(): void => setIsAddKeyOpen(true)}
-					/>
+				{!isAccountLoading && !isAccountError && (
+					<>
+						{activeTab === ServiceAccountDrawerTab.Overview && account && (
+							<OverviewTab
+								account={account}
+								localName={localName}
+								onNameChange={setLocalName}
+								localRoles={localRoles}
+								onRolesChange={setLocalRoles}
+								isDisabled={isDisabled}
+								availableRoles={availableRoles}
+								rolesLoading={rolesLoading}
+								rolesError={rolesError}
+								rolesErrorObj={rolesErrorObj}
+								onRefetchRoles={refetchRoles}
+							/>
+						)}
+						{activeTab === ServiceAccountDrawerTab.Keys && (
+							<KeysTab
+								accountId={selectedAccountId ?? ''}
+								keys={keys}
+								isLoading={keysLoading}
+								isDisabled={isDisabled}
+								currentPage={keysPage}
+								pageSize={PAGE_SIZE}
+								onRefetch={refetchKeys}
+								onAddKeyClick={(): void => setIsAddKeyOpen(true)}
+							/>
+						)}
+					</>
 				)}
 			</div>
 
@@ -342,10 +378,10 @@ function ServiceAccountDrawer({
 				onConfirm={handleDisable}
 			/>
 
-			{account && (
+			{selectedAccountId && (
 				<AddKeyModal
 					open={isAddKeyOpen}
-					accountId={account.id}
+					accountId={selectedAccountId}
 					onClose={(): void => setIsAddKeyOpen(false)}
 					onSuccess={handleKeySuccess}
 				/>

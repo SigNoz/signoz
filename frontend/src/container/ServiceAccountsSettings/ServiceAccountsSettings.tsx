@@ -1,10 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
-import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
+import {
+	getGetServiceAccountQueryKey,
+	useListServiceAccounts,
+} from 'api/generated/services/serviceaccount';
+import type {
+	GetServiceAccount200,
+	ListServiceAccounts200,
+} from 'api/generated/services/sigNoz.schemas';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
@@ -17,10 +25,14 @@ import {
 	parseAsStringEnum,
 	useQueryState,
 } from 'nuqs';
-import { toISOString } from 'utils/app';
 import { toAPIError } from 'utils/errorUtils';
 
-import { FilterMode, ServiceAccountRow, ServiceAccountStatus } from './utils';
+import {
+	FilterMode,
+	ServiceAccountRow,
+	ServiceAccountStatus,
+	toServiceAccountRow,
+} from './utils';
 
 import './ServiceAccountsSettings.styles.scss';
 
@@ -39,8 +51,22 @@ function ServiceAccountsSettings(): JSX.Element {
 			FilterMode.All,
 		),
 	);
-	const [selectedAccountId, setSelectedAccountId] = useQueryState('account');
+	const [, setSelectedAccountId] = useQueryState('account');
 	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+	const queryClient = useQueryClient();
+
+	const seedAccountCache = useCallback(
+		(data: ListServiceAccounts200) => {
+			data.data.forEach((account) => {
+				queryClient.setQueryData<GetServiceAccount200>(
+					getGetServiceAccountQueryKey({ id: account.id }),
+					(old) => old ?? { data: account, status: data.status },
+				);
+			});
+		},
+		[queryClient],
+	);
 
 	const {
 		data: serviceAccountsData,
@@ -48,19 +74,13 @@ function ServiceAccountsSettings(): JSX.Element {
 		isError,
 		error,
 		refetch: handleCreateSuccess,
-	} = useListServiceAccounts();
+	} = useListServiceAccounts({
+		query: { onSuccess: seedAccountCache },
+	});
 
 	const allAccounts = useMemo(
 		(): ServiceAccountRow[] =>
-			(serviceAccountsData?.data ?? []).map((sa) => ({
-				id: sa.id,
-				name: sa.name,
-				email: sa.email,
-				roles: sa.roles,
-				status: sa.status,
-				createdAt: toISOString(sa.createdAt),
-				updatedAt: toISOString(sa.updatedAt),
-			})),
+			(serviceAccountsData?.data ?? []).map(toServiceAccountRow),
 		[serviceAccountsData],
 	);
 
@@ -118,11 +138,6 @@ function ServiceAccountsSettings(): JSX.Element {
 			setPage(1);
 		}
 	}, [filteredAccounts.length, currentPage, setPage]);
-
-	const selectedAccount = useMemo(
-		() => allAccounts.find((a) => a.id === selectedAccountId) ?? null,
-		[allAccounts, selectedAccountId],
-	);
 
 	const totalCount = allAccounts.length;
 
@@ -281,10 +296,7 @@ function ServiceAccountsSettings(): JSX.Element {
 				onSuccess={handleCreateSuccess}
 			/>
 
-			<ServiceAccountDrawer
-				account={selectedAccount}
-				onSuccess={handleDrawerSuccess}
-			/>
+			<ServiceAccountDrawer onSuccess={handleDrawerSuccess} />
 		</>
 	);
 }

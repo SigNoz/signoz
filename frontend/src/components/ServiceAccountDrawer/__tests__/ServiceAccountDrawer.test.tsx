@@ -1,12 +1,10 @@
 import type { ReactNode } from 'react';
-import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
-import ServiceAccountDrawer, {
-	ServiceAccountDrawerProps,
-} from '../ServiceAccountDrawer';
+import ServiceAccountDrawer from '../ServiceAccountDrawer';
 
 jest.mock('@signozhq/drawer', () => ({
 	DrawerWrapper: ({
@@ -24,10 +22,10 @@ jest.mock('@signozhq/sonner', () => ({
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
-const SA_UPDATE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
+const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
 const SA_STATUS_ENDPOINT = '*/api/v1/service_accounts/sa-1/status';
 
-const activeAccount: ServiceAccountRow = {
+const activeAccountResponse = {
 	id: 'sa-1',
 	name: 'CI Bot',
 	email: 'ci-bot@signoz.io',
@@ -37,21 +35,19 @@ const activeAccount: ServiceAccountRow = {
 	updatedAt: '2026-01-02T00:00:00Z',
 };
 
-const disabledAccount: ServiceAccountRow = {
-	...activeAccount,
+const disabledAccountResponse = {
+	...activeAccountResponse,
 	id: 'sa-2',
 	status: 'DISABLED',
 };
 
 function renderDrawer(
-	props: Partial<ServiceAccountDrawerProps> = {},
+	searchParams: Record<string, string> = { account: 'sa-1' },
 ): ReturnType<typeof render> {
 	return render(
-		<ServiceAccountDrawer
-			account={activeAccount}
-			onSuccess={jest.fn()}
-			{...props}
-		/>,
+		<NuqsTestingAdapter searchParams={searchParams}>
+			<ServiceAccountDrawer onSuccess={jest.fn()} />
+		</NuqsTestingAdapter>,
 	);
 }
 
@@ -65,7 +61,10 @@ describe('ServiceAccountDrawer', () => {
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
-			rest.put(SA_UPDATE_ENDPOINT, (_, res, ctx) =>
+			rest.get(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: activeAccountResponse })),
+			),
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
 			rest.put(SA_STATUS_ENDPOINT, (_, res, ctx) =>
@@ -78,10 +77,10 @@ describe('ServiceAccountDrawer', () => {
 		server.resetHandlers();
 	});
 
-	it('renders Overview tab by default: editable name input, locked email, Save disabled when not dirty', () => {
+	it('renders Overview tab by default: editable name input, locked email, Save disabled when not dirty', async () => {
 		renderDrawer();
 
-		expect(screen.getByDisplayValue('CI Bot')).toBeInTheDocument();
+		expect(await screen.findByDisplayValue('CI Bot')).toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
 		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
 	});
@@ -92,15 +91,19 @@ describe('ServiceAccountDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_UPDATE_ENDPOINT, async (req, res, ctx) => {
+			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
 				updateSpy(await req.json());
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
 
-		renderDrawer({ onSuccess });
+		render(
+			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }}>
+				<ServiceAccountDrawer onSuccess={onSuccess} />
+			</NuqsTestingAdapter>,
+		);
 
-		const nameInput = screen.getByDisplayValue('CI Bot');
+		const nameInput = await screen.findByDisplayValue('CI Bot');
 		await user.clear(nameInput);
 		await user.type(nameInput, 'CI Bot Updated');
 
@@ -125,13 +128,15 @@ describe('ServiceAccountDrawer', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_UPDATE_ENDPOINT, async (req, res, ctx) => {
+			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
 				updateSpy(await req.json());
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
 
 		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
 
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-viewer'));
@@ -161,7 +166,13 @@ describe('ServiceAccountDrawer', () => {
 			}),
 		);
 
-		renderDrawer({ onSuccess });
+		render(
+			<NuqsTestingAdapter searchParams={{ account: 'sa-1' }}>
+				<ServiceAccountDrawer onSuccess={onSuccess} />
+			</NuqsTestingAdapter>,
+		);
+
+		await screen.findByDisplayValue('CI Bot');
 
 		await user.click(
 			screen.getByRole('button', { name: /Disable Service Account/i }),
@@ -181,8 +192,19 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('disabled account shows read-only name, no Save button, no Disable button', () => {
-		renderDrawer({ account: disabledAccount });
+	it('disabled account shows read-only name, no Save button, no Disable button', async () => {
+		server.use(
+			rest.get('*/api/v1/service_accounts/sa-2', (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: disabledAccountResponse })),
+			),
+			rest.get('*/api/v1/service_accounts/sa-2/keys', (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+		);
+
+		renderDrawer({ account: 'sa-2' });
+
+		await screen.findByText('CI Bot');
 
 		expect(
 			screen.queryByRole('button', { name: /Save Changes/i }),
@@ -191,7 +213,6 @@ describe('ServiceAccountDrawer', () => {
 			screen.queryByRole('button', { name: /Disable Service Account/i }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
-		expect(screen.getByText('CI Bot')).toBeInTheDocument();
 	});
 
 	it('switching to Keys tab shows "No keys" empty state', async () => {
@@ -199,8 +220,33 @@ describe('ServiceAccountDrawer', () => {
 
 		renderDrawer();
 
+		await screen.findByDisplayValue('CI Bot');
+
 		await user.click(screen.getByRole('radio', { name: /Keys/i }));
 
 		await screen.findByText(/No keys/i);
+	});
+
+	it('shows skeleton while loading account data', () => {
+		renderDrawer();
+
+		// Skeleton renders while the fetch is in-flight
+		expect(document.querySelector('.ant-skeleton')).toBeInTheDocument();
+	});
+
+	it('shows error state when account fetch fails', async () => {
+		server.use(
+			rest.get(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(500), ctx.json({ message: 'Server error' })),
+			),
+		);
+
+		renderDrawer();
+
+		expect(
+			await screen.findByText(
+				/An unexpected error occurred while fetching service account details/i,
+			),
+		).toBeInTheDocument();
 	});
 });

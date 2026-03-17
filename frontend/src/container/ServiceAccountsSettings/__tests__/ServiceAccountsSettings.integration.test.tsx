@@ -7,6 +7,7 @@ import { render, screen, userEvent } from 'tests/test-utils';
 import ServiceAccountsSettings from '../ServiceAccountsSettings';
 
 const SA_LIST_ENDPOINT = '*/api/v1/service_accounts';
+const SA_ENDPOINT = '*/api/v1/service_accounts/:id';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
@@ -61,6 +62,13 @@ describe('ServiceAccountsSettings (integration)', () => {
 			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI })),
 			),
+			rest.get(SA_ENDPOINT, (req, res, ctx) => {
+				const { id } = req.params as { id: string };
+				const account = mockServiceAccountsAPI.find((a) => a.id === id);
+				return account
+					? res(ctx.status(200), ctx.json({ data: account }))
+					: res(ctx.status(404), ctx.json({ message: 'Not found' }));
+			}),
 			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
@@ -133,7 +141,7 @@ describe('ServiceAccountsSettings (integration)', () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(
-			<NuqsTestingAdapter>
+			<NuqsTestingAdapter hasMemory>
 				<ServiceAccountsSettings />
 			</NuqsTestingAdapter>,
 		);
@@ -147,7 +155,43 @@ describe('ServiceAccountsSettings (integration)', () => {
 		expect(
 			await screen.findByRole('button', { name: /Disable Service Account/i }),
 		).toBeInTheDocument();
-		expect(screen.getByRole('button', { name: /Save Changes/i })).toBeDisabled();
+	});
+
+	it('saving changes in the drawer refetches the list', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const listRefetchSpy = jest.fn();
+
+		server.use(
+			rest.get(SA_LIST_ENDPOINT, (_, res, ctx) => {
+				listRefetchSpy();
+				return res(ctx.status(200), ctx.json({ data: mockServiceAccountsAPI }));
+			}),
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+
+		render(
+			<NuqsTestingAdapter hasMemory>
+				<ServiceAccountsSettings />
+			</NuqsTestingAdapter>,
+		);
+
+		await screen.findByText('CI Bot');
+		listRefetchSpy.mockClear();
+
+		await user.click(
+			await screen.findByRole('button', { name: /View service account CI Bot/i }),
+		);
+
+		const nameInput = await screen.findByDisplayValue('CI Bot');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'CI Bot Updated');
+
+		await user.click(screen.getByRole('button', { name: /Save Changes/i }));
+
+		await screen.findByDisplayValue('CI Bot Updated');
+		expect(listRefetchSpy).toHaveBeenCalled();
 	});
 
 	it('"New Service Account" button opens the Create Service Account modal', async () => {
