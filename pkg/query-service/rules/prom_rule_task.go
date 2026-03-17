@@ -12,7 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 // PromRuleTask is a promql rule executor
@@ -34,7 +34,7 @@ type PromRuleTask struct {
 	terminated chan struct{}
 
 	pause  bool
-	logger *zap.Logger
+	logger *slog.Logger
 	notify NotifyFunc
 
 	maintenanceStore ruletypes.MaintenanceStore
@@ -44,7 +44,7 @@ type PromRuleTask struct {
 // NewPromRuleTask holds rules that have promql condition
 // and evaluates the rule at a given frequency
 func NewPromRuleTask(name, file string, frequency time.Duration, rules []Rule, opts *ManagerOptions, notify NotifyFunc, maintenanceStore ruletypes.MaintenanceStore, orgID valuer.UUID) *PromRuleTask {
-	zap.L().Info("Initiating a new rule group", zap.String("name", name), zap.Duration("frequency", frequency))
+	opts.Logger.Info("initiating a new rule group", "name", name, "frequency", frequency)
 
 	if frequency == 0 {
 		frequency = DefaultFrequency
@@ -322,14 +322,14 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 	defer func() {
 		if r := recover(); r != nil {
-			zap.L().Error("panic during promql rule evaluation", zap.Any("panic", r))
+			g.logger.ErrorContext(ctx, "panic during promql rule evaluation", "panic", r)
 		}
 	}()
 
-	zap.L().Info("promql rule task", zap.String("name", g.name), zap.Time("eval started at", ts))
+	g.logger.InfoContext(ctx, "promql rule task", "name", g.name, "eval_started_at", ts)
 	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 	if err != nil {
-		zap.L().Error("Error in processing sql query", zap.Error(err))
+		g.logger.ErrorContext(ctx, "error in processing sql query", "error", err)
 	}
 
 	for i, rule := range g.rules {
@@ -339,7 +339,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			zap.L().Info("checking if rule should be skipped", zap.String("rule", rule.ID()), zap.Any("maintenance", m))
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -347,7 +347,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			zap.L().Info("rule should be skipped", zap.String("rule", rule.ID()))
+			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
 			continue
 		}
 
@@ -379,7 +379,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				zap.L().Warn("Evaluating rule failed", zap.String("ruleid", rule.ID()), zap.Error(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), "error", err)
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

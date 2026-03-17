@@ -128,6 +128,7 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 			isAdmin &&
 			(path === ROUTES.SETTINGS ||
 				path === ROUTES.ORG_SETTINGS ||
+				path === ROUTES.MEMBERS_SETTINGS ||
 				path === ROUTES.BILLING ||
 				path === ROUTES.MY_SETTINGS);
 

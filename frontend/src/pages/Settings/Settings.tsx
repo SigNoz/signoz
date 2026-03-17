@@ -63,6 +63,7 @@ function SettingsPage(): JSX.Element {
 						isAdmin &&
 						(item.key === ROUTES.BILLING ||
 							item.key === ROUTES.ORG_SETTINGS ||
+							item.key === ROUTES.MEMBERS_SETTINGS ||
 							item.key === ROUTES.MY_SETTINGS ||
 							item.key === ROUTES.SHORTCUTS)
 					),
