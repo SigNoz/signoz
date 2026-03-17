@@ -80,6 +80,7 @@ func NewStorableUser(user *User) *StorableUser {
 		OrgID:         user.OrgID.String(),
 		IsRoot:        user.IsRoot,
 		Status:        user.Status,
+		DeletedAt:     user.DeletedAt,
 		TimeAuditable: user.TimeAuditable,
 	}
 }
@@ -96,6 +97,7 @@ func NewUserFromStorable(storableUser *StorableUser) *User {
 		OrgID:         valuer.MustNewUUID(storableUser.OrgID),
 		IsRoot:        storableUser.IsRoot,
 		Status:        storableUser.Status,
+		DeletedAt:     storableUser.DeletedAt,
 		TimeAuditable: storableUser.TimeAuditable,
 	}
 }
