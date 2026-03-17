@@ -17,22 +17,24 @@ import (
 
 // bucketCache implements the BucketCache interface
 type bucketCache struct {
-	cache        cache.Cache
-	logger       *slog.Logger
-	cacheTTL     time.Duration
-	fluxInterval time.Duration
+	cache                cache.Cache
+	logger               *slog.Logger
+	cacheTTL             time.Duration
+	fluxInterval         time.Duration
+	heatmapCacheRounding time.Duration
 }
 
 var _ BucketCache = (*bucketCache)(nil)
 
 // NewBucketCache creates a new BucketCache implementation
-func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration) BucketCache {
+func NewBucketCache(settings factory.ProviderSettings, cache cache.Cache, cacheTTL time.Duration, fluxInterval time.Duration, heatmapCacheRounding time.Duration) BucketCache {
 	cacheSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querier/bucket_cache")
 	return &bucketCache{
-		cache:        cache,
-		logger:       cacheSettings.Logger(),
-		cacheTTL:     cacheTTL,
-		fluxInterval: fluxInterval,
+		cache:                cache,
+		logger:               cacheSettings.Logger(),
+		cacheTTL:             cacheTTL,
+		fluxInterval:         fluxInterval,
+		heatmapCacheRounding: heatmapCacheRounding,
 	}
 }
 
@@ -49,10 +51,32 @@ func (bc *bucketCache) GetMissRanges(
 
 	bc.logger.DebugContext(ctx, "getting miss ranges", "fingerprint", q.Fingerprint(), "start", startMs, "end", endMs)
 
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
+	// Determine request type from query
+	requestType := qbtypes.RequestTypeTimeSeries
+	if hasKind, ok := q.(interface{ GetKind() qbtypes.RequestType }); ok {
+		requestType = hasKind.GetKind()
+	}
 
-	bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
+	// For heatmaps with rounding enabled
+	if requestType == qbtypes.RequestTypeHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheStartMs, cacheEndMs := bc.roundHeatmapWindow(startMs, endMs)
+		windowCacheKey := bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+
+		var windowData qbtypes.CachedData
+		err := bc.cache.Get(ctx, orgID, windowCacheKey, &windowData)
+		if err == nil && len(windowData.Buckets) > 0 {
+			relevantBuckets := bc.filterRelevantBuckets(windowData.Buckets, cacheStartMs, cacheEndMs)
+			if len(relevantBuckets) > 0 {
+				mergedResult := bc.mergeBuckets(ctx, relevantBuckets, windowData.Warnings)
+				mergedResult = bc.filterResultToTimeRange(mergedResult, startMs, endMs)
+				return mergedResult, nil // No missing ranges for exact window match
+			}
+		}
+	}
+
+	// Generate base cache key
+	cacheKey := bc.generateCacheKey(q)
+	bc.logger.DebugContext(ctx, "base cache key", "cache_key", cacheKey)
 
 	// Try to get cached data
 	var data qbtypes.CachedData
@@ -66,12 +90,9 @@ func (bc *bucketCache) GetMissRanges(
 		return nil, missing
 	}
 
-	// Extract step interval if this is a builder query
-	stepMs := uint64(step.Duration.Milliseconds())
-
 	// Find missing ranges with step alignment
-	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-	bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
+	stepMs := uint64(step.Duration.Milliseconds())
+	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs, requestType)
 
 	// If no cached data overlaps with requested range, return empty result
 	if len(data.Buckets) == 0 {
@@ -97,13 +118,14 @@ func (bc *bucketCache) GetMissRanges(
 func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Query, step qbtypes.Step, fresh *qbtypes.Result) {
 	// Get query window
 	startMs, endMs := q.Window()
+	isHeatmap := fresh.Type == qbtypes.RequestTypeHeatmap
 
 	// Calculate the flux boundary - data after this point should not be cached
 	currentMs := uint64(time.Now().UnixMilli())
 	fluxBoundary := currentMs - uint64(bc.fluxInterval.Milliseconds())
 
 	// If the entire range is within flux interval, skip caching
-	if startMs >= fluxBoundary {
+	if !isHeatmap && startMs >= fluxBoundary {
 		bc.logger.DebugContext(ctx, "entire range within flux interval, skipping cache",
 			"start", startMs,
 			"end", endMs,
@@ -113,20 +135,11 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Adjust endMs to not include data within flux interval
 	cachableEndMs := endMs
-	if endMs > fluxBoundary {
+	if !isHeatmap && endMs > fluxBoundary {
 		cachableEndMs = fluxBoundary
 		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
 			"original_end", endMs,
 			"cachable_end", cachableEndMs)
-	}
-
-	// Generate cache key
-	cacheKey := bc.generateCacheKey(q)
-
-	// Get existing cached data
-	var existingData qbtypes.CachedData
-	if err := bc.cache.Get(ctx, orgID, cacheKey, &existingData); err != nil {
-		existingData = qbtypes.CachedData{}
 	}
 
 	// Trim the result to exclude data within flux interval
@@ -140,7 +153,6 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	cachableStartMs := startMs
 	stepMs := uint64(step.Duration.Milliseconds())
 
-	// If we have a step interval, adjust boundaries to only cache complete intervals
 	if stepMs > 0 {
 		// If start is not aligned, round up to next step boundary (first complete interval)
 		if startMs%stepMs != 0 {
@@ -167,9 +179,15 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	// Convert trimmed result to buckets with adjusted boundaries
 	freshBuckets := bc.resultToBuckets(ctx, trimmedResult, cachableStartMs, cachableEndMs)
 
-	// If no fresh buckets and no existing data, don't cache
-	if len(freshBuckets) == 0 && len(existingData.Buckets) == 0 {
+	// If no fresh buckets, don't cache
+	if len(freshBuckets) == 0 {
 		return
+	}
+
+	baseCacheKey := bc.generateCacheKey(q)
+	var existingData qbtypes.CachedData
+	if err := bc.cache.Get(ctx, orgID, baseCacheKey, &existingData); err != nil {
+		existingData = qbtypes.CachedData{}
 	}
 
 	// Merge with existing buckets
@@ -185,9 +203,24 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		Warnings: uniqueWarnings,
 	}
 
-	// Marshal and store in cache
-	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", "error", err)
+	// Store in base cache
+	if err := bc.cache.Set(ctx, orgID, baseCacheKey, &updatedData, bc.cacheTTL); err != nil {
+		bc.logger.ErrorContext(ctx, "error setting base cached data", "error", err)
+	}
+
+	// For heatmaps with rounding enabled
+	if isHeatmap && bc.heatmapCacheRounding > 0 {
+		cacheStartMs, cacheEndMs := bc.roundHeatmapWindow(startMs, endMs)
+		windowCacheKey := bc.generateCacheKeyWithWindow(q, cacheStartMs, cacheEndMs)
+
+		windowData := qbtypes.CachedData{
+			Buckets:  freshBuckets,
+			Warnings: trimmedResult.Warnings,
+		}
+
+		if err := bc.cache.Set(ctx, orgID, windowCacheKey, &windowData, bc.cacheTTL); err != nil {
+			bc.logger.ErrorContext(ctx, "error setting window cached data", "error", err)
+		}
 	}
 }
 
@@ -198,11 +231,35 @@ func (bc *bucketCache) generateCacheKey(q qbtypes.Query) string {
 	return fmt.Sprintf("v5:query:%s", fingerprint)
 }
 
+// generateCacheKeyWithWindow creates a cache key that includes rounded timestamps for heatmaps
+func (bc *bucketCache) generateCacheKeyWithWindow(q qbtypes.Query, startMs, endMs uint64) string {
+	fingerprint := q.Fingerprint()
+
+	return fmt.Sprintf("v5:query:%s:window:%d-%d", fingerprint, startMs, endMs)
+}
+
+// roundHeatmapWindow rounds start and end timestamps to the configured rounding interval
+func (bc *bucketCache) roundHeatmapWindow(startMs, endMs uint64) (uint64, uint64) {
+	roundingMs := uint64(bc.heatmapCacheRounding.Milliseconds())
+	return (startMs / roundingMs) * roundingMs, (endMs / roundingMs) * roundingMs
+}
+
 // findMissingRangesWithStep identifies time ranges not covered by cached buckets with step alignment
-func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64) []*qbtypes.TimeRange {
+func (bc *bucketCache) findMissingRangesWithStep(buckets []*qbtypes.CachedBucket, startMs, endMs uint64, stepMs uint64, requestType qbtypes.RequestType) []*qbtypes.TimeRange {
 	// When step is 0 or window is too small to be cached, use simple algorithm
 	if stepMs == 0 || (startMs+stepMs) > endMs {
 		return bc.findMissingRangesBasic(buckets, startMs, endMs)
+	}
+
+	if requestType == qbtypes.RequestTypeHeatmap && len(buckets) > 0 {
+		for _, bucket := range buckets {
+			if bucket.StartMs <= startMs && bucket.EndMs >= endMs {
+				// Cache fully covers the range - no missing data
+				return nil
+			}
+		}
+		// Return the entire range as missing
+		return []*qbtypes.TimeRange{{From: startMs, To: endMs}}
 	}
 
 	// When no buckets exist, handle partial windows specially
@@ -443,9 +500,8 @@ func (bc *bucketCache) mergeBuckets(ctx context.Context, buckets []*qbtypes.Cach
 	// Merge values based on type
 	var mergedValue any
 	switch resultType {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		mergedValue = bc.mergeTimeSeriesValues(ctx, buckets)
-		// Raw and Scalar types are not cached, so no merge needed
 	}
 
 	return &qbtypes.Result{
@@ -564,7 +620,7 @@ func (bc *bucketCache) isEmptyResult(result *qbtypes.Result) (isEmpty bool, isFi
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			// No aggregations at all means truly empty
 			if len(tsData.Aggregations) == 0 {
@@ -705,7 +761,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		// Trim time series data
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok && tsData != nil {
 			trimmedData := &qbtypes.TimeSeriesData{}
@@ -718,6 +774,7 @@ func (bc *bucketCache) trimResultToFluxBoundary(result *qbtypes.Result, fluxBoun
 				for _, series := range aggBucket.Series {
 					trimmedSeries := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 					}
 
 					// Filter values to exclude those beyond flux boundary and partial values
@@ -772,7 +829,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 	}
 
 	switch result.Type {
-	case qbtypes.RequestTypeTimeSeries:
+	case qbtypes.RequestTypeTimeSeries, qbtypes.RequestTypeHeatmap:
 		if tsData, ok := result.Value.(*qbtypes.TimeSeriesData); ok {
 			filteredData := &qbtypes.TimeSeriesData{
 				Aggregations: make([]*qbtypes.AggregationBucket, 0, len(tsData.Aggregations)),
@@ -789,6 +846,7 @@ func (bc *bucketCache) filterResultToTimeRange(result *qbtypes.Result, startMs, 
 				for _, series := range aggBucket.Series {
 					filteredSeries := &qbtypes.TimeSeries{
 						Labels: series.Labels,
+						Bounds: series.Bounds,
 						Values: make([]*qbtypes.TimeSeriesValue, 0, len(series.Values)),
 					}
 

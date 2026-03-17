@@ -886,3 +886,103 @@ func TestAdjustKey(t *testing.T) {
 		})
 	}
 }
+
+func TestStatementBuilderHeatmapQueryy(t *testing.T) {
+	cases := []struct {
+		name        string
+		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
+		requestType qbtypes.RequestType
+		expected    qbtypes.Statement
+		expectedErr error
+	}{
+		{
+			name: "bucket query with heatmap aggregation",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "heatmap(duration, 30)",
+					},
+				},
+				Filter: &qbtypes.Filter{
+					Expression: "service.name = 'cartservice'",
+				},
+			},
+			requestType: qbtypes.RequestTypeHeatmap,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE (simpleJSONExtractString(labels, 'service.name') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __histogram_0 AS (SELECT histogram(30)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS buckets_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?), __buckets_0 AS (SELECT arrayJoin(arrayMap(i -> (i, buckets_0[i].1, buckets_0[i].2), range(1, length(buckets_0) + 1))) AS bucket_0 FROM __histogram_0), __counts_0 AS (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, bucket_0.1 AS bucket_idx_0, count() AS cnt_0 FROM signoz_logs.distributed_logs_v2 CROSS JOIN __buckets_0 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND toFloat64(attributes_number['duration']) >= bucket_0.2 AND toFloat64(attributes_number['duration']) < bucket_0.3 GROUP BY ts, bucket_idx_0), __timestamps AS (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts FROM signoz_logs.distributed_logs_v2 WHERE true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts) SELECT t.ts, arrayMap(x -> (x.2, x.3, x.4), arraySort(x -> x.1, groupArray((b_0.bucket_0.1, b_0.bucket_0.2, b_0.bucket_0.3, ifNull(c_0.cnt_0, 0))))) AS __result_0 FROM __timestamps t CROSS JOIN __buckets_0 b_0 LEFT JOIN __counts_0 c_0 ON c_0.ts = t.ts AND c_0.bucket_idx_0 = b_0.bucket_0.1 GROUP BY t.ts ORDER BY t.ts",
+				Args:  []any{"cartservice", "%service.name%", "%service.name\":\"cartservice%", uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448)},
+			},
+			expectedErr: nil,
+		},
+		{
+			name: "heatmap with GroupBy and Limit",
+			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
+				Signal:       telemetrytypes.SignalLogs,
+				StepInterval: qbtypes.Step{Duration: 60 * time.Second},
+				Aggregations: []qbtypes.LogAggregation{
+					{
+						Expression: "heatmap(duration, 20)",
+					},
+				},
+				GroupBy: []qbtypes.GroupByKey{
+					{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "service.name",
+							FieldContext:  telemetrytypes.FieldContextResource,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+				},
+				Limit: 5,
+			},
+			requestType: qbtypes.RequestTypeHeatmap,
+			expected: qbtypes.Statement{
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?), __histogram_0 AS (SELECT histogram(20)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS buckets_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ?), __buckets_0 AS (SELECT arrayJoin(arrayMap(i -> (i, buckets_0[i].1, buckets_0[i].2), range(1, length(buckets_0) + 1))) AS bucket_0 FROM __histogram_0), __counts_0 AS (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, bucket_0.1 AS bucket_idx_0, count() AS cnt_0, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name` FROM signoz_logs.distributed_logs_v2 CROSS JOIN __buckets_0 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? AND toFloat64(attributes_number['duration']) >= bucket_0.2 AND toFloat64(attributes_number['duration']) < bucket_0.3 GROUP BY ts, bucket_idx_0, `service.name`), __timestamps AS (SELECT toStartOfInterval(fromUnixTimestamp64Nano(timestamp), INTERVAL 60 SECOND) AS ts, toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name` FROM signoz_logs.distributed_logs_v2 WHERE timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY ts, `service.name`), __limit_cte AS (SELECT toString(multiIf(multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL) IS NOT NULL, multiIf(resource.`service.name` IS NOT NULL, resource.`service.name`::String, mapContains(resources_string, 'service.name'), resources_string['service.name'], NULL), NULL)) AS `service.name`, histogram(20)(multiIf(mapContains(attributes_number, 'duration') = ?, toFloat64(attributes_number['duration']), NULL)) AS __result_0 FROM signoz_logs.distributed_logs_v2 WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? GROUP BY `service.name` ORDER BY __result_0 DESC LIMIT ?) SELECT t.ts, t.`service.name` AS `service.name`, arrayMap(x -> (x.2, x.3, x.4), arraySort(x -> x.1, groupArray((b_0.bucket_0.1, b_0.bucket_0.2, b_0.bucket_0.3, ifNull(c_0.cnt_0, 0))))) AS __result_0 FROM __timestamps t CROSS JOIN __buckets_0 b_0 LEFT JOIN __counts_0 c_0 ON c_0.ts = t.ts AND c_0.bucket_idx_0 = b_0.bucket_0.1 AND c_0.`service.name` = t.`service.name` WHERE (t.`service.name`) GLOBAL IN (SELECT `service.name` FROM __limit_cte) GROUP BY t.ts, t.`service.name` ORDER BY t.ts",
+				Args:  []any{uint64(1747945619), uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 5},
+			},
+			expectedErr: nil,
+		},
+	}
+
+	fm := NewFieldMapper()
+	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
+	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	for _, keys := range mockMetadataStore.KeysMap {
+		for _, key := range keys {
+			key.Signal = telemetrytypes.SignalLogs
+		}
+	}
+	cb := NewConditionBuilder(fm, mockMetadataStore)
+
+	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
+
+	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
+
+	statementBuilder := NewLogQueryStatementBuilder(
+		instrumentationtest.New().ToProviderSettings(),
+		mockMetadataStore,
+		fm,
+		cb,
+		resourceFilterStmtBuilder,
+		aggExprRewriter,
+		DefaultFullTextColumn,
+		GetBodyJSONKey,
+	)
+
+	for _, c := range cases {
+		t.Run(c.name, func(t *testing.T) {
+			q, err := statementBuilder.Build(context.Background(), 1747947419000, 1747983448000, c.requestType, c.query, nil)
+
+			if c.expectedErr != nil {
+				require.Error(t, err)
+				require.Contains(t, err.Error(), c.expectedErr.Error())
+			} else {
+				require.NoError(t, err)
+				require.Equal(t, c.expected.Query, q.Query)
+				require.Equal(t, c.expected.Args, q.Args)
+			}
+		})
+	}
+}

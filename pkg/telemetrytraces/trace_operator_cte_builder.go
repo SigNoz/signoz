@@ -402,6 +402,8 @@ func (b *traceOperatorCTEBuilder) buildFinalQuery(ctx context.Context, selectFro
 		return b.buildTraceQuery(ctx, selectFromCTE)
 	case qbtypes.RequestTypeScalar:
 		return b.buildScalarQuery(ctx, selectFromCTE)
+	case qbtypes.RequestTypeHeatmap:
+		return b.buildHeatmapQuery(ctx, selectFromCTE)
 	default:
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported request type: %s", requestType)
 	}
@@ -902,4 +904,241 @@ func (b *traceOperatorCTEBuilder) aggOrderBy(k qbtypes.OrderBy) (int, bool) {
 		}
 	}
 	return 0, false
+}
+
+func (b *traceOperatorCTEBuilder) buildHeatmapHistogramCTE(
+	ctx context.Context,
+	aggExpr qbtypes.TraceAggregation,
+	index int,
+	selectFromCTE string,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (cteName, cteSQL string, cteArgs []any, rawFieldName string, err error) {
+	rewritten, chArgs, err := b.stmtBuilder.aggExprRewriter.Rewrite(
+		ctx,
+		aggExpr.Expression,
+		uint64(b.operator.StepInterval.Seconds()),
+		keys,
+	)
+	if err != nil {
+		return "", "", nil, "", errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"failed to rewrite aggregation expression '%s': %v",
+			aggExpr.Expression,
+			err,
+		)
+	}
+
+	// Extract the raw field name from rewritten histogram
+	fieldName := querybuilder.ExtractFieldFromHistogramExpr(rewritten)
+	if fieldName == "" {
+		return "", "", nil, "", errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to extract field for histogram aggregation")
+	}
+
+	histSB := sqlbuilder.NewSelectBuilder()
+	histSB.Select(fmt.Sprintf("%s AS buckets_%d", rewritten, index))
+	histSB.From(selectFromCTE)
+
+	histSQL, histArgs := histSB.BuildWithFlavor(sqlbuilder.ClickHouse, chArgs...)
+	cteName = fmt.Sprintf("__histogram_op_%d", index)
+
+	return cteName, histSQL, histArgs, fieldName, nil
+}
+
+func (b *traceOperatorCTEBuilder) buildHeatmapBucketsCTE(
+	histogramCTEName string,
+	index int,
+) (cteName, cteSQL string, cteArgs []any) {
+	bucketsSB := sqlbuilder.NewSelectBuilder()
+	bucketsSB.Select(fmt.Sprintf(
+		"arrayJoin(arrayMap(i -> (i, buckets_%d[i].1, buckets_%d[i].2), range(1, length(buckets_%d) + 1))) AS bucket_%d",
+		index, index, index, index,
+	))
+	bucketsSB.From(histogramCTEName)
+
+	bucketsSQL, bucketsArgs := bucketsSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	cteName = fmt.Sprintf("__buckets_op_%d", index)
+
+	return cteName, bucketsSQL, bucketsArgs
+}
+
+func (b *traceOperatorCTEBuilder) buildHeatmapCountsCTE(
+	ctx context.Context,
+	bucketsCTEName string,
+	rawFieldName string,
+	index int,
+	selectFromCTE string,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (cteName, cteSQL string, cteArgs []any, err error) {
+	countsSB := sqlbuilder.NewSelectBuilder()
+	countsSB.Select(fmt.Sprintf(
+		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+		int64(b.operator.StepInterval.Seconds()),
+	))
+	countsSB.SelectMore(fmt.Sprintf("bucket_%d.1 AS bucket_idx_%d", index, index))
+	countsSB.SelectMore(fmt.Sprintf("count() AS cnt_%d", index))
+
+	var allGroupByArgs []any
+	for _, gb := range b.operator.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(
+			ctx,
+			&gb.TelemetryFieldKey,
+			b.stmtBuilder.fm,
+			b.stmtBuilder.cb,
+			keys,
+			telemetrytypes.FieldDataTypeString,
+			nil,
+		)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		groupByExpr := fmt.Sprintf("toString(%s)", expr)
+
+		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		countsSB.SelectMore(colExpr)
+	}
+
+	countsSB.From(selectFromCTE)
+	countsSB.SQL(fmt.Sprintf("CROSS JOIN %s", bucketsCTEName))
+
+	countsSB.Where(fmt.Sprintf("%s >= bucket_%d.2 AND %s < bucket_%d.3", rawFieldName, index, rawFieldName, index))
+	countsSB.GroupBy(fmt.Sprintf("ts, bucket_idx_%d", index))
+	countsSB.GroupBy(querybuilder.GroupByKeys(b.operator.GroupBy)...)
+
+	countsSQL, countsArgs := countsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
+	cteName = fmt.Sprintf("__counts_op_%d", index)
+
+	return cteName, countsSQL, countsArgs, nil
+}
+
+func (b *traceOperatorCTEBuilder) buildHeatmapTimestampsCTE(
+	ctx context.Context,
+	selectFromCTE string,
+	keys map[string][]*telemetrytypes.TelemetryFieldKey,
+) (cteName, cteSQL string, cteArgs []any, err error) {
+	tsSB := sqlbuilder.NewSelectBuilder()
+	tsSB.Select(fmt.Sprintf(
+		"toStartOfInterval(timestamp, INTERVAL %d SECOND) AS ts",
+		int64(b.operator.StepInterval.Seconds()),
+	))
+
+	var allGroupByArgs []any
+	for _, gb := range b.operator.GroupBy {
+		expr, args, err := querybuilder.CollisionHandledFinalExpr(
+			ctx,
+			&gb.TelemetryFieldKey,
+			b.stmtBuilder.fm,
+			b.stmtBuilder.cb,
+			keys,
+			telemetrytypes.FieldDataTypeString,
+			nil,
+		)
+		if err != nil {
+			return "", "", nil, err
+		}
+
+		groupByExpr := fmt.Sprintf("toString(%s)", expr)
+
+		colExpr := fmt.Sprintf("%s AS `%s`", groupByExpr, gb.TelemetryFieldKey.Name)
+		allGroupByArgs = append(allGroupByArgs, args...)
+		tsSB.SelectMore(colExpr)
+	}
+
+	tsSB.From(selectFromCTE)
+
+	tsSB.GroupBy("ts")
+	tsSB.GroupBy(querybuilder.GroupByKeys(b.operator.GroupBy)...)
+
+	tsSQL, tsArgs := tsSB.BuildWithFlavor(sqlbuilder.ClickHouse, allGroupByArgs...)
+	cteName = "__timestamps_op"
+
+	return cteName, tsSQL, tsArgs, nil
+}
+
+func (b *traceOperatorCTEBuilder) buildHeatmapQuery(ctx context.Context, selectFromCTE string) (*qbtypes.Statement, error) {
+	keySelectors := b.getKeySelectors()
+	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, aggExpr := range b.operator.Aggregations {
+		histCTEName, histSQL, histArgs, fieldExpr, err := b.buildHeatmapHistogramCTE(
+			ctx, aggExpr, i, selectFromCTE, keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+		b.addCTE(histCTEName, histSQL, histArgs, []string{selectFromCTE})
+
+		bucketsCTEName, bucketsSQL, bucketsArgs := b.buildHeatmapBucketsCTE(histCTEName, i)
+		b.addCTE(bucketsCTEName, bucketsSQL, bucketsArgs, []string{histCTEName})
+
+		countsCTEName, countsSQL, countsArgs, err := b.buildHeatmapCountsCTE(
+			ctx, bucketsCTEName, fieldExpr, i, selectFromCTE, keys,
+		)
+		if err != nil {
+			return nil, err
+		}
+		b.addCTE(countsCTEName, countsSQL, countsArgs, []string{selectFromCTE, bucketsCTEName})
+	}
+
+	tsCTEName, tsSQL, tsArgs, err := b.buildHeatmapTimestampsCTE(ctx, selectFromCTE, keys)
+	if err != nil {
+		return nil, err
+	}
+	b.addCTE(tsCTEName, tsSQL, tsArgs, []string{selectFromCTE})
+
+	mainSB := sqlbuilder.NewSelectBuilder()
+	mainSB.Select("t.ts")
+
+	// Select GroupBy fields from timestamps CTE
+	fieldNames := make([]string, 0, len(b.operator.GroupBy))
+	for _, gb := range b.operator.GroupBy {
+		mainSB.SelectMore(fmt.Sprintf("t.`%s` AS `%s`", gb.TelemetryFieldKey.Name, gb.TelemetryFieldKey.Name))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+	}
+
+	for i := range b.operator.Aggregations {
+		mainSB.SelectMore(fmt.Sprintf(
+			"arrayMap(x -> (x.2, x.3, x.4), arraySort(x -> x.1, groupArray((b_%d.bucket_%d.1, b_%d.bucket_%d.2, b_%d.bucket_%d.3, ifNull(c_%d.cnt_%d, 0))))) AS __result_%d",
+			i, i, i, i, i, i, i, i, i,
+		))
+	}
+
+	mainSB.From(fmt.Sprintf("%s t", tsCTEName))
+	for i := range b.operator.Aggregations {
+		mainSB.SQL(fmt.Sprintf("CROSS JOIN __buckets_op_%d b_%d", i, i))
+		joinCondition := fmt.Sprintf("c_%d.ts = t.ts AND c_%d.bucket_idx_%d = b_%d.bucket_%d.1", i, i, i, i, i)
+		for _, gb := range b.operator.GroupBy {
+			joinCondition += fmt.Sprintf(" AND c_%d.`%s` = t.`%s`", i, gb.TelemetryFieldKey.Name, gb.TelemetryFieldKey.Name)
+		}
+		mainSB.SQL(fmt.Sprintf("LEFT JOIN __counts_op_%d c_%d ON %s", i, i, joinCondition))
+	}
+
+	mainSB.GroupBy("t.ts")
+	if len(b.operator.GroupBy) > 0 {
+		for _, gb := range b.operator.GroupBy {
+			mainSB.GroupBy(fmt.Sprintf("t.`%s`", gb.TelemetryFieldKey.Name))
+		}
+	}
+
+	b.addHavingClause(mainSB)
+
+	for _, orderBy := range b.operator.Order {
+		idx, ok := b.aggOrderBy(orderBy)
+		if ok {
+			mainSB.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
+		} else {
+			mainSB.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+		}
+	}
+	mainSB.OrderBy("t.ts")
+
+	sql, args := mainSB.BuildWithFlavor(sqlbuilder.ClickHouse)
+	return &qbtypes.Statement{
+		Query: sql,
+		Args:  args,
+	}, nil
 }
