@@ -19,6 +19,7 @@ from fixtures.utils import get_testdata_file_path
 
 FILL_GAPS = "fillGaps"
 FILL_ZERO = "fillZero"
+HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 
 
 def _build_format_options(fill_mode: str) -> Dict[str, Any]:
@@ -590,7 +591,6 @@ def test_histogram_p90_returns_404_outside_data_window(
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
-    HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
     
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     metric_name = "test_p90_last_seen_bucket"
