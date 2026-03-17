@@ -12,8 +12,16 @@ type identNResolver struct {
 }
 
 func NewIdentNResolver(providerSettings factory.ProviderSettings, identNs ...IdentN) IdentNResolver {
+	enabledIdentNs := []IdentN{}
+
+	for _, identN := range identNs {
+		if identN.Enabled() {
+			enabledIdentNs = append(enabledIdentNs, identN)
+		}
+	}
+
 	return &identNResolver{
-		identNs:  identNs,
+		identNs:  enabledIdentNs,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn"),
 	}
 }

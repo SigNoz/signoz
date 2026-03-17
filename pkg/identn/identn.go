@@ -23,6 +23,8 @@ type IdentN interface {
 	GetIdentity(r *http.Request) (*authtypes.Identity, error)
 
 	Name() authtypes.IdentNProvider
+
+	Enabled() bool
 }
 
 // IdentNWithPreHook is optionally implemented by resolvers that need to
