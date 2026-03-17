@@ -866,8 +866,6 @@ func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQu
 }
 
 func jsonQueryTestUtil(_ *testing.T) (func(), func()) {
-	querybuilder.BodyJSONQueryEnabled = true
-
 	enable := func() {
 		querybuilder.BodyJSONQueryEnabled = true
 	}
