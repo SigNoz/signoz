@@ -21,10 +21,6 @@ jest.mock('@signozhq/drawer', () => ({
 	}): JSX.Element | null => (open ? <div>{content}</div> : null),
 }));
 
-jest.mock('@signozhq/sonner', () => ({
-	toast: { success: jest.fn(), error: jest.fn() },
-}));
-
 const mockServiceAccountsAPI = [
 	{
 		id: 'sa-1',

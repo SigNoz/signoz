@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { Controller, useForm } from 'react-hook-form';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
@@ -45,9 +44,30 @@ function CreateServiceAccountModal({
 		},
 	});
 
-	const [isSubmitting, setIsSubmitting] = useState(false);
-
-	const { mutateAsync: createServiceAccount } = useCreateServiceAccount();
+	const {
+		mutate: createServiceAccount,
+		isLoading: isSubmitting,
+	} = useCreateServiceAccount({
+		mutation: {
+			onSuccess: () => {
+				toast.success('Service account created successfully', {
+					richColors: true,
+				});
+				reset();
+				onSuccess();
+				onClose();
+			},
+			onError: (err) => {
+				const errMessage =
+					convertToApiError(
+						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'An error occurred';
+				toast.error(`Failed to create service account: ${errMessage}`, {
+					richColors: true,
+				});
+			},
+		},
+	});
 	const {
 		roles,
 		isLoading: rolesLoading,
@@ -61,31 +81,14 @@ function CreateServiceAccountModal({
 		onClose();
 	}
 
-	async function onSubmit(values: FormValues): Promise<void> {
-		setIsSubmitting(true);
-		try {
-			await createServiceAccount({
-				data: {
-					name: values.name.trim(),
-					email: values.email.trim(),
-					roles: values.roles,
-				},
-			});
-			toast.success('Service account created successfully', { richColors: true });
-			reset();
-			onSuccess();
-			onClose();
-		} catch (err: unknown) {
-			const errMessage =
-				convertToApiError(
-					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'An error occurred';
-			toast.error(`Failed to create service account: ${errMessage}`, {
-				richColors: true,
-			});
-		} finally {
-			setIsSubmitting(false);
-		}
+	function handleCreate(values: FormValues): void {
+		createServiceAccount({
+			data: {
+				name: values.name.trim(),
+				email: values.email.trim(),
+				roles: values.roles,
+			},
+		});
 	}
 
 	return (
@@ -210,7 +213,7 @@ function CreateServiceAccountModal({
 					variant="solid"
 					color="primary"
 					size="sm"
-					onClick={handleSubmit(onSubmit)}
+					onClick={handleSubmit(handleCreate)}
 					loading={isSubmitting}
 					disabled={!isValid}
 				>

@@ -128,25 +128,9 @@ function ServiceAccountDrawer({
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
-	const {
-		mutate: updateAccount,
-		isLoading: isSaving,
-	} = useUpdateServiceAccount();
-	const {
-		mutate: updateStatus,
-		isLoading: isDisabling,
-	} = useUpdateServiceAccountStatus();
-
-	function handleSave(): void {
-		if (!account || !isDirty) {
-			return;
-		}
-		updateAccount(
-			{
-				pathParams: { id: account.id },
-				data: { name: localName, email: account.email, roles: localRoles },
-			},
-			{
+	const { mutate: updateAccount, isLoading: isSaving } = useUpdateServiceAccount(
+		{
+			mutation: {
 				onSuccess: () => {
 					toast.success('Service account updated successfully', {
 						richColors: true,
@@ -162,33 +146,46 @@ function ServiceAccountDrawer({
 					toast.error(errMessage, { richColors: true });
 				},
 			},
-		);
+		},
+	);
+	const {
+		mutate: updateStatus,
+		isLoading: isDisabling,
+	} = useUpdateServiceAccountStatus({
+		mutation: {
+			onSuccess: () => {
+				toast.success('Service account disabled', { richColors: true });
+				setIsDisableConfirmOpen(false);
+				onSuccess({ closeDrawer: true });
+			},
+			onError: (error) => {
+				const errMessage =
+					convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'Failed to disable service account';
+				toast.error(errMessage, { richColors: true });
+			},
+		},
+	});
+
+	function handleSave(): void {
+		if (!account || !isDirty) {
+			return;
+		}
+		updateAccount({
+			pathParams: { id: account.id },
+			data: { name: localName, email: account.email, roles: localRoles },
+		});
 	}
 
 	function handleDisable(): void {
 		if (!account) {
 			return;
 		}
-		updateStatus(
-			{
-				pathParams: { id: account.id },
-				data: { status: 'DISABLED' },
-			},
-			{
-				onSuccess: () => {
-					toast.success('Service account disabled', { richColors: true });
-					setIsDisableConfirmOpen(false);
-					onSuccess({ closeDrawer: true });
-				},
-				onError: (error) => {
-					const errMessage =
-						convertToApiError(
-							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-						)?.getErrorMessage() || 'Failed to disable service account';
-					toast.error(errMessage, { richColors: true });
-				},
-			},
-		);
+		updateStatus({
+			pathParams: { id: account.id },
+			data: { status: 'DISABLED' },
+		});
 	}
 
 	const handleClose = useCallback((): void => {

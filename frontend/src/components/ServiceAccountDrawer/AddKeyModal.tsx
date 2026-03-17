@@ -42,7 +42,6 @@ function AddKeyModal({
 	const [keyName, setKeyName] = useState('');
 	const [expiryMode, setExpiryMode] = useState<ExpiryMode>('none');
 	const [expiryDate, setExpiryDate] = useState<Dayjs | null>(null);
-	const [isSubmitting, setIsSubmitting] = useState(false);
 	const [
 		createdKey,
 		setCreatedKey,
@@ -55,40 +54,43 @@ function AddKeyModal({
 			setKeyName('');
 			setExpiryMode('none');
 			setExpiryDate(null);
-			setIsSubmitting(false);
 			setCreatedKey(null);
 			setHasCopied(false);
 		}
 	}, [open]);
 
-	const { mutateAsync: createKey } = useCreateServiceAccountKey();
+	const {
+		mutate: createKey,
+		isLoading: isSubmitting,
+	} = useCreateServiceAccountKey({
+		mutation: {
+			onSuccess: (response) => {
+				const keyData = response?.data;
+				if (keyData) {
+					setCreatedKey(keyData);
+					setPhase('created');
+				}
+			},
+			onError: (error) => {
+				const errMessage =
+					convertToApiError(
+						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'Failed to create key';
+				toast.error(errMessage, { richColors: true });
+			},
+		},
+	});
 
-	const handleCreate = useCallback(async (): Promise<void> => {
+	const handleCreate = useCallback((): void => {
 		if (!keyName.trim()) {
 			return;
 		}
-		setIsSubmitting(true);
-		try {
-			const expiresAt =
-				expiryMode === 'date' && expiryDate ? expiryDate.endOf('day').unix() : 0;
-			const response = await createKey({
-				pathParams: { id: accountId },
-				data: { name: keyName.trim(), expiresAt },
-			});
-			const keyData = response?.data;
-			if (keyData) {
-				setCreatedKey(keyData);
-				setPhase('created');
-			}
-		} catch (error: unknown) {
-			const errMessage =
-				convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-				)?.getErrorMessage() || 'Failed to create key';
-			toast.error(errMessage, { richColors: true });
-		} finally {
-			setIsSubmitting(false);
-		}
+		const expiresAt =
+			expiryMode === 'date' && expiryDate ? expiryDate.endOf('day').unix() : 0;
+		createKey({
+			pathParams: { id: accountId },
+			data: { name: keyName.trim(), expiresAt },
+		});
 	}, [keyName, expiryMode, expiryDate, accountId, createKey]);
 
 	const handleCopy = useCallback(async (): Promise<void> => {
