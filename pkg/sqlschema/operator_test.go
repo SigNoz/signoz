@@ -1146,3 +1146,100 @@ func TestOperatorAlterTable(t *testing.T) {
 		})
 	}
 }
+
+func TestOperatorDiffIndices(t *testing.T) {
+	testCases := []struct {
+		name         string
+		oldIndices   []Index
+		newIndices   []Index
+		expectedSQLs [][]byte
+	}{
+		{
+			name: "UniqueToPartialUnique_DropAndCreate",
+			oldIndices: []Index{
+				&UniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+				},
+			},
+			newIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`DROP INDEX IF EXISTS "uq_users_email"`),
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_94610c77" ON "users" ("email") WHERE "deleted_at" IS NULL`),
+			},
+		},
+		{
+			name: "PartialUnique_SameWhere_NoOp",
+			oldIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			newIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			expectedSQLs: [][]byte{},
+		},
+		{
+			name: "PartialUnique_NormalizedWhere_NoOp",
+			oldIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `(deleted_at IS NULL)`,
+				},
+			},
+			newIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			expectedSQLs: [][]byte{},
+		},
+		{
+			name: "PartialUnique_DifferentWhere_DropAndCreate",
+			oldIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"deleted_at" IS NULL`,
+				},
+			},
+			newIndices: []Index{
+				&PartialUniqueIndex{
+					TableName:   "users",
+					ColumnNames: []ColumnName{"email"},
+					Where:       `"active" = true`,
+				},
+			},
+			expectedSQLs: [][]byte{
+				[]byte(`DROP INDEX IF EXISTS "puq_users_email_94610c77"`),
+				[]byte(`CREATE UNIQUE INDEX IF NOT EXISTS "puq_users_email_202121f8" ON "users" ("email") WHERE "active" = true`),
+			},
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			fmter := NewFormatter(schema.NewNopFormatter().Dialect())
+			operator := NewOperator(fmter, OperatorSupport{})
+
+			actuals := operator.DiffIndices(testCase.oldIndices, testCase.newIndices)
+			assert.Equal(t, testCase.expectedSQLs, actuals)
+		})
+	}
+}

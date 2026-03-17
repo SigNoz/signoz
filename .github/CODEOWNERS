@@ -105,6 +105,10 @@ go.mod @therealpandey
 /pkg/modules/authdomain/ @vikrantgupta25
 /pkg/modules/role/ @vikrantgupta25
 
+# IdentN Owners 
+/pkg/identn/ @vikrantgupta25
+/pkg/http/middleware/identn.go @vikrantgupta25
+
 # Integration tests
 
 /tests/integration/ @vikrantgupta25

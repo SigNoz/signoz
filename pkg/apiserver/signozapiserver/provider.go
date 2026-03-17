@@ -23,7 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/gorilla/mux"
 )
@@ -238,13 +238,13 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderAPIkey.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
 	}
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
 	}
 }

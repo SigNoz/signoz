@@ -223,7 +223,8 @@ SELECT
     i.indisunique AS unique,
     i.indisprimary AS primary,
     a.attname AS column_name,
-    array_position(i.indkey, a.attnum) AS column_position
+    array_position(i.indkey, a.attnum) AS column_position,
+    pg_get_expr(i.indpred, i.indrelid) AS predicate
 FROM
     pg_index i
     LEFT JOIN pg_class ct ON ct.oid = i.indrelid
@@ -246,7 +247,12 @@ ORDER BY index_name, column_position`, string(name))
 		}
 	}()
 
-	uniqueIndicesMap := make(map[string]*sqlschema.UniqueIndex)
+	type indexEntry struct {
+		columns   []sqlschema.ColumnName
+		predicate *string
+	}
+
+	uniqueIndicesMap := make(map[string]*indexEntry)
 	for rows.Next() {
 		var (
 			tableName  string
@@ -256,30 +262,50 @@ ORDER BY index_name, column_position`, string(name))
 			columnName string
 			// starts from 0 and is unused in this function, this is to ensure that the column names are in the correct order
 			columnPosition int
+			predicate      *string
 		)
 
-		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition); err != nil {
+		if err := rows.Scan(&tableName, &indexName, &unique, &primary, &columnName, &columnPosition, &predicate); err != nil {
 			return nil, err
 		}
 
 		if unique {
 			if _, ok := uniqueIndicesMap[indexName]; !ok {
-				uniqueIndicesMap[indexName] = &sqlschema.UniqueIndex{
-					TableName:   name,
-					ColumnNames: []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
+				uniqueIndicesMap[indexName] = &indexEntry{
+					columns:   []sqlschema.ColumnName{sqlschema.ColumnName(columnName)},
+					predicate: predicate,
 				}
 			} else {
-				uniqueIndicesMap[indexName].ColumnNames = append(uniqueIndicesMap[indexName].ColumnNames, sqlschema.ColumnName(columnName))
+				uniqueIndicesMap[indexName].columns = append(uniqueIndicesMap[indexName].columns, sqlschema.ColumnName(columnName))
 			}
 		}
 	}
 
 	indices := make([]sqlschema.Index, 0)
-	for indexName, index := range uniqueIndicesMap {
-		if index.Name() == indexName {
-			indices = append(indices, index)
+	for indexName, entry := range uniqueIndicesMap {
+		if entry.predicate != nil {
+			index := &sqlschema.PartialUniqueIndex{
+				TableName:   name,
+				ColumnNames: entry.columns,
+				Where:       *entry.predicate,
+			}
+
+			if index.Name() == indexName {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(indexName))
+			}
 		} else {
-			indices = append(indices, index.Named(indexName))
+			index := &sqlschema.UniqueIndex{
+				TableName:   name,
+				ColumnNames: entry.columns,
+			}
+
+			if index.Name() == indexName {
+				indices = append(indices, index)
+			} else {
+				indices = append(indices, index.Named(indexName))
+			}
 		}
 	}
 

@@ -45,6 +45,8 @@ type MetadataStore interface {
 
 	// GetFirstSeenFromMetricMetadata gets the first seen timestamp for a metric metadata lookup key.
 	GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []MetricMetadataLookupKey) (map[MetricMetadataLookupKey]int64, error)
+
+	FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error)
 }
 
 type MetricMetadataLookupKey struct {

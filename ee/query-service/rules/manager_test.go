@@ -80,6 +80,21 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 					alertDataRows := cmock.NewRows(cols, tc.Values)
 
 					mock := telemetryStore.Mock()
+					// Mock metadata queries for FetchTemporalityAndTypeMulti
+					// First query: fetchMetricsTemporalityAndType (from signoz_metrics time series table)
+					metadataCols := []cmock.ColumnType{
+						{Name: "metric_name", Type: "String"},
+						{Name: "temporality", Type: "String"},
+						{Name: "type", Type: "String"},
+						{Name: "is_monotonic", Type: "Bool"},
+					}
+					metadataRows := cmock.NewRows(metadataCols, [][]any{
+						{"probe_success", metrictypes.Unspecified, metrictypes.GaugeType, false},
+					})
+					mock.ExpectQuery("*distributed_time_series_v4*").WithArgs(nil, nil, nil).WillReturnRows(metadataRows)
+					// Second query: fetchMeterSourceMetricsTemporalityAndType (from signoz_meter table)
+					emptyMetadataRows := cmock.NewRows(metadataCols, [][]any{})
+					mock.ExpectQuery("*meter*").WithArgs(nil).WillReturnRows(emptyMetadataRows)
 
 					// Generate query arguments for the metric query
 					evalTime := time.Now().UTC()
