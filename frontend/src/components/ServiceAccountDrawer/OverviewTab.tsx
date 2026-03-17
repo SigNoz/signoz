@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Badge } from '@signozhq/badge';
 import { LockKeyhole } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import type { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import RolesSelect from 'components/RolesSelect';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
@@ -16,7 +16,7 @@ interface OverviewTabProps {
 	localRoles: string[];
 	onRolesChange: (v: string[]) => void;
 	isDisabled: boolean;
-	availableRoles: RoletypesRoleDTO[];
+	availableRoles: AuthtypesRoleDTO[];
 	rolesLoading?: boolean;
 	rolesError?: boolean;
 	rolesErrorObj?: APIError | undefined;

@@ -2,7 +2,7 @@ import { CircleAlert, RefreshCw } from '@signozhq/icons';
 import { Checkbox, Select } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { useListRoles } from 'api/generated/services/role';
-import type { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import APIError from 'types/api/error';
 
@@ -14,7 +14,7 @@ export interface RoleOption {
 }
 
 export function useRoles(): {
-	roles: RoletypesRoleDTO[];
+	roles: AuthtypesRoleDTO[];
 	isLoading: boolean;
 	isError: boolean;
 	error: APIError | undefined;
@@ -30,7 +30,7 @@ export function useRoles(): {
 	};
 }
 
-export function getRoleOptions(roles: RoletypesRoleDTO[]): RoleOption[] {
+export function getRoleOptions(roles: AuthtypesRoleDTO[]): RoleOption[] {
 	return roles.map((role) => ({
 		label: role.name ?? '',
 		value: role.name ?? '',
@@ -74,7 +74,7 @@ interface BaseProps {
 	placeholder?: string;
 	className?: string;
 	getPopupContainer?: (trigger: HTMLElement) => HTMLElement;
-	roles?: RoletypesRoleDTO[];
+	roles?: AuthtypesRoleDTO[];
 	loading?: boolean;
 	isError?: boolean;
 	error?: APIError;
