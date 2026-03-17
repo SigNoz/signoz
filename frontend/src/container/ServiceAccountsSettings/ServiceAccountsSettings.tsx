@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
@@ -20,6 +20,7 @@ import ServiceAccountsTable, {
 	PAGE_SIZE,
 } from 'components/ServiceAccountsTable/ServiceAccountsTable';
 import {
+	parseAsBoolean,
 	parseAsInteger,
 	parseAsString,
 	parseAsStringEnum,
@@ -52,7 +53,10 @@ function ServiceAccountsSettings(): JSX.Element {
 		),
 	);
 	const [, setSelectedAccountId] = useQueryState('account');
-	const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+	const [, setIsCreateModalOpen] = useQueryState(
+		'create-sa',
+		parseAsBoolean.withDefault(false),
+	);
 
 	const queryClient = useQueryClient();
 
@@ -267,7 +271,9 @@ function ServiceAccountsSettings(): JSX.Element {
 						variant="solid"
 						size="sm"
 						color="primary"
-						onClick={(): void => setIsCreateModalOpen(true)}
+						onClick={(): void => {
+							void setIsCreateModalOpen(true);
+						}}
 					>
 						<Plus size={12} />
 						New Service Account
@@ -290,11 +296,7 @@ function ServiceAccountsSettings(): JSX.Element {
 				/>
 			)}
 
-			<CreateServiceAccountModal
-				open={isCreateModalOpen}
-				onClose={(): void => setIsCreateModalOpen(false)}
-				onSuccess={handleCreateSuccess}
-			/>
+			<CreateServiceAccountModal />
 
 			<ServiceAccountDrawer onSuccess={handleDrawerSuccess} />
 		</>

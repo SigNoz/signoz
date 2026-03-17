@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { Controller, useForm } from 'react-hook-form';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
@@ -32,6 +33,12 @@ interface AddKeyModalProps {
 type Phase = 'form' | 'created';
 type ExpiryMode = 'none' | 'date';
 
+interface FormValues {
+	keyName: string;
+	expiryMode: ExpiryMode;
+	expiryDate: Dayjs | null;
+}
+
 function AddKeyModal({
 	open,
 	accountId,
@@ -39,25 +46,35 @@ function AddKeyModal({
 	onSuccess,
 }: AddKeyModalProps): JSX.Element {
 	const [phase, setPhase] = useState<Phase>('form');
-	const [keyName, setKeyName] = useState('');
-	const [expiryMode, setExpiryMode] = useState<ExpiryMode>('none');
-	const [expiryDate, setExpiryDate] = useState<Dayjs | null>(null);
 	const [
 		createdKey,
 		setCreatedKey,
 	] = useState<ServiceaccounttypesGettableFactorAPIKeyWithKeyDTO | null>(null);
 	const [hasCopied, setHasCopied] = useState(false);
 
+	const {
+		control,
+		register,
+		handleSubmit,
+		reset,
+		watch,
+		formState: { isValid },
+	} = useForm<FormValues>({
+		mode: 'onChange',
+		defaultValues: { keyName: '', expiryMode: 'none', expiryDate: null },
+	});
+
+	const expiryMode = watch('expiryMode');
+	const expiryDate = watch('expiryDate');
+
 	useEffect(() => {
 		if (open) {
 			setPhase('form');
-			setKeyName('');
-			setExpiryMode('none');
-			setExpiryDate(null);
 			setCreatedKey(null);
 			setHasCopied(false);
+			reset();
 		}
-	}, [open]);
+	}, [open, reset]);
 
 	const {
 		mutate: createKey,
@@ -81,17 +98,17 @@ function AddKeyModal({
 		},
 	});
 
-	const handleCreate = useCallback((): void => {
-		if (!keyName.trim()) {
-			return;
-		}
-		const expiresAt =
-			expiryMode === 'date' && expiryDate ? expiryDate.endOf('day').unix() : 0;
+	function handleCreate({
+		keyName,
+		expiryMode: mode,
+		expiryDate: date,
+	}: FormValues): void {
+		const expiresAt = mode === 'date' && date ? date.endOf('day').unix() : 0;
 		createKey({
 			pathParams: { id: accountId },
 			data: { name: keyName.trim(), expiresAt },
 		});
-	}, [keyName, expiryMode, expiryDate, accountId, createKey]);
+	}
 
 	const handleCopy = useCallback(async (): Promise<void> => {
 		if (!createdKey?.key) {
@@ -150,41 +167,46 @@ function AddKeyModal({
 							</label>
 							<Input
 								id="key-name"
-								value={keyName}
-								onChange={(e): void => setKeyName(e.target.value)}
 								placeholder="Enter key name e.g.: Service Owner"
 								className="add-key-modal__input"
+								{...register('keyName', {
+									required: true,
+									validate: (v) => !!v.trim(),
+								})}
 							/>
 						</div>
 
 						<div className="add-key-modal__field">
 							<span className="add-key-modal__label">Expiration</span>
-							<ToggleGroup
-								type="single"
-								value={expiryMode}
-								onValueChange={(val): void => {
-									if (val) {
-										setExpiryMode(val as ExpiryMode);
-										if (val === 'none') {
-											setExpiryDate(null);
-										}
-									}
-								}}
-								className="add-key-modal__expiry-toggle"
-							>
-								<ToggleGroupItem
-									value="none"
-									className="add-key-modal__expiry-toggle-btn"
-								>
-									No Expiration
-								</ToggleGroupItem>
-								<ToggleGroupItem
-									value="date"
-									className="add-key-modal__expiry-toggle-btn"
-								>
-									Set Expiration Date
-								</ToggleGroupItem>
-							</ToggleGroup>
+							<Controller
+								name="expiryMode"
+								control={control}
+								render={({ field }): JSX.Element => (
+									<ToggleGroup
+										type="single"
+										value={field.value}
+										onValueChange={(val): void => {
+											if (val) {
+												field.onChange(val);
+											}
+										}}
+										className="add-key-modal__expiry-toggle"
+									>
+										<ToggleGroupItem
+											value="none"
+											className="add-key-modal__expiry-toggle-btn"
+										>
+											No Expiration
+										</ToggleGroupItem>
+										<ToggleGroupItem
+											value="date"
+											className="add-key-modal__expiry-toggle-btn"
+										>
+											Set Expiration Date
+										</ToggleGroupItem>
+									</ToggleGroup>
+								)}
+							/>
 						</div>
 
 						{expiryMode === 'date' && (
@@ -193,13 +215,19 @@ function AddKeyModal({
 									Expiration Date
 								</label>
 								<div className="add-key-modal__datepicker">
-									<DatePicker
-										id="expiry-date"
-										value={expiryDate}
-										onChange={(date): void => setExpiryDate(date)}
-										popupClassName="add-key-modal-datepicker-popup"
-										getPopupContainer={popupContainer}
-										disabledDate={disabledDate}
+									<Controller
+										name="expiryDate"
+										control={control}
+										render={({ field }): JSX.Element => (
+											<DatePicker
+												id="expiry-date"
+												value={field.value}
+												onChange={field.onChange}
+												popupClassName="add-key-modal-datepicker-popup"
+												getPopupContainer={popupContainer}
+												disabledDate={disabledDate}
+											/>
+										)}
 									/>
 								</div>
 							</div>
@@ -221,8 +249,8 @@ function AddKeyModal({
 								color="primary"
 								size="sm"
 								loading={isSubmitting}
-								disabled={!keyName.trim()}
-								onClick={handleCreate}
+								disabled={!isValid}
+								onClick={handleSubmit(handleCreate)}
 							>
 								Create Key
 							</Button>

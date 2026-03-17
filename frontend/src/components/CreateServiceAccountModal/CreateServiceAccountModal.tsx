@@ -1,23 +1,22 @@
 import { Controller, useForm } from 'react-hook-form';
+import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { useCreateServiceAccount } from 'api/generated/services/serviceaccount';
+import {
+	invalidateListServiceAccounts,
+	useCreateServiceAccount,
+} from 'api/generated/services/serviceaccount';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
+import { parseAsBoolean, useQueryState } from 'nuqs';
 import { EMAIL_REGEX } from 'utils/app';
 
 import './CreateServiceAccountModal.styles.scss';
-
-interface CreateServiceAccountModalProps {
-	open: boolean;
-	onClose: () => void;
-	onSuccess: () => void;
-}
 
 interface FormValues {
 	name: string;
@@ -25,11 +24,13 @@ interface FormValues {
 	roles: string[];
 }
 
-function CreateServiceAccountModal({
-	open,
-	onClose,
-	onSuccess,
-}: CreateServiceAccountModalProps): JSX.Element {
+function CreateServiceAccountModal(): JSX.Element {
+	const queryClient = useQueryClient();
+	const [isOpen, setIsOpen] = useQueryState(
+		'create-sa',
+		parseAsBoolean.withDefault(false),
+	);
+
 	const {
 		control,
 		handleSubmit,
@@ -54,8 +55,8 @@ function CreateServiceAccountModal({
 					richColors: true,
 				});
 				reset();
-				onSuccess();
-				onClose();
+				void setIsOpen(null);
+				void invalidateListServiceAccounts(queryClient);
 			},
 			onError: (err) => {
 				const errMessage =
@@ -78,7 +79,7 @@ function CreateServiceAccountModal({
 
 	function handleClose(): void {
 		reset();
-		onClose();
+		void setIsOpen(null);
 	}
 
 	function handleCreate(values: FormValues): void {
@@ -94,9 +95,9 @@ function CreateServiceAccountModal({
 	return (
 		<DialogWrapper
 			title="New Service Account"
-			open={open}
-			onOpenChange={(isOpen): void => {
-				if (!isOpen) {
+			open={isOpen}
+			onOpenChange={(open): void => {
+				if (!open) {
 					handleClose();
 				}
 			}}

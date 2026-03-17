@@ -1,6 +1,7 @@
 import { toast } from '@signozhq/sonner';
 import { listRolesSuccessResponse } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import CreateServiceAccountModal from '../CreateServiceAccountModal';
@@ -13,6 +14,14 @@ const mockToast = jest.mocked(toast);
 
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SERVICE_ACCOUNTS_ENDPOINT = '*/api/v1/service_accounts';
+
+function renderModal(): ReturnType<typeof render> {
+	return render(
+		<NuqsTestingAdapter searchParams={{ 'create-sa': 'true' }} hasMemory>
+			<CreateServiceAccountModal />
+		</NuqsTestingAdapter>,
+	);
+}
 
 describe('CreateServiceAccountModal', () => {
 	beforeEach(() => {
@@ -32,9 +41,7 @@ describe('CreateServiceAccountModal', () => {
 	});
 
 	it('submit button is disabled when form is empty', () => {
-		render(
-			<CreateServiceAccountModal open onClose={jest.fn()} onSuccess={jest.fn()} />,
-		);
+		renderModal();
 
 		expect(
 			screen.getByRole('button', { name: /Create Service Account/i }),
@@ -43,10 +50,7 @@ describe('CreateServiceAccountModal', () => {
 
 	it('submit button remains disabled when email is invalid', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<CreateServiceAccountModal open onClose={jest.fn()} onSuccess={jest.fn()} />,
-		);
+		renderModal();
 
 		await user.type(screen.getByPlaceholderText('Enter a name'), 'My Bot');
 		await user.type(
@@ -64,14 +68,9 @@ describe('CreateServiceAccountModal', () => {
 		);
 	});
 
-	it('successful submit shows toast.success and calls onSuccess + onClose', async () => {
-		const onSuccess = jest.fn();
-		const onClose = jest.fn();
+	it('successful submit shows toast.success and closes modal', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<CreateServiceAccountModal open onClose={onClose} onSuccess={onSuccess} />,
-		);
+		renderModal();
 
 		await user.type(screen.getByPlaceholderText('Enter a name'), 'Deploy Bot');
 		await user.type(
@@ -93,13 +92,16 @@ describe('CreateServiceAccountModal', () => {
 				'Service account created successfully',
 				expect.anything(),
 			);
-			expect(onSuccess).toHaveBeenCalled();
-			expect(onClose).toHaveBeenCalled();
+		});
+
+		await waitFor(() => {
+			expect(
+				screen.queryByRole('dialog', { name: /New Service Account/i }),
+			).not.toBeInTheDocument();
 		});
 	});
 
-	it('shows toast.error and does not call onSuccess on API error', async () => {
-		const onSuccess = jest.fn();
+	it('shows toast.error on API error and keeps modal open', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
@@ -111,9 +113,7 @@ describe('CreateServiceAccountModal', () => {
 			),
 		);
 
-		render(
-			<CreateServiceAccountModal open onClose={jest.fn()} onSuccess={onSuccess} />,
-		);
+		renderModal();
 
 		await user.type(screen.getByPlaceholderText('Enter a name'), 'Dupe Bot');
 		await user.type(
@@ -135,29 +135,28 @@ describe('CreateServiceAccountModal', () => {
 				expect.stringMatching(/Failed to create service account/i),
 				expect.anything(),
 			);
-			expect(onSuccess).not.toHaveBeenCalled();
 		});
+
+		expect(
+			screen.getByRole('dialog', { name: /New Service Account/i }),
+		).toBeInTheDocument();
 	});
 
-	it('Cancel button calls onClose without submitting', async () => {
-		const onClose = jest.fn();
+	it('Cancel button closes modal without submitting', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		renderModal();
 
-		render(
-			<CreateServiceAccountModal open onClose={onClose} onSuccess={jest.fn()} />,
-		);
-
+		await screen.findByRole('dialog', { name: /New Service Account/i });
 		await user.click(screen.getByRole('button', { name: /Cancel/i }));
 
-		expect(onClose).toHaveBeenCalledTimes(1);
+		expect(
+			screen.queryByRole('dialog', { name: /New Service Account/i }),
+		).not.toBeInTheDocument();
 	});
 
 	it('shows "Name is required" after clearing the name field', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<CreateServiceAccountModal open onClose={jest.fn()} onSuccess={jest.fn()} />,
-		);
+		renderModal();
 
 		const nameInput = screen.getByPlaceholderText('Enter a name');
 		await user.type(nameInput, 'Bot');
@@ -168,10 +167,7 @@ describe('CreateServiceAccountModal', () => {
 
 	it('shows "Please enter a valid email address" for a malformed email', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-		render(
-			<CreateServiceAccountModal open onClose={jest.fn()} onSuccess={jest.fn()} />,
-		);
+		renderModal();
 
 		await user.type(
 			screen.getByPlaceholderText('email@example.com'),
