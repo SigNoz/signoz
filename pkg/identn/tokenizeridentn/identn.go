@@ -6,6 +6,7 @@ import (
 	"strings"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
@@ -15,21 +16,21 @@ import (
 
 type resolver struct {
 	tokenizer tokenizer.Tokenizer
-	headers   []string
+	config    identn.Config
 	settings  factory.ScopedProviderSettings
 	sfGroup   *singleflight.Group
 }
 
 func NewFactory(tokenizer tokenizer.Tokenizer) factory.ProviderFactory[identn.IdentN, identn.Config] {
 	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderTokenizer.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
-		return New(providerSettings, tokenizer, config.Tokenizer.Headers)
+		return New(providerSettings, tokenizer, config)
 	})
 }
 
-func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, headers []string) (identn.IdentN, error) {
+func New(providerSettings factory.ProviderSettings, tokenizer tokenizer.Tokenizer, config identn.Config) (identn.IdentN, error) {
 	return &resolver{
 		tokenizer: tokenizer,
-		headers:   headers,
+		config:    config,
 		settings:  factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"),
 		sfGroup:   &singleflight.Group{},
 	}, nil
@@ -40,7 +41,11 @@ func (r *resolver) Name() authtypes.IdentNProvider {
 }
 
 func (r *resolver) Test(req *http.Request) bool {
-	for _, header := range r.headers {
+	if !r.config.Tokenizer.Enabled {
+		return false
+	}
+
+	for _, header := range r.config.Tokenizer.Headers {
 		if req.Header.Get(header) != "" {
 			return true
 		}
@@ -49,6 +54,10 @@ func (r *resolver) Test(req *http.Request) bool {
 }
 
 func (r *resolver) Pre(req *http.Request) *http.Request {
+	if !r.config.Tokenizer.Enabled {
+		return req
+	}
+
 	accessToken := r.extractToken(req)
 	if accessToken == "" {
 		return req
@@ -59,8 +68,12 @@ func (r *resolver) Pre(req *http.Request) *http.Request {
 }
 
 func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
-	ctx := req.Context()
+	if !r.config.Tokenizer.Enabled {
+		// this should never happen since Test returns false
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "identN:%s resolver is disabled", r.Name().StringValue())
+	}
 
+	ctx := req.Context()
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
 		return nil, err
@@ -70,6 +83,10 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 }
 
 func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+	if !r.config.Tokenizer.Enabled {
+		return
+	}
+
 	accessToken, err := authtypes.AccessTokenFromContext(ctx)
 	if err != nil {
 		return
@@ -86,7 +103,7 @@ func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims
 
 func (r *resolver) extractToken(req *http.Request) string {
 	var value string
-	for _, header := range r.headers {
+	for _, header := range r.config.Tokenizer.Headers {
 		if v := req.Header.Get(header); v != "" {
 			value = v
 			break

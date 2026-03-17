@@ -19,21 +19,21 @@ type apiKeyTokenKey struct{}
 
 type resolver struct {
 	store    sqlstore.SQLStore
-	headers  []string
+	config   identn.Config
 	settings factory.ScopedProviderSettings
 	sfGroup  *singleflight.Group
 }
 
 func NewFactory(store sqlstore.SQLStore) factory.ProviderFactory[identn.IdentN, identn.Config] {
 	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIkey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
-		return New(providerSettings, store, config.APIKeyConfig.Headers)
+		return New(providerSettings, store, config)
 	})
 }
 
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, headers []string) (identn.IdentN, error) {
+func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, config identn.Config) (identn.IdentN, error) {
 	return &resolver{
 		store:    store,
-		headers:  headers,
+		config:   config,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
 		sfGroup:  &singleflight.Group{},
 	}, nil
@@ -44,7 +44,11 @@ func (r *resolver) Name() authtypes.IdentNProvider {
 }
 
 func (r *resolver) Test(req *http.Request) bool {
-	for _, header := range r.headers {
+	if !r.config.Tokenizer.Enabled {
+		return false
+	}
+
+	for _, header := range r.config.APIKeyConfig.Headers {
 		if req.Header.Get(header) != "" {
 			return true
 		}
@@ -53,6 +57,10 @@ func (r *resolver) Test(req *http.Request) bool {
 }
 
 func (r *resolver) Pre(req *http.Request) *http.Request {
+	if !r.config.Tokenizer.Enabled {
+		return req
+	}
+
 	token := r.extractToken(req)
 	if token == "" {
 		return req
@@ -63,8 +71,12 @@ func (r *resolver) Pre(req *http.Request) *http.Request {
 }
 
 func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
-	ctx := req.Context()
+	if !r.config.Tokenizer.Enabled {
+		// this should never happen since Test returns false
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "identN:%s resolver is disabled", r.Name().StringValue())
+	}
 
+	ctx := req.Context()
 	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
 	if !ok || apiKeyToken == "" {
 		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key")
@@ -106,6 +118,10 @@ func (r *resolver) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 }
 
 func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
+	if !r.config.Tokenizer.Enabled {
+		return
+	}
+
 	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
 	if !ok || apiKeyToken == "" {
 		return
@@ -128,7 +144,7 @@ func (r *resolver) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims
 }
 
 func (r *resolver) extractToken(req *http.Request) string {
-	for _, header := range r.headers {
+	for _, header := range r.config.APIKeyConfig.Headers {
 		if v := req.Header.Get(header); v != "" {
 			return v
 		}
