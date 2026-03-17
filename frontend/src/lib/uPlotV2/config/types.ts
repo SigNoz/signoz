@@ -99,6 +99,11 @@ export interface ScaleProps {
 	distribution?: DistributionType;
 }
 
+export enum DisconnectedValuesMode {
+	Never = 'never',
+	Threshold = 'threshold',
+}
+
 /**
  * Props for configuring a series
  */

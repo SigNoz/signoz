@@ -1,0 +1,16 @@
+.disconnect-values-selector {
+	.disconnect-values-input-wrapper {
+		display: flex;
+		align-items: stretch;
+		gap: 8px;
+
+		.disconnect-values-threshold-input {
+			width: 100px;
+			height: auto;
+			.disconnect-values-threshold-prefix {
+				padding: 0 8px;
+				font-size: 20px;
+			}
+		}
+	}
+}

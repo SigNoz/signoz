@@ -7,9 +7,10 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { Paintbrush } from 'lucide-react';
 
-import { FillModeSelector } from '../../components/FillModeSelector/FillModeSelector';
-import { LineInterpolationSelector } from '../../components/LineInterpolationSelector/LineInterpolationSelector';
-import { LineStyleSelector } from '../../components/LineStyleSelector/LineStyleSelector';
+import DisconnectValuesSelector from '../../components/DisconnectValuesSelector/DisconnectValuesSelector';
+import FillModeSelector from '../../components/FillModeSelector/FillModeSelector';
+import LineInterpolationSelector from '../../components/LineInterpolationSelector/LineInterpolationSelector';
+import LineStyleSelector from '../../components/LineStyleSelector/LineStyleSelector';
 import SettingsSection from '../../components/SettingsSection/SettingsSection';
 
 interface ChartAppearanceSectionProps {
@@ -21,10 +22,13 @@ interface ChartAppearanceSectionProps {
 	setLineInterpolation: Dispatch<SetStateAction<LineInterpolation>>;
 	showPoints: boolean;
 	setShowPoints: Dispatch<SetStateAction<boolean>>;
+	spanGaps: boolean | number;
+	setSpanGaps: Dispatch<SetStateAction<boolean | number>>;
 	allowFillMode: boolean;
 	allowLineStyle: boolean;
 	allowLineInterpolation: boolean;
 	allowShowPoints: boolean;
+	allowSpanGaps: boolean;
 }
 
 export default function ChartAppearanceSection({
@@ -36,10 +40,13 @@ export default function ChartAppearanceSection({
 	setLineInterpolation,
 	showPoints,
 	setShowPoints,
+	spanGaps,
+	setSpanGaps,
 	allowFillMode,
 	allowLineStyle,
 	allowLineInterpolation,
 	allowShowPoints,
+	allowSpanGaps,
 }: ChartAppearanceSectionProps): JSX.Element {
 	return (
 		<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
@@ -65,6 +72,9 @@ export default function ChartAppearanceSection({
 					</div>
 					<Switch size="small" checked={showPoints} onChange={setShowPoints} />
 				</section>
+			)}
+			{allowSpanGaps && (
+				<DisconnectValuesSelector value={spanGaps} onChange={setSpanGaps} />
 			)}
 		</SettingsSection>
 	);
