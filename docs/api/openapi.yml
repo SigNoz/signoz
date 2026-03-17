@@ -2218,16 +2218,6 @@ components:
       required:
       - id
       type: object
-    TypesUpdatableUser:
-      properties:
-        displayName:
-          type: string
-        role:
-          type: string
-      required:
-      - displayName
-      - role
-      type: object
     TypesUser:
       properties:
         createdAt:
@@ -5442,7 +5432,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesUpdatableUser'
+              $ref: '#/components/schemas/TypesUser'
       responses:
         "200":
           content:

@@ -235,7 +235,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Update user",
 		Description:         "This endpoint updates the user by id",
-		Request:             new(types.UpdatableUser),
+		Request:             new(types.User),
 		RequestContentType:  "application/json",
 		Response:            new(types.User),
 		ResponseContentType: "application/json",

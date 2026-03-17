@@ -67,11 +67,6 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-type UpdatableUser struct {
-	DisplayName string `json:"displayName" required:"true"`
-	Role        string `json:"role" required:"true" nullable:"false"`
-}
-
 func NewStorableUser(user *User) *StorableUser {
 	if user == nil {
 		return nil
