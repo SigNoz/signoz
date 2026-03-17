@@ -505,6 +505,9 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	resetLink := token.FactorPasswordResetLink(frontendBaseURL)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	if user.Status == types.UserStatusPendingInvite {
+		tokenLifetime = types.InviteTokenLifetime
+	}
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
 	if err := module.emailing.SendHTML(

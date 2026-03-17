@@ -34,7 +34,7 @@ var (
 )
 
 var (
-	InviteTokenLifetime = time.Duration(time.Hour * 48)
+	InviteTokenLifetime = 48 * time.Hour
 )
 
 type GettableUser = User
