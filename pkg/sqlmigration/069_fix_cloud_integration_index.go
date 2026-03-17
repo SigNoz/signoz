@@ -82,7 +82,19 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 		}
 	}
 
-	// Step 2: Fetch all active rows with non-null account_id, ordered for grouping
+	// Step 2: Normalize empty-string account_id to NULL
+	// Older table structure could store "" instead of NULL for unconnected accounts.
+	// Empty strings would violate the partial unique index since '' = '' (unlike NULL != NULL).
+	_, err = tx.NewUpdate().
+		TableExpr("cloud_integration").
+		Set("account_id = NULL").
+		Where("account_id = ''").
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Step 3: Fetch all active rows with non-null account_id, ordered for grouping
 	var activeRows []*cloudIntegrationRow
 	err = tx.NewSelect().
 		Model(&activeRows).
@@ -105,12 +117,12 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 			continue
 		}
 
-		// Step 3: Merge config from losers into keeper
+		// Step 4: Merge config from losers into keeper
 		if err = mergeCloudIntegrationConfigs(ctx, tx, group); err != nil {
 			return err
 		}
 
-		// Step 4: Reassign orphaned cloud_integration_service rows
+		// Step 5: Reassign orphaned cloud_integration_service rows
 		for _, loser := range group.losers {
 			// Delete services from loser that would conflict with keeper's services (same type)
 			_, err = tx.NewDelete().
@@ -140,7 +152,7 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 		}
 	}
 
-	// Step 5: Soft-delete all loser rows
+	// Step 6: Soft-delete all loser rows
 	if len(loserIDs) > 0 {
 		_, err = tx.NewUpdate().
 			TableExpr("cloud_integration").
@@ -153,7 +165,7 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 		}
 	}
 
-	// Step 6: Create correct partial unique index on (account_id, provider, org_id) WHERE removed_at IS NULL
+	// Step 7: Create the correct partial unique index on (account_id, provider, org_id) WHERE removed_at IS NULL
 	createSqls := migration.sqlschema.Operator().CreateIndex(
 		&sqlschema.PartialUniqueIndex{
 			TableName:   "cloud_integration",
