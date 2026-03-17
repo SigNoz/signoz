@@ -50,9 +50,9 @@ type StorableUser struct {
 
 	Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
-	Email       string        `bun:"email" json:"email"`
+	Email       valuer.Email  `bun:"email" json:"email"`
 	Role        Role          `bun:"role" json:"role"` // this will be removed as column from here
-	OrgID       string        `bun:"org_id" json:"orgId"`
+	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
 	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
@@ -75,9 +75,9 @@ func NewStorableUser(user *User) *StorableUser {
 	return &StorableUser{
 		Identifiable:  user.Identifiable,
 		DisplayName:   user.DisplayName,
-		Email:         user.Email.String(),
+		Email:         user.Email,
 		Role:          user.Role,
-		OrgID:         user.OrgID.String(),
+		OrgID:         user.OrgID,
 		IsRoot:        user.IsRoot,
 		Status:        user.Status,
 		DeletedAt:     user.DeletedAt,
@@ -92,9 +92,9 @@ func NewUserFromStorable(storableUser *StorableUser) *User {
 	return &User{
 		Identifiable:  storableUser.Identifiable,
 		DisplayName:   storableUser.DisplayName,
-		Email:         valuer.MustNewEmail(storableUser.Email),
+		Email:         storableUser.Email,
 		Role:          storableUser.Role,
-		OrgID:         valuer.MustNewUUID(storableUser.OrgID),
+		OrgID:         storableUser.OrgID,
 		IsRoot:        storableUser.IsRoot,
 		Status:        storableUser.Status,
 		DeletedAt:     storableUser.DeletedAt,

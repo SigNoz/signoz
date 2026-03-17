@@ -63,7 +63,7 @@ func (m *Module) AcceptInvite(ctx context.Context, token string, password string
 	}
 
 	// query the user again
-	storableUser, err = m.store.GetByOrgIDAndID(ctx, valuer.MustNewUUID(storableUser.OrgID), storableUser.ID)
+	storableUser, err = m.store.GetByOrgIDAndID(ctx, storableUser.OrgID, storableUser.ID)
 	if err != nil {
 		return nil, err
 	}

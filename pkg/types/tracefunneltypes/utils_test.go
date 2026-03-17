@@ -447,7 +447,7 @@ func TestConstructFunnelResponse(t *testing.T) {
 					Identifiable: types.Identifiable{
 						ID: userID,
 					},
-					Email: "funnel@example.com",
+					Email: valuer.MustNewEmail("funnel@example.com"),
 				},
 				Steps: []*FunnelStep{
 					{
