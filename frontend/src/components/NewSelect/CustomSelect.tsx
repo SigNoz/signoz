@@ -6,10 +6,7 @@ import React, {
 	useRef,
 	useState,
 } from 'react';
-import {
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Select } from 'antd';
 import cx from 'classnames';

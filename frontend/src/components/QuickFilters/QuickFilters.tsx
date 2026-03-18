@@ -1,8 +1,5 @@
 import { useMemo, useState } from 'react';
-import {
-	SyncOutlined,
-	VerticalAlignTopOutlined,
-} from '@ant-design/icons';
+import { SyncOutlined, VerticalAlignTopOutlined } from '@ant-design/icons';
 import {
 	Combobox,
 	ComboboxCommand,

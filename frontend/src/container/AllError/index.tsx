@@ -325,8 +325,9 @@ function AllErrors(): JSX.Element {
 			render: (value, record): JSX.Element => (
 				<Tooltip overlay={(): JSX.Element => value}>
 					<Link
-						to={`${ROUTES.ERROR_DETAIL}?groupId=${record.groupID
-							}&timestamp=${getNanoSeconds(record.lastSeen)}`}
+						to={`${ROUTES.ERROR_DETAIL}?groupId=${
+							record.groupID
+						}&timestamp=${getNanoSeconds(record.lastSeen)}`}
 					>
 						{value}
 					</Link>

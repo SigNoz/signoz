@@ -92,9 +92,9 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 
 	const selectedData = selectedDashboard
 		? {
-			...selectedDashboard.data,
-			uuid: selectedDashboard.id,
-		}
+				...selectedDashboard.data,
+				uuid: selectedDashboard.id,
+		  }
 		: ({} as DashboardData);
 	const { dashboardVariables } = useDashboardVariables();
 

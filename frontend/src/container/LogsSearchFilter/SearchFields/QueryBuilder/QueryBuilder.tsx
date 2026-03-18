@@ -134,9 +134,9 @@ function QueryField({
 			</Select>
 			<div style={{ flex: 2 }}>
 				{Array.isArray(query[2].value) ||
-					Object.values(QueryOperatorsMultiVal).some(
-						(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
-					) ? (
+				Object.values(QueryOperatorsMultiVal).some(
+					(op) => op.toUpperCase() === (query[1].value as string)?.toUpperCase(),
+				) ? (
 					<Select
 						mode="tags"
 						style={{ width: '100%' }}
@@ -159,12 +159,7 @@ function QueryField({
 				)}
 			</div>
 
-			<Button
-				icon={<X />}
-				type="text"
-				size="small"
-				onClick={handleClear}
-			/>
+			<Button icon={<X />} type="text" size="small" onClick={handleClear} />
 		</QueryFieldContainer>
 	);
 }

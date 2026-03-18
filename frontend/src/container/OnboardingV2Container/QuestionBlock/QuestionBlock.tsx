@@ -42,8 +42,9 @@ function QuestionBlock({
 	return (
 		<div
 			key={item.id}
-			className={`setup-flow__question-block ${index <= currentQuestion ? 'setup-flow__question-block--active' : ''
-				}`}
+			className={`setup-flow__question-block ${
+				index <= currentQuestion ? 'setup-flow__question-block--active' : ''
+			}`}
 			ref={(el): void => {
 				questionRefs.current[index] = el;
 			}}
@@ -98,13 +99,15 @@ function QuestionBlock({
 												<Flex
 													align="center"
 													gap={8}
-													className={`setup-flow__radio-custom ${answers[index] === option
-														? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
-														: ''
-														} ${animatingOption === option
+													className={`setup-flow__radio-custom ${
+														answers[index] === option
+															? 'setup-flow__radio-custom--pulse setup-flow__radio-custom--selected'
+															: ''
+													} ${
+														animatingOption === option
 															? 'setup-flow__radio-custom--animating'
 															: ''
-														}`}
+													}`}
 												>
 													<Avatar size={24} />
 													<Text className="setup-flow__radio-custom__text">{option}</Text>
@@ -134,10 +137,11 @@ function QuestionBlock({
 							<Button
 								type="text"
 								ghost
-								className={`setup-flow__category-filter-item ${selectedCategory === 'All'
-									? 'setup-flow__category-filter-item--selected'
-									: ''
-									}`}
+								className={`setup-flow__category-filter-item ${
+									selectedCategory === 'All'
+										? 'setup-flow__category-filter-item--selected'
+										: ''
+								}`}
 								// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 								onClick={() => handleCategoryClick('All')}
 							>
@@ -148,10 +152,11 @@ function QuestionBlock({
 									type="text"
 									ghost
 									key={group.id}
-									className={`setup-flow__category-filter-item ${selectedCategory === group.category
-										? 'setup-flow__category-filter-item--selected'
-										: ''
-										}`}
+									className={`setup-flow__category-filter-item ${
+										selectedCategory === group.category
+											? 'setup-flow__category-filter-item--selected'
+											: ''
+									}`}
 									// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 									onClick={() => handleCategoryClick(group.category)}
 								>

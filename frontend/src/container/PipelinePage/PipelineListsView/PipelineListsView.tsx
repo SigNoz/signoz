@@ -516,10 +516,10 @@ function PipelineListsView({
 		_data: PipelineData,
 		index?: number,
 	): React.HTMLAttributes<unknown> =>
-	({
-		index,
-		moveRow: movePipelineRow,
-	} as React.HTMLAttributes<unknown>);
+		({
+			index,
+			moveRow: movePipelineRow,
+		} as React.HTMLAttributes<unknown>);
 
 	const expandableConfig: ExpandableConfig<PipelineData> = {
 		expandedRowKeys,

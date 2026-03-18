@@ -2,10 +2,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import {
-	LoadingOutlined,
-	SyncOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, SyncOutlined } from '@ant-design/icons';
 import { Button, Input, Spin } from 'antd';
 import cx from 'classnames';
 import { ToggleGraphProps } from 'components/Graph/types';
@@ -338,8 +335,8 @@ function FullView({
 									version={selectedDashboard?.data?.version || 'v3'}
 									isListViewPanel={selectedPanelType === PANEL_TYPES.LIST}
 									signalSourceChangeEnabled
-								// filterConfigs={filterConfigs}
-								// queryComponents={queryComponents}
+									// filterConfigs={filterConfigs}
+									// queryComponents={queryComponents}
 								/>
 								<RightToolbarActions
 									onStageRunQuery={(): void => {

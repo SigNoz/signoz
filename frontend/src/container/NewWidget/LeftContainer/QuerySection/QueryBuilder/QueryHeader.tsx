@@ -1,8 +1,5 @@
 import { ReactNode, useState } from 'react';
-import {
-	EyeFilled,
-	EyeInvisibleFilled,
-} from '@ant-design/icons';
+import { EyeFilled, EyeInvisibleFilled } from '@ant-design/icons';
 import { Button, Row } from 'antd';
 
 import { QueryWrapper } from '../styles';

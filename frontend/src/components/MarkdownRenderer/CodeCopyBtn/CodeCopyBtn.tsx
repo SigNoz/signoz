@@ -40,7 +40,7 @@ function CodeCopyBtn({
 }
 
 CodeCopyBtn.defaultProps = {
-	onCopyClick: (): void => { },
+	onCopyClick: (): void => {},
 };
 
 export default CodeCopyBtn;

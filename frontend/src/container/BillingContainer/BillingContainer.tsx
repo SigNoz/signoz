@@ -481,13 +481,13 @@ export default function BillingContainer(): JSX.Element {
 
 				{!isLoading && !isFetchingBillingData && !showGracePeriodMessage
 					? headerText && (
-						<Alert
-							message={headerText}
-							type="info"
-							showIcon
-							style={{ marginTop: 12 }}
-						/>
-					)
+							<Alert
+								message={headerText}
+								type="info"
+								showIcon
+								style={{ marginTop: 12 }}
+							/>
+					  )
 					: null}
 
 				{isLoading || isFetchingBillingData ? (
@@ -495,10 +495,10 @@ export default function BillingContainer(): JSX.Element {
 				) : null}
 
 				{!isLoading &&
-					!isFetchingBillingData &&
-					billingData &&
-					trialInfo?.gracePeriodEnd &&
-					showGracePeriodMessage ? (
+				!isFetchingBillingData &&
+				billingData &&
+				trialInfo?.gracePeriodEnd &&
+				showGracePeriodMessage ? (
 					<Alert
 						message={`Your data is safe with us until ${getFormattedDate(
 							trialInfo?.gracePeriodEnd || Date.now(),

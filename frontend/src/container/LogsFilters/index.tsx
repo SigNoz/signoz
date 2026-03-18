@@ -48,14 +48,14 @@ function LogsFilters(): JSX.Element {
 			fieldData,
 			fieldIndex,
 		}: IHandleRemoveInterestProps) => (): Promise<void> =>
-				onHandleRemoveInterest({
-					fieldData,
-					fieldIndex,
-					interesting,
-					interestingFieldLoading,
-					selected,
-					setSelectedFieldLoading,
-				}),
+			onHandleRemoveInterest({
+				fieldData,
+				fieldIndex,
+				interesting,
+				interestingFieldLoading,
+				selected,
+				setSelectedFieldLoading,
+			}),
 		[interesting, interestingFieldLoading, selected, setSelectedFieldLoading],
 	);
 

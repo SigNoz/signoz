@@ -7,10 +7,7 @@ import React, {
 	useState,
 } from 'react';
 import { Virtuoso } from 'react-virtuoso';
-import {
-	LoadingOutlined,
-	ReloadOutlined,
-} from '@ant-design/icons';
+import { LoadingOutlined, ReloadOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Checkbox, Select, Typography } from 'antd';
 import cx from 'classnames';
@@ -1920,9 +1917,9 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 						style={
 							isActive || isSelected
 								? {
-									borderColor: Color.BG_ROBIN_500,
-									backgroundColor: Color.BG_SLATE_400,
-								}
+										borderColor: Color.BG_ROBIN_500,
+										backgroundColor: Color.BG_SLATE_400,
+								  }
 								: undefined
 						}
 					>
