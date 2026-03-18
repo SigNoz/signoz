@@ -598,6 +598,39 @@ components:
       required:
       - config
       type: object
+    GlobaltypesAPIKeyConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesConfig:
+      properties:
+        external_url:
+          type: string
+        identN:
+          $ref: '#/components/schemas/GlobaltypesIdentNConfig'
+        ingestion_url:
+          type: string
+      type: object
+    GlobaltypesIdentNConfig:
+      properties:
+        apikey:
+          $ref: '#/components/schemas/GlobaltypesAPIKeyConfig'
+        impersonation:
+          $ref: '#/components/schemas/GlobaltypesImpersonationConfig'
+        tokenizer:
+          $ref: '#/components/schemas/GlobaltypesTokenizerConfig'
+      type: object
+    GlobaltypesImpersonationConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesTokenizerConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
     MetricsexplorertypesListMetric:
       properties:
         description:
@@ -2030,13 +2063,6 @@ components:
       required:
       - id
       type: object
-    TypesGettableGlobalConfig:
-      properties:
-        external_url:
-          type: string
-        ingestion_url:
-          type: string
-      type: object
     TypesIdentifiable:
       properties:
         id:
@@ -3255,7 +3281,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesGettableGlobalConfig'
+                    $ref: '#/components/schemas/GlobaltypesConfig'
                   status:
                     type: string
                 required:
@@ -3263,29 +3289,12 @@ paths:
                 - data
                 type: object
           description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
       summary: Get global config
       tags:
       - global

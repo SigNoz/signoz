@@ -1,9 +1,11 @@
 package identn
 
 import (
+	"context"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
 type identNResolver struct {
@@ -11,19 +13,55 @@ type identNResolver struct {
 	settings factory.ScopedProviderSettings
 }
 
-func NewIdentNResolver(providerSettings factory.ProviderSettings, identNs ...IdentN) IdentNResolver {
-	enabledIdentNs := []IdentN{}
+func NewIdentNResolver(ctx context.Context, providerSettings factory.ProviderSettings, identNConfig Config, identNFactories factory.NamedMap[factory.ProviderFactory[IdentN, Config]]) (IdentNResolver, error) {
+	identNs := []IdentN{}
 
-	for _, identN := range identNs {
-		if identN.Enabled() {
-			enabledIdentNs = append(enabledIdentNs, identN)
+	if identNConfig.Impersonation.Enabled {
+		identNFactory, err := identNFactories.Get(authtypes.IdentNProviderImpersonation.StringValue())
+		if err != nil {
+			return nil, err
 		}
+
+		identN, err := identNFactory.New(ctx, providerSettings, identNConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		identNs = append(identNs, identN)
+	}
+
+	if identNConfig.Tokenizer.Enabled {
+		identNFactory, err := identNFactories.Get(authtypes.IdentNProviderTokenizer.StringValue())
+		if err != nil {
+			return nil, err
+		}
+
+		identN, err := identNFactory.New(ctx, providerSettings, identNConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		identNs = append(identNs, identN)
+	}
+
+	if identNConfig.APIKeyConfig.Enabled {
+		identNFactory, err := identNFactories.Get(authtypes.IdentNProviderAPIKey.StringValue())
+		if err != nil {
+			return nil, err
+		}
+
+		identN, err := identNFactory.New(ctx, providerSettings, identNConfig)
+		if err != nil {
+			return nil, err
+		}
+
+		identNs = append(identNs, identN)
 	}
 
 	return &identNResolver{
-		identNs:  enabledIdentNs,
+		identNs:  identNs,
 		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn"),
-	}
+	}, nil
 }
 
 // GetIdentN returns the first IdentN whose Test() returns true.

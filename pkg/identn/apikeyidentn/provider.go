@@ -25,7 +25,7 @@ type provider struct {
 }
 
 func NewFactory(store sqlstore.SQLStore) factory.ProviderFactory[identn.IdentN, identn.Config] {
-	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIkey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
+	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIKey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
 		return New(providerSettings, store, config)
 	})
 }
@@ -40,7 +40,7 @@ func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, con
 }
 
 func (provider *provider) Name() authtypes.IdentNProvider {
-	return authtypes.IdentNProviderAPIkey
+	return authtypes.IdentNProviderAPIKey
 }
 
 func (provider *provider) Test(req *http.Request) bool {
@@ -50,10 +50,6 @@ func (provider *provider) Test(req *http.Request) bool {
 		}
 	}
 	return false
-}
-
-func (provider *provider) Enabled() bool {
-	return provider.config.APIKeyConfig.Enabled
 }
 
 func (provider *provider) Pre(req *http.Request) *http.Request {

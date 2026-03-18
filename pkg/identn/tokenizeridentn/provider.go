@@ -48,10 +48,6 @@ func (provider *provider) Test(req *http.Request) bool {
 	return false
 }
 
-func (provider *provider) Enabled() bool {
-	return provider.config.Tokenizer.Enabled
-}
-
 func (provider *provider) Pre(req *http.Request) *http.Request {
 	accessToken := provider.extractToken(req)
 	if accessToken == "" {

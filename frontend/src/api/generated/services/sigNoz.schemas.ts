@@ -776,6 +776,45 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	tags?: string[] | null;
 }
 
+export interface GlobaltypesAPIKeyConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesConfigDTO {
+	/**
+	 * @type string
+	 */
+	external_url?: string;
+	identN?: GlobaltypesIdentNConfigDTO;
+	/**
+	 * @type string
+	 */
+	ingestion_url?: string;
+}
+
+export interface GlobaltypesIdentNConfigDTO {
+	apikey?: GlobaltypesAPIKeyConfigDTO;
+	impersonation?: GlobaltypesImpersonationConfigDTO;
+	tokenizer?: GlobaltypesTokenizerConfigDTO;
+}
+
+export interface GlobaltypesImpersonationConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesTokenizerConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
 export interface MetricsexplorertypesListMetricDTO {
 	/**
 	 * @type string
@@ -2402,17 +2441,6 @@ export interface TypesGettableAPIKeyDTO {
 	userId?: string;
 }
 
-export interface TypesGettableGlobalConfigDTO {
-	/**
-	 * @type string
-	 */
-	external_url?: string;
-	/**
-	 * @type string
-	 */
-	ingestion_url?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
@@ -3026,7 +3054,7 @@ export type GetResetPasswordToken200 = {
 };
 
 export type GetGlobalConfig200 = {
-	data: TypesGettableGlobalConfigDTO;
+	data: GlobaltypesConfigDTO;
 	/**
 	 * @type string
 	 */

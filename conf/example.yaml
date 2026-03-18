@@ -328,15 +328,18 @@ user:
 ##################### IdentN #####################
 identn:
   tokenizer:
-    # toggle the identN resolver
+    # toggle tokenizer identN
     enabled: true
     # headers to use for tokenizer identN resolver
     headers:
       - Authorization
       - Sec-WebSocket-Protocol
   apikey:
-    # toggle the identN resolver
+    # toggle apikey identN
     enabled: true
     # headers to use for apikey identN resolver
     headers:
       - SIGNOZ-API-KEY
+  impersonation:
+    # toggle impersonation identN, when enabled, all requests will impersonate the root user
+    enabled: false
