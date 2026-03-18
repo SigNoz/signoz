@@ -25,9 +25,9 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import NoLogs from '../NoLogs/NoLogs';
-import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
+import TanStackTableView from './TanStackTableView';
 import {
 	convertKeysToColumnFields,
 	getEmptyLogsListConfig,
@@ -155,7 +155,7 @@ function LogsExplorerList({
 
 		if (options.format === 'table') {
 			return (
-				<InfinityTableView
+				<TanStackTableView
 					ref={ref}
 					isLoading={isLoading}
 					tableViewProps={{

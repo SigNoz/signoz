@@ -14,6 +14,8 @@ interface TableHeaderCellStyledProps {
 
 export const TableStyled = styled.table`
 	width: 100%;
+	border-collapse: separate;
+	border-spacing: 0;
 `;
 
 const getTimestampColumnWidth = (
@@ -64,7 +66,10 @@ export const TableRowStyled = styled.tr<{
 	position: relative;
 
 	.log-line-action-buttons {
-		display: none;
+		display: flex;
+		opacity: 0;
+		pointer-events: none;
+		transition: opacity 80ms linear;
 	}
 
 	&:hover {
@@ -73,13 +78,15 @@ export const TableRowStyled = styled.tr<{
 				getActiveLogBackground(true, $isDarkMode, $logType)}
 		}
 		.log-line-action-buttons {
-			display: flex;
+			opacity: 1;
+			pointer-events: auto;
 		}
 	}
 `;
 
 export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
+	text-align: left;
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -98,6 +105,11 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 			: ``};
 	${({ $isLogIndicator }): string =>
 		$isLogIndicator ? 'padding: 0px; width: 1%;' : ''}
+	border-bottom: 1px solid var(--l2-border);
+	box-shadow: inset 0 -1px 0 var(--l2-border);
+	&:first-child {
+		border-left: 1px solid var(--l2-border);
+	}
 	color: ${(props): string =>
 		props.$isDarkMode ? 'var(--bg-vanilla-100, #fff)' : themeColors.bckgGrey};
 

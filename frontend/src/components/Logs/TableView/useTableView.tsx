@@ -43,7 +43,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const bodyColumnStyle = useMemo(
 		() => ({
 			...defaultTableStyle,
-			...(fields.length > 2 ? { width: '50rem' } : {}),
+			...(fields.length > 2 ? { width: 'auto' } : {}),
 		}),
 		[fields.length],
 	);
