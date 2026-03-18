@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Typography } from 'antd';
+import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
@@ -11,6 +12,7 @@ import {
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
+import get from 'lodash-es/get';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -191,6 +193,15 @@ function RightContainer({
 		],
 	);
 
+	const stepInterval = useMemo(() => {
+		const stepIntervals: ExecStats['stepIntervals'] = get(
+			queryResponse,
+			'data.payload.data.newResult.meta.stepIntervals',
+			{},
+		);
+		return Math.min(...Object.values(stepIntervals));
+	}, [queryResponse]);
+
 	return (
 		<div className="right-container">
 			<section className="header">
@@ -255,6 +266,7 @@ function RightContainer({
 						allowLineInterpolation={allowLineInterpolation}
 						allowShowPoints={allowShowPoints}
 						allowSpanGaps={allowSpanGaps}
+						stepInterval={stepInterval}
 					/>
 				)}
 

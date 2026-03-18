@@ -1,21 +1,26 @@
 import { useEffect, useState } from 'react';
 import { rangeUtil } from '@grafana/data';
+import { Callout } from '@signozhq/callout';
 import { Input } from '@signozhq/ui';
 interface DisconnectValuesThresholdInputProps {
 	value: number;
 	onChange: (seconds: number) => void;
+	minValue?: number;
 }
 
 export default function DisconnectValuesThresholdInput({
 	value,
 	onChange,
+	minValue,
 }: DisconnectValuesThresholdInputProps): JSX.Element {
 	const [inputValue, setInputValue] = useState<string>(
 		rangeUtil.secondsToHms(value),
 	);
+	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
 		setInputValue(rangeUtil.secondsToHms(value));
+		setError(null);
 	}, [value]);
 
 	const commitValue = (txt: string): void => {
@@ -29,14 +34,20 @@ export default function DisconnectValuesThresholdInput({
 			} else {
 				const parsed = Number(txt);
 				if (Number.isNaN(parsed) || parsed <= 0) {
+					setError('Enter a valid duration (e.g. 1h, 10m, 1d)');
 					return;
 				}
 				seconds = parsed;
 			}
+			if (minValue !== undefined && seconds <= minValue) {
+				setError(`Threshold should be > ${rangeUtil.secondsToHms(minValue)}`);
+				return;
+			}
+			setError(null);
 			setInputValue(txt);
 			onChange(seconds);
-		} catch (err) {
-			console.warn('Invalid threshold value', err);
+		} catch {
+			setError('Invalid threshold value');
 		}
 	};
 
@@ -51,15 +62,26 @@ export default function DisconnectValuesThresholdInput({
 	};
 
 	return (
-		<Input
-			name="disconnect-values-threshold"
-			className="disconnect-values-threshold-input"
-			prefix={<span className="disconnect-values-threshold-prefix">&gt;</span>}
-			value={inputValue}
-			onChange={(e): void => setInputValue(e.currentTarget.value)}
-			onKeyDown={handleKeyDown}
-			onBlur={handleBlur}
-			autoFocus={false}
-		/>
+		<div className="disconnect-values-threshold-wrapper">
+			<Input
+				name="disconnect-values-threshold"
+				type="text"
+				className="disconnect-values-threshold-input"
+				prefix={<span className="disconnect-values-threshold-prefix">&gt;</span>}
+				value={inputValue}
+				onChange={(e): void => {
+					setInputValue(e.currentTarget.value);
+					if (error) {
+						setError(null);
+					}
+				}}
+				onKeyDown={handleKeyDown}
+				onBlur={handleBlur}
+				autoFocus={false}
+				aria-invalid={!!error}
+				aria-describedby={error ? 'threshold-error' : undefined}
+			/>
+			{error && <Callout type="error" size="small" showIcon description={error} />}
+		</div>
 	);
 }

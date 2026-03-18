@@ -29,6 +29,7 @@ interface ChartAppearanceSectionProps {
 	allowLineInterpolation: boolean;
 	allowShowPoints: boolean;
 	allowSpanGaps: boolean;
+	stepInterval: number;
 }
 
 export default function ChartAppearanceSection({
@@ -47,6 +48,7 @@ export default function ChartAppearanceSection({
 	allowLineInterpolation,
 	allowShowPoints,
 	allowSpanGaps,
+	stepInterval,
 }: ChartAppearanceSectionProps): JSX.Element {
 	return (
 		<SettingsSection title="Chart Appearance" icon={<Paintbrush size={14} />}>
@@ -74,7 +76,11 @@ export default function ChartAppearanceSection({
 				</section>
 			)}
 			{allowSpanGaps && (
-				<DisconnectValuesSelector value={spanGaps} onChange={setSpanGaps} />
+				<DisconnectValuesSelector
+					value={spanGaps}
+					minValue={stepInterval}
+					onChange={setSpanGaps}
+				/>
 			)}
 		</SettingsSection>
 	);

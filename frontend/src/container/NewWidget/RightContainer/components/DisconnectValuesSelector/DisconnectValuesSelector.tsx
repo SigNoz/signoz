@@ -7,15 +7,17 @@ import DisconnectValuesThresholdInput from './DisconnectValuesThresholdInput';
 
 import './DisconnectValuesSelector.styles.scss';
 
-const DEFAULT_THRESHOLD_SECONDS = 10;
+const DEFAULT_THRESHOLD_SECONDS = 60;
 
 interface DisconnectValuesSelectorProps {
 	value: boolean | number;
+	minValue?: number;
 	onChange: (value: boolean | number) => void;
 }
 
 export default function DisconnectValuesSelector({
 	value,
+	minValue,
 	onChange,
 }: DisconnectValuesSelectorProps): JSX.Element {
 	const [mode, setMode] = useState<DisconnectedValuesMode>(() => {
@@ -25,7 +27,7 @@ export default function DisconnectValuesSelector({
 		return DisconnectedValuesMode.Never;
 	});
 	const [thresholdSeconds, setThresholdSeconds] = useState<number>(
-		typeof value === 'number' ? value : DEFAULT_THRESHOLD_SECONDS,
+		typeof value === 'number' ? value : minValue ?? DEFAULT_THRESHOLD_SECONDS,
 	);
 
 	useEffect(() => {
@@ -36,6 +38,16 @@ export default function DisconnectValuesSelector({
 			setThresholdSeconds(value);
 		}
 	}, [value]);
+
+	useEffect(() => {
+		if (minValue !== undefined) {
+			setThresholdSeconds(minValue);
+			if (mode === DisconnectedValuesMode.Threshold) {
+				onChange(minValue);
+			}
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [minValue]);
 
 	const handleModeChange = (newMode: DisconnectedValuesMode): void => {
 		setMode(newMode);
@@ -62,10 +74,16 @@ export default function DisconnectValuesSelector({
 			<div className="disconnect-values-input-wrapper">
 				<DisconnectValuesModeToggle value={mode} onChange={handleModeChange} />
 				{mode === DisconnectedValuesMode.Threshold && (
-					<DisconnectValuesThresholdInput
-						value={thresholdSeconds}
-						onChange={handleThresholdChange}
-					/>
+					<section className="control-container">
+						<Typography.Text className="section-heading">
+							Threshold Value
+						</Typography.Text>
+						<DisconnectValuesThresholdInput
+							value={thresholdSeconds}
+							minValue={minValue}
+							onChange={handleThresholdChange}
+						/>
+					</section>
 				)}
 			</div>
 		</section>
