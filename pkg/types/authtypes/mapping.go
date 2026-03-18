@@ -83,33 +83,18 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) ManagedRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity) (types.Role, []string) {
+func (roleMapping *RoleMapping) ManagedRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity) []string {
 	if roleMapping == nil {
-		return types.RoleViewer, []string{SigNozViewerRoleName}
+		return []string{SigNozViewerRoleName}
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
-		legacyRole, err := types.NewRole(strings.ToUpper(callbackIdentity.Role))
-		if err != nil {
-			return types.RoleViewer, []string{SigNozViewerRoleName}
-		}
 		if managedRole := resolveToManagedRole(callbackIdentity.Role); managedRole != "" {
-			return legacyRole, []string{managedRole}
+			return []string{managedRole}
 		}
 	}
 
 	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
-		highestLegacyRole := types.RoleViewer
-		for _, group := range callbackIdentity.Groups {
-			if mappedRole, exists := roleMapping.GroupMappings[group]; exists {
-				if role, err := types.NewRole(strings.ToUpper(mappedRole)); err == nil {
-					if compareRoles(role, highestLegacyRole) > 0 {
-						highestLegacyRole = role
-					}
-				}
-			}
-		}
-
 		seen := make(map[string]struct{})
 		var roles []string
 		for _, group := range callbackIdentity.Groups {
@@ -124,21 +109,30 @@ func (roleMapping *RoleMapping) ManagedRolesFromCallbackIdentity(callbackIdentit
 			}
 		}
 		if len(roles) > 0 {
-			return highestLegacyRole, roles
+			return roles
 		}
 	}
 
 	if roleMapping.DefaultRole != "" {
-		legacyRole, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole))
-		if err != nil {
-			return types.RoleViewer, []string{SigNozViewerRoleName}
-		}
 		if managedRole := resolveToManagedRole(roleMapping.DefaultRole); managedRole != "" {
-			return legacyRole, []string{managedRole}
+			return []string{managedRole}
 		}
 	}
 
-	return types.RoleViewer, []string{SigNozViewerRoleName}
+	return []string{SigNozViewerRoleName}
+}
+
+// for backward compatibility in API responses
+func HighestLegacyRoleFromManagedRoles(managedRoles []string) types.Role {
+	highest := types.RoleViewer
+	for _, name := range managedRoles {
+		for legacyRole, managedName := range ExistingRoleToSigNozManagedRoleMap {
+			if managedName == name && compareRoles(legacyRole, highest) > 0 {
+				highest = legacyRole
+			}
+		}
+	}
+	return highest
 }
 
 func compareRoles(a, b types.Role) int {

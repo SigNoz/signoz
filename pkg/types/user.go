@@ -301,6 +301,7 @@ func (u *User) PatchRoles(targetRoles []string) ([]string, []string) {
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
+		"role":         user.Role,
 		"roles":        user.Roles,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,

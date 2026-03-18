@@ -170,8 +170,17 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	emails := make([]string, len(bulkInvites.Invites))
 	var allRolesFromRequest []string
 	seenRolesFromRequest := make(map[string]struct{})
-	for idx, invite := range bulkInvites.Invites {
+	for idx := range bulkInvites.Invites {
+		invite := &bulkInvites.Invites[idx]
 		emails[idx] = invite.Email.StringValue()
+
+		// backward compat: derive Roles from legacy Role when Roles is not provided
+		if len(invite.Roles) == 0 && invite.Role != "" {
+			if managedRole, ok := authtypes.ExistingRoleToSigNozManagedRoleMap[invite.Role]; ok {
+				invite.Roles = []string{managedRole}
+			}
+		}
+
 		// for role name validation
 		for _, role := range invite.Roles {
 			if _, ok := seenRolesFromRequest[role]; !ok {

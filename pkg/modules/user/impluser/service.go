@@ -128,10 +128,9 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		oldRoles := existingUser.Roles
 
 		existingUser.PromoteToRoot() // this only sets the column is_root as true (permissions are managed by authz in next step)
-		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
-			return err
-		}
+		existingUser.Roles = []string{authtypes.SigNozAdminRoleName}
 
+		// authz grant is idempotent and safe to retry, so do it before DB mutations
 		if err := s.authz.ModifyGrant(ctx,
 			orgID,
 			oldRoles,
@@ -141,21 +140,30 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			return err
 		}
 
-		// update user_role junction table to reflect the new admin role
-		existingUser.Roles = []string{authtypes.SigNozAdminRoleName}
-		if err := s.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
+		// this is idempotent
+		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
+
+		// resolve the admin role ID for user_role entries
 		storableRoles, err := s.authz.ListByOrgIDAndNames(ctx, orgID, []string{authtypes.SigNozAdminRoleName})
 		if err != nil {
 			return err
 		}
-		userRoles := authtypes.NewStorableUserRoles(existingUser.ID, storableRoles)
-		if err := s.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
-			return err
-		}
 
-		return s.setPassword(ctx, existingUser.ID)
+		// wrap user_role updates and password in a transaction
+		return s.store.RunInTx(ctx, func(ctx context.Context) error {
+			if err := s.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
+				return err
+			}
+
+			userRoles := authtypes.NewStorableUserRoles(existingUser.ID, storableRoles)
+			if err := s.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+				return err
+			}
+
+			return s.setPassword(ctx, existingUser.ID)
+		})
 	}
 
 	// Create new root user
