@@ -69,8 +69,8 @@ func (migration *updatePlannedMaintenanceRule) Up(ctx context.Context, db *bun.D
 	}
 
 	// Drop the existing table
-	dropTableSqls := migration.sqlschema.Operator().DropTable(table)
-	for _, sql := range dropTableSqls {
+	dropTableSQLs := migration.sqlschema.Operator().DropTable(table)
+	for _, sql := range dropTableSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
@@ -101,8 +101,8 @@ func (migration *updatePlannedMaintenanceRule) Up(ctx context.Context, db *bun.D
 		},
 	}
 
-	createTableSqls := migration.sqlschema.Operator().CreateTable(newTable)
-	for _, sql := range createTableSqls {
+	createTableSQLs := migration.sqlschema.Operator().CreateTable(newTable)
+	for _, sql := range createTableSQLs {
 		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
