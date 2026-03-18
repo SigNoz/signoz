@@ -198,7 +198,10 @@ func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UU
 
 	response, err := provider.zeus.GetCheckoutURL(ctx, activeLicense.Key, body)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to generate checkout session")
+		if errors.Ast(err, errors.TypeAlreadyExists) {
+			return nil, errors.Wrapf(err, errors.TypeAlreadyExists, errors.CodeAlreadyExists, "checkout has already been completed for this account. Please use the reconcile payment option to sync your subscription")
+		}
+		return nil, errors.WithAdditionalf(errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to generate checkout session"), err.Error())
 	}
 
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
