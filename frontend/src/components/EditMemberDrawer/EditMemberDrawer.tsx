@@ -15,11 +15,14 @@ import {
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
 	useUpdateUser,
 } from 'api/generated/services/users';
+import { AxiosError } from 'axios';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
@@ -63,8 +66,14 @@ function EditMemberDrawer({
 				onComplete();
 				onClose();
 			},
-			onError: (): void => {
-				toast.error('Failed to update member details', { richColors: true });
+			onError: (err): void => {
+				const errMessage =
+					convertToApiError(
+						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'An error occurred';
+				toast.error(`Failed to update member details: ${errMessage}`, {
+					richColors: true,
+				});
 			},
 		},
 	});
@@ -80,11 +89,15 @@ function EditMemberDrawer({
 				onComplete();
 				onClose();
 			},
-			onError: (): void => {
-				toast.error(
-					isInvited ? 'Failed to revoke invite' : 'Failed to delete member',
-					{ richColors: true },
-				);
+			onError: (err): void => {
+				const errMessage =
+					convertToApiError(
+						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+					)?.getErrorMessage() || 'An error occurred';
+				const prefix = isInvited
+					? 'Failed to revoke invite'
+					: 'Failed to delete member';
+				toast.error(`${prefix}: ${errMessage}`, { richColors: true });
 			},
 		},
 	});

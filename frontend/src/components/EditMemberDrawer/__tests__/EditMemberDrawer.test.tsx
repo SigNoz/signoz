@@ -1,5 +1,6 @@
 import type { ReactNode } from 'react';
 import { toast } from '@signozhq/sonner';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
@@ -51,6 +52,10 @@ jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
 	useUpdateUser: jest.fn(),
 	getResetPasswordToken: jest.fn(),
+}));
+
+jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
+	convertToApiError: jest.fn(),
 }));
 
 jest.mock('@signozhq/sonner', () => ({
@@ -259,6 +264,99 @@ describe('EditMemberDrawer', () => {
 				}),
 			);
 			expect(onComplete).toHaveBeenCalled();
+		});
+	});
+
+	describe('error handling', () => {
+		const mockConvertToApiError = jest.mocked(convertToApiError);
+
+		beforeEach(() => {
+			mockConvertToApiError.mockReturnValue({
+				getErrorMessage: (): string => 'Something went wrong on server',
+			} as ReturnType<typeof convertToApiError>);
+		});
+
+		it('shows API error message when updateUser fails', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const mockToast = jest.mocked(toast);
+
+			(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+				mutate: mockUpdateMutate.mockImplementation(() => {
+					options?.mutation?.onError?.({});
+				}),
+				isLoading: false,
+			}));
+
+			renderDrawer();
+
+			const nameInput = screen.getByDisplayValue('Alice Smith');
+			await user.clear(nameInput);
+			await user.type(nameInput, 'Alice Updated');
+
+			const saveBtn = screen.getByRole('button', { name: /save member details/i });
+			await waitFor(() => expect(saveBtn).not.toBeDisabled());
+			await user.click(saveBtn);
+
+			await waitFor(() => {
+				expect(mockToast.error).toHaveBeenCalledWith(
+					'Failed to update member details: Something went wrong on server',
+					expect.anything(),
+				);
+			});
+		});
+
+		it('shows API error message when deleteUser fails for active member', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const mockToast = jest.mocked(toast);
+
+			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+				mutate: mockDeleteMutate.mockImplementation(() => {
+					options?.mutation?.onError?.({});
+				}),
+				isLoading: false,
+			}));
+
+			renderDrawer();
+
+			await user.click(screen.getByRole('button', { name: /delete member/i }));
+			const confirmBtns = screen.getAllByRole('button', {
+				name: /delete member/i,
+			});
+			await user.click(confirmBtns[confirmBtns.length - 1]);
+
+			await waitFor(() => {
+				expect(mockToast.error).toHaveBeenCalledWith(
+					'Failed to delete member: Something went wrong on server',
+					expect.anything(),
+				);
+			});
+		});
+
+		it('shows API error message when deleteUser fails for invited member', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			const mockToast = jest.mocked(toast);
+
+			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+				mutate: mockDeleteMutate.mockImplementation(() => {
+					options?.mutation?.onError?.({});
+				}),
+				isLoading: false,
+			}));
+
+			renderDrawer({ member: invitedMember });
+
+			await user.click(screen.getByRole('button', { name: /revoke invite/i }));
+			const confirmBtns = screen.getAllByRole('button', {
+				name: /revoke invite/i,
+			});
+			await user.click(confirmBtns[confirmBtns.length - 1]);
+
+			await waitFor(() => {
+				expect(mockToast.error).toHaveBeenCalledWith(
+					'Failed to revoke invite: Something went wrong on server',
+					expect.anything(),
+				);
+			});
 		});
 	});
 
