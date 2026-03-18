@@ -66,7 +66,6 @@ func ListenToConfigUpdate(orgId valuer.UUID, agentId string, hash string, ss OnC
 	defer coordinator.mutex.Unlock()
 
 	key := getSubscriberKey(orgId, hash)
-
 	if subs, ok := coordinator.subscribers[key]; ok {
 		subs = append(subs, ss)
 		coordinator.subscribers[key] = subs
