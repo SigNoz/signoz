@@ -398,8 +398,12 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, err
 	}
 
-	grants, revokes := existingUser.PatchRoles(user.Roles)
-	rolesChanged := (len(grants) > 0) || (len(revokes) > 0)
+	var grants, revokes []string
+	var rolesChanged bool
+	if user.Roles != nil {
+		grants, revokes = existingUser.PatchRoles(user.Roles)
+		rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
+	}
 
 	if rolesChanged && !slices.Contains(requestor.Roles, authtypes.SigNozAdminRoleName) {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
@@ -425,7 +429,14 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	existingUser.Update(user.DisplayName, user.Role, user.Roles)
+	// preserve existing role and roles when not explicitly provided in the request
+	updateRole := user.Role
+	updateRoles := user.Roles
+	if user.Roles == nil {
+		updateRole = existingUser.Role
+		updateRoles = existingUser.Roles
+	}
+	existingUser.Update(user.DisplayName, updateRole, updateRoles)
 	if rolesChanged {
 		err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 			// update the user
