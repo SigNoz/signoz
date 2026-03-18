@@ -106,16 +106,16 @@ func (s *service) reconcile(ctx context.Context) error {
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingStorableRoot, err := s.getRootUserByOrgID(ctx, orgID)
+	existingRoot, err := s.getRootUserByOrgID(ctx, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
-	if existingStorableRoot == nil {
+	if existingRoot == nil {
 		return s.createOrPromoteRootUser(ctx, orgID)
 	}
 
-	return s.updateExistingRootUser(ctx, orgID, existingStorableRoot)
+	return s.updateExistingRootUser(ctx, orgID, existingRoot)
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
