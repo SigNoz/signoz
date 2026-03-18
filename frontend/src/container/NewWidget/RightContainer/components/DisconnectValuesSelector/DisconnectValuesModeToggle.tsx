@@ -1,4 +1,4 @@
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Typography } from 'antd';
 import { DisconnectedValuesMode } from 'lib/uPlotV2/config/types';
 
@@ -15,25 +15,19 @@ export default function DisconnectValuesModeToggle({
 		<ToggleGroup
 			type="single"
 			value={value}
-			variant="outline"
 			size="lg"
-			onValueChange={(newValue): void => {
+			onChange={(newValue): void => {
 				if (newValue) {
 					onChange(newValue as DisconnectedValuesMode);
 				}
 			}}
 		>
-			<ToggleGroupItem
-				value={DisconnectedValuesMode.Never}
-				aria-label="Never"
-				title="Never"
-			>
+			<ToggleGroupItem value={DisconnectedValuesMode.Never} aria-label="Never">
 				<Typography.Text className="section-heading-small">Never</Typography.Text>
 			</ToggleGroupItem>
 			<ToggleGroupItem
 				value={DisconnectedValuesMode.Threshold}
 				aria-label="Threshold"
-				title="Threshold"
 			>
 				<Typography.Text className="section-heading-small">
 					Threshold

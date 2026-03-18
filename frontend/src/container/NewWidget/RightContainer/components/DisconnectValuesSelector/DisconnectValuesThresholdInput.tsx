@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { rangeUtil } from '@grafana/data';
-import { Callout } from '@signozhq/callout';
-import { Input } from '@signozhq/ui';
+import { Callout, Input } from '@signozhq/ui';
 interface DisconnectValuesThresholdInputProps {
 	value: number;
 	onChange: (seconds: number) => void;
@@ -39,7 +38,7 @@ export default function DisconnectValuesThresholdInput({
 				}
 				seconds = parsed;
 			}
-			if (minValue !== undefined && seconds <= minValue) {
+			if (minValue !== undefined && seconds < minValue) {
 				setError(`Threshold should be > ${rangeUtil.secondsToHms(minValue)}`);
 				return;
 			}
@@ -77,11 +76,15 @@ export default function DisconnectValuesThresholdInput({
 				}}
 				onKeyDown={handleKeyDown}
 				onBlur={handleBlur}
-				autoFocus={false}
+				autoFocus={true}
 				aria-invalid={!!error}
 				aria-describedby={error ? 'threshold-error' : undefined}
 			/>
-			{error && <Callout type="error" size="small" showIcon description={error} />}
+			{error && (
+				<Callout type="error" size="small" showIcon>
+					{error}
+				</Callout>
+			)}
 		</div>
 	);
 }
