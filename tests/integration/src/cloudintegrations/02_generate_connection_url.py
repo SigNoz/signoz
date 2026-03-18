@@ -6,7 +6,6 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrations import create_cloud_integration_account
 from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
@@ -168,14 +167,14 @@ def test_duplicate_cloud_account_checkins(
 
     assert account1_id != account2_id, "Two accounts should have different internal IDs"
 
-#     First check-in succeeds: account1 claims cloud_account_id
+    #     First check-in succeeds: account1 claims cloud_account_id
     response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account1_id, same_cloud_account_id
     )
     assert (
         response.status_code == HTTPStatus.OK
     ), f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
-#
+    #
     # Second check-in should fail: account2 tries to use the same cloud_account_id
     response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account2_id, same_cloud_account_id

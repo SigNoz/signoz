@@ -42,7 +42,11 @@ def test_unique_index_allows_multiple_deleted_rows(
     # Step 1: invite and delete the first user
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": UNIQUE_INDEX_USER_EMAIL, "role": "EDITOR", "name": "unique index user v1"},
+        json={
+            "email": UNIQUE_INDEX_USER_EMAIL,
+            "role": "EDITOR",
+            "name": "unique index user v1",
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -59,7 +63,11 @@ def test_unique_index_allows_multiple_deleted_rows(
     # Step 2: re-invite and delete the same email (second deleted row)
     resp = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": UNIQUE_INDEX_USER_EMAIL, "role": "EDITOR", "name": "unique index user v2"},
+        json={
+            "email": UNIQUE_INDEX_USER_EMAIL,
+            "role": "EDITOR",
+            "name": "unique index user v2",
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -85,9 +93,9 @@ def test_unique_index_allows_multiple_deleted_rows(
         )
         deleted_rows = result.fetchall()
 
-    assert len(deleted_rows) == 2, (
-        f"expected 2 deleted rows for {UNIQUE_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
-    )
+    assert (
+        len(deleted_rows) == 2
+    ), f"expected 2 deleted rows for {UNIQUE_INDEX_USER_EMAIL}, got {len(deleted_rows)}"
     deleted_ids = {row[0] for row in deleted_rows}
     assert first_user_id in deleted_ids
     assert second_user_id in deleted_ids

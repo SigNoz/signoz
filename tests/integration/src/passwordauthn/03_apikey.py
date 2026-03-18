@@ -63,7 +63,9 @@ def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> 
     assert found_pat["role"] == "ADMIN"
 
 
-def test_api_key_role(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> None:
+def test_api_key_role(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
     admin_token = get_token("admin@integration.test", "password123Z$")
 
     response = requests.post(
