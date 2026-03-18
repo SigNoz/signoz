@@ -2479,6 +2479,11 @@ export interface TypesInviteDTO {
 	 */
 	role?: string;
 	/**
+	 * @type array
+	 * @nullable true
+	 */
+	roles?: string[] | null;
+	/**
 	 * @type string
 	 */
 	token?: string;
@@ -2597,6 +2602,11 @@ export interface TypesPostableInviteDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	roles?: string[] | null;
 }
 
 export interface TypesPostableResetPasswordDTO {
@@ -2705,6 +2715,11 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	roles?: string[] | null;
 	/**
 	 * @type string
 	 */

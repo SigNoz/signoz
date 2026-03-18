@@ -2087,6 +2087,11 @@ components:
           type: string
         role:
           type: string
+        roles:
+          items:
+            type: string
+          nullable: true
+          type: array
         token:
           type: string
         updatedAt:
@@ -2169,6 +2174,11 @@ components:
           type: string
         role:
           type: string
+        roles:
+          items:
+            type: string
+          nullable: true
+          type: array
       type: object
     TypesPostableResetPassword:
       properties:
@@ -2235,6 +2245,11 @@ components:
           type: string
         role:
           type: string
+        roles:
+          items:
+            type: string
+          nullable: true
+          type: array
         status:
           type: string
         updatedAt:
