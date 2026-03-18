@@ -74,16 +74,9 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return provider.identity, nil
 	}
 
-	org, err := provider.orgGetter.Get(ctx, provider.userConfig.Root.Org.ID)
+	org, _, err := provider.orgGetter.GetByIDOrName(ctx, provider.userConfig.Root.Org.ID, provider.userConfig.Root.Org.Name)
 	if err != nil {
-		if !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
-		}
-
-		org, err = provider.orgGetter.GetByName(ctx, provider.userConfig.Root.Org.Name)
-		if err != nil {
-			return nil, err
-		}
+		return nil, err
 	}
 
 	rootUser, err := provider.userGetter.GetRootUserByOrgID(ctx, org.ID)
