@@ -248,7 +248,7 @@ func (c *conditionBuilder) ConditionFor(
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
 		// pass; No need to build exist condition for top level columns
-		// immidiately return
+		// immediately return
 		return condition, nil
 	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
 		// build exist condition for resource and attribute fields based on filter operator
