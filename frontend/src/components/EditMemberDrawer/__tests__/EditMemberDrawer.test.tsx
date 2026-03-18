@@ -1,8 +1,10 @@
 import type { ReactNode } from 'react';
 import { toast } from '@signozhq/sonner';
-import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
-import deleteUser from 'api/v1/user/id/delete';
-import update from 'api/v1/user/id/update';
+import {
+	getResetPasswordToken,
+	useDeleteUser,
+	useUpdateUser,
+} from 'api/generated/services/users';
 import { MemberStatus } from 'container/MembersSettings/utils';
 import {
 	fireEvent,
@@ -45,9 +47,12 @@ jest.mock('@signozhq/dialog', () => ({
 	),
 }));
 
-jest.mock('api/v1/user/id/update');
-jest.mock('api/v1/user/id/delete');
-jest.mock('api/v1/factor_password/getResetPasswordToken');
+jest.mock('api/generated/services/users', () => ({
+	useDeleteUser: jest.fn(),
+	useUpdateUser: jest.fn(),
+	getResetPasswordToken: jest.fn(),
+}));
+
 jest.mock('@signozhq/sonner', () => ({
 	toast: {
 		success: jest.fn(),
@@ -55,8 +60,8 @@ jest.mock('@signozhq/sonner', () => ({
 	},
 }));
 
-const mockUpdate = jest.mocked(update);
-const mockDeleteUser = jest.mocked(deleteUser);
+const mockUpdateMutate = jest.fn();
+const mockDeleteMutate = jest.fn();
 const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
 
 const activeMember = {
@@ -95,8 +100,14 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		mockUpdate.mockResolvedValue({ httpStatusCode: 200, data: null });
-		mockDeleteUser.mockResolvedValue({ httpStatusCode: 200, data: null });
+		(useUpdateUser as jest.Mock).mockReturnValue({
+			mutate: mockUpdateMutate,
+			isLoading: false,
+		});
+		(useDeleteUser as jest.Mock).mockReturnValue({
+			mutate: mockDeleteMutate,
+			isLoading: false,
+		});
 	});
 
 	it('renders active member details and disables Save when form is not dirty', () => {
@@ -114,6 +125,13 @@ describe('EditMemberDrawer', () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
+		(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+			mutate: mockUpdateMutate.mockImplementation(() => {
+				options?.mutation?.onSuccess?.();
+			}),
+			isLoading: false,
+		}));
+
 		renderDrawer({ onComplete });
 
 		const nameInput = screen.getByDisplayValue('Alice Smith');
@@ -126,10 +144,10 @@ describe('EditMemberDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdate).toHaveBeenCalledWith(
+			expect(mockUpdateMutate).toHaveBeenCalledWith(
 				expect.objectContaining({
-					userId: 'user-1',
-					displayName: 'Alice Updated',
+					pathParams: { id: 'user-1' },
+					data: expect.objectContaining({ displayName: 'Alice Updated' }),
 				}),
 			);
 			expect(onComplete).toHaveBeenCalled();
@@ -139,6 +157,13 @@ describe('EditMemberDrawer', () => {
 	it('shows delete confirm dialog and calls deleteUser for active members', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+			mutate: mockDeleteMutate.mockImplementation(() => {
+				options?.mutation?.onSuccess?.();
+			}),
+			isLoading: false,
+		}));
 
 		renderDrawer({ onComplete });
 
@@ -152,7 +177,9 @@ describe('EditMemberDrawer', () => {
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {
-			expect(mockDeleteUser).toHaveBeenCalledWith({ userId: 'user-1' });
+			expect(mockDeleteMutate).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
+			});
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
@@ -177,6 +204,13 @@ describe('EditMemberDrawer', () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
+		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
+			mutate: mockDeleteMutate.mockImplementation(() => {
+				options?.mutation?.onSuccess?.();
+			}),
+			isLoading: false,
+		}));
+
 		renderDrawer({ member: invitedMember, onComplete });
 
 		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
@@ -189,7 +223,9 @@ describe('EditMemberDrawer', () => {
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {
-			expect(mockDeleteUser).toHaveBeenCalledWith({ userId: 'abc123' });
+			expect(mockDeleteMutate).toHaveBeenCalledWith({
+				pathParams: { id: 'abc123' },
+			});
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
@@ -197,6 +233,13 @@ describe('EditMemberDrawer', () => {
 	it('calls update API when saving changes for an invited member', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+			mutate: mockUpdateMutate.mockImplementation(() => {
+				options?.mutation?.onSuccess?.();
+			}),
+			isLoading: false,
+		}));
 
 		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
 
@@ -209,8 +252,11 @@ describe('EditMemberDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdate).toHaveBeenCalledWith(
-				expect.objectContaining({ userId: 'abc123', displayName: 'Bob Updated' }),
+			expect(mockUpdateMutate).toHaveBeenCalledWith(
+				expect.objectContaining({
+					pathParams: { id: 'abc123' },
+					data: expect.objectContaining({ displayName: 'Bob Updated' }),
+				}),
 			);
 			expect(onComplete).toHaveBeenCalled();
 		});
@@ -234,8 +280,8 @@ describe('EditMemberDrawer', () => {
 				.spyOn(navigator.clipboard, 'writeText')
 				.mockImplementation(mockWriteText);
 			mockGetResetPasswordToken.mockResolvedValue({
-				httpStatusCode: 200,
-				data: { token: 'reset-tok-abc', userId: 'user-1' },
+				status: 'success',
+				data: { token: 'reset-tok-abc', id: 'user-1' },
 			});
 		});
 
@@ -256,7 +302,7 @@ describe('EditMemberDrawer', () => {
 				name: /password reset link/i,
 			});
 			expect(mockGetResetPasswordToken).toHaveBeenCalledWith({
-				userId: 'user-1',
+				id: 'user-1',
 			});
 			expect(dialog).toBeInTheDocument();
 			expect(dialog).toHaveTextContent('reset-tok-abc');

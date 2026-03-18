@@ -15,9 +15,11 @@ import {
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
-import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
-import deleteUser from 'api/v1/user/id/delete';
-import update from 'api/v1/user/id/update';
+import {
+	getResetPasswordToken,
+	useDeleteUser,
+	useUpdateUser,
+} from 'api/generated/services/users';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
@@ -45,8 +47,6 @@ function EditMemberDrawer({
 
 	const [displayName, setDisplayName] = useState('');
 	const [selectedRole, setSelectedRole] = useState<ROLES>('VIEWER');
-	const [isSaving, setIsSaving] = useState(false);
-	const [isDeleting, setIsDeleting] = useState(false);
 	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [resetLink, setResetLink] = useState<string | null>(null);
@@ -55,6 +55,39 @@ function EditMemberDrawer({
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
+
+	const { mutate: updateUser, isLoading: isSaving } = useUpdateUser({
+		mutation: {
+			onSuccess: (): void => {
+				toast.success('Member details updated successfully', { richColors: true });
+				onComplete();
+				onClose();
+			},
+			onError: (): void => {
+				toast.error('Failed to update member details', { richColors: true });
+			},
+		},
+	});
+
+	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
+		mutation: {
+			onSuccess: (): void => {
+				toast.success(
+					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
+					{ richColors: true },
+				);
+				setShowDeleteConfirm(false);
+				onComplete();
+				onClose();
+			},
+			onError: (): void => {
+				toast.error(
+					isInvited ? 'Failed to revoke invite' : 'Failed to delete member',
+					{ richColors: true },
+				);
+			},
+		},
+	});
 
 	useEffect(() => {
 		if (member) {
@@ -81,46 +114,24 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const handleSave = useCallback(async (): Promise<void> => {
+	const handleSave = useCallback((): void => {
 		if (!member || !isDirty) {
 			return;
 		}
-		setIsSaving(true);
-		try {
-			await update({ userId: member.id, displayName, role: selectedRole });
-			toast.success('Member details updated successfully', { richColors: true });
-			onComplete();
-			onClose();
-		} catch {
-			toast.error('Failed to update member details', { richColors: true });
-		} finally {
-			setIsSaving(false);
-		}
-	}, [member, isDirty, displayName, selectedRole, onComplete, onClose]);
+		updateUser({
+			pathParams: { id: member.id },
+			data: { id: member.id, displayName, role: selectedRole },
+		});
+	}, [member, isDirty, displayName, selectedRole, updateUser]);
 
-	const handleDelete = useCallback(async (): Promise<void> => {
+	const handleDelete = useCallback((): void => {
 		if (!member) {
 			return;
 		}
-		setIsDeleting(true);
-		try {
-			await deleteUser({ userId: member.id });
-			toast.success(
-				isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-				{ richColors: true },
-			);
-			setShowDeleteConfirm(false);
-			onComplete();
-			onClose();
-		} catch {
-			toast.error(
-				isInvited ? 'Failed to revoke invite' : 'Failed to delete member',
-				{ richColors: true },
-			);
-		} finally {
-			setIsDeleting(false);
-		}
-	}, [member, isInvited, onComplete, onClose]);
+		deleteUser({
+			pathParams: { id: member.id },
+		});
+	}, [member, deleteUser]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -128,7 +139,7 @@ function EditMemberDrawer({
 		}
 		setIsGeneratingLink(true);
 		try {
-			const response = await getResetPasswordToken({ userId: member.id });
+			const response = await getResetPasswordToken({ id: member.id });
 			if (response?.data?.token) {
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
