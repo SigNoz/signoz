@@ -83,51 +83,50 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
+func (roleMapping *RoleMapping) ManagedRolesFromCallbackIdentity(callbackIdentity *CallbackIdentity) []string {
 	if roleMapping == nil {
-		return types.RoleViewer
+		return []string{SigNozViewerRoleName}
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
-		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
-			return role
+		if managedRole := resolveToManagedRole(callbackIdentity.Role); managedRole != "" {
+			return []string{managedRole}
 		}
 	}
 
 	if len(roleMapping.GroupMappings) > 0 && len(callbackIdentity.Groups) > 0 {
-		highestRole := types.RoleViewer
-		found := false
-
+		seen := make(map[string]struct{})
+		var roles []string
 		for _, group := range callbackIdentity.Groups {
 			if mappedRole, exists := roleMapping.GroupMappings[group]; exists {
-				found = true
-				if role, err := types.NewRole(strings.ToUpper(mappedRole)); err == nil {
-					if compareRoles(role, highestRole) > 0 {
-						highestRole = role
+				managedRole := resolveToManagedRole(mappedRole)
+				if managedRole != "" {
+					if _, ok := seen[managedRole]; !ok {
+						seen[managedRole] = struct{}{}
+						roles = append(roles, managedRole)
 					}
 				}
 			}
 		}
-
-		if found {
-			return highestRole
+		if len(roles) > 0 {
+			return roles
 		}
 	}
 
 	if roleMapping.DefaultRole != "" {
-		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
-			return role
+		if managedRole := resolveToManagedRole(roleMapping.DefaultRole); managedRole != "" {
+			return []string{managedRole}
 		}
 	}
 
-	return types.RoleViewer
+	return []string{SigNozViewerRoleName}
 }
 
-func compareRoles(a, b types.Role) int {
-	order := map[types.Role]int{
-		types.RoleViewer: 0,
-		types.RoleEditor: 1,
-		types.RoleAdmin:  2,
+func resolveToManagedRole(role string) string {
+	// backward compatible legacy role (ADMIN -> signoz-admin) useful in case of SSO
+	if legacyRole, err := types.NewRole(strings.ToUpper(role)); err == nil {
+		return MustGetSigNozManagedRoleFromExistingRole(legacyRole)
 	}
-	return order[a] - order[b]
+
+	return role
 }

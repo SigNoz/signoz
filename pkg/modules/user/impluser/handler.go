@@ -169,7 +169,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := h.module.GetByOrgIDAndUserID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -188,7 +188,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	user, err := h.module.GetByOrgIDAndUserID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -207,7 +207,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.module.ListUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -270,7 +270,7 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
-	id := mux.Vars(r)["id"]
+	userID := mux.Vars(r)["id"]
 
 	claims, err := authtypes.ClaimsFromContext(ctx)
 	if err != nil {
@@ -278,13 +278,7 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	user, err := handler.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
-	if err != nil {
-		render.Error(w, err)
-		return
-	}
-
-	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID))
 	if err != nil {
 		render.Error(w, err)
 		return

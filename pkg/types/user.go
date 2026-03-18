@@ -37,7 +37,7 @@ type User struct {
 	Identifiable
 	DisplayName string        `json:"displayName"`
 	Email       valuer.Email  `json:"email"`
-	Role        Role          `json:"role"` // this will be moved to roles
+	Roles       []string      `json:"roles"`
 	OrgID       valuer.UUID   `json:"orgId"`
 	IsRoot      bool          `json:"isRoot"`
 	Status      valuer.String `json:"status"`
@@ -51,7 +51,6 @@ type StorableUser struct {
 	Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
 	Email       valuer.Email  `bun:"email" json:"email"`
-	Role        Role          `bun:"role" json:"role"` // this will be removed as column from here
 	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
@@ -76,7 +75,6 @@ func NewStorableUser(user *User) *StorableUser {
 		Identifiable:  user.Identifiable,
 		DisplayName:   user.DisplayName,
 		Email:         user.Email,
-		Role:          user.Role,
 		OrgID:         user.OrgID,
 		IsRoot:        user.IsRoot,
 		Status:        user.Status,
@@ -85,7 +83,7 @@ func NewStorableUser(user *User) *StorableUser {
 	}
 }
 
-func NewUserFromStorable(storableUser *StorableUser) *User {
+func NewUserFromStorable(storableUser *StorableUser, roleNames []string) *User {
 	if storableUser == nil {
 		return nil
 	}
@@ -93,7 +91,7 @@ func NewUserFromStorable(storableUser *StorableUser) *User {
 		Identifiable:  storableUser.Identifiable,
 		DisplayName:   storableUser.DisplayName,
 		Email:         storableUser.Email,
-		Role:          storableUser.Role,
+		Roles:         roleNames,
 		OrgID:         storableUser.OrgID,
 		IsRoot:        storableUser.IsRoot,
 		Status:        storableUser.Status,
@@ -102,13 +100,13 @@ func NewUserFromStorable(storableUser *StorableUser) *User {
 	}
 }
 
-func NewUsersFromStorables(storableUsers []*StorableUser) []*User {
-	users := make([]*User, len(storableUsers))
-	for i, s := range storableUsers {
-		users[i] = NewUserFromStorable(s)
-	}
-	return users
-}
+// func NewUsersFromStorables(storableUsers []*StorableUser) []*User {
+// 	users := make([]*User, len(storableUsers))
+// 	for i, s := range storableUsers {
+// 		users[i] = NewUserFromStorable(s)
+// 	}
+// 	return users
+// }
 
 func NewStorableUsers(users []*User) []*StorableUser {
 	storableUsers := make([]*StorableUser, len(users))
@@ -118,13 +116,13 @@ func NewStorableUsers(users []*User) []*StorableUser {
 	return storableUsers
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
+func NewUser(displayName string, email valuer.Email, roles []string, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 
-	if role == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
+	if len(roles) == 0 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "roles are required")
 	}
 
 	if orgID.IsZero() {
@@ -141,7 +139,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        role,
+		Roles:       roles,
 		OrgID:       orgID,
 		IsRoot:      false,
 		Status:      status,
@@ -152,7 +150,7 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 	}, nil
 }
 
-func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*User, error) {
+func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID, roleNames []string) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
@@ -167,7 +165,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        RoleAdmin,
+		Roles:       make([]string, 0),
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
@@ -180,13 +178,9 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, role Role) {
-	if displayName != "" {
-		u.DisplayName = displayName
-	}
-	if role != "" {
-		u.Role = role
-	}
+func (u *User) Update(displayName string, roles []string) {
+	u.DisplayName = displayName
+	u.Roles = roles
 	u.UpdatedAt = time.Now()
 }
 
@@ -210,7 +204,6 @@ func (u *User) UpdateStatus(status valuer.String) error {
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
-	u.Role = RoleAdmin
 	u.UpdatedAt = time.Now()
 }
 
@@ -229,9 +222,27 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
+// ErrIfRoot returns an error if the user is a root user. The caller should
+// enrich the error with the specific operation using errors.WithAdditionalf.
+func (u *StorableUser) ErrIfRoot() error {
+	if u.IsRoot {
+		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
+	}
+	return nil
+}
+
 // ErrIfDeleted returns an error if the user is in deleted state.
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfDeleted() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
+// ErrIfDeleted returns an error if the user is in deleted state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *StorableUser) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
@@ -247,10 +258,40 @@ func (u *User) ErrIfPending() error {
 	return nil
 }
 
+func (u *User) PatchRoles(targetRoles []string) ([]string, []string) {
+	currentRolesSet := make(map[string]struct{}, len(u.Roles))
+	inputRolesSet := make(map[string]struct{}, len(targetRoles))
+
+	for _, role := range u.Roles {
+		currentRolesSet[role] = struct{}{}
+	}
+	for _, role := range targetRoles {
+		inputRolesSet[role] = struct{}{}
+	}
+
+	// additions: roles present in input but not in current
+	additions := []string{}
+	for _, role := range targetRoles {
+		if _, exists := currentRolesSet[role]; !exists {
+			additions = append(additions, role)
+		}
+	}
+
+	// deletions: roles present in current but not in input
+	deletions := []string{}
+	for _, role := range u.Roles {
+		if _, exists := inputRolesSet[role]; !exists {
+			deletions = append(deletions, role)
+		}
+	}
+
+	return additions, deletions
+}
+
 func NewTraitsFromUser(user *User) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
-		"role":         user.Role,
+		"roles":        user.Roles,
 		"email":        user.Email.String(),
 		"display_name": user.DisplayName,
 		"status":       user.Status,
@@ -290,8 +331,8 @@ type UserStore interface {
 	// Get users by email.
 	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*StorableUser, error)
 
-	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*StorableUser, error)
+	// Get active users by role name and org. join to user_role table.
+	GetActiveUsersByRoleNameAndOrgID(ctx context.Context, roleName string, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by org.
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*StorableUser, error)

@@ -138,7 +138,7 @@ func NewGettableAPIKeyFromStorableAPIKey(storableAPIKey *StorableAPIKeyUser) *Ge
 		LastUsed:      lastUsed,
 		Revoked:       storableAPIKey.Revoked,
 		UserID:        storableAPIKey.UserID.String(),
-		CreatedByUser: NewUserFromStorable(storableAPIKey.CreatedByUser),
-		UpdatedByUser: NewUserFromStorable(storableAPIKey.UpdatedByUser),
+		CreatedByUser: NewUserFromStorable(storableAPIKey.CreatedByUser, make([]string, 0)), // factor api key will be removed
+		UpdatedByUser: NewUserFromStorable(storableAPIKey.UpdatedByUser, make([]string, 0)), // factor api key will be removed
 	}
 }

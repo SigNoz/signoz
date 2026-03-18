@@ -122,25 +122,6 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 	return users, nil
 }
 
-func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.StorableUser, error) {
-	var users []*types.StorableUser
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(&users).
-		Where("org_id = ?", orgID).
-		Where("role = ?", role).
-		Where("status = ?", types.UserStatusActive.StringValue()).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
 func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *types.StorableUser) error {
 	_, err := store.
 		sqlstore.
@@ -149,7 +130,6 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Model(user).
 		Column("display_name").
 		Column("email").
-		Column("role").
 		Column("is_root").
 		Column("updated_at").
 		Column("status").
@@ -563,7 +543,7 @@ func (store *store) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*type
 }
 
 func (store *store) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
-	user := new(types.User)
+	user := new(types.StorableUser)
 
 	count, err := store.
 		sqlstore.
@@ -701,5 +681,22 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 		return nil, err
 	}
 
+	return users, nil
+}
+
+func (store *store) GetActiveUsersByRoleNameAndOrgID(ctx context.Context, roleName string, orgID valuer.UUID) ([]*types.StorableUser, error) {
+	var users []*types.StorableUser
+
+	err := store.sqlstore.BunDBCtx(ctx).NewSelect().
+		Model(&users).
+		Join("JOIN user_role ON user_role.user_id = users.id").
+		Join("JOIN role ON role.id = user_role.role_id").
+		Where("users.org_id = ?", orgID).
+		Where("role.name = ?", roleName).
+		Where("users.status = ?", types.UserStatusActive.StringValue()).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
 	return users, nil
 }

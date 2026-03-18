@@ -15,31 +15,34 @@ import (
 )
 
 type service struct {
-	settings  factory.ScopedProviderSettings
-	store     types.UserStore
-	module    user.Module
-	orgGetter organization.Getter
-	authz     authz.AuthZ
-	config    user.RootConfig
-	stopC     chan struct{}
+	settings      factory.ScopedProviderSettings
+	store         types.UserStore
+	userRoleStore authtypes.UserRoleStore
+	module        user.Module
+	orgGetter     organization.Getter
+	authz         authz.AuthZ
+	config        user.RootConfig
+	stopC         chan struct{}
 }
 
 func NewService(
 	providerSettings factory.ProviderSettings,
 	store types.UserStore,
+	userRoleStore authtypes.UserRoleStore,
 	module user.Module,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
 	config user.RootConfig,
 ) user.Service {
 	return &service{
-		settings:  factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
-		store:     store,
-		module:    module,
-		orgGetter: orgGetter,
-		authz:     authz,
-		config:    config,
-		stopC:     make(chan struct{}),
+		settings:      factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
+		store:         store,
+		userRoleStore: userRoleStore,
+		module:        module,
+		orgGetter:     orgGetter,
+		authz:         authz,
+		config:        config,
+		stopC:         make(chan struct{}),
 	}
 }
 
@@ -103,17 +106,16 @@ func (s *service) reconcile(ctx context.Context) error {
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingStorableRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
+	existingStorableRoot, err := s.getRootUserByOrgID(ctx, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
-	existingRoot := types.NewUserFromStorable(existingStorableRoot)
 
-	if existingRoot == nil {
+	if existingStorableRoot == nil {
 		return s.createOrPromoteRootUser(ctx, orgID)
 	}
 
-	return s.updateExistingRootUser(ctx, orgID, existingRoot)
+	return s.updateExistingRootUser(ctx, orgID, existingStorableRoot)
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
@@ -123,29 +125,27 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		oldRole := existingUser.Role
+		oldRoles := existingUser.Roles
 
-		existingUser.PromoteToRoot()
+		existingUser.PromoteToRoot() // this only sets the column is_root as true (permissions are managed by authz in next step)
 		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return err
 		}
 
-		if oldRole != types.RoleAdmin {
-			if err := s.authz.ModifyGrant(ctx,
-				orgID,
-				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
-				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
-			); err != nil {
-				return err
-			}
+		if err := s.authz.ModifyGrant(ctx,
+			orgID,
+			oldRoles,
+			[]string{authtypes.SigNozAdminRoleName},
+			authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+		); err != nil {
+			return err
 		}
 
 		return s.setPassword(ctx, existingUser.ID)
 	}
 
 	// Create new root user
-	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID)
+	newUser, err := types.NewRootUser(s.config.Email.String(), s.config.Email, orgID, []string{authtypes.SigNozAdminRoleName})
 	if err != nil {
 		return err
 	}
@@ -155,6 +155,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
+	// authz grants are handled inside CreateUser
 	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
 }
 
@@ -195,4 +196,13 @@ func (s *service) setPassword(ctx context.Context, userID valuer.UUID) error {
 	}
 
 	return nil
+}
+
+func (s *service) getRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
+	storableRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	return s.module.GetByOrgIDAndUserID(ctx, orgID, storableRoot.ID)
 }

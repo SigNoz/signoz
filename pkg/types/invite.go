@@ -24,7 +24,7 @@ type Invite struct {
 	Name  string       `bun:"name,type:text" json:"name"`
 	Email valuer.Email `bun:"email,type:text" json:"email"`
 	Token string       `bun:"token,type:text" json:"token"`
-	Role  Role         `bun:"role,type:text" json:"role"`
+	Roles []string     `bun:"roles,type:text" json:"role"`
 	OrgID valuer.UUID  `bun:"org_id,type:text" json:"orgId"`
 
 	InviteLink string `bun:"-" json:"inviteLink"`
@@ -49,7 +49,7 @@ type PostableAcceptInvite struct {
 type PostableInvite struct {
 	Name            string       `json:"name"`
 	Email           valuer.Email `json:"email"`
-	Role            Role         `json:"role"`
+	Roles           []string     `json:"roles"`
 	FrontendBaseUrl string       `json:"frontendBaseUrl"`
 }
 
@@ -83,7 +83,7 @@ type GettableCreateInviteResponse struct {
 	InviteToken string `json:"token"`
 }
 
-func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
+func NewInvite(name string, roles []string, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
 	invite := &Invite{
 		Identifiable: Identifiable{
 			ID: valuer.GenerateUUID(),
@@ -91,7 +91,7 @@ func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*
 		Name:  name,
 		Email: email,
 		Token: valuer.GenerateUUID().String(),
-		Role:  role,
+		Roles: roles,
 		OrgID: orgID,
 		TimeAuditable: TimeAuditable{
 			CreatedAt: time.Now(),

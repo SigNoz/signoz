@@ -2,30 +2,18 @@ package impluser
 
 import (
 	"context"
-	"slices"
 
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 type getter struct {
-	store   types.UserStore
-	flagger flagger.Flagger
+	store types.UserStore
 }
 
-func NewGetter(store types.UserStore, flagger flagger.Flagger) user.Getter {
-	return &getter{store: store, flagger: flagger}
-}
-
-func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
-	storableUser, err := module.store.GetRootUserByOrgID(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-	return types.NewUserFromStorable(storableUser), nil
+func NewGetter(store types.UserStore) user.Getter {
+	return &getter{store: store}
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
@@ -34,33 +22,13 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 		return nil, err
 	}
 
-	// filter root users if feature flag `hide_root_users` is true
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
-
-	if hideRootUsers {
-		storableUsers = slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.IsRoot })
+	// we are not resolving roles for getter methods
+	users := make([]*types.User, len(storableUsers))
+	for idx, storableUser := range storableUsers {
+		users[idx] = types.NewUserFromStorable(storableUser, make([]string, 0))
 	}
 
-	return types.NewUsersFromStorables(storableUsers), nil
-}
-
-func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
-	storableUsers, err := module.store.GetUsersByEmail(ctx, email)
-	if err != nil {
-		return nil, err
-	}
-
-	return types.NewUsersFromStorables(storableUsers), nil
-}
-
-func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.User, error) {
-	storableUser, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
-	if err != nil {
-		return nil, err
-	}
-
-	return types.NewUserFromStorable(storableUser), nil
+	return users, nil
 }
 
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.User, error) {
@@ -69,7 +37,7 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.User, err
 		return nil, err
 	}
 
-	return types.NewUserFromStorable(storableUser), nil
+	return types.NewUserFromStorable(storableUser, make([]string, 0)), nil
 }
 
 func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
@@ -78,7 +46,13 @@ func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email value
 		return nil, err
 	}
 
-	return types.NewUsersFromStorables(storableUsers), nil
+	users := make([]*types.User, len(storableUsers))
+
+	for idx, storableUser := range storableUsers {
+		users[idx] = types.NewUserFromStorable(storableUser, make([]string, 0))
+	}
+
+	return users, nil
 }
 
 func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {

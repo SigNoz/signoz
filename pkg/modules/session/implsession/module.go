@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/authn"
+	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
@@ -28,9 +29,10 @@ type module struct {
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
+	authz      authz.AuthZ
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, authz authz.AuthZ) session.Module {
 	return &module{
 		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
@@ -142,9 +144,12 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+	managedRoles := roleMapping.ManagedRolesFromCallbackIdentity(callbackIdentity)
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID, types.UserStatusActive)
+	// pass only valid or fallback to viewer
+	validRoles, err := module.resolveValidRoles(ctx, callbackIdentity.OrgID, managedRoles, callbackIdentity.Email)
+
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, validRoles, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
@@ -158,7 +163,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role, authtypes.IdentNProviderTokenizer), map[string]string{})
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, types.RoleViewer, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {
 		return "", err
 	}
@@ -221,4 +226,40 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 	}
 
 	return provider, nil
+}
+
+// resolveValidRoles validates role names against the database
+// returns only roles that exist. If none are valid, falls back to signoz-viewer role
+func (module *module) resolveValidRoles(ctx context.Context, orgID valuer.UUID, roles []string, email valuer.Email) ([]string, error) {
+	storableRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, roles)
+	if err != nil {
+		return nil, err
+	}
+
+	validRoles := make([]string, 0, len(storableRoles))
+	validSet := make(map[string]struct{})
+	for _, sr := range storableRoles {
+		validRoles = append(validRoles, sr.Name)
+		validSet[sr.Name] = struct{}{}
+	}
+
+	// log ignored roles
+	if len(validRoles) < len(roles) {
+		var ignored []string
+		for _, r := range roles {
+			if _, ok := validSet[r]; !ok {
+				ignored = append(ignored, r)
+			}
+		}
+		module.settings.Logger().WarnContext(ctx, "ignoring non-existent roles from SSO mapping", "ignored_roles", ignored, "email", email)
+	}
+
+	// fallback to viewer if no valid roles
+	if len(validRoles) == 0 {
+		module.settings.Logger().WarnContext(ctx, "no valid roles from SSO mapping, falling back to viewer",
+			"email", email)
+		validRoles = []string{authtypes.SigNozViewerRoleName}
+	}
+
+	return validRoles, nil
 }
