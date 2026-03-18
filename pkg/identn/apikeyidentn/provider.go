@@ -85,7 +85,7 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
 	}
 
-	var user types.User
+	var user types.StorableUser
 	err = provider.
 		store.
 		BunDB().

@@ -410,6 +410,11 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, err
 	}
 
+	// backward compatibility: convert legacy "role" field to "roles" when "roles" is not provided
+	if user.Roles == nil && user.Role != "" && user.Role != existingUser.Role {
+		user.Roles = []string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}
+	}
+
 	var grants, revokes []string
 	var rolesChanged bool
 	if user.Roles != nil {

@@ -150,5 +150,6 @@ func resolveToManagedRole(role string) string {
 		return MustGetSigNozManagedRoleFromExistingRole(legacyRole)
 	}
 
-	return role
+	// if it's not a valid legacy role, return empty to signal unrecognized
+	return ""
 }
