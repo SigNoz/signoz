@@ -199,7 +199,7 @@ func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UU
 	response, err := provider.zeus.GetCheckoutURL(ctx, activeLicense.Key, body)
 	if err != nil {
 		if errors.Ast(err, errors.TypeAlreadyExists) {
-			return nil, errors.WithAdditionalf(err, "checkout has already been completed for this account. Please use the reconcile payment option to sync your subscription")
+			return nil, errors.WithAdditionalf(err, "checkout has already been completed for this account. Please click 'Refresh Status' to sync your subscriptio")
 		}
 		return nil, err
 	}
