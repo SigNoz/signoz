@@ -203,7 +203,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 		resetLink := userWithToken.ResetPasswordToken.FactorPasswordResetLink(frontendBaseUrl)
 
-		tokenLifetime := m.config.Password.Reset.MaxTokenLifetime
+		tokenLifetime := m.config.Password.Invite.MaxTokenLifetime
 		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
 		if err := m.emailing.SendHTML(ctx, userWithToken.User.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
@@ -460,7 +460,11 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	}
 
 	// create a new token
-	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(module.config.Password.Reset.MaxTokenLifetime))
+	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	if user.Status == types.UserStatusPendingInvite {
+		tokenLifetime = module.config.Password.Invite.MaxTokenLifetime
+	}
+	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(tokenLifetime))
 	if err != nil {
 		return nil, err
 	}
@@ -500,6 +504,9 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	resetLink := token.FactorPasswordResetLink(frontendBaseURL)
 
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
+	if user.Status == types.UserStatusPendingInvite {
+		tokenLifetime = module.config.Password.Invite.MaxTokenLifetime
+	}
 	humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
 	if err := module.emailing.SendHTML(

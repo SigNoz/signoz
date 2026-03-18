@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -41,9 +40,7 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(ctx)
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
+		if claims.IdentNProvider == authtypes.IdentNProviderAPIkey.StringValue() {
 			if err := claims.IsViewer(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -93,9 +90,7 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(ctx)
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
+		if claims.IdentNProvider == authtypes.IdentNProviderAPIkey.StringValue() {
 			if err := claims.IsEditor(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -144,9 +139,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 			return
 		}
 
-		commentCtx := ctxtypes.CommentFromContext(ctx)
-		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
+		if claims.IdentNProvider == authtypes.IdentNProviderAPIkey.StringValue() {
 			if err := claims.IsAdmin(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)

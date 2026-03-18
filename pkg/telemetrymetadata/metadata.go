@@ -102,7 +102,7 @@ func NewTelemetryMetaStore(
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
 					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
 				},
 			},
