@@ -2,8 +2,6 @@ package telemetrylogs
 
 import (
 	"context"
-	"slices"
-	"strings"
 	"testing"
 	"time"
 
@@ -796,17 +794,17 @@ func TestStatementBuilderListQueryBodyMessage(t *testing.T) {
 	}
 }
 
-func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *telemetrytypestest.MockMetadataStore {
+func buildTestTelemetryMetadataStore(t *testing.T) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
 	for path, jsonTypes := range types {
-		promoted := false
+		// promoted := false
 
-		split := strings.Split(path, telemetrytypes.ArraySep)
-		if slices.Contains(promotedPaths, split[0]) {
-			promoted = true
-		}
+		// split := strings.Split(path, telemetrytypes.ArraySep)
+		// if slices.Contains(promotedPaths, split[0]) {
+		// 	promoted = true
+		// }
 		// Create a TelemetryFieldKey for each JSONDataType for this path
 		// Since a path can have multiple types, we create one key per type
 		for _, jsonType := range jsonTypes {
@@ -816,7 +814,7 @@ func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *tel
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
 				JSONDataType:  &jsonType,
-				Materialized:  promoted,
+				// Materialized:  promoted,
 			}
 			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
 				BaseColumn:     LogsV2BodyV2Column,
@@ -830,8 +828,8 @@ func buildTestTelemetryMetadataStore(t *testing.T, promotedPaths ...string) *tel
 	return mockMetadataStore
 }
 
-func buildJSONTestStatementBuilder(t *testing.T, promotedPaths ...string) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t, promotedPaths...)
+func buildJSONTestStatementBuilder(t *testing.T) *logQueryStatementBuilder {
+	mockMetadataStore := buildTestTelemetryMetadataStore(t)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
