@@ -7,7 +7,6 @@ import {
 	Check,
 	ChevronDown,
 	Copy,
-	Link,
 	LockKeyhole,
 	RefreshCw,
 	Trash2,
@@ -17,14 +16,11 @@ import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
 import getResetPasswordToken from 'api/v1/factor_password/getResetPasswordToken';
-import sendInvite from 'api/v1/invite/create';
-import cancelInvite from 'api/v1/invite/id/delete';
 import deleteUser from 'api/v1/user/id/delete';
 import update from 'api/v1/user/id/update';
 import { MemberRow } from 'components/MembersTable/MembersTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
-import ROUTES from 'constants/routes';
-import { INVITE_PREFIX, MemberStatus } from 'container/MembersSettings/utils';
+import { MemberStatus } from 'container/MembersSettings/utils';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
@@ -36,7 +32,6 @@ export interface EditMemberDrawerProps {
 	open: boolean;
 	onClose: () => void;
 	onComplete: () => void;
-	onRefetch?: () => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -45,7 +40,6 @@ function EditMemberDrawer({
 	open,
 	onClose,
 	onComplete,
-	onRefetch,
 }: EditMemberDrawerProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -58,11 +52,9 @@ function EditMemberDrawer({
 	const [resetLink, setResetLink] = useState<string | null>(null);
 	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
 	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
+	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
-	// Invited member IDs are prefixed with 'invite-'; strip it to get the real invite ID
-	const inviteId =
-		isInvited && member ? member.id.slice(INVITE_PREFIX.length) : null;
 
 	useEffect(() => {
 		if (member) {
@@ -73,7 +65,7 @@ function EditMemberDrawer({
 
 	const isDirty =
 		member !== null &&
-		(displayName !== member.name || selectedRole !== member.role);
+		(displayName !== (member.name ?? '') || selectedRole !== member.role);
 
 	const formatTimestamp = useCallback(
 		(ts: string | null | undefined): string => {
@@ -89,80 +81,22 @@ function EditMemberDrawer({
 		[formatTimezoneAdjustedTimestamp],
 	);
 
-	const saveInvitedMember = useCallback(async (): Promise<void> => {
-		if (!member || !inviteId) {
-			return;
-		}
-		await cancelInvite({ id: inviteId });
-		try {
-			await sendInvite({
-				email: member.email,
-				name: displayName,
-				role: selectedRole,
-				frontendBaseUrl: window.location.origin,
-			});
-			toast.success('Invite updated successfully', { richColors: true });
-			onComplete();
-			onClose();
-		} catch {
-			onRefetch?.();
-			onClose();
-			toast.error(
-				'Failed to send the updated invite. Please re-invite this member.',
-				{ richColors: true },
-			);
-		}
-	}, [
-		member,
-		inviteId,
-		displayName,
-		selectedRole,
-		onComplete,
-		onClose,
-		onRefetch,
-	]);
-
-	const saveActiveMember = useCallback(async (): Promise<void> => {
-		if (!member) {
-			return;
-		}
-		await update({
-			userId: member.id,
-			displayName,
-			role: selectedRole,
-		});
-		toast.success('Member details updated successfully', { richColors: true });
-		onComplete();
-		onClose();
-	}, [member, displayName, selectedRole, onComplete, onClose]);
-
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!member || !isDirty) {
 			return;
 		}
 		setIsSaving(true);
 		try {
-			if (isInvited && inviteId) {
-				await saveInvitedMember();
-			} else {
-				await saveActiveMember();
-			}
+			await update({ userId: member.id, displayName, role: selectedRole });
+			toast.success('Member details updated successfully', { richColors: true });
+			onComplete();
+			onClose();
 		} catch {
-			toast.error(
-				isInvited ? 'Failed to update invite' : 'Failed to update member details',
-				{ richColors: true },
-			);
+			toast.error('Failed to update member details', { richColors: true });
 		} finally {
 			setIsSaving(false);
 		}
-	}, [
-		member,
-		isDirty,
-		isInvited,
-		inviteId,
-		saveInvitedMember,
-		saveActiveMember,
-	]);
+	}, [member, isDirty, displayName, selectedRole, onComplete, onClose]);
 
 	const handleDelete = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -170,25 +104,23 @@ function EditMemberDrawer({
 		}
 		setIsDeleting(true);
 		try {
-			if (isInvited && inviteId) {
-				await cancelInvite({ id: inviteId });
-				toast.success('Invitation cancelled successfully', { richColors: true });
-			} else {
-				await deleteUser({ userId: member.id });
-				toast.success('Member deleted successfully', { richColors: true });
-			}
+			await deleteUser({ userId: member.id });
+			toast.success(
+				isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
+				{ richColors: true },
+			);
 			setShowDeleteConfirm(false);
 			onComplete();
 			onClose();
 		} catch {
 			toast.error(
-				isInvited ? 'Failed to cancel invitation' : 'Failed to delete member',
+				isInvited ? 'Failed to revoke invite' : 'Failed to delete member',
 				{ richColors: true },
 			);
 		} finally {
 			setIsDeleting(false);
 		}
-	}, [member, isInvited, inviteId, onComplete, onClose]);
+	}, [member, isInvited, onComplete, onClose]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
 		if (!member) {
@@ -201,6 +133,7 @@ function EditMemberDrawer({
 				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
 				setResetLink(link);
 				setHasCopiedResetLink(false);
+				setLinkType(isInvited ? 'invite' : 'reset');
 				setShowResetLinkDialog(true);
 				onClose();
 			} else {
@@ -217,7 +150,7 @@ function EditMemberDrawer({
 		} finally {
 			setIsGeneratingLink(false);
 		}
-	}, [member, onClose]);
+	}, [member, isInvited, setLinkType, onClose]);
 
 	const handleCopyResetLink = useCallback(async (): Promise<void> => {
 		if (!resetLink) {
@@ -227,36 +160,18 @@ function EditMemberDrawer({
 			await navigator.clipboard.writeText(resetLink);
 			setHasCopiedResetLink(true);
 			setTimeout(() => setHasCopiedResetLink(false), 2000);
-			toast.success('Reset link copied to clipboard', { richColors: true });
+			toast.success(
+				linkType === 'invite'
+					? 'Invite link copied to clipboard'
+					: 'Reset link copied to clipboard',
+				{ richColors: true },
+			);
 		} catch {
 			toast.error('Failed to copy link', {
 				richColors: true,
 			});
 		}
-	}, [resetLink]);
-
-	const handleCopyInviteLink = useCallback(async (): Promise<void> => {
-		if (!member?.token) {
-			toast.error('Invite link is not available', {
-				richColors: true,
-				position: 'top-right',
-			});
-			return;
-		}
-		const inviteLink = `${window.location.origin}${ROUTES.SIGN_UP}?token=${member.token}`;
-		try {
-			await navigator.clipboard.writeText(inviteLink);
-			toast.success('Invite link copied to clipboard', {
-				richColors: true,
-				position: 'top-right',
-			});
-		} catch {
-			toast.error('Failed to copy invite link', {
-				richColors: true,
-				position: 'top-right',
-			});
-		}
-	}, [member]);
+	}, [resetLink, linkType]);
 
 	const handleClose = useCallback((): void => {
 		setShowDeleteConfirm(false);
@@ -348,30 +263,22 @@ function EditMemberDrawer({
 						onClick={(): void => setShowDeleteConfirm(true)}
 					>
 						<Trash2 size={12} />
-						{isInvited ? 'Cancel Invite' : 'Delete Member'}
+						{isInvited ? 'Revoke Invite' : 'Delete Member'}
 					</Button>
 
 					<div className="edit-member-drawer__footer-divider" />
-
-					{isInvited ? (
-						<Button
-							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-							onClick={handleCopyInviteLink}
-							disabled={!member?.token}
-						>
-							<Link size={12} />
-							Copy Invite Link
-						</Button>
-					) : (
-						<Button
-							className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-							onClick={handleGenerateResetLink}
-							disabled={isGeneratingLink}
-						>
-							<RefreshCw size={12} />
-							{isGeneratingLink ? 'Generating...' : 'Generate Password Reset Link'}
-						</Button>
-					)}
+					<Button
+						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+						onClick={handleGenerateResetLink}
+						disabled={isGeneratingLink}
+					>
+						<RefreshCw size={12} />
+						{isGeneratingLink
+							? 'Generating...'
+							: isInvited
+							? 'Copy Invite Link'
+							: 'Generate Password Reset Link'}
+					</Button>
 				</div>
 
 				<div className="edit-member-drawer__footer-right">
@@ -394,21 +301,21 @@ function EditMemberDrawer({
 		</div>
 	);
 
-	const deleteDialogTitle = isInvited ? 'Cancel Invitation' : 'Delete Member';
+	const deleteDialogTitle = isInvited ? 'Revoke Invite' : 'Delete Member';
 	const deleteDialogBody = isInvited ? (
 		<>
-			Are you sure you want to cancel the invitation for{' '}
+			Are you sure you want to revoke the invite for{' '}
 			<strong>{member?.email}</strong>? They will no longer be able to join the
 			workspace using this invite.
 		</>
 	) : (
 		<>
 			Are you sure you want to delete{' '}
-			<strong>{member?.name || member?.email}</strong>? This will permanently
-			remove their access to the workspace.
+			<strong>{member?.name || member?.email}</strong>? This will remove their
+			access to the workspace.
 		</>
 	);
-	const deleteConfirmLabel = isInvited ? 'Cancel Invite' : 'Delete Member';
+	const deleteConfirmLabel = isInvited ? 'Revoke Invite' : 'Delete Member';
 
 	return (
 		<>
@@ -434,17 +341,19 @@ function EditMemberDrawer({
 				onOpenChange={(isOpen): void => {
 					if (!isOpen) {
 						setShowResetLinkDialog(false);
+						setLinkType(null);
 					}
 				}}
-				title="Password Reset Link"
+				title={linkType === 'invite' ? 'Invite Link' : 'Password Reset Link'}
 				showCloseButton
 				width="base"
 				className="reset-link-dialog"
 			>
 				<div className="reset-link-dialog__content">
 					<p className="reset-link-dialog__description">
-						This creates a one-time link the team member can use to set a new password
-						for their SigNoz account.
+						{linkType === 'invite'
+							? 'Share this one-time link with the team member to complete their account setup.'
+							: 'This creates a one-time link the team member can use to set a new password for their SigNoz account.'}
 					</p>
 					<div className="reset-link-dialog__link-row">
 						<div className="reset-link-dialog__link-text-wrap">
