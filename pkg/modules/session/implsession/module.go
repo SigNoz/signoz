@@ -235,26 +235,22 @@ func getProvider[T authn.AuthN](authNProvider authtypes.AuthNProvider, authNs ma
 // resolveValidRoles validates role names against the database
 // returns only roles that exist. If none are valid, falls back to signoz-viewer role
 func (module *module) resolveValidRoles(ctx context.Context, orgID valuer.UUID, roles []string, email valuer.Email) ([]string, error) {
-	storableRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, roles)
-	if err != nil {
-		return nil, err
-	}
+	validRoles := make([]string, 0, len(roles))
+	var ignored []string
 
-	validRoles := make([]string, 0, len(storableRoles))
-	validSet := make(map[string]struct{})
-	for _, sr := range storableRoles {
-		validRoles = append(validRoles, sr.Name)
-		validSet[sr.Name] = struct{}{}
-	}
-
-	// log ignored roles
-	if len(validRoles) < len(roles) {
-		var ignored []string
-		for _, r := range roles {
-			if _, ok := validSet[r]; !ok {
-				ignored = append(ignored, r)
+	for _, roleName := range roles {
+		_, err := module.authz.GetByOrgIDAndName(ctx, orgID, roleName)
+		if err != nil {
+			if errors.Ast(err, errors.TypeNotFound) {
+				ignored = append(ignored, roleName)
+				continue
 			}
+			return nil, err
 		}
+		validRoles = append(validRoles, roleName)
+	}
+
+	if len(ignored) > 0 {
 		module.settings.Logger().WarnContext(ctx, "ignoring non-existent roles from SSO mapping", "ignored_roles", ignored, "email", email)
 	}
 

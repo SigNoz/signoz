@@ -214,7 +214,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		for idx, invite := range bulkInvites.Invites {
 			// create a new user with pending invite status
-			newUser, err := types.NewUser(invite.Name, invite.Email, invite.Role,  invite.Roles, orgID, types.UserStatusPendingInvite)
+			newUser, err := types.NewUser(invite.Name, invite.Email, invite.Role, invite.Roles, orgID, types.UserStatusPendingInvite)
 			if err != nil {
 				return err
 			}
@@ -435,6 +435,8 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	if user.Roles == nil {
 		updateRole = existingUser.Role
 		updateRoles = existingUser.Roles
+	} else if updateRole == "" {
+		updateRole = existingUser.Role
 	}
 	existingUser.Update(user.DisplayName, updateRole, updateRoles)
 	if rolesChanged {
