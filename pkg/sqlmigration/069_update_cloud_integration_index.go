@@ -14,16 +14,16 @@ import (
 	"github.com/uptrace/bun/migrate"
 )
 
-type fixCloudIntegrationUniqueIndex struct {
+type updateCloudIntegrationUniqueIndex struct {
 	sqlstore  sqlstore.SQLStore
 	sqlschema sqlschema.SQLSchema
 }
 
-func NewFixCloudIntegrationUniqueIndexFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
+func NewUpdateCloudIntegrationUniqueIndexFactory(sqlstore sqlstore.SQLStore, sqlschema sqlschema.SQLSchema) factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("fix_cloud_integration_index"),
+		factory.MustNewName("update_cloud_integration_index"),
 		func(ctx context.Context, ps factory.ProviderSettings, c Config) (SQLMigration, error) {
-			return &fixCloudIntegrationUniqueIndex{
+			return &updateCloudIntegrationUniqueIndex{
 				sqlstore:  sqlstore,
 				sqlschema: sqlschema,
 			}, nil
@@ -31,7 +31,7 @@ func NewFixCloudIntegrationUniqueIndexFactory(sqlstore sqlstore.SQLStore, sqlsch
 	)
 }
 
-func (migration *fixCloudIntegrationUniqueIndex) Register(migrations *migrate.Migrations) error {
+func (migration *updateCloudIntegrationUniqueIndex) Register(migrations *migrate.Migrations) error {
 	if err := migrations.Register(migration.Up, migration.Down); err != nil {
 		return err
 	}
@@ -60,7 +60,7 @@ type duplicateGroup struct {
 	losers []*cloudIntegrationRow
 }
 
-func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun.DB) error {
+func (migration *updateCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun.DB) error {
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -69,6 +69,8 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 		_ = tx.Rollback()
 	}()
 
+	sqls := [][]byte{}
+
 	// Step 1: Drop the wrong index on (id, provider, org_id)
 	dropSqls := migration.sqlschema.Operator().DropIndex(
 		(&sqlschema.UniqueIndex{
@@ -76,11 +78,7 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 			ColumnNames: []sqlschema.ColumnName{"id", "provider", "org_id"},
 		}).Named("unique_cloud_integration"),
 	)
-	for _, sql := range dropSqls {
-		if _, err := tx.ExecContext(ctx, string(sql)); err != nil {
-			return err
-		}
-	}
+	sqls = append(sqls, dropSqls...)
 
 	// Step 2: Normalize empty-string account_id to NULL
 	// Older table structure could store "" instead of NULL for unconnected accounts.
@@ -122,28 +120,19 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 			return err
 		}
 
-		// Step 5: Reassign orphaned cloud_integration_service rows
+		// Step 5: Reassign non-conflicting cloud_integration_service rows to keeper
 		for _, loser := range group.losers {
-			// Delete services from loser that would conflict with keeper's services (same type)
-			_, err = tx.NewDelete().
+			_, err = tx.NewUpdate().
 				TableExpr("cloud_integration_service").
+				Set("cloud_integration_id = ?", group.keeper.ID).
 				Where("cloud_integration_id = ?", loser.ID).
-				Where("type IN (?)",
+				Where("type NOT IN (?)",
 					tx.NewSelect().
 						TableExpr("cloud_integration_service").
 						Column("type").
 						Where("cloud_integration_id = ?", group.keeper.ID),
 				).
 				Exec(ctx)
-			if err != nil {
-				return err
-			}
-
-			// Reassign remaining services to the keeper
-			_, err = tx.ExecContext(ctx,
-				"UPDATE cloud_integration_service SET cloud_integration_id = ? WHERE cloud_integration_id = ?",
-				group.keeper.ID, loser.ID,
-			)
 			if err != nil {
 				return err
 			}
@@ -173,7 +162,9 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 			Where:       "removed_at IS NULL",
 		},
 	)
-	for _, sql := range createSqls {
+	sqls = append(sqls, createSqls...)
+
+	for _, sql := range sqls {
 		if _, err = tx.ExecContext(ctx, string(sql)); err != nil {
 			return err
 		}
@@ -182,7 +173,7 @@ func (migration *fixCloudIntegrationUniqueIndex) Up(ctx context.Context, db *bun
 	return tx.Commit()
 }
 
-func (migration *fixCloudIntegrationUniqueIndex) Down(ctx context.Context, db *bun.DB) error {
+func (migration *updateCloudIntegrationUniqueIndex) Down(ctx context.Context, db *bun.DB) error {
 	return nil
 }
 
