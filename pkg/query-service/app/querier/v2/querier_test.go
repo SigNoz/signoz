@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -1455,6 +1456,7 @@ func Test_querier_Traces_runWindowBasedListQueryDesc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
@@ -1680,6 +1682,7 @@ func Test_querier_Traces_runWindowBasedListQueryAsc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
@@ -1979,6 +1982,7 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),
@@ -2206,6 +2210,7 @@ func Test_querier_Logs_runWindowBasedListQueryAsc(t *testing.T) {
 
 			// Create reader and querier
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
 				prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore),

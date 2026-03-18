@@ -158,7 +158,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role), map[string]string{})
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {
 		return "", err
 	}

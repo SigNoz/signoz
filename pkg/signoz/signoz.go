@@ -16,6 +16,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -65,6 +66,7 @@ type SigNoz struct {
 	Sharder                sharder.Sharder
 	StatsReporter          statsreporter.StatsReporter
 	Tokenizer              pkgtokenizer.Tokenizer
+	IdentNResolver         identn.IdentNResolver
 	Authz                  authz.AuthZ
 	Modules                Modules
 	Handlers               Handlers
@@ -390,6 +392,18 @@ func New(
 	// Initialize all modules
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
+	// Initialize identN resolver
+	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer)
+	identNs := []identn.IdentN{}
+	for _, identNFactory := range identNFactories.GetInOrder() {
+		identN, err := identNFactory.New(ctx, providerSettings, config.IdentN)
+		if err != nil {
+			return nil, err
+		}
+		identNs = append(identNs, identN)
+	}
+	identNResolver := identn.NewIdentNResolver(providerSettings, identNs...)
+
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
@@ -468,6 +482,7 @@ func New(
 		Emailing:               emailing,
 		Sharder:                sharder,
 		Tokenizer:              tokenizer,
+		IdentNResolver:         identNResolver,
 		Authz:                  authz,
 		Modules:                modules,
 		Handlers:               handlers,

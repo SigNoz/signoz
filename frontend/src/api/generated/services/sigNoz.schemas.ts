@@ -278,6 +278,13 @@ export interface AuthtypesPatchableObjectsDTO {
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
+export interface AuthtypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -301,6 +308,17 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface AuthtypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface AuthtypesPostableRotateTokenDTO {
 	/**
 	 * @type string
@@ -317,6 +335,39 @@ export interface AuthtypesResourceDTO {
 	 * @type string
 	 */
 	type: string;
+}
+
+export interface AuthtypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 /**
@@ -2039,57 +2090,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface RoletypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
-export interface RoletypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface RoletypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -3163,7 +3163,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: RoletypesRoleDTO[];
+	data: AuthtypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -3185,7 +3185,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: RoletypesRoleDTO;
+	data: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */

@@ -220,6 +220,13 @@ components:
       - additions
       - deletions
       type: object
+    AuthtypesPatchableRole:
+      properties:
+        description:
+          type: string
+      required:
+      - description
+      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -236,6 +243,15 @@ components:
         password:
           type: string
       type: object
+    AuthtypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
     AuthtypesPostableRotateToken:
       properties:
         refreshToken:
@@ -250,6 +266,31 @@ components:
       required:
       - name
       - type
+      type: object
+    AuthtypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
       type: object
     AuthtypesRoleMapping:
       properties:
@@ -1721,47 +1762,6 @@ components:
       required:
       - status
       - error
-      type: object
-    RoletypesPatchableRole:
-      properties:
-        description:
-          type: string
-      required:
-      - description
-      type: object
-    RoletypesPostableRole:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      required:
-      - name
-      type: object
-    RoletypesRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
       type: object
     ServiceaccounttypesFactorAPIKey:
       properties:
@@ -4234,7 +4234,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RoletypesRole'
+                      $ref: '#/components/schemas/AuthtypesRole'
                     type: array
                   status:
                     type: string
@@ -4277,7 +4277,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPostableRole'
+              $ref: '#/components/schemas/AuthtypesPostableRole'
       responses:
         "201":
           content:
@@ -4422,7 +4422,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RoletypesRole'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -4470,7 +4470,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPatchableRole'
+              $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
           content:

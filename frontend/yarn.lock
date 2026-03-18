@@ -5646,7 +5646,7 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/toggle-group@^0.0.1":
+"@signozhq/toggle-group@0.0.1":
   version "0.0.1"
   resolved "https://registry.yarnpkg.com/@signozhq/toggle-group/-/toggle-group-0.0.1.tgz#c82ff1da34e77b24da53c2d595ad6b4a0d1b1de4"
   integrity sha512-871bQayL5MaqsuNOFHKexidu9W2Hlg1y4xmH8C5mGmlfZ4bd0ovJ9OweQrM6Puys3jeMwi69xmJuesYCfKQc1g==

@@ -14,7 +14,6 @@ import (
 	"github.com/open-telemetry/opamp-go/protobufs"
 	"github.com/open-telemetry/opamp-go/server/types"
 	"github.com/pkg/errors"
-	"go.uber.org/zap"
 )
 
 var AllAgents = Agents{
@@ -135,8 +134,8 @@ func (agents *Agents) RecommendLatestConfigToAll(
 
 		// Recommendation is same as current config
 		if string(newConfig) == agent.Config {
-			zap.L().Info(
-				"Recommended config same as current effective config for agent", zap.String("agentID", agent.AgentID),
+			agents.logger.Info(
+				"recommended config same as current effective config for agent", "agent_id", agent.AgentID,
 			)
 			return nil
 		}

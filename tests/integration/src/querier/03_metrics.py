@@ -10,12 +10,16 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     assert_minutely_bucket_values,
+    build_builder_query,
     find_named_result,
     index_series_by_label,
+    make_query_request,
 )
+from fixtures.utils import get_testdata_file_path
 
 FILL_GAPS = "fillGaps"
 FILL_ZERO = "fillZero"
+HISTOGRAM_FILE = get_testdata_file_path("histogram_data_1h.jsonl")
 
 
 def _build_format_options(fill_mode: str) -> Dict[str, Any]:
@@ -580,3 +584,39 @@ def test_metrics_fill_formula_with_group_by(
             expected_by_ts=expectations[group],
             context=f"metrics/{fill_mode}/F1/{group}",
         )
+
+def test_histogram_p90_returns_404_outside_data_window(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
+) -> None:
+    
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    metric_name = "test_p90_last_seen_bucket"
+
+    metrics = Metrics.load_from_file(
+        HISTOGRAM_FILE,
+        base_time=now - timedelta(minutes=90),
+        metric_name_override=metric_name,
+    )
+    insert_metrics(metrics)
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    query = build_builder_query(
+        "A",
+        metric_name,
+        "doesnotreallymatter",
+        "p90",
+    )
+
+    end_ms = int(now.timestamp() * 1000)
+
+    start_2h = int((now - timedelta(hours=2)).timestamp() * 1000)
+    response = make_query_request(signoz, token, start_2h, end_ms, [query])
+    assert response.status_code == HTTPStatus.OK
+    assert response.json()["status"] == "success"
+
+    start_15m = int((now - timedelta(minutes=15)).timestamp() * 1000)
+    response = make_query_request(signoz, token, start_15m, end_ms, [query])
+    assert response.status_code == HTTPStatus.NOT_FOUND

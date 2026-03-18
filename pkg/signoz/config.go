@@ -20,6 +20,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
+	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -113,6 +114,9 @@ type Config struct {
 
 	// User config
 	User user.Config `mapstructure:"user"`
+
+	// IdentN config
+	IdentN identn.Config `mapstructure:"identn"`
 }
 
 // DeprecatedFlags are the flags that are deprecated and scheduled for removal.
@@ -176,6 +180,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		metricsexplorer.NewConfigFactory(),
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
+		identn.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

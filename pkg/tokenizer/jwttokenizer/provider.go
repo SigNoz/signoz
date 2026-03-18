@@ -125,7 +125,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "claim role mismatch")
 	}
 
-	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role), nil
+	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role, authtypes.IdentNProviderTokenizer), nil
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {

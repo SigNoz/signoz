@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -44,7 +43,7 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsViewer(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -56,9 +55,9 @@ func (middleware *AuthZ) ViewAccess(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAdminRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozEditorRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozViewerRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozEditorRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozViewerRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
@@ -96,7 +95,7 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsEditor(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -108,8 +107,8 @@ func (middleware *AuthZ) EditAccess(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAdminRoleName),
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozEditorRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozEditorRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(
@@ -147,7 +146,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 
 		commentCtx := ctxtypes.CommentFromContext(ctx)
 		authtype, ok := commentCtx.Map()["auth_type"]
-		if ok && authtype == ctxtypes.AuthTypeAPIKey.StringValue() {
+		if ok && (authtype == authtypes.IdentNProviderAPIkey.StringValue()) {
 			if err := claims.IsAdmin(); err != nil {
 				middleware.logger.WarnContext(ctx, authzDeniedMessage, "claims", claims)
 				render.Error(rw, err)
@@ -159,7 +158,7 @@ func (middleware *AuthZ) AdminAccess(next http.HandlerFunc) http.HandlerFunc {
 		}
 
 		selectors := []authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, roletypes.SigNozAdminRoleName),
+			authtypes.MustNewSelector(authtypes.TypeRole, authtypes.SigNozAdminRoleName),
 		}
 
 		err = middleware.authzService.CheckWithTupleCreation(

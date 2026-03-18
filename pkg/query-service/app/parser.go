@@ -19,10 +19,11 @@ import (
 	"github.com/SigNoz/govaluate"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
+	"log/slog"
+
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
 	"go.uber.org/multierr"
-	"go.uber.org/zap"
 
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/metrics"
@@ -740,9 +741,9 @@ func chTransformQuery(query string, variables map[string]interface{}) {
 	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
 	transformedQuery, err := transformer.Transform()
 	if err != nil {
-		zap.L().Warn("failed to transform clickhouse query", zap.String("query", query), zap.Error(err))
+		slog.Warn("failed to transform clickhouse query", "query", query, "error", err)
 	}
-	zap.L().Info("transformed clickhouse query", zap.String("transformedQuery", transformedQuery), zap.String("originalQuery", query))
+	slog.Info("transformed clickhouse query", "transformed_query", transformedQuery, "original_query", query)
 }
 
 func ParseQueryRangeParams(r *http.Request) (*v3.QueryRangeParamsV3, *model.ApiError) {

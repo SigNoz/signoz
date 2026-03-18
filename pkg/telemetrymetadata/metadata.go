@@ -1928,3 +1928,37 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 
 	return result, nil
 }
+
+func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error) {
+	sb := sqlbuilder.Select(
+		"metric_name",
+		"max(unix_milli)",
+	).
+		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
+	sb.Where(sb.In("metric_name", metricNames))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", "query", query, "args", args)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric last seen info")
+	}
+	defer rows.Close()
+
+	lastSeenInfo := make(map[string]int64)
+	for rows.Next() {
+		var metricName string
+		var unix_milli int64
+		if err := rows.Scan(&metricName, &unix_milli); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan last seen info result")
+		}
+		lastSeenInfo[metricName] = unix_milli
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
+	}
+	return lastSeenInfo, nil
+}
