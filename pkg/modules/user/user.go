@@ -13,7 +13,7 @@ type Module interface {
 	// Gets user by org id and user id, this includes the roles resolution
 	GetByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.User, error)
 
-	// Lists all the users by org id, no filters applied and includes roles resolution
+	// Lists all the users by org id, includes roles resolution
 	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
 
 	// Creates the organization and the first user of that organization.

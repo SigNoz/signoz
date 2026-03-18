@@ -179,6 +179,9 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			if managedRole, ok := authtypes.ExistingRoleToSigNozManagedRoleMap[invite.Role]; ok {
 				invite.Roles = []string{managedRole}
 			}
+		} else if invite.Role == "" && len(invite.Roles) > 0 {
+			// and vice versa
+			invite.Role = authtypes.HighestLegacyRoleFromManagedRoles(invite.Roles)
 		}
 
 		// for role name validation
