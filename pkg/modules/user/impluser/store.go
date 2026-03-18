@@ -130,6 +130,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Model(user).
 		Column("display_name").
 		Column("email").
+		Column("role").
 		Column("is_root").
 		Column("updated_at").
 		Column("status").
@@ -654,7 +655,7 @@ func (store *store) GetUserByResetPasswordToken(ctx context.Context, token strin
 		BunDBCtx(ctx).
 		NewSelect().
 		Model(user).
-		Join(`JOIN factor_password ON factor_password.user_id = "user".id`).
+		Join(`JOIN factor_password ON factor_password.user_id = "users".id`).
 		Join("JOIN reset_password_token ON reset_password_token.password_id = factor_password.id").
 		Where("reset_password_token.token = ?", token).
 		Scan(ctx)

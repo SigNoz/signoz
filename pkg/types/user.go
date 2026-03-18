@@ -37,6 +37,7 @@ type User struct {
 	Identifiable
 	DisplayName string        `json:"displayName"`
 	Email       valuer.Email  `json:"email"`
+	Role        Role          `json:"role"`
 	Roles       []string      `json:"roles"`
 	OrgID       valuer.UUID   `json:"orgId"`
 	IsRoot      bool          `json:"isRoot"`
@@ -46,11 +47,12 @@ type User struct {
 }
 
 type StorableUser struct {
-	bun.BaseModel `bun:"table:users"`
+	bun.BaseModel `bun:"table:users,alias:users"`
 
 	Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
 	Email       valuer.Email  `bun:"email" json:"email"`
+	Role        Role          `bun:"role" json:"role"`
 	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
@@ -75,6 +77,7 @@ func NewStorableUser(user *User) *StorableUser {
 		Identifiable:  user.Identifiable,
 		DisplayName:   user.DisplayName,
 		Email:         user.Email,
+		Role:          user.Role,
 		OrgID:         user.OrgID,
 		IsRoot:        user.IsRoot,
 		Status:        user.Status,
@@ -91,6 +94,7 @@ func NewUserFromStorable(storableUser *StorableUser, roleNames []string) *User {
 		Identifiable:  storableUser.Identifiable,
 		DisplayName:   storableUser.DisplayName,
 		Email:         storableUser.Email,
+		Role:          storableUser.Role,
 		Roles:         roleNames,
 		OrgID:         storableUser.OrgID,
 		IsRoot:        storableUser.IsRoot,
@@ -116,13 +120,13 @@ func NewStorableUsers(users []*User) []*StorableUser {
 	return storableUsers
 }
 
-func NewUser(displayName string, email valuer.Email, roles []string, orgID valuer.UUID, status valuer.String) (*User, error) {
+func NewUser(displayName string, email valuer.Email, role Role, roles []string, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
 	}
 
-	if len(roles) == 0 {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "roles are required")
+	if role == "" {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
 	}
 
 	if orgID.IsZero() {
@@ -139,6 +143,7 @@ func NewUser(displayName string, email valuer.Email, roles []string, orgID value
 		},
 		DisplayName: displayName,
 		Email:       email,
+		Role:        role,
 		Roles:       roles,
 		OrgID:       orgID,
 		IsRoot:      false,
@@ -165,6 +170,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID, role
 		},
 		DisplayName: displayName,
 		Email:       email,
+		Role:        RoleAdmin,
 		Roles:       roleNames,
 		OrgID:       orgID,
 		IsRoot:      true,
@@ -178,8 +184,9 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID, role
 
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, roles []string) {
+func (u *User) Update(displayName string, role Role, roles []string) {
 	u.DisplayName = displayName
+	u.Role = role
 	u.Roles = roles
 	u.UpdatedAt = time.Now()
 }
@@ -204,6 +211,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
+	u.Role = RoleAdmin
 	u.UpdatedAt = time.Now()
 }
 

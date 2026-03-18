@@ -147,6 +147,7 @@ func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Inv
 		Name:  user.DisplayName,
 		Email: user.Email,
 		Token: token,
+		Role:  user.Role,
 		Roles: user.Roles,
 		OrgID: user.OrgID,
 		TimeAuditable: types.TimeAuditable{
@@ -213,7 +214,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
 		for idx, invite := range bulkInvites.Invites {
 			// create a new user with pending invite status
-			newUser, err := types.NewUser(invite.Name, invite.Email, invite.Roles, orgID, types.UserStatusPendingInvite)
+			newUser, err := types.NewUser(invite.Name, invite.Email, invite.Role,  invite.Roles, orgID, types.UserStatusPendingInvite)
 			if err != nil {
 				return err
 			}
@@ -225,7 +226,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			}
 
 			// generate reset password token
-			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID, newUser.OrgID)
+			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.OrgID, newUser.ID)
 			if err != nil {
 				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
 				return err
@@ -257,6 +258,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			Name:  userWithToken.User.DisplayName,
 			Email: userWithToken.User.Email,
 			Token: userWithToken.ResetPasswordToken.Token,
+			Role:  userWithToken.User.Role,
 			Roles: userWithToken.User.Roles,
 			OrgID: userWithToken.User.OrgID,
 			TimeAuditable: types.TimeAuditable{
@@ -302,7 +304,7 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 
 	for _, pUser := range pendingUsers {
 		// get the reset password token
-		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.ID, pUser.OrgID)
+		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.OrgID, pUser.ID)
 		if err != nil {
 			return nil, err
 		}
@@ -315,6 +317,7 @@ func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite,
 			Name:  pUser.DisplayName,
 			Email: pUser.Email,
 			Token: resetPasswordToken.Token,
+			Role:  pUser.Role,
 			Roles: pUser.Roles,
 			OrgID: pUser.OrgID,
 			TimeAuditable: types.TimeAuditable{
@@ -422,7 +425,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
-	existingUser.Update(user.DisplayName, user.Roles)
+	existingUser.Update(user.DisplayName, user.Role, user.Roles)
 	if rolesChanged {
 		err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 			// update the user
@@ -762,7 +765,7 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 		// for users logging through SSO flow but are having status as pending_invite
 		if existingUser.Status == types.UserStatusPendingInvite {
 			// respect the role coming from the SSO
-			existingUser.Update("", user.Roles)
+			existingUser.Update("", user.Role, user.Roles)
 			// activate the user
 			if err = module.activatePendingUser(ctx, existingUser); err != nil {
 				return nil, err

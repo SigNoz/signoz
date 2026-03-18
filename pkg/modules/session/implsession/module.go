@@ -145,7 +145,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	managedRoles := roleMapping.ManagedRolesFromCallbackIdentity(callbackIdentity)
+	legacyRole, managedRoles := roleMapping.ManagedRolesFromCallbackIdentity(callbackIdentity)
 
 	// pass only valid or fallback to viewer
 	validRoles, err := module.resolveValidRoles(ctx, callbackIdentity.OrgID, managedRoles, callbackIdentity.Email)
@@ -153,7 +153,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, validRoles, callbackIdentity.OrgID, types.UserStatusActive)
+	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, legacyRole, validRoles, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
