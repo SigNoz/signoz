@@ -131,38 +131,32 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
-	defaultPipelines := []pipelinetypes.GettablePipeline{}
-	if querybuilder.BodyJSONQueryEnabled {
-		preprocessingPipeline := pipelinetypes.GettablePipeline{
-			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				Name:    "Default Pipeline - PreProcessing Body",
-				Alias:   "NormalizeBodyDefault",
-				Enabled: true,
-			},
-			Filter: &v3.FilterSet{
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key: "body",
-						},
-						Operator: v3.FilterOperatorExists,
-					},
-				},
-			},
-			Config: []pipelinetypes.PipelineOperator{
+func (ic *LogParsingPipelineController) getNormalizePipeline() pipelinetypes.GettablePipeline {
+	return pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Name:    "Default Pipeline - PreProcessing Body",
+			Alias:   "NormalizeBodyDefault",
+			Enabled: true,
+		},
+		Filter: &v3.FilterSet{
+			Items: []v3.FilterItem{
 				{
-					ID:      uuid.NewString(),
-					Type:    "normalize",
-					Enabled: true,
-					If:      "body != nil",
+					Key: v3.AttributeKey{
+						Key: "body",
+					},
+					Operator: v3.FilterOperatorExists,
 				},
 			},
-		}
-
-		defaultPipelines = append(defaultPipelines, preprocessingPipeline)
+		},
+		Config: []pipelinetypes.PipelineOperator{
+			{
+				ID:      uuid.NewString(),
+				Type:    "normalize",
+				Enabled: true,
+				If:      "body != nil",
+			},
+		},
 	}
-	return defaultPipelines, nil
 }
 
 // Returns effective list of pipelines including user created
@@ -295,12 +289,10 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// recommend default pipelines along with user created pipelines
-	defaultPipelines, err := pc.getDefaultPipelines()
-	if err != nil {
-		return nil, "", model.InternalError(fmt.Errorf("failed to get default pipelines: %w", err))
+	if querybuilder.BodyJSONQueryEnabled {
+		// add default normalize pipeline at the beginning
+		pipelinesResp.Pipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, pipelinesResp.Pipelines...)
 	}
-	pipelinesResp.Pipelines = append(pipelinesResp.Pipelines, defaultPipelines...)
 
 	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, pipelinesResp.Pipelines)
 	if err != nil {
