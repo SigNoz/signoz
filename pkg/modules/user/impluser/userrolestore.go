@@ -53,7 +53,7 @@ func (store *userRoleStore) DeleteUserRoles(ctx context.Context, userID valuer.U
 func (store *userRoleStore) GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.StorableUserRole, error) {
 	storableUserRoles := make([]*authtypes.StorableUserRole, 0)
 
-	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storableUserRoles).Where("users.id = ?", userID).Scan(ctx)
+	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storableUserRoles).Where("user_id = ?", userID).Scan(ctx)
 	if err != nil {
 		return nil, err
 	}

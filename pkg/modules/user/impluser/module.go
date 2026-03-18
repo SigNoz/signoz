@@ -13,7 +13,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -34,12 +33,12 @@ type Module struct {
 	orgSetter     organization.Setter
 	authz         authz.AuthZ
 	analytics     analytics.Analytics
-	config        user.Config
+	config        root.Config
 	flagger       flagger.Flagger
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, userRoleStore authtypes.UserRoleStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, flagger flagger.Flagger) root.Module {
+func NewModule(store types.UserStore, userRoleStore authtypes.UserRoleStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, flagger flagger.Flagger) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:         store,
@@ -443,6 +442,11 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 			return nil
 		})
 		if err != nil {
+			return nil, err
+		}
+	} else {
+		// persist display name change even when roles haven't changed
+		if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 			return nil, err
 		}
 	}
@@ -960,10 +964,10 @@ func (module *Module) usersFromStorableUsersAndRolesMaps(storableUsers []*types.
 	for _, user := range storableUsers {
 		roleIDs := userIDToRoleIDsMap[user.ID]
 
-		roleNames := make([]string, len(roleIDs))
-		for idx, rid := range roleIDs {
+		roleNames := make([]string, 0, len(roleIDs))
+		for _, rid := range roleIDs {
 			if role, ok := roleIDToRole[rid.String()]; ok {
-				roleNames[idx] = role.Name
+				roleNames = append(roleNames, role.Name)
 			}
 		}
 

@@ -165,7 +165,7 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID, role
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Roles:       make([]string, 0),
+		Roles:       roleNames,
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,

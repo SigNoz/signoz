@@ -41,6 +41,7 @@ func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.A
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
 		orgGetter:  orgGetter,
+		authz:      authz,
 	}
 }
 
@@ -148,6 +149,9 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 
 	// pass only valid or fallback to viewer
 	validRoles, err := module.resolveValidRoles(ctx, callbackIdentity.OrgID, managedRoles, callbackIdentity.Email)
+	if err != nil {
+		return "", err
+	}
 
 	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, validRoles, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
@@ -256,8 +260,7 @@ func (module *module) resolveValidRoles(ctx context.Context, orgID valuer.UUID, 
 
 	// fallback to viewer if no valid roles
 	if len(validRoles) == 0 {
-		module.settings.Logger().WarnContext(ctx, "no valid roles from SSO mapping, falling back to viewer",
-			"email", email)
+		module.settings.Logger().WarnContext(ctx, "no valid roles from SSO mapping, falling back to viewer", "email", email)
 		validRoles = []string{authtypes.SigNozViewerRoleName}
 	}
 
