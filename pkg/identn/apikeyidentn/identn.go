@@ -101,13 +101,8 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	identity := authtypes.Identity{
-		UserID: user.ID,
-		Role:   apiKey.Role,
-		Email:  user.Email,
-		OrgID:  user.OrgID,
-	}
-	return &identity, nil
+	identity := authtypes.NewIdentity(user.ID, user.OrgID, user.Email, apiKey.Role, provider.Name())
+	return identity, nil
 }
 
 func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {

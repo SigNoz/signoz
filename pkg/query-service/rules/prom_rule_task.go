@@ -7,12 +7,14 @@ import (
 	"sync"
 	"time"
 
+	"log/slog"
+
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	opentracing "github.com/opentracing/opentracing-go"
 	plabels "github.com/prometheus/prometheus/model/labels"
-	"log/slog"
 )
 
 // PromRuleTask is a promql rule executor
@@ -371,7 +373,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			comment := ctxtypes.CommentFromContext(ctx)
 			comment.Set("rule_id", rule.ID())
-			comment.Set("auth_type", "internal")
+			comment.Set("identn_provider", authtypes.IdentNProviderInternal.StringValue())
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
