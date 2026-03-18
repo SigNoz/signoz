@@ -775,10 +775,12 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	if existingUser != nil {
 		// for users logging through SSO flow but are having status as pending_invite
 		if existingUser.Status == types.UserStatusPendingInvite {
+			// capture old roles before overwriting with SSO roles
+			oldRoles := existingUser.Roles
 			// respect the role coming from the SSO
 			existingUser.Update("", user.Role, user.Roles)
 			// activate the user
-			if err = module.activatePendingUser(ctx, existingUser); err != nil {
+			if err = module.activatePendingUser(ctx, existingUser, oldRoles); err != nil {
 				return nil, err
 			}
 		}
@@ -945,10 +947,12 @@ func (module *Module) createUserRoleEntries(ctx context.Context, user *types.Use
 	return module.userRoleStore.CreateUserRoles(ctx, userRoles)
 }
 
-func (module *Module) activatePendingUser(ctx context.Context, user *types.User) error {
-	err := module.authz.Grant(
+func (module *Module) activatePendingUser(ctx context.Context, user *types.User, oldRoles []string) error {
+	// use ModifyGrant to revoke old invite roles and grant new SSO roles
+	err := module.authz.ModifyGrant(
 		ctx,
 		user.OrgID,
+		oldRoles,
 		user.Roles,
 		authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
 	)
@@ -959,12 +963,19 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User)
 	if err := user.UpdateStatus(types.UserStatusActive); err != nil {
 		return err
 	}
-	err = module.store.UpdateUser(ctx, user.OrgID, types.NewStorableUser(user))
-	if err != nil {
-		return err
-	}
 
-	return nil
+	return module.store.RunInTx(ctx, func(ctx context.Context) error {
+		if err := module.store.UpdateUser(ctx, user.OrgID, types.NewStorableUser(user)); err != nil {
+			return err
+		}
+
+		// delete old invite role entries and create new ones from SSO
+		if err := module.userRoleStore.DeleteUserRoles(ctx, user.ID); err != nil {
+			return err
+		}
+
+		return module.createUserRoleEntries(ctx, user)
+	})
 }
 
 func (module *Module) usersFromStorableUsersAndRolesMaps(storableUsers []*types.StorableUser, roles []*authtypes.Role, userIDToRoleIDsMap map[valuer.UUID][]valuer.UUID) []*types.User {

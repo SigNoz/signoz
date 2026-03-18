@@ -141,6 +141,20 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			return err
 		}
 
+		// update user_role junction table to reflect the new admin role
+		existingUser.Roles = []string{authtypes.SigNozAdminRoleName}
+		if err := s.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
+			return err
+		}
+		storableRoles, err := s.authz.ListByOrgIDAndNames(ctx, orgID, []string{authtypes.SigNozAdminRoleName})
+		if err != nil {
+			return err
+		}
+		userRoles := authtypes.NewStorableUserRoles(existingUser.ID, storableRoles)
+		if err := s.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+			return err
+		}
+
 		return s.setPassword(ctx, existingUser.ID)
 	}
 

@@ -185,7 +185,9 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID, role
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
 func (u *User) Update(displayName string, role Role, roles []string) {
-	u.DisplayName = displayName
+	if displayName != "" {
+		u.DisplayName = displayName
+	}
 	u.Role = role
 	u.Roles = roles
 	u.UpdatedAt = time.Now()
