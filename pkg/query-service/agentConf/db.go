@@ -115,7 +115,6 @@ func (r *Repo) GetLatestVersion(
 func (r *Repo) insertConfig(
 	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
 ) error {
-
 	if c.ElementType.StringValue() == "" {
 		return errors.NewInvalidInputf(CodeElementTypeRequired, "element type is required for creating agent config version")
 	}
@@ -227,6 +226,25 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 	}
 
 	return nil
+}
+
+// GetDeployStatusByHash returns the DeployStatus for the given config hash
+// (stored with orgId prefix). Returns DeployStatusUnknown when no matching row exists.
+func (r *Repo) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, configHash string) (opamptypes.DeployStatus, error) {
+	var version opamptypes.AgentConfigVersion
+	err := r.store.BunDB().NewSelect().
+		Model(&version).
+		ColumnExpr("deploy_status").
+		Where("hash = ?", configHash).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return opamptypes.DeployStatusUnknown, nil
+		}
+		return opamptypes.DeployStatusUnknown, errors.WrapInternalf(err, errors.CodeInternal, "failed to query deploy status by hash")
+	}
+	return version.DeployStatus, nil
 }
 
 func (r *Repo) updateDeployStatusByHash(
