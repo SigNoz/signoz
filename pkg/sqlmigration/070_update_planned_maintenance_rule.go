@@ -2,9 +2,6 @@ package sqlmigration
 
 import (
 	"context"
-	"database/sql"
-
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlschema"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -48,9 +45,6 @@ func (migration *updatePlannedMaintenanceRule) Register(migrations *migrate.Migr
 func (migration *updatePlannedMaintenanceRule) Up(ctx context.Context, db *bun.DB) error {
 	table, _, err := migration.sqlschema.GetTable(ctx, sqlschema.TableName("planned_maintenance_rule"))
 	if err != nil {
-		if err == sql.ErrNoRows || errors.Ast(err, errors.TypeNotFound) {
-			return nil
-		}
 		return err
 	}
 
@@ -70,7 +64,7 @@ func (migration *updatePlannedMaintenanceRule) Up(ctx context.Context, db *bun.D
 	// Read all existing rows
 	var rows []*plannedMaintenanceRuleRow
 	err = tx.NewSelect().Model(&rows).Scan(ctx)
-	if err != nil && err != sql.ErrNoRows {
+	if err != nil {
 		return err
 	}
 
@@ -87,8 +81,8 @@ func (migration *updatePlannedMaintenanceRule) Up(ctx context.Context, db *bun.D
 		Name: sqlschema.TableName("planned_maintenance_rule"),
 		Columns: []*sqlschema.Column{
 			{Name: "id", DataType: sqlschema.DataTypeText, Nullable: false},
-			{Name: "planned_maintenance_id", DataType: sqlschema.DataTypeText, Nullable: true},
-			{Name: "rule_id", DataType: sqlschema.DataTypeText, Nullable: true},
+			{Name: "planned_maintenance_id", DataType: sqlschema.DataTypeText, Nullable: false},
+			{Name: "rule_id", DataType: sqlschema.DataTypeText, Nullable: false},
 		},
 		PrimaryKeyConstraint: &sqlschema.PrimaryKeyConstraint{
 			ColumnNames: []sqlschema.ColumnName{"id"},
