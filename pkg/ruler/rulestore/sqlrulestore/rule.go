@@ -6,6 +6,7 @@ import (
 	"log/slog"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -75,7 +76,7 @@ func (r *rule) DeleteRule(ctx context.Context, id valuer.UUID, cb func(context.C
 			Where("id = ?", id.StringValue()).
 			Exec(ctx)
 		if err != nil {
-			return err
+			return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete rule because it is referenced by a planned maintenance, remove the rule from the planned maintenance first")
 		}
 
 		return cb(ctx)

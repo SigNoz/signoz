@@ -176,6 +176,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddStatusUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateCloudIntegrationUniqueIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
 	)
 }
 
