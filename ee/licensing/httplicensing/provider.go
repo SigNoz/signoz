@@ -198,6 +198,9 @@ func (provider *provider) Checkout(ctx context.Context, organizationID valuer.UU
 
 	response, err := provider.zeus.GetCheckoutURL(ctx, activeLicense.Key, body)
 	if err != nil {
+		if errors.Ast(err, errors.TypeAlreadyExists) {
+			return nil, errors.WithAdditionalf(err, "checkout has already been completed for this account. Please use the reconcile payment option to sync your subscription")
+		}
 		return nil, err
 	}
 
@@ -217,7 +220,7 @@ func (provider *provider) Portal(ctx context.Context, organizationID valuer.UUID
 
 	response, err := provider.zeus.GetPortalURL(ctx, activeLicense.Key, body)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to generate portal session")
+		return nil, err
 	}
 
 	return &licensetypes.GettableSubscription{RedirectURL: gjson.GetBytes(response, "url").String()}, nil
