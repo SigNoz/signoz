@@ -361,6 +361,10 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		if err != nil {
 			return nil, err
 		}
+		// skip = true means we have indentified from the query itself that we don't need to execute this bucket
+		if stmt.Skip {
+			continue
+		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
 		// Execute with proper context for partial value detection

@@ -121,8 +121,18 @@ func (b *traceQueryStatementBuilder) Build(
 			if !ok {
 				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
 			} else if traceStart > 0 && traceEnd > 0 {
-				start = uint64(traceStart)
-				end = uint64(traceEnd)
+				// we don't  need to query if the start and end are non overlapping
+				if uint64(traceStart) > end || uint64(traceEnd) < start {
+					return &qbtypes.Statement{Skip: true}, nil
+				}
+
+				// clamp start/end to trace time range to avoid overlap between buckets
+				if uint64(traceStart) > start {
+					start = uint64(traceStart)
+				}
+				if uint64(traceEnd) < end {
+					end = uint64(traceEnd)
+				}
 				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
 			}
 		}
