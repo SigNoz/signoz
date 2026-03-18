@@ -148,7 +148,7 @@ function K8sPodsList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	useEffect(() => {
 		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '[]');
@@ -283,19 +283,22 @@ function K8sPodsList({
 	}, [minTime, maxTime, orderBy, selectedRowData]);
 
 	const groupedByRowDataQueryKey = useMemo(() => {
+		// be careful with what you serialize from selectedRowData
+		// since it's react node, it could contain circular references
+		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
 		if (selectedPodUID) {
 			return [
 				'podList',
 				JSON.stringify(queryFilters),
 				JSON.stringify(orderBy),
-				JSON.stringify(selectedRowData),
+				selectedRowDataKey,
 			];
 		}
 		return [
 			'podList',
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			JSON.stringify(selectedRowData),
+			selectedRowDataKey,
 			String(minTime),
 			String(maxTime),
 		];

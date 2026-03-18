@@ -175,19 +175,22 @@ function K8sJobsList({
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const groupedByRowDataQueryKey = useMemo(() => {
+		// be careful with what you serialize from selectedRowData
+		// since it's react node, it could contain circular references
+		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
 		if (selectedJobUID) {
 			return [
 				'jobList',
 				JSON.stringify(queryFilters),
 				JSON.stringify(orderBy),
-				JSON.stringify(selectedRowData),
+				selectedRowDataKey,
 			];
 		}
 		return [
 			'jobList',
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			JSON.stringify(selectedRowData),
+			selectedRowDataKey,
 			String(minTime),
 			String(maxTime),
 		];
