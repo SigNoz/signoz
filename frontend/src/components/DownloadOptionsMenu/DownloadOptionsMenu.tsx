@@ -175,9 +175,9 @@ export default function DownloadOptionsMenu({
 					className="periscope-btn ghost"
 					icon={
 						isDownloading ? (
-							<Loader2 size={18} className="animate-spin" />
+							<Loader2 size={14} className="animate-spin" />
 						) : (
-							<DownloadIcon size={15} />
+							<DownloadIcon size={14} />
 						)
 					}
 					data-testid={`periscope-btn-download-${dataSource}`}

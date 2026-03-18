@@ -219,7 +219,7 @@ describe.each([
 		});
 	});
 
-	it('sends empty selectFields when column scope is All', async () => {
+	it('sends no selectFields when column scope is All', async () => {
 		renderWithStore(createMockStagedQuery(dataSource), dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
@@ -229,7 +229,7 @@ describe.each([
 			expect(mockDownloadExportData).toHaveBeenCalledTimes(1);
 			const callArgs = mockDownloadExportData.mock.calls[0][0];
 			const query = callArgs.body.compositeQuery.queries[0];
-			expect(query.spec.selectFields).toEqual([]);
+			expect(query.spec.selectFields).toBeUndefined();
 		});
 	});
 

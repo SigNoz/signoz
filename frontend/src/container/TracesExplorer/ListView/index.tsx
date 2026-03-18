@@ -14,6 +14,7 @@ import logEvent from 'api/common/logEvent';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
+import TracesDownloadOptionsMenu from 'components/TracesDownloadOptionsMenu/TracesDownloadOptionsMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -237,6 +238,8 @@ function ListView({
 						dataSource={DataSource.TRACES}
 					/>
 				</div>
+
+				<TracesDownloadOptionsMenu stagedQuery={stagedQuery} />
 
 				<TraceExplorerControls
 					isLoading={isFetching}
