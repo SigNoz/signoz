@@ -13,7 +13,7 @@ import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
 
-import { FilterMode, MemberStatus } from './utils';
+import { FilterMode, MemberStatus, toMemberStatus } from './utils';
 
 import './MembersSettings.styles.scss';
 
@@ -40,27 +40,15 @@ function MembersSettings(): JSX.Element {
 
 	const allMembers = useMemo(
 		(): MemberRow[] =>
-			(usersData?.data ?? []).map((user) => {
-				let status: MemberStatus;
-				if (user.status === 'pending_invite') {
-					status = MemberStatus.Invited;
-				} else if (user.status === 'deleted') {
-					status = MemberStatus.Deleted;
-				} else if (user.status === 'active') {
-					status = MemberStatus.Active;
-				} else {
-					status = MemberStatus.Anonymous;
-				}
-				return {
-					id: user.id,
-					name: user.displayName,
-					email: user.email,
-					role: user.role,
-					status,
-					joinedOn: user.createdAt ? String(user.createdAt) : null,
-					updatedAt: user.updatedAt ? String(user.updatedAt) : null,
-				};
-			}),
+			(usersData?.data ?? []).map((user) => ({
+				id: user.id,
+				name: user.displayName,
+				email: user.email,
+				role: user.role,
+				status: toMemberStatus(user.status ?? ''),
+				joinedOn: user.createdAt ? String(user.createdAt) : null,
+				updatedAt: user.updatedAt ? String(user.updatedAt) : null,
+			})),
 		[usersData],
 	);
 
