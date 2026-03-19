@@ -1,3 +1,5 @@
+import type { Layout } from 'react-grid-layout';
+import type { Dashboard } from 'types/api/dashboard/getAll';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
@@ -14,7 +16,7 @@ import {
 
 export type DashboardStore = DashboardUISlice &
 	DashboardLayoutSlice & {
-		reset: () => void;
+		resetDashboardStore: () => void;
 	};
 
 /**
@@ -30,9 +32,19 @@ export const useDashboardStore = create<DashboardStore>()(
 		...createDashboardUISlice(set, get, api),
 		...createDashboardLayoutSlice(set, get, api),
 
-		reset: (): void =>
+		resetDashboardStore: (): void =>
 			set((state: DashboardStore) => {
 				Object.assign(state, initialDashboardUIState, initialDashboardLayoutState);
 			}),
 	})),
 );
+
+// Standalone imperative accessors — use these instead of calling useDashboardStore.getState() at call sites.
+export const getSelectedDashboard = (): Dashboard | undefined =>
+	useDashboardStore.getState().selectedDashboard;
+
+export const getDashboardLayouts = (): Layout[] =>
+	useDashboardStore.getState().layouts;
+
+export const resetDashboard = (): void =>
+	useDashboardStore.getState().resetDashboardStore();
