@@ -178,7 +178,7 @@ function RightContainer({
 			 */
 
 			// eslint-disable-next-line sonarjs/no-redundant-boolean
-			true &&
+			false &&
 			(allowFillMode ||
 				allowLineStyle ||
 				allowLineInterpolation ||
