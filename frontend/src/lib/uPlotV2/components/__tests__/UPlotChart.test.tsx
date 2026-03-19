@@ -4,7 +4,7 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 
 import { PlotContextProvider } from '../../context/PlotContext';
-import UPlotChart from '../UPlotChart';
+import UPlotChart from '../UPlotChart/UPlotChart';
 
 // ---------------------------------------------------------------------------
 // Mocks
