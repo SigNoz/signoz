@@ -184,6 +184,10 @@ describe('ServiceAccountDrawer', () => {
 		await waitFor(() => {
 			expect(statusSpy).toHaveBeenCalledWith({ status: 'DISABLED' });
 		});
+
+		await waitFor(() => {
+			expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
+		});
 	});
 
 	it('disabled account shows read-only name, no Save button, no Disable button', async () => {
