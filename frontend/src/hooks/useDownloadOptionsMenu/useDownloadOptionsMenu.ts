@@ -5,8 +5,8 @@ import { message } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
 import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
@@ -17,7 +17,6 @@ interface ExportOptions {
 }
 
 interface UseExportRawDataProps {
-	stagedQuery: Query | null;
 	dataSource: DataSource;
 }
 
@@ -27,10 +26,11 @@ interface UseExportRawDataReturn {
 }
 
 export function useExportRawData({
-	stagedQuery,
 	dataSource,
 }: UseExportRawDataProps): UseExportRawDataReturn {
 	const [isDownloading, setIsDownloading] = useState<boolean>(false);
+
+	const { stagedQuery } = useQueryBuilder();
 
 	const { selectedTime: globalSelectedInterval } = useSelector<
 		AppState,
@@ -50,7 +50,7 @@ export function useExportRawData({
 			try {
 				setIsDownloading(true);
 
-				const exportQuery: Query = {
+				const exportQuery = {
 					...stagedQuery,
 					builder: {
 						...stagedQuery.builder,

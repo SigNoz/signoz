@@ -6,14 +6,12 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { ArrowUp10, Minus } from 'lucide-react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import QueryStatus from './QueryStatus';
 
 function LogsActionsContainer({
 	listQuery,
-	stagedQuery,
 	selectedPanelType,
 	showFrequencyChart,
 	handleToggleFrequencyChart,
@@ -25,7 +23,6 @@ function LogsActionsContainer({
 	isSuccess,
 }: {
 	listQuery: any;
-	stagedQuery: Query | null;
 	selectedPanelType: PANEL_TYPES;
 	showFrequencyChart: boolean;
 	handleToggleFrequencyChart: () => void;
@@ -95,10 +92,7 @@ function LogsActionsContainer({
 								/>
 							</div>
 							<div className="download-options-container">
-								<DownloadOptionsMenu
-									stagedQuery={stagedQuery}
-									dataSource={DataSource.LOGS}
-								/>
+								<DownloadOptionsMenu dataSource={DataSource.LOGS} />
 							</div>
 							<div className="format-options-container">
 								<LogsFormatOptionsMenu

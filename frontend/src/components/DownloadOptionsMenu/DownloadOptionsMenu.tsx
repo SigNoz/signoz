@@ -2,7 +2,6 @@ import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Radio, Tooltip, Typography } from 'antd';
 import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
 import { Download, DownloadIcon, Loader2 } from 'lucide-react';
-import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import {
@@ -14,12 +13,10 @@ import {
 import './DownloadOptionsMenu.styles.scss';
 
 interface DownloadOptionsMenuProps {
-	stagedQuery: Query | null;
 	dataSource: DataSource;
 }
 
 export default function DownloadOptionsMenu({
-	stagedQuery,
 	dataSource,
 }: DownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
@@ -30,7 +27,6 @@ export default function DownloadOptionsMenu({
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
 	const { isDownloading, handleExportRawData } = useExportRawData({
-		stagedQuery,
 		dataSource,
 	});
 

@@ -435,7 +435,6 @@ function LogsExplorerViewsContainer({
 				{!showLiveLogs && (
 					<LogsActionsContainer
 						listQuery={listQuery}
-						stagedQuery={stagedQuery}
 						selectedPanelType={selectedPanelType}
 						showFrequencyChart={showFrequencyChart}
 						handleToggleFrequencyChart={handleToggleFrequencyChart}

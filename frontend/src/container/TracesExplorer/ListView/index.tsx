@@ -239,10 +239,7 @@ function ListView({
 					/>
 				</div>
 
-				<DownloadOptionsMenu
-					stagedQuery={stagedQuery}
-					dataSource={DataSource.TRACES}
-				/>
+				<DownloadOptionsMenu dataSource={DataSource.TRACES} />
 
 				<TraceExplorerControls
 					isLoading={isFetching}
