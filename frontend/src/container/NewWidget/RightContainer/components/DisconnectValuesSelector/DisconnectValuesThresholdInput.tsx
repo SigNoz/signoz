@@ -22,7 +22,7 @@ export default function DisconnectValuesThresholdInput({
 		setError(null);
 	}, [value]);
 
-	const commitValue = (txt: string): void => {
+	const updateValue = (txt: string): void => {
 		if (!txt) {
 			return;
 		}
@@ -52,12 +52,12 @@ export default function DisconnectValuesThresholdInput({
 
 	const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>): void => {
 		if (e.key === 'Enter') {
-			commitValue(e.currentTarget.value);
+			updateValue(e.currentTarget.value);
 		}
 	};
 
 	const handleBlur = (e: React.FocusEvent<HTMLInputElement>): void => {
-		commitValue(e.currentTarget.value);
+		updateValue(e.currentTarget.value);
 	};
 
 	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
