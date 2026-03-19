@@ -12,8 +12,12 @@ logger = setup_logger(__name__)
 def test_root_user_created(signoz: types.SigNoz) -> None:
     """
     The root user service reconciles asynchronously after startup.
-    Wait until the root user is available by polling /api/v1/version.
+
+    Phase 1: Poll /api/v1/version until setupCompleted=true.
+    Phase 2: Poll /api/v1/user until it returns 200, confirming the root
+             user actually exists and the impersonation provider works.
     """
+    # Phase 1: wait for setupCompleted
     for attempt in range(15):
         response = requests.get(
             signoz.self.host_configs["8080"].get("/api/v1/version"),
@@ -21,10 +25,27 @@ def test_root_user_created(signoz: types.SigNoz) -> None:
         )
         assert response.status_code == HTTPStatus.OK
         if response.json().get("setupCompleted") is True:
-            return
+            break
         logger.info(
             "Attempt %s: setupCompleted is not yet true, retrying ...",
             attempt + 1,
+        )
+        time.sleep(2)
+    else:
+        raise AssertionError("setupCompleted did not become true within the expected time")
+
+    # Phase 2: wait for root user to be fully resolved
+    for attempt in range(15):
+        response = requests.get(
+            signoz.self.host_configs["8080"].get("/api/v1/user"),
+            timeout=2,
+        )
+        if response.status_code == HTTPStatus.OK:
+            return
+        logger.info(
+            "Attempt %s: /api/v1/user returned %s, retrying ...",
+            attempt + 1,
+            response.status_code,
         )
         time.sleep(2)
 
