@@ -1,10 +1,10 @@
-import { useEffect, useState } from 'react';
+import { ChangeEvent, useEffect, useState } from 'react';
 import { rangeUtil } from '@grafana/data';
 import { Callout, Input } from '@signozhq/ui';
 interface DisconnectValuesThresholdInputProps {
 	value: number;
 	onChange: (seconds: number) => void;
-	minValue?: number;
+	minValue: number;
 }
 
 export default function DisconnectValuesThresholdInput({
@@ -60,6 +60,13 @@ export default function DisconnectValuesThresholdInput({
 		commitValue(e.currentTarget.value);
 	};
 
+	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
+		setInputValue(e.currentTarget.value);
+		if (error) {
+			setError(null);
+		}
+	};
+
 	return (
 		<div className="disconnect-values-threshold-wrapper">
 			<Input
@@ -68,12 +75,7 @@ export default function DisconnectValuesThresholdInput({
 				className="disconnect-values-threshold-input"
 				prefix={<span className="disconnect-values-threshold-prefix">&gt;</span>}
 				value={inputValue}
-				onChange={(e): void => {
-					setInputValue(e.currentTarget.value);
-					if (error) {
-						setError(null);
-					}
-				}}
+				onChange={handleChange}
 				onKeyDown={handleKeyDown}
 				onBlur={handleBlur}
 				autoFocus={true}

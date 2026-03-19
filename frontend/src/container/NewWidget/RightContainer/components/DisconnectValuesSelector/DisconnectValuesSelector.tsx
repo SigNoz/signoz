@@ -11,7 +11,7 @@ const DEFAULT_THRESHOLD_SECONDS = 60;
 
 interface DisconnectValuesSelectorProps {
 	value: boolean | number;
-	minValue?: number;
+	minValue: number;
 	onChange: (value: boolean | number) => void;
 }
 
