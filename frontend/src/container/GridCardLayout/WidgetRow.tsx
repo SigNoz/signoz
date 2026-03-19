@@ -6,7 +6,10 @@ import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -39,7 +42,8 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboardStore();
+	const { selectedDashboard } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();

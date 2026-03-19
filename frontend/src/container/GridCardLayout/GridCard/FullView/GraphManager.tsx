@@ -3,7 +3,10 @@ import { Button, Input } from 'antd';
 import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
 import { ExtendedChartDataset, GraphManagerProps } from './types';
@@ -34,7 +37,7 @@ function GraphManager({
 	}, [data, options]);
 
 	const { notifications } = useNotifications();
-	const { isDashboardLocked } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {
