@@ -12,6 +12,7 @@ import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
+import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
 
@@ -46,8 +47,8 @@ function MembersSettings(): JSX.Element {
 				email: user.email,
 				role: user.role,
 				status: toMemberStatus(user.status ?? ''),
-				joinedOn: user.createdAt ? String(user.createdAt) : null,
-				updatedAt: user.updatedAt ? String(user.updatedAt) : null,
+				joinedOn: toISOString(user.createdAt),
+				updatedAt: toISOString(user?.updatedAt),
 			})),
 		[usersData],
 	);
@@ -88,6 +89,9 @@ function MembersSettings(): JSX.Element {
 		const maxPage = Math.ceil(filteredMembers.length / PAGE_SIZE);
 		if (currentPage > maxPage) {
 			setPage(maxPage);
+		}
+		if (currentPage < 1) {
+			setPage(1);
 		}
 	}, [filteredMembers.length, currentPage, setPage]);
 
@@ -176,6 +180,7 @@ function MembersSettings(): JSX.Element {
 
 					<div className="members-settings__search">
 						<Input
+							type="search"
 							placeholder="Search by name, email, or role..."
 							value={searchQuery}
 							onChange={(e): void => {
@@ -184,6 +189,7 @@ function MembersSettings(): JSX.Element {
 							}}
 							className="members-search-input"
 							color="secondary"
+							name="members-search"
 						/>
 					</div>
 
