@@ -18,9 +18,11 @@ from fixtures.gatewayutils import (
     get_latest_gateway_request_body,
 )
 from fixtures.logger import setup_logger
-from ingestionkeys import GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD
 
 logger = setup_logger(__name__)
+
+GATEWAY_APIS_EDITOR_EMAIL = "gatewayapiseditor@integration.test"
+GATEWAY_APIS_EDITOR_PASSWORD = "password123Z$"
 
 
 def test_apply_license(

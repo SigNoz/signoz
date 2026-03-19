@@ -11,7 +11,6 @@ from wiremock.client import (
 
 from fixtures import types
 from fixtures.auth import add_license
-from ingestionkeys import GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD
 from fixtures.gatewayutils import (
     TEST_KEY_ID,
     TEST_LIMIT_ID,
@@ -22,6 +21,9 @@ from fixtures.gatewayutils import (
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
+
+GATEWAY_APIS_EDITOR_EMAIL = "gatewayapiseditor@integration.test"
+GATEWAY_APIS_EDITOR_PASSWORD = "password123Z$"
 
 
 def test_apply_license(
