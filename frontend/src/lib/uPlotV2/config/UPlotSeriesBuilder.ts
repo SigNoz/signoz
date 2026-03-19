@@ -216,8 +216,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			// spanGaps behavior and rely on data-prep to implement the
 			// threshold-based null handling. When spanGaps is boolean we
 			// map it directly. When spanGaps is undefined we fall back to
-			// the default of false.
-			spanGaps: typeof spanGaps === 'number' ? false : !!spanGaps,
+			// the default of true.
+			spanGaps: typeof spanGaps === 'number' ? false : spanGaps ?? true,
 			value: (): string => '',
 			pxAlign: true,
 			show,
