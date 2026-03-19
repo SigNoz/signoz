@@ -17,7 +17,7 @@ import { getVariableReferencesInQuery } from 'lib/dashboardVariables/variableRef
 import getTimeString from 'lib/getTimeString';
 import { isEqual } from 'lodash-es';
 import isEmpty from 'lodash-es/isEmpty';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { UpdateTimeInterval } from 'store/actions';
 import { AppState } from 'store/reducers';
 import APIError from 'types/api/error';
@@ -68,7 +68,7 @@ function GridCardGraph({
 	const [isInternalServerError, setIsInternalServerError] = useState<boolean>(
 		false,
 	);
-	const { setDashboardQueryRangeCalled } = useDashboard();
+	const { setDashboardQueryRangeCalled } = useDashboardStore();
 
 	const {
 		minTime,

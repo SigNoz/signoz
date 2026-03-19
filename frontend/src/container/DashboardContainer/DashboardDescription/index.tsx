@@ -39,8 +39,8 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -82,7 +82,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		isDashboardLocked,
 		setSelectedDashboard,
 		handleDashboardLockToggle,
-	} = useDashboard();
+	} = useDashboardStore();
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(

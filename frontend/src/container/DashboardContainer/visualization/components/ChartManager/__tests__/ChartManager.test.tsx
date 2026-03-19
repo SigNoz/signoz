@@ -32,8 +32,8 @@ jest.mock('lib/uPlotV2/hooks/useLegendsSync', () => ({
 	}),
 }));
 
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): { isDashboardLocked: boolean } => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): { isDashboardLocked: boolean } => ({
 		isDashboardLocked: false,
 	}),
 }));
