@@ -23,7 +23,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -41,7 +41,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodGet).GetError(); err != nil {
 		return err
 	}
@@ -58,7 +58,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -75,7 +75,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -92,7 +92,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}
@@ -109,7 +109,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusCreated,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPost).GetError(); err != nil {
 		return err
 	}
@@ -126,7 +126,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodPatch).GetError(); err != nil {
 		return err
 	}
@@ -143,7 +143,7 @@ func (provider *provider) addGatewayRoutes(router *mux.Router) error {
 		SuccessStatusCode:   http.StatusNoContent,
 		ErrorStatusCodes:    []int{},
 		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		SecuritySchemes:     newSecuritySchemes(types.RoleEditor),
 	})).Methods(http.MethodDelete).GetError(); err != nil {
 		return err
 	}

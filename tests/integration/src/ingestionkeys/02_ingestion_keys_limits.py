@@ -10,7 +10,8 @@ from wiremock.client import (
 )
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.auth import add_license
+from ingestionkeys import GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD
 from fixtures.gatewayutils import (
     TEST_KEY_ID,
     TEST_LIMIT_ID,
@@ -45,7 +46,7 @@ def test_create_ingestion_key_limit_only_size(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Creating a limit with only size omits count from the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}/limits"
 
@@ -79,7 +80,7 @@ def test_create_ingestion_key_limit_only_size(
             "config": {"day": {"size": 1000}},
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -105,7 +106,7 @@ def test_create_ingestion_key_limit_only_count(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Creating a limit with only count omits size from the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}/limits"
 
@@ -139,7 +140,7 @@ def test_create_ingestion_key_limit_only_count(
             "config": {"day": {"count": 500}},
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -162,7 +163,7 @@ def test_create_ingestion_key_limit_both_size_and_count(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Creating a limit with both size and count includes both in the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}/limits"
 
@@ -199,7 +200,7 @@ def test_create_ingestion_key_limit_both_size_and_count(
             },
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -229,7 +230,7 @@ def test_update_ingestion_key_limit_only_size(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Updating a limit with only size omits count from the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
 
@@ -256,7 +257,7 @@ def test_update_ingestion_key_limit_only_size(
             "config": {"day": {"size": 2000}},
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -279,7 +280,7 @@ def test_update_ingestion_key_limit_only_count(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Updating a limit with only count omits size from the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
 
@@ -306,7 +307,7 @@ def test_update_ingestion_key_limit_only_count(
             "config": {"day": {"count": 750}},
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -328,7 +329,7 @@ def test_update_ingestion_key_limit_both_size_and_count(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Updating a limit with both size and count includes both in the gateway payload."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
 
@@ -355,7 +356,7 @@ def test_update_ingestion_key_limit_both_size_and_count(
             "config": {"day": {"size": 1000, "count": 500}},
             "tags": ["test"],
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -382,7 +383,7 @@ def test_delete_ingestion_key_limit(
     get_token: Callable[[str, str], str],
 ) -> None:
     """DELETE /api/v2/gateway/ingestion_keys/limits/{limitId} deletes a limit."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/limits/{TEST_LIMIT_ID}"
 
@@ -405,7 +406,7 @@ def test_delete_ingestion_key_limit(
         signoz.self.host_configs["8080"].get(
             f"/api/v2/gateway/ingestion_keys/limits/{TEST_LIMIT_ID}"
         ),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 

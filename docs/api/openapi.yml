@@ -5814,9 +5814,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -5864,9 +5864,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -5904,9 +5904,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete ingestion key for workspace
       tags:
       - gateway
@@ -5948,9 +5948,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update ingestion key for workspace
       tags:
       - gateway
@@ -6005,9 +6005,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create limit for the ingestion key
       tags:
       - gateway
@@ -6045,9 +6045,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete limit for the ingestion key
       tags:
       - gateway
@@ -6089,9 +6089,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -6149,9 +6149,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Search ingestion keys for workspace
       tags:
       - gateway
