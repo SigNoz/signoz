@@ -5,7 +5,6 @@ import { useIsFetching } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -76,8 +75,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		panelMap,
 		setPanelMap,
 		setSelectedDashboard,
-		dashboardQueryRangeCalled,
-		setDashboardQueryRangeCalled,
 		columnWidths,
 	} = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
@@ -143,25 +140,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
-
-	useEffect(() => {
-		setDashboardQueryRangeCalled(false);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	useEffect(() => {
-		const timeoutId = setTimeout(() => {
-			// Send Sentry event if query_range is not called within expected timeframe (2 mins) when there are widgets
-			if (!dashboardQueryRangeCalled && data?.widgets?.length) {
-				Sentry.captureEvent({
-					message: `Dashboard query range not called within expected timeframe even when there are ${data?.widgets?.length} widgets`,
-					level: 'warning',
-				});
-			}
-		}, 120000);
-
-		return (): void => clearTimeout(timeoutId);
-	}, [dashboardQueryRangeCalled, data?.widgets?.length]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {

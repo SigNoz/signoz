@@ -16,7 +16,7 @@ import {
 
 export type DashboardStore = DashboardUISlice &
 	DashboardLayoutSlice & {
-		reset: () => void;
+		resetDashboardStore: () => void;
 	};
 
 /**
@@ -32,7 +32,7 @@ export const useDashboardStore = create<DashboardStore>()(
 		...createDashboardUISlice(set, get, api),
 		...createDashboardLayoutSlice(set, get, api),
 
-		reset: (): void =>
+		resetDashboardStore: (): void =>
 			set((state: DashboardStore) => {
 				Object.assign(state, initialDashboardUIState, initialDashboardLayoutState);
 			}),
@@ -45,3 +45,6 @@ export const getSelectedDashboard = (): Dashboard | undefined =>
 
 export const getDashboardLayouts = (): Layout[] =>
 	useDashboardStore.getState().layouts;
+
+export const resetDashboard = (): void =>
+	useDashboardStore.getState().resetDashboardStore();
