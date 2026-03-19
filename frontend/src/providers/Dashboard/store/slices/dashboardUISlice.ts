@@ -17,9 +17,6 @@ export interface DashboardUISlice {
 			| ((prev: Dashboard | undefined) => Dashboard | undefined),
 	) => void;
 	//
-	dashboardQueryRangeCalled: boolean;
-	setDashboardQueryRangeCalled: (v: boolean) => void;
-	//
 	columnWidths: WidgetColumnWidths;
 	setColumnWidths: (
 		updater:
@@ -30,7 +27,6 @@ export interface DashboardUISlice {
 
 export const initialDashboardUIState = {
 	selectedDashboard: undefined as Dashboard | undefined,
-	dashboardQueryRangeCalled: false,
 	columnWidths: {} as WidgetColumnWidths,
 };
 
@@ -46,11 +42,6 @@ export const createDashboardUISlice: StateCreator<
 		set((state: DashboardUISlice): void => {
 			state.selectedDashboard =
 				typeof updater === 'function' ? updater(state.selectedDashboard) : updater;
-		}),
-
-	setDashboardQueryRangeCalled: (v): void =>
-		set((state: DashboardUISlice): void => {
-			state.dashboardQueryRangeCalled = v;
 		}),
 
 	setColumnWidths: (updater): void =>
