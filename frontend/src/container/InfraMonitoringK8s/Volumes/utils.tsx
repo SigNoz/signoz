@@ -74,7 +74,7 @@ export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
+	orderBy: { columnName: 'usage', order: 'desc' },
 });
 
 const columnsConfig = [

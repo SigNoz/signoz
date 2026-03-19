@@ -172,7 +172,7 @@ function K8sNamespacesList({
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);

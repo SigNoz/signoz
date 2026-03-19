@@ -120,7 +120,7 @@ function K8sDeploymentsList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -173,7 +173,7 @@ function K8sDeploymentsList({
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);

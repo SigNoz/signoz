@@ -179,7 +179,7 @@ function K8sPodsList({
 			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 
 		if (groupBy.length > 0) {
