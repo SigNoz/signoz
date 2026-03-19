@@ -1,12 +1,10 @@
-// eslint-disable-next-line no-restricted-imports
 import { useEffect, useRef } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useParams } from 'react-router-dom';
-import { Modal } from 'antd';
-import { Typography } from 'antd';
+import { Modal, Typography } from 'antd';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { AxiosError } from 'axios';
 import NotFound from 'components/NotFound';
@@ -23,7 +21,7 @@ import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDash
 import useTabVisibility from 'hooks/useTabFocus';
 import { getUpdatedLayout } from 'lib/dashboard/getUpdatedLayout';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
-import { defaultTo, isEqual, isUndefined, omitBy } from 'lodash-es';
+import { defaultTo, isEqual } from 'lodash-es';
 import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import {
 	setDashboardVariablesStore,
@@ -54,16 +52,12 @@ function DashboardPage(): JSX.Element {
 
 	const [onModal, Content] = Modal.useModal();
 
-	const {
-		setSelectedDashboard,
-		setIsDashboardFetching,
-		setLayouts,
-		setPanelMap,
-	} = useDashboardStore();
+	const { setSelectedDashboard, setLayouts, setPanelMap } = useDashboardStore();
 	const selectedDashboard = useDashboardStore((s) => s.selectedDashboard);
 	const dashboardTitle = useDashboardStore(
 		(s) => s.selectedDashboard?.data.title,
 	);
+	const modalRef = useRef<ReturnType<typeof onModal.confirm>>();
 
 	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
 	const savedDashboardId = useDashboardVariablesSelector((s) => s.dashboardId);
@@ -93,6 +87,7 @@ function DashboardPage(): JSX.Element {
 
 	const { t } = useTranslation(['dashboard']);
 	const dashboardRef = useRef<Dashboard>();
+	const isVisible = useTabVisibility();
 
 	const dashboardResponse = useQuery(
 		[
@@ -102,19 +97,7 @@ function DashboardPage(): JSX.Element {
 		],
 		{
 			enabled: !!dashboardId,
-			queryFn: async () => {
-				setIsDashboardFetching(true);
-				try {
-					return await getDashboard({
-						id: dashboardId,
-					});
-				} catch (error) {
-					showErrorModal(error as APIError);
-					return;
-				} finally {
-					setIsDashboardFetching(false);
-				}
-			},
+			queryFn: () => getDashboard({ id: dashboardId }),
 			refetchOnWindowFocus: false,
 			cacheTime: globalTime.isAutoRefreshDisabled
 				? DASHBOARD_CACHE_TIME
@@ -124,37 +107,30 @@ function DashboardPage(): JSX.Element {
 			},
 			onSuccess: (data: SuccessResponseV2<Dashboard>) => {
 				const updatedDashboardData = transformDashboardVariables(data?.data);
-
-				// initialize URL variables after dashboard state is set to avoid race conditions
-				const variables = updatedDashboardData?.data?.variables;
-				if (variables) {
-					initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
-				}
-
 				const updatedDate = dayjs(updatedDashboardData?.updatedAt);
 
-				// on first render
-				if (updatedTimeRef.current === null) {
+				// First load: initialize everything and return
+				if (!dashboardRef.current) {
+					const variables = updatedDashboardData?.data?.variables;
+					if (variables) {
+						initializeDefaultVariables(variables, getUrlVariables, updateUrlVariable);
+					}
 					setSelectedDashboard(updatedDashboardData);
-
-					updatedTimeRef.current = updatedDate;
-
 					dashboardRef.current = updatedDashboardData;
-
 					setLayouts(
 						sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 					);
-
 					setPanelMap(defaultTo(updatedDashboardData?.data?.panelMap, {}));
+					return;
 				}
 
-				if (
-					updatedTimeRef.current !== null &&
-					updatedDate.isAfter(updatedTimeRef.current) &&
-					isVisible &&
-					dashboardRef.current?.id === updatedDashboardData?.id
-				) {
-					// show modal when state is out of sync
+				// Subsequent fetches: skip if data hasn't changed
+				if (!updatedDate.isAfter(dayjs(dashboardRef.current.updatedAt))) {
+					return;
+				}
+
+				// Data has changed: show confirmation modal if tab is visible
+				if (isVisible && dashboardRef.current.id === updatedDashboardData?.id) {
 					const modal = onModal.confirm({
 						centered: true,
 						title: t('dashboard_has_been_updated'),
@@ -178,61 +154,31 @@ function DashboardPage(): JSX.Element {
 							});
 
 							dashboardRef.current = updatedDashboardData;
-
-							updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
-
 							setLayouts(
 								sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
 							);
-
 							setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
 						},
 					});
-
 					modalRef.current = modal;
-				} else {
-					// normal flow
-					updatedTimeRef.current = dayjs(updatedDashboardData?.updatedAt);
-
-					dashboardRef.current = updatedDashboardData;
-
-					if (!isEqual(selectedDashboard, updatedDashboardData)) {
-						setSelectedDashboard(updatedDashboardData);
-					}
-
-					if (
-						!isEqual(
-							[omitBy(layouts, (value): boolean => isUndefined(value))[0]],
-							updatedDashboardData?.data.layout,
-						)
-					) {
-						setLayouts(
-							sortLayout(getUpdatedLayout(updatedDashboardData?.data.layout)),
-						);
-
-						setPanelMap(defaultTo(updatedDashboardData?.data.panelMap, {}));
-					}
 				}
 			},
 		},
 	);
 
-	// const modalRef = useRef<any>(null);
-	const isVisible = useTabVisibility();
+	useEffect(() => {
+		if (!isVisible && modalRef.current) {
+			modalRef.current.destroy();
+		}
+	}, [isVisible]);
 
-	// useEffect(() => {
-	// 	if (!isVisible && modalRef.current) {
-	// 		modalRef.current.destroy();
-	// 	}
-	// }, [isVisible]);
-
-	// useEffect(() => {
-	// 	// make the call on tab visibility only if the user is on dashboard / widget page
-	// 	if (isVisible && updatedTimeRef.current && !!dashboardId) {
-	// 		dashboardResponse.refetch();
-	// 	}
-	// 	// eslint-disable-next-line react-hooks/exhaustive-deps
-	// }, [isVisible]);
+	useEffect(() => {
+		// make the call on tab visibility only if the user is on dashboard / widget page
+		if (isVisible && dashboardRef.current) {
+			dashboardResponse.refetch();
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [isVisible]);
 
 	const { error, isFetching, isError, isLoading } = dashboardResponse;
 

@@ -1,3 +1,5 @@
+import type { Layout } from 'react-grid-layout';
+import type { Dashboard } from 'types/api/dashboard/getAll';
 import { create } from 'zustand';
 import { immer } from 'zustand/middleware/immer';
 
@@ -36,3 +38,10 @@ export const useDashboardStore = create<DashboardStore>()(
 			}),
 	})),
 );
+
+// Standalone imperative accessors — use these instead of calling useDashboardStore.getState() at call sites.
+export const getSelectedDashboard = (): Dashboard | undefined =>
+	useDashboardStore.getState().selectedDashboard;
+
+export const getDashboardLayouts = (): Layout[] =>
+	useDashboardStore.getState().layouts;

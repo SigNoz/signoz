@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
+import { useIsFetching } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
@@ -12,6 +13,7 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
@@ -64,6 +66,9 @@ interface GraphLayoutProps {
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { handle, enableDrillDown = false } = props;
 	const { safeNavigate } = useSafeNavigate();
+	const isDashboardFetching =
+		useIsFetching([REACT_QUERY_KEY.DASHBOARD_BY_ID]) > 0;
+
 	const {
 		selectedDashboard,
 		layouts,
@@ -73,7 +78,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setSelectedDashboard,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
-		isDashboardFetching,
 		columnWidths,
 	} = useDashboardStore();
 	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
