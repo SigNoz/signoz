@@ -1,6 +1,9 @@
 import { useMutation } from 'react-query';
 import locked from 'api/v1/dashboards/id/lock';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	getSelectedDashboard,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
 
@@ -24,7 +27,7 @@ export function useLockDashboard(): (value: boolean) => Promise<void> {
 	});
 
 	return async (value: boolean): Promise<void> => {
-		const selectedDashboard = useDashboardStore.getState().selectedDashboard;
+		const selectedDashboard = getSelectedDashboard();
 		if (selectedDashboard) {
 			try {
 				await lockDashboard({
