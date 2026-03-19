@@ -221,7 +221,7 @@ function NewWidget({
 		selectedWidget?.showPoints ?? false,
 	);
 	const [spanGaps, setSpanGaps] = useState<boolean | number>(
-		selectedWidget?.spanGaps ?? false,
+		selectedWidget?.spanGaps ?? true,
 	);
 	const [customLegendColors, setCustomLegendColors] = useState<
 		Record<string, string>
