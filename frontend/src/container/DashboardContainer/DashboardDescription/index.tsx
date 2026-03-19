@@ -21,6 +21,7 @@ import { DeleteButton } from 'container/ListOfDashboard/TableComponents/DeleteBu
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
+import { useLockDashboard } from 'hooks/dashboard/useLockDashboard';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -40,7 +41,10 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -79,10 +83,11 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setPanelMap,
 		layouts,
 		setLayouts,
-		isDashboardLocked,
 		setSelectedDashboard,
-		handleDashboardLockToggle,
 	} = useDashboardStore();
+
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
+	const handleDashboardLockToggle = useLockDashboard();
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(

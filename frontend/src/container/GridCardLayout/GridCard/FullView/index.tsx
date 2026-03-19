@@ -39,7 +39,10 @@ import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariab
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -81,11 +84,8 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const {
-		selectedDashboard,
-		isDashboardLocked,
-		setColumnWidths,
-	} = useDashboardStore();
+	const { selectedDashboard, setColumnWidths } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const onColumnWidthsChange = useCallback(
 		(widths: Record<string, number>) => {

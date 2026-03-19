@@ -31,7 +31,10 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -68,12 +71,12 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		panelMap,
 		setPanelMap,
 		setSelectedDashboard,
-		isDashboardLocked,
 		dashboardQueryRangeCalled,
 		setDashboardQueryRangeCalled,
 		isDashboardFetching,
 		columnWidths,
 	} = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
