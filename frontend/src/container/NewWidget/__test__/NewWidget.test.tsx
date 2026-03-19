@@ -6,11 +6,24 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
+import { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
+import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
+
+function DashboardBootstrapWrapper({
+	dashboardId,
+	children,
+}: {
+	dashboardId: string;
+	children: ReactNode;
+}): JSX.Element {
+	useDashboardBootstrap(dashboardId);
+	// eslint-disable-next-line react/jsx-no-useless-fragment
+	return <>{children}</>;
+}
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import i18n from 'ReactI18';
 import {
@@ -310,7 +323,7 @@ describe('Stacking bar in new panel', () => {
 
 		const { container, getByText } = render(
 			<I18nextProvider i18n={i18n}>
-				<DashboardProvider dashboardId="">
+				<DashboardBootstrapWrapper dashboardId="">
 					<PreferenceContextProvider>
 						<NewWidget
 							dashboardId=""
@@ -318,7 +331,7 @@ describe('Stacking bar in new panel', () => {
 							selectedGraph={PANEL_TYPES.BAR}
 						/>
 					</PreferenceContextProvider>
-				</DashboardProvider>
+				</DashboardBootstrapWrapper>
 			</I18nextProvider>,
 		);
 
@@ -356,13 +369,13 @@ describe('when switching to BAR panel type', () => {
 
 	it('should preserve saved stacking value of true', async () => {
 		const { getByTestId, getByText, container } = render(
-			<DashboardProvider dashboardId="">
+			<DashboardBootstrapWrapper dashboardId="">
 				<NewWidget
 					dashboardId=""
 					selectedDashboard={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
 				/>
-			</DashboardProvider>,
+			</DashboardBootstrapWrapper>,
 		);
 
 		expect(getByTestId('panel-change-select')).toHaveAttribute(
