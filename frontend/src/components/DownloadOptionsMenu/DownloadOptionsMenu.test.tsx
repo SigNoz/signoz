@@ -30,6 +30,11 @@ jest.mock('antd', () => {
 	};
 });
 
+const mockUseQueryBuilder = jest.fn();
+jest.mock('hooks/queryBuilder/useQueryBuilder', () => ({
+	useQueryBuilder: (): any => mockUseQueryBuilder(),
+}));
+
 const mockStore = configureStore([]);
 const createMockReduxStore = (): any =>
 	mockStore({
@@ -73,14 +78,11 @@ const createMockStagedQuery = (dataSource: DataSource): Query => ({
 	clickhouse_sql: [],
 });
 
-const renderWithStore = (
-	stagedQuery: Query | null,
-	dataSource: DataSource,
-): void => {
+const renderWithStore = (dataSource: DataSource): void => {
 	const mockReduxStore = createMockReduxStore();
 	render(
 		<Provider store={mockReduxStore}>
-			<DownloadOptionsMenu stagedQuery={stagedQuery} dataSource={dataSource} />
+			<DownloadOptionsMenu dataSource={dataSource} />
 		</Provider>,
 	);
 };
@@ -95,17 +97,20 @@ describe.each([
 		mockDownloadExportData.mockReset().mockResolvedValue(undefined);
 		(message.success as jest.Mock).mockReset();
 		(message.error as jest.Mock).mockReset();
+		mockUseQueryBuilder.mockReturnValue({
+			stagedQuery: createMockStagedQuery(dataSource),
+		});
 	});
 
 	it('renders download button', () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		const button = screen.getByTestId(testId);
 		expect(button).toBeInTheDocument();
 		expect(button).toHaveClass('periscope-btn', 'ghost');
 	});
 
 	it('shows popover with export options when download button is clicked', () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -115,7 +120,7 @@ describe.each([
 	});
 
 	it('allows changing export format', () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
 		const csvRadio = screen.getByRole('radio', { name: 'csv' });
@@ -128,7 +133,7 @@ describe.each([
 	});
 
 	it('allows changing row limit', () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
 		const tenKRadio = screen.getByRole('radio', { name: '10k' });
@@ -141,7 +146,7 @@ describe.each([
 	});
 
 	it('allows changing columns scope', () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
 		const allColumnsRadio = screen.getByRole('radio', { name: 'All' });
@@ -154,7 +159,7 @@ describe.each([
 	});
 
 	it('calls downloadExportData with correct format and POST body', async () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByText('Export'));
 
@@ -182,7 +187,8 @@ describe.each([
 			expression: 'count() > 10',
 		} as any;
 
-		renderWithStore(mockQuery, dataSource);
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByText('Export'));
 
@@ -201,7 +207,8 @@ describe.each([
 			{ name: 'http.status', fieldDataType: 'int64', fieldContext: 'attribute' },
 		] as any;
 
-		renderWithStore(mockQuery, dataSource);
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
 		fireEvent.click(screen.getByText('Export'));
@@ -220,7 +227,7 @@ describe.each([
 	});
 
 	it('sends no selectFields when column scope is All', async () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
 		fireEvent.click(screen.getByText('Export'));
@@ -234,7 +241,7 @@ describe.each([
 	});
 
 	it('handles successful export with success message', async () => {
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByText('Export'));
 
@@ -247,7 +254,7 @@ describe.each([
 
 	it('handles export failure with error message', async () => {
 		mockDownloadExportData.mockRejectedValueOnce(new Error('Server error'));
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByText('Export'));
 
@@ -266,7 +273,7 @@ describe.each([
 					resolveDownload = resolve;
 				}),
 		);
-		renderWithStore(createMockStagedQuery(dataSource), dataSource);
+		renderWithStore(dataSource);
 
 		fireEvent.click(screen.getByTestId(testId));
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
@@ -304,7 +311,8 @@ describe('DownloadOptionsMenu for traces with queryTraceOperator', () => {
 			},
 		];
 
-		renderWithStore(query, dataSource);
+		mockUseQueryBuilder.mockReturnValue({ stagedQuery: query });
+		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: '50k' }));
 		fireEvent.click(screen.getByText('Export'));
