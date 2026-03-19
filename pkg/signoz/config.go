@@ -125,7 +125,6 @@ type DeprecatedFlags struct {
 	MaxIdleConns               int
 	MaxOpenConns               int
 	DialTimeout                time.Duration
-	Config                     string
 	FluxInterval               string
 	FluxIntervalForTraceDetail string
 	PreferSpanMetrics          bool
@@ -137,7 +136,6 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 	cmd.Flags().IntVar(&df.MaxIdleConns, "max-idle-conns", 50, "max idle connections to the database")
 	cmd.Flags().IntVar(&df.MaxOpenConns, "max-open-conns", 100, "max open connections to the database")
 	cmd.Flags().DurationVar(&df.DialTimeout, "dial-timeout", 5*time.Second, "dial timeout for the database")
-	cmd.Flags().StringVar(&df.Config, "config", "./config/prometheus.yml", "(prometheus config to read metrics)")
 	cmd.Flags().StringVar(&df.FluxInterval, "flux-interval", "5m", "flux interval")
 	cmd.Flags().StringVar(&df.FluxIntervalForTraceDetail, "flux-interval-for-trace-detail", "2m", "flux interval for trace detail")
 	cmd.Flags().BoolVar(&df.PreferSpanMetrics, "prefer-span-metrics", false, "(prefer span metrics for service level metrics)")
@@ -147,7 +145,6 @@ func (df *DeprecatedFlags) RegisterFlags(cmd *cobra.Command) {
 	_ = cmd.Flags().MarkDeprecated("max-idle-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__IDLE__CONNS instead")
 	_ = cmd.Flags().MarkDeprecated("max-open-conns", "use SIGNOZ_TELEMETRYSTORE_MAX__OPEN__CONNS instead")
 	_ = cmd.Flags().MarkDeprecated("dial-timeout", "use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead")
-	_ = cmd.Flags().MarkDeprecated("config", "use SIGNOZ_PROMETHEUS_CONFIG instead")
 	_ = cmd.Flags().MarkDeprecated("flux-interval", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
 	_ = cmd.Flags().MarkDeprecated("flux-interval-for-trace-detail", "use SIGNOZ_QUERIER_FLUX__INTERVAL instead")
 	_ = cmd.Flags().MarkDeprecated("cluster", "use SIGNOZ_TELEMETRYSTORE_CLICKHOUSE_CLUSTER instead")
@@ -268,10 +265,6 @@ func mergeAndEnsureBackwardCompatibility(ctx context.Context, logger *slog.Logge
 	if deprecatedFlags.DialTimeout != 5*time.Second {
 		logger.WarnContext(ctx, "[Deprecated] flag --dial-timeout is deprecated and scheduled for removal. Please use SIGNOZ_TELEMETRYSTORE_DIAL__TIMEOUT instead.")
 		config.TelemetryStore.Connection.DialTimeout = deprecatedFlags.DialTimeout
-	}
-
-	if deprecatedFlags.Config != "" {
-		logger.WarnContext(ctx, "[Deprecated] flag --config is deprecated for passing prometheus config. The flag will be used for passing the entire SigNoz config. More details can be found at https://github.com/SigNoz/signoz/issues/6805.")
 	}
 
 	if os.Getenv("INVITE_EMAIL_TEMPLATE") != "" {
