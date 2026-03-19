@@ -32,11 +32,22 @@ const mockVariableItemCallbacks: {
 // Mock providers/Dashboard/Dashboard
 const mockSetSelectedDashboard = jest.fn();
 const mockUpdateLocalStorageDashboardVariables = jest.fn();
+interface MockDashboardStoreState {
+	selectedDashboard?: { id: string };
+	setSelectedDashboard: typeof mockSetSelectedDashboard;
+	updateLocalStorageDashboardVariables: typeof mockUpdateLocalStorageDashboardVariables;
+}
 jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
-	useDashboardStore: (): Record<string, unknown> => ({
-		setSelectedDashboard: mockSetSelectedDashboard,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
-	}),
+	useDashboardStore: (
+		selector?: (s: Record<string, unknown>) => MockDashboardStoreState,
+	): MockDashboardStoreState => {
+		const state = {
+			selectedDashboard: { id: 'dash-1' },
+			setSelectedDashboard: mockSetSelectedDashboard,
+			updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+		};
+		return selector ? selector(state) : state;
+	},
 }));
 
 // Mock hooks/dashboard/useVariablesFromUrl
