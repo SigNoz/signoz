@@ -26,13 +26,13 @@ export function findNearestNonNull(
 export function findSandwichedIndices(
 	gaps: number[][],
 	yData: (number | null | undefined)[],
-	u: uPlot,
+	uPlotInstance: uPlot,
 ): number[] {
 	const indices: number[] = [];
 	for (let i = 0; i < gaps.length; i++) {
 		const nextGap = gaps[i + 1];
 		if (nextGap && gaps[i][1] === nextGap[0]) {
-			const approxIdx = u.posToIdx(gaps[i][1], true);
+			const approxIdx = uPlotInstance.posToIdx(gaps[i][1], true);
 			indices.push(
 				yData[approxIdx] == null ? findNearestNonNull(yData, approxIdx) : approxIdx,
 			);
@@ -49,10 +49,11 @@ export function findSandwichedIndices(
  * Uses uPlot's gap pixel array rather than checking raw null neighbors in the
  * data array. Returns an array of data indices (not a bitmask); null = no points.
  *
+
  */
 // eslint-disable-next-line max-params
 export function isolatedPointFilter(
-	u: uPlot,
+	uPlotInstance: uPlot,
 	seriesIdx: number,
 	show: boolean,
 	gaps?: null | number[][],
@@ -61,18 +62,20 @@ export function isolatedPointFilter(
 		return null;
 	}
 
-	const idxs = u.series[seriesIdx].idxs;
+	const idxs = uPlotInstance.series[seriesIdx].idxs;
 	if (!idxs) {
 		return null;
 	}
 
 	const [firstIdx, lastIdx] = idxs;
-	const xData = u.data[0] as number[];
-	const yData = u.data[seriesIdx] as (number | null | undefined)[];
+	const xData = uPlotInstance.data[0] as number[];
+	const yData = uPlotInstance.data[seriesIdx] as (number | null | undefined)[];
 
 	// valToPos with canvas=true matches the pixel space used by the gaps array.
-	const firstPos = Math.round(u.valToPos(xData[firstIdx], 'x', true));
-	const lastPos = Math.round(u.valToPos(xData[lastIdx], 'x', true));
+	const firstPos = Math.round(
+		uPlotInstance.valToPos(xData[firstIdx], 'x', true),
+	);
+	const lastPos = Math.round(uPlotInstance.valToPos(xData[lastIdx], 'x', true));
 
 	const filtered: number[] = [];
 
@@ -80,7 +83,7 @@ export function isolatedPointFilter(
 		filtered.push(firstIdx);
 	}
 
-	filtered.push(...findSandwichedIndices(gaps, yData, u));
+	filtered.push(...findSandwichedIndices(gaps, yData, uPlotInstance));
 
 	if (gaps[gaps.length - 1][1] === lastPos) {
 		filtered.push(lastIdx);
