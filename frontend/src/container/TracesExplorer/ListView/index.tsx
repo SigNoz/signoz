@@ -11,10 +11,10 @@ import {
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
-import TracesDownloadOptionsMenu from 'components/TracesDownloadOptionsMenu/TracesDownloadOptionsMenu';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
@@ -239,7 +239,10 @@ function ListView({
 					/>
 				</div>
 
-				<TracesDownloadOptionsMenu stagedQuery={stagedQuery} />
+				<DownloadOptionsMenu
+					stagedQuery={stagedQuery}
+					dataSource={DataSource.TRACES}
+				/>
 
 				<TraceExplorerControls
 					isLoading={isFetching}

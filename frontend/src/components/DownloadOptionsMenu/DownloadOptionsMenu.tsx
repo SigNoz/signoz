@@ -1,15 +1,9 @@
 import { useCallback, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
-import { Button, message, Popover, Radio, Tooltip, Typography } from 'antd';
-import { downloadExportData } from 'api/v1/download/downloadExportData';
-import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
-import { PANEL_TYPES } from 'constants/queryBuilder';
+import { Button, Popover, Radio, Tooltip, Typography } from 'antd';
+import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
 import { Download, DownloadIcon, Loader2 } from 'lucide-react';
-import { AppState } from 'store/reducers';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
-import { GlobalReducer } from 'types/reducer/globalTime';
 
 import {
 	DownloadColumnsScopes,
@@ -33,71 +27,21 @@ export default function DownloadOptionsMenu({
 	const [columnsScope, setColumnsScope] = useState<string>(
 		DownloadColumnsScopes.ALL,
 	);
-	const [isDownloading, setIsDownloading] = useState<boolean>(false);
 	const [isPopoverOpen, setIsPopoverOpen] = useState<boolean>(false);
 
-	const { selectedTime: globalSelectedInterval } = useSelector<
-		AppState,
-		GlobalReducer
-	>((state) => state.globalTime);
-
-	const handleExportRawData = useCallback(async (): Promise<void> => {
-		setIsPopoverOpen(false);
-		if (!stagedQuery) {
-			return;
-		}
-
-		try {
-			setIsDownloading(true);
-
-			const clearSelectColumns = columnsScope === DownloadColumnsScopes.ALL;
-
-			const exportQuery: Query = {
-				...stagedQuery,
-				builder: {
-					...stagedQuery.builder,
-					queryData: stagedQuery.builder.queryData.map((qd) => ({
-						...qd,
-						groupBy: [],
-						having: { expression: '' },
-						limit: rowLimit,
-						...(clearSelectColumns && { selectColumns: [] }),
-					})),
-					queryTraceOperator: (stagedQuery.builder.queryTraceOperator || []).map(
-						(traceOp) => ({
-							...traceOp,
-							groupBy: [],
-							having: { expression: '' },
-							limit: rowLimit,
-							...(clearSelectColumns && { selectColumns: [] }),
-						}),
-					),
-				},
-			};
-
-			const { queryPayload } = prepareQueryRangePayloadV5({
-				query: exportQuery,
-				graphType: PANEL_TYPES.LIST,
-				selectedTime: 'GLOBAL_TIME',
-				globalSelectedInterval,
-			});
-
-			await downloadExportData({ format: exportFormat, body: queryPayload });
-			message.success('Export completed successfully');
-		} catch (error) {
-			console.error(`Error exporting ${dataSource}:`, error);
-			message.error(`Failed to export ${dataSource}. Please try again.`);
-		} finally {
-			setIsDownloading(false);
-		}
-	}, [
+	const { isDownloading, handleExportRawData } = useExportRawData({
 		stagedQuery,
-		columnsScope,
-		exportFormat,
-		rowLimit,
-		globalSelectedInterval,
 		dataSource,
-	]);
+	});
+
+	const handleExport = useCallback(async (): Promise<void> => {
+		setIsPopoverOpen(false);
+		await handleExportRawData({
+			format: exportFormat,
+			rowLimit,
+			clearSelectColumns: columnsScope === DownloadColumnsScopes.ALL,
+		});
+	}, [exportFormat, rowLimit, columnsScope, handleExportRawData]);
 
 	const popoverContent = useMemo(
 		() => (
@@ -148,7 +92,7 @@ export default function DownloadOptionsMenu({
 				<Button
 					type="primary"
 					icon={<Download size={16} />}
-					onClick={handleExportRawData}
+					onClick={handleExport}
 					className="export-button"
 					disabled={isDownloading}
 					loading={isDownloading}
@@ -157,7 +101,7 @@ export default function DownloadOptionsMenu({
 				</Button>
 			</div>
 		),
-		[exportFormat, rowLimit, columnsScope, isDownloading, handleExportRawData],
+		[exportFormat, rowLimit, columnsScope, isDownloading, handleExport],
 	);
 
 	return (
