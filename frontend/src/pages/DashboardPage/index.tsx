@@ -173,7 +173,7 @@ function DashboardPage(): JSX.Element {
 	}, [isVisible]);
 
 	useEffect(() => {
-		// make the call on tab visibility only if the user is on dashboard / widget page
+		// make the call on tab visibility only
 		if (isVisible && dashboardRef.current) {
 			dashboardResponse.refetch();
 		}
