@@ -186,13 +186,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}
 
 	private shouldApplyIsolatedPointFilter(show: Series.Points['show']): boolean {
-		const { drawStyle, spanGaps, pointsFilter } = this.props;
-		return (
-			drawStyle === DrawStyle.Line &&
-			typeof spanGaps === 'number' &&
-			!pointsFilter &&
-			!show
-		);
+		const { drawStyle, pointsFilter } = this.props;
+		return drawStyle === DrawStyle.Line && !pointsFilter && !show;
 	}
 
 	private getLineColor(): string {
