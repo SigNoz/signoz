@@ -5,6 +5,7 @@ import { useListRoles } from 'api/generated/services/role';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import cx from 'classnames';
 import APIError from 'types/api/error';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import './RolesSelect.styles.scss';
 
@@ -116,7 +117,7 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 		id,
 		placeholder = 'Select role',
 		className,
-		getPopupContainer,
+		getPopupContainer = popupContainer,
 		loading = internalLoading,
 		isError = internalError,
 		error = convertToApiError(internalErrorObj),

@@ -14,13 +14,14 @@ import type {
 	ServiceaccounttypesServiceAccountDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 
 function DisableAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
-	const [accountId, setAccountId] = useQueryState('account');
+	const [accountId, setAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isDisableOpen, setIsDisableOpen] = useQueryState(
-		'disable-sa',
+		SA_QUERY_PARAMS.DISABLE_SA,
 		parseAsBoolean.withDefault(false),
 	);
 	const open = !!isDisableOpen && !!accountId;
@@ -37,11 +38,11 @@ function DisableAccountModal(): JSX.Element {
 		isLoading: isDisabling,
 	} = useUpdateServiceAccountStatus({
 		mutation: {
-			onSuccess: () => {
+			onSuccess: async () => {
 				toast.success('Service account disabled', { richColors: true });
-				void setIsDisableOpen(null);
-				void setAccountId(null);
-				void invalidateListServiceAccounts(queryClient);
+				await setIsDisableOpen(null);
+				await setAccountId(null);
+				await invalidateListServiceAccounts(queryClient);
 			},
 			onError: (error) => {
 				const errMessage =
@@ -64,7 +65,7 @@ function DisableAccountModal(): JSX.Element {
 	}
 
 	function handleCancel(): void {
-		void setIsDisableOpen(null);
+		setIsDisableOpen(null);
 	}
 
 	return (

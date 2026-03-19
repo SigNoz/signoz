@@ -1,4 +1,5 @@
 import { Badge } from '@signozhq/badge';
+import { ScanSearch } from '@signozhq/icons';
 import { Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
@@ -72,9 +73,7 @@ export function ServiceAccountsEmptyState({
 }): JSX.Element {
 	return (
 		<div className="sa-empty-state">
-			<span className="sa-empty-state__emoji" role="img" aria-label="monocle face">
-				🧐
-			</span>
+			<ScanSearch size={24} className="sa-empty-state__icon" />
 			{searchQuery ? (
 				<p className="sa-empty-state__text">
 					No results for <strong>{searchQuery}</strong>

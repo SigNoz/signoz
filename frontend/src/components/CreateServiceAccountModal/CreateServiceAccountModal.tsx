@@ -13,6 +13,7 @@ import {
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
+import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 import { EMAIL_REGEX } from 'utils/app';
 
@@ -27,7 +28,7 @@ interface FormValues {
 function CreateServiceAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
 	const [isOpen, setIsOpen] = useQueryState(
-		'create-sa',
+		SA_QUERY_PARAMS.CREATE_SA,
 		parseAsBoolean.withDefault(false),
 	);
 
@@ -50,13 +51,13 @@ function CreateServiceAccountModal(): JSX.Element {
 		isLoading: isSubmitting,
 	} = useCreateServiceAccount({
 		mutation: {
-			onSuccess: () => {
+			onSuccess: async () => {
 				toast.success('Service account created successfully', {
 					richColors: true,
 				});
 				reset();
-				void setIsOpen(null);
-				void invalidateListServiceAccounts(queryClient);
+				await setIsOpen(null);
+				await invalidateListServiceAccounts(queryClient);
 			},
 			onError: (err) => {
 				const errMessage =
@@ -79,7 +80,7 @@ function CreateServiceAccountModal(): JSX.Element {
 
 	function handleClose(): void {
 		reset();
-		void setIsOpen(null);
+		setIsOpen(null);
 	}
 
 	function handleCreate(values: FormValues): void {
@@ -107,7 +108,11 @@ function CreateServiceAccountModal(): JSX.Element {
 			disableOutsideClick={false}
 		>
 			<div className="create-sa-modal__content">
-				<form className="create-sa-form">
+				<form
+					id="create-sa-form"
+					className="create-sa-form"
+					onSubmit={handleSubmit(handleCreate)}
+				>
 					<div className="create-sa-form__item">
 						<label htmlFor="sa-name">Name</label>
 						<Controller
@@ -184,10 +189,6 @@ function CreateServiceAccountModal(): JSX.Element {
 									placeholder="Select roles"
 									value={field.value}
 									onChange={field.onChange}
-									getPopupContainer={(triggerNode): HTMLElement =>
-										(triggerNode?.closest('.create-sa-modal') as HTMLElement) ||
-										document.body
-									}
 								/>
 							)}
 						/>
@@ -211,10 +212,11 @@ function CreateServiceAccountModal(): JSX.Element {
 				</Button>
 
 				<Button
+					type="submit"
+					form="create-sa-form"
 					variant="solid"
 					color="primary"
 					size="sm"
-					onClick={handleSubmit(handleCreate)}
 					loading={isSubmitting}
 					disabled={!isValid}
 				>

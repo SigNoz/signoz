@@ -28,6 +28,7 @@ import {
 } from 'nuqs';
 import { toAPIError } from 'utils/errorUtils';
 
+import { SA_QUERY_PARAMS } from './constants';
 import {
 	FilterMode,
 	ServiceAccountRow,
@@ -39,22 +40,22 @@ import './ServiceAccountsSettings.styles.scss';
 
 function ServiceAccountsSettings(): JSX.Element {
 	const [currentPage, setPage] = useQueryState(
-		'page',
+		SA_QUERY_PARAMS.PAGE,
 		parseAsInteger.withDefault(1),
 	);
 	const [searchQuery, setSearchQuery] = useQueryState(
-		'search',
+		SA_QUERY_PARAMS.SEARCH,
 		parseAsString.withDefault(''),
 	);
 	const [filterMode, setFilterMode] = useQueryState(
-		'filter',
+		SA_QUERY_PARAMS.FILTER,
 		parseAsStringEnum<FilterMode>(Object.values(FilterMode)).withDefault(
 			FilterMode.All,
 		),
 	);
-	const [, setSelectedAccountId] = useQueryState('account');
+	const [, setSelectedAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [, setIsCreateModalOpen] = useQueryState(
-		'create-sa',
+		SA_QUERY_PARAMS.CREATE_SA,
 		parseAsBoolean.withDefault(false),
 	);
 
@@ -271,8 +272,8 @@ function ServiceAccountsSettings(): JSX.Element {
 						variant="solid"
 						size="sm"
 						color="primary"
-						onClick={(): void => {
-							void setIsCreateModalOpen(true);
+						onClick={async (): Promise<void> => {
+							await setIsCreateModalOpen(true);
 						}}
 					>
 						<Plus size={12} />

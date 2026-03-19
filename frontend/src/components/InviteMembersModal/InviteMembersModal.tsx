@@ -13,6 +13,7 @@ import { cloneDeep, debounce } from 'lodash-es';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import './InviteMembersModal.styles.scss';
@@ -268,10 +269,7 @@ function InviteMembersModal({
 											className="team-member-role-select"
 											placeholder="Select roles"
 											suffixIcon={<ChevronDown size={14} />}
-											getPopupContainer={(triggerNode): HTMLElement =>
-												(triggerNode?.closest('.invite-members-modal') as HTMLElement) ||
-												document.body
-											}
+											getPopupContainer={popupContainer}
 										>
 											<Select.Option value="VIEWER">Viewer</Select.Option>
 											<Select.Option value="EDITOR">Editor</Select.Option>

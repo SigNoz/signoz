@@ -28,6 +28,7 @@ import { INVITE_PREFIX, MemberStatus } from 'container/MembersSettings/utils';
 import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
 import { ROLES } from 'types/roles';
+import { popupContainer } from 'utils/selectPopupContainer';
 
 import './EditMemberDrawer.styles.scss';
 
@@ -303,10 +304,7 @@ function EditMemberDrawer({
 						onChange={(role): void => setSelectedRole(role as ROLES)}
 						className="edit-member-drawer__role-select"
 						suffixIcon={<ChevronDown size={14} />}
-						getPopupContainer={(triggerNode): HTMLElement =>
-							(triggerNode?.closest('.edit-member-drawer') as HTMLElement) ||
-							document.body
-						}
+						getPopupContainer={popupContainer}
 					>
 						<Select.Option value="ADMIN">{capitalize('ADMIN')}</Select.Option>
 						<Select.Option value="EDITOR">{capitalize('EDITOR')}</Select.Option>

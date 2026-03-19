@@ -15,6 +15,7 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';
+import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
 	ServiceAccountRow,
 	toServiceAccountRow,
@@ -46,28 +47,30 @@ const PAGE_SIZE = 15;
 function ServiceAccountDrawer({
 	onSuccess,
 }: ServiceAccountDrawerProps): JSX.Element {
-	const [selectedAccountId, setSelectedAccountId] = useQueryState('account');
+	const [selectedAccountId, setSelectedAccountId] = useQueryState(
+		SA_QUERY_PARAMS.ACCOUNT,
+	);
 	const open = !!selectedAccountId;
 	const [activeTab, setActiveTab] = useQueryState(
-		'tab',
+		SA_QUERY_PARAMS.TAB,
 		parseAsStringEnum<ServiceAccountDrawerTab>(
 			Object.values(ServiceAccountDrawerTab),
 		).withDefault(ServiceAccountDrawerTab.Overview),
 	);
 	const [keysPage, setKeysPage] = useQueryState(
-		'keysPage',
+		SA_QUERY_PARAMS.KEYS_PAGE,
 		parseAsInteger.withDefault(1),
 	);
 	const [, setEditKeyId] = useQueryState(
-		'edit-key',
+		SA_QUERY_PARAMS.EDIT_KEY,
 		parseAsString.withDefault(''),
 	);
 	const [, setIsAddKeyOpen] = useQueryState(
-		'add-key',
+		SA_QUERY_PARAMS.ADD_KEY,
 		parseAsBoolean.withDefault(false),
 	);
 	const [, setIsDisableOpen] = useQueryState(
-		'disable-sa',
+		SA_QUERY_PARAMS.DISABLE_SA,
 		parseAsBoolean.withDefault(false),
 	);
 	const [localName, setLocalName] = useState('');

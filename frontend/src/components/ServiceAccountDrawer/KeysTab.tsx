@@ -1,9 +1,10 @@
 import { useCallback, useMemo } from 'react';
 import { Button } from '@signozhq/button';
-import { X } from '@signozhq/icons';
+import { KeyRound, X } from '@signozhq/icons';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
 import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
 import { useTimezone } from 'providers/Timezone';
@@ -36,7 +37,7 @@ function formatExpiry(expiresAt: number): JSX.Element {
 	if (expiryDate.isBefore(dayjs())) {
 		return <span className="keys-tab__expiry--expired">Expired</span>;
 	}
-	return <span>{expiryDate.format('MMM D, YYYY')}</span>;
+	return <span>{expiryDate.format(DATE_TIME_FORMATS.MONTH_DATE)}</span>;
 }
 
 function buildColumns({
@@ -163,15 +164,13 @@ function KeysTab({
 	if (keys.length === 0) {
 		return (
 			<div className="keys-tab__empty">
-				<span className="keys-tab__empty-emoji" role="img" aria-label="searching">
-					🧐
-				</span>
+				<KeyRound size={24} className="keys-tab__empty-icon" />
 				<p className="keys-tab__empty-text">No keys. Start by creating one.</p>
 				<Button
 					type="button"
 					className="keys-tab__learn-more"
-					onClick={(): void => {
-						void setIsAddKeyOpen(true);
+					onClick={async (): Promise<void> => {
+						await setIsAddKeyOpen(true);
 					}}
 					disabled={isDisabled}
 				>
@@ -209,17 +208,17 @@ function KeysTab({
 					tabIndex: number;
 					'aria-label': string;
 				} => ({
-					onClick: (): void => {
+					onClick: async (): Promise<void> => {
 						if (!isDisabled) {
-							void setEditKeyId(record.id);
+							await setEditKeyId(record.id);
 						}
 					},
-					onKeyDown: (e: React.KeyboardEvent): void => {
+					onKeyDown: async (e: React.KeyboardEvent): Promise<void> => {
 						if ((e.key === 'Enter' || e.key === ' ') && !isDisabled) {
 							if (e.key === ' ') {
 								e.preventDefault();
 							}
-							void setEditKeyId(record.id);
+							await setEditKeyId(record.id);
 						}
 					},
 					role: 'button',

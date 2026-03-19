@@ -14,6 +14,7 @@ import type {
 	ServiceaccounttypesFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
+import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsString, useQueryState } from 'nuqs';
 
 export interface RevokeKeyContentProps {
@@ -55,9 +56,9 @@ export function RevokeKeyContent({
 
 function RevokeKeyModal(): JSX.Element {
 	const queryClient = useQueryClient();
-	const [accountId] = useQueryState('account');
+	const [accountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [revokeKeyId, setRevokeKeyId] = useQueryState(
-		'revoke-key',
+		SA_QUERY_PARAMS.REVOKE_KEY,
 		parseAsString.withDefault(''),
 	);
 	const open = !!revokeKeyId && !!accountId;
@@ -74,11 +75,11 @@ function RevokeKeyModal(): JSX.Element {
 		isLoading: isRevoking,
 	} = useRevokeServiceAccountKey({
 		mutation: {
-			onSuccess: () => {
+			onSuccess: async () => {
 				toast.success('Key revoked successfully', { richColors: true });
-				void setRevokeKeyId(null);
+				await setRevokeKeyId(null);
 				if (accountId) {
-					void invalidateListServiceAccountKeys(queryClient, { id: accountId });
+					await invalidateListServiceAccountKeys(queryClient, { id: accountId });
 				}
 			},
 			onError: (error) => {
@@ -99,7 +100,7 @@ function RevokeKeyModal(): JSX.Element {
 	}
 
 	function handleCancel(): void {
-		void setRevokeKeyId(null);
+		setRevokeKeyId(null);
 	}
 
 	return (

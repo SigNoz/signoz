@@ -1,5 +1,6 @@
 import React from 'react';
 import { Table } from 'antd';
+import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { parseAsInteger, parseAsString, useQueryState } from 'nuqs';
 
@@ -25,10 +26,13 @@ function ServiceAccountsTable({
 	onRowClick,
 }: ServiceAccountsTableProps): JSX.Element {
 	const [currentPage, setPage] = useQueryState(
-		'page',
+		SA_QUERY_PARAMS.PAGE,
 		parseAsInteger.withDefault(1),
 	);
-	const [searchQuery] = useQueryState('search', parseAsString.withDefault(''));
+	const [searchQuery] = useQueryState(
+		SA_QUERY_PARAMS.SEARCH,
+		parseAsString.withDefault(''),
+	);
 
 	return (
 		<div className="sa-table-wrapper">
