@@ -212,7 +212,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		return {
 			scale: scaleKey,
 			label,
-			spanGaps: typeof spanGaps === 'boolean' ? spanGaps : false,
+			// When spanGaps is numeric, we always disable uPlot's internal
+			// spanGaps behavior and rely on data-prep to implement the
+			// threshold-based null handling. When spanGaps is boolean we
+			// map it directly. When spanGaps is undefined we fall back to
+			// the default of true.
+			spanGaps: typeof spanGaps === 'number' ? false : spanGaps ?? true,
 			value: (): string => '',
 			pxAlign: true,
 			show,

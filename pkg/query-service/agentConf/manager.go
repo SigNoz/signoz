@@ -180,6 +180,12 @@ func (m *Manager) ReportConfigDeploymentStatus(
 	}
 }
 
+// Implements model.AgentConfigProvider
+func (m *Manager) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, configHash string) (opamptypes.DeployStatus, error) {
+	return m.Repo.GetDeployStatusByHash(ctx, orgId, configHash)
+}
+
+
 func GetLatestVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, error) {

@@ -12,6 +12,10 @@ type Getter interface {
 	// Get gets the organization based on the given id
 	Get(context.Context, valuer.UUID) (*types.Organization, error)
 
+	// GetByIDOrName gets the organization by id, falling back to name on not found.
+	// The boolean is true when the name fallback path was used.
+	GetByIDOrName(context.Context, valuer.UUID, string) (*types.Organization, bool, error)
+
 	// ListByOwnedKeyRange gets all the organizations owned by the instance
 	ListByOwnedKeyRange(context.Context) ([]*types.Organization, error)
 

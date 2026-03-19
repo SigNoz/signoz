@@ -9,7 +9,7 @@ interface FillModeSelectorProps {
 	onChange: (value: FillMode) => void;
 }
 
-export function FillModeSelector({
+export default function FillModeSelector({
 	value,
 	onChange,
 }: FillModeSelectorProps): JSX.Element {

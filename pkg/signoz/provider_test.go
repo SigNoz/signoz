@@ -92,7 +92,6 @@ func TestNewProviderFactories(t *testing.T) {
 		NewAPIServerProviderFactories(
 			implorganization.NewGetter(implorganization.NewStore(sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherEqual)), nil),
 			nil,
-			nil,
 			Modules{},
 			Handlers{},
 		)

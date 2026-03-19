@@ -373,6 +373,7 @@ def test_histogram_count_no_param(
         )  ## to keep parallel to the cumulative test cases, first_value refers to the value at 10:02
         assert values[-1]["value"] == last_values[le]
 
+
 @pytest.mark.parametrize(
     "space_agg, zeroth_value, first_value, last_value",
     [
@@ -423,6 +424,7 @@ def test_histogram_percentile_for_all_services(
     assert result_values[1]["value"] == first_value
     assert result_values[-1]["value"] == last_value
 
+
 @pytest.mark.parametrize(
     "space_agg, first_value, last_value",
     [
@@ -471,6 +473,7 @@ def test_histogram_percentile_for_cumulative_service(
     assert len(result_values) == 59
     assert result_values[0]["value"] == first_value
     assert result_values[-1]["value"] == last_value
+
 
 @pytest.mark.parametrize(
     "space_agg, zeroth_value, first_value, last_value",

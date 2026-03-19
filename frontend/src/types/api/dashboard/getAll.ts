@@ -141,6 +141,7 @@ export interface IBaseWidget {
 	showPoints?: boolean;
 	lineStyle?: LineStyle;
 	fillMode?: FillMode;
+	spanGaps?: boolean | number;
 }
 export interface Widgets extends IBaseWidget {
 	query: Query;

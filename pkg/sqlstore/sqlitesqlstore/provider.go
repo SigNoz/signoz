@@ -100,7 +100,7 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
 	if sqlite3Err, ok := err.(*sqlite.Error); ok {
-		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
+		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY {
 			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 		}
 	}

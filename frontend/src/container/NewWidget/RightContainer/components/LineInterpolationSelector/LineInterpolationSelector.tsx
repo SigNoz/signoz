@@ -9,7 +9,7 @@ interface LineInterpolationSelectorProps {
 	onChange: (value: LineInterpolation) => void;
 }
 
-export function LineInterpolationSelector({
+export default function LineInterpolationSelector({
 	value,
 	onChange,
 }: LineInterpolationSelectorProps): JSX.Element {

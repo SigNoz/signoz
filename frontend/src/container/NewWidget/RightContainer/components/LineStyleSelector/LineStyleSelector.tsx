@@ -9,7 +9,7 @@ interface LineStyleSelectorProps {
 	onChange: (value: LineStyle) => void;
 }
 
-export function LineStyleSelector({
+export default function LineStyleSelector({
 	value,
 	onChange,
 }: LineStyleSelectorProps): JSX.Element {

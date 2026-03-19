@@ -6,8 +6,6 @@ import requests
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.types import SigNoz
 
-from sqlalchemy import sql
-
 
 def test_reinvite_deleted_user(
     signoz: SigNoz,
@@ -31,7 +29,11 @@ def test_reinvite_deleted_user(
     # invite the user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": reinvite_user_email, "role": reinvite_user_role, "name": reinvite_user_name},
+        json={
+            "email": reinvite_user_email,
+            "role": reinvite_user_role,
+            "name": reinvite_user_name,
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
@@ -58,21 +60,27 @@ def test_reinvite_deleted_user(
     # Re-invite the same email — should succeed
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        json={"email": reinvite_user_email, "role": "VIEWER", "name": "reinvite user v2"},
+        json={
+            "email": reinvite_user_email,
+            "role": "VIEWER",
+            "name": "reinvite user v2",
+        },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
     assert response.status_code == HTTPStatus.CREATED
     reinvited_user = response.json()["data"]
-    assert reinvited_user["role"] == "VIEWER" 
-    assert reinvited_user["id"] != invited_user["id"] # confirms a new user was created
+    assert reinvited_user["role"] == "VIEWER"
+    assert reinvited_user["id"] != invited_user["id"]  # confirms a new user was created
 
     reinvited_user_reset_password_token = reinvited_user["token"]
-    
 
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
-        json={"password": "newPassword123Z$", "token": reinvited_user_reset_password_token},
+        json={
+            "password": "newPassword123Z$",
+            "token": reinvited_user_reset_password_token,
+        },
         timeout=2,
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
@@ -95,8 +103,16 @@ def test_bulk_invite(
         signoz.self.host_configs["8080"].get("/api/v1/invite/bulk"),
         json={
             "invites": [
-                {"email": "bulk1@integration.test", "role": "EDITOR", "name": "bulk user 1"},
-                {"email": "bulk2@integration.test", "role": "VIEWER", "name": "bulk user 2"},
+                {
+                    "email": "bulk1@integration.test",
+                    "role": "EDITOR",
+                    "name": "bulk user 1",
+                },
+                {
+                    "email": "bulk2@integration.test",
+                    "role": "VIEWER",
+                    "name": "bulk user 2",
+                },
             ]
         },
         headers={"Authorization": f"Bearer {admin_token}"},

@@ -110,9 +110,7 @@ def test_invite_and_register(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {admin_token}"
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
@@ -156,9 +154,7 @@ def test_invite_and_register(
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {editor_token}"
-        },
+        headers={"Authorization": f"Bearer {editor_token}"},
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
@@ -210,7 +206,6 @@ def test_revoke_invite_and_register(
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     assert response.status_code == HTTPStatus.NO_CONTENT
-
 
     # Try to use the reset token — should fail (user deleted)
     response = requests.post(

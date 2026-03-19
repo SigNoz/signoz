@@ -6,8 +6,9 @@ import { LineChart } from 'lucide-react';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import uPlot, { AlignedData, Options } from 'uplot';
 
-import { usePlotContext } from '../context/PlotContext';
-import { UPlotChartProps } from './types';
+import { usePlotContext } from '../../context/PlotContext';
+import { UPlotChartProps } from '../types';
+import { prepareAlignedData } from './utils';
 
 /**
  * Check if dimensions have changed
@@ -83,8 +84,11 @@ export default function UPlotChart({
 			...configOptions,
 		} as Options;
 
+		// prepare final AlignedData
+		const preparedData = prepareAlignedData({ data, config });
+
 		// Create new plot instance
-		const plot = new uPlot(plotConfig, data as AlignedData, containerRef.current);
+		const plot = new uPlot(plotConfig, preparedData, containerRef.current);
 
 		if (plotRef) {
 			plotRef(plot);
@@ -162,7 +166,8 @@ export default function UPlotChart({
 		}
 		// Update data if only data changed
 		else if (!sameData(prevProps, currentProps) && plotInstanceRef.current) {
-			plotInstanceRef.current.setData(data as AlignedData);
+			const preparedData = prepareAlignedData({ data, config });
+			plotInstanceRef.current.setData(preparedData as AlignedData);
 		}
 
 		prevPropsRef.current = currentProps;

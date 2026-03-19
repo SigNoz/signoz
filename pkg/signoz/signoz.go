@@ -382,7 +382,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Global,
-		NewGlobalProviderFactories(),
+		NewGlobalProviderFactories(config.IdentN),
 		"signoz",
 	)
 	if err != nil {
@@ -393,16 +393,11 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	// Initialize identN resolver
-	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer)
-	identNs := []identn.IdentN{}
-	for _, identNFactory := range identNFactories.GetInOrder() {
-		identN, err := identNFactory.New(ctx, providerSettings, config.IdentN)
-		if err != nil {
-			return nil, err
-		}
-		identNs = append(identNs, identN)
+	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)
+	identNResolver, err := identn.NewIdentNResolver(ctx, providerSettings, config.IdentN, identNFactories)
+	if err != nil {
+		return nil, err
 	}
-	identNResolver := identn.NewIdentNResolver(providerSettings, identNs...)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
@@ -417,7 +412,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
 		"signoz",
 	)
 	if err != nil {

@@ -49,6 +49,7 @@ jobs:
           - ttl
           - alerts
           - ingestionkeys
+          - rootuser
         sqlstore-provider:
           - postgres
           - sqlite
