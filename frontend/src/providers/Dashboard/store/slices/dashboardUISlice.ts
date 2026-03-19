@@ -42,8 +42,6 @@ export interface DashboardUISlice {
 
 export const initialDashboardUIState = {
 	selectedDashboard: undefined as Dashboard | undefined,
-	isDashboardLocked: false,
-	isDashboardSliderOpen: false,
 	dashboardQueryRangeCalled: false,
 	isDashboardFetching: false,
 	columnWidths: {} as WidgetColumnWidths,
@@ -62,13 +60,6 @@ export const createDashboardUISlice: StateCreator<
 		set((state: DashboardUISlice): void => {
 			state.selectedDashboard =
 				typeof updater === 'function' ? updater(state.selectedDashboard) : updater;
-		}),
-
-	setIsDashboardLocked: (v: boolean): void =>
-		set((state: DashboardUISlice): void => {
-			if (state.selectedDashboard) {
-				state.selectedDashboard.locked = v;
-			}
 		}),
 
 	setDashboardQueryRangeCalled: (v): void =>
