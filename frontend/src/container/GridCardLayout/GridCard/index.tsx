@@ -80,8 +80,7 @@ function GridCardGraph({
 			}
 		}, 120000);
 		return (): void => clearTimeout(timeoutId);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
+	}, [widget?.id]);
 
 	const {
 		minTime,
