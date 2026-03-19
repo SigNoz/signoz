@@ -29,7 +29,7 @@ import {
 	setDashboardVariablesStore,
 	updateDashboardVariablesStore,
 } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
-import { useDashboard } from 'providers/Dashboard/store/useDashboardStore';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 // eslint-disable-next-line no-restricted-imports
@@ -59,9 +59,11 @@ function DashboardPage(): JSX.Element {
 		setIsDashboardFetching,
 		setLayouts,
 		setPanelMap,
-	} = useDashboard();
-	const selectedDashboard = useDashboard((s) => s.selectedDashboard);
-	const dashboardTitle = useDashboard((s) => s.selectedDashboard?.data.title);
+	} = useDashboardStore();
+	const selectedDashboard = useDashboardStore((s) => s.selectedDashboard);
+	const dashboardTitle = useDashboardStore(
+		(s) => s.selectedDashboard?.data.title,
+	);
 
 	const dashboardVariables = useDashboardVariablesSelector((s) => s.variables);
 	const savedDashboardId = useDashboardVariablesSelector((s) => s.dashboardId);

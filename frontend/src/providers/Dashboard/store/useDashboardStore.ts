@@ -17,7 +17,7 @@ export type DashboardStore = DashboardUISlice &
 		reset: () => void;
 	};
 
-export const useDashboard = create<DashboardStore>()(
+export const useDashboardStore = create<DashboardStore>()(
 	immer((set, get, api) => ({
 		...createDashboardUISlice(set, get, api),
 		...createDashboardLayoutSlice(set, get, api),

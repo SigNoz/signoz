@@ -5,7 +5,7 @@ import AddTags from 'container/DashboardContainer/DashboardSettings/General/AddT
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { isEqual } from 'lodash-es';
 import { Check, X } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 
 import { Button } from './styles';
 import { Base64Icons } from './utils';
@@ -15,7 +15,7 @@ import './GeneralSettings.styles.scss';
 const { Option } = Select;
 
 function GeneralDashboardSettings(): JSX.Element {
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
 
 	const updateDashboardMutation = useUpdateDashboard();
 

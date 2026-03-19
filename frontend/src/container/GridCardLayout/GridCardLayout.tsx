@@ -31,7 +31,7 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -73,7 +73,7 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		setDashboardQueryRangeCalled,
 		isDashboardFetching,
 		columnWidths,
-	} = useDashboard();
+	} = useDashboardStore();
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();

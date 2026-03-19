@@ -32,8 +32,8 @@ const mockVariableItemCallbacks: {
 // Mock providers/Dashboard/Dashboard
 const mockSetSelectedDashboard = jest.fn();
 const mockUpdateLocalStorageDashboardVariables = jest.fn();
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): Record<string, unknown> => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): Record<string, unknown> => ({
 		setSelectedDashboard: mockSetSelectedDashboard,
 		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
 	}),

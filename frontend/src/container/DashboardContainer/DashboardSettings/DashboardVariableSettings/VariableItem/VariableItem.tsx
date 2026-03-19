@@ -30,7 +30,7 @@ import {
 	Pyramid,
 	X,
 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import {
 	IDashboardVariable,
@@ -239,7 +239,7 @@ function VariableItem({
 
 	const [selectedWidgets, setSelectedWidgets] = useState<string[]>([]);
 
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 	const widgetsByDynamicVariableId = useWidgetsByDynamicVariableId();
 
 	useEffect(() => {
