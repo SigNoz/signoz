@@ -6,7 +6,10 @@ import { render, RenderResult, screen, waitFor } from '@testing-library/react';
 import getDashboard from 'api/v1/dashboards/id/get';
 import { DASHBOARD_CACHE_TIME_ON_REFRESH_ENABLED } from 'constants/queryCacheTime';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { DashboardProvider, useDashboard } from 'providers/Dashboard/Dashboard';
+import {
+	DashboardProvider,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { useDashboardVariables } from '../../../hooks/dashboard/useDashboardVariables';
@@ -55,7 +58,7 @@ jest.mock('react-redux', () => ({
 jest.mock('uuid', () => ({ v4: jest.fn(() => 'mock-uuid') }));
 
 function TestComponent(): JSX.Element {
-	const { dashboardResponse, selectedDashboard } = useDashboard();
+	const { dashboardResponse, selectedDashboard } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	return (

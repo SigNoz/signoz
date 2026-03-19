@@ -8,8 +8,8 @@ import {
 	useDashboardVariablesSelector,
 } from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import {
 	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
@@ -27,7 +27,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const {
 		setSelectedDashboard,
 		updateLocalStorageDashboardVariables,
-	} = useDashboard();
+	} = useDashboardStore();
 
 	const { updateUrlVariable } = useVariablesFromUrl();
 
