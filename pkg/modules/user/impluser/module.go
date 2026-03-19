@@ -11,14 +11,12 @@ import (
 	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	root "github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
-	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/dustin/go-humanize"
@@ -34,11 +32,10 @@ type Module struct {
 	authz         authz.AuthZ
 	analytics     analytics.Analytics
 	config        root.Config
-	flagger       flagger.Flagger
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, userRoleStore authtypes.UserRoleStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config, flagger flagger.Flagger) root.Module {
+func NewModule(store types.UserStore, userRoleStore authtypes.UserRoleStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config root.Config) root.Module {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &Module{
 		store:         store,
@@ -50,7 +47,6 @@ func NewModule(store types.UserStore, userRoleStore authtypes.UserRoleStore, tok
 		analytics:     analytics,
 		authz:         authz,
 		config:        config,
-		flagger:       flagger,
 	}
 }
 
@@ -69,40 +65,6 @@ func (m *Module) GetByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.U
 	user := types.NewUserFromStorable(storableUser, roleNames)
 
 	return user, nil
-}
-
-func (module *Module) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
-	storableUsers, err := module.store.ListUsersByOrgID(ctx, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	userIDs := make([]valuer.UUID, len(storableUsers))
-	for idx, storableUser := range storableUsers {
-		userIDs[idx] = storableUser.ID
-	}
-
-	storableUserRoles, err := module.userRoleStore.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	userIDToRoleIDs, roleIDs := authtypes.GetUserIDToRoleIDsMappingAndUniqueRoles(storableUserRoles)
-	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
-
-	if hideRootUsers {
-		storableUsers = slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.IsRoot })
-	}
-
-	users := module.usersFromStorableUsersAndRolesMaps(storableUsers, roles, userIDToRoleIDs)
-
-	return users, nil
 }
 
 func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
@@ -305,39 +267,39 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 }
 
 func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	users, err := m.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
+	storableUsers, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
 	if err != nil {
 		return nil, err
 	}
 
-	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
+	storableUsers = slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.Status != types.UserStatusPendingInvite })
 
 	var invites []*types.Invite
+	for _, su := range storableUsers {
+		roleNames, err := m.resolveRoleNamesForUser(ctx, su.ID, su.OrgID)
+		if err != nil {
+			return nil, err
+		}
+		user := types.NewUserFromStorable(su, roleNames)
 
-	for _, pUser := range pendingUsers {
-		// get the reset password token
-		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.OrgID, pUser.ID)
+		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, user.OrgID, user.ID)
 		if err != nil {
 			return nil, err
 		}
 
-		// create a dummy invite obj for backward compatibility
 		invite := &types.Invite{
-			Identifiable: types.Identifiable{
-				ID: pUser.ID,
-			},
-			Name:  pUser.DisplayName,
-			Email: pUser.Email,
-			Token: resetPasswordToken.Token,
-			Role:  pUser.Role,
-			Roles: pUser.Roles,
-			OrgID: pUser.OrgID,
+			Identifiable: types.Identifiable{ID: user.ID},
+			Name:         user.DisplayName,
+			Email:        user.Email,
+			Token:        resetPasswordToken.Token,
+			Role:         user.Role,
+			Roles:        user.Roles,
+			OrgID:        user.OrgID,
 			TimeAuditable: types.TimeAuditable{
-				CreatedAt: pUser.CreatedAt,
-				UpdatedAt: pUser.UpdatedAt, // dummy
+				CreatedAt: user.CreatedAt,
+				UpdatedAt: user.UpdatedAt,
 			},
 		}
-
 		invites = append(invites, invite)
 	}
 

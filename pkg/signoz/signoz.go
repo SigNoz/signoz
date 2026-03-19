@@ -287,9 +287,6 @@ func New(
 	// Initialize user role store
 	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
-	// Initialize user getter
-	userGetter := impluser.NewGetter(userStore)
-
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
 		ctx,
@@ -312,6 +309,9 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize user getter
+	userGetter := impluser.NewGetter(userStore, authz, userRoleStore, flagger)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(

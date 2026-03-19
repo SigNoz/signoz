@@ -13,9 +13,6 @@ type Module interface {
 	// Gets user by org id and user id, this includes the roles resolution
 	GetByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.User, error)
 
-	// Lists all the users by org id, includes roles resolution
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
-
 	// Creates the organization and the first user of that organization.
 	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*types.User, error)
 
@@ -64,13 +61,16 @@ type Module interface {
 }
 
 type Getter interface {
+	// Get root user by org id.
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
+
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
 
 	// Get user by id.
 	Get(context.Context, valuer.UUID) (*types.User, error)
 
-	// List users by email and org ids. This does not includes roles resolution as this is only used for session context
+	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)
 
 	// Count users by org id.
