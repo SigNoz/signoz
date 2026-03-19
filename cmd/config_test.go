@@ -7,14 +7,13 @@ import (
 	"path/filepath"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
 func TestNewSigNozConfig_NoConfigFiles(t *testing.T) {
 	logger := slog.New(slog.DiscardHandler)
-	config, err := NewSigNozConfig(context.Background(), logger, nil, signoz.DeprecatedFlags{})
+	config, err := NewSigNozConfig(context.Background(), logger, nil)
 	require.NoError(t, err)
 	assert.NotZero(t, config)
 }
@@ -29,7 +28,7 @@ cache:
 	require.NoError(t, err)
 
 	logger := slog.New(slog.DiscardHandler)
-	config, err := NewSigNozConfig(context.Background(), logger, []string{configPath}, signoz.DeprecatedFlags{})
+	config, err := NewSigNozConfig(context.Background(), logger, []string{configPath})
 	require.NoError(t, err)
 	assert.Equal(t, "redis", config.Cache.Provider)
 }
@@ -54,7 +53,7 @@ cache:
 	require.NoError(t, err)
 
 	logger := slog.New(slog.DiscardHandler)
-	config, err := NewSigNozConfig(context.Background(), logger, []string{basePath, overridePath}, signoz.DeprecatedFlags{})
+	config, err := NewSigNozConfig(context.Background(), logger, []string{basePath, overridePath})
 	require.NoError(t, err)
 	// Later file overrides earlier
 	assert.Equal(t, "redis", config.Cache.Provider)
@@ -74,7 +73,7 @@ cache:
 	t.Setenv("SIGNOZ_CACHE_PROVIDER", "fromenv")
 
 	logger := slog.New(slog.DiscardHandler)
-	config, err := NewSigNozConfig(context.Background(), logger, []string{configPath}, signoz.DeprecatedFlags{})
+	config, err := NewSigNozConfig(context.Background(), logger, []string{configPath})
 	require.NoError(t, err)
 	// Env should override file
 	assert.Equal(t, "fromenv", config.Cache.Provider)
@@ -82,6 +81,6 @@ cache:
 
 func TestNewSigNozConfig_NonexistentFile(t *testing.T) {
 	logger := slog.New(slog.DiscardHandler)
-	_, err := NewSigNozConfig(context.Background(), logger, []string{"/nonexistent/config.yaml"}, signoz.DeprecatedFlags{})
+	_, err := NewSigNozConfig(context.Background(), logger, []string{"/nonexistent/config.yaml"})
 	assert.Error(t, err)
 }

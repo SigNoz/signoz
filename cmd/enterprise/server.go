@@ -42,7 +42,6 @@ import (
 )
 
 func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
-	var flags signoz.DeprecatedFlags
 	var configFiles []string
 
 	serverCmd := &cobra.Command{
@@ -50,7 +49,7 @@ func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
 		Short:              "Run the SigNoz server",
 		FParseErrWhitelist: cobra.FParseErrWhitelist{UnknownFlags: true},
 		RunE: func(currCmd *cobra.Command, args []string) error {
-			config, err := cmd.NewSigNozConfig(currCmd.Context(), logger, configFiles, flags)
+			config, err := cmd.NewSigNozConfig(currCmd.Context(), logger, configFiles)
 			if err != nil {
 				return err
 			}
@@ -60,7 +59,6 @@ func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
 	}
 
 	serverCmd.Flags().StringArrayVar(&configFiles, "config", nil, "path to a YAML configuration file (can be specified multiple times, later files override earlier ones)")
-	flags.RegisterFlags(serverCmd)
 	parentCmd.AddCommand(serverCmd)
 }
 
