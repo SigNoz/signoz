@@ -67,13 +67,6 @@ export default function DisconnectValuesThresholdInput({
 		}
 	};
 
-	const handleChange = (e: ChangeEvent<HTMLInputElement>): void => {
-		setInputValue(e.currentTarget.value);
-		if (error) {
-			setError(null);
-		}
-	};
-
 	return (
 		<div className="disconnect-values-threshold-wrapper">
 			<Input
