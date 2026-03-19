@@ -24,10 +24,10 @@ export function isInvalidPlotValue(value: unknown): boolean {
 		}
 
 		// Try to parse the string as a number
-		const numValue = parseFloat(value);
+		const parsedNumber = parseFloat(value);
 
 		// If parsing failed or resulted in a non-finite number, it's invalid
-		if (Number.isNaN(numValue) || !Number.isFinite(numValue)) {
+		if (Number.isNaN(parsedNumber) || !Number.isFinite(parsedNumber)) {
 			return true;
 		}
 	}
@@ -105,14 +105,14 @@ export function insertLargeGapNullsIntoAlignedData(
 		return data;
 	}
 
-	const xs = xValues as number[];
-	const n = xs.length;
+	const timestamps = xValues as number[];
+	const totalPoints = timestamps.length;
 
 	// Pass 1: count insertions needed so we know the exact output length.
 	// This lets us pre-allocate arrays rather than growing them dynamically.
 	let insertionCount = 0;
-	for (let i = 0; i < n - 1; i += 1) {
-		if (gapExceedsThreshold(xs[i + 1] - xs[i], seriesOptions)) {
+	for (let i = 0; i < totalPoints - 1; i += 1) {
+		if (gapExceedsThreshold(timestamps[i + 1] - timestamps[i], seriesOptions)) {
 			insertionCount += 1;
 		}
 	}
@@ -123,31 +123,46 @@ export function insertLargeGapNullsIntoAlignedData(
 	}
 
 	// Pass 2: build output arrays of exact size and fill them.
-	// `out` is the write cursor into the output arrays.
-	const outputLen = n + insertionCount;
+	// `writeIndex` is the write cursor into the output arrays.
+	const outputLen = totalPoints + insertionCount;
 	const newX = new Array<number>(outputLen);
 	const newSeries: SeriesArray[] = seriesValues.map(
 		() => new Array<number | null | undefined>(outputLen),
 	);
 
-	let out = 0;
-	for (let i = 0; i < n; i += 1) {
+	let writeIndex = 0;
+	for (let i = 0; i < totalPoints; i += 1) {
 		// Copy the real data point at position i
-		newX[out] = xs[i];
-		for (let s = 0; s < seriesValues.length; s += 1) {
-			newSeries[s][out] = (seriesValues[s] as SeriesArray)[i];
+		newX[writeIndex] = timestamps[i];
+		for (
+			let seriesIndex = 0;
+			seriesIndex < seriesValues.length;
+			seriesIndex += 1
+		) {
+			newSeries[seriesIndex][writeIndex] = (seriesValues[
+				seriesIndex
+			] as SeriesArray)[i];
 		}
-		out += 1;
+		writeIndex += 1;
 
 		// If the gap to the next x timestamp exceeds the threshold, insert a
 		// synthetic null at the midpoint. The midpoint x is placed halfway
-		// between xs[i] and xs[i+1] (minimum 1 unit past xs[i] to stay unique).
-		if (i < n - 1 && gapExceedsThreshold(xs[i + 1] - xs[i], seriesOptions)) {
-			newX[out] = xs[i] + Math.max(1, Math.floor((xs[i + 1] - xs[i]) / 2));
-			for (let s = 0; s < seriesValues.length; s += 1) {
-				newSeries[s][out] = null; // null tells uPlot to break the line here
+		// between timestamps[i] and timestamps[i+1] (minimum 1 unit past timestamps[i] to stay unique).
+		if (
+			i < totalPoints - 1 &&
+			gapExceedsThreshold(timestamps[i + 1] - timestamps[i], seriesOptions)
+		) {
+			newX[writeIndex] =
+				timestamps[i] +
+				Math.max(1, Math.floor((timestamps[i + 1] - timestamps[i]) / 2));
+			for (
+				let seriesIndex = 0;
+				seriesIndex < seriesValues.length;
+				seriesIndex += 1
+			) {
+				newSeries[seriesIndex][writeIndex] = null; // null tells uPlot to break the line here
 			}
-			out += 1;
+			writeIndex += 1;
 		}
 	}
 
@@ -196,16 +211,16 @@ export function applySpanGapsToAlignedData(
 	}
 
 	const [newX, ...newSeries] = gapProcessed;
-	const transformedSeries = newSeries.map((ys, idx) => {
-		const { spanGaps } = seriesOptions[idx] ?? {};
+	const transformedSeries = newSeries.map((yValues, seriesIndex) => {
+		const { spanGaps } = seriesOptions[seriesIndex] ?? {};
 		if (spanGaps !== true) {
 			// This series doesn't use spanGaps: true — leave it unchanged.
-			return ys;
+			return yValues;
 		}
 		// Replace null with undefined: uPlot skips undefined points without
 		// breaking the line, effectively spanning over the gap.
-		return (ys as SeriesArray).map((v) =>
-			v === null ? undefined : v,
+		return (yValues as SeriesArray).map((pointValue) =>
+			pointValue === null ? undefined : pointValue,
 		) as uPlot.AlignedData[0];
 	});
 
