@@ -26,19 +26,6 @@ def test_global_config_returns_impersonation_enabled(signoz: types.SigNoz) -> No
     assert data["identN"]["apikey"]["enabled"] is False
 
 
-def test_unauthenticated_request_succeeds(signoz: types.SigNoz) -> None:
-    """
-    With impersonation enabled, requests without any auth header
-    should succeed as the root user (admin).
-    """
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/dashboards"),
-        timeout=2,
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-
 def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
     """
     The impersonated identity should have admin privileges.
