@@ -341,9 +341,8 @@ describe('Stacking bar in new panel', () => {
 const STACKING_STATE_ATTR = 'data-stacking-state';
 
 describe('when switching to BAR panel type', () => {
-	jest.setTimeout(10000);
-
 	beforeEach(() => {
+		jest.useFakeTimers();
 		jest.clearAllMocks();
 
 		// Mock useSearchParams to return the expected values
@@ -353,8 +352,14 @@ describe('when switching to BAR panel type', () => {
 		]);
 	});
 
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('should preserve saved stacking value of true', async () => {
-		const user = userEvent.setup();
+		const user = userEvent.setup({
+			advanceTimers: jest.advanceTimersByTime.bind(jest),
+		});
 
 		const { getByTestId, getByText, container } = render(
 			<DashboardProvider dashboardId="">
