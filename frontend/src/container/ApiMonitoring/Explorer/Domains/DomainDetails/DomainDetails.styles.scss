@@ -793,7 +793,6 @@
 
 			.ant-table-cell:has(.top-services-item-latency) {
 				text-align: center;
-
 			}
 
 			.ant-table-cell:has(.top-services-item-latency-title) {
@@ -890,7 +889,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: transparent;
+					background-color: var(--bg-slate-400);
 					border-radius: 2px;
 					height: 100%;
 					position: absolute;
@@ -1221,7 +1220,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: transparent;
+					background-color: var(--bg-vanilla-200);
 					border: 1px solid var(--bg-vanilla-300);
 				}
 			}
