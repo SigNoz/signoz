@@ -190,6 +190,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserRoleAuthzFactory(sqlstore),
+		sqlmigration.NewDropUserRoleColumnFactory(sqlstore, sqlschema),
 	)
 }
 
