@@ -279,12 +279,13 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		}
 	}
 
+	existingUser.Update(user.DisplayName, user.Role)
+
 	// update the user - idempotent (this does analytics too so keeping it outside txn)
 	if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 		return nil, err
 	}
 
-	existingUser.Update(user.DisplayName, user.Role)
 	err = m.store.RunInTx(ctx, func(ctx context.Context) error {
 		if roleChange {
 			// delete old role entries and create new ones

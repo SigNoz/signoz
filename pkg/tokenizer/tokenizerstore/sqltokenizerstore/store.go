@@ -35,7 +35,7 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 }
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
-	user := new(types.User)
+	user := new(types.StorableUser)
 
 	err := store.
 		sqlstore.
