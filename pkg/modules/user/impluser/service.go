@@ -159,6 +159,9 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			// set password
 			return s.setPassword(ctx, existingUser.ID)
 		})
+		if err != nil {
+			return err
+		}
 
 		return nil
 	}
