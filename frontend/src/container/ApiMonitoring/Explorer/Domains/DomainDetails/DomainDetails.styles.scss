@@ -793,14 +793,11 @@
 
 			.ant-table-cell:has(.top-services-item-latency) {
 				text-align: center;
-				opacity: 0.8;
-				background: rgba(171, 189, 255, 0.04);
+
 			}
 
 			.ant-table-cell:has(.top-services-item-latency-title) {
 				text-align: center;
-				opacity: 0.8;
-				background: rgba(171, 189, 255, 0.04);
 			}
 
 			.ant-table-tbody > tr:hover > td {
@@ -893,7 +890,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--bg-slate-400);
+					background-color: transparent;
 					border-radius: 2px;
 					height: 100%;
 					position: absolute;
@@ -1224,7 +1221,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--bg-vanilla-200);
+					background-color: transparent;
 					border: 1px solid var(--bg-vanilla-300);
 				}
 			}
