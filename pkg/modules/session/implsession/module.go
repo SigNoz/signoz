@@ -143,23 +143,35 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+	role, isAuthoritative := roleMapping.ResolveRoleFromCallbackIdentity(callbackIdentity)
 
-	user, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, role, callbackIdentity.OrgID, types.UserStatusActive)
+	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
 
-	user, err = module.user.GetOrCreateUser(ctx, user)
+	if isAuthoritative {
+		signozManagedRole := authtypes.MustGetSigNozManagedRoleFromExistingRole(role)
+		newUser, err = module.user.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{signozManagedRole}))
+	} else {
+		newUser, err = module.user.GetOrCreateUser(ctx, newUser)
+	}
 	if err != nil {
 		return "", err
 	}
 
-	if err := user.ErrIfRoot(); err != nil {
+	if err := newUser.ErrIfRoot(); err != nil {
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(user.ID, user.OrgID, user.Email, user.Role, authtypes.IdentNProviderTokenizer), map[string]string{})
+	finalRoleNames, err := module.user.ResolveRoleNamesForUser(ctx, newUser.ID, newUser.OrgID)
+	if err != nil {
+		return "", err
+	}
+
+	finalRole := authtypes.HighestLegacyRoleFromManagedRoleNames(finalRoleNames)
+
+	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(newUser.ID, newUser.OrgID, newUser.Email, finalRole, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {
 		return "", err
 	}

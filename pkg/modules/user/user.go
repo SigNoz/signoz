@@ -33,10 +33,10 @@ type Module interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.User, updatedBy string) (*types.User, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
-	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.DeprecatedUser) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
@@ -51,6 +51,10 @@ type Module interface {
 
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
+	// Roles
+	ResolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error)
+	ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
+
 	statsreporter.StatsCollector
 }
 
@@ -59,16 +63,16 @@ type Getter interface {
 	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
 
 	// Get gets the users based on the given id
-	ListByOrgID(context.Context, valuer.UUID) ([]*types.User, error)
+	ListByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
 
 	// Get users by email.
-	GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
+	// GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.User, error)
+	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
 
 	// Get user by id.
-	Get(context.Context, valuer.UUID) (*types.User, error)
+	Get(context.Context, valuer.UUID) (*types.DeprecatedUser, error)
 
 	// List users by email and org ids.
 	ListUsersByEmailAndOrgIDs(context.Context, valuer.Email, []valuer.UUID) ([]*types.User, error)

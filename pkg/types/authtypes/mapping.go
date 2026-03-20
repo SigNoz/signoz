@@ -83,14 +83,14 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
+func (roleMapping *RoleMapping) ResolveRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) (types.Role, bool) {
 	if roleMapping == nil {
-		return types.RoleViewer
+		return types.RoleViewer, false
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
 		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
-			return role
+			return role, true
 		}
 	}
 
@@ -110,17 +110,17 @@ func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *Ca
 		}
 
 		if found {
-			return highestRole
+			return highestRole, true
 		}
 	}
 
 	if roleMapping.DefaultRole != "" {
 		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
-			return role
+			return role, true
 		}
 	}
 
-	return types.RoleViewer
+	return types.RoleViewer, false
 }
 
 func compareRoles(a, b types.Role) int {
@@ -130,4 +130,16 @@ func compareRoles(a, b types.Role) int {
 		types.RoleAdmin:  2,
 	}
 	return order[a] - order[b]
+}
+
+func HighestLegacyRoleFromManagedRoleNames(managedRoles []string) types.Role {
+	highest := types.RoleViewer
+	for _, name := range managedRoles {
+		for legacyRole, managedName := range ExistingRoleToSigNozManagedRoleMap {
+			if managedName == name && compareRoles(legacyRole, highest) > 0 {
+				highest = legacyRole
+			}
+		}
+	}
+	return highest
 }

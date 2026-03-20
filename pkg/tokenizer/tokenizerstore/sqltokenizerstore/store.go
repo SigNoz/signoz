@@ -3,6 +3,7 @@ package sqltokenizerstore
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -47,7 +48,27 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	return authtypes.NewIdentity(userID, user.OrgID, user.Email, types.Role(user.Role), authtypes.IdentNProviderTokenizer), nil
+	var roleNames []string
+	err = store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		TableExpr("user_role AS ur").
+		ColumnExpr("r.name").
+		Join("JOIN role AS r ON r.id = ur.role_id").
+		Where("ur.user_id = ?", userID).
+		Scan(ctx, &roleNames)
+	if err != nil {
+		return nil, err
+	}
+
+	if len(roleNames) == 0 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no roles found for user with id: %s", userID)
+	}
+
+	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+
+	return authtypes.NewIdentity(userID, user.OrgID, user.Email, highestRole, authtypes.IdentNProviderTokenizer), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {

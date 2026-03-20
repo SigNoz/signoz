@@ -33,20 +33,34 @@ var (
 	ValidUserStatus         = []valuer.String{UserStatusPendingInvite, UserStatusActive, UserStatusDeleted}
 )
 
-type GettableUser = User
-
 type User struct {
-	bun.BaseModel `bun:"table:users"`
+	Identifiable
+	DisplayName string        `json:"displayName"`
+	Email       valuer.Email  `json:"email"`
+	OrgID       valuer.UUID   `json:"orgId"`
+	IsRoot      bool          `json:"isRoot"`
+	Status      valuer.String `json:"status"`
+	DeletedAt   time.Time     `json:"-"`
+	TimeAuditable
+}
+
+// db only model
+type StorableUser struct {
+	bun.BaseModel `bun:"table:users,alias:users"`
 
 	Identifiable
 	DisplayName string        `bun:"display_name" json:"displayName"`
 	Email       valuer.Email  `bun:"email" json:"email"`
-	Role        Role          `bun:"role" json:"role"`
 	OrgID       valuer.UUID   `bun:"org_id" json:"orgId"`
 	IsRoot      bool          `bun:"is_root" json:"isRoot"`
 	Status      valuer.String `bun:"status" json:"status"`
 	DeletedAt   time.Time     `bun:"deleted_at" json:"-"`
 	TimeAuditable
+}
+
+type DeprecatedUser struct {
+	User
+	Role Role `json:"role"`
 }
 
 type PostableRegisterOrgAndAdmin struct {
@@ -57,13 +71,9 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
-func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUID, status valuer.String) (*User, error) {
+func NewUser(displayName string, email valuer.Email, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
-	}
-
-	if role == "" {
-		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role is required")
 	}
 
 	if orgID.IsZero() {
@@ -80,7 +90,6 @@ func NewUser(displayName string, email valuer.Email, role Role, orgID valuer.UUI
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        role,
 		OrgID:       orgID,
 		IsRoot:      false,
 		Status:      status,
@@ -106,7 +115,6 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 		},
 		DisplayName: displayName,
 		Email:       email,
-		Role:        RoleAdmin,
 		OrgID:       orgID,
 		IsRoot:      true,
 		Status:      UserStatusActive,
@@ -117,9 +125,81 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}, nil
 }
 
+func NewUserFromStorableUser(storableUser *StorableUser) *User {
+	if storableUser == nil {
+		return nil
+	}
+
+	return &User{
+		Identifiable:  storableUser.Identifiable,
+		DisplayName:   storableUser.DisplayName,
+		Email:         storableUser.Email,
+		OrgID:         storableUser.OrgID,
+		IsRoot:        storableUser.IsRoot,
+		Status:        storableUser.Status,
+		TimeAuditable: storableUser.TimeAuditable,
+	}
+}
+
+func NewStorableUserFromUser(user *User) *StorableUser {
+	if user == nil {
+		return nil
+	}
+
+	return &StorableUser{
+		Identifiable:  user.Identifiable,
+		DisplayName:   user.DisplayName,
+		Email:         user.Email,
+		OrgID:         user.OrgID,
+		IsRoot:        user.IsRoot,
+		Status:        user.Status,
+		DeletedAt:     user.DeletedAt,
+		TimeAuditable: user.TimeAuditable,
+	}
+}
+
+func NewDeprecatedUserFromStorableUserAndRole(storableUser *StorableUser, role Role) *DeprecatedUser {
+	user := NewUserFromStorableUser(storableUser)
+	return &DeprecatedUser{
+		*user,
+		role,
+	}
+}
+
+func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
+	return &DeprecatedUser{
+		*user,
+		role,
+	}
+}
+
+func NewStorableUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *StorableUser {
+	if deprecatedUser == nil {
+		return nil
+	}
+
+	return &StorableUser{
+		Identifiable:  deprecatedUser.Identifiable,
+		DisplayName:   deprecatedUser.DisplayName,
+		Email:         deprecatedUser.Email,
+		OrgID:         deprecatedUser.OrgID,
+		IsRoot:        deprecatedUser.IsRoot,
+		Status:        deprecatedUser.Status,
+		DeletedAt:     deprecatedUser.DeletedAt,
+		TimeAuditable: deprecatedUser.TimeAuditable,
+	}
+}
+
 // Update applies mutable fields from the input to the user. Immutable fields
 // (email, is_root, org_id, id) are preserved. Only non-zero input fields are applied.
-func (u *User) Update(displayName string, role Role) {
+func (u *User) Update(displayName string) {
+	if displayName != "" {
+		u.DisplayName = displayName
+	}
+	u.UpdatedAt = time.Now()
+}
+
+func (u *DeprecatedUser) Update(displayName string, role Role) {
 	if displayName != "" {
 		u.DisplayName = displayName
 	}
@@ -146,15 +226,36 @@ func (u *User) UpdateStatus(status valuer.String) error {
 	return nil
 }
 
+func (u *StorableUser) UpdateStatus(status valuer.String) error {
+	// no updates allowed if user is in delete state
+	if err := u.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
+	}
+
+	// not udpates allowed from active to pending state
+	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
+		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot move user to pending state from active state")
+	}
+
+	u.Status = status
+	u.UpdatedAt = time.Now()
+
+	return nil
+}
+
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
-	u.Role = RoleAdmin
+	u.UpdatedAt = time.Now()
+}
+
+func (u *StorableUser) PromoteToRoot() {
+	u.IsRoot = true
 	u.UpdatedAt = time.Now()
 }
 
 // UpdateEmail updates the email of the user.
-func (u *User) UpdateEmail(email valuer.Email) {
+func (u *StorableUser) UpdateEmail(email valuer.Email) {
 	u.Email = email
 	u.UpdatedAt = time.Now()
 }
@@ -168,9 +269,27 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
+// ErrIfRoot returns an error if the user is a root user. The caller should
+// enrich the error with the specific operation using errors.WithAdditionalf.
+func (u *StorableUser) ErrIfRoot() error {
+	if u.IsRoot {
+		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
+	}
+	return nil
+}
+
 // ErrIfDeleted returns an error if the user is in deleted state.
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfDeleted() error {
+	if u.Status == UserStatusDeleted {
+		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
+	}
+	return nil
+}
+
+// ErrIfDeleted returns an error if the user is in deleted state.
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+func (u *StorableUser) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
@@ -187,6 +306,16 @@ func (u *User) ErrIfPending() error {
 }
 
 func NewTraitsFromUser(user *User) map[string]any {
+	return map[string]any{
+		"name":         user.DisplayName,
+		"email":        user.Email.String(),
+		"display_name": user.DisplayName,
+		"status":       user.Status,
+		"created_at":   user.CreatedAt,
+	}
+}
+
+func NewTraitsFromDeprecatedUser(user *DeprecatedUser) map[string]any {
 	return map[string]any{
 		"name":         user.DisplayName,
 		"role":         user.Role,
@@ -215,33 +344,33 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 
 type UserStore interface {
 	// Creates a user.
-	CreateUser(ctx context.Context, user *User) error
+	CreateUser(ctx context.Context, user *StorableUser) error
 
 	// Get user by id.
-	GetUser(context.Context, valuer.UUID) (*User, error)
+	GetUser(context.Context, valuer.UUID) (*StorableUser, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*StorableUser, error)
 
 	// Get user by email and orgID.
-	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*User, error)
+	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// Get users by email.
-	GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*User, error)
+	// GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*StorableUser, error)
 
 	// Get users by role and org.
-	GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*User, error)
+	// GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by org.
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*StorableUser, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
+	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*StorableUser, error)
 
 	// Get users for an org id using emails and statuses
-	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*StorableUser, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, user *StorableUser) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
@@ -267,10 +396,10 @@ type UserStore interface {
 	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
-	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
+	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*StorableUser, error)
 
 	// Get user by reset password token
-	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*StorableUser, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

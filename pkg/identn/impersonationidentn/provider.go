@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
@@ -88,7 +89,7 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		rootUser.ID,
 		rootUser.OrgID,
 		rootUser.Email,
-		rootUser.Role,
+		types.RoleAdmin,
 		authtypes.IdentNProviderImpersonation,
 	)
 

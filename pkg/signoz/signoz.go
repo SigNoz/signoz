@@ -89,7 +89,7 @@ func New(
 	sqlSchemaProviderFactories func(sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
+	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, userRoleStore authtypes.UserRoleStore, authz authz.AuthZ) (map[authtypes.AuthNProvider]authn.AuthN, error),
 	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
@@ -293,8 +293,11 @@ func New(
 		return nil, err
 	}
 
-	// Initialize user getter
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
+	// Initialize user store
+	userStore := impluser.NewStore(sqlstore, providerSettings)
+
+	// Initialize user role store
+	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
@@ -318,6 +321,9 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize user getter
+	userGetter := impluser.NewGetter(userStore, authz, userRoleStore, flagger)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(
@@ -363,7 +369,7 @@ func New(
 
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
-	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
+	authNs, err := authNsCallback(ctx, providerSettings, store, licensing, userRoleStore, authz)
 	if err != nil {
 		return nil, err
 	}
@@ -402,7 +408,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore)
 
 	// Initialize identN resolver
 	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)

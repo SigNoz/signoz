@@ -2384,6 +2384,47 @@ export interface TypesChangePasswordRequestDTO {
 	userId?: string;
 }
 
+export interface TypesDeprecatedUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
@@ -2682,10 +2723,6 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
 	/**
 	 * @type string
 	 */
@@ -3266,7 +3303,7 @@ export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: TypesDeprecatedUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -3280,7 +3317,7 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3291,7 +3328,7 @@ export type UpdateUserPathParameters = {
 	id: string;
 };
 export type UpdateUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3299,7 +3336,7 @@ export type UpdateUser200 = {
 };
 
 export type GetMyUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */

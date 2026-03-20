@@ -103,16 +103,16 @@ func (s *service) reconcile(ctx context.Context) error {
 }
 
 func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
+	existingStorableRoot, err := s.store.GetRootUserByOrgID(ctx, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
-	if existingRoot == nil {
+	if existingStorableRoot == nil {
 		return s.createOrPromoteRootUser(ctx, orgID)
 	}
 
-	return s.updateExistingRootUser(ctx, orgID, existingRoot)
+	return s.updateExistingRootUser(ctx, orgID, existingStorableRoot)
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
@@ -122,25 +122,45 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		oldRole := existingUser.Role
-
-		existingUser.PromoteToRoot()
-		if err := s.module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
+		existingUserRoleNames, err := s.module.ResolveRoleNamesForUser(ctx, existingUser.ID, existingUser.OrgID)
+		if err != nil {
 			return err
 		}
 
-		if oldRole != types.RoleAdmin {
-			if err := s.authz.ModifyGrant(ctx,
-				orgID,
-				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
-				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+		// idempotent - safe to retry can't put this in a txn
+		if err := s.authz.ModifyGrant(ctx,
+			orgID,
+			existingUserRoleNames,
+			[]string{authtypes.SigNozAdminRoleName},
+			authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
+		); err != nil {
+			return err
+		}
+
+		existingUser.PromoteToRoot()
+
+		err = s.store.RunInTx(ctx, func(ctx context.Context) error {
+			// update users table
+			deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingUser, types.RoleAdmin)
+			if err := s.module.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+				return err
+			}
+
+			// update user_role entries
+			if err := s.module.ReplaceUserRoleEntries(
+				ctx,
+				existingUser.OrgID,
+				existingUser.ID,
+				[]string{authtypes.SigNozAdminRoleName},
 			); err != nil {
 				return err
 			}
-		}
 
-		return s.setPassword(ctx, existingUser.ID)
+			// set password
+			return s.setPassword(ctx, existingUser.ID)
+		})
+
+		return nil
 	}
 
 	// Create new root user
@@ -154,15 +174,16 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword))
+	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{authtypes.SigNozAdminRoleName}))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.StorableUser) error {
 	existingRoot.PromoteToRoot()
 
 	if existingRoot.Email != s.config.Email {
 		existingRoot.UpdateEmail(s.config.Email)
-		if err := s.module.UpdateAnyUser(ctx, orgID, existingRoot); err != nil {
+		deprecatedUser := types.NewDeprecatedUserFromStorableUserAndRole(existingRoot, types.RoleAdmin)
+		if err := s.module.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
 			return err
 		}
 	}

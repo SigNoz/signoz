@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -18,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"log/slog"
 )
 
 type CloudIntegrationConnectionParamsResponse struct {
@@ -169,14 +170,19 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
-	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId), types.UserStatusActive)
+	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, valuer.MustNewUUID(orgId), types.UserStatusActive)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
 	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
 
-	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(ctx, cloudIntegrationUser, user.WithFactorPassword(password))
+	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(
+		ctx,
+		cloudIntegrationUser,
+		user.WithFactorPassword(password),
+		user.WithRoleNames([]string{authtypes.SigNozViewerRoleName}),
+	)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration user: %w", err))
 	}
