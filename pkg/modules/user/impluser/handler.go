@@ -156,7 +156,7 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user types.UpdatableDeprecatedUser
+	user := types.DeprecatedUser{User: &types.User{}}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		render.Error(w, err)
 		return
