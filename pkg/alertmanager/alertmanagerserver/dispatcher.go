@@ -111,7 +111,7 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 			if !ok || alertWrapper == nil {
 				// Iterator exhausted for some reason.
 				if err := it.Err(); err != nil {
-					d.logger.ErrorContext(d.ctx, "Error on alert update", slog.Any("err", err))
+					d.logger.ErrorContext(d.ctx, "Error on alert update", errors.Attr(err))
 				}
 				return
 			}
@@ -121,14 +121,14 @@ func (d *Dispatcher) run(it provider.AlertIterator) {
 
 			// Log errors but keep trying.
 			if err := it.Err(); err != nil {
-				d.logger.ErrorContext(d.ctx, "Error on alert update", slog.Any("err", err))
+				d.logger.ErrorContext(d.ctx, "Error on alert update", errors.Attr(err))
 				continue
 			}
 
 			now := time.Now()
 			channels, err := d.notificationManager.Match(d.ctx, d.orgID, getRuleIDFromAlert(alert), alert.Labels)
 			if err != nil {
-				d.logger.ErrorContext(d.ctx, "Error on alert match", slog.Any("err", err))
+				d.logger.ErrorContext(d.ctx, "Error on alert match", errors.Attr(err))
 				continue
 			}
 			for _, channel := range channels {
@@ -328,7 +328,7 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	go ag.run(func(ctx context.Context, alerts ...*types.Alert) bool {
 		_, _, err := d.stage.Exec(ctx, d.logger, alerts...)
 		if err != nil {
-			logger := d.logger.With(slog.Int("num_alerts", len(alerts)), slog.Any("err", err))
+			logger := d.logger.With(slog.Int("num_alerts", len(alerts)), errors.Attr(err))
 			if errors.Is(ctx.Err(), context.Canceled) {
 				// It is expected for the context to be canceled on
 				// configuration reload or shutdown. In this case, the
@@ -457,7 +457,7 @@ func (ag *aggrGroup) stop() {
 // insert inserts the alert into the aggregation group.
 func (ag *aggrGroup) insert(alert *types.Alert) {
 	if err := ag.alerts.Set(alert); err != nil {
-		ag.logger.ErrorContext(ag.ctx, "error on set alert", slog.Any("err", err))
+		ag.logger.ErrorContext(ag.ctx, "error on set alert", errors.Attr(err))
 	}
 
 	// Immediately trigger a flush if the wait duration for this
@@ -505,7 +505,7 @@ func (ag *aggrGroup) flush(notify func(...*types.Alert) bool) {
 		// that each resolved alert has not fired again during the flush as then
 		// we would delete an active alert thinking it was resolved.
 		if err := ag.alerts.DeleteIfNotModified(resolvedSlice); err != nil {
-			ag.logger.ErrorContext(ag.ctx, "error on delete alerts", slog.Any("err", err))
+			ag.logger.ErrorContext(ag.ctx, "error on delete alerts", errors.Attr(err))
 		}
 	}
 }

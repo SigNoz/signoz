@@ -123,7 +123,7 @@ func (b *traceQueryStatementBuilder) Build(
 			} else if traceStart > 0 && traceEnd > 0 {
 				start = uint64(traceStart)
 				end = uint64(traceEnd)
-				b.logger.DebugContext(ctx, "optimized time range for traces", slog.Any("trace_ids", traceIDs), slog.Any("start", start), slog.Any("end", end))
+				b.logger.DebugContext(ctx, "optimized time range for traces", slog.Any("trace_ids", traceIDs), slog.Uint64("start", start), slog.Uint64("end", end))
 			}
 		}
 	}
@@ -249,7 +249,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", slog.Any("action", action))
+		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 
 	return query

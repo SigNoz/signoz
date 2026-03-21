@@ -61,7 +61,7 @@ func (r *Registry) Wait(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		r.logger.InfoContext(ctx, "caught context error, exiting", slog.Any("error", ctx.Err()))
+		r.logger.InfoContext(ctx, "caught context error, exiting", errors.Attr(ctx.Err()))
 	case s := <-interrupt:
 		r.logger.InfoContext(ctx, "caught interrupt signal, exiting", slog.Any("signal", s))
 	case err := <-r.startCh:
