@@ -3,6 +3,7 @@ package httplicensing
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
 
 	"github.com/tidwall/gjson"
@@ -134,7 +135,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil
 		}
-		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "org_id", organizationID.StringValue())
+		provider.settings.Logger().ErrorContext(ctx, "license validation failed", slog.String("org_id", organizationID.StringValue()))
 		return err
 	}
 

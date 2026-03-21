@@ -2,6 +2,7 @@ package analyticsstatsreporter
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 	"time"
 
@@ -135,7 +136,7 @@ func (provider *provider) Report(ctx context.Context) error {
 	for _, org := range orgs {
 		stats := provider.collectOrg(ctx, org.ID)
 		if len(stats) == 0 {
-			provider.settings.Logger().WarnContext(ctx, "no stats collected", "org_id", org.ID)
+			provider.settings.Logger().WarnContext(ctx, "no stats collected", slog.Any("org_id", org.ID))
 			continue
 		}
 
@@ -155,7 +156,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		stats["created_at"] = org.CreatedAt
 		stats["alias"] = org.Alias
 
-		provider.settings.Logger().DebugContext(ctx, "reporting stats", "stats", stats)
+		provider.settings.Logger().DebugContext(ctx, "reporting stats", slog.Any("stats", stats))
 
 		provider.analytics.IdentifyGroup(ctx, org.ID.String(), stats)
 		provider.analytics.TrackGroup(ctx, org.ID.String(), "Stats Reported", stats)
@@ -166,13 +167,13 @@ func (provider *provider) Report(ctx context.Context) error {
 
 		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
 		if err != nil {
-			provider.settings.Logger().WarnContext(ctx, "failed to list users", errors.Attr(err), "org_id", org.ID)
+			provider.settings.Logger().WarnContext(ctx, "failed to list users", errors.Attr(err), slog.Any("org_id", org.ID))
 			continue
 		}
 
 		maxLastObservedAtPerUserID, err := provider.tokenizer.ListMaxLastObservedAtByOrgID(ctx, org.ID)
 		if err != nil {
-			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", errors.Attr(err), "org_id", org.ID)
+			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", errors.Attr(err), slog.Any("org_id", org.ID))
 			maxLastObservedAtPerUserID = make(map[valuer.UUID]time.Time)
 		}
 

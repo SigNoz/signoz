@@ -1122,7 +1122,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "query for related values", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "query for related values", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1761,7 +1761,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching metric temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching metric temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1817,7 +1817,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching meter metrics temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching meter metrics temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1941,7 +1941,7 @@ func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, metricN
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {

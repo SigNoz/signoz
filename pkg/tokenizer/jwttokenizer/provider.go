@@ -2,6 +2,7 @@ package jwttokenizer
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 	"sync"
 	"time"
@@ -45,7 +46,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/tokenizer/jwttokenizer")
 
 	if config.JWT.Secret == "" {
-		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", "error", "SIGNOZ_TOKENIZER_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400.")
+		settings.Logger().ErrorContext(ctx, "🚨 CRITICAL SECURITY ISSUE: No JWT secret key specified!", slog.String("error", "SIGNOZ_TOKENIZER_JWT_SECRET environment variable is not set. This has dire consequences for the security of the application. Without a JWT secret, user sessions are vulnerable to tampering and unauthorized access. Please set the SIGNOZ_TOKENIZER_JWT_SECRET environment variable immediately. For more information, please refer to https://github.com/SigNoz/signoz/issues/8400."))
 	}
 
 	lastObservedAtCache, err := ristretto.NewCache(&ristretto.Config[string, map[valuer.UUID]time.Time]{
@@ -130,7 +131,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {
-	provider.settings.Logger().WarnContext(ctx, "Deleting token by access token is not supported for this tokenizer, this is a no-op", "tokenizer_provider", provider.config.Provider)
+	provider.settings.Logger().WarnContext(ctx, "Deleting token by access token is not supported for this tokenizer, this is a no-op", slog.String("tokenizer_provider", provider.config.Provider))
 	return nil
 }
 
@@ -149,7 +150,7 @@ func (provider *provider) RotateToken(ctx context.Context, _ string, refreshToke
 }
 
 func (provider *provider) DeleteTokensByUserID(ctx context.Context, userID valuer.UUID) error {
-	provider.settings.Logger().WarnContext(ctx, "Deleting token by user id is not supported for this tokenizer, this is a no-op", "tokenizer_provider", provider.config.Provider)
+	provider.settings.Logger().WarnContext(ctx, "Deleting token by user id is not supported for this tokenizer, this is a no-op", slog.String("tokenizer_provider", provider.config.Provider))
 	return nil
 }
 
@@ -177,7 +178,7 @@ func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken str
 	cachedLastObservedAts[valuer.MustNewUUID(claims.UserID)] = lastObservedAt
 
 	if ok := provider.lastObservedAtCache.Set(claims.OrgID, cachedLastObservedAts, 1); !ok {
-		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", "user_id", claims.UserID)
+		provider.settings.Logger().ErrorContext(ctx, "error caching last observed at timestamp", slog.String("user_id", claims.UserID))
 	}
 
 	return nil

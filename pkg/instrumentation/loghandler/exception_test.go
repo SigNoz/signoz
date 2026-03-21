@@ -4,7 +4,6 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"testing"
 
@@ -35,17 +34,17 @@ func TestException(t *testing.T) {
 		{
 			name: "StdlibError",
 			attrs: []slog.Attr{
-				errors.Attr(fmt.Errorf("something went wrong")),
+				errors.Attr(errors.Newf(errors.TypeInternal, errors.MustNewCode("internal"), "something went wrong")),
 			},
 			exceptionType:    "internal",
-			exceptionCode:    "unknown",
+			exceptionCode:    "internal",
 			exceptionMessage: "something went wrong",
 			hasException:     true,
 		},
 		{
 			name: "WrappedPkgError",
 			attrs: []slog.Attr{
-				errors.Attr(errors.Wrapf(fmt.Errorf("db connection failed"), errors.TypeInternal, errors.MustNewCode("db_error"), "failed to fetch user")),
+				errors.Attr(errors.Wrapf(errors.New(errors.TypeNotFound, errors.MustNewCode("not_found"), "db connection failed"), errors.TypeInternal, errors.MustNewCode("db_error"), "failed to fetch user")),
 			},
 			exceptionType:    "internal",
 			exceptionCode:    "db_error",

@@ -5,6 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"net/http"
 	"runtime/debug"
 	"strconv"
@@ -58,10 +59,10 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
 			handler.set.Logger.ErrorContext(ctx, "panic in QueryRange",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
+				slog.Any("error", r),
+				slog.Any("user", claims.UserID),
+				slog.String("payload", string(queryJSON)),
+				slog.String("stacktrace", stackTrace),
 			)
 
 			render.Error(rw, errors.NewInternalf(
@@ -158,10 +159,10 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 			queryJSON, _ := json.Marshal(queryRangeRequest)
 
 			handler.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
+				slog.Any("error", r),
+				slog.Any("user", claims.UserID),
+				slog.String("payload", string(queryJSON)),
+				slog.String("stacktrace", stackTrace),
 			)
 
 			render.Error(rw, errors.NewInternalf(

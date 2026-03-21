@@ -2,6 +2,7 @@ package googlecallbackauthn
 
 import (
 	"context"
+	"log/slog"
 	"net/url"
 
 	"github.com/coreos/go-oidc/v3/oidc"
@@ -73,7 +74,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := query.Get("error"); err != "" {
-		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", "error", err, "error_description", query.Get("error_description"))
+		a.settings.Logger().ErrorContext(ctx, "google: error while authenticating", slog.String("error", err), slog.String("error_description", query.Get("error_description")))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: error while authenticating").WithAdditional(query.Get("error_description"))
 	}
 
@@ -93,7 +94,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
 		if errors.As(err, &retrieveError) {
-			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err), "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
+			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err), slog.String("error_description", retrieveError.ErrorDescription), slog.String("body", string(retrieveError.Body)))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription)
 		}
 
@@ -126,13 +127,13 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if claims.HostedDomain != authDomain.StorableAuthDomain().Name {
-		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", "expected", authDomain.StorableAuthDomain().Name, "actual", claims.HostedDomain)
+		a.settings.Logger().ErrorContext(ctx, "google: unexpected hd claim", slog.String("expected", authDomain.StorableAuthDomain().Name), slog.String("actual", claims.HostedDomain))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: unexpected hd claim")
 	}
 
 	if !authDomain.AuthDomainConfig().Google.InsecureSkipEmailVerified {
 		if !claims.EmailVerified {
-			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", "email", claims.Email)
+			a.settings.Logger().ErrorContext(ctx, "google: email is not verified", slog.String("email", claims.Email))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: email is not verified")
 		}
 	}

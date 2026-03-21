@@ -53,7 +53,7 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 		ctx := r.Context()
 		claims := identity.ToClaims()
 		if err := m.sharder.IsMyOwnedKey(ctx, types.NewOrganizationKey(valuer.MustNewUUID(claims.OrgID))); err != nil {
-			m.logger.ErrorContext(ctx, identityCrossOrgMessage, "claims", claims, errors.Attr(err))
+			m.logger.ErrorContext(ctx, identityCrossOrgMessage, slog.Any("claims", claims), errors.Attr(err))
 			next.ServeHTTP(w, r)
 			return
 		}

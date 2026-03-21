@@ -29,7 +29,7 @@ func NewLogging(logger *slog.Logger, excludedRoutes []string) *Logging {
 	}
 
 	return &Logging{
-		logger:         logger.With("pkg", pkgname),
+		logger:         logger.With(slog.String("pkg", pkgname)),
 		excludedRoutes: excludedRoutesMap,
 	}
 }

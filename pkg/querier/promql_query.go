@@ -93,7 +93,7 @@ func newPromqlQuery(
 func (q *promqlQuery) Fingerprint() string {
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
-		q.logger.ErrorContext(context.TODO(), "failed render template variables", "query", q.query.Query)
+		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
 		return ""
 	}
 	parts := []string{
@@ -136,7 +136,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", errors.Attr(err), "query", query)
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", errors.Attr(err), slog.String("query", query))
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
 	}
 

@@ -511,7 +511,7 @@ func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, 
 		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
 			hits[metricName] = &cachedMetadata
 		} else {
-			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, errors.Attr(err))
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", slog.String("metric_name", metricName), errors.Attr(err))
 			misses = append(misses, metricName)
 		}
 	}
@@ -567,7 +567,7 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, errors.Attr(err))
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -627,7 +627,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, errors.Attr(err))
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -766,7 +766,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
 	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
-		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metric_name", req.MetricName, errors.Attr(err))
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", slog.String("metric_name", req.MetricName), errors.Attr(err))
 	}
 
 	return nil

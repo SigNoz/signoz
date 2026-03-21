@@ -2,6 +2,7 @@ package identn
 
 import (
 	"context"
+	"log/slog"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -69,7 +70,7 @@ func NewIdentNResolver(ctx context.Context, providerSettings factory.ProviderSet
 func (c *identNResolver) GetIdentN(r *http.Request) IdentN {
 	for _, idn := range c.identNs {
 		if idn.Test(r) {
-			c.settings.Logger().DebugContext(r.Context(), "identN matched", "provider", idn.Name())
+			c.settings.Logger().DebugContext(r.Context(), "identN matched", slog.Any("provider", idn.Name()))
 			return idn
 		}
 	}

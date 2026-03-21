@@ -2,6 +2,7 @@ package flagger
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/open-feature/go-sdk/openfeature"
 
@@ -97,7 +98,7 @@ func (f *flagger) Boolean(ctx context.Context, flag featuretypes.Name, evalCtx f
 	// check if the feature is present in the default registry
 	feature, _, err := f.registry.Get(flag)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), slog.Any("flag", flag))
 		return false, err
 	}
 
@@ -105,7 +106,7 @@ func (f *flagger) Boolean(ctx context.Context, flag featuretypes.Name, evalCtx f
 	defaultValue, _, err := featuretypes.VariantValue[bool](feature, feature.DefaultVariant)
 	if err != nil {
 		// something which should never happen
-		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), slog.Any("flag", flag))
 		return false, err
 	}
 
@@ -114,7 +115,7 @@ func (f *flagger) Boolean(ctx context.Context, flag featuretypes.Name, evalCtx f
 	for _, client := range f.clients {
 		value, err := client.BooleanValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().ErrorContext(ctx, "failed to get value from client", errors.Attr(err), "flag", flag, "client", client.Metadata().Name)
+			f.settings.Logger().ErrorContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
 			continue
 		}
 
@@ -130,7 +131,7 @@ func (f *flagger) String(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	// check if the feature is present in the default registry
 	feature, _, err := f.registry.Get(flag)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), slog.Any("flag", flag))
 		return "", err
 	}
 
@@ -138,7 +139,7 @@ func (f *flagger) String(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	defaultValue, _, err := featuretypes.VariantValue[string](feature, feature.DefaultVariant)
 	if err != nil {
 		// something which should never happen
-		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), slog.Any("flag", flag))
 		return "", err
 	}
 
@@ -147,7 +148,7 @@ func (f *flagger) String(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	for _, client := range f.clients {
 		value, err := client.StringValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), "flag", flag, "client", client.Metadata().Name)
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
 			continue
 		}
 
@@ -163,7 +164,7 @@ func (f *flagger) Float(ctx context.Context, flag featuretypes.Name, evalCtx fea
 	// check if the feature is present in the default registry
 	feature, _, err := f.registry.Get(flag)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), slog.Any("flag", flag))
 		return 0, err
 	}
 
@@ -171,7 +172,7 @@ func (f *flagger) Float(ctx context.Context, flag featuretypes.Name, evalCtx fea
 	defaultValue, _, err := featuretypes.VariantValue[float64](feature, feature.DefaultVariant)
 	if err != nil {
 		// something which should never happen
-		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), slog.Any("flag", flag))
 		return 0, err
 	}
 
@@ -180,7 +181,7 @@ func (f *flagger) Float(ctx context.Context, flag featuretypes.Name, evalCtx fea
 	for _, client := range f.clients {
 		value, err := client.FloatValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), "flag", flag, "client", client.Metadata().Name)
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
 			continue
 		}
 
@@ -196,7 +197,7 @@ func (f *flagger) Int(ctx context.Context, flag featuretypes.Name, evalCtx featu
 	// check if the feature is present in the default registry
 	feature, _, err := f.registry.Get(flag)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), slog.Any("flag", flag))
 		return 0, err
 	}
 
@@ -204,7 +205,7 @@ func (f *flagger) Int(ctx context.Context, flag featuretypes.Name, evalCtx featu
 	defaultValue, _, err := featuretypes.VariantValue[int64](feature, feature.DefaultVariant)
 	if err != nil {
 		// something which should never happen
-		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), slog.Any("flag", flag))
 		return 0, err
 	}
 
@@ -213,7 +214,7 @@ func (f *flagger) Int(ctx context.Context, flag featuretypes.Name, evalCtx featu
 	for _, client := range f.clients {
 		value, err := client.IntValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), "flag", flag, "client", client.Metadata().Name)
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
 			continue
 		}
 
@@ -229,7 +230,7 @@ func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	// check if the feature is present in the default registry
 	feature, _, err := f.registry.Get(flag)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get feature from default registry", errors.Attr(err), slog.Any("flag", flag))
 		return nil, err
 	}
 
@@ -237,7 +238,7 @@ func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	defaultValue, _, err := featuretypes.VariantValue[any](feature, feature.DefaultVariant)
 	if err != nil {
 		// something which should never happen
-		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get default value from feature", errors.Attr(err), slog.Any("flag", flag))
 		return nil, err
 	}
 
@@ -246,7 +247,7 @@ func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	for _, client := range f.clients {
 		value, err := client.ObjectValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), "flag", flag, "client", client.Metadata().Name)
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
 			continue
 		}
 
@@ -264,7 +265,7 @@ func (f *flagger) BooleanOrEmpty(ctx context.Context, flag featuretypes.Name, ev
 	defaultValue := false
 	value, err := f.Boolean(ctx, flag, evalCtx)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), slog.Any("flag", flag))
 		return defaultValue
 	}
 	return value
@@ -274,7 +275,7 @@ func (f *flagger) StringOrEmpty(ctx context.Context, flag featuretypes.Name, eva
 	defaultValue := ""
 	value, err := f.String(ctx, flag, evalCtx)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), slog.Any("flag", flag))
 		return defaultValue
 	}
 	return value
@@ -284,7 +285,7 @@ func (f *flagger) FloatOrEmpty(ctx context.Context, flag featuretypes.Name, eval
 	defaultValue := 0.0
 	value, err := f.Float(ctx, flag, evalCtx)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), slog.Any("flag", flag))
 		return defaultValue
 	}
 	return value
@@ -294,7 +295,7 @@ func (f *flagger) IntOrEmpty(ctx context.Context, flag featuretypes.Name, evalCt
 	defaultValue := int64(0)
 	value, err := f.Int(ctx, flag, evalCtx)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), slog.Any("flag", flag))
 		return defaultValue
 	}
 	return value
@@ -304,7 +305,7 @@ func (f *flagger) ObjectOrEmpty(ctx context.Context, flag featuretypes.Name, eva
 	defaultValue := struct{}{}
 	value, err := f.Object(ctx, flag, evalCtx)
 	if err != nil {
-		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), "flag", flag)
+		f.settings.Logger().ErrorContext(ctx, "failed to get value from flagger service", errors.Attr(err), slog.Any("flag", flag))
 		return defaultValue
 	}
 	return value
@@ -338,7 +339,7 @@ func (f *flagger) List(ctx context.Context, evalCtx featuretypes.FlaggerEvaluati
 	for _, provider := range f.providers {
 		pFeatures, err := provider.List(ctx)
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get features from provider", errors.Attr(err), "provider", provider.Metadata().Name)
+			f.settings.Logger().WarnContext(ctx, "failed to get features from provider", errors.Attr(err), slog.String("provider", provider.Metadata().Name))
 			continue
 		}
 

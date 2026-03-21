@@ -2,10 +2,10 @@ package rediscache
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
-
-	"fmt"
 
 	"github.com/redis/go-redis/extra/redisotel/v9"
 	"github.com/redis/go-redis/v9"
@@ -77,6 +77,6 @@ func (c *provider) DeleteMany(ctx context.Context, orgID valuer.UUID, cacheKeys 
 	}
 
 	if err := c.client.Del(ctx, updatedCacheKeys...).Err(); err != nil {
-		c.settings.Logger().ErrorContext(ctx, "error deleting cache keys", "cache_keys", cacheKeys, errors.Attr(err))
+		c.settings.Logger().ErrorContext(ctx, "error deleting cache keys", slog.Any("cache_keys", cacheKeys), errors.Attr(err))
 	}
 }

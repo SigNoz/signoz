@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -100,8 +101,8 @@ func New(
 		return nil, err
 	}
 
-	instrumentation.Logger().InfoContext(ctx, "starting signoz", "version", version.Info.Version(), "variant", version.Info.Variant(), "commit", version.Info.Hash(), "branch", version.Info.Branch(), "go", version.Info.GoVersion(), "time", version.Info.Time())
-	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", "config", config)
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", slog.String("version", version.Info.Version()), slog.String("variant", version.Info.Variant()), slog.String("commit", version.Info.Hash()), slog.String("branch", version.Info.Branch()), slog.String("go", version.Info.GoVersion()), slog.String("time", version.Info.Time()))
+	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", slog.Any("config", config))
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()

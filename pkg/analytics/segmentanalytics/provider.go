@@ -2,6 +2,7 @@ package segmentanalytics
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -45,14 +46,14 @@ func (provider *provider) Send(ctx context.Context, messages ...analyticstypes.M
 	for _, message := range messages {
 		err := provider.client.Enqueue(message)
 		if err != nil {
-			provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+			provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 		}
 	}
 }
 
 func (provider *provider) TrackGroup(ctx context.Context, group, event string, properties map[string]any) {
 	if properties == nil {
-		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping event", "group", group, "event", event)
+		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping event", slog.String("group", group), slog.String("event", event))
 		return
 	}
 
@@ -67,13 +68,13 @@ func (provider *provider) TrackGroup(ctx context.Context, group, event string, p
 		},
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 }
 
 func (provider *provider) TrackUser(ctx context.Context, group, user, event string, properties map[string]any) {
 	if properties == nil {
-		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping event", "user", user, "group", group, "event", event)
+		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping event", slog.String("user", user), slog.String("group", group), slog.String("event", event))
 		return
 	}
 
@@ -88,13 +89,13 @@ func (provider *provider) TrackUser(ctx context.Context, group, user, event stri
 		},
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 }
 
 func (provider *provider) IdentifyGroup(ctx context.Context, group string, traits map[string]any) {
 	if traits == nil {
-		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping identify", "group", group)
+		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping identify", slog.String("group", group))
 		return
 	}
 
@@ -104,7 +105,7 @@ func (provider *provider) IdentifyGroup(ctx context.Context, group string, trait
 		Traits: analyticstypes.NewTraitsFromMap(traits),
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 
 	// identify the group using the stats user
@@ -114,13 +115,13 @@ func (provider *provider) IdentifyGroup(ctx context.Context, group string, trait
 		Traits:  analyticstypes.NewTraitsFromMap(traits),
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 }
 
 func (provider *provider) IdentifyUser(ctx context.Context, group, user string, traits map[string]any) {
 	if traits == nil {
-		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping identify", "user", user, "group", group)
+		provider.settings.Logger().WarnContext(ctx, "empty attributes received, skipping identify", slog.String("user", user), slog.String("group", group))
 		return
 	}
 
@@ -130,7 +131,7 @@ func (provider *provider) IdentifyUser(ctx context.Context, group, user string, 
 		Traits: analyticstypes.NewTraitsFromMap(traits),
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 
 	// associate the user with the group
@@ -140,13 +141,13 @@ func (provider *provider) IdentifyUser(ctx context.Context, group, user string, 
 		Traits:  analyticstypes.NewTraits().Set("id", group), // A trait is required
 	})
 	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to send message to segment", slog.Any("err", err))
 	}
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
 	if err := provider.client.Close(); err != nil {
-		provider.settings.Logger().WarnContext(ctx, "unable to close segment client", "err", err)
+		provider.settings.Logger().WarnContext(ctx, "unable to close segment client", slog.Any("err", err))
 	}
 
 	close(provider.stopC)

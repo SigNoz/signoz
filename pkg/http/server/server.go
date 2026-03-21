@@ -38,14 +38,14 @@ func New(logger *slog.Logger, cfg Config, handler http.Handler) (*Server, error)
 
 	return &Server{
 		srv:     srv,
-		logger:  logger.With("pkg", "go.signoz.io/pkg/http/server"),
+		logger:  logger.With(slog.String("pkg", "go.signoz.io/pkg/http/server")),
 		handler: handler,
 		cfg:     cfg,
 	}, nil
 }
 
 func (server *Server) Start(ctx context.Context) error {
-	server.logger.InfoContext(ctx, "starting http server", "address", server.srv.Addr)
+	server.logger.InfoContext(ctx, "starting http server", slog.String("address", server.srv.Addr))
 	if err := server.srv.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
 			server.logger.ErrorContext(ctx, "failed to start server", errors.Attr(err))
