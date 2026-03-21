@@ -5,16 +5,18 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/spf13/cobra"
+
 	"github.com/SigNoz/signoz/cmd"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/oidccallbackauthn"
 	"github.com/SigNoz/signoz/ee/authn/callbackauthn/samlcallbackauthn"
 	"github.com/SigNoz/signoz/ee/authz/openfgaauthz"
-	eequerier "github.com/SigNoz/signoz/ee/querier"
 	"github.com/SigNoz/signoz/ee/authz/openfgaschema"
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
+	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
 	"github.com/SigNoz/signoz/ee/sqlschema/postgressqlschema"
 	"github.com/SigNoz/signoz/ee/sqlstore/postgressqlstore"
@@ -23,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -38,7 +41,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
-	"github.com/spf13/cobra"
 )
 
 func registerServer(parentCmd *cobra.Command, logger *slog.Logger) {
@@ -69,7 +71,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	// add enterprise sqlstore factories to the community sqlstore factories
 	sqlstoreFactories := signoz.NewSQLStoreProviderFactories()
 	if err := sqlstoreFactories.Add(postgressqlstore.NewFactory(sqlstorehook.NewLoggingFactory(), sqlstorehook.NewInstrumentationFactory())); err != nil {
-		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", "error", err)
+		logger.ErrorContext(ctx, "failed to add postgressqlstore factory", errors.Attr(err))
 		return err
 	}
 
@@ -132,37 +134,37 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 	)
 
 	if err != nil {
-		logger.ErrorContext(ctx, "failed to create signoz", "error", err)
+		logger.ErrorContext(ctx, "failed to create signoz", errors.Attr(err))
 		return err
 	}
 
 	server, err := enterpriseapp.NewServer(config, signoz)
 	if err != nil {
-		logger.ErrorContext(ctx, "failed to create server", "error", err)
+		logger.ErrorContext(ctx, "failed to create server", errors.Attr(err))
 		return err
 	}
 
 	if err := server.Start(ctx); err != nil {
-		logger.ErrorContext(ctx, "failed to start server", "error", err)
+		logger.ErrorContext(ctx, "failed to start server", errors.Attr(err))
 		return err
 	}
 
 	signoz.Start(ctx)
 
 	if err := signoz.Wait(ctx); err != nil {
-		logger.ErrorContext(ctx, "failed to start signoz", "error", err)
+		logger.ErrorContext(ctx, "failed to start signoz", errors.Attr(err))
 		return err
 	}
 
 	err = server.Stop(ctx)
 	if err != nil {
-		logger.ErrorContext(ctx, "failed to stop server", "error", err)
+		logger.ErrorContext(ctx, "failed to stop server", errors.Attr(err))
 		return err
 	}
 
 	err = signoz.Stop(ctx)
 	if err != nil {
-		logger.ErrorContext(ctx, "failed to stop signoz", "error", err)
+		logger.ErrorContext(ctx, "failed to stop signoz", errors.Attr(err))
 		return err
 	}
 

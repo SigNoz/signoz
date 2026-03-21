@@ -11,6 +11,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -18,9 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/prometheus/prometheus/model/labels"
-	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/promql/parser"
 )
 
 // unquotedDottedNamePattern matches unquoted identifiers containing dots
@@ -135,7 +136,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", errors.Attr(err), "query", query)
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
 	}
 

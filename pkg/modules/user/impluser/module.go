@@ -6,6 +6,8 @@ import (
 	"strings"
 	"time"
 
+	"github.com/dustin/go-humanize"
+
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/emailing"
@@ -20,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dustin/go-humanize"
 )
 
 type Module struct {
@@ -107,7 +108,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			// generate reset password token
 			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID)
 			if err != nil {
-				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", errors.Attr(err))
 				return err
 			}
 
@@ -163,7 +164,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			"link":          resetLink,
 			"Expiry":        humanizedTokenLifetime,
 		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
+			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", errors.Attr(err))
 		}
 	}
 
@@ -405,7 +406,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", errors.Attr(err))
 		return err
 	}
 
@@ -427,7 +428,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 			"Expiry": humanizedTokenLifetime,
 		},
 	); err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", errors.Attr(err))
 		return nil
 	}
 

@@ -5,6 +5,10 @@ import (
 	"slices"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -14,9 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dgraph-io/ristretto/v2"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 var (
@@ -81,7 +82,7 @@ func (provider *provider) Start(ctx context.Context) error {
 
 			orgs, err := provider.orgGetter.ListByOwnedKeyRange(ctx)
 			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to get orgs data", errors.Attr(err))
 				span.End()
 				continue
 			}
@@ -89,12 +90,12 @@ func (provider *provider) Start(ctx context.Context) error {
 			for _, org := range orgs {
 				if err := provider.gc(ctx, org); err != nil {
 					span.RecordError(err)
-					provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err, "org_id", org.ID)
+					provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", errors.Attr(err), "org_id", org.ID)
 				}
 
 				if err := provider.flushLastObservedAt(ctx, org); err != nil {
 					span.RecordError(err)
-					provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err, "org_id", org.ID)
+					provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", errors.Attr(err), "org_id", org.ID)
 				}
 			}
 
@@ -230,12 +231,12 @@ func (provider *provider) Stop(ctx context.Context) error {
 	for _, org := range orgs {
 		// garbage collect tokens on stop
 		if err := provider.gc(ctx, org); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", "error", err, "org_id", org.ID)
+			provider.settings.Logger().ErrorContext(ctx, "failed to garbage collect tokens", errors.Attr(err), "org_id", org.ID)
 		}
 
 		// flush tokens on stop
 		if err := provider.flushLastObservedAt(ctx, org); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", "error", err, "org_id", org.ID)
+			provider.settings.Logger().ErrorContext(ctx, "failed to flush tokens", errors.Attr(err), "org_id", org.ID)
 		}
 	}
 

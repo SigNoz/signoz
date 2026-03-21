@@ -9,13 +9,14 @@ import (
 
 	"log/slog"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"golang.org/x/exp/slices"
 )
 
 var (
@@ -135,7 +136,7 @@ func (r *Repo) insertConfig(
 
 	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		slog.ErrorContext(ctx, "failed to fetch latest config version", "error", err)
+		slog.ErrorContext(ctx, "failed to fetch latest config version", errors.Attr(err))
 		return err
 	}
 
@@ -221,7 +222,7 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update deploy status", "error", err)
+		slog.ErrorContext(ctx, "failed to update deploy status", errors.Attr(err))
 		return model.BadRequest(fmt.Errorf("failed to update deploy status"))
 	}
 
@@ -258,7 +259,7 @@ func (r *Repo) updateDeployStatusByHash(
 		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update deploy status", "error", err)
+		slog.ErrorContext(ctx, "failed to update deploy status", errors.Attr(err))
 		return errors.WrapInternalf(err, CodeConfigDeployStatusUpdateFailed, "failed to update deploy status")
 	}
 

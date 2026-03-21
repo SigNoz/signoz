@@ -65,7 +65,7 @@ func (r *Registry) Wait(ctx context.Context) error {
 	case s := <-interrupt:
 		r.logger.InfoContext(ctx, "caught interrupt signal, exiting", "signal", s)
 	case err := <-r.startCh:
-		r.logger.ErrorContext(ctx, "caught service error, exiting", "error", err)
+		r.logger.ErrorContext(ctx, "caught service error, exiting", errors.Attr(err))
 		return err
 	}
 

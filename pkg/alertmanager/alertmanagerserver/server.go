@@ -10,10 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -25,6 +21,11 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 var (
@@ -139,7 +140,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		server.silences.Maintenance(server.srvConfig.Silences.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := server.silences.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "silence garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "silence garbage collection", errors.Attr(err))
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -168,7 +169,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		defer server.wg.Done()
 		server.nflog.Maintenance(server.srvConfig.NFLog.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			if _, err := server.nflog.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "notification log garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "notification log garbage collection", errors.Attr(err))
 				// Don't return without saving the current state.
 			}
 

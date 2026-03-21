@@ -12,6 +12,7 @@ import (
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/cache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/transition"
@@ -391,7 +392,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", "error", err, "data", tmplData, "rule_name", r.Name())
+				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData, "rule_name", r.Name())
 			}
 			return result
 		}
@@ -467,7 +468,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", "error", err, "labels", a.Labels)
+			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given

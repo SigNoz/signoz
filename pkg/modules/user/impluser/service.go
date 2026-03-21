@@ -60,7 +60,7 @@ func (s *service) Start(ctx context.Context) error {
 			return nil
 		}
 
-		s.settings.Logger().WarnContext(ctx, "root user reconciliation failed, retrying", "error", err)
+		s.settings.Logger().WarnContext(ctx, "root user reconciliation failed, retrying", errors.Attr(err))
 
 		select {
 		case <-s.stopC:

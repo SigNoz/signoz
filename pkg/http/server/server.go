@@ -48,7 +48,7 @@ func (server *Server) Start(ctx context.Context) error {
 	server.logger.InfoContext(ctx, "starting http server", "address", server.srv.Addr)
 	if err := server.srv.ListenAndServe(); err != nil {
 		if err != http.ErrServerClosed {
-			server.logger.ErrorContext(ctx, "failed to start server", "error", err)
+			server.logger.ErrorContext(ctx, "failed to start server", errors.Attr(err))
 			return err
 		}
 	}
@@ -60,7 +60,7 @@ func (server *Server) Stop(ctx context.Context) error {
 	defer cancel()
 
 	if err := server.srv.Shutdown(ctx); err != nil {
-		server.logger.ErrorContext(ctx, "failed to stop server", "error", err)
+		server.logger.ErrorContext(ctx, "failed to stop server", errors.Attr(err))
 		return err
 	}
 

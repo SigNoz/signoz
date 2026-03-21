@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"log/slog"
 
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/migrate"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/transition"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/migrate"
 )
 
 type migrateRulesV4ToV5 struct {
@@ -55,7 +57,7 @@ func (migration *migrateRulesV4ToV5) getLogDuplicateKeys(ctx context.Context) ([
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		migration.logger.WarnContext(ctx, "failed to query log duplicate keys", "error", err)
+		migration.logger.WarnContext(ctx, "failed to query log duplicate keys", errors.Attr(err))
 		return nil, nil
 	}
 	defer rows.Close()
@@ -64,7 +66,7 @@ func (migration *migrateRulesV4ToV5) getLogDuplicateKeys(ctx context.Context) ([
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			migration.logger.WarnContext(ctx, "failed to scan log duplicate key", "error", err)
+			migration.logger.WarnContext(ctx, "failed to scan log duplicate key", errors.Attr(err))
 			continue
 		}
 		keys = append(keys, key)
@@ -85,7 +87,7 @@ func (migration *migrateRulesV4ToV5) getTraceDuplicateKeys(ctx context.Context) 
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		migration.logger.WarnContext(ctx, "failed to query trace duplicate keys", "error", err)
+		migration.logger.WarnContext(ctx, "failed to query trace duplicate keys", errors.Attr(err))
 		return nil, nil
 	}
 	defer rows.Close()
@@ -94,7 +96,7 @@ func (migration *migrateRulesV4ToV5) getTraceDuplicateKeys(ctx context.Context) 
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			migration.logger.WarnContext(ctx, "failed to scan trace duplicate key", "error", err)
+			migration.logger.WarnContext(ctx, "failed to scan trace duplicate key", errors.Attr(err))
 			continue
 		}
 		keys = append(keys, key)

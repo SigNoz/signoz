@@ -5,11 +5,12 @@ import (
 	"fmt"
 	"strings"
 
+	"github.com/huandu/go-sqlbuilder"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 type cteNode struct {
@@ -240,7 +241,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			}, b.start, b.end,
 		)
 		if err != nil {
-			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)
+			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", errors.Attr(err), "filter", query.Filter.Expression)
 			return "", err
 		}
 		if filterWhereClause != nil {
@@ -453,7 +454,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
-				"field", field.Name, "error", err)
+				"field", field.Name, errors.Attr(err))
 			continue
 		}
 		sb.SelectMore(colExpr)

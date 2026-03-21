@@ -5,8 +5,12 @@ import (
 	"sync"
 	"time"
 
+	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/trace"
+
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/analytics/segmentanalytics"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -18,8 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/version"
-	"go.opentelemetry.io/otel/attribute"
-	"go.opentelemetry.io/otel/trace"
 )
 
 type provider struct {
@@ -100,7 +102,7 @@ func New(
 func (provider *provider) Start(ctx context.Context) error {
 	go func() {
 		if err := provider.analytics.Start(ctx); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to start analytics", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to start analytics", errors.Attr(err))
 		}
 	}()
 
@@ -116,7 +118,7 @@ func (provider *provider) Start(ctx context.Context) error {
 
 			if err := provider.Report(ctx); err != nil {
 				span.RecordError(err)
-				provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
+				provider.settings.Logger().WarnContext(ctx, "failed to report stats", errors.Attr(err))
 			}
 
 			span.End()
@@ -164,13 +166,13 @@ func (provider *provider) Report(ctx context.Context) error {
 
 		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
 		if err != nil {
-			provider.settings.Logger().WarnContext(ctx, "failed to list users", "error", err, "org_id", org.ID)
+			provider.settings.Logger().WarnContext(ctx, "failed to list users", errors.Attr(err), "org_id", org.ID)
 			continue
 		}
 
 		maxLastObservedAtPerUserID, err := provider.tokenizer.ListMaxLastObservedAtByOrgID(ctx, org.ID)
 		if err != nil {
-			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", "error", err, "org_id", org.ID)
+			provider.settings.Logger().WarnContext(ctx, "failed to list max last observed at per user id", errors.Attr(err), "org_id", org.ID)
 			maxLastObservedAtPerUserID = make(map[valuer.UUID]time.Time)
 		}
 
@@ -192,11 +194,11 @@ func (provider *provider) Stop(ctx context.Context) error {
 	close(provider.stopC)
 	// report stats on stop
 	if err := provider.Report(ctx); err != nil {
-		provider.settings.Logger().WarnContext(ctx, "failed to report stats", "error", err)
+		provider.settings.Logger().WarnContext(ctx, "failed to report stats", errors.Attr(err))
 	}
 
 	if err := provider.analytics.Stop(ctx); err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to stop analytics", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to stop analytics", errors.Attr(err))
 	}
 
 	return nil
@@ -219,7 +221,7 @@ func (provider *provider) collectOrg(ctx context.Context, orgID valuer.UUID) map
 
 			collectorStats, err := collector.Collect(ctx, orgID)
 			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to collect stats", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to collect stats", errors.Attr(err))
 				return
 			}
 

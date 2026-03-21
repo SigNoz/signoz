@@ -74,7 +74,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 	for _, org := range orgs {
 		config, _, err := service.getConfig(ctx, org.ID.StringValue())
 		if err != nil {
-			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", "org_id", org.ID.StringValue(), "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", "org_id", org.ID.StringValue(), errors.Attr(err))
 			continue
 		}
 
@@ -82,7 +82,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 		if _, ok := service.servers[org.ID.StringValue()]; !ok {
 			server, err := service.newServer(ctx, org.ID.StringValue())
 			if err != nil {
-				service.settings.Logger().ErrorContext(ctx, "failed to create alertmanager server", "org_id", org.ID.StringValue(), "error", err)
+				service.settings.Logger().ErrorContext(ctx, "failed to create alertmanager server", "org_id", org.ID.StringValue(), errors.Attr(err))
 				continue
 			}
 
@@ -96,7 +96,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 
 		err = service.servers[org.ID.StringValue()].SetConfig(ctx, config)
 		if err != nil {
-			service.settings.Logger().ErrorContext(ctx, "failed to set config for alertmanager server", "org_id", org.ID.StringValue(), "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to set config for alertmanager server", "org_id", org.ID.StringValue(), errors.Attr(err))
 			continue
 		}
 	}
@@ -163,7 +163,7 @@ func (service *Service) Stop(ctx context.Context) error {
 	for _, server := range service.servers {
 		if err := server.Stop(ctx); err != nil {
 			errs = append(errs, err)
-			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", errors.Attr(err))
 		}
 	}
 

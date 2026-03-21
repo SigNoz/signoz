@@ -10,6 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dustin/go-humanize"
+	"golang.org/x/exp/maps"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -20,8 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/dustin/go-humanize"
-	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -368,7 +369,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					var err error
 					metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
 					if err != nil {
-						q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
+						q.logger.WarnContext(ctx, "failed to fetch metric temporality", errors.Attr(err), "metrics", metricNames)
 						return nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
 					}
 					q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
@@ -748,7 +749,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errs {
 		if err != nil {
 			// If any query failed, fall back to full execution
-			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
+			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
 			result, err := query.Execute(ctx)
 			if err != nil {
 				return nil, err

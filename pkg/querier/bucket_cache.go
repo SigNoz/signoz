@@ -59,7 +59,7 @@ func (bc *bucketCache) GetMissRanges(
 	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
-			bc.logger.ErrorContext(ctx, "error getting cached data", "error", err)
+			bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
 		}
 		// No cached data, need to fetch entire range
 		missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
@@ -187,7 +187,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Marshal and store in cache
 	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", "error", err)
+		bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
 	}
 }
 
@@ -471,7 +471,7 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
-			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", "error", err)
+			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
 			continue
 		}
 
@@ -623,7 +623,7 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 	// In the future, we could split large ranges into smaller buckets
 	valueBytes, err := json.Marshal(result.Value)
 	if err != nil {
-		bc.logger.ErrorContext(ctx, "failed to marshal result value", "error", err)
+		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
 		return nil
 	}
 

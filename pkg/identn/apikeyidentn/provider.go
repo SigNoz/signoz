@@ -5,13 +5,14 @@ import (
 	"net/http"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"golang.org/x/sync/singleflight"
 )
 
 // todo: will move this in types layer with service account integration
@@ -118,7 +119,7 @@ func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes
 			Where("revoked = false").
 			Exec(ctx)
 		if err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to update last used of api key", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to update last used of api key", errors.Attr(err))
 		}
 		return true, nil
 	})

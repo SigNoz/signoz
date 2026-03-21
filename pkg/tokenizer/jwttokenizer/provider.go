@@ -6,14 +6,15 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dgraph-io/ristretto/v2"
+	"github.com/golang-jwt/jwt/v5"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dgraph-io/ristretto/v2"
-	"github.com/golang-jwt/jwt/v5"
 )
 
 var (
@@ -160,7 +161,7 @@ func (provider *provider) DeleteIdentity(ctx context.Context, userID valuer.UUID
 func (provider *provider) SetLastObservedAt(ctx context.Context, accessToken string, lastObservedAt time.Time) error {
 	claims, err := provider.getClaimsFromToken(accessToken)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", errors.Attr(err))
 		return nil
 	}
 
@@ -258,7 +259,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 
 	err := provider.cache.Get(ctx, orgID, identityCacheKey(userID), identity)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to get identity from cache", errors.Attr(err))
 	}
 
 	if err == nil {
@@ -272,7 +273,7 @@ func (provider *provider) getOrSetIdentity(ctx context.Context, orgID, userID va
 
 	err = provider.cache.Set(ctx, orgID, identityCacheKey(identity.UserID), identity, 0)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to cache identity", errors.Attr(err))
 	}
 
 	return identity, nil

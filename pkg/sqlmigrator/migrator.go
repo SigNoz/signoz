@@ -6,9 +6,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 
+	"github.com/uptrace/bun/migrate"
+
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/uptrace/bun/migrate"
 )
 
 var (
@@ -102,7 +103,7 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 		select {
 		case <-timer.C:
 			err := errors.New(errors.TypeTimeout, errors.CodeTimeout, "timed out waiting for lock")
-			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", "error", err, "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "cannot acquire lock", errors.Attr(err), "lock_timeout", migrator.config.Lock.Timeout.String(), "dialect", migrator.dialect)
 			return err
 		case <-ticker.C:
 			var err error
@@ -110,7 +111,7 @@ func (migrator *migrator) Lock(ctx context.Context) error {
 				migrator.settings.Logger().InfoContext(ctx, "acquired migration lock", "dialect", migrator.dialect)
 				return nil
 			}
-			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", "error", err, "lock_interval", migrator.config.Lock.Interval.String(), "dialect", migrator.dialect)
+			migrator.settings.Logger().ErrorContext(ctx, "attempt to acquire lock failed", errors.Attr(err), "lock_interval", migrator.config.Lock.Interval.String(), "dialect", migrator.dialect)
 		case <-ctx.Done():
 			return ctx.Err()
 		}

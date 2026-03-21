@@ -6,11 +6,13 @@ import (
 	"strings"
 	"time"
 
+	"golang.org/x/sync/singleflight"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/tokenizer"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"golang.org/x/sync/singleflight"
 )
 
 type provider struct {
@@ -81,7 +83,7 @@ func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes
 
 	_, _, _ = provider.sfGroup.Do(accessToken, func() (any, error) {
 		if err := provider.tokenizer.SetLastObservedAt(ctx, accessToken, time.Now()); err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", "error", err)
+			provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", errors.Attr(err))
 			return false, err
 		}
 		return true, nil

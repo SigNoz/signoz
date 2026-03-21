@@ -4,17 +4,18 @@ import (
 	"context"
 	"net/url"
 
+	"github.com/coreos/go-oidc/v3/oidc"
+	"golang.org/x/oauth2"
+	"golang.org/x/oauth2/google"
+	admin "google.golang.org/api/admin/directory/v1"
+	"google.golang.org/api/option"
+
 	"github.com/SigNoz/signoz/pkg/authn"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/coreos/go-oidc/v3/oidc"
-	"golang.org/x/oauth2"
-	"golang.org/x/oauth2/google"
-	admin "google.golang.org/api/admin/directory/v1"
-	"google.golang.org/api/option"
 )
 
 const (
@@ -78,7 +79,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 
 	state, err := authtypes.NewStateFromString(query.Get("state"))
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: invalid state", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: invalid state", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInvalidInput, authtypes.ErrCodeInvalidState, "google: invalid state").WithAdditional(err.Error())
 	}
 
@@ -92,11 +93,11 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if err != nil {
 		var retrieveError *oauth2.RetrieveError
 		if errors.As(err, &retrieveError) {
-			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err, "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
+			a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err), "error_description", retrieveError.ErrorDescription, "body", string(retrieveError.Body))
 			return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to get token").WithAdditional(retrieveError.ErrorDescription)
 		}
 
-		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: failed to get token", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: failed to get token")
 	}
 
@@ -108,7 +109,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	verifier := oidcProvider.Verifier(&oidc.Config{ClientID: authDomain.AuthDomainConfig().Google.ClientID})
 	idToken, err := verifier.Verify(ctx, rawIDToken)
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: failed to verify token", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: failed to verify token")
 	}
 
@@ -120,7 +121,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	}
 
 	if err := idToken.Claims(&claims); err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: missing or invalid claims", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeForbidden, errors.CodeForbidden, "google: missing or invalid claims").WithAdditional(err.Error())
 	}
 
@@ -145,7 +146,7 @@ func (a *AuthN) HandleCallback(ctx context.Context, query url.Values) (*authtype
 	if authDomain.AuthDomainConfig().Google.FetchGroups {
 		groups, err = a.fetchGoogleWorkspaceGroups(ctx, claims.Email, authDomain.AuthDomainConfig().Google)
 		if err != nil {
-			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", "error", err)
+			a.settings.Logger().ErrorContext(ctx, "google: could not fetch groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "google: could not fetch groups").WithAdditional(err.Error())
 		}
 
@@ -189,7 +190,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	jwtConfig, err := google.JWTConfigFromJSON([]byte(config.ServiceAccountJSON), admin.AdminDirectoryGroupReadonlyScope)
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: invalid service account credentials", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: invalid service account credentials", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid service account credentials")
 	}
 
@@ -199,7 +200,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 
 	adminService, err := admin.NewService(ctx, option.WithHTTPClient(jwtConfig.Client(customCtx)))
 	if err != nil {
-		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", "error", err)
+		a.settings.Logger().ErrorContext(ctx, "google: unable to create directory service", errors.Attr(err))
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to create directory service")
 	}
 
@@ -221,7 +222,7 @@ func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, user
 
 		groupList, err := call.Context(ctx).Do()
 		if err != nil {
-			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", "error", err)
+			a.settings.Logger().ErrorContext(ctx, "google: unable to list groups", errors.Attr(err))
 			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list groups")
 		}
 
@@ -236,7 +237,7 @@ func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, user
 			if fetchTransitive {
 				transitiveGroups, err := a.getGroups(ctx, adminService, group.Email, fetchTransitive, checkedGroups)
 				if err != nil {
-					a.settings.Logger().ErrorContext(ctx, "google: unable to list transitive groups", "error", err)
+					a.settings.Logger().ErrorContext(ctx, "google: unable to list transitive groups", errors.Attr(err))
 					return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "unable to list transitive groups")
 				}
 				userGroups = append(userGroups, transitiveGroups...)

@@ -5,6 +5,8 @@ import (
 	"encoding/json"
 	"time"
 
+	"github.com/tidwall/gjson"
+
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -16,7 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
-	"github.com/tidwall/gjson"
 )
 
 type provider struct {
@@ -55,7 +56,7 @@ func (provider *provider) Start(ctx context.Context) error {
 
 	err := provider.Validate(ctx)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", errors.Attr(err))
 	}
 
 	for {
@@ -65,7 +66,7 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-tick.C:
 			err := provider.Validate(ctx)
 			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", errors.Attr(err))
 			}
 		}
 	}

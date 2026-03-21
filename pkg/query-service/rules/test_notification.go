@@ -5,11 +5,14 @@ import (
 	"fmt"
 	"time"
 
+	"log/slog"
+
+	"github.com/google/uuid"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
-	"github.com/google/uuid"
-	"log/slog"
 )
 
 // TestNotification prepares a dummy rule for given rule parameters and
@@ -57,7 +60,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			slog.Error("failed to prepare a new threshold rule for test", "error", err)
+			slog.Error("failed to prepare a new threshold rule for test", errors.Attr(err))
 			return 0, model.BadRequest(err)
 		}
 
@@ -79,7 +82,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 		)
 
 		if err != nil {
-			slog.Error("failed to prepare a new promql rule for test", "error", err)
+			slog.Error("failed to prepare a new promql rule for test", errors.Attr(err))
 			return 0, model.BadRequest(err)
 		}
 	} else {
@@ -91,7 +94,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, *model.ApiError)
 
 	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		slog.Error("evaluating rule failed", "rule", rule.Name(), "error", err)
+		slog.Error("evaluating rule failed", "rule", rule.Name(), errors.Attr(err))
 		return 0, model.InternalError(fmt.Errorf("rule evaluation failed"))
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
