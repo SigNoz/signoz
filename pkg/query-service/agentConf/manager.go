@@ -304,7 +304,7 @@ func UpsertFilterProcessor(ctx context.Context, orgId valuer.UUID, version int, 
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", "error", yamlErr)
+		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", errors.Attr(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeDropRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))
@@ -355,7 +355,7 @@ func UpsertSamplingProcessor(ctx context.Context, orgId valuer.UUID, version int
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", "error", yamlErr)
+		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", errors.Attr(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))

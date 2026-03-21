@@ -156,11 +156,11 @@ func (r *Repo) insertConfig(
 			// Delete elements first, then version (to respect potential foreign key constraints)
 			_, delErr := r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
 			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config elements during cleanup", "error", delErr, "version_id", c.ID.String())
+				slog.ErrorContext(ctx, "failed to delete config elements during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
 			}
 			_, delErr = r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
 			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config version during cleanup", "error", delErr, "version_id", c.ID.String())
+				slog.ErrorContext(ctx, "failed to delete config version during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
 			}
 		}
 	}()
@@ -171,7 +171,7 @@ func (r *Repo) insertConfig(
 		Model(c).
 		Exec(ctx)
 	if dbErr != nil {
-		slog.ErrorContext(ctx, "error in inserting config version", "error", dbErr)
+		slog.ErrorContext(ctx, "error in inserting config version", errors.Attr(dbErr))
 		return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
 	}
 

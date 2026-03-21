@@ -1434,7 +1434,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+				r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 				return
 			}
 
@@ -1453,7 +1453,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+						r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 						return
 					}
 				}
@@ -1473,7 +1473,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 				return
@@ -1488,7 +1488,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 		}
@@ -1572,7 +1572,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+				r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 				return
 			}
 
@@ -1603,7 +1603,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+						r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 						return
 					}
 				}
@@ -1624,7 +1624,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 				return
@@ -1639,7 +1639,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 		}(distributedTableName)
@@ -1845,7 +1845,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		// Insert TTL setting record
 		_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("error in inserting to custom_retention_ttl_settings table", "error", dbErr)
+			r.logger.Error("error in inserting to custom_retention_ttl_settings table", errorsV2.Attr(dbErr))
 			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
 		}
 
@@ -2061,7 +2061,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("Error in processing custom_retention_ttl_status update sql query", "error", dbErr)
+			r.logger.Error("Error in processing custom_retention_ttl_status update sql query", errorsV2.Attr(dbErr))
 		}
 	}
 }
@@ -2244,7 +2244,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			Model(&ttl).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+			r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 			return
 		}
 		timeColumn := "timestamp_ms"
@@ -2275,7 +2275,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 			}
@@ -2296,7 +2296,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 			return
@@ -2311,7 +2311,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+			r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 			return
 		}
 	}
@@ -2813,12 +2813,12 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 	}
 	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, apiErr = r.getNextErrorID(ctx, queryParams)
 	if apiErr != nil {
-		r.logger.Error("Unable to get next error ID due to err: ", "error", apiErr)
+		r.logger.Error("Unable to get next error ID due to err: ", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, apiErr = r.getPrevErrorID(ctx, queryParams)
 	if apiErr != nil {
-		r.logger.Error("Unable to get prev error ID due to err: ", "error", apiErr)
+		r.logger.Error("Unable to get prev error ID due to err: ", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 	return &getNextPrevErrorIDsResponse, nil
@@ -2979,7 +2979,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UU
 	// Batch fetch all metadata at once
 	metadataMap, apiErr := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiErr != nil {
-		r.logger.Warn("Failed to fetch updated metrics metadata", "error", apiErr)
+		r.logger.Warn("Failed to fetch updated metrics metadata", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 
@@ -3635,7 +3635,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 	// 1. Fetch metadata from cache/db using unified function
 	metadataMap, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 	if apiError != nil {
-		r.logger.Error("Error in getting metric cached metadata", "error", apiError)
+		r.logger.Error("Error in getting metric cached metadata", errorsV2.Attr(apiError))
 		return nil, fmt.Errorf("error fetching metric metadata: %s", apiError.Err.Error())
 	}
 
@@ -5953,7 +5953,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	//get updated metrics data
 	batch, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiError != nil {
-		r.logger.Error("Error in getting metrics cached metadata", "error", apiError)
+		r.logger.Error("Error in getting metrics cached metadata", errorsV2.Attr(apiError))
 	}
 
 	var filteredMetrics []metrics_explorer.MetricDetail
@@ -6830,7 +6830,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 
 			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
 			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, 0); cacheErr != nil {
-				r.logger.Error("Failed to store metrics metadata in cache", "metric_name", metadata.MetricName, "error", cacheErr)
+				r.logger.Error("Failed to store metrics metadata in cache", "metric_name", metadata.MetricName, errorsV2.Attr(cacheErr))
 			}
 			cachedMetadata[metadata.MetricName] = metadata
 			found[metadata.MetricName] = struct{}{}
@@ -6871,7 +6871,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 
 			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
 			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, 0); cacheErr != nil {
-				r.logger.Error("Failed to cache fallback metadata", "metric_name", metadata.MetricName, "error", cacheErr)
+				r.logger.Error("Failed to cache fallback metadata", "metric_name", metadata.MetricName, errorsV2.Attr(cacheErr))
 			}
 			cachedMetadata[metadata.MetricName] = metadata
 		}

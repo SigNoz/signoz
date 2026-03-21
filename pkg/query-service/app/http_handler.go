@@ -938,7 +938,7 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			}
 			keys = model.GetLogFieldsV3(ctx, params, logFields)
 		} else {
-			aH.logger.ErrorContext(ctx, "failed to get log fields using empty keys", "error", apiErr)
+			aH.logger.ErrorContext(ctx, "failed to get log fields using empty keys", errors.Attr(apiErr))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
@@ -1278,14 +1278,14 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 
 	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
 	if apiErr != nil {
-		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", "error", apiErr)
+		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", errors.Attr(apiErr))
 	} else {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
 	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
 	if apiErr != nil {
-		aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", "error", apiErr)
+		aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(apiErr))
 	} else {
 		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}
@@ -1480,7 +1480,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if res.Err != nil {
-		aH.logger.ErrorContext(r.Context(), "error in query range metrics", "error", res.Err)
+		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1535,7 +1535,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res.Err != nil {
-		aH.logger.ErrorContext(r.Context(), "error in query range metrics", "error", res.Err)
+		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
 	}
 
 	if res.Err != nil {
@@ -2154,7 +2154,7 @@ func (aH *APIHandler) onboardProducers(
 ) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2256,7 +2256,7 @@ func (aH *APIHandler) onboardConsumers(
 ) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2403,7 +2403,7 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2513,7 +2513,7 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2624,7 +2624,7 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2681,7 +2681,7 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2739,7 +2739,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2797,7 +2797,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2857,7 +2857,7 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2973,7 +2973,7 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3031,7 +3031,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3089,7 +3089,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3150,7 +3150,7 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -4455,7 +4455,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		aH.logger.ErrorContext(r.Context(), "error parsing query range params", "error", apiErrorObj.Err)
+		aH.logger.ErrorContext(r.Context(), "error parsing query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4535,7 +4535,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 
 		if apiErr != nil {
 			aH.logger.ErrorContext(ctx, "failed to report query start for progress tracking",
-				"query_id", queryIdHeader, "error", apiErr,
+				"query_id", queryIdHeader, errors.Attr(apiErr),
 			)
 
 		} else {
@@ -4710,7 +4710,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", "error", apiErrorObj.Err)
+		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4718,7 +4718,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
-		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", "error", temporalityErr)
+		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", errors.Attr(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -4763,7 +4763,7 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 	if apiErr != nil {
 		// Shouldn't happen unless query progress requested after query finished
 		aH.logger.WarnContext(r.Context(), "failed to subscribe to query progress",
-			"query_id", queryId, "error", apiErr,
+			"query_id", queryId, errors.Attr(apiErr),
 		)
 		return
 	}
@@ -4929,7 +4929,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", "error", apiErrorObj.Err)
+		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4938,7 +4938,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
-		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", "error", temporalityErr)
+		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", errors.Attr(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -4987,7 +4987,7 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	queueListRequest, apiErr := ParseQueueBody(r)
 
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse queue body", "error", apiErr.Err)
+		aH.logger.ErrorContext(r.Context(), "failed to parse queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -5026,7 +5026,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse request body", "error", apiErr)
+		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
 		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
@@ -5086,7 +5086,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		aH.logger.ErrorContext(r.Context(), "failed to parse request body", "error", apiErr)
+		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
 		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
