@@ -48,7 +48,7 @@ func TestException(t *testing.T) {
 			},
 			exceptionType:    "internal",
 			exceptionCode:    "db_error",
-			exceptionMessage: "db connection failed",
+			exceptionMessage: "failed to fetch user",
 			hasException:     true,
 		},
 		{

@@ -33,12 +33,12 @@ func (h *exception) Wrap(next LogHandler) LogHandler {
 			return next.Handle(ctx, record)
 		}
 
-		t, c, _, _, _, _ := errors.Unwrapb(foundErr)
+		t, c, m, _, _, _ := errors.Unwrapb(foundErr)
 		newRecord.AddAttrs(
 			slog.Group("exception",
 				slog.String("type", t.String()),
 				slog.String("code", c.String()),
-				slog.String("message", foundErr.Error()),
+				slog.String("message", m),
 				slog.String("stacktrace", captureStacktrace()),
 			),
 		)
