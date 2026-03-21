@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Module interface {
+type Setter interface {
 	// Creates the organization and the first user of that organization.
 	CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, password string) (*types.User, error)
 

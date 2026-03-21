@@ -24,18 +24,18 @@ import (
 type module struct {
 	settings   factory.ScopedProviderSettings
 	authNs     map[authtypes.AuthNProvider]authn.AuthN
-	user       user.Module
+	userSetter user.Setter
 	userGetter user.Getter
 	authDomain authdomain.Module
 	tokenizer  tokenizer.Tokenizer
 	orgGetter  organization.Getter
 }
 
-func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, user user.Module, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
+func NewModule(providerSettings factory.ProviderSettings, authNs map[authtypes.AuthNProvider]authn.AuthN, userSetter user.Setter, userGetter user.Getter, authDomain authdomain.Module, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter) session.Module {
 	return &module{
 		settings:   factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/session/implsession"),
 		authNs:     authNs,
-		user:       user,
+		userSetter: userSetter,
 		userGetter: userGetter,
 		authDomain: authDomain,
 		tokenizer:  tokenizer,
@@ -152,9 +152,9 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 
 	if isAuthoritative {
 		signozManagedRole := authtypes.MustGetSigNozManagedRoleFromExistingRole(role)
-		newUser, err = module.user.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{signozManagedRole}))
+		newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{signozManagedRole}))
 	} else {
-		newUser, err = module.user.GetOrCreateUser(ctx, newUser)
+		newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser)
 	}
 	if err != nil {
 		return "", err
@@ -164,7 +164,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	userRoles, err := module.user.GetUserRoles(ctx, newUser.ID)
+	userRoles, err := module.userSetter.GetUserRoles(ctx, newUser.ID)
 	if err != nil {
 		return "", err
 	}

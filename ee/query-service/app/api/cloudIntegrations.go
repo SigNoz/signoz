@@ -127,7 +127,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 
-	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgIdUUID)
+	allPats, err := ah.Signoz.Modules.UserSetter.ListAPIKeys(ctx, orgIdUUID)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -155,7 +155,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 
-	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
+	err = ah.Signoz.Modules.UserSetter.CreateAPIKey(ctx, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
@@ -177,7 +177,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 
 	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
 
-	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(
+	cloudIntegrationUser, err = ah.Signoz.Modules.UserSetter.GetOrCreateUser(
 		ctx,
 		cloudIntegrationUser,
 		user.WithFactorPassword(password),

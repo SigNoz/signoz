@@ -25,7 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-type Module struct {
+type setter struct {
 	store         types.UserStore
 	userRoleStore authtypes.UserRoleStore
 	tokenizer     tokenizer.Tokenizer
@@ -38,9 +38,9 @@ type Module struct {
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, userRoleStore authtypes.UserRoleStore) root.Module {
+func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, userRoleStore authtypes.UserRoleStore) root.Setter {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
-	return &Module{
+	return &setter{
 		store:         store,
 		userRoleStore: userRoleStore,
 		tokenizer:     tokenizer,
@@ -54,13 +54,13 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 }
 
 // this function gets user with its proper roles populated
-func (m *Module) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.DeprecatedUser, error) {
-	user, err := m.store.GetByOrgIDAndID(ctx, orgID, userID)
+func (module *setter) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.DeprecatedUser, error) {
+	user, err := module.store.GetByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	userRoles, err := m.GetUserRoles(ctx, userID)
+	userRoles, err := module.GetUserRoles(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,8 +73,8 @@ func (m *Module) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userI
 }
 
 // CreateBulk implements invite.Module.
-func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
-	creator, err := m.store.GetUser(ctx, userID)
+func (module *setter) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error) {
+	creator, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
@@ -84,7 +84,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	for idx, invite := range bulkInvites.Invites {
 		emails[idx] = invite.Email.StringValue()
 	}
-	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	users, err := module.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +109,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	newUsersWithResetToken := make([]*userWithResetToken, len(bulkInvites.Invites))
 
-	if err := m.store.RunInTx(ctx, func(ctx context.Context) error {
+	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		for idx, invite := range bulkInvites.Invites {
 			// create a new user with pending invite status
 			newUser, err := types.NewUser(invite.Name, invite.Email, orgID, types.UserStatusPendingInvite)
@@ -118,15 +118,15 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			}
 
 			// store the user and password in db
-			err = m.createUserWithoutGrant(ctx, newUser, root.WithRoleNames([]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(invite.Role)}))
+			err = module.createUserWithoutGrant(ctx, newUser, root.WithRoleNames([]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(invite.Role)}))
 			if err != nil {
 				return err
 			}
 
 			// generate reset password token
-			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID)
+			resetPasswordToken, err := module.GetOrCreateResetPasswordToken(ctx, newUser.ID)
 			if err != nil {
-				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", errors.Attr(err))
+				module.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
 				return err
 			}
 
@@ -145,7 +145,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 	// send password reset emails to all the invited users
 	for idx, userWithToken := range newUsersWithResetToken {
-		m.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
+		module.analytics.TrackUser(ctx, orgID.String(), creator.ID.String(), "Invite Sent", map[string]any{
 			"invitee_email": userWithToken.User.Email,
 			"invitee_role":  userWithToken.Role,
 		})
@@ -169,28 +169,28 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 		frontendBaseUrl := bulkInvites.Invites[idx].FrontendBaseUrl
 		if frontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", slog.Any("invitee_email", userWithToken.User.Email))
+			module.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", userWithToken.User.Email)
 			continue
 		}
 
 		resetLink := userWithToken.ResetPasswordToken.FactorPasswordResetLink(frontendBaseUrl)
 
-		tokenLifetime := m.config.Password.Invite.MaxTokenLifetime
+		tokenLifetime := module.config.Password.Invite.MaxTokenLifetime
 		humanizedTokenLifetime := strings.TrimSpace(humanize.RelTime(time.Now(), time.Now().Add(tokenLifetime), "", ""))
 
-		if err := m.emailing.SendHTML(ctx, userWithToken.User.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
+		if err := module.emailing.SendHTML(ctx, userWithToken.User.Email.String(), "You're Invited to Join SigNoz", emailtypes.TemplateNameInvitationEmail, map[string]any{
 			"inviter_email": creator.Email,
 			"link":          resetLink,
 			"Expiry":        humanizedTokenLifetime,
 		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", errors.Attr(err))
+			module.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
 		}
 	}
 
 	return invites, nil
 }
 
-func (module *Module) CreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
+func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	// since assign is idempotant multiple calls to assign won't cause issues in case of retries.
@@ -237,8 +237,8 @@ func (module *Module) CreateUser(ctx context.Context, user *types.User, opts ...
 	return nil
 }
 
-func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
-	existingUser, err := m.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(id))
+func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
+	existingUser, err := module.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +251,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	requestor, err := m.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(updatedBy))
+	requestor, err := module.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +268,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	}
 
 	if roleChange {
-		err = m.authz.ModifyGrant(ctx,
+		err = module.authz.ModifyGrant(ctx,
 			orgID,
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(existingUser.Role)},
 			[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)},
@@ -282,19 +282,19 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	existingUser.Update(user.DisplayName, user.Role)
 
 	// update the user - idempotent (this does analytics too so keeping it outside txn)
-	if err := m.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
+	if err := module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 		return nil, err
 	}
 
-	err = m.store.RunInTx(ctx, func(ctx context.Context) error {
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if roleChange {
 			// delete old role entries and create new ones
-			if err := m.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
+			if err := module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID); err != nil {
 				return err
 			}
 
 			// create new ones
-			if err := m.createUserRoleEntries(ctx, existingUser.OrgID, existingUser.ID, []string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}); err != nil {
+			if err := module.createUserRoleEntries(ctx, existingUser.OrgID, existingUser.ID, []string{authtypes.MustGetSigNozManagedRoleFromExistingRole(user.Role)}); err != nil {
 				return err
 			}
 		}
@@ -308,7 +308,7 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return existingUser, nil
 }
 
-func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
+func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
 	user := types.NewUserFromDeprecatedUser(deprecateUser)
 	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
 		return err
@@ -325,7 +325,7 @@ func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, depr
 	return nil
 }
 
-func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
+func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
 	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
@@ -382,7 +382,7 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	return nil
 }
 
-func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
+func (module *setter) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
 	user, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
@@ -449,7 +449,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 	return resetPasswordToken, nil
 }
 
-func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
+func (module *setter) ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error {
 	if !module.config.Password.Reset.AllowSelf {
 		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "Users are not allowed to reset their password themselves, please contact an admin to reset your password.")
 	}
@@ -497,7 +497,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 	return nil
 }
 
-func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
+func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, token string, passwd string) error {
 	resetPasswordToken, err := module.store.GetResetPasswordToken(ctx, token)
 	if err != nil {
 		return err
@@ -571,7 +571,7 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 	})
 }
 
-func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
+func (module *setter) UpdatePassword(ctx context.Context, userID valuer.UUID, oldpasswd string, passwd string) error {
 	user, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return err
@@ -615,7 +615,7 @@ func (module *Module) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 	return module.tokenizer.DeleteTokensByUserID(ctx, userID)
 }
 
-func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
+func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	existingUser, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
@@ -688,27 +688,27 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 	return user, nil
 }
 
-func (m *Module) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
-	return m.store.CreateAPIKey(ctx, apiKey)
+func (module *setter) CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error {
+	return module.store.CreateAPIKey(ctx, apiKey)
 }
 
-func (m *Module) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
-	return m.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
+func (module *setter) UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error {
+	return module.store.UpdateAPIKey(ctx, id, apiKey, updaterID)
 }
 
-func (m *Module) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
-	return m.store.ListAPIKeys(ctx, orgID)
+func (module *setter) ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error) {
+	return module.store.ListAPIKeys(ctx, orgID)
 }
 
-func (m *Module) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
-	return m.store.GetAPIKey(ctx, orgID, id)
+func (module *setter) GetAPIKey(ctx context.Context, orgID, id valuer.UUID) (*types.StorableAPIKeyUser, error) {
+	return module.store.GetAPIKey(ctx, orgID, id)
 }
 
-func (m *Module) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
-	return m.store.RevokeAPIKey(ctx, id, removedByUserID)
+func (module *setter) RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error {
+	return module.store.RevokeAPIKey(ctx, id, removedByUserID)
 }
 
-func (module *Module) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
+func (module *setter) CreateFirstUser(ctx context.Context, organization *types.Organization, name string, email valuer.Email, passwd string) (*types.User, error) {
 	user, err := types.NewRootUser(name, email, organization.ID)
 	if err != nil {
 		return nil, err
@@ -753,7 +753,7 @@ func (module *Module) CreateFirstUser(ctx context.Context, organization *types.O
 	return user, nil
 }
 
-func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
+func (module *setter) Collect(ctx context.Context, orgID valuer.UUID) (map[string]any, error) {
 	stats := make(map[string]any)
 	counts, err := module.store.CountByOrgIDAndStatuses(ctx, orgID, []string{types.UserStatusActive.StringValue(), types.UserStatusDeleted.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err == nil {
@@ -772,7 +772,7 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 }
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
-func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+func (module *setter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
 	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
@@ -793,7 +793,7 @@ func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 
 }
 
-func (module *Module) createUserWithoutGrant(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
+func (module *setter) createUserWithoutGrant(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
 		if err := module.store.CreateUser(ctx, user); err != nil {
@@ -826,7 +826,7 @@ func (module *Module) createUserWithoutGrant(ctx context.Context, user *types.Us
 	return nil
 }
 
-func (module *Module) createUserRoleEntries(ctx context.Context, orgID, userId valuer.UUID, roleNames []string) error {
+func (module *setter) createUserRoleEntries(ctx context.Context, orgID, userId valuer.UUID, roleNames []string) error {
 	roles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, roleNames)
 	if err != nil {
 		return err
@@ -836,7 +836,7 @@ func (module *Module) createUserRoleEntries(ctx context.Context, orgID, userId v
 	return module.userRoleStore.CreateUserRoles(ctx, userRoles)
 }
 
-func (module *Module) activatePendingUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
+func (module *setter) activatePendingUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
 	if len(createUserOpts.RoleNames) > 0 {
@@ -878,7 +878,7 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User,
 	return nil
 }
 
-func (module *Module) ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
+func (module *setter) ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		// delete old user_role entries and create new ones from SSO
 		if err := module.userRoleStore.DeleteUserRoles(ctx, userID); err != nil {
@@ -890,7 +890,7 @@ func (module *Module) ReplaceUserRoleEntries(ctx context.Context, orgID, userID 
 	})
 }
 
-func (module *Module) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
+func (module *setter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
 	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err

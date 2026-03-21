@@ -262,7 +262,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-			impluser.NewHandler(modules.User, modules.UserGetter),
+			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
 			implsession.NewHandler(modules.Session),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),

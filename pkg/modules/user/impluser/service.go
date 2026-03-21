@@ -17,7 +17,7 @@ import (
 type service struct {
 	settings  factory.ScopedProviderSettings
 	store     types.UserStore
-	module    user.Module
+	setter    user.Setter
 	orgGetter organization.Getter
 	authz     authz.AuthZ
 	config    user.RootConfig
@@ -27,7 +27,7 @@ type service struct {
 func NewService(
 	providerSettings factory.ProviderSettings,
 	store types.UserStore,
-	module user.Module,
+	setter user.Setter,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
 	config user.RootConfig,
@@ -35,7 +35,7 @@ func NewService(
 	return &service{
 		settings:  factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
 		store:     store,
-		module:    module,
+		setter:    setter,
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
@@ -85,12 +85,12 @@ func (s *service) reconcile(ctx context.Context) error {
 
 		if s.config.Org.ID.IsZero() {
 			newOrg := types.NewOrganization(s.config.Org.Name, s.config.Org.Name)
-			_, err := s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
+			_, err := s.setter.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
 			return err
 		}
 
 		newOrg := types.NewOrganizationWithID(s.config.Org.ID, s.config.Org.Name, s.config.Org.Name)
-		_, err = s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
+		_, err = s.setter.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
 		return err
 	}
 
@@ -116,13 +116,13 @@ func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) erro
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingUser, err := s.module.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
+	existingUser, err := s.setter.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
 	if existingUser != nil {
-		userRoles, err := s.module.GetUserRoles(ctx, existingUser.ID)
+		userRoles, err := s.setter.GetUserRoles(ctx, existingUser.ID)
 		if err != nil {
 			return err
 		}
@@ -147,12 +147,12 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		err = s.store.RunInTx(ctx, func(ctx context.Context) error {
 			// update users table
 			deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingUser, types.RoleAdmin)
-			if err := s.module.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+			if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
 				return err
 			}
 
 			// update user_role entries
-			if err := s.module.ReplaceUserRoleEntries(
+			if err := s.setter.ReplaceUserRoleEntries(
 				ctx,
 				existingUser.OrgID,
 				existingUser.ID,
@@ -182,7 +182,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		return err
 	}
 
-	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{authtypes.SigNozAdminRoleName}))
+	return s.setter.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{authtypes.SigNozAdminRoleName}))
 }
 
 func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
@@ -191,7 +191,7 @@ func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID,
 	if existingRoot.Email != s.config.Email {
 		existingRoot.UpdateEmail(s.config.Email)
 		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingRoot, types.RoleAdmin)
-		if err := s.module.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+		if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
 			return err
 		}
 	}
