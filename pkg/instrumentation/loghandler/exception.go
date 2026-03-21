@@ -34,21 +34,19 @@ func (h *exception) Wrap(next LogHandler) LogHandler {
 
 		t, c, m, _, _, _ := errors.Unwrapb(foundErr)
 
-		attrs := []any{
-			slog.String("type", t.String()),
-			slog.String("code", c.String()),
-			slog.String("message", m),
-		}
+		newRecord.AddAttrs(
+			slog.String("exception.type", t.String()),
+			slog.String("exception.code", c.String()),
+			slog.String("exception.message", m),
+		)
 
 		// Use the stacktrace captured at error creation time if available.
 		type stacktracer interface {
 			Stacktrace() string
 		}
 		if st, ok := foundErr.(stacktracer); ok && st.Stacktrace() != "" {
-			attrs = append(attrs, slog.String("stacktrace", st.Stacktrace()))
+			newRecord.AddAttrs(slog.String("exception.stacktrace", st.Stacktrace()))
 		}
-
-		newRecord.AddAttrs(slog.Group("exception", attrs...))
 
 		return next.Handle(ctx, newRecord)
 	})

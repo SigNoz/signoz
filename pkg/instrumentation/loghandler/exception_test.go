@@ -83,17 +83,17 @@ func TestException(t *testing.T) {
 			assert.Equal(t, "operation failed", m["msg"])
 
 			if tc.hasException {
-				exc, ok := m["exception"].(map[string]any)
-				require.True(t, ok, "exception should be a nested object")
-				assert.Equal(t, tc.exceptionType, exc["type"])
-				assert.Equal(t, tc.exceptionCode, exc["code"])
-				assert.Equal(t, tc.exceptionMessage, exc["message"])
-				stacktrace, ok := exc["stacktrace"].(string)
+				assert.Equal(t, tc.exceptionType, m["exception.type"])
+				assert.Equal(t, tc.exceptionCode, m["exception.code"])
+				assert.Equal(t, tc.exceptionMessage, m["exception.message"])
+				stacktrace, ok := m["exception.stacktrace"].(string)
 				require.True(t, ok)
 				assert.Contains(t, stacktrace, "exception_test.go:")
 			} else {
-				_, isMap := m["exception"].(map[string]any)
-				assert.False(t, isMap, "exception should not be a structured object")
+				assert.Nil(t, m["exception.type"])
+				assert.Nil(t, m["exception.code"])
+				assert.Nil(t, m["exception.message"])
+				assert.Nil(t, m["exception.stacktrace"])
 			}
 		})
 	}
