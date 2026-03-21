@@ -24,7 +24,7 @@ func New(store authtypes.AuthNStore, userRoleStore authtypes.UserRoleStore, auth
 }
 
 func (a *AuthN) Authenticate(ctx context.Context, email string, password string, orgID valuer.UUID) (*authtypes.Identity, error) {
-	storableUser, factorPassword, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
+	user, factorPassword, err := a.store.GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -33,14 +33,14 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
-	roleNames, err := a.resolveRoleNamesForUser(ctx, storableUser.ID, storableUser.OrgID)
+	roleNames, err := a.resolveRoleNamesForUser(ctx, user.ID, user.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
 
-	return authtypes.NewIdentity(storableUser.ID, orgID, storableUser.Email, highestRole, authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewIdentity(user.ID, orgID, user.Email, highestRole, authtypes.IdentNProviderTokenizer), nil
 }
 
 func (a *AuthN) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error) {
