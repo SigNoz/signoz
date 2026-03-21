@@ -19,22 +19,32 @@ func NewUserRoleStore(sqlstore sqlstore.SQLStore, settings factory.ProviderSetti
 	return &userRoleStore{sqlstore: sqlstore, settings: settings}
 }
 
-func (store *userRoleStore) ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*authtypes.StorableUserRole, error) {
-	storableUserRoles := make([]*authtypes.StorableUserRole, 0)
+func (store *userRoleStore) ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*authtypes.UserRole, error) {
+	userRoles := make([]*authtypes.UserRole, 0)
 
-	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storableUserRoles).
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&userRoles).
 		Join("JOIN users").
 		JoinOn("users.id = user_role.user_id").
-		Where("users.org_id = ?", orgID).Where("users.id IN (?)", bun.In(userIDs)).Scan(ctx)
+		Where("users.org_id = ?", orgID).
+		Where("users.id IN (?)", bun.In(userIDs)).
+		Relation("Role").
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return storableUserRoles, nil
+	return userRoles, nil
 }
 
-func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*authtypes.StorableUserRole) error {
-	_, err := store.sqlstore.BunDBCtx(ctx).NewInsert().Model(&userRoles).Exec(ctx)
+func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*authtypes.UserRole) error {
+	_, err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewInsert().
+		Model(&userRoles).
+		Exec(ctx)
 	if err != nil {
 		return store.sqlstore.WrapAlreadyExistsErrf(err, authtypes.ErrCodeUserRoleAlreadyExists, "duplicate role assignments for service account")
 	}
@@ -42,7 +52,12 @@ func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*au
 }
 
 func (store *userRoleStore) DeleteUserRoles(ctx context.Context, userID valuer.UUID) error {
-	_, err := store.sqlstore.BunDBCtx(ctx).NewDelete().Model(new(authtypes.StorableUserRole)).Where("user_id = ?", userID).Exec(ctx)
+	_, err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(authtypes.UserRole)).
+		Where("user_id = ?", userID).
+		Exec(ctx)
 	if err != nil {
 		return err
 	}
@@ -50,13 +65,19 @@ func (store *userRoleStore) DeleteUserRoles(ctx context.Context, userID valuer.U
 	return nil
 }
 
-func (store *userRoleStore) GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.StorableUserRole, error) {
-	storableUserRoles := make([]*authtypes.StorableUserRole, 0)
+func (store *userRoleStore) GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
+	userRoles := make([]*authtypes.UserRole, 0)
 
-	err := store.sqlstore.BunDBCtx(ctx).NewSelect().Model(&storableUserRoles).Where("user_id = ?", userID).Scan(ctx)
+	err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&userRoles).
+		Where("user_id = ?", userID).
+		Relation("Role").
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	return storableUserRoles, nil
+	return userRoles, nil
 }

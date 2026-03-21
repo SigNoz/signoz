@@ -164,12 +164,12 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	finalRoleNames, err := module.user.ResolveRoleNamesForUser(ctx, newUser.ID, newUser.OrgID)
+	userRoles, err := module.user.GetUserRoles(ctx, newUser.ID)
 	if err != nil {
 		return "", err
 	}
 
-	finalRole := authtypes.SigNozManagedRoleToExistingLegacyRole[finalRoleNames[0]]
+	finalRole := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(newUser.ID, newUser.OrgID, newUser.Email, finalRole, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {

@@ -5,7 +5,6 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -14,90 +13,48 @@ var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
 )
 
-type StorableUserRole struct {
+type UserRole struct {
 	bun.BaseModel `bun:"table:user_role,alias:user_role"`
 
-	types.Identifiable
+	ID        valuer.UUID `bun:"id,pk,type:text" json:"id" required:"true"`
+	UserID    valuer.UUID `bun:"user_id" json:"user_id"`
+	RoleID    valuer.UUID `bun:"role_id" json:"role_id"`
+	CreatedAt time.Time   `bun:"created_at" json:"createdAt"`
+	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt"`
 
-	UserID valuer.UUID `bun:"user_id"`
-	RoleID valuer.UUID `bun:"role_id"`
-
-	types.TimeAuditable
+	// read only fields
+	Role *StorableRole `bun:"rel:belongs-to,join:role_id=id" json:"role"`
 }
 
-func newStorableUserRole(userID valuer.UUID, roleID valuer.UUID) *StorableUserRole {
-	return &StorableUserRole{
-		Identifiable: types.Identifiable{
-			ID: valuer.GenerateUUID(),
-		},
-		UserID: userID,
-		RoleID: roleID,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: time.Now(),
-			UpdatedAt: time.Now(),
-		},
+func newUserRole(userID valuer.UUID, roleID valuer.UUID) *UserRole {
+	return &UserRole{
+		ID:        valuer.GenerateUUID(),
+		UserID:    userID,
+		RoleID:    roleID,
+		CreatedAt: time.Now(),
+		UpdatedAt: time.Now(),
 	}
 }
 
-func NewStorableUserRoles(userID valuer.UUID, roles []*Role) []*StorableUserRole {
-	storableUserRoles := make([]*StorableUserRole, len(roles))
+func NewStorableUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
+	userRoles := make([]*UserRole, len(roles))
 
 	for idx, role := range roles {
-		storableUserRoles[idx] = newStorableUserRole(userID, role.ID)
+		userRoles[idx] = newUserRole(userID, role.ID)
 	}
 
-	return storableUserRoles
-}
-
-func GetUserIDToRoleIDsMappingAndUniqueRoles(storableUserRoles []*StorableUserRole) (map[valuer.UUID][]valuer.UUID, []valuer.UUID) {
-	userIDRoles := make(map[valuer.UUID][]valuer.UUID)
-	uniqueRoleIDSet := make(map[valuer.UUID]struct{})
-
-	for _, userRole := range storableUserRoles {
-		userID := userRole.UserID
-		if _, ok := userIDRoles[userID]; !ok {
-			userIDRoles[userID] = make([]valuer.UUID, 0)
-		}
-		roleUUID := userRole.RoleID
-		userIDRoles[userID] = append(userIDRoles[userID], roleUUID)
-		uniqueRoleIDSet[userRole.RoleID] = struct{}{}
-	}
-
-	roleIDs := make([]valuer.UUID, 0, len(uniqueRoleIDSet))
-	for rid := range uniqueRoleIDSet {
-		roleIDs = append(roleIDs, rid)
-	}
-
-	return userIDRoles, roleIDs
-}
-
-func NewRoleNamesFromStorableUserRoles(storableUserRoles []*StorableUserRole, roles []*Role) ([]string, error) {
-	roleIDToName := make(map[valuer.UUID]string, len(roles))
-	for _, role := range roles {
-		roleIDToName[role.ID] = role.Name
-	}
-
-	names := make([]string, 0, len(storableUserRoles))
-	for _, storableUserRole := range storableUserRoles {
-		roleName, ok := roleIDToName[storableUserRole.RoleID]
-		if !ok {
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "role id %s not found in provided roles", storableUserRole.RoleID)
-		}
-		names = append(names, roleName)
-	}
-
-	return names, nil
+	return userRoles
 }
 
 type UserRoleStore interface {
 	// create user roles in bulk
-	CreateUserRoles(ctx context.Context, userRoles []*StorableUserRole) error
+	CreateUserRoles(ctx context.Context, userRoles []*UserRole) error
 
 	// get user roles by user id
-	GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*StorableUserRole, error)
+	GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*UserRole, error)
 
 	// list all user_role entries for
-	ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*StorableUserRole, error)
+	ListUserRolesByOrgIDAndUserIDs(ctx context.Context, orgID valuer.UUID, userIDs []valuer.UUID) ([]*UserRole, error)
 
 	// delete user role entries by user id
 	DeleteUserRoles(ctx context.Context, userID valuer.UUID) error

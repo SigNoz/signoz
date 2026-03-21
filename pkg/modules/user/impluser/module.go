@@ -60,12 +60,12 @@ func (m *Module) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userI
 		return nil, err
 	}
 
-	roleNames, err := m.ResolveRoleNamesForUser(ctx, userID, user.OrgID)
+	userRoles, err := m.GetUserRoles(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, role)
 
@@ -352,10 +352,12 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
-	roleNames, err := module.ResolveRoleNamesForUser(ctx, user.ID, user.OrgID)
+	userRoles, err := module.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return err
 	}
+
+	roleNames := roleNamesFromUserRoles(userRoles)
 
 	// since revoke is idempotant multiple calls to revoke won't cause issues in case of retries
 	err = module.authz.Revoke(
@@ -528,10 +530,12 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	roleNames, err := module.ResolveRoleNamesForUser(ctx, user.ID, user.OrgID)
+	userRoles, err := module.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return err
 	}
+
+	roleNames := roleNamesFromUserRoles(userRoles)
 
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
 	if user.Status == types.UserStatusPendingInvite {
@@ -628,11 +632,12 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 					return nil, err
 				}
 			} else {
-				existingRoleNames, err := module.ResolveRoleNamesForUser(ctx, existingUser.ID, existingUser.OrgID)
+				userRoles, err := module.GetUserRoles(ctx, existingUser.ID)
 				if err != nil {
 					return nil, err
 				}
 
+				existingRoleNames := roleNamesFromUserRoles(userRoles)
 				if err = module.activatePendingUser(ctx, existingUser, root.WithRoleNames(existingRoleNames)); err != nil {
 					return nil, err
 				}
@@ -642,10 +647,11 @@ func (module *Module) GetOrCreateUser(ctx context.Context, user *types.User, opt
 		}
 
 		if createUserOpts.RoleNames != nil {
-			existingRoleNames, err := module.ResolveRoleNamesForUser(ctx, existingUser.ID, existingUser.OrgID)
+			userRoles, err := module.GetUserRoles(ctx, existingUser.ID)
 			if err != nil {
 				return nil, err
 			}
+			existingRoleNames := roleNamesFromUserRoles(userRoles)
 
 			if !sameRoleNames(existingRoleNames, createUserOpts.RoleNames) {
 				if err := module.authz.ModifyGrant(
@@ -884,28 +890,13 @@ func (module *Module) ReplaceUserRoleEntries(ctx context.Context, orgID, userID 
 	})
 }
 
-func (module *Module) ResolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error) {
-	storableUserRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
+func (module *Module) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
+	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	roleIDs := make([]valuer.UUID, len(storableUserRoles))
-	for idx, sur := range storableUserRoles {
-		roleIDs[idx] = sur.RoleID
-	}
-
-	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	roleNames := make([]string, len(roles))
-	for idx, role := range roles {
-		roleNames[idx] = role.Name
-	}
-
-	return roleNames, nil
+	return userRoles, nil
 }
 
 func sameRoleNames(a, b []string) bool {
@@ -920,4 +911,14 @@ func sameRoleNames(a, b []string) bool {
 	slices.Sort(bb)
 
 	return slices.Equal(aa, bb)
+}
+
+func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {
+	names := make([]string, 0, len(userRoles))
+	for _, ur := range userRoles {
+		if ur.Role != nil {
+			names = append(names, ur.Role.Name)
+		}
+	}
+	return names
 }

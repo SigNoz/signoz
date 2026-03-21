@@ -36,7 +36,6 @@ func (store *store) Create(ctx context.Context, token *authtypes.StorableToken) 
 
 func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID) (*authtypes.Identity, error) {
 	user := new(types.User)
-
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -48,25 +47,23 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		return nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with id: %s does not exist", userID)
 	}
 
-	var roleNames []string
-	err = store.
-		sqlstore.
+	userRoles := make([]*authtypes.UserRole, 0)
+	err = store.sqlstore.
 		BunDBCtx(ctx).
 		NewSelect().
-		TableExpr("user_role AS ur").
-		ColumnExpr("r.name").
-		Join("JOIN role AS r ON r.id = ur.role_id").
-		Where("ur.user_id = ?", userID).
-		Scan(ctx, &roleNames)
+		Model(&userRoles).
+		Where("user_id = ?", userID).
+		Relation("Role").
+		Scan(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if len(roleNames) == 0 {
+	if len(userRoles) == 0 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no roles found for user with id: %s", userID)
 	}
 
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return authtypes.NewIdentity(userID, user.OrgID, user.Email, role, authtypes.IdentNProviderTokenizer), nil
 }

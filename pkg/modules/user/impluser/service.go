@@ -122,9 +122,14 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		existingUserRoleNames, err := s.module.ResolveRoleNamesForUser(ctx, existingUser.ID, existingUser.OrgID)
+		userRoles, err := s.module.GetUserRoles(ctx, existingUser.ID)
 		if err != nil {
 			return err
+		}
+
+		existingUserRoleNames := make([]string, len(userRoles))
+		for idx, userRole := range userRoles {
+			existingUserRoleNames[idx] = userRole.Role.Name
 		}
 
 		// idempotent - safe to retry can't put this in a txn

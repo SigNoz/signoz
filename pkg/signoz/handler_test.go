@@ -50,7 +50,7 @@ func TestNewHandlers(t *testing.T) {
 
 	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), nil, userRoleStore, flagger)
+	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
 
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore)
 

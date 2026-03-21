@@ -4,7 +4,6 @@ import (
 	"context"
 	"slices"
 
-	"github.com/SigNoz/signoz/pkg/authz"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -15,13 +14,12 @@ import (
 
 type getter struct {
 	store         types.UserStore
-	authz         authz.AuthZ
 	userRoleStore authtypes.UserRoleStore
 	flagger       flagger.Flagger
 }
 
-func NewGetter(store types.UserStore, authz authz.AuthZ, userRoleStore authtypes.UserRoleStore, flagger flagger.Flagger) user.Getter {
-	return &getter{store: store, authz: authz, userRoleStore: userRoleStore, flagger: flagger}
+func NewGetter(store types.UserStore, userRoleStore authtypes.UserRoleStore, flagger flagger.Flagger) user.Getter {
+	return &getter{store: store, userRoleStore: userRoleStore, flagger: flagger}
 }
 
 func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
@@ -51,18 +49,25 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 		userIDs[idx] = user.ID
 	}
 
-	storableUserRoles, err := module.userRoleStore.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
+	userRoles, err := module.userRoleStore.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
 	if err != nil {
 		return nil, err
 	}
 
-	userIDToRoleIDs, roleIDs := authtypes.GetUserIDToRoleIDsMappingAndUniqueRoles(storableUserRoles)
-	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
-	if err != nil {
-		return nil, err
+	// Build userID → role name mapping directly from the joined Role
+	userIDToRoleNames := make(map[valuer.UUID][]string)
+	for _, ur := range userRoles {
+		if ur.Role != nil {
+			userIDToRoleNames[ur.UserID] = append(userIDToRoleNames[ur.UserID], ur.Role.Name)
+		}
 	}
 
-	deprecatedUsers := module.deprecatedUsersFromUsersAndRolesMaps(users, roles, userIDToRoleIDs)
+	deprecatedUsers := make([]*types.DeprecatedUser, 0, len(users))
+	for _, user := range users {
+		roleNames := userIDToRoleNames[user.ID]
+		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
+		deprecatedUsers = append(deprecatedUsers, types.NewDeprecatedUserFromUserAndRole(user, role))
+	}
 
 	return deprecatedUsers, nil
 }
@@ -74,7 +79,7 @@ func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id
 	}
 
 	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID, user.OrgID)
+	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -91,7 +96,7 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 	}
 
 	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID, user.OrgID)
+	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID)
 	if err != nil {
 		return nil, err
 	}
@@ -132,52 +137,15 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 	return factorPassword, nil
 }
 
-func (module *getter) deprecatedUsersFromUsersAndRolesMaps(users []*types.User, roles []*authtypes.Role, userIDToRoleIDsMap map[valuer.UUID][]valuer.UUID) []*types.DeprecatedUser {
-	dUsers := make([]*types.DeprecatedUser, 0, len(users))
-
-	roleIDToRole := make(map[string]*authtypes.Role, len(roles))
-	for _, role := range roles {
-		roleIDToRole[role.ID.String()] = role
-	}
-
-	for _, user := range users {
-		roleIDs := userIDToRoleIDsMap[user.ID]
-
-		roleNames := make([]string, 0, len(roleIDs))
-		for _, rid := range roleIDs {
-			if role, ok := roleIDToRole[rid.String()]; ok {
-				roleNames = append(roleNames, role.Name)
-			}
-		}
-
-		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
-
-		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, role)
-		dUsers = append(dUsers, deprecatedUser)
-	}
-
-	return dUsers
-}
-
-func (module *getter) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error) {
-	storableUserRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
+func (module *getter) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID) ([]string, error) {
+	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	roleIDs := make([]valuer.UUID, len(storableUserRoles))
-	for idx, sur := range storableUserRoles {
-		roleIDs[idx] = sur.RoleID
-	}
-
-	roles, err := module.authz.ListByOrgIDAndIDs(ctx, orgID, roleIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	roleNames := make([]string, len(roles))
-	for idx, role := range roles {
-		roleNames[idx] = role.Name
+	roleNames := make([]string, len(userRoles))
+	for idx, userRole := range userRoles {
+		roleNames[idx] = userRole.Role.Name
 	}
 
 	return roleNames, nil

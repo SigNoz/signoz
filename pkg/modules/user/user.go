@@ -6,6 +6,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -52,7 +53,7 @@ type Module interface {
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
 	// Roles
-	ResolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error)
+	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
 	ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
 
 	statsreporter.StatsCollector

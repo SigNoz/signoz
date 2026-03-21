@@ -89,7 +89,7 @@ func New(
 	sqlSchemaProviderFactories func(sqlstore.SQLStore) factory.NamedMap[factory.ProviderFactory[sqlschema.SQLSchema, sqlschema.Config]],
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
-	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing, userRoleStore authtypes.UserRoleStore, authz authz.AuthZ) (map[authtypes.AuthNProvider]authn.AuthN, error),
+	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
 	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) factory.ProviderFactory[authz.AuthZ, authz.Config],
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
@@ -323,7 +323,7 @@ func New(
 	}
 
 	// Initialize user getter
-	userGetter := impluser.NewGetter(userStore, authz, userRoleStore, flagger)
+	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(
@@ -369,7 +369,7 @@ func New(
 
 	// Initialize authns
 	store := sqlauthnstore.NewStore(sqlstore)
-	authNs, err := authNsCallback(ctx, providerSettings, store, licensing, userRoleStore, authz)
+	authNs, err := authNsCallback(ctx, providerSettings, store, licensing)
 	if err != nil {
 		return nil, err
 	}

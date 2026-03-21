@@ -17,7 +17,7 @@ func NewStore(sqlstore sqlstore.SQLStore) authtypes.AuthNStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error) {
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, []*authtypes.UserRole, error) {
 	user := new(types.User)
 	factorPassword := new(types.FactorPassword)
 
@@ -31,7 +31,7 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
+		return nil, nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)
 	}
 
 	err = store.
@@ -42,10 +42,22 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		Where("user_id = ?", user.ID).
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
+		return nil, nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodePasswordNotFound, "user with email %s in org %s does not have password", email, orgID)
 	}
 
-	return user, factorPassword, nil
+	userRoles := make([]*authtypes.UserRole, 0)
+	err = store.sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&userRoles).
+		Where("user_id = ?", user.ID).
+		Relation("Role").
+		Scan(ctx)
+	if err != nil {
+		return nil, nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodePasswordNotFound, "user with email %s in org %s does not have user role entries", email, orgID)
+	}
+
+	return user, factorPassword, userRoles, nil
 }
 
 func (store *store) GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*authtypes.AuthDomain, error) {
