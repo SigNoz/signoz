@@ -50,10 +50,7 @@ type Setter interface {
 	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
 	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
 
-	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
-
 	// Roles
-	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
 	ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
 
 	statsreporter.StatsCollector
@@ -66,8 +63,8 @@ type Getter interface {
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
 
-	// Get user by orgID and id.
-	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
+	// Get deprecated user object by orgID and id.
+	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
 
 	// Get user by id.
 	Get(context.Context, valuer.UUID) (*types.DeprecatedUser, error)
@@ -83,6 +80,12 @@ type Getter interface {
 
 	// Get factor password by user id.
 	GetFactorPasswordByUserID(context.Context, valuer.UUID) (*types.FactorPassword, error)
+
+	// Gets single Non-Deleted user by email and org id
+	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
+
+	// Gets user_role with roles entries from db
+	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
 }
 
 type Handler interface {

@@ -97,7 +97,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := h.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -116,7 +116,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	user, err := h.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -203,7 +203,7 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	user, err := handler.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := handler.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return

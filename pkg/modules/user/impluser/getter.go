@@ -4,6 +4,7 @@ import (
 	"context"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
@@ -78,19 +79,18 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	return deprecatedUsers, nil
 }
 
-func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {
+func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {
 	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID)
+	userRoles, err := module.GetUserRoles(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
@@ -101,13 +101,12 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 		return nil, err
 	}
 
-	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID)
+	userRoles, err := module.GetUserRoles(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
@@ -143,16 +142,33 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 	return factorPassword, nil
 }
 
-func (module *getter) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID) ([]string, error) {
+// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
+func (module *getter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
+	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter out the deleted users
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
+
+	if len(existingUsers) > 1 {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+	}
+
+	if len(existingUsers) == 1 {
+		return existingUsers[0], nil
+	}
+
+	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
+
+}
+
+func (module *getter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
 	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	roleNames := make([]string, len(userRoles))
-	for idx, userRole := range userRoles {
-		roleNames[idx] = userRole.Role.Name
-	}
-
-	return roleNames, nil
+	return userRoles, nil
 }

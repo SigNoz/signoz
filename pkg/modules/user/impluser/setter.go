@@ -35,10 +35,11 @@ type setter struct {
 	authz         authz.AuthZ
 	analytics     analytics.Analytics
 	config        user.Config
+	getter        root.Getter
 }
 
 // This module is a WIP, don't take inspiration from this.
-func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, userRoleStore authtypes.UserRoleStore) root.Setter {
+func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing emailing.Emailing, providerSettings factory.ProviderSettings, orgSetter organization.Setter, authz authz.AuthZ, analytics analytics.Analytics, config user.Config, userRoleStore authtypes.UserRoleStore, getter root.Getter) root.Setter {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/modules/user/impluser")
 	return &setter{
 		store:         store,
@@ -50,26 +51,8 @@ func NewSetter(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		analytics:     analytics,
 		authz:         authz,
 		config:        config,
+		getter:        getter,
 	}
-}
-
-// this function gets user with its proper roles populated
-func (module *setter) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.DeprecatedUser, error) {
-	user, err := module.store.GetByOrgIDAndID(ctx, orgID, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	userRoles, err := module.GetUserRoles(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
-
-	deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, role)
-
-	return deprecatedUser, nil
 }
 
 // CreateBulk implements invite.Module.
@@ -238,7 +221,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 }
 
 func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
-	existingUser, err := module.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(id))
+	existingUser, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
 	}
@@ -251,7 +234,7 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id stri
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	requestor, err := module.GetDeprecatedByOrgIDAndUserID(ctx, orgID, valuer.MustNewUUID(updatedBy))
+	requestor, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
@@ -352,7 +335,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
-	userRoles, err := module.GetUserRoles(ctx, user.ID)
+	userRoles, err := module.getter.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -454,7 +437,7 @@ func (module *setter) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "Users are not allowed to reset their password themselves, please contact an admin to reset your password.")
 	}
 
-	user, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, email, orgID)
+	user, err := module.getter.GetNonDeletedUserByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil // for security reasons
@@ -530,7 +513,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	userRoles, err := module.GetUserRoles(ctx, user.ID)
+	userRoles, err := module.getter.GetUserRoles(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -618,7 +601,7 @@ func (module *setter) UpdatePassword(ctx context.Context, userID valuer.UUID, ol
 func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opts ...root.CreateUserOption) (*types.User, error) {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 
-	existingUser, err := module.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
+	existingUser, err := module.getter.GetNonDeletedUserByEmailAndOrgID(ctx, user.Email, user.OrgID)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -632,7 +615,7 @@ func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opt
 					return nil, err
 				}
 			} else {
-				userRoles, err := module.GetUserRoles(ctx, existingUser.ID)
+				userRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
 				if err != nil {
 					return nil, err
 				}
@@ -647,7 +630,7 @@ func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opt
 		}
 
 		if createUserOpts.RoleNames != nil {
-			userRoles, err := module.GetUserRoles(ctx, existingUser.ID)
+			userRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
 			if err != nil {
 				return nil, err
 			}
@@ -771,28 +754,6 @@ func (module *setter) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 	return stats, nil
 }
 
-// this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
-func (module *setter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
-	if err != nil {
-		return nil, err
-	}
-
-	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
-
-	if len(existingUsers) > 1 {
-		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
-	}
-
-	if len(existingUsers) == 1 {
-		return existingUsers[0], nil
-	}
-
-	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
-
-}
-
 func (module *setter) createUserWithoutGrant(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
@@ -888,15 +849,6 @@ func (module *setter) ReplaceUserRoleEntries(ctx context.Context, orgID, userID 
 		// create fresh ones
 		return module.createUserRoleEntries(ctx, orgID, userID, finalRoleNames)
 	})
-}
-
-func (module *setter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
-	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	return userRoles, nil
 }
 
 func sameRoleNames(a, b []string) bool {

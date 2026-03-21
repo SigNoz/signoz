@@ -17,6 +17,7 @@ import (
 type service struct {
 	settings  factory.ScopedProviderSettings
 	store     types.UserStore
+	getter    user.Getter
 	setter    user.Setter
 	orgGetter organization.Getter
 	authz     authz.AuthZ
@@ -27,6 +28,7 @@ type service struct {
 func NewService(
 	providerSettings factory.ProviderSettings,
 	store types.UserStore,
+	getter user.Getter,
 	setter user.Setter,
 	orgGetter organization.Getter,
 	authz authz.AuthZ,
@@ -35,6 +37,7 @@ func NewService(
 	return &service{
 		settings:  factory.NewScopedProviderSettings(providerSettings, "go.signoz.io/pkg/modules/user"),
 		store:     store,
+		getter:    getter,
 		setter:    setter,
 		orgGetter: orgGetter,
 		authz:     authz,
@@ -116,13 +119,13 @@ func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) erro
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingUser, err := s.setter.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
+	existingUser, err := s.getter.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
 
 	if existingUser != nil {
-		userRoles, err := s.setter.GetUserRoles(ctx, existingUser.ID)
+		userRoles, err := s.getter.GetUserRoles(ctx, existingUser.ID)
 		if err != nil {
 			return err
 		}

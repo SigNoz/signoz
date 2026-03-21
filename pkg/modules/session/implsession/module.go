@@ -164,7 +164,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", errors.WithAdditionalf(err, "root user can only authenticate via password")
 	}
 
-	userRoles, err := module.userSetter.GetUserRoles(ctx, newUser.ID)
+	userRoles, err := module.userGetter.GetUserRoles(ctx, newUser.ID)
 	if err != nil {
 		return "", err
 	}

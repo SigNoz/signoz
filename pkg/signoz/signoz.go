@@ -417,7 +417,7 @@ func New(
 		return nil, err
 	}
 
-	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.UserSetter, orgGetter, authz, config.User.Root)
+	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.UserGetter, modules.UserSetter, orgGetter, authz, config.User.Root)
 
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
 	querierHandler := querierHandlerCallback(providerSettings, querier, analytics)
