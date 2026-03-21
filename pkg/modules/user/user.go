@@ -34,7 +34,7 @@ type Setter interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.UpdatableDeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
 	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.DeprecatedUser) error

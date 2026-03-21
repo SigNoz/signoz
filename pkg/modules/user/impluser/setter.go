@@ -220,7 +220,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 	return nil
 }
 
-func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
+func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.UpdatableDeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
 	existingUser, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err

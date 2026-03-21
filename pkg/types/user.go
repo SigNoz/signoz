@@ -59,6 +59,11 @@ type PostableRegisterOrgAndAdmin struct {
 	OrgName        string       `json:"orgName"`
 }
 
+type UpdatableDeprecatedUser struct {
+	DisplayName string `json:"displayName"`
+	Role        Role   `json:"role"`
+}
+
 func NewUser(displayName string, email valuer.Email, orgID valuer.UUID, status valuer.String) (*User, error) {
 	if email.IsZero() {
 		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "email is required")
