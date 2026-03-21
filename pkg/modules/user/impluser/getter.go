@@ -79,9 +79,9 @@ func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id
 		return nil, err
 	}
 
-	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-	return types.NewDeprecatedUserFromUserAndRole(user, highestRole), nil
+	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
 
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.DeprecatedUser, error) {
@@ -96,9 +96,9 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 		return nil, err
 	}
 
-	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-	return types.NewDeprecatedUserFromUserAndRole(user, highestRole), nil
+	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
 }
 
 func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
@@ -150,9 +150,9 @@ func (module *getter) deprecatedUsersFromUsersAndRolesMaps(users []*types.User, 
 			}
 		}
 
-		highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, highestRole)
+		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, role)
 		dUsers = append(dUsers, deprecatedUser)
 	}
 

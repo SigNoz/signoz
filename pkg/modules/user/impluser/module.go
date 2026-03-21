@@ -65,9 +65,9 @@ func (m *Module) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userI
 		return nil, err
 	}
 
-	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-	deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, highestRole)
+	deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, role)
 
 	return deprecatedUser, nil
 }

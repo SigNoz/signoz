@@ -131,15 +131,3 @@ func compareRoles(a, b types.Role) int {
 	}
 	return order[a] - order[b]
 }
-
-func HighestLegacyRoleFromManagedRoleNames(managedRoles []string) types.Role {
-	highest := types.RoleViewer
-	for _, name := range managedRoles {
-		for legacyRole, managedName := range ExistingRoleToSigNozManagedRoleMap {
-			if managedName == name && compareRoles(legacyRole, highest) > 0 {
-				highest = legacyRole
-			}
-		}
-	}
-	return highest
-}

@@ -169,7 +169,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 		return "", err
 	}
 
-	finalRole := authtypes.HighestLegacyRoleFromManagedRoleNames(finalRoleNames)
+	finalRole := authtypes.SigNozManagedRoleToExistingLegacyRole[finalRoleNames[0]]
 
 	token, err := module.tokenizer.CreateToken(ctx, authtypes.NewIdentity(newUser.ID, newUser.OrgID, newUser.Email, finalRole, authtypes.IdentNProviderTokenizer), map[string]string{})
 	if err != nil {

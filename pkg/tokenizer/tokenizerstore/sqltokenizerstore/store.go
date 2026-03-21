@@ -66,9 +66,9 @@ func (store *store) GetIdentityByUserID(ctx context.Context, userID valuer.UUID)
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "no roles found for user with id: %s", userID)
 	}
 
-	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-	return authtypes.NewIdentity(userID, user.OrgID, user.Email, highestRole, authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewIdentity(userID, user.OrgID, user.Email, role, authtypes.IdentNProviderTokenizer), nil
 }
 
 func (store *store) GetByAccessToken(ctx context.Context, accessToken string) (*authtypes.StorableToken, error) {

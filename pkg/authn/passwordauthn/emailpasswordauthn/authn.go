@@ -38,9 +38,9 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, err
 	}
 
-	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 
-	return authtypes.NewIdentity(user.ID, orgID, user.Email, highestRole, authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewIdentity(user.ID, orgID, user.Email, role, authtypes.IdentNProviderTokenizer), nil
 }
 
 func (a *AuthN) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error) {
