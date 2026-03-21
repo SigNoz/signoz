@@ -143,7 +143,7 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role, isAuthoritative := roleMapping.ResolveRoleFromCallbackIdentity(callbackIdentity)
+	role, isAuthoritative := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
 
 	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {

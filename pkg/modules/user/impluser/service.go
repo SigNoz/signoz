@@ -180,12 +180,12 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	return s.module.CreateUser(ctx, newUser, user.WithFactorPassword(factorPassword), user.WithRoleNames([]string{authtypes.SigNozAdminRoleName}))
 }
 
-func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.StorableUser) error {
+func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID, existingRoot *types.User) error {
 	existingRoot.PromoteToRoot()
 
 	if existingRoot.Email != s.config.Email {
 		existingRoot.UpdateEmail(s.config.Email)
-		deprecatedUser := types.NewDeprecatedUserFromStorableUserAndRole(existingRoot, types.RoleAdmin)
+		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingRoot, types.RoleAdmin)
 		if err := s.module.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
 			return err
 		}

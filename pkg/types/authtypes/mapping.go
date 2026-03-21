@@ -83,7 +83,7 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) ResolveRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) (types.Role, bool) {
+func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) (types.Role, bool) {
 	if roleMapping == nil {
 		return types.RoleViewer, false
 	}

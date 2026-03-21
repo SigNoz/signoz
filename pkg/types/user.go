@@ -34,18 +34,6 @@ var (
 )
 
 type User struct {
-	Identifiable
-	DisplayName string        `json:"displayName"`
-	Email       valuer.Email  `json:"email"`
-	OrgID       valuer.UUID   `json:"orgId"`
-	IsRoot      bool          `json:"isRoot"`
-	Status      valuer.String `json:"status"`
-	DeletedAt   time.Time     `json:"-"`
-	TimeAuditable
-}
-
-// db only model
-type StorableUser struct {
 	bun.BaseModel `bun:"table:users,alias:users"`
 
 	Identifiable
@@ -59,7 +47,7 @@ type StorableUser struct {
 }
 
 type DeprecatedUser struct {
-	User
+	*User
 	Role Role `json:"role"`
 }
 
@@ -125,60 +113,19 @@ func NewRootUser(displayName string, email valuer.Email, orgID valuer.UUID) (*Us
 	}, nil
 }
 
-func NewUserFromStorableUser(storableUser *StorableUser) *User {
-	if storableUser == nil {
-		return nil
-	}
-
-	return &User{
-		Identifiable:  storableUser.Identifiable,
-		DisplayName:   storableUser.DisplayName,
-		Email:         storableUser.Email,
-		OrgID:         storableUser.OrgID,
-		IsRoot:        storableUser.IsRoot,
-		Status:        storableUser.Status,
-		TimeAuditable: storableUser.TimeAuditable,
-	}
-}
-
-func NewStorableUserFromUser(user *User) *StorableUser {
-	if user == nil {
-		return nil
-	}
-
-	return &StorableUser{
-		Identifiable:  user.Identifiable,
-		DisplayName:   user.DisplayName,
-		Email:         user.Email,
-		OrgID:         user.OrgID,
-		IsRoot:        user.IsRoot,
-		Status:        user.Status,
-		DeletedAt:     user.DeletedAt,
-		TimeAuditable: user.TimeAuditable,
-	}
-}
-
-func NewDeprecatedUserFromStorableUserAndRole(storableUser *StorableUser, role Role) *DeprecatedUser {
-	user := NewUserFromStorableUser(storableUser)
-	return &DeprecatedUser{
-		*user,
-		role,
-	}
-}
-
 func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
 	return &DeprecatedUser{
-		*user,
+		user,
 		role,
 	}
 }
 
-func NewStorableUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *StorableUser {
+func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
 	if deprecatedUser == nil {
 		return nil
 	}
 
-	return &StorableUser{
+	return &User{
 		Identifiable:  deprecatedUser.Identifiable,
 		DisplayName:   deprecatedUser.DisplayName,
 		Email:         deprecatedUser.Email,
@@ -226,36 +173,14 @@ func (u *User) UpdateStatus(status valuer.String) error {
 	return nil
 }
 
-func (u *StorableUser) UpdateStatus(status valuer.String) error {
-	// no updates allowed if user is in delete state
-	if err := u.ErrIfDeleted(); err != nil {
-		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
-	}
-
-	// not udpates allowed from active to pending state
-	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
-		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot move user to pending state from active state")
-	}
-
-	u.Status = status
-	u.UpdatedAt = time.Now()
-
-	return nil
-}
-
 // PromoteToRoot promotes the user to a root user with admin role.
 func (u *User) PromoteToRoot() {
 	u.IsRoot = true
 	u.UpdatedAt = time.Now()
 }
 
-func (u *StorableUser) PromoteToRoot() {
-	u.IsRoot = true
-	u.UpdatedAt = time.Now()
-}
-
 // UpdateEmail updates the email of the user.
-func (u *StorableUser) UpdateEmail(email valuer.Email) {
+func (u *User) UpdateEmail(email valuer.Email) {
 	u.Email = email
 	u.UpdatedAt = time.Now()
 }
@@ -269,27 +194,9 @@ func (u *User) ErrIfRoot() error {
 	return nil
 }
 
-// ErrIfRoot returns an error if the user is a root user. The caller should
-// enrich the error with the specific operation using errors.WithAdditionalf.
-func (u *StorableUser) ErrIfRoot() error {
-	if u.IsRoot {
-		return errors.New(errors.TypeUnsupported, ErrCodeRootUserOperationUnsupported, "this operation is not supported for the root user")
-	}
-	return nil
-}
-
 // ErrIfDeleted returns an error if the user is in deleted state.
 // This error can be enriched with specific operation by the called using errors.WithAdditionalf
 func (u *User) ErrIfDeleted() error {
-	if u.Status == UserStatusDeleted {
-		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
-	}
-	return nil
-}
-
-// ErrIfDeleted returns an error if the user is in deleted state.
-// This error can be enriched with specific operation by the called using errors.WithAdditionalf
-func (u *StorableUser) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
 	}
@@ -344,33 +251,27 @@ func (request *PostableRegisterOrgAndAdmin) UnmarshalJSON(data []byte) error {
 
 type UserStore interface {
 	// Creates a user.
-	CreateUser(ctx context.Context, user *StorableUser) error
+	CreateUser(ctx context.Context, user *User) error
 
 	// Get user by id.
-	GetUser(context.Context, valuer.UUID) (*StorableUser, error)
+	GetUser(context.Context, valuer.UUID) (*User, error)
 
 	// Get user by orgID and id.
-	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*StorableUser, error)
+	GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*User, error)
 
 	// Get user by email and orgID.
-	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*StorableUser, error)
-
-	// Get users by email.
-	// GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*StorableUser, error)
-
-	// Get users by role and org.
-	// GetActiveUsersByRoleAndOrgID(ctx context.Context, role Role, orgID valuer.UUID) ([]*StorableUser, error)
+	GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*User, error)
 
 	// List users by org.
-	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*StorableUser, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*User, error)
 
 	// List users by email and org ids.
-	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*StorableUser, error)
+	ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*User, error)
 
 	// Get users for an org id using emails and statuses
-	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*StorableUser, error)
+	GetUsersByEmailsOrgIDAndStatuses(context.Context, valuer.UUID, []string, []string) ([]*User, error)
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, user *StorableUser) error
+	UpdateUser(ctx context.Context, orgID valuer.UUID, user *User) error
 	DeleteUser(ctx context.Context, orgID string, id string) error
 	SoftDeleteUser(ctx context.Context, orgID string, id string) error
 
@@ -396,10 +297,10 @@ type UserStore interface {
 	CountByOrgIDAndStatuses(ctx context.Context, orgID valuer.UUID, statuses []string) (map[valuer.String]int64, error)
 
 	// Get root user by org.
-	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*StorableUser, error)
+	GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*User, error)
 
 	// Get user by reset password token
-	GetUserByResetPasswordToken(ctx context.Context, token string) (*StorableUser, error)
+	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

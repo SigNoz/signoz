@@ -25,15 +25,15 @@ func NewGetter(store types.UserStore, authz authz.AuthZ, userRoleStore authtypes
 }
 
 func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
-	storableRootUser, err := module.store.GetRootUserByOrgID(ctx, orgID)
+	rootUser, err := module.store.GetRootUserByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
-	return types.NewUserFromStorableUser(storableRootUser), nil
+	return rootUser, nil
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
-	storableUsers, err := module.store.ListUsersByOrgID(ctx, orgID)
+	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -43,12 +43,12 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
 
 	if hideRootUsers {
-		storableUsers = slices.DeleteFunc(storableUsers, func(user *types.StorableUser) bool { return user.IsRoot })
+		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
 	}
 
-	userIDs := make([]valuer.UUID, len(storableUsers))
-	for idx, storableUser := range storableUsers {
-		userIDs[idx] = storableUser.ID
+	userIDs := make([]valuer.UUID, len(users))
+	for idx, user := range users {
+		userIDs[idx] = user.ID
 	}
 
 	storableUserRoles, err := module.userRoleStore.ListUserRolesByOrgIDAndUserIDs(ctx, orgID, userIDs)
@@ -62,66 +62,47 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 		return nil, err
 	}
 
-	users := module.usersFromStorableUsersAndRolesMaps(storableUsers, roles, userIDToRoleIDs)
+	deprecatedUsers := module.deprecatedUsersFromUsersAndRolesMaps(users, roles, userIDToRoleIDs)
 
-	return users, nil
+	return deprecatedUsers, nil
 }
 
-// func (module *getter) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
-// 	users, err := module.store.GetUsersByEmail(ctx, email)
-// 	if err != nil {
-// 		return nil, err
-// 	}
-
-// 	return users, nil
-// }
-
 func (module *getter) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {
-	storableUser, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
+	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
 	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, storableUser.ID, storableUser.OrgID)
+	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID, user.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
 
-	return types.NewDeprecatedUserFromStorableUserAndRole(storableUser, highestRole), nil
+	return types.NewDeprecatedUserFromUserAndRole(user, highestRole), nil
 }
 
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.DeprecatedUser, error) {
-	storableUser, err := module.store.GetUser(ctx, id)
+	user, err := module.store.GetUser(ctx, id)
 	if err != nil {
 		return nil, err
 	}
 
 	// figure out role
-	roleNames, err := module.resolveRoleNamesForUser(ctx, storableUser.ID, storableUser.OrgID)
+	roleNames, err := module.resolveRoleNamesForUser(ctx, user.ID, user.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
 
-	return types.NewDeprecatedUserFromStorableUserAndRole(storableUser, highestRole), nil
+	return types.NewDeprecatedUserFromUserAndRole(user, highestRole), nil
 }
 
 func (module *getter) ListUsersByEmailAndOrgIDs(ctx context.Context, email valuer.Email, orgIDs []valuer.UUID) ([]*types.User, error) {
-	storableUsers, err := module.store.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
-	if err != nil {
-		return nil, err
-	}
-
-	users := make([]*types.User, len(storableUsers))
-	for idx, sUser := range storableUsers {
-		users[idx] = types.NewUserFromStorableUser(sUser)
-	}
-
-	return users, nil
+	return module.store.ListUsersByEmailAndOrgIDs(ctx, email, orgIDs)
 }
 
 func (module *getter) CountByOrgID(ctx context.Context, orgID valuer.UUID) (int64, error) {
@@ -151,15 +132,15 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 	return factorPassword, nil
 }
 
-func (module *getter) usersFromStorableUsersAndRolesMaps(storableUsers []*types.StorableUser, roles []*authtypes.Role, userIDToRoleIDsMap map[valuer.UUID][]valuer.UUID) []*types.DeprecatedUser {
-	users := make([]*types.DeprecatedUser, 0, len(storableUsers))
+func (module *getter) deprecatedUsersFromUsersAndRolesMaps(users []*types.User, roles []*authtypes.Role, userIDToRoleIDsMap map[valuer.UUID][]valuer.UUID) []*types.DeprecatedUser {
+	dUsers := make([]*types.DeprecatedUser, 0, len(users))
 
 	roleIDToRole := make(map[string]*authtypes.Role, len(roles))
 	for _, role := range roles {
 		roleIDToRole[role.ID.String()] = role
 	}
 
-	for _, user := range storableUsers {
+	for _, user := range users {
 		roleIDs := userIDToRoleIDsMap[user.ID]
 
 		roleNames := make([]string, 0, len(roleIDs))
@@ -171,11 +152,11 @@ func (module *getter) usersFromStorableUsersAndRolesMaps(storableUsers []*types.
 
 		highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
 
-		deprecatedUser := types.NewDeprecatedUserFromStorableUserAndRole(user, highestRole)
-		users = append(users, deprecatedUser)
+		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, highestRole)
+		dUsers = append(dUsers, deprecatedUser)
 	}
 
-	return users
+	return dUsers
 }
 
 func (module *getter) resolveRoleNamesForUser(ctx context.Context, userID valuer.UUID, orgID valuer.UUID) ([]string, error) {

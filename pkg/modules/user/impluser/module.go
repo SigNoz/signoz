@@ -55,19 +55,19 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 
 // this function gets user with its proper roles populated
 func (m *Module) GetDeprecatedByOrgIDAndUserID(ctx context.Context, orgID, userID valuer.UUID) (*types.DeprecatedUser, error) {
-	storableUser, err := m.store.GetByOrgIDAndID(ctx, orgID, userID)
+	user, err := m.store.GetByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	roleNames, err := m.ResolveRoleNamesForUser(ctx, userID, storableUser.OrgID)
+	roleNames, err := m.ResolveRoleNamesForUser(ctx, userID, user.OrgID)
 	if err != nil {
 		return nil, err
 	}
 
 	highestRole := authtypes.HighestLegacyRoleFromManagedRoleNames(roleNames)
 
-	deprecatedUser := types.NewDeprecatedUserFromStorableUserAndRole(storableUser, highestRole)
+	deprecatedUser := types.NewDeprecatedUserFromUserAndRole(user, highestRole)
 
 	return deprecatedUser, nil
 }
@@ -84,21 +84,21 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 	for idx, invite := range bulkInvites.Invites {
 		emails[idx] = invite.Email.StringValue()
 	}
-	storableUsers, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
+	users, err := m.store.GetUsersByEmailsOrgIDAndStatuses(ctx, orgID, emails, []string{types.UserStatusActive.StringValue(), types.UserStatusPendingInvite.StringValue()})
 	if err != nil {
 		return nil, err
 	}
 
-	if len(storableUsers) > 0 {
-		if err := storableUsers[0].ErrIfRoot(); err != nil {
+	if len(users) > 0 {
+		if err := users[0].ErrIfRoot(); err != nil {
 			return nil, errors.WithAdditionalf(err, "Cannot send invite to root user")
 		}
 
-		if storableUsers[0].Status == types.UserStatusPendingInvite {
-			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", storableUsers[0].Email.StringValue())
+		if users[0].Status == types.UserStatusPendingInvite {
+			return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "An invite already exists for this email: %s", users[0].Email.StringValue())
 		}
 
-		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", storableUsers[0].Email.StringValue())
+		return nil, errors.Newf(errors.TypeAlreadyExists, errors.CodeAlreadyExists, "User already exists with this email: %s", users[0].Email.StringValue())
 	}
 
 	type userWithResetToken struct {
@@ -207,7 +207,7 @@ func (module *Module) CreateUser(ctx context.Context, user *types.User, opts ...
 	}
 
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, types.NewStorableUserFromUser(user)); err != nil {
+		if err := module.store.CreateUser(ctx, user); err != nil {
 			return err
 		}
 
@@ -308,13 +308,13 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 	return existingUser, nil
 }
 
-func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.DeprecatedUser) error {
-	storableUser := types.NewStorableUserFromDeprecatedUser(user)
-	if err := module.store.UpdateUser(ctx, orgID, storableUser); err != nil {
+func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
+	user := types.NewUserFromDeprecatedUser(deprecateUser)
+	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
 		return err
 	}
 
-	traits := types.NewTraitsFromDeprecatedUser(user)
+	traits := types.NewTraitsFromDeprecatedUser(deprecateUser)
 	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
 
@@ -326,20 +326,20 @@ func (module *Module) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user
 }
 
 func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error {
-	storableUser, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(id))
 	if err != nil {
 		return err
 	}
 
-	if err := storableUser.ErrIfRoot(); err != nil {
+	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete root user")
 	}
 
-	if err := storableUser.ErrIfDeleted(); err != nil {
+	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "cannot delete already deleted user")
 	}
 
-	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(storableUser.Email.String())) {
+	if slices.Contains(integrationtypes.AllIntegrationUserEmails, integrationtypes.IntegrationUserEmail(user.Email.String())) {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "integration user cannot be deleted")
 	}
 
@@ -348,11 +348,11 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
-	if deleter.ID == storableUser.ID {
+	if deleter.ID == user.ID {
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
-	roleNames, err := module.ResolveRoleNamesForUser(ctx, storableUser.ID, storableUser.OrgID)
+	roleNames, err := module.ResolveRoleNamesForUser(ctx, user.ID, user.OrgID)
 	if err != nil {
 		return err
 	}
@@ -369,11 +369,11 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 	}
 
 	// for now we are only soft deleting users
-	if err := module.store.SoftDeleteUser(ctx, orgID.String(), storableUser.ID.StringValue()); err != nil {
+	if err := module.store.SoftDeleteUser(ctx, orgID.String(), user.ID.StringValue()); err != nil {
 		return err
 	}
 
-	module.analytics.TrackUser(ctx, storableUser.OrgID.String(), storableUser.ID.String(), "User Deleted", map[string]any{
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
 
@@ -381,16 +381,16 @@ func (module *Module) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 }
 
 func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID valuer.UUID) (*types.ResetPasswordToken, error) {
-	storableUser, err := module.store.GetUser(ctx, userID)
+	user, err := module.store.GetUser(ctx, userID)
 	if err != nil {
 		return nil, err
 	}
 
-	if err := storableUser.ErrIfRoot(); err != nil {
+	if err := user.ErrIfRoot(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
-	if err := storableUser.ErrIfDeleted(); err != nil {
+	if err := user.ErrIfDeleted(); err != nil {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "user has been deleted")
 	}
 
@@ -430,7 +430,7 @@ func (module *Module) GetOrCreateResetPasswordToken(ctx context.Context, userID 
 
 	// create a new token
 	tokenLifetime := module.config.Password.Reset.MaxTokenLifetime
-	if storableUser.Status == types.UserStatusPendingInvite {
+	if user.Status == types.UserStatusPendingInvite {
 		tokenLifetime = module.config.Password.Invite.MaxTokenLifetime
 	}
 	resetPasswordToken, err := types.NewResetPasswordToken(password.ID, time.Now().Add(tokenLifetime))
@@ -510,17 +510,17 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	storableUser, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
+	user, err := module.store.GetUser(ctx, valuer.MustNewUUID(password.UserID))
 	if err != nil {
 		return err
 	}
 
 	// handle deleted user
-	if err := storableUser.ErrIfDeleted(); err != nil {
+	if err := user.ErrIfDeleted(); err != nil {
 		return errors.WithAdditionalf(err, "deleted users cannot reset their password")
 	}
 
-	if err := storableUser.ErrIfRoot(); err != nil {
+	if err := user.ErrIfRoot(); err != nil {
 		return errors.WithAdditionalf(err, "cannot reset password for root user")
 	}
 
@@ -528,29 +528,29 @@ func (module *Module) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	roleNames, err := module.ResolveRoleNamesForUser(ctx, storableUser.ID, storableUser.OrgID)
+	roleNames, err := module.ResolveRoleNamesForUser(ctx, user.ID, user.OrgID)
 	if err != nil {
 		return err
 	}
 
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
-	if storableUser.Status == types.UserStatusPendingInvite {
+	if user.Status == types.UserStatusPendingInvite {
 		if err = module.authz.Grant(
 			ctx,
-			storableUser.OrgID,
+			user.OrgID,
 			roleNames,
-			authtypes.MustNewSubject(authtypes.TypeableUser, storableUser.ID.StringValue(), storableUser.OrgID, nil),
+			authtypes.MustNewSubject(authtypes.TypeableUser, user.ID.StringValue(), user.OrgID, nil),
 		); err != nil {
 			return err
 		}
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if storableUser.Status == types.UserStatusPendingInvite {
-			if err := storableUser.UpdateStatus(types.UserStatusActive); err != nil {
+		if user.Status == types.UserStatusPendingInvite {
+			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
 				return err
 			}
-			if err := module.store.UpdateUser(ctx, storableUser.OrgID, storableUser); err != nil {
+			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 				return err
 			}
 		}
@@ -767,20 +767,20 @@ func (module *Module) Collect(ctx context.Context, orgID valuer.UUID) (map[strin
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
 func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	existingStorableUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
 
 	// filter out the deleted users
-	existingStorableUsers = slices.DeleteFunc(existingStorableUsers, func(user *types.StorableUser) bool { return user.ErrIfDeleted() != nil })
+	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
-	if len(existingStorableUsers) > 1 {
+	if len(existingUsers) > 1 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())
 	}
 
-	if len(existingStorableUsers) == 1 {
-		return types.NewUserFromStorableUser(existingStorableUsers[0]), nil
+	if len(existingUsers) == 1 {
+		return existingUsers[0], nil
 	}
 
 	return nil, errors.Newf(errors.TypeNotFound, errors.CodeNotFound, "No non-deleted user found with email %s in org_id: %s", email.StringValue(), orgID.StringValue())
@@ -790,7 +790,7 @@ func (module *Module) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 func (module *Module) createUserWithoutGrant(ctx context.Context, user *types.User, opts ...root.CreateUserOption) error {
 	createUserOpts := root.NewCreateUserOptions(opts...)
 	if err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.CreateUser(ctx, types.NewStorableUserFromUser(user)); err != nil {
+		if err := module.store.CreateUser(ctx, user); err != nil {
 			return err
 		}
 
@@ -850,7 +850,7 @@ func (module *Module) activatePendingUser(ctx context.Context, user *types.User,
 	}
 
 	err := module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if err := module.store.UpdateUser(ctx, user.OrgID, types.NewStorableUserFromUser(user)); err != nil {
+		if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
 			return err
 		}
 
