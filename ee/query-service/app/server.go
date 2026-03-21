@@ -211,6 +211,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
+	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
@@ -219,7 +220,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		otelmux.WithFilter(func(r *http.Request) bool {
 			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
 		}),
-		otelmux.WithPublicEndpoint(),
 	))
 	r.Use(middleware.NewIdentN(s.signoz.IdentNResolver, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
