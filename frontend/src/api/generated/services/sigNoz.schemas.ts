@@ -2697,6 +2697,17 @@ export interface TypesStorableAPIKeyDTO {
 	userId?: string;
 }
 
+export interface TypesUpdatableDeprecatedUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+}
+
 export interface TypesUserDTO {
 	/**
 	 * @type string

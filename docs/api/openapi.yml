@@ -2232,6 +2232,13 @@ components:
       required:
       - id
       type: object
+    TypesUpdatableDeprecatedUser:
+      properties:
+        displayName:
+          type: string
+        role:
+          type: string
+      type: object
     TypesUser:
       properties:
         createdAt:
@@ -5252,7 +5259,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesDeprecatedUser'
+              $ref: '#/components/schemas/TypesUpdatableDeprecatedUser'
       responses:
         "200":
           content:
