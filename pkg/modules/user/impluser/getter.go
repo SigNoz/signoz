@@ -22,12 +22,18 @@ func NewGetter(store types.UserStore, userRoleStore authtypes.UserRoleStore, fla
 	return &getter{store: store, userRoleStore: userRoleStore, flagger: flagger}
 }
 
-func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, error) {
+func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID) (*types.User, []*authtypes.UserRole, error) {
 	rootUser, err := module.store.GetRootUserByOrgID(ctx, orgID)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
-	return rootUser, nil
+
+	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, rootUser.ID)
+	if err != nil {
+		return nil, nil, err
+	}
+
+	return rootUser, userRoles, nil
 }
 
 func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {

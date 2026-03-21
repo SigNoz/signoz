@@ -10,7 +10,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
@@ -80,16 +79,18 @@ func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, e
 		return nil, err
 	}
 
-	rootUser, err := provider.userGetter.GetRootUserByOrgID(ctx, org.ID)
+	rootUser, userRoles, err := provider.userGetter.GetRootUserByOrgID(ctx, org.ID)
 	if err != nil {
 		return nil, err
 	}
+
+	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	provider.identity = authtypes.NewIdentity(
 		rootUser.ID,
 		rootUser.OrgID,
 		rootUser.Email,
-		types.RoleAdmin,
+		role,
 		authtypes.IdentNProviderImpersonation,
 	)
 

@@ -61,13 +61,10 @@ type Module interface {
 
 type Getter interface {
 	// Get root user by org id.
-	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, error)
+	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
 
 	// Get gets the users based on the given id
 	ListByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
-
-	// Get users by email.
-	// GetUsersByEmail(context.Context, valuer.Email) ([]*types.User, error)
 
 	// Get user by orgID and id.
 	GetByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
