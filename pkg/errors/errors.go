@@ -7,7 +7,7 @@ import (
 )
 
 // base is the fundamental struct that implements the error interface.
-// The order of the struct is 'TCMEUA'.
+// The order of the struct is 'TCMEUAS'.
 type base struct {
 	// t denotes the custom type of the error.
 	t typ
@@ -21,6 +21,13 @@ type base struct {
 	u string
 	// a denotes any additional error messages (if present).
 	a []string
+	// s contains the stacktrace captured at error creation time.
+	s stacktrace
+}
+
+// Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
+func (b *base) Stacktrace() string {
+	return b.s.String()
 }
 
 // base implements Error interface.
@@ -41,6 +48,7 @@ func New(t typ, code Code, message string) *base {
 		e: nil,
 		u: "",
 		a: []string{},
+		s: newStackTrace(),
 	}
 }
 
@@ -51,6 +59,7 @@ func Newf(t typ, code Code, format string, args ...any) *base {
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: nil,
+		s: newStackTrace(),
 	}
 }
 
@@ -62,6 +71,7 @@ func Wrapf(cause error, t typ, code Code, format string, args ...any) *base {
 		c: code,
 		m: fmt.Sprintf(format, args...),
 		e: cause,
+		s: newStackTrace(),
 	}
 }
 
@@ -72,12 +82,17 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 		c: code,
 		m: message,
 		e: cause,
+		s: newStackTrace(),
 	}
 }
 
 // WithAdditionalf adds an additional error message to the existing error.
 func WithAdditionalf(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
+	var s stacktrace
+	if original, ok := cause.(*base); ok {
+		s = original.s
+	}
 	b := &base{
 		t: t,
 		c: c,
@@ -85,6 +100,7 @@ func WithAdditionalf(cause error, format string, args ...any) *base {
 		e: e,
 		u: u,
 		a: a,
+		s: s,
 	}
 
 	return b.WithAdditional(append(a, fmt.Sprintf(format, args...))...)
@@ -99,6 +115,7 @@ func (b *base) WithUrl(u string) *base {
 		e: b.e,
 		u: u,
 		a: b.a,
+		s: b.s,
 	}
 }
 
@@ -111,6 +128,7 @@ func (b *base) WithAdditional(a ...string) *base {
 		e: b.e,
 		u: b.u,
 		a: a,
+		s: b.s,
 	}
 }
 

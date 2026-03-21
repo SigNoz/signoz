@@ -90,7 +90,7 @@ func TestException(t *testing.T) {
 				assert.Equal(t, tc.exceptionMessage, exc["message"])
 				stacktrace, ok := exc["stacktrace"].(string)
 				require.True(t, ok)
-				assert.Contains(t, stacktrace, ".go:")
+				assert.Contains(t, stacktrace, "exception_test.go:")
 			} else {
 				_, isMap := m["exception"].(map[string]any)
 				assert.False(t, isMap, "exception should not be a structured object")

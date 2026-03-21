@@ -3,7 +3,6 @@ package loghandler
 import (
 	"context"
 	"log/slog"
-	"runtime"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 )
@@ -34,23 +33,23 @@ func (h *exception) Wrap(next LogHandler) LogHandler {
 		}
 
 		t, c, m, _, _, _ := errors.Unwrapb(foundErr)
-		newRecord.AddAttrs(
-			slog.Group("exception",
-				slog.String("type", t.String()),
-				slog.String("code", c.String()),
-				slog.String("message", m),
-				slog.String("stacktrace", captureStacktrace()),
-			),
-		)
+
+		attrs := []any{
+			slog.String("type", t.String()),
+			slog.String("code", c.String()),
+			slog.String("message", m),
+		}
+
+		// Use the stacktrace captured at error creation time if available.
+		type stacktracer interface {
+			Stacktrace() string
+		}
+		if st, ok := foundErr.(stacktracer); ok && st.Stacktrace() != "" {
+			attrs = append(attrs, slog.String("stacktrace", st.Stacktrace()))
+		}
+
+		newRecord.AddAttrs(slog.Group("exception", attrs...))
 
 		return next.Handle(ctx, newRecord)
 	})
-}
-
-// captureStacktrace returns the raw runtime.Stack output for the current goroutine.
-// See: https://github.com/open-telemetry/opentelemetry-go/blob/b8301a29d95f8b43d18a10d31db5d8ec360739bf/sdk/trace/span.go#L579 (recordStackTrace)
-func captureStacktrace() string {
-	stacktrace := make([]byte, 2048)
-	n := runtime.Stack(stacktrace, false)
-	return string(stacktrace[:n])
 }
