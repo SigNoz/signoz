@@ -10,16 +10,7 @@ import (
 
 type zapToSlogConverter struct{}
 
-func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
-	// Always include the core wrappers so that all loggers get
-	// correlation, filtering, and exception enrichment uniformly.
-	defaultWrappers := []loghandler.Wrapper{
-		loghandler.NewCorrelation(),
-		loghandler.NewFiltering(),
-		loghandler.NewException(),
-	}
-	allWrappers := append(defaultWrappers, wrappers...)
-
+func NewLogger(config Config) *slog.Logger {
 	logger := slog.New(
 		loghandler.New(
 			slog.NewJSONHandler(os.Stderr, &slog.HandlerOptions{Level: config.Logs.Level, AddSource: true, ReplaceAttr: func(groups []string, a slog.Attr) slog.Attr {
@@ -36,7 +27,9 @@ func NewLogger(config Config, wrappers ...loghandler.Wrapper) *slog.Logger {
 
 				return a
 			}}),
-			allWrappers...,
+			loghandler.NewCorrelation(),
+			loghandler.NewFiltering(),
+			loghandler.NewException(),
 		),
 	)
 
