@@ -116,7 +116,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		meterProvider:             meterProvider,
 		meterProviderShutdownFunc: meterProviderShutdownFunc,
 		prometheusRegistry:        prometheusRegistry,
-		logger:                    NewLogger(cfg, loghandler.NewCorrelation(), loghandler.NewFiltering()),
+		logger:                    NewLogger(cfg, loghandler.NewCorrelation(), loghandler.NewFiltering(), loghandler.NewException()),
 		startCh:                   make(chan struct{}),
 	}, nil
 }

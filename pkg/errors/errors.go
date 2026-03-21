@@ -23,16 +23,6 @@ type base struct {
 	a []string
 }
 
-func (b *base) LogValue() slog.Value {
-	return slog.GroupValue(
-		slog.String("type", b.t.s),
-		slog.String("code", b.c.s),
-		slog.String("message", b.m),
-		slog.String("url", b.u),
-		slog.Any("additional", b.a),
-	)
-}
-
 // base implements Error interface.
 func (b *base) Error() string {
 	if b.e != nil {
@@ -222,4 +212,9 @@ func WrapTimeoutf(cause error, code Code, format string, args ...any) *base {
 // NewTimeoutf is a wrapper around Newf with TypeTimeout.
 func NewTimeoutf(code Code, format string, args ...any) *base {
 	return Newf(TypeTimeout, code, format, args...)
+}
+
+// Attr returns an slog.Attr with a standardized "exception" key for the given error.
+func Attr(err error) slog.Attr {
+	return slog.Any("exception", err)
 }

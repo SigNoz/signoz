@@ -51,3 +51,10 @@ func TestUnwrapb(t *testing.T) {
 	atyp, _, _, _, _, _ = Unwrapb(oerr)
 	assert.Equal(t, TypeInternal, atyp)
 }
+
+func TestAttr(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error")
+	attr := Attr(err)
+	assert.Equal(t, "exception", attr.Key)
+	assert.Equal(t, err, attr.Value.Any())
+}
