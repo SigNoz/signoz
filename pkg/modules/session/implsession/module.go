@@ -143,19 +143,15 @@ func (module *module) CreateCallbackAuthNSession(ctx context.Context, authNProvi
 	}
 
 	roleMapping := authDomain.AuthDomainConfig().RoleMapping
-	role, isAuthoritative := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+	role := roleMapping.NewRoleFromCallbackIdentity(callbackIdentity)
+	signozManagedRole := authtypes.MustGetSigNozManagedRoleFromExistingRole(role)
 
 	newUser, err := types.NewUser(callbackIdentity.Name, callbackIdentity.Email, callbackIdentity.OrgID, types.UserStatusActive)
 	if err != nil {
 		return "", err
 	}
 
-	if isAuthoritative {
-		signozManagedRole := authtypes.MustGetSigNozManagedRoleFromExistingRole(role)
-		newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{signozManagedRole}))
-	} else {
-		newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser)
-	}
+	newUser, err = module.userSetter.GetOrCreateUser(ctx, newUser, user.WithRoleNames([]string{signozManagedRole}))
 	if err != nil {
 		return "", err
 	}

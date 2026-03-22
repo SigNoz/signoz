@@ -83,14 +83,14 @@ func (typ *RoleMapping) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) (types.Role, bool) {
+func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *CallbackIdentity) types.Role {
 	if roleMapping == nil {
-		return types.RoleViewer, false
+		return types.RoleViewer
 	}
 
 	if roleMapping.UseRoleAttribute && callbackIdentity.Role != "" {
 		if role, err := types.NewRole(strings.ToUpper(callbackIdentity.Role)); err == nil {
-			return role, true
+			return role
 		}
 	}
 
@@ -110,17 +110,17 @@ func (roleMapping *RoleMapping) NewRoleFromCallbackIdentity(callbackIdentity *Ca
 		}
 
 		if found {
-			return highestRole, true
+			return highestRole
 		}
 	}
 
 	if roleMapping.DefaultRole != "" {
 		if role, err := types.NewRole(strings.ToUpper(roleMapping.DefaultRole)); err == nil {
-			return role, true
+			return role
 		}
 	}
 
-	return types.RoleViewer, false
+	return types.RoleViewer
 }
 
 func compareRoles(a, b types.Role) int {

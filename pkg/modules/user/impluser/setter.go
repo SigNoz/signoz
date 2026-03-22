@@ -610,58 +610,12 @@ func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opt
 
 	if existingUser != nil {
 		if existingUser.Status == types.UserStatusPendingInvite {
-			if createUserOpts.RoleNames != nil {
-				if err = module.activatePendingUser(ctx, existingUser, root.WithRoleNames(createUserOpts.RoleNames)); err != nil {
-					return nil, err
-				}
-			} else {
-				userRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
-				if err != nil {
-					return nil, err
-				}
-
-				existingRoleNames := roleNamesFromUserRoles(userRoles)
-				if err = module.activatePendingUser(ctx, existingUser, root.WithRoleNames(existingRoleNames)); err != nil {
-					return nil, err
-				}
-			}
-
-			return existingUser, nil
-		}
-
-		if createUserOpts.RoleNames != nil {
-			userRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
-			if err != nil {
+			if err = module.activatePendingUser(ctx, existingUser, root.WithRoleNames(createUserOpts.RoleNames)); err != nil {
 				return nil, err
-			}
-			existingRoleNames := roleNamesFromUserRoles(userRoles)
-
-			if !sameRoleNames(existingRoleNames, createUserOpts.RoleNames) {
-				if err := module.authz.ModifyGrant(
-					ctx,
-					existingUser.OrgID,
-					existingRoleNames,
-					createUserOpts.RoleNames,
-					authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
-				); err != nil {
-					return nil, err
-				}
-
-				if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, createUserOpts.RoleNames); err != nil {
-					return nil, err
-				}
-
-				if err := module.tokenizer.DeleteIdentity(ctx, existingUser.ID); err != nil {
-					return nil, err
-				}
 			}
 		}
 
 		return existingUser, nil
-	}
-
-	if createUserOpts.RoleNames == nil {
-		opts = append(opts, root.WithRoleNames([]string{authtypes.SigNozViewerRoleName}))
 	}
 
 	if err := module.CreateUser(ctx, user, opts...); err != nil {
