@@ -417,8 +417,6 @@ components:
         message:
           type: string
       type: object
-    FactoryName:
-      type: object
     FactoryResponse:
       properties:
         healthy:
@@ -426,7 +424,7 @@ components:
         services:
           additionalProperties:
             items:
-              $ref: '#/components/schemas/FactoryName'
+              type: string
             type: array
           nullable: true
           type: object

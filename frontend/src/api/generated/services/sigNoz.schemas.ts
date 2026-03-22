@@ -543,16 +543,10 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
-export interface FactoryNameDTO {
-	[key: string]: unknown;
-}
-
 /**
  * @nullable
  */
-export type FactoryResponseDTOServices = {
-	[key: string]: FactoryNameDTO[];
-} | null;
+export type FactoryResponseDTOServices = { [key: string]: string[] } | null;
 
 export interface FactoryResponseDTO {
 	/**
