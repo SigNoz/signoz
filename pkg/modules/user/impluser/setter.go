@@ -805,20 +805,6 @@ func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.
 	})
 }
 
-func sameRoleNames(a, b []string) bool {
-	if len(a) != len(b) {
-		return false
-	}
-
-	aa := slices.Clone(a)
-	bb := slices.Clone(b)
-
-	slices.Sort(aa)
-	slices.Sort(bb)
-
-	return slices.Equal(aa, bb)
-}
-
 func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {
 	names := make([]string, 0, len(userRoles))
 	for _, ur := range userRoles {
