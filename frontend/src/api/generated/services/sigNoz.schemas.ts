@@ -543,6 +543,29 @@ export interface ErrorsResponseerroradditionalDTO {
 	message?: string;
 }
 
+export interface FactoryNameDTO {
+	[key: string]: unknown;
+}
+
+/**
+ * @nullable
+ */
+export type FactoryResponseDTOServices = {
+	[key: string]: FactoryNameDTO[];
+} | null;
+
+export interface FactoryResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	healthy?: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	services?: FactoryResponseDTOServices;
+}
+
 /**
  * @nullable
  */
@@ -3420,6 +3443,22 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
+export type Healthz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Livez200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListMetricsParams = {
 	/**
 	 * @type integer
@@ -3549,6 +3588,14 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz200 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */

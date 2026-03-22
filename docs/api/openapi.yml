@@ -417,6 +417,20 @@ components:
         message:
           type: string
       type: object
+    FactoryName:
+      type: object
+    FactoryResponse:
+      properties:
+        healthy:
+          type: boolean
+        services:
+          additionalProperties:
+            items:
+              $ref: '#/components/schemas/FactoryName'
+            type: array
+          nullable: true
+          type: object
+      type: object
     FeaturetypesGettableFeature:
       properties:
         defaultVariant:
@@ -5961,6 +5975,64 @@ paths:
       summary: Search ingestion keys for workspace
       tags:
       - gateway
+  /api/v2/healthz:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Healthz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Health check
+      tags:
+      - health
+  /api/v2/livez:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Livez
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Liveness check
+      tags:
+      - health
   /api/v2/metrics:
     get:
       deprecated: false
@@ -6637,6 +6709,35 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/readyz:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Readyz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Readiness check
+      tags:
+      - health
   /api/v2/sessions:
     delete:
       deprecated: false
