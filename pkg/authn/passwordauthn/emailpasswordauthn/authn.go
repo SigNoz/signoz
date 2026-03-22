@@ -30,6 +30,10 @@ func (a *AuthN) Authenticate(ctx context.Context, email string, password string,
 		return nil, errors.New(errors.TypeUnauthenticated, types.ErrCodeIncorrectPassword, "invalid email or password")
 	}
 
+	if len(userRoles) == 0 {
+		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
+	}
+
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return authtypes.NewIdentity(user.ID, orgID, user.Email, role, authtypes.IdentNProviderTokenizer), nil

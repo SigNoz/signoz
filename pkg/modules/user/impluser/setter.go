@@ -793,7 +793,7 @@ func (module *setter) createUserRoleEntries(ctx context.Context, orgID, userId v
 		return err
 	}
 
-	userRoles := authtypes.NewStorableUserRoles(userId, roles)
+	userRoles := authtypes.NewUserRoles(userId, roles)
 	return module.userRoleStore.CreateUserRoles(ctx, userRoles)
 }
 

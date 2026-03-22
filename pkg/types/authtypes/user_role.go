@@ -11,6 +11,7 @@ import (
 
 var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
+	ErrCodeUserRolesNotFound      = errors.MustNewCode("user_roles_not_found")
 )
 
 type UserRole struct {
@@ -36,7 +37,7 @@ func newUserRole(userID valuer.UUID, roleID valuer.UUID) *UserRole {
 	}
 }
 
-func NewStorableUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
+func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 	userRoles := make([]*UserRole, len(roles))
 
 	for idx, role := range roles {

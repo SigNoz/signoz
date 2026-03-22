@@ -90,6 +90,10 @@ func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID v
 		return nil, err
 	}
 
+	if len(userRoles) == 0 {
+		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
+	}
+
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
@@ -104,6 +108,10 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 	userRoles, err := module.GetUserRoles(ctx, id)
 	if err != nil {
 		return nil, err
+	}
+
+	if len(userRoles) == 0 {
+		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
 	}
 
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]

@@ -3,6 +3,7 @@ package sqlauthnstore
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -54,7 +55,7 @@ func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Co
 		Relation("Role").
 		Scan(ctx)
 	if err != nil {
-		return nil, nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodePasswordNotFound, "user with email %s in org %s does not have user role entries", email, orgID)
+		return nil, nil, nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to get user roles for user %s in org %s", email, orgID)
 	}
 
 	return user, factorPassword, userRoles, nil

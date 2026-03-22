@@ -121,10 +121,6 @@ func NewDeprecatedUserFromUserAndRole(user *User, role Role) *DeprecatedUser {
 }
 
 func NewUserFromDeprecatedUser(deprecatedUser *DeprecatedUser) *User {
-	if deprecatedUser == nil {
-		return nil
-	}
-
 	return &User{
 		Identifiable:  deprecatedUser.Identifiable,
 		DisplayName:   deprecatedUser.DisplayName,
