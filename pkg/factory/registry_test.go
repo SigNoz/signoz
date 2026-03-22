@@ -2,12 +2,12 @@ package factory
 
 import (
 	"context"
-	"fmt"
 	"log/slog"
 	"sync"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
@@ -171,7 +171,7 @@ func TestAwaitHealthy(t *testing.T) {
 func TestAwaitHealthyWithFailure(t *testing.T) {
 	s1 := &failingHealthyService{
 		healthyC: make(chan struct{}),
-		err:      fmt.Errorf("startup failed"),
+		err:      errors.Newf(errors.TypeInternal, errors.CodeInternal,"startup failed"),
 	}
 
 	registry, err := NewRegistry(context.Background(), slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1))
@@ -245,7 +245,7 @@ func TestDependsOnStartsAfterDependency(t *testing.T) {
 func TestDependsOnFailsWhenDependencyFails(t *testing.T) {
 	s1 := &failingHealthyService{
 		healthyC: make(chan struct{}),
-		err:      fmt.Errorf("s1 crashed"),
+		err:      errors.Newf(errors.TypeInternal, errors.CodeInternal,"s1 crashed"),
 	}
 	s2 := newTestService(t)
 
@@ -291,7 +291,7 @@ func TestDependsOnUnknownServiceIsIgnored(t *testing.T) {
 func TestServiceStateFailed(t *testing.T) {
 	s1 := &failingHealthyService{
 		healthyC: make(chan struct{}),
-		err:      fmt.Errorf("fatal error"),
+		err:      errors.Newf(errors.TypeInternal, errors.CodeInternal,"fatal error"),
 	}
 
 	registry, err := NewRegistry(context.Background(), slog.New(slog.DiscardHandler), NewNamedService(MustNewName("s1"), s1))
