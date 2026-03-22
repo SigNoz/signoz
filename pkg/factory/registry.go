@@ -111,17 +111,13 @@ func (registry *Registry) Start(ctx context.Context) {
 
 			registry.logger.InfoContext(ctx, "starting service", slog.Any("service", ss.service.Name()))
 
-			if h, ok := unwrapService(ss.service).(Healthy); ok {
-				go func() {
-					select {
-					case <-h.Healthy():
-						ss.setState(StateRunning)
-					case <-ss.startReturnedC:
-					}
-				}()
-			} else {
-				ss.setState(StateRunning)
-			}
+			go func() {
+				select {
+				case <-ss.service.Healthy():
+					ss.setState(StateRunning)
+				case <-ss.startReturnedC:
+				}
+			}()
 
 			err := ss.service.Start(ctx)
 			if err != nil {

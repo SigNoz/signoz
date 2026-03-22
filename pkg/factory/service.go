@@ -20,18 +20,31 @@ type Healthy interface {
 	Healthy() <-chan struct{}
 }
 
+// ServiceWithHealthy is a Service that explicitly signals when it is healthy.
+type ServiceWithHealthy interface {
+	Service
+	Healthy
+}
+
 // NamedService is a Service with a Name and optional dependencies.
 type NamedService interface {
 	Named
-	Service
+	ServiceWithHealthy
 	// DependsOn returns the names of services that must be healthy before this service starts.
 	DependsOn() []Name
 }
 
+// closedC is a pre-closed channel returned for services that don't implement Healthy.
+var closedC = func() chan struct{} {
+	c := make(chan struct{})
+	close(c)
+	return c
+}()
+
 type namedService struct {
 	name      Name
 	dependsOn []Name
-	Service
+	service   Service
 }
 
 // NewNamedService wraps a Service with a Name and optional dependency names.
@@ -39,7 +52,7 @@ func NewNamedService(name Name, service Service, dependsOn ...Name) NamedService
 	return &namedService{
 		name:      name,
 		dependsOn: dependsOn,
-		Service:   service,
+		service:   service,
 	}
 }
 
@@ -51,11 +64,19 @@ func (s *namedService) DependsOn() []Name {
 	return s.dependsOn
 }
 
-// unwrapService extracts the underlying Service from a NamedService
-// so optional interface checks (like Healthy) work correctly.
-func unwrapService(ns NamedService) Service {
-	if wrapped, ok := ns.(*namedService); ok {
-		return wrapped.Service
+func (s *namedService) Start(ctx context.Context) error {
+	return s.service.Start(ctx)
+}
+
+func (s *namedService) Stop(ctx context.Context) error {
+	return s.service.Stop(ctx)
+}
+
+// Healthy delegates to the underlying service if it implements Healthy,
+// otherwise returns an already-closed channel (immediately healthy).
+func (s *namedService) Healthy() <-chan struct{} {
+	if h, ok := s.service.(Healthy); ok {
+		return h.Healthy()
 	}
-	return ns
+	return closedC
 }

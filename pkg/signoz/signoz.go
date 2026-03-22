@@ -440,7 +440,7 @@ func New(
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
-		factory.NewNamedService(factory.MustNewName("user"), userService),
+		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
 	)
 	if err != nil {
 		return nil, err
