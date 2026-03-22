@@ -34,6 +34,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/pprof"
+	"github.com/SigNoz/signoz/pkg/pprof/httppprof"
+	"github.com/SigNoz/signoz/pkg/pprof/nooppprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -86,6 +89,13 @@ func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web,
 	return factory.MustNewNamedMap(
 		routerweb.NewFactory(),
 		noopweb.NewFactory(),
+	)
+}
+
+func NewPProfProviderFactories() factory.NamedMap[factory.ProviderFactory[pprof.PProf, pprof.Config]] {
+	return factory.MustNewNamedMap(
+		httppprof.NewFactory(),
+		nooppprof.NewFactory(),
 	)
 }
 

@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -51,6 +52,7 @@ import (
 type SigNoz struct {
 	*factory.Registry
 	Instrumentation        instrumentation.Instrumentation
+	PProf                  pprof.PProf
 	Analytics              analytics.Analytics
 	Cache                  cache.Cache
 	Web                    web.Web
@@ -106,6 +108,17 @@ func New(
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	pprofService, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.PProf,
+		NewPProfProviderFactories(),
+		config.PProf.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize analytics just after instrumentation, as providers might require it
 	analytics, err := factory.NewProviderFromNamedMap(
@@ -448,6 +461,7 @@ func New(
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("pprof"), pprofService),
 		factory.NewNamedService(factory.MustNewName("analytics"), analytics),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),
@@ -464,6 +478,7 @@ func New(
 		Registry:               registry,
 		Analytics:              analytics,
 		Instrumentation:        instrumentation,
+		PProf:                  pprofService,
 		Cache:                  cache,
 		Web:                    web,
 		SQLStore:               sqlstore,
