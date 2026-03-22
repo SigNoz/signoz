@@ -2,7 +2,6 @@ package impluser
 
 import (
 	"context"
-	"log/slog"
 	"slices"
 	"strings"
 	"time"
