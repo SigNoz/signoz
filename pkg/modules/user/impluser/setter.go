@@ -2,6 +2,7 @@ package impluser
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
@@ -108,7 +109,7 @@ func (module *setter) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, u
 			// generate reset password token
 			resetPasswordToken, err := module.GetOrCreateResetPasswordToken(ctx, newUser.ID)
 			if err != nil {
-				module.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+				module.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", errors.Attr(err))
 				return err
 			}
 
@@ -151,7 +152,7 @@ func (module *setter) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, u
 
 		frontendBaseUrl := bulkInvites.Invites[idx].FrontendBaseUrl
 		if frontendBaseUrl == "" {
-			module.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", userWithToken.User.Email)
+			module.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", slog.Any("invitee_email", userWithToken.User.Email))
 			continue
 		}
 
@@ -165,7 +166,7 @@ func (module *setter) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, u
 			"link":          resetLink,
 			"Expiry":        humanizedTokenLifetime,
 		}); err != nil {
-			module.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
+			module.settings.Logger().ErrorContext(ctx, "failed to send invite email", errors.Attr(err))
 		}
 	}
 
