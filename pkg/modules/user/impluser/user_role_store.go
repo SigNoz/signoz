@@ -46,7 +46,7 @@ func (store *userRoleStore) CreateUserRoles(ctx context.Context, userRoles []*au
 		Model(&userRoles).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapAlreadyExistsErrf(err, authtypes.ErrCodeUserRoleAlreadyExists, "duplicate role assignments for service account")
+		return store.sqlstore.WrapAlreadyExistsErrf(err, authtypes.ErrCodeUserRoleAlreadyExists, "duplicate role assignments for user")
 	}
 	return nil
 }

@@ -155,7 +155,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 			}
 
 			// update user_role entries
-			if err := s.setter.ReplaceUserRoleEntries(
+			if err := s.setter.UpdateUserRoles(
 				ctx,
 				existingUser.OrgID,
 				existingUser.ID,

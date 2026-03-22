@@ -152,13 +152,10 @@ func (module *getter) GetFactorPasswordByUserID(ctx context.Context, userID valu
 
 // this function restricts that only one non-deleted user email can exist for an org ID, if found more, it throws an error
 func (module *getter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error) {
-	existingUsers, err := module.store.GetUsersByEmailAndOrgID(ctx, email, orgID)
+	existingUsers, err := module.store.GetNonDeletedUsersByEmailAndOrgID(ctx, email, orgID)
 	if err != nil {
 		return nil, err
 	}
-
-	// filter out the deleted users
-	existingUsers = slices.DeleteFunc(existingUsers, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
 	if len(existingUsers) > 1 {
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "Multiple non-deleted users found for email %s in org_id: %s", email.StringValue(), orgID.StringValue())

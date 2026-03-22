@@ -647,7 +647,7 @@ func (module *setter) GetOrCreateUser(ctx context.Context, user *types.User, opt
 					return nil, err
 				}
 
-				if err := module.ReplaceUserRoleEntries(ctx, existingUser.OrgID, existingUser.ID, createUserOpts.RoleNames); err != nil {
+				if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, createUserOpts.RoleNames); err != nil {
 					return nil, err
 				}
 
@@ -839,7 +839,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 	return nil
 }
 
-func (module *setter) ReplaceUserRoleEntries(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
+func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
 		// delete old user_role entries and create new ones from SSO
 		if err := module.userRoleStore.DeleteUserRoles(ctx, userID); err != nil {

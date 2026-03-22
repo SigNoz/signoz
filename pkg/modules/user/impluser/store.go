@@ -87,7 +87,7 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 	return user, nil
 }
 
-func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
+func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
 	var users []*types.User
 
 	err := store.
@@ -97,6 +97,7 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("email = ?", email).
+		Where("status != ?", types.UserStatusDeleted).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
