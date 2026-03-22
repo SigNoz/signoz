@@ -3,7 +3,6 @@ package middleware
 import (
 	"context"
 	"encoding/json"
-	"fmt"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
@@ -38,7 +37,7 @@ func TestRecovery(t *testing.T) {
 		{
 			name: "PanicWithError",
 			handler: func(w http.ResponseWriter, r *http.Request) {
-				panic(fmt.Errorf("db connection failed"))
+				panic(errors.New(errors.TypeInternal, errors.CodeInternal, "db connection failed"))
 			},
 			wantStatus:      http.StatusInternalServerError,
 			wantLog:         true,
