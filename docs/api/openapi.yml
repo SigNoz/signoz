@@ -5975,8 +5975,6 @@ paths:
       - gateway
   /api/v2/healthz:
     get:
-      deprecated: false
-      description: ""
       operationId: Healthz
       responses:
         "200":
@@ -5993,12 +5991,20 @@ paths:
                 - data
                 type: object
           description: OK
-        "500":
+        "503":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
       summary: Health check
       tags:
       - health
@@ -6709,8 +6715,6 @@ paths:
       - orgs
   /api/v2/readyz:
     get:
-      deprecated: false
-      description: ""
       operationId: Readyz
       responses:
         "200":
@@ -6727,12 +6731,20 @@ paths:
                 - data
                 type: object
           description: OK
-        "500":
+        "503":
           content:
             application/json:
               schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
       summary: Readiness check
       tags:
       - health
