@@ -27,12 +27,16 @@ function DataStateRenderer<T>({
 }: DataStateRendererProps<T>): JSX.Element {
 	const { t } = useTranslation('common');
 
-	if (isLoading || isRefetching || !data) {
+	if (isError) {
+		return <div>{errorMessage || t('something_went_wrong')}</div>;
+	}
+
+	if (isLoading || isRefetching) {
 		return <Spinner tip={loadingMessage} height="100%" />;
 	}
 
-	if (isError || data === null) {
-		return <div>{errorMessage ?? t('something_went_wrong')}</div>;
+	if (data === null) {
+		return <div>{errorMessage || t('something_went_wrong')}</div>;
 	}
 
 	return <>{children(data)}</>;
