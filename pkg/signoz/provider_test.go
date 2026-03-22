@@ -7,7 +7,6 @@ import (
 	"github.com/DATA-DOG/go-sqlmock"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager/nfmanagertest"
 	"github.com/SigNoz/signoz/pkg/analytics"
-	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
@@ -95,7 +94,6 @@ func TestNewProviderFactories(t *testing.T) {
 			nil,
 			Modules{},
 			Handlers{},
-			(factory.Handler)(nil),
 		)
 	})
 }

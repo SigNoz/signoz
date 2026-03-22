@@ -238,7 +238,7 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
-	if err := provider.addHealthzRoutes(router); err != nil {
+	if err := provider.addRegistryRoutes(router); err != nil {
 		return err
 	}
 

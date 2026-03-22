@@ -405,9 +405,6 @@ func New(
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
 	querierHandler := querierHandlerCallback(providerSettings, querier, analytics)
 
-	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus)
-
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
 		alertmanager,
@@ -449,12 +446,16 @@ func New(
 		return nil, err
 	}
 
+	// Initialize all handlers for the modules
+	registryHandler := factory.NewHandler(registry)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler)
+
 	// Initialize the API server (after registry so it can access service health)
 	apiserverInstance, err := factory.NewProviderFromNamedMap(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers, registry),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
 		"signoz",
 	)
 	if err != nil {
