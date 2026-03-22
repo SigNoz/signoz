@@ -24,7 +24,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
-	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -52,7 +51,6 @@ import (
 type SigNoz struct {
 	*factory.Registry
 	Instrumentation        instrumentation.Instrumentation
-	PProf                  pprof.PProf
 	Analytics              analytics.Analytics
 	Cache                  cache.Cache
 	Web                    web.Web
@@ -478,7 +476,6 @@ func New(
 		Registry:               registry,
 		Analytics:              analytics,
 		Instrumentation:        instrumentation,
-		PProf:                  pprofService,
 		Cache:                  cache,
 		Web:                    web,
 		SQLStore:               sqlstore,
