@@ -18,8 +18,10 @@ import type { ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
 	Healthz200,
+	Healthz503,
 	Livez200,
 	Readyz200,
+	Readyz503,
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
@@ -40,7 +42,7 @@ export const getHealthzQueryKey = () => {
 
 export const getHealthzQueryOptions = <
 	TData = Awaited<ReturnType<typeof healthz>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<Healthz503>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof healthz>>, TError, TData>;
 }) => {
@@ -62,7 +64,7 @@ export const getHealthzQueryOptions = <
 export type HealthzQueryResult = NonNullable<
 	Awaited<ReturnType<typeof healthz>>
 >;
-export type HealthzQueryError = ErrorType<RenderErrorResponseDTO>;
+export type HealthzQueryError = ErrorType<Healthz503>;
 
 /**
  * @summary Health check
@@ -70,7 +72,7 @@ export type HealthzQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useHealthz<
 	TData = Awaited<ReturnType<typeof healthz>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<Healthz503>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof healthz>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
@@ -189,7 +191,7 @@ export const getReadyzQueryKey = () => {
 
 export const getReadyzQueryOptions = <
 	TData = Awaited<ReturnType<typeof readyz>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<Readyz503>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof readyz>>, TError, TData>;
 }) => {
@@ -209,7 +211,7 @@ export const getReadyzQueryOptions = <
 };
 
 export type ReadyzQueryResult = NonNullable<Awaited<ReturnType<typeof readyz>>>;
-export type ReadyzQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ReadyzQueryError = ErrorType<Readyz503>;
 
 /**
  * @summary Readiness check
@@ -217,7 +219,7 @@ export type ReadyzQueryError = ErrorType<RenderErrorResponseDTO>;
 
 export function useReadyz<
 	TData = Awaited<ReturnType<typeof readyz>>,
-	TError = ErrorType<RenderErrorResponseDTO>
+	TError = ErrorType<Readyz503>
 >(options?: {
 	query?: UseQueryOptions<Awaited<ReturnType<typeof readyz>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {

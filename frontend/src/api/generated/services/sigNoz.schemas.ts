@@ -3445,6 +3445,14 @@ export type Healthz200 = {
 	status: string;
 };
 
+export type Healthz503 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type Livez200 = {
 	data: FactoryResponseDTO;
 	/**
@@ -3589,6 +3597,14 @@ export type GetMyOrganization200 = {
 };
 
 export type Readyz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz503 = {
 	data: FactoryResponseDTO;
 	/**
 	 * @type string
