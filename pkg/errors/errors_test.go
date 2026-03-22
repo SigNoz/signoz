@@ -60,8 +60,7 @@ func TestAttr(t *testing.T) {
 }
 
 func TestWithStacktrace(t *testing.T) {
-	err := New(TypeInternal, MustNewCode("test_code"), "panic").
-		WithStacktrace("custom stack trace")
+	err := New(TypeInternal, MustNewCode("test_code"), "panic").WithStacktrace("custom stack trace")
 
 	assert.Equal(t, "custom stack trace", err.Stacktrace())
 	assert.Equal(t, "panic", err.Error())
