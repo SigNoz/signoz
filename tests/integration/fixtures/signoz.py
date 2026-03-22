@@ -114,17 +114,18 @@ def create_signoz(
                     if response.status_code == HTTPStatus.OK:
                         return
                     if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
-                        logger.info(
+                        logger.error(
                             "Attempt %s: SigNoz container %s not ready yet:\n%s",
                             attempt + 1,
                             container,
                             response.text,
                         )
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.info(
-                        "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.error(
+                        "Attempt %s at readiness check for SigNoz container %s failed: %s",
                         attempt + 1,
                         container,
+                        e,
                     )
                 time.sleep(2)
             raise TimeoutError("timeout exceeded while waiting")
