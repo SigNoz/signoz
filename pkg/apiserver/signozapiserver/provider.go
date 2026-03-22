@@ -50,6 +50,7 @@ type provider struct {
 	zeusHandler            zeus.Handler
 	querierHandler         querier.Handler
 	serviceAccountHandler  serviceaccount.Handler
+	factoryHandler         factory.Handler
 }
 
 func NewFactory(
@@ -72,6 +73,7 @@ func NewFactory(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
+	factoryHandler factory.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -97,6 +99,7 @@ func NewFactory(
 			zeusHandler,
 			querierHandler,
 			serviceAccountHandler,
+			factoryHandler,
 		)
 	})
 }
@@ -124,6 +127,7 @@ func newProvider(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
+	factoryHandler factory.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -149,6 +153,7 @@ func newProvider(
 		zeusHandler:            zeusHandler,
 		querierHandler:         querierHandler,
 		serviceAccountHandler:  serviceAccountHandler,
+		factoryHandler:         factoryHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -230,6 +235,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 	}
 
 	if err := provider.addServiceAccountRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addHealthzRoutes(router); err != nil {
 		return err
 	}
 

@@ -27,6 +27,16 @@ func (n Name) String() string {
 	return n.name
 }
 
+// MarshalText implements encoding.TextMarshaler for JSON serialization.
+func (n Name) MarshalText() ([]byte, error) {
+	return []byte(n.name), nil
+}
+
+// MarshalJSON implements json.Marshaler so Name serializes as a JSON string.
+func (n Name) MarshalJSON() ([]byte, error) {
+	return []byte(`"` + n.name + `"`), nil
+}
+
 // NewName creates a new name.
 func NewName(name string) (Name, error) {
 	if !nameRegex.MatchString(name) {
