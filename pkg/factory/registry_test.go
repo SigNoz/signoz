@@ -8,6 +8,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 )
 
@@ -78,8 +79,8 @@ func TestRegistryWith2Services(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		registry.Start(ctx)
-		require.NoError(t, registry.Wait(ctx))
-		require.NoError(t, registry.Stop(ctx))
+		assert.NoError(t, registry.Wait(ctx))
+		assert.NoError(t, registry.Stop(ctx))
 	}()
 	cancel()
 
@@ -99,7 +100,7 @@ func TestRegistryWith2ServicesWithoutWait(t *testing.T) {
 	go func() {
 		defer wg.Done()
 		registry.Start(ctx)
-		require.NoError(t, registry.Stop(ctx))
+		assert.NoError(t, registry.Stop(ctx))
 	}()
 
 	wg.Wait()
@@ -117,10 +118,10 @@ func TestServiceStateTransitions(t *testing.T) {
 	require.NoError(t, registry.AwaitHealthy(ctx))
 
 	byState := registry.ServicesByState()
-	require.Len(t, byState[StateRunning], 1)
-	require.True(t, registry.IsHealthy())
+	assert.Len(t, byState[StateRunning], 1)
+	assert.True(t, registry.IsHealthy())
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestServiceStateWithHealthy(t *testing.T) {
@@ -137,18 +138,18 @@ func TestServiceStateWithHealthy(t *testing.T) {
 		byState := registry.ServicesByState()
 		return len(byState[StateStarting]) == 1
 	}, time.Second, time.Millisecond)
-	require.False(t, registry.IsHealthy())
+	assert.False(t, registry.IsHealthy())
 
 	// Signal healthy
 	close(s1.healthyC)
 
 	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
+	assert.True(t, registry.IsHealthy())
 
 	byState := registry.ServicesByState()
-	require.Len(t, byState[StateRunning], 1)
+	assert.Len(t, byState[StateRunning], 1)
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestAwaitHealthy(t *testing.T) {
@@ -161,10 +162,10 @@ func TestAwaitHealthy(t *testing.T) {
 	ctx := context.Background()
 	registry.Start(ctx)
 
-	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
+	assert.NoError(t, registry.AwaitHealthy(ctx))
+	assert.True(t, registry.IsHealthy())
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestAwaitHealthyWithFailure(t *testing.T) {
@@ -180,8 +181,8 @@ func TestAwaitHealthyWithFailure(t *testing.T) {
 	registry.Start(ctx)
 
 	err = registry.AwaitHealthy(ctx)
-	require.Error(t, err)
-	require.Contains(t, err.Error(), "startup failed")
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "startup failed")
 }
 
 func TestServicesByState(t *testing.T) {
@@ -205,9 +206,9 @@ func TestServicesByState(t *testing.T) {
 
 	require.NoError(t, registry.AwaitHealthy(ctx))
 	byState := registry.ServicesByState()
-	require.Len(t, byState[StateRunning], 2)
+	assert.Len(t, byState[StateRunning], 2)
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestDependsOnStartsAfterDependency(t *testing.T) {
@@ -235,10 +236,10 @@ func TestDependsOnStartsAfterDependency(t *testing.T) {
 	// Make s1 healthy — s2 should then start and become RUNNING
 	close(s1.healthyC)
 
-	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
+	assert.NoError(t, registry.AwaitHealthy(ctx))
+	assert.True(t, registry.IsHealthy())
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestDependsOnFailsWhenDependencyFails(t *testing.T) {
@@ -261,7 +262,7 @@ func TestDependsOnFailsWhenDependencyFails(t *testing.T) {
 	registry.Start(ctx)
 
 	// Both should eventually fail
-	require.Eventually(t, func() bool {
+	assert.Eventually(t, func() bool {
 		byState := registry.ServicesByState()
 		return len(byState[StateFailed]) == 2
 	}, time.Second, time.Millisecond)
@@ -281,10 +282,10 @@ func TestDependsOnUnknownServiceIsIgnored(t *testing.T) {
 	ctx := context.Background()
 	registry.Start(ctx)
 
-	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
+	assert.NoError(t, registry.AwaitHealthy(ctx))
+	assert.True(t, registry.IsHealthy())
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
 func TestServiceStateFailed(t *testing.T) {
@@ -300,11 +301,11 @@ func TestServiceStateFailed(t *testing.T) {
 	registry.Start(ctx)
 
 	// Wait for the service to fail
-	require.Eventually(t, func() bool {
+	assert.Eventually(t, func() bool {
 		byState := registry.ServicesByState()
 		return len(byState[StateFailed]) == 1
 	}, time.Second, time.Millisecond)
-	require.False(t, registry.IsHealthy())
+	assert.False(t, registry.IsHealthy())
 }
 
 func TestDependsOnSelfDependencyIsIgnored(t *testing.T) {
@@ -321,30 +322,23 @@ func TestDependsOnSelfDependencyIsIgnored(t *testing.T) {
 	ctx := context.Background()
 	registry.Start(ctx)
 
-	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
+	assert.NoError(t, registry.AwaitHealthy(ctx))
+	assert.True(t, registry.IsHealthy())
 
-	require.NoError(t, registry.Stop(ctx))
+	assert.NoError(t, registry.Stop(ctx))
 }
 
-func TestDependsOnCycleIsDropped(t *testing.T) {
+func TestDependsOnCycleReturnsError(t *testing.T) {
 	s1 := newTestService(t)
 	s2 := newTestService(t)
 
-	// A -> B and B -> A would deadlock without cycle detection.
-	registry, err := NewRegistry(
+	// A -> B and B -> A is a cycle.
+	_, err := NewRegistry(
 		context.Background(),
 		slog.New(slog.DiscardHandler),
 		NewNamedService(MustNewName("s1"), s1, MustNewName("s2")),
 		NewNamedService(MustNewName("s2"), s2, MustNewName("s1")),
 	)
-	require.NoError(t, err)
-
-	ctx := context.Background()
-	registry.Start(ctx)
-
-	require.NoError(t, registry.AwaitHealthy(ctx))
-	require.True(t, registry.IsHealthy())
-
-	require.NoError(t, registry.Stop(ctx))
+	assert.Error(t, err)
+	assert.Contains(t, err.Error(), "dependency cycles detected")
 }

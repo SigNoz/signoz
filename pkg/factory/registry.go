@@ -8,6 +8,8 @@ import (
 	"syscall"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"gonum.org/v1/gonum/graph/simple"
+	"gonum.org/v1/gonum/graph/topo"
 )
 
 var (
@@ -47,29 +49,24 @@ func NewRegistry(ctx context.Context, logger *slog.Logger, services ...NamedServ
 
 	registryLogger := logger.With(slog.String("pkg", "github.com/SigNoz/signoz/pkg/factory"))
 
-	// Validate dependsOn references — drop unknown deps with a log error.
 	for _, ss := range servicesWithState {
 		for _, dep := range ss.service.DependsOn() {
 			if dep == ss.service.Name() {
 				registryLogger.ErrorContext(ctx, "ignoring self-dependency", slog.Any("service", ss.service.Name()))
 				continue
 			}
+
 			if _, ok := servicesByName[dep]; !ok {
 				registryLogger.ErrorContext(ctx, "ignoring unknown dependency", slog.Any("service", ss.service.Name()), slog.Any("dependency", dep))
 				continue
 			}
+
 			ss.dependsOn = append(ss.dependsOn, dep)
 		}
 	}
 
-	// Detect dependency cycles via DFS — drop edges that would form a cycle.
-	adjacency := make(map[Name][]Name, len(servicesWithState))
-	for _, ss := range servicesWithState {
-		adjacency[ss.service.Name()] = ss.dependsOn
-	}
-	acyclic := detectAndDropCycles(adjacency)
-	for _, ss := range servicesWithState {
-		ss.dependsOn = acyclic[ss.service.Name()]
+	if err := detectCyclicDeps(servicesWithState); err != nil {
+		return nil, err
 	}
 
 	return &Registry{
@@ -216,40 +213,42 @@ func (registry *Registry) IsHealthy() bool {
 	return true
 }
 
-// detectAndDropCycles returns a copy of the adjacency map with back-edges removed
-// so the dependency graph is a DAG. Uses DFS with three-color marking.
-func detectAndDropCycles(adjacency map[Name][]Name) map[Name][]Name {
-	const (
-		white = 0 // unvisited
-		gray  = 1 // in current DFS path
-		black = 2 // fully processed
-	)
+// detectCyclicDeps returns an error listing all dependency cycles found using
+// gonum's Tarjan SCC algorithm.
+func detectCyclicDeps(services []*serviceWithState) error {
+	nameToID := make(map[Name]int64, len(services))
+	idToName := make(map[int64]Name, len(services))
+	for i, ss := range services {
+		id := int64(i)
+		nameToID[ss.service.Name()] = id
+		idToName[id] = ss.service.Name()
+	}
 
-	color := make(map[Name]int, len(adjacency))
-	result := make(map[Name][]Name, len(adjacency))
+	g := simple.NewDirectedGraph()
+	for _, ss := range services {
+		g.AddNode(simple.Node(nameToID[ss.service.Name()]))
+	}
+	for _, ss := range services {
+		fromID := nameToID[ss.service.Name()]
+		for _, dep := range ss.dependsOn {
+			g.SetEdge(simple.Edge{F: simple.Node(fromID), T: simple.Node(nameToID[dep])})
+		}
+	}
 
-	var visit func(node Name)
-	visit = func(node Name) {
-		color[node] = gray
-		for _, dep := range adjacency[node] {
-			switch color[dep] {
-			case white:
-				result[node] = append(result[node], dep)
-				visit(dep)
-			case gray:
-				// Back-edge: dep is an ancestor in the current path — drop to break cycle.
-			case black:
-				result[node] = append(result[node], dep)
+	if _, err := topo.Sort(g); err == nil {
+		return nil
+	}
+
+	var cycles [][]Name
+	for _, scc := range topo.TarjanSCC(g) {
+		if len(scc) > 1 {
+			cycle := make([]Name, len(scc))
+			for i, n := range scc {
+				cycle[i] = idToName[n.ID()]
 			}
-		}
-		color[node] = black
-	}
-
-	for node := range adjacency {
-		if color[node] == white {
-			visit(node)
+			cycles = append(cycles, cycle)
 		}
 	}
 
-	return result
+	return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidRegistry, "dependency cycles detected: %v", cycles)
 }
