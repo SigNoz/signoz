@@ -33,11 +33,11 @@ func (m *dashboardMigrateV5) Migrate(ctx context.Context, dashboardData map[stri
 	}
 
 	if version == "v5" {
-		m.logger.InfoContext(ctx, "dashboard is already migrated to v5, skipping", "dashboard_name", dashboardData["title"])
+		m.logger.InfoContext(ctx, "dashboard is already migrated to v5, skipping", slog.Any("dashboard_name", dashboardData["title"]))
 		return false
 	}
 
-	m.logger.InfoContext(ctx, "migrating dashboard", "dashboard_name", dashboardData["title"])
+	m.logger.InfoContext(ctx, "migrating dashboard", slog.Any("dashboard_name", dashboardData["title"]))
 
 	// if there is a white space in variable, replace it
 	if variables, ok := dashboardData["variables"].(map[string]any); ok {
@@ -46,7 +46,7 @@ func (m *dashboardMigrateV5) Migrate(ctx context.Context, dashboardData map[stri
 				name, ok := varMap["name"].(string)
 				if ok {
 					if strings.Contains(name, " ") {
-						m.logger.InfoContext(ctx, "found a variable with space in map, replacing it", "name", name)
+						m.logger.InfoContext(ctx, "found a variable with space in map, replacing it", slog.String("name", name))
 						name = strings.ReplaceAll(name, " ", "")
 						updated = true
 						varMap["name"] = name
@@ -78,7 +78,7 @@ func (migration *dashboardMigrateV5) updateWidget(ctx context.Context, widget ma
 
 	if qType, ok := query["queryType"]; ok {
 		if qType == "promql" || qType == "clickhouse_sql" {
-			migration.logger.InfoContext(ctx, "nothing to migrate for query type", "query_type", qType)
+			migration.logger.InfoContext(ctx, "nothing to migrate for query type", slog.Any("query_type", qType))
 			return false
 		}
 	}

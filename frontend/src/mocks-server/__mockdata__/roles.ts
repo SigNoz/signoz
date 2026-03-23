@@ -1,8 +1,8 @@
-import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 
 const orgId = '019ba2bb-2fa1-7b24-8159-cfca08617ef9';
 
-export const managedRoles: RoletypesRoleDTO[] = [
+export const managedRoles: AuthtypesRoleDTO[] = [
 	{
 		id: '019c24aa-2248-756f-9833-984f1ab63819',
 		createdAt: new Date('2026-02-03T18:00:55.624356Z'),
@@ -35,7 +35,7 @@ export const managedRoles: RoletypesRoleDTO[] = [
 	},
 ];
 
-export const customRoles: RoletypesRoleDTO[] = [
+export const customRoles: AuthtypesRoleDTO[] = [
 	{
 		id: '019c24aa-3333-0001-aaaa-111111111111',
 		createdAt: new Date('2026-02-10T10:30:00.000Z'),
@@ -56,7 +56,7 @@ export const customRoles: RoletypesRoleDTO[] = [
 	},
 ];
 
-export const allRoles: RoletypesRoleDTO[] = [...managedRoles, ...customRoles];
+export const allRoles: AuthtypesRoleDTO[] = [...managedRoles, ...customRoles];
 
 export const listRolesSuccessResponse = {
 	status: 'success',

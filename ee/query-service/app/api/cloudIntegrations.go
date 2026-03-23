@@ -10,6 +10,8 @@ import (
 	"strings"
 	"time"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -18,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
-	"go.uber.org/zap"
 )
 
 type CloudIntegrationConnectionParamsResponse struct {
@@ -71,7 +72,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		// Return the API Key (PAT) even if the rest of the params can not be deduced.
 		// Params not returned from here will be requested from the user via form inputs.
 		// This enables gracefully degraded but working experience even for non-cloud deployments.
-		zap.L().Info("ingestion params and signoz api url can not be deduced since no license was found")
+		slog.InfoContext(r.Context(), "ingestion params and signoz api url can not be deduced since no license was found")
 		ah.Respond(w, result)
 		return
 	}
@@ -103,7 +104,7 @@ func (ah *APIHandler) CloudIntegrationsGenerateConnectionParams(w http.ResponseW
 		result.IngestionKey = ingestionKey
 
 	} else {
-		zap.L().Info("ingestion key can't be deduced since no gateway url has been configured")
+		slog.InfoContext(r.Context(), "ingestion key can't be deduced since no gateway url has been configured")
 	}
 
 	ah.Respond(w, result)
@@ -126,7 +127,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 
-	allPats, err := ah.Signoz.Modules.User.ListAPIKeys(ctx, orgIdUUID)
+	allPats, err := ah.Signoz.Modules.UserSetter.ListAPIKeys(ctx, orgIdUUID)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't list PATs: %w", err,
@@ -138,9 +139,8 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		}
 	}
 
-	zap.L().Info(
-		"no PAT found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider),
+	slog.InfoContext(ctx, "no PAT found for cloud integration, creating a new one",
+		"cloud_provider", cloudProvider,
 	)
 
 	newPAT, err := types.NewStorableAPIKey(
@@ -155,7 +155,7 @@ func (ah *APIHandler) getOrCreateCloudIntegrationPAT(ctx context.Context, orgId 
 		))
 	}
 
-	err = ah.Signoz.Modules.User.CreateAPIKey(ctx, newPAT)
+	err = ah.Signoz.Modules.UserSetter.CreateAPIKey(ctx, newPAT)
 	if err != nil {
 		return "", basemodel.InternalError(fmt.Errorf(
 			"couldn't create cloud integration PAT: %w", err,
@@ -170,14 +170,19 @@ func (ah *APIHandler) getOrCreateCloudIntegrationUser(
 	cloudIntegrationUserName := fmt.Sprintf("%s-integration", cloudProvider)
 	email := valuer.MustNewEmail(fmt.Sprintf("%s@signoz.io", cloudIntegrationUserName))
 
-	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, types.RoleViewer, valuer.MustNewUUID(orgId), types.UserStatusActive)
+	cloudIntegrationUser, err := types.NewUser(cloudIntegrationUserName, email, valuer.MustNewUUID(orgId), types.UserStatusActive)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't create cloud integration user: %w", err))
 	}
 
 	password := types.MustGenerateFactorPassword(cloudIntegrationUser.ID.StringValue())
 
-	cloudIntegrationUser, err = ah.Signoz.Modules.User.GetOrCreateUser(ctx, cloudIntegrationUser, user.WithFactorPassword(password))
+	cloudIntegrationUser, err = ah.Signoz.Modules.UserSetter.GetOrCreateUser(
+		ctx,
+		cloudIntegrationUser,
+		user.WithFactorPassword(password),
+		user.WithRoleNames([]string{authtypes.SigNozViewerRoleName}),
+	)
 	if err != nil {
 		return nil, basemodel.InternalError(fmt.Errorf("couldn't look for integration user: %w", err))
 	}
@@ -287,9 +292,8 @@ func getOrCreateCloudProviderIngestionKey(
 		}
 	}
 
-	zap.L().Info(
-		"no existing ingestion key found for cloud integration, creating a new one",
-		zap.String("cloudProvider", cloudProvider),
+	slog.InfoContext(ctx, "no existing ingestion key found for cloud integration, creating a new one",
+		"cloud_provider", cloudProvider,
 	)
 	createKeyResult, apiErr := requestGateway[createIngestionKeyResponse](
 		ctx, gatewayUrl, licenseKey, "/v1/workspaces/me/keys",

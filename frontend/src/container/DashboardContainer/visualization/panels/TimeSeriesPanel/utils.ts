@@ -10,9 +10,9 @@ import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
 	DrawStyle,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
-	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
@@ -123,13 +123,13 @@ export const prepareUPlotConfig = ({
 			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: true,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: hasSingleValidPoint
-				? VisibilityMode.Always
-				: VisibilityMode.Never,
+			spanGaps: widget.spanGaps ?? true,
+			lineStyle: widget.lineStyle || LineStyle.Solid,
+			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
+			showPoints:
+				widget.showPoints || hasSingleValidPoint ? true : !!widget.showPoints,
 			pointSize: 5,
+			fillMode: widget.fillMode || FillMode.None,
 			isDarkMode,
 		});
 	});

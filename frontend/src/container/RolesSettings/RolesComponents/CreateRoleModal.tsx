@@ -13,8 +13,8 @@ import {
 	usePatchRole,
 } from 'api/generated/services/role';
 import {
+	AuthtypesPostableRoleDTO,
 	RenderErrorResponseDTO,
-	RoletypesPostableRoleDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
 import ROUTES from 'constants/routes';
@@ -114,7 +114,7 @@ function CreateRoleModal({
 					data: { description: values.description || '' },
 				});
 			} else {
-				const data: RoletypesPostableRoleDTO = {
+				const data: AuthtypesPostableRoleDTO = {
 					name: values.name,
 					...(values.description ? { description: values.description } : {}),
 				};

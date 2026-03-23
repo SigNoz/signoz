@@ -220,6 +220,13 @@ components:
       - additions
       - deletions
       type: object
+    AuthtypesPatchableRole:
+      properties:
+        description:
+          type: string
+      required:
+      - description
+      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -236,6 +243,15 @@ components:
         password:
           type: string
       type: object
+    AuthtypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
     AuthtypesPostableRotateToken:
       properties:
         refreshToken:
@@ -250,6 +266,31 @@ components:
       required:
       - name
       - type
+      type: object
+    AuthtypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
       type: object
     AuthtypesRoleMapping:
       properties:
@@ -556,6 +597,39 @@ components:
           type: array
       required:
       - config
+      type: object
+    GlobaltypesAPIKeyConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesConfig:
+      properties:
+        external_url:
+          type: string
+        identN:
+          $ref: '#/components/schemas/GlobaltypesIdentNConfig'
+        ingestion_url:
+          type: string
+      type: object
+    GlobaltypesIdentNConfig:
+      properties:
+        apikey:
+          $ref: '#/components/schemas/GlobaltypesAPIKeyConfig'
+        impersonation:
+          $ref: '#/components/schemas/GlobaltypesImpersonationConfig'
+        tokenizer:
+          $ref: '#/components/schemas/GlobaltypesTokenizerConfig'
+      type: object
+    GlobaltypesImpersonationConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesTokenizerConfig:
+      properties:
+        enabled:
+          type: boolean
       type: object
     MetricsexplorertypesListMetric:
       properties:
@@ -1722,47 +1796,6 @@ components:
       - status
       - error
       type: object
-    RoletypesPatchableRole:
-      properties:
-        description:
-          type: string
-      required:
-      - description
-      type: object
-    RoletypesPostableRole:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      required:
-      - name
-      type: object
-    RoletypesRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
     ServiceaccounttypesFactorAPIKey:
       properties:
         createdAt:
@@ -1993,6 +2026,31 @@ components:
         userId:
           type: string
       type: object
+    TypesDeprecatedUser:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     TypesGettableAPIKey:
       properties:
         createdAt:
@@ -2029,13 +2087,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    TypesGettableGlobalConfig:
-      properties:
-        external_url:
-          type: string
-        ingestion_url:
-          type: string
       type: object
     TypesIdentifiable:
       properties:
@@ -2099,17 +2150,6 @@ components:
         name:
           type: string
         role:
-          type: string
-      type: object
-    TypesPostableAcceptInvite:
-      properties:
-        displayName:
-          type: string
-        password:
-          type: string
-        sourceUrl:
-          type: string
-        token:
           type: string
       type: object
     TypesPostableBulkInviteRequest:
@@ -2206,8 +2246,6 @@ components:
         isRoot:
           type: boolean
         orgId:
-          type: string
-        role:
           type: string
         status:
           type: string
@@ -3317,7 +3355,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesGettableGlobalConfig'
+                    $ref: '#/components/schemas/GlobaltypesConfig'
                   status:
                     type: string
                 required:
@@ -3325,80 +3363,16 @@ paths:
                 - data
                 type: object
           description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
       summary: Get global config
       tags:
       - global
   /api/v1/invite:
-    get:
-      deprecated: false
-      description: This endpoint lists all invites
-      operationId: ListInvite
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesInvite'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List invites
-      tags:
-      - users
     post:
       deprecated: false
       description: This endpoint creates an invite for a user
@@ -3459,151 +3433,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Create invite
-      tags:
-      - users
-  /api/v1/invite/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint deletes an invite by id
-      operationId: DeleteInvite
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete invite
-      tags:
-      - users
-  /api/v1/invite/{token}:
-    get:
-      deprecated: false
-      description: This endpoint gets an invite by token
-      operationId: GetInvite
-      parameters:
-      - in: path
-        name: token
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesInvite'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get invite
-      tags:
-      - users
-  /api/v1/invite/accept:
-    post:
-      deprecated: false
-      description: This endpoint accepts an invite by token
-      operationId: AcceptInvite
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableAcceptInvite'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Accept invite
       tags:
       - users
   /api/v1/invite/bulk:
@@ -4296,7 +4125,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RoletypesRole'
+                      $ref: '#/components/schemas/AuthtypesRole'
                     type: array
                   status:
                     type: string
@@ -4339,7 +4168,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPostableRole'
+              $ref: '#/components/schemas/AuthtypesPostableRole'
       responses:
         "201":
           content:
@@ -4484,7 +4313,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RoletypesRole'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -4532,7 +4361,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPatchableRole'
+              $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
           content:
@@ -5333,7 +5162,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesUser'
+                      $ref: '#/components/schemas/TypesDeprecatedUser'
                     type: array
                   status:
                     type: string
@@ -5431,7 +5260,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5485,7 +5314,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesUser'
+              $ref: '#/components/schemas/TypesDeprecatedUser'
       responses:
         "200":
           content:
@@ -5493,7 +5322,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5551,7 +5380,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5876,9 +5705,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -5926,9 +5755,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -5966,9 +5795,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete ingestion key for workspace
       tags:
       - gateway
@@ -6010,9 +5839,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update ingestion key for workspace
       tags:
       - gateway
@@ -6067,9 +5896,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create limit for the ingestion key
       tags:
       - gateway
@@ -6107,9 +5936,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete limit for the ingestion key
       tags:
       - gateway
@@ -6151,9 +5980,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -6211,9 +6040,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Search ingestion keys for workspace
       tags:
       - gateway

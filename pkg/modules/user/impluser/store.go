@@ -52,23 +52,6 @@ func (store *store) CreateUser(ctx context.Context, user *types.User) error {
 	return nil
 }
 
-func (store *store) GetUsersByEmail(ctx context.Context, email valuer.Email) ([]*types.User, error) {
-	var users []*types.User
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(&users).
-		Where("email = ?", email).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
 func (store *store) GetUser(ctx context.Context, id valuer.UUID) (*types.User, error) {
 	user := new(types.User)
 
@@ -104,7 +87,7 @@ func (store *store) GetByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id v
 	return user, nil
 }
 
-func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
+func (store *store) GetNonDeletedUsersByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) ([]*types.User, error) {
 	var users []*types.User
 
 	err := store.
@@ -114,25 +97,7 @@ func (store *store) GetUsersByEmailAndOrgID(ctx context.Context, email valuer.Em
 		Model(&users).
 		Where("org_id = ?", orgID).
 		Where("email = ?", email).
-		Scan(ctx)
-	if err != nil {
-		return nil, err
-	}
-
-	return users, nil
-}
-
-func (store *store) GetActiveUsersByRoleAndOrgID(ctx context.Context, role types.Role, orgID valuer.UUID) ([]*types.User, error) {
-	var users []*types.User
-
-	err := store.
-		sqlstore.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(&users).
-		Where("org_id = ?", orgID).
-		Where("role = ?", role).
-		Where("status = ?", types.UserStatusActive.StringValue()).
+		Where("status != ?", types.UserStatusDeleted).
 		Scan(ctx)
 	if err != nil {
 		return nil, err
@@ -149,7 +114,6 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 		Model(user).
 		Column("display_name").
 		Column("email").
-		Column("role").
 		Column("is_root").
 		Column("updated_at").
 		Column("status").
@@ -162,7 +126,7 @@ func (store *store) UpdateUser(ctx context.Context, orgID valuer.UUID, user *typ
 	return nil
 }
 
-func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.GettableUser, error) {
+func (store *store) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
 	users := []*types.User{}
 
 	err := store.

@@ -2,6 +2,7 @@ import platform
 import time
 from http import HTTPStatus
 from os import path
+from typing import Optional
 
 import docker
 import docker.errors
@@ -16,8 +17,7 @@ from fixtures.logger import setup_logger
 logger = setup_logger(__name__)
 
 
-@pytest.fixture(name="signoz", scope="package")
-def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+def create_signoz(
     network: Network,
     zeus: types.TestContainerDocker,
     gateway: types.TestContainerDocker,
@@ -25,9 +25,12 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     clickhouse: types.TestContainerClickhouse,
     request: pytest.FixtureRequest,
     pytestconfig: pytest.Config,
+    cache_key: str = "signoz",
+    env_overrides: Optional[dict] = None,
 ) -> types.SigNoz:
     """
-    Package-scoped fixture for setting up SigNoz.
+    Factory function for creating a SigNoz container.
+    Accepts optional env_overrides to customize the container environment.
     """
 
     def create() -> types.SigNoz:
@@ -80,6 +83,9 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
 
         if with_web:
             env["SIGNOZ_WEB_ENABLED"] = True
+
+        if env_overrides:
+            env = env | env_overrides
 
         container = DockerContainer("signoz:integration")
         for k, v in env.items():
@@ -169,7 +175,7 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
     return dev.wrap(
         request,
         pytestconfig,
-        "signoz",
+        cache_key,
         empty=lambda: types.SigNoz(
             self=types.TestContainerDocker(
                 id="",
@@ -184,4 +190,28 @@ def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
         create=create,
         delete=delete,
         restore=restore,
+    )
+
+
+@pytest.fixture(name="signoz", scope="package")
+def signoz(  # pylint: disable=too-many-arguments,too-many-positional-arguments
+    network: Network,
+    zeus: types.TestContainerDocker,
+    gateway: types.TestContainerDocker,
+    sqlstore: types.TestContainerSQL,
+    clickhouse: types.TestContainerClickhouse,
+    request: pytest.FixtureRequest,
+    pytestconfig: pytest.Config,
+) -> types.SigNoz:
+    """
+    Package-scoped fixture for setting up SigNoz.
+    """
+    return create_signoz(
+        network=network,
+        zeus=zeus,
+        gateway=gateway,
+        sqlstore=sqlstore,
+        clickhouse=clickhouse,
+        request=request,
+        pytestconfig=pytestconfig,
     )

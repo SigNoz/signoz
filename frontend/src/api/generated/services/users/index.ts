@@ -20,33 +20,27 @@ import { useMutation, useQuery } from 'react-query';
 import type { BodyType, ErrorType } from '../../../generatedAPIInstance';
 import { GeneratedAPIInstance } from '../../../generatedAPIInstance';
 import type {
-	AcceptInvite201,
 	ChangePasswordPathParameters,
 	CreateAPIKey201,
 	CreateInvite201,
-	DeleteInvitePathParameters,
 	DeleteUserPathParameters,
-	GetInvite200,
-	GetInvitePathParameters,
 	GetMyUser200,
 	GetResetPasswordToken200,
 	GetResetPasswordTokenPathParameters,
 	GetUser200,
 	GetUserPathParameters,
 	ListAPIKeys200,
-	ListInvite200,
 	ListUsers200,
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
-	TypesPostableAcceptInviteDTO,
+	TypesDeprecatedUserDTO,
 	TypesPostableAPIKeyDTO,
 	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesStorableAPIKeyDTO,
-	TypesUserDTO,
 	UpdateAPIKeyPathParameters,
 	UpdateUser200,
 	UpdateUserPathParameters,
@@ -256,84 +250,6 @@ export const invalidateGetResetPasswordToken = async (
 };
 
 /**
- * This endpoint lists all invites
- * @summary List invites
- */
-export const listInvite = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListInvite200>({
-		url: `/api/v1/invite`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getListInviteQueryKey = () => {
-	return [`/api/v1/invite`] as const;
-};
-
-export const getListInviteQueryOptions = <
-	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
-}) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getListInviteQueryKey();
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listInvite>>> = ({
-		signal,
-	}) => listInvite(signal);
-
-	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listInvite>>,
-		TError,
-		TData
-	> & { queryKey: QueryKey };
-};
-
-export type ListInviteQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listInvite>>
->;
-export type ListInviteQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary List invites
- */
-
-export function useListInvite<
-	TData = Awaited<ReturnType<typeof listInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listInvite>>, TError, TData>;
-}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListInviteQueryOptions(options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary List invites
- */
-export const invalidateListInvite = async (
-	queryClient: QueryClient,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getListInviteQueryKey() },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
  * This endpoint creates an invite for a user
  * @summary Create invite
  */
@@ -413,257 +329,6 @@ export const useCreateInvite = <
 	TContext
 > => {
 	const mutationOptions = getCreateInviteMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint deletes an invite by id
- * @summary Delete invite
- */
-export const deleteInvite = ({ id }: DeleteInvitePathParameters) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/invite/${id}`,
-		method: 'DELETE',
-	});
-};
-
-export const getDeleteInviteMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteInvite>>,
-		TError,
-		{ pathParams: DeleteInvitePathParameters },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof deleteInvite>>,
-	TError,
-	{ pathParams: DeleteInvitePathParameters },
-	TContext
-> => {
-	const mutationKey = ['deleteInvite'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof deleteInvite>>,
-		{ pathParams: DeleteInvitePathParameters }
-	> = (props) => {
-		const { pathParams } = props ?? {};
-
-		return deleteInvite(pathParams);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type DeleteInviteMutationResult = NonNullable<
-	Awaited<ReturnType<typeof deleteInvite>>
->;
-
-export type DeleteInviteMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Delete invite
- */
-export const useDeleteInvite = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof deleteInvite>>,
-		TError,
-		{ pathParams: DeleteInvitePathParameters },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof deleteInvite>>,
-	TError,
-	{ pathParams: DeleteInvitePathParameters },
-	TContext
-> => {
-	const mutationOptions = getDeleteInviteMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint gets an invite by token
- * @summary Get invite
- */
-export const getInvite = (
-	{ token }: GetInvitePathParameters,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetInvite200>({
-		url: `/api/v1/invite/${token}`,
-		method: 'GET',
-		signal,
-	});
-};
-
-export const getGetInviteQueryKey = ({ token }: GetInvitePathParameters) => {
-	return [`/api/v1/invite/${token}`] as const;
-};
-
-export const getGetInviteQueryOptions = <
-	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ token }: GetInvitePathParameters,
-	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getInvite>>, TError, TData>;
-	},
-) => {
-	const { query: queryOptions } = options ?? {};
-
-	const queryKey = queryOptions?.queryKey ?? getGetInviteQueryKey({ token });
-
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getInvite>>> = ({
-		signal,
-	}) => getInvite({ token }, signal);
-
-	return {
-		queryKey,
-		queryFn,
-		enabled: !!token,
-		...queryOptions,
-	} as UseQueryOptions<Awaited<ReturnType<typeof getInvite>>, TError, TData> & {
-		queryKey: QueryKey;
-	};
-};
-
-export type GetInviteQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getInvite>>
->;
-export type GetInviteQueryError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get invite
- */
-
-export function useGetInvite<
-	TData = Awaited<ReturnType<typeof getInvite>>,
-	TError = ErrorType<RenderErrorResponseDTO>
->(
-	{ token }: GetInvitePathParameters,
-	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getInvite>>, TError, TData>;
-	},
-): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetInviteQueryOptions({ token }, options);
-
-	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
-		queryKey: QueryKey;
-	};
-
-	query.queryKey = queryOptions.queryKey;
-
-	return query;
-}
-
-/**
- * @summary Get invite
- */
-export const invalidateGetInvite = async (
-	queryClient: QueryClient,
-	{ token }: GetInvitePathParameters,
-	options?: InvalidateOptions,
-): Promise<QueryClient> => {
-	await queryClient.invalidateQueries(
-		{ queryKey: getGetInviteQueryKey({ token }) },
-		options,
-	);
-
-	return queryClient;
-};
-
-/**
- * This endpoint accepts an invite by token
- * @summary Accept invite
- */
-export const acceptInvite = (
-	typesPostableAcceptInviteDTO: BodyType<TypesPostableAcceptInviteDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<AcceptInvite201>({
-		url: `/api/v1/invite/accept`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: typesPostableAcceptInviteDTO,
-		signal,
-	});
-};
-
-export const getAcceptInviteMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof acceptInvite>>,
-		TError,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> },
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof acceptInvite>>,
-	TError,
-	{ data: BodyType<TypesPostableAcceptInviteDTO> },
-	TContext
-> => {
-	const mutationKey = ['acceptInvite'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof acceptInvite>>,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> }
-	> = (props) => {
-		const { data } = props ?? {};
-
-		return acceptInvite(data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type AcceptInviteMutationResult = NonNullable<
-	Awaited<ReturnType<typeof acceptInvite>>
->;
-export type AcceptInviteMutationBody = BodyType<TypesPostableAcceptInviteDTO>;
-export type AcceptInviteMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Accept invite
- */
-export const useAcceptInvite = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof acceptInvite>>,
-		TError,
-		{ data: BodyType<TypesPostableAcceptInviteDTO> },
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof acceptInvite>>,
-	TError,
-	{ data: BodyType<TypesPostableAcceptInviteDTO> },
-	TContext
-> => {
-	const mutationOptions = getAcceptInviteMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };
@@ -1428,13 +1093,13 @@ export const invalidateGetUser = async (
  */
 export const updateUser = (
 	{ id }: UpdateUserPathParameters,
-	typesUserDTO: BodyType<TypesUserDTO>,
+	typesDeprecatedUserDTO: BodyType<TypesDeprecatedUserDTO>,
 ) => {
 	return GeneratedAPIInstance<UpdateUser200>({
 		url: `/api/v1/user/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesUserDTO,
+		data: typesDeprecatedUserDTO,
 	});
 };
 
@@ -1445,13 +1110,19 @@ export const getUpdateUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{
+		pathParams: UpdateUserPathParameters;
+		data: BodyType<TypesDeprecatedUserDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateUser'];
@@ -1465,7 +1136,10 @@ export const getUpdateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateUser>>,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> }
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1478,7 +1152,7 @@ export const getUpdateUserMutationOptions = <
 export type UpdateUserMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUser>>
 >;
-export type UpdateUserMutationBody = BodyType<TypesUserDTO>;
+export type UpdateUserMutationBody = BodyType<TypesDeprecatedUserDTO>;
 export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1491,13 +1165,19 @@ export const useUpdateUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{
+		pathParams: UpdateUserPathParameters;
+		data: BodyType<TypesDeprecatedUserDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateUserMutationOptions(options);
