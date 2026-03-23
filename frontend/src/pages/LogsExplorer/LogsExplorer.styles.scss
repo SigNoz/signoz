@@ -36,9 +36,17 @@
 		.log-quick-filter-left-section {
 			width: 260px;
 			height: 100%;
-			overflow-y: auto;
-			overflow-x: hidden;
+			overflow: visible;
 			min-height: 0;
+			position: relative;
+			z-index: 2;
+			display: flex;
+			flex-direction: column;
+
+			.quick-filters-container {
+				flex: 1;
+				min-height: 0;
+			}
 		}
 
 		.log-module-right-section {
