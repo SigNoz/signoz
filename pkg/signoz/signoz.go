@@ -107,6 +107,17 @@ func New(
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
 
+	pprofService, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.PProf,
+		NewPProfProviderFactories(),
+		config.PProf.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	// Initialize analytics just after instrumentation, as providers might require it
 	analytics, err := factory.NewProviderFromNamedMap(
 		ctx,
@@ -282,8 +293,11 @@ func New(
 		return nil, err
 	}
 
-	// Initialize user getter
-	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), flagger)
+	// Initialize user store
+	userStore := impluser.NewStore(sqlstore, providerSettings)
+
+	// Initialize user role store
+	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
 	licensingProviderFactory := licenseProviderFactory(sqlstore, zeus, orgGetter, analytics)
 	licensing, err := licensingProviderFactory.New(
@@ -307,6 +321,9 @@ func New(
 	if err != nil {
 		return nil, err
 	}
+
+	// Initialize user getter
+	userGetter := impluser.NewGetter(userStore, userRoleStore, flagger)
 
 	// Initialize notification manager from the available notification manager provider factories
 	nfManager, err := factory.NewProviderFromNamedMap(
@@ -391,7 +408,7 @@ func New(
 	}
 
 	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore)
 
 	// Initialize identN resolver
 	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)
@@ -400,7 +417,7 @@ func New(
 		return nil, err
 	}
 
-	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
+	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.UserGetter, modules.UserSetter, orgGetter, authz, config.User.Root)
 
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
 	querierHandler := querierHandlerCallback(providerSettings, querier, analytics)
@@ -426,7 +443,7 @@ func New(
 		ruler,
 		modules.Dashboard,
 		modules.SavedView,
-		modules.User,
+		modules.UserSetter,
 		licensing,
 		tokenizer,
 		config,
@@ -448,6 +465,7 @@ func New(
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("pprof"), pprofService),
 		factory.NewNamedService(factory.MustNewName("analytics"), analytics),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),

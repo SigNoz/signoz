@@ -22,12 +22,29 @@ type base struct {
 	// a denotes any additional error messages (if present).
 	a []string
 	// s contains the stacktrace captured at error creation time.
-	s stacktrace
+	s fmt.Stringer
 }
 
 // Stacktrace returns the stacktrace captured at error creation time, formatted as a string.
 func (b *base) Stacktrace() string {
+	if b.s == nil {
+		return ""
+	}
 	return b.s.String()
+}
+
+// WithStacktrace replaces the auto-captured stacktrace with a pre-formatted string
+// and returns a new base error.
+func (b *base) WithStacktrace(s string) *base {
+	return &base{
+		t: b.t,
+		c: b.c,
+		m: b.m,
+		e: b.e,
+		u: b.u,
+		a: b.a,
+		s: rawStacktrace(s),
+	}
 }
 
 // base implements Error interface.
@@ -89,7 +106,7 @@ func Wrap(cause error, t typ, code Code, message string) *base {
 // WithAdditionalf adds an additional error message to the existing error.
 func WithAdditionalf(cause error, format string, args ...any) *base {
 	t, c, m, e, u, a := Unwrapb(cause)
-	var s stacktrace
+	var s fmt.Stringer
 	if original, ok := cause.(*base); ok {
 		s = original.s
 	}

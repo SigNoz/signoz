@@ -178,7 +178,7 @@ func (provider *provider) Report(ctx context.Context) error {
 		}
 
 		for _, user := range users {
-			traits := types.NewTraitsFromUser(user)
+			traits := types.NewTraitsFromDeprecatedUser(user)
 			if maxLastObservedAt, ok := maxLastObservedAtPerUserID[user.ID]; ok {
 				traits["auth_token.last_observed_at.max.time"] = maxLastObservedAt.UTC()
 				traits["auth_token.last_observed_at.max.time_unix"] = maxLastObservedAt.Unix()

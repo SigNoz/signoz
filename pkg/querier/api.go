@@ -5,9 +5,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
-	"log/slog"
 	"net/http"
-	"runtime/debug"
 	"strconv"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -51,26 +49,6 @@ func (handler *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, err)
 		return
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			handler.set.Logger.ErrorContext(ctx, "panic in QueryRange",
-				slog.Any("error", r),
-				slog.Any("user", claims.UserID),
-				slog.String("payload", string(queryJSON)),
-				slog.String("stacktrace", stackTrace),
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {
@@ -151,26 +129,6 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 		render.Error(rw, err)
 		return
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			handler.set.Logger.ErrorContext(ctx, "panic in QueryRawStream",
-				slog.Any("error", r),
-				slog.Any("user", claims.UserID),
-				slog.String("payload", string(queryJSON)),
-				slog.String("stacktrace", stackTrace),
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
 
 	// Validate the query request
 	if err := queryRangeRequest.Validate(); err != nil {

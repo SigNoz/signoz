@@ -36,3 +36,10 @@ func (s stacktrace) String() string {
 	}
 	return buf.String()
 }
+
+// rawStacktrace holds a pre-formatted stacktrace string.
+type rawStacktrace string
+
+func (r rawStacktrace) String() string {
+	return string(r)
+}

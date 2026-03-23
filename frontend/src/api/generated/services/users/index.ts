@@ -34,13 +34,13 @@ import type {
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
+	TypesDeprecatedUserDTO,
 	TypesPostableAPIKeyDTO,
 	TypesPostableBulkInviteRequestDTO,
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesStorableAPIKeyDTO,
-	TypesUserDTO,
 	UpdateAPIKeyPathParameters,
 	UpdateUser200,
 	UpdateUserPathParameters,
@@ -1093,13 +1093,13 @@ export const invalidateGetUser = async (
  */
 export const updateUser = (
 	{ id }: UpdateUserPathParameters,
-	typesUserDTO: BodyType<TypesUserDTO>,
+	typesDeprecatedUserDTO: BodyType<TypesDeprecatedUserDTO>,
 ) => {
 	return GeneratedAPIInstance<UpdateUser200>({
 		url: `/api/v1/user/${id}`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesUserDTO,
+		data: typesDeprecatedUserDTO,
 	});
 };
 
@@ -1110,13 +1110,19 @@ export const getUpdateUserMutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		},
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{
+		pathParams: UpdateUserPathParameters;
+		data: BodyType<TypesDeprecatedUserDTO>;
+	},
 	TContext
 > => {
 	const mutationKey = ['updateUser'];
@@ -1130,7 +1136,10 @@ export const getUpdateUserMutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateUser>>,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> }
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		}
 	> = (props) => {
 		const { pathParams, data } = props ?? {};
 
@@ -1143,7 +1152,7 @@ export const getUpdateUserMutationOptions = <
 export type UpdateUserMutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateUser>>
 >;
-export type UpdateUserMutationBody = BodyType<TypesUserDTO>;
+export type UpdateUserMutationBody = BodyType<TypesDeprecatedUserDTO>;
 export type UpdateUserMutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -1156,13 +1165,19 @@ export const useUpdateUser = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateUser>>,
 		TError,
-		{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+		{
+			pathParams: UpdateUserPathParameters;
+			data: BodyType<TypesDeprecatedUserDTO>;
+		},
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateUser>>,
 	TError,
-	{ pathParams: UpdateUserPathParameters; data: BodyType<TypesUserDTO> },
+	{
+		pathParams: UpdateUserPathParameters;
+		data: BodyType<TypesDeprecatedUserDTO>;
+	},
 	TContext
 > => {
 	const mutationOptions = getUpdateUserMutationOptions(options);

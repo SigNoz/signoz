@@ -17,7 +17,7 @@ type Store interface {
 	ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider CloudProviderType) ([]*StorableCloudIntegration, error)
 
 	// CreateAccount creates a new cloud integration account
-	CreateAccount(ctx context.Context, account *StorableCloudIntegration) (*StorableCloudIntegration, error)
+	CreateAccount(ctx context.Context, account *StorableCloudIntegration) error
 
 	// UpdateAccount updates an existing cloud integration account
 	UpdateAccount(ctx context.Context, account *StorableCloudIntegration) error
@@ -34,7 +34,7 @@ type Store interface {
 	ListServices(ctx context.Context, cloudIntegrationID valuer.UUID) ([]*StorableCloudIntegrationService, error)
 
 	// CreateService creates a new cloud integration service
-	CreateService(ctx context.Context, service *StorableCloudIntegrationService) (*StorableCloudIntegrationService, error)
+	CreateService(ctx context.Context, service *StorableCloudIntegrationService) error
 
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
