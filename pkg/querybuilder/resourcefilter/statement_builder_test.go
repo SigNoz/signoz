@@ -477,7 +477,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 			end:   uint64(1770062578000000000),
 			expected: qbtypes.Statement{
 				Query: "SELECT fingerprint FROM signoz_logs.distributed_logs_v2_resource WHERE ((simpleJSONExtractString(labels, 'env') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'k8s.deployment.name') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?",
-				Args:  []any{"prod", "%env%", "%env\":\"prod%", "fnscrapers", "%k8s.deployment.name%", "%k8s.deployment.name\":\"fnscrapers%", uint64(1769974378), uint64(1770062578)},
+				Args:  []any{"prod", "%env%", "%env\":\"prod%", "prod-deployment", "%k8s.deployment.name%", "%k8s.deployment.name\":\"prod-deployment%", uint64(1769974378), uint64(1770062578)},
 			},
 		},
 		{

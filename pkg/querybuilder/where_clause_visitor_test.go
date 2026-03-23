@@ -720,7 +720,7 @@ var visitTestKeys = map[string][]*telemetrytypes.TelemetryFieldKey{
 		{Name: "cz", FieldContext: telemetrytypes.FieldContextResource, FieldDataType: telemetrytypes.FieldDataTypeString}},
 }
 
-type resourceConditionBuilder struct{ m map[string]string }
+type resourceConditionBuilder struct{}
 
 func (b *resourceConditionBuilder) ConditionFor(
 	_ context.Context,
@@ -733,13 +733,9 @@ func (b *resourceConditionBuilder) ConditionFor(
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return TrueConditionLiteral, nil
+		return SkipConditionLiteral, nil
 	}
-	if b.m != nil {
-		if result, ok := b.m[key.Name]; ok {
-			return result, nil
-		}
-	}
+
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 
@@ -755,11 +751,6 @@ func (b *conditionBuilder) ConditionFor(
 	_ uint64,
 ) (string, error) {
 
-	if b.m != nil {
-		if result, ok := b.m[key.Name]; ok {
-			return result, nil
-		}
-	}
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 

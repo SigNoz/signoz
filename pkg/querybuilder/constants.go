@@ -6,6 +6,7 @@ import (
 
 const (
 	TrueConditionLiteral = "true"
+	SkipConditionLiteral = "__skip__"
 )
 
 var (
