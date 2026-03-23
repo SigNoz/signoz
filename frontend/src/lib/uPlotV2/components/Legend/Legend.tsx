@@ -40,27 +40,40 @@ export default function Legend({
 		legendItemsMap,
 	]);
 
+	const sortedLegendItems = useMemo(
+		() =>
+			[...legendItems].sort((a, b) =>
+				(a.label || '').localeCompare(b.label || ''),
+			),
+		[legendItems],
+	);
+
 	const isSingleRow = useMemo(() => {
 		if (!legendContainerRef.current || position !== LegendPosition.BOTTOM) {
 			return false;
 		}
 		const containerWidth = legendContainerRef.current.clientWidth;
 
-		const totalLegendWidth = legendItems.length * (averageLegendWidth + 16);
+		const totalLegendWidth = sortedLegendItems.length * (averageLegendWidth + 16);
 		const totalRows = Math.ceil(totalLegendWidth / containerWidth);
 		return totalRows <= 1;
-	}, [averageLegendWidth, legendContainerRef, legendItems.length, position]);
+	}, [
+		averageLegendWidth,
+		legendContainerRef,
+		position,
+		sortedLegendItems.length,
+	]);
 
 	const visibleLegendItems = useMemo(() => {
 		if (position !== LegendPosition.RIGHT || !legendSearchQuery.trim()) {
-			return legendItems;
+			return sortedLegendItems;
 		}
 
 		const query = legendSearchQuery.trim().toLowerCase();
-		return legendItems.filter((item) =>
+		return sortedLegendItems.filter((item) =>
 			item.label?.toLowerCase().includes(query),
 		);
-	}, [position, legendSearchQuery, legendItems]);
+	}, [position, legendSearchQuery, sortedLegendItems]);
 
 	const handleCopyLegendItem = useCallback(
 		(e: React.MouseEvent, seriesIndex: number, label: string): void => {
