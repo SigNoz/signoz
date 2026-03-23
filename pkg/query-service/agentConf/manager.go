@@ -9,6 +9,9 @@ import (
 	"sync"
 	"sync/atomic"
 
+	"github.com/google/uuid"
+	yaml "gopkg.in/yaml.v3"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/app/opamp"
 	filterprocessor "github.com/SigNoz/signoz/pkg/query-service/app/opamp/otelconfig/filterprocessor"
@@ -17,8 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
-	yaml "gopkg.in/yaml.v3"
 )
 
 var m *Manager
@@ -185,7 +186,6 @@ func (m *Manager) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, 
 	return m.Repo.GetDeployStatusByHash(ctx, orgId, configHash)
 }
 
-
 func GetLatestVersion(
 	ctx context.Context, orgId valuer.UUID, elementType opamptypes.ElementType,
 ) (*opamptypes.AgentConfigVersion, error) {
@@ -230,7 +230,7 @@ func NotifyConfigUpdate(ctx context.Context) {
 func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType, version int) error {
 	configVersion, err := GetConfigVersion(ctx, orgId, typ, version)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to fetch config version during redeploy", "error", err)
+		slog.ErrorContext(ctx, "failed to fetch config version during redeploy", errors.Attr(err))
 		return err
 	}
 
@@ -242,7 +242,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 	case opamptypes.ElementTypeSamplingRules:
 		var config *tsp.Config
 		if err := yaml.Unmarshal([]byte(configVersion.Config), &config); err != nil {
-			slog.DebugContext(ctx, "failed to read last conf correctly", "error", err)
+			slog.DebugContext(ctx, "failed to read last conf correctly", errors.Attr(err))
 			return model.BadRequest(fmt.Errorf("failed to read the stored config correctly"))
 		}
 
@@ -254,7 +254,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 		opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to call agent config update for trace processor", "error", err)
+			slog.ErrorContext(ctx, "failed to call agent config update for trace processor", errors.Attr(err))
 			return errors.WithAdditionalf(err, "failed to deploy the config")
 		}
 
@@ -262,7 +262,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 	case opamptypes.ElementTypeDropRules:
 		var filterConfig *filterprocessor.Config
 		if err := yaml.Unmarshal([]byte(configVersion.Config), &filterConfig); err != nil {
-			slog.ErrorContext(ctx, "failed to read last conf correctly", "error", err)
+			slog.ErrorContext(ctx, "failed to read last conf correctly", errors.Attr(err))
 			return model.InternalError(fmt.Errorf("failed to read the stored config correctly"))
 		}
 		processorConf := map[string]interface{}{
@@ -272,7 +272,7 @@ func Redeploy(ctx context.Context, orgId valuer.UUID, typ opamptypes.ElementType
 		opamp.AddToMetricsPipelineSpec("filter")
 		configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to call agent config update for trace processor", "error", err)
+			slog.ErrorContext(ctx, "failed to call agent config update for trace processor", errors.Attr(err))
 			return err
 		}
 
@@ -298,13 +298,13 @@ func UpsertFilterProcessor(ctx context.Context, orgId valuer.UUID, version int, 
 	opamp.AddToMetricsPipelineSpec("filter")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "metrics", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to call agent config update for trace processor", "error", err)
+		slog.ErrorContext(ctx, "failed to call agent config update for trace processor", errors.Attr(err))
 		return err
 	}
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", "error", yamlErr)
+		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", errors.Attr(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeDropRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))
@@ -349,13 +349,13 @@ func UpsertSamplingProcessor(ctx context.Context, orgId valuer.UUID, version int
 	opamp.AddToTracePipelineSpec("signoz_tail_sampling")
 	configHash, err := opamp.UpsertControlProcessors(ctx, "traces", processorConf, m.OnConfigUpdate)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to call agent config update for trace processor", "error", err)
+		slog.ErrorContext(ctx, "failed to call agent config update for trace processor", errors.Attr(err))
 		return err
 	}
 
 	processorConfYaml, yamlErr := yaml.Marshal(config)
 	if yamlErr != nil {
-		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", "error", yamlErr)
+		slog.WarnContext(ctx, "unexpected error while transforming processor config to yaml", errors.Attr(yamlErr))
 	}
 
 	m.updateDeployStatus(ctx, orgId, opamptypes.ElementTypeSamplingRules, version, opamptypes.DeployInitiated.StringValue(), "Deployment started", configHash, string(processorConfYaml))

@@ -2,6 +2,7 @@ package signoz
 
 import (
 	"context"
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
@@ -100,11 +101,22 @@ func New(
 		return nil, err
 	}
 
-	instrumentation.Logger().InfoContext(ctx, "starting signoz", "version", version.Info.Version(), "variant", version.Info.Variant(), "commit", version.Info.Hash(), "branch", version.Info.Branch(), "go", version.Info.GoVersion(), "time", version.Info.Time())
-	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", "config", config)
+	instrumentation.Logger().InfoContext(ctx, "starting signoz", slog.String("version", version.Info.Version()), slog.String("variant", version.Info.Variant()), slog.String("commit", version.Info.Hash()), slog.String("branch", version.Info.Branch()), slog.String("go", version.Info.GoVersion()), slog.String("time", version.Info.Time()))
+	instrumentation.Logger().DebugContext(ctx, "loaded signoz config", slog.Any("config", config))
 
 	// Get the provider settings from instrumentation
 	providerSettings := instrumentation.ToProviderSettings()
+
+	pprofService, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.PProf,
+		NewPProfProviderFactories(),
+		config.PProf.Provider(),
+	)
+	if err != nil {
+		return nil, err
+	}
 
 	// Initialize analytics just after instrumentation, as providers might require it
 	analytics, err := factory.NewProviderFromNamedMap(
@@ -382,7 +394,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.Global,
-		NewGlobalProviderFactories(),
+		NewGlobalProviderFactories(config.IdentN),
 		"signoz",
 	)
 	if err != nil {
@@ -393,16 +405,11 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter)
 
 	// Initialize identN resolver
-	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer)
-	identNs := []identn.IdentN{}
-	for _, identNFactory := range identNFactories.GetInOrder() {
-		identN, err := identNFactory.New(ctx, providerSettings, config.IdentN)
-		if err != nil {
-			return nil, err
-		}
-		identNs = append(identNs, identN)
+	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)
+	identNResolver, err := identn.NewIdentNResolver(ctx, providerSettings, config.IdentN, identNFactories)
+	if err != nil {
+		return nil, err
 	}
-	identNResolver := identn.NewIdentNResolver(providerSettings, identNs...)
 
 	userService := impluser.NewService(providerSettings, impluser.NewStore(sqlstore, providerSettings), modules.User, orgGetter, authz, config.User.Root)
 
@@ -417,7 +424,7 @@ func New(
 		ctx,
 		providerSettings,
 		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, global, modules, handlers),
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
 		"signoz",
 	)
 	if err != nil {
@@ -452,6 +459,7 @@ func New(
 	registry, err := factory.NewRegistry(
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
+		factory.NewNamedService(factory.MustNewName("pprof"), pprofService),
 		factory.NewNamedService(factory.MustNewName("analytics"), analytics),
 		factory.NewNamedService(factory.MustNewName("alertmanager"), alertmanager),
 		factory.NewNamedService(factory.MustNewName("licensing"), licensing),

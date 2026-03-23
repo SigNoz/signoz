@@ -10,6 +10,9 @@ import (
 	"sync"
 	"time"
 
+	"github.com/dustin/go-humanize"
+	"golang.org/x/exp/maps"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -20,8 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/dustin/go-humanize"
-	"golang.org/x/exp/maps"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -368,10 +369,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					var err error
 					metricTemporality, metricTypes, err = q.metadataStore.FetchTemporalityAndTypeMulti(ctx, req.Start, req.End, metricNames...)
 					if err != nil {
-						q.logger.WarnContext(ctx, "failed to fetch metric temporality", "error", err, "metrics", metricNames)
+						q.logger.WarnContext(ctx, "failed to fetch metric temporality", errors.Attr(err), slog.Any("metrics", metricNames))
 						return nil, errors.NewInternalf(errors.CodeInternal, "failed to fetch metrics temporality")
 					}
-					q.logger.DebugContext(ctx, "fetched metric temporalities and types", "metric_temporality", metricTemporality, "metric_types", metricTypes)
+					q.logger.DebugContext(ctx, "fetched metric temporalities and types", slog.Any("metric_temporality", metricTemporality), slog.Any("metric_types", metricTypes))
 				}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
@@ -590,9 +591,9 @@ func (q *querier) run(
 		// Skip cache if NoCache is set, or if cache is not available
 		if req.NoCache || q.bucketCache == nil || query.Fingerprint() == "" {
 			if req.NoCache {
-				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", "query", name)
+				q.logger.DebugContext(ctx, "NoCache flag set, bypassing cache", slog.String("query", name))
 			} else {
-				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", "fingerprint", query.Fingerprint())
+				q.logger.InfoContext(ctx, "no bucket cache or fingerprint, executing query", slog.String("fingerprint", query.Fingerprint()))
 			}
 			result, err := query.Execute(ctx)
 			qbEvent.HasData = qbEvent.HasData || hasData(result)
@@ -709,8 +710,8 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	totalStats := qbtypes.ExecStats{}
 
 	q.logger.DebugContext(ctx, "executing queries for missing ranges",
-		"missing_ranges_count", len(missingRanges),
-		"ranges", missingRanges)
+		slog.Int("missing_ranges_count", len(missingRanges)),
+		slog.Any("ranges", missingRanges))
 
 	sem := make(chan struct{}, 4)
 	var wg sync.WaitGroup
@@ -748,7 +749,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errs {
 		if err != nil {
 			// If any query failed, fall back to full execution
-			q.logger.ErrorContext(ctx, "parallel query execution failed", "error", err)
+			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
 			result, err := query.Execute(ctx)
 			if err != nil {
 				return nil, err

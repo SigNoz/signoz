@@ -15,6 +15,8 @@ import (
 	"sync"
 	"time"
 
+	"github.com/uptrace/bun"
+
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/query-service/model/metrics_explorer"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
@@ -24,17 +26,18 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/uptrace/bun"
 
-	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/google/uuid"
 	"github.com/pkg/errors"
+
+	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 
 	"github.com/prometheus/prometheus/promql"
 	"github.com/prometheus/prometheus/util/stats"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 
 	"log/slog"
@@ -321,7 +324,7 @@ func (r *ClickHouseReader) GetTopLevelOperations(ctx context.Context, start, end
 	rows, err := r.db.Query(ctx, query, clickhouse.Named("start", start), clickhouse.Named("services", services))
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -393,7 +396,7 @@ func (r *ClickHouseReader) buildResourceSubQuery(tags []model.TagQueryParam, svc
 		v3.AttributeKey{},
 		false)
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return "", err
 	}
 	return resourceSubQuery, nil
@@ -473,7 +476,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 			resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, svc, *queryParams.Start, *queryParams.End)
 			if err != nil {
-				r.logger.Error("Error in processing sql query", "error", err)
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
 			}
 			query += `
@@ -498,7 +501,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 			}
 
 			if err != nil {
-				r.logger.Error("Error in processing sql query", "error", err)
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
 			}
 
@@ -510,7 +513,7 @@ func (r *ClickHouseReader) GetServices(ctx context.Context, queryParams *model.G
 
 			err = r.db.QueryRow(ctx, errorQuery, args...).Scan(&numErrors)
 			if err != nil {
-				r.logger.Error("Error in processing sql query", "error", err)
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return
 			}
 
@@ -793,7 +796,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 
 	resourceSubQuery, err := r.buildResourceSubQuery(queryParams.Tags, queryParams.ServiceName, *queryParams.Start, *queryParams.End)
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 	query += `
@@ -810,7 +813,7 @@ func (r *ClickHouseReader) GetTopOperations(ctx context.Context, queryParams *mo
 	err = r.db.Select(ctx, &topOperationsItems, query, namedArgs...)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -847,7 +850,7 @@ func (r *ClickHouseReader) GetUsage(ctx context.Context, queryParams *model.GetU
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
@@ -877,7 +880,7 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 		if err == sql.ErrNoRows {
 			return []model.SpanItemV2{}, nil
 		}
-		r.logger.Error("Error in processing trace summary sql query", "error", err)
+		r.logger.Error("Error in processing trace summary sql query", errorsV2.Attr(err))
 		return nil, model.ExecutionError(fmt.Errorf("error in processing trace summary sql query: %w", err))
 	}
 
@@ -886,7 +889,7 @@ func (r *ClickHouseReader) GetSpansForTrace(ctx context.Context, traceID string,
 	err = r.db.Select(ctx, &searchScanResponses, traceDetailsQuery, traceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 	r.logger.Info(traceDetailsQuery)
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, model.ExecutionError(fmt.Errorf("error in processing trace data sql query: %w", err))
 	}
 	r.logger.Info("trace details query took: ", "duration", time.Since(queryStartTime), "traceID", traceID)
@@ -898,7 +901,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadataCache(ctx contex
 	cachedTraceData := new(model.GetWaterfallSpansForTraceWithMetadataCache)
 	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), cachedTraceData)
 	if err != nil {
-		r.logger.Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", "error", err, "traceID", traceID)
+		r.logger.Debug("error in retrieving getWaterfallSpansForTraceWithMetadata cache", errorsV2.Attr(err), "traceID", traceID)
 		return nil, err
 	}
 
@@ -949,7 +952,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
-				r.logger.Error("getWaterfallSpansForTraceWithMetadata: error unmarshalling references", "error", err, "traceID", traceID)
+				r.logger.Error("getWaterfallSpansForTraceWithMetadata: error unmarshalling references", errorsV2.Attr(err), "traceID", traceID)
 				return nil, errorsV2.Newf(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, "getWaterfallSpansForTraceWithMetadata: error unmarshalling references %s", err.Error())
 			}
 
@@ -969,7 +972,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 				var eventMap model.Event
 				err = json.Unmarshal([]byte(event), &eventMap)
 				if err != nil {
-					r.logger.Error("Error unmarshalling events", "error", err)
+					r.logger.Error("Error unmarshalling events", errorsV2.Attr(err))
 					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getWaterfallSpansForTraceWithMetadata: error in unmarshalling events %s", err.Error())
 				}
 				events = append(events, eventMap)
@@ -1082,7 +1085,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 		r.logger.Info("getWaterfallSpansForTraceWithMetadata: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
 		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getWaterfallSpansForTraceWithMetadata", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", "traceID", traceID, "error", err)
+			r.logger.Debug("failed to store cache for getWaterfallSpansForTraceWithMetadata", "traceID", traceID, errorsV2.Attr(err))
 		}
 	}
 
@@ -1116,7 +1119,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTraceCache(ctx context.Context, 
 	cachedTraceData := new(model.GetFlamegraphSpansForTraceCache)
 	err := r.cacheForTraceDetail.Get(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), cachedTraceData)
 	if err != nil {
-		r.logger.Debug("error in retrieving getFlamegraphSpansForTrace cache", "error", err, "traceID", traceID)
+		r.logger.Debug("error in retrieving getFlamegraphSpansForTrace cache", errorsV2.Attr(err), "traceID", traceID)
 		return nil, err
 	}
 
@@ -1164,7 +1167,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 			ref := []model.OtelSpanRef{}
 			err := json.Unmarshal([]byte(item.References), &ref)
 			if err != nil {
-				r.logger.Error("Error unmarshalling references", "error", err)
+				r.logger.Error("Error unmarshalling references", errorsV2.Attr(err))
 				return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling references %s", err.Error())
 			}
 
@@ -1173,7 +1176,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 				var eventMap model.Event
 				err = json.Unmarshal([]byte(event), &eventMap)
 				if err != nil {
-					r.logger.Error("Error unmarshalling events", "error", err)
+					r.logger.Error("Error unmarshalling events", errorsV2.Attr(err))
 					return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "getFlamegraphSpansForTrace: error in unmarshalling events %s", err.Error())
 				}
 				events = append(events, eventMap)
@@ -1252,7 +1255,7 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 		r.logger.Info("getFlamegraphSpansForTrace: processing pre cache", "duration", time.Since(processingBeforeCache), "traceID", traceID)
 		cacheErr := r.cacheForTraceDetail.Set(ctx, orgID, strings.Join([]string{"getFlamegraphSpansForTrace", traceID}, "-"), &traceCache, time.Minute*5)
 		if cacheErr != nil {
-			r.logger.Debug("failed to store cache for getFlamegraphSpansForTrace", "traceID", traceID, "error", err)
+			r.logger.Debug("failed to store cache for getFlamegraphSpansForTrace", "traceID", traceID, errorsV2.Attr(err))
 		}
 	}
 
@@ -1312,7 +1315,7 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 	err := r.db.Select(ctx, &response, query, args...)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error in processing sql query %w", err)
 	}
 
@@ -1431,13 +1434,13 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+				r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 				return
 			}
 
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				r.logger.Error("error in setting cold storage", "error", err)
+				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
 				statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
 				if apiErr == nil {
 					_, dbErr := r.
@@ -1450,7 +1453,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+						r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 						return
 					}
 				}
@@ -1459,7 +1462,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 			r.logger.Info("Executing TTL request: ", "request", query)
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, query); err != nil {
-				r.logger.Error("error while setting ttl", "error", err)
+				r.logger.Error("error while setting ttl", errorsV2.Attr(err))
 				_, dbErr := r.
 					sqlDB.
 					BunDB().
@@ -1470,7 +1473,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 				return
@@ -1485,7 +1488,7 @@ func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params 
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 		}
@@ -1569,7 +1572,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				Model(&ttl).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+				r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 				return
 			}
 
@@ -1587,7 +1590,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			}
 			err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 			if err != nil {
-				r.logger.Error("Error in setting cold storage", "error", err)
+				r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
 				statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
 				if apiErr == nil {
 					_, dbErr := r.
@@ -1600,7 +1603,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 						Where("id = ?", statusItem.ID.StringValue()).
 						Exec(ctx)
 					if dbErr != nil {
-						r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+						r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 						return
 					}
 				}
@@ -1610,7 +1613,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 			r.logger.Error(" ExecutingTTL request: ", "request", req)
 			statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if err := r.db.Exec(ctx, req); err != nil {
-				r.logger.Error("Error in executing set TTL query", "error", err)
+				r.logger.Error("Error in executing set TTL query", errorsV2.Attr(err))
 				_, dbErr := r.
 					sqlDB.
 					BunDB().
@@ -1621,7 +1624,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 				return
@@ -1636,7 +1639,7 @@ func (r *ClickHouseReader) setTTLTraces(ctx context.Context, orgID string, param
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 		}(distributedTableName)
@@ -1662,7 +1665,7 @@ func (r *ClickHouseReader) hasCustomRetentionColumn(ctx context.Context) (bool, 
 			r.logger.Debug("_retention_days column not found in logs table", "table", r.logsLocalTableV2)
 			return false, nil
 		}
-		r.logger.Error("Error checking for _retention_days column", "error", err)
+		r.logger.Error("Error checking for _retention_days column", errorsV2.Attr(err))
 		return false, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error checking columns")
 	}
 
@@ -1842,14 +1845,14 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		// Insert TTL setting record
 		_, dbErr := r.sqlDB.BunDB().NewInsert().Model(&customTTL).Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("error in inserting to custom_retention_ttl_settings table", "error", dbErr)
+			r.logger.Error("error in inserting to custom_retention_ttl_settings table", errorsV2.Attr(dbErr))
 			return nil, errorsV2.Wrapf(dbErr, errorsV2.TypeInternal, errorsV2.CodeInternal, "error inserting TTL settings")
 		}
 
 		if len(params.ColdStorageVolume) > 0 && coldStorageDuration > 0 {
 			err := r.setColdStorage(ctx, tableName, params.ColdStorageVolume)
 			if err != nil {
-				r.logger.Error("error in setting cold storage", "error", err)
+				r.logger.Error("error in setting cold storage", errorsV2.Attr(err))
 				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
 				return nil, errorsV2.Wrapf(err.Err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting cold storage for table %s", tableName)
 			}
@@ -1858,7 +1861,7 @@ func (r *ClickHouseReader) SetTTLV2(ctx context.Context, orgID string, params *m
 		for i, query := range queries {
 			r.logger.Debug("Executing custom retention TTL request: ", "request", query, "step", i+1)
 			if err := r.db.Exec(ctx, query); err != nil {
-				r.logger.Error("error while setting custom retention ttl", "error", err)
+				r.logger.Error("error while setting custom retention ttl", errorsV2.Attr(err))
 				r.updateCustomRetentionTTLStatus(ctx, orgID, tableName, constants.StatusFailed)
 				return nil, errorsV2.Wrapf(err, errorsV2.TypeInternal, errorsV2.CodeInternal, "error setting custom retention TTL for table %s, query: %s", tableName, query)
 			}
@@ -1950,7 +1953,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 	hasCustomRetention, err := r.hasCustomRetentionColumn(ctx)
 	if err != nil {
 		// If there's an error checking, assume V1 and proceed
-		r.logger.Warn("Error checking for custom retention column, assuming V1", "error", err)
+		r.logger.Warn("Error checking for custom retention column, assuming V1", errorsV2.Attr(err))
 		hasCustomRetention = false
 	}
 
@@ -1971,7 +1974,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 			Scan(ctx)
 
 		if err != nil && err != sql.ErrNoRows {
-			r.logger.Error("Error in processing sql query", "error", err)
+			r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 			return nil, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing get custom ttl query")
 		}
 
@@ -1988,7 +1991,7 @@ func (r *ClickHouseReader) GetCustomRetentionTTL(ctx context.Context, orgID stri
 		var ttlConditions []model.CustomRetentionRule
 		if customTTL.Condition != "" {
 			if err := json.Unmarshal([]byte(customTTL.Condition), &ttlConditions); err != nil {
-				r.logger.Error("Error parsing TTL conditions", "error", err)
+				r.logger.Error("Error parsing TTL conditions", errorsV2.Attr(err))
 				ttlConditions = []model.CustomRetentionRule{}
 			}
 		}
@@ -2041,7 +2044,7 @@ func (r *ClickHouseReader) checkCustomRetentionTTLStatusItem(ctx context.Context
 		Scan(ctx)
 
 	if err != nil && err != sql.ErrNoRows {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return ttl, errorsV2.Newf(errorsV2.TypeInternal, errorsV2.CodeInternal, "error in processing custom_retention_ttl_status check sql query")
 	}
 
@@ -2058,7 +2061,7 @@ func (r *ClickHouseReader) updateCustomRetentionTTLStatus(ctx context.Context, o
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("Error in processing custom_retention_ttl_status update sql query", "error", dbErr)
+			r.logger.Error("Error in processing custom_retention_ttl_status update sql query", errorsV2.Attr(dbErr))
 		}
 	}
 }
@@ -2241,7 +2244,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			Model(&ttl).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("error in inserting to ttl_status table", "error", dbErr)
+			r.logger.Error("error in inserting to ttl_status table", errorsV2.Attr(dbErr))
 			return
 		}
 		timeColumn := "timestamp_ms"
@@ -2259,7 +2262,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		}
 		err := r.setColdStorage(context.Background(), tableName, params.ColdStorageVolume)
 		if err != nil {
-			r.logger.Error("Error in setting cold storage", "error", err)
+			r.logger.Error("Error in setting cold storage", errorsV2.Attr(err))
 			statusItem, apiErr := r.checkTTLStatusItem(ctx, orgID, tableName)
 			if apiErr == nil {
 				_, dbErr := r.
@@ -2272,7 +2275,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 					Where("id = ?", statusItem.ID.StringValue()).
 					Exec(ctx)
 				if dbErr != nil {
-					r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+					r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 					return
 				}
 			}
@@ -2282,7 +2285,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 		r.logger.Info("Executing TTL request: ", "request", req)
 		statusItem, _ := r.checkTTLStatusItem(ctx, orgID, tableName)
 		if err := r.db.Exec(ctx, req); err != nil {
-			r.logger.Error("error while setting ttl.", "error", err)
+			r.logger.Error("error while setting ttl.", errorsV2.Attr(err))
 			_, dbErr := r.
 				sqlDB.
 				BunDB().
@@ -2293,7 +2296,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 				Where("id = ?", statusItem.ID.StringValue()).
 				Exec(ctx)
 			if dbErr != nil {
-				r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+				r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 				return
 			}
 			return
@@ -2308,7 +2311,7 @@ func (r *ClickHouseReader) setTTLMetrics(ctx context.Context, orgID string, para
 			Where("id = ?", statusItem.ID.StringValue()).
 			Exec(ctx)
 		if dbErr != nil {
-			r.logger.Error("Error in processing ttl_status update sql query", "error", dbErr)
+			r.logger.Error("Error in processing ttl_status update sql query", errorsV2.Attr(dbErr))
 			return
 		}
 	}
@@ -2333,7 +2336,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		Scan(ctx, &limitTransactions)
 
 	if err != nil {
-		r.logger.Error("Error in processing ttl_status delete sql query", "error", err)
+		r.logger.Error("Error in processing ttl_status delete sql query", errorsV2.Attr(err))
 	}
 
 	_, err = r.
@@ -2344,7 +2347,7 @@ func (r *ClickHouseReader) deleteTtlTransactions(ctx context.Context, orgID stri
 		Where("transaction_id NOT IN (?)", bun.In(limitTransactions)).
 		Exec(ctx)
 	if err != nil {
-		r.logger.Error("Error in processing ttl_status delete sql query", "error", err)
+		r.logger.Error("Error in processing ttl_status delete sql query", errorsV2.Attr(err))
 	}
 }
 
@@ -2363,7 +2366,7 @@ func (r *ClickHouseReader) checkTTLStatusItem(ctx context.Context, orgID string,
 		Limit(1).
 		Scan(ctx)
 	if err != nil && err != sql.ErrNoRows {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return ttl, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing ttl_status check sql query")}
 	}
 	return ttl, nil
@@ -2410,7 +2413,7 @@ func (r *ClickHouseReader) setColdStorage(ctx context.Context, tableName string,
 
 		r.logger.Info("Executing Storage policy request: ", "request", policyReq)
 		if err := r.db.Exec(ctx, policyReq); err != nil {
-			r.logger.Error("error while setting storage policy", "error", err)
+			r.logger.Error("error while setting storage policy", errorsV2.Attr(err))
 			return &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while setting storage policy. Err=%v", err)}
 		}
 	}
@@ -2427,7 +2430,7 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 
 	query := "SELECT name,type FROM system.disks"
 	if err := r.db.Select(ctx, &diskItems, query); err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting disks. Err=%v", err)}
 	}
 
@@ -2487,7 +2490,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			r.logger.Error("error while getting ttl", "error", err)
+			r.logger.Error("error while getting ttl", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2505,7 +2508,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			r.logger.Error("error while getting ttl", "error", err)
+			r.logger.Error("error while getting ttl", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2523,7 +2526,7 @@ func (r *ClickHouseReader) GetTTL(ctx context.Context, orgID string, ttlParams *
 		err := r.db.Select(ctx, &dbResp, query)
 
 		if err != nil {
-			r.logger.Error("error while getting ttl", "error", err)
+			r.logger.Error("error while getting ttl", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error while getting ttl. Err=%v", err)}
 		}
 		if len(dbResp) == 0 {
@@ -2656,7 +2659,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	args = append(args, argsSubQuery...)
 
 	if errStatus != nil {
-		r.logger.Error("Error in processing tags", "error", errStatus)
+		r.logger.Error("Error in processing tags", errorsV2.Attr(errStatus))
 		return nil, errStatus
 	}
 	query = query + " GROUP BY groupID"
@@ -2687,7 +2690,7 @@ func (r *ClickHouseReader) ListErrors(ctx context.Context, queryParams *model.Li
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -2722,7 +2725,7 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	args = append(args, argsSubQuery...)
 
 	if errStatus != nil {
-		r.logger.Error("Error in processing tags", "error", errStatus)
+		r.logger.Error("Error in processing tags", errorsV2.Attr(errStatus))
 		return 0, errStatus
 	}
 
@@ -2730,7 +2733,7 @@ func (r *ClickHouseReader) CountErrors(ctx context.Context, queryParams *model.C
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return 0, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -2757,7 +2760,7 @@ func (r *ClickHouseReader) GetErrorFromErrorID(ctx context.Context, queryParams 
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -2786,7 +2789,7 @@ func (r *ClickHouseReader) GetErrorFromGroupID(ctx context.Context, queryParams 
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 
@@ -2810,12 +2813,12 @@ func (r *ClickHouseReader) GetNextPrevErrorIDs(ctx context.Context, queryParams 
 	}
 	getNextPrevErrorIDsResponse.NextErrorID, getNextPrevErrorIDsResponse.NextTimestamp, apiErr = r.getNextErrorID(ctx, queryParams)
 	if apiErr != nil {
-		r.logger.Error("Unable to get next error ID due to err: ", "error", apiErr)
+		r.logger.Error("Unable to get next error ID due to err: ", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 	getNextPrevErrorIDsResponse.PrevErrorID, getNextPrevErrorIDsResponse.PrevTimestamp, apiErr = r.getPrevErrorID(ctx, queryParams)
 	if apiErr != nil {
-		r.logger.Error("Unable to get prev error ID due to err: ", "error", apiErr)
+		r.logger.Error("Unable to get prev error ID due to err: ", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 	return &getNextPrevErrorIDsResponse, nil
@@ -2839,7 +2842,7 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 	if len(getNextErrorIDReponse) == 0 {
@@ -2860,7 +2863,7 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 			r.logger.Info(query)
 
 			if err != nil {
-				r.logger.Error("Error in processing sql query", "error", err)
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 			}
 			if len(getNextErrorIDReponse) == 0 {
@@ -2874,7 +2877,7 @@ func (r *ClickHouseReader) getNextErrorID(ctx context.Context, queryParams *mode
 				r.logger.Info(query)
 
 				if err != nil {
-					r.logger.Error("Error in processing sql query", "error", err)
+					r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 				}
 
@@ -2913,7 +2916,7 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 	}
 	if len(getPrevErrorIDReponse) == 0 {
@@ -2934,7 +2937,7 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 			r.logger.Info(query)
 
 			if err != nil {
-				r.logger.Error("Error in processing sql query", "error", err)
+				r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 				return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 			}
 			if len(getPrevErrorIDReponse) == 0 {
@@ -2948,7 +2951,7 @@ func (r *ClickHouseReader) getPrevErrorID(ctx context.Context, queryParams *mode
 				r.logger.Info(query)
 
 				if err != nil {
-					r.logger.Error("Error in processing sql query", "error", err)
+					r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 					return "", time.Time{}, &model.ApiError{Typ: model.ErrorExec, Err: fmt.Errorf("error in processing sql query")}
 				}
 
@@ -2976,7 +2979,7 @@ func (r *ClickHouseReader) FetchTemporality(ctx context.Context, orgID valuer.UU
 	// Batch fetch all metadata at once
 	metadataMap, apiErr := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiErr != nil {
-		r.logger.Warn("Failed to fetch updated metrics metadata", "error", apiErr)
+		r.logger.Warn("Failed to fetch updated metrics metadata", errorsV2.Attr(apiErr))
 		return nil, apiErr
 	}
 
@@ -3325,7 +3328,7 @@ func (r *ClickHouseReader) QueryDashboardVars(ctx context.Context, query string)
 	r.logger.Info(query)
 
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, err
 	}
 
@@ -3379,7 +3382,7 @@ func (r *ClickHouseReader) GetMetricAggregateAttributes(ctx context.Context, org
 
 	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), normalized)
 	if err != nil {
-		r.logger.Error("Error while querying metric names", "error", err)
+		r.logger.Error("Error while querying metric names", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing metric name query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3458,7 +3461,7 @@ func (r *ClickHouseReader) GetMeterAggregateAttributes(ctx context.Context, orgI
 
 	rows, err := r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		r.logger.Error("Error while querying meter names", "error", err)
+		r.logger.Error("Error while querying meter names", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing meter name query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3513,7 +3516,7 @@ func (r *ClickHouseReader) GetMetricAttributeKeys(ctx context.Context, req *v3.F
 	}
 	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3553,7 +3556,7 @@ func (r *ClickHouseReader) GetMeterAttributeKeys(ctx context.Context, req *v3.Fi
 	}
 	rows, err = r.db.Query(ctx, query, req.AggregateAttribute, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3602,7 +3605,7 @@ func (r *ClickHouseReader) GetMetricAttributeValues(ctx context.Context, req *v3
 	rows, err = r.db.Query(ctx, query, req.FilterAttributeKey, names, req.FilterAttributeKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized)
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3632,7 +3635,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 	// 1. Fetch metadata from cache/db using unified function
 	metadataMap, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricName)
 	if apiError != nil {
-		r.logger.Error("Error in getting metric cached metadata", "error", apiError)
+		r.logger.Error("Error in getting metric cached metadata", errorsV2.Attr(apiError))
 		return nil, fmt.Errorf("error fetching metric metadata: %s", apiError.Err.Error())
 	}
 
@@ -3675,7 +3678,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 
 		rows, err := r.db.Query(ctx, query, metricName, unixMilli, serviceName, serviceName)
 		if err != nil {
-			r.logger.Error("Error while querying histogram buckets", "error", err)
+			r.logger.Error("Error while querying histogram buckets", errorsV2.Attr(err))
 			return nil, fmt.Errorf("error while querying histogram buckets: %s", err.Error())
 		}
 		defer rows.Close()
@@ -3687,7 +3690,7 @@ func (r *ClickHouseReader) GetMetricMetadata(ctx context.Context, orgID valuer.U
 			}
 			le, err := strconv.ParseFloat(leStr, 64)
 			if err != nil || math.IsInf(le, 0) {
-				r.logger.Error("Invalid 'le' bucket value", "value", leStr, "error", err)
+				r.logger.Error("Invalid 'le' bucket value", "value", leStr, errorsV2.Attr(err))
 				continue
 			}
 			leFloat64 = append(leFloat64, le)
@@ -3900,7 +3903,7 @@ func (r *ClickHouseReader) GetLogAggregateAttributes(ctx context.Context, req *v
 	query = fmt.Sprintf("SELECT DISTINCT(tag_key), tag_type, tag_data_type from %s.%s WHERE %s and tag_type != 'logfield' limit $2", r.logsDB, r.logsTagAttributeTableV2, where)
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -3964,7 +3967,7 @@ func (r *ClickHouseReader) GetLogAttributeKeys(ctx context.Context, req *v3.Filt
 	}
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4179,7 +4182,7 @@ func (r *ClickHouseReader) GetLogAttributeValues(ctx context.Context, req *v3.Fi
 	}
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4249,7 +4252,7 @@ func readRow(vars []interface{}, columnNames []string, countOfNumberCols int) ([
 				var metric map[string]string
 				err := json.Unmarshal([]byte(*v), &metric)
 				if err != nil {
-					slog.Error("unexpected error encountered", "error", err)
+					slog.Error("unexpected error encountered", errorsV2.Attr(err))
 				}
 				for key, val := range metric {
 					groupBy = append(groupBy, val)
@@ -4445,7 +4448,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 					go func() {
 						err := r.queryProgressTracker.ReportQueryProgress(qid, p)
 						if err != nil {
-							r.logger.Error("Couldn't report query progress", "queryId", qid, "error", err)
+							r.logger.Error("Couldn't report query progress", "queryId", qid, errorsV2.Attr(err))
 						}
 					}()
 				},
@@ -4456,7 +4459,7 @@ func (r *ClickHouseReader) GetTimeSeriesResultV3(ctx context.Context, query stri
 	rows, err := r.db.Query(ctx, query)
 
 	if err != nil {
-		r.logger.Error("error while reading time series result", "error", err)
+		r.logger.Error("error while reading time series result", errorsV2.Attr(err))
 		return nil, errors.New(err.Error())
 	}
 	defer rows.Close()
@@ -4498,7 +4501,7 @@ func (r *ClickHouseReader) GetListResultV3(ctx context.Context, query string) ([
 	})
 	rows, err := r.db.Query(ctx, query)
 	if err != nil {
-		r.logger.Error("error while reading time series result", "error", err)
+		r.logger.Error("error while reading time series result", errorsV2.Attr(err))
 		return nil, errors.New(err.Error())
 	}
 
@@ -4576,7 +4579,7 @@ func (r *ClickHouseReader) GetMetricsExistenceAndEarliestTime(ctx context.Contex
 	var count, minFirstReported uint64
 	err := r.db.QueryRow(ctx, query, clickhouse.Named("metric_names", metricNames)).Scan(&count, &minFirstReported)
 	if err != nil {
-		r.logger.Error("error getting host metrics existence and earliest time", "error", err)
+		r.logger.Error("error getting host metrics existence and earliest time", errorsV2.Attr(err))
 		return 0, 0, err
 	}
 	return count, minFirstReported, nil
@@ -4586,7 +4589,7 @@ func getPersonalisedError(err error) error {
 	if err == nil {
 		return nil
 	}
-	slog.Error("error while reading result", "error", err)
+	slog.Error("error while reading result", errorsV2.Attr(err))
 	if strings.Contains(err.Error(), "code: 307") {
 		return chErrors.ErrResourceBytesLimitExceeded
 	}
@@ -4664,7 +4667,7 @@ func (r *ClickHouseReader) GetTraceAggregateAttributes(ctx context.Context, req 
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4730,7 +4733,7 @@ func (r *ClickHouseReader) GetTraceAttributeKeys(ctx context.Context, req *v3.Fi
 	rows, err = r.db.Query(ctx, query, fmt.Sprintf("%%%s%%", req.SearchText), req.Limit)
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4846,7 +4849,7 @@ func (r *ClickHouseReader) GetTraceAttributeValues(ctx context.Context, req *v3.
 	}
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -4895,7 +4898,7 @@ func (r *ClickHouseReader) GetSpanAttributeKeysByNames(ctx context.Context, name
 
 	rows, err = r.db.Query(ctx, query)
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error while executing query: %s", err.Error())
 	}
 	defer rows.Close()
@@ -5056,7 +5059,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryByRuleID(
 	r.logger.Debug("rule state history query", "query", query)
 	err := r.db.Select(ctx, &history, query)
 	if err != nil {
-		r.logger.Error("Error while reading rule state history", "error", err)
+		r.logger.Error("Error while reading rule state history", errorsV2.Attr(err))
 		return nil, err
 	}
 
@@ -5124,7 +5127,7 @@ func (r *ClickHouseReader) ReadRuleStateHistoryTopContributorsByRuleID(
 	contributors := []model.RuleStateHistoryContributor{}
 	err := r.db.Select(ctx, &contributors, query)
 	if err != nil {
-		r.logger.Error("Error while reading rule state history", "error", err)
+		r.logger.Error("Error while reading rule state history", errorsV2.Attr(err))
 		return nil, err
 	}
 
@@ -5425,7 +5428,7 @@ func (r *ClickHouseReader) GetMinAndMaxTimestampForTraceID(ctx context.Context, 
 
 	err := r.db.QueryRow(ctx, query).Scan(&minTime, &maxTime)
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return 0, 0, err
 	}
 
@@ -5471,7 +5474,7 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeKeys(ctx context.Context, 
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, common.PastDayRoundOff(), normalized, fmt.Sprintf("%%%s%%", req.SearchText)) //only showing past day data
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -5517,7 +5520,7 @@ func (r *ClickHouseReader) GetAllMetricFilterAttributeValues(ctx context.Context
 	rows, err = r.db.Query(valueCtx, query, req.FilterKey, req.FilterKey, fmt.Sprintf("%%%s%%", req.SearchText), common.PastDayRoundOff(), normalized) //only showing past day data
 
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -5551,7 +5554,7 @@ func (r *ClickHouseReader) GetAllMetricFilterUnits(ctx context.Context, req *met
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -5582,7 +5585,7 @@ func (r *ClickHouseReader) GetAllMetricFilterTypes(ctx context.Context, req *met
 	valueCtx := context.WithValue(ctx, "clickhouse_max_threads", constants.MetricsExplorerClickhouseThreads)
 	rows, err := r.db.Query(valueCtx, query, fmt.Sprintf("%%%s%%", req.SearchText))
 	if err != nil {
-		r.logger.Error("Error while executing query", "error", err)
+		r.logger.Error("Error while executing query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -5821,7 +5824,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	queryDuration := time.Since(begin)
 	r.logger.Info("Time taken to execute metrics query to fetch metrics with high time series", "query", metricsQuery, "args", args, "duration", queryDuration)
 	if err != nil {
-		r.logger.Error("Error executing metrics query", "error", err)
+		r.logger.Error("Error executing metrics query", errorsV2.Attr(err))
 		return &metrics_explorer.SummaryListMetricsResponse{}, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -5832,14 +5835,14 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	for rows.Next() {
 		var metric metrics_explorer.MetricDetail
 		if err := rows.Scan(&metric.MetricName, &metric.Description, &metric.MetricType, &metric.MetricUnit, &metric.TimeSeries, &response.Total); err != nil {
-			r.logger.Error("Error scanning metric row", "error", err)
+			r.logger.Error("Error scanning metric row", errorsV2.Attr(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		metricNames = append(metricNames, metric.MetricName)
 		response.Metrics = append(response.Metrics, metric)
 	}
 	if err := rows.Err(); err != nil {
-		r.logger.Error("Error iterating over metric rows", "error", err)
+		r.logger.Error("Error iterating over metric rows", errorsV2.Attr(err))
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	// If no metrics were found, return early.
@@ -5926,7 +5929,7 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 	queryDuration = time.Since(begin)
 	r.logger.Info("Time taken to execute list summary query", "query", sampleQuery, "args", args, "duration", queryDuration)
 	if err != nil {
-		r.logger.Error("Error executing samples query", "error", err)
+		r.logger.Error("Error executing samples query", errorsV2.Attr(err))
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -5937,20 +5940,20 @@ func (r *ClickHouseReader) ListSummaryMetrics(ctx context.Context, orgID valuer.
 		var samples uint64
 		var metricName string
 		if err := rows.Scan(&samples, &metricName); err != nil {
-			r.logger.Error("Error scanning sample row", "error", err)
+			r.logger.Error("Error scanning sample row", errorsV2.Attr(err))
 			return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		samplesMap[metricName] = samples
 	}
 	if err := rows.Err(); err != nil {
-		r.logger.Error("Error iterating over sample rows", "error", err)
+		r.logger.Error("Error iterating over sample rows", errorsV2.Attr(err))
 		return &response, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
 	//get updated metrics data
 	batch, apiError := r.GetUpdatedMetricsMetadata(ctx, orgID, metricNames...)
 	if apiError != nil {
-		r.logger.Error("Error in getting metrics cached metadata", "error", apiError)
+		r.logger.Error("Error in getting metrics cached metadata", errorsV2.Attr(apiError))
 	}
 
 	var filteredMetrics []metrics_explorer.MetricDetail
@@ -6042,7 +6045,7 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	duration := time.Since(begin)
 	r.logger.Info("Time taken to execute time series percentage query", "query", query, "args", args, "duration", duration)
 	if err != nil {
-		r.logger.Error("Error executing time series percentage query", "error", err, "query", query)
+		r.logger.Error("Error executing time series percentage query", errorsV2.Attr(err), "query", query)
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -6051,14 +6054,14 @@ func (r *ClickHouseReader) GetMetricsTimeSeriesPercentage(ctx context.Context, r
 	for rows.Next() {
 		var item metrics_explorer.TreeMapResponseItem
 		if err := rows.Scan(&item.MetricName, &item.TotalValue, &item.Percentage); err != nil {
-			r.logger.Error("Error scanning row", "error", err)
+			r.logger.Error("Error scanning row", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		treemap = append(treemap, item)
 	}
 
 	if err := rows.Err(); err != nil {
-		r.logger.Error("Error iterating over rows", "error", err)
+		r.logger.Error("Error iterating over rows", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -6109,7 +6112,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	duration := time.Since(begin)
 	r.logger.Info("Time taken to execute samples percentage metric name query to reduce search space", "query", metricsQuery, "start", start, "end", end, "duration", duration)
 	if err != nil {
-		r.logger.Error("Error executing samples percentage query", "error", err)
+		r.logger.Error("Error executing samples percentage query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -6120,13 +6123,13 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 		var metricName string
 		var timeSeries uint64
 		if err := rows.Scan(&metricName, &timeSeries); err != nil {
-			r.logger.Error("Error scanning metric row", "error", err)
+			r.logger.Error("Error scanning metric row", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		metricNames = append(metricNames, metricName)
 	}
 	if err := rows.Err(); err != nil {
-		r.logger.Error("Error iterating over metric rows", "error", err)
+		r.logger.Error("Error iterating over metric rows", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -6207,7 +6210,7 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	duration = time.Since(begin)
 	r.logger.Info("Time taken to execute samples percentage query", "query", sampleQuery, "args", args, "duration", duration)
 	if err != nil {
-		r.logger.Error("Error executing samples query", "error", err)
+		r.logger.Error("Error executing samples query", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 	defer rows.Close()
@@ -6217,13 +6220,13 @@ func (r *ClickHouseReader) GetMetricsSamplesPercentage(ctx context.Context, req 
 	for rows.Next() {
 		var item metrics_explorer.TreeMapResponseItem
 		if err := rows.Scan(&item.TotalValue, &item.MetricName, &item.Percentage); err != nil {
-			r.logger.Error("Error scanning row", "error", err)
+			r.logger.Error("Error scanning row", errorsV2.Attr(err))
 			return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 		}
 		treemap = append(treemap, item)
 	}
 	if err := rows.Err(); err != nil {
-		r.logger.Error("Error iterating over sample rows", "error", err)
+		r.logger.Error("Error iterating over sample rows", errorsV2.Attr(err))
 		return nil, &model.ApiError{Typ: "ClickHouseError", Err: err}
 	}
 
@@ -6827,7 +6830,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 
 			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
 			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, 0); cacheErr != nil {
-				r.logger.Error("Failed to store metrics metadata in cache", "metric_name", metadata.MetricName, "error", cacheErr)
+				r.logger.Error("Failed to store metrics metadata in cache", "metric_name", metadata.MetricName, errorsV2.Attr(cacheErr))
 			}
 			cachedMetadata[metadata.MetricName] = metadata
 			found[metadata.MetricName] = struct{}{}
@@ -6868,7 +6871,7 @@ func (r *ClickHouseReader) GetUpdatedMetricsMetadata(ctx context.Context, orgID 
 
 			cacheKey := constants.UpdatedMetricsMetadataCachePrefix + metadata.MetricName
 			if cacheErr := r.cache.Set(ctx, orgID, cacheKey, metadata, 0); cacheErr != nil {
-				r.logger.Error("Failed to cache fallback metadata", "metric_name", metadata.MetricName, "error", cacheErr)
+				r.logger.Error("Failed to cache fallback metadata", "metric_name", metadata.MetricName, errorsV2.Attr(cacheErr))
 			}
 			cachedMetadata[metadata.MetricName] = metadata
 		}
@@ -6900,7 +6903,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		if err == sql.ErrNoRows {
 			return &searchSpansResult, nil
 		}
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
@@ -6915,7 +6918,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 	query := fmt.Sprintf("SELECT timestamp, duration_nano, span_id, trace_id, has_error, kind, resource_string_service$$name, name, links as references, attributes_string, attributes_number, attributes_bool, resources_string, events, status_message, status_code_string, kind_string FROM %s.%s WHERE trace_id=$1 and ts_bucket_start>=$2 and ts_bucket_start<=$3", r.TraceDB, r.traceTableName)
 	err = r.db.Select(ctx, &searchScanResponses, query, params.TraceID, strconv.FormatInt(traceSummary.Start.Unix()-1800, 10), strconv.FormatInt(traceSummary.End.Unix(), 10))
 	if err != nil {
-		r.logger.Error("Error in processing sql query", "error", err)
+		r.logger.Error("Error in processing sql query", errorsV2.Attr(err))
 		return nil, fmt.Errorf("error in processing sql query")
 	}
 
@@ -6927,7 +6930,7 @@ func (r *ClickHouseReader) SearchTraces(ctx context.Context, params *model.Searc
 		ref := []model.OtelSpanRef{}
 		err := json.Unmarshal([]byte(item.References), &ref)
 		if err != nil {
-			r.logger.Error("Error unmarshalling references", "error", err)
+			r.logger.Error("Error unmarshalling references", errorsV2.Attr(err))
 			return nil, err
 		}
 

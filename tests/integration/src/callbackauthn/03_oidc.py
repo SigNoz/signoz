@@ -4,7 +4,6 @@ from urllib.parse import urlparse
 
 import requests
 from selenium import webdriver
-from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import (

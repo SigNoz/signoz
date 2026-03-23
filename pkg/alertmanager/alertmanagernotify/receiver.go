@@ -21,7 +21,7 @@ func NewReceiverIntegrations(nc alertmanagertypes.Receiver, tmpl *template.Templ
 		errs         types.MultiError
 		integrations []notify.Integration
 		add          = func(name string, i int, rs notify.ResolvedSender, f func(l *slog.Logger) (notify.Notifier, error)) {
-			n, err := f(logger.With("integration", name))
+			n, err := f(logger.With(slog.String("integration", name)))
 			if err != nil {
 				errs.Add(err)
 				return

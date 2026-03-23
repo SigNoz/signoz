@@ -1,13 +1,9 @@
-import { useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
-import { useLocation } from 'react-router-dom';
+import { useMemo, useState } from 'react';
 import { Button } from '@signozhq/button';
 import { Callout } from '@signozhq/callout';
 import { Input } from '@signozhq/input';
 import { Form, Input as AntdInput, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import accept from 'api/v1/invite/id/accept';
-import getInviteDetails from 'api/v1/invite/id/get';
 import signUpApi from 'api/v1/register/post';
 import passwordAuthNContext from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
@@ -15,9 +11,7 @@ import AuthError from 'components/AuthError/AuthError';
 import AuthPageContainer from 'components/AuthPageContainer';
 import { useNotifications } from 'hooks/useNotifications';
 import { ArrowRight, CircleAlert } from 'lucide-react';
-import { SuccessResponseV2 } from 'types/api';
 import APIError from 'types/api/error';
-import { InviteDetails } from 'types/api/user/getInviteDetails';
 
 import { FormContainer, Label } from './styles';
 
@@ -39,22 +33,6 @@ function SignUp(): JSX.Element {
 		false,
 	);
 	const [formError, setFormError] = useState<APIError | null>();
-	const { search } = useLocation();
-	const params = new URLSearchParams(search);
-	const token = params.get('token');
-	const [isDetailsDisable, setIsDetailsDisable] = useState<boolean>(false);
-
-	const getInviteDetailsResponse = useQuery<
-		SuccessResponseV2<InviteDetails>,
-		APIError
-	>({
-		queryFn: () =>
-			getInviteDetails({
-				inviteId: token || '',
-			}),
-		queryKey: ['getInviteDetails', token],
-		enabled: token !== null,
-	});
 
 	const { notifications } = useNotifications();
 	const [form] = Form.useForm<FormValues>();
@@ -64,49 +42,6 @@ function SignUp(): JSX.Element {
 	const password = Form.useWatch('password', form);
 	const confirmPassword = Form.useWatch('confirmPassword', form);
 
-	useEffect(() => {
-		if (
-			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse.data.data
-		) {
-			const responseDetails = getInviteDetailsResponse.data.data;
-			form.setFieldValue('email', responseDetails.email);
-			form.setFieldValue('organizationName', responseDetails.organization);
-			setIsDetailsDisable(true);
-
-			logEvent('Account Creation Page Visited', {
-				email: responseDetails.email,
-				name: responseDetails.name,
-				company_name: responseDetails.organization,
-				source: 'SigNoz Cloud',
-			});
-		}
-	}, [
-		getInviteDetailsResponse.data?.data,
-		form,
-		getInviteDetailsResponse.status,
-	]);
-
-	useEffect(() => {
-		if (
-			getInviteDetailsResponse.status === 'success' &&
-			getInviteDetailsResponse?.error
-		) {
-			const { error } = getInviteDetailsResponse;
-			notifications.error({
-				message: (error as APIError).getErrorCode(),
-				description: (error as APIError).getErrorMessage(),
-			});
-		}
-	}, [
-		getInviteDetailsResponse,
-		getInviteDetailsResponse.data,
-		getInviteDetailsResponse.status,
-		notifications,
-	]);
-
-	const isSignUp = token === null;
-
 	const signUp = async (values: FormValues): Promise<void> => {
 		try {
 			const { organizationName, password, email } = values;
@@ -114,28 +49,8 @@ function SignUp(): JSX.Element {
 				email,
 				orgDisplayName: organizationName,
 				password,
-				token: params.get('token') || undefined,
 			});
 
-			const token = await passwordAuthNContext({
-				email,
-				password,
-				orgId: user.data.orgId,
-			});
-
-			await afterLogin(token.data.accessToken, token.data.refreshToken);
-		} catch (error) {
-			setFormError(error as APIError);
-		}
-	};
-
-	const acceptInvite = async (values: FormValues): Promise<void> => {
-		try {
-			const { password, email } = values;
-			const user = await accept({
-				password,
-				token: params.get('token') || '',
-			});
 			const token = await passwordAuthNContext({
 				email,
 				password,
@@ -155,14 +70,10 @@ function SignUp(): JSX.Element {
 				setLoading(true);
 				setFormError(null);
 
-				if (isSignUp) {
-					await signUp(values);
-					logEvent('Account Created Successfully', {
-						email: values.email,
-					});
-				} else {
-					await acceptInvite(values);
-				}
+				await signUp(values);
+				logEvent('Account Created Successfully', {
+					email: values.email,
+				});
 
 				setLoading(false);
 			} catch (error) {
@@ -247,7 +158,6 @@ function SignUp(): JSX.Element {
 										autoFocus
 										required
 										id="signupEmail"
-										disabled={isDetailsDisable}
 										className="signup-form-input"
 									/>
 								</FormContainer.Item>
@@ -291,15 +201,13 @@ function SignUp(): JSX.Element {
 						</div>
 					</div>
 
-					{isSignUp && (
-						<Callout
-							type="info"
-							size="small"
-							showIcon
-							className="signup-info-callout"
-							description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
-						/>
-					)}
+					<Callout
+						type="info"
+						size="small"
+						showIcon
+						className="signup-info-callout"
+						description="This will create an admin account. If you are not an admin, please ask your admin for an invite link"
+					/>
 
 					{confirmPasswordError && (
 						<Callout

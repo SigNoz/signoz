@@ -81,7 +81,7 @@ func (r *Repo) insertPipeline(
 		Model(&insertRow.StoreablePipeline).
 		Exec(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "error in inserting pipeline data", "error", err)
+		slog.ErrorContext(ctx, "error in inserting pipeline data", errors.Attr(err))
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to insert pipeline")
 	}
 
@@ -137,7 +137,7 @@ func (r *Repo) GetPipeline(
 		Where("org_id = ?", orgID).
 		Scan(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to get ingestion pipeline from db", "error", err)
+		slog.ErrorContext(ctx, "failed to get ingestion pipeline from db", errors.Attr(err))
 		return nil, errors.WrapInternalf(err, errors.CodeInternal, "failed to get ingestion pipeline from db")
 	}
 
@@ -150,11 +150,11 @@ func (r *Repo) GetPipeline(
 		gettablePipeline := pipelinetypes.GettablePipeline{}
 		gettablePipeline.StoreablePipeline = storablePipelines[0]
 		if err := gettablePipeline.ParseRawConfig(); err != nil {
-			slog.ErrorContext(ctx, "invalid pipeline config found", "id", id, "error", err)
+			slog.ErrorContext(ctx, "invalid pipeline config found", "id", id, errors.Attr(err))
 			return nil, err
 		}
 		if err := gettablePipeline.ParseFilter(); err != nil {
-			slog.ErrorContext(ctx, "invalid pipeline filter found", "id", id, "error", err)
+			slog.ErrorContext(ctx, "invalid pipeline filter found", "id", id, errors.Attr(err))
 			return nil, err
 		}
 		return &gettablePipeline, nil

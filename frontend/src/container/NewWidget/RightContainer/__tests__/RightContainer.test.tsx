@@ -178,6 +178,8 @@ describe('RightContainer - Alerts Section', () => {
 		setLineStyle: jest.fn(),
 		showPoints: false,
 		setShowPoints: jest.fn(),
+		spanGaps: false,
+		setSpanGaps: jest.fn(),
 	};
 
 	beforeEach(() => {

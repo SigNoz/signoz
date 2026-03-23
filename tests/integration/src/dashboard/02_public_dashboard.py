@@ -175,7 +175,7 @@ def test_public_dashboard_widget_query_range(
         ),
         json={
             "timeRangeEnabled": False,
-            "defaultTimeRange": "10s",
+            "defaultTimeRange": "10m",
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,

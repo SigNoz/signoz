@@ -2,9 +2,12 @@ package impluser
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 	"strings"
 	"time"
+
+	"github.com/dustin/go-humanize"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
 	"github.com/SigNoz/signoz/pkg/authz"
@@ -20,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/emailtypes"
 	"github.com/SigNoz/signoz/pkg/types/integrationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/dustin/go-humanize"
 )
 
 type Module struct {
@@ -47,54 +49,6 @@ func NewModule(store types.UserStore, tokenizer tokenizer.Tokenizer, emailing em
 		authz:     authz,
 		config:    config,
 	}
-}
-
-func (m *Module) AcceptInvite(ctx context.Context, token string, password string) (*types.User, error) {
-	// get the user by reset password token
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	// update the password and delete the token
-	err = m.UpdatePasswordByResetPasswordToken(ctx, token, password)
-	if err != nil {
-		return nil, err
-	}
-
-	// query the user again
-	user, err = m.store.GetByOrgIDAndID(ctx, user.OrgID, user.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	return user, nil
-}
-
-func (m *Module) GetInviteByToken(ctx context.Context, token string) (*types.Invite, error) {
-	// get the user
-	user, err := m.store.GetUserByResetPasswordToken(ctx, token)
-	if err != nil {
-		return nil, err
-	}
-
-	// create a dummy invite obj for backward compatibility
-	invite := &types.Invite{
-		Identifiable: types.Identifiable{
-			ID: user.ID,
-		},
-		Name:  user.DisplayName,
-		Email: user.Email,
-		Token: token,
-		Role:  user.Role,
-		OrgID: user.OrgID,
-		TimeAuditable: types.TimeAuditable{
-			CreatedAt: user.CreatedAt,
-			UpdatedAt: user.UpdatedAt,
-		},
-	}
-
-	return invite, nil
 }
 
 // CreateBulk implements invite.Module.
@@ -155,7 +109,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			// generate reset password token
 			resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, newUser.ID)
 			if err != nil {
-				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", "error", err)
+				m.settings.Logger().ErrorContext(ctx, "failed to create reset password token for invited user", errors.Attr(err))
 				return err
 			}
 
@@ -197,7 +151,7 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 
 		frontendBaseUrl := bulkInvites.Invites[idx].FrontendBaseUrl
 		if frontendBaseUrl == "" {
-			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", "invitee_email", userWithToken.User.Email)
+			m.settings.Logger().InfoContext(ctx, "frontend base url is not provided, skipping email", slog.Any("invitee_email", userWithToken.User.Email))
 			continue
 		}
 
@@ -211,48 +165,8 @@ func (m *Module) CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID
 			"link":          resetLink,
 			"Expiry":        humanizedTokenLifetime,
 		}); err != nil {
-			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", "error", err)
+			m.settings.Logger().ErrorContext(ctx, "failed to send invite email", errors.Attr(err))
 		}
-	}
-
-	return invites, nil
-}
-
-func (m *Module) ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error) {
-	// find all the users with pending_invite status
-	users, err := m.store.ListUsersByOrgID(ctx, valuer.MustNewUUID(orgID))
-	if err != nil {
-		return nil, err
-	}
-
-	pendingUsers := slices.DeleteFunc(users, func(user *types.User) bool { return user.Status != types.UserStatusPendingInvite })
-
-	var invites []*types.Invite
-
-	for _, pUser := range pendingUsers {
-		// get the reset password token
-		resetPasswordToken, err := m.GetOrCreateResetPasswordToken(ctx, pUser.ID)
-		if err != nil {
-			return nil, err
-		}
-
-		// create a dummy invite obj for backward compatibility
-		invite := &types.Invite{
-			Identifiable: types.Identifiable{
-				ID: pUser.ID,
-			},
-			Name:  pUser.DisplayName,
-			Email: pUser.Email,
-			Token: resetPasswordToken.Token,
-			Role:  pUser.Role,
-			OrgID: pUser.OrgID,
-			TimeAuditable: types.TimeAuditable{
-				CreatedAt: pUser.CreatedAt,
-				UpdatedAt: pUser.UpdatedAt, // dummy
-			},
-		}
-
-		invites = append(invites, invite)
 	}
 
 	return invites, nil
@@ -302,10 +216,6 @@ func (m *Module) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, u
 
 	if err := existingUser.ErrIfDeleted(); err != nil {
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
-	}
-
-	if err := existingUser.ErrIfPending(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update pending user")
 	}
 
 	requestor, err := m.store.GetUser(ctx, valuer.MustNewUUID(updatedBy))
@@ -497,7 +407,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 
 	token, err := module.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to create reset password token", errors.Attr(err))
 		return err
 	}
 
@@ -519,7 +429,7 @@ func (module *Module) ForgotPassword(ctx context.Context, orgID valuer.UUID, ema
 			"Expiry": humanizedTokenLifetime,
 		},
 	); err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to send reset password email", errors.Attr(err))
 		return nil
 	}
 

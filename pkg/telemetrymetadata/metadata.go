@@ -6,6 +6,9 @@ import (
 	"log/slog"
 	"strings"
 
+	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -18,8 +21,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -102,7 +103,7 @@ func NewTelemetryMetaStore(
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
 					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
 				},
 			},
@@ -582,7 +583,7 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	if querybuilder.BodyJSONQueryEnabled {
 		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
-			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
+			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", errors.Attr(err))
 		}
 		keys = append(keys, bodyJSONPaths...)
 		complete = complete && finished
@@ -1066,7 +1067,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
-			t.logger.WarnContext(ctx, "error parsing existing query for related values", "error", err)
+			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
 		}
 	}
 
@@ -1121,7 +1122,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "query for related values", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "query for related values", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1760,7 +1761,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching metric temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching metric temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1816,7 +1817,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching meter metrics temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching meter metrics temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1940,7 +1941,7 @@ func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, metricN
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {

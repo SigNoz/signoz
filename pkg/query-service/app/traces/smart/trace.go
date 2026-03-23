@@ -5,6 +5,7 @@ import (
 	"log/slog"
 	"strconv"
 
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 )
 
@@ -53,7 +54,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 			break
 		}
 		if err != nil {
-			slog.Error("error during breadth first search", "error", err)
+			slog.Error("error during breadth first search", signozerrors.Attr(err))
 			return nil, err
 		}
 	}

@@ -1,6 +1,7 @@
 import { Dispatch, SetStateAction, useMemo } from 'react';
 import { UseQueryResult } from 'react-query';
 import { Typography } from 'antd';
+import { ExecStats } from 'api/v5/v5';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import { PANEL_TYPES, PanelDisplay } from 'constants/queryBuilder';
 import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
@@ -11,6 +12,7 @@ import {
 	LineInterpolation,
 	LineStyle,
 } from 'lib/uPlotV2/config/types';
+import get from 'lodash-es/get';
 import { SuccessResponse } from 'types/api';
 import {
 	ColumnUnit,
@@ -36,6 +38,7 @@ import {
 	panelTypeVsPanelTimePreferences,
 	panelTypeVsShowPoints,
 	panelTypeVsSoftMinMax,
+	panelTypeVsSpanGaps,
 	panelTypeVsStackingChartPreferences,
 	panelTypeVsThreshold,
 	panelTypeVsYAxisUnit,
@@ -68,6 +71,8 @@ function RightContainer({
 	setLineStyle,
 	showPoints,
 	setShowPoints,
+	spanGaps,
+	setSpanGaps,
 	bucketCount,
 	bucketWidth,
 	stackedBarChart,
@@ -138,6 +143,7 @@ function RightContainer({
 	const allowLineStyle = panelTypeVsLineStyle[selectedGraph];
 	const allowFillMode = panelTypeVsFillMode[selectedGraph];
 	const allowShowPoints = panelTypeVsShowPoints[selectedGraph];
+	const allowSpanGaps = panelTypeVsSpanGaps[selectedGraph];
 
 	const decimapPrecisionOptions = useMemo(
 		() => [
@@ -176,9 +182,25 @@ function RightContainer({
 			(allowFillMode ||
 				allowLineStyle ||
 				allowLineInterpolation ||
-				allowShowPoints),
-		[allowFillMode, allowLineStyle, allowLineInterpolation, allowShowPoints],
+				allowShowPoints ||
+				allowSpanGaps),
+		[
+			allowFillMode,
+			allowLineStyle,
+			allowLineInterpolation,
+			allowShowPoints,
+			allowSpanGaps,
+		],
 	);
+
+	const stepInterval = useMemo(() => {
+		const stepIntervals: ExecStats['stepIntervals'] = get(
+			queryResponse,
+			'data.payload.data.newResult.meta.stepIntervals',
+			{},
+		);
+		return Math.min(...Object.values(stepIntervals));
+	}, [queryResponse]);
 
 	return (
 		<div className="right-container">
@@ -237,10 +259,14 @@ function RightContainer({
 						setLineInterpolation={setLineInterpolation}
 						showPoints={showPoints}
 						setShowPoints={setShowPoints}
+						spanGaps={spanGaps}
+						setSpanGaps={setSpanGaps}
 						allowFillMode={allowFillMode}
 						allowLineStyle={allowLineStyle}
 						allowLineInterpolation={allowLineInterpolation}
 						allowShowPoints={allowShowPoints}
+						allowSpanGaps={allowSpanGaps}
+						stepInterval={stepInterval}
 					/>
 				)}
 
@@ -364,6 +390,8 @@ export interface RightContainerProps {
 	setLineStyle: Dispatch<SetStateAction<LineStyle>>;
 	showPoints: boolean;
 	setShowPoints: Dispatch<SetStateAction<boolean>>;
+	spanGaps: boolean | number;
+	setSpanGaps: Dispatch<SetStateAction<boolean | number>>;
 }
 
 RightContainer.defaultProps = {

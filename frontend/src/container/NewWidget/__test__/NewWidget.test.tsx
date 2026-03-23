@@ -14,7 +14,6 @@ import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import i18n from 'ReactI18';
 import {
-	fireEvent,
 	getByText as getByTextUtil,
 	render,
 	userEvent,
@@ -342,9 +341,8 @@ describe('Stacking bar in new panel', () => {
 const STACKING_STATE_ATTR = 'data-stacking-state';
 
 describe('when switching to BAR panel type', () => {
-	jest.setTimeout(10000);
-
 	beforeEach(() => {
+		jest.useFakeTimers();
 		jest.clearAllMocks();
 
 		// Mock useSearchParams to return the expected values
@@ -354,7 +352,15 @@ describe('when switching to BAR panel type', () => {
 		]);
 	});
 
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('should preserve saved stacking value of true', async () => {
+		const user = userEvent.setup({
+			advanceTimers: jest.advanceTimersByTime.bind(jest),
+		});
+
 		const { getByTestId, getByText, container } = render(
 			<DashboardProvider dashboardId="">
 				<NewWidget
@@ -370,7 +376,7 @@ describe('when switching to BAR panel type', () => {
 			'true',
 		);
 
-		await userEvent.click(getByText('Bar')); // Panel Type Selected
+		await user.click(getByText('Bar')); // Panel Type Selected
 
 		// find dropdown with - .ant-select-dropdown
 		const panelDropdown = document.querySelector(
@@ -380,7 +386,7 @@ describe('when switching to BAR panel type', () => {
 
 		// Select TimeSeries from dropdown
 		const option = within(panelDropdown).getByText('Time Series');
-		fireEvent.click(option);
+		await user.click(option);
 
 		expect(getByTestId('panel-change-select')).toHaveAttribute(
 			STACKING_STATE_ATTR,
@@ -395,7 +401,7 @@ describe('when switching to BAR panel type', () => {
 		expect(panelTypeDropdown2).toBeInTheDocument();
 
 		expect(getByTextUtil(panelTypeDropdown2, 'Time Series')).toBeInTheDocument();
-		fireEvent.click(getByTextUtil(panelTypeDropdown2, 'Time Series'));
+		await user.click(getByTextUtil(panelTypeDropdown2, 'Time Series'));
 
 		// find dropdown with - .ant-select-dropdown
 		const panelDropdown2 = document.querySelector(
@@ -403,7 +409,7 @@ describe('when switching to BAR panel type', () => {
 		) as HTMLElement;
 		// // Select BAR from dropdown
 		const BarOption = within(panelDropdown2).getByText('Bar');
-		fireEvent.click(BarOption);
+		await user.click(BarOption);
 
 		// Stack series should be true
 		checkStackSeriesState(container, true);

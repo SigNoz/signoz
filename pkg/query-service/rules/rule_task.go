@@ -9,11 +9,14 @@ import (
 
 	"log/slog"
 
+	opentracing "github.com/opentracing/opentracing-go"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	opentracing "github.com/opentracing/opentracing-go"
 )
 
 // RuleTask holds a rule (with composite queries)
@@ -316,7 +319,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 
 	if err != nil {
-		g.logger.ErrorContext(ctx, "error in processing sql query", "error", err)
+		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
 	}
 
 	for i, rule := range g.rules {
@@ -358,7 +361,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 			comment := ctxtypes.CommentFromContext(ctx)
 			comment.Set("rule_id", rule.ID())
-			comment.Set("auth_type", "internal")
+			comment.Set("identn_provider", authtypes.IdentNProviderInternal.StringValue())
 			ctx = ctxtypes.NewContextWithComment(ctx, comment)
 
 			_, err := rule.Eval(ctx, ts)
@@ -366,7 +369,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), "error", err)
+				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

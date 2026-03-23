@@ -40,7 +40,7 @@ type JSONAccessNode struct {
 	// Node information
 	Name       string
 	IsTerminal bool
-	isRoot     bool // marked true for only body_json and body_json_promoted
+	isRoot     bool // marked true for only body_v2 and body_promoted
 
 	// Precomputed type information (single source of truth)
 	AvailableTypes []JSONDataType
