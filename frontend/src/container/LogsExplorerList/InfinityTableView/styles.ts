@@ -144,6 +144,15 @@ export const TableRowStyled = styled.tr<{
 			pointer-events: auto;
 		}
 	}
+	${({ $isActiveLog }): string =>
+		$isActiveLog
+			? `
+		.log-line-action-buttons {
+			opacity: 1;
+			pointer-events: auto;
+		}
+	`
+			: ''}
 `;
 
 export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
