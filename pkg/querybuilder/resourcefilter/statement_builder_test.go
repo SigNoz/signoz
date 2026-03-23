@@ -628,11 +628,11 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 			query: qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]{
 				Signal: telemetrytypes.SignalTraces,
 				Filter: &qbtypes.Filter{
-					Expression: "service.name = $service_name",
+					Expression: "service.name = $service.name",
 				},
 			},
 			variables: map[string]qbtypes.VariableItem{
-				"service_name": {
+				"service.name": {
 					Value: "redis-manual",
 				},
 			},
