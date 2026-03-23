@@ -20,6 +20,7 @@ import (
 )
 
 type builderQuery[T any] struct {
+	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
 	stmtBuilder    qbtypes.StatementBuilder[T]
 	spec           qbtypes.QueryBuilderQuery[T]
@@ -33,6 +34,7 @@ type builderQuery[T any] struct {
 var _ qbtypes.Query = (*builderQuery[any])(nil)
 
 func newBuilderQuery[T any](
+	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
 	stmtBuilder qbtypes.StatementBuilder[T],
 	spec qbtypes.QueryBuilderQuery[T],
@@ -41,6 +43,7 @@ func newBuilderQuery[T any](
 	variables map[string]qbtypes.VariableItem,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
+		logger:         logger,
 		telemetryStore: telemetryStore,
 		stmtBuilder:    stmtBuilder,
 		spec:           spec,
@@ -319,7 +322,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 			traceStartMS := uint64(traceStart) / 1_000_000
 			traceEndMS := uint64(traceEnd) / 1_000_000
 			if !ok {
-				slog.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
+				q.logger.DebugContext(ctx, "failed to get trace time range", slog.Any("trace_ids", traceIDs))
 			} else if traceStartMS > 0 && traceEndMS > 0 {
 				// no overlap — nothing to return
 				if uint64(traceStartMS) > toMS || uint64(traceEndMS) < fromMS {
@@ -341,7 +344,7 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 				if uint64(traceEndMS) < toMS {
 					toMS = uint64(traceEndMS)
 				}
-				slog.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", fromMS, "end", toMS)
+				q.logger.DebugContext(ctx, "optimized time range for traces", slog.Any("trace_ids", traceIDs), slog.Uint64("start", fromMS), slog.Uint64("end", toMS))
 			}
 		}
 	}
