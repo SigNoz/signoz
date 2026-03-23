@@ -10,9 +10,10 @@ import (
 var (
 	SPAN_LIMIT_PER_REQUEST_FOR_WATERFALL float64 = 500
 
-	maxDepthForSelectedSpanChildren int  = 5
-	MaxLimitToSelectAllSpans        uint = 10_000
+	MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN int  = 5
+	MAX_LIMIT_TO_SELECT_ALL_SPANS        uint = 10_000
 )
+
 
 type Interval struct {
 	StartTime uint64
@@ -91,16 +92,23 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
+// traverseOpts holds the traversal configuration that remains constant
+// throughout the recursion. Per-call state (level, isPartOfPreOrder, etc.)
+// is passed as direct arguments.
+type traverseOpts struct {
+	uncollapsedSpans          []string
+	selectedSpanID            string
+	isSelectedSpanUncollapsed bool
+	selectAll                 bool
+}
+
 func traverseTrace(
 	span *model.Span,
-	uncollapsedSpans []string,
+	opts traverseOpts,
 	level uint64,
 	isPartOfPreOrder bool,
 	hasSibling bool,
-	selectedSpanId string,
-	depthFromSelectedSpan int,
-	isSelectedSpanIDUnCollapsed bool,
-	selectAllSpan bool,
+	remainingAutoExpandDepth int,
 ) ([]*model.Span, []string) {
 
 	preOrderTraversal := []*model.Span{}
@@ -141,23 +149,22 @@ func traverseTrace(
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
-	nextDepthFromSelectedSpan := -1
-	if span.SpanID == selectedSpanId && isSelectedSpanIDUnCollapsed {
-		nextDepthFromSelectedSpan = 1
-	} else if depthFromSelectedSpan >= 1 && depthFromSelectedSpan < maxDepthForSelectedSpanChildren {
-		nextDepthFromSelectedSpan = depthFromSelectedSpan + 1
+	childRemainingDepth := 0
+	if span.SpanID == opts.selectedSpanID && opts.isSelectedSpanUncollapsed {
+		childRemainingDepth = MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN
+	} else if remainingAutoExpandDepth > 0 {
+		childRemainingDepth = remainingAutoExpandDepth - 1
 	}
 
+	// isAlreadyUncollapsed is a property of the parent span, not the child —
+	// compute it once outside the loop.
+	isAlreadyUncollapsed := slices.Contains(opts.uncollapsedSpans, span.SpanID)
 	for index, child := range span.Children {
 		// A child is included in the pre-order output if its parent is uncollapsed
 		// OR if the child falls within MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN levels
 		// below the selected span.
-		isChildWithinMaxDepth := nextDepthFromSelectedSpan >= 1
-		isAlreadyUncollapsed := slices.Contains(uncollapsedSpans, span.SpanID)
-		childIsPartOfPreOrder := isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth)
-		if selectAllSpan {
-			childIsPartOfPreOrder = true
-		}
+		isChildWithinMaxDepth := childRemainingDepth > 0
+		childIsPartOfPreOrder := opts.selectAll || (isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth))
 
 		if isPartOfPreOrder && isChildWithinMaxDepth && !isAlreadyUncollapsed {
 			if !slices.Contains(autoExpandedSpans, span.SpanID) {
@@ -165,8 +172,7 @@ func traverseTrace(
 			}
 		}
 
-		_childTraversal, _autoExpanded := traverseTrace(child, uncollapsedSpans, level+1, childIsPartOfPreOrder, index != (len(span.Children)-1), selectedSpanId,
-			nextDepthFromSelectedSpan, isSelectedSpanIDUnCollapsed, selectAllSpan)
+		_childTraversal, _autoExpanded := traverseTrace(child, opts, level+1, childIsPartOfPreOrder, index != (len(span.Children)-1), childRemainingDepth)
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
 		autoExpandedSpans = append(autoExpandedSpans, _autoExpanded...)
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
@@ -208,7 +214,12 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 			_, spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, selectedSpanID, updatedUncollapsedSpans, isSelectedSpanIDUnCollapsed)
 			updatedUncollapsedSpans = append(updatedUncollapsedSpans, spansFromRootToNode...)
 
-			_preOrderTraversal, _autoExpanded := traverseTrace(rootNode, updatedUncollapsedSpans, 0, true, false, selectedSpanID, -1, isSelectedSpanIDUnCollapsed, false)
+			opts := traverseOpts{
+				uncollapsedSpans:          updatedUncollapsedSpans,
+				selectedSpanID:            selectedSpanID,
+				isSelectedSpanUncollapsed: isSelectedSpanIDUnCollapsed,
+			}
+			_preOrderTraversal, _autoExpanded := traverseTrace(rootNode, opts, 0, true, false, 0)
 			// Merge auto-expanded spans into updatedUncollapsedSpans for returning in response
 			for _, spanID := range _autoExpanded {
 				if !slices.Contains(updatedUncollapsedSpans, spanID) {
@@ -265,7 +276,7 @@ func GetAllSpans(traceRoots []*model.Span) (spans []*model.Span, rootServiceName
 		rootEntryPoint = traceRoots[0].Name
 	}
 	for _, root := range traceRoots {
-		childSpans, _ := traverseTrace(root, nil, 0, true, false, "", -1, false, true)
+		childSpans, _ := traverseTrace(root, traverseOpts{selectAll: true}, 0, true, false, 0)
 		spans = append(spans, childSpans...)
 	}
 	return

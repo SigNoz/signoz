@@ -1090,7 +1090,10 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	}
 
 	processingPostCache := time.Now()
-	limit := min(req.Limit, tracedetail.MaxLimitToSelectAllSpans)
+	// When req.Limit is 0 (not set by the client), limit becomes 0 and
+	// selectAllSpans is false for any non-empty trace, preserving the old
+	// paged behaviour for clients that have not yet adopted this field.
+	limit := min(req.Limit, tracedetail.MAX_LIMIT_TO_SELECT_ALL_SPANS)
 	selectAllSpans := totalSpans <= uint64(limit)
 
 	var (
