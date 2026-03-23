@@ -40,6 +40,7 @@ import {
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { sortLayout } from 'providers/Dashboard/util';
 import { DashboardData } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
@@ -48,10 +49,10 @@ import { ComponentTypes } from 'utils/permission';
 import { v4 as uuid } from 'uuid';
 
 import DashboardHeader from '../components/DashboardHeader/DashboardHeader';
-import DashboardGraphSlider from '../ComponentsSlider';
 import DashboardSettings from '../DashboardSettings';
 import { Base64Icons } from '../DashboardSettings/General/utils';
 import DashboardVariableSelection from '../DashboardVariablesSelection';
+import PanelTypeSelectionModal from '../PanelTypeSelectionModal';
 import SettingsDrawer from './SettingsDrawer';
 import { VariablesSettingsTab } from './types';
 import {
@@ -69,6 +70,9 @@ interface DashboardDescriptionProps {
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const { handle } = props;
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
 	const {
 		selectedDashboard,
 		panelMap,
@@ -77,8 +81,6 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 		setLayouts,
 		isDashboardLocked,
 		setSelectedDashboard,
-		handleToggleDashboardSlider,
-		setSelectedRowWidgetId,
 		handleDashboardLockToggle,
 	} = useDashboard();
 
@@ -146,15 +148,14 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 	const [addPanelPermission] = useComponentPermission(permissions, userRole);
 
 	const onEmptyWidgetHandler = useCallback(() => {
-		setSelectedRowWidgetId(null);
-		handleToggleDashboardSlider(true);
+		setIsPanelTypeSelectionModalOpen(true);
 		logEvent('Dashboard Detail: Add new panel clicked', {
 			dashboardId: selectedDashboard?.id,
 			dashboardName: selectedDashboard?.data.title,
 			numberOfPanels: selectedDashboard?.data.widgets?.length,
 		});
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [handleToggleDashboardSlider]);
+	}, [setIsPanelTypeSelectionModalOpen]);
 
 	const handleLockDashboardToggle = (): void => {
 		setIsDashbordSettingsOpen(false);
@@ -523,7 +524,7 @@ function DashboardDescription(props: DashboardDescriptionProps): JSX.Element {
 					<DashboardVariableSelection />
 				</section>
 			)}
-			<DashboardGraphSlider />
+			<PanelTypeSelectionModal />
 
 			<Modal
 				open={isRenameDashboardOpen}

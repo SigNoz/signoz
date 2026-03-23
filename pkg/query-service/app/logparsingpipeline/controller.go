@@ -7,6 +7,8 @@ import (
 	"slices"
 	"strings"
 
+	"github.com/google/uuid"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
@@ -19,9 +21,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 var (
@@ -175,7 +176,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	if version >= 0 {
 		savedPipelines, err := ic.getPipelinesByVersion(ctx, orgID.String(), version)
 		if err != nil {
-			zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(err))
+			slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, errors.Attr(err))
 			return nil, err
 		}
 		result = savedPipelines
@@ -227,7 +228,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 ) (*PipelinesResponse, error) {
 	pipelines, err := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
 	if err != nil {
-		zap.L().Error("failed to get pipelines for version", zap.Int("version", version), zap.Error(err))
+		slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, errors.Attr(err))
 		return nil, err
 	}
 
@@ -235,7 +236,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	if version >= 0 {
 		cv, err := agentConf.GetConfigVersion(ctx, orgId, opamptypes.ElementTypeLogPipelines, version)
 		if err != nil {
-			zap.L().Error("failed to get config for version", zap.Int("version", version), zap.Error(err))
+			slog.ErrorContext(ctx, "failed to get config for version", "version", version, errors.Attr(err))
 			return nil, err
 		}
 		configVersion = cv

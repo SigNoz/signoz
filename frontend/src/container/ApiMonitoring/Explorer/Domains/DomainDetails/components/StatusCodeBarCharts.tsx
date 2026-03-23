@@ -3,16 +3,14 @@ import { UseQueryResult } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Card, Skeleton, Typography } from 'antd';
 import cx from 'classnames';
-import { useGetGraphCustomSeries } from 'components/CeleryTask/useGetGraphCustomSeries';
 import { useNavigateToExplorer } from 'components/CeleryTask/useNavigateToExplorer';
-import Uplot from 'components/Uplot';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import {
 	getCustomFiltersForBarChart,
 	getFormattedEndPointStatusCodeChartData,
 	getStatusCodeBarChartWidgetData,
 	statusCodeWidgetInfo,
 } from 'container/ApiMonitoring/utils';
+import BarChart from 'container/DashboardContainer/visualization/charts/BarChart/BarChart';
 import { handleGraphClick } from 'container/GridCardLayout/GridCard/utils';
 import { useGraphClickToShowButton } from 'container/GridCardLayout/useGraphClickToShowButton';
 import useNavigateToExplorerPages from 'container/GridCardLayout/useNavigateToExplorerPages';
@@ -20,15 +18,16 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useResizeObserver } from 'hooks/useDimensions';
 import { useNotifications } from 'hooks/useNotifications';
-import { getUPlotChartOptions } from 'lib/uPlotLib/getUplotChartOptions';
 import { getUPlotChartData } from 'lib/uPlotLib/utils/getUplotChartData';
+import { LegendPosition } from 'lib/uPlotV2/components/types';
 import { getStartAndEndTimesInMilliseconds } from 'pages/MessagingQueues/MessagingQueuesUtils';
+import { useTimezone } from 'providers/Timezone';
 import { SuccessResponse } from 'types/api';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
-import { Options } from 'uplot';
 
 import ErrorState from './ErrorState';
+import { prepareStatusCodeBarChartsConfig } from './utils';
 
 function StatusCodeBarCharts({
 	endPointStatusCodeBarChartsDataQuery,
@@ -67,13 +66,6 @@ function StatusCodeBarCharts({
 	} = endPointStatusCodeLatencyBarChartsDataQuery;
 
 	const { startTime: minTime, endTime: maxTime } = timeRange;
-	const legendScrollPositionRef = useRef<{
-		scrollTop: number;
-		scrollLeft: number;
-	}>({
-		scrollTop: 0,
-		scrollLeft: 0,
-	});
 
 	const graphRef = useRef<HTMLDivElement>(null);
 	const dimensions = useResizeObserver(graphRef);
@@ -119,6 +111,7 @@ function StatusCodeBarCharts({
 
 	const navigateToExplorer = useNavigateToExplorer();
 	const { currentQuery } = useQueryBuilder();
+	const { timezone } = useTimezone();
 
 	const navigateToExplorerPages = useNavigateToExplorerPages();
 	const { notifications } = useNotifications();
@@ -133,12 +126,6 @@ function StatusCodeBarCharts({
 		}),
 		[],
 	);
-
-	const { getCustomSeries } = useGetGraphCustomSeries({
-		isDarkMode,
-		drawStyle: 'bars',
-		colorMapping,
-	});
 
 	const widget = useMemo<Widgets>(
 		() =>
@@ -193,49 +180,36 @@ function StatusCodeBarCharts({
 		],
 	);
 
-	const options = useMemo(
-		() =>
-			getUPlotChartOptions({
-				apiResponse:
-					currentWidgetInfoIndex === 0
-						? formattedEndPointStatusCodeBarChartsDataPayload
-						: formattedEndPointStatusCodeLatencyBarChartsDataPayload,
-				isDarkMode,
-				dimensions,
-				yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
-				softMax: null,
-				softMin: null,
-				minTimeScale: minTime,
-				maxTimeScale: maxTime,
-				panelType: PANEL_TYPES.BAR,
-				onClickHandler: graphClickHandler,
-				customSeries: getCustomSeries,
-				onDragSelect,
-				colorMapping,
-				query: currentQuery,
-				legendScrollPosition: legendScrollPositionRef.current,
-				setLegendScrollPosition: (position: {
-					scrollTop: number;
-					scrollLeft: number;
-				}) => {
-					legendScrollPositionRef.current = position;
-				},
-			}),
-		[
-			minTime,
-			maxTime,
-			currentWidgetInfoIndex,
-			dimensions,
-			formattedEndPointStatusCodeBarChartsDataPayload,
-			formattedEndPointStatusCodeLatencyBarChartsDataPayload,
+	const config = useMemo(() => {
+		const apiResponse =
+			currentWidgetInfoIndex === 0
+				? formattedEndPointStatusCodeBarChartsDataPayload
+				: formattedEndPointStatusCodeLatencyBarChartsDataPayload;
+		return prepareStatusCodeBarChartsConfig({
+			timezone,
 			isDarkMode,
-			graphClickHandler,
-			getCustomSeries,
+			query: currentQuery,
 			onDragSelect,
+			onClick: graphClickHandler,
+			apiResponse,
+			minTimeScale: minTime,
+			maxTimeScale: maxTime,
+			yAxisUnit: statusCodeWidgetInfo[currentWidgetInfoIndex].yAxisUnit,
 			colorMapping,
-			currentQuery,
-		],
-	);
+		});
+	}, [
+		currentQuery,
+		isDarkMode,
+		minTime,
+		maxTime,
+		graphClickHandler,
+		onDragSelect,
+		formattedEndPointStatusCodeBarChartsDataPayload,
+		formattedEndPointStatusCodeLatencyBarChartsDataPayload,
+		timezone,
+		currentWidgetInfoIndex,
+		colorMapping,
+	]);
 
 	const renderCardContent = useCallback(
 		(query: UseQueryResult<SuccessResponse<any>, unknown>): JSX.Element => {
@@ -253,11 +227,20 @@ function StatusCodeBarCharts({
 							!query.isLoading && !query?.data?.payload?.data?.result?.length,
 					})}
 				>
-					<Uplot options={options as Options} data={chartData} />
+					<BarChart
+						config={config}
+						data={chartData}
+						width={dimensions.width}
+						height={dimensions.height}
+						timezone={timezone}
+						legendConfig={{
+							position: LegendPosition.BOTTOM,
+						}}
+					/>
 				</div>
 			);
 		},
-		[options, chartData],
+		[config, chartData, dimensions, timezone],
 	);
 
 	return (

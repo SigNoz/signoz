@@ -7,9 +7,11 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
+import { Button } from '@signozhq/button';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { QueryParams } from 'constants/query';
 import { DateTimeRangeType } from 'container/TopNav/CustomDateTimeModal';
 import {
 	FixedDurationSuggestionOptions,
@@ -17,9 +19,11 @@ import {
 	RelativeDurationSuggestionOptions,
 } from 'container/TopNav/DateTimeSelectionV2/constants';
 import dayjs from 'dayjs';
+import { useZoomOut } from 'hooks/useZoomOut';
 import { isValidShortHandDateTimeFormat } from 'lib/getMinMax';
+import { isZoomOutDisabled } from 'lib/zoomOutUtils';
 import { defaultTo, isFunction, noop } from 'lodash-es';
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { ChevronDown, ChevronUp, ZoomOut } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
 import { getTimeDifference, validateEpochRange } from 'utils/epochUtils';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -66,6 +70,8 @@ interface CustomTimePickerProps {
 	showRecentlyUsed?: boolean;
 	minTime: number;
 	maxTime: number;
+	/** When true, zoom-out button is hidden (e.g. in drawer/modal time selection) */
+	isModalTimeSelection?: boolean;
 }
 
 function CustomTimePicker({
@@ -88,6 +94,7 @@ function CustomTimePicker({
 	showRecentlyUsed = true,
 	minTime,
 	maxTime,
+	isModalTimeSelection = false,
 }: CustomTimePickerProps): JSX.Element {
 	const [
 		selectedTimePlaceholderValue,
@@ -115,6 +122,14 @@ function CustomTimePicker({
 	const activeTimezoneOffset = timezone.offset;
 
 	const [isOpenedFromFooter, setIsOpenedFromFooter] = useState(false);
+
+	const durationMs = (maxTime - minTime) / 1e6;
+	const zoomOutDisabled = showLiveLogs || isZoomOutDisabled(durationMs);
+
+	const handleZoomOut = useZoomOut({
+		isDisabled: zoomOutDisabled,
+		urlParamsToDelete: [QueryParams.activeLogId],
+	});
 
 	// function to get selected time in Last 1m, Last 2h, Last 3d, Last 4w format
 	// 1m, 2h, 3d, 4w -> Last 1 minute, Last 2 hours, Last 3 days, Last 4 weeks
@@ -282,7 +297,11 @@ function CustomTimePicker({
 		resetErrorStatus();
 	};
 
-	const handleInputPressEnter = (): void => {
+	const handleInputPressEnter = (
+		event?: React.KeyboardEvent<HTMLInputElement>,
+	): void => {
+		event?.preventDefault();
+		event?.stopPropagation();
 		// check if the entered time is in the format of 1m, 2h, 3d, 4w
 		const isTimeDurationShortHandFormat = /^(\d+)([mhdw])$/.test(inputValue);
 
@@ -631,6 +650,23 @@ function CustomTimePicker({
 					/>
 				</Popover>
 			</Tooltip>
+			{!showLiveLogs && !isModalTimeSelection && (
+				<Tooltip
+					title={
+						zoomOutDisabled ? 'Zoom out time range is limited to 1 month' : 'Zoom out'
+					}
+				>
+					<span>
+						<Button
+							className="zoom-out-btn"
+							onClick={handleZoomOut}
+							disabled={zoomOutDisabled}
+							data-testid="zoom-out-btn"
+							prefixIcon={<ZoomOut size={14} />}
+						/>
+					</span>
+				</Tooltip>
+			)}
 		</div>
 	);
 }

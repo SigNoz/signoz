@@ -17,7 +17,7 @@ func NewStore(sqlstore sqlstore.SQLStore) authtypes.AuthNStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) GetUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error) {
+func (store *store) GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error) {
 	user := new(types.User)
 	factorPassword := new(types.FactorPassword)
 
@@ -28,6 +28,7 @@ func (store *store) GetUserAndFactorPasswordByEmailAndOrgID(ctx context.Context,
 		Model(user).
 		Where("email = ?", email).
 		Where("org_id = ?", orgID).
+		Where("status = ?", types.UserStatusActive.StringValue()).
 		Scan(ctx)
 	if err != nil {
 		return nil, nil, store.sqlstore.WrapNotFoundErrf(err, types.ErrCodeUserNotFound, "user with email %s in org %s not found", email, orgID)

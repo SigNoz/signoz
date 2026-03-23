@@ -11,7 +11,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -61,7 +60,7 @@ func (s *service) Start(ctx context.Context) error {
 			return nil
 		}
 
-		s.settings.Logger().WarnContext(ctx, "root user reconciliation failed, retrying", "error", err)
+		s.settings.Logger().WarnContext(ctx, "root user reconciliation failed, retrying", errors.Attr(err))
 
 		select {
 		case <-s.stopC:
@@ -78,52 +77,26 @@ func (s *service) Stop(ctx context.Context) error {
 }
 
 func (s *service) reconcile(ctx context.Context) error {
-	if !s.config.Org.ID.IsZero() {
-		return s.reconcileWithOrgID(ctx)
-	}
-
-	return s.reconcileByName(ctx)
-}
-
-func (s *service) reconcileWithOrgID(ctx context.Context) error {
-	org, err := s.orgGetter.Get(ctx, s.config.Org.ID)
+	org, resolvedByName, err := s.orgGetter.GetByIDOrName(ctx, s.config.Org.ID, s.config.Org.Name)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
 			return err // something really went wrong
 		}
 
-		// org was not found using id check if we can find an org using name
-
-		existingOrgByName, nameErr := s.orgGetter.GetByName(ctx, s.config.Org.Name)
-		if nameErr != nil && !errors.Ast(nameErr, errors.TypeNotFound) {
-			return nameErr // something really went wrong
-		}
-
-		// we found an org using name
-		if existingOrgByName != nil {
-			// the existing org has the same name as config but org id is different inform user with actionable message
-			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "organization with name %q already exists with a different ID %s (expected %s)", s.config.Org.Name, existingOrgByName.ID.StringValue(), s.config.Org.ID.StringValue())
-		}
-
-		// default - we did not found any org using id and name both - create a new org
-		newOrg := types.NewOrganizationWithID(s.config.Org.ID, s.config.Org.Name, s.config.Org.Name)
-		_, err = s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
-		return err
-	}
-
-	return s.reconcileRootUser(ctx, org.ID)
-}
-
-func (s *service) reconcileByName(ctx context.Context) error {
-	org, err := s.orgGetter.GetByName(ctx, s.config.Org.Name)
-	if err != nil {
-		if errors.Ast(err, errors.TypeNotFound) {
+		if s.config.Org.ID.IsZero() {
 			newOrg := types.NewOrganization(s.config.Org.Name, s.config.Org.Name)
 			_, err := s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
 			return err
 		}
 
+		newOrg := types.NewOrganizationWithID(s.config.Org.ID, s.config.Org.Name, s.config.Org.Name)
+		_, err = s.module.CreateFirstUser(ctx, newOrg, s.config.Email.String(), s.config.Email, s.config.Password)
 		return err
+	}
+
+	if !s.config.Org.ID.IsZero() && resolvedByName {
+		// the existing org has the same name as config but org id is different; inform user with actionable message
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "organization with name %q already exists with a different ID %s (expected %s)", s.config.Org.Name, org.ID.StringValue(), s.config.Org.ID.StringValue())
 	}
 
 	return s.reconcileRootUser(ctx, org.ID)
@@ -143,7 +116,7 @@ func (s *service) reconcileRootUser(ctx context.Context, orgID valuer.UUID) erro
 }
 
 func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID) error {
-	existingUser, err := s.store.GetUserByEmailAndOrgID(ctx, s.config.Email, orgID)
+	existingUser, err := s.module.GetNonDeletedUserByEmailAndOrgID(ctx, s.config.Email, orgID)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 		return err
 	}
@@ -159,8 +132,8 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		if oldRole != types.RoleAdmin {
 			if err := s.authz.ModifyGrant(ctx,
 				orgID,
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
-				[]string{roletypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
+				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(oldRole)},
+				[]string{authtypes.MustGetSigNozManagedRoleFromExistingRole(types.RoleAdmin)},
 				authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), orgID, nil),
 			); err != nil {
 				return err

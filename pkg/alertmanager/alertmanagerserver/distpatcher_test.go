@@ -365,7 +365,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -496,7 +496,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -638,7 +638,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -798,7 +798,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -897,7 +897,7 @@ route:
 	logger := providerSettings.Logger
 	route := dispatch.NewRoute(conf.Route, nil)
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1028,7 +1028,7 @@ route:
 		err := nfManager.SetNotificationConfig(orgId, ruleID, &config)
 		require.NoError(t, err)
 	}
-	err = alerts.Put(inputAlerts...)
+	err = alerts.Put(ctx, inputAlerts...)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1159,7 +1159,7 @@ func newAlert(labels model.LabelSet) *alertmanagertypes.Alert {
 func TestDispatcherRace(t *testing.T) {
 	logger := promslog.NewNopLogger()
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1175,6 +1175,7 @@ func TestDispatcherRace(t *testing.T) {
 }
 
 func TestDispatcherRaceOnFirstAlertNotDeliveredWhenGroupWaitIsZero(t *testing.T) {
+	ctx := context.Background()
 	const numAlerts = 5000
 	confData := `receivers:
 - name: 'slack'
@@ -1194,7 +1195,7 @@ route:
 	providerSettings := createTestProviderSettings()
 	logger := providerSettings.Logger
 	marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1247,7 +1248,7 @@ route:
 	for i := 0; i < numAlerts; i++ {
 		ruleId := fmt.Sprintf("Alert_%d", i)
 		alert := newAlert(model.LabelSet{"ruleId": model.LabelValue(ruleId)})
-		require.NoError(t, alerts.Put(alert))
+		require.NoError(t, alerts.Put(ctx, alert))
 	}
 
 	for deadline := time.Now().Add(5 * time.Second); time.Now().Before(deadline); {
@@ -1265,7 +1266,7 @@ func TestDispatcher_DoMaintenance(t *testing.T) {
 	r := prometheus.NewRegistry()
 	marker := alertmanagertypes.NewMarker(r)
 
-	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, nil, promslog.NewNopLogger(), nil)
+	alerts, err := mem.NewAlerts(context.Background(), marker, time.Minute, 0, nil, promslog.NewNopLogger(), prometheus.NewRegistry(), nil)
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -1370,7 +1371,7 @@ route:
 			logger := providerSettings.Logger
 			route := dispatch.NewRoute(conf.Route, nil)
 			marker := alertmanagertypes.NewMarker(prometheus.NewRegistry())
-			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, nil, logger, nil)
+			alerts, err := mem.NewAlerts(context.Background(), marker, time.Hour, 0, nil, logger, prometheus.NewRegistry(), nil)
 			if err != nil {
 				t.Fatal(err)
 			}

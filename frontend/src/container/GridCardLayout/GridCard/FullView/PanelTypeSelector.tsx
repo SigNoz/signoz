@@ -2,7 +2,7 @@ import { useCallback } from 'react';
 import { Select, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import GraphTypes from 'container/DashboardContainer/ComponentsSlider/menuItems';
+import { PanelTypesWithData } from 'container/DashboardContainer/PanelTypeSelectionModal/menuItems';
 import { handleQueryChange } from 'container/NewWidget/utils';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
@@ -59,7 +59,7 @@ function PanelTypeSelector({
 				data-testid="panel-change-select"
 				disabled={disabled}
 			>
-				{GraphTypes.map((item) => (
+				{PanelTypesWithData.map((item) => (
 					<Option key={item.name} value={item.name}>
 						<div className="view-panel-select-option">
 							<div className="icon">{item.icon}</div>

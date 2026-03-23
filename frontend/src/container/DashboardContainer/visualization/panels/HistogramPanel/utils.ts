@@ -149,7 +149,7 @@ export function prepareHistogramPanelConfig({
 	isDarkMode,
 }: {
 	widget: Widgets;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	panelMode: PanelMode;
 	isDarkMode: boolean;
 }): UPlotConfigBuilder {
@@ -204,7 +204,7 @@ export function prepareHistogramPanelConfig({
 			fillColor: '#4E74F8',
 			isDarkMode,
 		});
-	} else {
+	} else if (apiResponse && apiResponse?.data?.result) {
 		apiResponse.data.result.forEach((series) => {
 			const baseLabelName = getLabelName(
 				series.metric,

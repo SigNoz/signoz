@@ -11,6 +11,10 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql"
+	"github.com/prometheus/prometheus/promql/parser"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -18,8 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbv5 "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/prometheus/prometheus/promql"
-	"github.com/prometheus/prometheus/promql/parser"
 )
 
 // unquotedDottedNamePattern matches unquoted identifiers containing dots
@@ -91,7 +93,7 @@ func newPromqlQuery(
 func (q *promqlQuery) Fingerprint() string {
 	query, err := q.renderVars(q.query.Query, q.vars, q.tr.From, q.tr.To)
 	if err != nil {
-		q.logger.ErrorContext(context.TODO(), "failed render template variables", "query", q.query.Query)
+		q.logger.ErrorContext(context.TODO(), "failed render template variables", slog.String("query", q.query.Query))
 		return ""
 	}
 	parts := []string{
@@ -134,7 +136,7 @@ func (q *promqlQuery) removeAllVarMatchers(query string, vars map[string]qbv5.Va
 	// Create visitor and walk the AST
 	visitor := &allVarRemover{allVars: allVars}
 	if err := parser.Walk(visitor, expr, nil); err != nil {
-		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", "error", err, "query", query)
+		q.logger.ErrorContext(context.TODO(), "unexpected error while removing __all__ variable matchers", errors.Attr(err), slog.String("query", query))
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "error while removing __all__ variable matchers")
 	}
 
@@ -254,17 +256,16 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 	var series []*qbv5.TimeSeries
 	for _, v := range matrix {
 		var s qbv5.TimeSeries
-		lbls := make([]*qbv5.Label, 0, len(v.Metric))
-		for name, value := range v.Metric.Copy().Map() {
-			if excludeLabel(name) {
-				continue
+		lbls := make([]*qbv5.Label, 0, v.Metric.Len())
+		v.Metric.Range(func(l labels.Label) {
+			if excludeLabel(l.Name) {
+				return
 			}
 			lbls = append(lbls, &qbv5.Label{
-				Key:   telemetrytypes.TelemetryFieldKey{Name: name},
-				Value: value,
+				Key:   telemetrytypes.TelemetryFieldKey{Name: l.Name},
+				Value: l.Value,
 			})
-		}
-
+		})
 		s.Labels = lbls
 
 		for idx := range v.Floats {

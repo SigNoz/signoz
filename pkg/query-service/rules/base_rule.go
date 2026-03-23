@@ -20,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 // BaseRule contains common fields and methods for all rule types
@@ -370,7 +369,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 		Limit(1).
 		Scan(ctx, &orgID)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "failed to get org ids", "error", err)
+		r.logger.ErrorContext(ctx, "failed to get org ids", errors.Attr(err))
 		return
 	}
 
@@ -400,7 +399,7 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 }
 
 func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
-	zap.L().Debug("recording rule state history", zap.String("ruleid", r.ID()), zap.Any("prevState", prevState), zap.Any("currentState", currentState), zap.Any("itemsToAdd", itemsToAdd))
+	r.logger.DebugContext(ctx, "recording rule state history", "ruleid", r.ID(), "prevState", prevState, "currentState", currentState, "itemsToAdd", itemsToAdd)
 	revisedItemsToAdd := map[uint64]model.RuleStateHistory{}
 
 	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
@@ -410,7 +409,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	// if the query-service has been restarted, or the rule has been modified (which re-initializes the rule),
 	// the state would reset so we need to add the corresponding state changes to previously saved states
 	if !r.handledRestart && len(lastSavedState) > 0 {
-		zap.L().Debug("handling restart", zap.String("ruleid", r.ID()), zap.Any("lastSavedState", lastSavedState))
+		r.logger.DebugContext(ctx, "handling restart", "ruleid", r.ID(), "lastSavedState", lastSavedState)
 		l := map[uint64]model.RuleStateHistory{}
 		for _, item := range itemsToAdd {
 			l[item.Fingerprint] = item
@@ -442,7 +441,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 			// do not add this item to revisedItemsToAdd as it is already processed
 			shouldSkip[item.Fingerprint] = true
 		}
-		zap.L().Debug("after lastSavedState loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+		r.logger.DebugContext(ctx, "after lastSavedState loop", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
 
 		// if there are any new state changes that were not saved, add them to the revised items
 		for _, item := range itemsToAdd {
@@ -450,7 +449,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 				revisedItemsToAdd[item.Fingerprint] = item
 			}
 		}
-		zap.L().Debug("after itemsToAdd loop", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+		r.logger.DebugContext(ctx, "after itemsToAdd loop", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
 
 		newState := model.StateInactive
 		for _, item := range revisedItemsToAdd {
@@ -459,7 +458,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 				break
 			}
 		}
-		zap.L().Debug("newState", zap.String("ruleid", r.ID()), zap.Any("newState", newState))
+		r.logger.DebugContext(ctx, "newState", "ruleid", r.ID(), "newState", newState)
 
 		// if there is a change in the overall state, update the overall state
 		if lastSavedState[0].OverallState != newState {
@@ -469,7 +468,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 				revisedItemsToAdd[fingerprint] = item
 			}
 		}
-		zap.L().Debug("revisedItemsToAdd after newState", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+		r.logger.DebugContext(ctx, "revisedItemsToAdd after newState", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
 
 	} else {
 		for _, item := range itemsToAdd {
@@ -478,7 +477,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	}
 
 	if len(revisedItemsToAdd) > 0 && r.reader != nil {
-		zap.L().Debug("writing rule state history", zap.String("ruleid", r.ID()), zap.Any("revisedItemsToAdd", revisedItemsToAdd))
+		r.logger.DebugContext(ctx, "writing rule state history", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
 
 		entries := make([]model.RuleStateHistory, 0, len(revisedItemsToAdd))
 		for _, item := range revisedItemsToAdd {
@@ -486,7 +485,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 		}
 		err := r.reader.AddRuleStateHistory(ctx, entries)
 		if err != nil {
-			zap.L().Error("error while inserting rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+			r.logger.ErrorContext(ctx, "error while inserting rule state history", errors.Attr(err), "itemsToAdd", itemsToAdd)
 		}
 	}
 	r.handledRestart = true

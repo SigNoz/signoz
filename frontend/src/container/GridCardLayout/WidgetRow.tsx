@@ -5,6 +5,8 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -33,12 +35,11 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 	} = props;
 	const [isRowSettingsOpen, setIsRowSettingsOpen] = useState<boolean>(false);
 
-	const {
-		handleToggleDashboardSlider,
-		selectedDashboard,
-		isDashboardLocked,
-		setSelectedRowWidgetId,
-	} = useDashboard();
+	const setIsPanelTypeSelectionModalOpen = usePanelTypeSelectionModalStore(
+		(s) => s.setIsPanelTypeSelectionModalOpen,
+	);
+
+	const { selectedDashboard, isDashboardLocked } = useDashboard();
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();
@@ -81,8 +82,13 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 							disabled={!editWidget && addPanelPermission && !isDashboardLocked}
 							icon={<Plus size={14} />}
 							onClick={(): void => {
-								setSelectedRowWidgetId(id);
-								handleToggleDashboardSlider(true);
+								// TODO: @AshwinBhatkal Simplify this check in cleanup of https://github.com/SigNoz/engineering-pod/issues/3953
+								if (!selectedDashboard?.id) {
+									return;
+								}
+
+								setSelectedRowWidgetId(selectedDashboard.id, id);
+								setIsPanelTypeSelectionModalOpen(true);
 							}}
 						>
 							New Panel

@@ -28,13 +28,6 @@ func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 				FieldDataType: telemetrytypes.FieldDataTypeString,
 			},
 		},
-		"body": {
-			{
-				Name:          "body",
-				FieldContext:  telemetrytypes.FieldContextLog,
-				FieldDataType: telemetrytypes.FieldDataTypeString,
-			},
-		},
 		"http.status_code": {
 			{
 				Name:          "http.status_code",
@@ -939,6 +932,13 @@ func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 				Materialized:  true,
 			},
 		},
+		"body": {
+			{
+				Name:          "body",
+				FieldContext:  telemetrytypes.FieldContextLog,
+				FieldDataType: telemetrytypes.FieldDataTypeString,
+			},
+		},
 	}
 
 	for _, keys := range keysMap {
@@ -949,6 +949,7 @@ func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytype
 			}
 		}
 	}
+
 	return keysMap
 }
 

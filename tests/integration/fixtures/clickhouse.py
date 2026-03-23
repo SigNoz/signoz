@@ -75,6 +75,9 @@ def clickhouse(
                 </cluster>
             </remote_servers>
 
+            <user_defined_executable_functions_config>*function.xml</user_defined_executable_functions_config>
+            <user_scripts_path>/var/lib/clickhouse/user_scripts/</user_scripts_path>
+
             <distributed_ddl>
                 <path>/clickhouse/task_queue/ddl</path>
                 <profile>default</profile>
@@ -117,16 +120,72 @@ def clickhouse(
         </clickhouse>
         """
 
+        custom_function_config = """
+        <functions>
+            <function>
+                <type>executable</type>
+                <name>histogramQuantile</name>
+                <return_type>Float64</return_type>
+                <argument>
+                    <type>Array(Float64)</type>
+                    <name>buckets</name>
+                </argument>
+                <argument>
+                    <type>Array(Float64)</type>
+                    <name>counts</name>
+                </argument>
+                <argument>
+                    <type>Float64</type>
+                    <name>quantile</name>
+                </argument>
+                <format>CSV</format>
+                <command>./histogramQuantile</command>
+            </function>
+        </functions>
+        """
+
         tmp_dir = tmpfs("clickhouse")
         cluster_config_file_path = os.path.join(tmp_dir, "cluster.xml")
         with open(cluster_config_file_path, "w", encoding="utf-8") as f:
             f.write(cluster_config)
 
+        custom_function_file_path = os.path.join(tmp_dir, "custom-function.xml")
+        with open(custom_function_file_path, "w", encoding="utf-8") as f:
+            f.write(custom_function_config)
+
         container.with_volume_mapping(
             cluster_config_file_path, "/etc/clickhouse-server/config.d/cluster.xml"
         )
+        container.with_volume_mapping(
+            custom_function_file_path,
+            "/etc/clickhouse-server/custom-function.xml",
+        )
         container.with_network(network)
         container.start()
+
+        # Download and install the histogramQuantile binary
+        wrapped = container.get_wrapped_container()
+        exit_code, output = wrapped.exec_run(
+            [
+                "bash",
+                "-c",
+                (
+                    'version="v0.0.1" && '
+                    'node_os=$(uname -s | tr "[:upper:]" "[:lower:]") && '
+                    "node_arch=$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/) && "
+                    "cd /tmp && "
+                    'wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F${version}/histogram-quantile_${node_os}_${node_arch}.tar.gz" && '
+                    "tar -xzf histogram-quantile.tar.gz && "
+                    "mkdir -p /var/lib/clickhouse/user_scripts && "
+                    "mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile && "
+                    "chmod +x /var/lib/clickhouse/user_scripts/histogramQuantile"
+                ),
+            ],
+        )
+        if exit_code != 0:
+            raise RuntimeError(
+                f"Failed to install histogramQuantile binary: {output.decode()}"
+            )
 
         connection = clickhouse_connect.get_client(
             user=container.username,

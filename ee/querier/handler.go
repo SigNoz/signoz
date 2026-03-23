@@ -6,7 +6,6 @@ import (
 	"encoding/json"
 	"io"
 	"net/http"
-	"runtime/debug"
 
 	anomalyV2 "github.com/SigNoz/signoz/ee/anomaly"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -53,26 +52,6 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		render.Error(rw, errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to decode request body: %v", err))
 		return
 	}
-
-	defer func() {
-		if r := recover(); r != nil {
-			stackTrace := string(debug.Stack())
-
-			queryJSON, _ := json.Marshal(queryRangeRequest)
-
-			h.set.Logger.ErrorContext(ctx, "panic in QueryRange",
-				"error", r,
-				"user", claims.UserID,
-				"payload", string(queryJSON),
-				"stacktrace", stackTrace,
-			)
-
-			render.Error(rw, errors.NewInternalf(
-				errors.CodeInternal,
-				"Something went wrong on our end. It's not you, it's us. Our team is notified about it. Reach out to support if issue persists.",
-			))
-		}
-	}()
 
 	if err := queryRangeRequest.Validate(); err != nil {
 		render.Error(rw, err)

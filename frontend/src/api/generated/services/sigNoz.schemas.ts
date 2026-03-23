@@ -278,6 +278,13 @@ export interface AuthtypesPatchableObjectsDTO {
 	deletions: AuthtypesGettableObjectsDTO[] | null;
 }
 
+export interface AuthtypesPatchableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description: string;
+}
+
 export interface AuthtypesPostableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 	/**
@@ -301,6 +308,17 @@ export interface AuthtypesPostableEmailPasswordSessionDTO {
 	password?: string;
 }
 
+export interface AuthtypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface AuthtypesPostableRotateTokenDTO {
 	/**
 	 * @type string
@@ -317,6 +335,39 @@ export interface AuthtypesResourceDTO {
 	 * @type string
 	 */
 	type: string;
+}
+
+export interface AuthtypesRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	type: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
 }
 
 /**
@@ -723,6 +774,45 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	 * @nullable true
 	 */
 	tags?: string[] | null;
+}
+
+export interface GlobaltypesAPIKeyConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesConfigDTO {
+	/**
+	 * @type string
+	 */
+	external_url?: string;
+	identN?: GlobaltypesIdentNConfigDTO;
+	/**
+	 * @type string
+	 */
+	ingestion_url?: string;
+}
+
+export interface GlobaltypesIdentNConfigDTO {
+	apikey?: GlobaltypesAPIKeyConfigDTO;
+	impersonation?: GlobaltypesImpersonationConfigDTO;
+	tokenizer?: GlobaltypesTokenizerConfigDTO;
+}
+
+export interface GlobaltypesImpersonationConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesTokenizerConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
 }
 
 export interface MetricsexplorertypesListMetricDTO {
@@ -2039,57 +2129,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export interface RoletypesPatchableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description: string;
-}
-
-export interface RoletypesPostableRoleDTO {
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-}
-
-export interface RoletypesRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type string
-	 */
-	orgId: string;
-	/**
-	 * @type string
-	 */
-	type: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -2100,7 +2139,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2113,7 +2152,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	last_used: Date;
+	lastObservedAt: Date;
 	/**
 	 * @type string
 	 */
@@ -2121,7 +2160,7 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 */
-	service_account_id: string;
+	serviceAccountId: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2145,7 +2184,7 @@ export interface ServiceaccounttypesPostableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2175,6 +2214,11 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 * @format date-time
+	 */
+	deletedAt: Date;
+	/**
+	 * @type string
 	 */
 	email: string;
 	/**
@@ -2188,7 +2232,7 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	orgID: string;
+	orgId: string;
 	/**
 	 * @type array
 	 */
@@ -2209,7 +2253,7 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type integer
 	 * @minimum 0
 	 */
-	expires_at: number;
+	expiresAt: number;
 	/**
 	 * @type string
 	 */
@@ -2397,17 +2441,6 @@ export interface TypesGettableAPIKeyDTO {
 	userId?: string;
 }
 
-export interface TypesGettableGlobalConfigDTO {
-	/**
-	 * @type string
-	 */
-	external_url?: string;
-	/**
-	 * @type string
-	 */
-	ingestion_url?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
@@ -2506,23 +2539,11 @@ export interface TypesPostableAPIKeyDTO {
 	role?: string;
 }
 
-export interface TypesPostableAcceptInviteDTO {
+export interface TypesPostableBulkInviteRequestDTO {
 	/**
-	 * @type string
+	 * @type array
 	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type string
-	 */
-	sourceUrl?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
+	invites: TypesPostableInviteDTO[];
 }
 
 export interface TypesPostableForgotPasswordDTO {
@@ -2665,6 +2686,10 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -3010,18 +3035,7 @@ export type GetResetPasswordToken200 = {
 };
 
 export type GetGlobalConfig200 = {
-	data: TypesGettableGlobalConfigDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListInvite200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesInviteDTO[];
+	data: GlobaltypesConfigDTO;
 	/**
 	 * @type string
 	 */
@@ -3030,28 +3044,6 @@ export type ListInvite200 = {
 
 export type CreateInvite201 = {
 	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteInvitePathParameters = {
-	id: string;
-};
-export type GetInvitePathParameters = {
-	token: string;
-};
-export type GetInvite200 = {
-	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AcceptInvite201 = {
-	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3147,7 +3139,7 @@ export type ListRoles200 = {
 	/**
 	 * @type array
 	 */
-	data: RoletypesRoleDTO[];
+	data: AuthtypesRoleDTO[];
 	/**
 	 * @type string
 	 */
@@ -3169,7 +3161,7 @@ export type GetRolePathParameters = {
 	id: string;
 };
 export type GetRole200 = {
-	data: RoletypesRoleDTO;
+	data: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */

@@ -3,14 +3,12 @@ package telemetrylogs
 import (
 	"context"
 	"fmt"
-	"slices"
 
 	schema "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"golang.org/x/exp/maps"
 
 	"github.com/huandu/go-sqlbuilder"
 )
@@ -38,7 +36,7 @@ func (c *conditionBuilder) conditionFor(
 
 	// TODO(Piyush): Update this to support multiple JSON columns based on evolutions
 	for _, column := range columns {
-		if column.IsJSONColumn() && querybuilder.BodyJSONQueryEnabled {
+		if column.Type.GetType() == schema.ColumnTypeEnumJSON && querybuilder.BodyJSONQueryEnabled && key.Name != messageSubField {
 			valueType, value := InferDataType(value, operator, key)
 			cond, err := NewJSONConditionBuilder(key, valueType).buildJSONCondition(operator, value, sb)
 			if err != nil {
@@ -46,6 +44,7 @@ func (c *conditionBuilder) conditionFor(
 			}
 			return cond, nil
 		}
+
 	}
 
 	if operator.IsStringSearchOperator() {
@@ -58,14 +57,14 @@ func (c *conditionBuilder) conditionFor(
 	}
 
 	// Check if this is a body JSON search - either by FieldContext
-	if key.FieldContext == telemetrytypes.FieldContextBody {
+	if key.FieldContext == telemetrytypes.FieldContextBody && !querybuilder.BodyJSONQueryEnabled {
 		fieldExpression, value = GetBodyJSONKey(ctx, key, operator, value)
 	}
 
 	fieldExpression, value = querybuilder.DataTypeCollisionHandledFieldName(key, value, fieldExpression, operator)
 
 	// make use of case insensitive index for body
-	if fieldExpression == "body" {
+	if fieldExpression == "body" || fieldExpression == messageSubColumn {
 		switch operator {
 		case qbtypes.FilterOperatorLike:
 			return sb.ILike(fieldExpression, value), nil
@@ -207,9 +206,8 @@ func (c *conditionBuilder) conditionFor(
 		case schema.ColumnTypeEnumJSON:
 			if operator == qbtypes.FilterOperatorExists {
 				return sb.IsNotNull(fieldExpression), nil
-			} else {
-				return sb.IsNull(fieldExpression), nil
 			}
+			return sb.IsNull(fieldExpression), nil
 		case schema.ColumnTypeEnumLowCardinality:
 			switch elementType := column.Type.(schema.LowCardinalityColumnType).ElementType; elementType.GetType() {
 			case schema.ColumnTypeEnumString:
@@ -278,19 +276,30 @@ func (c *conditionBuilder) ConditionFor(
 		return "", err
 	}
 
-	if !(key.FieldContext == telemetrytypes.FieldContextBody && querybuilder.BodyJSONQueryEnabled) && operator.AddDefaultExistsFilter() {
-		// skip adding exists filter for intrinsic fields
-		// with an exception for body json search
-		fieldExpression, _ := c.fm.FieldFor(ctx, startNs, endNs, key)
-		if slices.Contains(maps.Keys(IntrinsicFields), fieldExpression) && key.FieldContext != telemetrytypes.FieldContextBody {
+	// Skip adding exists filter for intrinsic fields i.e. Table level log context fields
+	buildExistCondition := operator.AddDefaultExistsFilter()
+	switch key.FieldContext {
+	case telemetrytypes.FieldContextLog, telemetrytypes.FieldContextScope:
+		// pass; No need to build exist condition for top level columns
+		// immediately return
+		return condition, nil
+	case telemetrytypes.FieldContextResource, telemetrytypes.FieldContextAttribute:
+		// build exist condition for resource and attribute fields based on filter operator
+	case telemetrytypes.FieldContextBody:
+		// Querying JSON fields already account for Nullability of fields
+		// so additional exists checks are not needed
+		if querybuilder.BodyJSONQueryEnabled {
 			return condition, nil
 		}
+	}
 
+	if buildExistCondition {
 		existsCondition, err := c.conditionFor(ctx, startNs, endNs, key, qbtypes.FilterOperatorExists, nil, sb)
 		if err != nil {
 			return "", err
 		}
 		return sb.And(condition, existsCondition), nil
 	}
+
 	return condition, nil
 }
