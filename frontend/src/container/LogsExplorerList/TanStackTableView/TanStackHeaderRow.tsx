@@ -19,9 +19,7 @@ type TanStackHeaderRowProps = {
 	hasSingleColumn: boolean;
 };
 
-const DEFAULT_RESIZE_HANDLE_WIDTH = 24;
-/** Wider hit target for body column (last data col before sticky row actions). */
-const BODY_RESIZE_HANDLE_WIDTH = 30;
+const DEFAULT_RESIZE_HANDLE_WIDTH = 5;
 const GRIP_ICON_SIZE = 12;
 const GRIP_SLOT_WIDTH = 18;
 // eslint-disable-next-line sonarjs/cognitive-complexity
@@ -38,10 +36,12 @@ function TanStackHeaderRow({
 	const isResizableColumn = Boolean(header?.column.getCanResize());
 	const isResizing = Boolean(header?.column.getIsResizing());
 	const resizeHandler = header?.getResizeHandler();
-	const resizeHandleWidth =
-		column.key === 'body'
-			? BODY_RESIZE_HANDLE_WIDTH
-			: DEFAULT_RESIZE_HANDLE_WIDTH;
+	const resizeHandleWidth = DEFAULT_RESIZE_HANDLE_WIDTH;
+	const headerText =
+		typeof column.title === 'string' && column.title
+			? column.title
+			: String(header?.id ?? columnId);
+	const headerTitleAttr = headerText.replace(/^\w/, (c) => c.toUpperCase());
 	const handleResizeStart = (
 		event: ReactMouseEvent<HTMLElement> | ReactTouchEvent<HTMLElement>,
 	): void => {
@@ -94,9 +94,11 @@ function TanStackHeaderRow({
 		>
 			<span
 				style={{
-					display: 'inline-flex',
+					display: 'flex',
 					alignItems: 'center',
 					height: '100%',
+					minWidth: 0,
+					width: '100%',
 					maxWidth: isResizableColumn
 						? `calc(100% - ${resizeHandleWidth}px)`
 						: '100%',
@@ -139,9 +141,11 @@ function TanStackHeaderRow({
 						</span>
 					</span>
 				) : null}
-				{header
-					? flexRender(header.column.columnDef.header, header.getContext())
-					: String(column.title || '').replace(/^\w/, (c) => c.toUpperCase())}
+				<span className="tanstack-header-title" title={headerTitleAttr}>
+					{header
+						? flexRender(header.column.columnDef.header, header.getContext())
+						: String(column.title || '').replace(/^\w/, (c) => c.toUpperCase())}
+				</span>
 			</span>
 			{isResizableColumn && (
 				<span

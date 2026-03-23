@@ -117,7 +117,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					const isExpand = column.key === 'expand';
 					const isFixedColumn = isStateIndicator || isExpand;
 					const fixedWidth = isFixedColumn ? 32 : undefined;
-					const minWidthPx = getColumnMinWidthPx(column);
+					const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
 					const headerTitle = String(column.title || '');
 
 					return {
@@ -335,7 +335,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									const columnId = getColumnId(column);
 									const isFixedColumn =
 										column.key === 'expand' || column.key === 'state-indicator';
-									const minWidthPx = getColumnMinWidthPx(column);
+									const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
 									const persistedWidth = columnSizing[columnId];
 									const computedWidth = table.getColumn(columnId)?.getSize();
 									const effectiveWidth = persistedWidth ?? computedWidth;

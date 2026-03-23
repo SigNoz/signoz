@@ -49,6 +49,22 @@ export const TanStackTableStyled = styled(TableStyled)`
 		min-width: 0;
 		max-width: 100%;
 	}
+
+	/* Long column titles: ellipsis when wider than the column (TanStackHeaderRow) */
+	& thead th .tanstack-header-title {
+		min-width: 0;
+		flex: 1 1 0;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+	}
+
+	& thead th .tanstack-header-title > * {
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		max-width: 100%;
+	}
 `;
 
 const getTimestampColumnWidth = (

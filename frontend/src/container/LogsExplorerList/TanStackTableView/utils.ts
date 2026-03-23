@@ -8,20 +8,31 @@ export const getColumnId = (column: OrderedColumn): string =>
 
 /** Browser default root font size; TanStack column sizing uses px. */
 const REM_PX = 16;
-const MIN_WIDTH_OTHER_REM = 15;
+const MIN_WIDTH_OTHER_REM = 12;
 const MIN_WIDTH_BODY_REM = 40;
+
+/** When total column count is below this, body column min width is doubled (more horizontal space for few columns). */
+export const FEW_COLUMNS_BODY_MIN_WIDTH_THRESHOLD = 4;
 
 /**
  * Minimum width (px) for TanStack column defs + colgroup.
- * Design: state/expand 32px; body min 40rem; all other columns min 10rem (rem→px via 16px root).
+ * Design: state/expand 32px; body min 40rem (doubled when fewer than
+ * {@link FEW_COLUMNS_BODY_MIN_WIDTH_THRESHOLD} total columns); other columns use rem→px (16px root).
  */
-export const getColumnMinWidthPx = (column: OrderedColumn): number => {
+export const getColumnMinWidthPx = (
+	column: OrderedColumn,
+	orderedColumns?: OrderedColumn[],
+): number => {
 	const key = String(column.key);
 	if (key === 'state-indicator' || key === 'expand') {
 		return 32;
 	}
 	if (key === 'body') {
-		return MIN_WIDTH_BODY_REM * REM_PX;
+		const base = MIN_WIDTH_BODY_REM * REM_PX;
+		const fewColumns =
+			orderedColumns != null &&
+			orderedColumns.length < FEW_COLUMNS_BODY_MIN_WIDTH_THRESHOLD;
+		return fewColumns ? base * 1.5 : base;
 	}
 	return MIN_WIDTH_OTHER_REM * REM_PX;
 };
