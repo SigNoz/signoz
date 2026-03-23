@@ -470,7 +470,7 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 					// env and k8s.deployment.name are resource fields
 					// severity_text is an attribute field (returns true)
 					// Multiple grouped conditions with attribute fields
-					Expression: "env = 'prod' AND k8s.deployment.name = 'fnscrapers' AND severity_text = 'ERROR' AND severity_text = 'WARN' AND (severity_text = 'INFO' AND severity_text = 'DEBUG') AND (severity_text = 'TRACE' AND severity_text = 'FATAL') AND (severity_text = 'a' AND severity_text = 'b') AND (severity_text = 'c' AND severity_text = 'd') AND (severity_text = 'e' AND severity_text = 'f')",
+					Expression: "env = 'prod' AND k8s.deployment.name = 'prod-deployment' AND severity_text = 'ERROR' AND severity_text = 'WARN' AND (severity_text = 'INFO' AND severity_text = 'DEBUG') AND (severity_text = 'TRACE' AND severity_text = 'FATAL') AND (severity_text = 'a' AND severity_text = 'b') AND (severity_text = 'c' AND severity_text = 'd') AND (severity_text = 'e' AND severity_text = 'f')",
 				},
 			},
 			start: uint64(1769976178000000000), // These will give bucket start 1769974378 and end 1770062578
