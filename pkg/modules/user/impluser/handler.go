@@ -19,12 +19,12 @@ import (
 )
 
 type handler struct {
-	module root.Module
+	setter root.Setter
 	getter root.Getter
 }
 
-func NewHandler(module root.Module, getter root.Getter) root.Handler {
-	return &handler{module: module, getter: getter}
+func NewHandler(setter root.Setter, getter root.Getter) root.Handler {
+	return &handler{setter: setter, getter: getter}
 }
 
 func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
@@ -43,7 +43,7 @@ func (h *handler) CreateInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	invites, err := h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
+	invites, err := h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &types.PostableBulkInviteRequest{
 		Invites: []types.PostableInvite{req},
 	})
 	if err != nil {
@@ -76,7 +76,7 @@ func (h *handler) CreateBulkInvite(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	_, err = h.module.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &req)
+	_, err = h.setter.CreateBulkInvite(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), &req)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -97,7 +97,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := h.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -116,7 +116,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	user, err := h.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
+	user, err := h.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -156,13 +156,13 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var user types.User
+	user := types.DeprecatedUser{User: &types.User{}}
 	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	updatedUser, err := h.module.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
+	updatedUser, err := h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), id, &user, claims.UserID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -183,7 +183,7 @@ func (h *handler) DeleteUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.module.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
+	if err := h.setter.DeleteUser(ctx, valuer.MustNewUUID(claims.OrgID), id, claims.UserID); err != nil {
 		render.Error(w, err)
 		return
 	}
@@ -203,13 +203,13 @@ func (handler *handler) GetResetPasswordToken(w http.ResponseWriter, r *http.Req
 		return
 	}
 
-	user, err := handler.getter.GetByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
+	user, err := handler.getter.GetDeprecatedUserByOrgIDAndID(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(id))
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	token, err := handler.module.GetOrCreateResetPasswordToken(ctx, user.ID)
+	token, err := handler.setter.GetOrCreateResetPasswordToken(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -228,7 +228,7 @@ func (handler *handler) ResetPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := handler.module.UpdatePasswordByResetPasswordToken(ctx, req.Token, req.Password)
+	err := handler.setter.UpdatePasswordByResetPasswordToken(ctx, req.Token, req.Password)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -247,7 +247,7 @@ func (handler *handler) ChangePassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := handler.module.UpdatePassword(ctx, req.UserID, req.OldPassword, req.NewPassword)
+	err := handler.setter.UpdatePassword(ctx, req.UserID, req.OldPassword, req.NewPassword)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -266,7 +266,7 @@ func (h *handler) ForgotPassword(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.module.ForgotPassword(ctx, req.OrgID, req.Email, req.FrontendBaseURL)
+	err := h.setter.ForgotPassword(ctx, req.OrgID, req.Email, req.FrontendBaseURL)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -302,13 +302,13 @@ func (h *handler) CreateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.CreateAPIKey(ctx, apiKey)
+	err = h.setter.CreateAPIKey(ctx, apiKey)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	createdApiKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), apiKey.ID)
+	createdApiKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), apiKey.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -328,7 +328,7 @@ func (h *handler) ListAPIKeys(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	apiKeys, err := h.module.ListAPIKeys(ctx, valuer.MustNewUUID(claims.OrgID))
+	apiKeys, err := h.setter.ListAPIKeys(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -373,7 +373,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	existingAPIKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -391,7 +391,7 @@ func (h *handler) UpdateAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.module.UpdateAPIKey(ctx, id, &req, valuer.MustNewUUID(claims.UserID))
+	err = h.setter.UpdateAPIKey(ctx, id, &req, valuer.MustNewUUID(claims.UserID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -418,7 +418,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	}
 
 	//get the API Key
-	existingAPIKey, err := h.module.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
+	existingAPIKey, err := h.setter.GetAPIKey(ctx, valuer.MustNewUUID(claims.OrgID), id)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -436,7 +436,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.module.RevokeAPIKey(ctx, id, valuer.MustNewUUID(claims.UserID)); err != nil {
+	if err := h.setter.RevokeAPIKey(ctx, id, valuer.MustNewUUID(claims.UserID)); err != nil {
 		render.Error(w, err)
 		return
 	}

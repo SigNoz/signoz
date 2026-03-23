@@ -28,7 +28,7 @@ import {
 	getCustomTimeRangeWindowSweepInMS,
 	getStartAndEndTimesInMilliseconds,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { Props } from 'types/api/dashboard/update';
 import { EQueryType } from 'types/common/dashboard';
@@ -106,7 +106,7 @@ function WidgetGraphComponent({
 		selectedDashboard,
 		setSelectedDashboard,
 		setColumnWidths,
-	} = useDashboard();
+	} = useDashboardStore();
 
 	const onColumnWidthsChange = useCallback(
 		(widths: Record<string, number>) => {

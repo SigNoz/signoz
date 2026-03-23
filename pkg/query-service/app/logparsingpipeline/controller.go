@@ -132,38 +132,32 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
-	defaultPipelines := []pipelinetypes.GettablePipeline{}
-	if querybuilder.BodyJSONQueryEnabled {
-		preprocessingPipeline := pipelinetypes.GettablePipeline{
-			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				Name:    "Default Pipeline - PreProcessing Body",
-				Alias:   "NormalizeBodyDefault",
-				Enabled: true,
-			},
-			Filter: &v3.FilterSet{
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key: "body",
-						},
-						Operator: v3.FilterOperatorExists,
-					},
-				},
-			},
-			Config: []pipelinetypes.PipelineOperator{
+func (ic *LogParsingPipelineController) getNormalizePipeline() pipelinetypes.GettablePipeline {
+	return pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Name:    "Default Pipeline - PreProcessing Body",
+			Alias:   "NormalizeBodyDefault",
+			Enabled: true,
+		},
+		Filter: &v3.FilterSet{
+			Items: []v3.FilterItem{
 				{
-					ID:      uuid.NewString(),
-					Type:    "normalize",
-					Enabled: true,
-					If:      "body != nil",
+					Key: v3.AttributeKey{
+						Key: "body",
+					},
+					Operator: v3.FilterOperatorExists,
 				},
 			},
-		}
-
-		defaultPipelines = append(defaultPipelines, preprocessingPipeline)
+		},
+		Config: []pipelinetypes.PipelineOperator{
+			{
+				ID:      uuid.NewString(),
+				Type:    "normalize",
+				Enabled: true,
+				If:      "body != nil",
+			},
+		},
 	}
-	return defaultPipelines, nil
 }
 
 // Returns effective list of pipelines including user created
@@ -279,6 +273,17 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 }
 
 // Implements agentConf.AgentFeature interface.
+// RecommendAgentConfig generates the collector config to be sent to agents.
+// The normalize pipeline (when BodyJSONQueryEnabled) is injected here, after
+// rawPipelineData is serialized. So it is only present in the config sent to
+// the collector and never persisted to the database as part of the user's pipeline list.
+//
+// NOTE: The configId sent to agents is derived from the pipeline version number
+// (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
+// the generated YAML without bumping the version (e.g. toggling BodyJSONQueryEnabled
+// or updating operator IfExpressions), agents that already applied that version will
+// not re-apply the new config. In such cases, users must save a new pipeline version
+// via the API to force agents to pick up the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId valuer.UUID,
 	currentConfYaml []byte,
@@ -296,21 +301,19 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", err
 	}
 
-	// recommend default pipelines along with user created pipelines
-	defaultPipelines, err := pc.getDefaultPipelines()
+	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
 	if err != nil {
-		return nil, "", model.InternalError(fmt.Errorf("failed to get default pipelines: %w", err))
+		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
 	}
-	pipelinesResp.Pipelines = append(pipelinesResp.Pipelines, defaultPipelines...)
+
+	if querybuilder.BodyJSONQueryEnabled {
+		// add default normalize pipeline at the beginning, only for sending to collector
+		pipelinesResp.Pipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, pipelinesResp.Pipelines...)
+	}
 
 	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, pipelinesResp.Pipelines)
 	if err != nil {
 		return nil, "", err
-	}
-
-	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
-	if err != nil {
-		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
 	}
 
 	return updatedConf, string(rawPipelineData), nil

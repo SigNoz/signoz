@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/ruler"
@@ -49,6 +50,9 @@ type Config struct {
 
 	// Instrumentation config
 	Instrumentation instrumentation.Config `mapstructure:"instrumentation"`
+
+	// PProf config
+	PProf pprof.Config `mapstructure:"pprof"`
 
 	// Analytics config
 	Analytics analytics.Config `mapstructure:"analytics"`
@@ -122,6 +126,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		global.NewConfigFactory(),
 		version.NewConfigFactory(),
 		instrumentation.NewConfigFactory(),
+		pprof.NewConfigFactory(),
 		analytics.NewConfigFactory(),
 		web.NewConfigFactory(),
 		cache.NewConfigFactory(),
