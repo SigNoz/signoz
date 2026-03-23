@@ -163,10 +163,8 @@ func (migration *addUserRole) Up(ctx context.Context, db *bun.DB) error {
 		if !ok {
 			managedRoleName = "signoz-viewer" // fallback
 		}
-		roleID, ok := roleMap[orgRoleKey{OrgID: u.OrgID, RoleName: managedRoleName}]
-		if !ok {
-			continue // user needs to get access again
-		}
+
+		roleID := roleMap[orgRoleKey{OrgID: u.OrgID, RoleName: managedRoleName}]
 
 		userRoles = append(userRoles, &userRoleRow{
 			Identifiable: types.Identifiable{ID: valuer.GenerateUUID()},

@@ -72,6 +72,11 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	deprecatedUsers := make([]*types.DeprecatedUser, 0, len(users))
 	for _, user := range users {
 		roleNames := userIDToRoleNames[user.ID]
+
+		if len(roleNames) == 0 {
+			return nil, errors.Newf(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found for user: %s", user.ID.String())
+		}
+
 		role := authtypes.SigNozManagedRoleToExistingLegacyRole[roleNames[0]]
 		deprecatedUsers = append(deprecatedUsers, types.NewDeprecatedUserFromUserAndRole(user, role))
 	}

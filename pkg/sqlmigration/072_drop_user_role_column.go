@@ -33,10 +33,6 @@ func (migration *dropUserRoleColumn) Register(migrations *migrate.Migrations) er
 }
 
 func (migration *dropUserRoleColumn) Up(ctx context.Context, db *bun.DB) error {
-	if err := migration.sqlSchema.ToggleFKEnforcement(ctx, db, false); err != nil {
-		return err
-	}
-
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {
 		return err
@@ -66,10 +62,6 @@ func (migration *dropUserRoleColumn) Up(ctx context.Context, db *bun.DB) error {
 	}
 
 	if err := tx.Commit(); err != nil {
-		return err
-	}
-
-	if err := migration.sqlSchema.ToggleFKEnforcement(ctx, db, true); err != nil {
 		return err
 	}
 
