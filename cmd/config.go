@@ -10,18 +10,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/signoz"
 )
 
-func NewSigNozConfig(ctx context.Context, logger *slog.Logger, flags signoz.DeprecatedFlags) (signoz.Config, error) {
+func NewSigNozConfig(ctx context.Context, logger *slog.Logger, configFiles []string) (signoz.Config, error) {
+	uris := make([]string, 0, len(configFiles)+1)
+	for _, f := range configFiles {
+		uris = append(uris, "file:"+f)
+	}
+	uris = append(uris, "env:")
+
 	config, err := signoz.NewConfig(
 		ctx,
 		logger,
 		config.ResolverConfig{
-			Uris: []string{"env:"},
+			Uris: uris,
 			ProviderFactories: []config.ProviderFactory{
 				envprovider.NewFactory(),
 				fileprovider.NewFactory(),
 			},
 		},
-		flags,
 	)
 	if err != nil {
 		return signoz.Config{}, err

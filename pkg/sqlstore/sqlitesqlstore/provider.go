@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -52,7 +53,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	settings.Logger().InfoContext(ctx, "connected to sqlite", "path", config.Sqlite.Path)
+	settings.Logger().InfoContext(ctx, "connected to sqlite", slog.String("path", config.Sqlite.Path))
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
 	sqliteDialect := sqlitedialect.New()

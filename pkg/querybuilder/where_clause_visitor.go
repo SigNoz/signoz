@@ -934,7 +934,7 @@ func (v *filterExpressionVisitor) VisitKey(ctx *grammar.KeyContext) any {
 			v.warnings = append(v.warnings, warnMsg)
 		}
 		v.keysWithWarnings[keyName] = true
-		v.logger.Warn("ambiguous key", "field_key_name", fieldKey.Name) //nolint:sloglint
+		v.logger.Warn("ambiguous key", slog.String("field_key_name", fieldKey.Name)) //nolint:sloglint
 	}
 
 	return fieldKeysForName

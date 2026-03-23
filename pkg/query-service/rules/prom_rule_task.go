@@ -9,12 +9,14 @@ import (
 
 	"log/slog"
 
+	opentracing "github.com/opentracing/opentracing-go"
+	plabels "github.com/prometheus/prometheus/model/labels"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	opentracing "github.com/opentracing/opentracing-go"
-	plabels "github.com/prometheus/prometheus/model/labels"
 )
 
 // PromRuleTask is a promql rule executor
@@ -331,7 +333,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 	g.logger.InfoContext(ctx, "promql rule task", "name", g.name, "eval_started_at", ts)
 	maintenance, err := g.maintenanceStore.GetAllPlannedMaintenance(ctx, g.orgID.StringValue())
 	if err != nil {
-		g.logger.ErrorContext(ctx, "error in processing sql query", "error", err)
+		g.logger.ErrorContext(ctx, "error in processing sql query", errors.Attr(err))
 	}
 
 	for i, rule := range g.rules {
@@ -381,7 +383,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), "error", err)
+				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

@@ -11,7 +11,7 @@ import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboard
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { PublicDashboardMetaProps } from 'types/api/dashboard/public/getMeta';
 import APIError from 'types/api/error';
 import { USER_ROLES } from 'types/roles';
@@ -59,7 +59,7 @@ function PublicDashboardSetting(): JSX.Element {
 	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 
 	const { isCloudUser, isEnterpriseSelfHostedUser } = useGetTenantLicense();
 

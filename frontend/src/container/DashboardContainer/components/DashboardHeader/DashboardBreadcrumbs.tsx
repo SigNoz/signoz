@@ -4,7 +4,7 @@ import ROUTES from 'constants/routes';
 import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LayoutGrid } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { DashboardData } from 'types/api/dashboard/getAll';
 
 import { Base64Icons } from '../../DashboardSettings/General/utils';
@@ -13,7 +13,7 @@ import './DashboardBreadcrumbs.styles.scss';
 
 function DashboardBreadcrumbs(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 	const updatedAtRef = useRef(selectedDashboard?.updatedAt);
 
 	const selectedData = selectedDashboard

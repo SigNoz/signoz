@@ -664,7 +664,9 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
     # --- Step 3: SSO login should be blocked for deleted user ---
     create_user_idp(email, "password", True, "SAML", "Lifecycle")
 
-    perform_saml_login(signoz, driver, get_session_context, idp_login, email, "password")
+    perform_saml_login(
+        signoz, driver, get_session_context, idp_login, email, "password"
+    )
 
     # Verify user is NOT reactivated — check via DB since API may filter deleted users
     with signoz.sqlstore.conn.connect() as conn:
@@ -683,7 +685,11 @@ def test_saml_sso_deleted_user_gets_new_user_on_login(
         headers={"Authorization": f"Bearer {admin_token}"},
     )
     found_user = next(
-        (user for user in response.json()["data"] if user["email"] == email and user["id"] != user_id),
+        (
+            user
+            for user in response.json()["data"]
+            if user["email"] == email and user["id"] != user_id
+        ),
         None,
     )
     assert found_user is not None

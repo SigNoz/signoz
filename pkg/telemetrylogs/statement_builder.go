@@ -217,7 +217,7 @@ func (b *logQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[stri
 
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
+		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 
 	return query

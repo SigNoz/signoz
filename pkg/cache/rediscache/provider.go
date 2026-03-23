@@ -2,18 +2,19 @@ package rediscache
 
 import (
 	"context"
+	"fmt"
+	"log/slog"
 	"strings"
 	"time"
 
-	"fmt"
+	"github.com/redis/go-redis/extra/redisotel/v9"
+	"github.com/redis/go-redis/v9"
 
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/redis/go-redis/extra/redisotel/v9"
-	"github.com/redis/go-redis/v9"
 )
 
 type provider struct {
@@ -76,6 +77,6 @@ func (c *provider) DeleteMany(ctx context.Context, orgID valuer.UUID, cacheKeys 
 	}
 
 	if err := c.client.Del(ctx, updatedCacheKeys...).Err(); err != nil {
-		c.settings.Logger().ErrorContext(ctx, "error deleting cache keys", "cache_keys", cacheKeys, "error", err)
+		c.settings.Logger().ErrorContext(ctx, "error deleting cache keys", slog.Any("cache_keys", cacheKeys), errors.Attr(err))
 	}
 }

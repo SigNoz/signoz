@@ -546,6 +546,23 @@ export interface ErrorsResponseerroradditionalDTO {
 /**
  * @nullable
  */
+export type FactoryResponseDTOServices = { [key: string]: string[] } | null;
+
+export interface FactoryResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	healthy?: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	services?: FactoryResponseDTOServices;
+}
+
+/**
+ * @nullable
+ */
 export type FeaturetypesGettableFeatureDTOVariants = {
 	[key: string]: unknown;
 } | null;
@@ -774,6 +791,45 @@ export interface GatewaytypesUpdatableIngestionKeyLimitDTO {
 	 * @nullable true
 	 */
 	tags?: string[] | null;
+}
+
+export interface GlobaltypesAPIKeyConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesConfigDTO {
+	/**
+	 * @type string
+	 */
+	external_url?: string;
+	identN?: GlobaltypesIdentNConfigDTO;
+	/**
+	 * @type string
+	 */
+	ingestion_url?: string;
+}
+
+export interface GlobaltypesIdentNConfigDTO {
+	apikey?: GlobaltypesAPIKeyConfigDTO;
+	impersonation?: GlobaltypesImpersonationConfigDTO;
+	tokenizer?: GlobaltypesTokenizerConfigDTO;
+}
+
+export interface GlobaltypesImpersonationConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface GlobaltypesTokenizerConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
 }
 
 export interface MetricsexplorertypesListMetricDTO {
@@ -2345,6 +2401,47 @@ export interface TypesChangePasswordRequestDTO {
 	userId?: string;
 }
 
+export interface TypesDeprecatedUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
@@ -2400,17 +2497,6 @@ export interface TypesGettableAPIKeyDTO {
 	 * @type string
 	 */
 	userId?: string;
-}
-
-export interface TypesGettableGlobalConfigDTO {
-	/**
-	 * @type string
-	 */
-	external_url?: string;
-	/**
-	 * @type string
-	 */
-	ingestion_url?: string;
 }
 
 export interface TypesIdentifiableDTO {
@@ -2509,25 +2595,6 @@ export interface TypesPostableAPIKeyDTO {
 	 * @type string
 	 */
 	role?: string;
-}
-
-export interface TypesPostableAcceptInviteDTO {
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	password?: string;
-	/**
-	 * @type string
-	 */
-	sourceUrl?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
 }
 
 export interface TypesPostableBulkInviteRequestDTO {
@@ -2673,10 +2740,6 @@ export interface TypesUserDTO {
 	 * @type string
 	 */
 	orgId?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
 	/**
 	 * @type string
 	 */
@@ -3026,18 +3089,7 @@ export type GetResetPasswordToken200 = {
 };
 
 export type GetGlobalConfig200 = {
-	data: TypesGettableGlobalConfigDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type ListInvite200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesInviteDTO[];
+	data: GlobaltypesConfigDTO;
 	/**
 	 * @type string
 	 */
@@ -3046,28 +3098,6 @@ export type ListInvite200 = {
 
 export type CreateInvite201 = {
 	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type DeleteInvitePathParameters = {
-	id: string;
-};
-export type GetInvitePathParameters = {
-	token: string;
-};
-export type GetInvite200 = {
-	data: TypesInviteDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type AcceptInvite201 = {
-	data: TypesUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3290,7 +3320,7 @@ export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: TypesDeprecatedUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -3304,7 +3334,7 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3315,7 +3345,7 @@ export type UpdateUserPathParameters = {
 	id: string;
 };
 export type UpdateUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3323,7 +3353,7 @@ export type UpdateUser200 = {
 };
 
 export type GetMyUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3438,6 +3468,30 @@ export type SearchIngestionKeysParams = {
 
 export type SearchIngestionKeys200 = {
 	data: GatewaytypesGettableIngestionKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Healthz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Healthz503 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Livez200 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */
@@ -3573,6 +3627,22 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz503 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */

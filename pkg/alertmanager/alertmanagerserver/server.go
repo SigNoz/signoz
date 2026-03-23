@@ -10,10 +10,6 @@ import (
 	"github.com/prometheus/alertmanager/types"
 	"golang.org/x/sync/errgroup"
 
-	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
-	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
-	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/prometheus/alertmanager/dispatch"
 	"github.com/prometheus/alertmanager/featurecontrol"
 	"github.com/prometheus/alertmanager/inhibit"
@@ -25,6 +21,11 @@ import (
 	"github.com/prometheus/alertmanager/timeinterval"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/common/model"
+
+	"github.com/SigNoz/signoz/pkg/alertmanager/alertmanagernotify"
+	"github.com/SigNoz/signoz/pkg/alertmanager/nfmanager"
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 )
 
 var (
@@ -72,7 +73,7 @@ type Server struct {
 
 func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registerer, srvConfig Config, orgID string, stateStore alertmanagertypes.StateStore, nfManager nfmanager.NotificationManager) (*Server, error) {
 	server := &Server{
-		logger:              logger.With("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver"),
+		logger:              logger.With(slog.String("pkg", "go.signoz.io/pkg/alertmanager/alertmanagerserver")),
 		registry:            registry,
 		srvConfig:           srvConfig,
 		orgID:               orgID,
@@ -139,7 +140,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		server.silences.Maintenance(server.srvConfig.Silences.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			// Delete silences older than the retention period.
 			if _, err := server.silences.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "silence garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "silence garbage collection", errors.Attr(err))
 				// Don't return here - we need to snapshot our state first.
 			}
 
@@ -168,7 +169,7 @@ func New(ctx context.Context, logger *slog.Logger, registry prometheus.Registere
 		defer server.wg.Done()
 		server.nflog.Maintenance(server.srvConfig.NFLog.MaintenanceInterval, snapfnoop, server.stopc, func() (int64, error) {
 			if _, err := server.nflog.GC(); err != nil {
-				server.logger.ErrorContext(ctx, "notification log garbage collection", "error", err)
+				server.logger.ErrorContext(ctx, "notification log garbage collection", errors.Attr(err))
 				// Don't return without saving the current state.
 			}
 
@@ -246,7 +247,7 @@ func (server *Server) SetConfig(ctx context.Context, alertmanagerConfig *alertma
 	for _, rcv := range config.Receivers {
 		if _, found := activeReceivers[rcv.Name]; !found {
 			// No need to build a receiver if no route is using it.
-			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", "receiver", rcv.Name)
+			server.logger.InfoContext(ctx, "skipping creation of receiver not referenced by any route", slog.String("receiver", rcv.Name))
 			continue
 		}
 		integrations, err := alertmanagernotify.NewReceiverIntegrations(rcv, server.tmpl, server.logger)

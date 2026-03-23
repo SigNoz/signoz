@@ -43,74 +43,6 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/invite/{token}", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetInvite), handler.OpenAPIDef{
-		ID:                  "GetInvite",
-		Tags:                []string{"users"},
-		Summary:             "Get invite",
-		Description:         "This endpoint gets an invite by token",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            new(types.Invite),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/invite/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.DeleteInvite), handler.OpenAPIDef{
-		ID:                  "DeleteInvite",
-		Tags:                []string{"users"},
-		Summary:             "Delete invite",
-		Description:         "This endpoint deletes an invite by id",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodDelete).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/invite", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListInvite), handler.OpenAPIDef{
-		ID:                  "ListInvite",
-		Tags:                []string{"users"},
-		Summary:             "List invites",
-		Description:         "This endpoint lists all invites",
-		Request:             nil,
-		RequestContentType:  "",
-		Response:            make([]*types.Invite, 0),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusOK,
-		ErrorStatusCodes:    []int{},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodGet).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/invite/accept", handler.New(provider.authZ.OpenAccess(provider.userHandler.AcceptInvite), handler.OpenAPIDef{
-		ID:                  "AcceptInvite",
-		Tags:                []string{"users"},
-		Summary:             "Accept invite",
-		Description:         "This endpoint accepts an invite by token",
-		Request:             new(types.PostableAcceptInvite),
-		RequestContentType:  "application/json",
-		Response:            new(types.User),
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusCreated,
-		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
-		Deprecated:          false,
-		SecuritySchemes:     []handler.OpenAPISecurityScheme{},
-	})).Methods(http.MethodPost).GetError(); err != nil {
-		return err
-	}
-
 	if err := router.Handle("/api/v1/pats", handler.New(provider.authZ.AdminAccess(provider.userHandler.CreateAPIKey), handler.OpenAPIDef{
 		ID:                  "CreateAPIKey",
 		Tags:                []string{"users"},
@@ -186,7 +118,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists all users",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*types.GettableUser, 0),
+		Response:            make([]*types.DeprecatedUser, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -203,7 +135,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user I belong to",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableUser),
+		Response:            new(types.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},
@@ -220,7 +152,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Description:         "This endpoint returns the user by id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.GettableUser),
+		Response:            new(types.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
@@ -235,9 +167,9 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		Tags:                []string{"users"},
 		Summary:             "Update user",
 		Description:         "This endpoint updates the user by id",
-		Request:             new(types.User),
+		Request:             new(types.DeprecatedUser),
 		RequestContentType:  "application/json",
-		Response:            new(types.GettableUser),
+		Response:            new(types.DeprecatedUser),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},

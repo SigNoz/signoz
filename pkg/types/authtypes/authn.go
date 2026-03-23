@@ -128,7 +128,7 @@ func (typ *Identity) ToClaims() Claims {
 
 type AuthNStore interface {
 	// Get user and factor password by email and orgID.
-	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error)
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, []*UserRole, error)
 
 	// Get org domain from id.
 	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)

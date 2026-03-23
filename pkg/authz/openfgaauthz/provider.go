@@ -43,6 +43,10 @@ func (provider *provider) Start(ctx context.Context) error {
 	return provider.server.Start(ctx)
 }
 
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.server.Healthy()
+}
+
 func (provider *provider) Stop(ctx context.Context) error {
 	return provider.server.Stop(ctx)
 }

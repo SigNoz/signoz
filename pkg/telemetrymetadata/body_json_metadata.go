@@ -3,6 +3,7 @@ package telemetrymetadata
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strings"
 	"time"
@@ -78,7 +79,7 @@ func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 		for _, typ := range typesArray {
 			mapping, found := telemetrytypes.MappingStringToJSONDataType[typ]
 			if !found {
-				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", "type", typ, "path", path)
+				t.logger.ErrorContext(ctx, "failed to map type string to JSON data type", slog.String("type", typ), slog.String("path", path))
 				continue
 			}
 			fieldKeys = append(fieldKeys, &telemetrytypes.TelemetryFieldKey{
@@ -229,7 +230,7 @@ func (t *telemetryMetaStore) getJSONPathIndexes(ctx context.Context, paths ...st
 
 			jsonDataType, found := telemetrytypes.MappingStringToJSONDataType[columnType]
 			if !found {
-				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", "column_type", columnType, "column_expr", columnExpr)
+				t.logger.ErrorContext(ctx, "failed to map column type to JSON data type", slog.String("column_type", columnType), slog.String("column_expr", columnExpr))
 				continue
 			}
 

@@ -6,15 +6,15 @@ import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
-import getPendingInvites from 'api/v1/invite/get';
 import getAll from 'api/v1/user/get';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
 import { useAppContext } from 'providers/App/App';
+import { toISOString } from 'utils/app';
 
-import { FilterMode, INVITE_PREFIX, MemberStatus } from './utils';
+import { FilterMode, MemberStatus, toMemberStatus } from './utils';
 
 import './MembersSettings.styles.scss';
 
@@ -34,51 +34,24 @@ function MembersSettings(): JSX.Element {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
-	const {
-		data: usersData,
-		isLoading: isUsersLoading,
-		refetch: refetchUsers,
-	} = useQuery({
+	const { data: usersData, isLoading, refetch: refetchUsers } = useQuery({
 		queryFn: getAll,
 		queryKey: ['getOrgUser', org?.[0]?.id],
 	});
 
-	const {
-		data: invitesData,
-		isLoading: isInvitesLoading,
-		refetch: refetchInvites,
-	} = useQuery({
-		queryFn: getPendingInvites,
-		queryKey: ['getPendingInvites'],
-	});
-
-	const isLoading = isUsersLoading || isInvitesLoading;
-
-	const allMembers = useMemo((): MemberRow[] => {
-		const activeMembers: MemberRow[] = (usersData?.data ?? []).map((user) => ({
-			id: user.id,
-			name: user.displayName,
-			email: user.email,
-			role: user.role,
-			status: MemberStatus.Active,
-			joinedOn: user.createdAt ? String(user.createdAt) : null,
-			updatedAt: user?.updatedAt ? String(user.updatedAt) : null,
-		}));
-
-		const pendingInvites: MemberRow[] = (invitesData?.data ?? []).map(
-			(invite) => ({
-				id: `${INVITE_PREFIX}${invite.id}`,
-				name: invite.name ?? '',
-				email: invite.email,
-				role: invite.role,
-				status: MemberStatus.Invited,
-				joinedOn: invite.createdAt ? String(invite.createdAt) : null,
-				token: invite.token ?? null,
-			}),
-		);
-
-		return [...activeMembers, ...pendingInvites];
-	}, [usersData, invitesData]);
+	const allMembers = useMemo(
+		(): MemberRow[] =>
+			(usersData?.data ?? []).map((user) => ({
+				id: user.id,
+				name: user.displayName,
+				email: user.email,
+				role: user.role,
+				status: toMemberStatus(user.status ?? ''),
+				joinedOn: toISOString(user.createdAt),
+				updatedAt: toISOString(user?.updatedAt),
+			})),
+		[usersData],
+	);
 
 	const filteredMembers = useMemo((): MemberRow[] => {
 		let result = allMembers;
@@ -100,11 +73,6 @@ function MembersSettings(): JSX.Element {
 		return result;
 	}, [allMembers, filterMode, searchQuery]);
 
-	const paginatedMembers = useMemo((): MemberRow[] => {
-		const start = (currentPage - 1) * PAGE_SIZE;
-		return filteredMembers.slice(start, start + PAGE_SIZE);
-	}, [filteredMembers, currentPage]);
-
 	// TODO(nuqs): Replace with nuqs once the nuqs setup and integration is done
 	const setPage = useCallback(
 		(page: number): void => {
@@ -122,9 +90,14 @@ function MembersSettings(): JSX.Element {
 		if (currentPage > maxPage) {
 			setPage(maxPage);
 		}
+		if (currentPage < 1) {
+			setPage(1);
+		}
 	}, [filteredMembers.length, currentPage, setPage]);
 
-	const pendingCount = invitesData?.data?.length ?? 0;
+	const pendingCount = allMembers.filter(
+		(m) => m.status === MemberStatus.Invited,
+	).length;
 	const totalCount = allMembers.length;
 
 	const filterMenuItems: MenuProps['items'] = [
@@ -163,8 +136,7 @@ function MembersSettings(): JSX.Element {
 
 	const handleInviteComplete = useCallback((): void => {
 		refetchUsers();
-		refetchInvites();
-	}, [refetchUsers, refetchInvites]);
+	}, [refetchUsers]);
 
 	const handleRowClick = useCallback((member: MemberRow): void => {
 		setSelectedMember(member);
@@ -176,9 +148,8 @@ function MembersSettings(): JSX.Element {
 
 	const handleMemberEditComplete = useCallback((): void => {
 		refetchUsers();
-		refetchInvites();
 		setSelectedMember(null);
-	}, [refetchUsers, refetchInvites]);
+	}, [refetchUsers]);
 
 	return (
 		<>
@@ -209,6 +180,7 @@ function MembersSettings(): JSX.Element {
 
 					<div className="members-settings__search">
 						<Input
+							type="search"
 							placeholder="Search by name, email, or role..."
 							value={searchQuery}
 							onChange={(e): void => {
@@ -217,6 +189,7 @@ function MembersSettings(): JSX.Element {
 							}}
 							className="members-search-input"
 							color="secondary"
+							name="members-search"
 						/>
 					</div>
 
@@ -232,7 +205,7 @@ function MembersSettings(): JSX.Element {
 				</div>
 			</div>
 			<MembersTable
-				data={paginatedMembers}
+				data={filteredMembers}
 				loading={isLoading}
 				total={filteredMembers.length}
 				currentPage={currentPage}
@@ -253,7 +226,6 @@ function MembersSettings(): JSX.Element {
 				open={selectedMember !== null}
 				onClose={handleDrawerClose}
 				onComplete={handleMemberEditComplete}
-				onRefetch={handleInviteComplete}
 			/>
 		</>
 	);

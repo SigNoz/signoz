@@ -3,7 +3,10 @@ package httplicensing
 import (
 	"context"
 	"encoding/json"
+	"log/slog"
 	"time"
+
+	"github.com/tidwall/gjson"
 
 	"github.com/SigNoz/signoz/ee/licensing/licensingstore/sqllicensingstore"
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -16,7 +19,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
-	"github.com/tidwall/gjson"
 )
 
 type provider struct {
@@ -55,7 +57,7 @@ func (provider *provider) Start(ctx context.Context) error {
 
 	err := provider.Validate(ctx)
 	if err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", errors.Attr(err))
 	}
 
 	for {
@@ -65,7 +67,7 @@ func (provider *provider) Start(ctx context.Context) error {
 		case <-tick.C:
 			err := provider.Validate(ctx)
 			if err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to validate license from upstream server", errors.Attr(err))
 			}
 		}
 	}
@@ -133,7 +135,7 @@ func (provider *provider) Refresh(ctx context.Context, organizationID valuer.UUI
 		if errors.Ast(err, errors.TypeNotFound) {
 			return nil
 		}
-		provider.settings.Logger().ErrorContext(ctx, "license validation failed", "org_id", organizationID.StringValue())
+		provider.settings.Logger().ErrorContext(ctx, "license validation failed", slog.String("org_id", organizationID.StringValue()))
 		return err
 	}
 

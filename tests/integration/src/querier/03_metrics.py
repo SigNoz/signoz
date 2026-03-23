@@ -585,13 +585,14 @@ def test_metrics_fill_formula_with_group_by(
             context=f"metrics/{fill_mode}/F1/{group}",
         )
 
+
 def test_histogram_p90_returns_404_outside_data_window(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_metrics: Callable[[List[Metrics]], None],
 ) -> None:
-    
+
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     metric_name = "test_p90_last_seen_bucket"
 
