@@ -4,7 +4,7 @@ import (
 	"context"
 	"log/slog"
 	"net/http"
-	httppprof "net/http/pprof"
+	nethttppprof "net/http/pprof"
 	runtimepprof "runtime/pprof"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -43,15 +43,16 @@ func (provider *provider) Stop(ctx context.Context) error {
 
 func newHandler() http.Handler {
 	mux := http.NewServeMux()
-	mux.HandleFunc("/debug/pprof/", httppprof.Index)
-	mux.HandleFunc("/debug/pprof/cmdline", httppprof.Cmdline)
-	mux.HandleFunc("/debug/pprof/profile", httppprof.Profile)
-	mux.HandleFunc("/debug/pprof/symbol", httppprof.Symbol)
-	mux.HandleFunc("/debug/pprof/trace", httppprof.Trace)
+	// Register the endpoints from net/http/pprof.
+	mux.HandleFunc("/debug/pprof/", nethttppprof.Index)
+	mux.HandleFunc("/debug/pprof/cmdline", nethttppprof.Cmdline)
+	mux.HandleFunc("/debug/pprof/profile", nethttppprof.Profile)
+	mux.HandleFunc("/debug/pprof/symbol", nethttppprof.Symbol)
+	mux.HandleFunc("/debug/pprof/trace", nethttppprof.Trace)
 
 	// Register the runtime profiles in the same order returned by runtime/pprof.Profiles().
 	for _, profile := range runtimepprof.Profiles() {
-		mux.Handle("/debug/pprof/"+profile.Name(), httppprof.Handler(profile.Name()))
+		mux.Handle("/debug/pprof/"+profile.Name(), nethttppprof.Handler(profile.Name()))
 	}
 
 	return mux
