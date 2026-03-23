@@ -51,6 +51,46 @@ func TestAdjustTimeRangeForShift(t *testing.T) {
 			expectedToMS:   1940000, // 2000000 - 60000
 		},
 		{
+			name: "shift by compact duration string",
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Functions: []qbtypes.Function{
+					{
+						Name: qbtypes.FunctionNameTimeShift,
+						Args: []qbtypes.FunctionArg{
+							{Value: "5m"},
+						},
+					},
+				},
+			},
+			timeRange: qbtypes.TimeRange{
+				From: 1000000,
+				To:   2000000,
+			},
+			requestType:    qbtypes.RequestTypeTimeSeries,
+			expectedFromMS: 700000,
+			expectedToMS:   1700000,
+		},
+		{
+			name: "shift by human readable string",
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Functions: []qbtypes.Function{
+					{
+						Name: qbtypes.FunctionNameTimeShift,
+						Args: []qbtypes.FunctionArg{
+							{Value: "1 hour ago"},
+						},
+					},
+				},
+			},
+			timeRange: qbtypes.TimeRange{
+				From: 10000000,
+				To:   20000000,
+			},
+			requestType:    qbtypes.RequestTypeScalar,
+			expectedFromMS: 6400000,
+			expectedToMS:   16400000,
+		},
+		{
 			name: "shift by negative 30 seconds (future shift)",
 			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Functions: []qbtypes.Function{
@@ -169,6 +209,34 @@ func TestExtractShiftFromBuilderQuery(t *testing.T) {
 				},
 			},
 			expectedShiftBy: 3600,
+		},
+		{
+			name: "extract from timeShift function with compact duration string",
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Functions: []qbtypes.Function{
+					{
+						Name: qbtypes.FunctionNameTimeShift,
+						Args: []qbtypes.FunctionArg{
+							{Value: "5m"},
+						},
+					},
+				},
+			},
+			expectedShiftBy: 300,
+		},
+		{
+			name: "extract from timeShift function with human readable string",
+			spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+				Functions: []qbtypes.Function{
+					{
+						Name: qbtypes.FunctionNameTimeShift,
+						Args: []qbtypes.FunctionArg{
+							{Value: "1 week ago"},
+						},
+					},
+				},
+			},
+			expectedShiftBy: 604800,
 		},
 		{
 			name: "no timeShift function",

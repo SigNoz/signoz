@@ -592,6 +592,73 @@ func TestFuncTimeShift(t *testing.T) {
 	}
 }
 
+func TestFunctionValidateArgsTimeShift(t *testing.T) {
+	tests := []struct {
+		name    string
+		arg     any
+		wantErr bool
+	}{
+		{
+			name:    "accepts compact duration",
+			arg:     "5m",
+			wantErr: false,
+		},
+		{
+			name:    "accepts human readable duration",
+			arg:     "1 week ago",
+			wantErr: false,
+		},
+		{
+			name:    "rejects invalid text",
+			arg:     "later",
+			wantErr: true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := Function{
+				Name: FunctionNameTimeShift,
+				Args: []FunctionArg{
+					{Value: tt.arg},
+				},
+			}.ValidateArgs()
+
+			if tt.wantErr && err == nil {
+				t.Fatalf("expected error, got nil")
+			}
+			if !tt.wantErr && err != nil {
+				t.Fatalf("expected no error, got %v", err)
+			}
+		})
+	}
+}
+
+func TestApplyFunctionTimeShiftFriendlyInput(t *testing.T) {
+	result := createTestTimeSeriesData([]float64{1, 2, 3})
+	newResult := ApplyFunction(
+		Function{
+			Name: FunctionNameTimeShift,
+			Args: []FunctionArg{
+				{Value: "5m"},
+			},
+		},
+		result,
+	)
+
+	got := make([]int64, len(newResult.Values))
+	for i, point := range newResult.Values {
+		got[i] = point.Timestamp
+	}
+
+	want := []int64{300001, 300002, 300003}
+	for i := range got {
+		if got[i] != want[i] {
+			t.Fatalf("ApplyFunction(timeShift) at index %d timestamp = %v, want %v", i, got[i], want[i])
+		}
+	}
+}
+
 func TestApplyFunction(t *testing.T) {
 	tests := []struct {
 		name     string

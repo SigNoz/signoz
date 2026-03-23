@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 	"slices"
-	"strconv"
 	"strings"
 	"sync"
 	"time"
@@ -80,17 +79,9 @@ func New(
 func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
 	for _, fn := range spec.Functions {
 		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
-			switch v := fn.Args[0].Value.(type) {
-			case float64:
-				return int64(v)
-			case int64:
-				return v
-			case int:
-				return int64(v)
-			case string:
-				if shiftFloat, err := strconv.ParseFloat(v, 64); err == nil {
-					return int64(shiftFloat)
-				}
+			shiftSeconds, err := valuer.ParseTimeShiftSeconds(fn.Args[0].Value)
+			if err == nil {
+				return int64(shiftSeconds)
 			}
 		}
 	}

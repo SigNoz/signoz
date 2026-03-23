@@ -35,9 +35,11 @@ export default function Function({
 	const isDarkMode = useIsDarkMode();
 	// Normalize function name to handle backend response case sensitivity
 	const normalizedFunctionName = normalizeFunctionName(funcData.name);
-	const { showInput, disabled } = queryFunctionsTypesConfig[
-		normalizedFunctionName
-	];
+	const {
+		showInput,
+		disabled,
+		placeholder,
+	} = queryFunctionsTypesConfig[normalizedFunctionName];
 
 	let functionValue;
 
@@ -104,6 +106,7 @@ export default function Function({
 					minAutoWidth={70}
 					maxAutoWidth={150}
 					className="query-function-value"
+					placeholder={placeholder}
 				/>
 			)}
 
