@@ -371,7 +371,7 @@ func TestFieldForWithEvolutions(t *testing.T) {
 		// 	evolutions: []*telemetrytypes.EvolutionEntry{
 		// 		{
 		// 			Signal:       telemetrytypes.SignalLogs,
-		// 			ColumnName:   LogsV2BodyJSONColumn,
+		// 			ColumnName:   LogsV2BodyV2Column,
 		// 			ColumnType:   "JSON(max_dynamic_paths=0)",
 		// 			FieldContext: telemetrytypes.FieldContextBody,
 		// 			FieldName:    "__all__",
@@ -823,13 +823,13 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 		{
 			name: "Single evolution after tsStartTime - JSON body",
 			columns: []*schema.Column{
-				logsV2Columns[LogsV2BodyJSONColumn],
+				logsV2Columns[LogsV2BodyV2Column],
 				logsV2Columns[LogsV2BodyPromotedColumn],
 			},
 			evolutions: []*telemetrytypes.EvolutionEntry{
 				{
 					Signal:       telemetrytypes.SignalLogs,
-					ColumnName:   LogsV2BodyJSONColumn,
+					ColumnName:   LogsV2BodyV2Column,
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextBody,
 					FieldName:    "__all__",
@@ -846,19 +846,19 @@ func TestSelectEvolutionsForColumns(t *testing.T) {
 			},
 			tsStart:         uint64(time.Date(2024, 2, 1, 0, 0, 0, 0, time.UTC).UnixNano()),
 			tsEnd:           uint64(time.Date(2024, 2, 15, 0, 0, 0, 0, time.UTC).UnixNano()),
-			expectedColumns: []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn}, // sorted by ReleaseTime desc (newest first)
-			expectedEvols:   []string{LogsV2BodyPromotedColumn, LogsV2BodyJSONColumn},
+			expectedColumns: []string{LogsV2BodyPromotedColumn, LogsV2BodyV2Column}, // sorted by ReleaseTime desc (newest first)
+			expectedEvols:   []string{LogsV2BodyPromotedColumn, LogsV2BodyV2Column},
 		},
 		{
 			name: "No evolution after tsStartTime - JSON body",
 			columns: []*schema.Column{
-				logsV2Columns[LogsV2BodyJSONColumn],
+				logsV2Columns[LogsV2BodyV2Column],
 				logsV2Columns[LogsV2BodyPromotedColumn],
 			},
 			evolutions: []*telemetrytypes.EvolutionEntry{
 				{
 					Signal:       telemetrytypes.SignalLogs,
-					ColumnName:   LogsV2BodyJSONColumn,
+					ColumnName:   LogsV2BodyV2Column,
 					ColumnType:   "JSON()",
 					FieldContext: telemetrytypes.FieldContextBody,
 					FieldName:    "__all__",
