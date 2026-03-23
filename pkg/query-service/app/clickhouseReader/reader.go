@@ -1101,6 +1101,7 @@ func (r *ClickHouseReader) GetWaterfallSpansForTraceWithMetadata(ctx context.Con
 	if selectAllSpans {
 		selectedSpans, rootServiceName, rootServiceEntryPoint = tracedetail.GetAllSpans(traceRoots)
 	} else {
+		// backward compatible as the limit is recently introduced and value of it will be 0, thus selectAllSpans will be false
 		selectedSpans, uncollapsedSpans, rootServiceName, rootServiceEntryPoint = tracedetail.GetSelectedSpans(req.UncollapsedSpans, req.SelectedSpanID, traceRoots, spanIdToSpanNodeMap, req.IsSelectedSpanIDUnCollapsed)
 	}
 	r.logger.Info("getWaterfallSpansForTraceWithMetadata: processing post cache", "duration", time.Since(processingPostCache), "traceID", traceID)

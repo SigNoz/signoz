@@ -70,7 +70,7 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	spansFromRootToNode := []string{}
 
 	if node.SpanID == selectedSpanId {
-		if isSelectedSpanIDUnCollapsed {
+		if isSelectedSpanIDUnCollapsed && !slices.Contains(uncollapsedSpans, node.SpanID) {
 			spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 		}
 		return true, spansFromRootToNode
@@ -91,8 +91,17 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreOrder bool, hasSibling bool, selectedSpanId string,
-	depthFromSelectedSpan int, isSelectedSpanIDUnCollapsed bool, selectAllSpan bool) ([]*model.Span, []string) {
+func traverseTrace(
+	span *model.Span,
+	uncollapsedSpans []string,
+	level uint64,
+	isPartOfPreOrder bool,
+	hasSibling bool,
+	selectedSpanId string,
+	depthFromSelectedSpan int,
+	isSelectedSpanIDUnCollapsed bool,
+	selectAllSpan bool,
+) ([]*model.Span, []string) {
 
 	preOrderTraversal := []*model.Span{}
 	autoExpandedSpans := []string{}
@@ -251,15 +260,13 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 }
 
 func GetAllSpans(traceRoots []*model.Span) (spans []*model.Span, rootServiceName, rootEntryPoint string) {
+	if len(traceRoots) > 0 {
+		rootServiceName = traceRoots[0].ServiceName
+		rootEntryPoint = traceRoots[0].Name
+	}
 	for _, root := range traceRoots {
 		childSpans, _ := traverseTrace(root, nil, 0, true, false, "", -1, false, true)
 		spans = append(spans, childSpans...)
-		if rootServiceName == "" {
-			rootServiceName = root.ServiceName
-		}
-		if rootEntryPoint == "" {
-			rootEntryPoint = root.Name
-		}
 	}
 	return
 }
