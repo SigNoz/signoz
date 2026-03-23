@@ -2037,7 +2037,7 @@ def test_traces_list_filter_by_trace_id(
     Tests that filtering by trace_id:
     1. Returns the matching span (narrow window, single bucket).
     2. Does not return duplicate spans when the query window spans multiple
-       exponential buckets (>1 h) — regression test for the expand-vs-clamp bug.
+       exponential buckets (>1 h)
     3. Returns no results when the query window does not contain the trace.
     """
     target_trace_id = TraceIdGenerator.trace_id()
@@ -2167,18 +2167,20 @@ def test_traces_list_filter_by_trace_id_cross_bucket(
     insert_traces: Callable[[List[Traces]], None],
 ) -> None:
     """
-    Regression test for multi-bucket trace_id queries.
+    Regression test: a trace whose spans are spread across exponential time
+    buckets must return all spans exactly once (no duplicates, no missing spans).
 
-    Setup: a single trace with two spans placed in different exponential buckets.
+    Setup: one trace with two spans in different buckets.
       makeBuckets over a 3-hour window produces (newest-first):
-        bucket 1: [now-1h,  now]       ← span_a lives here (now-30min)
-        bucket 2: [now-3h,  now-1h]    ← span_b lives here (now-90min)
+        bucket 1: [now-1h,   now]      ← span_a lives here (timestamp=now-30min)
+        bucket 2: [now-3h,   now-2h]   ← span_b lives here (timestamp=now-160min)
 
-    Without the fix: both buckets expanded their window to [traceStart, traceEnd]
-    and therefore each returned both spans → 4 rows total (duplicates).
-
-    With the fix: each bucket is tied to its intersection with the trace range,
-    so bucket 1 returns span_a and bucket 2 returns span_b → exactly 2 rows.
+    With the time-range clamping in builder_query.go:
+      - The 3-hour query window is clamped once to [now-160min, now-30min]
+        before makeBuckets runs.
+      - makeBuckets then produces two buckets over the narrower window;
+        span_a is found in bucket 1 and span_b in bucket 2.
+      - Result: exactly 2 rows, one per span, no duplicates.
     """
     trace_id = TraceIdGenerator.trace_id()
     span_id_a = TraceIdGenerator.span_id()
@@ -2208,9 +2210,9 @@ def test_traces_list_filter_by_trace_id_cross_bucket(
                 resources=common_resources,
                 attributes={},
             ),
-            # span_b: sits in bucket 2 [now-3h, now-1h]
+            # span_b: sits in bucket 2 [now-3h, now-2h]
             Traces(
-                timestamp=now - timedelta(minutes=90),
+                timestamp=now - timedelta(minutes=160),
                 duration=timedelta(seconds=1),
                 trace_id=trace_id,
                 span_id=span_id_b,
@@ -2227,9 +2229,6 @@ def test_traces_list_filter_by_trace_id_cross_bucket(
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # 3-hour window forces makeBuckets to create two buckets:
-    #   bucket 1: [now-1h, now]
-    #   bucket 2: [now-3h, now-1h]
     start_ms = int((now - timedelta(hours=3)).timestamp() * 1000)
     end_ms = int(now.timestamp() * 1000)
 
@@ -2271,8 +2270,7 @@ def test_traces_list_filter_by_trace_id_cross_bucket(
     rows = response.json()["data"]["data"]["results"][0]["rows"] or []
 
     assert len(rows) == 2, (
-        f"Expected exactly 2 spans (one per bucket), got {len(rows)} — "
-        f"likely a duplicate-span regression from bucket window expansion"
+        f"Expected exactly 2 spans (one per bucket, no duplicates), got {len(rows)}"
     )
     returned_span_ids = {r["data"]["span_id"] for r in rows}
     assert returned_span_ids == {span_id_a, span_id_b}
