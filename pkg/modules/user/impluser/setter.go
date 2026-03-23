@@ -530,6 +530,9 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		); err != nil {
 			return err
 		}
+
+		traitsOrProperties := types.NewTraitsFromUser(user)
+		module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
@@ -789,6 +792,9 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 	if err != nil {
 		return err
 	}
+
+	traitsOrProperties := types.NewTraitsFromUser(user)
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 
 	return nil
 }
