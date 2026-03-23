@@ -33,6 +33,7 @@ def _get_logs_resource_evolution_time_json(signoz: types.SigNoz) -> datetime:
     release_time_ns = int(result[0][0])
     return datetime.fromtimestamp(release_time_ns / 1e9, tz=timezone.utc)
 
+
 # Logs with timestamps before the evolution time will have resources written only to resources_string.
 # Logs with timestamps at or after the evolution time will have resources written to both resources_string and resource_json.
 def _build_evolved_log(
@@ -41,9 +42,7 @@ def _build_evolved_log(
     service_name: str,
     body: str,
 ) -> Logs:
-    resource_write_mode = (
-        "legacy_only" if timestamp < evolution_time else "dual_write"
-    )
+    resource_write_mode = "legacy_only" if timestamp < evolution_time else "dual_write"
     return Logs(
         timestamp=timestamp,
         resources={
@@ -54,6 +53,7 @@ def _build_evolved_log(
         severity_text="INFO",
         resource_write_mode=resource_write_mode,
     )
+
 
 def _query_grouped_log_series(
     signoz: types.SigNoz,
@@ -245,9 +245,7 @@ def test_logs_resource_evolution(
     insert_logs: Callable[[List[Logs]], None],
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-    _test_logs_resource_evolution(
-        signoz, token, insert_logs
-    )
+    _test_logs_resource_evolution(signoz, token, insert_logs)
 
 
 def test_logs_materialized_resource_evolution(
@@ -259,6 +257,4 @@ def test_logs_materialized_resource_evolution(
 ) -> None:
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     materialize_log_field(token, "service.name", "string", "resources")
-    _test_logs_resource_evolution(
-        signoz, token, insert_logs
-    )
+    _test_logs_resource_evolution(signoz, token, insert_logs)
