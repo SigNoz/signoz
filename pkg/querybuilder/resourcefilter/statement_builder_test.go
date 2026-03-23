@@ -352,6 +352,9 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 				Filter: &qbtypes.Filter{
 					// http.request.method is an attribute field, not a resource field
 					// so the condition returns "true", and NOT should also return "true" (not "NOT (true)")
+					// Strictly, NOT(true) = false. But in this system, TrueConditionLiteral means 
+					// "this condition is not evaluable here" and the negation of "not evaluable" is also
+					// "not evaluable", so true is the right no-op. Returning false would incorrectly exclude all rows.
 					Expression: "NOT (http.request.method = 'GET')",
 				},
 			},
