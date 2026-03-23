@@ -47,7 +47,6 @@ type Statement struct {
 	Args           []any
 	Warnings       []string
 	WarningsDocURL string
-	Skip           bool // don't run this query
 }
 
 // StatementBuilder builds the query.

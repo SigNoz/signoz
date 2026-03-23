@@ -111,33 +111,6 @@ func (b *traceQueryStatementBuilder) Build(
 
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
-	// Check if filter contains trace_id(s) and optimize time range if needed
-	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
-		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
-		if found && len(traceIDs) > 0 {
-			finder := NewTraceTimeRangeFinder(b.telemetryStore)
-
-			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
-			if !ok {
-				b.logger.DebugContext(ctx, "failed to get trace time range", slog.Any("trace_ids", traceIDs))
-			} else if traceStart > 0 && traceEnd > 0 {
-				// we don't  need to query if the start and end are non overlapping
-				if uint64(traceStart) > end || uint64(traceEnd) < start {
-					return &qbtypes.Statement{Skip: true}, nil
-				}
-
-				// clamp start/end to trace time range to avoid overlap between buckets
-				if uint64(traceStart) > start {
-					start = uint64(traceStart)
-				}
-				if uint64(traceEnd) < end {
-					end = uint64(traceEnd)
-				}
-				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
-			}
-		}
-	}
-
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 

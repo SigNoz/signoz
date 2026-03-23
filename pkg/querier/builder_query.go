@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
@@ -11,6 +12,7 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -305,6 +307,45 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	totalBytes := uint64(0)
 	start := time.Now()
 
+	// Check if filter contains trace_id(s) and optimize time range if needed
+	if q.spec.Signal == telemetrytypes.SignalTraces &&
+		q.spec.Filter != nil && q.spec.Filter.Expression != "" {
+
+		traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
+		if found && len(traceIDs) > 0 {
+			finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
+
+			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			traceStartMS := uint64(traceStart) / 1_000_000
+			traceEndMS := uint64(traceEnd) / 1_000_000
+			if !ok {
+				slog.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
+			} else if traceStartMS > 0 && traceEndMS > 0 {
+				// no overlap — nothing to return
+				if uint64(traceStartMS) > toMS || uint64(traceEndMS) < fromMS {
+					return &qbtypes.Result{
+						Type: qbtypes.RequestTypeRaw,
+						Value: &qbtypes.RawData{
+							QueryName: q.spec.Name,
+						},
+						Stats: qbtypes.ExecStats{
+							DurationMS: uint64(time.Since(start).Milliseconds()),
+						},
+					}, nil
+				}
+
+				// clamp window to trace time range before bucketing
+				if uint64(traceStartMS) > fromMS {
+					fromMS = uint64(traceStartMS)
+				}
+				if uint64(traceEndMS) < toMS {
+					toMS = uint64(traceEndMS)
+				}
+				slog.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", fromMS, "end", toMS)
+			}
+		}
+	}
+
 	// Get buckets and reverse them for ascending order
 	buckets := makeBuckets(fromMS, toMS)
 	if isAsc {
@@ -324,10 +365,6 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 		stmt, err := q.stmtBuilder.Build(ctx, r.fromNS/1e6, r.toNS/1e6, q.kind, q.spec, q.variables)
 		if err != nil {
 			return nil, err
-		}
-		// skip = true means we have indentified from the query itself that we don't need to execute this bucket
-		if stmt.Skip {
-			continue
 		}
 		warnings = stmt.Warnings
 		warningsDocURL = stmt.WarningsDocURL
