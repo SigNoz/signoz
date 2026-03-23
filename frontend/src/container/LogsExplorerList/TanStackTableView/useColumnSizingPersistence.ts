@@ -59,6 +59,10 @@ export const useColumnSizingPersistence = (
 	]);
 
 	useEffect(() => {
+		if (orderedColumnIds.length === 0) {
+			return;
+		}
+
 		const validColumnIds = new Set(orderedColumnIds);
 		const nonResizableColumnIds = new Set(
 			orderedColumns

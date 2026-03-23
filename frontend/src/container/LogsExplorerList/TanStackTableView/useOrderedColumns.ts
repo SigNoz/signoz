@@ -47,7 +47,7 @@ export const useOrderedColumns = ({
 	);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
-			activationConstraint: { distance: 8 },
+			activationConstraint: { distance: 4 },
 		}),
 	);
 

@@ -18,6 +18,39 @@ export const TableStyled = styled.table`
 	border-spacing: 0;
 `;
 
+/**
+ * TanStack column sizing uses table-layout:fixed + colgroup widths; without clipping,
+ * cell content overflows visually on top of neighbouring columns (overlap / "ghost" text).
+ */
+export const TanStackTableStyled = styled(TableStyled)`
+	table-layout: fixed;
+	width: 100%;
+	max-width: 100%;
+
+	& td,
+	& th {
+		overflow: hidden;
+		min-width: 0;
+		box-sizing: border-box;
+		vertical-align: top;
+	}
+
+	& td.table-actions-cell {
+		overflow: visible;
+	}
+
+	& td.body {
+		word-break: break-word;
+		overflow-wrap: anywhere;
+	}
+
+	/* Let nested body HTML / line-clamp shrink inside fixed columns */
+	& td.body > * {
+		min-width: 0;
+		max-width: 100%;
+	}
+`;
+
 const getTimestampColumnWidth = (
 	columnKey?: string,
 	$hasSingleColumn?: boolean,
@@ -48,6 +81,19 @@ export const TableCellStyled = styled.td<TableHeaderCellStyledProps>`
 
 	${({ columnKey, $hasSingleColumn }): string =>
 		getTimestampColumnWidth(columnKey, $hasSingleColumn)}
+
+	&.table-actions-cell {
+		position: sticky;
+		right: 0;
+		z-index: 2;
+		width: 0;
+		min-width: 0;
+		max-width: 0;
+		padding: 0 !important;
+		white-space: nowrap;
+		overflow: visible;
+		background-color: inherit;
+	}
 `;
 
 export const TableRowStyled = styled.tr<{
@@ -86,6 +132,7 @@ export const TableRowStyled = styled.tr<{
 
 export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 	padding: 0.5rem;
+	height: 36px;
 	text-align: left;
 	font-size: 14px;
 	font-style: normal;
@@ -105,6 +152,7 @@ export const TableHeaderCellStyled = styled.th<TableHeaderCellStyledProps>`
 			: ``};
 	${({ $isLogIndicator }): string =>
 		$isLogIndicator ? 'padding: 0px; width: 1%;' : ''}
+	border-top: 1px solid var(--l2-border);
 	border-bottom: 1px solid var(--l2-border);
 	box-shadow: inset 0 -1px 0 var(--l2-border);
 	&:first-child {

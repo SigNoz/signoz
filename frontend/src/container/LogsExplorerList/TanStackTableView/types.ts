@@ -1,31 +1,20 @@
-import { ReactElement } from 'react';
 import { ColumnSizingState } from '@tanstack/react-table';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { ILog } from 'types/api/logs/log';
 
 export type TableRecord = Record<string, unknown>;
 
-export type LegacyCellResult =
-	| {
-			props?: Record<string, unknown>;
-			children?: ReactElement;
-	  }
-	| ReactElement
-	| string
-	| number
-	| null
-	| undefined;
-
-export type LegacyColumn = {
+export type LogsTableColumnDef = {
 	key?: string | number;
 	title?: string;
 	render?: (
 		value: unknown,
 		record: TableRecord,
 		index: number,
-	) => LegacyCellResult;
+	) => ColumnTypeRender<Record<string, unknown>>;
 };
 
-export type OrderedColumn = LegacyColumn & {
+export type OrderedColumn = LogsTableColumnDef & {
 	key: string | number;
 };
 

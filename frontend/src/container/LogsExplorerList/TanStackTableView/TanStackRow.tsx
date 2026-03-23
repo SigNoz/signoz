@@ -16,6 +16,7 @@ type TanStackRowProps = {
 	fontSize: InfinityTableProps['tableViewProps']['fontSize'];
 	onSetActiveLog?: InfinityTableProps['onSetActiveLog'];
 	onClearActiveLog?: InfinityTableProps['onClearActiveLog'];
+	isActiveLog?: boolean;
 	isDarkMode: boolean;
 	onLogCopy: (logId: string, event: ReactMouseEvent<HTMLElement>) => void;
 	isLogsExplorerPage: boolean;
@@ -26,12 +27,12 @@ function TanStackRow({
 	fontSize,
 	onSetActiveLog,
 	onClearActiveLog,
+	isActiveLog = false,
 	isDarkMode,
 	onLogCopy,
 	isLogsExplorerPage,
 }: TanStackRowProps): JSX.Element {
 	const { currentLog } = row.original;
-	const isActiveLog = row.getIsSelected();
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -75,11 +76,20 @@ function TanStackRow({
 				);
 			})}
 			{isLogsExplorerPage && (
-				<LogLinesActionButtons
-					handleShowContext={handleShowContext}
-					onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
-					customClassName="table-view-log-actions"
-				/>
+				<TableCellStyled
+					$isDragColumn={false}
+					$isLogIndicator={false}
+					$hasSingleColumn={false}
+					$isDarkMode={isDarkMode}
+					fontSize={fontSize}
+					className="table-actions-cell"
+				>
+					<LogLinesActionButtons
+						handleShowContext={handleShowContext}
+						onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
+						customClassName="table-view-log-actions"
+					/>
+				</TableCellStyled>
 			)}
 		</>
 	);

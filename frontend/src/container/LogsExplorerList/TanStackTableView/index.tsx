@@ -28,28 +28,32 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import {
-	getLogIndicatorType,
-	getLogIndicatorTypeForTable,
-} from 'components/Logs/LogStateIndicator/utils';
+import { ColumnTypeRender } from 'components/Logs/TableView/types';
 import { useTableView } from 'components/Logs/TableView/useTableView';
 import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
+import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
 import { getInfinityDefaultStyles } from '../InfinityTableView/config';
-import { TableRowStyled, TableStyled } from '../InfinityTableView/styles';
+import { TanStackTableStyled } from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
+import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
 import TanStackRow from './TanStackRow';
-import { LegacyCellResult, TableRecord, TanStackTableRowData } from './types';
+import { TableRecord, TanStackTableRowData } from './types';
 import { useColumnSizingPersistence } from './useColumnSizingPersistence';
 import { useOrderedColumns } from './useOrderedColumns';
-import { getColumnId, resolveLegacyCellContent } from './utils';
+import {
+	getColumnId,
+	getColumnMinWidthPx,
+	resolveColumnTypeRender,
+} from './utils';
+
 const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function TanStackTableView(
 		{
@@ -113,6 +117,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					const isExpand = column.key === 'expand';
 					const isFixedColumn = isStateIndicator || isExpand;
 					const fixedWidth = isFixedColumn ? 32 : undefined;
+					const minWidthPx = getColumnMinWidthPx(column);
 					const headerTitle = String(column.title || '');
 
 					return {
@@ -122,7 +127,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						),
 						accessorFn: (row): unknown => row.log[column.key as keyof TableRecord],
 						enableResizing: !isFixedColumn,
-						minSize: fixedWidth ?? 180,
+						minSize: fixedWidth ?? minWidthPx,
 						size: fixedWidth,
 						maxSize: fixedWidth,
 						cell: ({ row, getValue }): ReactElement | string | number | null => {
@@ -130,32 +135,35 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 								return null;
 							}
 
-							return resolveLegacyCellContent(
+							return resolveColumnTypeRender(
 								column.render(
 									getValue(),
 									row.original.log,
 									row.original.rowIndex,
-								) as LegacyCellResult,
+								) as ColumnTypeRender<Record<string, unknown>>,
 							);
 						},
 					};
 				}),
 			[orderedColumns],
 		);
+		const { activeLogId } = useCopyLogLink();
+		const { activeLog: activeContextLog } = useActiveLog();
 		const rowSelection = useMemo<Record<string, boolean>>(() => {
-			if (!activeLog?.id) {
+			const targetId = activeLog?.id ?? activeLogId;
+			if (targetId === undefined || targetId === null || targetId === '') {
 				return {};
 			}
 
 			const activeIndex = tableData.findIndex(
-				(row) => String(row.currentLog.id) === String(activeLog.id),
+				(row) => String(row.currentLog.id) === String(targetId),
 			);
 			if (activeIndex < 0) {
 				return {};
 			}
 
 			return { [String(activeIndex)]: true };
-		}, [activeLog?.id, tableData]);
+		}, [activeLog?.id, activeLogId, tableData]);
 		const table = useReactTable({
 			data: tableData,
 			columns: tanstackColumns,
@@ -171,7 +179,6 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		const tableRows = table.getRowModel().rows;
 
 		const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
-		const { activeLog: activeContextLog } = useActiveLog();
 		const logsById = useMemo(
 			() => new Map(tableViewProps.logs.map((log) => [String(log.id), log])),
 			[tableViewProps.logs],
@@ -208,28 +215,18 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		const customTableRow = useCallback<
 			NonNullable<TableComponents<TanStackTableRowData>['TableRow']>
 		>(
-			({ children, item, ...props }) => {
-				const rowId = String(item.currentLog.id ?? '');
-				const rowLog = logsById.get(rowId) || item.currentLog;
-				const logType = rowLog
-					? getLogIndicatorType(rowLog)
-					: getLogIndicatorTypeForTable(item.log);
-
-				return (
-					<TableRowStyled
-						{...props}
-						$isDarkMode={isDarkMode}
-						$isActiveLog={
-							rowId === String(activeLog?.id ?? '') ||
-							rowId === String(activeContextLog?.id ?? '')
-						}
-						$logType={logType}
-					>
-						{children}
-					</TableRowStyled>
-				);
-			},
-			[activeContextLog?.id, activeLog?.id, isDarkMode, logsById],
+			({ children, item, ...props }) => (
+				<TanStackCustomTableRow
+					{...props}
+					item={item}
+					activeLog={activeLog}
+					activeContextLog={activeContextLog}
+					logsById={logsById}
+				>
+					{children}
+				</TanStackCustomTableRow>
+			),
+			[activeContextLog, activeLog, logsById],
 		);
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
@@ -244,6 +241,9 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						fontSize={tableViewProps.fontSize}
 						onSetActiveLog={onSetActiveLog}
 						onClearActiveLog={onClearActiveLog}
+						isActiveLog={
+							String(activeLog?.id ?? '') === String(row.original.currentLog.id ?? '')
+						}
 						isDarkMode={isDarkMode}
 						onLogCopy={handleLogCopy}
 						isLogsExplorerPage={isLogsExplorerPage}
@@ -251,6 +251,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				);
 			},
 			[
+				activeLog?.id,
 				handleLogCopy,
 				isDarkMode,
 				isLogsExplorerPage,
@@ -328,28 +329,45 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				itemContent={itemContent}
 				components={{
 					Table: ({ style, children }): JSX.Element => (
-						<TableStyled style={style}>
+						<TanStackTableStyled style={style}>
 							<colgroup>
 								{orderedColumns.map((column) => {
 									const columnId = getColumnId(column);
-									const width = table.getColumn(columnId)?.getSize();
+									const isFixedColumn =
+										column.key === 'expand' || column.key === 'state-indicator';
+									const minWidthPx = getColumnMinWidthPx(column);
+									const persistedWidth = columnSizing[columnId];
+									const computedWidth = table.getColumn(columnId)?.getSize();
+									const effectiveWidth = persistedWidth ?? computedWidth;
+									if (isFixedColumn) {
+										return (
+											<col
+												key={columnId}
+												style={{
+													width: '32px',
+													minWidth: '32px',
+													maxWidth: '32px',
+												}}
+											/>
+										);
+									}
+									const widthPx =
+										effectiveWidth != null
+											? Math.max(effectiveWidth, minWidthPx)
+											: minWidthPx;
 									return (
 										<col
 											key={columnId}
-											style={
-												width
-													? {
-															width: `${width}px`,
-															minWidth: `${width}px`,
-													  }
-													: undefined
-											}
+											style={{
+												width: `${widthPx}px`,
+												minWidth: `${minWidthPx}px`,
+											}}
 										/>
 									);
 								})}
 							</colgroup>
 							{children}
-						</TableStyled>
+						</TanStackTableStyled>
 					),
 					TableRow: customTableRow,
 				}}
