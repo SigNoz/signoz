@@ -193,6 +193,16 @@ module.exports = {
 				],
 			},
 		],
+		'no-restricted-syntax': [
+			'error',
+			{
+				selector:
+					// TODO: Make this generic on removal of redux
+					"CallExpression[callee.property.name='getState'][callee.object.name=/^use/]",
+				message:
+					'Avoid calling .getState() directly. Export a standalone action from the store instead.',
+			},
+		],
 	},
 	overrides: [
 		{
@@ -215,6 +225,14 @@ module.exports = {
 				'@typescript-eslint/explicit-module-boundary-types': 'off',
 				'no-nested-ternary': 'off',
 				'@typescript-eslint/no-unused-vars': 'warn',
+			},
+		},
+		{
+			// Store definition files are the only place .getState() is permitted —
+			// they are the canonical source for standalone action exports.
+			files: ['**/*Store.{ts,tsx}'],
+			rules: {
+				'no-restricted-syntax': 'off',
 			},
 		},
 	],

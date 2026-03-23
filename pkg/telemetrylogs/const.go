@@ -1,7 +1,10 @@
 package telemetrylogs
 
 import (
+	"fmt"
+
 	"github.com/SigNoz/signoz-otel-collector/constants"
+	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -17,7 +20,7 @@ const (
 	LogsV2TimestampColumn         = "timestamp"
 	LogsV2ObservedTimestampColumn = "observed_timestamp"
 	LogsV2BodyColumn              = "body"
-	LogsV2BodyJSONColumn          = constants.BodyV2Column
+	LogsV2BodyV2Column            = constants.BodyV2Column
 	LogsV2BodyPromotedColumn      = constants.BodyPromotedColumn
 	LogsV2TraceIDColumn           = "trace_id"
 	LogsV2SpanIDColumn            = "span_id"
@@ -34,8 +37,14 @@ const (
 	LogsV2ResourcesStringColumn  = "resources_string"
 	LogsV2ScopeStringColumn      = "scope_string"
 
-	BodyJSONColumnPrefix     = constants.BodyV2ColumnPrefix
+	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
 	BodyPromotedColumnPrefix = constants.BodyPromotedColumnPrefix
+
+	// messageSubColumn is the ClickHouse sub-column that body searches map to
+	// when BodyJSONQueryEnabled is true.
+	messageSubField          = "message"
+	messageSubColumn         = "body_v2.message"
+	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (
@@ -118,3 +127,11 @@ var (
 		},
 	}
 )
+
+func bodyAliasExpression() string {
+	if !querybuilder.BodyJSONQueryEnabled {
+		return LogsV2BodyColumn
+	}
+
+	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
+}

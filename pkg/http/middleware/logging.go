@@ -9,6 +9,8 @@ import (
 
 	"github.com/gorilla/mux"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -27,7 +29,7 @@ func NewLogging(logger *slog.Logger, excludedRoutes []string) *Logging {
 	}
 
 	return &Logging{
-		logger:         logger.With("pkg", pkgname),
+		logger:         logger.With(slog.String("pkg", pkgname)),
 		excludedRoutes: excludedRoutesMap,
 	}
 }
@@ -65,7 +67,7 @@ func (middleware *Logging) Wrap(next http.Handler) http.Handler {
 			string(semconv.HTTPServerRequestDurationName), time.Since(start),
 		)
 		if err != nil {
-			fields = append(fields, "error", err)
+			fields = append(fields, errors.Attr(err))
 			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
 		} else {
 			// when the status code is 400 or >=500, and the response body is not empty.

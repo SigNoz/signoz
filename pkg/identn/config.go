@@ -1,6 +1,7 @@
 package identn
 
 import (
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -10,11 +11,20 @@ type Config struct {
 
 	// Config for apikey identN resolver
 	APIKeyConfig APIKeyConfig `mapstructure:"apikey"`
+
+	// Config for impersonation identN resolver
+	Impersonation ImpersonationConfig `mapstructure:"impersonation"`
+}
+
+type ImpersonationConfig struct {
+	// Toggles the identN resolver
+	Enabled bool `mapstructure:"enabled"`
 }
 
 type TokenizerConfig struct {
 	// Toggles the identN resolver
 	Enabled bool `mapstructure:"enabled"`
+
 	// Headers to extract from incoming requests
 	Headers []string `mapstructure:"headers"`
 }
@@ -22,6 +32,7 @@ type TokenizerConfig struct {
 type APIKeyConfig struct {
 	// Toggles the identN resolver
 	Enabled bool `mapstructure:"enabled"`
+
 	// Headers to extract from incoming requests
 	Headers []string `mapstructure:"headers"`
 }
@@ -40,9 +51,22 @@ func newConfig() factory.Config {
 			Enabled: true,
 			Headers: []string{"SIGNOZ-API-KEY"},
 		},
+		Impersonation: ImpersonationConfig{
+			Enabled: false,
+		},
 	}
 }
 
 func (c Config) Validate() error {
+	if c.Impersonation.Enabled {
+		if c.Tokenizer.Enabled {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::impersonation cannot be enabled if identn::tokenizer is enabled")
+		}
+
+		if c.APIKeyConfig.Enabled {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "identn::impersonation cannot be enabled if identn::apikey is enabled")
+		}
+	}
+
 	return nil
 }

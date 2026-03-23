@@ -14,7 +14,6 @@ import (
 	"github.com/ClickHouse/clickhouse-go/v2/lib/driver"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/bytedance/sonic"
 )
 
 var (
@@ -394,17 +393,11 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 
 			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-
-			// Post-process JSON columns: normalize into structured values
+			// Post-process JSON columns: normalize into String value
 			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
 				switch x := val.(type) {
 				case []byte:
-					if len(x) > 0 {
-						var v any
-						if err := sonic.Unmarshal(x, &v); err == nil {
-							val = v
-						}
-					}
+					val = string(x)
 				default:
 					// already a structured type (map[string]any, []any, etc.)
 				}

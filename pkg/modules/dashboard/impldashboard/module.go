@@ -2,6 +2,7 @@ package impldashboard
 
 import (
 	"context"
+	"log/slog"
 	"slices"
 
 	"github.com/SigNoz/signoz/pkg/analytics"
@@ -308,7 +309,7 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypeClickHouseSQL, queryStr)
 		if err != nil {
 			// Log warning and continue - parsing errors shouldn't break the search
-			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", "query", queryStr, "error", err)
+			module.settings.Logger().WarnContext(ctx, "failed to parse ClickHouse query", slog.String("query", queryStr), errors.Attr(err))
 			continue
 		}
 
@@ -343,7 +344,7 @@ func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, quer
 		result, err := module.queryParser.AnalyzeQueryFilter(ctx, qbtypes.QueryTypePromQL, queryStr)
 		if err != nil {
 			// Log warning and continue - parsing errors shouldn't break the search
-			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", "query", queryStr, "error", err)
+			module.settings.Logger().WarnContext(ctx, "failed to parse PromQL query", slog.String("query", queryStr), errors.Attr(err))
 			continue
 		}
 

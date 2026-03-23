@@ -220,6 +220,9 @@ function NewWidget({
 	const [showPoints, setShowPoints] = useState<boolean>(
 		selectedWidget?.showPoints ?? false,
 	);
+	const [spanGaps, setSpanGaps] = useState<boolean | number>(
+		selectedWidget?.spanGaps ?? true,
+	);
 	const [customLegendColors, setCustomLegendColors] = useState<
 		Record<string, string>
 	>(selectedWidget?.customLegendColors || {});
@@ -289,6 +292,7 @@ function NewWidget({
 				fillMode,
 				lineStyle,
 				showPoints,
+				spanGaps,
 				columnUnits,
 				bucketCount,
 				stackedBarChart,
@@ -328,6 +332,7 @@ function NewWidget({
 		fillMode,
 		lineStyle,
 		showPoints,
+		spanGaps,
 		customLegendColors,
 		contextLinks,
 		selectedWidget.columnWidths,
@@ -541,6 +546,7 @@ function NewWidget({
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								spanGaps: selectedWidget?.spanGaps ?? true,
 								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
@@ -572,6 +578,7 @@ function NewWidget({
 								softMin: selectedWidget?.softMin || 0,
 								softMax: selectedWidget?.softMax || 0,
 								fillSpans: selectedWidget?.fillSpans,
+								spanGaps: selectedWidget?.spanGaps ?? true,
 								isLogScale: selectedWidget?.isLogScale || false,
 								bucketWidth: selectedWidget?.bucketWidth || 0,
 								bucketCount: selectedWidget?.bucketCount || 0,
@@ -889,6 +896,8 @@ function NewWidget({
 							setLineStyle={setLineStyle}
 							showPoints={showPoints}
 							setShowPoints={setShowPoints}
+							spanGaps={spanGaps}
+							setSpanGaps={setSpanGaps}
 							opacity={opacity}
 							yAxisUnit={yAxisUnit}
 							columnUnits={columnUnits}

@@ -35,11 +35,11 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 	}
 
 	if version == "v5" {
-		m.logger.InfoContext(ctx, "alert is already migrated to v5, skipping", "alert_name", ruleData["alert"])
+		m.logger.InfoContext(ctx, "alert is already migrated to v5, skipping", slog.Any("alert_name", ruleData["alert"]))
 		return false
 	}
 
-	m.logger.InfoContext(ctx, "migrating alert", "alert_name", ruleData["alert"])
+	m.logger.InfoContext(ctx, "migrating alert", slog.Any("alert_name", ruleData["alert"]))
 
 	ruleCondition, ok := ruleData["condition"].(map[string]any)
 	if !ok {
@@ -80,7 +80,7 @@ func (m *alertMigrateV5) Migrate(ctx context.Context, ruleData map[string]any) b
 
 					// wrap it in the v5 envelope
 					envelope := m.WrapInV5Envelope(name, queryMap, "builder_query")
-					m.logger.InfoContext(ctx, "envelope after wrap", "envelope", envelope)
+					m.logger.InfoContext(ctx, "envelope after wrap", slog.Any("envelope", envelope))
 					compositeQuery["queries"] = append(compositeQuery["queries"].([]any), envelope)
 				}
 			}

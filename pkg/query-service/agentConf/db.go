@@ -9,13 +9,14 @@ import (
 
 	"log/slog"
 
+	"golang.org/x/exp/slices"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"golang.org/x/exp/slices"
 )
 
 var (
@@ -115,7 +116,6 @@ func (r *Repo) GetLatestVersion(
 func (r *Repo) insertConfig(
 	ctx context.Context, orgId valuer.UUID, userId valuer.UUID, c *opamptypes.AgentConfigVersion, elements []string,
 ) error {
-
 	if c.ElementType.StringValue() == "" {
 		return errors.NewInvalidInputf(CodeElementTypeRequired, "element type is required for creating agent config version")
 	}
@@ -136,7 +136,7 @@ func (r *Repo) insertConfig(
 
 	configVersion, err := r.GetLatestVersion(ctx, orgId, c.ElementType)
 	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		slog.ErrorContext(ctx, "failed to fetch latest config version", "error", err)
+		slog.ErrorContext(ctx, "failed to fetch latest config version", errors.Attr(err))
 		return err
 	}
 
@@ -156,11 +156,11 @@ func (r *Repo) insertConfig(
 			// Delete elements first, then version (to respect potential foreign key constraints)
 			_, delErr := r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigElement)).Where("version_id = ?", c.ID).Exec(ctx)
 			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config elements during cleanup", "error", delErr, "version_id", c.ID.String())
+				slog.ErrorContext(ctx, "failed to delete config elements during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
 			}
 			_, delErr = r.store.BunDB().NewDelete().Model(new(opamptypes.AgentConfigVersion)).Where("id = ?", c.ID).Where("org_id = ?", orgId).Exec(ctx)
 			if delErr != nil {
-				slog.ErrorContext(ctx, "failed to delete config version during cleanup", "error", delErr, "version_id", c.ID.String())
+				slog.ErrorContext(ctx, "failed to delete config version during cleanup", errors.Attr(delErr), "version_id", c.ID.String())
 			}
 		}
 	}()
@@ -171,7 +171,7 @@ func (r *Repo) insertConfig(
 		Model(c).
 		Exec(ctx)
 	if dbErr != nil {
-		slog.ErrorContext(ctx, "error in inserting config version", "error", dbErr)
+		slog.ErrorContext(ctx, "error in inserting config version", errors.Attr(dbErr))
 		return errors.WrapInternalf(dbErr, CodeConfigVersionInsertFailed, "failed to insert config version")
 	}
 
@@ -222,11 +222,30 @@ func (r *Repo) updateDeployStatus(ctx context.Context,
 		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update deploy status", "error", err)
+		slog.ErrorContext(ctx, "failed to update deploy status", errors.Attr(err))
 		return model.BadRequest(fmt.Errorf("failed to update deploy status"))
 	}
 
 	return nil
+}
+
+// GetDeployStatusByHash returns the DeployStatus for the given config hash
+// (stored with orgId prefix). Returns DeployStatusUnknown when no matching row exists.
+func (r *Repo) GetDeployStatusByHash(ctx context.Context, orgId valuer.UUID, configHash string) (opamptypes.DeployStatus, error) {
+	var version opamptypes.AgentConfigVersion
+	err := r.store.BunDB().NewSelect().
+		Model(&version).
+		ColumnExpr("deploy_status").
+		Where("hash = ?", configHash).
+		Where("org_id = ?", orgId).
+		Scan(ctx)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			return opamptypes.DeployStatusUnknown, nil
+		}
+		return opamptypes.DeployStatusUnknown, errors.WrapInternalf(err, errors.CodeInternal, "failed to query deploy status by hash")
+	}
+	return version.DeployStatus, nil
 }
 
 func (r *Repo) updateDeployStatusByHash(
@@ -240,7 +259,7 @@ func (r *Repo) updateDeployStatusByHash(
 		Where("org_id = ?", orgId).
 		Exec(ctx)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to update deploy status", "error", err)
+		slog.ErrorContext(ctx, "failed to update deploy status", errors.Attr(err))
 		return errors.WrapInternalf(err, CodeConfigDeployStatusUpdateFailed, "failed to update deploy status")
 	}
 

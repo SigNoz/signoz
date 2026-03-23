@@ -30,3 +30,4 @@ import '@signozhq/switch';
 import '@signozhq/table';
 import '@signozhq/toggle-group';
 import '@signozhq/tooltip';
+import '@signozhq/ui';

@@ -52,16 +52,16 @@ jobs:
     with:
       PRIMUS_REF: main
       JS_SRC: frontend
-  md-languages:
+  languages:
     if: |
       github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
     steps:
-      - name: checkout
+      - name: self-checkout
         uses: actions/checkout@v4
-      - name: validate md languages
+      - name: run
         run: bash frontend/scripts/validate-md-languages.sh
   authz:
     if: |
@@ -70,44 +70,55 @@ jobs:
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
     steps:
-      - name: Checkout code
+      - name: self-checkout
         uses: actions/checkout@v5
-
-      - name: Set up Node.js
+      - name: node-install
         uses: actions/setup-node@v5
         with:
           node-version: "22"
-
-      - name: Install frontend dependencies
+      - name: deps-install
         working-directory: ./frontend
         run: |
           yarn install
-
-      - name: Install uv
+      - name: uv-install
         uses: astral-sh/setup-uv@v5
-
-      - name: Install Python dependencies
+      - name: uv-deps
         working-directory: ./tests/integration
         run: |
           uv sync
-
-      - name: Start test environment
+      - name: setup-test
         run: |
           make py-test-setup
-
-      - name: Generate permissions.type.ts
+      - name: generate
         working-directory: ./frontend
         run: |
           yarn generate:permissions-type
-
-      - name: Teardown test environment
+      - name: teardown-test
         if: always()
         run: |
           make py-test-teardown
-
-      - name: Check for changes
+      - name: validate
         run: |
           if ! git diff --exit-code frontend/src/hooks/useAuthZ/permissions.type.ts; then
             echo "::error::frontend/src/hooks/useAuthZ/permissions.type.ts is out of date. Please run the generator locally and commit the changes: npm run generate:permissions-type (from the frontend directory)"
             exit 1
           fi
+  openapi:
+    if: |
+      github.event_name == 'merge_group' ||
+      (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
+      (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
+    runs-on: ubuntu-latest
+    steps:
+      - name: self-checkout
+        uses: actions/checkout@v4
+      - name: node-install
+        uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - name: install-frontend
+        run: cd frontend && yarn install
+      - name: generate-api-clients
+        run: |
+          cd frontend && yarn generate:api
+          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)

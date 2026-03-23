@@ -369,7 +369,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 		Limit(1).
 		Scan(ctx, &orgID)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "failed to get org ids", "error", err)
+		r.logger.ErrorContext(ctx, "failed to get org ids", errors.Attr(err))
 		return
 	}
 
@@ -485,7 +485,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 		}
 		err := r.reader.AddRuleStateHistory(ctx, entries)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error while inserting rule state history", "error", err, "itemsToAdd", itemsToAdd)
+			r.logger.ErrorContext(ctx, "error while inserting rule state history", errors.Attr(err), "itemsToAdd", itemsToAdd)
 		}
 	}
 	r.handledRestart = true

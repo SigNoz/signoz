@@ -5,7 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -19,7 +19,7 @@ type StorableServiceAccountRole struct {
 	RoleID           string `bun:"role_id"`
 }
 
-func NewStorableServiceAccountRoles(serviceAccountID valuer.UUID, roles []*roletypes.Role) []*StorableServiceAccountRole {
+func NewStorableServiceAccountRoles(serviceAccountID valuer.UUID, roles []*authtypes.Role) []*StorableServiceAccountRole {
 	storableServiceAccountRoles := make([]*StorableServiceAccountRole, len(roles))
 	for idx, role := range roles {
 		storableServiceAccountRoles[idx] = &StorableServiceAccountRole{
@@ -38,7 +38,7 @@ func NewStorableServiceAccountRoles(serviceAccountID valuer.UUID, roles []*rolet
 	return storableServiceAccountRoles
 }
 
-func NewRolesFromStorableServiceAccountRoles(storable []*StorableServiceAccountRole, roles []*roletypes.Role) ([]string, error) {
+func NewRolesFromStorableServiceAccountRoles(storable []*StorableServiceAccountRole, roles []*authtypes.Role) ([]string, error) {
 	roleIDToName := make(map[string]string, len(roles))
 	for _, role := range roles {
 		roleIDToName[role.ID.String()] = role.Name

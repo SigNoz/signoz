@@ -5,7 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
@@ -14,11 +14,11 @@ type store struct {
 	sqlstore sqlstore.SQLStore
 }
 
-func NewSqlAuthzStore(sqlstore sqlstore.SQLStore) roletypes.Store {
+func NewSqlAuthzStore(sqlstore sqlstore.SQLStore) authtypes.RoleStore {
 	return &store{sqlstore: sqlstore}
 }
 
-func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) error {
+func (store *store) Create(ctx context.Context, role *authtypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -32,8 +32,8 @@ func (store *store) Create(ctx context.Context, role *roletypes.StorableRole) er
 	return nil
 }
 
-func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.StorableRole, error) {
-	role := new(roletypes.StorableRole)
+func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.StorableRole, error) {
+	role := new(authtypes.StorableRole)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -43,14 +43,14 @@ func (store *store) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) 
 		Where("id = ?", id).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with id: %s doesn't exist", id)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeRoleNotFound, "role with id: %s doesn't exist", id)
 	}
 
 	return role, nil
 }
 
-func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*roletypes.StorableRole, error) {
-	role := new(roletypes.StorableRole)
+func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.StorableRole, error) {
+	role := new(authtypes.StorableRole)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -60,14 +60,14 @@ func (store *store) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, na
 		Where("name = ?", name).
 		Scan(ctx)
 	if err != nil {
-		return nil, store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with name: %s doesn't exist", name)
+		return nil, store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeRoleNotFound, "role with name: %s doesn't exist", name)
 	}
 
 	return role, nil
 }
 
-func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.StorableRole, error) {
-	roles := make([]*roletypes.StorableRole, 0)
+func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -82,8 +82,8 @@ func (store *store) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.S
 	return roles, nil
 }
 
-func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*roletypes.StorableRole, error) {
-	roles := make([]*roletypes.StorableRole, 0)
+func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -99,7 +99,7 @@ func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, 
 	if len(roles) != len(names) {
 		return nil, store.sqlstore.WrapNotFoundErrf(
 			nil,
-			roletypes.ErrCodeRoleNotFound,
+			authtypes.ErrCodeRoleNotFound,
 			"not all roles found for the provided names: %v", names,
 		)
 	}
@@ -107,8 +107,8 @@ func (store *store) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, 
 	return roles, nil
 }
 
-func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*roletypes.StorableRole, error) {
-	roles := make([]*roletypes.StorableRole, 0)
+func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*authtypes.StorableRole, error) {
+	roles := make([]*authtypes.StorableRole, 0)
 	err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -124,7 +124,7 @@ func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, id
 	if len(roles) != len(ids) {
 		return nil, store.sqlstore.WrapNotFoundErrf(
 			nil,
-			roletypes.ErrCodeRoleNotFound,
+			authtypes.ErrCodeRoleNotFound,
 			"not all roles found for the provided ids: %v", ids,
 		)
 	}
@@ -132,7 +132,7 @@ func (store *store) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, id
 	return roles, nil
 }
 
-func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *roletypes.StorableRole) error {
+func (store *store) Update(ctx context.Context, orgID valuer.UUID, role *authtypes.StorableRole) error {
 	_, err := store.
 		sqlstore.
 		BunDBCtx(ctx).
@@ -153,12 +153,12 @@ func (store *store) Delete(ctx context.Context, orgID valuer.UUID, id valuer.UUI
 		sqlstore.
 		BunDBCtx(ctx).
 		NewDelete().
-		Model(new(roletypes.StorableRole)).
+		Model(new(authtypes.StorableRole)).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).
 		Exec(ctx)
 	if err != nil {
-		return store.sqlstore.WrapNotFoundErrf(err, roletypes.ErrCodeRoleNotFound, "role with id %s doesn't exist", id)
+		return store.sqlstore.WrapNotFoundErrf(err, authtypes.ErrCodeRoleNotFound, "role with id %s doesn't exist", id)
 	}
 
 	return nil
