@@ -57,7 +57,6 @@ export const AggregatorFilter = memo(function AggregatorFilter({
 	}, [signalSource]);
 
 	const debouncedSearchText = useMemo(() => {
-		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, value] = getAutocompleteValueAndType(searchText);
 
 		return value;

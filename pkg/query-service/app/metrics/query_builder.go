@@ -2,12 +2,12 @@ package metrics
 
 import (
 	"fmt"
+	"log/slog"
 	"reflect"
 	"strconv"
 	"strings"
 
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 )
 
 func AddMetricValueFilter(mq *v3.BuilderQuery) *v3.MetricValueFilter {
@@ -69,7 +69,7 @@ func AddMetricValueFilter(mq *v3.BuilderQuery) *v3.MetricValueFilter {
 				case string:
 					numericValue, err := strconv.ParseFloat(v, 64)
 					if err != nil {
-						zap.L().Warn("invalid type for metric value filter, ignoring", zap.Any("type", reflect.TypeOf(v)), zap.String("value", v))
+						slog.Warn("invalid type for metric value filter, ignoring", "type", reflect.TypeOf(v), "value", v)
 						continue
 					}
 					metricValueFilter = &v3.MetricValueFilter{
@@ -111,11 +111,11 @@ func FormattedValue(v interface{}) string {
 		case int, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			slog.Error("invalid type for formatted value", "type", reflect.TypeOf(x[0]))
 			return ""
 		}
 	default:
-		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		slog.Error("invalid type for formatted value", "type", reflect.TypeOf(x))
 		return ""
 	}
 }
@@ -144,11 +144,11 @@ func PromFormattedValue(v interface{}) string {
 			}
 			return strings.Join(str, "|")
 		default:
-			zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			slog.Error("invalid type for prom formatted value", "type", reflect.TypeOf(x[0]))
 			return ""
 		}
 	default:
-		zap.L().Error("invalid type for prom formatted value", zap.Any("type", reflect.TypeOf(x)))
+		slog.Error("invalid type for prom formatted value", "type", reflect.TypeOf(x))
 		return ""
 	}
 }

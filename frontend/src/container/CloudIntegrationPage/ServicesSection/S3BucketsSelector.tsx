@@ -90,7 +90,6 @@ function S3BucketsSelector({
 					<Form.Item
 						key={region}
 						label={region}
-						// eslint-disable-next-line react/jsx-props-no-spreading
 						{...(disabled && {
 							help:
 								'Region disabled in account settings; S3 buckets here will not be synced.',

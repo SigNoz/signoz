@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 // @ts-nocheck
 import { PrecisionOption } from 'components/Graph/types';
 import { getToolTipValue } from 'components/Graph/yAxisConfig';
@@ -13,7 +12,6 @@ const PANEL_TYPES_WITH_X_AXIS_DATETIME_FORMAT = [
 	PANEL_TYPES.PIE,
 ];
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const getAxes = ({
 	isDarkMode,
 	yAxisUnit,
@@ -85,7 +83,6 @@ const getAxes = ({
 			);
 
 			if (longestVal !== '' && self) {
-				// eslint-disable-next-line prefer-destructuring, no-param-reassign
 				self.ctx.font = axis.font[0];
 				axisSize += self.ctx.measureText(longestVal).width / devicePixelRatio;
 			}

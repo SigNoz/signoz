@@ -12,6 +12,7 @@ var (
 	TypeCanceled               = typ{"canceled"}
 	TypeTimeout                = typ{"timeout"}
 	TypeUnexpected             = typ{"unexpected"} // Generic mismatch of expectations
+	TypeFatal                  = typ{"fatal"}     // Unrecoverable failure (e.g. panic)
 	TypeLicenseUnavailable     = typ{"license-unavailable"}
 )
 

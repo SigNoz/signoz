@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { AppState } from 'store/reducers';

@@ -2,6 +2,7 @@ package alertmanager
 
 import (
 	"context"
+	"log/slog"
 	"sync"
 
 	"github.com/prometheus/alertmanager/featurecontrol"
@@ -72,9 +73,9 @@ func (service *Service) SyncServers(ctx context.Context) error {
 
 	service.serversMtx.Lock()
 	for _, org := range orgs {
-		config, err := service.getConfig(ctx, org.ID.StringValue())
+		config, _, err := service.getConfig(ctx, org.ID.StringValue())
 		if err != nil {
-			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", "org_id", org.ID.StringValue(), "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to get alertmanager config for org", slog.String("org_id", org.ID.StringValue()), errors.Attr(err))
 			continue
 		}
 
@@ -82,7 +83,7 @@ func (service *Service) SyncServers(ctx context.Context) error {
 		if _, ok := service.servers[org.ID.StringValue()]; !ok {
 			server, err := service.newServer(ctx, org.ID.StringValue())
 			if err != nil {
-				service.settings.Logger().ErrorContext(ctx, "failed to create alertmanager server", "org_id", org.ID.StringValue(), "error", err)
+				service.settings.Logger().ErrorContext(ctx, "failed to create alertmanager server", slog.String("org_id", org.ID.StringValue()), errors.Attr(err))
 				continue
 			}
 
@@ -90,13 +91,13 @@ func (service *Service) SyncServers(ctx context.Context) error {
 		}
 
 		if service.servers[org.ID.StringValue()].Hash() == config.StoreableConfig().Hash {
-			service.settings.Logger().DebugContext(ctx, "skipping alertmanager sync for org", "org_id", org.ID.StringValue(), "hash", config.StoreableConfig().Hash)
+			service.settings.Logger().DebugContext(ctx, "skipping alertmanager sync for org", slog.String("org_id", org.ID.StringValue()), slog.String("hash", config.StoreableConfig().Hash))
 			continue
 		}
 
 		err = service.servers[org.ID.StringValue()].SetConfig(ctx, config)
 		if err != nil {
-			service.settings.Logger().ErrorContext(ctx, "failed to set config for alertmanager server", "org_id", org.ID.StringValue(), "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to set config for alertmanager server", slog.String("org_id", org.ID.StringValue()), errors.Attr(err))
 			continue
 		}
 	}
@@ -163,7 +164,7 @@ func (service *Service) Stop(ctx context.Context) error {
 	for _, server := range service.servers {
 		if err := server.Stop(ctx); err != nil {
 			errs = append(errs, err)
-			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", "error", err)
+			service.settings.Logger().ErrorContext(ctx, "failed to stop alertmanager server", errors.Attr(err))
 		}
 	}
 
@@ -171,7 +172,7 @@ func (service *Service) Stop(ctx context.Context) error {
 }
 
 func (service *Service) newServer(ctx context.Context, orgID string) (*alertmanagerserver.Server, error) {
-	config, err := service.getConfig(ctx, orgID)
+	config, storedHash, err := service.getConfig(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
@@ -181,14 +182,17 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 		return nil, err
 	}
 
-	beforeCompareAndSelectHash := config.StoreableConfig().Hash
 	config, err = service.compareAndSelectConfig(ctx, config)
 	if err != nil {
 		return nil, err
 	}
 
-	if beforeCompareAndSelectHash == config.StoreableConfig().Hash {
-		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", "org_id", orgID, "hash", config.StoreableConfig().Hash)
+	// compare against the hash of the config stored in the DB (before overlays
+	// were applied by getConfig). This ensures that overlay changes (e.g. new
+	// defaults from an upstream upgrade or something similar) trigger a DB update
+	// so that other code paths reading directly from the store see the up-to-date config.
+	if storedHash == config.StoreableConfig().Hash {
+		service.settings.Logger().DebugContext(ctx, "skipping config store update for org", slog.String("org_id", orgID), slog.String("hash", config.StoreableConfig().Hash))
 		return server, nil
 	}
 
@@ -200,27 +204,33 @@ func (service *Service) newServer(ctx context.Context, orgID string) (*alertmana
 	return server, nil
 }
 
-func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, error) {
+// getConfig returns the config for the given orgID with overlays applied, along
+// with the hash that was stored in the DB before overlays. When no config exists
+// in the store yet the stored hash is empty.
+func (service *Service) getConfig(ctx context.Context, orgID string) (*alertmanagertypes.Config, string, error) {
 	config, err := service.configStore.Get(ctx, orgID)
+	var storedHash string
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
-			return nil, err
+			return nil, "", err
 		}
 
 		config, err = alertmanagertypes.NewDefaultConfig(service.config.Global, service.config.Route, orgID)
 		if err != nil {
-			return nil, err
+			return nil, "", err
 		}
+	} else {
+		storedHash = config.StoreableConfig().Hash
 	}
 
 	if err := config.SetGlobalConfig(service.config.Global); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 	if err := config.SetRouteConfig(service.config.Route); err != nil {
-		return nil, err
+		return nil, "", err
 	}
 
-	return config, nil
+	return config, storedHash, nil
 }
 
 func (service *Service) compareAndSelectConfig(ctx context.Context, incomingConfig *alertmanagertypes.Config) (*alertmanagertypes.Config, error) {

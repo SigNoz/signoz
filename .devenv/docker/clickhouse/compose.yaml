@@ -1,4 +1,22 @@
 services:
+  init-clickhouse:
+    image: clickhouse/clickhouse-server:25.5.6
+    container_name: init-clickhouse
+    command:
+      - bash
+      - -c
+      - |
+        version="v0.0.1"
+        node_os=$$(uname -s | tr '[:upper:]' '[:lower:]')
+        node_arch=$$(uname -m | sed s/aarch64/arm64/ | sed s/x86_64/amd64/)
+        echo "Fetching histogram-binary for $${node_os}/$${node_arch}"
+        cd /tmp
+        wget -O histogram-quantile.tar.gz "https://github.com/SigNoz/signoz/releases/download/histogram-quantile%2F$${version}/histogram-quantile_$${node_os}_$${node_arch}.tar.gz"
+        tar -xvzf histogram-quantile.tar.gz
+        mv histogram-quantile /var/lib/clickhouse/user_scripts/histogramQuantile
+    restart: on-failure
+    volumes:
+      - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
   clickhouse:
     image: clickhouse/clickhouse-server:25.5.6
     container_name: clickhouse
@@ -7,6 +25,7 @@ services:
       - ${PWD}/fs/etc/clickhouse-server/users.d/users.xml:/etc/clickhouse-server/users.d/users.xml
       - ${PWD}/fs/tmp/var/lib/clickhouse/:/var/lib/clickhouse/
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
+      - ${PWD}/../../../deploy/common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
     ports:
       - '127.0.0.1:8123:8123'
       - '127.0.0.1:9000:9000'
@@ -22,7 +41,10 @@ services:
       timeout: 5s
       retries: 3
     depends_on:
-      - zookeeper
+      init-clickhouse:
+        condition: service_completed_successfully
+      zookeeper:
+        condition: service_healthy
     environment:
       - CLICKHOUSE_SKIP_USER_SETUP=1
   zookeeper:

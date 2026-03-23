@@ -37,13 +37,7 @@ function DraggableTableRow({
 	drop(drag(ref));
 
 	return (
-		<tr
-			ref={ref}
-			className={className}
-			style={{ ...style }}
-			// eslint-disable-next-line react/jsx-props-no-spreading
-			{...restProps}
-		/>
+		<tr ref={ref} className={className} style={{ ...style }} {...restProps} />
 	);
 }
 

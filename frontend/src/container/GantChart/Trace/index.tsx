@@ -190,7 +190,6 @@ function Trace(props: TraceProps): JSX.Element {
 							key={child.id}
 							activeHoverId={activeHoverId}
 							setActiveHoverId={setActiveHoverId}
-							// eslint-disable-next-line react/jsx-props-no-spreading
 							{...child}
 							globalSpread={globalSpread}
 							globalStart={globalStart}

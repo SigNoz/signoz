@@ -15,6 +15,7 @@ pytest_plugins = [
     "fixtures.logs",
     "fixtures.traces",
     "fixtures.metrics",
+    "fixtures.meter",
     "fixtures.driver",
     "fixtures.idp",
     "fixtures.idputils",

@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter, useLocation } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { sanitizeDashboardData } from 'container/DashboardContainer/DashboardDescription/utils';
@@ -9,7 +8,6 @@ import {
 } from 'mocks-server/__mockdata__/dashboards';
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
 import { fireEvent, render, waitFor } from 'tests/test-utils';
 
 jest.mock('container/DashboardContainer/DashboardDescription/utils', () => ({
@@ -20,11 +18,6 @@ jest.mock('container/DashboardContainer/DashboardDescription/utils', () => ({
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: jest.fn(),
-	useRouteMatch: jest.fn().mockReturnValue({
-		params: {
-			dashboardId: 4,
-		},
-	}),
 }));
 
 const mockWindowOpen = jest.fn();
@@ -48,9 +41,7 @@ describe('dashboard list page', () => {
 			<MemoryRouter
 				initialEntries={['/dashbords?columnKey=asgard&order=stones&page=1']}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -72,9 +63,7 @@ describe('dashboard list page', () => {
 			<MemoryRouter
 				initialEntries={['/dashbords?columnKey=createdAt&order=descend&page=1']}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -93,9 +82,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -136,9 +123,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -165,9 +150,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 
@@ -197,9 +180,7 @@ describe('dashboard list page', () => {
 					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
-				<DashboardProvider>
-					<DashboardsList />
-				</DashboardProvider>
+				<DashboardsList />
 			</MemoryRouter>,
 		);
 

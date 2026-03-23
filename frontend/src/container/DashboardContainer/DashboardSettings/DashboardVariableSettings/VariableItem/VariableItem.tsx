@@ -1,8 +1,7 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { orange } from '@ant-design/colors';
 import { Color } from '@signozhq/design-tokens';
@@ -536,7 +535,6 @@ function VariableItem({
 								type="text"
 								icon={<Pyramid size={14} />}
 								className={cx(
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
 									queryType === 'DYNAMIC' ? 'selected' : '',
 								)}
@@ -594,7 +592,6 @@ function VariableItem({
 								type="text"
 								icon={<DatabaseZap size={14} />}
 								className={cx(
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									'variable-type-btn',
 									queryType === 'QUERY' ? 'selected' : '',
 								)}

@@ -16,6 +16,7 @@ var (
 	CodeCanceled                = Code{"canceled"}
 	CodeTimeout                 = Code{"timeout"}
 	CodeUnknown                 = Code{"unknown"}
+	CodeFatal                   = Code{"fatal"}
 	CodeLicenseUnavailable      = Code{"license_unavailable"}
 )
 

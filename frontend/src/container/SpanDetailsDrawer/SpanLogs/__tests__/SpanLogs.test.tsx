@@ -136,7 +136,6 @@ describe('SpanLogs', () => {
 	});
 
 	it('should show simple empty state when emptyStateConfig is not provided', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<SpanLogs {...defaultProps} />);
 
 		// Should show simple empty state (no emptyStateConfig provided)
@@ -160,7 +159,6 @@ describe('SpanLogs', () => {
 	it('should show enhanced empty state when entire trace has no logs', () => {
 		render(
 			<SpanLogs
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...defaultProps}
 				emptyStateConfig={getEmptyLogsListConfig(jest.fn())}
 			/>,
@@ -198,7 +196,6 @@ describe('SpanLogs', () => {
 
 		render(
 			<SpanLogs
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...defaultProps}
 				handleExplorerPageRedirect={mockHandleExplorerPageRedirect}
 			/>,

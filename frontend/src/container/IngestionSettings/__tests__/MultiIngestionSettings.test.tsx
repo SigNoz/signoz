@@ -28,7 +28,6 @@ interface TestGatewayIngestionKeysResponse {
 // Mock useHistory.push to capture navigation URL used by MultiIngestionSettings
 const mockPush = jest.fn() as jest.MockedFunction<(path: string) => void>;
 jest.mock('react-router-dom', () => {
-	// eslint-disable-next-line @typescript-eslint/no-var-requires
 	const actual = jest.requireActual('react-router-dom');
 	return {
 		...actual,

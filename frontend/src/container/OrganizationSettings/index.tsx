@@ -3,8 +3,6 @@ import { useAppContext } from 'providers/App/App';
 
 import AuthDomain from './AuthDomain';
 import DisplayName from './DisplayName';
-import Members from './Members';
-import PendingInvitesContainer from './PendingInvitesContainer';
 
 import './OrganizationSettings.styles.scss';
 
@@ -23,9 +21,6 @@ function OrganizationSettings(): JSX.Element {
 				))}
 			</Space>
 
-			<PendingInvitesContainer />
-
-			<Members />
 			<AuthDomain />
 		</div>
 	);

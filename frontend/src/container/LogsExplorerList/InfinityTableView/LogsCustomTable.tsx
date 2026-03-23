@@ -20,7 +20,6 @@ export const LogsCustomTable = ({
 		}
 		return (
 			<ReactDragListView.DragColumn
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...dragColumnParams}
 				onDragEnd={handleDragEnd}
 			>

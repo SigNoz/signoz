@@ -1,8 +1,4 @@
 /* eslint-disable import/no-extraneous-dependencies */
-/* eslint-disable no-cond-assign */
-/* eslint-disable no-restricted-syntax */
-/* eslint-disable class-methods-use-this */
-/* eslint-disable react/no-this-in-sfc */
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQuery } from 'react-query';
@@ -149,7 +145,6 @@ const stopEventsExtension = EditorView.domEventHandlers({
 	},
 });
 
-// eslint-disable-next-line react/no-this-in-sfc
 function QueryAggregationSelect({
 	onChange,
 	queryData,

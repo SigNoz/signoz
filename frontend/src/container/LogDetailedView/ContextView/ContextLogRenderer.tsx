@@ -80,12 +80,10 @@ function ContextLogRenderer({
 
 	useEffect(() => {
 		setLogs((prev) => [...previousLogs, ...prev]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [previousLogs]);
 
 	useEffect(() => {
 		setLogs((prev) => [...prev, ...afterLogs]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [afterLogs]);
 
 	useEffect(() => {

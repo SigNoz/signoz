@@ -26,10 +26,6 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * Checks if the authenticated user has permissions for given transactions
  * @summary Check permissions

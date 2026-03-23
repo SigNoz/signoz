@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/ban-ts-comment */
 import { useEffect, useState } from 'react';
 import { MarkdownRenderer } from 'components/MarkdownRenderer/MarkdownRenderer';
 import { QueryParams } from 'constants/query';

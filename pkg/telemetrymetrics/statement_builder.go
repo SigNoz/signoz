@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -123,8 +122,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 	origTimeAgg := query.Aggregations[0].TimeAggregation
 	origGroupBy := slices.Clone(query.GroupBy)
 
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() &&
-		query.Aggregations[0].Type != metrictypes.ExpHistogramType {
+	if query.Aggregations[0].Type == metrictypes.HistogramType {
 		// add le in the group by if doesn't exist
 		leExists := false
 		for _, g := range query.GroupBy {
@@ -154,7 +152,11 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// make the time aggregation rate and space aggregation sum
-		query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+		if query.Aggregations[0].SpaceAggregation.IsPercentile() {
+			query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationRate
+		} else {
+			query.Aggregations[0].TimeAggregation = metrictypes.TimeAggregationIncrease
+		}
 		query.Aggregations[0].SpaceAggregation = metrictypes.SpaceAggregationSum
 	}
 
@@ -186,9 +188,7 @@ func (b *MetricQueryStatementBuilder) buildPipelineStatement(
 		}
 
 		// spatial_aggregation_cte
-		if frag, args, err := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); err != nil {
-			return nil, err
-		} else if frag != "" {
+		if frag, args := b.buildSpatialAggregationCTE(ctx, start, end, query, keys); frag != "" {
 			cteFragments = append(cteFragments, frag)
 			cteArgs = append(cteArgs, args)
 		}
@@ -519,14 +519,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	_ uint64,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 	_ map[string][]*telemetrytypes.TelemetryFieldKey,
-) (string, []any, error) {
-	if query.Aggregations[0].SpaceAggregation.IsZero() {
-		return "", nil, errors.Newf(
-			errors.TypeInvalidInput,
-			errors.CodeInvalidInput,
-			"invalid space aggregation, should be one of the following: [`sum`, `avg`, `min`, `max`, `count`, `p50`, `p75`, `p90`, `p95`, `p99`]",
-		)
-	}
+) (string, []any) {
 	sb := sqlbuilder.NewSelectBuilder()
 
 	sb.Select("ts")
@@ -543,7 +536,7 @@ func (b *MetricQueryStatementBuilder) buildSpatialAggregationCTE(
 	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 
 	q, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
-	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args, nil
+	return fmt.Sprintf("__spatial_aggregation_cte AS (%s)", q), args
 }
 
 func (b *MetricQueryStatementBuilder) BuildFinalSelect(
@@ -551,6 +544,9 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	cteArgs [][]any,
 	query qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation],
 ) (*qbtypes.Statement, error) {
+	metricType := query.Aggregations[0].Type
+	spaceAgg := query.Aggregations[0].SpaceAggregation
+
 	combined := querybuilder.CombineCTEs(cteFragments)
 
 	var args []any
@@ -560,12 +556,8 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 
 	sb := sqlbuilder.NewSelectBuilder()
 
-	var quantile float64
-	if query.Aggregations[0].SpaceAggregation.IsPercentile() {
-		quantile = query.Aggregations[0].SpaceAggregation.Percentile()
-	}
-
-	if quantile != 0 && query.Aggregations[0].Type != metrictypes.ExpHistogramType {
+	if metricType == metrictypes.HistogramType && spaceAgg.IsPercentile() {
+		quantile := query.Aggregations[0].SpaceAggregation.Percentile()
 		sb.Select("ts")
 		for _, g := range query.GroupBy {
 			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
@@ -582,7 +574,31 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
 			sb.Having(rewrittenExpr)
 		}
+	} else if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam != nil {
+		sb.Select("ts")
+
+		for _, g := range query.GroupBy {
+			sb.SelectMore(fmt.Sprintf("`%s`", g.TelemetryFieldKey.Name))
+		}
+
+		aggQuery, err := AggregationQueryForHistogramCountWithParams(query.Aggregations[0].ComparisonSpaceAggregationParam)
+		if err != nil {
+			return nil, err
+		}
+		sb.SelectMore(aggQuery)
+
+		sb.From("__spatial_aggregation_cte")
+
+		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		sb.GroupBy("ts")
+
+		if query.Having != nil && query.Having.Expression != "" {
+			rewriter := querybuilder.NewHavingExpressionRewriter()
+			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			sb.Having(rewrittenExpr)
+		}
 	} else {
+		// for count aggregation on histograms with no params, the exact result of spatial aggregation can be sent forward
 		sb.Select("*")
 		sb.From("__spatial_aggregation_cte")
 		if query.Having != nil && query.Having.Expression != "" {
@@ -593,6 +609,9 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 	}
 	sb.OrderBy(querybuilder.GroupByKeys(query.GroupBy)...)
 	sb.OrderBy("ts")
+	if metricType == metrictypes.HistogramType && spaceAgg == metrictypes.SpaceAggregationCount && query.Aggregations[0].ComparisonSpaceAggregationParam == nil {
+		sb.OrderBy("toFloat64(le)")
+	}
 
 	q, a := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	return &qbtypes.Statement{Query: combined + q, Args: append(args, a...)}, nil

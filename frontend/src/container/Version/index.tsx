@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Button, Form } from 'antd';
 import { CheckCircle, CloudUpload, InfoIcon, Wrench } from 'lucide-react';

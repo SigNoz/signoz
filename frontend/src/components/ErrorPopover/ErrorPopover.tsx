@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { ReactNode } from 'react';
 import { Popover, PopoverProps } from 'antd';
 

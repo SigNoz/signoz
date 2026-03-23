@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable react/jsx-props-no-spreading */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import {
 	act,
@@ -102,7 +100,6 @@ const mockAggregateKeysData = {
 	payload: {
 		attributeKeys: [
 			{
-				// eslint-disable-next-line sonarjs/no-duplicate-string
 				key: 'http.status',
 				dataType: DataTypes.String,
 				type: TYPE_TAG,

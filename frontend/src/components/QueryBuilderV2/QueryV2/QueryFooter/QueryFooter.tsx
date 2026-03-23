@@ -1,5 +1,4 @@
 import { useMemo } from 'react';
-/* eslint-disable react/require-default-props */
 import { Button, Tooltip, Typography } from 'antd';
 import WarningPopover from 'components/WarningPopover/WarningPopover';
 import { PANEL_TYPES } from 'constants/queryBuilder';

@@ -1,6 +1,5 @@
 import { ReduceOperators } from 'types/common/queryBuilder';
 
-/* eslint-disable sonarjs/no-duplicate-string */
 export const tableDataMultipleQueriesSuccessResponse = {
 	columns: [
 		{

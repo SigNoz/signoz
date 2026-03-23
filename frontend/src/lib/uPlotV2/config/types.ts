@@ -34,7 +34,7 @@ export enum SelectionPreferencesSource {
  * Props for configuring the uPlot config builder
  */
 export interface ConfigBuilderProps {
-	widgetId?: string;
+	id: string;
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	tzDate?: uPlot.LocalDateFromUnix;
 	selectionPreferencesSource?: SelectionPreferencesSource;
@@ -99,6 +99,11 @@ export interface ScaleProps {
 	distribution?: DistributionType;
 }
 
+export enum DisconnectedValuesMode {
+	Never = 'never',
+	Threshold = 'threshold',
+}
+
 /**
  * Props for configuring a series
  */
@@ -112,6 +117,7 @@ export enum DrawStyle {
 	Line = 'line',
 	Points = 'points',
 	Bar = 'bar',
+	Histogram = 'histogram',
 }
 
 export enum LineInterpolation {
@@ -119,12 +125,6 @@ export enum LineInterpolation {
 	Spline = 'spline',
 	StepAfter = 'stepAfter',
 	StepBefore = 'stepBefore',
-}
-
-export enum VisibilityMode {
-	Always = 'always',
-	Auto = 'auto',
-	Never = 'never',
 }
 
 /**
@@ -162,21 +162,36 @@ export interface BarConfig {
 export interface PointsConfig {
 	pointColor?: string;
 	pointSize?: number;
-	showPoints?: VisibilityMode;
+	showPoints?: boolean;
+}
+
+export enum FillMode {
+	Solid = 'solid',
+	Gradient = 'gradient',
+	None = 'none',
 }
 
 export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	scaleKey: string;
 	label?: string;
-	panelType: PANEL_TYPES;
 	colorMapping: Record<string, string>;
 	drawStyle: DrawStyle;
 	pathBuilder?: Series.PathBuilder;
 	pointsFilter?: Series.Points.Filter;
 	pointsBuilder?: Series.Points.Show;
 	show?: boolean;
-	spanGaps?: boolean;
+	/**
+	 * Controls how nulls are treated for this series.
+	 *
+	 * - boolean: mapped directly to uPlot's spanGaps behavior
+	 * - number: interpreted as an X-axis threshold (same unit as ref values),
+	 *           where gaps smaller than this threshold are spanned by
+	 *           converting short null runs to undefined during data prep
+	 *           while uPlot's internal spanGaps is kept disabled.
+	 */
+	spanGaps?: boolean | number;
 	fillColor?: string;
+	fillMode?: FillMode;
 	isDarkMode?: boolean;
 	stepInterval?: number;
 }

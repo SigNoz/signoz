@@ -6,8 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Form } from 'antd';
-import { FormInstance } from 'antd/lib';
+import { Form, FormInstance } from 'antd';
 import { CloudAccount } from 'container/CloudIntegrationPage/ServicesSection/types';
 import { useUpdateAccountConfig } from 'hooks/integration/aws/useUpdateAccountConfig';
 import { isEqual } from 'lodash-es';

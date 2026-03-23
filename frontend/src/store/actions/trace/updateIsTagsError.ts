@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { UPDATE_IS_TAG_ERROR } from 'types/actions/trace';

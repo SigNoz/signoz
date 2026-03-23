@@ -1,4 +1,5 @@
 import { memo, useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import Graph from 'components/Graph';

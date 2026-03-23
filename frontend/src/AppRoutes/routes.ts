@@ -1,12 +1,10 @@
 import { RouteProps } from 'react-router-dom';
 import ROUTES from 'constants/routes';
-import AlertTypeSelectionPage from 'pages/AlertTypeSelection';
-import MessagingQueues from 'pages/MessagingQueues';
-import MeterExplorer from 'pages/MeterExplorer';
 
 import {
 	AlertHistory,
 	AlertOverview,
+	AlertTypeSelectionPage,
 	AllAlertChannels,
 	AllErrors,
 	ApiMonitoring,
@@ -29,6 +27,8 @@ import {
 	LogsExplorer,
 	LogsIndexToFields,
 	LogsSaveViews,
+	MessagingQueuesMainPage,
+	MeterExplorerPage,
 	MetricsExplorer,
 	OldLogsExplorer,
 	Onboarding,
@@ -399,28 +399,28 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_CELERY_TASK,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_CELERY_TASK',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_OVERVIEW,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_OVERVIEW',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.MESSAGING_QUEUES_KAFKA_DETAIL,
 		exact: true,
-		component: MessagingQueues,
+		component: MessagingQueuesMainPage,
 		key: 'MESSAGING_QUEUES_KAFKA_DETAIL',
 		isPrivate: true,
 	},
@@ -463,21 +463,21 @@ const routes: AppRoutes[] = [
 	{
 		path: ROUTES.METER,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER_EXPLORER',
 		isPrivate: true,
 	},
 	{
 		path: ROUTES.METER_EXPLORER_VIEWS,
 		exact: true,
-		component: MeterExplorer,
+		component: MeterExplorerPage,
 		key: 'METER_EXPLORER_VIEWS',
 		isPrivate: true,
 	},

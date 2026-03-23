@@ -1,6 +1,7 @@
-import { useCallback } from 'react';
+import { useCallback, useRef } from 'react';
 import { Button } from 'antd';
 import ROUTES from 'constants/routes';
+import { DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY } from 'hooks/dashboard/useDashboardsListQueryParams';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { LayoutGrid } from 'lucide-react';
 import { useDashboard } from 'providers/Dashboard/Dashboard';
@@ -12,7 +13,8 @@ import './DashboardBreadcrumbs.styles.scss';
 
 function DashboardBreadcrumbs(): JSX.Element {
 	const { safeNavigate } = useSafeNavigate();
-	const { selectedDashboard, listSortOrder } = useDashboard();
+	const { selectedDashboard } = useDashboard();
+	const updatedAtRef = useRef(selectedDashboard?.updatedAt);
 
 	const selectedData = selectedDashboard
 		? {
@@ -24,15 +26,21 @@ function DashboardBreadcrumbs(): JSX.Element {
 	const { title = '', image = Base64Icons[0] } = selectedData || {};
 
 	const goToListPage = useCallback(() => {
-		const urlParams = new URLSearchParams();
-		urlParams.set('columnKey', listSortOrder.columnKey as string);
-		urlParams.set('order', listSortOrder.order as string);
-		urlParams.set('page', listSortOrder.pagination as string);
-		urlParams.set('search', listSortOrder.search as string);
+		const dashboardsListQueryParamsString = sessionStorage.getItem(
+			DASHBOARDS_LIST_QUERY_PARAMS_STORAGE_KEY,
+		);
 
-		const generatedUrl = `${ROUTES.ALL_DASHBOARD}?${urlParams.toString()}`;
-		safeNavigate(generatedUrl);
-	}, [listSortOrder, safeNavigate]);
+		const hasDashboardBeenUpdated =
+			selectedDashboard?.updatedAt !== updatedAtRef.current;
+		if (!hasDashboardBeenUpdated && dashboardsListQueryParamsString) {
+			safeNavigate({
+				pathname: ROUTES.ALL_DASHBOARD,
+				search: `?${dashboardsListQueryParamsString}`,
+			});
+		} else {
+			safeNavigate(ROUTES.ALL_DASHBOARD);
+		}
+	}, [safeNavigate, selectedDashboard?.updatedAt]);
 
 	return (
 		<div className="dashboard-breadcrumbs">

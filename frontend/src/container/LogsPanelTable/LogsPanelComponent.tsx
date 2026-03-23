@@ -33,6 +33,7 @@ function LogsPanelComponent({
 	widget,
 	setRequestData,
 	queryResponse,
+	onColumnWidthsChange,
 }: LogsPanelComponentProps): JSX.Element {
 	const [pageSize, setPageSize] = useState<number>(10);
 	const [offset, setOffset] = useState<number>(0);
@@ -145,8 +146,8 @@ function LogsPanelComponent({
 							columns={columns}
 							onRow={handleRow}
 							rowKey={(record): string => record.id}
-							widgetId={widget.id}
-							shouldPersistColumnWidths
+							columnWidths={widget.columnWidths}
+							onColumnWidthsChange={onColumnWidthsChange}
 						/>
 					</OverlayScrollbar>
 				</div>
@@ -189,6 +190,7 @@ export type LogsPanelComponentProps = {
 		Error
 	>;
 	widget: Widgets;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export default LogsPanelComponent;

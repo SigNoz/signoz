@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Select } from 'antd';

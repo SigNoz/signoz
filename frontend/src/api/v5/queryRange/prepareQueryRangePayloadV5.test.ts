@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/no-duplicate-string, simple-import-sort/imports, @typescript-eslint/indent, no-mixed-spaces-and-tabs */
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
+import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import {
 	IBuilderFormula,
 	IBuilderQuery,
 } from 'types/api/queryBuilder/queryBuilderData';
-import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import {
 	ClickHouseQuery,
 	LogAggregation,
@@ -17,7 +17,6 @@ import {
 } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 import { prepareQueryRangePayloadV5 } from './prepareQueryRangePayloadV5';
 

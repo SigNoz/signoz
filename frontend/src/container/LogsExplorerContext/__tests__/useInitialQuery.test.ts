@@ -160,7 +160,6 @@ describe('useInitialQuery - Priority-Based Resource Filtering', () => {
 				expect.objectContaining({
 					items: expect.arrayContaining([
 						expect.objectContaining({
-							// eslint-disable-next-line sonarjs/no-duplicate-string
 							key: expect.objectContaining({ key: 'service.name' }),
 							value: 'frontend-service',
 						}),

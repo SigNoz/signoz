@@ -13,10 +13,11 @@ type claimsKey struct{}
 type accessTokenKey struct{}
 
 type Claims struct {
-	UserID string
-	Email  string
-	Role   types.Role
-	OrgID  string
+	UserID         string
+	Email          string
+	Role           types.Role
+	OrgID          string
+	IdentNProvider string
 }
 
 // NewContextWithClaims attaches individual claims to the context.
@@ -53,6 +54,7 @@ func (c *Claims) LogValue() slog.Value {
 		slog.String("email", c.Email),
 		slog.String("role", c.Role.String()),
 		slog.String("org_id", c.OrgID),
+		slog.String("identn_provider", c.IdentNProvider),
 	)
 }
 

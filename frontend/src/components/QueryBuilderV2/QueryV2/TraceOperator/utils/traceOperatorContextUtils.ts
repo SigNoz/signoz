@@ -1,5 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable no-continue */
 
 import { CharStreams, CommonTokenStream, Token } from 'antlr4';
 import TraceOperatorGrammarLexer from 'parser/TraceOperatorParser/TraceOperatorGrammarLexer';
@@ -290,7 +289,6 @@ export function getCurrentTraceExpressionPair(
 		// Find the rightmost pair whose end position is before or at the cursor
 		let bestMatch: ITraceExpressionPair | null = null;
 
-		// eslint-disable-next-line no-restricted-syntax
 		for (const pair of expressionPairs) {
 			const { position } = pair;
 			const pairEnd =

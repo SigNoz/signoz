@@ -1,9 +1,8 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { memo, ReactNode, useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { ExclamationCircleFilled } from '@ant-design/icons';
 import { Space, Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import { getYAxisFormattedValue } from 'components/Graph/yAxisConfig';
 import { Events } from 'constants/events';
 import { QueryTable } from 'container/QueryTable';
@@ -46,6 +45,8 @@ function GridTableComponent({
 	onOpenTraceBtnClick,
 	customOnRowClick,
 	widgetId,
+	columnWidths,
+	onColumnWidthsChange,
 	panelType,
 	queryRangeRequest,
 	decimalPrecision,
@@ -131,7 +132,6 @@ function GridTableComponent({
 
 	useEffect(() => {
 		if (tableProcessedDataRef) {
-			// eslint-disable-next-line no-param-reassign
 			tableProcessedDataRef.current = createDataInCorrectFormat(dataSource);
 		}
 	}, [createDataInCorrectFormat, dataSource, tableProcessedDataRef]);
@@ -286,6 +286,8 @@ function GridTableComponent({
 				dataSource={dataSource}
 				sticky={sticky}
 				widgetId={widgetId}
+				columnWidths={columnWidths}
+				onColumnWidthsChange={onColumnWidthsChange}
 				panelType={panelType}
 				queryRangeRequest={queryRangeRequest}
 				onRow={
@@ -300,7 +302,6 @@ function GridTableComponent({
 						  })
 						: undefined
 				}
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...props}
 			/>
 		</WrapperStyled>

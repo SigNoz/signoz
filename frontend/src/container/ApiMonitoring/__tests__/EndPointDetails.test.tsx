@@ -181,7 +181,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	const mockProps = {
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		domainName: 'test-domain',
 		endPointName: '/api/test',
 		setSelectedEndPointName: jest.fn(),
@@ -227,7 +226,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('renders the component correctly', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		// Check all major components are rendered
@@ -248,7 +246,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('calls getEndPointDetailsQueryPayload with correct parameters', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		expect(getEndPointDetailsQueryPayload).toHaveBeenCalledWith(
@@ -268,7 +265,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('adds endpoint filter to initial filters', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		expect(getEndPointDetailsQueryPayload).toHaveBeenCalledWith(
@@ -287,7 +283,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('updates filters when QueryBuilderSearch changes', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		// Trigger filter change
@@ -311,7 +306,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('handles endpoint dropdown selection', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		// Trigger endpoint selection
@@ -343,7 +337,6 @@ describe('EndPointDetails Component', () => {
 			} as TagFilter,
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...propsWithServiceFilter} />);
 
 		// Dependent services should not be displayed
@@ -351,7 +344,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('passes the correct parameters to widget data generators', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		expect(getRateOverTimeWidgetData).toHaveBeenCalledWith(
@@ -382,7 +374,6 @@ describe('EndPointDetails Component', () => {
 	});
 
 	it('generates correct query parameters for useQueries', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointDetails {...mockProps} />);
 
 		// Check if useQueries was called with correct parameters

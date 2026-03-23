@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -38,7 +39,7 @@ const mockProps: WidgetGraphComponentProps = {
 		columnUnits: {},
 		description: '',
 		fillSpans: false,
-		id: '17f905f6-d355-46bd-a78e-cbc87e6f58cc',
+		id: 'w-17f905f6-d355-46bd-a78e-cbc87e6f58cc',
 		mergeAllActiveQueries: false,
 		nullZeroValues: 'zero',
 		opacity: '1',
@@ -167,6 +168,9 @@ jest.mock('providers/Dashboard/Dashboard', () => ({
 				variables: [],
 			},
 		},
+		setLayouts: jest.fn(),
+		setSelectedDashboard: jest.fn(),
+		setColumnWidths: jest.fn(),
 	}),
 }));
 

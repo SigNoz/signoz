@@ -37,7 +37,6 @@ export const getRemainingDays = (billingEndDate: number): number => {
 	const endDate = new Date(billingEndDate * 1000); // Convert seconds to milliseconds
 
 	// Calculate the time difference in milliseconds
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 	// @ts-ignore
 	const timeDifference = endDate - startDate;
 

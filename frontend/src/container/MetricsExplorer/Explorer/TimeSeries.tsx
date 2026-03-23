@@ -1,8 +1,14 @@
 import { useMemo } from 'react';
-import { useQueries } from 'react-query';
+import { useQueries, useQueryClient } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
-import { Tooltip, Typography } from 'antd';
+import { toast } from '@signozhq/sonner';
+import { Button, Tooltip, Typography } from 'antd';
+import {
+	invalidateGetMetricMetadata,
+	useUpdateMetricMetadata,
+} from 'api/generated/services/metrics';
 import { isAxiosError } from 'axios';
 import classNames from 'classnames';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
@@ -22,8 +28,12 @@ import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
 
+import EmptyMetricsSearch from './EmptyMetricsSearch';
 import { TimeSeriesProps } from './types';
-import { splitQueryIntoOneChartPerQuery } from './utils';
+import {
+	buildUpdateMetricYAxisUnitPayload,
+	splitQueryIntoOneChartPerQuery,
+} from './utils';
 
 function TimeSeries({
 	showOneChartPerQuery,
@@ -35,6 +45,7 @@ function TimeSeries({
 	yAxisUnit,
 	setYAxisUnit,
 	showYAxisUnitSelector,
+	metrics,
 }: TimeSeriesProps): JSX.Element {
 	const { stagedQuery, currentQuery } = useQueryBuilder();
 
@@ -42,6 +53,7 @@ function TimeSeries({
 		AppState,
 		GlobalReducer
 	>((state) => state.globalTime);
+	const queryClient = useQueryClient();
 
 	const isValidToConvertToMs = useMemo(() => {
 		const isValid: boolean[] = [];
@@ -138,54 +150,51 @@ function TimeSeries({
 		setYAxisUnit(value);
 	};
 
-	// TODO: Enable once we have resolved all related metrics v2 api issues
 	// Show the save unit button if
 	// 1. There is only one metric
 	// 2. The metric has no saved unit
 	// 3. The user has selected a unit
-	// const showSaveUnitButton = useMemo(
-	// 	() =>
-	// 		metricUnits.length === 1 &&
-	// 		Boolean(metrics?.[0]) &&
-	// 		!metricUnits[0] &&
-	// 		yAxisUnit,
-	// 	[metricUnits, metrics, yAxisUnit],
-	// );
+	const showSaveUnitButton = useMemo(
+		() =>
+			metricUnits.length === 1 &&
+			Boolean(metrics[0]) &&
+			!metricUnits[0] &&
+			yAxisUnit,
+		[metricUnits, metrics, yAxisUnit],
+	);
 
-	// const {
-	// 	mutate: updateMetricMetadata,
-	// 	isLoading: isUpdatingMetricMetadata,
-	// } = useUpdateMetricMetadata();
+	const {
+		mutate: updateMetricMetadata,
+		isLoading: isUpdatingMetricMetadata,
+	} = useUpdateMetricMetadata();
 
-	// const handleSaveUnit = (): void => {
-	// 	updateMetricMetadata(
-	// 		{
-	// 			metricName: metricNames[0],
-	// 			payload: {
-	// 				unit: yAxisUnit,
-	// 				description: metrics[0]?.description ?? '',
-	// 				metricType: metrics[0]?.type as MetricType,
-	// 				temporality: metrics[0]?.temporality,
-	// 			},
-	// 		},
-	// 		{
-	// 			onSuccess: () => {
-	// 				notifications.success({
-	// 					message: 'Unit saved successfully',
-	// 				});
-	// 				queryClient.invalidateQueries([
-	// 					REACT_QUERY_KEY.GET_METRIC_DETAILS,
-	// 					metricNames[0],
-	// 				]);
-	// 			},
-	// 			onError: () => {
-	// 				notifications.error({
-	// 					message: 'Failed to save unit',
-	// 				});
-	// 			},
-	// 		},
-	// 	);
-	// };
+	const handleSaveUnit = (): void => {
+		if (metrics[0] && yAxisUnit) {
+			updateMetricMetadata(
+				{
+					pathParams: {
+						metricName: metricNames[0],
+					},
+					data: buildUpdateMetricYAxisUnitPayload(
+						metricNames[0],
+						metrics[0],
+						yAxisUnit,
+					),
+				},
+				{
+					onSuccess: () => {
+						toast.success('Unit saved successfully');
+						invalidateGetMetricMetadata(queryClient, {
+							metricName: metricNames[0],
+						});
+					},
+					onError: () => {
+						toast.error('Failed to save unit');
+					},
+				},
+			);
+		}
+	};
 
 	return (
 		<>
@@ -198,11 +207,10 @@ function TimeSeries({
 							source={YAxisSource.EXPLORER}
 							data-testid="y-axis-unit-selector"
 						/>
-						{/* TODO: Enable once we have resolved all related metrics v2 api issues */}
-						{/* {showSaveUnitButton && (
+						{showSaveUnitButton && (
 							<div className="save-unit-container">
 								<Typography.Text>
-									Save the selected unit for this metric?
+									Set the selected unit as the metric unit?
 								</Typography.Text>
 								<Button
 									type="primary"
@@ -213,7 +221,7 @@ function TimeSeries({
 									<Typography.Paragraph>Yes</Typography.Paragraph>
 								</Button>
 							</div>
-						)} */}
+						)}
 					</>
 				)}
 			</div>
@@ -222,64 +230,71 @@ function TimeSeries({
 					'time-series-container': changeLayoutForOneChartPerQuery,
 				})}
 			>
-				{responseData.map((datapoint, index) => {
-					const isQueryDataItem = index < metricNames.length;
-					const metricName = isQueryDataItem ? metricNames[index] : undefined;
-					const metricUnit = isQueryDataItem ? metricUnits[index] : undefined;
+				{metricNames.length === 0 && <EmptyMetricsSearch />}
+				{metricNames.length > 0 &&
+					responseData.map((datapoint, index) => {
+						const isQueryDataItem = index < metricNames.length;
+						const metricName = isQueryDataItem ? metricNames[index] : undefined;
+						const metricUnit = isQueryDataItem ? metricUnits[index] : undefined;
 
-					// Show the no unit warning if -
-					// 1. The metric query is not loading
-					// 2. The metric units are not loading
-					// 3. There are more than one metric
-					// 4. The current metric unit is empty
-					// 5. Is a queryData item
-					const isMetricUnitEmpty =
-						isQueryDataItem &&
-						!queries[index].isLoading &&
-						!isMetricUnitsLoading &&
-						metricUnits.length > 1 &&
-						!metricUnit &&
-						metricName;
+						// Show the no unit warning if -
+						// 1. The metric query is not loading
+						// 2. The metric units are not loading
+						// 3. There are more than one metric
+						// 4. The current metric unit is empty
+						// 5. Is a queryData item
+						const isMetricUnitEmpty =
+							isQueryDataItem &&
+							!queries[index].isLoading &&
+							!isMetricUnitsLoading &&
+							metricUnits.length > 1 &&
+							!metricUnit &&
+							metricName;
 
-					const currentYAxisUnit = yAxisUnit || metricUnit;
+						const currentYAxisUnit = yAxisUnit || metricUnit;
 
-					return (
-						<div
-							className="time-series-view"
-							// eslint-disable-next-line react/no-array-index-key
-							key={index}
-						>
-							{isMetricUnitEmpty && metricName && (
-								<Tooltip
-									className="no-unit-warning"
-									title={
-										<Typography.Text>
-											This metric does not have a unit. Please set one for it in the{' '}
-											<Typography.Link
-												onClick={(): void => handleOpenMetricDetails(metricName)}
-											>
-												metric details
-											</Typography.Link>{' '}
-											page.
-										</Typography.Text>
-									}
-								>
-									<AlertTriangle size={16} color={Color.BG_AMBER_400} />
-								</Tooltip>
-							)}
-							<TimeSeriesView
-								isFilterApplied={false}
-								isError={queries[index].isError}
-								isLoading={queries[index].isLoading || isMetricUnitsLoading}
-								data={datapoint}
-								yAxisUnit={currentYAxisUnit}
-								dataSource={DataSource.METRICS}
-								error={queries[index].error as APIError}
-								setWarning={setWarning}
-							/>
-						</div>
-					);
-				})}
+						return (
+							<div
+								className="time-series-view"
+								// eslint-disable-next-line react/no-array-index-key
+								key={index}
+							>
+								{isMetricUnitEmpty && metricName && (
+									<Tooltip
+										className="no-unit-warning"
+										title={
+											<Typography.Text>
+												No unit is set for this metric. You can assign one from the{' '}
+												<Typography.Link
+													onClick={(): void => handleOpenMetricDetails(metricName)}
+												>
+													metric details
+												</Typography.Link>{' '}
+												page.
+											</Typography.Text>
+										}
+									>
+										<AlertTriangle
+											size={16}
+											color={Color.BG_AMBER_400}
+											role="img"
+											aria-label="no unit warning"
+										/>
+									</Tooltip>
+								)}
+								<TimeSeriesView
+									isFilterApplied={false}
+									isError={queries[index].isError}
+									isLoading={queries[index].isLoading || isMetricUnitsLoading}
+									data={datapoint}
+									yAxisUnit={currentYAxisUnit}
+									dataSource={DataSource.METRICS}
+									error={queries[index].error as APIError}
+									setWarning={setWarning}
+								/>
+							</div>
+						);
+					})}
 			</div>
 		</>
 	);

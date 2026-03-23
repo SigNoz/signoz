@@ -196,7 +196,7 @@ func (mc *migrateCommon) updateQueryData(ctx context.Context, queryData map[stri
 							}
 
 							if !present {
-								mc.logger.WarnContext(ctx, "found a order by without group by, skipping", "order_col_name", columnName)
+								mc.logger.WarnContext(ctx, "found a order by without group by, skipping", slog.String("order_col_name", columnName))
 								continue
 							}
 						}
@@ -512,7 +512,7 @@ func (mc *migrateCommon) createFilterExpression(ctx context.Context, queryData m
 	expression := mc.buildExpression(ctx, items, op, dataSource)
 	if expression != "" {
 		if groupByExists := mc.groupByExistsExpr(queryData); groupByExists != "" && dataSource != "metrics" {
-			mc.logger.InfoContext(ctx, "adding default exists for old qb", "group_by_exists", groupByExists)
+			mc.logger.InfoContext(ctx, "adding default exists for old qb", slog.String("group_by_exists", groupByExists))
 			expression += " " + groupByExists
 		}
 
@@ -615,10 +615,10 @@ func (mc *migrateCommon) createHavingExpression(ctx context.Context, queryData m
 		}
 	}
 
-	mc.logger.InfoContext(ctx, "having before expression", "having", having)
+	mc.logger.InfoContext(ctx, "having before expression", slog.Any("having", having))
 
 	expression := mc.buildExpression(ctx, having, "AND", dataSource)
-	mc.logger.InfoContext(ctx, "having expression after building", "expression", expression, "having", having)
+	mc.logger.InfoContext(ctx, "having expression after building", slog.String("expression", expression), slog.Any("having", having))
 	queryData["having"] = map[string]any{
 		"expression": expression,
 	}
@@ -653,7 +653,7 @@ func (mc *migrateCommon) buildExpression(ctx context.Context, items []any, op, d
 		}
 
 		if slices.Contains(mc.ambiguity[dataSource], keyStr) {
-			mc.logger.WarnContext(ctx, "ambiguity found for a key", "ambiguity_key", keyStr)
+			mc.logger.WarnContext(ctx, "ambiguity found for a key", slog.String("ambiguity_key", keyStr))
 			typeStr, ok := key["type"].(string)
 			if ok {
 				if typeStr == "tag" {
@@ -703,13 +703,13 @@ func (mc *migrateCommon) buildCondition(ctx context.Context, key, operator strin
 		return fmt.Sprintf("%s <= %s", key, formattedValue)
 	case "in", "IN":
 		if !strings.HasPrefix(formattedValue, "[") && !mc.isVariable(formattedValue) {
-			mc.logger.WarnContext(ctx, "multi-value operator in found with single value", "key", key, "formatted_value", formattedValue)
+			mc.logger.WarnContext(ctx, "multi-value operator in found with single value", slog.String("key", key), slog.String("formatted_value", formattedValue))
 			return fmt.Sprintf("%s = %s", key, formattedValue)
 		}
 		return fmt.Sprintf("%s IN %s", key, formattedValue)
 	case "nin", "NOT IN":
 		if !strings.HasPrefix(formattedValue, "[") && !mc.isVariable(formattedValue) {
-			mc.logger.WarnContext(ctx, "multi-value operator not in found with single value", "key", key, "formatted_value", formattedValue)
+			mc.logger.WarnContext(ctx, "multi-value operator not in found with single value", slog.String("key", key), slog.String("formatted_value", formattedValue))
 			return fmt.Sprintf("%s != %s", key, formattedValue)
 		}
 		return fmt.Sprintf("%s NOT IN %s", key, formattedValue)
@@ -852,12 +852,12 @@ func (mc *migrateCommon) formatValue(ctx context.Context, value any, dataType st
 	switch v := value.(type) {
 	case string:
 		if mc.isVariable(v) {
-			mc.logger.InfoContext(ctx, "found a variable", "dashboard_variable", v)
+			mc.logger.InfoContext(ctx, "found a variable", slog.String("dashboard_variable", v))
 			return mc.normalizeVariable(ctx, v)
 		} else {
 			// if we didn't recognize something as variable but looks like has variable like value, double check
 			if strings.Contains(v, "{") || strings.Contains(v, "[") || strings.Contains(v, "$") {
-				mc.logger.WarnContext(ctx, "variable like string found", "dashboard_variable", v)
+				mc.logger.WarnContext(ctx, "variable like string found", slog.String("dashboard_variable", v))
 			}
 		}
 
@@ -955,7 +955,7 @@ func (mc *migrateCommon) normalizeVariable(ctx context.Context, s string) string
 	}
 
 	if strings.Contains(varName, " ") {
-		mc.logger.InfoContext(ctx, "found white space in var name, replacing it", "dashboard_var_name", varName)
+		mc.logger.InfoContext(ctx, "found white space in var name, replacing it", slog.String("dashboard_var_name", varName))
 		varName = strings.ReplaceAll(varName, " ", "")
 	}
 

@@ -1,0 +1,264 @@
+.invite-members-modal {
+	max-width: 700px;
+	background: var(--popover);
+	border: 1px solid var(--secondary);
+	border-radius: 4px;
+	box-shadow: 0 4px 9px 0 rgba(0, 0, 0, 0.04);
+
+	[data-slot='dialog-header'] {
+		padding: var(--padding-4);
+		border-bottom: 1px solid var(--secondary);
+		flex-shrink: 0;
+		background: transparent;
+		margin: 0;
+	}
+
+	[data-slot='dialog-title'] {
+		font-family: Inter, sans-serif;
+		font-size: var(--label-base-400-font-size);
+		font-weight: var(--label-base-400-font-weight);
+		line-height: var(--label-base-400-line-height);
+		letter-spacing: -0.065px;
+		color: var(--bg-base-white);
+		margin: 0;
+	}
+
+	[data-slot='dialog-description'] {
+		padding: 0;
+
+		.invite-members-modal__content {
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-8);
+			padding: var(--padding-4);
+		}
+	}
+}
+
+.invite-members-modal__table {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-4);
+	width: 100%;
+}
+
+.invite-members-modal__table-header {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-8);
+	width: 100%;
+
+	.email-header {
+		flex: 0 0 240px;
+	}
+
+	.role-header {
+		flex: 1 0 0;
+		min-width: 0;
+	}
+
+	.action-header {
+		flex: 0 0 32px;
+	}
+
+	.table-header-cell {
+		font-family: Inter, sans-serif;
+		font-size: var(--paragraph-base-400-font-size);
+		font-weight: var(--paragraph-base-400-font-weight);
+		line-height: var(--paragraph-base-400-line-height);
+		letter-spacing: -0.07px;
+		color: var(--foreground);
+	}
+}
+
+.invite-members-modal__container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-8);
+	width: 100%;
+}
+
+.team-member-row {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--spacing-8);
+	width: 100%;
+
+	> .email-cell {
+		flex: 0 0 240px;
+	}
+
+	> .role-cell {
+		flex: 1 0 0;
+		min-width: 0;
+	}
+
+	> .action-cell {
+		flex: 0 0 32px;
+	}
+}
+
+.team-member-cell {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+
+	&.action-cell {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		height: 32px;
+	}
+}
+
+.team-member-email-input {
+	width: 100%;
+	height: 32px;
+	color: var(--l1-foreground);
+	background-color: var(--l2-background);
+	border-color: var(--border);
+	font-size: var(--paragraph-base-400-font-size);
+
+	&::placeholder {
+		color: var(--l3-foreground);
+	}
+
+	&:focus {
+		border-color: var(--primary);
+		box-shadow: none;
+	}
+}
+.team-member-role-select {
+	width: 100%;
+
+	.ant-select-selector {
+		height: 32px;
+		border-radius: 2px;
+		background-color: var(--l2-background) !important;
+		border: 1px solid var(--border) !important;
+		padding: 0 var(--padding-2) !important;
+
+		.ant-select-selection-placeholder {
+			color: var(--l3-foreground);
+			opacity: 0.4;
+			font-size: var(--paragraph-base-400-font-size);
+			letter-spacing: -0.07px;
+			line-height: 32px;
+		}
+
+		.ant-select-selection-item {
+			font-size: var(--paragraph-base-400-font-size);
+			letter-spacing: -0.07px;
+			color: var(--bg-base-white);
+			line-height: 32px;
+		}
+	}
+
+	.ant-select-arrow {
+		color: var(--foreground);
+	}
+
+	&.ant-select-focused .ant-select-selector,
+	&:not(.ant-select-disabled):hover .ant-select-selector {
+		border-color: var(--primary);
+	}
+}
+
+.remove-team-member-button {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	width: 32px;
+	height: 32px;
+	min-width: 32px;
+	border: none;
+	border-radius: 2px;
+	background: transparent;
+	color: var(--destructive);
+	opacity: 0.6;
+	padding: 0;
+	transition: background-color 0.2s, opacity 0.2s;
+	box-shadow: none;
+
+	&:hover {
+		background: rgba(229, 72, 77, 0.1);
+		opacity: 0.9;
+	}
+}
+
+.email-error-message {
+	display: block;
+	font-family: Inter, sans-serif;
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-normal);
+	line-height: var(--line-height-18);
+	color: var(--destructive);
+}
+
+.invite-team-members-error-callout {
+	background: rgba(229, 72, 77, 0.1);
+	border: 1px solid rgba(229, 72, 77, 0.2);
+	border-radius: 4px;
+	animation: horizontal-shaking 300ms ease-out;
+}
+
+@keyframes horizontal-shaking {
+	0% {
+		transform: translateX(0);
+	}
+	25% {
+		transform: translateX(5px);
+	}
+	50% {
+		transform: translateX(-5px);
+	}
+	75% {
+		transform: translateX(5px);
+	}
+	100% {
+		transform: translateX(0);
+	}
+}
+
+.invite-members-modal__footer {
+	display: flex;
+	flex-direction: row;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 var(--padding-4);
+	height: 56px;
+	min-height: 56px;
+	border-top: 1px solid var(--secondary);
+	gap: 0;
+	flex-shrink: 0;
+}
+
+.invite-members-modal__footer-right {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-6);
+}
+
+.add-another-member-button {
+	&:hover {
+		border-color: var(--primary);
+		border-style: dashed;
+		color: var(--l1-foreground);
+	}
+}
+
+.lightMode {
+	.invite-members-modal {
+		[data-slot='dialog-title'] {
+			color: var(--bg-base-black);
+		}
+	}
+
+	.team-member-role-select {
+		.ant-select-selector {
+			.ant-select-selection-item {
+				color: var(--bg-base-black);
+			}
+		}
+	}
+}

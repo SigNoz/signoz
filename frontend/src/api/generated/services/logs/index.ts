@@ -25,10 +25,6 @@ import type {
 	RenderErrorResponseDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoints promotes and indexes paths
  * @summary Promote and index paths

@@ -44,9 +44,7 @@ jest.mock('container/ApiMonitoring/utils', () => ({
 
 describe('EndPointsDropDown Component', () => {
 	const mockEndPoints = [
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ key: '1', value: '/api/endpoint1', label: '/api/endpoint1' },
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		{ key: '2', value: '/api/endpoint2', label: '/api/endpoint2' },
 	];
 
@@ -104,11 +102,9 @@ describe('EndPointsDropDown Component', () => {
 	});
 
 	it('renders the component correctly', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...defaultProps} />);
 
 		expect(screen.getByTestId('mock-select')).toBeInTheDocument();
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		expect(screen.getByTestId('select-loading')).toHaveTextContent('not-loading');
 	});
 
@@ -120,7 +116,6 @@ describe('EndPointsDropDown Component', () => {
 			}),
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...loadingProps} />);
 
 		expect(screen.getByTestId('select-loading')).toHaveTextContent('loading');
@@ -134,7 +129,6 @@ describe('EndPointsDropDown Component', () => {
 			}),
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...fetchingProps} />);
 
 		expect(screen.getByTestId('select-loading')).toHaveTextContent('loading');
@@ -146,7 +140,6 @@ describe('EndPointsDropDown Component', () => {
 			selectedEndPointName: '/api/endpoint1',
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...selectedProps} />);
 
 		expect(screen.getByTestId('select-value')).toHaveTextContent(
@@ -155,7 +148,6 @@ describe('EndPointsDropDown Component', () => {
 	});
 
 	it('calls setSelectedEndPointName when an option is selected', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...defaultProps} />);
 
 		// Get the select element and change its value
@@ -166,7 +158,6 @@ describe('EndPointsDropDown Component', () => {
 	});
 
 	it('calls setSelectedEndPointName with empty string when cleared', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...defaultProps} />);
 
 		// Click the clear button
@@ -182,7 +173,6 @@ describe('EndPointsDropDown Component', () => {
 			dropdownStyle: { maxHeight: '200px' },
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...styleProps} />);
 
 		// We can't easily test style props in our mock, but at least ensure the component rendered
@@ -213,7 +203,6 @@ describe('EndPointsDropDown Component', () => {
 			}),
 		};
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<EndPointsDropDown {...dataProps} />);
 
 		expect(getFormattedEndPointDropDownData).toHaveBeenCalledWith(mockRows);

@@ -1,5 +1,4 @@
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter, Route } from 'react-router-dom';
 import ROUTES from 'constants/routes';
 import { explorerView } from 'mocks-server/__mockdata__/explorer_views';
@@ -100,7 +99,6 @@ describe('SaveView', () => {
 		server.use(
 			rest.put(
 				'http://localhost/api/v1/explorer/views/test-uuid-1',
-				// eslint-disable-next-line no-return-assign
 				(_req, res, ctx) =>
 					res(
 						ctx.status(200),

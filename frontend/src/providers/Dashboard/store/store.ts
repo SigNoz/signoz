@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { produce } from 'immer';
 type ListenerFn = () => void;
 

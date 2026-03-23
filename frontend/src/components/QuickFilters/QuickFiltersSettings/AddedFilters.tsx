@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { useMemo } from 'react';
 import {
 	closestCenter,

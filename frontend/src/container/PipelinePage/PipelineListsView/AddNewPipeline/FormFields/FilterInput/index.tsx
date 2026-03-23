@@ -1,7 +1,7 @@
 import { useTranslation } from 'react-i18next';
 import { Form } from 'antd';
 import { initialQueryBuilderFormValuesMap } from 'constants/queryBuilder';
-import QueryBuilderSearch from 'container/QueryBuilder/filters/QueryBuilderSearch';
+import QueryBuilderSearchV2 from 'container/QueryBuilder/filters/QueryBuilderSearchV2/QueryBuilderSearchV2';
 import isEqual from 'lodash-es/isEqual';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -30,7 +30,7 @@ function TagFilterInput({
 	};
 
 	return (
-		<QueryBuilderSearch
+		<QueryBuilderSearchV2
 			query={query}
 			onChange={onQueryChange}
 			placeholder={placeholder}

@@ -87,7 +87,6 @@ function FunnelItemPopover({
 	}
 
 	return (
-		// eslint-disable-next-line jsx-a11y/click-events-have-key-events
 		<div
 			onClick={preventDefault}
 			role="button"

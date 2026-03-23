@@ -1,4 +1,5 @@
 // Mock dependencies before imports
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { matchPath, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';

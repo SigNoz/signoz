@@ -162,8 +162,6 @@ export default function Support(): JSX.Element {
 			});
 			setIsAddCreditCardModalOpen(true);
 		} else if (window.pylon) {
-			// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-			// @ts-ignore
 			window.Pylon('show');
 		}
 	};

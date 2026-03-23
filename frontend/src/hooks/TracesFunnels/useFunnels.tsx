@@ -4,7 +4,7 @@ import {
 	useQuery,
 	UseQueryResult,
 } from 'react-query';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import {
 	createFunnel,
 	deleteFunnel,
@@ -142,7 +142,6 @@ export const useValidateFunnelSteps = ({
 			funnelId,
 			selectedTime,
 			steps.map((step) => {
-				// eslint-disable-next-line @typescript-eslint/naming-convention
 				const { latency_type: _latency_type, ...rest } = step;
 				return rest;
 			}),

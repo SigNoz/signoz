@@ -1,4 +1,3 @@
-/* eslint-disable @typescript-eslint/no-loop-func */
 import { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation, useQuery } from 'react-query';
@@ -13,10 +12,10 @@ import {
 	Row,
 	Skeleton,
 	Table,
+	TableColumnsType as ColumnsType,
 	Tag,
 	Typography,
 } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import getUsage, { UsageResponsePayloadProps } from 'api/billing/getUsage';
 import logEvent from 'api/common/logEvent';
 import updateCreditCardApi from 'api/v1/checkout/create';

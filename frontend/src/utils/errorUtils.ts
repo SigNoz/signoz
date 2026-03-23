@@ -1,6 +1,6 @@
-import { ErrorResponseHandlerV2 } from 'api/ErrorResponseHandlerV2';
-import { AxiosError } from 'axios';
-import { ErrorV2Resp } from 'types/api';
+import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { ErrorType } from 'api/generatedAPIInstance';
 import APIError from 'types/api/error';
 
 /**
@@ -35,11 +35,11 @@ export const isRetryableError = (error: any): boolean => {
 };
 
 export function toAPIError(
-	error: unknown,
+	error: ErrorType<RenderErrorResponseDTO>,
 	defaultMessage = 'An unexpected error occurred.',
 ): APIError {
 	try {
-		ErrorResponseHandlerV2(error as AxiosError<ErrorV2Resp>);
+		ErrorResponseHandlerForGeneratedAPIs(error);
 	} catch (apiError) {
 		if (apiError instanceof APIError) {
 			return apiError;
@@ -54,4 +54,15 @@ export function toAPIError(
 			errors: [],
 		},
 	});
+}
+
+export function handleApiError(
+	err: ErrorType<RenderErrorResponseDTO>,
+	showErrorFunction: (error: APIError) => void,
+): void {
+	try {
+		ErrorResponseHandlerForGeneratedAPIs(err);
+	} catch (apiError) {
+		showErrorFunction(apiError as APIError);
+	}
 }

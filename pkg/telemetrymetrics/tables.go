@@ -1,6 +1,7 @@
 package telemetrymetrics
 
 import (
+	"fmt"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -307,4 +308,21 @@ func AggregationColumnForSamplesTable(
 		)
 	}
 	return aggregationColumn, nil
+}
+
+func AggregationQueryForHistogramCountWithParams(param *metrictypes.ComparisonSpaceAggregationParam) (string, error) {
+	if param == nil {
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "no aggregation param provided for histogram count")
+	}
+	histogramCountThreshold := param.Threshold
+
+	switch param.Operater {
+	case "<=":
+		return fmt.Sprintf("argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f)) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
+	case ">":
+		return fmt.Sprintf("argMax(value, toFloat64(le)) - (argMaxIf(value, toFloat64(le), toFloat64(le) <= %f) + (argMinIf(value, toFloat64(le), toFloat64(le) > %f) - argMaxIf(value, toFloat64(le), toFloat64(le) <= %f)) * (%f - maxIf(toFloat64(le), toFloat64(le) <= %f)) / (minIf(toFloat64(le), toFloat64(le) > %f) - maxIf(toFloat64(le), toFloat64(le) <= %f))) AS value", histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold, histogramCountThreshold), nil
+	default:
+		return "", errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid space aggregation operator, should be one of the following: [`<=`, `>`]")
+	}
+
 }

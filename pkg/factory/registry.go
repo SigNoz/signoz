@@ -37,7 +37,7 @@ func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, erro
 	}
 
 	return &Registry{
-		logger:   logger.With("pkg", "go.signoz.io/pkg/factory"),
+		logger:   logger.With(slog.String("pkg", "go.signoz.io/pkg/factory")),
 		services: m,
 		startCh:  make(chan error, 1),
 		stopCh:   make(chan error, len(services)),
@@ -47,7 +47,7 @@ func NewRegistry(logger *slog.Logger, services ...NamedService) (*Registry, erro
 func (r *Registry) Start(ctx context.Context) {
 	for _, s := range r.services.GetInOrder() {
 		go func(s NamedService) {
-			r.logger.InfoContext(ctx, "starting service", "service", s.Name())
+			r.logger.InfoContext(ctx, "starting service", slog.Any("service", s.Name()))
 			err := s.Start(ctx)
 			r.startCh <- err
 		}(s)
@@ -61,11 +61,11 @@ func (r *Registry) Wait(ctx context.Context) error {
 
 	select {
 	case <-ctx.Done():
-		r.logger.InfoContext(ctx, "caught context error, exiting", "error", ctx.Err())
+		r.logger.InfoContext(ctx, "caught context error, exiting", errors.Attr(ctx.Err()))
 	case s := <-interrupt:
-		r.logger.InfoContext(ctx, "caught interrupt signal, exiting", "signal", s)
+		r.logger.InfoContext(ctx, "caught interrupt signal, exiting", slog.Any("signal", s))
 	case err := <-r.startCh:
-		r.logger.ErrorContext(ctx, "caught service error, exiting", "error", err)
+		r.logger.ErrorContext(ctx, "caught service error, exiting", errors.Attr(err))
 		return err
 	}
 
@@ -75,7 +75,7 @@ func (r *Registry) Wait(ctx context.Context) error {
 func (r *Registry) Stop(ctx context.Context) error {
 	for _, s := range r.services.GetInOrder() {
 		go func(s NamedService) {
-			r.logger.InfoContext(ctx, "stopping service", "service", s.Name())
+			r.logger.InfoContext(ctx, "stopping service", slog.Any("service", s.Name()))
 			err := s.Stop(ctx)
 			r.stopCh <- err
 		}(s)

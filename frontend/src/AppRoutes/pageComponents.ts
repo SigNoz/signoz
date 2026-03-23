@@ -165,11 +165,6 @@ export const MySettings = Loadable(
 	() => import(/* webpackChunkName: "All MySettings" */ 'pages/Settings'),
 );
 
-export const CustomDomainSettings = Loadable(
-	() =>
-		import(/* webpackChunkName: "Custom Domain Settings" */ 'pages/Settings'),
-);
-
 export const Logs = Loadable(
 	() => import(/* webpackChunkName: "Logs" */ 'pages/LogsModulePage'),
 );
@@ -307,4 +302,16 @@ export const PublicDashboardPage = Loadable(
 		import(
 			/* webpackChunkName: "Public Dashboard Page" */ 'pages/PublicDashboard'
 		),
+);
+
+export const AlertTypeSelectionPage = Loadable(
+	() =>
+		import(
+			/* webpackChunkName: "Alert Type Selection Page" */ 'pages/AlertTypeSelection'
+		),
+);
+
+export const MeterExplorerPage = Loadable(
+	() =>
+		import(/* webpackChunkName: "Meter Explorer Page" */ 'pages/MeterExplorer'),
 );
