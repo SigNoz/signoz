@@ -24,13 +24,12 @@ const mockActiveMembers: MemberRow[] = [
 ];
 
 const mockInvitedMember: MemberRow = {
-	id: 'invite-abc',
+	id: 'inv-abc',
 	name: '',
 	email: 'charlie@signoz.io',
 	role: 'EDITOR' as ROLES,
 	status: MemberStatus.Invited,
 	joinedOn: null,
-	token: 'tok-123',
 };
 
 const defaultProps = {
@@ -90,6 +89,34 @@ describe('MembersTable', () => {
 		expect(onRowClick).toHaveBeenCalledTimes(1);
 		expect(onRowClick).toHaveBeenCalledWith(
 			expect.objectContaining({ id: 'user-1', email: 'alice@signoz.io' }),
+		);
+	});
+
+	it('renders DELETED badge and does not call onRowClick when a deleted member row is clicked', async () => {
+		const onRowClick = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const deletedMember: MemberRow = {
+			id: 'user-del',
+			name: 'Dave Deleted',
+			email: 'dave@signoz.io',
+			role: 'VIEWER' as ROLES,
+			status: MemberStatus.Deleted,
+			joinedOn: null,
+		};
+
+		render(
+			<MembersTable
+				{...defaultProps}
+				data={[...mockActiveMembers, deletedMember]}
+				total={3}
+				onRowClick={onRowClick}
+			/>,
+		);
+
+		expect(screen.getByText('DELETED')).toBeInTheDocument();
+		await user.click(screen.getByText('Dave Deleted'));
+		expect(onRowClick).not.toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'user-del' }),
 		);
 	});
 

@@ -28,9 +28,6 @@ const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"
 
-// Deprecated: Use the new emailing service instead
-var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
-
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")
 

@@ -3,6 +3,7 @@ package queryparser
 import (
 	"net/http"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -31,7 +32,7 @@ func (a *API) AnalyzeQueryFilter(w http.ResponseWriter, r *http.Request) {
 
 	result, err := a.queryParser.AnalyzeQueryFilter(r.Context(), req.QueryType, req.Query)
 	if err != nil {
-		a.settings.Logger.ErrorContext(r.Context(), "failed to analyze query filter", "error", err)
+		a.settings.Logger.ErrorContext(r.Context(), "failed to analyze query filter", errors.Attr(err))
 		render.Error(w, err)
 		return
 	}

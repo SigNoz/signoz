@@ -4,6 +4,7 @@ import (
 	"log/slog"
 	"strconv"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -68,7 +69,7 @@ func TraceIdFilterUsedWithEqual(params *v3.QueryRangeParamsV3) (bool, []string) 
 					val := item.Value
 					val, err = utils.ValidateAndCastValue(val, item.Key.DataType)
 					if err != nil {
-						slog.Error("invalid value for key", "key", item.Key.Key, "error", err)
+						slog.Error("invalid value for key", "key", item.Key.Key, errors.Attr(err))
 						return false, []string{}
 					}
 					if val != nil {

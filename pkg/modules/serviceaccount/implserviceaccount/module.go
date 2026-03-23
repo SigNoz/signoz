@@ -273,7 +273,7 @@ func (module *module) CreateFactorAPIKey(ctx context.Context, factorAPIKey *serv
 		"KeyID":        factorAPIKey.ID.String(),
 		"KeyCreatedAt": factorAPIKey.CreatedAt.String(),
 	}); err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to send email", errors.Attr(err))
 	}
 
 	return nil
@@ -328,7 +328,7 @@ func (module *module) RevokeFactorAPIKey(ctx context.Context, serviceAccountID v
 		"KeyID":        factorAPIKey.ID.String(),
 		"KeyCreatedAt": factorAPIKey.CreatedAt.String(),
 	}); err != nil {
-		module.settings.Logger().ErrorContext(ctx, "failed to send email", "error", err)
+		module.settings.Logger().ErrorContext(ctx, "failed to send email", errors.Attr(err))
 	}
 
 	return nil

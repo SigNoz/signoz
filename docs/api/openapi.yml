@@ -598,6 +598,39 @@ components:
       required:
       - config
       type: object
+    GlobaltypesAPIKeyConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesConfig:
+      properties:
+        external_url:
+          type: string
+        identN:
+          $ref: '#/components/schemas/GlobaltypesIdentNConfig'
+        ingestion_url:
+          type: string
+      type: object
+    GlobaltypesIdentNConfig:
+      properties:
+        apikey:
+          $ref: '#/components/schemas/GlobaltypesAPIKeyConfig'
+        impersonation:
+          $ref: '#/components/schemas/GlobaltypesImpersonationConfig'
+        tokenizer:
+          $ref: '#/components/schemas/GlobaltypesTokenizerConfig'
+      type: object
+    GlobaltypesImpersonationConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesTokenizerConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
     MetricsexplorertypesListMetric:
       properties:
         description:
@@ -2030,13 +2063,6 @@ components:
       required:
       - id
       type: object
-    TypesGettableGlobalConfig:
-      properties:
-        external_url:
-          type: string
-        ingestion_url:
-          type: string
-      type: object
     TypesIdentifiable:
       properties:
         id:
@@ -2099,17 +2125,6 @@ components:
         name:
           type: string
         role:
-          type: string
-      type: object
-    TypesPostableAcceptInvite:
-      properties:
-        displayName:
-          type: string
-        password:
-          type: string
-        sourceUrl:
-          type: string
-        token:
           type: string
       type: object
     TypesPostableBulkInviteRequest:
@@ -3255,7 +3270,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesGettableGlobalConfig'
+                    $ref: '#/components/schemas/GlobaltypesConfig'
                   status:
                     type: string
                 required:
@@ -3263,80 +3278,16 @@ paths:
                 - data
                 type: object
           description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
       summary: Get global config
       tags:
       - global
   /api/v1/invite:
-    get:
-      deprecated: false
-      description: This endpoint lists all invites
-      operationId: ListInvite
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesInvite'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List invites
-      tags:
-      - users
     post:
       deprecated: false
       description: This endpoint creates an invite for a user
@@ -3397,151 +3348,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Create invite
-      tags:
-      - users
-  /api/v1/invite/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint deletes an invite by id
-      operationId: DeleteInvite
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete invite
-      tags:
-      - users
-  /api/v1/invite/{token}:
-    get:
-      deprecated: false
-      description: This endpoint gets an invite by token
-      operationId: GetInvite
-      parameters:
-      - in: path
-        name: token
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesInvite'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get invite
-      tags:
-      - users
-  /api/v1/invite/accept:
-    post:
-      deprecated: false
-      description: This endpoint accepts an invite by token
-      operationId: AcceptInvite
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableAcceptInvite'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Accept invite
       tags:
       - users
   /api/v1/invite/bulk:
@@ -5814,9 +5620,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -5864,9 +5670,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -5904,9 +5710,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete ingestion key for workspace
       tags:
       - gateway
@@ -5948,9 +5754,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update ingestion key for workspace
       tags:
       - gateway
@@ -6005,9 +5811,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create limit for the ingestion key
       tags:
       - gateway
@@ -6045,9 +5851,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete limit for the ingestion key
       tags:
       - gateway
@@ -6089,9 +5895,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -6149,9 +5955,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Search ingestion keys for workspace
       tags:
       - gateway

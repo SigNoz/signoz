@@ -41,9 +41,6 @@ type Module interface {
 
 	// invite
 	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
-	ListInvite(ctx context.Context, orgID string) ([]*types.Invite, error)
-	AcceptInvite(ctx context.Context, token string, password string) (*types.User, error)
-	GetInviteByToken(ctx context.Context, token string) (*types.Invite, error)
 
 	// API KEY
 	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
@@ -89,10 +86,6 @@ type Getter interface {
 type Handler interface {
 	// invite
 	CreateInvite(http.ResponseWriter, *http.Request)
-	AcceptInvite(http.ResponseWriter, *http.Request)
-	GetInvite(http.ResponseWriter, *http.Request) // public function
-	ListInvite(http.ResponseWriter, *http.Request)
-	DeleteInvite(http.ResponseWriter, *http.Request)
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
 	ListUsers(http.ResponseWriter, *http.Request)

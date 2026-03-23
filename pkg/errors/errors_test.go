@@ -51,3 +51,22 @@ func TestUnwrapb(t *testing.T) {
 	atyp, _, _, _, _, _ = Unwrapb(oerr)
 	assert.Equal(t, TypeInternal, atyp)
 }
+
+func TestAttr(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "test error")
+	attr := Attr(err)
+	assert.Equal(t, "exception", attr.Key)
+	assert.Equal(t, err, attr.Value.Any())
+}
+
+func TestWithStacktrace(t *testing.T) {
+	err := New(TypeInternal, MustNewCode("test_code"), "panic").WithStacktrace("custom stack trace")
+
+	assert.Equal(t, "custom stack trace", err.Stacktrace())
+	assert.Equal(t, "panic", err.Error())
+
+	typ, code, message, _, _, _ := Unwrapb(err)
+	assert.Equal(t, TypeInternal, typ)
+	assert.Equal(t, "test_code", code.String())
+	assert.Equal(t, "panic", message)
+}

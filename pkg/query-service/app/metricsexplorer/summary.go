@@ -5,10 +5,15 @@ import (
 	"encoding/json"
 	"errors"
 	"sort"
+
 	"strings"
 	"time"
 
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
+
 	"log/slog"
+
+	"golang.org/x/sync/errgroup"
 
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -18,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"golang.org/x/sync/errgroup"
 )
 
 type SummaryService struct {
@@ -173,14 +177,14 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		if data != nil {
 			jsonData, err := json.Marshal(data)
 			if err != nil {
-				slog.Error("error marshalling data", "error", err)
+				slog.Error("error marshalling data", signozerrors.Attr(err))
 				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 
 			var dashboards map[string][]metrics_explorer.Dashboard
 			err = json.Unmarshal(jsonData, &dashboards)
 			if err != nil {
-				slog.Error("error unmarshalling data", "error", err)
+				slog.Error("error unmarshalling data", signozerrors.Attr(err))
 				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
 			if _, ok := dashboards[metricName]; ok {
@@ -350,12 +354,12 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		if names != nil {
 			jsonData, err := json.Marshal(names)
 			if err != nil {
-				slog.Error("error marshalling dashboard data", "error", err)
+				slog.Error("error marshalling dashboard data", signozerrors.Attr(err))
 				return &model.ApiError{Typ: "MarshallingErr", Err: err}
 			}
 			err = json.Unmarshal(jsonData, &dashboardsRelatedData)
 			if err != nil {
-				slog.Error("error unmarshalling dashboard data", "error", err)
+				slog.Error("error unmarshalling dashboard data", signozerrors.Attr(err))
 				return &model.ApiError{Typ: "UnMarshallingErr", Err: err}
 			}
 		}

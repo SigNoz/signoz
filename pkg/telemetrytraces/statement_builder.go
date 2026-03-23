@@ -119,7 +119,7 @@ func (b *traceQueryStatementBuilder) Build(
 
 			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
 			if !ok {
-				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
+				b.logger.DebugContext(ctx, "failed to get trace time range", slog.Any("trace_ids", traceIDs))
 			} else if traceStart > 0 && traceEnd > 0 {
 				// we don't  need to query if the start and end are non overlapping
 				if uint64(traceStart) > end || uint64(traceEnd) < start {
@@ -259,7 +259,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
+		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 
 	return query

@@ -99,6 +99,11 @@ export interface ScaleProps {
 	distribution?: DistributionType;
 }
 
+export enum DisconnectedValuesMode {
+	Never = 'never',
+	Threshold = 'threshold',
+}
+
 /**
  * Props for configuring a series
  */
@@ -175,7 +180,16 @@ export interface SeriesProps extends LineConfig, PointsConfig, BarConfig {
 	pointsFilter?: Series.Points.Filter;
 	pointsBuilder?: Series.Points.Show;
 	show?: boolean;
-	spanGaps?: boolean;
+	/**
+	 * Controls how nulls are treated for this series.
+	 *
+	 * - boolean: mapped directly to uPlot's spanGaps behavior
+	 * - number: interpreted as an X-axis threshold (same unit as ref values),
+	 *           where gaps smaller than this threshold are spanned by
+	 *           converting short null runs to undefined during data prep
+	 *           while uPlot's internal spanGaps is kept disabled.
+	 */
+	spanGaps?: boolean | number;
 	fillColor?: string;
 	fillMode?: FillMode;
 	isDarkMode?: boolean;

@@ -219,7 +219,6 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 			// we don't have a toBoolOrNull in ClickHouse, so we need to convert the bool to a string
 			value = fmt.Sprintf("%t", v)
 		}
-
 	case telemetrytypes.FieldDataTypeInt64,
 		telemetrytypes.FieldDataTypeArrayInt64,
 		telemetrytypes.FieldDataTypeNumber,

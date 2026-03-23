@@ -240,7 +240,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 
 func (m *Manager) Start(ctx context.Context) {
 	if err := m.initiate(ctx); err != nil {
-		m.logger.ErrorContext(ctx, "failed to initialize alerting rules manager", "error", err)
+		m.logger.ErrorContext(ctx, "failed to initialize alerting rules manager", errors.Attr(err))
 	}
 	m.run(ctx)
 }
@@ -298,7 +298,7 @@ func (m *Manager) initiate(ctx context.Context) error {
 			if !parsedRule.Disabled {
 				err := m.addTask(ctx, org.ID, &parsedRule, taskName)
 				if err != nil {
-					m.logger.ErrorContext(ctx, "failed to load the rule definition", "name", taskName, "error", err)
+					m.logger.ErrorContext(ctx, "failed to load the rule definition", "name", taskName, errors.Attr(err))
 				}
 			}
 		}
@@ -419,7 +419,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 	})
 
 	if err != nil {
-		m.logger.Error("loading tasks failed", "error", err)
+		m.logger.Error("loading tasks failed", errors.Attr(err))
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error preparing rule with given parameters, previous rule set restored")
 	}
 
@@ -455,7 +455,7 @@ func (m *Manager) editTask(_ context.Context, orgID valuer.UUID, rule *ruletypes
 func (m *Manager) DeleteRule(ctx context.Context, idStr string) error {
 	id, err := valuer.NewUUID(idStr)
 	if err != nil {
-		m.logger.Error("delete rule received a rule id in invalid format, must be a valid uuid-v7", "id", idStr, "error", err)
+		m.logger.Error("delete rule received a rule id in invalid format, must be a valid uuid-v7", "id", idStr, errors.Attr(err))
 		return fmt.Errorf("delete rule received an rule id in invalid format, must be a valid uuid-v7")
 	}
 
@@ -628,7 +628,7 @@ func (m *Manager) addTask(_ context.Context, orgID valuer.UUID, rule *ruletypes.
 	})
 
 	if err != nil {
-		m.logger.Error("creating rule task failed", "name", taskName, "error", err)
+		m.logger.Error("creating rule task failed", "name", taskName, errors.Attr(err))
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "error loading rules, previous rule set restored")
 	}
 
@@ -784,7 +784,7 @@ func (m *Manager) prepareTestNotifyFunc() NotifyFunc {
 		}
 		err := m.alertmanager.TestAlert(ctx, orgID, ruleID, receiverMap)
 		if err != nil {
-			m.logger.ErrorContext(ctx, "failed to send test notification", "error", err)
+			m.logger.ErrorContext(ctx, "failed to send test notification", errors.Attr(err))
 			return
 		}
 	}
@@ -819,7 +819,7 @@ func (m *Manager) ListRuleStates(ctx context.Context) (*ruletypes.GettableRules,
 		ruleResponse := ruletypes.GettableRule{}
 		err = json.Unmarshal([]byte(s.Data), &ruleResponse)
 		if err != nil {
-			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", s.ID.StringValue(), "error", err)
+			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", s.ID.StringValue(), errors.Attr(err))
 			continue
 		}
 
@@ -850,7 +850,7 @@ func (m *Manager) GetRule(ctx context.Context, id valuer.UUID) (*ruletypes.Getta
 	r := ruletypes.GettableRule{}
 	err = json.Unmarshal([]byte(s.Data), &r)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", s.ID.StringValue(), "error", err)
+		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", s.ID.StringValue(), errors.Attr(err))
 		return nil, err
 	}
 	r.Id = id.StringValue()
@@ -919,30 +919,30 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	// retrieve rule from DB
 	storedJSON, err := m.ruleStore.GetStoredRule(ctx, id)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "failed to get stored rule with given id", "id", id.StringValue(), "error", err)
+		m.logger.ErrorContext(ctx, "failed to get stored rule with given id", "id", id.StringValue(), errors.Attr(err))
 		return nil, err
 	}
 
 	storedRule := ruletypes.PostableRule{}
 	if err := json.Unmarshal([]byte(storedJSON.Data), &storedRule); err != nil {
-		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", id.StringValue(), "error", err)
+		m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", id.StringValue(), errors.Attr(err))
 		return nil, err
 	}
 
 	if err := json.Unmarshal([]byte(ruleStr), &storedRule); err != nil {
-		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", "id", id.StringValue(), "error", err)
+		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", "id", id.StringValue(), errors.Attr(err))
 		return nil, err
 	}
 
 	// deploy or un-deploy task according to patched (new) rule state
 	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
-		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", "task_name", taskName, "error", err)
+		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", "task_name", taskName, errors.Attr(err))
 		return nil, err
 	}
 
 	newStoredJson, err := json.Marshal(&storedRule)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "failed to marshal new stored rule with given id", "id", id.StringValue(), "error", err)
+		m.logger.ErrorContext(ctx, "failed to marshal new stored rule with given id", "id", id.StringValue(), errors.Attr(err))
 		return nil, err
 	}
 
@@ -954,7 +954,7 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	err = m.ruleStore.EditRule(ctx, storedJSON, func(ctx context.Context) error { return nil })
 	if err != nil {
 		if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
-			m.logger.ErrorContext(ctx, "failed to restore rule after patch failure", "task_name", taskName, "error", err)
+			m.logger.ErrorContext(ctx, "failed to restore rule after patch failure", "task_name", taskName, errors.Attr(err))
 		}
 		return nil, err
 	}
@@ -1022,7 +1022,7 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 	result := make(map[string][]ruletypes.GettableRule)
 	rules, err := m.ruleStore.GetStoredRules(ctx, claims.OrgID)
 	if err != nil {
-		m.logger.ErrorContext(ctx, "error getting stored rules", "error", err)
+		m.logger.ErrorContext(ctx, "error getting stored rules", errors.Attr(err))
 		return nil, &model.ApiError{Typ: model.ErrorExec, Err: err}
 	}
 
@@ -1032,7 +1032,7 @@ func (m *Manager) GetAlertDetailsForMetricNames(ctx context.Context, metricNames
 		var rule ruletypes.GettableRule
 		err = json.Unmarshal([]byte(storedRule.Data), &rule)
 		if err != nil {
-			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", storedRule.ID.StringValue(), "error", err)
+			m.logger.ErrorContext(ctx, "failed to unmarshal rule from db", "id", storedRule.ID.StringValue(), errors.Attr(err))
 			continue
 		}
 

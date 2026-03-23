@@ -4,6 +4,10 @@
 	font-family: 'Space Mono';
 	padding-bottom: 48px;
 
+	.panel-type-select {
+		width: 100%;
+	}
+
 	.section-heading {
 		font-family: 'Space Mono';
 		color: var(--bg-vanilla-400);
@@ -24,10 +28,6 @@
 		word-break: initial;
 		line-height: 16px; /* 133.333% */
 		letter-spacing: 0.48px;
-	}
-
-	.panel-type-select {
-		width: 100%;
 	}
 
 	.header {
@@ -192,6 +192,16 @@
 			justify-content: space-between;
 		}
 	}
+
+	.context-links {
+		padding: 12px 12px 16px 12px;
+		border-bottom: 1px solid var(--bg-slate-500);
+	}
+
+	.thresholds-section {
+		padding: 12px 12px 16px 12px;
+		border-top: 1px solid var(--bg-slate-500);
+	}
 }
 
 .select-option {
@@ -216,7 +226,8 @@
 .lightMode {
 	.right-container {
 		background-color: var(--bg-vanilla-100);
-		.section-heading {
+		.section-heading,
+		.section-heading-small {
 			color: var(--bg-ink-400);
 		}
 		.header {
