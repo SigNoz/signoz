@@ -21,66 +21,66 @@ FILTER_EXPRESSIONS_FILE = os.path.join(TESTDATA_DIR, "filter_expressions_10000.t
     [
         # NOT on resource attribute unique to alpha → beta only
         pytest.param(
-            'NOT resource.f1 = "v10"',
+            'NOT resource.region = "us-east"',
             {"beta-log"},
             id="not_resource_attr",
         ),
         # NOT on number attribute unique to alpha → beta only
         pytest.param(
-            "NOT attribute.f4 = 40",
+            "NOT attribute.status_code = 200",
             {"beta-log"},
             id="not_number_attr",
         ),
         # NOT (OR covering both logs) → no logs
-        # resource.f1 = "v10" matches alpha; resource.f4 = "v41" matches beta
+        # resource.region = "us-east" matches alpha; resource.status_code = "500" matches beta
         pytest.param(
-            'NOT (resource.f1 = "v10" OR resource.f4 = "v41")',
+            'NOT (resource.region = "us-east" OR resource.status_code = "500")',
             set(),
             id="not_or_covering_all",
         ),
         # Multiple NOTs ANDed: each NOT excludes one log → no logs
         pytest.param(
-            'NOT resource.f1 = "v10" AND NOT resource.f4 = "v41"',
+            'NOT resource.region = "us-east" AND NOT resource.status_code = "500"',
             set(),
             id="multiple_nots_and",
         ),
         # Double NOT: NOT (NOT expr) ≡ expr → alpha only
         pytest.param(
-            'NOT (NOT resource.f1 = "v10")',
+            'NOT (NOT resource.region = "us-east")',
             {"alpha-log"},
             id="double_not",
         ),
-        # NOT EXISTS: resource.f1 exists only on alpha → beta only
+        # NOT EXISTS: resource.region exists only on alpha → beta only
         pytest.param(
-            "NOT resource.f1 EXISTS",
+            "NOT resource.region EXISTS",
             {"beta-log"},
             id="not_exists",
         ),
         # NOT IN on resource attribute unique to beta → alpha only
         pytest.param(
-            'resource.f4 NOT IN ["v41"]',
+            'resource.status_code NOT IN ["500"]',
             {"alpha-log"},
             id="not_in",
         ),
         # NOT compound (number attr AND resource attr both on alpha) → beta only
         pytest.param(
-            'NOT (attribute.f4 = 40 AND resource.f1 = "v10")',
+            'NOT (attribute.status_code = 200 AND resource.region = "us-east")',
             {"beta-log"},
             id="not_compound_attr_and_resource",
         ),
-        # NOT wrapping impossible AND: no log has both resource.f1 and resource.f4
+        # NOT wrapping impossible AND: no log has both resource.region and resource.status_code
         # → AND always false → NOT always true → both logs
         pytest.param(
-            'NOT (resource.f1 = "v10" AND resource.f4 = "v41")',
+            'NOT (resource.region = "us-east" AND resource.status_code = "500")',
             {"alpha-log", "beta-log"},
             id="not_impossible_and",
         ),
         # IS and NULL are not grammar keywords so they lex as KEY tokens.
         # The implicit AND in andExpression splits this into three unary expressions:
-        #   NOT (body REGEXP 'resource.f1') AND (body REGEXP 'IS') AND (body REGEXP 'NULL')
+        #   NOT (body REGEXP 'resource.region') AND (body REGEXP 'IS') AND (body REGEXP 'NULL')
         # Neither body ("alpha-log", "beta-log") matches "IS" or "NULL" → empty set.
         pytest.param(
-            "NOT resource.f1 IS NULL",
+            "NOT resource.region IS NULL",
             set(),
             id="sql_is_null_as_fulltext",
         ),
@@ -104,13 +104,13 @@ def test_not_filter_expression(
 
     Insert the two canonical test logs used by all valid-expression test cases.
 
-    alpha-log: resources f1="v10", f2="v20", f3="v30"
-               attributes f4=40,   f5=50,   f6=60  (numbers)
-    beta-log:  resources f4="v41", f5="v51", f6="v61"
-               attributes f1=11,   f2=21,   f3=31  (numbers)
+    alpha-log: resources region="us-east", env="production",  hostname="host-alpha"
+               attributes status_code=200,  latency_ms=350,   error_count=3  (numbers)
+    beta-log:  resources status_code="500", latency_ms="2500", error_count="10"
+               attributes region=1,          env=2,             hostname=3    (numbers)
 
-    f1-f3 are present as resource on alpha and as attribute on beta.
-    f4-f6 are present as attribute on alpha and as resource on beta.
+    region/env/hostname are present as resource on alpha and as attribute on beta.
+    status_code/latency_ms/error_count are present as attribute on alpha and as resource on beta.
     This intentional overlap exercises context-prefix disambiguation.
     """
     now = datetime.now(tz=timezone.utc)
@@ -120,28 +120,28 @@ def test_not_filter_expression(
                 timestamp=now - timedelta(seconds=5),
                 body="alpha-log",
                 resources={
-                    "f1": "v10",
-                    "f2": "v20",
-                    "f3": "v30",
+                    "region": "us-east",
+                    "env": "production",
+                    "hostname": "host-alpha",
                 },
                 attributes={
-                    "f4": 40,
-                    "f5": 50,
-                    "f6": 60,
+                    "status_code": 200,
+                    "latency_ms": 350,
+                    "error_count": 3,
                 },
             ),
             Logs(
                 timestamp=now - timedelta(seconds=3),
                 body="beta-log",
                 resources={
-                    "f4": "v41",
-                    "f5": "v51",
-                    "f6": "v61",
+                    "status_code": "500",
+                    "latency_ms": "2500",
+                    "error_count": "10",
                 },
                 attributes={
-                    "f1": 11,
-                    "f2": 21,
-                    "f3": 31,
+                    "region": 1,
+                    "env": 2,
+                    "hostname": 3,
                 },
             ),
         ]
