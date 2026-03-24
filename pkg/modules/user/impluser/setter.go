@@ -900,7 +900,11 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 
 	// create user_role entry
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	return module.userRoleStore.CreateUserRoles(ctx, userRoles)
+	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+		return err
+	}
+
+	return module.tokenizer.DeleteIdentity(ctx, userID)
 }
 
 func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) error {
@@ -944,7 +948,11 @@ func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.U
 		return err
 	}
 
-	return module.userRoleStore.DeleteUserRoleByUserIDAndRoleID(ctx, userID, roleID)
+	if err := module.userRoleStore.DeleteUserRoleByUserIDAndRoleID(ctx, userID, roleID); err != nil {
+		return err
+	}
+
+	return module.tokenizer.DeleteIdentity(ctx, userID)
 }
 
 func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {
