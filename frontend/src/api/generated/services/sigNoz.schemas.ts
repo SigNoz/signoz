@@ -437,6 +437,48 @@ export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
 }
 
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	roles?: AuthtypesRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface CloudintegrationtypesAWSAccountConfigDTO {
 	/**
 	 * @type array
@@ -865,48 +907,6 @@ export interface CloudintegrationtypesUpdatableAccountDTO {
 
 export interface CloudintegrationtypesUpdatableServiceDTO {
 	config: CloudintegrationtypesServiceConfigDTO;
-}
-
-export interface AuthtypesUserWithRolesDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	displayName?: string;
-	/**
-	 * @type string
-	 */
-	email?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type boolean
-	 */
-	isRoot?: boolean;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	roles?: AuthtypesRoleDTO[] | null;
-	/**
-	 * @type string
-	 */
-	status?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
 }
 
 export interface DashboardtypesDashboardDTO {

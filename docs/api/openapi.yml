@@ -342,6 +342,34 @@ components:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
       type: object
+    AuthtypesUserWithRoles:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        roles:
+          items:
+            $ref: '#/components/schemas/AuthtypesRole'
+          nullable: true
+          type: array
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     CloudintegrationtypesAWSAccountConfig:
       properties:
         regions:
@@ -744,34 +772,6 @@ components:
           $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
       required:
       - config
-      type: object
-    AuthtypesUserWithRoles:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        displayName:
-          type: string
-        email:
-          type: string
-        id:
-          type: string
-        isRoot:
-          type: boolean
-        orgId:
-          type: string
-        roles:
-          items:
-            $ref: '#/components/schemas/AuthtypesRole'
-          nullable: true
-          type: array
-        status:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
       type: object
     DashboardtypesDashboard:
       properties:
