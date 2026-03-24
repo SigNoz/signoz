@@ -144,6 +144,8 @@ telemetrystore:
 
 ##################### Prometheus #####################
 prometheus:
+  # The maximum time a PromQL query is allowed to run before being aborted.
+  timeout: 2m
   active_query_tracker:
     # Whether to enable the active query tracker.
     enabled: true

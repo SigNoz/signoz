@@ -20,6 +20,9 @@ type Config struct {
 	//
 	// If not set, the prometheus default is used (currently 5m).
 	LookbackDelta time.Duration `mapstructure:"lookback_delta"`
+
+	// Timeout is the maximum time a query is allowed to run before being aborted.
+	Timeout time.Duration `mapstructure:"timeout"`
 }
 
 func NewConfigFactory() factory.ConfigFactory {
@@ -33,6 +36,7 @@ func newConfig() factory.Config {
 			Path:          "",
 			MaxConcurrent: 20,
 		},
+		Timeout: 2 * time.Minute,
 	}
 }
 
