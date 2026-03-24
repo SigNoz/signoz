@@ -37,7 +37,7 @@ func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID)
 	return rootUser, userRoles, nil
 }
 
-func (module *getter) ListByOrgIDDeprecated(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
+func (module *getter) ListDeprecatedUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -84,7 +84,7 @@ func (module *getter) ListByOrgIDDeprecated(ctx context.Context, orgID valuer.UU
 	return deprecatedUsers, nil
 }
 
-func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
+func (module *getter) ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err

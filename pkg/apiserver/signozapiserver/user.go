@@ -112,7 +112,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/user", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsersDeprecated), handler.OpenAPIDef{
-		ID:                  "ListUsers",
+		ID:                  "ListUsersDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "List users",
 		Description:         "This endpoint lists all users",
@@ -129,7 +129,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/users", handler.New(provider.authZ.AdminAccess(provider.userHandler.ListUsers), handler.OpenAPIDef{
-		ID:                  "ListUsersV2",
+		ID:                  "ListUsers",
 		Tags:                []string{"users"},
 		Summary:             "List users v2",
 		Description:         "This endpoint lists all users for the organization",
@@ -146,7 +146,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/user/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUserDeprecated), handler.OpenAPIDef{
-		ID:                  "GetMyUser",
+		ID:                  "GetMyUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get my user",
 		Description:         "This endpoint returns the user I belong to",
@@ -163,7 +163,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/users/me", handler.New(provider.authZ.OpenAccess(provider.userHandler.GetMyUser), handler.OpenAPIDef{
-		ID:                  "GetMyUserV2",
+		ID:                  "GetMyUser",
 		Tags:                []string{"users"},
 		Summary:             "Get my user v2",
 		Description:         "This endpoint returns the user I belong to",
@@ -197,7 +197,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.GetUserDeprecated), handler.OpenAPIDef{
-		ID:                  "GetUser",
+		ID:                  "GetUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Get user",
 		Description:         "This endpoint returns the user by id",
@@ -214,13 +214,13 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUser), handler.OpenAPIDef{
-		ID:                  "GetUserV2",
+		ID:                  "GetUser",
 		Tags:                []string{"users"},
 		Summary:             "Get user by user id",
 		Description:         "This endpoint returns the user by id",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(types.User),
+		Response:            new(authtypes.UserWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},

@@ -327,6 +327,27 @@ components:
           nullable: true
           type: array
       type: object
+    AuthtypesStorableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesTransaction:
       properties:
         object:
@@ -341,6 +362,25 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    AuthtypesUserRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        role:
+          $ref: '#/components/schemas/AuthtypesStorableRole'
+        role_id:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        user_id:
+          type: string
+      required:
+      - id
       type: object
     AuthtypesUserWithRoles:
       properties:
@@ -357,16 +397,16 @@ components:
           type: boolean
         orgId:
           type: string
-        roles:
-          items:
-            $ref: '#/components/schemas/AuthtypesRole'
-          nullable: true
-          type: array
         status:
           type: string
         updatedAt:
           format: date-time
           type: string
+        user_roles:
+          items:
+            $ref: '#/components/schemas/AuthtypesUserRole'
+          nullable: true
+          type: array
       required:
       - id
       type: object
@@ -6160,7 +6200,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists all users
-      operationId: ListUsers
+      operationId: ListUsersDeprecated
       responses:
         "200":
           content:
@@ -6253,7 +6293,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user by id
-      operationId: GetUser
+      operationId: GetUserDeprecated
       parameters:
       - in: path
         name: id
@@ -6379,7 +6419,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user I belong to
-      operationId: GetMyUser
+      operationId: GetMyUserDeprecated
       responses:
         "200":
           content:
@@ -8050,7 +8090,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists all users for the organization
-      operationId: ListUsersV2
+      operationId: ListUsers
       responses:
         "200":
           content:
@@ -8098,7 +8138,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user by id
-      operationId: GetUserV2
+      operationId: GetUser
       parameters:
       - in: path
         name: id
@@ -8112,7 +8152,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/AuthtypesUserWithRoles'
                   status:
                     type: string
                 required:
@@ -8272,7 +8312,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user I belong to
-      operationId: GetMyUserV2
+      operationId: GetMyUser
       responses:
         "200":
           content:

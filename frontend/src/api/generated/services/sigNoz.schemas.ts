@@ -425,6 +425,39 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
+export interface AuthtypesStorableRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -435,6 +468,32 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role?: AuthtypesStorableRoleDTO;
+	/**
+	 * @type string
+	 */
+	role_id?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	user_id?: string;
 }
 
 export interface AuthtypesUserWithRolesDTO {
@@ -464,11 +523,6 @@ export interface AuthtypesUserWithRolesDTO {
 	 */
 	orgId?: string;
 	/**
-	 * @type array
-	 * @nullable true
-	 */
-	roles?: AuthtypesRoleDTO[] | null;
-	/**
 	 * @type string
 	 */
 	status?: string;
@@ -477,6 +531,11 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @format date-time
 	 */
 	updatedAt?: Date;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	user_roles?: AuthtypesUserRoleDTO[] | null;
 }
 
 export interface CloudintegrationtypesAWSAccountConfigDTO {
@@ -3910,7 +3969,7 @@ export type UpdateServiceAccountKeyPathParameters = {
 export type UpdateServiceAccountStatusPathParameters = {
 	id: string;
 };
-export type ListUsers200 = {
+export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
 	 */
@@ -3924,10 +3983,10 @@ export type ListUsers200 = {
 export type DeleteUserPathParameters = {
 	id: string;
 };
-export type GetUserPathParameters = {
+export type GetUserDeprecatedPathParameters = {
 	id: string;
 };
-export type GetUser200 = {
+export type GetUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3946,7 +4005,7 @@ export type UpdateUser200 = {
 	status: string;
 };
 
-export type GetMyUser200 = {
+export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -4281,7 +4340,7 @@ export type RotateSession200 = {
 	status: string;
 };
 
-export type ListUsersV2200 = {
+export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
@@ -4292,11 +4351,11 @@ export type ListUsersV2200 = {
 	status: string;
 };
 
-export type GetUserV2PathParameters = {
+export type GetUserPathParameters = {
 	id: string;
 };
-export type GetUserV2200 = {
-	data: TypesUserDTO;
+export type GetUser200 = {
+	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -4320,7 +4379,7 @@ export type GetUserRoles200 = {
 	status: string;
 };
 
-export type GetMyUserV2200 = {
+export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string

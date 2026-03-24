@@ -36,7 +36,7 @@ type Setter interface {
 
 	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
 	UpdateMyUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableSelfUser) (*types.User, error)
-	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser, updatedBy valuer.UUID) (*types.User, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
 	UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error
@@ -64,8 +64,8 @@ type Getter interface {
 	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
 
 	// Get gets the users based on the given org id
-	ListByOrgIDDeprecated(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
-	ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
+	ListDeprecatedUsersByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
+	ListUsersByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
 
 	// Get deprecated user object by orgID and id.
 	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)

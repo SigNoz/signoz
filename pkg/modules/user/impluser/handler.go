@@ -124,7 +124,18 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	render.Success(w, http.StatusOK, user)
+	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	userWithRoles := &authtypes.UserWithRoles{
+		User:      user,
+		UserRoles: userRoles,
+	}
+
+	render.Success(w, http.StatusOK, userWithRoles)
 }
 
 func (h *handler) GetMyUserDeprecated(w http.ResponseWriter, r *http.Request) {
@@ -168,14 +179,9 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	roles := make([]*authtypes.Role, len(userRoles))
-	for idx, userRole := range userRoles {
-		roles[idx] = authtypes.NewRoleFromStorableRole(userRole.Role)
-	}
-
 	userWithRoles := &authtypes.UserWithRoles{
-		User:  user,
-		Roles: roles,
+		User:      user,
+		UserRoles: userRoles,
 	}
 
 	render.Success(w, http.StatusOK, userWithRoles)
@@ -216,7 +222,7 @@ func (h *handler) ListUsersDeprecated(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgIDDeprecated(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.getter.ListDeprecatedUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -235,7 +241,7 @@ func (h *handler) ListUsers(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	users, err := h.getter.ListByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
+	users, err := h.getter.ListUsersByOrgID(ctx, valuer.MustNewUUID(claims.OrgID))
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -283,13 +289,17 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if userID == claims.UserID {
+		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+	}
+
 	updatableUser := new(types.UpdatableUser)
 	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), updatableUser, valuer.MustNewUUID(claims.UserID))
+	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), updatableUser)
 	if err != nil {
 		render.Error(w, err)
 		return

@@ -50,7 +50,7 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 
 type UserWithRoles struct {
 	*types.User
-	Roles []*Role `json:"roles"`
+	UserRoles []*UserRole `json:"user_roles"`
 }
 
 type UserRoleStore interface {
@@ -65,4 +65,35 @@ type UserRoleStore interface {
 
 	// delete user role entries by user id
 	DeleteUserRoles(ctx context.Context, userID valuer.UUID) error
+}
+
+// Returns the diff between current role names and target role name separately, as additions and deletions
+func PatchRolesNames(currentRolesNames, targetRoleNames []string) ([]string, []string) {
+	currentRolesSet := make(map[string]struct{}, len(currentRolesNames))
+	targetRolesSet := make(map[string]struct{}, len(targetRoleNames))
+
+	for _, role := range currentRolesNames {
+		currentRolesSet[role] = struct{}{}
+	}
+	for _, role := range targetRoleNames {
+		targetRolesSet[role] = struct{}{}
+	}
+
+	// additions: roles present in input but not in current
+	additions := []string{}
+	for _, role := range targetRoleNames {
+		if _, exists := currentRolesSet[role]; !exists {
+			additions = append(additions, role)
+		}
+	}
+
+	// deletions: roles present in current but not in input
+	deletions := []string{}
+	for _, role := range currentRolesNames {
+		if _, exists := targetRolesSet[role]; !exists {
+			deletions = append(deletions, role)
+		}
+	}
+
+	return additions, deletions
 }

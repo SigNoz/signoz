@@ -313,7 +313,7 @@ func (module *setter) UpdateMyUser(ctx context.Context, orgID valuer.UUID, userI
 	return existingUser, nil
 }
 
-func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser, updatedBy valuer.UUID) (*types.User, error) {
+func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error) {
 	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
 		return nil, err
@@ -344,12 +344,8 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 		}
 	}
 
-	grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
+	grants, revokes = authtypes.PatchRolesNames(existingUserRoleNames, updatable.RoleNames)
 	rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
-
-	if rolesChanged && existingUser.ID == updatedBy {
-		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot change self roles")
-	}
 
 	if rolesChanged {
 		err = module.authz.ModifyGrant(
@@ -929,34 +925,4 @@ func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {
 		}
 	}
 	return names
-}
-
-func (module *setter) patchRolesNames(currentRolesNames, targetRoleNames []string) ([]string, []string) {
-	currentRolesSet := make(map[string]struct{}, len(currentRolesNames))
-	targetRolesSet := make(map[string]struct{}, len(targetRoleNames))
-
-	for _, role := range currentRolesNames {
-		currentRolesSet[role] = struct{}{}
-	}
-	for _, role := range targetRoleNames {
-		targetRolesSet[role] = struct{}{}
-	}
-
-	// additions: roles present in input but not in current
-	additions := []string{}
-	for _, role := range targetRoleNames {
-		if _, exists := currentRolesSet[role]; !exists {
-			additions = append(additions, role)
-		}
-	}
-
-	// deletions: roles present in current but not in input
-	deletions := []string{}
-	for _, role := range currentRolesNames {
-		if _, exists := targetRolesSet[role]; !exists {
-			deletions = append(deletions, role)
-		}
-	}
-
-	return additions, deletions
 }

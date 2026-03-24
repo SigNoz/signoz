@@ -165,7 +165,7 @@ func (provider *provider) Report(ctx context.Context) error {
 			continue
 		}
 
-		users, err := provider.userGetter.ListByOrgID(ctx, org.ID)
+		users, err := provider.userGetter.ListUsersByOrgID(ctx, org.ID)
 		if err != nil {
 			provider.settings.Logger().WarnContext(ctx, "failed to list users", errors.Attr(err), slog.Any("org_id", org.ID))
 			continue

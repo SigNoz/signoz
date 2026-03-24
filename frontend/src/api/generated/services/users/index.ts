@@ -25,20 +25,20 @@ import type {
 	CreateInvite201,
 	DeleteUserPathParameters,
 	GetMyUser200,
-	GetMyUserV2200,
+	GetMyUserDeprecated200,
 	GetResetPasswordToken200,
 	GetResetPasswordTokenPathParameters,
 	GetUser200,
+	GetUserDeprecated200,
+	GetUserDeprecatedPathParameters,
 	GetUserPathParameters,
 	GetUserRoles200,
 	GetUserRolesPathParameters,
 	GetUsersByRoleID200,
 	GetUsersByRoleIDPathParameters,
-	GetUserV2PathParameters,
-	GetUserV2200,
 	ListAPIKeys200,
 	ListUsers200,
-	ListUsersV2200,
+	ListUsersDeprecated200,
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
@@ -856,55 +856,63 @@ export const useResetPassword = <
  * This endpoint lists all users
  * @summary List users
  */
-export const listUsers = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListUsers200>({
+export const listUsersDeprecated = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUsersDeprecated200>({
 		url: `/api/v1/user`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getListUsersQueryKey = () => {
+export const getListUsersDeprecatedQueryKey = () => {
 	return [`/api/v1/user`] as const;
 };
 
-export const getListUsersQueryOptions = <
-	TData = Awaited<ReturnType<typeof listUsers>>,
+export const getListUsersDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof listUsersDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUsersDeprecated>>,
+		TError,
+		TData
+	>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListUsersQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getListUsersDeprecatedQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsers>>> = ({
-		signal,
-	}) => listUsers(signal);
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof listUsersDeprecated>>
+	> = ({ signal }) => listUsersDeprecated(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listUsers>>,
+		Awaited<ReturnType<typeof listUsersDeprecated>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type ListUsersQueryResult = NonNullable<
-	Awaited<ReturnType<typeof listUsers>>
+export type ListUsersDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listUsersDeprecated>>
 >;
-export type ListUsersQueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListUsersDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List users
  */
 
-export function useListUsers<
-	TData = Awaited<ReturnType<typeof listUsers>>,
+export function useListUsersDeprecated<
+	TData = Awaited<ReturnType<typeof listUsersDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUsersDeprecated>>,
+		TError,
+		TData
+	>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListUsersQueryOptions(options);
+	const queryOptions = getListUsersDeprecatedQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -918,12 +926,12 @@ export function useListUsers<
 /**
  * @summary List users
  */
-export const invalidateListUsers = async (
+export const invalidateListUsersDeprecated = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListUsersQueryKey() },
+		{ queryKey: getListUsersDeprecatedQueryKey() },
 		options,
 	);
 
@@ -1011,67 +1019,80 @@ export const useDeleteUser = <
  * This endpoint returns the user by id
  * @summary Get user
  */
-export const getUser = (
-	{ id }: GetUserPathParameters,
+export const getUserDeprecated = (
+	{ id }: GetUserDeprecatedPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetUser200>({
+	return GeneratedAPIInstance<GetUserDeprecated200>({
 		url: `/api/v1/user/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetUserQueryKey = ({ id }: GetUserPathParameters) => {
+export const getGetUserDeprecatedQueryKey = ({
+	id,
+}: GetUserDeprecatedPathParameters) => {
 	return [`/api/v1/user/${id}`] as const;
 };
 
-export const getGetUserQueryOptions = <
-	TData = Awaited<ReturnType<typeof getUser>>,
+export const getGetUserDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetUserPathParameters,
+	{ id }: GetUserDeprecatedPathParameters,
 	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserDeprecated>>,
+			TError,
+			TData
+		>;
 	},
 ) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey({ id });
+	const queryKey =
+		queryOptions?.queryKey ?? getGetUserDeprecatedQueryKey({ id });
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({
-		signal,
-	}) => getUser({ id }, signal);
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getUserDeprecated>>
+	> = ({ signal }) => getUserDeprecated({ id }, signal);
 
 	return {
 		queryKey,
 		queryFn,
 		enabled: !!id,
 		...queryOptions,
-	} as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
-		queryKey: QueryKey;
-	};
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getUserDeprecated>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
 };
 
-export type GetUserQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getUser>>
+export type GetUserDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUserDeprecated>>
 >;
-export type GetUserQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get user
  */
 
-export function useGetUser<
-	TData = Awaited<ReturnType<typeof getUser>>,
+export function useGetUserDeprecated<
+	TData = Awaited<ReturnType<typeof getUserDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetUserPathParameters,
+	{ id }: GetUserDeprecatedPathParameters,
 	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserDeprecated>>,
+			TError,
+			TData
+		>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetUserQueryOptions({ id }, options);
+	const queryOptions = getGetUserDeprecatedQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1085,13 +1106,13 @@ export function useGetUser<
 /**
  * @summary Get user
  */
-export const invalidateGetUser = async (
+export const invalidateGetUserDeprecated = async (
 	queryClient: QueryClient,
-	{ id }: GetUserPathParameters,
+	{ id }: GetUserDeprecatedPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetUserQueryKey({ id }) },
+		{ queryKey: getGetUserDeprecatedQueryKey({ id }) },
 		options,
 	);
 
@@ -1199,55 +1220,63 @@ export const useUpdateUser = <
  * This endpoint returns the user I belong to
  * @summary Get my user
  */
-export const getMyUser = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<GetMyUser200>({
+export const getMyUserDeprecated = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMyUserDeprecated200>({
 		url: `/api/v1/user/me`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetMyUserQueryKey = () => {
+export const getGetMyUserDeprecatedQueryKey = () => {
 	return [`/api/v1/user/me`] as const;
 };
 
-export const getGetMyUserQueryOptions = <
-	TData = Awaited<ReturnType<typeof getMyUser>>,
+export const getGetMyUserDeprecatedQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMyUserDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
+		TError,
+		TData
+	>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetMyUserQueryKey();
+	const queryKey = queryOptions?.queryKey ?? getGetMyUserDeprecatedQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyUser>>> = ({
-		signal,
-	}) => getMyUser(signal);
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>
+	> = ({ signal }) => getMyUserDeprecated(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getMyUser>>,
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetMyUserQueryResult = NonNullable<
-	Awaited<ReturnType<typeof getMyUser>>
+export type GetMyUserDeprecatedQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMyUserDeprecated>>
 >;
-export type GetMyUserQueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMyUserDeprecatedQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get my user
  */
 
-export function useGetMyUser<
-	TData = Awaited<ReturnType<typeof getMyUser>>,
+export function useGetMyUserDeprecated<
+	TData = Awaited<ReturnType<typeof getMyUserDeprecated>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserDeprecated>>,
+		TError,
+		TData
+	>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetMyUserQueryOptions(options);
+	const queryOptions = getGetMyUserDeprecatedQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1261,12 +1290,12 @@ export function useGetMyUser<
 /**
  * @summary Get my user
  */
-export const invalidateGetMyUser = async (
+export const invalidateGetMyUserDeprecated = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetMyUserQueryKey() },
+		{ queryKey: getGetMyUserDeprecatedQueryKey() },
 		options,
 	);
 
@@ -1463,63 +1492,55 @@ export const invalidateGetUsersByRoleID = async (
  * This endpoint lists all users for the organization
  * @summary List users v2
  */
-export const listUsersV2 = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<ListUsersV2200>({
+export const listUsers = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUsers200>({
 		url: `/api/v2/users`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getListUsersV2QueryKey = () => {
+export const getListUsersQueryKey = () => {
 	return [`/api/v2/users`] as const;
 };
 
-export const getListUsersV2QueryOptions = <
-	TData = Awaited<ReturnType<typeof listUsersV2>>,
+export const getListUsersQueryOptions = <
+	TData = Awaited<ReturnType<typeof listUsers>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersV2>>,
-		TError,
-		TData
-	>;
+	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getListUsersV2QueryKey();
+	const queryKey = queryOptions?.queryKey ?? getListUsersQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsersV2>>> = ({
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsers>>> = ({
 		signal,
-	}) => listUsersV2(signal);
+	}) => listUsers(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersV2>>,
+		Awaited<ReturnType<typeof listUsers>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type ListUsersV2QueryResult = NonNullable<
-	Awaited<ReturnType<typeof listUsersV2>>
+export type ListUsersQueryResult = NonNullable<
+	Awaited<ReturnType<typeof listUsers>>
 >;
-export type ListUsersV2QueryError = ErrorType<RenderErrorResponseDTO>;
+export type ListUsersQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary List users v2
  */
 
-export function useListUsersV2<
-	TData = Awaited<ReturnType<typeof listUsersV2>>,
+export function useListUsers<
+	TData = Awaited<ReturnType<typeof listUsers>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof listUsersV2>>,
-		TError,
-		TData
-	>;
+	query?: UseQueryOptions<Awaited<ReturnType<typeof listUsers>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getListUsersV2QueryOptions(options);
+	const queryOptions = getListUsersQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1533,12 +1554,12 @@ export function useListUsersV2<
 /**
  * @summary List users v2
  */
-export const invalidateListUsersV2 = async (
+export const invalidateListUsers = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getListUsersV2QueryKey() },
+		{ queryKey: getListUsersQueryKey() },
 		options,
 	);
 
@@ -1549,67 +1570,67 @@ export const invalidateListUsersV2 = async (
  * This endpoint returns the user by id
  * @summary Get user by user id
  */
-export const getUserV2 = (
-	{ id }: GetUserV2PathParameters,
+export const getUser = (
+	{ id }: GetUserPathParameters,
 	signal?: AbortSignal,
 ) => {
-	return GeneratedAPIInstance<GetUserV2200>({
+	return GeneratedAPIInstance<GetUser200>({
 		url: `/api/v2/users/${id}`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetUserV2QueryKey = ({ id }: GetUserV2PathParameters) => {
+export const getGetUserQueryKey = ({ id }: GetUserPathParameters) => {
 	return [`/api/v2/users/${id}`] as const;
 };
 
-export const getGetUserV2QueryOptions = <
-	TData = Awaited<ReturnType<typeof getUserV2>>,
+export const getGetUserQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUser>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetUserV2PathParameters,
+	{ id }: GetUserPathParameters,
 	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData>;
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
 	},
 ) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetUserV2QueryKey({ id });
+	const queryKey = queryOptions?.queryKey ?? getGetUserQueryKey({ id });
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserV2>>> = ({
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUser>>> = ({
 		signal,
-	}) => getUserV2({ id }, signal);
+	}) => getUser({ id }, signal);
 
 	return {
 		queryKey,
 		queryFn,
 		enabled: !!id,
 		...queryOptions,
-	} as UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData> & {
+	} as UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData> & {
 		queryKey: QueryKey;
 	};
 };
 
-export type GetUserV2QueryResult = NonNullable<
-	Awaited<ReturnType<typeof getUserV2>>
+export type GetUserQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUser>>
 >;
-export type GetUserV2QueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get user by user id
  */
 
-export function useGetUserV2<
-	TData = Awaited<ReturnType<typeof getUserV2>>,
+export function useGetUser<
+	TData = Awaited<ReturnType<typeof getUser>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(
-	{ id }: GetUserV2PathParameters,
+	{ id }: GetUserPathParameters,
 	options?: {
-		query?: UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData>;
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getUser>>, TError, TData>;
 	},
 ): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetUserV2QueryOptions({ id }, options);
+	const queryOptions = getGetUserQueryOptions({ id }, options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1623,13 +1644,13 @@ export function useGetUserV2<
 /**
  * @summary Get user by user id
  */
-export const invalidateGetUserV2 = async (
+export const invalidateGetUser = async (
 	queryClient: QueryClient,
-	{ id }: GetUserV2PathParameters,
+	{ id }: GetUserPathParameters,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetUserV2QueryKey({ id }) },
+		{ queryKey: getGetUserQueryKey({ id }) },
 		options,
 	);
 
@@ -1838,63 +1859,55 @@ export const invalidateGetUserRoles = async (
  * This endpoint returns the user I belong to
  * @summary Get my user v2
  */
-export const getMyUserV2 = (signal?: AbortSignal) => {
-	return GeneratedAPIInstance<GetMyUserV2200>({
+export const getMyUser = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMyUser200>({
 		url: `/api/v2/users/me`,
 		method: 'GET',
 		signal,
 	});
 };
 
-export const getGetMyUserV2QueryKey = () => {
+export const getGetMyUserQueryKey = () => {
 	return [`/api/v2/users/me`] as const;
 };
 
-export const getGetMyUserV2QueryOptions = <
-	TData = Awaited<ReturnType<typeof getMyUserV2>>,
+export const getGetMyUserQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMyUser>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getMyUserV2>>,
-		TError,
-		TData
-	>;
+	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }) => {
 	const { query: queryOptions } = options ?? {};
 
-	const queryKey = queryOptions?.queryKey ?? getGetMyUserV2QueryKey();
+	const queryKey = queryOptions?.queryKey ?? getGetMyUserQueryKey();
 
-	const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyUserV2>>> = ({
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyUser>>> = ({
 		signal,
-	}) => getMyUserV2(signal);
+	}) => getMyUser(signal);
 
 	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
-		Awaited<ReturnType<typeof getMyUserV2>>,
+		Awaited<ReturnType<typeof getMyUser>>,
 		TError,
 		TData
 	> & { queryKey: QueryKey };
 };
 
-export type GetMyUserV2QueryResult = NonNullable<
-	Awaited<ReturnType<typeof getMyUserV2>>
+export type GetMyUserQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMyUser>>
 >;
-export type GetMyUserV2QueryError = ErrorType<RenderErrorResponseDTO>;
+export type GetMyUserQueryError = ErrorType<RenderErrorResponseDTO>;
 
 /**
  * @summary Get my user v2
  */
 
-export function useGetMyUserV2<
-	TData = Awaited<ReturnType<typeof getMyUserV2>>,
+export function useGetMyUser<
+	TData = Awaited<ReturnType<typeof getMyUser>>,
 	TError = ErrorType<RenderErrorResponseDTO>
 >(options?: {
-	query?: UseQueryOptions<
-		Awaited<ReturnType<typeof getMyUserV2>>,
-		TError,
-		TData
-	>;
+	query?: UseQueryOptions<Awaited<ReturnType<typeof getMyUser>>, TError, TData>;
 }): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
-	const queryOptions = getGetMyUserV2QueryOptions(options);
+	const queryOptions = getGetMyUserQueryOptions(options);
 
 	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
 		queryKey: QueryKey;
@@ -1908,12 +1921,12 @@ export function useGetMyUserV2<
 /**
  * @summary Get my user v2
  */
-export const invalidateGetMyUserV2 = async (
+export const invalidateGetMyUser = async (
 	queryClient: QueryClient,
 	options?: InvalidateOptions,
 ): Promise<QueryClient> => {
 	await queryClient.invalidateQueries(
-		{ queryKey: getGetMyUserV2QueryKey() },
+		{ queryKey: getGetMyUserQueryKey() },
 		options,
 	);
 
