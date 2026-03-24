@@ -28,11 +28,11 @@ import type {
 	CloudintegrationtypesPostableAgentCheckInRequestDTO,
 	CloudintegrationtypesUpdatableAccountDTO,
 	CloudintegrationtypesUpdatableServiceDTO,
+	CreateAccount200,
+	CreateAccountPathParameters,
 	DisconnectAccountPathParameters,
 	GetAccount200,
 	GetAccountPathParameters,
-	GetConnectionArtifact200,
-	GetConnectionArtifactPathParameters,
 	GetService200,
 	GetServicePathParameters,
 	ListAccounts200,
@@ -249,6 +249,105 @@ export const invalidateListAccounts = async (
 	return queryClient;
 };
 
+/**
+ * This endpoint creates a new cloud integration account for the specified cloud provider
+ * @summary Create account
+ */
+export const createAccount = (
+	{ cloudProvider }: CreateAccountPathParameters,
+	cloudintegrationtypesConnectionArtifactRequestDTO: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<CreateAccount200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: cloudintegrationtypesConnectionArtifactRequestDTO,
+		signal,
+	});
+};
+
+export const getCreateAccountMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createAccount>>,
+		TError,
+		{
+			pathParams: CreateAccountPathParameters;
+			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof createAccount>>,
+	TError,
+	{
+		pathParams: CreateAccountPathParameters;
+		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['createAccount'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof createAccount>>,
+		{
+			pathParams: CreateAccountPathParameters;
+			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return createAccount(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type CreateAccountMutationResult = NonNullable<
+	Awaited<ReturnType<typeof createAccount>>
+>;
+export type CreateAccountMutationBody = BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+export type CreateAccountMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Create account
+ */
+export const useCreateAccount = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof createAccount>>,
+		TError,
+		{
+			pathParams: CreateAccountPathParameters;
+			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof createAccount>>,
+	TError,
+	{
+		pathParams: CreateAccountPathParameters;
+		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getCreateAccountMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
 /**
  * This endpoint disconnects an account for the specified cloud provider
  * @summary Disconnect account
@@ -625,105 +724,6 @@ export const useAgentCheckIn = <
 	TContext
 > => {
 	const mutationOptions = getAgentCheckInMutationOptions(options);
-
-	return useMutation(mutationOptions);
-};
-/**
- * This endpoint returns a connection artifact for the specified cloud provider and creates new cloud integration account
- * @summary Get connection artifact
- */
-export const getConnectionArtifact = (
-	{ cloudProvider }: GetConnectionArtifactPathParameters,
-	cloudintegrationtypesConnectionArtifactRequestDTO: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>,
-	signal?: AbortSignal,
-) => {
-	return GeneratedAPIInstance<GetConnectionArtifact200>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/connection_artifact`,
-		method: 'POST',
-		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesConnectionArtifactRequestDTO,
-		signal,
-	});
-};
-
-export const getGetConnectionArtifactMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof getConnectionArtifact>>,
-		TError,
-		{
-			pathParams: GetConnectionArtifactPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof getConnectionArtifact>>,
-	TError,
-	{
-		pathParams: GetConnectionArtifactPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['getConnectionArtifact'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof getConnectionArtifact>>,
-		{
-			pathParams: GetConnectionArtifactPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return getConnectionArtifact(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type GetConnectionArtifactMutationResult = NonNullable<
-	Awaited<ReturnType<typeof getConnectionArtifact>>
->;
-export type GetConnectionArtifactMutationBody = BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-export type GetConnectionArtifactMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Get connection artifact
- */
-export const useGetConnectionArtifact = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof getConnectionArtifact>>,
-		TError,
-		{
-			pathParams: GetConnectionArtifactPathParameters;
-			data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof getConnectionArtifact>>,
-	TError,
-	{
-		pathParams: GetConnectionArtifactPathParameters;
-		data: BodyType<CloudintegrationtypesConnectionArtifactRequestDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getGetConnectionArtifactMutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

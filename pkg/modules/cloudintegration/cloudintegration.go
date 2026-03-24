@@ -53,8 +53,7 @@ type Module interface {
 }
 
 type Handler interface {
-	// GetConnectionArtifact creates a new cloud integration account and returns the connection artifact
-	GetConnectionArtifact(http.ResponseWriter, *http.Request)
+	CreateAccount(http.ResponseWriter, *http.Request)
 	ListAccounts(http.ResponseWriter, *http.Request)
 	GetAccount(http.ResponseWriter, *http.Request)
 	UpdateAccount(http.ResponseWriter, *http.Request)
