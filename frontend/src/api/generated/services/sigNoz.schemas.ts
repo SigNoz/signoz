@@ -968,6 +968,23 @@ export interface ErrorsResponseerroradditionalDTO {
 /**
  * @nullable
  */
+export type FactoryResponseDTOServices = { [key: string]: string[] } | null;
+
+export interface FactoryResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	healthy?: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	services?: FactoryResponseDTOServices;
+}
+
+/**
+ * @nullable
+ */
 export type FeaturetypesGettableFeatureDTOVariants = {
 	[key: string]: unknown;
 } | null;
@@ -3455,6 +3472,19 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type HandleExportRawDataPOSTParams = {
+	/**
+	 * @enum csv,jsonl
+	 * @type string
+	 * @description The output format for the export.
+	 */
+	format?: HandleExportRawDataPOSTFormat;
+};
+
+export enum HandleExportRawDataPOSTFormat {
+	csv = 'csv',
+	jsonl = 'jsonl',
+}
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined
@@ -3970,6 +4000,30 @@ export type SearchIngestionKeys200 = {
 	status: string;
 };
 
+export type Healthz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Healthz503 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Livez200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListMetricsParams = {
 	/**
 	 * @type integer
@@ -4099,6 +4153,22 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz503 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */

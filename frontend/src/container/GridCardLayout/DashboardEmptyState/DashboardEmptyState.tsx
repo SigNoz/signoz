@@ -8,8 +8,11 @@ import { VariablesSettingsTab } from 'container/DashboardContainer/DashboardDesc
 import DashboardSettings from 'container/DashboardContainer/DashboardSettings';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -20,7 +23,8 @@ export default function DashboardEmptyState(): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const variablesSettingsTabHandle = useRef<VariablesSettingsTab>(null);
 	const [isSettingsDrawerOpen, setIsSettingsDrawerOpen] = useState<boolean>(

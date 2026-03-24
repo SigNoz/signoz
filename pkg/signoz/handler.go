@@ -57,6 +57,7 @@ type Handlers struct {
 	ZeusHandler             zeus.Handler
 	QuerierHandler          querier.Handler
 	ServiceAccountHandler   serviceaccount.Handler
+	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
 }
 
@@ -72,6 +73,7 @@ func NewHandlers(
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
+	registryHandler factory.Handler,
 ) Handlers {
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
@@ -91,6 +93,7 @@ func NewHandlers(
 		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
+		RegistryHandler:         registryHandler,
 		CloudIntegrationHandler: implcloudintegration.NewHandler(),
 	}
 }

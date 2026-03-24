@@ -23,6 +23,7 @@ type service struct {
 	authz     authz.AuthZ
 	config    user.RootConfig
 	stopC     chan struct{}
+	healthyC  chan struct{}
 }
 
 func NewService(
@@ -42,12 +43,14 @@ func NewService(
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
-		stopC:     make(chan struct{}),
+		stopC:    make(chan struct{}),
+		healthyC: make(chan struct{}),
 	}
 }
 
 func (s *service) Start(ctx context.Context) error {
 	if !s.config.Enabled {
+		close(s.healthyC)
 		<-s.stopC
 		return nil
 	}
@@ -59,6 +62,7 @@ func (s *service) Start(ctx context.Context) error {
 		err := s.reconcile(ctx)
 		if err == nil {
 			s.settings.Logger().InfoContext(ctx, "root user reconciliation completed successfully")
+			close(s.healthyC)
 			<-s.stopC
 			return nil
 		}
@@ -72,6 +76,10 @@ func (s *service) Start(ctx context.Context) error {
 			continue
 		}
 	}
+}
+
+func (s *service) Healthy() <-chan struct{} {
+	return s.healthyC
 }
 
 func (s *service) Stop(ctx context.Context) error {
