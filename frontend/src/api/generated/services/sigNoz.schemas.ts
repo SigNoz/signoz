@@ -2959,6 +2959,19 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type HandleExportRawDataPOSTParams = {
+	/**
+	 * @enum csv,jsonl
+	 * @type string
+	 * @description The output format for the export.
+	 */
+	format?: HandleExportRawDataPOSTFormat;
+};
+
+export enum HandleExportRawDataPOSTFormat {
+	csv = 'csv',
+	jsonl = 'jsonl',
+}
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined

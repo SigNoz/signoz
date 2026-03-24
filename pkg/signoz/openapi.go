@@ -23,6 +23,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -59,6 +60,7 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
 		struct{ authz.Handler }{},
+		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},

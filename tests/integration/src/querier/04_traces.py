@@ -696,7 +696,6 @@ def test_traces_list_with_corrupt_data(
     assert response.status_code == status_code
 
     if response.status_code == HTTPStatus.OK:
-
         if not results(traces):
             # No results expected
             assert response.json()["data"]["data"]["results"][0]["rows"] is None
@@ -2026,3 +2025,136 @@ def test_traces_fill_zero_formula_with_group_by(
             expected_by_ts=expectations[service_name],
             context=f"traces/fillZero/F1/{service_name}",
         )
+
+
+def test_traces_list_filter_by_trace_id(
+    signoz: types.SigNoz,
+    create_user_admin: None,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    insert_traces: Callable[[List[Traces]], None],
+) -> None:
+    """
+    Tests that filtering by trace_id:
+    1. Returns the matching span (narrow window, single bucket).
+    2. Does not return duplicate spans when the query window spans multiple
+       exponential buckets (>1 h)
+    3. Returns no results when the query window does not contain the trace.
+    """
+    target_trace_id = TraceIdGenerator.trace_id()
+    other_trace_id = TraceIdGenerator.trace_id()
+    span_id_root = TraceIdGenerator.span_id()
+    other_span_id = TraceIdGenerator.span_id()
+
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+
+    common_resources = {
+        "deployment.environment": "production",
+        "service.name": "trace-filter-service",
+        "cloud.provider": "integration",
+    }
+
+    insert_traces(
+        [
+            Traces(
+                timestamp=now - timedelta(seconds=10),
+                duration=timedelta(seconds=5),
+                trace_id=target_trace_id,
+                span_id=span_id_root,
+                parent_span_id="",
+                name="root-span",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources=common_resources,
+                attributes={"http.request.method": "GET"},
+            ),
+            # span from a different trace — must not appear in results
+            Traces(
+                timestamp=now - timedelta(seconds=5),
+                duration=timedelta(seconds=1),
+                trace_id=other_trace_id,
+                span_id=other_span_id,
+                parent_span_id="",
+                name="other-root-span",
+                kind=TracesKind.SPAN_KIND_SERVER,
+                status_code=TracesStatusCode.STATUS_CODE_OK,
+                status_message="",
+                resources=common_resources,
+                attributes={},
+            ),
+        ]
+    )
+
+    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    trace_filter = f"trace_id = '{target_trace_id}'"
+
+    def _query(start_ms: int, end_ms: int) -> List:
+        response = make_query_request(
+            signoz,
+            token,
+            start_ms=start_ms,
+            end_ms=end_ms,
+            request_type="raw",
+            queries=[
+                {
+                    "type": "builder_query",
+                    "spec": {
+                        "name": "A",
+                        "signal": "traces",
+                        "disabled": False,
+                        "limit": 100,
+                        "offset": 0,
+                        "filter": {"expression": trace_filter},
+                        "order": [{"key": {"name": "timestamp"}, "direction": "desc"}],
+                        "selectFields": [
+                            {
+                                "name": "name",
+                                "fieldDataType": "string",
+                                "fieldContext": "span",
+                                "signal": "traces",
+                            }
+                        ],
+                        "having": {"expression": ""},
+                        "aggregations": [{"expression": "count()"}],
+                    },
+                }
+            ],
+        )
+        assert response.status_code == HTTPStatus.OK
+        assert response.json()["status"] == "success"
+        return response.json()["data"]["data"]["results"][0]["rows"] or []
+
+    now_ms = int(now.timestamp() * 1000)
+
+    # --- Test 1: narrow window (single bucket, <1 h) ---
+    narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
+    narrow_rows = _query(narrow_start_ms, now_ms)
+
+    assert (
+        len(narrow_rows) == 1
+    ), f"Expected 1 span for trace_id filter (narrow window), got {len(narrow_rows)}"
+    assert narrow_rows[0]["data"]["span_id"] == span_id_root
+    assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
+
+    # --- Test 2: wide window (>1 h, triggers multiple exponential buckets) ---
+    # should just return 1 span, not duplicate
+    wide_start_ms = int((now - timedelta(hours=12)).timestamp() * 1000)
+    wide_rows = _query(wide_start_ms, now_ms)
+
+    assert len(wide_rows) == 1, (
+        f"Expected 1 span for trace_id filter (wide window, multi-bucket), "
+        f"got {len(wide_rows)} — possible duplicate-span regression"
+    )
+    assert wide_rows[0]["data"]["span_id"] == span_id_root
+    assert wide_rows[0]["data"]["trace_id"] == target_trace_id
+
+    # --- Test 3: window that does not contain the trace returns no results ---
+    past_start_ms = int((now - timedelta(hours=6)).timestamp() * 1000)
+    past_end_ms = int((now - timedelta(hours=2)).timestamp() * 1000)
+    past_rows = _query(past_start_ms, past_end_ms)
+
+    assert len(past_rows) == 0, (
+        f"Expected 0 spans for trace_id filter outside time window, "
+        f"got {len(past_rows)}"
+    )
