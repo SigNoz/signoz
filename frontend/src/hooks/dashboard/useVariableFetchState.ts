@@ -137,7 +137,10 @@ export function useIsPanelWaitingOnVariable(variableNames: string[]): boolean {
 
 	return variableNames.some((name) => {
 		const variableFetchState = states[name];
-		const { selectedValue, allSelected } = dashboardVariables?.[name] || {};
+		const variableData = Object.values(dashboardVariables).find(
+			(v) => v.name === name,
+		);
+		const { selectedValue, allSelected } = variableData || {};
 
 		const isVariableInFetchingOrWaitingState =
 			variableFetchState === 'loading' ||

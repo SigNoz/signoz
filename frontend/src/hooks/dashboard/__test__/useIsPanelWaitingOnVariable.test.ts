@@ -313,4 +313,39 @@ describe('useIsPanelWaitingOnVariable', () => {
 		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['a']));
 		expect(result.current).toBe(true);
 	});
+
+	it('should find variable by name when store key differs from variable name', () => {
+		setFetchStates({ myVar: 'loading' });
+		setDashboardVariables({
+			variables: {
+				'uuid-abc-123': makeVariable({
+					id: 'uuid-abc-123',
+					name: 'myVar',
+					selectedValue: undefined,
+				}),
+			},
+			variableTypes: { myVar: 'QUERY' },
+		});
+
+		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['myVar']));
+		expect(result.current).toBe(true);
+	});
+
+	it('should respect selectedValue when store key differs from variable name', () => {
+		// When the variable has a value, it should not block even if loading
+		setFetchStates({ myVar: 'loading' });
+		setDashboardVariables({
+			variables: {
+				'uuid-abc-123': makeVariable({
+					id: 'uuid-abc-123',
+					name: 'myVar',
+					selectedValue: 'production',
+				}),
+			},
+			variableTypes: { myVar: 'QUERY' },
+		});
+
+		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['myVar']));
+		expect(result.current).toBe(false);
+	});
 });
