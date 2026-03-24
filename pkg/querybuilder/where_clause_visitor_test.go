@@ -739,7 +739,7 @@ func (b *resourceConditionBuilder) ConditionFor(
 	return fmt.Sprintf("%s_cond", key.Name), nil
 }
 
-type conditionBuilder struct{ m map[string]string }
+type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
 	_ context.Context,
@@ -807,7 +807,6 @@ func visitComparisonOpts() (rsbOpts, sbOpts FilterExprVisitorOpts) {
 	}
 	return
 }
-
 
 // TestVisitComparison_AND covers AND expressions with attribute keys (a, b, c →
 // TrueConditionLiteral in RSB) and resource keys (x, y, z → "{name}_cond" in RSB).
@@ -1610,4 +1609,3 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 		})
 	}
 }
-
