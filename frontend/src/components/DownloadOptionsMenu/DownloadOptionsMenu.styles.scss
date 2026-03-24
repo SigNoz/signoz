@@ -1,11 +1,11 @@
-.logs-download-popover {
+.download-popover {
 	.ant-popover-inner {
 		border-radius: 4px;
-		border: 1px solid var(--bg-slate-400);
+		border: 1px solid var(--l3-border);
 		background: linear-gradient(
 			139deg,
-			var(--bg-ink-400) 0%,
-			var(--bg-ink-500) 98.68%
+			var(--l2-background) 0%,
+			var(--l3-background) 98.68%
 		);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 		backdrop-filter: blur(20px);
@@ -19,7 +19,7 @@
 
 		.title {
 			display: flex;
-			color: var(--bg-slate-50);
+			color: var(--l3-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -38,7 +38,7 @@
 			flex-direction: column;
 
 			:global(.ant-radio-wrapper) {
-				color: var(--bg-vanilla-400);
+				color: var(--foreground);
 				font-family: Inter;
 				font-size: 13px;
 			}
@@ -46,7 +46,7 @@
 
 		.horizontal-line {
 			height: 1px;
-			background: var(--bg-slate-400);
+			background: var(--l3-border);
 		}
 
 		.export-button {
@@ -59,27 +59,27 @@
 }
 
 .lightMode {
-	.logs-download-popover {
+	.download-popover {
 		.ant-popover-inner {
-			border: 1px solid var(--bg-vanilla-300);
+			border: 1px solid var(--l2-border);
 			background: linear-gradient(
 				139deg,
-				var(--bg-vanilla-100) 0%,
-				var(--bg-vanilla-300) 98.68%
+				var(--background) 0%,
+				var(--l1-background) 98.68%
 			);
 			box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
 		}
 		.export-options-container {
 			.title {
-				color: var(--bg-ink-200);
+				color: var(--l2-foreground);
 			}
 
 			:global(.ant-radio-wrapper) {
-				color: var(--bg-ink-400);
+				color: var(--foreground);
 			}
 
 			.horizontal-line {
-				background: var(--bg-vanilla-300);
+				background: var(--l2-border);
 			}
 		}
 	}

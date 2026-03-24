@@ -546,6 +546,23 @@ export interface ErrorsResponseerroradditionalDTO {
 /**
  * @nullable
  */
+export type FactoryResponseDTOServices = { [key: string]: string[] } | null;
+
+export interface FactoryResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	healthy?: boolean;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	services?: FactoryResponseDTOServices;
+}
+
+/**
+ * @nullable
+ */
 export type FeaturetypesGettableFeatureDTOVariants = {
 	[key: string]: unknown;
 } | null;
@@ -2384,6 +2401,47 @@ export interface TypesChangePasswordRequestDTO {
 	userId?: string;
 }
 
+export interface TypesDeprecatedUserDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	role?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface TypesGettableAPIKeyDTO {
 	/**
 	 * @type string
@@ -2685,10 +2743,6 @@ export interface TypesUserDTO {
 	/**
 	 * @type string
 	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
 	status?: string;
 	/**
 	 * @type string
@@ -2905,6 +2959,19 @@ export type DeleteAuthDomainPathParameters = {
 export type UpdateAuthDomainPathParameters = {
 	id: string;
 };
+export type HandleExportRawDataPOSTParams = {
+	/**
+	 * @enum csv,jsonl
+	 * @type string
+	 * @description The output format for the export.
+	 */
+	format?: HandleExportRawDataPOSTFormat;
+};
+
+export enum HandleExportRawDataPOSTFormat {
+	csv = 'csv',
+	jsonl = 'jsonl',
+}
 export type GetFieldsKeysParams = {
 	/**
 	 * @description undefined
@@ -3266,7 +3333,7 @@ export type ListUsers200 = {
 	/**
 	 * @type array
 	 */
-	data: TypesUserDTO[];
+	data: TypesDeprecatedUserDTO[];
 	/**
 	 * @type string
 	 */
@@ -3280,7 +3347,7 @@ export type GetUserPathParameters = {
 	id: string;
 };
 export type GetUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3291,7 +3358,7 @@ export type UpdateUserPathParameters = {
 	id: string;
 };
 export type UpdateUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3299,7 +3366,7 @@ export type UpdateUser200 = {
 };
 
 export type GetMyUser200 = {
-	data: TypesUserDTO;
+	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
 	 */
@@ -3414,6 +3481,30 @@ export type SearchIngestionKeysParams = {
 
 export type SearchIngestionKeys200 = {
 	data: GatewaytypesGettableIngestionKeysDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Healthz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Healthz503 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Livez200 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */
@@ -3549,6 +3640,22 @@ export type GetMetricsTreemap200 = {
 
 export type GetMyOrganization200 = {
 	data: TypesOrganizationDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz200 = {
+	data: FactoryResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type Readyz503 = {
+	data: FactoryResponseDTO;
 	/**
 	 * @type string
 	 */

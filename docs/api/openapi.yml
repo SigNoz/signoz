@@ -417,6 +417,18 @@ components:
         message:
           type: string
       type: object
+    FactoryResponse:
+      properties:
+        healthy:
+          type: boolean
+        services:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
+      type: object
     FeaturetypesGettableFeature:
       properties:
         defaultVariant:
@@ -2026,6 +2038,31 @@ components:
         userId:
           type: string
       type: object
+    TypesDeprecatedUser:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     TypesGettableAPIKey:
       properties:
         createdAt:
@@ -2221,8 +2258,6 @@ components:
         isRoot:
           type: boolean
         orgId:
-          type: string
-        role:
           type: string
         status:
           type: string
@@ -3016,6 +3051,68 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    post:
+      deprecated: false
+      description: This endpoints allows complex query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataPOST
+      parameters:
+      - description: The output format for the export.
+        in: query
+        name: format
+        schema:
+          default: csv
+          description: The output format for the export.
+          enum:
+          - csv
+          - jsonl
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/fields/keys:
     get:
       deprecated: false
@@ -5077,7 +5174,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesUser'
+                      $ref: '#/components/schemas/TypesDeprecatedUser'
                     type: array
                   status:
                     type: string
@@ -5175,7 +5272,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5229,7 +5326,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesUser'
+              $ref: '#/components/schemas/TypesDeprecatedUser'
       responses:
         "200":
           content:
@@ -5237,7 +5334,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5295,7 +5392,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5961,6 +6058,70 @@ paths:
       summary: Search ingestion keys for workspace
       tags:
       - gateway
+  /api/v2/healthz:
+    get:
+      operationId: Healthz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "503":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
+      summary: Health check
+      tags:
+      - health
+  /api/v2/livez:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Livez
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Liveness check
+      tags:
+      - health
   /api/v2/metrics:
     get:
       deprecated: false
@@ -6637,6 +6798,41 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/readyz:
+    get:
+      operationId: Readyz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "503":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
+      summary: Readiness check
+      tags:
+      - health
   /api/v2/sessions:
     delete:
       deprecated: false

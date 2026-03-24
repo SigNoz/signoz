@@ -4,9 +4,12 @@ import { Button, Popover } from 'antd';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { EllipsisIcon, PenLine, Plus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { usePanelTypeSelectionModalStore } from 'providers/Dashboard/helpers/panelTypeSelectionModalHelper';
 import { setSelectedRowWidgetId } from 'providers/Dashboard/helpers/selectedRowWidgetIdHelper';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { ROLES, USER_ROLES } from 'types/roles';
 import { ComponentTypes } from 'utils/permission';
 
@@ -39,7 +42,8 @@ export function WidgetRowHeader(props: WidgetRowHeaderProps): JSX.Element {
 		(s) => s.setIsPanelTypeSelectionModalOpen,
 	);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const permissions: ComponentTypes[] = ['add_panel'];
 	const { user } = useAppContext();

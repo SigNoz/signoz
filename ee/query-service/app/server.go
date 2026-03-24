@@ -5,7 +5,6 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	_ "net/http/pprof" // http profiler
 	"slices"
 
 	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
@@ -311,15 +310,6 @@ func (s *Server) Start(ctx context.Context) error {
 			slog.Error("Could not start HTTP server", errors.Attr(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
-	}()
-
-	go func() {
-		slog.Info("Starting pprof server", "addr", baseconst.DebugHttpPort)
-
-		err = http.ListenAndServe(baseconst.DebugHttpPort, nil)
-		if err != nil {
-			slog.Error("Could not start pprof server", errors.Attr(err))
-		}
 	}()
 
 	go func() {

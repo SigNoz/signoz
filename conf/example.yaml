@@ -39,6 +39,13 @@ instrumentation:
             host: "0.0.0.0"
             port: 9090
 
+##################### PProf #####################
+pprof:
+  # Whether to enable the pprof server.
+  enabled: true
+  # The address on which the pprof server listens.
+  address: 0.0.0.0:6060
+
 ##################### Web #####################
 web:
   # Whether to enable the web frontend

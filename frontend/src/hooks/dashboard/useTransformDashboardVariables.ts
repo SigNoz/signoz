@@ -1,8 +1,5 @@
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
-import {
-	useDashboardVariablesFromLocalStorage,
-	UseDashboardVariablesFromLocalStorageReturn,
-} from 'hooks/dashboard/useDashboardFromLocalStorage';
+import { getLocalStorageDashboardVariables } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import useVariablesFromUrl, {
 	UseVariablesFromUrlReturn,
 } from 'hooks/dashboard/useVariablesFromUrl';
@@ -13,14 +10,10 @@ import { v4 as generateUUID } from 'uuid';
 
 export function useTransformDashboardVariables(
 	dashboardId: string,
-): Pick<UseVariablesFromUrlReturn, 'getUrlVariables' | 'updateUrlVariable'> &
-	UseDashboardVariablesFromLocalStorageReturn & {
-		transformDashboardVariables: (data: Dashboard) => Dashboard;
-	} {
-	const {
-		currentDashboard,
-		updateLocalStorageDashboardVariables,
-	} = useDashboardVariablesFromLocalStorage(dashboardId);
+): Pick<UseVariablesFromUrlReturn, 'getUrlVariables' | 'updateUrlVariable'> & {
+	transformDashboardVariables: (data: Dashboard) => Dashboard;
+	currentDashboard: ReturnType<typeof getLocalStorageDashboardVariables>;
+} {
 	const { getUrlVariables, updateUrlVariable } = useVariablesFromUrl();
 
 	const mergeDBWithLocalStorage = (
@@ -80,7 +73,7 @@ export function useTransformDashboardVariables(
 		if (data && data.data && data.data.variables) {
 			const clonedDashboardData = mergeDBWithLocalStorage(
 				JSON.parse(JSON.stringify(data)),
-				currentDashboard,
+				getLocalStorageDashboardVariables(dashboardId),
 			);
 			const { variables } = clonedDashboardData.data;
 			const existingOrders: Set<number> = new Set();
@@ -122,7 +115,6 @@ export function useTransformDashboardVariables(
 		transformDashboardVariables,
 		getUrlVariables,
 		updateUrlVariable,
-		currentDashboard,
-		updateLocalStorageDashboardVariables,
+		currentDashboard: getLocalStorageDashboardVariables(dashboardId),
 	};
 }

@@ -1,5 +1,5 @@
 import { renderHook } from '@testing-library/react';
-import { useDashboardVariablesFromLocalStorage } from 'hooks/dashboard/useDashboardFromLocalStorage';
+import { getLocalStorageDashboardVariables } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useTransformDashboardVariables } from 'hooks/dashboard/useTransformDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
 import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
@@ -7,8 +7,8 @@ import { Dashboard, IDashboardVariable } from 'types/api/dashboard/getAll';
 jest.mock('hooks/dashboard/useDashboardFromLocalStorage');
 jest.mock('hooks/dashboard/useVariablesFromUrl');
 
-const mockUseDashboardVariablesFromLocalStorage = useDashboardVariablesFromLocalStorage as jest.MockedFunction<
-	typeof useDashboardVariablesFromLocalStorage
+const mockGetLocalStorageDashboardVariables = getLocalStorageDashboardVariables as jest.MockedFunction<
+	typeof getLocalStorageDashboardVariables
 >;
 const mockUseVariablesFromUrl = useVariablesFromUrl as jest.MockedFunction<
 	typeof useVariablesFromUrl
@@ -46,10 +46,7 @@ const setupHook = (
 	currentDashboard: Record<string, any> = {},
 	urlVariables: Record<string, any> = {},
 ): ReturnType<typeof useTransformDashboardVariables> => {
-	mockUseDashboardVariablesFromLocalStorage.mockReturnValue({
-		currentDashboard,
-		updateLocalStorageDashboardVariables: jest.fn(),
-	});
+	mockGetLocalStorageDashboardVariables.mockReturnValue(currentDashboard as any);
 	mockUseVariablesFromUrl.mockReturnValue({
 		getUrlVariables: () => urlVariables,
 		setUrlVariables: jest.fn(),
