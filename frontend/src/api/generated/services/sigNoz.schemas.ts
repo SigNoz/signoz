@@ -4001,10 +4001,10 @@ export type GetUserDeprecated200 = {
 	status: string;
 };
 
-export type UpdateUserPathParameters = {
+export type UpdateUserDeprecatedPathParameters = {
 	id: string;
 };
-export type UpdateUser200 = {
+export type UpdateUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -4369,13 +4369,13 @@ export type GetUser200 = {
 	status: string;
 };
 
-export type UpdateUserV2PathParameters = {
+export type UpdateUserPathParameters = {
 	id: string;
 };
-export type GetUserRolesPathParameters = {
+export type GetRolesByUserIDPathParameters = {
 	id: string;
 };
-export type GetUserRoles200 = {
+export type GetRolesByUserID200 = {
 	/**
 	 * @type array
 	 */

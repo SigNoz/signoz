@@ -6357,7 +6357,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint updates the user by id
-      operationId: UpdateUser
+      operationId: UpdateUserDeprecated
       parameters:
       - in: path
         name: id
@@ -8202,7 +8202,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint updates the user by id
-      operationId: UpdateUserV2
+      operationId: UpdateUser
       parameters:
       - in: path
         name: id
@@ -8259,7 +8259,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user roles by user id
-      operationId: GetUserRoles
+      operationId: GetRolesByUserID
       parameters:
       - in: path
         name: id

@@ -231,7 +231,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v1/user/{id}", handler.New(provider.authZ.SelfAccess(provider.userHandler.UpdateUserDeprecated), handler.OpenAPIDef{
-		ID:                  "UpdateUser",
+		ID:                  "UpdateUserDeprecated",
 		Tags:                []string{"users"},
 		Summary:             "Update user",
 		Description:         "This endpoint updates the user by id",
@@ -248,7 +248,7 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 	}
 
 	if err := router.Handle("/api/v2/users/{id}", handler.New(provider.authZ.AdminAccess(provider.userHandler.UpdateUser), handler.OpenAPIDef{
-		ID:                  "UpdateUserV2",
+		ID:                  "UpdateUser",
 		Tags:                []string{"users"},
 		Summary:             "Update user v2",
 		Description:         "This endpoint updates the user by id",
