@@ -10,16 +10,16 @@ import (
 )
 
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
-	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/connection_artifact", handler.New(
-		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionArtifact),
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts", handler.New(
+		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.CreateAccount),
 		handler.OpenAPIDef{
-			ID:                  "GetConnectionArtifact",
+			ID:                  "CreateAccount",
 			Tags:                []string{"cloudintegration"},
-			Summary:             "Get connection artifact",
-			Description:         "This endpoint returns a connection artifact for the specified cloud provider and creates new cloud integration account",
+			Summary:             "Create account",
+			Description:         "This endpoint creates a new cloud integration account for the specified cloud provider",
 			Request:             new(citypes.PostableConnectionArtifact),
 			RequestContentType:  "application/json",
-			Response:            new(citypes.GettableConnectionArtifact),
+			Response:            new(citypes.GettableAccountWithArtifact),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},

@@ -10,9 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var (
-	ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
-)
+var ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
 
 type CloudIntegrationService struct {
 	types.Identifiable
@@ -24,7 +22,7 @@ type CloudIntegrationService struct {
 
 type ServiceConfig struct {
 	// required till new providers are added
-	AWS *AWSServiceConfig `json:"aws,omitempty" required:"true" nullable:"false"`
+	AWS *AWSServiceConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -38,7 +36,7 @@ type ServiceMetadata struct {
 
 // ServiceDefinitionMetadata represents service definition metadata. This is useful for showing service tab in frontend.
 type ServiceDefinitionMetadata struct {
-	Id    string `json:"id" required:"true"`
+	ID    string `json:"id" required:"true"`
 	Title string `json:"title" required:"true"`
 	Icon  string `json:"icon" required:"true"`
 }
@@ -82,7 +80,7 @@ type DataCollected struct {
 // CollectionStrategy is cloud provider specific configuration for signal collection,
 // this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
 type CollectionStrategy struct {
-	AWS *AWSCollectionStrategy `json:"aws,omitempty"`
+	AWS *AWSCollectionStrategy `json:"aws" required:"true" nullable:"false"`
 }
 
 type AWSServiceConfig struct {
@@ -166,7 +164,7 @@ type AWSLogsStrategy struct {
 // This is used to show available pre-made dashboards for a service,
 // hence has additional fields like id, title and description
 type Dashboard struct {
-	Id          string                               `json:"id"`
+	ID          string                               `json:"id"`
 	Title       string                               `json:"title"`
 	Description string                               `json:"description"`
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
@@ -176,13 +174,13 @@ type Dashboard struct {
 
 // GetCloudIntegrationDashboardID returns the dashboard id for a cloud integration, given the cloud provider, service id, and dashboard id.
 // This is used to generate unique dashboard ids for cloud integration, and also to parse the dashboard id to get the cloud provider and service id when needed.
-func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcId, dashboardId string) string {
-	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
+func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcID, dashboardID string) string {
+	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcID, dashboardID)
 }
 
 // GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition.
 func GetDashboardsFromAssets(
-	svcId string,
+	svcID string,
 	orgID valuer.UUID,
 	cloudProvider CloudProviderType,
 	createdAt time.Time,
@@ -193,7 +191,7 @@ func GetDashboardsFromAssets(
 	for _, d := range assets.Dashboards {
 		author := fmt.Sprintf("%s-integration", cloudProvider)
 		dashboards = append(dashboards, &dashboardtypes.Dashboard{
-			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
+			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcID, d.ID),
 			Locked: true,
 			OrgID:  orgID,
 			Data:   d.Definition,

@@ -12,10 +12,10 @@ type Account struct {
 	types.TimeAuditable
 	ProviderAccountID *string           `json:"providerAccountId" required:"true" nullable:"true"`
 	Provider          CloudProviderType `json:"provider" required:"true"`
-	RemovedAt         *time.Time        `json:"removedAt,omitempty" required:"true" nullable:"true"`
-	AgentReport       *AgentReport      `json:"agentReport,omitempty" required:"true" nullable:"true"`
+	RemovedAt         *time.Time        `json:"removedAt" required:"true" nullable:"true"`
+	AgentReport       *AgentReport      `json:"agentReport" required:"true" nullable:"true"`
 	OrgID             valuer.UUID       `json:"orgId" required:"true"`
-	Config            *AccountConfig    `json:"config,omitempty" required:"true" nullable:"false"`
+	Config            *AccountConfig    `json:"config" required:"true" nullable:"false"`
 }
 
 // AgentReport represents heartbeats sent by the agent.
@@ -26,7 +26,7 @@ type AgentReport struct {
 
 type AccountConfig struct {
 	// required till new providers are added
-	AWS *AWSAccountConfig `json:"aws,omitempty" required:"true" nullable:"false"`
+	AWS *AWSAccountConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 type GettableAccounts struct {
