@@ -180,7 +180,7 @@ function TanStackHeaderRow({
 							top: 0,
 							bottom: 0,
 							left: '50%',
-							width: isResizing ? 2 : 1,
+							width: isResizing ? 2 : 4,
 							transform: 'translateX(-50%)',
 							background: isResizing ? 'var(--bg-robin-500)' : 'var(--l2-border)',
 							opacity: 1,

@@ -54,6 +54,13 @@ import {
 	resolveColumnTypeRender,
 } from './utils';
 
+import '../logsTableVirtuosoScrollbar.scss';
+
+const COLUMN_DND_AUTO_SCROLL = {
+	layoutShiftCompensation: false as const,
+	threshold: { x: 0.2, y: 0 },
+};
+
 const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function TanStackTableView(
 		{
@@ -274,6 +281,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					sensors={sensors}
 					collisionDetection={pointerWithin}
 					onDragEnd={handleDragEnd}
+					autoScroll={COLUMN_DND_AUTO_SCROLL}
 				>
 					<SortableContext
 						items={orderedColumnIds}
@@ -318,6 +326,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 		return (
 			<TableVirtuoso
+				className="logs-table-virtuoso-scroll"
 				ref={virtuosoRef}
 				style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 				data={tableData}
