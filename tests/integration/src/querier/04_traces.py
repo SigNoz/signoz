@@ -2131,9 +2131,9 @@ def test_traces_list_filter_by_trace_id(
     narrow_start_ms = int((now - timedelta(minutes=5)).timestamp() * 1000)
     narrow_rows = _query(narrow_start_ms, now_ms)
 
-    assert len(narrow_rows) == 1, (
-        f"Expected 1 span for trace_id filter (narrow window), got {len(narrow_rows)}"
-    )
+    assert (
+        len(narrow_rows) == 1
+    ), f"Expected 1 span for trace_id filter (narrow window), got {len(narrow_rows)}"
     assert narrow_rows[0]["data"]["span_id"] == span_id_root
     assert narrow_rows[0]["data"]["trace_id"] == target_trace_id
 
