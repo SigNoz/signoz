@@ -40,7 +40,10 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
 import { getInfinityDefaultStyles } from '../InfinityTableView/config';
-import { TanStackTableStyled } from '../InfinityTableView/styles';
+import {
+	TableHeaderCellStyled,
+	TanStackTableStyled,
+} from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
@@ -237,7 +240,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
-				const row = tableRows[index];
+				const row = table.getRowModel().rows[index];
 				if (!row) {
 					return null;
 				}
@@ -264,7 +267,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				isLogsExplorerPage,
 				onClearActiveLog,
 				onSetActiveLog,
-				tableRows,
+				table,
 				tableViewProps.fontSize,
 			],
 		);
@@ -305,6 +308,22 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									/>
 								);
 							})}
+							<TableHeaderCellStyled
+								aria-hidden
+								$isDragColumn={false}
+								$isDarkMode={isDarkMode}
+								fontSize={tableViewProps.fontSize}
+								className="logs-table-filler-header"
+							/>
+							{isLogsExplorerPage && (
+								<TableHeaderCellStyled
+									aria-hidden
+									$isDragColumn={false}
+									$isDarkMode={isDarkMode}
+									fontSize={tableViewProps.fontSize}
+									className="logs-table-actions-header"
+								/>
+							)}
 						</tr>
 					</SortableContext>
 				</DndContext>
@@ -318,6 +337,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			sensors,
 			table,
 			tableViewProps.fontSize,
+			isLogsExplorerPage,
 		]);
 
 		if (isLoading) {
@@ -374,6 +394,20 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										/>
 									);
 								})}
+								<col
+									key="logs-table-filler-col"
+									style={{ width: '100%', minWidth: 0 }}
+								/>
+								{isLogsExplorerPage && (
+									<col
+										key="logs-table-actions-col"
+										style={{
+											width: 0,
+											minWidth: 0,
+											maxWidth: 0,
+										}}
+									/>
+								)}
 							</colgroup>
 							{children}
 						</TanStackTableStyled>

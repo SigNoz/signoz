@@ -68,13 +68,22 @@ function TanStackRow({
 						$isDarkMode={isDarkMode}
 						key={cell.id}
 						fontSize={fontSize}
-						onClick={handleShowLogDetails}
 						className={columnKey}
+						onClick={handleShowLogDetails}
 					>
 						{flexRender(cell.column.columnDef.cell, cell.getContext())}
 					</TableCellStyled>
 				);
 			})}
+			<TableCellStyled
+				$isDragColumn={false}
+				$isLogIndicator={false}
+				$hasSingleColumn={false}
+				$isDarkMode={isDarkMode}
+				fontSize={fontSize}
+				className="logs-table-filler-cell"
+				onClick={handleShowLogDetails}
+			/>
 			{isLogsExplorerPage && (
 				<TableCellStyled
 					$isDragColumn={false}

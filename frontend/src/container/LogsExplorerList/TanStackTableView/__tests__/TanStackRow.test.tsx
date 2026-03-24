@@ -82,7 +82,7 @@ describe('TanStackRow', () => {
 			</table>,
 		);
 
-		expect(screen.getAllByRole('cell')).toHaveLength(2);
+		expect(screen.getAllByRole('cell')).toHaveLength(3);
 		expect(flexRenderMock).toHaveBeenCalled();
 	});
 
@@ -130,7 +130,7 @@ describe('TanStackRow', () => {
 		expect(screen.getByTestId('copy-btn')).toBeInTheDocument();
 	});
 
-	it('click on cell calls onSetActiveLog with current log', () => {
+	it('click on a data cell calls onSetActiveLog with current log', () => {
 		const onSetActiveLog = jest.fn();
 		const row = buildMockRow([{ columnId: 'body' }]);
 
@@ -158,7 +158,37 @@ describe('TanStackRow', () => {
 		);
 	});
 
-	it('when row is active log, click clears active log instead of setting', () => {
+	it('click on filler cell calls onSetActiveLog', () => {
+		const onSetActiveLog = jest.fn();
+		const row = buildMockRow([{ columnId: 'body' }]);
+
+		const { container } = render(
+			<table>
+				<tbody>
+					<tr>
+						<TanStackRow
+							row={row}
+							fontSize={FontSize.SMALL}
+							isDarkMode={false}
+							onSetActiveLog={onSetActiveLog}
+							onLogCopy={jest.fn()}
+							isLogsExplorerPage={false}
+						/>
+					</tr>
+				</tbody>
+			</table>,
+		);
+
+		const filler = container.querySelector('td.logs-table-filler-cell');
+		expect(filler).toBeTruthy();
+		fireEvent.click(filler!);
+
+		expect(onSetActiveLog).toHaveBeenCalledWith(
+			expect.objectContaining({ id: 'log-1' }),
+		);
+	});
+
+	it('when row is active log, click on cell clears active log', () => {
 		const onSetActiveLog = jest.fn();
 		const onClearActiveLog = jest.fn();
 		const row = buildMockRow([{ columnId: 'body' }]);

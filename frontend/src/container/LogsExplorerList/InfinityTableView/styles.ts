@@ -25,6 +25,7 @@ export const TableStyled = styled.table`
 export const TanStackTableStyled = styled(TableStyled)`
 	table-layout: fixed;
 	width: 100%;
+	min-width: 100%;
 	max-width: 100%;
 
 	& td,
@@ -64,6 +65,26 @@ export const TanStackTableStyled = styled(TableStyled)`
 		text-overflow: ellipsis;
 		white-space: nowrap;
 		max-width: 100%;
+	}
+
+	& td.logs-table-filler-cell,
+	& th.logs-table-filler-header {
+		padding: 0 !important;
+		min-width: 0;
+		border-left: none;
+	}
+
+	& th.logs-table-actions-header {
+		position: sticky;
+		right: 0;
+		z-index: 2;
+		width: 0 !important;
+		min-width: 0 !important;
+		max-width: 0 !important;
+		padding: 0 !important;
+		overflow: visible;
+		white-space: nowrap;
+		border-left: none;
 	}
 `;
 
