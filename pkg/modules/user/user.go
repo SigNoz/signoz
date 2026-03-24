@@ -90,7 +90,7 @@ type Getter interface {
 	GetNonDeletedUserByEmailAndOrgID(ctx context.Context, email valuer.Email, orgID valuer.UUID) (*types.User, error)
 
 	// Gets user_role with roles entries from db
-	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
+	GetRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
 
 	// Gets all the user with role using role id in an org id
 	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
@@ -112,7 +112,7 @@ type Handler interface {
 	GetMyUserDeprecated(http.ResponseWriter, *http.Request)
 	GetMyUser(http.ResponseWriter, *http.Request)
 	UpdateMyUser(http.ResponseWriter, *http.Request)
-	GetUserRoles(http.ResponseWriter, *http.Request)
+	GetRolesByUserID(http.ResponseWriter, *http.Request)
 	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password

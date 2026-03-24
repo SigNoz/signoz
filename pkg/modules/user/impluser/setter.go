@@ -327,28 +327,33 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	existingUserRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
+	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
 	if err != nil {
 		return nil, err
 	}
 
 	existingUserRoleNames := roleNamesFromUserRoles(existingUserRoles)
 
+	targetRoleNames := make([]string, len(updatable.Roles))
+	for idx, pRole := range updatable.Roles {
+		targetRoleNames[idx] = pRole.Name
+	}
+
 	var grants, revokes []string
 	var rolesChanged bool
-	if len(updatable.RoleNames) > 0 {
+	if len(targetRoleNames) > 0 {
 		// validate that all requested role names exist before making any changes
-		foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, updatable.RoleNames)
+		foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, targetRoleNames)
 		if err != nil {
 			return nil, err
 		}
-		if len(foundRoles) != len(updatable.RoleNames) {
+		if len(foundRoles) != len(targetRoleNames) {
 			foundNames := make(map[string]struct{}, len(foundRoles))
 			for _, r := range foundRoles {
 				foundNames[r.Name] = struct{}{}
 			}
 			var missing []string
-			for _, name := range updatable.RoleNames {
+			for _, name := range targetRoleNames {
 				if _, ok := foundNames[name]; !ok {
 					missing = append(missing, name)
 				}
@@ -357,7 +362,7 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 		}
 	}
 
-	grants, revokes = authtypes.PatchRolesNames(existingUserRoleNames, updatable.RoleNames)
+	grants, revokes = authtypes.DiffRoles(existingUserRoleNames, targetRoleNames)
 	rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
 
 	if rolesChanged {
@@ -381,7 +386,7 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 
 	if rolesChanged {
 		// this by default runs in txn
-		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, updatable.RoleNames); err != nil {
+		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, targetRoleNames); err != nil {
 			return nil, err
 		}
 	}
@@ -450,7 +455,7 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
-	userRoles, err := module.getter.GetUserRoles(ctx, user.ID)
+	userRoles, err := module.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		return err
 	}
@@ -628,7 +633,7 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		return err
 	}
 
-	userRoles, err := module.getter.GetUserRoles(ctx, user.ID)
+	userRoles, err := module.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		return err
 	}

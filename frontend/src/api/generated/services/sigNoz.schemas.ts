@@ -3180,6 +3180,13 @@ export interface TypesPostableResetPasswordDTO {
 	token?: string;
 }
 
+export interface TypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
@@ -3260,7 +3267,7 @@ export interface TypesUpdatableUserDTO {
 	/**
 	 * @type array
 	 */
-	roleNames: string[];
+	roles: TypesPostableRoleDTO[];
 }
 
 export interface TypesUserDTO {

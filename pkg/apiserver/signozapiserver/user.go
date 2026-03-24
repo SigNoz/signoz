@@ -349,8 +349,8 @@ func (provider *provider) addUserRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetUserRoles), handler.OpenAPIDef{
-		ID:                  "GetUserRoles",
+	if err := router.Handle("/api/v2/users/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.userHandler.GetRolesByUserID), handler.OpenAPIDef{
+		ID:                  "GetRolesByUserID",
 		Tags:                []string{"users"},
 		Summary:             "Get user roles",
 		Description:         "This endpoint returns the user roles by user id",

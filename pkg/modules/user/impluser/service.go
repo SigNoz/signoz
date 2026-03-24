@@ -133,7 +133,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		userRoles, err := s.getter.GetUserRoles(ctx, existingUser.ID)
+		userRoles, err := s.getter.GetRolesByUserID(ctx, existingUser.ID)
 		if err != nil {
 			return err
 		}

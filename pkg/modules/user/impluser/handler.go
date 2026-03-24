@@ -124,7 +124,7 @@ func (h *handler) GetUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -173,7 +173,7 @@ func (h *handler) GetMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -581,7 +581,7 @@ func (h *handler) RevokeAPIKey(w http.ResponseWriter, r *http.Request) {
 	render.Success(w, http.StatusNoContent, nil)
 }
 
-func (h *handler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
+func (h *handler) GetRolesByUserID(w http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()
 
@@ -599,7 +599,7 @@ func (h *handler) GetUserRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	userRoles, err := h.getter.GetUserRoles(ctx, user.ID)
+	userRoles, err := h.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		render.Error(w, err)
 		return

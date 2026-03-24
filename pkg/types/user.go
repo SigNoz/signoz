@@ -56,8 +56,12 @@ type UpdatableSelfUser struct {
 }
 
 type UpdatableUser struct {
-	DisplayName string   `json:"displayName" required:"true"`
-	RoleNames   []string `json:"roleNames" required:"true" nullable:"false"`
+	DisplayName string         `json:"displayName" required:"true"`
+	Roles       []PostableRole `json:"roles" required:"true" nullable:"false"`
+}
+
+type PostableRole struct {
+	Name string `json:"name" required:"true"`
 }
 
 type PostableRegisterOrgAndAdmin struct {

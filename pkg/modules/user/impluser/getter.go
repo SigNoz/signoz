@@ -107,7 +107,7 @@ func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID v
 		return nil, err
 	}
 
-	userRoles, err := module.GetUserRoles(ctx, id)
+	userRoles, err := module.GetRolesByUserID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -135,7 +135,7 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 		return nil, err
 	}
 
-	userRoles, err := module.GetUserRoles(ctx, id)
+	userRoles, err := module.GetRolesByUserID(ctx, id)
 	if err != nil {
 		return nil, err
 	}
@@ -203,7 +203,7 @@ func (module *getter) GetNonDeletedUserByEmailAndOrgID(ctx context.Context, emai
 
 }
 
-func (module *getter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
+func (module *getter) GetRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
 	userRoles, err := module.userRoleStore.GetUserRolesByUserID(ctx, userID)
 	if err != nil {
 		return nil, err

@@ -2674,6 +2674,13 @@ components:
         token:
           type: string
       type: object
+    TypesPostableRole:
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
     TypesResetPasswordToken:
       properties:
         expiresAt:
@@ -2726,13 +2733,13 @@ components:
       properties:
         displayName:
           type: string
-        roleNames:
+        roles:
           items:
-            type: string
+            $ref: '#/components/schemas/TypesPostableRole'
           type: array
       required:
       - displayName
-      - roleNames
+      - roles
       type: object
     TypesUser:
       properties:

@@ -68,7 +68,7 @@ type UserRoleStore interface {
 }
 
 // Returns the diff between current role names and target role name separately, as additions and deletions
-func PatchRolesNames(currentRolesNames, targetRoleNames []string) ([]string, []string) {
+func DiffRoles(currentRolesNames, targetRoleNames []string) ([]string, []string) {
 	currentRolesSet := make(map[string]struct{}, len(currentRolesNames))
 	targetRolesSet := make(map[string]struct{}, len(targetRoleNames))
 
