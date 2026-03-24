@@ -338,9 +338,22 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID 
 	var rolesChanged bool
 	if len(updatable.RoleNames) > 0 {
 		// validate that all requested role names exist before making any changes
-		_, err := module.authz.ListByOrgIDAndNames(ctx, orgID, updatable.RoleNames)
+		foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, updatable.RoleNames)
 		if err != nil {
 			return nil, err
+		}
+		if len(foundRoles) != len(updatable.RoleNames) {
+			foundNames := make(map[string]struct{}, len(foundRoles))
+			for _, r := range foundRoles {
+				foundNames[r.Name] = struct{}{}
+			}
+			var missing []string
+			for _, name := range updatable.RoleNames {
+				if _, ok := foundNames[name]; !ok {
+					missing = append(missing, name)
+				}
+			}
+			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "role names not found: %v", missing)
 		}
 	}
 
