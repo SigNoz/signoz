@@ -3252,22 +3252,11 @@ export interface TypesStorableAPIKeyDTO {
 	userId?: string;
 }
 
-export interface TypesUpdatableSelfUserDTO {
-	/**
-	 * @type string
-	 */
-	displayName: string;
-}
-
 export interface TypesUpdatableUserDTO {
 	/**
 	 * @type string
 	 */
 	displayName: string;
-	/**
-	 * @type array
-	 */
-	roles: TypesPostableRoleDTO[];
 }
 
 export interface TypesUserDTO {
@@ -4386,6 +4375,13 @@ export type GetRolesByUserID200 = {
 	status: string;
 };
 
+export type SetRoleByUserIDPathParameters = {
+	id: string;
+};
+export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
+	id: string;
+	roleId: string;
+};
 export type GetMyUser200 = {
 	data: AuthtypesUserWithRolesDTO;
 	/**

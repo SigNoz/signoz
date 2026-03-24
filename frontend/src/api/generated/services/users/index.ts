@@ -39,8 +39,10 @@ import type {
 	ListAPIKeys200,
 	ListUsers200,
 	ListUsersDeprecated200,
+	RemoveUserRoleByUserIDAndRoleIDPathParameters,
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
+	SetRoleByUserIDPathParameters,
 	TypesChangePasswordRequestDTO,
 	TypesDeprecatedUserDTO,
 	TypesPostableAPIKeyDTO,
@@ -48,8 +50,8 @@ import type {
 	TypesPostableForgotPasswordDTO,
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
+	TypesPostableRoleDTO,
 	TypesStorableAPIKeyDTO,
-	TypesUpdatableSelfUserDTO,
 	TypesUpdatableUserDTO,
 	UpdateAPIKeyPathParameters,
 	UpdateUserDeprecated200,
@@ -1858,6 +1860,187 @@ export const invalidateGetRolesByUserID = async (
 };
 
 /**
+ * This endpoint assigns the role to the user roles by user id
+ * @summary Set user roles
+ */
+export const setRoleByUserID = (
+	{ id }: SetRoleByUserIDPathParameters,
+	typesPostableRoleDTO: BodyType<TypesPostableRoleDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/${id}/roles`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesPostableRoleDTO,
+		signal,
+	});
+};
+
+export const getSetRoleByUserIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof setRoleByUserID>>,
+		TError,
+		{
+			pathParams: SetRoleByUserIDPathParameters;
+			data: BodyType<TypesPostableRoleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof setRoleByUserID>>,
+	TError,
+	{
+		pathParams: SetRoleByUserIDPathParameters;
+		data: BodyType<TypesPostableRoleDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['setRoleByUserID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof setRoleByUserID>>,
+		{
+			pathParams: SetRoleByUserIDPathParameters;
+			data: BodyType<TypesPostableRoleDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return setRoleByUserID(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type SetRoleByUserIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof setRoleByUserID>>
+>;
+export type SetRoleByUserIDMutationBody = BodyType<TypesPostableRoleDTO>;
+export type SetRoleByUserIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Set user roles
+ */
+export const useSetRoleByUserID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof setRoleByUserID>>,
+		TError,
+		{
+			pathParams: SetRoleByUserIDPathParameters;
+			data: BodyType<TypesPostableRoleDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof setRoleByUserID>>,
+	TError,
+	{
+		pathParams: SetRoleByUserIDPathParameters;
+		data: BodyType<TypesPostableRoleDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getSetRoleByUserIDMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint removes a role from the user by user id and role id
+ * @summary Remove a role from user
+ */
+export const removeUserRoleByUserIDAndRoleID = ({
+	id,
+	roleId,
+}: RemoveUserRoleByUserIDAndRoleIDPathParameters) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/${id}/roles/${roleId}`,
+		method: 'DELETE',
+	});
+};
+
+export const getRemoveUserRoleByUserIDAndRoleIDMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
+		TError,
+		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
+	TError,
+	{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
+	TContext
+> => {
+	const mutationKey = ['removeUserRoleByUserIDAndRoleID'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
+		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters }
+	> = (props) => {
+		const { pathParams } = props ?? {};
+
+		return removeUserRoleByUserIDAndRoleID(pathParams);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type RemoveUserRoleByUserIDAndRoleIDMutationResult = NonNullable<
+	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>
+>;
+
+export type RemoveUserRoleByUserIDAndRoleIDMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Remove a role from user
+ */
+export const useRemoveUserRoleByUserIDAndRoleID = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
+		TError,
+		{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof removeUserRoleByUserIDAndRoleID>>,
+	TError,
+	{ pathParams: RemoveUserRoleByUserIDAndRoleIDPathParameters },
+	TContext
+> => {
+	const mutationOptions = getRemoveUserRoleByUserIDAndRoleIDMutationOptions(
+		options,
+	);
+
+	return useMutation(mutationOptions);
+};
+/**
  * This endpoint returns the user I belong to
  * @summary Get my user v2
  */
@@ -1940,13 +2123,13 @@ export const invalidateGetMyUser = async (
  * @summary Update my user v2
  */
 export const updateMyUserV2 = (
-	typesUpdatableSelfUserDTO: BodyType<TypesUpdatableSelfUserDTO>,
+	typesUpdatableUserDTO: BodyType<TypesUpdatableUserDTO>,
 ) => {
 	return GeneratedAPIInstance<void>({
 		url: `/api/v2/users/me`,
 		method: 'PUT',
 		headers: { 'Content-Type': 'application/json' },
-		data: typesUpdatableSelfUserDTO,
+		data: typesUpdatableUserDTO,
 	});
 };
 
@@ -1957,13 +2140,13 @@ export const getUpdateMyUserV2MutationOptions = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
 		TError,
-		{ data: BodyType<TypesUpdatableSelfUserDTO> },
+		{ data: BodyType<TypesUpdatableUserDTO> },
 		TContext
 	>;
 }): UseMutationOptions<
 	Awaited<ReturnType<typeof updateMyUserV2>>,
 	TError,
-	{ data: BodyType<TypesUpdatableSelfUserDTO> },
+	{ data: BodyType<TypesUpdatableUserDTO> },
 	TContext
 > => {
 	const mutationKey = ['updateMyUserV2'];
@@ -1977,7 +2160,7 @@ export const getUpdateMyUserV2MutationOptions = <
 
 	const mutationFn: MutationFunction<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
-		{ data: BodyType<TypesUpdatableSelfUserDTO> }
+		{ data: BodyType<TypesUpdatableUserDTO> }
 	> = (props) => {
 		const { data } = props ?? {};
 
@@ -1990,7 +2173,7 @@ export const getUpdateMyUserV2MutationOptions = <
 export type UpdateMyUserV2MutationResult = NonNullable<
 	Awaited<ReturnType<typeof updateMyUserV2>>
 >;
-export type UpdateMyUserV2MutationBody = BodyType<TypesUpdatableSelfUserDTO>;
+export type UpdateMyUserV2MutationBody = BodyType<TypesUpdatableUserDTO>;
 export type UpdateMyUserV2MutationError = ErrorType<RenderErrorResponseDTO>;
 
 /**
@@ -2003,13 +2186,13 @@ export const useUpdateMyUserV2 = <
 	mutation?: UseMutationOptions<
 		Awaited<ReturnType<typeof updateMyUserV2>>,
 		TError,
-		{ data: BodyType<TypesUpdatableSelfUserDTO> },
+		{ data: BodyType<TypesUpdatableUserDTO> },
 		TContext
 	>;
 }): UseMutationResult<
 	Awaited<ReturnType<typeof updateMyUserV2>>,
 	TError,
-	{ data: BodyType<TypesUpdatableSelfUserDTO> },
+	{ data: BodyType<TypesUpdatableUserDTO> },
 	TContext
 > => {
 	const mutationOptions = getUpdateMyUserV2MutationOptions(options);
