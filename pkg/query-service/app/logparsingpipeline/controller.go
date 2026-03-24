@@ -59,7 +59,7 @@ func NewLogParsingPipelinesController(
 // TODO(Piyush): remove with qbv5 migration
 func (pc *LogParsingPipelineController) enrichPipelinesFilters(
 	ctx context.Context, pipelines []pipelinetypes.GettablePipeline,
-) []pipelinetypes.GettablePipeline {
+) ([]pipelinetypes.GettablePipeline, error) {
 	// Collect names of non-static keys that are missing type info.
 	// Static fields (body, trace_id, etc.) are intentionally Unspecified and map
 	// to top-level OTEL fields — they do not need enrichment.
@@ -82,13 +82,13 @@ func (pc *LogParsingPipelineController) enrichPipelinesFilters(
 		}
 	}
 	if len(unspecifiedNames) == 0 {
-		return pipelines
+		return pipelines, nil
 	}
 
 	logFields, apiErr := pc.reader.GetLogFieldsFromNames(ctx, slices.Collect(maps.Keys(unspecifiedNames)))
 	if apiErr != nil {
 		slog.ErrorContext(ctx, "failed to fetch log fields for pipeline filter enrichment", "error", apiErr)
-		return pipelines
+		return pipelines, apiErr
 	}
 
 	// Build a simple name → AttributeKeyType map from the response.
@@ -128,7 +128,7 @@ func (pc *LogParsingPipelineController) enrichPipelinesFilters(
 		}
 	}
 
-	return pipelines
+	return pipelines, nil
 }
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests
@@ -340,7 +340,11 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, error) {
-	pipelines := ic.enrichPipelinesFilters(ctx, request.Pipelines)
+	pipelines, err := ic.enrichPipelinesFilters(ctx, request.Pipelines)
+	if err != nil {
+		return nil, err
+	}
+
 	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
 	if err != nil {
 		return nil, err
@@ -378,9 +382,7 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	if configVersion != nil {
 		pipelinesVersion = configVersion.Version
 	}
-
 	ctx := context.Background()
-
 	pipelinesResp, err := pc.GetPipelinesByVersion(ctx, orgId, pipelinesVersion)
 	if err != nil {
 		return nil, "", err
@@ -391,7 +393,11 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
 	}
 
-	enrichedPipelines := pc.enrichPipelinesFilters(ctx, pipelinesResp.Pipelines)
+	enrichedPipelines, err := pc.enrichPipelinesFilters(ctx, pipelinesResp.Pipelines)
+	if err != nil {
+		return nil, "", err
+	}
+
 	if querybuilder.BodyJSONQueryEnabled {
 		// add default normalize pipeline at the beginning, only for sending to collector
 		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
