@@ -50,7 +50,7 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 
 type UserWithRoles struct {
 	*types.User
-	UserRoles []*UserRole `json:"user_roles"`
+	UserRoles []*UserRole `json:"userRoles"`
 }
 
 type UserRoleStore interface {

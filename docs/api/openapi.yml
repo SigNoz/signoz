@@ -402,7 +402,7 @@ components:
         updatedAt:
           format: date-time
           type: string
-        user_roles:
+        userRoles:
           items:
             $ref: '#/components/schemas/AuthtypesUserRole'
           nullable: true

@@ -535,7 +535,7 @@ export interface AuthtypesUserWithRolesDTO {
 	 * @type array
 	 * @nullable true
 	 */
-	user_roles?: AuthtypesUserRoleDTO[] | null;
+	userRoles?: AuthtypesUserRoleDTO[] | null;
 }
 
 export interface CloudintegrationtypesAWSAccountConfigDTO {
