@@ -3,6 +3,7 @@ package prometheus
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 )
 
@@ -41,6 +42,9 @@ func newConfig() factory.Config {
 }
 
 func (c Config) Validate() error {
+	if c.Timeout <= 0 {
+		return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "prometheus::timeout must be greater than 0")
+	}
 	return nil
 }
 

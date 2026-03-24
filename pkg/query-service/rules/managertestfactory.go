@@ -99,7 +99,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 
 	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{}, telemetryStore)
+	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 	reader := clickhouseReader.NewReader(
 		instrumentationtest.New().Logger(),
 		nil,
