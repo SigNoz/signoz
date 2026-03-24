@@ -5,13 +5,14 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
-	ErrCodeUserRolesNotFound      = errors.MustNewCode("user_roles_not_found")
+	ErrCodeUserRolesNotFound     = errors.MustNewCode("user_roles_not_found")
 )
 
 type UserRole struct {
@@ -45,6 +46,11 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 	}
 
 	return userRoles
+}
+
+type UserWithRoles struct {
+	*types.User
+	Roles []*Role `json:"roles"`
 }
 
 type UserRoleStore interface {

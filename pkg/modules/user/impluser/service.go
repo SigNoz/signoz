@@ -156,9 +156,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		existingUser.PromoteToRoot()
 
 		err = s.store.RunInTx(ctx, func(ctx context.Context) error {
-			// update users table
-			deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingUser, types.RoleAdmin)
-			if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+			if err := s.setter.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 				return err
 			}
 
@@ -201,8 +199,7 @@ func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID,
 
 	if existingRoot.Email != s.config.Email {
 		existingRoot.UpdateEmail(s.config.Email)
-		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingRoot, types.RoleAdmin)
-		if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+		if err := s.setter.UpdateAnyUser(ctx, orgID, existingRoot); err != nil {
 			return err
 		}
 	}

@@ -25,12 +25,20 @@ import type {
 	CreateInvite201,
 	DeleteUserPathParameters,
 	GetMyUser200,
+	GetMyUserV2200,
 	GetResetPasswordToken200,
 	GetResetPasswordTokenPathParameters,
 	GetUser200,
 	GetUserPathParameters,
+	GetUserRoles200,
+	GetUserRolesPathParameters,
+	GetUsersByRoleID200,
+	GetUsersByRoleIDPathParameters,
+	GetUserV2PathParameters,
+	GetUserV2200,
 	ListAPIKeys200,
 	ListUsers200,
+	ListUsersV2200,
 	RenderErrorResponseDTO,
 	RevokeAPIKeyPathParameters,
 	TypesChangePasswordRequestDTO,
@@ -41,9 +49,12 @@ import type {
 	TypesPostableInviteDTO,
 	TypesPostableResetPasswordDTO,
 	TypesStorableAPIKeyDTO,
+	TypesUpdatableSelfUserDTO,
+	TypesUpdatableUserDTO,
 	UpdateAPIKeyPathParameters,
 	UpdateUser200,
 	UpdateUserPathParameters,
+	UpdateUserV2PathParameters,
 } from '../sigNoz.schemas';
 
 /**
@@ -1342,6 +1353,651 @@ export const useForgotPassword = <
 	TContext
 > => {
 	const mutationOptions = getForgotPasswordMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint returns the users having the role by role id
+ * @summary Get users by role id
+ */
+export const getUsersByRoleID = (
+	{ id }: GetUsersByRoleIDPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetUsersByRoleID200>({
+		url: `/api/v2/roles/${id}/users`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetUsersByRoleIDQueryKey = ({
+	id,
+}: GetUsersByRoleIDPathParameters) => {
+	return [`/api/v2/roles/${id}/users`] as const;
+};
+
+export const getGetUsersByRoleIDQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUsersByRoleID>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUsersByRoleIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUsersByRoleID>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetUsersByRoleIDQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUsersByRoleID>>> = ({
+		signal,
+	}) => getUsersByRoleID({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getUsersByRoleID>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetUsersByRoleIDQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUsersByRoleID>>
+>;
+export type GetUsersByRoleIDQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get users by role id
+ */
+
+export function useGetUsersByRoleID<
+	TData = Awaited<ReturnType<typeof getUsersByRoleID>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUsersByRoleIDPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUsersByRoleID>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetUsersByRoleIDQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get users by role id
+ */
+export const invalidateGetUsersByRoleID = async (
+	queryClient: QueryClient,
+	{ id }: GetUsersByRoleIDPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetUsersByRoleIDQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint lists all users for the organization
+ * @summary List users v2
+ */
+export const listUsersV2 = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<ListUsersV2200>({
+		url: `/api/v2/users`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getListUsersV2QueryKey = () => {
+	return [`/api/v2/users`] as const;
+};
+
+export const getListUsersV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof listUsersV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUsersV2>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getListUsersV2QueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof listUsersV2>>> = ({
+		signal,
+	}) => listUsersV2(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof listUsersV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type ListUsersV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof listUsersV2>>
+>;
+export type ListUsersV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary List users v2
+ */
+
+export function useListUsersV2<
+	TData = Awaited<ReturnType<typeof listUsersV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof listUsersV2>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getListUsersV2QueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary List users v2
+ */
+export const invalidateListUsersV2 = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getListUsersV2QueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint returns the user by id
+ * @summary Get user by user id
+ */
+export const getUserV2 = (
+	{ id }: GetUserV2PathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetUserV2200>({
+		url: `/api/v2/users/${id}`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetUserV2QueryKey = ({ id }: GetUserV2PathParameters) => {
+	return [`/api/v2/users/${id}`] as const;
+};
+
+export const getGetUserV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUserV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetUserV2QueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserV2>>> = ({
+		signal,
+	}) => getUserV2({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData> & {
+		queryKey: QueryKey;
+	};
+};
+
+export type GetUserV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUserV2>>
+>;
+export type GetUserV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get user by user id
+ */
+
+export function useGetUserV2<
+	TData = Awaited<ReturnType<typeof getUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUserV2PathParameters,
+	options?: {
+		query?: UseQueryOptions<Awaited<ReturnType<typeof getUserV2>>, TError, TData>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetUserV2QueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get user by user id
+ */
+export const invalidateGetUserV2 = async (
+	queryClient: QueryClient,
+	{ id }: GetUserV2PathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetUserV2QueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint updates the user by id
+ * @summary Update user v2
+ */
+export const updateUserV2 = (
+	{ id }: UpdateUserV2PathParameters,
+	typesUpdatableUserDTO: BodyType<TypesUpdatableUserDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/${id}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesUpdatableUserDTO,
+	});
+};
+
+export const getUpdateUserV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateUserV2>>,
+		TError,
+		{
+			pathParams: UpdateUserV2PathParameters;
+			data: BodyType<TypesUpdatableUserDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateUserV2>>,
+	TError,
+	{
+		pathParams: UpdateUserV2PathParameters;
+		data: BodyType<TypesUpdatableUserDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateUserV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateUserV2>>,
+		{
+			pathParams: UpdateUserV2PathParameters;
+			data: BodyType<TypesUpdatableUserDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateUserV2(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateUserV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateUserV2>>
+>;
+export type UpdateUserV2MutationBody = BodyType<TypesUpdatableUserDTO>;
+export type UpdateUserV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update user v2
+ */
+export const useUpdateUserV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateUserV2>>,
+		TError,
+		{
+			pathParams: UpdateUserV2PathParameters;
+			data: BodyType<TypesUpdatableUserDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateUserV2>>,
+	TError,
+	{
+		pathParams: UpdateUserV2PathParameters;
+		data: BodyType<TypesUpdatableUserDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getUpdateUserV2MutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * This endpoint returns the user roles by user id
+ * @summary Get user roles
+ */
+export const getUserRoles = (
+	{ id }: GetUserRolesPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetUserRoles200>({
+		url: `/api/v2/users/${id}/roles`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetUserRolesQueryKey = ({ id }: GetUserRolesPathParameters) => {
+	return [`/api/v2/users/${id}/roles`] as const;
+};
+
+export const getGetUserRolesQueryOptions = <
+	TData = Awaited<ReturnType<typeof getUserRoles>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUserRolesPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserRoles>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetUserRolesQueryKey({ id });
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getUserRoles>>> = ({
+		signal,
+	}) => getUserRoles({ id }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!id,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getUserRoles>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetUserRolesQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getUserRoles>>
+>;
+export type GetUserRolesQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get user roles
+ */
+
+export function useGetUserRoles<
+	TData = Awaited<ReturnType<typeof getUserRoles>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ id }: GetUserRolesPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getUserRoles>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetUserRolesQueryOptions({ id }, options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get user roles
+ */
+export const invalidateGetUserRoles = async (
+	queryClient: QueryClient,
+	{ id }: GetUserRolesPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetUserRolesQueryKey({ id }) },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint returns the user I belong to
+ * @summary Get my user v2
+ */
+export const getMyUserV2 = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMyUserV2200>({
+		url: `/api/v2/users/me`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMyUserV2QueryKey = () => {
+	return [`/api/v2/users/me`] as const;
+};
+
+export const getGetMyUserV2QueryOptions = <
+	TData = Awaited<ReturnType<typeof getMyUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserV2>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey = queryOptions?.queryKey ?? getGetMyUserV2QueryKey();
+
+	const queryFn: QueryFunction<Awaited<ReturnType<typeof getMyUserV2>>> = ({
+		signal,
+	}) => getMyUserV2(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserV2>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMyUserV2QueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMyUserV2>>
+>;
+export type GetMyUserV2QueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get my user v2
+ */
+
+export function useGetMyUserV2<
+	TData = Awaited<ReturnType<typeof getMyUserV2>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMyUserV2>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMyUserV2QueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get my user v2
+ */
+export const invalidateGetMyUserV2 = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMyUserV2QueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
+/**
+ * This endpoint updates the user I belong to
+ * @summary Update my user v2
+ */
+export const updateMyUserV2 = (
+	typesUpdatableSelfUserDTO: BodyType<TypesUpdatableSelfUserDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v2/users/me`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: typesUpdatableSelfUserDTO,
+	});
+};
+
+export const getUpdateMyUserV2MutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyUserV2>>,
+		TError,
+		{ data: BodyType<TypesUpdatableSelfUserDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateMyUserV2>>,
+	TError,
+	{ data: BodyType<TypesUpdatableSelfUserDTO> },
+	TContext
+> => {
+	const mutationKey = ['updateMyUserV2'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateMyUserV2>>,
+		{ data: BodyType<TypesUpdatableSelfUserDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return updateMyUserV2(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateMyUserV2MutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateMyUserV2>>
+>;
+export type UpdateMyUserV2MutationBody = BodyType<TypesUpdatableSelfUserDTO>;
+export type UpdateMyUserV2MutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update my user v2
+ */
+export const useUpdateMyUserV2 = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateMyUserV2>>,
+		TError,
+		{ data: BodyType<TypesUpdatableSelfUserDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateMyUserV2>>,
+	TError,
+	{ data: BodyType<TypesUpdatableSelfUserDTO> },
+	TContext
+> => {
+	const mutationOptions = getUpdateMyUserV2MutationOptions(options);
 
 	return useMutation(mutationOptions);
 };

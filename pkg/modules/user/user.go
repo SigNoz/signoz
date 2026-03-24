@@ -34,10 +34,13 @@ type Setter interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
+	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
+	UpdateMyUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableSelfUser) (*types.User, error)
+	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser, updatedBy valuer.UUID) (*types.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
-	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.DeprecatedUser) error
+	UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error
+	UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
@@ -60,11 +63,13 @@ type Getter interface {
 	// Get root user by org id.
 	GetRootUserByOrgID(context.Context, valuer.UUID) (*types.User, []*authtypes.UserRole, error)
 
-	// Get gets the users based on the given id
-	ListByOrgID(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
+	// Get gets the users based on the given org id
+	ListByOrgIDDeprecated(context.Context, valuer.UUID) ([]*types.DeprecatedUser, error)
+	ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error)
 
 	// Get deprecated user object by orgID and id.
 	GetDeprecatedUserByOrgIDAndID(context.Context, valuer.UUID, valuer.UUID) (*types.DeprecatedUser, error)
+	GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.User, error)
 
 	// Get user by id.
 	Get(context.Context, valuer.UUID) (*types.DeprecatedUser, error)
@@ -86,6 +91,9 @@ type Getter interface {
 
 	// Gets user_role with roles entries from db
 	GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error)
+
+	// Gets all the user with role using role id in an org id
+	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error)
 }
 
 type Handler interface {
@@ -93,11 +101,19 @@ type Handler interface {
 	CreateInvite(http.ResponseWriter, *http.Request)
 	CreateBulkInvite(http.ResponseWriter, *http.Request)
 
+	// users
+	ListUsersDeprecated(http.ResponseWriter, *http.Request)
 	ListUsers(http.ResponseWriter, *http.Request)
+	UpdateUserDeprecated(http.ResponseWriter, *http.Request)
 	UpdateUser(http.ResponseWriter, *http.Request)
 	DeleteUser(http.ResponseWriter, *http.Request)
+	GetUserDeprecated(http.ResponseWriter, *http.Request)
 	GetUser(http.ResponseWriter, *http.Request)
+	GetMyUserDeprecated(http.ResponseWriter, *http.Request)
 	GetMyUser(http.ResponseWriter, *http.Request)
+	UpdateMyUser(http.ResponseWriter, *http.Request)
+	GetUserRoles(http.ResponseWriter, *http.Request)
+	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password
 	GetResetPasswordToken(http.ResponseWriter, *http.Request)

@@ -51,6 +51,15 @@ type DeprecatedUser struct {
 	Role Role `json:"role"`
 }
 
+type UpdatableSelfUser struct {
+	DisplayName string `json:"displayName" required:"true"`
+}
+
+type UpdatableUser struct {
+	DisplayName string   `json:"displayName" required:"true"`
+	RoleNames   []string `json:"roleNames" required:"true" nullable:"false"`
+}
+
 type PostableRegisterOrgAndAdmin struct {
 	Name           string       `json:"name"`
 	Email          valuer.Email `json:"email"`
@@ -297,6 +306,9 @@ type UserStore interface {
 
 	// Get user by reset password token
 	GetUserByResetPasswordToken(ctx context.Context, token string) (*User, error)
+
+	// Get users having role by org id and role id
+	GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*User, error)
 
 	// Transaction
 	RunInTx(ctx context.Context, cb func(ctx context.Context) error) error

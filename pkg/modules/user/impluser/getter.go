@@ -37,7 +37,7 @@ func (module *getter) GetRootUserByOrgID(ctx context.Context, orgID valuer.UUID)
 	return rootUser, userRoles, nil
 }
 
-func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
+func (module *getter) ListByOrgIDDeprecated(ctx context.Context, orgID valuer.UUID) ([]*types.DeprecatedUser, error) {
 	users, err := module.store.ListUsersByOrgID(ctx, orgID)
 	if err != nil {
 		return nil, err
@@ -84,6 +84,23 @@ func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*ty
 	return deprecatedUsers, nil
 }
 
+func (module *getter) ListByOrgID(ctx context.Context, orgID valuer.UUID) ([]*types.User, error) {
+	users, err := module.store.ListUsersByOrgID(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	// filter root users if feature flag `hide_root_users` is true
+	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
+	hideRootUsers := module.flagger.BooleanOrEmpty(ctx, flagger.FeatureHideRootUser, evalCtx)
+
+	if hideRootUsers {
+		users = slices.DeleteFunc(users, func(user *types.User) bool { return user.IsRoot })
+	}
+
+	return users, nil
+}
+
 func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.DeprecatedUser, error) {
 	user, err := module.store.GetByOrgIDAndID(ctx, orgID, id)
 	if err != nil {
@@ -99,9 +116,17 @@ func (module *getter) GetDeprecatedUserByOrgIDAndID(ctx context.Context, orgID v
 		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
 	}
 
+	if userRoles[0].Role == nil {
+		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
+	}
+
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
 
 	return types.NewDeprecatedUserFromUserAndRole(user, role), nil
+}
+
+func (module *getter) GetUserByOrgIDAndID(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) (*types.User, error) {
+	return module.store.GetByOrgIDAndID(ctx, orgID, userID)
 }
 
 func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.DeprecatedUser, error) {
@@ -117,6 +142,10 @@ func (module *getter) Get(ctx context.Context, id valuer.UUID) (*types.Deprecate
 
 	if len(userRoles) == 0 {
 		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeUserRolesNotFound, "no user roles entries found")
+	}
+
+	if userRoles[0].Role == nil {
+		return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
 	}
 
 	role := authtypes.SigNozManagedRoleToExistingLegacyRole[userRoles[0].Role.Name]
@@ -180,5 +209,15 @@ func (module *getter) GetUserRoles(ctx context.Context, userID valuer.UUID) ([]*
 		return nil, err
 	}
 
+	for _, ur := range userRoles {
+		if ur.Role == nil {
+			return nil, errors.New(errors.TypeUnexpected, authtypes.ErrCodeRoleNotFound, "role not found for user role entry")
+		}
+	}
+
 	return userRoles, nil
+}
+
+func (module *getter) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
+	return module.store.GetUsersByOrgIDAndRoleID(ctx, orgID, roleID)
 }

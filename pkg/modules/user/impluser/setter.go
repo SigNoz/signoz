@@ -220,7 +220,7 @@ func (module *setter) CreateUser(ctx context.Context, user *types.User, opts ...
 	return nil
 }
 
-func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
+func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error) {
 	existingUser, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(id))
 	if err != nil {
 		return nil, err
@@ -265,7 +265,7 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id stri
 	existingUser.Update(user.DisplayName, user.Role)
 
 	// update the user - idempotent (this does analytics too so keeping it outside txn)
-	if err := module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
+	if err := module.UpdateAnyUserDeprecated(ctx, orgID, existingUser); err != nil {
 		return nil, err
 	}
 
@@ -291,7 +291,113 @@ func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, id stri
 	return existingUser, nil
 }
 
-func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
+func (module *setter) UpdateMyUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableSelfUser) (*types.User, error) {
+	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := existingUser.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update root user")
+	}
+
+	if err := existingUser.ErrIfDeleted(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
+	}
+
+	existingUser.Update(updatable.DisplayName)
+	if err := module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
+		return nil, err
+	}
+
+	return existingUser, nil
+}
+
+func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser, updatedBy valuer.UUID) (*types.User, error) {
+	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	if err := existingUser.ErrIfRoot(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update root user")
+	}
+
+	if err := existingUser.ErrIfDeleted(); err != nil {
+		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
+	}
+
+	existingUserRoles, err := module.getter.GetUserRoles(ctx, existingUser.ID)
+	if err != nil {
+		return nil, err
+	}
+
+	existingUserRoleNames := roleNamesFromUserRoles(existingUserRoles)
+
+	var grants, revokes []string
+	var rolesChanged bool
+	if len(updatable.RoleNames) > 0 {
+		// validate that all requested role names exist before making any changes
+		_, err := module.authz.ListByOrgIDAndNames(ctx, orgID, updatable.RoleNames)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	grants, revokes = module.patchRolesNames(existingUserRoleNames, updatable.RoleNames)
+	rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
+
+	if rolesChanged && existingUser.ID == updatedBy {
+		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot change self roles")
+	}
+
+	if rolesChanged {
+		err = module.authz.ModifyGrant(
+			ctx,
+			orgID,
+			revokes,
+			grants,
+			authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil),
+		)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	existingUser.Update(updatable.DisplayName)
+
+	if err := module.UpdateAnyUser(ctx, existingUser.OrgID, existingUser); err != nil {
+		return nil, err
+	}
+
+	if rolesChanged {
+		// this by default runs in txn
+		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, updatable.RoleNames); err != nil {
+			return nil, err
+		}
+	}
+
+	return existingUser, nil
+}
+
+func (module *setter) UpdateAnyUser(ctx context.Context, orgID valuer.UUID, user *types.User) error {
+	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
+		return err
+	}
+
+	if err := module.tokenizer.DeleteIdentity(ctx, user.ID); err != nil {
+		return err
+	}
+
+	// stats collector things
+	traits := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traits)
+	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Updated", traits)
+
+	return nil
+}
+
+func (module *setter) UpdateAnyUserDeprecated(ctx context.Context, orgID valuer.UUID, deprecateUser *types.DeprecatedUser) error {
 	user := types.NewUserFromDeprecatedUser(deprecateUser)
 	if err := module.store.UpdateUser(ctx, orgID, user); err != nil {
 		return err
@@ -801,13 +907,17 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 
 func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error {
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		// delete old user_role entries and create new ones from SSO
+		// delete old user_role entries
 		if err := module.userRoleStore.DeleteUserRoles(ctx, userID); err != nil {
 			return err
 		}
 
-		// create fresh ones
-		return module.createUserRoleEntries(ctx, orgID, userID, finalRoleNames)
+		// create fresh ones only if there are roles to assign
+		if len(finalRoleNames) > 0 {
+			return module.createUserRoleEntries(ctx, orgID, userID, finalRoleNames)
+		}
+
+		return nil
 	})
 }
 
@@ -819,4 +929,34 @@ func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {
 		}
 	}
 	return names
+}
+
+func (module *setter) patchRolesNames(currentRolesNames, targetRoleNames []string) ([]string, []string) {
+	currentRolesSet := make(map[string]struct{}, len(currentRolesNames))
+	targetRolesSet := make(map[string]struct{}, len(targetRoleNames))
+
+	for _, role := range currentRolesNames {
+		currentRolesSet[role] = struct{}{}
+	}
+	for _, role := range targetRoleNames {
+		targetRolesSet[role] = struct{}{}
+	}
+
+	// additions: roles present in input but not in current
+	additions := []string{}
+	for _, role := range targetRoleNames {
+		if _, exists := currentRolesSet[role]; !exists {
+			additions = append(additions, role)
+		}
+	}
+
+	// deletions: roles present in current but not in input
+	deletions := []string{}
+	for _, role := range currentRolesNames {
+		if _, exists := targetRolesSet[role]; !exists {
+			deletions = append(deletions, role)
+		}
+	}
+
+	return additions, deletions
 }
