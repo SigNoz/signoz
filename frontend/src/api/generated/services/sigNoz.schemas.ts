@@ -660,7 +660,7 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 }
 
 export interface CloudintegrationtypesCollectionStrategyDTO {
-	aws?: CloudintegrationtypesAWSCollectionStrategyDTO;
+	aws: CloudintegrationtypesAWSCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesConnectionArtifactDTO {
@@ -698,6 +698,14 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	 * @nullable true
 	 */
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGettableAccountWithArtifactDTO {
+	connectionArtifact: CloudintegrationtypesConnectionArtifactDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
 }
 
 export interface CloudintegrationtypesGettableAccountsDTO {
@@ -754,7 +762,7 @@ export type CloudintegrationtypesIntegrationConfigDTO = {
 	/**
 	 * @type array
 	 */
-	enabledRegions: string[];
+	enabled_regions: string[];
 	telemetry: CloudintegrationtypesAWSCollectionStrategyDTO;
 } | null;
 
@@ -3302,6 +3310,17 @@ export type ListAccounts200 = {
 	status: string;
 };
 
+export type CreateAccountPathParameters = {
+	cloudProvider: string;
+};
+export type CreateAccount200 = {
+	data: CloudintegrationtypesGettableAccountWithArtifactDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type DisconnectAccountPathParameters = {
 	cloudProvider: string;
 	id: string;
@@ -3327,17 +3346,6 @@ export type AgentCheckInPathParameters = {
 };
 export type AgentCheckIn200 = {
 	data: CloudintegrationtypesGettableAgentCheckInResponseDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type GetConnectionArtifactPathParameters = {
-	cloudProvider: string;
-};
-export type GetConnectionArtifact200 = {
-	data: CloudintegrationtypesConnectionArtifactDTO;
 	/**
 	 * @type string
 	 */

@@ -533,6 +533,8 @@ components:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - aws
       type: object
     CloudintegrationtypesConnectionArtifact:
       properties:
@@ -571,6 +573,16 @@ components:
             $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
           nullable: true
           type: array
+      type: object
+    CloudintegrationtypesGettableAccountWithArtifact:
+      properties:
+        connectionArtifact:
+          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
+        id:
+          type: string
+      required:
+      - id
+      - connectionArtifact
       type: object
     CloudintegrationtypesGettableAccounts:
       properties:
@@ -625,14 +637,14 @@ components:
     CloudintegrationtypesIntegrationConfig:
       nullable: true
       properties:
-        enabledRegions:
+        enabled_regions:
           items:
             type: string
           type: array
         telemetry:
           $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
       required:
-      - enabledRegions
+      - enabled_regions
       - telemetry
       type: object
     CloudintegrationtypesPostableAgentCheckInRequest:
@@ -2985,6 +2997,63 @@ paths:
       summary: List accounts
       tags:
       - cloudintegration
+    post:
+      deprecated: false
+      description: This endpoint creates a new cloud integration account for the specified
+        cloud provider
+      operationId: CreateAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create account
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}:
     delete:
       deprecated: false
@@ -3202,64 +3271,6 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Agent check-in
-      tags:
-      - cloudintegration
-  /api/v1/cloud_integrations/{cloud_provider}/accounts/connection_artifact:
-    post:
-      deprecated: false
-      description: This endpoint returns a connection artifact for the specified cloud
-        provider and creates new cloud integration account
-      operationId: GetConnectionArtifact
-      parameters:
-      - in: path
-        name: cloud_provider
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Get connection artifact
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/services:
