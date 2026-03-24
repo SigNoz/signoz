@@ -8,6 +8,7 @@ import {
 	useImperativeHandle,
 	useMemo,
 	useRef,
+	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
@@ -58,6 +59,7 @@ import {
 } from './utils';
 
 import '../logsTableVirtuosoScrollbar.scss';
+import './TanStackTableView.styles.scss';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
@@ -68,6 +70,9 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	function TanStackTableView(
 		{
 			isLoading,
+			isFetching,
+			onRemoveColumn,
+			removableColumnKeys,
 			tableViewProps,
 			infitiyTableProps,
 			onSetActiveLog,
@@ -106,6 +111,17 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		});
 		const { columnSizing, setColumnSizing } = useColumnSizingPersistence(
 			orderedColumns,
+		);
+		const removableColumnKeySet = useMemo(
+			() => new Set((removableColumnKeys || []).map((column) => String(column))),
+			[removableColumnKeys],
+		);
+		const isAtMinimumRemovableColumns = useMemo(
+			() =>
+				orderedColumns.filter(
+					(column) => column.key !== 'state-indicator' && column.key !== 'expand',
+				).length <= 1,
+			[orderedColumns],
 		);
 		const tableData = useMemo<TanStackTableRowData[]>(
 			() =>
@@ -187,6 +203,15 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			},
 		});
 		const tableRows = table.getRowModel().rows;
+		const [loadMoreState, setLoadMoreState] = useState<{
+			active: boolean;
+			seenFetching: boolean;
+			startCount: number;
+		}>({
+			active: false,
+			seenFetching: false,
+			startCount: 0,
+		});
 
 		const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
 		const logsById = useMemo(
@@ -205,6 +230,30 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				behavior: 'auto',
 			});
 		}, [tableRows.length, tableViewProps.activeLogIndex]);
+
+		useEffect(() => {
+			if (!loadMoreState.active) {
+				return;
+			}
+
+			if (isFetching && !loadMoreState.seenFetching) {
+				setLoadMoreState((prev) =>
+					prev.active && !prev.seenFetching ? { ...prev, seenFetching: true } : prev,
+				);
+				return;
+			}
+
+			if (
+				(loadMoreState.seenFetching && !isFetching) ||
+				tableRows.length > loadMoreState.startCount
+			) {
+				setLoadMoreState((prev) =>
+					prev.active
+						? { active: false, seenFetching: false, startCount: prev.startCount }
+						: prev,
+				);
+			}
+		}, [isFetching, loadMoreState, tableRows.length]);
 		const isDarkMode = useIsDarkMode();
 		const handleLogCopy = useCallback(
 			(logId: string, event: ReactMouseEvent<HTMLElement>): void => {
@@ -305,6 +354,11 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										isDarkMode={isDarkMode}
 										fontSize={tableViewProps.fontSize}
 										hasSingleColumn={hasSingleColumn}
+										onRemoveColumn={onRemoveColumn}
+										canRemoveColumn={
+											!isAtMinimumRemovableColumns &&
+											removableColumnKeySet.has(String(column.key ?? ''))
+										}
 									/>
 								);
 							})}
@@ -334,90 +388,94 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			isDarkMode,
 			orderedColumnIds,
 			orderedColumns,
+			onRemoveColumn,
+			isAtMinimumRemovableColumns,
+			removableColumnKeySet,
 			sensors,
 			table,
 			tableViewProps.fontSize,
 			isLogsExplorerPage,
 		]);
 
+		const handleEndReached = useCallback(
+			(index: number): void => {
+				if (!infitiyTableProps?.onEndReached) {
+					return;
+				}
+
+				setLoadMoreState({
+					active: true,
+					seenFetching: Boolean(isFetching),
+					startCount: tableRows.length,
+				});
+				infitiyTableProps.onEndReached(index);
+			},
+			[infitiyTableProps, isFetching, tableRows.length],
+		);
+
 		if (isLoading) {
 			return <Spinner height="35px" tip="Getting Logs" />;
 		}
 
 		return (
-			<TableVirtuoso
-				className="logs-table-virtuoso-scroll"
-				ref={virtuosoRef}
-				style={getInfinityDefaultStyles(tableViewProps.fontSize)}
-				data={tableData}
-				totalCount={tableRows.length}
-				initialTopMostItemIndex={
-					tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
-				}
-				fixedHeaderContent={tableHeader}
-				itemContent={itemContent}
-				components={{
-					Table: ({ style, children }): JSX.Element => (
-						<TanStackTableStyled style={style}>
-							<colgroup>
-								{orderedColumns.map((column) => {
-									const columnId = getColumnId(column);
-									const isFixedColumn =
-										column.key === 'expand' || column.key === 'state-indicator';
-									const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
-									const persistedWidth = columnSizing[columnId];
-									const computedWidth = table.getColumn(columnId)?.getSize();
-									const effectiveWidth = persistedWidth ?? computedWidth;
-									if (isFixedColumn) {
+			<div className="tanstack-table-view-wrapper">
+				<TableVirtuoso
+					className="logs-table-virtuoso-scroll"
+					ref={virtuosoRef}
+					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
+					data={tableData}
+					totalCount={tableRows.length}
+					initialTopMostItemIndex={
+						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
+					}
+					fixedHeaderContent={tableHeader}
+					itemContent={itemContent}
+					components={{
+						Table: ({ style, children }): JSX.Element => (
+							<TanStackTableStyled style={style}>
+								<colgroup>
+									{orderedColumns.map((column) => {
+										const columnId = getColumnId(column);
+										const isFixedColumn =
+											column.key === 'expand' || column.key === 'state-indicator';
+										const minWidthPx = getColumnMinWidthPx(column, orderedColumns);
+										const persistedWidth = columnSizing[columnId];
+										const computedWidth = table.getColumn(columnId)?.getSize();
+										const effectiveWidth = persistedWidth ?? computedWidth;
+										if (isFixedColumn) {
+											return <col key={columnId} className="tanstack-fixed-col" />;
+										}
+										const widthPx =
+											effectiveWidth != null
+												? Math.max(effectiveWidth, minWidthPx)
+												: minWidthPx;
 										return (
 											<col
 												key={columnId}
-												style={{
-													width: '32px',
-													minWidth: '32px',
-													maxWidth: '32px',
-												}}
+												style={{ width: `${widthPx}px`, minWidth: `${minWidthPx}px` }}
 											/>
 										);
-									}
-									const widthPx =
-										effectiveWidth != null
-											? Math.max(effectiveWidth, minWidthPx)
-											: minWidthPx;
-									return (
-										<col
-											key={columnId}
-											style={{
-												width: `${widthPx}px`,
-												minWidth: `${minWidthPx}px`,
-											}}
-										/>
-									);
-								})}
-								<col
-									key="logs-table-filler-col"
-									style={{ width: '100%', minWidth: 0 }}
-								/>
-								{isLogsExplorerPage && (
-									<col
-										key="logs-table-actions-col"
-										style={{
-											width: 0,
-											minWidth: 0,
-											maxWidth: 0,
-										}}
-									/>
-								)}
-							</colgroup>
-							{children}
-						</TanStackTableStyled>
-					),
-					TableRow: customTableRow,
-				}}
-				{...(infitiyTableProps?.onEndReached
-					? { endReached: infitiyTableProps.onEndReached }
-					: {})}
-			/>
+									})}
+									<col key="logs-table-filler-col" className="tanstack-filler-col" />
+									{isLogsExplorerPage && (
+										<col key="logs-table-actions-col" className="tanstack-actions-col" />
+									)}
+								</colgroup>
+								{children}
+							</TanStackTableStyled>
+						),
+						TableRow: customTableRow,
+					}}
+					{...(infitiyTableProps?.onEndReached
+						? { endReached: handleEndReached }
+						: {})}
+				/>
+				{loadMoreState.active && (
+					<div className="tanstack-load-more-container">
+						<Spinner height="20px" tip="Getting Logs" />
+					</div>
+				)}
+			</div>
 		);
 	},
 );

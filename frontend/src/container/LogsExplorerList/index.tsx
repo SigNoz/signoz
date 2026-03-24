@@ -61,7 +61,7 @@ function LogsExplorerList({
 		handleCloseLogDetail,
 	} = useLogDetailHandlers();
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator:
@@ -82,6 +82,10 @@ function LogsExplorerList({
 	const selectedFields = useMemo(
 		() => convertKeysToColumnFields(options.selectColumns),
 		[options],
+	);
+	const removableColumnKeys = useMemo(
+		() => options.selectColumns.map((column) => String(column.name)),
+		[options.selectColumns],
 	);
 
 	const handleScrollToLog = useScrollToLog({
@@ -158,6 +162,7 @@ function LogsExplorerList({
 				<TanStackTableView
 					ref={ref}
 					isLoading={isLoading}
+					isFetching={isFetching}
 					tableViewProps={{
 						logs,
 						fields: selectedFields,
@@ -172,6 +177,8 @@ function LogsExplorerList({
 					onSetActiveLog={handleSetActiveLog}
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
+					onRemoveColumn={config.addColumn?.onRemove}
+					removableColumnKeys={removableColumnKeys}
 				/>
 			);
 		}
@@ -216,11 +223,14 @@ function LogsExplorerList({
 		logs,
 		onEndReached,
 		getItemContent,
+		isFetching,
 		selectedFields,
 		handleChangeSelectedView,
 		handleSetActiveLog,
 		handleCloseLogDetail,
 		activeLog,
+		config.addColumn?.onRemove,
+		removableColumnKeys,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

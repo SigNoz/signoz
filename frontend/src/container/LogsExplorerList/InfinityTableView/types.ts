@@ -5,6 +5,9 @@ import { ILog } from 'types/api/logs/log';
 
 export type InfinityTableProps = {
 	isLoading?: boolean;
+	isFetching?: boolean;
+	onRemoveColumn?: (columnKey: string) => void;
+	removableColumnKeys?: string[];
 	tableViewProps: Omit<UseTableViewProps, 'onOpenLogsContext' | 'onClickExpand'>;
 	infitiyTableProps?: {
 		onEndReached: (index: number) => void;
