@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import { render, screen } from '@testing-library/react';
 import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 
@@ -49,7 +48,7 @@ describe('TableView', () => {
 		inspectMetricsTimeSeries: mockTimeSeries,
 		setShowExpandedView: jest.fn(),
 		setExpandedViewOptions: jest.fn(),
-		metricInspectionOptions: {
+		metricInspectionAppliedOptions: {
 			timeAggregationInterval: 60,
 			timeAggregationOption: TimeAggregationOptions.MAX,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,

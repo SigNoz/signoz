@@ -7,7 +7,7 @@ import (
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/converter"
+	"github.com/SigNoz/signoz/pkg/units"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -201,12 +201,12 @@ func sortThresholds(thresholds []BasicRuleThreshold) {
 
 // convertToRuleUnit converts the given value from the target unit to the rule unit
 func (b BasicRuleThreshold) convertToRuleUnit(val float64, ruleUnit string) float64 {
-	unitConverter := converter.FromUnit(converter.Unit(b.TargetUnit))
+	unitConverter := units.ConverterFromUnit(units.Unit(b.TargetUnit))
 	// convert the target value to the y-axis unit
-	value := unitConverter.Convert(converter.Value{
+	value := unitConverter.Convert(units.Value{
 		F: val,
-		U: converter.Unit(b.TargetUnit),
-	}, converter.Unit(ruleUnit))
+		U: units.Unit(b.TargetUnit),
+	}, units.Unit(ruleUnit))
 	return value.F
 }
 

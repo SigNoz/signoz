@@ -11,7 +11,6 @@ const TEST_HOST_NAME = 'test-host.example.com';
 export const mockSpanWithInfraMetadata: Span = {
 	spanId: 'infra-span-id',
 	traceId: TEST_TRACE_ID,
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	name: 'api-service',
 	serviceName: 'api-service',
 	timestamp: 1640995200000000, // 2022-01-01 00:00:00 in microseconds
@@ -148,7 +147,6 @@ export const expectedPodOnlyMetadata = {
 	podName: TEST_POD_NAME,
 	nodeName: '',
 	hostName: '',
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	spanTimestamp: '2022-01-01T00:00:00.000Z',
 };
 

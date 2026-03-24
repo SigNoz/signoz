@@ -24,6 +24,13 @@ export interface SidebarItem {
 
 export const CHANGELOG_LABEL = 'Full Changelog';
 
+export interface SettingsNavSection {
+	title?: string;
+	items: SidebarItem[];
+	key: string;
+	hasDivider?: boolean;
+}
+
 export interface DropdownSeparator {
 	type: 'divider' | 'group';
 	label?: ReactNode;

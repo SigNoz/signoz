@@ -1,6 +1,8 @@
 import { useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { Button, Input } from 'antd';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import { INITIAL_FILTER_VALUE } from 'store/reducers/trace';

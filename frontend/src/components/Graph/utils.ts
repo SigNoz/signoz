@@ -1,6 +1,5 @@
 import { MutableRefObject } from 'react';
 import { Chart, ChartConfiguration, ChartData, Color } from 'chart.js';
-// eslint-disable-next-line import/namespace -- side-effect import that registers Chart.js date adapter
 import * as chartjsAdapter from 'chartjs-adapter-date-fns';
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -208,7 +207,6 @@ export const getGraphOptions = (
 			cubicInterpolationMode: 'monotone',
 		},
 		point: {
-			// eslint-disable-next-line @typescript-eslint/no-explicit-any
 			hoverBackgroundColor: (ctx: any): string => {
 				if (ctx?.element?.options?.borderColor) {
 					return ctx.element.options.borderColor;
@@ -235,7 +233,6 @@ export const getGraphOptions = (
 			);
 
 			if (interactions[0]) {
-				// eslint-disable-next-line no-param-reassign
 				nearestDatasetIndex.current = interactions[0].datasetIndex;
 			}
 		}
@@ -247,6 +244,11 @@ declare module 'chart.js' {
 		custom: TooltipPositionerFunction<ChartType>;
 	}
 }
+
+const intlNumberFormatter = new Intl.NumberFormat('en-US', {
+	useGrouping: false,
+	maximumFractionDigits: 20,
+});
 
 /**
  * Formats a number for display, preserving leading zeros after the decimal point
@@ -270,10 +272,7 @@ export const formatDecimalWithLeadingZeros = (
 	}
 
 	// Use toLocaleString to get a full decimal representation without scientific notation.
-	const numStr = value.toLocaleString('en-US', {
-		useGrouping: false,
-		maximumFractionDigits: 20,
-	});
+	const numStr = intlNumberFormatter.format(value);
 
 	const [integerPart, decimalPart = ''] = numStr.split('.');
 

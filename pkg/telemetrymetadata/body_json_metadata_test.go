@@ -117,7 +117,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedArgs: []any{
 				telemetrylogs.DBName,
 				telemetrylogs.LogsV2LocalTableName,
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 			},
 		},
@@ -130,7 +130,7 @@ func TestBuildListLogsJSONIndexesQuery(t *testing.T) {
 			expectedArgs: []any{
 				telemetrylogs.DBName,
 				telemetrylogs.LogsV2LocalTableName,
-				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyJSONColumnPrefix)),
+				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyV2ColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains(constants.BodyPromotedColumnPrefix)),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("foo")),
 				fmt.Sprintf("%%%s%%", querybuilder.FormatValueForContains("bar")),

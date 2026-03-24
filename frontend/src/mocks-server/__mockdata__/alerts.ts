@@ -32,8 +32,8 @@ export const editSlackDescriptionDefaultValue = `{{ range .Alerts -}} *Alert:* {
 export const pagerDutyDescriptionDefaultVaule = `{{ if gt (len .Alerts.Firing) 0 -}} Alerts Firing: {{ range .Alerts.Firing }} - Message: {{ .Annotations.description }} Labels: {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }} {{ end }} Annotations: {{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }} {{ end }} Source: {{ .GeneratorURL }} {{ end }} {{- end }} {{ if gt (len .Alerts.Resolved) 0 -}} Alerts Resolved: {{ range .Alerts.Resolved }} - Message: {{ .Annotations.description }} Labels: {{ range .Labels.SortedPairs }} - {{ .Name }} = {{ .Value }} {{ end }} Annotations: {{ range .Annotations.SortedPairs }} - {{ .Name }} = {{ .Value }} {{ end }} Source: {{ .GeneratorURL }} {{ end }} {{- end }}`;
 
 export const pagerDutyAdditionalDetailsDefaultValue = JSON.stringify({
-	firing: `{{ template "pagerduty.default.instances" .Alerts.Firing }}`,
-	resolved: `{{ template "pagerduty.default.instances" .Alerts.Resolved }}`,
+	firing: `{{ .Alerts.Firing | toJson }}`,
+	resolved: `{{ .Alerts.Resolved | toJson }}`,
 	num_firing: '{{ .Alerts.Firing | len }}',
 	num_resolved: '{{ .Alerts.Resolved | len }}',
 });

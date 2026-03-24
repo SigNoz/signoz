@@ -1,4 +1,3 @@
-/* eslint-disable import/no-import-module-exports */
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
@@ -49,7 +48,6 @@ describe('API Monitoring Utils', () => {
 			const columns = APIMonitoringColumnsMock;
 			const data = [
 				[
-					// eslint-disable-next-line sonarjs/no-duplicate-string
 					'test-domain', // domainName
 					'10', // endpoints
 					'25', // rps
@@ -107,7 +105,6 @@ describe('API Monitoring Utils', () => {
 			const groupBy = [
 				{
 					id: 'group-by-1',
-					// eslint-disable-next-line sonarjs/no-duplicate-string
 					key: 'http.method',
 					dataType: DataTypes.String,
 					type: '',
@@ -348,14 +345,12 @@ describe('API Monitoring Utils', () => {
 			const mockData = [
 				{
 					data: {
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/users',
 						A: 150, // count or other metric
 					},
 				},
 				{
 					data: {
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						[URL_PATH_KEY]: '/api/orders',
 						A: 75,
 					},
@@ -379,7 +374,6 @@ describe('API Monitoring Utils', () => {
 			expect(result[1]).toHaveProperty('value', '/api/orders');
 		});
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle empty input array', () => {
 			// Act
 			const result = getFormattedEndPointDropDownData([]);
@@ -388,7 +382,6 @@ describe('API Monitoring Utils', () => {
 			expect(result).toEqual([]);
 		});
 
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		it('should handle undefined input', () => {
 			// Arrange
 			const undefinedInput = undefined as any;

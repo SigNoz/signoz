@@ -95,7 +95,6 @@ const renderWithContext = (
 				{
 					currentQuery: initialQuery,
 					redirectWithQueryBuilderData: mockRedirectWithQueryBuilderData,
-					// eslint-disable-next-line @typescript-eslint/no-explicit-any
 				} as any
 			}
 		>
@@ -172,7 +171,6 @@ describe('SpanScopeSelector', () => {
 
 		it('should add isRoot filter when selecting ROOT_SPANS', async () => {
 			renderWithContext(defaultQuery, undefined, defaultQueryBuilderQuery);
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			await selectOption('Root Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();
@@ -184,7 +182,6 @@ describe('SpanScopeSelector', () => {
 
 		it('should add isEntryPoint filter when selecting ENTRYPOINT_SPANS', async () => {
 			renderWithContext(defaultQuery, undefined, defaultQueryBuilderQuery);
-			// eslint-disable-next-line sonarjs/no-duplicate-string
 			await selectOption('Entrypoint Spans');
 
 			expect(mockRedirectWithQueryBuilderData).toHaveBeenCalled();

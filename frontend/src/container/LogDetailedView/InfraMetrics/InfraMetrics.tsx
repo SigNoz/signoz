@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { Empty } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import SignozRadioGroup from 'components/SignozRadioGroup/SignozRadioGroup';
 import { History, Table } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';

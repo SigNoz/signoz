@@ -4,9 +4,14 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"io"
 	"net/http"
 	"time"
+
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
+
+	"log/slog"
 
 	"github.com/SigNoz/signoz/ee/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/flagger"
@@ -15,7 +20,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
@@ -35,23 +39,23 @@ func (ah *APIHandler) getFeatureFlags(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if constants.FetchFeatures == "true" {
-		zap.L().Debug("fetching license")
+		slog.DebugContext(ctx, "fetching license")
 		license, err := ah.Signoz.Licensing.GetActive(ctx, orgID)
 		if err != nil {
-			zap.L().Error("failed to fetch license", zap.Error(err))
+			slog.ErrorContext(ctx, "failed to fetch license", signozerrors.Attr(err))
 		} else if license == nil {
-			zap.L().Debug("no active license found")
+			slog.DebugContext(ctx, "no active license found")
 		} else {
 			licenseKey := license.Key
 
-			zap.L().Debug("fetching zeus features")
+			slog.DebugContext(ctx, "fetching zeus features")
 			zeusFeatures, err := fetchZeusFeatures(constants.ZeusFeaturesURL, licenseKey)
 			if err == nil {
-				zap.L().Debug("fetched zeus features", zap.Any("features", zeusFeatures))
+				slog.DebugContext(ctx, "fetched zeus features", "features", zeusFeatures)
 				// merge featureSet and zeusFeatures in featureSet with higher priority to zeusFeatures
 				featureSet = MergeFeatureSets(zeusFeatures, featureSet)
 			} else {
-				zap.L().Error("failed to fetch zeus features", zap.Error(err))
+				slog.ErrorContext(ctx, "failed to fetch zeus features", signozerrors.Attr(err))
 			}
 		}
 	}

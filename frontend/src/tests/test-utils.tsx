@@ -1,12 +1,13 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import React, { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, RenderOptions, RenderResult } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
+import { NuqsAdapter } from 'nuqs/adapters/react';
 import { AppContext } from 'providers/App/App';
 import { IAppContext } from 'providers/App/types';
 import { ErrorModalProvider } from 'providers/ErrorModalProvider';
@@ -31,13 +32,10 @@ import { ROLES, USER_ROLES } from 'types/roles';
 
 // Mock ResizeObserver
 class ResizeObserverMock {
-	// eslint-disable-next-line class-methods-use-this
 	observe(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	unobserve(): void {}
 
-	// eslint-disable-next-line class-methods-use-this
 	disconnect(): void {}
 }
 
@@ -248,6 +246,7 @@ export function getAppContextMock(
 			ee: 'Y',
 			setupCompleted: true,
 		},
+
 		...appContextOverrides,
 	};
 }
@@ -282,23 +281,25 @@ export function AllTheProviders({
 
 	return (
 		<MemoryRouter initialEntries={[initialRouteValue]}>
-			<QueryClientProvider client={queryClient}>
-				<Provider store={mockStored(roleValue)}>
-					<AppContext.Provider
-						value={getAppContextMock(roleValue, appContextOverridesValue)}
-					>
-						<ResourceProvider>
-							<ErrorModalProvider>
-								<TimezoneProvider>
-									<PreferenceContextProvider>
-										{queryBuilderContent}
-									</PreferenceContextProvider>
-								</TimezoneProvider>
-							</ErrorModalProvider>
-						</ResourceProvider>
-					</AppContext.Provider>
-				</Provider>
-			</QueryClientProvider>
+			<NuqsAdapter>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={mockStored(roleValue)}>
+						<AppContext.Provider
+							value={getAppContextMock(roleValue, appContextOverridesValue)}
+						>
+							<ResourceProvider>
+								<ErrorModalProvider>
+									<TimezoneProvider>
+										<PreferenceContextProvider>
+											{queryBuilderContent}
+										</PreferenceContextProvider>
+									</TimezoneProvider>
+								</ErrorModalProvider>
+							</ResourceProvider>
+						</AppContext.Provider>
+					</Provider>
+				</QueryClientProvider>
+			</NuqsAdapter>
 		</MemoryRouter>
 	);
 }
@@ -344,8 +345,6 @@ const customRender = (
 	});
 };
 
-// eslint-disable-next-line import/export -- re-exporting custom render alongside @testing-library/react
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
-// eslint-disable-next-line import/export -- custom render wraps the original
 export { customRender as render };

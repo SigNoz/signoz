@@ -1,4 +1,5 @@
 import { ReactNode, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useParams } from 'react-router-dom';
 import { SyncOutlined } from '@ant-design/icons';
@@ -123,7 +124,6 @@ export default function ServiceTopLevelOperations(): JSX.Element {
 						columns={columns}
 						bordered
 						title={(): string => 'Top Level Operations'}
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
 						// @ts-ignore
 						dataSource={topLevelOperations}
 						loading={isLoading}

@@ -12,7 +12,6 @@ export const metricAggregateOperatorOptions: SelectOption<string, string>[] = [
 	},
 	{
 		value: MetricAggregateOperator.COUNT_DISTINCT,
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		label: 'Count Distinct',
 	},
 	{
@@ -132,7 +131,6 @@ export const meterAggregateOperatorOptions: SelectOption<string, string>[] = [
 	},
 	{
 		value: MetricAggregateOperator.COUNT_DISTINCT,
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		label: 'Count Distinct',
 	},
 	{

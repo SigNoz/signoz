@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { act, render } from '@testing-library/react';
 import * as dashboardVariablesStoreModule from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
 import {
@@ -33,11 +32,22 @@ const mockVariableItemCallbacks: {
 // Mock providers/Dashboard/Dashboard
 const mockSetSelectedDashboard = jest.fn();
 const mockUpdateLocalStorageDashboardVariables = jest.fn();
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): Record<string, unknown> => ({
-		setSelectedDashboard: mockSetSelectedDashboard,
-		updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
-	}),
+interface MockDashboardStoreState {
+	selectedDashboard?: { id: string };
+	setSelectedDashboard: typeof mockSetSelectedDashboard;
+	updateLocalStorageDashboardVariables: typeof mockUpdateLocalStorageDashboardVariables;
+}
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (
+		selector?: (s: Record<string, unknown>) => MockDashboardStoreState,
+	): MockDashboardStoreState => {
+		const state = {
+			selectedDashboard: { id: 'dash-1' },
+			setSelectedDashboard: mockSetSelectedDashboard,
+			updateLocalStorageDashboardVariables: mockUpdateLocalStorageDashboardVariables,
+		};
+		return selector ? selector(state) : state;
+	},
 }));
 
 // Mock hooks/dashboard/useVariablesFromUrl
@@ -72,7 +82,6 @@ jest.mock('react-redux', () => ({
 // VariableItem mock captures the onValueUpdate prop for use in onValueUpdate tests
 jest.mock('../VariableItem', () => ({
 	__esModule: true,
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	default: (props: any): JSX.Element => {
 		mockVariableItemCallbacks.onValueUpdate = props.onValueUpdate;
 		return <div data-testid="variable-item" />;

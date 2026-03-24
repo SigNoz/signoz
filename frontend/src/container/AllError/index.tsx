@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueries } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Link, useLocation } from 'react-router-dom';
 import { SearchOutlined } from '@ant-design/icons';
@@ -13,9 +14,9 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { ColumnType, TablePaginationConfig } from 'antd/es/table';
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import type { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';

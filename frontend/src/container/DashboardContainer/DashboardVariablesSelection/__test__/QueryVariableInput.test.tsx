@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { act, render, waitFor } from '@testing-library/react';
 import dashboardVariablesQuery from 'api/dashboard/variables/dashboardVariablesQuery';

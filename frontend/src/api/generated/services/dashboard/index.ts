@@ -35,10 +35,6 @@ import type {
 	UpdatePublicDashboardPathParameters,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint deletes the public sharing config and disables the public sharing of a dashboard
  * @summary Delete public dashboard

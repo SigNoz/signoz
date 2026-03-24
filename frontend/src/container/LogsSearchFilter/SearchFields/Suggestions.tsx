@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Button } from 'antd';
 import CategoryHeading from 'components/Logs/CategoryHeading';

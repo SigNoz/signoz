@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/no-identical-functions */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
 import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
@@ -184,7 +184,6 @@ function ClusterDetails({
 				category: InfraMonitoringEvents.Cluster,
 			});
 		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [cluster]);
 
 	useEffect(() => {
@@ -533,7 +532,6 @@ function ClusterDetails({
 						>
 							<Radio.Button
 								className={
-									// eslint-disable-next-line sonarjs/no-duplicate-string
 									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
 								}
 								value={VIEW_TYPES.METRICS}

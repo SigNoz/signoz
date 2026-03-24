@@ -49,7 +49,6 @@ export const getUniqueOrderByValues = (values: IOption[]): IOption[] => {
 		if (!match) {
 			return { label: item.label, value: item.value };
 		}
-		// eslint-disable-next-line @typescript-eslint/naming-convention, @typescript-eslint/no-unused-vars
 		const [_, order] = match.data.flat() as string[];
 		if (order) {
 			return {

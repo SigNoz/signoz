@@ -60,11 +60,30 @@
 			gap: 8px;
 
 			margin-left: 108px;
+			position: relative;
+
+			/* Vertical dashed line connecting query elements */
+			&::after {
+				content: '';
+				position: absolute;
+				left: -28px;
+				top: 0;
+				bottom: 0;
+				width: 1px;
+				background: repeating-linear-gradient(
+					to bottom,
+					#1d212d,
+					#1d212d 4px,
+					transparent 4px,
+					transparent 8px
+				);
+			}
 
 			.code-mirror-where-clause,
 			.query-aggregation-container,
 			.query-add-ons,
-			.metrics-aggregation-section-content {
+			.metrics-aggregation-section-content,
+			.metrics-container {
 				position: relative;
 
 				&::before {
@@ -101,6 +120,10 @@
 		.qb-content-section {
 			.qb-elements-container {
 				margin-left: 0px;
+
+				&::after {
+					display: none;
+				}
 
 				.code-mirror-where-clause,
 				.query-aggregation-container,
@@ -333,28 +356,7 @@
 				text-transform: uppercase;
 
 				&::before {
-					content: '';
-					height: 120px;
-					content: '';
-					position: absolute;
-					left: 0;
-					top: 31px;
-					bottom: 0;
-					width: 1px;
-					background: repeating-linear-gradient(
-						to bottom,
-						#1d212d,
-						#1d212d 4px,
-						transparent 4px,
-						transparent 8px
-					);
-					left: 15px;
-				}
-
-				&.has-trace-operator {
-					&::before {
-						height: 0px;
-					}
+					display: none;
 				}
 			}
 
@@ -462,10 +464,21 @@
 
 		.qb-content-section {
 			.qb-elements-container {
+				&::after {
+					background: repeating-linear-gradient(
+						to bottom,
+						var(--bg-vanilla-300),
+						var(--bg-vanilla-300) 4px,
+						transparent 4px,
+						transparent 8px
+					);
+				}
+
 				.code-mirror-where-clause,
 				.query-aggregation-container,
 				.query-add-ons,
-				.metrics-aggregation-section-content {
+				.metrics-aggregation-section-content,
+				.metrics-container {
 					&::before {
 						border-left: 6px dotted var(--bg-vanilla-300);
 					}
@@ -529,18 +542,6 @@
 
 		.qb-entity-options {
 			.options {
-				.query-name {
-					&::before {
-						background: repeating-linear-gradient(
-							to bottom,
-							var(--bg-vanilla-300),
-							var(--bg-vanilla-300) 4px,
-							transparent 4px,
-							transparent 8px
-						);
-					}
-				}
-
 				.formula-name {
 					&::before {
 						background: repeating-linear-gradient(

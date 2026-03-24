@@ -3,6 +3,7 @@ package rules
 import (
 	"context"
 	"strings"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -964,7 +965,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1080,7 +1081,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1312,7 +1313,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
@@ -1448,7 +1449,7 @@ func TestPromRule_NoData(t *testing.T) {
 			}()
 
 			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 			require.NoError(t, err)
 
@@ -1597,7 +1598,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			}()
 
 			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 			require.NoError(t, err)
 
@@ -1755,7 +1756,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			}()
 
 			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
 			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
 			require.NoError(t, err)
 

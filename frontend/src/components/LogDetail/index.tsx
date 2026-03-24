@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -55,6 +55,7 @@ import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
 import './LogDetails.styles.scss';
 
+/* eslint-disable-next-line sonarjs/cognitive-complexity */
 function LogDetailInner({
 	log,
 	onClose,
@@ -109,6 +110,7 @@ function LogDetailInner({
 
 	// Keyboard navigation - handle up/down arrow keys
 	// Only listen when in OVERVIEW tab
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
 			!logs ||
@@ -424,7 +426,6 @@ function LogDetailInner({
 					>
 						<Radio.Button
 							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 							}
 							value={VIEW_TYPES.OVERVIEW}
@@ -573,11 +574,9 @@ function LogDetailInner({
 function LogDetail(props: LogDetailProps): JSX.Element {
 	const { log } = props;
 	if (!log) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 

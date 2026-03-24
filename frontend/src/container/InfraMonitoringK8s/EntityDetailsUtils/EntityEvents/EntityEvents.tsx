@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';

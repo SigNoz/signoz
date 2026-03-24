@@ -1,5 +1,3 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import { ReactNode, useEffect, useState } from 'react';
 import { useHistory } from 'react-router-dom';
 import { CaretDownOutlined, LoadingOutlined } from '@ant-design/icons';

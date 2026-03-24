@@ -1,7 +1,6 @@
 import { useMemo, useState } from 'react';
 import { UseQueryResult } from 'react-query';
-import { Table, TablePaginationConfig, Typography } from 'antd';
-import Skeleton from 'antd/lib/skeleton';
+import { Skeleton, Table, TablePaginationConfig, Typography } from 'antd';
 import { QueryParams } from 'constants/query';
 import {
 	dependentServicesColumns,

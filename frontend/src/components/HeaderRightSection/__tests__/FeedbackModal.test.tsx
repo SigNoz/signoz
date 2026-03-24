@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
 import { toast } from '@signozhq/sonner';

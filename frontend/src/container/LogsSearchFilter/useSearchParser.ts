@@ -1,4 +1,5 @@
 import { useCallback, useEffect } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { QueryParams } from 'constants/query';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -6,6 +7,7 @@ import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import history from 'lib/history';
 import { parseQuery } from 'lib/logql';
 import isEqual from 'lodash-es/isEqual';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

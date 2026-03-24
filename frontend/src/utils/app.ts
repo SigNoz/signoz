@@ -1,7 +1,9 @@
 import getLocalStorage from 'api/browser/localstorage/get';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
+import dayjs from 'dayjs';
 import { get } from 'lodash-es';
+import { getLocation } from 'utils/getLocation';
 
 export const isOnboardingSkipped = (): boolean =>
 	getLocalStorage(SKIP_ONBOARDING) === 'true';
@@ -57,7 +59,7 @@ export function buildAbsolutePath({
 	relativePath: string;
 	urlQueryString?: string;
 }): string {
-	const { pathname } = window.location;
+	const { pathname } = getLocation();
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
@@ -69,4 +71,22 @@ export function buildAbsolutePath({
 	const absolutePath = basePath + normalizedRelativePath;
 
 	return urlQueryString ? `${absolutePath}?${urlQueryString}` : absolutePath;
+}
+
+export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export function toISOString(
+	date: Date | string | number | null | undefined,
+): string | null {
+	if (date == null) {
+		return null;
+	}
+
+	const d = dayjs(date);
+
+	if (!d.isValid()) {
+		return null;
+	}
+
+	return d.toISOString();
 }

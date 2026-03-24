@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/no-identical-functions */
 /* eslint-disable @typescript-eslint/explicit-function-return-type */
 
 import { fireEvent, render, screen } from '@testing-library/react';

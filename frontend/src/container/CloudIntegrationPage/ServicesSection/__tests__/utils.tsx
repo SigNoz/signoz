@@ -19,7 +19,6 @@ const renderModal = (
 	return render(
 		<MockQueryClientProvider>
 			<ConfigureServiceModal
-				// eslint-disable-next-line react/jsx-props-no-spreading
 				{...defaultModalProps}
 				serviceId={serviceId}
 				initialConfig={initialConfig}

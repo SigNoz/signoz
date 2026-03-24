@@ -27,6 +27,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -52,7 +54,7 @@ type Modules struct {
 	OrgGetter       organization.Getter
 	OrgSetter       organization.Setter
 	Preference      preference.Module
-	User            user.Module
+	UserSetter      user.Setter
 	UserGetter      user.Getter
 	SavedView       savedview.Module
 	Apdex           apdex.Module
@@ -66,6 +68,7 @@ type Modules struct {
 	SpanPercentile  spanpercentile.Module
 	MetricsExplorer metricsexplorer.Module
 	Promote         promote.Module
+	ServiceAccount  serviceaccount.Module
 }
 
 func NewModules(
@@ -86,10 +89,11 @@ func NewModules(
 	config Config,
 	dashboard dashboard.Module,
 	userGetter user.Getter,
+	userRoleStore authtypes.UserRoleStore,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User)
+	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
@@ -99,16 +103,17 @@ func NewModules(
 		SavedView:       implsavedview.NewModule(sqlstore),
 		Apdex:           implapdex.NewModule(sqlstore),
 		Dashboard:       dashboard,
-		User:            user,
+		UserSetter:      userSetter,
 		UserGetter:      userGetter,
 		QuickFilter:     quickfilter,
 		TraceFunnel:     impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:   implrawdataexport.NewModule(querier),
 		AuthDomain:      implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:         implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		Session:         implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
 		Services:        implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
 	}
 }

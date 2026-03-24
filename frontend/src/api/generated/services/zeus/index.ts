@@ -26,10 +26,6 @@ import type {
 	ZeustypesPostableProfileDTO,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint gets the host info from zeus.
  * @summary Get host info from Zeus.

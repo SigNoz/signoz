@@ -1,5 +1,3 @@
-/* eslint-disable import/first */
-// eslint-disable-next-line import/order
 import setupCommonMocks from '../../commonMocks';
 
 setupCommonMocks();

@@ -1,10 +1,11 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { useInterval } from 'react-use';
 import { CaretDownFilled } from '@ant-design/icons';
 import { Button, Checkbox, Popover, Typography } from 'antd';
-import { CheckboxChangeEvent } from 'antd/lib/checkbox';
+import type { CheckboxChangeEvent } from 'antd/lib/checkbox';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import { DASHBOARD_TIME_IN_DURATION } from 'constants/app';
@@ -12,6 +13,7 @@ import useUrlQuery from 'hooks/useUrlQuery';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import _omit from 'lodash-es/omit';
 import { Check } from 'lucide-react';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
@@ -153,7 +155,6 @@ function AutoRefresh({
 	);
 
 	if (globalTime.selectedTime === 'custom') {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 

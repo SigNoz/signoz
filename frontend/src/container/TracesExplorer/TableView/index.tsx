@@ -6,6 +6,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Space } from 'antd';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
@@ -49,7 +50,6 @@ function TableView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 

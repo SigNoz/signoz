@@ -7,6 +7,7 @@ import {
 	useRef,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import logEvent from 'api/common/logEvent';
@@ -256,7 +257,9 @@ function TimeSeriesView({
 					chartData[0]?.length === 0 &&
 					!isLoading &&
 					!isError &&
-					dataSource === DataSource.METRICS && <EmptyMetricsSearch />}
+					dataSource === DataSource.METRICS && (
+						<EmptyMetricsSearch hasQueryResult={data !== undefined} />
+					)}
 
 				{!isLoading &&
 					!isError &&

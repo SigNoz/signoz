@@ -1,5 +1,6 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import {
 	LoadingOutlined,
@@ -38,7 +39,10 @@ import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariab
 import GetMinMax from 'lib/getMinMax';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -80,7 +84,15 @@ function FullView({
 		setCurrentGraphRef(fullViewRef);
 	}, [setCurrentGraphRef]);
 
-	const { selectedDashboard, isDashboardLocked } = useDashboard();
+	const { selectedDashboard, setColumnWidths } = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
+
+	const onColumnWidthsChange = useCallback(
+		(widths: Record<string, number>) => {
+			setColumnWidths((prev) => ({ ...prev, [widget.id]: widths }));
+		},
+		[setColumnWidths, widget.id],
+	);
 	const { dashboardVariables } = useDashboardVariables();
 	const { user } = useAppContext();
 
@@ -241,7 +253,6 @@ function FullView({
 
 	if (response.data && selectedPanelType === PANEL_TYPES.PIE) {
 		const transformedData = populateMultipleResults(response?.data);
-		// eslint-disable-next-line no-param-reassign
 		response.data = transformedData;
 	}
 
@@ -381,6 +392,7 @@ function FullView({
 								onClickHandler={onClickHandler}
 								enableDrillDown={enableDrillDown}
 								selectedGraph={selectedPanelType}
+								onColumnWidthsChange={onColumnWidthsChange}
 							/>
 						</GraphContainer>
 					</div>

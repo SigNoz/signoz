@@ -8,10 +8,11 @@ import (
 
 	"gopkg.in/yaml.v3"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
-	"go.uber.org/zap"
 )
 
 var lockLogsPipelineSpec sync.RWMutex
@@ -154,14 +155,14 @@ func buildCollectorPipelineProcessorsList(
 
 func checkDuplicateString(pipeline []string) bool {
 	exists := make(map[string]bool, len(pipeline))
-	zap.L().Debug("checking duplicate processors in the pipeline:", zap.Any("pipeline", pipeline))
+	slog.Debug("checking duplicate processors in the pipeline", "pipeline", pipeline)
 	for _, processor := range pipeline {
 		name := processor
 		if _, ok := exists[name]; ok {
-			zap.L().Error(
+			slog.Error(
 				"duplicate processor name detected in generated collector config for log pipelines",
-				zap.String("processor", processor),
-				zap.Any("pipeline", pipeline),
+				"processor", processor,
+				"pipeline", pipeline,
 			)
 			return true
 		}

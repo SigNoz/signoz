@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
@@ -30,7 +31,6 @@ import HostsListTable from './HostsListTable';
 import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
 
 import './InfraMonitoring.styles.scss';
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,

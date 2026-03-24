@@ -6,8 +6,7 @@ import {
 	useMemo,
 	useState,
 } from 'react';
-import { Form } from 'antd';
-import { FormInstance } from 'antd/lib';
+import { Form, FormInstance } from 'antd';
 import {
 	ActiveViewEnum,
 	ModalStateEnum,

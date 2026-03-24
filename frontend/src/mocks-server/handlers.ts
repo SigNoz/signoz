@@ -9,7 +9,6 @@ import {
 	getDashboardById,
 } from './__mockdata__/dashboards';
 import { explorerView } from './__mockdata__/explorer_views';
-import { inviteUser } from './__mockdata__/invite_user';
 import { licensesSuccessResponse } from './__mockdata__/licenses';
 import { membersResponse } from './__mockdata__/members';
 import { queryRangeSuccessResponse } from './__mockdata__/query_range';
@@ -175,11 +174,14 @@ export const handlers = [
 		res(ctx.status(200), ctx.json(getDashboardById)),
 	),
 
-	rest.get('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json(inviteUser)),
-	),
 	rest.post('http://localhost/api/v1/invite', (_, res, ctx) =>
-		res(ctx.status(200), ctx.json(inviteUser)),
+		res(
+			ctx.status(200),
+			ctx.json({
+				status: 'success',
+				data: 'invite sent successfully',
+			}),
+		),
 	),
 	rest.put('http://localhost/api/v1/user/:id', (_, res, ctx) =>
 		res(

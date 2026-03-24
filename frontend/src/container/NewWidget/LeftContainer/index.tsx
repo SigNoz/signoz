@@ -1,5 +1,6 @@
 import { memo, useEffect } from 'react';
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -29,6 +30,8 @@ function LeftContainer({
 	setRequestData,
 	setQueryResponse,
 	enableDrillDown = false,
+	selectedDashboard,
+	isNewPanel = false,
 }: WidgetGraphProps): JSX.Element {
 	const { stagedQuery } = useQueryBuilder();
 
@@ -74,6 +77,11 @@ function LeftContainer({
 					selectedGraph={selectedGraph}
 					queryRangeKey={queryRangeKey}
 					isLoadingQueries={queryResponse.isFetching}
+					selectedWidget={selectedWidget}
+					dashboardVersion={ENTITY_VERSION_V5}
+					dashboardId={selectedDashboard?.id}
+					dashboardName={selectedDashboard?.data.title}
+					isNewPanel={isNewPanel}
 				/>
 				{selectedGraph === PANEL_TYPES.LIST && (
 					<ExplorerColumnsRenderer

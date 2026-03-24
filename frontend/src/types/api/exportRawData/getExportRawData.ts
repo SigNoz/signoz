@@ -1,10 +1,6 @@
+import { QueryRangePayloadV5 } from 'types/api/v5/queryRange';
+
 export interface ExportRawDataProps {
-	source: string;
 	format: string;
-	start: number;
-	end: number;
-	columns: string[];
-	filter: string;
-	orderBy: string;
-	limit: number;
+	body: QueryRangePayloadV5;
 }

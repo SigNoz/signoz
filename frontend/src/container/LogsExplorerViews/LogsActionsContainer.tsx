@@ -1,5 +1,5 @@
 import { Switch, Typography } from 'antd';
-import LogsDownloadOptionsMenu from 'components/LogsDownloadOptionsMenu/LogsDownloadOptionsMenu';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import LogsFormatOptionsMenu from 'components/LogsFormatOptionsMenu/LogsFormatOptionsMenu';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { LOCALSTORAGE } from 'constants/localStorage';
@@ -21,8 +21,6 @@ function LogsActionsContainer({
 	isLoading,
 	isError,
 	isSuccess,
-	minTime,
-	maxTime,
 }: {
 	listQuery: any;
 	selectedPanelType: PANEL_TYPES;
@@ -34,8 +32,6 @@ function LogsActionsContainer({
 	isLoading: boolean;
 	isError: boolean;
 	isSuccess: boolean;
-	minTime: number;
-	maxTime: number;
 }): JSX.Element {
 	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
@@ -96,13 +92,7 @@ function LogsActionsContainer({
 								/>
 							</div>
 							<div className="download-options-container">
-								<LogsDownloadOptionsMenu
-									startTime={minTime}
-									endTime={maxTime}
-									filter={listQuery?.filter?.expression || ''}
-									columns={config.addColumn?.value || []}
-									orderBy={orderBy}
-								/>
+								<DownloadOptionsMenu dataSource={DataSource.LOGS} />
 							</div>
 							<div className="format-options-container">
 								<LogsFormatOptionsMenu

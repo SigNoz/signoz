@@ -16,7 +16,6 @@ export const prepareQueryWithDefaultTimestamp = (query: Query): Query => ({
 	},
 });
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum ExplorerViews {
 	LIST = 'list',
 	TIMESERIES = 'timeseries',

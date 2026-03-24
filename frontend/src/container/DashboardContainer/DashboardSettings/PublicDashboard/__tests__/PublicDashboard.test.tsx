@@ -7,14 +7,14 @@ import {
 	unpublishedPublicDashboardMeta,
 } from 'mocks-server/__mockdata__/publicDashboard';
 import { rest, server } from 'mocks-server/server';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import PublicDashboardSetting from '../index';
 
 // Mock dependencies
-jest.mock('providers/Dashboard/Dashboard');
+jest.mock('providers/Dashboard/store/useDashboardStore');
 jest.mock('react-use', () => ({
 	...jest.requireActual('react-use'),
 	useCopyToClipboard: jest.fn(),
@@ -26,7 +26,7 @@ jest.mock('@signozhq/sonner', () => ({
 	},
 }));
 
-const mockUseDashboard = jest.mocked(useDashboard);
+const mockUseDashboard = jest.mocked(useDashboardStore);
 const mockUseCopyToClipboard = jest.mocked(useCopyToClipboard);
 const mockToast = jest.mocked(toast);
 
@@ -67,10 +67,10 @@ beforeEach(() => {
 	// Mock window.open
 	window.open = jest.fn();
 
-	// Mock useDashboard
+	// Mock useDashboardStore
 	mockUseDashboard.mockReturnValue(({
 		selectedDashboard: mockSelectedDashboard,
-	} as unknown) as ReturnType<typeof useDashboard>);
+	} as unknown) as ReturnType<typeof useDashboardStore>);
 
 	// Mock useCopyToClipboard
 	mockUseCopyToClipboard.mockReturnValue(([
@@ -376,7 +376,6 @@ describe('PublicDashboardSetting', () => {
 			server.use(
 				rest.get(
 					`*/api/v1/dashboards/${MOCK_DASHBOARD_ID}/public`,
-					// eslint-disable-next-line sonarjs/no-identical-functions
 					(_req, res, ctx) =>
 						res(
 							ctx.status(StatusCodes.NOT_FOUND),
@@ -396,7 +395,6 @@ describe('PublicDashboardSetting', () => {
 		});
 
 		describe('Published dashboard buttons for non-admin users', () => {
-			// eslint-disable-next-line sonarjs/no-identical-functions
 			beforeEach(() => {
 				server.use(
 					rest.get(

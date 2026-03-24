@@ -29,6 +29,7 @@ export type PanelWrapperProps = {
 	customSeries?: (data: QueryData[]) => uPlot.Series[];
 	enableDrillDown?: boolean;
 	panelMode: PanelMode;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 };
 
 export type TooltipData = {

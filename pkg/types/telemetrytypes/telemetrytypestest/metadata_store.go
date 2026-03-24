@@ -16,27 +16,39 @@ type MockMetadataStore struct {
 	RelatedValuesMap   map[string][]string
 	AllValuesMap       map[string]*telemetrytypes.TelemetryFieldValues
 	TemporalityMap     map[string]metrictypes.Temporality
+	TypeMap            map[string]metrictypes.Type
 	PromotedPathsMap   map[string]bool
 	LogsJSONIndexesMap map[string][]schemamigrator.Index
 	LookupKeysMap      map[telemetrytypes.MetricMetadataLookupKey]int64
+	// StaticFields holds signal-specific intrinsic field definitions (e.g. telemetrylogs.IntrinsicFields).
+	StaticFields map[string]telemetrytypes.TelemetryFieldKey
 }
 
-// NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps
+// NewMockMetadataStore creates a new instance of MockMetadataStore with initialized maps.
 func NewMockMetadataStore() *MockMetadataStore {
 	return &MockMetadataStore{
 		KeysMap:            make(map[string][]*telemetrytypes.TelemetryFieldKey),
 		RelatedValuesMap:   make(map[string][]string),
 		AllValuesMap:       make(map[string]*telemetrytypes.TelemetryFieldValues),
 		TemporalityMap:     make(map[string]metrictypes.Temporality),
+		TypeMap:            make(map[string]metrictypes.Type),
 		PromotedPathsMap:   make(map[string]bool),
 		LogsJSONIndexesMap: make(map[string][]schemamigrator.Index),
 		LookupKeysMap:      make(map[telemetrytypes.MetricMetadataLookupKey]int64),
+		StaticFields:       make(map[string]telemetrytypes.TelemetryFieldKey),
 	}
+}
+
+// SetStaticFields sets the static fields for the mock metadata store.
+// Pass the signal-specific intrinsic fields (e.g. telemetrylogs.IntrinsicFields) so the mock
+// mirrors what the real metadata store does when injecting those definitions into key results.
+func (m *MockMetadataStore) SetStaticFields(intrinsicFields map[string]telemetrytypes.TelemetryFieldKey) {
+	m.StaticFields = intrinsicFields
 }
 
 // GetKeys returns a map of field keys types.TelemetryFieldKey by name
 func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
-
+	setOfKeys := make(map[string]*telemetrytypes.TelemetryFieldKey)
 	result := make(map[string][]*telemetrytypes.TelemetryFieldKey)
 
 	// If selector is nil, return all keys
@@ -44,18 +56,30 @@ func (m *MockMetadataStore) GetKeys(ctx context.Context, fieldKeySelector *telem
 		return m.KeysMap, true, nil
 	}
 
-	// Apply selector logic
+	// Apply selector logic from KeysMap
 	for name, keys := range m.KeysMap {
-		// Check if name matches
 		if matchesName(fieldKeySelector, name) {
-			filteredKeys := []*telemetrytypes.TelemetryFieldKey{}
 			for _, key := range keys {
 				if matchesKey(fieldKeySelector, key) {
-					filteredKeys = append(filteredKeys, key)
+					if _, exists := setOfKeys[key.Text()]; !exists {
+						result[name] = append(result[name], key)
+						setOfKeys[key.Text()] = key
+					}
 				}
 			}
-			if len(filteredKeys) > 0 {
-				result[name] = filteredKeys
+		}
+	}
+
+	// StaticFields (e.g. IntrinsicFields), mirroring the real metadata store.
+	for key, field := range m.StaticFields {
+		if !matchesName(fieldKeySelector, key) {
+			continue
+		}
+
+		if matchesKey(fieldKeySelector, &field) {
+			if _, exists := setOfKeys[field.Text()]; !exists {
+				result[field.Name] = append(result[field.Name], &field)
+				setOfKeys[field.Text()] = &field
 			}
 		}
 	}
@@ -106,7 +130,7 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 
 	result := []*telemetrytypes.TelemetryFieldKey{}
 
-	// Find keys matching the selector
+	// Find keys matching the selector from KeysMap
 	for name, keys := range m.KeysMap {
 		if matchesName(fieldKeySelector, name) {
 			for _, key := range keys {
@@ -114,6 +138,17 @@ func (m *MockMetadataStore) GetKey(ctx context.Context, fieldKeySelector *teleme
 					result = append(result, key)
 				}
 			}
+		}
+	}
+
+	// Add matching StaticFields (e.g. IntrinsicFields), same as the real metadata store does
+	for key, field := range m.StaticFields {
+		if !matchesName(fieldKeySelector, key) {
+			continue
+		}
+
+		if matchesKey(fieldKeySelector, &field) {
+			result = append(result, &field)
 		}
 	}
 
@@ -287,6 +322,27 @@ func (m *MockMetadataStore) FetchTemporalityMulti(ctx context.Context, queryTime
 	return result, nil
 }
 
+// FetchTemporalityMulti fetches the temporality for multiple metrics
+func (m *MockMetadataStore) FetchTemporalityAndTypeMulti(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	temporalities := make(map[string]metrictypes.Temporality)
+	types := make(map[string]metrictypes.Type)
+
+	for _, metricName := range metricNames {
+		if temporality, exists := m.TemporalityMap[metricName]; exists {
+			temporalities[metricName] = temporality
+		} else {
+			temporalities[metricName] = metrictypes.Unknown
+		}
+		if metricType, exists := m.TypeMap[metricName]; exists {
+			types[metricName] = metricType
+		} else {
+			types[metricName] = metrictypes.UnspecifiedType
+		}
+	}
+
+	return temporalities, types, nil
+}
+
 // SetTemporality sets the temporality for a metric in the mock store
 func (m *MockMetadataStore) SetTemporality(metricName string, temporality metrictypes.Temporality) {
 	m.TemporalityMap[metricName] = temporality
@@ -318,4 +374,8 @@ func (m *MockMetadataStore) SetFirstSeenFromMetricMetadata(firstSeenMap map[tele
 	for key, value := range firstSeenMap {
 		m.LookupKeysMap[key] = value
 	}
+}
+
+func (m *MockMetadataStore) FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error) {
+	return make(map[string]int64), nil
 }

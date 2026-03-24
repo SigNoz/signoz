@@ -25,7 +25,7 @@ echo "\n✅ Prettier formatting successful"
 
 # Fix linting issues
 echo "\n\n---\nRunning eslint...\n"
-if ! yarn lint --fix --quiet src/api/generated; then
+if ! yarn lint:generated; then
   echo "ESLint check failed! Please fix linting errors before proceeding."
   exit 1
 fi

@@ -36,7 +36,7 @@ export type VariableFetchContext = Pick<
 	IDashboardVariablesStoreState,
 	'variableTypes' | 'dynamicVariableOrder' | 'dependencyData'
 > & {
-	doAllVariablesHaveValuesSelected: boolean;
+	doAllQueryVariablesHaveValuesSelected: boolean;
 };
 
 const initialState: IVariableFetchStoreState = {
@@ -88,7 +88,7 @@ export function initializeVariableFetchStore(variableNames: string[]): void {
  */
 export function enqueueFetchOfAllVariables(): void {
 	const {
-		doAllVariablesHaveValuesSelected,
+		doAllQueryVariablesHaveValuesSelected,
 		dependencyData,
 		variableTypes,
 		dynamicVariableOrder,
@@ -116,7 +116,7 @@ export function enqueueFetchOfAllVariables(): void {
 		// otherwise wait for query variables to settle first
 		dynamicVariableOrder.forEach((name) => {
 			draft.cycleIds[name] = (draft.cycleIds[name] || 0) + 1;
-			draft.states[name] = doAllVariablesHaveValuesSelected
+			draft.states[name] = doAllQueryVariablesHaveValuesSelected
 				? resolveFetchState(draft, name)
 				: 'waiting';
 		});
@@ -208,7 +208,11 @@ export function onVariableFetchFailure(name: string): void {
  * ensures parents are set before children within a single update).
  */
 export function enqueueDescendantsOfVariable(name: string): void {
-	const { dependencyData, variableTypes } = getVariableDependencyContext();
+	const {
+		dependencyData,
+		variableTypes,
+		dynamicVariableOrder,
+	} = getVariableDependencyContext();
 	if (!dependencyData) {
 		return;
 	}
@@ -228,6 +232,19 @@ export function enqueueDescendantsOfVariable(name: string): void {
 
 			draft.states[desc] = allParentsSettled
 				? resolveFetchState(draft, desc)
+				: 'waiting';
+		});
+
+		// Dynamic variables implicitly depend on all query variable values.
+		// If all query variables are currently settled, start them immediately;
+		// otherwise they wait until query vars finish (unlocked via onVariableFetchComplete).
+		dynamicVariableOrder.forEach((dynName) => {
+			draft.cycleIds[dynName] = (draft.cycleIds[dynName] || 0) + 1;
+			draft.states[dynName] = areAllQueryVariablesSettled(
+				draft.states,
+				variableTypes,
+			)
+				? resolveFetchState(draft, dynName)
 				: 'waiting';
 		});
 	});

@@ -7,7 +7,6 @@ import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 
 describe('MetricOverTime - V5 Migration Validation', () => {
 	const mockDomainName = 'api.example.com';
-	// eslint-disable-next-line sonarjs/no-duplicate-string
 	const mockEndpointName = '/api/users';
 	const emptyFilters: IBuilderQuery['filters'] = {
 		items: [],
@@ -57,13 +56,11 @@ describe('MetricOverTime - V5 Migration Validation', () => {
 					{
 						id: 'test-1',
 						key: {
-							// eslint-disable-next-line sonarjs/no-duplicate-string
 							key: 'service.name',
 							dataType: DataTypes.String,
 							type: 'resource',
 						},
 						op: '=',
-						// eslint-disable-next-line sonarjs/no-duplicate-string
 						value: 'user-service',
 					},
 					{

@@ -1,5 +1,5 @@
 import { UseMutateAsyncFunction } from 'react-query';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import logEvent from 'api/common/logEvent';
 import { MenuItemLabelGeneratorProps } from 'components/ExplorerCard/types';
 import { showErrorNotification } from 'components/ExplorerCard/utils';

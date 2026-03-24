@@ -1,6 +1,5 @@
 import { css, FlattenSimpleInterpolation } from 'styled-components';
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
 const cssProperty = (key: any, value: any): FlattenSimpleInterpolation =>
 	key &&
 	value &&

@@ -1,5 +1,4 @@
-import { Avatar, Button, Table, Typography } from 'antd';
-import { TableProps } from 'antd/lib/table';
+import { Avatar, Button, Table, TableProps, Typography } from 'antd';
 import { themeColors } from 'constants/theme';
 import { StyledCSS } from 'container/GantChart/Trace/styles';
 import styled from 'styled-components';
@@ -44,7 +43,6 @@ export const ProcessorIndexIcon = styled(Avatar)`
 `;
 
 export const StyledTable: React.FC<
-	// eslint-disable-next-line @typescript-eslint/no-explicit-any
 	TableProps<any> & { isDarkMode: boolean }
 > = styled(Table)`
 	.ant-table-tbody > tr > td {

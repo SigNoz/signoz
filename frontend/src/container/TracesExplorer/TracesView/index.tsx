@@ -7,6 +7,7 @@ import {
 	useEffect,
 	useMemo,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -85,7 +86,6 @@ function TracesView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 

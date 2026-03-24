@@ -149,12 +149,17 @@ export function prepareHistogramPanelConfig({
 	isDarkMode,
 }: {
 	widget: Widgets;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	panelMode: PanelMode;
 	isDarkMode: boolean;
 }): UPlotConfigBuilder {
 	const builder = buildBaseConfig({
-		widget,
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		apiResponse,
 		panelMode,
@@ -191,17 +196,15 @@ export function prepareHistogramPanelConfig({
 		builder.addSeries({
 			label: '',
 			scaleKey: 'y',
-			drawStyle: DrawStyle.Bar,
-			panelType: PANEL_TYPES.HISTOGRAM,
+			drawStyle: DrawStyle.Histogram,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: false,
 			barWidthFactor: 1,
 			pointSize: 5,
 			lineColor: '#3f5ecc',
 			fillColor: '#4E74F8',
 			isDarkMode,
 		});
-	} else {
+	} else if (apiResponse && apiResponse?.data?.result) {
 		apiResponse.data.result.forEach((series) => {
 			const baseLabelName = getLabelName(
 				series.metric,
@@ -216,10 +219,8 @@ export function prepareHistogramPanelConfig({
 			builder.addSeries({
 				label: label,
 				scaleKey: 'y',
-				drawStyle: DrawStyle.Bar,
-				panelType: PANEL_TYPES.HISTOGRAM,
+				drawStyle: DrawStyle.Histogram,
 				colorMapping: widget.customLegendColors ?? {},
-				spanGaps: false,
 				barWidthFactor: 1,
 				pointSize: 5,
 				isDarkMode,

@@ -169,6 +169,10 @@
 				font-weight: 400;
 				line-height: 16px; /* 133.333% */
 
+				.ant-select {
+					width: 100%;
+				}
+
 				.ant-select-selector {
 					border: none;
 					height: unset;

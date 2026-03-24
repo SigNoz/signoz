@@ -72,22 +72,24 @@ export function ColumnUnitSelector(
 	return (
 		<section className="column-unit-selector">
 			<Typography.Text className="heading">Column Units</Typography.Text>
-			{aggregationQueries.map(({ value, label }) => {
-				const baseQueryName = value.split('.')[0];
-				return (
-					<YAxisUnitSelectorV2
-						value={columnUnits[value] || ''}
-						onSelect={(unitValue: string): void =>
-							handleColumnUnitSelect(value, unitValue)
-						}
-						fieldLabel={label}
-						key={value}
-						selectedQueryName={baseQueryName}
-						// Update the column unit value automatically only in create mode
-						shouldUpdateYAxisUnit={isNewDashboard}
-					/>
-				);
-			})}
+			<div className="column-unit-selector-content">
+				{aggregationQueries.map(({ value, label }) => {
+					const baseQueryName = value.split('.')[0];
+					return (
+						<YAxisUnitSelectorV2
+							value={columnUnits[value] || ''}
+							onSelect={(unitValue: string): void =>
+								handleColumnUnitSelect(value, unitValue)
+							}
+							fieldLabel={label}
+							key={value}
+							selectedQueryName={baseQueryName}
+							// Update the column unit value automatically only in create mode
+							shouldUpdateYAxisUnit={isNewDashboard}
+						/>
+					);
+				})}
+			</div>
 		</section>
 	);
 }

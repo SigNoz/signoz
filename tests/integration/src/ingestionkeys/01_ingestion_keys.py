@@ -21,6 +21,9 @@ from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+GATEWAY_APIS_EDITOR_EMAIL = "gatewayapiseditor@integration.test"
+GATEWAY_APIS_EDITOR_PASSWORD = "password123Z$"
+
 
 def test_apply_license(
     signoz: types.SigNoz,
@@ -30,6 +33,31 @@ def test_apply_license(
 ) -> None:
     """Activate a license so that all subsequent gateway calls succeed."""
     add_license(signoz, make_http_mocks, get_token)
+
+
+def test_create_editor_user(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """Invite and register an editor user for gateway API tests."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    invite_response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": GATEWAY_APIS_EDITOR_EMAIL, "role": "EDITOR"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert invite_response.status_code == HTTPStatus.CREATED
+    reset_token = invite_response.json()["data"]["token"]
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": GATEWAY_APIS_EDITOR_PASSWORD, "token": reset_token},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
 
 # ---------------------------------------------------------------------------
@@ -44,7 +72,7 @@ def test_create_ingestion_key(
     get_token: Callable[[str, str], str],
 ) -> None:
     """POST /api/v2/gateway/ingestion_keys creates a key via the gateway."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     make_http_mocks(
         signoz.gateway,
@@ -77,7 +105,7 @@ def test_create_ingestion_key(
             "tags": ["env:test", "team:platform"],
             "expires_at": "2030-01-01T00:00:00Z",
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -103,7 +131,7 @@ def test_get_ingestion_keys(
     get_token: Callable[[str, str], str],
 ) -> None:
     """GET /api/v2/gateway/ingestion_keys lists keys via the gateway."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     # Default page=1, per_page=10 → gateway gets ?page=1&per_page=10
     make_http_mocks(
@@ -146,7 +174,7 @@ def test_get_ingestion_keys(
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v2/gateway/ingestion_keys"),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -168,7 +196,7 @@ def test_get_ingestion_keys_custom_pagination(
     get_token: Callable[[str, str], str],
 ) -> None:
     """GET /api/v2/gateway/ingestion_keys with custom pagination params."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     make_http_mocks(
         signoz.gateway,
@@ -200,7 +228,7 @@ def test_get_ingestion_keys_custom_pagination(
         signoz.self.host_configs["8080"].get(
             "/api/v2/gateway/ingestion_keys?page=2&per_page=5"
         ),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -221,7 +249,7 @@ def test_search_ingestion_keys(
     get_token: Callable[[str, str], str],
 ) -> None:
     """GET /api/v2/gateway/ingestion_keys/search searches keys by name."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     # name, page, per_page are sorted alphabetically by Go url.Values.Encode()
     make_http_mocks(
@@ -266,7 +294,7 @@ def test_search_ingestion_keys(
         signoz.self.host_configs["8080"].get(
             "/api/v2/gateway/ingestion_keys/search?name=my-test"
         ),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -286,7 +314,7 @@ def test_search_ingestion_keys_empty(
     get_token: Callable[[str, str], str],
 ) -> None:
     """Search returns an empty list when no keys match."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     make_http_mocks(
         signoz.gateway,
@@ -318,7 +346,7 @@ def test_search_ingestion_keys_empty(
         signoz.self.host_configs["8080"].get(
             "/api/v2/gateway/ingestion_keys/search?name=nonexistent"
         ),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -338,7 +366,7 @@ def test_update_ingestion_key(
     get_token: Callable[[str, str], str],
 ) -> None:
     """PATCH /api/v2/gateway/ingestion_keys/{keyId} updates a key via the gateway."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}"
 
@@ -366,7 +394,7 @@ def test_update_ingestion_key(
             "tags": ["env:prod"],
             "expires_at": "2031-06-15T00:00:00Z",
         },
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 
@@ -388,7 +416,7 @@ def test_delete_ingestion_key(
     get_token: Callable[[str, str], str],
 ) -> None:
     """DELETE /api/v2/gateway/ingestion_keys/{keyId} deletes a key via the gateway."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    editor_token = get_token(GATEWAY_APIS_EDITOR_EMAIL, GATEWAY_APIS_EDITOR_PASSWORD)
 
     gateway_url = f"/v1/workspaces/me/keys/{TEST_KEY_ID}"
 
@@ -411,7 +439,7 @@ def test_delete_ingestion_key(
         signoz.self.host_configs["8080"].get(
             f"/api/v2/gateway/ingestion_keys/{TEST_KEY_ID}"
         ),
-        headers={"Authorization": f"Bearer {admin_token}"},
+        headers={"Authorization": f"Bearer {editor_token}"},
         timeout=10,
     )
 

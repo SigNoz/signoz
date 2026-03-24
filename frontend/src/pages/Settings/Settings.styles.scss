@@ -31,9 +31,33 @@
 		.settings-page-sidenav {
 			width: 240px;
 			height: calc(100vh - 48px);
-			border-right: 1px solid var(--Slate-500, #161922);
-			background: var(--Ink-500, #0b0c0e);
-			margin-top: 4px;
+			border-right: 1px solid var(--secondary);
+			background: var(--sidebar-primary-foreground);
+			padding-top: var(--padding-1);
+			display: flex;
+			flex-direction: column;
+			gap: var(--spacing-12);
+			overflow-y: auto;
+
+			.settings-nav-section {
+				display: flex;
+				flex-direction: column;
+			}
+
+			.settings-nav-section--with-divider {
+				border-top: 1px solid var(--secondary);
+				padding-top: var(--padding-4);
+			}
+
+			.settings-nav-section-title {
+				font-size: var(--uppercase-small-600-font-size);
+				font-weight: var(--uppercase-small-600-font-weight);
+				letter-spacing: 0.88px;
+				text-transform: uppercase;
+				color: var(--l3-foreground);
+				margin-bottom: var(--margin-2);
+				padding: var(--padding-1) var(--padding-3);
+			}
 
 			.nav-item {
 				.nav-item-data {

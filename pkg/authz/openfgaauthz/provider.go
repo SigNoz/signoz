@@ -8,7 +8,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/authz/openfgaserver"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -19,7 +18,7 @@ import (
 
 type provider struct {
 	server *openfgaserver.Server
-	store  roletypes.Store
+	store  authtypes.RoleStore
 }
 
 func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
@@ -42,6 +41,10 @@ func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, 
 
 func (provider *provider) Start(ctx context.Context) error {
 	return provider.server.Start(ctx)
+}
+
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.server.Healthy()
 }
 
 func (provider *provider) Stop(ctx context.Context) error {
@@ -68,74 +71,92 @@ func (provider *provider) ListObjects(ctx context.Context, subject string, relat
 	return provider.server.ListObjects(ctx, subject, relation, typeable)
 }
 
-func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*roletypes.Role, error) {
+func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*authtypes.Role, error) {
 	storableRole, err := provider.store.Get(ctx, orgID, id)
 	if err != nil {
 		return nil, err
 	}
 
-	return roletypes.NewRoleFromStorableRole(storableRole), nil
+	return authtypes.NewRoleFromStorableRole(storableRole), nil
 }
 
-func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*roletypes.Role, error) {
+func (provider *provider) GetByOrgIDAndName(ctx context.Context, orgID valuer.UUID, name string) (*authtypes.Role, error) {
 	storableRole, err := provider.store.GetByOrgIDAndName(ctx, orgID, name)
 	if err != nil {
 		return nil, err
 	}
 
-	return roletypes.NewRoleFromStorableRole(storableRole), nil
+	return authtypes.NewRoleFromStorableRole(storableRole), nil
 }
 
-func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*roletypes.Role, error) {
+func (provider *provider) List(ctx context.Context, orgID valuer.UUID) ([]*authtypes.Role, error) {
 	storableRoles, err := provider.store.List(ctx, orgID)
 	if err != nil {
 		return nil, err
 	}
 
-	roles := make([]*roletypes.Role, len(storableRoles))
+	roles := make([]*authtypes.Role, len(storableRoles))
 	for idx, storableRole := range storableRoles {
-		roles[idx] = roletypes.NewRoleFromStorableRole(storableRole)
+		roles[idx] = authtypes.NewRoleFromStorableRole(storableRole)
 	}
 
 	return roles, nil
 }
 
-func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*roletypes.Role, error) {
+func (provider *provider) ListByOrgIDAndNames(ctx context.Context, orgID valuer.UUID, names []string) ([]*authtypes.Role, error) {
 	storableRoles, err := provider.store.ListByOrgIDAndNames(ctx, orgID, names)
 	if err != nil {
 		return nil, err
 	}
 
-	roles := make([]*roletypes.Role, len(storableRoles))
+	roles := make([]*authtypes.Role, len(storableRoles))
 	for idx, storable := range storableRoles {
-		roles[idx] = roletypes.NewRoleFromStorableRole(storable)
+		roles[idx] = authtypes.NewRoleFromStorableRole(storable)
 	}
 
 	return roles, nil
 }
 
-func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+func (provider *provider) ListByOrgIDAndIDs(ctx context.Context, orgID valuer.UUID, ids []valuer.UUID) ([]*authtypes.Role, error) {
+	storableRoles, err := provider.store.ListByOrgIDAndIDs(ctx, orgID, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	roles := make([]*authtypes.Role, len(storableRoles))
+	for idx, storable := range storableRoles {
+		roles[idx] = authtypes.NewRoleFromStorableRole(storable)
+	}
+
+	return roles, nil
+}
+
+func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
+	selectors := make([]authtypes.Selector, len(names))
+	for idx, name := range names {
+		selectors[idx] = authtypes.MustNewSelector(authtypes.TypeRole, name)
+	}
+
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, name),
-		},
+		selectors,
 		orgID,
 	)
 	if err != nil {
 		return err
 	}
+
 	return provider.Write(ctx, tuples, nil)
 }
 
-func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleName string, updatedRoleName string, subject string) error {
-	err := provider.Revoke(ctx, orgID, existingRoleName, subject)
+func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleNames []string, updatedRoleNames []string, subject string) error {
+	err := provider.Revoke(ctx, orgID, existingRoleNames, subject)
 	if err != nil {
 		return err
 	}
 
-	err = provider.Grant(ctx, orgID, updatedRoleName, subject)
+	err = provider.Grant(ctx, orgID, updatedRoleNames, subject)
 	if err != nil {
 		return err
 	}
@@ -143,13 +164,16 @@ func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, ex
 	return nil
 }
 
-func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, name string, subject string) error {
+func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names []string, subject string) error {
+	selectors := make([]authtypes.Selector, len(names))
+	for idx, name := range names {
+		selectors[idx] = authtypes.MustNewSelector(authtypes.TypeRole, name)
+	}
+
 	tuples, err := authtypes.TypeableRole.Tuples(
 		subject,
 		authtypes.RelationAssignee,
-		[]authtypes.Selector{
-			authtypes.MustNewSelector(authtypes.TypeRole, name),
-		},
+		selectors,
 		orgID,
 	)
 	if err != nil {
@@ -158,10 +182,10 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, name st
 	return provider.Write(ctx, nil, tuples)
 }
 
-func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*roletypes.Role) error {
+func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*authtypes.Role) error {
 	err := provider.store.RunInTx(ctx, func(ctx context.Context) error {
 		for _, role := range managedRoles {
-			err := provider.store.Create(ctx, roletypes.NewStorableRoleFromRole(role))
+			err := provider.store.Create(ctx, authtypes.NewStorableRoleFromRole(role))
 			if err != nil {
 				return err
 			}
@@ -178,15 +202,15 @@ func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID,
 }
 
 func (provider *provider) CreateManagedUserRoleTransactions(ctx context.Context, orgID valuer.UUID, userID valuer.UUID) error {
-	return provider.Grant(ctx, orgID, roletypes.SigNozAdminRoleName, authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil))
+	return provider.Grant(ctx, orgID, []string{authtypes.SigNozAdminRoleName}, authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil))
 }
 
-func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *roletypes.Role) error {
-	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+func (setter *provider) Create(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
+	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *roletypes.Role) (*roletypes.Role, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+func (provider *provider) GetOrCreate(_ context.Context, _ valuer.UUID, _ *authtypes.Role) (*authtypes.Role, error) {
+	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource {
@@ -194,19 +218,19 @@ func (provider *provider) GetResources(_ context.Context) []*authtypes.Resource 
 }
 
 func (provider *provider) GetObjects(ctx context.Context, orgID valuer.UUID, id valuer.UUID, relation authtypes.Relation) ([]*authtypes.Object, error) {
-	return nil, errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+	return nil, errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
-func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *roletypes.Role) error {
-	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+func (provider *provider) Patch(_ context.Context, _ valuer.UUID, _ *authtypes.Role) error {
+	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) PatchObjects(_ context.Context, _ valuer.UUID, _ string, _ authtypes.Relation, _, _ []*authtypes.Object) error {
-	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) Delete(_ context.Context, _ valuer.UUID, _ valuer.UUID) error {
-	return errors.Newf(errors.TypeUnsupported, roletypes.ErrCodeRoleUnsupported, "not implemented")
+	return errors.Newf(errors.TypeUnsupported, authtypes.ErrCodeRoleUnsupported, "not implemented")
 }
 
 func (provider *provider) MustGetTypeables() []authtypes.Typeable {

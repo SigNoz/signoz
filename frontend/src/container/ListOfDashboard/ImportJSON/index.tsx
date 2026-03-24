@@ -249,7 +249,6 @@ function ImportJSON({
 							monaco.editor.remeasureFonts();
 						});
 					}}
-					// eslint-disable-next-line react/jsx-no-bind
 					beforeMount={setEditorTheme}
 				/>
 			</div>

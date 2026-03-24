@@ -41,6 +41,21 @@ func NewOrganization(displayName string, name string) *Organization {
 	}
 }
 
+func NewOrganizationWithID(id valuer.UUID, displayName string, name string) *Organization {
+	return &Organization{
+		Identifiable: Identifiable{
+			ID: id,
+		},
+		TimeAuditable: TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Name:        name,
+		DisplayName: displayName,
+		Key:         NewOrganizationKey(id),
+	}
+}
+
 func NewOrganizationKey(orgID valuer.UUID) uint32 {
 	hasher := fnv.New32a()
 

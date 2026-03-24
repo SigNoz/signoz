@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { LoadingOutlined, SearchOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
@@ -15,7 +16,7 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { FilterDropdownProps } from 'antd/lib/table/interface';
+import type { FilterDropdownProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import {
 	getQueueOverview,
@@ -90,7 +91,6 @@ const getColumnSearchProps = (
 		clearFilters,
 		close,
 	}): JSX.Element => (
-		// eslint-disable-next-line jsx-a11y/no-static-element-interactions
 		<div style={{ padding: 8 }} onKeyDown={(e): void => e.stopPropagation()}>
 			<Input
 				ref={searchInput}

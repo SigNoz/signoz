@@ -18,11 +18,13 @@ export enum DashboardCursorSync {
 }
 
 export interface TooltipViewState {
-	plot?: uPlot | null;
+	/** Whether a plot instance exists; plot reference is in controller, not state. */
+	hasPlot?: boolean;
 	style: Partial<CSSProperties>;
 	isHovering: boolean;
 	isPinned: boolean;
 	dismiss: () => void;
+	clickData: TooltipClickData | null;
 	contents?: ReactNode;
 }
 
@@ -38,8 +40,25 @@ export interface TooltipPluginProps {
 	syncMode?: DashboardCursorSync;
 	syncKey?: string;
 	render: (args: TooltipRenderArgs) => ReactNode;
+	pinnedTooltipElement?: (clickData: TooltipClickData) => ReactNode;
 	maxWidth?: number;
 	maxHeight?: number;
+}
+
+export interface TooltipClickData {
+	xValue: number;
+	yValue: number;
+	focusedSeries: {
+		seriesIndex: number;
+		seriesName: string;
+		value: number;
+		color: string;
+	} | null;
+	clickedDataTimestamp: number;
+	mouseX: number;
+	mouseY: number;
+	absoluteMouseX: number;
+	absoluteMouseY: number;
 }
 
 /**
@@ -58,6 +77,7 @@ export interface TooltipControllerState {
 	hoverActive: boolean;
 	isAnySeriesActive: boolean;
 	pinned: boolean;
+	clickData: TooltipClickData | null;
 	style: TooltipViewState['style'];
 	horizontalOffset: number;
 	verticalOffset: number;

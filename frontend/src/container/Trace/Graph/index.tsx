@@ -1,4 +1,5 @@
 import { useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useMeasure } from 'react-use';
 import { Typography } from 'antd';

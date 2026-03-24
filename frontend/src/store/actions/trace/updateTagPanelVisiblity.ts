@@ -1,3 +1,4 @@
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { UPDATE_TAG_MODAL_VISIBILITY } from 'types/actions/trace';

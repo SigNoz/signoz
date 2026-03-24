@@ -161,7 +161,6 @@ export const getSteps = ({
 				SetupCentralCollectorStep,
 				SendHostmetricsLogs,
 			];
-		// eslint-disable-next-line sonarjs/no-duplicated-branches
 		case 'azureAks':
 			return [
 				DataSourceStep,
@@ -201,7 +200,6 @@ export const getSteps = ({
 				SendLogs,
 				SendMetrics,
 			];
-		// eslint-disable-next-line sonarjs/no-duplicated-branches
 		case 'azureBlobStorage':
 			return [
 				DataSourceStep,
@@ -210,7 +208,6 @@ export const getSteps = ({
 				SendLogs,
 				SendMetrics,
 			];
-		// eslint-disable-next-line sonarjs/no-duplicated-branches
 		case 'azureSQLDatabaseMetrics':
 			return [
 				DataSourceStep,

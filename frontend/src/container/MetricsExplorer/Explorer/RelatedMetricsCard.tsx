@@ -39,10 +39,7 @@ function RelatedMetricsCard({ metric }: RelatedMetricsCardProps): JSX.Element {
 					dataSource={DataSource.METRICS}
 				/>
 			)}
-			<DashboardsAndAlertsPopover
-				dashboards={metric.dashboards}
-				alerts={metric.alerts}
-			/>
+			<DashboardsAndAlertsPopover metricName={metric.name} />
 		</div>
 	);
 }

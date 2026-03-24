@@ -64,7 +64,6 @@ function FunnelConfiguration({
 					<div className="funnel-configuration__header-right">
 						<Tooltip
 							title={
-								// eslint-disable-next-line no-nested-ternary
 								!hasEditPermission
 									? 'You need editor or admin access to edit funnel description'
 									: funnel?.description

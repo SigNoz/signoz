@@ -18,11 +18,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/zeus"
 	"github.com/gorilla/mux"
 )
@@ -46,8 +48,11 @@ type provider struct {
 	gatewayHandler         gateway.Handler
 	fieldsHandler          fields.Handler
 	authzHandler           authz.Handler
+	rawDataExportHandler   rawdataexport.Handler
 	zeusHandler            zeus.Handler
 	querierHandler         querier.Handler
+	serviceAccountHandler  serviceaccount.Handler
+	factoryHandler         factory.Handler
 }
 
 func NewFactory(
@@ -67,8 +72,11 @@ func NewFactory(
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
+	factoryHandler factory.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -91,8 +99,11 @@ func NewFactory(
 			gatewayHandler,
 			fieldsHandler,
 			authzHandler,
+			rawDataExportHandler,
 			zeusHandler,
 			querierHandler,
+			serviceAccountHandler,
+			factoryHandler,
 		)
 	})
 }
@@ -117,8 +128,11 @@ func newProvider(
 	gatewayHandler gateway.Handler,
 	fieldsHandler fields.Handler,
 	authzHandler authz.Handler,
+	rawDataExportHandler rawdataexport.Handler,
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
+	serviceAccountHandler serviceaccount.Handler,
+	factoryHandler factory.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()
@@ -141,8 +155,11 @@ func newProvider(
 		gatewayHandler:         gatewayHandler,
 		fieldsHandler:          fieldsHandler,
 		authzHandler:           authzHandler,
+		rawDataExportHandler:   rawDataExportHandler,
 		zeusHandler:            zeusHandler,
 		querierHandler:         querierHandler,
+		serviceAccountHandler:  serviceAccountHandler,
+		factoryHandler:         factoryHandler,
 	}
 
 	provider.authZ = middleware.NewAuthZ(settings.Logger(), orgGetter, authz)
@@ -215,6 +232,10 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addRawDataExportRoutes(router); err != nil {
+		return err
+	}
+
 	if err := provider.addZeusRoutes(router); err != nil {
 		return err
 	}
@@ -223,18 +244,26 @@ func (provider *provider) AddToRouter(router *mux.Router) error {
 		return err
 	}
 
+	if err := provider.addServiceAccountRoutes(router); err != nil {
+		return err
+	}
+
+	if err := provider.addRegistryRoutes(router); err != nil {
+		return err
+	}
+
 	return nil
 }
 
 func newSecuritySchemes(role types.Role) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: ctxtypes.AuthTypeAPIKey.StringValue(), Scopes: []string{role.String()}},
-		{Name: ctxtypes.AuthTypeTokenizer.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderAPIKey.StringValue(), Scopes: []string{role.String()}},
+		{Name: authtypes.IdentNProviderTokenizer.StringValue(), Scopes: []string{role.String()}},
 	}
 }
 
 func newAnonymousSecuritySchemes(scopes []string) []handler.OpenAPISecurityScheme {
 	return []handler.OpenAPISecurityScheme{
-		{Name: ctxtypes.AuthTypeAnonymous.StringValue(), Scopes: scopes},
+		{Name: authtypes.IdentNProviderAnonymous.StringValue(), Scopes: scopes},
 	}
 }

@@ -1,4 +1,3 @@
-/* eslint-disable react/no-unstable-nested-components */
 import {
 	KeyboardEvent,
 	ReactElement,
@@ -405,7 +404,6 @@ function QueryBuilderSearch({
 				onInputKeyDown={onInputKeyDownHandler}
 				notFoundContent={isFetching ? <Spin size="small" /> : null}
 				suffixIcon={
-					// eslint-disable-next-line no-nested-ternary
 					!isUndefined(suffixIcon) ? (
 						suffixIcon
 					) : isOpen ? (
