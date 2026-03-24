@@ -35,7 +35,6 @@ type Setter interface {
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
 	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
-	UpdateMyUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableSelfUser) (*types.User, error)
 	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
@@ -55,6 +54,8 @@ type Setter interface {
 
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
+	AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) error
+	RemoveUserRole(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) error
 
 	statsreporter.StatsCollector
 }
@@ -113,6 +114,8 @@ type Handler interface {
 	GetMyUser(http.ResponseWriter, *http.Request)
 	UpdateMyUser(http.ResponseWriter, *http.Request)
 	GetRolesByUserID(http.ResponseWriter, *http.Request)
+	SetRoleByUserID(http.ResponseWriter, *http.Request)
+	RemoveUserRoleByRoleID(http.ResponseWriter, *http.Request)
 	GetUsersByRoleID(http.ResponseWriter, *http.Request)
 
 	// Reset Password

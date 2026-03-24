@@ -291,7 +291,7 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 	return existingUser, nil
 }
 
-func (module *setter) UpdateMyUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableSelfUser) (*types.User, error) {
+func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error) {
 	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
 	if err != nil {
 		return nil, err
@@ -308,87 +308,6 @@ func (module *setter) UpdateMyUser(ctx context.Context, orgID valuer.UUID, userI
 	existingUser.Update(updatable.DisplayName)
 	if err := module.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 		return nil, err
-	}
-
-	return existingUser, nil
-}
-
-func (module *setter) UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error) {
-	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
-	if err != nil {
-		return nil, err
-	}
-
-	if err := existingUser.ErrIfRoot(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update root user")
-	}
-
-	if err := existingUser.ErrIfDeleted(); err != nil {
-		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
-	}
-
-	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
-	if err != nil {
-		return nil, err
-	}
-
-	existingUserRoleNames := roleNamesFromUserRoles(existingUserRoles)
-
-	targetRoleNames := make([]string, len(updatable.Roles))
-	for idx, pRole := range updatable.Roles {
-		targetRoleNames[idx] = pRole.Name
-	}
-
-	var grants, revokes []string
-	var rolesChanged bool
-	if len(targetRoleNames) > 0 {
-		// validate that all requested role names exist before making any changes
-		foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, targetRoleNames)
-		if err != nil {
-			return nil, err
-		}
-		if len(foundRoles) != len(targetRoleNames) {
-			foundNames := make(map[string]struct{}, len(foundRoles))
-			for _, r := range foundRoles {
-				foundNames[r.Name] = struct{}{}
-			}
-			var missing []string
-			for _, name := range targetRoleNames {
-				if _, ok := foundNames[name]; !ok {
-					missing = append(missing, name)
-				}
-			}
-			return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "role names not found: %v", missing)
-		}
-	}
-
-	grants, revokes = authtypes.DiffRoles(existingUserRoleNames, targetRoleNames)
-	rolesChanged = (len(grants) > 0) || (len(revokes) > 0)
-
-	if rolesChanged {
-		err = module.authz.ModifyGrant(
-			ctx,
-			orgID,
-			revokes,
-			grants,
-			authtypes.MustNewSubject(authtypes.TypeableUser, userID.String(), orgID, nil),
-		)
-		if err != nil {
-			return nil, err
-		}
-	}
-
-	existingUser.Update(updatable.DisplayName)
-
-	if err := module.UpdateAnyUser(ctx, existingUser.OrgID, existingUser); err != nil {
-		return nil, err
-	}
-
-	if rolesChanged {
-		// this by default runs in txn
-		if err := module.UpdateUserRoles(ctx, existingUser.OrgID, existingUser.ID, targetRoleNames); err != nil {
-			return nil, err
-		}
 	}
 
 	return existingUser, nil
@@ -933,6 +852,99 @@ func (module *setter) UpdateUserRoles(ctx context.Context, orgID, userID valuer.
 
 		return nil
 	})
+}
+
+func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID, roleName string) error {
+	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := existingUser.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot add role for root user")
+	}
+
+	if err := existingUser.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot add role for deleted user")
+	}
+
+	// validate that the role name exists
+	foundRoles, err := module.authz.ListByOrgIDAndNames(ctx, orgID, []string{roleName})
+	if err != nil {
+		return err
+	}
+	if len(foundRoles) != 1 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "role name not found: %s", roleName)
+	}
+
+	// check if user already has this role
+	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
+	if err != nil {
+		return err
+	}
+	for _, userRole := range existingUserRoles {
+		if userRole.Role != nil && userRole.Role.Name == roleName {
+			return nil // role already assigned no-op
+		}
+	}
+
+	// grant via authz (idempotent)
+	if err := module.authz.Grant(
+		ctx,
+		orgID,
+		[]string{roleName},
+		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+	); err != nil {
+		return err
+	}
+
+	// create user_role entry
+	userRoles := authtypes.NewUserRoles(userID, foundRoles)
+	return module.userRoleStore.CreateUserRoles(ctx, userRoles)
+}
+
+func (module *setter) RemoveUserRole(ctx context.Context, orgID, userID valuer.UUID, roleID valuer.UUID) error {
+	existingUser, err := module.getter.GetUserByOrgIDAndID(ctx, orgID, userID)
+	if err != nil {
+		return err
+	}
+
+	if err := existingUser.ErrIfRoot(); err != nil {
+		return errors.WithAdditionalf(err, "cannot remove role for root user")
+	}
+
+	if err := existingUser.ErrIfDeleted(); err != nil {
+		return errors.WithAdditionalf(err, "cannot remove role for deleted user")
+	}
+
+	// resolve role name for authz revoke
+	existingUserRoles, err := module.getter.GetRolesByUserID(ctx, existingUser.ID)
+	if err != nil {
+		return err
+	}
+
+	var roleName string
+	for _, ur := range existingUserRoles {
+		if ur.Role != nil && ur.RoleID == roleID {
+			roleName = ur.Role.Name
+			break
+		}
+	}
+	if roleName == "" {
+		return errors.Newf(errors.TypeNotFound, authtypes.ErrCodeUserRolesNotFound, "role %s not found for user %s", roleID, userID)
+	}
+
+	// revoke authz grant
+	if err := module.authz.Revoke(
+		ctx,
+		orgID,
+		[]string{roleName},
+		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
+	); err != nil {
+		return err
+	}
+
+	return module.userRoleStore.DeleteUserRoleByUserIDAndRoleID(ctx, userID, roleID)
 }
 
 func roleNamesFromUserRoles(userRoles []*authtypes.UserRole) []string {

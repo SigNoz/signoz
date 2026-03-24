@@ -197,13 +197,13 @@ func (h *handler) UpdateMyUser(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	updatableSelfUser := new(types.UpdatableSelfUser)
-	if err := json.NewDecoder(r.Body).Decode(&updatableSelfUser); err != nil {
+	updatableUser := new(types.UpdatableUser)
+	if err := json.NewDecoder(r.Body).Decode(&updatableUser); err != nil {
 		render.Error(w, err)
 		return
 	}
 
-	_, err = h.setter.UpdateMyUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), updatableSelfUser)
+	_, err = h.setter.UpdateUser(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(claims.UserID), updatableUser)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -290,7 +290,8 @@ func (h *handler) UpdateUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if userID == claims.UserID {
-		render.Error(w, errors.Wrapf(err, errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
 	}
 
 	updatableUser := new(types.UpdatableUser)
@@ -611,6 +612,68 @@ func (h *handler) GetRolesByUserID(w http.ResponseWriter, r *http.Request) {
 	}
 
 	render.Success(w, http.StatusOK, roles)
+}
+
+func (h *handler) SetRoleByUserID(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if userID == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	postableRole := new(types.PostableRole)
+	if err := json.NewDecoder(r.Body).Decode(postableRole); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if postableRole.Name == "" {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "role name is required"))
+		return
+	}
+
+	if err := h.setter.AddUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), postableRole.Name); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusOK, nil)
+}
+
+func (h *handler) RemoveUserRoleByRoleID(w http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	userID := mux.Vars(r)["id"]
+	roleID := mux.Vars(r)["roleId"]
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	if userID == claims.UserID {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "users cannot call this api on self"))
+		return
+	}
+
+	if err := h.setter.RemoveUserRole(ctx, valuer.MustNewUUID(claims.OrgID), valuer.MustNewUUID(userID), valuer.MustNewUUID(roleID)); err != nil {
+		render.Error(w, err)
+		return
+	}
+
+	render.Success(w, http.StatusNoContent, nil)
 }
 
 func (h *handler) GetUsersByRoleID(w http.ResponseWriter, r *http.Request) {

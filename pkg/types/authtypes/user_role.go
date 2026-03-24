@@ -65,35 +65,7 @@ type UserRoleStore interface {
 
 	// delete user role entries by user id
 	DeleteUserRoles(ctx context.Context, userID valuer.UUID) error
-}
 
-// Returns the diff between current role names and target role name separately, as additions and deletions
-func DiffRoles(currentRolesNames, targetRoleNames []string) ([]string, []string) {
-	currentRolesSet := make(map[string]struct{}, len(currentRolesNames))
-	targetRolesSet := make(map[string]struct{}, len(targetRoleNames))
-
-	for _, role := range currentRolesNames {
-		currentRolesSet[role] = struct{}{}
-	}
-	for _, role := range targetRoleNames {
-		targetRolesSet[role] = struct{}{}
-	}
-
-	// additions: roles present in input but not in current
-	additions := []string{}
-	for _, role := range targetRoleNames {
-		if _, exists := currentRolesSet[role]; !exists {
-			additions = append(additions, role)
-		}
-	}
-
-	// deletions: roles present in current but not in input
-	deletions := []string{}
-	for _, role := range currentRolesNames {
-		if _, exists := targetRolesSet[role]; !exists {
-			deletions = append(deletions, role)
-		}
-	}
-
-	return additions, deletions
+	// delete a single user role entry by user id and role id
+	DeleteUserRoleByUserIDAndRoleID(ctx context.Context, userID valuer.UUID, roleID valuer.UUID) error
 }

@@ -51,13 +51,8 @@ type DeprecatedUser struct {
 	Role Role `json:"role"`
 }
 
-type UpdatableSelfUser struct {
-	DisplayName string `json:"displayName" required:"true"`
-}
-
 type UpdatableUser struct {
-	DisplayName string         `json:"displayName" required:"true"`
-	Roles       []PostableRole `json:"roles" required:"true" nullable:"false"`
+	DisplayName string `json:"displayName" required:"true"`
 }
 
 type PostableRole struct {
