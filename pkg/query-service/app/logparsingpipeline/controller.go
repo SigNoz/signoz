@@ -63,7 +63,7 @@ func (pc *LogParsingPipelineController) enrichPipelinesFilters(
 	// Collect names of non-static keys that are missing type info.
 	// Static fields (body, trace_id, etc.) are intentionally Unspecified and map
 	// to top-level OTEL fields — they do not need enrichment.
-	unspecifiedNames := map[string]bool{}
+	unspecifiedNames := map[string]struct{}{}
 	for _, p := range pipelines {
 		if p.Filter != nil {
 			for _, item := range p.Filter.Items {
@@ -76,7 +76,7 @@ func (pc *LogParsingPipelineController) enrichPipelinesFilters(
 					if strings.HasPrefix(item.Key.Key, "body.") {
 						continue
 					}
-					unspecifiedNames[item.Key.Key] = true
+					unspecifiedNames[item.Key.Key] = struct{}{}
 				}
 			}
 		}
