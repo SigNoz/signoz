@@ -38,7 +38,9 @@ export default function DownloadOptionsMenu({
 		await handleExportRawData({
 			format: exportFormat,
 			rowLimit,
-			clearSelectColumns: columnsScope === DownloadColumnsScopes.ALL,
+			clearSelectColumns:
+				dataSource !== DataSource.TRACES &&
+				columnsScope === DownloadColumnsScopes.ALL,
 			selectedColumns,
 		});
 	}, [
@@ -47,6 +49,7 @@ export default function DownloadOptionsMenu({
 		columnsScope,
 		selectedColumns,
 		handleExportRawData,
+		dataSource,
 	]);
 
 	const popoverContent = useMemo(
@@ -82,18 +85,22 @@ export default function DownloadOptionsMenu({
 					</Radio.Group>
 				</div>
 
-				<div className="horizontal-line" />
+				{dataSource !== DataSource.TRACES && (
+					<>
+						<div className="horizontal-line" />
 
-				<div className="columns-scope">
-					<Typography.Text className="title">Columns</Typography.Text>
-					<Radio.Group
-						value={columnsScope}
-						onChange={(e): void => setColumnsScope(e.target.value)}
-					>
-						<Radio value={DownloadColumnsScopes.ALL}>All</Radio>
-						<Radio value={DownloadColumnsScopes.SELECTED}>Selected</Radio>
-					</Radio.Group>
-				</div>
+						<div className="columns-scope">
+							<Typography.Text className="title">Columns</Typography.Text>
+							<Radio.Group
+								value={columnsScope}
+								onChange={(e): void => setColumnsScope(e.target.value)}
+							>
+								<Radio value={DownloadColumnsScopes.ALL}>All</Radio>
+								<Radio value={DownloadColumnsScopes.SELECTED}>Selected</Radio>
+							</Radio.Group>
+						</div>
+					</>
+				)}
 
 				<Button
 					type="primary"
@@ -107,7 +114,14 @@ export default function DownloadOptionsMenu({
 				</Button>
 			</div>
 		),
-		[exportFormat, rowLimit, columnsScope, isDownloading, handleExport],
+		[
+			exportFormat,
+			rowLimit,
+			columnsScope,
+			isDownloading,
+			handleExport,
+			dataSource,
+		],
 	);
 
 	return (
