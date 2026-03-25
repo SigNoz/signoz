@@ -67,7 +67,7 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	spansFromRootToNode := []string{}
 
 	if node.SpanID == selectedSpanId {
-		if isSelectedSpanIDUnCollapsed {
+		if isSelectedSpanIDUnCollapsed && !slices.Contains(uncollapsedSpans, node.SpanID) {
 			spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 		}
 		return true, spansFromRootToNode
@@ -88,7 +88,15 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
 }
 
-func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, isPartOfPreOrder bool, hasSibling bool, selectedSpanId string) []*model.Span {
+// traverseOpts holds the traversal configuration that remains constant
+// throughout the recursion. Per-call state (level, isPartOfPreOrder, etc.)
+// is passed as direct arguments.
+type traverseOpts struct {
+	uncollapsedSpans []string
+	selectedSpanID   string
+}
+
+func traverseTrace(span *model.Span, opts traverseOpts, level uint64, isPartOfPreOrder bool, hasSibling bool) []*model.Span {
 	preOrderTraversal := []*model.Span{}
 
 	// sort the children to maintain the order across requests
@@ -126,8 +134,9 @@ func traverseTrace(span *model.Span, uncollapsedSpans []string, level uint64, is
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
+	isAlreadyUncollapsed := slices.Contains(opts.uncollapsedSpans, span.SpanID)
 	for index, child := range span.Children {
-		_childTraversal := traverseTrace(child, uncollapsedSpans, level+1, isPartOfPreOrder && slices.Contains(uncollapsedSpans, span.SpanID), index != (len(span.Children)-1), selectedSpanId)
+		_childTraversal := traverseTrace(child, opts, level+1, isPartOfPreOrder && isAlreadyUncollapsed, index != (len(span.Children)-1))
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
 		span.SubTreeNodeCount += child.SubTreeNodeCount + 1
@@ -168,7 +177,11 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 			_, spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, selectedSpanID, updatedUncollapsedSpans, isSelectedSpanIDUnCollapsed)
 			updatedUncollapsedSpans = append(updatedUncollapsedSpans, spansFromRootToNode...)
 
-			_preOrderTraversal := traverseTrace(rootNode, updatedUncollapsedSpans, 0, true, false, selectedSpanID)
+			opts := traverseOpts{
+				uncollapsedSpans: updatedUncollapsedSpans,
+				selectedSpanID:   selectedSpanID,
+			}
+			_preOrderTraversal := traverseTrace(rootNode, opts, 0, true, false)
 			_selectedSpanIndex := findIndexForSelectedSpanFromPreOrder(_preOrderTraversal, selectedSpanID)
 
 			if _selectedSpanIndex != -1 {

@@ -65,6 +65,21 @@ func (store *userRoleStore) DeleteUserRoles(ctx context.Context, userID valuer.U
 	return nil
 }
 
+func (store *userRoleStore) DeleteUserRoleByUserIDAndRoleID(ctx context.Context, userID valuer.UUID, roleID valuer.UUID) error {
+	_, err := store.sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(authtypes.UserRole)).
+		Where("user_id = ?", userID).
+		Where("role_id = ?", roleID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (store *userRoleStore) GetUserRolesByUserID(ctx context.Context, userID valuer.UUID) ([]*authtypes.UserRole, error) {
 	userRoles := make([]*authtypes.UserRole, 0)
 
