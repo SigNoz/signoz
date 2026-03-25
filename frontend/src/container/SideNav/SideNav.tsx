@@ -54,6 +54,7 @@ import {
 	Logs,
 	MousePointerClick,
 	PackagePlus,
+	PanelLeft,
 	ScrollText,
 	X,
 } from 'lucide-react';
@@ -119,7 +120,13 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+function SideNav({
+	isPinned,
+	onToggleSidebar,
+}: {
+	isPinned: boolean;
+	onToggleSidebar?: () => void;
+}): JSX.Element {
 	const { openCmdK } = useCmdK();
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
@@ -973,6 +980,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 								</div>
 							)}
 						</div>
+
+						{onToggleSidebar && (
+							<button
+								type="button"
+								className="dockBtn"
+								onClick={onToggleSidebar}
+								aria-label={isPinned ? 'Collapse sidebar' : 'Expand sidebar'}
+							>
+								<PanelLeft size={16} />
+							</button>
+						)}
 					</div>
 				</div>
 

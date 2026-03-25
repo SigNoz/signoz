@@ -168,6 +168,19 @@
 			padding: 0;
 			height: 16px;
 			width: 16px;
+			color: var(--bg-vanilla-400, #c0c1c3);
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			transition: color 0.2s ease;
+
+			&:hover {
+				color: var(--bg-vanilla-100, #fff);
+			}
+
+			&:focus {
+				outline: none;
+			}
 		}
 	}
 
@@ -1305,6 +1318,14 @@
 
 				.version {
 					color: var(--bg-ink-400);
+				}
+			}
+
+			.dockBtn {
+				color: var(--bg-slate-50, #62687c);
+
+				&:hover {
+					color: var(--bg-slate-500, #161922);
 				}
 			}
 		}
