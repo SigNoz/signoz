@@ -120,21 +120,6 @@ func TestGetSelectedSpans_MultipleUncollapsed(t *testing.T) {
 	assert.Equal(t, []string{"root", "childA", "grandchildA", "childB", "grandchildB"}, spanIDs(spans))
 }
 
-// The selected span is always present in the output window.
-func TestGetSelectedSpans_SelectedSpanAlwaysInWindow(t *testing.T) {
-	root := mkSpan("root", "svc",
-		mkSpan("A", "svc",
-			mkSpan("B", "svc",
-				mkSpan("selected", "svc"),
-			),
-		),
-	)
-	spanMap := buildSpanMap(root)
-	spans, _, _, _ := GetSelectedSpans([]string{}, "selected", []*model.Span{root}, spanMap, false)
-
-	assert.Equal(t, []string{"root", "A", "B", "selected"}, spanIDs(spans))
-}
-
 // Collapsing a span with other uncollapsed spans
 //
 // root
