@@ -187,4 +187,38 @@ describe('useOrderedColumns', () => {
 
 		expect(result.current.sensors).toBeDefined();
 	});
+
+	it('syncs ordered columns when base order changes externally (e.g. URL / localStorage)', () => {
+		mockGetDraggedColumns.mockImplementation((_current, dragged) =>
+			Array.isArray(dragged) && dragged.length > 0
+				? [col('c'), col('b'), col('a')]
+				: [col('a'), col('b'), col('c')],
+		);
+
+		const { result, rerender } = renderHook(
+			({ draggedColumns }: { draggedColumns: unknown[] }) =>
+				useOrderedColumns({
+					columns: [],
+					draggedColumns,
+					onColumnOrderChange: jest.fn(),
+				}),
+			{ initialProps: { draggedColumns: [] as unknown[] } },
+		);
+
+		expect(result.current.orderedColumns.map((column) => column.key)).toEqual([
+			'a',
+			'b',
+			'c',
+		]);
+
+		act(() => {
+			rerender({ draggedColumns: [{ title: 'from-url' }] as unknown[] });
+		});
+
+		expect(result.current.orderedColumns.map((column) => column.key)).toEqual([
+			'c',
+			'b',
+			'a',
+		]);
+	});
 });

@@ -84,7 +84,7 @@
 }
 
 .tanstack-column-actions-content {
-	width: 156px;
+	width: 140px;
 	padding: 6px;
 	background: var(--bg-ink-400);
 	border-color: var(--l2-border);
@@ -97,28 +97,32 @@
 	align-items: center;
 	gap: 8px;
 	width: 100%;
-	min-height: 34px;
-	padding: 0 12px;
+	min-height: 25px;
+	padding: 0 6px;
 	border: none;
 	border-radius: 6px;
 	background: transparent;
 	justify-content: flex-start;
 	cursor: pointer;
-	color: var(--bg-cherry-500);
+	color: var(--text-vanilla-200);
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
 	transition: background-color 120ms ease, color 120ms ease;
 
 	&:hover {
-		background: var(--bg-slate-500);
-		color: var(--bg-cherry-600);
+		background: var(--bg-slate-400);
+		color: var(--text-vanilla-100);
+
+		.tanstack-remove-column-action-icon {
+			color: var(--text-vanilla-200);
+		}
 	}
 }
 
 .tanstack-remove-column-action-icon {
 	font-size: 11px;
-	color: var(--bg-cherry-500);
+	color: var(--text-vanilla-400);
 	opacity: 0.95;
 }
 
@@ -129,16 +133,20 @@
 }
 
 .lightMode .tanstack-remove-column-action {
-	color: var(--bg-cherry-600);
+	color: var(--text-ink-500);
 
 	&:hover {
 		background: var(--bg-vanilla-300);
-		color: var(--bg-cherry-700);
+		color: var(--text-ink-600);
+
+		.tanstack-remove-column-action-icon {
+			color: var(--text-ink-600);
+		}
 	}
 }
 
 .lightMode .tanstack-remove-column-action-icon {
-	color: var(--bg-cherry-600);
+	color: var(--text-ink-400);
 }
 
 .tanstack-header-cell .cursor-col-resize {

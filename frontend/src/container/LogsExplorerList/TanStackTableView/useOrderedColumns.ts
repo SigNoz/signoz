@@ -53,17 +53,28 @@ export const useOrderedColumns = ({
 
 	useEffect(() => {
 		setOrderedColumns((previousColumns) => {
+			const previousIds = previousColumns.map((column) => getColumnId(column));
+			const baseIds = baseColumns.map((column) => getColumnId(column));
+
+			// Same columns, different order: `baseColumns` reflects persisted / URL order
+			// after navigation. The merge path below would keep the stale in-memory order.
+			if (
+				previousIds.length === baseIds.length &&
+				[...previousIds].sort().join('|') === [...baseIds].sort().join('|') &&
+				previousIds.join('|') !== baseIds.join('|')
+			) {
+				return baseColumns;
+			}
+
 			const baseColumnsById = new Map(
 				baseColumns.map((column) => [getColumnId(column), column] as const),
 			);
-			const previousIds = new Set(
-				previousColumns.map((column) => getColumnId(column)),
-			);
+			const previousIdsSet = new Set(previousIds);
 			const orderedFromPrevious = previousColumns
 				.map((column) => baseColumnsById.get(getColumnId(column)))
 				.filter(Boolean) as OrderedColumn[];
 			const appendedNewColumns = baseColumns.filter(
-				(column) => !previousIds.has(getColumnId(column)),
+				(column) => !previousIdsSet.has(getColumnId(column)),
 			);
 			const nextColumns = [...orderedFromPrevious, ...appendedNewColumns];
 
