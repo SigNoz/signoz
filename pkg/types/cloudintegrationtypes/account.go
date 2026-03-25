@@ -1,8 +1,10 @@
 package cloudintegrationtypes
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -41,4 +43,62 @@ type UpdatableAccount struct {
 
 type AWSAccountConfig struct {
 	Regions []string `json:"regions" required:"true" nullable:"false"`
+}
+
+func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountConfig) *Account {
+	return &Account{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		OrgID:    orgID,
+		Provider: provider,
+		Config:   config,
+	}
+}
+
+func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*AccountConfig, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if artifact.Aws == nil {
+			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
+		}
+		return &AccountConfig{
+			AWS: &AWSAccountConfig{
+				Regions: artifact.Aws.Regions,
+			},
+		}, nil
+	}
+
+	return nil, errors.NewInternalf(errors.CodeInternal, "unsupported provider type")
+}
+
+func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*ConnectionArtifactRequest, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if artifact.Aws == nil {
+			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
+		}
+		return &ConnectionArtifactRequest{
+			Aws: &AWSConnectionArtifactRequest{
+				DeploymentRegion: artifact.Aws.DeploymentRegion,
+				Regions:          artifact.Aws.Regions,
+			},
+		}, nil
+	}
+
+	return nil, errors.NewInternalf(errors.CodeInternal, "unsupported provider type")
+}
+
+// MarshalJSON return JSON bytes for the account config
+// NOTE: this entertains first non-null provider's config
+func (config *AccountConfig) MarshalJSON() ([]byte, error) {
+	if config.AWS != nil {
+		return json.Marshal(config.AWS)
+	}
+
+	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
 }

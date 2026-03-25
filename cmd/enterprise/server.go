@@ -15,6 +15,7 @@ import (
 	"github.com/SigNoz/signoz/ee/gateway/httpgateway"
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
@@ -29,9 +30,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/licensing"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -39,6 +42,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/sqlstore/sqlstorehook"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
@@ -131,8 +135,10 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
+		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, userGetter user.Getter, userSetter user.Setter) cloudintegration.Module {
+			return implcloudintegration.NewModule(store, config.Global, zeus, gateway, licensing, userGetter, userSetter)
+		},
 	)
-
 	if err != nil {
 		logger.ErrorContext(ctx, "failed to create signoz", errors.Attr(err))
 		return err

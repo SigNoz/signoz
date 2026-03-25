@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
@@ -51,24 +52,25 @@ import (
 )
 
 type Modules struct {
-	OrgGetter       organization.Getter
-	OrgSetter       organization.Setter
-	Preference      preference.Module
-	UserSetter      user.Setter
-	UserGetter      user.Getter
-	SavedView       savedview.Module
-	Apdex           apdex.Module
-	Dashboard       dashboard.Module
-	QuickFilter     quickfilter.Module
-	TraceFunnel     tracefunnel.Module
-	RawDataExport   rawdataexport.Module
-	AuthDomain      authdomain.Module
-	Session         session.Module
-	Services        services.Module
-	SpanPercentile  spanpercentile.Module
-	MetricsExplorer metricsexplorer.Module
-	Promote         promote.Module
-	ServiceAccount  serviceaccount.Module
+	OrgGetter        organization.Getter
+	OrgSetter        organization.Setter
+	Preference       preference.Module
+	UserSetter       user.Setter
+	UserGetter       user.Getter
+	SavedView        savedview.Module
+	Apdex            apdex.Module
+	Dashboard        dashboard.Module
+	QuickFilter      quickfilter.Module
+	TraceFunnel      tracefunnel.Module
+	RawDataExport    rawdataexport.Module
+	AuthDomain       authdomain.Module
+	Session          session.Module
+	Services         services.Module
+	SpanPercentile   spanpercentile.Module
+	MetricsExplorer  metricsexplorer.Module
+	Promote          promote.Module
+	ServiceAccount   serviceaccount.Module
+	CloudIntegration cloudintegration.Module
 }
 
 func NewModules(
@@ -116,4 +118,13 @@ func NewModules(
 		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
 	}
+}
+
+// SetCloudIntegrationModule sets cloud integration module in Modules
+// TODO: find a better way to set the module,
+// why this was done: cloud integration depends on few modules like userSetter which are initialized in NewModules and other deps like zeus/gateway is not present
+// cloud integration is initialized via callback depending on flavor of Signoz ee/community
+func (modules Modules) SetCloudIntegrationModule(module cloudintegration.Module) Modules {
+	modules.CloudIntegration = module
+	return modules
 }

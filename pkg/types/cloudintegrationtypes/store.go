@@ -38,4 +38,6 @@ type Store interface {
 
 	// UpdateService updates an existing cloud integration service
 	UpdateService(ctx context.Context, service *StorableCloudIntegrationService) error
+
+	RunInTx(context.Context, func(ctx context.Context) error) error
 }

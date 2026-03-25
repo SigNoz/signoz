@@ -1,6 +1,8 @@
 package cloudintegrationtypes
 
 import (
+	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -38,4 +40,30 @@ func NewCloudProvider(provider string) (CloudProviderType, error) {
 	default:
 		return CloudProviderType{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider)
 	}
+}
+
+func GetCloudProviderEmail(provider CloudProviderType) (valuer.Email, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		return AWSIntegrationUserEmail, nil
+	case CloudProviderTypeAzure:
+		return AzureIntegrationUserEmail, nil
+	default:
+		return valuer.Email{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
+
+func NewIngestionKeyName(provider CloudProviderType) string {
+	return fmt.Sprintf("%s-integration", provider.StringValue())
+}
+
+func NewIntegrationUserDisplayName(provider CloudProviderType) string {
+	return fmt.Sprintf("%s-integration", provider.StringValue())
+}
+
+// NewAPIKeyName returns API key name for cloud integration provider
+// TODO: figure out way to migrate API keys to have similar naming convention as ingestion key
+// ie. "{cloud-provider}-integration", and then remove this function.
+func NewAPIKeyName(provider CloudProviderType) string {
+	return fmt.Sprintf("%s integration", provider.StringValue())
 }

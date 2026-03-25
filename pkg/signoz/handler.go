@@ -94,6 +94,6 @@ func NewHandlers(
 		QuerierHandler:          querierHandler,
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
 		RegistryHandler:         registryHandler,
-		CloudIntegrationHandler: implcloudintegration.NewHandler(),
+		CloudIntegrationHandler: implcloudintegration.NewHandler(modules.CloudIntegration),
 	}
 }

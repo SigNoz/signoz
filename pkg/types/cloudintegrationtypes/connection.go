@@ -79,3 +79,10 @@ type AWSIntegrationConfig struct {
 	EnabledRegions []string               `json:"enabledRegions" required:"true" nullable:"false"`
 	Telemetry      *AWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`
 }
+
+type SignozCredentials struct {
+	SigNozAPIURL string
+	SigNozAPIKey string // PAT
+	IngestionURL string
+	IngestionKey string
+}

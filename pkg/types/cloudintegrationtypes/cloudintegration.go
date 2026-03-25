@@ -13,6 +13,7 @@ import (
 )
 
 var (
+	ErrCodeUnsupported                          = errors.MustNewCode("cloud_integration_unsupported")
 	ErrCodeCloudIntegrationNotFound             = errors.MustNewCode("cloud_integration_not_found")
 	ErrCodeCloudIntegrationAlreadyExists        = errors.MustNewCode("cloud_integration_already_exists")
 	ErrCodeCloudIntegrationServiceNotFound      = errors.MustNewCode("cloud_integration_service_not_found")
@@ -80,4 +81,20 @@ func (r *StorableAgentReport) Value() (driver.Value, error) {
 	}
 	// Return as string instead of []byte to ensure PostgreSQL stores as text, not bytes
 	return string(serialized), nil
+}
+
+func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, error) {
+	configBytes, err := account.Config.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+
+	return &StorableCloudIntegration{
+		Identifiable:  account.Identifiable,
+		TimeAuditable: account.TimeAuditable,
+		Provider:      account.Provider,
+		Config:        string(configBytes),
+		AccountID:     nil, // updated during agent check in
+		OrgID:         account.OrgID,
+	}, nil
 }

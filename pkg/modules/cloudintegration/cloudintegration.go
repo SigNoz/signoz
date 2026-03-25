@@ -13,16 +13,16 @@ type Module interface {
 	CreateAccount(ctx context.Context, account *citypes.Account) error
 
 	// GetAccount returns cloud integration account
-	GetAccount(ctx context.Context, orgID, accountID valuer.UUID) (*citypes.Account, error)
+	GetAccount(ctx context.Context, orgID, accountID valuer.UUID, provider citypes.CloudProviderType) (*citypes.Account, error)
 
 	// ListAccounts lists accounts where agent is connected
-	ListAccounts(ctx context.Context, orgID valuer.UUID) ([]*citypes.Account, error)
+	ListAccounts(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType) ([]*citypes.Account, error)
 
 	// UpdateAccount updates the cloud integration account for a specific organization.
 	UpdateAccount(ctx context.Context, account *citypes.Account) error
 
 	// DisconnectAccount soft deletes/removes a cloud integration account.
-	DisconnectAccount(ctx context.Context, orgID, accountID valuer.UUID) error
+	DisconnectAccount(ctx context.Context, orgID, accountID valuer.UUID, provider citypes.CloudProviderType) error
 
 	// GetConnectionArtifact returns cloud provider specific connection information,
 	// client side handles how this information is shown
@@ -36,11 +36,14 @@ type Module interface {
 	// other details required to show in service details page on web client.
 	GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*citypes.Service, error)
 
+	// CreateService creates a new service for a cloud integration account.
+	CreateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService) error
+
 	// UpdateService updates cloud integration service
 	UpdateService(ctx context.Context, orgID valuer.UUID, service *citypes.CloudIntegrationService) error
 
 	// AgentCheckIn is called by agent to heartbeat and get latest config in response.
-	AgentCheckIn(ctx context.Context, orgID valuer.UUID, req *citypes.AgentCheckInRequest) (*citypes.AgentCheckInResponse, error)
+	AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType, req *citypes.AgentCheckInRequest) (*citypes.AgentCheckInResponse, error)
 
 	// GetDashboardByID returns dashboard JSON for a given dashboard id.
 	// this only returns the dashboard when the service (embedded in dashboard id) is enabled
@@ -50,6 +53,13 @@ type Module interface {
 	// ListDashboards returns list of dashboards across all connected cloud integration accounts
 	// for enabled services in the org. This list gets added to dashboard list page
 	ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
+
+	// GetCloudProvider returns cloud provider specific module
+	GetCloudProvider(provider citypes.CloudProviderType) (CloudProviderModule, error)
+}
+
+type CloudProviderModule interface {
+	GetConnectionArtifact(ctx context.Context, creds *citypes.SignozCredentials, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 }
 
 type Handler interface {

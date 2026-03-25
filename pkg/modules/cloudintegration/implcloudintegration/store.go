@@ -172,3 +172,9 @@ func (store *store) UpdateService(ctx context.Context, service *cloudintegration
 		Exec(ctx)
 	return err
 }
+
+func (store *store) RunInTx(ctx context.Context, cb func(ctx context.Context) error) error {
+	return store.store.RunInTxCtx(ctx, nil, func(ctx context.Context) error {
+		return cb(ctx)
+	})
+}
