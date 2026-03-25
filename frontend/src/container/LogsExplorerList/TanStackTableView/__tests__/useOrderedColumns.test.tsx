@@ -189,11 +189,7 @@ describe('useOrderedColumns', () => {
 	});
 
 	it('syncs ordered columns when base order changes externally (e.g. URL / localStorage)', () => {
-		mockGetDraggedColumns.mockImplementation((_current, dragged) =>
-			Array.isArray(dragged) && dragged.length > 0
-				? [col('c'), col('b'), col('a')]
-				: [col('a'), col('b'), col('c')],
-		);
+		mockGetDraggedColumns.mockReturnValue([col('a'), col('b'), col('c')]);
 
 		const { result, rerender } = renderHook(
 			({ draggedColumns }: { draggedColumns: unknown[] }) =>
@@ -210,6 +206,8 @@ describe('useOrderedColumns', () => {
 			'b',
 			'c',
 		]);
+
+		mockGetDraggedColumns.mockReturnValue([col('c'), col('b'), col('a')]);
 
 		act(() => {
 			rerender({ draggedColumns: [{ title: 'from-url' }] as unknown[] });

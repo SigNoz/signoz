@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
 	DragEndEvent,
 	PointerSensor,
@@ -45,6 +45,7 @@ export const useOrderedColumns = ({
 	const [orderedColumns, setOrderedColumns] = useState<OrderedColumn[]>(
 		baseColumns,
 	);
+	const lastBaseOrderKeyRef = useRef<string | null>(null);
 	const sensors = useSensors(
 		useSensor(PointerSensor, {
 			activationConstraint: { distance: 4 },
@@ -52,16 +53,23 @@ export const useOrderedColumns = ({
 	);
 
 	useEffect(() => {
+		const baseIds = baseColumns.map((column) => getColumnId(column));
+		const baseKey = baseIds.join('|');
+		const prevBaseKey = lastBaseOrderKeyRef.current;
+		const baseOrderChanged = prevBaseKey !== null && prevBaseKey !== baseKey;
+
+		lastBaseOrderKeyRef.current = baseKey;
+
 		setOrderedColumns((previousColumns) => {
 			const previousIds = previousColumns.map((column) => getColumnId(column));
-			const baseIds = baseColumns.map((column) => getColumnId(column));
 
-			// Same columns, different order: `baseColumns` reflects persisted / URL order
-			// after navigation. The merge path below would keep the stale in-memory order.
+			// Only when `baseColumns` order from the parent actually changed (e.g. URL /
+			// localStorage hydration). If we synced whenever state ≠ base, we would reset
+			// user drags before `draggedColumns` catches up.
 			if (
+				baseOrderChanged &&
 				previousIds.length === baseIds.length &&
-				[...previousIds].sort().join('|') === [...baseIds].sort().join('|') &&
-				previousIds.join('|') !== baseIds.join('|')
+				[...previousIds].sort().join('|') === [...baseIds].sort().join('|')
 			) {
 				return baseColumns;
 			}
