@@ -112,6 +112,12 @@ export function formatEpochTimestamp(epoch: number): string {
  */
 
 export function formatTime(seconds: number): string {
+	seconds = +seconds;
+
+	if (Number.isNaN(seconds)) {
+		return '-';
+	}
+
 	const days = seconds / 86400;
 
 	if (days >= 1) {
