@@ -10,6 +10,7 @@ type Store interface {
 	// Service Account
 	Create(context.Context, *StorableServiceAccount) error
 	Get(context.Context, valuer.UUID, valuer.UUID) (*StorableServiceAccount, error)
+	GetActiveByOrgIDAndName(context.Context, valuer.UUID, string) (*StorableServiceAccount, error)
 	GetByID(context.Context, valuer.UUID) (*StorableServiceAccount, error)
 	List(context.Context, valuer.UUID) ([]*StorableServiceAccount, error)
 	Update(context.Context, valuer.UUID, *StorableServiceAccount) error

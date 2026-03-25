@@ -16,8 +16,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"log/slog"
+
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 	"golang.org/x/exp/slices"
 )
@@ -272,6 +275,10 @@ func (h *HostsRepo) getTopHostGroups(ctx context.Context, orgID valuer.UUID, req
 		topHostGroupsQueryRangeParams.CompositeQuery.BuilderQueries[queryName] = query
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "getTopHostGroups",
+	})
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, topHostGroupsQueryRangeParams)
 	if err != nil {
 		return nil, nil, err
@@ -421,7 +428,7 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))
 	if step <= 0 {
-		zap.L().Error("step is less than or equal to 0", zap.Int64("step", step))
+		slog.ErrorContext(ctx, "step is less than or equal to 0", "step", step)
 		return resp, errors.New("step is less than or equal to 0")
 	}
 
@@ -482,6 +489,10 @@ func (h *HostsRepo) GetHostList(ctx context.Context, orgID valuer.UUID, req mode
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "inframetrics",
+		instrumentationtypes.CodeFunctionName: "GetHostList",
+	})
 	queryResponse, _, err := h.querierV2.QueryRange(ctx, orgID, query)
 	if err != nil {
 		return resp, err

@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
@@ -14,7 +15,7 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
+	"log/slog"
 )
 
 func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
@@ -35,7 +36,7 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := baseapp.ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
+		slog.ErrorContext(r.Context(), "error parsing metric query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -44,7 +45,7 @@ func (aH *APIHandler) queryRangeV4(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
-		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
+		slog.ErrorContext(r.Context(), "error while adding temporality for metrics", errors.Attr(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}

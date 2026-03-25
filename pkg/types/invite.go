@@ -30,22 +30,6 @@ type Invite struct {
 	InviteLink string `bun:"-" json:"inviteLink"`
 }
 
-type InviteEmailData struct {
-	CustomerName string
-	InviterName  string
-	InviterEmail string
-	Link         string
-}
-
-type PostableAcceptInvite struct {
-	DisplayName string `json:"displayName"`
-	InviteToken string `json:"token"`
-	Password    string `json:"password"`
-
-	// reference URL to track where the register request is coming from
-	SourceURL string `json:"sourceUrl"`
-}
-
 type PostableInvite struct {
 	Name            string       `json:"name"`
 	Email           valuer.Email `json:"email"`
@@ -54,11 +38,29 @@ type PostableInvite struct {
 }
 
 type PostableBulkInviteRequest struct {
-	Invites []PostableInvite `json:"invites"`
+	Invites []PostableInvite `json:"invites" required:"true" nullable:"false"`
 }
 
-type GettableCreateInviteResponse struct {
-	InviteToken string `json:"token"`
+func (request *PostableBulkInviteRequest) UnmarshalJSON(data []byte) error {
+	type Alias PostableBulkInviteRequest
+
+	var temp Alias
+	if err := json.Unmarshal(data, &temp); err != nil {
+		return err
+	}
+
+	// check for duplicate emails in the same request
+	seen := make(map[string]struct{}, len(temp.Invites))
+	for _, invite := range temp.Invites {
+		email := invite.Email.StringValue()
+		if _, exists := seen[email]; exists {
+			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "Duplicate email in request: %s", email)
+		}
+		seen[email] = struct{}{}
+	}
+
+	*request = PostableBulkInviteRequest(temp)
+	return nil
 }
 
 func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*Invite, error) {
@@ -78,24 +80,4 @@ func NewInvite(name string, role Role, orgID valuer.UUID, email valuer.Email) (*
 	}
 
 	return invite, nil
-}
-
-func (request *PostableAcceptInvite) UnmarshalJSON(data []byte) error {
-	type Alias PostableAcceptInvite
-
-	var temp Alias
-	if err := json.Unmarshal(data, &temp); err != nil {
-		return err
-	}
-
-	if temp.InviteToken == "" {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invite token is required")
-	}
-
-	if !IsPasswordValid(temp.Password) {
-		return ErrInvalidPassword
-	}
-
-	*request = PostableAcceptInvite(temp)
-	return nil
 }

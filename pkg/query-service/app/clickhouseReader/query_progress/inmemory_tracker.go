@@ -2,17 +2,18 @@ package queryprogress
 
 import (
 	"fmt"
+	"log/slog"
 	"sync"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/google/uuid"
-	"go.uber.org/zap"
 	"golang.org/x/exp/maps"
 )
 
 // tracks progress and manages subscriptions for all queries
 type inMemoryQueryProgressTracker struct {
+	logger  *slog.Logger
 	queries map[string]*queryTracker
 	lock    sync.RWMutex
 }
@@ -30,7 +31,7 @@ func (tracker *inMemoryQueryProgressTracker) ReportQueryStarted(
 		))
 	}
 
-	tracker.queries[queryId] = newQueryTracker(queryId)
+	tracker.queries[queryId] = newQueryTracker(tracker.logger, queryId)
 
 	return func() {
 		tracker.onQueryFinished(queryId)
@@ -93,6 +94,7 @@ func (tracker *inMemoryQueryProgressTracker) getQueryTracker(
 
 // Tracks progress and manages subscriptions for a single query
 type queryTracker struct {
+	logger     *slog.Logger
 	queryId    string
 	isFinished bool
 
@@ -102,8 +104,9 @@ type queryTracker struct {
 	lock sync.Mutex
 }
 
-func newQueryTracker(queryId string) *queryTracker {
+func newQueryTracker(logger *slog.Logger, queryId string) *queryTracker {
 	return &queryTracker{
+		logger:        logger,
 		queryId:       queryId,
 		subscriptions: map[string]*queryProgressSubscription{},
 	}
@@ -114,10 +117,7 @@ func (qt *queryTracker) handleProgressUpdate(p *clickhouse.Progress) {
 	defer qt.lock.Unlock()
 
 	if qt.isFinished {
-		zap.L().Warn(
-			"received clickhouse progress update for finished query",
-			zap.String("queryId", qt.queryId), zap.Any("progress", p),
-		)
+		qt.logger.Warn("received clickhouse progress update for finished query", "queryId", qt.queryId, "progress", p)
 		return
 	}
 
@@ -146,7 +146,7 @@ func (qt *queryTracker) subscribe() (
 	}
 
 	subscriberId := uuid.NewString()
-	subscription := newQueryProgressSubscription()
+	subscription := newQueryProgressSubscription(qt.logger)
 	qt.subscriptions[subscriberId] = subscription
 
 	if qt.progress != nil {
@@ -163,11 +163,7 @@ func (qt *queryTracker) unsubscribe(subscriberId string) {
 	defer qt.lock.Unlock()
 
 	if qt.isFinished {
-		zap.L().Debug(
-			"received unsubscribe request after query finished",
-			zap.String("subscriber", subscriberId),
-			zap.String("queryId", qt.queryId),
-		)
+		qt.logger.Debug("received unsubscribe request after query finished", "subscriber", subscriberId, "queryId", qt.queryId)
 		return
 	}
 
@@ -183,10 +179,7 @@ func (qt *queryTracker) onFinished() {
 	defer qt.lock.Unlock()
 
 	if qt.isFinished {
-		zap.L().Warn(
-			"receiver query finish report after query finished",
-			zap.String("queryId", qt.queryId),
-		)
+		qt.logger.Warn("receiver query finish report after query finished", "queryId", qt.queryId)
 		return
 	}
 
@@ -199,15 +192,17 @@ func (qt *queryTracker) onFinished() {
 }
 
 type queryProgressSubscription struct {
+	logger   *slog.Logger
 	ch       chan model.QueryProgress
 	isClosed bool
 	lock     sync.Mutex
 }
 
-func newQueryProgressSubscription() *queryProgressSubscription {
+func newQueryProgressSubscription(logger *slog.Logger) *queryProgressSubscription {
 	ch := make(chan model.QueryProgress, 1000)
 	return &queryProgressSubscription{
-		ch: ch,
+		logger: logger,
+		ch:     ch,
 	}
 }
 
@@ -217,10 +212,7 @@ func (ch *queryProgressSubscription) send(progress model.QueryProgress) {
 	defer ch.lock.Unlock()
 
 	if ch.isClosed {
-		zap.L().Error(
-			"can't send query progress: channel already closed.",
-			zap.Any("progress", progress),
-		)
+		ch.logger.Error("can't send query progress: channel already closed.", "progress", progress)
 		return
 	}
 
@@ -228,12 +220,9 @@ func (ch *queryProgressSubscription) send(progress model.QueryProgress) {
 	// blocking while sending doesn't happen in the happy path
 	select {
 	case ch.ch <- progress:
-		zap.L().Debug("published query progress", zap.Any("progress", progress))
+		ch.logger.Debug("published query progress", "progress", progress)
 	default:
-		zap.L().Error(
-			"couldn't publish query progress. dropping update.",
-			zap.Any("progress", progress),
-		)
+		ch.logger.Error("couldn't publish query progress. dropping update.", "progress", progress)
 	}
 }
 

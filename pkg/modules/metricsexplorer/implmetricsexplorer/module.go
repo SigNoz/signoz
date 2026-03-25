@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -18,14 +21,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metricsexplorertypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	sqlbuilder "github.com/huandu/go-sqlbuilder"
-	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -59,6 +61,8 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 
 // TODO(srikanthccv): use metadata store to fetch metric metadata
 func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "ListMetrics")
+
 	if err := params.Validate(); err != nil {
 		return nil, err
 	}
@@ -288,6 +292,7 @@ func (m *module) GetTreemap(ctx context.Context, orgID valuer.UUID, req *metrics
 }
 
 func (m *module) GetMetricMetadataMulti(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
+
 	if len(metricNames) == 0 {
 		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
@@ -476,6 +481,8 @@ func (m *module) GetMetricAttributes(ctx context.Context, orgID valuer.UUID, req
 }
 
 func (m *module) CheckMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) (bool, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "CheckMetricExists")
+
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("count(*) > 0 as metricExists")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
@@ -504,7 +511,7 @@ func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, 
 		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
 			hits[metricName] = &cachedMetadata
 		} else {
-			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", slog.String("metric_name", metricName), errors.Attr(err))
 			misses = append(misses, metricName)
 		}
 	}
@@ -512,6 +519,8 @@ func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, 
 }
 
 func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "fetchUpdatedMetadata")
+
 	if len(metricNames) == 0 {
 		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
@@ -558,7 +567,7 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -570,6 +579,8 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 }
 
 func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID, metricNames []string) (map[string]*metricsexplorertypes.MetricMetadata, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "fetchTimeseriesMetadata")
+
 	if len(metricNames) == 0 {
 		return map[string]*metricsexplorertypes.MetricMetadata{}, nil
 	}
@@ -616,7 +627,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -698,6 +709,8 @@ func (m *module) validateMetricLabels(ctx context.Context, req *metricsexplorert
 }
 
 func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, label string) (bool, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "checkForLabelInMetric")
+
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("count(*) > 0 AS has_label")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
@@ -719,6 +732,7 @@ func (m *module) checkForLabelInMetric(ctx context.Context, metricName string, l
 }
 
 func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, req *metricsexplorertypes.UpdateMetricMetadataRequest) error {
+	ctx = m.withMetricsExplorerContext(ctx, "insertMetricsMetadata")
 	createdAt := time.Now().UnixMilli()
 
 	ib := sqlbuilder.NewInsertBuilder()
@@ -752,7 +766,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
 	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
-		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metric_name", req.MetricName, "error", err)
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", slog.String("metric_name", req.MetricName), errors.Attr(err))
 	}
 
 	return nil
@@ -812,6 +826,7 @@ func (m *module) fetchMetricsStatsWithSamples(
 	normalized bool,
 	orderBy *qbtypes.OrderBy,
 ) ([]metricsexplorertypes.Stat, uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricsStatsWithSamples")
 
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
@@ -919,6 +934,8 @@ func (m *module) fetchMetricsStatsWithSamples(
 }
 
 func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "computeTimeseriesTreemap")
+
 	start, end, distributedTsTable, _ := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 
 	totalTSBuilder := sqlbuilder.NewSelectBuilder()
@@ -983,6 +1000,8 @@ func (m *module) computeTimeseriesTreemap(ctx context.Context, req *metricsexplo
 }
 
 func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorertypes.TreemapRequest, filterWhereClause *sqlbuilder.WhereClause) ([]metricsexplorertypes.TreemapEntry, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "computeSamplesTreemap")
+
 	start, end, distributedTsTable, localTsTable := telemetrymetrics.WhichTSTableToUse(uint64(req.Start), uint64(req.End), nil)
 	samplesTable := telemetrymetrics.WhichSamplesTableToUse(uint64(req.Start), uint64(req.End), metrictypes.UnspecifiedType, metrictypes.TimeAggregationUnspecified, nil)
 	countExp := telemetrymetrics.CountExpressionForSamplesTable(samplesTable)
@@ -1084,6 +1103,8 @@ func (m *module) computeSamplesTreemap(ctx context.Context, req *metricsexplorer
 
 // getMetricDataPoints returns the total number of data points (samples) for a metric.
 func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "getMetricDataPoints")
+
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("sum(count) AS data_points")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.SamplesV4Agg30mTableName))
@@ -1104,6 +1125,8 @@ func (m *module) getMetricDataPoints(ctx context.Context, metricName string) (ui
 
 // getMetricLastReceived returns the last received timestamp for a metric.
 func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "getMetricLastReceived")
+
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("MAX(last_reported_unix_milli) AS last_received_time")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.AttributesMetadataTableName))
@@ -1127,6 +1150,8 @@ func (m *module) getMetricLastReceived(ctx context.Context, metricName string) (
 
 // getTotalTimeSeriesForMetricName returns the total number of unique time series for a metric.
 func (m *module) getTotalTimeSeriesForMetricName(ctx context.Context, metricName string) (uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "getTotalTimeSeriesForMetricName")
+
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("uniq(fingerprint) AS time_series_count")
 	sb.From(fmt.Sprintf("%s.%s", telemetrymetrics.DBName, telemetrymetrics.TimeseriesV41weekTableName))
@@ -1147,6 +1172,8 @@ func (m *module) getTotalTimeSeriesForMetricName(ctx context.Context, metricName
 
 // getActiveTimeSeriesForMetricName returns the number of active time series for a metric within the given duration.
 func (m *module) getActiveTimeSeriesForMetricName(ctx context.Context, metricName string, duration time.Duration) (uint64, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "getActiveTimeSeriesForMetricName")
+
 	milli := time.Now().Add(-duration).UnixMilli()
 
 	sb := sqlbuilder.NewSelectBuilder()
@@ -1168,6 +1195,8 @@ func (m *module) getActiveTimeSeriesForMetricName(ctx context.Context, metricNam
 }
 
 func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, start, end *int64) ([]metricsexplorertypes.MetricAttribute, error) {
+	ctx = m.withMetricsExplorerContext(ctx, "fetchMetricAttributes")
+
 	// Build query using sqlbuilder
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select(
@@ -1215,4 +1244,13 @@ func (m *module) fetchMetricAttributes(ctx context.Context, metricName string, s
 	}
 
 	return attributes, nil
+}
+
+func (m *module) withMetricsExplorerContext(ctx context.Context, functionName string) context.Context {
+	comments := map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metrics-explorer",
+		instrumentationtypes.CodeFunctionName: functionName,
+	}
+	return ctxtypes.NewContextWithCommentVals(ctx, comments)
 }

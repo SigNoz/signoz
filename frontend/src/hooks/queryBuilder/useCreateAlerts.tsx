@@ -17,7 +17,7 @@ import { useNotifications } from 'hooks/useNotifications';
 import { getDashboardVariables } from 'lib/dashboardVariables/getDashboardVariables';
 import { mapQueryDataFromApi } from 'lib/newQueryBuilder/queryBuilderMappers/mapQueryDataFromApi';
 import { isEmpty } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -33,7 +33,7 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 
 	const { notifications } = useNotifications();
 
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 
 	const { dashboardVariables } = useDashboardVariables();
 	const dashboardDynamicVariables = useDashboardVariablesByType(
@@ -107,7 +107,6 @@ const useCreateAlerts = (widget?: Widgets, caller?: string): VoidFunction => {
 		queryRangeMutation,
 		dashboardVariables,
 		dashboardDynamicVariables,
-		selectedDashboard?.data.version,
 		widget,
 	]);
 };

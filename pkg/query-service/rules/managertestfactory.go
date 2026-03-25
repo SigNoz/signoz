@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
 	"github.com/stretchr/testify/require"
-	"go.uber.org/zap"
 )
 
 type queryMatcherAny struct {
@@ -100,8 +99,9 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 
 	options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{}, telemetryStore)
+	prometheus := prometheustest.New(context.Background(), providerSettings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 	reader := clickhouseReader.NewReader(
+		instrumentationtest.New().Logger(),
 		nil,
 		telemetryStore,
 		prometheus,
@@ -123,8 +123,7 @@ func NewTestManager(t *testing.T, testOpts *TestManagerOptions) *Manager {
 	require.NoError(t, err)
 
 	mgrOpts := &ManagerOptions{
-		Logger:         zap.NewNop(),
-		SLogger:        instrumentationtest.New().Logger(),
+		Logger:         instrumentationtest.New().Logger(),
 		Cache:          cacheObj,
 		Alertmanager:   fAlert,
 		Querier:        mockQuerier,

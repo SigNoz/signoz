@@ -1,4 +1,6 @@
+import { ReactNode } from 'react';
 import { MemoryRouter, useLocation } from 'react-router-dom';
+import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
 import {
 	getDashboardById,
 	getNonIntegrationDashboardById,
@@ -6,10 +8,9 @@ import {
 import { server } from 'mocks-server/server';
 import { rest } from 'msw';
 import {
-	DashboardContext,
-	DashboardProvider,
-} from 'providers/Dashboard/Dashboard';
-import { IDashboardContext } from 'providers/Dashboard/types';
+	resetDashboard,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import {
 	fireEvent,
 	render,
@@ -20,6 +21,18 @@ import {
 import { Dashboard } from 'types/api/dashboard/getAll';
 
 import DashboardDescription from '..';
+
+function DashboardBootstrapWrapper({
+	dashboardId,
+	children,
+}: {
+	dashboardId: string;
+	children: ReactNode;
+}): JSX.Element {
+	useDashboardBootstrap(dashboardId);
+	// eslint-disable-next-line react/jsx-no-useless-fragment
+	return <>{children}</>;
+}
 
 interface MockSafeNavigateReturn {
 	safeNavigate: jest.MockedFunction<(url: string) => void>;
@@ -34,11 +47,6 @@ const mockSafeNavigate = jest.fn();
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
 	useLocation: jest.fn(),
-	useRouteMatch: jest.fn().mockReturnValue({
-		params: {
-			dashboardId: 4,
-		},
-	}),
 }));
 
 jest.mock(
@@ -59,6 +67,7 @@ describe('Dashboard landing page actions header tests', () => {
 	beforeEach(() => {
 		mockSafeNavigate.mockClear();
 		sessionStorage.clear();
+		resetDashboard();
 	});
 
 	it('unlock dashboard should be disabled for integrations created dashboards', async () => {
@@ -69,7 +78,7 @@ describe('Dashboard landing page actions header tests', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardBootstrapWrapper dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -78,7 +87,7 @@ describe('Dashboard landing page actions header tests', () => {
 							node: { current: null },
 						}}
 					/>
-				</DashboardProvider>
+				</DashboardBootstrapWrapper>
 			</MemoryRouter>,
 		);
 
@@ -110,7 +119,7 @@ describe('Dashboard landing page actions header tests', () => {
 		);
 		const { getByTestId } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardBootstrapWrapper dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -119,7 +128,7 @@ describe('Dashboard landing page actions header tests', () => {
 							node: { current: null },
 						}}
 					/>
-				</DashboardProvider>
+				</DashboardBootstrapWrapper>
 			</MemoryRouter>,
 		);
 
@@ -149,7 +158,7 @@ describe('Dashboard landing page actions header tests', () => {
 
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardProvider>
+				<DashboardBootstrapWrapper dashboardId="4">
 					<DashboardDescription
 						handle={{
 							active: false,
@@ -158,7 +167,7 @@ describe('Dashboard landing page actions header tests', () => {
 							node: { current: null },
 						}}
 					/>
-				</DashboardProvider>
+				</DashboardBootstrapWrapper>
 			</MemoryRouter>,
 		);
 
@@ -186,44 +195,26 @@ describe('Dashboard landing page actions header tests', () => {
 
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 
-		const mockContextValue: IDashboardContext = {
-			isDashboardSliderOpen: false,
-			isDashboardLocked: false,
-			handleToggleDashboardSlider: jest.fn(),
-			handleDashboardLockToggle: jest.fn(),
-			dashboardResponse: {} as IDashboardContext['dashboardResponse'],
+		useDashboardStore.setState({
 			selectedDashboard: (getDashboardById.data as unknown) as Dashboard,
-			dashboardId: '4',
 			layouts: [],
 			panelMap: {},
 			setPanelMap: jest.fn(),
 			setLayouts: jest.fn(),
 			setSelectedDashboard: jest.fn(),
-			updatedTimeRef: { current: null },
-			toScrollWidgetId: '',
-			setToScrollWidgetId: jest.fn(),
-			updateLocalStorageDashboardVariables: jest.fn(),
-			dashboardQueryRangeCalled: false,
-			setDashboardQueryRangeCalled: jest.fn(),
-			selectedRowWidgetId: null,
-			setSelectedRowWidgetId: jest.fn(),
-			isDashboardFetching: false,
 			columnWidths: {},
-			setColumnWidths: jest.fn(),
-		};
+		});
 
 		const { getByText } = render(
 			<MemoryRouter initialEntries={[DASHBOARD_PATH]}>
-				<DashboardContext.Provider value={mockContextValue}>
-					<DashboardDescription
-						handle={{
-							active: false,
-							enter: (): Promise<void> => Promise.resolve(),
-							exit: (): Promise<void> => Promise.resolve(),
-							node: { current: null },
-						}}
-					/>
-				</DashboardContext.Provider>
+				<DashboardDescription
+					handle={{
+						active: false,
+						enter: (): Promise<void> => Promise.resolve(),
+						exit: (): Promise<void> => Promise.resolve(),
+						node: { current: null },
+					}}
+				/>
 			</MemoryRouter>,
 		);
 

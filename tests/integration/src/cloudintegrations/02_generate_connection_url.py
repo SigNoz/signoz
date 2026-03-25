@@ -1,3 +1,4 @@
+import uuid
 from http import HTTPStatus
 from typing import Callable
 
@@ -5,6 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -142,3 +144,42 @@ def test_generate_connection_url_unsupported_provider(
     assert (
         "unsupported cloud provider" in response_data["error"].lower()
     ), "Error message should indicate unsupported provider"
+
+
+def test_duplicate_cloud_account_checkins(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Test that two accounts cannot check in with the same cloud_account_id."""
+
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+    cloud_provider = "aws"
+    same_cloud_account_id = str(uuid.uuid4())
+
+    # Create two separate cloud integration accounts via generate-connection-url
+    account1 = create_cloud_integration_account(admin_token, cloud_provider)
+    account1_id = account1["account_id"]
+
+    account2 = create_cloud_integration_account(admin_token, cloud_provider)
+    account2_id = account2["account_id"]
+
+    assert account1_id != account2_id, "Two accounts should have different internal IDs"
+
+    #     First check-in succeeds: account1 claims cloud_account_id
+    response = simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account1_id, same_cloud_account_id
+    )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
+    #
+    # Second check-in should fail: account2 tries to use the same cloud_account_id
+    response = simulate_agent_checkin(
+        signoz, admin_token, cloud_provider, account2_id, same_cloud_account_id
+    )
+
+    assert (
+        response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
+    ), f"Expected 500 for duplicate cloud_account_id, got {response.status_code}: {response.text}"

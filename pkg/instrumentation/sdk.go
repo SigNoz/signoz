@@ -6,7 +6,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/instrumentation/loghandler"
 	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/prometheus/client_golang/prometheus"
 	"github.com/prometheus/client_golang/prometheus/collectors"
@@ -15,7 +14,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/metric"
 	sdkmetricnoop "go.opentelemetry.io/otel/metric/noop"
 	sdkresource "go.opentelemetry.io/otel/sdk/resource"
-	semconv "go.opentelemetry.io/otel/semconv/v1.37.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.39.0"
 	sdktrace "go.opentelemetry.io/otel/trace"
 )
 
@@ -116,7 +115,7 @@ func New(ctx context.Context, cfg Config, build version.Build, serviceName strin
 		meterProvider:             meterProvider,
 		meterProviderShutdownFunc: meterProviderShutdownFunc,
 		prometheusRegistry:        prometheusRegistry,
-		logger:                    NewLogger(cfg, loghandler.NewCorrelation()),
+		logger:                    NewLogger(cfg),
 		startCh:                   make(chan struct{}),
 	}, nil
 }

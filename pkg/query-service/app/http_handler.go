@@ -13,6 +13,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 
 	"io"
+	"log/slog"
 	"math"
 	"net/http"
 	"regexp"
@@ -24,6 +25,8 @@ import (
 	"text/template"
 	"time"
 
+	"github.com/prometheus/prometheus/promql"
+
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	errorsV2 "github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
@@ -34,7 +37,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/prometheus/promql"
 
 	"github.com/gorilla/mux"
 	"github.com/gorilla/websocket"
@@ -62,16 +64,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/types/featuretypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/licensetypes"
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	traceFunnels "github.com/SigNoz/signoz/pkg/types/tracefunneltypes"
-
-	"go.uber.org/zap"
 
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	"github.com/SigNoz/signoz/pkg/query-service/app/logparsingpipeline"
@@ -95,6 +97,7 @@ func NewRouter() *mux.Router {
 
 // APIHandler implements the query service public API
 type APIHandler struct {
+	logger       *slog.Logger
 	reader       interfaces.Reader
 	ruleManager  *rules.Manager
 	querier      interfaces.Querier
@@ -210,6 +213,7 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
+		logger:                        slog.Default(),
 		reader:                        opts.Reader,
 		temporalityMap:                make(map[string]map[v3.Temporality]bool),
 		ruleManager:                   opts.RuleManager,
@@ -249,13 +253,13 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	// TODO(nitya): remote this in later for multitenancy.
 	orgs, err := opts.Signoz.Modules.OrgGetter.ListByOwnedKeyRange(context.Background())
 	if err != nil {
-		zap.L().Warn("unexpected error while fetching orgs  while initializing base api handler", zap.Error(err))
+		aH.logger.Warn("unexpected error while fetching orgs while initializing base api handler", errors.Attr(err))
 	}
 	// if the first org with the first user is created then the setup is complete.
 	if len(orgs) == 1 {
 		count, err := opts.Signoz.Modules.UserGetter.CountByOrgID(context.Background(), orgs[0].ID)
 		if err != nil {
-			zap.L().Warn("unexpected error while fetch user count while initializing base api handler", zap.Error(err))
+			aH.logger.Warn("unexpected error while fetching user count while initializing base api handler", errors.Attr(err))
 		}
 
 		if count > 0 {
@@ -310,7 +314,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 		Data:      data,
 	})
 	if err != nil {
-		zap.L().Error("error marshalling json response", zap.Error(err))
+		slog.Error("error marshalling json response", errors.Attr(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -342,7 +346,7 @@ func RespondError(w http.ResponseWriter, apiErr model.BaseApiError, data interfa
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(code)
 	if n, err := w.Write(b); err != nil {
-		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
+		slog.Error("error writing response", "bytes_written", n, errors.Attr(err))
 	}
 }
 
@@ -354,7 +358,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 		Data:   data,
 	})
 	if err != nil {
-		zap.L().Error("error marshalling json response", zap.Error(err))
+		slog.Error("error marshalling json response", errors.Attr(err))
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
@@ -362,7 +366,7 @@ func writeHttpResponse(w http.ResponseWriter, data interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(http.StatusOK)
 	if n, err := w.Write(b); err != nil {
-		zap.L().Error("error writing response", zap.Int("bytesWritten", n), zap.Error(err))
+		slog.Error("error writing response", "bytes_written", n, errors.Attr(err))
 	}
 }
 
@@ -571,9 +575,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v3/licenses/active", am.ViewAccess(func(rw http.ResponseWriter, req *http.Request) {
 		aH.LicensingAPI.Activate(rw, req)
 	})).Methods(http.MethodGet)
-
-	// Export
-	router.HandleFunc("/api/v1/export_raw_data", am.ViewAccess(aH.Signoz.Handlers.RawDataExport.ExportRawData)).Methods(http.MethodGet)
 
 	router.HandleFunc("/api/v1/span_percentile", am.ViewAccess(aH.Signoz.Handlers.SpanPercentile.GetSpanPercentileDetails)).Methods(http.MethodPost)
 
@@ -934,14 +935,14 @@ func (aH *APIHandler) metaForLinks(ctx context.Context, rule *ruletypes.Gettable
 			}
 			keys = model.GetLogFieldsV3(ctx, params, logFields)
 		} else {
-			zap.L().Error("failed to get log fields using empty keys; the link might not work as expected", zap.Error(apiErr))
+			aH.logger.ErrorContext(ctx, "failed to get log fields using empty keys", errors.Attr(apiErr))
 		}
 	} else if rule.AlertType == ruletypes.AlertTypeTraces {
 		traceFields, err := aH.reader.GetSpanAttributeKeysByNames(ctx, logsv3.GetFieldNames(rule.PostableRule.RuleCondition.CompositeQuery))
 		if err == nil {
 			keys = traceFields
 		} else {
-			zap.L().Error("failed to get span attributes using empty keys; the link might not work as expected", zap.Error(err))
+			aH.logger.ErrorContext(ctx, "failed to get span attributes using empty keys", errors.Attr(err))
 		}
 	}
 
@@ -1274,14 +1275,14 @@ func (aH *APIHandler) List(rw http.ResponseWriter, r *http.Request) {
 
 	installedIntegrationDashboards, apiErr := aH.IntegrationsController.GetDashboardsForInstalledIntegrations(ctx, orgID)
 	if apiErr != nil {
-		zap.L().Error("failed to get dashboards for installed integrations", zap.Error(apiErr))
+		aH.logger.ErrorContext(ctx, "failed to get dashboards for installed integrations", errors.Attr(apiErr))
 	} else {
 		dashboards = append(dashboards, installedIntegrationDashboards...)
 	}
 
 	cloudIntegrationDashboards, apiErr := aH.CloudIntegrationsController.AvailableDashboards(ctx, orgID)
 	if apiErr != nil {
-		zap.L().Error("failed to get dashboards for cloud integrations", zap.Error(apiErr))
+		aH.logger.ErrorContext(ctx, "failed to get dashboards for cloud integrations", errors.Attr(apiErr))
 	} else {
 		dashboards = append(dashboards, cloudIntegrationDashboards...)
 	}
@@ -1323,7 +1324,7 @@ func (aH *APIHandler) testRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("Error in getting req body in test rule API", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "error reading request body for test rule", errors.Attr(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1375,7 +1376,7 @@ func (aH *APIHandler) patchRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("error in getting req body of patch rule API\n", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "error reading request body for patch rule", errors.Attr(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1405,7 +1406,7 @@ func (aH *APIHandler) editRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("error in getting req body of edit rule API", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "error reading request body for edit rule", errors.Attr(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1430,7 +1431,7 @@ func (aH *APIHandler) createRule(w http.ResponseWriter, r *http.Request) {
 	defer r.Body.Close()
 	body, err := io.ReadAll(r.Body)
 	if err != nil {
-		zap.L().Error("Error in getting req body for create rule API", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "error reading request body for create rule", errors.Attr(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorBadData, Err: err}, nil)
 		return
 	}
@@ -1454,7 +1455,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	// zap.L().Info(query, apiError)
+	// TODO: add structured logging for query and apiError if needed
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1476,7 +1477,7 @@ func (aH *APIHandler) queryRangeMetrics(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if res.Err != nil {
-		zap.L().Error("error in query range metrics", zap.Error(res.Err))
+		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1509,7 +1510,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// zap.L().Info(query, apiError)
+	// TODO: add structured logging for query and apiError if needed
 
 	ctx := r.Context()
 	if to := r.FormValue("timeout"); to != "" {
@@ -1531,7 +1532,7 @@ func (aH *APIHandler) queryMetrics(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if res.Err != nil {
-		zap.L().Error("error in query range metrics", zap.Error(res.Err))
+		aH.logger.ErrorContext(r.Context(), "error in query range metrics", errors.Attr(res.Err))
 	}
 
 	if res.Err != nil {
@@ -1634,7 +1635,7 @@ func (aH *APIHandler) getServicesTopLevelOps(w http.ResponseWriter, r *http.Requ
 	var params topLevelOpsParams
 	err := json.NewDecoder(r.Body).Decode(&params)
 	if err != nil {
-		zap.L().Error("Error in getting req body for get top operations API", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "error reading request body for get top operations", errors.Attr(err))
 	}
 
 	if params.Service != "" {
@@ -2038,7 +2039,7 @@ func (aH *APIHandler) registerUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	organization := types.NewOrganization(req.OrgDisplayName, req.OrgName)
-	user, errv2 := aH.Signoz.Modules.User.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
+	user, errv2 := aH.Signoz.Modules.UserSetter.CreateFirstUser(r.Context(), organization, req.Name, req.Email, req.Password)
 	if errv2 != nil {
 		render.Error(w, errv2)
 		return
@@ -2056,7 +2057,7 @@ func (aH *APIHandler) HandleError(w http.ResponseWriter, err error, statusCode i
 		return false
 	}
 	if statusCode == http.StatusInternalServerError {
-		zap.L().Error("HTTP handler, Internal Server Error", zap.Error(err))
+		aH.logger.Error("internal server error in http handler", errors.Attr(err))
 	}
 	structuredResp := structuredResponse{
 		Errors: []structuredError{
@@ -2150,7 +2151,7 @@ func (aH *APIHandler) onboardProducers(
 ) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2158,7 +2159,7 @@ func (aH *APIHandler) onboardProducers(
 	chq, err := kafka.BuildClickHouseQuery(messagingQueue, kafka.KafkaQueue, "onboard_producers")
 
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build clickhouse query for onboard producers", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2252,7 +2253,7 @@ func (aH *APIHandler) onboardConsumers(
 ) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2260,7 +2261,7 @@ func (aH *APIHandler) onboardConsumers(
 	chq, err := kafka.BuildClickHouseQuery(messagingQueue, kafka.KafkaQueue, "onboard_consumers")
 
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build clickhouse query for onboard consumers", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2399,7 +2400,7 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2407,12 +2408,17 @@ func (aH *APIHandler) onboardKafka(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, err := kafka.BuildBuilderQueriesKafkaOnboarding(messagingQueue)
 
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build kafka onboarding queries", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	results, errQueriesByName, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "onboardKafka",
+	})
+
+	results, errQueriesByName, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2504,19 +2510,19 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	queryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "throughput", attributeCache)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for throughput", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2524,7 +2530,12 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getNetworkData",
+	})
+
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2550,17 +2561,17 @@ func (aH *APIHandler) getNetworkData(w http.ResponseWriter, r *http.Request) {
 
 	queryRangeParams, err = kafka.BuildQRParamsWithCache(messagingQueue, "fetch-latency", attributeCache)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for fetch latency", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for fetch latency", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2610,23 +2621,27 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	evalCtx := featuretypes.NewFlaggerEvaluationContext(orgID)
-	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(r.Context(), flagger.FeatureKafkaSpanEval, evalCtx)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerData",
+	})
+	kafkaSpanEval := aH.Signoz.Flagger.BooleanOrEmpty(ctx, flagger.FeatureKafkaSpanEval, evalCtx)
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2634,7 +2649,7 @@ func (aH *APIHandler) getProducerData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2663,7 +2678,7 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2673,13 +2688,13 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for consumer", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for consumer", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2687,7 +2702,11 @@ func (aH *APIHandler) getConsumerData(w http.ResponseWriter, r *http.Request) {
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2717,7 +2736,7 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2727,13 +2746,13 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-topic-throughput", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer topic throughput", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer topic throughput", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2741,7 +2760,11 @@ func (aH *APIHandler) getPartitionOverviewLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getPartitionOverviewLatencyData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2771,7 +2794,7 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2781,13 +2804,13 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer_partition_latency", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for consumer partition latency", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for consumer partition latency", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2795,7 +2818,11 @@ func (aH *APIHandler) getConsumerPartitionLatencyData(w http.ResponseWriter, r *
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerPartitionLatencyData",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2827,7 +2854,7 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2838,13 +2865,13 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 
 	producerQueryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview", attributeCache)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer throughput overview", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(producerQueryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer throughput overview", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2852,7 +2879,11 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, producerQueryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputOverview",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, producerQueryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2876,17 +2907,17 @@ func (aH *APIHandler) getProducerThroughputOverview(w http.ResponseWriter, r *ht
 
 	queryRangeParams, err := kafka.BuildQRParamsWithCache(messagingQueue, "producer-throughput-overview-byte-rate", attributeCache)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer throughput byte rate", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer throughput byte rate", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
-	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	resultFetchLatency, errQueriesByNameFetchLatency, err := aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByNameFetchLatency)
@@ -2939,7 +2970,7 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2949,13 +2980,13 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-throughput-details", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer throughput details", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer throughput details", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -2963,7 +2994,11 @@ func (aH *APIHandler) getProducerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerThroughputDetails",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -2993,7 +3028,7 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3003,13 +3038,13 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-overview", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for consumer throughput overview", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for consumer throughput overview", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3017,7 +3052,11 @@ func (aH *APIHandler) getConsumerThroughputOverview(w http.ResponseWriter, r *ht
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputOverview",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3047,7 +3086,7 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3057,13 +3096,13 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "consumer-throughput-details", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for consumer throughput details", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for consumer throughput details", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3071,7 +3110,11 @@ func (aH *APIHandler) getConsumerThroughputDetails(w http.ResponseWriter, r *htt
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getConsumerThroughputDetails",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3104,7 +3147,7 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	messagingQueue, apiErr := ParseKafkaQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse kafka queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3114,7 +3157,7 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 
 	queryRangeParams, err := kafka.BuildQueryRangeParams(messagingQueue, "producer-consumer-eval", kafkaSpanEval)
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build query range params for producer consumer eval", errors.Attr(err))
 		RespondError(w, &model.ApiError{
 			Typ: model.ErrorBadData,
 			Err: err,
@@ -3123,7 +3166,7 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	}
 
 	if err := validateQueryRangeParamsV3(queryRangeParams); err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to validate query range params for producer consumer eval", errors.Attr(err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -3131,7 +3174,11 @@ func (aH *APIHandler) getProducerConsumerEval(w http.ResponseWriter, r *http.Req
 	var result []*v3.Result
 	var errQueriesByName map[string]error
 
-	result, errQueriesByName, err = aH.querierV2.QueryRange(r.Context(), orgID, queryRangeParams)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getProducerConsumerEval",
+	})
+	result, errQueriesByName, err = aH.querierV2.QueryRange(ctx, orgID, queryRangeParams)
 	if err != nil {
 		apiErrObj := &model.ApiError{Typ: model.ErrorBadData, Err: err}
 		RespondError(w, apiErrObj, errQueriesByName)
@@ -3392,6 +3439,10 @@ func (aH *APIHandler) calculateLogsConnectionStatus(ctx context.Context, orgID v
 			},
 		},
 	}
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
+	})
 	queryRes, _, err := aH.querier.QueryRange(ctx, orgID, qrParams)
 	if err != nil {
 		return nil, model.InternalError(fmt.Errorf(
@@ -3944,6 +3995,10 @@ func (aH *APIHandler) calculateAWSIntegrationSvcLogsConnectionStatus(
 			},
 		},
 	}
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "calculateLogsConnectionStatus",
+	})
 	queryRes, _, err := aH.querier.QueryRange(
 		ctx, orgID, qrParams,
 	)
@@ -4199,7 +4254,7 @@ func (aH *APIHandler) CreateLogsPipeline(w http.ResponseWriter, r *http.Request)
 		postable []pipelinetypes.PostablePipeline,
 	) (*logparsingpipeline.PipelinesResponse, error) {
 		if len(postable) == 0 {
-			zap.L().Warn("found no pipelines in the http request, this will delete all the pipelines")
+			aH.logger.WarnContext(r.Context(), "found no pipelines in the http request, this will delete all the pipelines")
 		}
 
 		err := aH.LogsParsingPipelineController.ValidatePipelines(ctx, postable)
@@ -4397,7 +4452,7 @@ func (aH *APIHandler) QueryRangeV3Format(w http.ResponseWriter, r *http.Request)
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.L().Error(apiErrorObj.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "error parsing query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4459,13 +4514,13 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
 		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
 		if isUsed && len(traceIDs) > 0 {
-			zap.L().Debug("traceID used as filter in traces query")
+			aH.logger.DebugContext(ctx, "trace_id used as filter in traces query")
 			// query signoz_spans table with traceID to get min and max timestamp
 			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
 			if err == nil {
 				// add timestamp filter to queryRange params
 				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
-				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+				aH.logger.DebugContext(ctx, "post adding timestamp filter in traces query", "query_range_params", queryRangeParams)
 			}
 		}
 	}
@@ -4476,9 +4531,8 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		onQueryFinished, apiErr := aH.reader.ReportQueryStartForProgressTracking(queryIdHeader)
 
 		if apiErr != nil {
-			zap.L().Error(
-				"couldn't report query start for progress tracking",
-				zap.String("queryId", queryIdHeader), zap.Error(apiErr),
+			aH.logger.ErrorContext(ctx, "failed to report query start for progress tracking",
+				"query_id", queryIdHeader, errors.Attr(apiErr),
 			)
 
 		} else {
@@ -4492,6 +4546,10 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 		}
 	}
 
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRange",
+	})
 	result, errQueriesByName, err = aH.querier.QueryRange(ctx, orgID, queryRangeParams)
 
 	if err != nil {
@@ -4649,7 +4707,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
+		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4657,7 +4715,7 @@ func (aH *APIHandler) QueryRangeV3(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
-		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
+		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", errors.Attr(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
@@ -4701,9 +4759,8 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 	progressCh, unsubscribe, apiErr := aH.reader.SubscribeToQueryProgress(queryId)
 	if apiErr != nil {
 		// Shouldn't happen unless query progress requested after query finished
-		zap.L().Warn(
-			"couldn't subscribe to query progress",
-			zap.String("queryId", queryId), zap.Any("error", apiErr),
+		aH.logger.WarnContext(r.Context(), "failed to subscribe to query progress",
+			"query_id", queryId, errors.Attr(apiErr),
 		)
 		return
 	}
@@ -4712,25 +4769,22 @@ func (aH *APIHandler) GetQueryProgressUpdates(w http.ResponseWriter, r *http.Req
 	for queryProgress := range progressCh {
 		msg, err := json.Marshal(queryProgress)
 		if err != nil {
-			zap.L().Error(
-				"failed to serialize progress message",
-				zap.String("queryId", queryId), zap.Any("progress", queryProgress), zap.Error(err),
+			aH.logger.ErrorContext(r.Context(), "failed to serialize progress message",
+				"query_id", queryId, "progress", queryProgress, errors.Attr(err),
 			)
 			continue
 		}
 
 		err = c.WriteMessage(websocket.TextMessage, msg)
 		if err != nil {
-			zap.L().Error(
-				"failed to write progress msg to websocket",
-				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			aH.logger.ErrorContext(r.Context(), "failed to write progress message to websocket",
+				"query_id", queryId, "msg", string(msg), errors.Attr(err),
 			)
 			break
 
 		} else {
-			zap.L().Debug(
-				"wrote progress msg to websocket",
-				zap.String("queryId", queryId), zap.String("msg", string(msg)), zap.Error(err),
+			aH.logger.DebugContext(r.Context(), "wrote progress message to websocket",
+				"query_id", queryId, "msg", string(msg),
 			)
 		}
 	}
@@ -4814,13 +4868,13 @@ func (aH *APIHandler) queryRangeV4(ctx context.Context, queryRangeParams *v3.Que
 		// check if traceID is used as filter (with equal/similar operator) in traces query if yes add timestamp filter to queryRange params
 		isUsed, traceIDs := tracesV3.TraceIdFilterUsedWithEqual(queryRangeParams)
 		if isUsed && len(traceIDs) > 0 {
-			zap.L().Debug("traceID used as filter in traces query")
+			aH.logger.DebugContext(ctx, "trace_id used as filter in traces query")
 			// query signoz_spans table with traceID to get min and max timestamp
 			min, max, err := aH.reader.GetMinAndMaxTimestampForTraceID(ctx, traceIDs)
 			if err == nil {
 				// add timestamp filter to queryRange params
 				tracesV3.AddTimestampFilters(min, max, queryRangeParams)
-				zap.L().Debug("post adding timestamp filter in traces query", zap.Any("queryRangeParams", queryRangeParams))
+				aH.logger.DebugContext(ctx, "post adding timestamp filter in traces query", "query_range_params", queryRangeParams)
 			}
 		}
 	}
@@ -4872,7 +4926,7 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	queryRangeParams, apiErrorObj := ParseQueryRangeParams(r)
 
 	if apiErrorObj != nil {
-		zap.L().Error("error parsing metric query range params", zap.Error(apiErrorObj.Err))
+		aH.logger.ErrorContext(r.Context(), "error parsing metric query range params", errors.Attr(apiErrorObj.Err))
 		RespondError(w, apiErrorObj, nil)
 		return
 	}
@@ -4881,12 +4935,16 @@ func (aH *APIHandler) QueryRangeV4(w http.ResponseWriter, r *http.Request) {
 	// add temporality for each metric
 	temporalityErr := aH.PopulateTemporality(r.Context(), orgID, queryRangeParams)
 	if temporalityErr != nil {
-		zap.L().Error("Error while adding temporality for metrics", zap.Error(temporalityErr))
+		aH.logger.ErrorContext(r.Context(), "error adding temporality for metrics", errors.Attr(temporalityErr))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: temporalityErr}, nil)
 		return
 	}
 
-	aH.queryRangeV4(r.Context(), queryRangeParams, w, r)
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "QueryRangeV4",
+	})
+	aH.queryRangeV4(ctx, queryRangeParams, w, r)
 }
 
 func (aH *APIHandler) traceFields(w http.ResponseWriter, r *http.Request) {
@@ -4926,7 +4984,7 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	queueListRequest, apiErr := ParseQueueBody(r)
 
 	if apiErr != nil {
-		zap.L().Error(apiErr.Err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to parse queue body", errors.Attr(apiErr.Err))
 		RespondError(w, apiErr, nil)
 		return
 	}
@@ -4934,7 +4992,7 @@ func (aH *APIHandler) getQueueOverview(w http.ResponseWriter, r *http.Request) {
 	chq, err := queues2.BuildOverviewQuery(queueListRequest)
 
 	if err != nil {
-		zap.L().Error(err.Error())
+		aH.logger.ErrorContext(r.Context(), "failed to build queue overview query", errors.Attr(err))
 		RespondError(w, &model.ApiError{Typ: model.ErrorInternal, Err: fmt.Errorf("error building clickhouse query: %v", err)}, nil)
 		return
 	}
@@ -4965,7 +5023,7 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
+		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
 		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
@@ -4973,16 +5031,20 @@ func (aH *APIHandler) getDomainList(w http.ResponseWriter, r *http.Request) {
 	// Build the v5 query range request for domain listing
 	queryRangeRequest, err := thirdpartyapi.BuildDomainList(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain list query", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "failed to build domain list query", errors.Attr(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
 
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainList",
+	})
 	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
-		zap.L().Error("Query execution failed", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
@@ -5021,7 +5083,7 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	// Parse the request body to get third-party query parameters
 	thirdPartyQueryRequest, apiErr := ParseRequestBody(r)
 	if apiErr != nil {
-		zap.L().Error("Failed to parse request body", zap.Error(apiErr))
+		aH.logger.ErrorContext(r.Context(), "failed to parse request body", errors.Attr(apiErr))
 		render.Error(w, errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, apiErr.Error()))
 		return
 	}
@@ -5029,16 +5091,20 @@ func (aH *APIHandler) getDomainInfo(w http.ResponseWriter, r *http.Request) {
 	// Build the v5 query range request for domain info
 	queryRangeRequest, err := thirdpartyapi.BuildDomainInfo(thirdPartyQueryRequest)
 	if err != nil {
-		zap.L().Error("Failed to build domain info query", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "failed to build domain info query", errors.Attr(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return
 	}
 
+	ctx := ctxtypes.NewContextWithCommentVals(r.Context(), map[string]string{
+		instrumentationtypes.CodeNamespace:    "app",
+		instrumentationtypes.CodeFunctionName: "getDomainInfo",
+	})
 	// Execute the query using the v5 querier
-	result, err := aH.Signoz.Querier.QueryRange(r.Context(), orgID, queryRangeRequest)
+	result, err := aH.Signoz.Querier.QueryRange(ctx, orgID, queryRangeRequest)
 	if err != nil {
-		zap.L().Error("Query execution failed", zap.Error(err))
+		aH.logger.ErrorContext(r.Context(), "query execution failed", errors.Attr(err))
 		apiErrObj := errorsV2.New(errorsV2.TypeInvalidInput, errorsV2.CodeInvalidInput, err.Error())
 		render.Error(w, apiErrObj)
 		return

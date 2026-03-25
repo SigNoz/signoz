@@ -3,15 +3,15 @@ import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
+	dashboardId: string;
+	selectedDashboard: Dashboard | undefined;
 	selectedGraph: PANEL_TYPES;
-	yAxisUnit: Widgets['yAxisUnit'];
-	fillSpans: Widgets['fillSpans'];
 	enableDrillDown?: boolean;
 }
 
@@ -34,6 +34,8 @@ export interface WidgetGraphProps {
 		>
 	>;
 	enableDrillDown?: boolean;
+	selectedDashboard: Dashboard | undefined;
+	isNewPanel?: boolean;
 }
 
 export type WidgetGraphContainerProps = {

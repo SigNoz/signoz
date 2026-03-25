@@ -177,7 +177,7 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 	onConflictClause := ""
 	if len(onConflictSetStmts) > 0 {
 		onConflictClause = fmt.Sprintf(
-			"conflict(id, provider, org_id) do update SET\n%s",
+			"conflict(id) do update SET\n%s",
 			strings.Join(onConflictSetStmts, ",\n"),
 		)
 	}
@@ -202,6 +202,8 @@ func (r *cloudProviderAccountsSQLRepository) upsert(
 		Exec(ctx)
 
 	if dbErr != nil {
+		// for now returning internal error even if there is a conflict,
+		// will be handled better in the future iteration
 		return nil, model.InternalError(fmt.Errorf(
 			"could not upsert cloud account record: %w", dbErr,
 		))

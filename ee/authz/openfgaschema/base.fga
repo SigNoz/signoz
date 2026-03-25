@@ -2,39 +2,45 @@ module base
 
 type organisation 
   relations
-    define read: [user, role#assignee]
-    define update: [user, role#assignee]
+    define read: [user, serviceaccount, role#assignee]
+    define update: [user, serviceaccount, role#assignee]
 
 type user
   relations
-    define read: [user, role#assignee]
-    define update: [user, role#assignee]
-    define delete: [user, role#assignee]
+    define read: [user, serviceaccount, role#assignee]
+    define update: [user, serviceaccount, role#assignee]
+    define delete: [user, serviceaccount, role#assignee]
+
+type serviceaccount 
+  relations
+    define read: [user, serviceaccount, role#assignee]
+    define update: [user, serviceaccount, role#assignee]
+    define delete: [user, serviceaccount, role#assignee]  
 
 type anonymous
 
 type role 
   relations
-    define assignee: [user, anonymous]
+    define assignee: [user, serviceaccount, anonymous]
 
-    define read: [user, role#assignee]
-    define update: [user, role#assignee]
-    define delete: [user, role#assignee]
+    define read: [user, serviceaccount, role#assignee]
+    define update: [user, serviceaccount, role#assignee]
+    define delete: [user, serviceaccount, role#assignee]
 
 type metaresources
   relations
-    define create: [user, role#assignee]
-    define list: [user, role#assignee]
+    define create: [user, serviceaccount, role#assignee]
+    define list: [user, serviceaccount, role#assignee]
 
 type metaresource
   relations
-      define read: [user, anonymous, role#assignee]
-      define update: [user, role#assignee]
-      define delete: [user, role#assignee]
+      define read: [user, serviceaccount, anonymous, role#assignee]
+      define update: [user, serviceaccount, role#assignee]
+      define delete: [user, serviceaccount, role#assignee]
 
-      define block: [user, role#assignee]
+      define block: [user, serviceaccount, role#assignee]
 
 
 type telemetryresource
   relations
-      define read: [user, role#assignee]
+      define read: [user, serviceaccount, role#assignee]

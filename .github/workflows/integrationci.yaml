@@ -29,6 +29,7 @@ jobs:
       - name: fmt
         run: |
           make py-fmt
+          git diff --exit-code -- tests/integration/
       - name: lint
         run: |
           make py-lint
@@ -49,6 +50,7 @@ jobs:
           - ttl
           - alerts
           - ingestionkeys
+          - rootuser
         sqlstore-provider:
           - postgres
           - sqlite

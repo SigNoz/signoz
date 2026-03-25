@@ -104,68 +104,62 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
 def test_invite_and_register(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
     # Generate an invite token for the editor user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "editor@integration.test", "role": "EDITOR", "name": "editor"},
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
-        },
+        headers={"Authorization": f"Bearer {admin_token}"},
     )
 
     assert response.status_code == HTTPStatus.CREATED
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
-        },
-    )
+    invited_user = response.json()["data"]
+    assert invited_user["email"] == "editor@integration.test"
+    assert invited_user["role"] == "EDITOR"
 
-    invite_response = response.json()["data"]
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "editor@integration.test"
-        ),
+    # Verify the user user appears in the users list but as pending_invite status
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    assert response.status_code == HTTPStatus.OK
+
+    user_response = response.json()["data"]
+    found_user = next(
+        (user for user in user_response if user["email"] == "editor@integration.test"),
         None,
     )
+    assert found_user is not None
+    assert found_user["status"] == "pending_invite"
+    assert found_user["role"] == "EDITOR"
 
-    # Register the editor user using the invite token
+    reset_token = invited_user["token"]
+
+    # Reset the password to complete the invite flow (activates the user and also grants authz)
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "password123Z$",
-            "displayName": "editor",
-            "token": f"{found_invite['token']}",
-        },
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": reset_token},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Verify that the invite token has been deleted
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/invite/{found_invite['token']}"),
-        timeout=2,
-    )
-
-    assert response.status_code in (HTTPStatus.NOT_FOUND, HTTPStatus.BAD_REQUEST)
+    # Verify the user can now log in
+    editor_token = get_token("editor@integration.test", "password123Z$")
+    assert editor_token is not None
 
     # Verify that an admin endpoint cannot be called by the editor user
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
-        headers={
-            "Authorization": f"Bearer {get_token("editor@integration.test", "password123Z$")}"
-        },
+        headers={"Authorization": f"Bearer {editor_token}"},
     )
 
     assert response.status_code == HTTPStatus.FORBIDDEN
 
-    # Verify that the editor has been created
+    # Verify that the editor user status has been updated to ACTIVE
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user"),
         timeout=2,
@@ -186,59 +180,39 @@ def test_invite_and_register(
     assert found_user["role"] == "EDITOR"
     assert found_user["displayName"] == "editor"
     assert found_user["email"] == "editor@integration.test"
+    assert found_user["status"] == "active"
 
 
 def test_revoke_invite_and_register(
     signoz: types.SigNoz, get_token: Callable[[str, str], str]
 ) -> None:
     admin_token = get_token("admin@integration.test", "password123Z$")
-    # Generate an invite token for the viewer user
+
+    # Invite the viewer user
     response = requests.post(
         signoz.self.host_configs["8080"].get("/api/v1/invite"),
         json={"email": "viewer@integration.test", "role": "VIEWER"},
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-
     assert response.status_code == HTTPStatus.CREATED
+    invited_user = response.json()["data"]
+    reset_token = invited_user["token"]
 
-    response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/invite"),
-        timeout=2,
-        headers={
-            "Authorization": f"Bearer {get_token("admin@integration.test", "password123Z$")}"
-        },
-    )
-
-    invite_response = response.json()["data"]
-    found_invite = next(
-        (
-            invite
-            for invite in invite_response
-            if invite["email"] == "viewer@integration.test"
-        ),
-        None,
-    )
-
+    # Delete the pending invite user (revoke the invite)
     response = requests.delete(
-        signoz.self.host_configs["8080"].get(f"/api/v1/invite/{found_invite['id']}"),
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{invited_user['id']}"),
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-
     assert response.status_code == HTTPStatus.NO_CONTENT
 
-    # Try registering the viewer user with the invite token
+    # Try to use the reset token — should fail (user deleted)
     response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v1/invite/accept"),
-        json={
-            "password": "password123Z$",
-            "displayName": "viewer",
-            "token": f"{found_invite["token"]}",
-        },
+        signoz.self.host_configs["8080"].get("/api/v1/resetPassword"),
+        json={"password": "password123Z$", "token": reset_token},
         timeout=2,
     )
-
     assert response.status_code in (HTTPStatus.BAD_REQUEST, HTTPStatus.NOT_FOUND)
 
 

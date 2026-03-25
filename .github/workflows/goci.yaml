@@ -7,10 +7,14 @@ on:
   pull_request_target:
     types:
       - labeled
+  merge_group:
+    types:
+      - checks_requested
 
 jobs:
   test:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/go-test.yaml@main
@@ -21,6 +25,7 @@ jobs:
       GO_VERSION: 1.24
   fmt:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/go-fmt.yaml@main
@@ -30,6 +35,7 @@ jobs:
       GO_VERSION: 1.24
   lint:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/go-lint.yaml@main
@@ -39,6 +45,7 @@ jobs:
       GO_VERSION: 1.24
   deps:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     uses: signoz/primus.workflows/.github/workflows/go-deps.yaml@main
@@ -48,6 +55,7 @@ jobs:
       GO_VERSION: 1.24
   build:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
@@ -79,6 +87,7 @@ jobs:
           make docker-build-enterprise
   openapi:
     if: |
+      github.event_name == 'merge_group' ||
       (github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))
     runs-on: ubuntu-latest
@@ -93,13 +102,3 @@ jobs:
         run: |
           go run cmd/enterprise/*.go generate openapi
           git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in openapi spec. Run go run cmd/enterprise/*.go generate openapi locally and commit."; exit 1)
-      - name: node-install
-        uses: actions/setup-node@v5
-        with:
-          node-version: "22"
-      - name: install-frontend
-        run: cd frontend && yarn install
-      - name: generate-api-clients
-        run: |
-          cd frontend && yarn generate:api
-          git diff --compact-summary --exit-code || (echo; echo "Unexpected difference in generated api clients. Run yarn generate:api in frontend/ locally and commit."; exit 1)

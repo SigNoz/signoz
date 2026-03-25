@@ -1,13 +1,13 @@
 import { createShortcutActions } from '../../constants/shortcutActions';
 import { useCmdK } from '../../providers/cmdKProvider';
+import { ROLES } from '../../types/roles';
 import { ShiftOverlay } from './ShiftOverlay';
 import { useShiftHoldOverlay } from './useShiftHoldOverlay';
 
-type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
 export function ShiftHoldOverlayController({
 	userRole,
 }: {
-	userRole: UserRole;
+	userRole: ROLES;
 }): JSX.Element | null {
 	const { open: isCmdKOpen } = useCmdK();
 	const noop = (): void => undefined;

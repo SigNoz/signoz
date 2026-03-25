@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -116,7 +117,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, nil)
 			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(nil, telemetryStore, nil, "", time.Second, nil, nil, options)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, nil, "", time.Second, nil, nil, options)
 
 			rule, err := NewAnomalyRule(
 				"test-anomaly-rule",
@@ -247,7 +248,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 
 			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, nil)
 			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(nil, telemetryStore, nil, "", time.Second, nil, nil, options)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, nil, "", time.Second, nil, nil, options)
 
 			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, reader, nil, logger, nil)
 			require.NoError(t, err)

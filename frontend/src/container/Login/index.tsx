@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQuery } from 'react-query';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Form, Input, Select, Typography } from 'antd';
 import getVersion from 'api/v1/version/get';
 import get from 'api/v2/sessions/context/get';
@@ -392,9 +392,9 @@ function Login(): JSX.Element {
 							disabled={!isNextButtonEnabled}
 							variant="solid"
 							onClick={onNextHandler}
-							data-testid="initiate_login"
+							testId="initiate_login"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Next
 						</Button>
@@ -406,10 +406,10 @@ function Login(): JSX.Element {
 							variant="solid"
 							type="submit"
 							color="primary"
-							data-testid="callback_authn_submit"
+							testId="callback_authn_submit"
 							data-attr="signup"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Sign in with SSO
 						</Button>
@@ -420,11 +420,11 @@ function Login(): JSX.Element {
 							disabled={!isSubmitButtonEnabled}
 							variant="solid"
 							color="primary"
-							data-testid="password_authn_submit"
+							testId="password_authn_submit"
 							type="submit"
 							data-attr="signup"
 							className="login-submit-btn"
-							suffixIcon={<ArrowRight size={12} />}
+							suffix={<ArrowRight />}
 						>
 							Sign in with Password
 						</Button>

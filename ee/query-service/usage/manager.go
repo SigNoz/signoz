@@ -8,13 +8,14 @@ import (
 	"sync/atomic"
 	"time"
 
+	"log/slog"
+
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/go-co-op/gocron"
 	"github.com/google/uuid"
 
-	"go.uber.org/zap"
-
 	"github.com/SigNoz/signoz/ee/query-service/model"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/encryption"
@@ -76,19 +77,19 @@ func (lm *Manager) Start(ctx context.Context) error {
 func (lm *Manager) UploadUsage(ctx context.Context) {
 	organizations, err := lm.orgGetter.ListByOwnedKeyRange(ctx)
 	if err != nil {
-		zap.L().Error("failed to get organizations", zap.Error(err))
+		slog.ErrorContext(ctx, "failed to get organizations", errors.Attr(err))
 		return
 	}
 	for _, organization := range organizations {
 		// check if license is present or not
 		license, err := lm.licenseService.GetActive(ctx, organization.ID)
 		if err != nil {
-			zap.L().Error("failed to get active license", zap.Error(err))
+			slog.ErrorContext(ctx, "failed to get active license", errors.Attr(err))
 			return
 		}
 		if license == nil {
 			// we will not start the usage reporting if license is not present.
-			zap.L().Info("no license present, skipping usage reporting")
+			slog.InfoContext(ctx, "no license present, skipping usage reporting")
 			return
 		}
 
@@ -115,7 +116,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 			dbusages := []model.UsageDB{}
 			err := lm.clickhouseConn.Select(ctx, &dbusages, fmt.Sprintf(query, db, db), time.Now().Add(-(24 * time.Hour)))
 			if err != nil && !strings.Contains(err.Error(), "doesn't exist") {
-				zap.L().Error("failed to get usage from clickhouse: %v", zap.Error(err))
+				slog.ErrorContext(ctx, "failed to get usage from clickhouse", errors.Attr(err))
 				return
 			}
 			for _, u := range dbusages {
@@ -125,24 +126,24 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 		}
 
 		if len(usages) <= 0 {
-			zap.L().Info("no snapshots to upload, skipping.")
+			slog.InfoContext(ctx, "no snapshots to upload, skipping")
 			return
 		}
 
-		zap.L().Info("uploading usage data")
+		slog.InfoContext(ctx, "uploading usage data")
 
 		usagesPayload := []model.Usage{}
 		for _, usage := range usages {
 			usageDataBytes, err := encryption.Decrypt([]byte(usage.ExporterID[:32]), []byte(usage.Data))
 			if err != nil {
-				zap.L().Error("error while decrypting usage data: %v", zap.Error(err))
+				slog.ErrorContext(ctx, "error while decrypting usage data", errors.Attr(err))
 				return
 			}
 
 			usageData := model.Usage{}
 			err = json.Unmarshal(usageDataBytes, &usageData)
 			if err != nil {
-				zap.L().Error("error while unmarshalling usage data: %v", zap.Error(err))
+				slog.ErrorContext(ctx, "error while unmarshalling usage data", errors.Attr(err))
 				return
 			}
 
@@ -163,13 +164,13 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 
 		body, errv2 := json.Marshal(payload)
 		if errv2 != nil {
-			zap.L().Error("error while marshalling usage payload: %v", zap.Error(errv2))
+			slog.ErrorContext(ctx, "error while marshalling usage payload", errors.Attr(errv2))
 			return
 		}
 
 		errv2 = lm.zeus.PutMeters(ctx, payload.LicenseKey.String(), body)
 		if errv2 != nil {
-			zap.L().Error("failed to upload usage: %v", zap.Error(errv2))
+			slog.ErrorContext(ctx, "failed to upload usage", errors.Attr(errv2))
 			// not returning error here since it is captured in the failed count
 			return
 		}
@@ -179,7 +180,7 @@ func (lm *Manager) UploadUsage(ctx context.Context) {
 func (lm *Manager) Stop(ctx context.Context) {
 	lm.scheduler.Stop()
 
-	zap.L().Info("sending usage data before shutting down")
+	slog.InfoContext(ctx, "sending usage data before shutting down")
 	// send usage before shutting down
 	lm.UploadUsage(ctx)
 	atomic.StoreUint32(&locker, stateUnlocked)

@@ -28,6 +28,8 @@ export function QueryTable({
 	sticky,
 	searchTerm,
 	widgetId,
+	columnWidths,
+	onColumnWidthsChange,
 	panelType,
 	...props
 }: QueryTableProps): JSX.Element {
@@ -175,8 +177,8 @@ export function QueryTable({
 					dataSource={filterTable === null ? newDataSource : filterTable}
 					scroll={{ x: 'max-content' }}
 					pagination={paginationConfig}
-					widgetId={widgetId}
-					shouldPersistColumnWidths
+					columnWidths={columnWidths}
+					onColumnWidthsChange={onColumnWidthsChange}
 					sticky={sticky}
 					{...props}
 				/>

@@ -24,6 +24,8 @@ export type QueryTableProps = Omit<
 	sticky?: TableProps<RowData>['sticky'];
 	searchTerm?: string;
 	widgetId?: string;
+	columnWidths?: Record<string, number>;
+	onColumnWidthsChange?: (widths: Record<string, number>) => void;
 	enableDrillDown?: boolean;
 	contextLinks?: ContextLinksData;
 	panelType?: PANEL_TYPES;

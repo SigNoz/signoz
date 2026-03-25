@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
+
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/gorilla/handlers"
+
+	"github.com/rs/cors"
+	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
@@ -31,8 +35,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
-	"github.com/rs/cors"
-	"github.com/soheilhy/cmux"
+
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -47,7 +51,6 @@ import (
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"go.uber.org/zap"
 )
 
 // Server runs HTTP, Mux and a grpc server
@@ -83,6 +86,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	}
 
 	reader := clickhouseReader.NewReader(
+		signoz.Instrumentation.Logger(),
 		signoz.SQLStore,
 		signoz.TelemetryStore,
 		signoz.Prometheus,
@@ -132,6 +136,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
+		reader,
 	)
 	if err != nil {
 		return nil, err
@@ -206,6 +211,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
+	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
@@ -214,10 +220,8 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		otelmux.WithFilter(func(r *http.Request) bool {
 			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
 		}),
-		otelmux.WithPublicEndpoint(),
 	))
-	r.Use(middleware.NewAuthN([]string{"Authorization", "Sec-WebSocket-Protocol"}, s.signoz.Sharder, s.signoz.Tokenizer, s.signoz.Instrumentation.Logger()).Wrap)
-	r.Use(middleware.NewAPIKey(s.signoz.SQLStore, []string{"SIGNOZ-API-KEY"}, s.signoz.Instrumentation.Logger(), s.signoz.Sharder).Wrap)
+	r.Use(middleware.NewIdentN(s.signoz.IdentNResolver, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
 		s.config.APIServer.Timeout.ExcludedRoutes,
 		s.config.APIServer.Timeout.Default,
@@ -278,7 +282,7 @@ func (s *Server) initListeners() error {
 		return err
 	}
 
-	zap.L().Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
+	slog.Info(fmt.Sprintf("Query server started listening on %s...", s.httpHostPort))
 
 	return nil
 }
@@ -298,31 +302,22 @@ func (s *Server) Start(ctx context.Context) error {
 	}
 
 	go func() {
-		zap.L().Info("Starting HTTP server", zap.Int("port", httpPort), zap.String("addr", s.httpHostPort))
+		slog.Info("Starting HTTP server", "port", httpPort, "addr", s.httpHostPort)
 
 		switch err := s.httpServer.Serve(s.httpConn); err {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
 		default:
-			zap.L().Error("Could not start HTTP server", zap.Error(err))
+			slog.Error("Could not start HTTP server", errors.Attr(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
 	}()
 
 	go func() {
-		zap.L().Info("Starting pprof server", zap.String("addr", baseconst.DebugHttpPort))
-
-		err = http.ListenAndServe(baseconst.DebugHttpPort, nil)
-		if err != nil {
-			zap.L().Error("Could not start pprof server", zap.Error(err))
-		}
-	}()
-
-	go func() {
-		zap.L().Info("Starting OpAmp Websocket server", zap.String("addr", baseconst.OpAmpWsEndpoint))
+		slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
-			zap.L().Error("opamp ws server failed to start", zap.Error(err))
+			slog.Error("opamp ws server failed to start", errors.Attr(err))
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
@@ -358,10 +353,9 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		MetadataStore:       metadataStore,
 		Prometheus:          prometheus,
 		Context:             context.Background(),
-		Logger:              zap.L(),
 		Reader:              ch,
 		Querier:             querier,
-		SLogger:             providerSettings.Logger,
+		Logger:              providerSettings.Logger,
 		Cache:               cache,
 		EvalDelay:           baseconst.GetEvalDelay(),
 		PrepareTaskFunc:     rules.PrepareTaskFunc,
@@ -380,7 +374,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		return nil, fmt.Errorf("rule manager error: %v", err)
 	}
 
-	zap.L().Info("rules manager is ready")
+	slog.Info("rules manager is ready")
 
 	return manager, nil
 }

@@ -15,9 +15,10 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -105,6 +106,10 @@ func (module *module) GetPublicDashboardSelectorsAndOrg(ctx context.Context, id 
 }
 
 func (module *module) GetPublicWidgetQueryRange(ctx context.Context, id valuer.UUID, widgetIdx, startTime, endTime uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "dashboard",
+		instrumentationtypes.CodeFunctionName: "GetPublicWidgetQueryRange",
+	})
 	dashboard, err := module.GetDashboardByPublicID(ctx, id)
 	if err != nil {
 		return nil, err
@@ -218,7 +223,7 @@ func (module *module) MustGetTypeables() []authtypes.Typeable {
 
 func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.Transaction {
 	return map[string][]*authtypes.Transaction{
-		roletypes.SigNozAnonymousRoleName: {
+		authtypes.SigNozAnonymousRoleName: {
 			{
 				ID:       valuer.GenerateUUID(),
 				Relation: authtypes.RelationRead,

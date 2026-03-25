@@ -101,7 +101,7 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503") {
 		return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 	}
 

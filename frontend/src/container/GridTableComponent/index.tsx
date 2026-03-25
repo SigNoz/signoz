@@ -45,6 +45,8 @@ function GridTableComponent({
 	onOpenTraceBtnClick,
 	customOnRowClick,
 	widgetId,
+	columnWidths,
+	onColumnWidthsChange,
 	panelType,
 	queryRangeRequest,
 	decimalPrecision,
@@ -284,6 +286,8 @@ function GridTableComponent({
 				dataSource={dataSource}
 				sticky={sticky}
 				widgetId={widgetId}
+				columnWidths={columnWidths}
+				onColumnWidthsChange={onColumnWidthsChange}
 				panelType={panelType}
 				queryRangeRequest={queryRangeRequest}
 				onRow={
