@@ -4,7 +4,6 @@ import { useSelector } from 'react-redux';
 import { message } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
 import { prepareQueryRangePayloadV5, TelemetryFieldKey } from 'api/v5/v5';
-import { ALL_TRACE_COLUMNS } from 'components/DownloadOptionsMenu/constants';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
@@ -53,12 +52,8 @@ export function useExportRawData({
 			try {
 				setIsDownloading(true);
 
-				// HACK: When ALL columns are requested for traces, explicitly send all known
-				// trace columns because the backend doesn't return everything when selectFields is empty.
 				const selectColumnsOverride = clearSelectColumns
-					? {
-							selectColumns: dataSource === DataSource.TRACES ? ALL_TRACE_COLUMNS : [],
-					  }
+					? {}
 					: selectedColumns?.length
 					? { selectColumns: selectedColumns }
 					: {};
