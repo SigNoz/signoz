@@ -1,25 +1,24 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
-import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
-import type { Plugin, TransformResult, UserConfig } from 'vite';
+import type { Plugin, Rolldown, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
 import { createHtmlPlugin } from 'vite-plugin-html';
 import { ViteImageOptimizer } from 'vite-plugin-image-optimizer';
-import tsconfigPaths from 'vite-tsconfig-paths';
 
 function rawMarkdownPlugin(): Plugin {
 	return {
 		name: 'raw-markdown',
-		transform(code, id): TransformResult | undefined {
+		transform(code, id): Rolldown.TransformResult | undefined {
 			if (!id.endsWith('.md')) {
 				return undefined;
 			}
 			return {
 				code: `export default ${JSON.stringify(code)};`,
 				map: null,
+				moduleType: 'js',
 			};
 		},
 	};
@@ -30,7 +29,6 @@ export default defineConfig(
 		const env = loadEnv(mode, process.cwd(), '');
 
 		const plugins = [
-			tsconfigPaths(),
 			rawMarkdownPlugin(),
 			react(),
 			createHtmlPlugin({
@@ -82,14 +80,7 @@ export default defineConfig(
 		return {
 			plugins,
 			resolve: {
-				alias: {
-					utils: resolve(__dirname, './src/utils'),
-					types: resolve(__dirname, './src/types'),
-					constants: resolve(__dirname, './src/constants'),
-					parser: resolve(__dirname, './src/parser'),
-					providers: resolve(__dirname, './src/providers'),
-					lib: resolve(__dirname, './src/lib'),
-				},
+				tsconfigPaths: true,
 			},
 			css: {
 				preprocessorOptions: {
@@ -123,7 +114,7 @@ export default defineConfig(
 			build: {
 				sourcemap: true,
 				outDir: 'build',
-				cssMinify: 'esbuild',
+				cssMinify: 'lightningcss',
 			},
 			server: {
 				open: true,

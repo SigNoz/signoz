@@ -3,10 +3,10 @@
 exports[`PipelinePage container test should render PipelinesSearchSection section 1`] = `
 <DocumentFragment>
   <span
-    class="ant-input-affix-wrapper css-dev-only-do-not-override-2i2tap"
+    class="ant-input-affix-wrapper css-dev-only-do-not-override-1l6e01l"
   >
     <input
-      class="ant-input css-dev-only-do-not-override-2i2tap"
+      class="ant-input css-dev-only-do-not-override-1l6e01l"
       placeholder="search_pipeline_placeholder"
       type="text"
       value=""

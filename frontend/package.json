@@ -46,7 +46,7 @@
     "@radix-ui/react-tabs": "1.0.4",
     "@radix-ui/react-tooltip": "1.0.7",
     "@sentry/react": "8.41.0",
-    "@sentry/vite-plugin": "2.22.6",
+    "@sentry/vite-plugin": "^5.1.1",
     "@signozhq/badge": "0.0.2",
     "@signozhq/button": "0.0.2",
     "@signozhq/calendar": "0.0.0",
@@ -78,7 +78,7 @@
     "@visx/hierarchy": "3.12.0",
     "@visx/shape": "3.5.0",
     "@visx/tooltip": "3.3.0",
-    "@vitejs/plugin-react": "5.1.4",
+    "@vitejs/plugin-react": "^6.0.1",
     "@xstate/react": "^3.0.0",
     "ansi-to-html": "0.7.2",
     "antd": "5.11.0",
@@ -160,7 +160,7 @@
     "typescript": "5.9.3",
     "uplot": "1.6.31",
     "uuid": "^8.3.2",
-    "vite": "npm:rolldown-vite@7.3.1",
+    "vite": "^8.0.2",
     "vite-plugin-html": "3.2.2",
     "web-vitals": "^0.2.4",
     "xstate": "^4.31.0",
@@ -257,8 +257,7 @@
     "typescript-plugin-css-modules": "5.2.0",
     "vite-plugin-checker": "0.12.0",
     "vite-plugin-compression": "0.5.1",
-    "vite-plugin-image-optimizer": "2.0.3",
-    "vite-tsconfig-paths": "6.1.1"
+    "vite-plugin-image-optimizer": "2.0.3"
   },
   "lint-staged": {
     "*.(js|jsx|ts|tsx)": [
@@ -283,7 +282,6 @@
     "form-data": "4.0.4",
     "brace-expansion": "^2.0.2",
     "on-headers": "^1.1.0",
-    "tmp": "0.2.4",
-    "vite": "npm:rolldown-vite@7.3.1"
+    "tmp": "0.2.4"
   }
 }

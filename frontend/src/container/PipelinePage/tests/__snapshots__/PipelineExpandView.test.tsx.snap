@@ -34,10 +34,10 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
 }
 
 <div
-    class="ant-table-wrapper c0 css-dev-only-do-not-override-2i2tap"
+    class="ant-table-wrapper c0 css-dev-only-do-not-override-1l6e01l"
   >
     <div
-      class="ant-spin-nested-loading css-dev-only-do-not-override-2i2tap"
+      class="ant-spin-nested-loading css-dev-only-do-not-override-1l6e01l"
     >
       <div
         class="ant-spin-container"
@@ -72,7 +72,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1l6e01l"
                       >
                         <span
                           class="ant-avatar-string"
@@ -103,7 +103,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1l6e01l"
                       >
                         <span
                           class="ant-avatar-string"
@@ -134,7 +134,7 @@ exports[`PipelinePage should render PipelineExpandView section 1`] = `
                       style="text-align: right;"
                     >
                       <span
-                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-2i2tap"
+                        class="ant-avatar ant-avatar-circle c1 css-dev-only-do-not-override-1l6e01l"
                       >
                         <span
                           class="ant-avatar-string"
