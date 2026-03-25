@@ -698,7 +698,7 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), settings, prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), settings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
 				time.Second,
 				nil,

@@ -327,6 +327,27 @@ components:
           nullable: true
           type: array
       type: object
+    AuthtypesStorableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesTransaction:
       properties:
         object:
@@ -341,6 +362,53 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    AuthtypesUserRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        role:
+          $ref: '#/components/schemas/AuthtypesStorableRole'
+        roleId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        userId:
+          type: string
+      required:
+      - id
+      type: object
+    AuthtypesUserWithRoles:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        userRoles:
+          items:
+            $ref: '#/components/schemas/AuthtypesUserRole'
+          nullable: true
+          type: array
+      required:
+      - id
       type: object
     CloudintegrationtypesAWSAccountConfig:
       properties:
@@ -2606,6 +2674,13 @@ components:
         token:
           type: string
       type: object
+    TypesPostableRole:
+      properties:
+        name:
+          type: string
+      required:
+      - name
+      type: object
     TypesResetPasswordToken:
       properties:
         expiresAt:
@@ -2646,6 +2721,13 @@ components:
           type: string
       required:
       - id
+      type: object
+    TypesUpdatableUser:
+      properties:
+        displayName:
+          type: string
+      required:
+      - displayName
       type: object
     TypesUser:
       properties:
@@ -6113,7 +6195,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists all users
-      operationId: ListUsers
+      operationId: ListUsersDeprecated
       responses:
         "200":
           content:
@@ -6206,7 +6288,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user by id
-      operationId: GetUser
+      operationId: GetUserDeprecated
       parameters:
       - in: path
         name: id
@@ -6263,7 +6345,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint updates the user by id
-      operationId: UpdateUser
+      operationId: UpdateUserDeprecated
       parameters:
       - in: path
         name: id
@@ -6332,7 +6414,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user I belong to
-      operationId: GetMyUser
+      operationId: GetMyUserDeprecated
       responses:
         "200":
           content:
@@ -7781,6 +7863,66 @@ paths:
       summary: Readiness check
       tags:
       - health
+  /api/v2/roles/{id}/users:
+    get:
+      deprecated: false
+      description: This endpoint returns the users having the role by role id
+      operationId: GetUsersByRoleID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/TypesUser'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get users by role id
+      tags:
+      - users
   /api/v2/sessions:
     delete:
       deprecated: false
@@ -7939,6 +8081,408 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/users:
+    get:
+      deprecated: false
+      description: This endpoint lists all users for the organization
+      operationId: ListUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/TypesUser'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List users v2
+      tags:
+      - users
+  /api/v2/users/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns the user by id
+      operationId: GetUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserWithRoles'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user by user id
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint updates the user by id
+      operationId: UpdateUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesUpdatableUser'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update user v2
+      tags:
+      - users
+  /api/v2/users/{id}/roles:
+    get:
+      deprecated: false
+      description: This endpoint returns the user roles by user id
+      operationId: GetRolesByUserID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesRole'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user roles
+      tags:
+      - users
+    post:
+      deprecated: false
+      description: This endpoint assigns the role to the user roles by user id
+      operationId: SetRoleByUserID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableRole'
+      responses:
+        "200":
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Set user roles
+      tags:
+      - users
+  /api/v2/users/{id}/roles/{roleId}:
+    delete:
+      deprecated: false
+      description: This endpoint removes a role from the user by user id and role
+        id
+      operationId: RemoveUserRoleByUserIDAndRoleID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Remove a role from user
+      tags:
+      - users
+  /api/v2/users/me:
+    get:
+      deprecated: false
+      description: This endpoint returns the user I belong to
+      operationId: GetMyUser
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserWithRoles'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - tokenizer: []
+      summary: Get my user v2
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint updates the user I belong to
+      operationId: UpdateMyUserV2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesUpdatableUser'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - tokenizer: []
+      summary: Update my user v2
+      tags:
+      - users
   /api/v2/zeus/hosts:
     get:
       deprecated: false
