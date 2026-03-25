@@ -19,8 +19,8 @@ type UserRole struct {
 	bun.BaseModel `bun:"table:user_role,alias:user_role"`
 
 	ID        valuer.UUID `bun:"id,pk,type:text" json:"id" required:"true"`
-	UserID    valuer.UUID `bun:"user_id" json:"user_id"`
-	RoleID    valuer.UUID `bun:"role_id" json:"role_id"`
+	UserID    valuer.UUID `bun:"user_id" json:"userId"`
+	RoleID    valuer.UUID `bun:"role_id" json:"roleId"`
 	CreatedAt time.Time   `bun:"created_at" json:"createdAt"`
 	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt"`
 

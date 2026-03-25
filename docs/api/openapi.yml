@@ -372,12 +372,12 @@ components:
           type: string
         role:
           $ref: '#/components/schemas/AuthtypesStorableRole'
-        role_id:
+        roleId:
           type: string
         updatedAt:
           format: date-time
           type: string
-        user_id:
+        userId:
           type: string
       required:
       - id

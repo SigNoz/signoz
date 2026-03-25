@@ -484,7 +484,7 @@ export interface AuthtypesUserRoleDTO {
 	/**
 	 * @type string
 	 */
-	role_id?: string;
+	roleId?: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -493,7 +493,7 @@ export interface AuthtypesUserRoleDTO {
 	/**
 	 * @type string
 	 */
-	user_id?: string;
+	userId?: string;
 }
 
 export interface AuthtypesUserWithRolesDTO {
