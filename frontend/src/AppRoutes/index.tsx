@@ -296,16 +296,16 @@ function App(): JSX.Element {
 
 	useEffect(() => {
 		if (isCloudUser || isEnterpriseSelfHostedUser) {
-			import('posthog-js').then(({ default: posthog }) => {
-				posthogRef.current = posthog;
+			if (process.env.POSTHOG_KEY) {
+				import('posthog-js').then(({ default: posthog }) => {
+					posthogRef.current = posthog;
 
-				if (process.env.POSTHOG_KEY) {
-					posthog.init(process.env.POSTHOG_KEY, {
+					posthog.init(process.env.POSTHOG_KEY as string, {
 						api_host: 'https://us.i.posthog.com',
 						person_profiles: 'identified_only', // or 'always' to create profiles for anonymous users as well
 					});
-				}
-			});
+				});
+			}
 
 			if (!isSentryInitialized) {
 				Sentry.init({
