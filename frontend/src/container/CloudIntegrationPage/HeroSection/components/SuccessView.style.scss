@@ -16,14 +16,14 @@
 		.cloud-account-setup-success-view {
 			&__title {
 				h3 {
-					color: var(--bg-vanilla-100);
+					color: var(--l1-foreground);
 					font-size: 20px;
 					font-weight: 500;
 					line-height: 32px;
 				}
 			}
 			&__description {
-				color: var(--bg-vanilla-400);
+				color: var(--l2-foreground);
 				font-size: 14px;
 				font-weight: 400;
 				line-height: 20px;
@@ -37,7 +37,7 @@
 		gap: 18px;
 		text-align: left;
 		&-title {
-			color: var(--bg-slate-50);
+			color: var(--muted-foreground);
 			font-size: 11px;
 			font-weight: 500;
 			line-height: 18px;
@@ -60,8 +60,8 @@
 					letter-spacing: -0.21px;
 				}
 				&.ant-alert-info {
-					border: 1px solid rgba(63, 94, 204, 0.5);
-					background: rgba(78, 116, 248, 0.2);
+					border: 1px solid color-mix(in srgb, var(--bg-robin-600) 50%, transparent);
+					background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 					color: var(--bg-robin-400);
 				}
 
@@ -85,7 +85,7 @@
 		padding-top: 18px;
 		.ant-btn {
 			background: var(--bg-robin-500);
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			font-size: 14px;
 			font-weight: 500;
 			line-height: 20px;
@@ -108,26 +108,26 @@
 			.cloud-account-setup-success-view {
 				&__title {
 					h3 {
-						color: var(--bg-ink-500);
+						color: var(--l1-foreground);
 					}
 				}
 
 				&__description {
-					color: var(--bg-ink-400);
+					color: var(--l1-foreground);
 				}
 			}
 		}
 
 		&__what-next {
 			&-title {
-				color: var(--bg-ink-500);
+				color: var(--l1-foreground);
 			}
 
 			.what-next-items-wrapper {
 				&__item {
 					&.ant-alert-info {
-						border: 1px solid rgba(63, 94, 204, 0.2);
-						background: rgba(78, 116, 248, 0.1);
+						border: 1px solid color-mix(in srgb, var(--bg-robin-600) 20%, transparent);
+						background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
 						color: var(--bg-robin-500);
 					}
 
@@ -145,7 +145,7 @@
 		&__footer {
 			.ant-btn {
 				background: var(--bg-robin-500);
-				color: var(--bg-vanilla-100);
+				color: var(--l1-background);
 
 				&:hover {
 					background: var(--bg-robin-400);

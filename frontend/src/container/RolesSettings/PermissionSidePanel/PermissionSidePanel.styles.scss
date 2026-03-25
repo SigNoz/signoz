@@ -37,7 +37,7 @@
 		flex-shrink: 0;
 
 		&:hover {
-			color: var(--text-base-white);
+			color: var(--l1-foreground);
 		}
 	}
 
@@ -97,7 +97,7 @@
 		height: 6px;
 		border-radius: 50px;
 		background: var(--primary);
-		box-shadow: 0px 0px 6px 0px rgba(78, 116, 248, 0.4);
+		box-shadow: 0px 0px 6px 0px color-mix(in srgb, var(--bg-robin-500) 40%, transparent);
 		flex-shrink: 0;
 	}
 
@@ -135,11 +135,11 @@
 		transition: background 0.15s ease;
 
 		&--expanded {
-			background: rgba(171, 189, 255, 0.04);
+			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 		}
 
 		&:hover {
-			background: rgba(171, 189, 255, 0.03);
+			background: color-mix(in srgb, var(--bg-robin-200) 3%, transparent);
 		}
 	}
 
@@ -165,7 +165,7 @@
 		font-weight: 400;
 		line-height: 20px;
 		letter-spacing: -0.07px;
-		color: var(--text-base-white);
+		color: var(--l1-foreground);
 		text-transform: capitalize;
 	}
 
@@ -174,7 +174,7 @@
 		flex-direction: column;
 		gap: 2px;
 		padding: 8px 0 8px 44px;
-		background: rgba(171, 189, 255, 0.04);
+		background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 	}
 
 	&__radio-group {
@@ -195,7 +195,7 @@
 			font-weight: 400;
 			line-height: 20px;
 			letter-spacing: -0.07px;
-			color: var(--text-base-white);
+			color: var(--l1-foreground);
 			cursor: pointer;
 		}
 	}
@@ -240,7 +240,7 @@
 			font-size: 14px;
 			font-weight: 400;
 			line-height: 20px;
-			color: var(--text-base-white) !important;
+			color: var(--l1-foreground) !important;
 			height: auto !important;
 		}
 
@@ -265,7 +265,7 @@
 
 			&-option-selected {
 				background: var(--border) !important;
-				color: var(--text-base-white) !important;
+				color: var(--l1-foreground) !important;
 			}
 
 			&-option-active {
@@ -278,38 +278,6 @@
 			border: 1px solid var(--border);
 			border-radius: 2px;
 			padding: 4px 0;
-		}
-	}
-}
-
-.lightMode {
-	.permission-side-panel {
-		&__close {
-			&:hover {
-				color: var(--text-base-black);
-			}
-		}
-	}
-
-	.psp-resource {
-		&__label {
-			color: var(--text-base-black);
-		}
-
-		&__radio-item label {
-			color: var(--text-base-black);
-		}
-
-		&__select .ant-select-selection-item {
-			color: var(--text-base-black) !important;
-		}
-	}
-
-	.psp-resource__select-popup {
-		.ant-select-item {
-			&-option-selected {
-				color: var(--text-base-black) !important;
-			}
 		}
 	}
 }

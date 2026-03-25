@@ -10,7 +10,7 @@
 		position: absolute;
 		inset: 1px;
 		border-radius: 50%;
-		background: rgba(78, 116, 248, 0.2);
+		background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 	}
 
 	&::after {

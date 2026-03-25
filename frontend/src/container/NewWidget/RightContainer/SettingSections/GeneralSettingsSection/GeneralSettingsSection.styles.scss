@@ -9,9 +9,9 @@
 		flex: 1 0 0;
 		align-self: stretch;
 		border-radius: 2px;
-		border: 1px solid var(--bg-slate-400);
-		background: var(--bg-ink-300);
-		color: var(--bg-vanilla-100);
+		border: 1px solid var(--l2-border);
+		background: var(--l3-background);
+		color: var(--l1-foreground);
 		font-family: Inter;
 		font-size: 14px;
 		font-style: normal;
@@ -29,9 +29,9 @@
 			align-items: flex-start;
 			gap: 4px;
 			border-radius: 2px;
-			border: 1px solid var(--bg-slate-400);
-			background: var(--bg-ink-300);
-			color: var(--bg-vanilla-100);
+			border: 1px solid var(--l2-border);
+			background: var(--l3-background);
+			color: var(--l1-foreground);
 			font-family: Inter;
 			font-size: 14px;
 			font-style: normal;
@@ -42,23 +42,3 @@
 	}
 }
 
-.lightMode {
-	.general-settings__name-description {
-		border-top: 1px solid var(--bg-vanilla-300);
-		border-bottom: 1px solid var(--bg-vanilla-300);
-
-		.general-settings__name-input {
-			border: 1px solid var(--bg-vanilla-300);
-			background: var(--bg-vanilla-300);
-			color: var(--bg-ink-300);
-		}
-
-		.general-settings__description-input {
-			.ant-input {
-				border: 1px solid var(--bg-vanilla-300);
-				background: var(--bg-vanilla-300);
-				color: var(--bg-ink-300);
-			}
-		}
-	}
-}

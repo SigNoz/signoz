@@ -10,17 +10,11 @@
 	align-items: center;
 	justify-content: space-between;
 	padding: 8px;
-	border-bottom: 1px solid var(--bg-ink-300);
+	border-bottom: 1px solid var(--l3-border);
 
 	.live-logs-frequency-chart-view-controller {
 		display: flex;
 		align-items: center;
 		gap: 8px;
-	}
-}
-
-.lightMode {
-	.live-logs-settings-panel {
-		border-bottom: 1px solid var(--bg-vanilla-300);
 	}
 }

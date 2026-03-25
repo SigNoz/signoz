@@ -26,7 +26,7 @@
 		}
 	}
 	&--negative {
-		background: rgba(229, 72, 77, 0.1);
+		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
 
 		.change-percentage-pill {
 			&__icon {

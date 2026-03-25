@@ -65,12 +65,12 @@
 	width: 100%;
 
 	.error-content {
-		background: rgba(229, 72, 77, 0.1);
-		border: 1px solid rgba(229, 72, 77, 0.2);
+		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+		border: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		border-radius: 4px;
 
 		&__summary-section {
-			border-bottom: 1px solid rgba(229, 72, 77, 0.2);
+			border-bottom: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		}
 
 		&__summary {
@@ -123,7 +123,7 @@
 		&__message-badge-line {
 			background-image: radial-gradient(
 				circle,
-				rgba(229, 72, 77, 0.3) 1px,
+				color-mix(in srgb, var(--bg-cherry-500) 30%, transparent) 1px,
 				transparent 2px
 			);
 		}
@@ -149,7 +149,7 @@
 		}
 
 		&__scroll-hint {
-			background: rgba(229, 72, 77, 0.2);
+			background: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		}
 
 		&__scroll-hint-text {
@@ -161,43 +161,43 @@
 .lightMode {
 	.login-error-container {
 		.error-content {
-			background: rgba(229, 72, 77, 0.1);
-			border-color: rgba(229, 72, 77, 0.2);
+			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);
+			border-color: color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 
 			&__error-code {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 
 			&__error-message {
-				color: var(--bg-ink-400);
+				color: var(--l1-foreground);
 			}
 
 			&__docs-button {
-				color: var(--bg-ink-400);
-				border-color: var(--bg-vanilla-300);
+				color: var(--l1-foreground);
+				border-color: var(--l3-border);
 				background: transparent;
 
 				&:hover {
-					color: var(--bg-ink-100);
-					border-color: var(--bg-vanilla-400);
+					color: var(--l2-foreground);
+					border-color: var(--l3-border);
 					background: transparent;
 				}
 			}
 
 			&__message-badge-label-text {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 
 			&__message-item {
-				color: var(--bg-ink-400);
+				color: var(--l1-foreground);
 
 				&::before {
-					background: var(--bg-ink-400);
+					background: var(--l3-background);
 				}
 			}
 
 			&__scroll-hint-text {
-				color: var(--bg-ink-100);
+				color: var(--l2-foreground);
 			}
 		}
 	}
@@ -337,62 +337,4 @@
 
 .login-submit-btn {
 	width: 100%;
-}
-
-.lightMode {
-	.login-form-title {
-		color: var(--text-ink-500);
-	}
-
-	.login-form-description {
-		color: var(--text-neutral-light-200);
-	}
-
-	.login-form-card {
-		background: var(--bg-base-white);
-		border-color: var(--bg-vanilla-300);
-	}
-
-	.forgot-password-link {
-		color: var(--text-neutral-dark-300);
-	}
-
-	.login-form-input {
-		background: var(--bg-vanilla-200);
-		border-color: var(--bg-vanilla-300);
-		color: var(--text-ink-500);
-
-		&::placeholder {
-			color: var(--text-neutral-light-200);
-		}
-
-		&:focus {
-			border-color: var(--primary);
-		}
-
-		// Select component light mode styling
-		&.ant-select {
-			.ant-select-selector {
-				background: var(--bg-vanilla-200) !important;
-				border-color: var(--bg-vanilla-300) !important;
-				color: var(--text-ink-500) !important;
-			}
-
-			.ant-select-selection-placeholder {
-				color: var(--text-neutral-light-200) !important;
-			}
-
-			.ant-select-selection-item {
-				color: var(--text-ink-500) !important;
-			}
-
-			&:hover .ant-select-selector {
-				border-color: var(--bg-vanilla-300) !important;
-			}
-
-			&.ant-select-focused .ant-select-selector {
-				border-color: var(--primary) !important;
-			}
-		}
-	}
 }

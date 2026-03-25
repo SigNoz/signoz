@@ -4,7 +4,7 @@
 	justify-content: space-between;
 	padding: 12px;
 	min-height: 44px;
-	border-top: 1px solid var(--bg-slate-500);
+	border-top: 1px solid var(--l1-border);
 	cursor: pointer;
 
 	.alerts-section__left {
@@ -13,11 +13,11 @@
 		gap: 8px;
 
 		.alerts-section__bell-icon {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 		}
 
 		.alerts-section__text {
-			color: var(--bg-vanilla-400);
+			color: var(--l2-foreground);
 			font-size: 14px;
 			font-style: normal;
 			font-weight: 400;
@@ -26,25 +26,7 @@
 		}
 	}
 	.alerts-section__plus-icon {
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 	}
 }
 
-.lightMode {
-	.alerts-section {
-		border-top: 1px solid var(--bg-vanilla-300);
-
-		.alerts-section__left {
-			.alerts-section__bell-icon {
-				color: var(--bg-ink-300);
-			}
-
-			.alerts-section__text {
-				color: var(--bg-ink-300);
-			}
-		}
-		.alerts-section__plus-icon {
-			color: var(--bg-ink-300);
-		}
-	}
-}

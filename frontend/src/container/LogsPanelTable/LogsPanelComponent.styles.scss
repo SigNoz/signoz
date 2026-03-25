@@ -22,7 +22,7 @@
 			font-family: Inter;
 			.ant-typography {
 				background-color: transparent;
-				color: var(--bg-vanilla-100);
+				color: var(--l1-foreground);
 				margin-bottom: 0;
 				font-size: 13px;
 				font-style: normal;
@@ -36,12 +36,12 @@
 		}
 
 		.ant-table-wrapper .ant-table-header {
-			border-bottom: 0.5px solid var(--bg-slate-400);
+			border-bottom: 0.5px solid var(--l2-border);
 		}
 
 		.ant-table-wrapper .ant-table-thead > tr > th {
 			font-family: Inter;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			background-color: transparent;
 			border: none;
 			font-size: 14px;
@@ -71,18 +71,18 @@
 	.logs-table {
 		.resize-table {
 			.ant-table-wrapper .ant-table-tbody > tr > td {
-				background-color: var(--bg-vanilla-100);
+				background-color: var(--l1-foreground);
 				.ant-typography {
-					color: var(--bg-ink-500);
+					color: var(--l1-foreground);
 				}
 			}
 			.ant-table-wrapper .ant-table-thead > tr > th {
-				background-color: var(--bg-vanilla-100);
-				color: var(--bg-ink-500);
+				background-color: var(--l1-foreground);
+				color: var(--l1-foreground);
 			}
 
 			.ant-table-wrapper .ant-table-header {
-				border-bottom: 0.5px solid var(--bg-vanilla-400);
+				border-bottom: 0.5px solid var(--l3-border);
 			}
 		}
 	}

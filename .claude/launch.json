@@ -1,0 +1,47 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Frontend (Vite)",
+      "runtimeExecutable": "yarn",
+      "runtimeArgs": ["--cwd", "frontend", "dev"],
+      "port": 3301
+    },
+    {
+      "name": "Backend: Enterprise",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["go-run-enterprise"],
+      "port": 8080
+    },
+    {
+      "name": "Backend: Community",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["go-run-community"],
+      "port": 8080
+    },
+    {
+      "name": "DevEnv: ClickHouse + OTel Collector",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["devenv-up"],
+      "port": 8123
+    },
+    {
+      "name": "DevEnv: ClickHouse",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["devenv-clickhouse"],
+      "port": 8123
+    },
+    {
+      "name": "DevEnv: OTel Collector",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["devenv-signoz-otel-collector"],
+      "port": 4317
+    },
+    {
+      "name": "DevEnv: PostgreSQL",
+      "runtimeExecutable": "make",
+      "runtimeArgs": ["devenv-postgres"],
+      "port": 5432
+    }
+  ]
+}

@@ -115,7 +115,7 @@
 
 .highlight-text {
 	border-radius: 2px;
-	background: rgba(78, 116, 248, 0.1);
+	background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
 	padding-right: 4px;
 	font-family: 'Geist Mono';
 	color: var(--bg-robin-500);
@@ -130,7 +130,7 @@
 	.cancel-btn {
 		border-radius: 2px;
 		border: none;
-		background: var(--bg-slate-500, #161922);
+		background: var(--l1-background, #161922);
 		box-shadow: none;
 	}
 
@@ -142,7 +142,7 @@
 .isDarkMode {
 	.app-layout {
 		.app-content {
-			background: #0b0c0e;
+			background: var(--background);
 		}
 	}
 }
@@ -150,7 +150,7 @@
 .isLightMode {
 	.app-layout {
 		.app-content {
-			background: #ffffff;
+			background: var(--card);
 		}
 	}
 }

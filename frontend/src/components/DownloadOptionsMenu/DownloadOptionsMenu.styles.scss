@@ -57,30 +57,3 @@
 		}
 	}
 }
-
-.lightMode {
-	.download-popover {
-		.ant-popover-inner {
-			border: 1px solid var(--l2-border);
-			background: linear-gradient(
-				139deg,
-				var(--background) 0%,
-				var(--l1-background) 98.68%
-			);
-			box-shadow: 4px 10px 16px 2px rgba(255, 255, 255, 0.2);
-		}
-		.export-options-container {
-			.title {
-				color: var(--l2-foreground);
-			}
-
-			:global(.ant-radio-wrapper) {
-				color: var(--foreground);
-			}
-
-			.horizontal-line {
-				background: var(--l2-border);
-			}
-		}
-	}
-}

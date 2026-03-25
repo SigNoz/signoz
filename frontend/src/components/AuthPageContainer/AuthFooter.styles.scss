@@ -16,8 +16,8 @@
 	justify-content: center;
 	gap: 16px;
 	padding: 12px;
-	background: var(--bg-ink-400);
-	border: 1px solid var(--bg-ink-200);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: 4px;
 }
 
@@ -84,14 +84,12 @@
 	width: 4px;
 	height: 4px;
 	border-radius: 50%;
-	background: var(--bg-ink-200);
+	background: var(--l3-background);
 	flex-shrink: 0;
 }
 
 .lightMode {
 	.auth-footer-content {
-		background: var(--bg-base-white);
-		border-color: var(--bg-vanilla-300);
 		box-shadow: 0px 1px 4px rgba(0, 0, 0, 0.08);
 	}
 
@@ -107,9 +105,5 @@
 
 	.auth-footer-link-icon {
 		color: var(--text-neutral-light-100);
-	}
-
-	.auth-footer-separator {
-		background: var(--bg-vanilla-300);
 	}
 }

@@ -41,7 +41,7 @@
 	gap: 8px;
 	height: 32px;
 	padding: 10px 16px;
-	background: var(--bg-ink-400);
+	background: var(--l2-background);
 	border: none;
 	border-radius: 2px;
 	cursor: pointer;
@@ -72,8 +72,6 @@
 	}
 
 	.auth-header-help-button {
-		background: var(--bg-vanilla-200);
-
 		span,
 		svg {
 			color: var(--text-neutral-light-200);

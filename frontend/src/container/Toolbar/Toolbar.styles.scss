@@ -3,8 +3,8 @@
 	justify-content: space-between;
 	align-items: flex-end;
 
-	border-top: 1px solid var(--bg-slate-400);
-	border-bottom: 1px solid var(--bg-slate-400);
+	border-top: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l2-border);
 
 	padding: 0px 8px;
 	gap: 8px;
@@ -45,9 +45,3 @@
 	}
 }
 
-.lightMode {
-	.toolbar {
-		border-top: 1px solid var(--bg-vanilla-300);
-		border-bottom: 1px solid var(--bg-vanilla-300);
-	}
-}

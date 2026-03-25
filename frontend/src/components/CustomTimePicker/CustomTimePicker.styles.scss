@@ -17,7 +17,7 @@
 		height: 33px;
 
 		&:hover:not(:disabled) {
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			background: var(--primary);
 		}
 
@@ -98,7 +98,7 @@
 	justify-content: center;
 	padding: 4px;
 	cursor: default;
-	color: var(--bg-vanilla-400, #c0c1c3) !important;
+	color: var(--l2-foreground) !important;
 	font-size: 14px;
 	font-style: normal;
 	font-weight: 400;
@@ -146,14 +146,10 @@
 			color: rgba($color: #000000, $alpha: 0.4);
 		}
 	}
-
-	.info-text {
-		color: var(--bg-slate-400) !important;
-	}
 }
 
 .date-time-popover__footer {
-	border-top: 1px solid var(--bg-ink-200);
+	border-top: 1px solid var(--l2-border);
 	padding: 8px 14px;
 	.timezone-container {
 		display: flex;
@@ -205,7 +201,7 @@
 
 		display: flex;
 		align-items: center;
-		color: var(--bg-vanilla-400);
+		color: var(--l2-foreground);
 		gap: 6px;
 
 		.timezone {
@@ -213,10 +209,10 @@
 			align-items: center;
 			gap: 4px;
 			border-radius: 2px;
-			background: rgba(171, 189, 255, 0.04);
+			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
 			cursor: pointer;
 			padding: 0px 4px;
-			color: var(--bg-vanilla-100);
+			color: var(--l1-foreground);
 			border: none;
 		}
 	}
@@ -228,8 +224,8 @@
 	justify-content: center;
 	padding: 0 4px;
 	border-radius: 2px;
-	color: var(--bg-vanilla-400);
-	background-color: var(--bg-ink-200);
+	color: var(--l2-foreground);
+	background-color: var(--l3-background);
 	font-size: 9px;
 	font-weight: 400;
 	line-height: 12px;
@@ -249,8 +245,8 @@
 	width: 36px;
 
 	font-size: 11px;
-	color: var(--bg-vanilla-400);
-	background-color: var(--bg-ink-200);
+	color: var(--l2-foreground);
+	background-color: var(--l3-background);
 	cursor: pointer;
 
 	&.is-live {
@@ -272,13 +268,13 @@
 
 @keyframes ripple {
 	0% {
-		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0.4);
+		box-shadow: 0 0 0 0 color-mix(in srgb, var(--bg-amber-400) 40%, transparent);
 	}
 	60% {
-		box-shadow: 0 0 0 6px rgba(245, 158, 11, 0);
+		box-shadow: 0 0 0 6px transparent;
 	}
 	100% {
-		box-shadow: 0 0 0 0 rgba(245, 158, 11, 0);
+		box-shadow: 0 0 0 0 transparent;
 	}
 }
 
@@ -288,8 +284,8 @@
 	justify-content: center;
 	padding: 0 4px;
 	border-radius: 2px;
-	background: rgba(171, 189, 255, 0.04);
-	color: var(--bg-vanilla-100);
+	background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent);
+	color: var(--l1-foreground);
 	font-size: 12px;
 	font-weight: 400;
 	line-height: 16px;
@@ -299,23 +295,16 @@
 	width: 20px;
 
 	&:hover {
-		background: rgba(171, 189, 255, 0.08);
+		background: color-mix(in srgb, var(--bg-robin-200) 8%, transparent);
 	}
 }
 
 .lightMode {
-	.date-time-popover__footer {
-		border-color: var(--bg-vanilla-400);
-	}
-
 	.timezone-container {
-		color: var(--bg-ink-400);
-
 		.timezone {
-			color: var(--bg-ink-100);
 			background: rgb(179 179 179 / 15%);
 			&__icon {
-				stroke: var(--bg-ink-100);
+				stroke: var(--l1-foreground);
 			}
 		}
 	}
@@ -323,23 +312,16 @@
 	.custom-time-picker {
 		.timeSelection-input {
 			&:hover {
-				border-color: var(--bg-vanilla-300) !important;
+				border-color: var(--l2-border) !important;
 			}
 		}
 	}
 
 	.timezone-badge {
-		color: var(--bg-ink-100);
 		background: rgb(179 179 179 / 15%);
 	}
 
-	.time-input-prefix {
-		background-color: var(--bg-vanilla-300);
-		color: var(--bg-ink-400);
-	}
-
 	.time-input-suffix-icon-badge {
-		color: var(--bg-ink-100);
 		background: rgb(179 179 179 / 15%);
 
 		&:hover {
