@@ -1,5 +1,6 @@
 import { useCallback, useMemo, useState } from 'react';
 import { Button, Popover, Radio, Tooltip, Typography } from 'antd';
+import { TelemetryFieldKey } from 'api/v5/v5';
 import { useExportRawData } from 'hooks/useDownloadOptionsMenu/useDownloadOptionsMenu';
 import { Download, DownloadIcon, Loader2 } from 'lucide-react';
 import { DataSource } from 'types/common/queryBuilder';
@@ -14,10 +15,12 @@ import './DownloadOptionsMenu.styles.scss';
 
 interface DownloadOptionsMenuProps {
 	dataSource: DataSource;
+	selectedColumns?: TelemetryFieldKey[];
 }
 
 export default function DownloadOptionsMenu({
 	dataSource,
+	selectedColumns,
 }: DownloadOptionsMenuProps): JSX.Element {
 	const [exportFormat, setExportFormat] = useState<string>(DownloadFormats.CSV);
 	const [rowLimit, setRowLimit] = useState<number>(DownloadRowCounts.TEN_K);
@@ -36,8 +39,15 @@ export default function DownloadOptionsMenu({
 			format: exportFormat,
 			rowLimit,
 			clearSelectColumns: columnsScope === DownloadColumnsScopes.ALL,
+			selectedColumns,
 		});
-	}, [exportFormat, rowLimit, columnsScope, handleExportRawData]);
+	}, [
+		exportFormat,
+		rowLimit,
+		columnsScope,
+		selectedColumns,
+		handleExportRawData,
+	]);
 
 	const popoverContent = useMemo(
 		() => (

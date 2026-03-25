@@ -3,7 +3,8 @@ import { useCallback, useState } from 'react';
 import { useSelector } from 'react-redux';
 import { message } from 'antd';
 import { downloadExportData } from 'api/v1/download/downloadExportData';
-import { prepareQueryRangePayloadV5 } from 'api/v5/v5';
+import { prepareQueryRangePayloadV5, TelemetryFieldKey } from 'api/v5/v5';
+import { ALL_TRACE_COLUMNS } from 'components/DownloadOptionsMenu/constants';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { AppState } from 'store/reducers';
@@ -14,6 +15,7 @@ interface ExportOptions {
 	format: string;
 	rowLimit: number;
 	clearSelectColumns: boolean;
+	selectedColumns?: TelemetryFieldKey[];
 }
 
 interface UseExportRawDataProps {
@@ -42,6 +44,7 @@ export function useExportRawData({
 			format,
 			rowLimit,
 			clearSelectColumns,
+			selectedColumns,
 		}: ExportOptions): Promise<void> => {
 			if (!stagedQuery) {
 				return;
@@ -49,6 +52,16 @@ export function useExportRawData({
 
 			try {
 				setIsDownloading(true);
+
+				// HACK: When ALL columns are requested for traces, explicitly send all known
+				// trace columns because the backend doesn't return everything when selectFields is empty.
+				const selectColumnsOverride = clearSelectColumns
+					? {
+							selectColumns: dataSource === DataSource.TRACES ? ALL_TRACE_COLUMNS : [],
+					  }
+					: selectedColumns?.length
+					? { selectColumns: selectedColumns }
+					: {};
 
 				const exportQuery = {
 					...stagedQuery,
@@ -59,7 +72,7 @@ export function useExportRawData({
 							groupBy: [],
 							having: { expression: '' },
 							limit: rowLimit,
-							...(clearSelectColumns && { selectColumns: [] }),
+							...selectColumnsOverride,
 						})),
 						queryTraceOperator: (stagedQuery.builder.queryTraceOperator || []).map(
 							(traceOp) => ({
@@ -67,7 +80,7 @@ export function useExportRawData({
 								groupBy: [],
 								having: { expression: '' },
 								limit: rowLimit,
-								...(clearSelectColumns && { selectColumns: [] }),
+								...selectColumnsOverride,
 							}),
 						),
 					},
