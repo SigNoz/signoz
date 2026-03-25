@@ -18,7 +18,7 @@ func TestFiltering_SuppressesContextCanceled(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	logger := slog.New(&handler{base: slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}), wrappers: []Wrapper{filtering}})
 
-	logger.ErrorContext(context.Background(), "operation failed", "error", context.Canceled)
+	logger.ErrorContext(context.Background(), "operation failed", slog.Any("error", context.Canceled))
 
 	assert.Empty(t, buf.String(), "log with context.Canceled should be suppressed")
 }
@@ -29,7 +29,7 @@ func TestFiltering_AllowsOtherErrors(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	logger := slog.New(&handler{base: slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}), wrappers: []Wrapper{filtering}})
 
-	logger.ErrorContext(context.Background(), "operation failed", "error", errors.New(errors.TypeInternal, errors.CodeInternal, "some other error"))
+	logger.ErrorContext(context.Background(), "operation failed", slog.Any("error", errors.New(errors.TypeInternal, errors.CodeInternal, "some other error")))
 
 	m := make(map[string]any)
 	err := json.Unmarshal(buf.Bytes(), &m)
@@ -43,7 +43,7 @@ func TestFiltering_AllowsLogsWithoutErrors(t *testing.T) {
 	buf := bytes.NewBuffer(nil)
 	logger := slog.New(&handler{base: slog.NewJSONHandler(buf, &slog.HandlerOptions{Level: slog.LevelDebug}), wrappers: []Wrapper{filtering}})
 
-	logger.InfoContext(context.Background(), "normal log", "key", "value")
+	logger.InfoContext(context.Background(), "normal log", slog.String("key", "value"))
 
 	m := make(map[string]any)
 	err := json.Unmarshal(buf.Bytes(), &m)

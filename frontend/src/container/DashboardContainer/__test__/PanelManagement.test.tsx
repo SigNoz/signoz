@@ -56,8 +56,8 @@ const mockDashboard = {
 	},
 };
 // Mock dependencies
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
 		selectedDashboard: mockDashboard,
 	}),
 }));
@@ -152,8 +152,8 @@ describe('Panel Management Tests', () => {
 			};
 
 			// Temporarily mock the dashboard
-			jest.doMock('providers/Dashboard/Dashboard', () => ({
-				useDashboard: (): any => ({
+			jest.doMock('providers/Dashboard/store/useDashboardStore', () => ({
+				useDashboardStore: (): any => ({
 					selectedDashboard: modifiedDashboard,
 				}),
 			}));

@@ -6,6 +6,8 @@ import (
 	"net/http"
 	"strings"
 	"time"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 )
 
 const (
@@ -36,7 +38,7 @@ func NewTimeout(logger *slog.Logger, excludedRoutes []string, defaultTimeout tim
 	}
 
 	return &Timeout{
-		logger:         logger.With("pkg", pkgname),
+		logger:         logger.With(slog.String("pkg", pkgname)),
 		excluded:       excluded,
 		defaultTimeout: defaultTimeout,
 		maxTimeout:     maxTimeout,
@@ -51,7 +53,7 @@ func (middleware *Timeout) Wrap(next http.Handler) http.Handler {
 			if incoming != "" {
 				parsed, err := time.ParseDuration(strings.TrimSpace(incoming) + "s")
 				if err != nil {
-					middleware.logger.WarnContext(req.Context(), "cannot parse timeout in header, using default timeout", "timeout", incoming, "error", err)
+					middleware.logger.WarnContext(req.Context(), "cannot parse timeout in header, using default timeout", slog.String("timeout", incoming), errors.Attr(err))
 				} else {
 					if parsed > middleware.maxTimeout {
 						actual = middleware.maxTimeout

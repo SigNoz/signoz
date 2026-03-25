@@ -61,9 +61,12 @@ def test_list_services_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # List services for the account
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
@@ -152,9 +155,12 @@ def test_get_service_details_with_account(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get list of services first
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -253,9 +259,12 @@ def test_update_service_config(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get list of services to pick a valid service ID
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
@@ -365,9 +374,12 @@ def test_update_service_config_invalid_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Try to update config for invalid service
     fake_service_id = "non-existent-service"
@@ -409,9 +421,12 @@ def test_update_service_config_disable_service(
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Get a valid service
     list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"

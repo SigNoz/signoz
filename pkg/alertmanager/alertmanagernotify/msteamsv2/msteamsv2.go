@@ -112,7 +112,7 @@ func (n *Notifier) Notify(ctx context.Context, as ...*types.Alert) (bool, error)
 		return false, err
 	}
 
-	n.logger.DebugContext(ctx, "extracted group key", "key", key)
+	n.logger.DebugContext(ctx, "extracted group key", slog.String("key", string(key)))
 
 	data := notify.GetTemplateData(ctx, n.tmpl, as, n.logger)
 	tmpl := notify.TmplText(n.tmpl, data, &err)

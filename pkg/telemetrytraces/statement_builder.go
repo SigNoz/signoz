@@ -111,23 +111,6 @@ func (b *traceQueryStatementBuilder) Build(
 
 	query = b.adjustKeys(ctx, keys, query, requestType)
 
-	// Check if filter contains trace_id(s) and optimize time range if needed
-	if query.Filter != nil && query.Filter.Expression != "" && b.telemetryStore != nil {
-		traceIDs, found := ExtractTraceIDsFromFilter(query.Filter.Expression)
-		if found && len(traceIDs) > 0 {
-			finder := NewTraceTimeRangeFinder(b.telemetryStore)
-
-			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
-			if !ok {
-				b.logger.DebugContext(ctx, "failed to get trace time range", "trace_ids", traceIDs)
-			} else if traceStart > 0 && traceEnd > 0 {
-				start = uint64(traceStart)
-				end = uint64(traceEnd)
-				b.logger.DebugContext(ctx, "optimized time range for traces", "trace_ids", traceIDs, "start", start, "end", end)
-			}
-		}
-	}
-
 	// Create SQL builder
 	q := sqlbuilder.NewSelectBuilder()
 
@@ -249,7 +232,7 @@ func (b *traceQueryStatementBuilder) adjustKeys(ctx context.Context, keys map[st
 
 	for _, action := range actions {
 		// TODO: change to debug level once we are confident about the behavior
-		b.logger.InfoContext(ctx, "key adjustment action", "action", action)
+		b.logger.InfoContext(ctx, "key adjustment action", slog.String("action", action))
 	}
 
 	return query

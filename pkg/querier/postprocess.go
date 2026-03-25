@@ -3,12 +3,15 @@ package querier
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"math"
 	"slices"
 	"sort"
 	"strings"
 
 	"github.com/SigNoz/govaluate"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -358,14 +361,14 @@ func (q *querier) processTimeSeriesFormula(
 	// Create formula evaluator
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
 	// Evaluate the formula
 	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
@@ -508,13 +511,13 @@ func (q *querier) processScalarFormula(
 	canDefaultZero := req.GetQueriesSupportingZeroDefault()
 	evaluator, err := qbtypes.NewFormulaEvaluator(formula.Expression, canDefaultZero)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to create formula evaluator", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to create formula evaluator", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 
 	formulaSeries, err := evaluator.EvaluateFormula(timeSeriesData)
 	if err != nil {
-		q.logger.ErrorContext(ctx, "failed to evaluate formula", "error", err, "formula", formula.Name)
+		q.logger.ErrorContext(ctx, "failed to evaluate formula", errors.Attr(err), slog.String("formula", formula.Name))
 		return nil
 	}
 

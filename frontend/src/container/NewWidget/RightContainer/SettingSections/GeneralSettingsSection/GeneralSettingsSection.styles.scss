@@ -1,0 +1,64 @@
+.general-settings__name-description {
+	padding: 0 0 4px 0;
+
+	.general-settings__name-input {
+		display: flex;
+		padding: 6px 6px 6px 8px;
+		align-items: center;
+		gap: 4px;
+		flex: 1 0 0;
+		align-self: stretch;
+		border-radius: 2px;
+		border: 1px solid var(--bg-slate-400);
+		background: var(--bg-ink-300);
+		color: var(--bg-vanilla-100);
+		font-family: Inter;
+		font-size: 14px;
+		font-style: normal;
+		font-weight: 400;
+		line-height: 18px; /* 128.571% */
+		letter-spacing: -0.07px;
+	}
+
+	.general-settings__description-input {
+		border-style: unset;
+		.ant-input {
+			display: flex;
+			height: 80px;
+			padding: 6px 6px 6px 8px;
+			align-items: flex-start;
+			gap: 4px;
+			border-radius: 2px;
+			border: 1px solid var(--bg-slate-400);
+			background: var(--bg-ink-300);
+			color: var(--bg-vanilla-100);
+			font-family: Inter;
+			font-size: 14px;
+			font-style: normal;
+			font-weight: 400;
+			line-height: 18px; /* 128.571% */
+			letter-spacing: -0.07px;
+		}
+	}
+}
+
+.lightMode {
+	.general-settings__name-description {
+		border-top: 1px solid var(--bg-vanilla-300);
+		border-bottom: 1px solid var(--bg-vanilla-300);
+
+		.general-settings__name-input {
+			border: 1px solid var(--bg-vanilla-300);
+			background: var(--bg-vanilla-300);
+			color: var(--bg-ink-300);
+		}
+
+		.general-settings__description-input {
+			.ant-input {
+				border: 1px solid var(--bg-vanilla-300);
+				background: var(--bg-vanilla-300);
+				color: var(--bg-ink-300);
+			}
+		}
+	}
+}

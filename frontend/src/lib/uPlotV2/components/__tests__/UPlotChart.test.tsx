@@ -4,7 +4,7 @@ import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import type { AlignedData } from 'uplot';
 
 import { PlotContextProvider } from '../../context/PlotContext';
-import UPlotChart from '../UPlotChart';
+import UPlotChart from '../UPlotChart/UPlotChart';
 
 // ---------------------------------------------------------------------------
 // Mocks
@@ -86,6 +86,7 @@ const createMockConfig = (): UPlotConfigBuilder => {
 		}),
 		getId: jest.fn().mockReturnValue(undefined),
 		getShouldSaveSelectionPreference: jest.fn().mockReturnValue(false),
+		getSeriesSpanGapsOptions: jest.fn().mockReturnValue([]),
 	} as unknown) as UPlotConfigBuilder;
 };
 
@@ -325,6 +326,78 @@ describe('UPlotChart', () => {
 			expect(onDestroy).toHaveBeenCalledWith(firstInstance);
 			expect(firstInstance.destroy).toHaveBeenCalled();
 			expect(instances).toHaveLength(2);
+		});
+	});
+
+	describe('spanGaps data transformation', () => {
+		it('inserts null break points before passing data to uPlot when a gap exceeds the numeric threshold', () => {
+			const config = createMockConfig();
+			// gap 0→100 = 100 > threshold 50 → null inserted at midpoint x=50
+			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+				{ spanGaps: 50 },
+			]);
+			const data: AlignedData = [
+				[0, 100],
+				[1, 2],
+			];
+
+			render(<UPlotChart config={config} data={data} width={600} height={400} />, {
+				wrapper: Wrapper,
+			});
+
+			const [, receivedData] = mockUPlotConstructor.mock.calls[0];
+			expect(receivedData[0]).toEqual([0, 50, 100]);
+			expect(receivedData[1]).toEqual([1, null, 2]);
+		});
+
+		it('passes data through unchanged when no gap exceeds the numeric threshold', () => {
+			const config = createMockConfig();
+			// all gaps = 10, threshold = 50 → no insertions, same reference returned
+			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+				{ spanGaps: 50 },
+			]);
+			const data: AlignedData = [
+				[0, 10, 20],
+				[1, 2, 3],
+			];
+
+			render(<UPlotChart config={config} data={data} width={600} height={400} />, {
+				wrapper: Wrapper,
+			});
+
+			const [, receivedData] = mockUPlotConstructor.mock.calls[0];
+			expect(receivedData).toBe(data);
+		});
+
+		it('transforms data passed to setData when data updates and a new gap exceeds the threshold', () => {
+			const config = createMockConfig();
+			(config.getSeriesSpanGapsOptions as jest.Mock).mockReturnValue([
+				{ spanGaps: 50 },
+			]);
+
+			// initial render: gap 10 < 50, no transformation
+			const initialData: AlignedData = [
+				[0, 10],
+				[1, 2],
+			];
+			// updated data: gap 100 > 50 → null inserted at midpoint x=50
+			const newData: AlignedData = [
+				[0, 100],
+				[3, 4],
+			];
+
+			const { rerender } = render(
+				<UPlotChart config={config} data={initialData} width={600} height={400} />,
+				{ wrapper: Wrapper },
+			);
+
+			rerender(
+				<UPlotChart config={config} data={newData} width={600} height={400} />,
+			);
+
+			const receivedData = instances[0].setData.mock.calls[0][0];
+			expect(receivedData[0]).toEqual([0, 50, 100]);
+			expect(receivedData[1]).toEqual([3, null, 4]);
 		});
 	});
 

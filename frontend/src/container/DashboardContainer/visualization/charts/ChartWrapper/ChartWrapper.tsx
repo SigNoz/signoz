@@ -5,7 +5,7 @@ import {
 	LegendPosition,
 	TooltipRenderArgs,
 } from 'lib/uPlotV2/components/types';
-import UPlotChart from 'lib/uPlotV2/components/UPlotChart';
+import UPlotChart from 'lib/uPlotV2/components/UPlotChart/UPlotChart';
 import { PlotContextProvider } from 'lib/uPlotV2/context/PlotContext';
 import TooltipPlugin from 'lib/uPlotV2/plugins/TooltipPlugin/TooltipPlugin';
 import noop from 'lodash-es/noop';

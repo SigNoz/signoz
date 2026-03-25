@@ -1,6 +1,6 @@
 import type React from 'react';
 import { Badge } from '@signozhq/badge';
-import { Pagination, Table, Tooltip } from 'antd';
+import { Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
@@ -18,7 +18,6 @@ export interface MemberRow {
 	status: MemberStatus;
 	joinedOn: string | null;
 	updatedAt?: string | null;
-	token?: string | null;
 }
 
 interface MembersTableProps {
@@ -64,11 +63,23 @@ function StatusBadge({ status }: { status: MemberRow['status'] }): JSX.Element {
 			</Badge>
 		);
 	}
-	return (
-		<Badge color="amber" variant="outline">
-			INVITED
-		</Badge>
-	);
+	if (status === MemberStatus.Deleted) {
+		return (
+			<Badge color="cherry" variant="outline">
+				DELETED
+			</Badge>
+		);
+	}
+
+	if (status === MemberStatus.Invited) {
+		return (
+			<Badge color="amber" variant="outline">
+				INVITED
+			</Badge>
+		);
+	}
+
+	return <Badge color="vanilla">⎯</Badge>;
 }
 
 function MembersEmptyState({
@@ -199,14 +210,30 @@ function MembersTable({
 				dataSource={data}
 				rowKey="id"
 				loading={loading}
-				pagination={false}
+				pagination={{
+					current: currentPage,
+					pageSize,
+					total,
+					showTotal: showPaginationTotal,
+					showSizeChanger: false,
+					onChange: onPageChange,
+					className: 'members-table-pagination',
+					hideOnSinglePage: true,
+				}}
 				rowClassName={(_, index): string =>
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
-				onRow={(record): React.HTMLAttributes<HTMLElement> => ({
-					onClick: (): void => onRowClick?.(record),
-					style: onRowClick ? { cursor: 'pointer' } : undefined,
-				})}
+				onRow={(record): React.HTMLAttributes<HTMLElement> => {
+					const isClickable = onRowClick && record.status !== MemberStatus.Deleted;
+					return {
+						onClick: (): void => {
+							if (isClickable) {
+								onRowClick(record);
+							}
+						},
+						style: isClickable ? { cursor: 'pointer' } : undefined,
+					};
+				}}
 				onChange={(_, __, sorter): void => {
 					if (onSortChange) {
 						onSortChange(
@@ -220,17 +247,6 @@ function MembersTable({
 				}}
 				className="members-table"
 			/>
-			{total > pageSize && (
-				<Pagination
-					current={currentPage}
-					pageSize={pageSize}
-					total={total}
-					showTotal={showPaginationTotal}
-					showSizeChanger={false}
-					onChange={onPageChange}
-					className="members-table-pagination"
-				/>
-			)}
 		</div>
 	);
 }

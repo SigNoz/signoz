@@ -61,3 +61,57 @@ def test_api_key(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> 
     assert found_pat["userId"] == found_user["id"]
     assert found_pat["name"] == "admin"
     assert found_pat["role"] == "ADMIN"
+
+
+def test_api_key_role(
+    signoz: types.SigNoz, get_token: Callable[[str, str], str]
+) -> None:
+    admin_token = get_token("admin@integration.test", "password123Z$")
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/pats"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "name": "viewer",
+            "role": "VIEWER",
+            "expiresInDays": 1,
+        },
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    pat_response = response.json()
+    assert "data" in pat_response
+    assert "token" in pat_response["data"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN
+
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/pats"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={
+            "name": "editor",
+            "role": "EDITOR",
+            "expiresInDays": 1,
+        },
+        timeout=2,
+    )
+
+    assert response.status_code == HTTPStatus.CREATED
+    pat_response = response.json()
+    assert "data" in pat_response
+    assert "token" in pat_response["data"]
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"SIGNOZ-API-KEY": f"{pat_response["data"]["token"]}"},
+    )
+
+    assert response.status_code == HTTPStatus.FORBIDDEN

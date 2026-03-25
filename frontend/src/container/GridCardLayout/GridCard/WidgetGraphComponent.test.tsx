@@ -161,8 +161,8 @@ const mockProps: WidgetGraphComponentProps = {
 };
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
 		selectedDashboard: {
 			data: {
 				variables: [],
