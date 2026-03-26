@@ -239,7 +239,10 @@ function ListView({
 					/>
 				</div>
 
-				<DownloadOptionsMenu dataSource={DataSource.TRACES} />
+				<DownloadOptionsMenu
+					dataSource={DataSource.TRACES}
+					selectedColumns={options?.selectColumns}
+				/>
 
 				<TraceExplorerControls
 					isLoading={isFetching}
