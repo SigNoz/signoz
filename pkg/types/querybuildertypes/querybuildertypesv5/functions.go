@@ -326,6 +326,10 @@ func funcAbsolute(result *TimeSeries) *TimeSeries {
 
 // funcRunningDiff returns the running difference of each point
 func funcRunningDiff(result *TimeSeries) *TimeSeries {
+	if len(result.Values) == 0 {
+		return result
+	}
+
 	// iterate over the points in reverse order
 	for idx := len(result.Values) - 1; idx >= 0; idx-- {
 		if idx > 0 {

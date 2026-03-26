@@ -292,6 +292,11 @@ func TestFuncRunningDiff(t *testing.T) {
 		want   []float64
 	}{
 		{
+			name:   "test funcRunningDiff with empty series",
+			values: []float64{},
+			want:   []float64{},
+		},
+		{
 			name:   "test funcRunningDiff",
 			values: []float64{1, 2, 3},
 			want:   []float64{1, 1}, // diff removes first element
