@@ -38,7 +38,6 @@ jest.mock('hooks/useComponentPermission', () => ({
 jest.mock('hooks/useGetTenantLicense', () => ({
 	useGetTenantLicense: jest.fn(() => ({
 		isCloudUser: false,
-		isEnterpriseSelfHostedUser: false,
 	})),
 }));
 
@@ -389,7 +388,6 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		beforeEach(() => {
 			(useGetTenantLicense as jest.Mock).mockReturnValue({
 				isCloudUser: true,
-				isEnterpriseSelfHostedUser: false,
 			});
 		});
 
@@ -415,11 +413,10 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		beforeEach(() => {
 			(useGetTenantLicense as jest.Mock).mockReturnValue({
 				isCloudUser: false,
-				isEnterpriseSelfHostedUser: true,
 			});
 		});
 
-		it('should render CustomDomainSettings but not GeneralSettingsCloud', () => {
+		it('should not render CustomDomainSettings or GeneralSettingsCloud', () => {
 			render(
 				<GeneralSettings
 					metricsTtlValuesPayload={mockMetricsRetention}
@@ -432,7 +429,9 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			expect(screen.getByTestId('custom-domain-settings')).toBeInTheDocument();
+			expect(
+				screen.queryByTestId('custom-domain-settings'),
+			).not.toBeInTheDocument();
 			expect(
 				screen.queryByTestId('general-settings-cloud'),
 			).not.toBeInTheDocument();
