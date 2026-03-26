@@ -422,21 +422,6 @@ func New(
 	// Initialize the querier handler via callback (allows EE to decorate with anomaly detection)
 	querierHandler := querierHandlerCallback(providerSettings, querier, analytics)
 
-	// Initialize all handlers for the modules
-	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus)
-
-	// Initialize the API server
-	apiserver, err := factory.NewProviderFromNamedMap(
-		ctx,
-		providerSettings,
-		config.APIServer,
-		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
-		"signoz",
-	)
-	if err != nil {
-		return nil, err
-	}
-
 	// Create a list of all stats collectors
 	statsCollectors := []statsreporter.StatsCollector{
 		alertmanager,
@@ -463,6 +448,7 @@ func New(
 	}
 
 	registry, err := factory.NewRegistry(
+		ctx,
 		instrumentation.Logger(),
 		factory.NewNamedService(factory.MustNewName("instrumentation"), instrumentation),
 		factory.NewNamedService(factory.MustNewName("pprof"), pprofService),
@@ -472,7 +458,23 @@ func New(
 		factory.NewNamedService(factory.MustNewName("statsreporter"), statsReporter),
 		factory.NewNamedService(factory.MustNewName("tokenizer"), tokenizer),
 		factory.NewNamedService(factory.MustNewName("authz"), authz),
-		factory.NewNamedService(factory.MustNewName("user"), userService),
+		factory.NewNamedService(factory.MustNewName("user"), userService, factory.MustNewName("authz")),
+	)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize all handlers for the modules
+	registryHandler := factory.NewHandler(registry)
+	handlers := NewHandlers(modules, providerSettings, analytics, querierHandler, licensing, global, flagger, gateway, telemetryMetadataStore, authz, zeus, registryHandler)
+
+	// Initialize the API server (after registry so it can access service health)
+	apiserverInstance, err := factory.NewProviderFromNamedMap(
+		ctx,
+		providerSettings,
+		config.APIServer,
+		NewAPIServerProviderFactories(orgGetter, authz, modules, handlers),
+		"signoz",
 	)
 	if err != nil {
 		return nil, err
@@ -490,7 +492,7 @@ func New(
 		Prometheus:             prometheus,
 		Alertmanager:           alertmanager,
 		Querier:                querier,
-		APIServer:              apiserver,
+		APIServer:              apiserverInstance,
 		Zeus:                   zeus,
 		Licensing:              licensing,
 		Emailing:               emailing,

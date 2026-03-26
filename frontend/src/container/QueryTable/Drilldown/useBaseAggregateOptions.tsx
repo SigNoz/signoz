@@ -11,7 +11,7 @@ import useContextVariables from 'hooks/dashboard/useContextVariables';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import createQueryParams from 'lib/createQueryParams';
 import ContextMenu from 'periscope/components/ContextMenu';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { ContextLinksData } from 'types/api/dashboard/getAll';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -66,7 +66,7 @@ const useBaseAggregateOptions = ({
 		getUpdatedQuery,
 		isLoading: isResolveQueryLoading,
 	} = useUpdatedQuery();
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 
 	useEffect(() => {
 		if (!aggregateData) {

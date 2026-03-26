@@ -342,6 +342,409 @@ components:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
       type: object
+    CloudintegrationtypesAWSAccountConfig:
+      properties:
+        regions:
+          items:
+            type: string
+          type: array
+      required:
+      - regions
+      type: object
+    CloudintegrationtypesAWSCollectionStrategy:
+      properties:
+        aws_logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
+        aws_metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesAWSConnectionArtifact:
+      properties:
+        connectionURL:
+          type: string
+      required:
+      - connectionURL
+      type: object
+    CloudintegrationtypesAWSConnectionArtifactRequest:
+      properties:
+        deploymentRegion:
+          type: string
+        regions:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentRegion
+      - regions
+      type: object
+    CloudintegrationtypesAWSIntegrationConfig:
+      properties:
+        enabledRegions:
+          items:
+            type: string
+          type: array
+        telemetry:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - enabledRegions
+      - telemetry
+      type: object
+    CloudintegrationtypesAWSLogsStrategy:
+      properties:
+        cloudwatch_logs_subscriptions:
+          items:
+            properties:
+              filter_pattern:
+                type: string
+              log_group_name_prefix:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesAWSMetricsStrategy:
+      properties:
+        cloudwatch_metric_stream_filters:
+          items:
+            properties:
+              MetricNames:
+                items:
+                  type: string
+                type: array
+              Namespace:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesAWSServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesAWSServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesAWSServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAccount:
+      properties:
+        agentReport:
+          $ref: '#/components/schemas/CloudintegrationtypesAgentReport'
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        orgId:
+          type: string
+        provider:
+          type: string
+        providerAccountId:
+          nullable: true
+          type: string
+        removedAt:
+          format: date-time
+          nullable: true
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - providerAccountId
+      - provider
+      - removedAt
+      - agentReport
+      - orgId
+      - config
+      type: object
+    CloudintegrationtypesAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesAgentReport:
+      nullable: true
+      properties:
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        timestampMillis:
+          format: int64
+          type: integer
+      required:
+      - timestampMillis
+      - data
+      type: object
+    CloudintegrationtypesAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesCollectedLogAttribute:
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+      type: object
+    CloudintegrationtypesCollectedMetric:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    CloudintegrationtypesCollectionStrategy:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesConnectionArtifact:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesConnectionArtifactRequest:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesDashboard:
+      properties:
+        definition:
+          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
+        description:
+          type: string
+        id:
+          type: string
+        title:
+          type: string
+      type: object
+    CloudintegrationtypesDataCollected:
+      properties:
+        logs:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesCollectedLogAttribute'
+          nullable: true
+          type: array
+        metrics:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesGettableAccountWithArtifact:
+      properties:
+        connectionArtifact:
+          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
+        id:
+          type: string
+      required:
+      - id
+      - connectionArtifact
+      type: object
+    CloudintegrationtypesGettableAccounts:
+      properties:
+        accounts:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAccount'
+          type: array
+      required:
+      - accounts
+      type: object
+    CloudintegrationtypesGettableAgentCheckInResponse:
+      properties:
+        account_id:
+          type: string
+        cloud_account_id:
+          type: string
+        cloudIntegrationId:
+          type: string
+        integration_config:
+          $ref: '#/components/schemas/CloudintegrationtypesIntegrationConfig'
+        integrationConfig:
+          $ref: '#/components/schemas/CloudintegrationtypesProviderIntegrationConfig'
+        providerAccountId:
+          type: string
+        removed_at:
+          format: date-time
+          nullable: true
+          type: string
+        removedAt:
+          format: date-time
+          nullable: true
+          type: string
+      required:
+      - account_id
+      - cloud_account_id
+      - integration_config
+      - removed_at
+      - cloudIntegrationId
+      - providerAccountId
+      - integrationConfig
+      - removedAt
+      type: object
+    CloudintegrationtypesGettableServicesMetadata:
+      properties:
+        services:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceMetadata'
+          type: array
+      required:
+      - services
+      type: object
+    CloudintegrationtypesIntegrationConfig:
+      nullable: true
+      properties:
+        enabled_regions:
+          items:
+            type: string
+          type: array
+        telemetry:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - enabled_regions
+      - telemetry
+      type: object
+    CloudintegrationtypesPostableAgentCheckInRequest:
+      properties:
+        account_id:
+          type: string
+        cloud_account_id:
+          type: string
+        cloudIntegrationId:
+          type: string
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        providerAccountId:
+          type: string
+      required:
+      - data
+      type: object
+    CloudintegrationtypesProviderIntegrationConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesService:
+      properties:
+        assets:
+          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+        dataCollected:
+          $ref: '#/components/schemas/CloudintegrationtypesDataCollected'
+        icon:
+          type: string
+        id:
+          type: string
+        overview:
+          type: string
+        serviceConfig:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+        supported_signals:
+          $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
+        title:
+          type: string
+      required:
+      - id
+      - title
+      - icon
+      - overview
+      - assets
+      - supported_signals
+      - dataCollected
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesServiceConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesServiceMetadata:
+      properties:
+        enabled:
+          type: boolean
+        icon:
+          type: string
+        id:
+          type: string
+        title:
+          type: string
+      required:
+      - id
+      - title
+      - icon
+      - enabled
+      type: object
+    CloudintegrationtypesSupportedSignals:
+      properties:
+        logs:
+          type: boolean
+        metrics:
+          type: boolean
+      type: object
+    CloudintegrationtypesUpdatableAccount:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+      required:
+      - config
+      type: object
+    CloudintegrationtypesUpdatableService:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+      required:
+      - config
+      type: object
     DashboardtypesDashboard:
       properties:
         createdAt:
@@ -416,6 +819,18 @@ components:
       properties:
         message:
           type: string
+      type: object
+    FactoryResponse:
+      properties:
+        healthy:
+          type: boolean
+        services:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
       type: object
     FeaturetypesGettableFeature:
       properties:
@@ -2472,6 +2887,551 @@ paths:
       summary: Change password
       tags:
       - users
+  /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
+    post:
+      deprecated: true
+      description: '[Deprecated] This endpoint is called by the deployed agent to
+        check in'
+      operationId: AgentCheckInDeprecated
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts:
+    get:
+      deprecated: false
+      description: This endpoint lists the accounts for the specified cloud provider
+      operationId: ListAccounts
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccounts'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List accounts
+      tags:
+      - cloudintegration
+    post:
+      deprecated: false
+      description: This endpoint creates a new cloud integration account for the specified
+        cloud provider
+      operationId: CreateAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create account
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint disconnects an account for the specified cloud provider
+      operationId: DisconnectAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Disconnect account
+      tags:
+      - cloudintegration
+    get:
+      deprecated: false
+      description: This endpoint gets an account for the specified cloud provider
+      operationId: GetAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesAccount'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get account
+      tags:
+      - cloudintegration
+    put:
+      deprecated: false
+      description: This endpoint updates an account for the specified cloud provider
+      operationId: UpdateAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableAccount'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update account
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
+    post:
+      deprecated: false
+      description: This endpoint is called by the deployed agent to check in
+      operationId: AgentCheckIn
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified cloud
+        provider
+      operationId: ListServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List services metadata
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service for the specified cloud provider
+      operationId: GetService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service
+      tags:
+      - cloudintegration
+    put:
+      deprecated: false
+      description: This endpoint updates a service for the specified cloud provider
+      operationId: UpdateService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update service
+      tags:
+      - cloudintegration
   /api/v1/complete/google:
     get:
       deprecated: false
@@ -3039,6 +3999,68 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    post:
+      deprecated: false
+      description: This endpoints allows complex query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataPOST
+      parameters:
+      - description: The output format for the export.
+        in: query
+        name: format
+        schema:
+          default: csv
+          description: The output format for the export.
+          enum:
+          - csv
+          - jsonl
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/fields/keys:
     get:
       deprecated: false
@@ -5984,6 +7006,70 @@ paths:
       summary: Search ingestion keys for workspace
       tags:
       - gateway
+  /api/v2/healthz:
+    get:
+      operationId: Healthz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "503":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
+      summary: Health check
+      tags:
+      - health
+  /api/v2/livez:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Livez
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Liveness check
+      tags:
+      - health
   /api/v2/metrics:
     get:
       deprecated: false
@@ -6660,6 +7746,41 @@ paths:
       summary: Update my organization
       tags:
       - orgs
+  /api/v2/readyz:
+    get:
+      operationId: Readyz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "503":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
+      summary: Readiness check
+      tags:
+      - health
   /api/v2/sessions:
     delete:
       deprecated: false

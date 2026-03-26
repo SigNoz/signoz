@@ -108,16 +108,24 @@ def create_signoz(
             for attempt in range(10):
                 try:
                     response = requests.get(
-                        f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v1/health",
+                        f"http://{container.get_container_host_ip()}:{container.get_exposed_port(8080)}/api/v2/healthz",
                         timeout=2,
                     )
                     if response.status_code == HTTPStatus.OK:
                         return
-                except Exception:  # pylint: disable=broad-exception-caught
-                    logger.info(
-                        "Attempt %s at readiness check for SigNoz container %s failed, going to retry ...",
+                    if response.status_code == HTTPStatus.SERVICE_UNAVAILABLE:
+                        logger.error(
+                            "Attempt %s: SigNoz container %s not ready yet:\n%s",
+                            attempt + 1,
+                            container,
+                            response.text,
+                        )
+                except Exception as e:  # pylint: disable=broad-exception-caught
+                    logger.error(
+                        "Attempt %s at readiness check for SigNoz container %s failed: %s",
                         attempt + 1,
                         container,
+                        e,
                     )
                 time.sleep(2)
             raise TimeoutError("timeout exceeded while waiting")

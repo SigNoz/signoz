@@ -57,6 +57,10 @@ func (provider *provider) Start(ctx context.Context) error {
 	return provider.openfgaServer.Start(ctx)
 }
 
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.openfgaServer.Healthy()
+}
+
 func (provider *provider) Stop(ctx context.Context) error {
 	return provider.openfgaServer.Stop(ctx)
 }
