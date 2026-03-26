@@ -11,8 +11,8 @@ import (
 var (
 	SPAN_LIMIT_PER_REQUEST_FOR_WATERFALL float64 = 500
 
-	MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN int  = 5
-	MAX_LIMIT_TO_SELECT_ALL_SPANS        uint = 10_000
+	maxDepthForSelectedSpanChildren int  = 5
+	MaxLimitToSelectAllSpans        uint = 10_000
 )
 
 type Interval struct {
@@ -104,7 +104,7 @@ func traverseTrace(
 	level uint64,
 	isPartOfPreOrder bool,
 	hasSibling bool,
-	remainingAutoExpandDepth int,
+	autoExpandDepth int,
 ) ([]*model.Span, []string) {
 
 	preOrderTraversal := []*model.Span{}
@@ -145,11 +145,11 @@ func traverseTrace(
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
-	childRemainingDepth := 0
+	remainingAutoExpandDepth := 0
 	if span.SpanID == opts.selectedSpanID && opts.isSelectedSpanUncollapsed {
-		childRemainingDepth = MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN
-	} else if remainingAutoExpandDepth > 0 {
-		childRemainingDepth = remainingAutoExpandDepth - 1
+		remainingAutoExpandDepth = maxDepthForSelectedSpanChildren
+	} else if autoExpandDepth > 0 {
+		remainingAutoExpandDepth = autoExpandDepth - 1
 	}
 
 	_, isAlreadyUncollapsed := opts.uncollapsedSpans[span.SpanID]
@@ -157,7 +157,7 @@ func traverseTrace(
 		// A child is included in the pre-order output if its parent is uncollapsed
 		// OR if the child falls within MAX_DEPTH_FOR_SELECTED_SPAN_CHILDREN levels
 		// below the selected span.
-		isChildWithinMaxDepth := childRemainingDepth > 0
+		isChildWithinMaxDepth := remainingAutoExpandDepth > 0
 		childIsPartOfPreOrder := opts.selectAll || (isPartOfPreOrder && (isAlreadyUncollapsed || isChildWithinMaxDepth))
 
 		if isPartOfPreOrder && isChildWithinMaxDepth && !isAlreadyUncollapsed {
@@ -166,7 +166,7 @@ func traverseTrace(
 			}
 		}
 
-		_childTraversal, _autoExpanded := traverseTrace(child, opts, level+1, childIsPartOfPreOrder, index != (len(span.Children)-1), childRemainingDepth)
+		_childTraversal, _autoExpanded := traverseTrace(child, opts, level+1, childIsPartOfPreOrder, index != (len(span.Children)-1), remainingAutoExpandDepth)
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
 		autoExpandedSpans = append(autoExpandedSpans, _autoExpanded...)
 		nodeWithoutChildren.SubTreeNodeCount += child.SubTreeNodeCount + 1
