@@ -49,7 +49,7 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 								Disabled: true,
 								Aggregations: []LogAggregation{
 									{
-										Expression: "count",
+										Expression: "count()",
 									},
 								},
 								Signal: telemetrytypes.SignalLogs,
@@ -400,7 +400,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Disabled: true,
 								Aggregations: []LogAggregation{
 									{
-										Expression: "count",
+										Expression: "count()",
 									},
 								},
 								Signal: telemetrytypes.SignalLogs,
@@ -413,7 +413,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Disabled: true,
 								Aggregations: []TraceAggregation{
 									{
-										Expression: "count",
+										Expression: "count()",
 									},
 								},
 								Signal: telemetrytypes.SignalTraces,
@@ -440,7 +440,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Disabled: true,
 								Aggregations: []LogAggregation{
 									{
-										Expression: "count",
+										Expression: "count()",
 									},
 								},
 								Signal: telemetrytypes.SignalLogs,
