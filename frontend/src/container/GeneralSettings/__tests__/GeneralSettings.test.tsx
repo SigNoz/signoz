@@ -409,7 +409,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 		});
 	});
 
-	describe('Enterprise Self-Hosted User Rendering', () => {
+	describe('Non-cloud user rendering', () => {
 		beforeEach(() => {
 			(useGetTenantLicense as jest.Mock).mockReturnValue({
 				isCloudUser: false,
@@ -436,7 +436,7 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				screen.queryByTestId('general-settings-cloud'),
 			).not.toBeInTheDocument();
 
-			// Save buttons should be visible for self-hosted
+			// Save buttons should be visible for non-cloud users (these are from retentions)
 			const saveButtons = screen.getAllByRole('button', { name: /save/i });
 			expect(saveButtons.length).toBeGreaterThan(0);
 		});
