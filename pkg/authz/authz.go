@@ -11,7 +11,7 @@ import (
 )
 
 type AuthZ interface {
-	factory.Service
+	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
 	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error

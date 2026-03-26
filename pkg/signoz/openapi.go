@@ -10,18 +10,21 @@ import (
 	"github.com/SigNoz/signoz/pkg/apiserver"
 	"github.com/SigNoz/signoz/pkg/apiserver/signozapiserver"
 	"github.com/SigNoz/signoz/pkg/authz"
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
+	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -58,9 +61,12 @@ func NewOpenAPI(ctx context.Context, instrumentation instrumentation.Instrumenta
 		struct{ gateway.Handler }{},
 		struct{ fields.Handler }{},
 		struct{ authz.Handler }{},
+		struct{ rawdataexport.Handler }{},
 		struct{ zeus.Handler }{},
 		struct{ querier.Handler }{},
 		struct{ serviceaccount.Handler }{},
+		struct{ factory.Handler }{},
+		struct{ cloudintegration.Handler }{},
 	).New(ctx, instrumentation.ToProviderSettings(), apiserver.Config{})
 	if err != nil {
 		return nil, err

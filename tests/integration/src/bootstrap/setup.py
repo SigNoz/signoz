@@ -1,3 +1,4 @@
+import logging
 from http import HTTPStatus
 
 import numpy as np
@@ -5,13 +6,20 @@ import requests
 
 from fixtures import types
 
+logger = logging.getLogger(__name__)
+
 
 def test_setup(signoz: types.SigNoz) -> None:
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/version"), timeout=2
     )
-
     assert response.status_code == HTTPStatus.OK
+
+    healthz = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/healthz"), timeout=2
+    )
+    logger.info("healthz response: %s", healthz.json())
+    assert healthz.status_code == HTTPStatus.OK
 
 
 def test_telemetry_databases_exist(signoz: types.SigNoz) -> None:

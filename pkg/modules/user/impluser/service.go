@@ -23,6 +23,7 @@ type service struct {
 	authz     authz.AuthZ
 	config    user.RootConfig
 	stopC     chan struct{}
+	healthyC  chan struct{}
 }
 
 func NewService(
@@ -42,12 +43,14 @@ func NewService(
 		orgGetter: orgGetter,
 		authz:     authz,
 		config:    config,
-		stopC:     make(chan struct{}),
+		stopC:    make(chan struct{}),
+		healthyC: make(chan struct{}),
 	}
 }
 
 func (s *service) Start(ctx context.Context) error {
 	if !s.config.Enabled {
+		close(s.healthyC)
 		<-s.stopC
 		return nil
 	}
@@ -59,6 +62,7 @@ func (s *service) Start(ctx context.Context) error {
 		err := s.reconcile(ctx)
 		if err == nil {
 			s.settings.Logger().InfoContext(ctx, "root user reconciliation completed successfully")
+			close(s.healthyC)
 			<-s.stopC
 			return nil
 		}
@@ -72,6 +76,10 @@ func (s *service) Start(ctx context.Context) error {
 			continue
 		}
 	}
+}
+
+func (s *service) Healthy() <-chan struct{} {
+	return s.healthyC
 }
 
 func (s *service) Stop(ctx context.Context) error {
@@ -125,7 +133,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 	}
 
 	if existingUser != nil {
-		userRoles, err := s.getter.GetUserRoles(ctx, existingUser.ID)
+		userRoles, err := s.getter.GetRolesByUserID(ctx, existingUser.ID)
 		if err != nil {
 			return err
 		}
@@ -148,9 +156,7 @@ func (s *service) createOrPromoteRootUser(ctx context.Context, orgID valuer.UUID
 		existingUser.PromoteToRoot()
 
 		err = s.store.RunInTx(ctx, func(ctx context.Context) error {
-			// update users table
-			deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingUser, types.RoleAdmin)
-			if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+			if err := s.setter.UpdateAnyUser(ctx, orgID, existingUser); err != nil {
 				return err
 			}
 
@@ -193,8 +199,7 @@ func (s *service) updateExistingRootUser(ctx context.Context, orgID valuer.UUID,
 
 	if existingRoot.Email != s.config.Email {
 		existingRoot.UpdateEmail(s.config.Email)
-		deprecatedUser := types.NewDeprecatedUserFromUserAndRole(existingRoot, types.RoleAdmin)
-		if err := s.setter.UpdateAnyUser(ctx, orgID, deprecatedUser); err != nil {
+		if err := s.setter.UpdateAnyUser(ctx, orgID, existingRoot); err != nil {
 			return err
 		}
 	}

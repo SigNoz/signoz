@@ -62,9 +62,6 @@ export const getVolumeQueryPayload = (
 	const k8sPVCNameKey = dotMetricsEnabled
 		? 'k8s.persistentvolumeclaim.name'
 		: 'k8s_persistentvolumeclaim_name';
-	const legendTemplate = dotMetricsEnabled
-		? '{{k8s.namespace.name}}-{{k8s.pod.name}}'
-		: '{{k8s_namespace_name}}-{{k8s_pod_name}}';
 
 	return [
 		{
@@ -136,7 +133,7 @@ export const getVolumeQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: legendTemplate,
+							legend: 'Available',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
@@ -228,7 +225,7 @@ export const getVolumeQueryPayload = (
 							functions: [],
 							groupBy: [],
 							having: [],
-							legend: legendTemplate,
+							legend: 'Capacity',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
@@ -319,7 +316,7 @@ export const getVolumeQueryPayload = (
 							},
 							groupBy: [],
 							having: [],
-							legend: legendTemplate,
+							legend: 'Inodes Used',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
@@ -411,7 +408,7 @@ export const getVolumeQueryPayload = (
 							},
 							groupBy: [],
 							having: [],
-							legend: legendTemplate,
+							legend: 'Total Inodes',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
@@ -503,7 +500,7 @@ export const getVolumeQueryPayload = (
 							},
 							groupBy: [],
 							having: [],
-							legend: legendTemplate,
+							legend: 'Inodes Free',
 							limit: null,
 							orderBy: [],
 							queryName: 'A',
