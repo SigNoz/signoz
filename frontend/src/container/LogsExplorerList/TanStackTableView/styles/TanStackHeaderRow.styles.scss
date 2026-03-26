@@ -15,12 +15,8 @@
 	}
 
 	&.is-resizing {
-		background: var(--bg-slate-500);
+		background: var(--l2-background-hover);
 	}
-}
-
-.lightMode .tanstack-header-cell.is-resizing {
-	background: var(--bg-vanilla-300);
 }
 
 .tanstack-header-content {
@@ -62,7 +58,7 @@
 	width: 12px;
 	height: 12px;
 	cursor: grab;
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 	opacity: 1;
 	touch-action: none;
 }
@@ -75,21 +71,16 @@
 	height: 20px;
 	cursor: pointer;
 	flex-shrink: 0;
-	color: var(--text-vanilla-400);
-}
-
-.lightMode .tanstack-grip-activator,
-.lightMode .tanstack-header-action-trigger {
-	color: var(--text-ink-500);
+	color: var(--l2-foreground);
 }
 
 .tanstack-column-actions-content {
 	width: 140px;
 	padding: 6px;
-	background: var(--bg-ink-400);
-	border-color: var(--l2-border);
+	background: var(--l2-background);
+	border: 1px solid var(--l2-border);
 	border-radius: 8px;
-	box-shadow: 0 8px 20px var(--bg-ink-500);
+	box-shadow: 0 8px 20px var(--l2-border);
 }
 
 .tanstack-remove-column-action {
@@ -104,49 +95,26 @@
 	background: transparent;
 	justify-content: flex-start;
 	cursor: pointer;
-	color: var(--text-vanilla-200);
+	color: var(--l2-foreground);
 	font-size: 12px;
 	line-height: 16px;
 	font-weight: 500;
 	transition: background-color 120ms ease, color 120ms ease;
 
 	&:hover {
-		background: var(--bg-slate-400);
-		color: var(--text-vanilla-100);
+		background: var(--l2-background-hover);
+		color: var(--l2-foreground);
 
 		.tanstack-remove-column-action-icon {
-			color: var(--text-vanilla-200);
+			color: var(--l2-foreground);
 		}
 	}
 }
 
 .tanstack-remove-column-action-icon {
 	font-size: 11px;
-	color: var(--text-vanilla-400);
+	color: var(--l2-foreground);
 	opacity: 0.95;
-}
-
-.lightMode .tanstack-column-actions-content {
-	background: var(--bg-vanilla-100);
-	border: 1px solid var(--l2-border);
-	box-shadow: 0 6px 16px var(--bg-slate-300);
-}
-
-.lightMode .tanstack-remove-column-action {
-	color: var(--text-ink-500);
-
-	&:hover {
-		background: var(--bg-vanilla-300);
-		color: var(--text-ink-600);
-
-		.tanstack-remove-column-action-icon {
-			color: var(--text-ink-600);
-		}
-	}
-}
-
-.lightMode .tanstack-remove-column-action-icon {
-	color: var(--text-ink-400);
 }
 
 .tanstack-header-cell .cursor-col-resize {

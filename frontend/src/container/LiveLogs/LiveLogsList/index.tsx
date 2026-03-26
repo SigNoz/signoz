@@ -55,10 +55,6 @@ function LiveLogsList({
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
 	});
-	const removableColumnKeys = useMemo(
-		() => options.selectColumns.map((column) => String(column.name)),
-		[options.selectColumns],
-	);
 
 	const activeLogIndex = useMemo(
 		() => formattedLogs.findIndex(({ id }) => id === activeLogId),
@@ -179,7 +175,6 @@ function LiveLogsList({
 							onClearActiveLog={handleCloseLogDetail}
 							activeLog={activeLog}
 							onRemoveColumn={config.addColumn?.onRemove}
-							removableColumnKeys={removableColumnKeys}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>

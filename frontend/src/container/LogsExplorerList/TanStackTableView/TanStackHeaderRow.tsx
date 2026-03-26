@@ -15,7 +15,7 @@ import { InfinityTableProps } from '../InfinityTableView/types';
 import { OrderedColumn, TanStackTableRowData } from './types';
 import { getColumnId } from './utils';
 
-import './TanStackHeaderRow.styles.scss';
+import './styles/TanStackHeaderRow.styles.scss';
 
 type TanStackHeaderRowProps = {
 	column: OrderedColumn;

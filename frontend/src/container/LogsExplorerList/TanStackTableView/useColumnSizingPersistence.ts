@@ -9,6 +9,21 @@ import { getColumnId } from './utils';
 
 const COLUMN_SIZING_PERSIST_DEBOUNCE_MS = 250;
 
+const sanitizeSizing = (input: unknown): ColumnSizingState => {
+	if (!input || typeof input !== 'object') {
+		return {};
+	}
+	return Object.entries(
+		input as Record<string, unknown>,
+	).reduce<ColumnSizingState>((acc, [key, value]) => {
+		if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
+			return acc;
+		}
+		acc[key] = value;
+		return acc;
+	}, {});
+};
+
 const readPersistedColumnSizing = (): ColumnSizingState => {
 	const rawSizing = getFromLocalstorage(LOCALSTORAGE.LOGS_LIST_COLUMN_SIZING);
 	if (!rawSizing) {
@@ -22,17 +37,7 @@ const readPersistedColumnSizing = (): ColumnSizingState => {
 		const sizing = ('sizing' in parsed
 			? parsed.sizing
 			: parsed) as ColumnSizingState;
-
-		return Object.entries(sizing).reduce<ColumnSizingState>(
-			(acc, [key, value]) => {
-				if (typeof value !== 'number' || !Number.isFinite(value) || value <= 0) {
-					return acc;
-				}
-				acc[key] = value;
-				return acc;
-			},
-			{},
-		);
+		return sanitizeSizing(sizing);
 	} catch (error) {
 		console.error('Failed to parse persisted log column sizing', error);
 		return {};
@@ -54,9 +59,6 @@ export const useColumnSizingPersistence = (
 		() => orderedColumns.map((column) => getColumnId(column)),
 		[orderedColumns],
 	);
-	const orderedColumnIdsSignature = useMemo(() => orderedColumnIds.join('|'), [
-		orderedColumnIds,
-	]);
 
 	useEffect(() => {
 		if (orderedColumnIds.length === 0) {
@@ -95,11 +97,7 @@ export const useColumnSizingPersistence = (
 
 	useEffect(() => {
 		const timeoutId = window.setTimeout(() => {
-			const persistedSizing: PersistedColumnSizing = {
-				version: 1,
-				columnIdsSignature: orderedColumnIdsSignature,
-				sizing: columnSizing,
-			};
+			const persistedSizing = { sizing: columnSizing };
 			setToLocalstorage(
 				LOCALSTORAGE.LOGS_LIST_COLUMN_SIZING,
 				JSON.stringify(persistedSizing),
@@ -107,7 +105,7 @@ export const useColumnSizingPersistence = (
 		}, COLUMN_SIZING_PERSIST_DEBOUNCE_MS);
 
 		return (): void => window.clearTimeout(timeoutId);
-	}, [columnSizing, orderedColumnIdsSignature]);
+	}, [columnSizing]);
 
 	return { columnSizing, setColumnSizing };
 };

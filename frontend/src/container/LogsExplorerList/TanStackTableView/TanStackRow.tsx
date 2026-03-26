@@ -11,7 +11,7 @@ import { TableCellStyled } from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
 import { TanStackTableRowData } from './types';
 
-type TanStackRowProps = {
+type TanStackRowCellsProps = {
 	row: TanStackRowModel<TanStackTableRowData>;
 	fontSize: InfinityTableProps['tableViewProps']['fontSize'];
 	onSetActiveLog?: InfinityTableProps['onSetActiveLog'];
@@ -22,7 +22,7 @@ type TanStackRowProps = {
 	isLogsExplorerPage: boolean;
 };
 
-function TanStackRow({
+function TanStackRowCells({
 	row,
 	fontSize,
 	onSetActiveLog,
@@ -31,7 +31,7 @@ function TanStackRow({
 	isDarkMode,
 	onLogCopy,
 	isLogsExplorerPage,
-}: TanStackRowProps): JSX.Element {
+}: TanStackRowCellsProps): JSX.Element {
 	const { currentLog } = row.original;
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
@@ -104,4 +104,4 @@ function TanStackRow({
 	);
 }
 
-export default TanStackRow;
+export default TanStackRowCells;

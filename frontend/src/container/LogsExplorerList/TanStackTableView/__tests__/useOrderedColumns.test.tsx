@@ -91,18 +91,18 @@ describe('useOrderedColumns', () => {
 			} as never);
 		});
 
+		expect(onColumnOrderChange).toHaveBeenCalledWith([
+			expect.objectContaining({ key: 'b' }),
+			expect.objectContaining({ key: 'c' }),
+			expect.objectContaining({ key: 'a' }),
+		]);
+
+		// Derived-only: orderedColumns should remain until draggedColumns (URL/localStorage) updates.
 		expect(result.current.orderedColumns.map((c) => c.key)).toEqual([
+			'a',
 			'b',
 			'c',
-			'a',
 		]);
-		expect(onColumnOrderChange).toHaveBeenCalledWith(
-			expect.arrayContaining([
-				expect.objectContaining({ key: 'b' }),
-				expect.objectContaining({ key: 'c' }),
-				expect.objectContaining({ key: 'a' }),
-			]),
-		);
 	});
 
 	it('handleDragEnd no-ops when over is null', () => {

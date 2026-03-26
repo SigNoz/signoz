@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { FontSize } from 'container/OptionsMenu/types';
 
-import TanStackRow from '../TanStackRow';
+import TanStackRowCells from '../TanStackRow';
 import type { TanStackTableRowData } from '../types';
 
 jest.mock('../../InfinityTableView/styles', () => ({
@@ -34,7 +34,7 @@ jest.mock('@tanstack/react-table', () => ({
 
 function buildMockRow(
 	visibleCells: Array<{ columnId: string }>,
-): Parameters<typeof TanStackRow>[0]['row'] {
+): Parameters<typeof TanStackRowCells>[0]['row'] {
 	return {
 		original: {
 			currentLog: { id: 'log-1' } as TanStackTableRowData['currentLog'],
@@ -55,7 +55,7 @@ function buildMockRow(
 	} as never;
 }
 
-describe('TanStackRow', () => {
+describe('TanStackRowCells', () => {
 	beforeEach(() => {
 		flexRenderMock.mockClear();
 	});
@@ -70,7 +70,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}
@@ -93,7 +93,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}
@@ -115,7 +115,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}
@@ -138,7 +138,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}
@@ -166,7 +166,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}
@@ -197,7 +197,7 @@ describe('TanStackRow', () => {
 			<table>
 				<tbody>
 					<tr>
-						<TanStackRow
+						<TanStackRowCells
 							row={row}
 							fontSize={FontSize.SMALL}
 							isDarkMode={false}

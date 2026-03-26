@@ -83,10 +83,6 @@ function LogsExplorerList({
 		() => convertKeysToColumnFields(options.selectColumns),
 		[options],
 	);
-	const removableColumnKeys = useMemo(
-		() => options.selectColumns.map((column) => String(column.name)),
-		[options.selectColumns],
-	);
 
 	const handleScrollToLog = useScrollToLog({
 		logs,
@@ -178,7 +174,6 @@ function LogsExplorerList({
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
 					onRemoveColumn={config.addColumn?.onRemove}
-					removableColumnKeys={removableColumnKeys}
 				/>
 			);
 		}
@@ -230,7 +225,6 @@ function LogsExplorerList({
 		handleCloseLogDetail,
 		activeLog,
 		config.addColumn?.onRemove,
-		removableColumnKeys,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

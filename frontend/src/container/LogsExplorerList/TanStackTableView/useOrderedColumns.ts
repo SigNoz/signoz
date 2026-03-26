@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo } from 'react';
 import {
 	DragEndEvent,
 	PointerSensor,
@@ -42,61 +42,7 @@ export const useOrderedColumns = ({
 		[columns, draggedColumns],
 	);
 
-	const [orderedColumns, setOrderedColumns] = useState<OrderedColumn[]>(
-		baseColumns,
-	);
-	const lastBaseOrderKeyRef = useRef<string | null>(null);
-	const sensors = useSensors(
-		useSensor(PointerSensor, {
-			activationConstraint: { distance: 4 },
-		}),
-	);
-
-	useEffect(() => {
-		const baseIds = baseColumns.map((column) => getColumnId(column));
-		const baseKey = baseIds.join('|');
-		const prevBaseKey = lastBaseOrderKeyRef.current;
-		const baseOrderChanged = prevBaseKey !== null && prevBaseKey !== baseKey;
-
-		lastBaseOrderKeyRef.current = baseKey;
-
-		setOrderedColumns((previousColumns) => {
-			const previousIds = previousColumns.map((column) => getColumnId(column));
-
-			// Only when `baseColumns` order from the parent actually changed (e.g. URL /
-			// localStorage hydration). If we synced whenever state ≠ base, we would reset
-			// user drags before `draggedColumns` catches up.
-			if (
-				baseOrderChanged &&
-				previousIds.length === baseIds.length &&
-				[...previousIds].sort().join('|') === [...baseIds].sort().join('|')
-			) {
-				return baseColumns;
-			}
-
-			const baseColumnsById = new Map(
-				baseColumns.map((column) => [getColumnId(column), column] as const),
-			);
-			const previousIdsSet = new Set(previousIds);
-			const orderedFromPrevious = previousColumns
-				.map((column) => baseColumnsById.get(getColumnId(column)))
-				.filter(Boolean) as OrderedColumn[];
-			const appendedNewColumns = baseColumns.filter(
-				(column) => !previousIdsSet.has(getColumnId(column)),
-			);
-			const nextColumns = [...orderedFromPrevious, ...appendedNewColumns];
-
-			if (nextColumns.length !== previousColumns.length) {
-				return nextColumns;
-			}
-
-			const hasReferenceChange = nextColumns.some(
-				(column, index) => column !== previousColumns[index],
-			);
-
-			return hasReferenceChange ? nextColumns : previousColumns;
-		});
-	}, [baseColumns]);
+	const orderedColumns = baseColumns;
 
 	const handleDragEnd = useCallback(
 		(event: DragEndEvent): void => {
@@ -105,24 +51,20 @@ export const useOrderedColumns = ({
 				return;
 			}
 
-			setOrderedColumns((previousColumns) => {
-				const oldIndex = previousColumns.findIndex(
-					(column) => getColumnId(column) === String(active.id),
-				);
-				const newIndex = previousColumns.findIndex(
-					(column) => getColumnId(column) === String(over.id),
-				);
-				if (oldIndex === -1 || newIndex === -1) {
-					return previousColumns;
-				}
+			const oldIndex = orderedColumns.findIndex(
+				(column) => getColumnId(column) === String(active.id),
+			);
+			const newIndex = orderedColumns.findIndex(
+				(column) => getColumnId(column) === String(over.id),
+			);
+			if (oldIndex === -1 || newIndex === -1) {
+				return;
+			}
 
-				const nextColumns = arrayMove(previousColumns, oldIndex, newIndex);
-				onColumnOrderChange(nextColumns as unknown[]);
-
-				return nextColumns;
-			});
+			const nextColumns = arrayMove(orderedColumns, oldIndex, newIndex);
+			onColumnOrderChange(nextColumns as unknown[]);
 		},
-		[onColumnOrderChange],
+		[onColumnOrderChange, orderedColumns],
 	);
 
 	const orderedColumnIds = useMemo(
@@ -134,6 +76,11 @@ export const useOrderedColumns = ({
 			orderedColumns.filter((column) => column.key !== 'state-indicator')
 				.length === 1,
 		[orderedColumns],
+	);
+	const sensors = useSensors(
+		useSensor(PointerSensor, {
+			activationConstraint: { distance: 4 },
+		}),
 	);
 
 	return {

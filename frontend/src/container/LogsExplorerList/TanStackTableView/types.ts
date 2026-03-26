@@ -25,7 +25,5 @@ export type TanStackTableRowData = {
 };
 
 export type PersistedColumnSizing = {
-	version: 1;
-	columnIdsSignature: string;
 	sizing: ColumnSizingState;
 };

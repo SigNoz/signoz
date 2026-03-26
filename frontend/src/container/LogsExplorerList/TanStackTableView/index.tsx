@@ -36,7 +36,6 @@ import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { useActiveLog } from 'hooks/logs/useActiveLog';
-import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
@@ -48,7 +47,7 @@ import {
 import { InfinityTableProps } from '../InfinityTableView/types';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
-import TanStackRow from './TanStackRow';
+import TanStackRowCells from './TanStackRow';
 import { TableRecord, TanStackTableRowData } from './types';
 import { useColumnSizingPersistence } from './useColumnSizingPersistence';
 import { useOrderedColumns } from './useOrderedColumns';
@@ -59,7 +58,7 @@ import {
 } from './utils';
 
 import '../logsTableVirtuosoScrollbar.scss';
-import './TanStackTableView.styles.scss';
+import './styles/TanStackTableView.styles.scss';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
@@ -72,7 +71,6 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			isLoading,
 			isFetching,
 			onRemoveColumn,
-			removableColumnKeys,
 			tableViewProps,
 			infitiyTableProps,
 			onSetActiveLog,
@@ -89,12 +87,18 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[],
 		);
 		const [, setCopy] = useCopyToClipboard();
+		const isDarkMode = useIsDarkMode();
+		const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
+		const { activeLog: activeContextLog } = useActiveLog();
+
+		// Column definitions (shared with existing logs table)
 		const { dataSource, columns } = useTableView({
 			...tableViewProps,
 			onClickExpand: onSetActiveLog,
 			onOpenLogsContext: (log): void => onSetActiveLog?.(log, VIEW_TYPES.CONTEXT),
 		});
 
+		// Column order (drag + persisted order)
 		const { draggedColumns, onColumnOrderChange } = useDragColumns<TableRecord>(
 			LOCALSTORAGE.LOGS_LIST_COLUMNS,
 		);
@@ -109,13 +113,13 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			draggedColumns,
 			onColumnOrderChange: onColumnOrderChange as (columns: unknown[]) => void,
 		});
+
+		// Column sizing (persisted)
 		const { columnSizing, setColumnSizing } = useColumnSizingPersistence(
 			orderedColumns,
 		);
-		const removableColumnKeySet = useMemo(
-			() => new Set((removableColumnKeys || []).map((column) => String(column))),
-			[removableColumnKeys],
-		);
+
+		// don't allow "remove column" when only state-indicator + one data col remain
 		const isAtMinimumRemovableColumns = useMemo(
 			() =>
 				orderedColumns.filter(
@@ -123,6 +127,8 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				).length <= 1,
 			[orderedColumns],
 		);
+
+		// Table data (TanStack row data shape)
 		const tableData = useMemo<TanStackTableRowData[]>(
 			() =>
 				dataSource
@@ -136,6 +142,8 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					.filter(Boolean) as TanStackTableRowData[],
 			[dataSource, tableViewProps.logs],
 		);
+
+		// TanStack columns + table instance
 		const tanstackColumns = useMemo<ColumnDef<TanStackTableRowData>[]>(
 			() =>
 				orderedColumns.map((column) => {
@@ -173,23 +181,6 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				}),
 			[orderedColumns],
 		);
-		const { activeLogId } = useCopyLogLink();
-		const { activeLog: activeContextLog } = useActiveLog();
-		const rowSelection = useMemo<Record<string, boolean>>(() => {
-			const targetId = activeLog?.id ?? activeLogId;
-			if (targetId === undefined || targetId === null || targetId === '') {
-				return {};
-			}
-
-			const activeIndex = tableData.findIndex(
-				(row) => String(row.currentLog.id) === String(targetId),
-			);
-			if (activeIndex < 0) {
-				return {};
-			}
-
-			return { [String(activeIndex)]: true };
-		}, [activeLog?.id, activeLogId, tableData]);
 		const table = useReactTable({
 			data: tableData,
 			columns: tanstackColumns,
@@ -198,26 +189,26 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			columnResizeMode: 'onChange',
 			onColumnSizingChange: setColumnSizing,
 			state: {
-				rowSelection,
 				columnSizing,
 			},
 		});
 		const tableRows = table.getRowModel().rows;
+
+		// Infinite-scroll footer UI state
 		const [loadMoreState, setLoadMoreState] = useState<{
 			active: boolean;
-			seenFetching: boolean;
 			startCount: number;
 		}>({
 			active: false,
-			seenFetching: false,
 			startCount: 0,
 		});
 
-		const isLogsExplorerPage = pathname === ROUTES.LOGS_EXPLORER;
+		// Map to resolve full log object by id (row highlighting + indicator)
 		const logsById = useMemo(
 			() => new Map(tableViewProps.logs.map((log) => [String(log.id), log])),
 			[tableViewProps.logs],
 		);
+
 		useEffect(() => {
 			const activeLogIndex = tableViewProps.activeLogIndex ?? -1;
 			if (activeLogIndex < 0 || activeLogIndex >= tableRows.length) {
@@ -236,25 +227,13 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				return;
 			}
 
-			if (isFetching && !loadMoreState.seenFetching) {
+			if (!isFetching || tableRows.length > loadMoreState.startCount) {
 				setLoadMoreState((prev) =>
-					prev.active && !prev.seenFetching ? { ...prev, seenFetching: true } : prev,
-				);
-				return;
-			}
-
-			if (
-				(loadMoreState.seenFetching && !isFetching) ||
-				tableRows.length > loadMoreState.startCount
-			) {
-				setLoadMoreState((prev) =>
-					prev.active
-						? { active: false, seenFetching: false, startCount: prev.startCount }
-						: prev,
+					prev.active ? { active: false, startCount: prev.startCount } : prev,
 				);
 			}
 		}, [isFetching, loadMoreState, tableRows.length]);
-		const isDarkMode = useIsDarkMode();
+
 		const handleLogCopy = useCallback(
 			(logId: string, event: ReactMouseEvent<HTMLElement>): void => {
 				event.preventDefault();
@@ -271,6 +250,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			},
 			[pathname, setCopy],
 		);
+
 		const customTableRow = useCallback<
 			NonNullable<TableComponents<TanStackTableRowData>['TableRow']>
 		>(
@@ -287,6 +267,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			),
 			[activeContextLog, activeLog, logsById],
 		);
+
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
 				const row = table.getRowModel().rows[index];
@@ -295,7 +276,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				}
 
 				return (
-					<TanStackRow
+					<TanStackRowCells
 						row={row}
 						fontSize={tableViewProps.fontSize}
 						onSetActiveLog={onSetActiveLog}
@@ -320,6 +301,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				tableViewProps.fontSize,
 			],
 		);
+
 		const tableHeader = useCallback(() => {
 			const flatHeaders = table
 				.getFlatHeaders()
@@ -355,10 +337,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										fontSize={tableViewProps.fontSize}
 										hasSingleColumn={hasSingleColumn}
 										onRemoveColumn={onRemoveColumn}
-										canRemoveColumn={
-											!isAtMinimumRemovableColumns &&
-											removableColumnKeySet.has(String(column.key ?? ''))
-										}
+										canRemoveColumn={!isAtMinimumRemovableColumns}
 									/>
 								);
 							})}
@@ -390,7 +369,6 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			orderedColumns,
 			onRemoveColumn,
 			isAtMinimumRemovableColumns,
-			removableColumnKeySet,
 			sensors,
 			table,
 			tableViewProps.fontSize,
@@ -405,12 +383,11 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 				setLoadMoreState({
 					active: true,
-					seenFetching: Boolean(isFetching),
 					startCount: tableRows.length,
 				});
 				infitiyTableProps.onEndReached(index);
 			},
-			[infitiyTableProps, isFetching, tableRows.length],
+			[infitiyTableProps, tableRows.length],
 		);
 
 		if (isLoading) {
