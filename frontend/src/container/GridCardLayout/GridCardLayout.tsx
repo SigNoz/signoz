@@ -48,6 +48,7 @@ import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import {
+	applyRowCollapse,
 	hasColumnWidthsChanged,
 	removeUndefinedValuesFromLayout,
 } from './utils';
@@ -268,12 +269,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			return;
 		}
 
-		currentWidget.title = newTitle;
-		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
-			(e) => e.id !== currentSelectRowId,
+		const updatedWidgets = selectedDashboard?.data?.widgets?.map((e) =>
+			e.id === currentSelectRowId ? { ...e, title: newTitle } : e,
 		);
-
-		updatedWidgets?.push(currentWidget);
 
 		const updatedSelectedDashboard: Props = {
 			id: selectedDashboard.id,
@@ -316,88 +314,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		if (!selectedDashboard) {
 			return;
 		}
-		const rowProperties = { ...currentPanelMap[id] };
-		const updatedPanelMap = { ...currentPanelMap };
-
-		let updatedDashboardLayout = [...dashboardLayout];
-		if (rowProperties.collapsed === true) {
-			rowProperties.collapsed = false;
-			const widgetsInsideTheRow = rowProperties.widgets;
-			let maxY = 0;
-			widgetsInsideTheRow.forEach((w) => {
-				maxY = Math.max(maxY, w.y + w.h);
-			});
-			const currentRowWidget = dashboardLayout.find((w) => w.i === id);
-			if (currentRowWidget && widgetsInsideTheRow.length) {
-				maxY -= currentRowWidget.h + currentRowWidget.y;
-			}
-
-			const idxCurrentRow = dashboardLayout.findIndex((w) => w.i === id);
-
-			for (let j = idxCurrentRow + 1; j < dashboardLayout.length; j++) {
-				updatedDashboardLayout[j].y += maxY;
-				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
-						...w,
-						y: w.y + maxY,
-					}));
-				}
-			}
-			updatedDashboardLayout = [...updatedDashboardLayout, ...widgetsInsideTheRow];
-		} else {
-			rowProperties.collapsed = true;
-			const currentIdx = dashboardLayout.findIndex((w) => w.i === id);
-
-			let widgetsInsideTheRow: Layout[] = [];
-			let isPanelMapUpdated = false;
-			for (let j = currentIdx + 1; j < dashboardLayout.length; j++) {
-				if (currentPanelMap[dashboardLayout[j].i]) {
-					rowProperties.widgets = widgetsInsideTheRow;
-					widgetsInsideTheRow = [];
-					isPanelMapUpdated = true;
-					break;
-				} else {
-					widgetsInsideTheRow.push(dashboardLayout[j]);
-				}
-			}
-			if (!isPanelMapUpdated) {
-				rowProperties.widgets = widgetsInsideTheRow;
-			}
-			let maxY = 0;
-			widgetsInsideTheRow.forEach((w) => {
-				maxY = Math.max(maxY, w.y + w.h);
-			});
-			const currentRowWidget = dashboardLayout[currentIdx];
-			if (currentRowWidget && widgetsInsideTheRow.length) {
-				maxY -= currentRowWidget.h + currentRowWidget.y;
-			}
-			for (let j = currentIdx + 1; j < updatedDashboardLayout.length; j++) {
-				updatedDashboardLayout[j].y += maxY;
-				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
-						...w,
-						y: w.y + maxY,
-					}));
-				}
-			}
-
-			updatedDashboardLayout = updatedDashboardLayout.filter(
-				(widget) => !rowProperties.widgets.some((w: Layout) => w.i === widget.i),
-			);
-		}
-		setCurrentPanelMap((prev) => ({
-			...prev,
-			...updatedPanelMap,
-			[id]: {
-				...rowProperties,
-			},
-		}));
-
-		setDashboardLayout(sortLayout(updatedDashboardLayout));
+		const { updatedLayout, updatedPanelMap } = applyRowCollapse(
+			id,
+			dashboardLayout,
+			currentPanelMap,
+		);
+		setCurrentPanelMap((prev) => ({ ...prev, ...updatedPanelMap }));
+		setDashboardLayout(sortLayout(updatedLayout));
 	};
 
 	const handleDragStop: ItemCallback = (_, oldItem, newItem): void => {
