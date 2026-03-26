@@ -10,6 +10,7 @@ const DOCLINKS = {
 		'https://signoz.io/docs/external-api-monitoring/overview/',
 	QUERY_CLICKHOUSE_TRACES:
 		'https://signoz.io/docs/userguide/writing-clickhouse-traces-query/#timestamp-bucketing-for-distributed_signoz_index_v3',
+	AGENT_SKILL_INSTALL: 'https://signoz.io/docs/ai/agent-skills/#installation',
 };
 
 export default DOCLINKS;

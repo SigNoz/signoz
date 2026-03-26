@@ -1,6 +1,6 @@
 import { PlusOutlined } from '@ant-design/icons';
+import { Callout } from '@signozhq/ui';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
-import { Info } from 'lucide-react';
 import { EQueryType } from 'types/common/dashboard';
 import DOCLINKS from 'utils/docLinks';
 
@@ -15,49 +15,28 @@ function ClickHouseQueryContainer(): JSX.Element | null {
 
 	return (
 		<>
-			<div
-				style={{
-					display: 'flex',
-					alignItems: 'flex-start',
-					gap: 8,
-					margin: '8px 8px 16px 16px',
-					padding: '8px 12px',
-					borderRadius: 4,
-					background: 'var(--callout-primary-background)',
-					border: '1px solid var(--callout-primary-border)',
-					color: 'var(--callout-primary-description)',
-				}}
-			>
-				<Info
-					size={14}
-					style={{
-						marginTop: 2,
-						flexShrink: 0,
-						color: 'var(--callout-primary-icon)',
-					}}
+			<div style={{ margin: '8px 8px 16px 16px' }}>
+				<Callout
+					type="info"
+					showIcon
+					title={
+						<span>
+							<a
+								href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
+								target="_blank"
+								rel="noreferrer"
+							>
+								Learn how to write optimized queries
+							</a>
+							{' · Using an LLM? '}
+							<a href={DOCLINKS.AGENT_SKILL_INSTALL} target="_blank" rel="noreferrer">
+								Install the SigNoz ClickHouse query agent skill
+							</a>
+						</span>
+					}
 				/>
-				<span>
-					<a
-						href={DOCLINKS.QUERY_CLICKHOUSE_TRACES}
-						target="_blank"
-						rel="noreferrer"
-						style={{ color: 'var(--bg-robin-400)', textDecoration: 'underline' }}
-					>
-						Learn how to write optimized queries
-					</a>
-					{' · '}
-					If you are using LLMs,{' '}
-					<a
-						href="https://signoz.io/docs/ai/agent-skills/#installation"
-						target="_blank"
-						rel="noreferrer"
-						style={{ color: 'var(--bg-robin-400)', textDecoration: 'underline' }}
-					>
-						install SigNoz clickhouse-query agent skill
-					</a>{' '}
-					to write optimized queries
-				</span>
 			</div>
+
 			{currentQuery.clickhouse_sql.map((q, idx) => (
 				<ClickHouseQueryBuilder
 					key={q.name}
