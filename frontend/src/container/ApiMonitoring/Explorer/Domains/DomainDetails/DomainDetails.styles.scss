@@ -21,7 +21,7 @@
 }
 
 .domain-detail-drawer {
-	border-left: 1px solid var(--bg-slate-500);
+	border-left: 1px solid var(--bg-slate-400);
 	background: var(--bg-ink-400);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
@@ -31,7 +31,7 @@
 
 		align-items: stretch;
 
-		border-bottom: 1px solid var(--bg-slate-500);
+		border-bottom: 1px solid var(--bg-slate-400);
 		background: var(--bg-ink-400);
 	}
 
@@ -152,7 +152,7 @@
 
 			.ant-card {
 				&.ant-card-bordered {
-					border: 1px solid var(--bg-slate-500) !important;
+					border: 1px solid var(--bg-slate-400) !important;
 				}
 			}
 		}
@@ -246,14 +246,14 @@
 	}
 	// Add border-bottom to table cells when pagination is not present
 	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
-		border-bottom: 1px solid var(--bg-slate-500) !important;
+		border-bottom: 1px solid var(--bg-slate-400) !important;
 	}
 
 	.endpoints-table-container {
 		display: flex;
 		flex-direction: column;
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--bg-slate-400);
 
 		.endpoints-table-header {
 			display: flex;
@@ -456,7 +456,7 @@
 		display: flex;
 		flex-direction: row;
 		align-items: center;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--bg-slate-400);
 		height: 36px;
 		box-sizing: content-box;
 		.ant-select-selector {
@@ -465,7 +465,7 @@
 
 		.endpoint-details-filters-container-dropdown {
 			width: 120px;
-			border-right: 1px solid var(--bg-slate-500);
+			border-right: 1px solid var(--bg-slate-400);
 			height: 36px;
 			display: flex;
 			align-items: center;
@@ -488,7 +488,7 @@
 
 	.status-code-table-container {
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--bg-slate-400);
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
@@ -622,7 +622,7 @@
 	padding: 16px 0px 16px 0px;
 
 	border-radius: 6px;
-	border: 1px dashed var(--bg-slate-500);
+	border: 1px dashed var(--bg-slate-400);
 	font-family: 'Inter';
 
 	.error-state-content-wrapper {
@@ -658,7 +658,7 @@
 	height: 370px;
 	padding: 10px;
 
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--bg-slate-400);
 
 	.header {
 		display: flex;
@@ -736,7 +736,7 @@
 	font-family: 'Geist Mono' !important;
 
 	border-radius: 3px;
-	border: 1px solid var(--bg-slate-500);
+	border: 1px solid var(--bg-slate-400);
 
 	.title-wrapper {
 		display: inline-flex;
@@ -755,7 +755,7 @@
 	}
 	.dependent-services-container {
 		border-radius: 3px;
-		border: 1px solid var(--bg-slate-500);
+		border: 1px solid var(--bg-slate-400);
 		.ant-table {
 			.ant-table-thead > tr > th {
 				padding: 12px;
@@ -916,7 +916,7 @@
 		}
 
 		.top-services-load-more {
-			border-top: 1px solid var(--bg-slate-500);
+			border-top: 1px solid var(--bg-slate-400);
 			padding: 10px;
 
 			color: var(--text-vanilla-400);
