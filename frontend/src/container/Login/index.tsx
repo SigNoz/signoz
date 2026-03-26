@@ -7,10 +7,12 @@ import get from 'api/v2/sessions/context/get';
 import post from 'api/v2/sessions/email_password/post';
 import afterLogin from 'AppRoutes/utils';
 import AuthError from 'components/AuthError/AuthError';
+import Spinner from 'components/Spinner';
 import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { ArrowRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { ErrorV2 } from 'types/api';
 import APIError from 'types/api/error';
 import { SessionsContext } from 'types/api/v2/sessions/context/get';
@@ -69,6 +71,7 @@ function Login(): JSX.Element {
 	const email = Form.useWatch('email', form);
 	const password = Form.useWatch('password', form);
 	const orgId = Form.useWatch('orgId', form);
+	const { isLoggedIn } = useAppContext();
 
 	// setupCompleted information to route to signup page in case setup is incomplete
 	const {
@@ -299,6 +302,11 @@ function Login(): JSX.Element {
 		isPasswordAuthN,
 		password,
 	]);
+
+	if (isLoggedIn) {
+		// Route to home immediately via PrivateRoute, but show loading to prevent UI flashing
+		return <Spinner tip="Loading..." />;
+	}
 
 	return (
 		<div className="login-form-container">
