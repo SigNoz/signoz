@@ -1,6 +1,7 @@
 package tracedetail
 
 import (
+	"maps"
 	"slices"
 	"sort"
 
@@ -63,26 +64,22 @@ func findIndexForSelectedSpanFromPreOrder(spans []*model.Span, selectedSpanId st
 	return selectedSpanIndex
 }
 
-func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, uncollapsedSpans []string, isSelectedSpanIDUnCollapsed bool) (bool, []string) {
+func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string) (bool, []string) {
 	spansFromRootToNode := []string{}
 
+	spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
 	if node.SpanID == selectedSpanId {
-		if isSelectedSpanIDUnCollapsed && !slices.Contains(uncollapsedSpans, node.SpanID) {
-			spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
-		}
 		return true, spansFromRootToNode
 	}
 
 	isPresentInSubtreeForTheNode := false
 	for _, child := range node.Children {
-		isPresentInThisSubtree, _spansFromRootToNode := getPathFromRootToSelectedSpanId(child, selectedSpanId, uncollapsedSpans, isSelectedSpanIDUnCollapsed)
+		isPresentInThisSubtree, _spansFromRootToNode := getPathFromRootToSelectedSpanId(child, selectedSpanId)
 		// if the interested node is present in the given subtree then add the span node to uncollapsed node list
 		if isPresentInThisSubtree {
-			if !slices.Contains(uncollapsedSpans, node.SpanID) {
-				spansFromRootToNode = append(spansFromRootToNode, node.SpanID)
-			}
 			isPresentInSubtreeForTheNode = true
 			spansFromRootToNode = append(spansFromRootToNode, _spansFromRootToNode...)
+			break
 		}
 	}
 	return isPresentInSubtreeForTheNode, spansFromRootToNode
@@ -92,7 +89,7 @@ func getPathFromRootToSelectedSpanId(node *model.Span, selectedSpanId string, un
 // throughout the recursion. Per-call state (level, isPartOfPreOrder, etc.)
 // is passed as direct arguments.
 type traverseOpts struct {
-	uncollapsedSpans []string
+	uncollapsedSpans map[string]struct{}
 	selectedSpanID   string
 }
 
@@ -134,7 +131,7 @@ func traverseTrace(span *model.Span, opts traverseOpts, level uint64, isPartOfPr
 		preOrderTraversal = append(preOrderTraversal, &nodeWithoutChildren)
 	}
 
-	isAlreadyUncollapsed := slices.Contains(opts.uncollapsedSpans, span.SpanID)
+	_, isAlreadyUncollapsed := opts.uncollapsedSpans[span.SpanID]
 	for index, child := range span.Children {
 		_childTraversal := traverseTrace(child, opts, level+1, isPartOfPreOrder && isAlreadyUncollapsed, index != (len(span.Children)-1))
 		preOrderTraversal = append(preOrderTraversal, _childTraversal...)
@@ -169,16 +166,28 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 
 	var preOrderTraversal = make([]*model.Span, 0)
 	var rootServiceName, rootServiceEntryPoint string
-	updatedUncollapsedSpans := uncollapsedSpans
+
+	// create a map of uncollapsed spans for quick lookup
+	uncollapsedSpanMap := make(map[string]struct{})
+	for _, spanID := range uncollapsedSpans {
+		uncollapsedSpanMap[spanID] = struct{}{}
+	}
 
 	selectedSpanIndex := -1
 	for _, rootSpanID := range traceRoots {
 		if rootNode, exists := spanIdToSpanNodeMap[rootSpanID.SpanID]; exists {
-			_, spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, selectedSpanID, updatedUncollapsedSpans, isSelectedSpanIDUnCollapsed)
-			updatedUncollapsedSpans = append(updatedUncollapsedSpans, spansFromRootToNode...)
+			present, spansFromRootToNode := getPathFromRootToSelectedSpanId(rootNode, selectedSpanID)
+			if present {
+				for _, spanID := range spansFromRootToNode {
+					if selectedSpanID == spanID && !isSelectedSpanIDUnCollapsed {
+						continue
+					}
+					uncollapsedSpanMap[spanID] = struct{}{}
+				}
+			}
 
 			opts := traverseOpts{
-				uncollapsedSpans: updatedUncollapsedSpans,
+				uncollapsedSpans: uncollapsedSpanMap,
 				selectedSpanID:   selectedSpanID,
 			}
 			_preOrderTraversal := traverseTrace(rootNode, opts, 0, true, false)
@@ -223,5 +232,5 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 		startIndex = 0
 	}
 
-	return preOrderTraversal[startIndex:endIndex], updatedUncollapsedSpans, rootServiceName, rootServiceEntryPoint
+	return preOrderTraversal[startIndex:endIndex], slices.Collect(maps.Keys(uncollapsedSpanMap)), rootServiceName, rootServiceEntryPoint
 }
