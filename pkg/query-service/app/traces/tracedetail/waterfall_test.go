@@ -392,6 +392,25 @@ func TestGetSelectedSpans_DepthCountedFromSelectedSpan(t *testing.T) {
 	assert.NotContains(t, ids, "d6a", "depth 6 > limit — excluded")
 }
 
+func TestGetAllSpans(t *testing.T) {
+	root := mkSpan("root", "svc",
+		mkSpan("childA", "svc",
+			mkSpan("grandchildA", "svc",
+				mkSpan("leafA", "svc2"),
+			),
+		),
+		mkSpan("childB", "svc3",
+			mkSpan("grandchildB", "svc",
+				mkSpan("leafB", "svc2"),
+			),
+		),
+	)
+	spans, rootServiceName, rootEntryPoint := GetAllSpans([]*model.Span{root})
+	assert.ElementsMatch(t, spanIDs(spans), []string{"root", "childA", "grandchildA", "leafA", "childB", "grandchildB", "leafB"})
+	assert.Equal(t, rootServiceName, "svc")
+	assert.Equal(t, rootEntryPoint, "root-op")
+}
+
 func mkSpan(id, service string, children ...*model.Span) *model.Span {
 	return &model.Span{
 		SpanID:      id,
