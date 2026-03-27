@@ -237,6 +237,22 @@
 			}
 		}
 	}
+
+	.api-monitoring-page {
+		.api-quick-filter-left-section {
+			.api-quick-filters-header {
+				border-bottom-color: var(--bg-vanilla-300);
+				border-right-color: var(--bg-vanilla-300);
+			}
+		}
+
+		.api-module-right-section {
+			.toolbar {
+				border-bottom-color: var(--bg-vanilla-300);
+			}
+		}
+	}
+
 	.api-monitoring-domain-list-table {
 		.ant-table {
 			.ant-table-thead > tr > th {
@@ -271,6 +287,7 @@
 
 			.round-metric-tag {
 				color: var(--bg-vanilla-100);
+				border-color: var(--bg-vanilla-300);
 			}
 		}
 	}
