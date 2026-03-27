@@ -44,8 +44,11 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 	baseCond := sb.Or(conditions...)
 
 	// path index
-	pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
-	return sb.And(baseCond, pathIndex), nil
+	if operator.AddDefaultExistsFilter() {
+		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+		return sb.And(baseCond, pathIndex), nil
+	}
+	return baseCond, nil
 }
 
 // emitPlannedCondition handles paths with array traversal
