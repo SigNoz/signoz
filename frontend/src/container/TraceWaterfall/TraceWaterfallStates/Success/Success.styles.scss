@@ -416,18 +416,18 @@
 								background: var(--l2-foreground);
 
 								.children-count {
-									color: var(--l2-background);
+									color: var(--l1-background);
 								}
 							}
 
 							.span-name {
-								color: var(--l2-background);
+								color: var(--l1-foreground);
 							}
 						}
 
 						.second-row {
 							.service-name {
-								color: var(--l2-background);
+								color: var(--l2-foreground);
 							}
 						}
 					}
