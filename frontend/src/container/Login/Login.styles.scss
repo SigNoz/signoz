@@ -159,6 +159,10 @@
 }
 
 .lightMode {
+	.login-form-card {
+		background: var(--l2-background);
+	}
+
 	.login-error-container {
 		.error-content {
 			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent);

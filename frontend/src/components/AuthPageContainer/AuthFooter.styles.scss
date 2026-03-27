@@ -49,7 +49,7 @@
 	font-size: 11px;
 	font-weight: 400;
 	line-height: 1;
-	color: var(--text-neutral-dark-100);
+	color: var(--l2-foreground);
 	text-align: center;
 }
 
@@ -67,7 +67,7 @@
 
 .auth-footer-link-icon {
 	flex-shrink: 0;
-	color: var(--text-neutral-dark-50);
+	color: var(--l1-foreground);
 }
 
 .auth-footer-link-status {
