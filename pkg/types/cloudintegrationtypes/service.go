@@ -10,20 +10,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-var (
-	S3Sync = valuer.NewString("s3sync")
-	// ErrCodeInvalidServiceID is the error code for invalid service id.
-	ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
-)
-
-type ServiceID struct{ valuer.String }
+var ErrCodeInvalidServiceID = errors.MustNewCode("invalid_service_id")
 
 type CloudIntegrationService struct {
 	types.Identifiable
 	types.TimeAuditable
 	Type               ServiceID      `json:"type"`
 	Config             *ServiceConfig `json:"config"`
-	CloudIntegrationID valuer.UUID    `json:"cloudIntegrationID"`
+	CloudIntegrationID valuer.UUID    `json:"cloudIntegrationId"`
+}
+
+type ServiceConfig struct {
+	// required till new providers are added
+	AWS *AWSServiceConfig `json:"aws" required:"true" nullable:"false"`
 }
 
 // ServiceMetadata helps to quickly list available services and whether it is enabled or not.
@@ -32,26 +31,56 @@ type CloudIntegrationService struct {
 type ServiceMetadata struct {
 	ServiceDefinitionMetadata
 	// if the service is enabled for the account
-	Enabled bool `json:"enabled"`
+	Enabled bool `json:"enabled" required:"true"`
+}
+
+// ServiceDefinitionMetadata represents service definition metadata. This is useful for showing service tab in frontend.
+type ServiceDefinitionMetadata struct {
+	ID    string `json:"id" required:"true"`
+	Title string `json:"title" required:"true"`
+	Icon  string `json:"icon" required:"true"`
 }
 
 type GettableServicesMetadata struct {
-	Services []*ServiceMetadata `json:"services"`
+	Services []*ServiceMetadata `json:"services" required:"true" nullable:"false"`
 }
 
 type Service struct {
 	ServiceDefinition
-	ServiceConfig *ServiceConfig `json:"serviceConfig"`
+	ServiceConfig *ServiceConfig `json:"serviceConfig" required:"false" nullable:"false"`
 }
 
 type GettableService = Service
 
 type UpdatableService struct {
-	Config *ServiceConfig `json:"config"`
+	Config *ServiceConfig `json:"config" required:"true" nullable:"false"`
 }
 
-type ServiceConfig struct {
-	AWS *AWSServiceConfig `json:"aws,omitempty"`
+type ServiceDefinition struct {
+	ServiceDefinitionMetadata
+	Overview         string              `json:"overview" required:"true"` // markdown
+	Assets           Assets              `json:"assets" required:"true"`
+	SupportedSignals SupportedSignals    `json:"supported_signals" required:"true"`
+	DataCollected    DataCollected       `json:"dataCollected" required:"true"`
+	Strategy         *CollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
+}
+
+// SupportedSignals for cloud provider's service.
+type SupportedSignals struct {
+	Logs    bool `json:"logs"`
+	Metrics bool `json:"metrics"`
+}
+
+// DataCollected is curated static list of metrics and logs, this is shown as part of service overview.
+type DataCollected struct {
+	Logs    []CollectedLogAttribute `json:"logs"`
+	Metrics []CollectedMetric       `json:"metrics"`
+}
+
+// CollectionStrategy is cloud provider specific configuration for signal collection,
+// this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
+type CollectionStrategy struct {
+	AWS *AWSCollectionStrategy `json:"aws" required:"true" nullable:"false"`
 }
 
 type AWSServiceConfig struct {
@@ -70,43 +99,9 @@ type AWSServiceMetricsConfig struct {
 	Enabled bool `json:"enabled"`
 }
 
-// ServiceDefinitionMetadata represents service definition metadata. This is useful for showing service tab in frontend.
-type ServiceDefinitionMetadata struct {
-	Id    string `json:"id"`
-	Title string `json:"title"`
-	Icon  string `json:"icon"`
-}
-
-type ServiceDefinition struct {
-	ServiceDefinitionMetadata
-	Overview         string              `json:"overview"` // markdown
-	Assets           Assets              `json:"assets"`
-	SupportedSignals SupportedSignals    `json:"supported_signals"`
-	DataCollected    DataCollected       `json:"dataCollected"`
-	Strategy         *CollectionStrategy `json:"telemetryCollectionStrategy"`
-}
-
-// CollectionStrategy is cloud provider specific configuration for signal collection,
-// this is used by agent to understand the nitty-gritty for collecting telemetry for the cloud provider.
-type CollectionStrategy struct {
-	AWS *AWSCollectionStrategy `json:"aws,omitempty"`
-}
-
 // Assets represents the collection of dashboards.
 type Assets struct {
 	Dashboards []Dashboard `json:"dashboards"`
-}
-
-// SupportedSignals for cloud provider's service.
-type SupportedSignals struct {
-	Logs    bool `json:"logs"`
-	Metrics bool `json:"metrics"`
-}
-
-// DataCollected is curated static list of metrics and logs, this is shown as part of service overview.
-type DataCollected struct {
-	Logs    []CollectedLogAttribute `json:"logs"`
-	Metrics []CollectedMetric       `json:"metrics"`
 }
 
 // CollectedLogAttribute represents a log attribute that is present in all log entries for a service,
@@ -169,56 +164,23 @@ type AWSLogsStrategy struct {
 // This is used to show available pre-made dashboards for a service,
 // hence has additional fields like id, title and description
 type Dashboard struct {
-	Id          string                               `json:"id"`
+	ID          string                               `json:"id"`
 	Title       string                               `json:"title"`
 	Description string                               `json:"description"`
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
-}
-
-// SupportedServices is the map of supported services for each cloud provider.
-var SupportedServices = map[CloudProviderType][]ServiceID{
-	CloudProviderTypeAWS: {
-		{valuer.NewString("alb")},
-		{valuer.NewString("api-gateway")},
-		{valuer.NewString("dynamodb")},
-		{valuer.NewString("ec2")},
-		{valuer.NewString("ecs")},
-		{valuer.NewString("eks")},
-		{valuer.NewString("elasticache")},
-		{valuer.NewString("lambda")},
-		{valuer.NewString("msk")},
-		{valuer.NewString("rds")},
-		{valuer.NewString("s3sync")},
-		{valuer.NewString("sns")},
-		{valuer.NewString("sqs")},
-	},
-}
-
-// NewServiceID returns a new ServiceID from a string, validated against the supported services for the given cloud provider.
-func NewServiceID(provider CloudProviderType, service string) (ServiceID, error) {
-	services, ok := SupportedServices[provider]
-	if !ok {
-		return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "no services defined for cloud provider: %s", provider)
-	}
-	for _, s := range services {
-		if s.StringValue() == service {
-			return s, nil
-		}
-	}
-	return ServiceID{}, errors.NewInvalidInputf(ErrCodeInvalidServiceID, "invalid service id %q for cloud provider %s", service, provider)
 }
 
 // UTILS
 
 // GetCloudIntegrationDashboardID returns the dashboard id for a cloud integration, given the cloud provider, service id, and dashboard id.
 // This is used to generate unique dashboard ids for cloud integration, and also to parse the dashboard id to get the cloud provider and service id when needed.
-func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcId, dashboardId string) string {
-	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcId, dashboardId)
+func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcID, dashboardID string) string {
+	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcID, dashboardID)
 }
 
 // GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition.
 func GetDashboardsFromAssets(
-	svcId string,
+	svcID string,
 	orgID valuer.UUID,
 	cloudProvider CloudProviderType,
 	createdAt time.Time,
@@ -229,7 +191,7 @@ func GetDashboardsFromAssets(
 	for _, d := range assets.Dashboards {
 		author := fmt.Sprintf("%s-integration", cloudProvider)
 		dashboards = append(dashboards, &dashboardtypes.Dashboard{
-			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcId, d.Id),
+			ID:     GetCloudIntegrationDashboardID(cloudProvider, svcID, d.ID),
 			Locked: true,
 			OrgID:  orgID,
 			Data:   d.Definition,

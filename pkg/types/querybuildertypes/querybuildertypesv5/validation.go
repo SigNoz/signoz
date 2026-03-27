@@ -206,8 +206,11 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 		return nil
 	}
 
-	// At least one aggregation required for non-disabled queries
-	if len(q.Aggregations) == 0 && !q.Disabled {
+	// At least one aggregation required for aggregation queries, even if
+	// they are disabled, usually because they are used in formula
+	// regardless of use in formula, it's invalid to have empty Aggregations
+	// for aggregation request
+	if len(q.Aggregations) == 0 {
 		return errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"at least one aggregation is required",

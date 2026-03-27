@@ -257,7 +257,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 						WillReturnRows(samplesRows)
 
 					// Create Prometheus provider for this test
-					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, store)
+					promProvider = prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, store)
 				},
 				ManagerOptionsHook: func(opts *rules.ManagerOptions) {
 					// Set Prometheus provider for PromQL queries

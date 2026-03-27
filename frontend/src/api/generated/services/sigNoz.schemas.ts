@@ -425,6 +425,39 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
+export interface AuthtypesStorableRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -435,6 +468,504 @@ export interface AuthtypesTransactionDTO {
 
 export interface AuthtypesUpdateableAuthDomainDTO {
 	config?: AuthtypesAuthDomainConfigDTO;
+}
+
+export interface AuthtypesUserRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role?: AuthtypesStorableRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type string
+	 */
+	userId?: string;
+}
+
+export interface AuthtypesUserWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	displayName?: string;
+	/**
+	 * @type string
+	 */
+	email?: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type boolean
+	 */
+	isRoot?: boolean;
+	/**
+	 * @type string
+	 */
+	orgId?: string;
+	/**
+	 * @type string
+	 */
+	status?: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	userRoles?: AuthtypesUserRoleDTO[] | null;
+}
+
+export interface CloudintegrationtypesAWSAccountConfigDTO {
+	/**
+	 * @type array
+	 */
+	regions: string[];
+}
+
+export type CloudintegrationtypesAWSCollectionStrategyDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesAWSCollectionStrategyDTO {
+	aws_logs?: CloudintegrationtypesAWSLogsStrategyDTO;
+	aws_metrics?: CloudintegrationtypesAWSMetricsStrategyDTO;
+	/**
+	 * @type object
+	 */
+	s3_buckets?: CloudintegrationtypesAWSCollectionStrategyDTOS3Buckets;
+}
+
+export interface CloudintegrationtypesAWSConnectionArtifactDTO {
+	/**
+	 * @type string
+	 */
+	connectionURL: string;
+}
+
+export interface CloudintegrationtypesAWSConnectionArtifactRequestDTO {
+	/**
+	 * @type string
+	 */
+	deploymentRegion: string;
+	/**
+	 * @type array
+	 */
+	regions: string[];
+}
+
+export interface CloudintegrationtypesAWSIntegrationConfigDTO {
+	/**
+	 * @type array
+	 */
+	enabledRegions: string[];
+	telemetry: CloudintegrationtypesAWSCollectionStrategyDTO;
+}
+
+export type CloudintegrationtypesAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem = {
+	/**
+	 * @type string
+	 */
+	filter_pattern?: string;
+	/**
+	 * @type string
+	 */
+	log_group_name_prefix?: string;
+};
+
+export interface CloudintegrationtypesAWSLogsStrategyDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	cloudwatch_logs_subscriptions?:
+		| CloudintegrationtypesAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem[]
+		| null;
+}
+
+export type CloudintegrationtypesAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem = {
+	/**
+	 * @type array
+	 */
+	MetricNames?: string[];
+	/**
+	 * @type string
+	 */
+	Namespace?: string;
+};
+
+export interface CloudintegrationtypesAWSMetricsStrategyDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	cloudwatch_metric_stream_filters?:
+		| CloudintegrationtypesAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem[]
+		| null;
+}
+
+export interface CloudintegrationtypesAWSServiceConfigDTO {
+	logs?: CloudintegrationtypesAWSServiceLogsConfigDTO;
+	metrics?: CloudintegrationtypesAWSServiceMetricsConfigDTO;
+}
+
+export type CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesAWSServiceLogsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+	/**
+	 * @type object
+	 */
+	s3_buckets?: CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets;
+}
+
+export interface CloudintegrationtypesAWSServiceMetricsConfigDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled?: boolean;
+}
+
+export interface CloudintegrationtypesAccountDTO {
+	agentReport: CloudintegrationtypesAgentReportDTO;
+	config: CloudintegrationtypesAccountConfigDTO;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	provider: string;
+	/**
+	 * @type string
+	 * @nullable true
+	 */
+	providerAccountId: string | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	removedAt: Date | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface CloudintegrationtypesAccountConfigDTO {
+	aws: CloudintegrationtypesAWSAccountConfigDTO;
+}
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesAgentReportDTOData = {
+	[key: string]: unknown;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesAgentReportDTO = {
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	data: CloudintegrationtypesAgentReportDTOData;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	timestampMillis: number;
+} | null;
+
+export interface CloudintegrationtypesAssetsDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	dashboards?: CloudintegrationtypesDashboardDTO[] | null;
+}
+
+export interface CloudintegrationtypesCollectedLogAttributeDTO {
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	path?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+}
+
+export interface CloudintegrationtypesCollectedMetricDTO {
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	name?: string;
+	/**
+	 * @type string
+	 */
+	type?: string;
+	/**
+	 * @type string
+	 */
+	unit?: string;
+}
+
+export interface CloudintegrationtypesCollectionStrategyDTO {
+	aws: CloudintegrationtypesAWSCollectionStrategyDTO;
+}
+
+export interface CloudintegrationtypesConnectionArtifactDTO {
+	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
+}
+
+export interface CloudintegrationtypesConnectionArtifactRequestDTO {
+	aws: CloudintegrationtypesAWSConnectionArtifactRequestDTO;
+}
+
+export interface CloudintegrationtypesDashboardDTO {
+	definition?: DashboardtypesStorableDashboardDataDTO;
+	/**
+	 * @type string
+	 */
+	description?: string;
+	/**
+	 * @type string
+	 */
+	id?: string;
+	/**
+	 * @type string
+	 */
+	title?: string;
+}
+
+export interface CloudintegrationtypesDataCollectedDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	logs?: CloudintegrationtypesCollectedLogAttributeDTO[] | null;
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
+}
+
+export interface CloudintegrationtypesGettableAccountWithArtifactDTO {
+	connectionArtifact: CloudintegrationtypesConnectionArtifactDTO;
+	/**
+	 * @type string
+	 */
+	id: string;
+}
+
+export interface CloudintegrationtypesGettableAccountsDTO {
+	/**
+	 * @type array
+	 */
+	accounts: CloudintegrationtypesAccountDTO[];
+}
+
+export interface CloudintegrationtypesGettableAgentCheckInResponseDTO {
+	/**
+	 * @type string
+	 */
+	account_id: string;
+	/**
+	 * @type string
+	 */
+	cloud_account_id: string;
+	/**
+	 * @type string
+	 */
+	cloudIntegrationId: string;
+	integration_config: CloudintegrationtypesIntegrationConfigDTO;
+	integrationConfig: CloudintegrationtypesProviderIntegrationConfigDTO;
+	/**
+	 * @type string
+	 */
+	providerAccountId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	removed_at: Date | null;
+	/**
+	 * @type string
+	 * @format date-time
+	 * @nullable true
+	 */
+	removedAt: Date | null;
+}
+
+export interface CloudintegrationtypesGettableServicesMetadataDTO {
+	/**
+	 * @type array
+	 */
+	services: CloudintegrationtypesServiceMetadataDTO[];
+}
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesIntegrationConfigDTO = {
+	/**
+	 * @type array
+	 */
+	enabled_regions: string[];
+	telemetry: CloudintegrationtypesAWSCollectionStrategyDTO;
+} | null;
+
+/**
+ * @nullable
+ */
+export type CloudintegrationtypesPostableAgentCheckInRequestDTOData = {
+	[key: string]: unknown;
+} | null;
+
+export interface CloudintegrationtypesPostableAgentCheckInRequestDTO {
+	/**
+	 * @type string
+	 */
+	account_id?: string;
+	/**
+	 * @type string
+	 */
+	cloud_account_id?: string;
+	/**
+	 * @type string
+	 */
+	cloudIntegrationId?: string;
+	/**
+	 * @type object
+	 * @nullable true
+	 */
+	data: CloudintegrationtypesPostableAgentCheckInRequestDTOData;
+	/**
+	 * @type string
+	 */
+	providerAccountId?: string;
+}
+
+export interface CloudintegrationtypesProviderIntegrationConfigDTO {
+	aws: CloudintegrationtypesAWSIntegrationConfigDTO;
+}
+
+export interface CloudintegrationtypesServiceDTO {
+	assets: CloudintegrationtypesAssetsDTO;
+	dataCollected: CloudintegrationtypesDataCollectedDTO;
+	/**
+	 * @type string
+	 */
+	icon: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	overview: string;
+	serviceConfig?: CloudintegrationtypesServiceConfigDTO;
+	supported_signals: CloudintegrationtypesSupportedSignalsDTO;
+	telemetryCollectionStrategy: CloudintegrationtypesCollectionStrategyDTO;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesServiceConfigDTO {
+	aws: CloudintegrationtypesAWSServiceConfigDTO;
+}
+
+export interface CloudintegrationtypesServiceMetadataDTO {
+	/**
+	 * @type boolean
+	 */
+	enabled: boolean;
+	/**
+	 * @type string
+	 */
+	icon: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	title: string;
+}
+
+export interface CloudintegrationtypesSupportedSignalsDTO {
+	/**
+	 * @type boolean
+	 */
+	logs?: boolean;
+	/**
+	 * @type boolean
+	 */
+	metrics?: boolean;
+}
+
+export interface CloudintegrationtypesUpdatableAccountDTO {
+	config: CloudintegrationtypesAccountConfigDTO;
+}
+
+export interface CloudintegrationtypesUpdatableServiceDTO {
+	config: CloudintegrationtypesServiceConfigDTO;
 }
 
 export interface DashboardtypesDashboardDTO {
@@ -2649,6 +3180,13 @@ export interface TypesPostableResetPasswordDTO {
 	token?: string;
 }
 
+export interface TypesPostableRoleDTO {
+	/**
+	 * @type string
+	 */
+	name: string;
+}
+
 export interface TypesResetPasswordTokenDTO {
 	/**
 	 * @type string
@@ -2712,6 +3250,13 @@ export interface TypesStorableAPIKeyDTO {
 	 * @type string
 	 */
 	userId?: string;
+}
+
+export interface TypesUpdatableUserDTO {
+	/**
+	 * @type string
+	 */
+	displayName: string;
 }
 
 export interface TypesUserDTO {
@@ -2857,6 +3402,97 @@ export type AuthzResources200 = {
 
 export type ChangePasswordPathParameters = {
 	id: string;
+};
+export type AgentCheckInDeprecatedPathParameters = {
+	cloudProvider: string;
+};
+export type AgentCheckInDeprecated200 = {
+	data: CloudintegrationtypesGettableAgentCheckInResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListAccountsPathParameters = {
+	cloudProvider: string;
+};
+export type ListAccounts200 = {
+	data: CloudintegrationtypesGettableAccountsDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateAccountPathParameters = {
+	cloudProvider: string;
+};
+export type CreateAccount200 = {
+	data: CloudintegrationtypesGettableAccountWithArtifactDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DisconnectAccountPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type GetAccountPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type GetAccount200 = {
+	data: CloudintegrationtypesAccountDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateAccountPathParameters = {
+	cloudProvider: string;
+	id: string;
+};
+export type AgentCheckInPathParameters = {
+	cloudProvider: string;
+};
+export type AgentCheckIn200 = {
+	data: CloudintegrationtypesGettableAgentCheckInResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListServicesMetadataPathParameters = {
+	cloudProvider: string;
+};
+export type ListServicesMetadata200 = {
+	data: CloudintegrationtypesGettableServicesMetadataDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetServicePathParameters = {
+	cloudProvider: string;
+	serviceId: string;
+};
+export type GetService200 = {
+	data: CloudintegrationtypesServiceDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateServicePathParameters = {
+	cloudProvider: string;
+	serviceId: string;
 };
 export type CreateSessionByGoogleCallback303 = {
 	data: AuthtypesGettableTokenDTO;
@@ -3329,7 +3965,7 @@ export type UpdateServiceAccountKeyPathParameters = {
 export type UpdateServiceAccountStatusPathParameters = {
 	id: string;
 };
-export type ListUsers200 = {
+export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
 	 */
@@ -3343,10 +3979,10 @@ export type ListUsers200 = {
 export type DeleteUserPathParameters = {
 	id: string;
 };
-export type GetUserPathParameters = {
+export type GetUserDeprecatedPathParameters = {
 	id: string;
 };
-export type GetUser200 = {
+export type GetUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3354,10 +3990,10 @@ export type GetUser200 = {
 	status: string;
 };
 
-export type UpdateUserPathParameters = {
+export type UpdateUserDeprecatedPathParameters = {
 	id: string;
 };
-export type UpdateUser200 = {
+export type UpdateUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3365,7 +4001,7 @@ export type UpdateUser200 = {
 	status: string;
 };
 
-export type GetMyUser200 = {
+export type GetMyUserDeprecated200 = {
 	data: TypesDeprecatedUserDTO;
 	/**
 	 * @type string
@@ -3662,6 +4298,20 @@ export type Readyz503 = {
 	status: string;
 };
 
+export type GetUsersByRoleIDPathParameters = {
+	id: string;
+};
+export type GetUsersByRoleID200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetSessionContext200 = {
 	data: AuthtypesSessionContextDTO;
 	/**
@@ -3680,6 +4330,60 @@ export type CreateSessionByEmailPassword200 = {
 
 export type RotateSession200 = {
 	data: AuthtypesGettableTokenDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type ListUsers200 = {
+	/**
+	 * @type array
+	 */
+	data: TypesUserDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetUserPathParameters = {
+	id: string;
+};
+export type GetUser200 = {
+	data: AuthtypesUserWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type UpdateUserPathParameters = {
+	id: string;
+};
+export type GetRolesByUserIDPathParameters = {
+	id: string;
+};
+export type GetRolesByUserID200 = {
+	/**
+	 * @type array
+	 */
+	data: AuthtypesRoleDTO[];
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type SetRoleByUserIDPathParameters = {
+	id: string;
+};
+export type RemoveUserRoleByUserIDAndRoleIDPathParameters = {
+	id: string;
+	roleId: string;
+};
+export type GetMyUser200 = {
+	data: AuthtypesUserWithRolesDTO;
 	/**
 	 * @type string
 	 */

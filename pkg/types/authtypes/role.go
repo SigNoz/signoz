@@ -65,10 +65,10 @@ type StorableRole struct {
 
 	types.Identifiable
 	types.TimeAuditable
-	Name        string `bun:"name,type:string"`
-	Description string `bun:"description,type:string"`
-	Type        string `bun:"type,type:string"`
-	OrgID       string `bun:"org_id,type:string"`
+	Name        string `bun:"name,type:string" json:"name"`
+	Description string `bun:"description,type:string" json:"description"`
+	Type        string `bun:"type,type:string" json:"type"`
+	OrgID       string `bun:"org_id,type:string" json:"orgId"`
 }
 
 type Role struct {
