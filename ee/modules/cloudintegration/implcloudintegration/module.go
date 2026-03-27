@@ -181,18 +181,17 @@ func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "couldn't search ingestion keys")
 	}
 
-	for _, k := range result.Keys {
-		if k.Name == keyName {
-			return k.Value, nil
-		}
+	// ideally there should be only one key per cloud integration provider
+	if len(result.Keys) > 0 {
+		return result.Keys[0].Value, nil
 	}
 
-	created, err := module.gateway.CreateIngestionKey(ctx, orgID, keyName, []string{"integration"}, time.Time{})
+	createdIngestionKey, err := module.gateway.CreateIngestionKey(ctx, orgID, keyName, []string{"integration"}, time.Time{})
 	if err != nil {
 		return "", errors.WrapInternalf(err, errors.CodeInternal, "couldn't create ingestion key")
 	}
 
-	return created.Value, nil
+	return createdIngestionKey.Value, nil
 }
 
 func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {
