@@ -188,6 +188,8 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdateCloudIntegrationUniqueIndexFactory(sqlstore, sqlschema),
 		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewDropUserRoleColumnFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -259,7 +261,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-			impluser.NewHandler(modules.User, modules.UserGetter),
+			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
 			implsession.NewHandler(modules.Session),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
@@ -272,9 +274,12 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.GatewayHandler,
 			handlers.Fields,
 			handlers.AuthzHandler,
+			handlers.RawDataExport,
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
+			handlers.RegistryHandler,
+			handlers.CloudIntegrationHandler,
 		),
 	)
 }

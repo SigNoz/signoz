@@ -20,7 +20,7 @@ import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
-	useUpdateUser,
+	useUpdateUserDeprecated,
 } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
 import { MemberRow } from 'components/MembersTable/MembersTable';
@@ -60,7 +60,7 @@ function EditMemberDrawer({
 
 	const isInvited = member?.status === MemberStatus.Invited;
 
-	const { mutate: updateUser, isLoading: isSaving } = useUpdateUser({
+	const { mutate: updateUser, isLoading: isSaving } = useUpdateUserDeprecated({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success('Member details updated successfully', { richColors: true });

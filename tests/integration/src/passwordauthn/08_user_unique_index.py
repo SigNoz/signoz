@@ -117,15 +117,14 @@ def test_unique_index_allows_multiple_deleted_rows(
         conn.execute(
             sql.text(
                 "INSERT INTO users"
-                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
-                " VALUES (:id, :display_name, :email, :role, :org_id,"
+                " (id, display_name, email, org_id, is_root, status, created_at, updated_at, deleted_at)"
+                " VALUES (:id, :display_name, :email, :org_id,"
                 "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :zero_time)"
             ),
             {
                 "id": active_id,
                 "display_name": "first active row",
                 "email": UNIQUE_INDEX_USER_EMAIL,
-                "role": "EDITOR",
                 "org_id": org_id,
                 "zero_time": "0001-01-01 00:00:00",
             },
@@ -137,15 +136,14 @@ def test_unique_index_allows_multiple_deleted_rows(
             conn.execute(
                 sql.text(
                     "INSERT INTO users"
-                    " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
-                    " VALUES (:id, :display_name, :email, :role, :org_id,"
+                    " (id, display_name, email, org_id, is_root, status, created_at, updated_at, deleted_at)"
+                    " VALUES (:id, :display_name, :email, :org_id,"
                     "         false, 'active', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, :zero_time)"
                 ),
                 {
                     "id": str(uuid.uuid4()),
                     "display_name": "should violate index",
                     "email": UNIQUE_INDEX_USER_EMAIL,
-                    "role": "EDITOR",
                     "org_id": org_id,
                     "zero_time": "0001-01-01 00:00:00",
                 },
@@ -156,15 +154,14 @@ def test_unique_index_allows_multiple_deleted_rows(
         conn.execute(
             sql.text(
                 "INSERT INTO users"
-                " (id, display_name, email, role, org_id, is_root, status, created_at, updated_at, deleted_at)"
-                " VALUES (:id, :display_name, :email, :role, :org_id,"
+                " (id, display_name, email, org_id, is_root, status, created_at, updated_at, deleted_at)"
+                " VALUES (:id, :display_name, :email, :org_id,"
                 "         false, 'deleted', CURRENT_TIMESTAMP, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)"
             ),
             {
                 "id": str(uuid.uuid4()),
                 "display_name": "third deleted row",
                 "email": UNIQUE_INDEX_USER_EMAIL,
-                "role": "EDITOR",
                 "org_id": org_id,
             },
         )

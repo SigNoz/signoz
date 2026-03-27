@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { PANEL_GROUP_TYPES } from 'constants/queryBuilder';
 import { createDynamicVariableToWidgetsMap } from 'hooks/dashboard/utils';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { Widgets } from 'types/api/dashboard/getAll';
 
 import { useDashboardVariablesByType } from './useDashboardVariablesByType';
@@ -12,7 +12,7 @@ import { useDashboardVariablesByType } from './useDashboardVariablesByType';
  */
 export function useWidgetsByDynamicVariableId(): Record<string, string[]> {
 	const dynamicVariables = useDashboardVariablesByType('DYNAMIC', 'values');
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 
 	return useMemo(() => {
 		const widgets =

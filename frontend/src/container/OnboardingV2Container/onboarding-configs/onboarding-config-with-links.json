@@ -6122,5 +6122,95 @@
 		],
 		"id": "huggingface-observability",
 		"link": "/docs/huggingface-observability/"
+	},
+	{
+		"dataSource": "mistral-observability",
+		"label": "Mistral AI",
+		"imgUrl": "/Logos/mistral.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"mistral",
+			"mistral ai",
+			"monitoring",
+			"observability",
+			"otel mistral",
+			"traces",
+			"tracing"
+		],
+		"id": "mistral-observability",
+		"link": "/docs/mistral-observability/"
+	},
+	{
+		"dataSource": "openclaw-observability",
+		"label": "OpenClaw",
+		"imgUrl": "/Logos/openclaw.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"openclaw",
+			"otel openclaw",
+			"traces",
+			"tracing"
+		],
+		"id": "openclaw-observability",
+		"link": "/docs/openclaw-monitoring/"
+	},
+	{
+		"dataSource": "claude-agent-monitoring",
+		"label": "Claude Agent SDK",
+		"imgUrl": "/Logos/claude-code.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"anthropic",
+			"claude",
+			"claude agent",
+			"claude agent sdk",
+			"claude sdk",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel claude",
+			"traces",
+			"tracing"
+		],
+		"id": "claude-agent-monitoring",
+		"link": "/docs/claude-agent-monitoring/"
+	},
+	{
+		"dataSource": "render-metrics",
+		"label": "Render",
+		"imgUrl": "/Logos/render.svg",
+		"tags": [
+			"infrastructure monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"infrastructure",
+			"metrics",
+			"monitoring",
+			"observability",
+			"paas",
+			"render",
+			"render metrics",
+			"render monitoring"
+		],
+		"id": "render-metrics",
+		"link": "/docs/metrics-management/render-metrics/"
 	}
 ]

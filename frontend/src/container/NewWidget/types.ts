@@ -2,16 +2,15 @@ import { Dispatch, SetStateAction } from 'react';
 import { UseQueryResult } from 'react-query';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
-import { IDashboardContext } from 'providers/Dashboard/types';
 import { SuccessResponse, Warning } from 'types/api';
-import { Widgets } from 'types/api/dashboard/getAll';
+import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 
 import { timePreferance } from './RightContainer/timeItems';
 
 export interface NewWidgetProps {
 	dashboardId: string;
-	selectedDashboard: IDashboardContext['selectedDashboard'];
+	selectedDashboard: Dashboard | undefined;
 	selectedGraph: PANEL_TYPES;
 	enableDrillDown?: boolean;
 }
@@ -35,7 +34,7 @@ export interface WidgetGraphProps {
 		>
 	>;
 	enableDrillDown?: boolean;
-	selectedDashboard: IDashboardContext['selectedDashboard'];
+	selectedDashboard: Dashboard | undefined;
 	isNewPanel?: boolean;
 }
 

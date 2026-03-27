@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -31,7 +32,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -39,7 +47,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "B",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -61,7 +74,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -194,7 +214,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -232,7 +259,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "sum(duration)",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -366,7 +398,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -374,7 +411,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[TraceAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalTraces,
+								Aggregations: []TraceAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalTraces,
 							},
 						},
 					},
@@ -396,7 +438,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -404,7 +451,14 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 					},
@@ -427,7 +481,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},
@@ -581,7 +637,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},
@@ -743,7 +801,7 @@ func TestValidateQueryEnvelope(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := validateQueryEnvelope(tt.envelope, tt.requestType)
+			err := validateQueryEnvelope(tt.envelope)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("validateQueryEnvelope() expected error but got none")
@@ -816,7 +874,7 @@ func TestQueryEnvelope_Helpers(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				got := tt.envelope.queryName()
+				got := tt.envelope.GetQueryName()
 				if got != tt.want {
 					t.Errorf("queryName() = %q, want %q", got, tt.want)
 				}
@@ -868,7 +926,7 @@ func TestQueryEnvelope_Helpers(t *testing.T) {
 		}
 		for _, tt := range tests {
 			t.Run(tt.name, func(t *testing.T) {
-				got := tt.envelope.isDisabled()
+				got := tt.envelope.IsDisabled()
 				if got != tt.want {
 					t.Errorf("isDisabled() = %v, want %v", got, tt.want)
 				}
@@ -1107,7 +1165,7 @@ func TestQueryRangeRequest_ValidateOrderByForAggregation(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			err := tt.query.Validate(RequestTypeTimeSeries)
+			err := tt.query.Validate(GetValidationOptions(RequestTypeTimeSeries)...)
 			if tt.wantErr {
 				if err == nil {
 					t.Errorf("validateOrderByForAggregation() expected error but got none")
@@ -1161,7 +1219,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: "service.name"}},
 			},
 		}
-		err := query.Validate(RequestTypeRaw)
+		err := query.Validate(GetValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for groupBy with raw request type, got: %v", err)
 		}
@@ -1178,7 +1236,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: ""}},
 			},
 		}
-		err := query.Validate(RequestTypeTimeSeries)
+		err := query.Validate(GetValidationOptions(RequestTypeTimeSeries)...)
 		if err == nil {
 			t.Errorf("expected error for empty groupBy key with timeseries request type")
 		}
@@ -1190,7 +1248,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			Signal: telemetrytypes.SignalLogs,
 			Having: &Having{Expression: "count() > 10"},
 		}
-		err := query.Validate(RequestTypeRaw)
+		err := query.Validate(GetValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for having with raw request type, got: %v", err)
 		}
@@ -1202,7 +1260,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			Signal: telemetrytypes.SignalTraces,
 			Having: &Having{Expression: "count() > 10"},
 		}
-		err := query.Validate(RequestTypeTrace)
+		err := query.Validate(GetValidationOptions(RequestTypeTrace)...)
 		if err != nil {
 			t.Errorf("expected no error for having with trace request type, got: %v", err)
 		}
@@ -1216,7 +1274,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{Expression: "count()"},
 			},
 		}
-		err := query.Validate(RequestTypeRaw)
+		err := query.Validate(GetValidationOptions(RequestTypeRaw)...)
 		if err != nil {
 			t.Errorf("expected no error for aggregations with raw request type, got: %v", err)
 		}
@@ -1230,7 +1288,7 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 				{Expression: "count()"},
 			},
 		}
-		err := query.Validate(RequestTypeRawStream)
+		err := query.Validate(GetValidationOptions(RequestTypeRawStream)...)
 		if err != nil {
 			t.Errorf("expected no error for aggregations with raw_stream request type, got: %v", err)
 		}
@@ -1248,12 +1306,12 @@ func TestNonAggregationFieldsSkipped(t *testing.T) {
 			},
 		}
 		// Should error for raw (selectFields are validated)
-		err := query.Validate(RequestTypeRaw)
+		err := query.Validate(GetValidationOptions(RequestTypeRaw)...)
 		if err == nil {
 			t.Errorf("expected error for isRoot in selectFields with raw request type")
 		}
 		// Should pass for timeseries (selectFields skipped)
-		err = query.Validate(RequestTypeTimeSeries)
+		err = query.Validate(GetValidationOptions(RequestTypeTimeSeries)...)
 		if err != nil {
 			t.Errorf("expected no error for isRoot in selectFields with timeseries request type, got: %v", err)
 		}

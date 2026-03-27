@@ -31,6 +31,7 @@ type Server struct {
 	modelID       string
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
+	healthyC      chan struct{}
 }
 
 func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (*Server, error) {
@@ -61,6 +62,7 @@ func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, co
 		openfgaSchema: openfgaSchema,
 		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
+		healthyC:      make(chan struct{}),
 	}, nil
 }
 
@@ -80,8 +82,14 @@ func (server *Server) Start(ctx context.Context) error {
 	server.storeID = storeID
 	server.mtx.Unlock()
 
+	close(server.healthyC)
+
 	<-server.stopChan
 	return nil
+}
+
+func (server *Server) Healthy() <-chan struct{} {
+	return server.healthyC
 }
 
 func (server *Server) Stop(ctx context.Context) error {
