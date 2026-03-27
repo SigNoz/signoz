@@ -216,7 +216,7 @@ function HostsList(): JSX.Element {
 							</div>
 						)}
 						<HostsListControls
-							filters={filters ?? undefined}
+							filters={filters}
 							handleFiltersChange={handleFiltersChange}
 							showAutoRefresh={!selectedHostData}
 						/>

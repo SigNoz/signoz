@@ -4,12 +4,10 @@ setupCommonMocks();
 
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, screen } from '@testing-library/react';
 import K8sHeader from 'container/InfraMonitoringK8s/K8sHeader';
 import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
-import store from 'store';
 
 import { INFRA_MONITORING_K8S_PARAMS_KEYS, K8sCategory } from '../constants';
 
@@ -42,11 +40,9 @@ describe('K8sHeader URL Parameter Parsing', () => {
 		return render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<K8sHeader {...defaultProps} />
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<K8sHeader {...defaultProps} />
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);

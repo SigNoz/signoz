@@ -148,7 +148,7 @@ export const dummyColumnConfig = {
 	className: 'column column-dummy',
 };
 
-const columnsConfig: ColumnType<any>[] = [
+const columnsConfig: ColumnType<K8sPodsRowData>[] = [
 	{
 		title: <div className="column-header pod-name-header">Pod Name</div>,
 		dataIndex: 'podName',
@@ -231,7 +231,7 @@ const columnsConfig: ColumnType<any>[] = [
 	// },
 ];
 
-export const namespaceColumnConfig: ColumnType<any> = {
+export const namespaceColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Namespace</div>,
 	dataIndex: 'namespace',
 	key: 'namespace',
@@ -242,7 +242,7 @@ export const namespaceColumnConfig: ColumnType<any> = {
 	className: 'column column-namespace',
 };
 
-export const nodeColumnConfig: ColumnType<any> = {
+export const nodeColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Node</div>,
 	dataIndex: 'node',
 	key: 'node',
@@ -253,7 +253,7 @@ export const nodeColumnConfig: ColumnType<any> = {
 	className: 'column column-node',
 };
 
-export const clusterColumnConfig: ColumnType<any> = {
+export const clusterColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Cluster</div>,
 	dataIndex: 'cluster',
 	key: 'cluster',
@@ -264,7 +264,7 @@ export const clusterColumnConfig: ColumnType<any> = {
 	className: 'column column-cluster',
 };
 
-export const columnConfigMap: Record<string, ColumnType<any>> = {
+export const columnConfigMap: Record<string, ColumnType<K8sPodsRowData>> = {
 	namespace: namespaceColumnConfig,
 	node: nodeColumnConfig,
 	cluster: clusterColumnConfig,

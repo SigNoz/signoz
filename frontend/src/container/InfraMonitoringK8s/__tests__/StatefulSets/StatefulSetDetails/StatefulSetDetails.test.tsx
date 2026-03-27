@@ -4,12 +4,11 @@ setupCommonMocks();
 
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
-import { fireEvent, render, screen } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import StatefulSetDetails from 'container/InfraMonitoringK8s/StatefulSets/StatefulSetDetails/StatefulSetDetails';
 import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
-import store from 'store';
+import { userEvent } from 'tests/test-utils';
 
 const queryClient = new QueryClient();
 
@@ -28,15 +27,13 @@ describe('StatefulSetDetails', () => {
 		render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<StatefulSetDetails
-								statefulSet={mockStatefulSet}
-								isModalTimeSelection
-								onClose={mockOnClose}
-							/>
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<StatefulSetDetails
+							statefulSet={mockStatefulSet}
+							isModalTimeSelection
+							onClose={mockOnClose}
+						/>
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
@@ -54,15 +51,13 @@ describe('StatefulSetDetails', () => {
 		render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<StatefulSetDetails
-								statefulSet={mockStatefulSet}
-								isModalTimeSelection
-								onClose={mockOnClose}
-							/>
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<StatefulSetDetails
+							statefulSet={mockStatefulSet}
+							isModalTimeSelection
+							onClose={mockOnClose}
+						/>
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
@@ -84,15 +79,13 @@ describe('StatefulSetDetails', () => {
 		render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<StatefulSetDetails
-								statefulSet={mockStatefulSet}
-								isModalTimeSelection
-								onClose={mockOnClose}
-							/>
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<StatefulSetDetails
+							statefulSet={mockStatefulSet}
+							isModalTimeSelection
+							onClose={mockOnClose}
+						/>
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
@@ -101,48 +94,44 @@ describe('StatefulSetDetails', () => {
 		expect(metricsTab).toBeChecked();
 	});
 
-	it('should switch to events tab when events tab is clicked', () => {
+	it('should switch to events tab when events tab is clicked', async () => {
 		render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<StatefulSetDetails
-								statefulSet={mockStatefulSet}
-								isModalTimeSelection
-								onClose={mockOnClose}
-							/>
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<StatefulSetDetails
+							statefulSet={mockStatefulSet}
+							isModalTimeSelection
+							onClose={mockOnClose}
+						/>
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
 
 		const eventsTab = screen.getByRole('radio', { name: 'Events' });
 		expect(eventsTab).not.toBeChecked();
-		fireEvent.click(eventsTab);
+		await userEvent.click(eventsTab);
 		expect(eventsTab).toBeChecked();
 	});
 
-	it('should close modal when close button is clicked', () => {
+	it('should close modal when close button is clicked', async () => {
 		render(
 			<Wrapper>
 				<QueryClientProvider client={queryClient}>
-					<Provider store={store}>
-						<MemoryRouter>
-							<StatefulSetDetails
-								statefulSet={mockStatefulSet}
-								isModalTimeSelection
-								onClose={mockOnClose}
-							/>
-						</MemoryRouter>
-					</Provider>
+					<MemoryRouter>
+						<StatefulSetDetails
+							statefulSet={mockStatefulSet}
+							isModalTimeSelection
+							onClose={mockOnClose}
+						/>
+					</MemoryRouter>
 				</QueryClientProvider>
 			</Wrapper>,
 		);
 
 		const closeButton = screen.getByRole('button', { name: 'Close' });
-		fireEvent.click(closeButton);
+		await userEvent.click(closeButton);
 		expect(mockOnClose).toHaveBeenCalled();
 	});
 });
