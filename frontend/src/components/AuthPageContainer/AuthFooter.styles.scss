@@ -32,7 +32,7 @@
 	width: 6px;
 	height: 6px;
 	border-radius: 9999px;
-	background: #25e192;
+	background: var(--bg-forest-500);
 	flex-shrink: 0;
 }
 
@@ -72,11 +72,11 @@
 
 .auth-footer-link-status {
 	.auth-footer-text {
-		color: #25e192;
+		color: var(--bg-forest-500);
 	}
 
 	.auth-footer-link-icon {
-		color: #25e192;
+		color: var(--bg-forest-500);
 	}
 }
 

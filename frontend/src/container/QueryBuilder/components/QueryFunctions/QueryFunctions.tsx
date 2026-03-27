@@ -93,7 +93,6 @@ export default function QueryFunctions({
 		})),
 	);
 
-	const isDarkMode = useIsDarkMode();
 
 	const hasAnomalyFunction = functions.some((func) => func.name === 'anomaly');
 	const hasFunctions = functions.length > 0;
@@ -191,7 +190,7 @@ export default function QueryFunctions({
 			>
 				<FunctionIcon
 					className="function-icon"
-					fillColor={!isDarkMode ? '#0B0C0E' : 'white'}
+					fillColor="var(--l1-foreground)"
 				/>
 			</Button>
 
@@ -238,7 +237,7 @@ export default function QueryFunctions({
 					disabled={functions && functions.length >= maxFunctions}
 					onClick={handleAddNewFunction}
 				>
-					<Plus size={14} color={!isDarkMode ? '#0B0C0E' : 'white'} />
+					<Plus size={14} color="var(--l1-foreground)" />
 				</Button>
 			</Tooltip>
 		</div>

@@ -431,7 +431,7 @@
 
 			.periscope-btn.secondary {
 				border-radius: 2px;
-				border: 1px solid var(--Slate-400);
+				border: 1px solid var(--l2-border);
 				background: var(--l2-background);
 			}
 		}
@@ -579,7 +579,7 @@
 				border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
 				background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 
-				color: var(--Sienna-400);
+				color: var(--bg-sienna-400);
 				text-align: center;
 				font-family: Inter;
 				font-size: 12px;
@@ -590,7 +590,7 @@
 
 			.firing-tag {
 				color: var(--bg-sakura-500);
-				background: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
+				background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 			}
 		}
 
@@ -626,7 +626,7 @@
 		padding: 4px 12px !important;
 
 		border-radius: 0px 0px 6px 6px;
-		border: 1px solid var(--Slate-400);
+		border: 1px solid var(--l2-border);
 		background: var(--l2-background);
 		box-shadow: 0px -8px 6px 0px rgba(0, 0, 0, 0.1);
 
@@ -644,7 +644,7 @@
 				letter-spacing: -0.07px;
 
 				&:hover {
-					color: var(--Robin-400);
+					color: var(--primary-background-hover);
 				}
 			}
 		}
@@ -708,7 +708,7 @@
 	}
 
 	.empty-description {
-		color: var(--Vanilla-400);
+		color: var(--l3-foreground);
 		font-family: Inter;
 		font-size: 12px;
 		font-style: normal;
@@ -731,10 +731,10 @@
 			gap: 8px;
 
 			border-radius: 1.484px;
-			border: 1px solid var(--Slate-400);
+			border: 1px solid var(--l2-border);
 			background: var(--l2-background);
 
-			color: var(--Vanilla-400);
+			color: var(--l3-foreground);
 			font-family: Inter;
 			font-size: 11px;
 			font-style: normal;
@@ -750,7 +750,7 @@
 	align-items: center;
 	gap: 4px;
 
-	color: var(--Robin-400);
+	color: var(--primary-background-hover);
 	font-family: Inter;
 	font-size: 11px;
 	font-style: normal;
@@ -766,6 +766,10 @@
 	border: 1px solid var(--l2-border);
 	background: var(--l2-background);
 	color: var(--l1-foreground);
+
+	.ant-popover-content {
+		border: none;
+	}
 
 	.ant-popover-inner {
 		background-color: transparent !important;

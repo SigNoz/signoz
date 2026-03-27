@@ -119,7 +119,7 @@
 		border: none;
 	}
 	.cancel-run:hover {
-		background-color: #ff7875 !important;
+		background-color: var(--bg-cherry-400) !important;
 		color: var(--l1-foreground) !important;
 	}
 }

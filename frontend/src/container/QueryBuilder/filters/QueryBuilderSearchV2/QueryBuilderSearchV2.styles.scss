@@ -257,16 +257,16 @@
 			}
 
 			&.resource {
-				border: 1px solid #4bcff920;
+				border: 1px solid color-mix(in srgb, var(--bg-aqua-400) 13%, transparent);
 
 				.ant-typography {
 					color: var(--bg-aqua-400);
-					background: #4bcff910;
+					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 					font-size: 14px;
 				}
 
 				.ant-tag-close-icon {
-					background: #4bcff910;
+					background: color-mix(in srgb, var(--bg-aqua-400) 6%, transparent);
 				}
 			}
 			&.tag {

@@ -206,12 +206,12 @@
 
 		.valid {
 			background-color: color-mix(in srgb, var(--bg-forest-400) 10%, transparent);
-			color: #27ae60;
+			color: var(--bg-forest-600);
 		}
 
 		.invalid {
 			background-color: color-mix(in srgb, var(--bg-cherry-400) 10%, transparent);
-			color: #eb5757;
+			color: var(--bg-cherry-500);
 		}
 
 		.query-validation-status {
@@ -407,32 +407,32 @@
 
 		// Color variations based on context
 		&.context-indicator-key {
-			border-left-color: #1890ff; // blue
-			background-color: rgba(24, 144, 255, 0.1);
+			border-left-color: var(--bg-robin-500); // blue
+			background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
 		}
 
 		&.context-indicator-operator {
-			border-left-color: #722ed1; // purple
-			background-color: rgba(114, 46, 209, 0.1);
+			border-left-color: var(--bg-robin-600); // purple
+			background-color: color-mix(in srgb, var(--bg-robin-600) 10%, transparent);
 		}
 
 		&.context-indicator-value {
-			border-left-color: #52c41a; // green
+			border-left-color: var(--bg-forest-500); // green
 			background-color: color-mix(in srgb, var(--bg-forest-400) 10%, transparent);
 		}
 
 		&.context-indicator-conjunction {
-			border-left-color: #fa8c16; // orange
+			border-left-color: var(--bg-amber-500); // orange
 			background-color: color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
 		}
 
 		&.context-indicator-function {
-			border-left-color: #13c2c2; // cyan
-			background-color: rgba(19, 194, 194, 0.1);
+			border-left-color: var(--bg-aqua-500); // cyan
+			background-color: color-mix(in srgb, var(--bg-aqua-500) 10%, transparent);
 		}
 
 		&.context-indicator-parenthesis {
-			border-left-color: #eb2f96; // magenta
+			border-left-color: var(--bg-sakura-500); // magenta
 			background-color: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
 		}
 	}
@@ -463,16 +463,16 @@
 
 			.cm-line {
 				::-moz-selection {
-					background: #b3d4fc !important;
+					background: var(--bg-robin-200) !important;
 				}
 
 				::selection {
-					background: #b3d4fc !important;
+					background: var(--bg-robin-200) !important;
 				}
 			}
 
 			.cm-selectionBackground {
-				background: #b3d4fc !important;
+				background: var(--bg-robin-200) !important;
 			}
 		}
 	}

@@ -31,7 +31,7 @@
 		}
 
 		&__error-code {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 			font-size: 13px;
 			font-weight: 500;
 			line-height: 1;
@@ -39,7 +39,7 @@
 		}
 
 		&__error-message {
-			color: #f5b6b8;
+			color: var(--bg-cherry-300);
 			font-size: 13px;
 			font-weight: 400;
 			line-height: 20px;
@@ -51,7 +51,7 @@
 		}
 
 		&__message-badge-label-text {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 		}
 
 		&__message-badge-line {
@@ -71,14 +71,14 @@
 		}
 
 		&__message-item {
-			color: #f5b6b8;
+			color: var(--bg-cherry-300);
 			font-size: 13px;
 			font-weight: 400;
 			line-height: 20px;
 			letter-spacing: -0.065px;
 
 			&::before {
-				background: #f5b6b8;
+				background: var(--bg-cherry-300);
 			}
 		}
 
@@ -87,7 +87,7 @@
 		}
 
 		&__scroll-hint-text {
-			color: #fadadb;
+			color: var(--bg-cherry-100);
 		}
 	}
 

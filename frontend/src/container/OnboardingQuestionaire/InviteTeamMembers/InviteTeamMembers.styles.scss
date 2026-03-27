@@ -186,7 +186,7 @@
 	border: none !important;
 	border-radius: 2px !important;
 	background: transparent !important;
-	color: #e5484d !important;
+	color: var(--bg-cherry-500) !important;
 	opacity: 0.6 !important;
 	cursor: pointer;
 	padding: 0 !important;
@@ -194,7 +194,7 @@
 	box-shadow: none !important;
 
 	svg {
-		color: #e5484d !important;
+		color: var(--bg-cherry-500) !important;
 		width: 12px !important;
 		height: 12px !important;
 	}
@@ -202,10 +202,10 @@
 	&:hover {
 		background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent) !important;
 		opacity: 0.9 !important;
-		color: #e5484d !important;
+		color: var(--bg-cherry-500) !important;
 
 		svg {
-			color: #e5484d !important;
+			color: var(--bg-cherry-500) !important;
 		}
 	}
 
