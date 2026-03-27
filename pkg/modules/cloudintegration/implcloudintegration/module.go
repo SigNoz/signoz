@@ -69,5 +69,5 @@ func (m *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dash
 }
 
 func (m *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
-	panic("unimplemented")
+	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get cloud provider is not supported")
 }
