@@ -102,6 +102,10 @@ func (fn FunctionName) Validate() error {
 
 // ApplyFunction applies the given function to the result data
 func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
+	if len(result.Values) == 0 {
+		return result
+	}
+
 	// Extract the function name and arguments
 	name := fn.Name
 	args := fn.Args
@@ -326,10 +330,6 @@ func funcAbsolute(result *TimeSeries) *TimeSeries {
 
 // funcRunningDiff returns the running difference of each point
 func funcRunningDiff(result *TimeSeries) *TimeSeries {
-	if len(result.Values) == 0 {
-		return result
-	}
-
 	// iterate over the points in reverse order
 	for idx := len(result.Values) - 1; idx >= 0; idx-- {
 		if idx > 0 {
