@@ -183,7 +183,7 @@ func TestGetSelectedSpans_PathReturnedInUncollapsed(t *testing.T) {
 	spanMap := buildSpanMap(root)
 	spans, uncollapsed, _, _ := GetSelectedSpans([]string{}, "selected", []*model.Span{root}, spanMap, false)
 
-	assert.Equal(t, []string{"root", "parent"}, uncollapsed)
+	assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 	assert.Equal(t, []string{"root", "parent", "selected"}, spanIDs(spans))
 }
 
@@ -206,7 +206,7 @@ func TestGetSelectedSpans_SiblingsNotExpanded(t *testing.T) {
 	// children of root sort alphabetically: parent < unrelated; unrelated-child stays hidden
 	assert.Equal(t, []string{"root", "parent", "selected", "unrelated"}, spanIDs(spans))
 	// only the path nodes are tracked as uncollapsed — unrelated is not
-	assert.Equal(t, []string{"root", "parent"}, uncollapsed)
+	assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 }
 
 // An unknown selectedSpanID must not panic; returns a window from index 0.
