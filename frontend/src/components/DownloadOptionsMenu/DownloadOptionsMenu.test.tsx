@@ -116,7 +116,12 @@ describe.each([
 		expect(screen.getByRole('dialog')).toBeInTheDocument();
 		expect(screen.getByText('FORMAT')).toBeInTheDocument();
 		expect(screen.getByText('Number of Rows')).toBeInTheDocument();
-		expect(screen.getByText('Columns')).toBeInTheDocument();
+
+		if (dataSource === DataSource.TRACES) {
+			expect(screen.queryByText('Columns')).not.toBeInTheDocument();
+		} else {
+			expect(screen.getByText('Columns')).toBeInTheDocument();
+		}
 	});
 
 	it('allows changing export format', () => {
@@ -146,6 +151,17 @@ describe.each([
 	});
 
 	it('allows changing columns scope', () => {
+		if (dataSource === DataSource.TRACES) {
+			renderWithStore(dataSource);
+			fireEvent.click(screen.getByTestId(testId));
+
+			expect(screen.queryByRole('radio', { name: 'All' })).not.toBeInTheDocument();
+			expect(
+				screen.queryByRole('radio', { name: 'Selected' }),
+			).not.toBeInTheDocument();
+			return;
+		}
+
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 
@@ -210,7 +226,12 @@ describe.each([
 		mockUseQueryBuilder.mockReturnValue({ stagedQuery: mockQuery });
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
-		fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
+
+		// For traces, column scope is always Selected and the radio is hidden
+		if (dataSource !== DataSource.TRACES) {
+			fireEvent.click(screen.getByRole('radio', { name: 'Selected' }));
+		}
+
 		fireEvent.click(screen.getByText('Export'));
 
 		await waitFor(() => {
@@ -227,6 +248,11 @@ describe.each([
 	});
 
 	it('sends no selectFields when column scope is All', async () => {
+		// For traces, column scope is always Selected — this test only applies to other sources
+		if (dataSource === DataSource.TRACES) {
+			return;
+		}
+
 		renderWithStore(dataSource);
 		fireEvent.click(screen.getByTestId(testId));
 		fireEvent.click(screen.getByRole('radio', { name: 'All' }));
