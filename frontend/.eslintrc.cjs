@@ -219,7 +219,7 @@ module.exports = {
 						object: 'navigator',
 						property: 'clipboard',
 						message:
-							'Do not use navigator.clipboard directly since it does work well with specific browsers. Use hook useCopyToClipboard from react-use library. https://streamich.github.io/react-use/?path=/story/side-effects-usecopytoclipboard--docs',
+							'Do not use navigator.clipboard directly since it does not work well with specific browsers. Use hook useCopyToClipboard from react-use library. https://streamich.github.io/react-use/?path=/story/side-effects-usecopytoclipboard--docs',
 					},
 				],
 			},
