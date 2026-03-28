@@ -5,7 +5,6 @@ import { TIMEZONE_DATA } from 'components/CustomTimePicker/timezoneUtils';
 import { UniversalYAxisUnit } from 'components/YAxisUnitSelector/types';
 import { getRandomColor } from 'container/ExplorerOptions/utils';
 import { PostableAlertRuleV2 } from 'types/api/alerts/alertTypesV2';
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { v4 } from 'uuid';
 
 import { useCreateAlertState } from './context';
@@ -191,10 +190,10 @@ export function getNotificationSettingsStateFromAlertDef(
 			(state) => state as 'firing' | 'nodata',
 		) || [];
 	const reNotificationValue = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || DEFAULT_TIME_RANGE).time
+		? parseGoTime(alertDef.notificationSettings.renotify.interval ||'30m').time
 		: 30;
 	const reNotificationUnit = alertDef.notificationSettings?.renotify
-		? parseGoTime(alertDef.notificationSettings.renotify.interval || DEFAULT_TIME_RANGE).unit
+		? parseGoTime(alertDef.notificationSettings.renotify.interval || '30m').unit
 		: UniversalYAxisUnit.MINUTES;
 
 	return {

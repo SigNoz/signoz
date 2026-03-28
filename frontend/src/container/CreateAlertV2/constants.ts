@@ -1,5 +1,4 @@
 import { ENTITY_VERSION_V5 } from 'constants/app';
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants'; 
 import {
 	initialQueryBuilderFormValuesMap,
 	initialQueryPromQLData,
@@ -23,7 +22,7 @@ const defaultNotificationSettings: PostableAlertRuleV2['notificationSettings'] =
 	groupBy: [],
 	renotify: {
 		enabled: false,
-		interval: DEFAULT_TIME_RANGE,
+		interval: '30m',
 		alertStates: [],
 	},
 	usePolicy: false,
