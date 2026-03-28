@@ -1,4 +1,5 @@
 import ROUTES from 'constants/routes';
+export const DEFAULT_TIME_RANGE = '30m';
 
 import { CustomTimeType, Option, Time, TimeFrame } from './types';
 
@@ -110,7 +111,7 @@ export const convertOldTimeToNewValidCustomTimeFormat = (
 		return `${match[1]}${unit}` as CustomTimeType;
 	}
 
-	return '30m';
+	return DEFAULT_TIME_RANGE;
 };
 
 export const getDefaultOption = (route: string): Time => {

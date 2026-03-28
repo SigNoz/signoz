@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
@@ -77,7 +78,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.LOGS,
 			},
@@ -87,7 +88,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
@@ -102,7 +103,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.TRACES,
 			},
@@ -112,7 +113,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
