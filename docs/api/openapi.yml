@@ -2279,47 +2279,6 @@ components:
       - status
       - error
       type: object
-    RoletypesPatchableRole:
-      properties:
-        description:
-          type: string
-      required:
-      - description
-      type: object
-    RoletypesPostableRole:
-      properties:
-        description:
-          type: string
-        name:
-          type: string
-      required:
-      - name
-      type: object
-    RoletypesRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      - name
-      - description
-      - type
-      - orgId
-      type: object
     RulestatehistorytypesAlertState:
       enum:
       - inactive
@@ -8098,6 +8057,518 @@ paths:
       summary: Get users by role id
       tags:
       - users
+  /api/v2/rules/{id}/history/filter_keys:
+    get:
+      deprecated: false
+      description: Returns distinct label keys from rule history entries for the selected
+        range.
+      operationId: GetRuleHistoryFilterKeys
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get rule history filter keys
+      tags:
+      - rules
+  /api/v2/rules/{id}/history/filter_values:
+    get:
+      deprecated: false
+      description: Returns distinct label values for a given key from rule history
+        entries.
+      operationId: GetRuleHistoryFilterValues
+      parameters:
+      - in: query
+        name: signal
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSignal'
+      - in: query
+        name: source
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesSource'
+      - in: query
+        name: limit
+        schema:
+          type: integer
+      - in: query
+        name: startUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: endUnixMilli
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: fieldContext
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldContext'
+      - in: query
+        name: fieldDataType
+        schema:
+          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
+      - in: query
+        name: metricName
+        schema:
+          type: string
+      - in: query
+        name: searchText
+        schema:
+          type: string
+      - in: query
+        name: name
+        schema:
+          type: string
+      - in: query
+        name: existingQuery
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get rule history filter values
+      tags:
+      - rules
+  /api/v2/rules/{id}/history/overall_status:
+    get:
+      deprecated: false
+      description: Returns overall firing/inactive intervals for a rule in the selected
+        time range.
+      operationId: GetRuleHistoryOverallStatus
+      parameters:
+      - in: query
+        name: start
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: end
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateWindow'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get rule overall status timeline
+      tags:
+      - rules
+  /api/v2/rules/{id}/history/stats:
+    get:
+      deprecated: false
+      description: Returns trigger and resolution statistics for a rule in the selected
+        time range.
+      operationId: GetRuleHistoryStats
+      parameters:
+      - in: query
+        name: start
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: end
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RulestatehistorytypesStats'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get rule history stats
+      tags:
+      - rules
+  /api/v2/rules/{id}/history/timeline:
+    get:
+      deprecated: false
+      description: Returns paginated timeline entries for rule state transitions.
+      operationId: GetRuleHistoryTimeline
+      parameters:
+      - in: query
+        name: start
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: end
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: state
+        schema:
+          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+      - in: query
+        name: filterExpression
+        schema:
+          type: string
+      - in: query
+        name: limit
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: order
+        schema:
+          $ref: '#/components/schemas/Querybuildertypesv5OrderDirection'
+      - in: query
+        name: cursor
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/RulestatehistorytypesRuleStateTimelineResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get rule history timeline
+      tags:
+      - rules
+  /api/v2/rules/{id}/history/top_contributors:
+    get:
+      deprecated: false
+      description: Returns top label combinations contributing to rule firing in the
+        selected time range.
+      operationId: GetRuleHistoryTopContributors
+      parameters:
+      - in: query
+        name: start
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: query
+        name: end
+        required: true
+        schema:
+          format: int64
+          type: integer
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateHistoryContributorResponse'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Get top contributors to rule firing
+      tags:
+      - rules
   /api/v2/sessions:
     delete:
       deprecated: false
