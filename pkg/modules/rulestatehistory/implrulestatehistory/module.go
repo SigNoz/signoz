@@ -38,26 +38,26 @@ func (m *module) GetHistoryContributors(ctx context.Context, ruleID string, quer
 	return m.store.ReadRuleStateHistoryTopContributorsByRuleID(ctx, ruleID, &query)
 }
 
-func (m *module) GetHistoryOverallStatus(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateWindow, error) {
+func (m *module) GetHistoryOverallStatus(ctx context.Context, ruleID string, query rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error) {
 	return m.store.GetOverallStateTransitions(ctx, ruleID, &query)
 }
 
-func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rulestatehistorytypes.Query) (rulestatehistorytypes.Stats, error) {
+func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rulestatehistorytypes.Query) (rulestatehistorytypes.GettableRuleStateHistoryStats, error) {
 	totalCurrentTriggers, err := m.store.GetTotalTriggers(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	currentTriggersSeries, err := m.store.GetTriggersByInterval(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	currentAvgResolutionTime, err := m.store.GetAvgResolutionTime(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	currentAvgResolutionTimeSeries, err := m.store.GetAvgResolutionTimeByInterval(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 
 	if params.End-params.Start >= 86400000 {
@@ -71,19 +71,19 @@ func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rule
 
 	totalPastTriggers, err := m.store.GetTotalTriggers(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	pastTriggersSeries, err := m.store.GetTriggersByInterval(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	pastAvgResolutionTime, err := m.store.GetAvgResolutionTime(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 	pastAvgResolutionTimeSeries, err := m.store.GetAvgResolutionTimeByInterval(ctx, ruleID, &params)
 	if err != nil {
-		return rulestatehistorytypes.Stats{}, err
+		return rulestatehistorytypes.GettableRuleStateHistoryStats{}, err
 	}
 
 	if math.IsNaN(currentAvgResolutionTime) || math.IsInf(currentAvgResolutionTime, 0) {
@@ -93,7 +93,7 @@ func (m *module) GetHistoryStats(ctx context.Context, ruleID string, params rule
 		pastAvgResolutionTime = 0
 	}
 
-	return rulestatehistorytypes.Stats{
+	return rulestatehistorytypes.GettableRuleStateHistoryStats{
 		TotalCurrentTriggers:           totalCurrentTriggers,
 		TotalPastTriggers:              totalPastTriggers,
 		CurrentTriggersSeries:          currentTriggersSeries,

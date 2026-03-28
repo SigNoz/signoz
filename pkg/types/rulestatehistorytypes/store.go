@@ -3,6 +3,9 @@ package rulestatehistorytypes
 import (
 	"context"
 	"database/sql/driver"
+	"encoding/json"
+	"sort"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -54,6 +57,35 @@ func (l LabelsString) Value() (driver.Value, error) {
 	return string(l), nil
 }
 
+func (l LabelsString) ToQBLabels() []*qbtypes.Label {
+	if strings.TrimSpace(string(l)) == "" {
+		return []*qbtypes.Label{}
+	}
+
+	labelsMap := map[string]any{}
+	if err := json.Unmarshal([]byte(l), &labelsMap); err != nil {
+		return []*qbtypes.Label{}
+	}
+
+	keys := make([]string, 0, len(labelsMap))
+	for key := range labelsMap {
+		keys = append(keys, key)
+	}
+	sort.Strings(keys)
+
+	labels := make([]*qbtypes.Label, 0, len(keys))
+	for _, key := range keys {
+		labels = append(labels, &qbtypes.Label{
+			Key: telemetrytypes.TelemetryFieldKey{
+				Name: key,
+			},
+			Value: labelsMap[key],
+		})
+	}
+
+	return labels
+}
+
 type RuleStateHistory struct {
 	RuleID   string `ch:"rule_id"`
 	RuleName string `ch:"rule_name"`
@@ -84,7 +116,7 @@ type Store interface {
 	ReadRuleStateHistoryFilterKeysByRuleID(ctx context.Context, ruleID string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldKeys, error)
 	ReadRuleStateHistoryFilterValuesByRuleID(ctx context.Context, ruleID string, key string, query *Query, search string, limit int64) (*telemetrytypes.GettableFieldValues, error)
 	ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context, ruleID string, query *Query) ([]RuleStateHistoryContributor, error)
-	GetOverallStateTransitions(ctx context.Context, ruleID string, query *Query) ([]RuleStateWindow, error)
+	GetOverallStateTransitions(ctx context.Context, ruleID string, query *Query) ([]GettableRuleStateWindow, error)
 	GetTotalTriggers(ctx context.Context, ruleID string, query *Query) (uint64, error)
 	GetTriggersByInterval(ctx context.Context, ruleID string, query *Query) (*qbtypes.TimeSeries, error)
 	GetAvgResolutionTime(ctx context.Context, ruleID string, query *Query) (float64, error)

@@ -80,9 +80,9 @@ func NewFactory(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
-	ruleStateHistoryHandler rulestatehistory.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
 ) factory.ProviderFactory[apiserver.APIServer, apiserver.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("signoz"), func(ctx context.Context, providerSettings factory.ProviderSettings, config apiserver.Config) (apiserver.APIServer, error) {
 		return newProvider(
@@ -109,9 +109,9 @@ func NewFactory(
 			zeusHandler,
 			querierHandler,
 			serviceAccountHandler,
-			ruleStateHistoryHandler,
 			factoryHandler,
 			cloudIntegrationHandler,
+			ruleStateHistoryHandler,
 		)
 	})
 }
@@ -140,9 +140,9 @@ func newProvider(
 	zeusHandler zeus.Handler,
 	querierHandler querier.Handler,
 	serviceAccountHandler serviceaccount.Handler,
-	ruleStateHistoryHandler rulestatehistory.Handler,
 	factoryHandler factory.Handler,
 	cloudIntegrationHandler cloudintegration.Handler,
+	ruleStateHistoryHandler rulestatehistory.Handler,
 ) (apiserver.APIServer, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/apiserver/signozapiserver")
 	router := mux.NewRouter().UseEncodedPath()

@@ -19,7 +19,7 @@ type Module interface {
 	GetLastSavedRuleStateHistory(context.Context, string) ([]rulestatehistorytypes.RuleStateHistory, error)
 
 	// GetHistoryStats returns aggregated statistics for rule state history matching the given query.
-	GetHistoryStats(context.Context, string, rulestatehistorytypes.Query) (rulestatehistorytypes.Stats, error)
+	GetHistoryStats(context.Context, string, rulestatehistorytypes.Query) (rulestatehistorytypes.GettableRuleStateHistoryStats, error)
 
 	// GetHistoryTimeline returns a time-ordered list of rule state history entries and a total count
 	// for the given query, suitable for paginated timeline views.
@@ -36,7 +36,7 @@ type Module interface {
 
 	// GetHistoryOverallStatus returns the overall status windows for rule state history,
 	// providing an aggregated view of rule health over time.
-	GetHistoryOverallStatus(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateWindow, error)
+	GetHistoryOverallStatus(context.Context, string, rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error)
 }
 
 // Handler defines the HTTP handler methods for rule state history API endpoints.

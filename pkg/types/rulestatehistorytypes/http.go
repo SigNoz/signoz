@@ -2,14 +2,14 @@ package rulestatehistorytypes
 
 import qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 
-// V2HistoryBaseQueryParams defines URL query params common across v2 rule history APIs.
-type V2HistoryBaseQueryParams struct {
+// PostableRuleStateHistoryBaseQuery defines URL query params common across v2 rule history APIs.
+type PostableRuleStateHistoryBaseQuery struct {
 	Start int64 `query:"start" required:"true"`
 	End   int64 `query:"end" required:"true"`
 }
 
-// V2HistoryTimelineQueryParams defines URL query params for timeline API.
-type V2HistoryTimelineQueryParams struct {
+// PostableRuleStateHistoryTimelineQuery defines URL query params for timeline API.
+type PostableRuleStateHistoryTimelineQuery struct {
 	Start            int64                  `query:"start" required:"true"`
 	End              int64                  `query:"end" required:"true"`
 	State            AlertState             `query:"state"`

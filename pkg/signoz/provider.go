@@ -278,9 +278,9 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
-			handlers.RuleStateHistory,
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
+			handlers.RuleStateHistory,
 		),
 	)
 }

@@ -4,13 +4,13 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-type RuleStateTimelineResponse struct {
-	Items      []RuleStateHistoryResponseItem `json:"items" required:"true"`
-	Total      uint64                         `json:"total" required:"true"`
-	NextCursor string                         `json:"nextCursor,omitempty"`
+type GettableRuleStateTimeline struct {
+	Items      []GettableRuleStateHistory `json:"items" required:"true"`
+	Total      uint64                     `json:"total" required:"true"`
+	NextCursor string                     `json:"nextCursor,omitempty"`
 }
 
-type RuleStateHistoryResponseItem struct {
+type GettableRuleStateHistory struct {
 	RuleID              string           `json:"ruleID" required:"true"`
 	RuleName            string           `json:"ruleName" required:"true"`
 	OverallState        AlertState       `json:"overallState" required:"true"`
@@ -23,7 +23,7 @@ type RuleStateHistoryResponseItem struct {
 	Value               float64          `json:"value" required:"true"`
 }
 
-type RuleStateHistoryContributorResponse struct {
+type GettableRuleStateHistoryContributor struct {
 	Fingerprint       uint64           `json:"fingerprint" required:"true"`
 	Labels            []*qbtypes.Label `json:"labels" required:"true"`
 	Count             uint64           `json:"count" required:"true"`
@@ -31,13 +31,13 @@ type RuleStateHistoryContributorResponse struct {
 	RelatedLogsLink   string           `json:"relatedLogsLink,omitempty"`
 }
 
-type RuleStateWindow struct {
+type GettableRuleStateWindow struct {
 	State AlertState `json:"state" ch:"state" required:"true"`
 	Start int64      `json:"start" ch:"start" required:"true"`
 	End   int64      `json:"end" ch:"end" required:"true"`
 }
 
-type Stats struct {
+type GettableRuleStateHistoryStats struct {
 	TotalCurrentTriggers           uint64              `json:"totalCurrentTriggers" required:"true"`
 	TotalPastTriggers              uint64              `json:"totalPastTriggers" required:"true"`
 	CurrentTriggersSeries          *qbtypes.TimeSeries `json:"currentTriggersSeries" required:"true" nullable:"true"`

@@ -324,7 +324,7 @@ func (s *store) ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context,
 	return contributors, nil
 }
 
-func (s *store) GetOverallStateTransitions(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.RuleStateWindow, error) {
+func (s *store) GetOverallStateTransitions(ctx context.Context, ruleID string, query *rulestatehistorytypes.Query) ([]rulestatehistorytypes.GettableRuleStateWindow, error) {
 	innerSB := sqlbuilder.NewSelectBuilder()
 
 	eventsSubquery := fmt.Sprintf(
@@ -370,7 +370,7 @@ GROUP BY unix_milli`,
 	selectQuery, outerArgs := outerSB.BuildWithFlavor(sqlbuilder.ClickHouse)
 	args = append(args, outerArgs...)
 
-	windows := []rulestatehistorytypes.RuleStateWindow{}
+	windows := []rulestatehistorytypes.GettableRuleStateWindow{}
 	if err := s.telemetryStore.ClickhouseDB().Select(ctx, &windows, selectQuery, args...); err != nil {
 		return nil, err
 	}

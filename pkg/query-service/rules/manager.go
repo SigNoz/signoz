@@ -18,8 +18,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/alertmanager"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
@@ -244,6 +244,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 }
 
 func (m *Manager) Start(ctx context.Context) {
+	return
 	if err := m.initiate(ctx); err != nil {
 		m.logger.ErrorContext(ctx, "failed to initialize alerting rules manager", errors.Attr(err))
 	}

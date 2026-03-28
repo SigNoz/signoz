@@ -4,7 +4,6 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"net/http"
-	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -37,12 +36,12 @@ func NewHandler(module rulestatehistory.Module) rulestatehistory.Handler {
 
 func (h *handler) GetRuleHistoryStats(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	req, ok := h.parseV2BaseQueryRequest(w, r)
+	query, ok := h.parseV2BaseQueryRequest(w, r)
 	if !ok {
 		return
 	}
 
-	stats, err := h.module.GetHistoryStats(r.Context(), ruleID, req.Query)
+	stats, err := h.module.GetHistoryStats(r.Context(), ruleID, query)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -52,12 +51,12 @@ func (h *handler) GetRuleHistoryStats(w http.ResponseWriter, r *http.Request) {
 
 func (h *handler) GetRuleHistoryOverallStatus(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	req, ok := h.parseV2BaseQueryRequest(w, r)
+	query, ok := h.parseV2BaseQueryRequest(w, r)
 	if !ok {
 		return
 	}
 
-	res, err := h.module.GetHistoryOverallStatus(r.Context(), ruleID, req.Query)
+	res, err := h.module.GetHistoryOverallStatus(r.Context(), ruleID, query)
 	if err != nil {
 		render.Error(w, err)
 		return
@@ -92,10 +91,10 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 		return
 	}
 
-	resp := rulestatehistorytypes.RuleStateTimelineResponse{}
-	resp.Items = make([]rulestatehistorytypes.RuleStateHistoryResponseItem, 0, len(timelineItems))
+	resp := rulestatehistorytypes.GettableRuleStateTimeline{}
+	resp.Items = make([]rulestatehistorytypes.GettableRuleStateHistory, 0, len(timelineItems))
 	for _, item := range timelineItems {
-		resp.Items = append(resp.Items, rulestatehistorytypes.RuleStateHistoryResponseItem{
+		resp.Items = append(resp.Items, rulestatehistorytypes.GettableRuleStateHistory{
 			RuleID:              item.RuleID,
 			RuleName:            item.RuleName,
 			OverallState:        item.OverallState,
@@ -103,7 +102,7 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 			State:               item.State,
 			StateChanged:        item.StateChanged,
 			UnixMilli:           item.UnixMilli,
-			Labels:              toQBLabels(item.Labels),
+			Labels:              item.Labels.ToQBLabels(),
 			Fingerprint:         item.Fingerprint,
 			Value:               item.Value,
 		})
@@ -123,21 +122,21 @@ func (h *handler) GetRuleHistoryTimeline(w http.ResponseWriter, r *http.Request)
 
 func (h *handler) GetRuleHistoryContributors(w http.ResponseWriter, r *http.Request) {
 	ruleID := mux.Vars(r)["id"]
-	req, ok := h.parseV2BaseQueryRequest(w, r)
+	query, ok := h.parseV2BaseQueryRequest(w, r)
 	if !ok {
 		return
 	}
 
-	res, err := h.module.GetHistoryContributors(r.Context(), ruleID, req.Query)
+	res, err := h.module.GetHistoryContributors(r.Context(), ruleID, query)
 	if err != nil {
 		render.Error(w, err)
 		return
 	}
-	converted := make([]rulestatehistorytypes.RuleStateHistoryContributorResponse, 0, len(res))
+	converted := make([]rulestatehistorytypes.GettableRuleStateHistoryContributor, 0, len(res))
 	for _, item := range res {
-		converted = append(converted, rulestatehistorytypes.RuleStateHistoryContributorResponse{
+		converted = append(converted, rulestatehistorytypes.GettableRuleStateHistoryContributor{
 			Fingerprint:       item.Fingerprint,
-			Labels:            toQBLabels(item.Labels),
+			Labels:            item.Labels.ToQBLabels(),
 			Count:             item.Count,
 			RelatedTracesLink: item.RelatedTracesLink,
 			RelatedLogsLink:   item.RelatedLogsLink,
@@ -176,17 +175,17 @@ func (h *handler) GetRuleHistoryFilterValues(w http.ResponseWriter, r *http.Requ
 	render.Success(w, http.StatusOK, res)
 }
 
-func (h *handler) parseV2BaseQueryRequest(w http.ResponseWriter, r *http.Request) (*ruleHistoryRequest, bool) {
-	req, err := parseV2BaseQueryFromURL(r)
+func (h *handler) parseV2BaseQueryRequest(w http.ResponseWriter, r *http.Request) (rulestatehistorytypes.Query, bool) {
+	query, err := parseV2BaseQueryFromURL(r)
 	if err != nil {
 		render.Error(w, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "invalid query parameters"))
-		return nil, false
+		return rulestatehistorytypes.Query{}, false
 	}
-	if req.Query.Start == 0 || req.Query.End == 0 || req.Query.Start >= req.Query.End {
+	if query.Start == 0 || query.End == 0 || query.Start >= query.End {
 		render.Error(w, errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end are required and start must be less than end"))
-		return nil, false
+		return rulestatehistorytypes.Query{}, false
 	}
-	return req, true
+	return query, true
 }
 
 func (h *handler) parseV2TimelineQueryRequest(w http.ResponseWriter, r *http.Request) (*ruleHistoryRequest, bool) {
@@ -252,20 +251,20 @@ func (h *handler) parseV2FilterValuesRequest(w http.ResponseWriter, r *http.Requ
 	return query, key, strings.TrimSpace(raw.SearchText), limit, true
 }
 
-func parseV2BaseQueryFromURL(r *http.Request) (*ruleHistoryRequest, error) {
-	raw := rulestatehistorytypes.V2HistoryBaseQueryParams{}
+func parseV2BaseQueryFromURL(r *http.Request) (rulestatehistorytypes.Query, error) {
+	raw := rulestatehistorytypes.PostableRuleStateHistoryBaseQuery{}
 	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
-		return nil, err
+		return rulestatehistorytypes.Query{}, err
 	}
 
-	req := &ruleHistoryRequest{}
-	req.Query.Start = raw.Start
-	req.Query.End = raw.End
-	return req, nil
+	return rulestatehistorytypes.Query{
+		Start: raw.Start,
+		End:   raw.End,
+	}, nil
 }
 
 func parseV2TimelineQueryFromURL(r *http.Request) (*ruleHistoryRequest, error) {
-	raw := rulestatehistorytypes.V2HistoryTimelineQueryParams{}
+	raw := rulestatehistorytypes.PostableRuleStateHistoryTimelineQuery{}
 	if err := binding.Query.BindQuery(r.URL.Query(), &raw); err != nil {
 		return nil, err
 	}
@@ -309,35 +308,6 @@ func normalizeFilterLimit(limit int64) int64 {
 		return 200
 	}
 	return limit
-}
-
-func toQBLabels(raw rulestatehistorytypes.LabelsString) []*qbtypes.Label {
-	if strings.TrimSpace(string(raw)) == "" {
-		return []*qbtypes.Label{}
-	}
-
-	labelsMap := map[string]any{}
-	if err := json.Unmarshal([]byte(raw), &labelsMap); err != nil {
-		return []*qbtypes.Label{}
-	}
-
-	keys := make([]string, 0, len(labelsMap))
-	for key := range labelsMap {
-		keys = append(keys, key)
-	}
-	sort.Strings(keys)
-
-	labels := make([]*qbtypes.Label, 0, len(keys))
-	for _, key := range keys {
-		labels = append(labels, &qbtypes.Label{
-			Key: telemetrytypes.TelemetryFieldKey{
-				Name: key,
-			},
-			Value: labelsMap[key],
-		})
-	}
-
-	return labels
 }
 
 func parseFilterExpression(values ...string) qbtypes.Filter {

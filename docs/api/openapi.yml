@@ -2288,29 +2288,7 @@ components:
       - nodata
       - disabled
       type: string
-    RulestatehistorytypesRuleStateHistoryContributorResponse:
-      properties:
-        count:
-          minimum: 0
-          type: integer
-        fingerprint:
-          minimum: 0
-          type: integer
-        labels:
-          items:
-            $ref: '#/components/schemas/Querybuildertypesv5Label'
-          nullable: true
-          type: array
-        relatedLogsLink:
-          type: string
-        relatedTracesLink:
-          type: string
-      required:
-      - fingerprint
-      - labels
-      - count
-      type: object
-    RulestatehistorytypesRuleStateHistoryResponseItem:
+    RulestatehistorytypesGettableRuleStateHistory:
       properties:
         fingerprint:
           minimum: 0
@@ -2350,38 +2328,29 @@ components:
       - fingerprint
       - value
       type: object
-    RulestatehistorytypesRuleStateTimelineResponse:
+    RulestatehistorytypesGettableRuleStateHistoryContributor:
       properties:
-        items:
-          items:
-            $ref: '#/components/schemas/RulestatehistorytypesRuleStateHistoryResponseItem'
-          nullable: true
-          type: array
-        nextCursor:
-          type: string
-        total:
+        count:
           minimum: 0
           type: integer
-      required:
-      - items
-      - total
-      type: object
-    RulestatehistorytypesRuleStateWindow:
-      properties:
-        end:
-          format: int64
+        fingerprint:
+          minimum: 0
           type: integer
-        start:
-          format: int64
-          type: integer
-        state:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+        labels:
+          items:
+            $ref: '#/components/schemas/Querybuildertypesv5Label'
+          nullable: true
+          type: array
+        relatedLogsLink:
+          type: string
+        relatedTracesLink:
+          type: string
       required:
-      - state
-      - start
-      - end
+      - fingerprint
+      - labels
+      - count
       type: object
-    RulestatehistorytypesStats:
+    RulestatehistorytypesGettableRuleStateHistoryStats:
       properties:
         currentAvgResolutionTime:
           format: double
@@ -2412,6 +2381,37 @@ components:
       - pastAvgResolutionTime
       - currentAvgResolutionTimeSeries
       - pastAvgResolutionTimeSeries
+      type: object
+    RulestatehistorytypesGettableRuleStateTimeline:
+      properties:
+        items:
+          items:
+            $ref: '#/components/schemas/RulestatehistorytypesGettableRuleStateHistory'
+          nullable: true
+          type: array
+        nextCursor:
+          type: string
+        total:
+          minimum: 0
+          type: integer
+      required:
+      - items
+      - total
+      type: object
+    RulestatehistorytypesGettableRuleStateWindow:
+      properties:
+        end:
+          format: int64
+          type: integer
+        start:
+          format: int64
+          type: integer
+        state:
+          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+      required:
+      - state
+      - start
+      - end
       type: object
     ServiceaccounttypesFactorAPIKey:
       properties:
@@ -8291,7 +8291,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateWindow'
+                      $ref: '#/components/schemas/RulestatehistorytypesGettableRuleStateWindow'
                     nullable: true
                     type: array
                   status:
@@ -8364,7 +8364,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RulestatehistorytypesStats'
+                    $ref: '#/components/schemas/RulestatehistorytypesGettableRuleStateHistoryStats'
                   status:
                     type: string
                 required:
@@ -8455,7 +8455,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RulestatehistorytypesRuleStateTimelineResponse'
+                    $ref: '#/components/schemas/RulestatehistorytypesGettableRuleStateTimeline'
                   status:
                     type: string
                 required:
@@ -8527,7 +8527,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateHistoryContributorResponse'
+                      $ref: '#/components/schemas/RulestatehistorytypesGettableRuleStateHistoryContributor'
                     nullable: true
                     type: array
                   status:
