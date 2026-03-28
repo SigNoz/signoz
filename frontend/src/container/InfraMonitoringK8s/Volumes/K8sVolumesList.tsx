@@ -7,11 +7,12 @@ import {
 	Button,
 	Spin,
 	Table,
+	TableColumnType as ColumnType,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { ColumnType, SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
 import classNames from 'classnames';
@@ -216,7 +217,7 @@ function K8sVolumesList({
 		{
 			dataSource: currentQuery.builder.queryData[0].dataSource,
 			aggregateAttribute: GetK8sEntityToAggregateAttribute(
-				K8sCategory.NODES,
+				K8sCategory.VOLUMES,
 				dotMetricsEnabled,
 			),
 			aggregateOperator: 'noop',
@@ -227,7 +228,7 @@ function K8sVolumesList({
 			queryKey: [currentQuery.builder.queryData[0].dataSource, 'noop'],
 		},
 		true,
-		K8sCategory.NODES,
+		K8sCategory.VOLUMES,
 	);
 
 	const query = useMemo(() => {
@@ -596,7 +597,7 @@ function K8sVolumesList({
 				isLoadingGroupByFilters={isLoadingGroupByFilters}
 				handleGroupByChange={handleGroupByChange}
 				selectedGroupBy={groupBy}
-				entity={K8sCategory.NODES}
+				entity={K8sCategory.VOLUMES}
 				showAutoRefresh={!selectedVolumeData}
 			/>
 			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}

@@ -10,6 +10,7 @@ import setRetentionApi from 'api/settings/setRetention';
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
 import TextToolTip from 'components/TextToolTip';
 import CustomDomainSettings from 'container/CustomDomainSettings';
+import LicenseKeyRow from 'container/GeneralSettings/LicenseKeyRow/LicenseKeyRow';
 import GeneralSettingsCloud from 'container/GeneralSettingsCloud';
 import useComponentPermission from 'hooks/useComponentPermission';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
@@ -81,7 +82,7 @@ function GeneralSettings({
 		logsTtlValuesPayload,
 	);
 
-	const { user } = useAppContext();
+	const { user, activeLicense } = useAppContext();
 
 	const [setRetentionPermission] = useComponentPermission(
 		['set_retention_period'],
@@ -463,14 +464,10 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEnterpriseSelfHostedUser,
-	} = useGetTenantLicense();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const showCustomDomainSettings =
-		(isCloudUserVal || isEnterpriseSelfHostedUser) && isAdmin;
+	const showCustomDomainSettings = isCloudUserVal && isAdmin;
 
 	const renderConfig = [
 		{
@@ -674,13 +671,21 @@ function GeneralSettings({
 	return (
 		<div className="general-settings-page">
 			<div className="general-settings-header">
-				<span className="general-settings-title">General</span>
+				<span className="general-settings-title">Workspace</span>
 				<span className="general-settings-subtitle">
 					Manage your workspace settings.
 				</span>
 			</div>
 
-			{showCustomDomainSettings && <CustomDomainSettings />}
+			{(showCustomDomainSettings || activeLicense?.key) && (
+				<div className="custom-domain-card">
+					{showCustomDomainSettings && <CustomDomainSettings />}
+					{showCustomDomainSettings && activeLicense?.key && (
+						<div className="custom-domain-card-divider" />
+					)}
+					{activeLicense?.key && <LicenseKeyRow />}
+				</div>
+			)}
 
 			<div className="retention-controls-container">
 				<div className="retention-controls-header">

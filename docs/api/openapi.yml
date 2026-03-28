@@ -220,6 +220,13 @@ components:
       - additions
       - deletions
       type: object
+    AuthtypesPatchableRole:
+      properties:
+        description:
+          type: string
+      required:
+      - description
+      type: object
     AuthtypesPostableAuthDomain:
       properties:
         config:
@@ -236,6 +243,15 @@ components:
         password:
           type: string
       type: object
+    AuthtypesPostableRole:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+      required:
+      - name
+      type: object
     AuthtypesPostableRotateToken:
       properties:
         refreshToken:
@@ -250,6 +266,31 @@ components:
       required:
       - name
       - type
+      type: object
+    AuthtypesRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - description
+      - type
+      - orgId
       type: object
     AuthtypesRoleMapping:
       properties:
@@ -286,6 +327,27 @@ components:
           nullable: true
           type: array
       type: object
+    AuthtypesStorableRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        description:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        type:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     AuthtypesTransaction:
       properties:
         object:
@@ -300,6 +362,456 @@ components:
       properties:
         config:
           $ref: '#/components/schemas/AuthtypesAuthDomainConfig'
+      type: object
+    AuthtypesUserRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        role:
+          $ref: '#/components/schemas/AuthtypesStorableRole'
+        roleId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        userId:
+          type: string
+      required:
+      - id
+      type: object
+    AuthtypesUserWithRoles:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+        userRoles:
+          items:
+            $ref: '#/components/schemas/AuthtypesUserRole'
+          nullable: true
+          type: array
+      required:
+      - id
+      type: object
+    CloudintegrationtypesAWSAccountConfig:
+      properties:
+        regions:
+          items:
+            type: string
+          type: array
+      required:
+      - regions
+      type: object
+    CloudintegrationtypesAWSCollectionStrategy:
+      properties:
+        aws_logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
+        aws_metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesAWSConnectionArtifact:
+      properties:
+        connectionURL:
+          type: string
+      required:
+      - connectionURL
+      type: object
+    CloudintegrationtypesAWSConnectionArtifactRequest:
+      properties:
+        deploymentRegion:
+          type: string
+        regions:
+          items:
+            type: string
+          type: array
+      required:
+      - deploymentRegion
+      - regions
+      type: object
+    CloudintegrationtypesAWSIntegrationConfig:
+      properties:
+        enabledRegions:
+          items:
+            type: string
+          type: array
+        telemetry:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - enabledRegions
+      - telemetry
+      type: object
+    CloudintegrationtypesAWSLogsStrategy:
+      properties:
+        cloudwatch_logs_subscriptions:
+          items:
+            properties:
+              filter_pattern:
+                type: string
+              log_group_name_prefix:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesAWSMetricsStrategy:
+      properties:
+        cloudwatch_metric_stream_filters:
+          items:
+            properties:
+              MetricNames:
+                items:
+                  type: string
+                type: array
+              Namespace:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesAWSServiceConfig:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceLogsConfig'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceMetricsConfig'
+      type: object
+    CloudintegrationtypesAWSServiceLogsConfig:
+      properties:
+        enabled:
+          type: boolean
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesAWSServiceMetricsConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    CloudintegrationtypesAccount:
+      properties:
+        agentReport:
+          $ref: '#/components/schemas/CloudintegrationtypesAgentReport'
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        orgId:
+          type: string
+        provider:
+          type: string
+        providerAccountId:
+          nullable: true
+          type: string
+        removedAt:
+          format: date-time
+          nullable: true
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - providerAccountId
+      - provider
+      - removedAt
+      - agentReport
+      - orgId
+      - config
+      type: object
+    CloudintegrationtypesAccountConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSAccountConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesAgentReport:
+      nullable: true
+      properties:
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        timestampMillis:
+          format: int64
+          type: integer
+      required:
+      - timestampMillis
+      - data
+      type: object
+    CloudintegrationtypesAssets:
+      properties:
+        dashboards:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesDashboard'
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesCollectedLogAttribute:
+      properties:
+        name:
+          type: string
+        path:
+          type: string
+        type:
+          type: string
+      type: object
+    CloudintegrationtypesCollectedMetric:
+      properties:
+        description:
+          type: string
+        name:
+          type: string
+        type:
+          type: string
+        unit:
+          type: string
+      type: object
+    CloudintegrationtypesCollectionStrategy:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesConnectionArtifact:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifact'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesConnectionArtifactRequest:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesDashboard:
+      properties:
+        definition:
+          $ref: '#/components/schemas/DashboardtypesStorableDashboardData'
+        description:
+          type: string
+        id:
+          type: string
+        title:
+          type: string
+      type: object
+    CloudintegrationtypesDataCollected:
+      properties:
+        logs:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesCollectedLogAttribute'
+          nullable: true
+          type: array
+        metrics:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesCollectedMetric'
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesGettableAccountWithArtifact:
+      properties:
+        connectionArtifact:
+          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
+        id:
+          type: string
+      required:
+      - id
+      - connectionArtifact
+      type: object
+    CloudintegrationtypesGettableAccounts:
+      properties:
+        accounts:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesAccount'
+          type: array
+      required:
+      - accounts
+      type: object
+    CloudintegrationtypesGettableAgentCheckInResponse:
+      properties:
+        account_id:
+          type: string
+        cloud_account_id:
+          type: string
+        cloudIntegrationId:
+          type: string
+        integration_config:
+          $ref: '#/components/schemas/CloudintegrationtypesIntegrationConfig'
+        integrationConfig:
+          $ref: '#/components/schemas/CloudintegrationtypesProviderIntegrationConfig'
+        providerAccountId:
+          type: string
+        removed_at:
+          format: date-time
+          nullable: true
+          type: string
+        removedAt:
+          format: date-time
+          nullable: true
+          type: string
+      required:
+      - account_id
+      - cloud_account_id
+      - integration_config
+      - removed_at
+      - cloudIntegrationId
+      - providerAccountId
+      - integrationConfig
+      - removedAt
+      type: object
+    CloudintegrationtypesGettableServicesMetadata:
+      properties:
+        services:
+          items:
+            $ref: '#/components/schemas/CloudintegrationtypesServiceMetadata'
+          type: array
+      required:
+      - services
+      type: object
+    CloudintegrationtypesIntegrationConfig:
+      nullable: true
+      properties:
+        enabled_regions:
+          items:
+            type: string
+          type: array
+        telemetry:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+      required:
+      - enabled_regions
+      - telemetry
+      type: object
+    CloudintegrationtypesPostableAgentCheckInRequest:
+      properties:
+        account_id:
+          type: string
+        cloud_account_id:
+          type: string
+        cloudIntegrationId:
+          type: string
+        data:
+          additionalProperties: {}
+          nullable: true
+          type: object
+        providerAccountId:
+          type: string
+      required:
+      - data
+      type: object
+    CloudintegrationtypesProviderIntegrationConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSIntegrationConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesService:
+      properties:
+        assets:
+          $ref: '#/components/schemas/CloudintegrationtypesAssets'
+        dataCollected:
+          $ref: '#/components/schemas/CloudintegrationtypesDataCollected'
+        icon:
+          type: string
+        id:
+          type: string
+        overview:
+          type: string
+        serviceConfig:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+        supported_signals:
+          $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
+        title:
+          type: string
+      required:
+      - id
+      - title
+      - icon
+      - overview
+      - assets
+      - supported_signals
+      - dataCollected
+      - telemetryCollectionStrategy
+      type: object
+    CloudintegrationtypesServiceConfig:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSServiceConfig'
+      required:
+      - aws
+      type: object
+    CloudintegrationtypesServiceMetadata:
+      properties:
+        enabled:
+          type: boolean
+        icon:
+          type: string
+        id:
+          type: string
+        title:
+          type: string
+      required:
+      - id
+      - title
+      - icon
+      - enabled
+      type: object
+    CloudintegrationtypesSupportedSignals:
+      properties:
+        logs:
+          type: boolean
+        metrics:
+          type: boolean
+      type: object
+    CloudintegrationtypesUpdatableAccount:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesAccountConfig'
+      required:
+      - config
+      type: object
+    CloudintegrationtypesUpdatableService:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+      required:
+      - config
       type: object
     DashboardtypesDashboard:
       properties:
@@ -375,6 +887,18 @@ components:
       properties:
         message:
           type: string
+      type: object
+    FactoryResponse:
+      properties:
+        healthy:
+          type: boolean
+        services:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          nullable: true
+          type: object
       type: object
     FeaturetypesGettableFeature:
       properties:
@@ -556,6 +1080,39 @@ components:
           type: array
       required:
       - config
+      type: object
+    GlobaltypesAPIKeyConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesConfig:
+      properties:
+        external_url:
+          type: string
+        identN:
+          $ref: '#/components/schemas/GlobaltypesIdentNConfig'
+        ingestion_url:
+          type: string
+      type: object
+    GlobaltypesIdentNConfig:
+      properties:
+        apikey:
+          $ref: '#/components/schemas/GlobaltypesAPIKeyConfig'
+        impersonation:
+          $ref: '#/components/schemas/GlobaltypesImpersonationConfig'
+        tokenizer:
+          $ref: '#/components/schemas/GlobaltypesTokenizerConfig'
+      type: object
+    GlobaltypesImpersonationConfig:
+      properties:
+        enabled:
+          type: boolean
+      type: object
+    GlobaltypesTokenizerConfig:
+      properties:
+        enabled:
+          type: boolean
       type: object
     MetricsexplorertypesListMetric:
       properties:
@@ -1902,19 +2459,19 @@ components:
         createdAt:
           format: date-time
           type: string
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         id:
           type: string
         key:
           type: string
-        last_used:
+        lastObservedAt:
           format: date-time
           type: string
         name:
           type: string
-        service_account_id:
+        serviceAccountId:
           type: string
         updatedAt:
           format: date-time
@@ -1922,9 +2479,9 @@ components:
       required:
       - id
       - key
-      - expires_at
-      - last_used
-      - service_account_id
+      - expiresAt
+      - lastObservedAt
+      - serviceAccountId
       type: object
     ServiceaccounttypesGettableFactorAPIKeyWithKey:
       properties:
@@ -1938,14 +2495,14 @@ components:
       type: object
     ServiceaccounttypesPostableFactorAPIKey:
       properties:
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         name:
           type: string
       required:
       - name
-      - expires_at
+      - expiresAt
       type: object
     ServiceaccounttypesPostableServiceAccount:
       properties:
@@ -1967,13 +2524,16 @@ components:
         createdAt:
           format: date-time
           type: string
+        deletedAt:
+          format: date-time
+          type: string
         email:
           type: string
         id:
           type: string
         name:
           type: string
-        orgID:
+        orgId:
           type: string
         roles:
           items:
@@ -1990,18 +2550,19 @@ components:
       - email
       - roles
       - status
-      - orgID
+      - orgId
+      - deletedAt
       type: object
     ServiceaccounttypesUpdatableFactorAPIKey:
       properties:
-        expires_at:
+        expiresAt:
           minimum: 0
           type: integer
         name:
           type: string
       required:
       - name
-      - expires_at
+      - expiresAt
       type: object
     ServiceaccounttypesUpdatableServiceAccount:
       properties:
@@ -2123,6 +2684,31 @@ components:
         userId:
           type: string
       type: object
+    TypesDeprecatedUser:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        displayName:
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        isRoot:
+          type: boolean
+        orgId:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     TypesGettableAPIKey:
       properties:
         createdAt:
@@ -2159,13 +2745,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    TypesGettableGlobalConfig:
-      properties:
-        external_url:
-          type: string
-        ingestion_url:
-          type: string
       type: object
     TypesIdentifiable:
       properties:
@@ -2231,16 +2810,14 @@ components:
         role:
           type: string
       type: object
-    TypesPostableAcceptInvite:
+    TypesPostableBulkInviteRequest:
       properties:
-        displayName:
-          type: string
-        password:
-          type: string
-        sourceUrl:
-          type: string
-        token:
-          type: string
+        invites:
+          items:
+            $ref: '#/components/schemas/TypesPostableInvite'
+          type: array
+      required:
+      - invites
       type: object
     TypesPostableForgotPassword:
       properties:
@@ -2271,6 +2848,13 @@ components:
           type: string
         token:
           type: string
+      type: object
+    TypesPostableRole:
+      properties:
+        name:
+          type: string
+      required:
+      - name
       type: object
     TypesResetPasswordToken:
       properties:
@@ -2313,6 +2897,13 @@ components:
       required:
       - id
       type: object
+    TypesUpdatableUser:
+      properties:
+        displayName:
+          type: string
+      required:
+      - displayName
+      type: object
     TypesUser:
       properties:
         createdAt:
@@ -2328,7 +2919,7 @@ components:
           type: boolean
         orgId:
           type: string
-        role:
+        status:
           type: string
         updatedAt:
           format: date-time
@@ -2553,6 +3144,551 @@ paths:
       summary: Change password
       tags:
       - users
+  /api/v1/cloud-integrations/{cloud_provider}/agent-check-in:
+    post:
+      deprecated: true
+      description: '[Deprecated] This endpoint is called by the deployed agent to
+        check in'
+      operationId: AgentCheckInDeprecated
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts:
+    get:
+      deprecated: false
+      description: This endpoint lists the accounts for the specified cloud provider
+      operationId: ListAccounts
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccounts'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List accounts
+      tags:
+      - cloudintegration
+    post:
+      deprecated: false
+      description: This endpoint creates a new cloud integration account for the specified
+        cloud provider
+      operationId: CreateAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create account
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}:
+    delete:
+      deprecated: false
+      description: This endpoint disconnects an account for the specified cloud provider
+      operationId: DisconnectAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Disconnect account
+      tags:
+      - cloudintegration
+    get:
+      deprecated: false
+      description: This endpoint gets an account for the specified cloud provider
+      operationId: GetAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesAccount'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get account
+      tags:
+      - cloudintegration
+    put:
+      deprecated: false
+      description: This endpoint updates an account for the specified cloud provider
+      operationId: UpdateAccount
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableAccount'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update account
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
+    post:
+      deprecated: false
+      description: This endpoint is called by the deployed agent to check in
+      operationId: AgentCheckIn
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesPostableAgentCheckInRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAgentCheckInResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/services:
+    get:
+      deprecated: false
+      description: This endpoint lists the services metadata for the specified cloud
+        provider
+      operationId: ListServicesMetadata
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableServicesMetadata'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List services metadata
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/services/{service_id}:
+    get:
+      deprecated: false
+      description: This endpoint gets a service for the specified cloud provider
+      operationId: GetService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesService'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get service
+      tags:
+      - cloudintegration
+    put:
+      deprecated: false
+      description: This endpoint updates a service for the specified cloud provider
+      operationId: UpdateService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update service
+      tags:
+      - cloudintegration
   /api/v1/complete/google:
     get:
       deprecated: false
@@ -3120,6 +4256,68 @@ paths:
       summary: Update auth domain
       tags:
       - authdomains
+  /api/v1/export_raw_data:
+    post:
+      deprecated: false
+      description: This endpoints allows complex query exporting raw data for traces
+        and logs
+      operationId: HandleExportRawDataPOST
+      parameters:
+      - description: The output format for the export.
+        in: query
+        name: format
+        schema:
+          default: csv
+          description: The output format for the export.
+          enum:
+          - csv
+          - jsonl
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/Querybuildertypesv5QueryRangeRequest'
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: OK
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - VIEWER
+      - tokenizer:
+        - VIEWER
+      summary: Export raw data
+      tags:
+      - logs
+      - traces
   /api/v1/fields/keys:
     get:
       deprecated: false
@@ -3374,7 +4572,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesGettableGlobalConfig'
+                    $ref: '#/components/schemas/GlobaltypesConfig'
                   status:
                     type: string
                 required:
@@ -3382,80 +4580,16 @@ paths:
                 - data
                 type: object
           description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
         "500":
           content:
             application/json:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Internal Server Error
-      security:
-      - api_key:
-        - EDITOR
-      - tokenizer:
-        - EDITOR
       summary: Get global config
       tags:
       - global
   /api/v1/invite:
-    get:
-      deprecated: false
-      description: This endpoint lists all invites
-      operationId: ListInvite
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesInvite'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List invites
-      tags:
-      - users
     post:
       deprecated: false
       description: This endpoint creates an invite for a user
@@ -3518,151 +4652,6 @@ paths:
       summary: Create invite
       tags:
       - users
-  /api/v1/invite/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint deletes an invite by id
-      operationId: DeleteInvite
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Delete invite
-      tags:
-      - users
-  /api/v1/invite/{token}:
-    get:
-      deprecated: false
-      description: This endpoint gets an invite by token
-      operationId: GetInvite
-      parameters:
-      - in: path
-        name: token
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesInvite'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Get invite
-      tags:
-      - users
-  /api/v1/invite/accept:
-    post:
-      deprecated: false
-      description: This endpoint accepts an invite by token
-      operationId: AcceptInvite
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableAcceptInvite'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesUser'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      summary: Accept invite
-      tags:
-      - users
   /api/v1/invite/bulk:
     post:
       deprecated: false
@@ -3672,9 +4661,7 @@ paths:
         content:
           application/json:
             schema:
-              items:
-                $ref: '#/components/schemas/TypesPostableInvite'
-              type: array
+              $ref: '#/components/schemas/TypesPostableBulkInviteRequest'
       responses:
         "201":
           description: Created
@@ -4355,7 +5342,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RoletypesRole'
+                      $ref: '#/components/schemas/AuthtypesRole'
                     type: array
                   status:
                     type: string
@@ -4398,7 +5385,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPostableRole'
+              $ref: '#/components/schemas/AuthtypesPostableRole'
       responses:
         "201":
           content:
@@ -4543,7 +5530,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/RoletypesRole'
+                    $ref: '#/components/schemas/AuthtypesRole'
                   status:
                     type: string
                 required:
@@ -4591,7 +5578,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/RoletypesPatchableRole'
+              $ref: '#/components/schemas/AuthtypesPatchableRole'
       responses:
         "204":
           content:
@@ -5383,7 +6370,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint lists all users
-      operationId: ListUsers
+      operationId: ListUsersDeprecated
       responses:
         "200":
           content:
@@ -5392,7 +6379,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/TypesUser'
+                      $ref: '#/components/schemas/TypesDeprecatedUser'
                     type: array
                   status:
                     type: string
@@ -5476,7 +6463,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user by id
-      operationId: GetUser
+      operationId: GetUserDeprecated
       parameters:
       - in: path
         name: id
@@ -5490,7 +6477,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5533,7 +6520,7 @@ paths:
     put:
       deprecated: false
       description: This endpoint updates the user by id
-      operationId: UpdateUser
+      operationId: UpdateUserDeprecated
       parameters:
       - in: path
         name: id
@@ -5544,7 +6531,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/TypesUser'
+              $ref: '#/components/schemas/TypesDeprecatedUser'
       responses:
         "200":
           content:
@@ -5552,7 +6539,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5602,7 +6589,7 @@ paths:
     get:
       deprecated: false
       description: This endpoint returns the user I belong to
-      operationId: GetMyUser
+      operationId: GetMyUserDeprecated
       responses:
         "200":
           content:
@@ -5610,7 +6597,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TypesUser'
+                    $ref: '#/components/schemas/TypesDeprecatedUser'
                   status:
                     type: string
                 required:
@@ -5935,9 +6922,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Get ingestion keys for workspace
       tags:
       - gateway
@@ -5985,9 +6972,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create ingestion key for workspace
       tags:
       - gateway
@@ -6025,9 +7012,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete ingestion key for workspace
       tags:
       - gateway
@@ -6069,9 +7056,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update ingestion key for workspace
       tags:
       - gateway
@@ -6126,9 +7113,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Create limit for the ingestion key
       tags:
       - gateway
@@ -6166,9 +7153,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Delete limit for the ingestion key
       tags:
       - gateway
@@ -6210,9 +7197,9 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Update limit for the ingestion key
       tags:
       - gateway
@@ -6270,12 +7257,76 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - ADMIN
+        - EDITOR
       - tokenizer:
-        - ADMIN
+        - EDITOR
       summary: Search ingestion keys for workspace
       tags:
       - gateway
+  /api/v2/healthz:
+    get:
+      operationId: Healthz
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "503":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Service Unavailable
+      summary: Health check
+      tags:
+      - health
+  /api/v2/livez:
+    get:
+      deprecated: false
+      description: ""
+      operationId: Livez
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/FactoryResponse'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Liveness check
+      tags:
+      - health
   /api/v2/metrics:
     get:
       deprecated: false
@@ -6952,56 +8003,9 @@ paths:
       summary: Update my organization
       tags:
       - orgs
-  /api/v2/rules/{id}/history/filter_keys:
+  /api/v2/readyz:
     get:
-      deprecated: false
-      description: Returns distinct label keys from rule history entries for the selected
-        range.
-      operationId: GetRuleHistoryFilterKeys
-      parameters:
-      - in: query
-        name: signal
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
-        name: source
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
-        name: limit
-        schema:
-          type: integer
-      - in: query
-        name: startUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: endUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: fieldContext
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
-        name: fieldDataType
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
-        name: metricName
-        schema:
-          type: string
-      - in: query
-        name: searchText
-        schema:
-          type: string
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
+      operationId: Readyz
       responses:
         "200":
           content:
@@ -7009,7 +8013,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TelemetrytypesGettableFieldKeys'
+                    $ref: '#/components/schemas/FactoryResponse'
                   status:
                     type: string
                 required:
@@ -7017,162 +8021,29 @@ paths:
                 - data
                 type: object
           description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get rule history filter keys
-      tags:
-      - rules
-  /api/v2/rules/{id}/history/filter_values:
-    get:
-      deprecated: false
-      description: Returns distinct label values for a given key from rule history
-        entries.
-      operationId: GetRuleHistoryFilterValues
-      parameters:
-      - in: query
-        name: signal
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSignal'
-      - in: query
-        name: source
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesSource'
-      - in: query
-        name: limit
-        schema:
-          type: integer
-      - in: query
-        name: startUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: endUnixMilli
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: fieldContext
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldContext'
-      - in: query
-        name: fieldDataType
-        schema:
-          $ref: '#/components/schemas/TelemetrytypesFieldDataType'
-      - in: query
-        name: metricName
-        schema:
-          type: string
-      - in: query
-        name: searchText
-        schema:
-          type: string
-      - in: query
-        name: name
-        schema:
-          type: string
-      - in: query
-        name: existingQuery
-        schema:
-          type: string
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
+        "503":
           content:
             application/json:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/TelemetrytypesGettableFieldValues'
+                    $ref: '#/components/schemas/FactoryResponse'
                   status:
                     type: string
                 required:
                 - status
                 - data
                 type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get rule history filter values
+          description: Service Unavailable
+      summary: Readiness check
       tags:
-      - rules
-  /api/v2/rules/{id}/history/overall_status:
+      - health
+  /api/v2/roles/{id}/users:
     get:
       deprecated: false
-      description: Returns overall firing/inactive intervals for a rule in the selected
-        time range.
-      operationId: GetRuleHistoryOverallStatus
+      description: This endpoint returns the users having the role by role id
+      operationId: GetUsersByRoleID
       parameters:
-      - in: query
-        name: start
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: end
-        required: true
-        schema:
-          format: int64
-          type: integer
       - in: path
         name: id
         required: true
@@ -7186,8 +8057,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateWindow'
-                    nullable: true
+                      $ref: '#/components/schemas/TypesUser'
                     type: array
                   status:
                     type: string
@@ -7196,12 +8066,6 @@ paths:
                 - data
                 type: object
           description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
         "401":
           content:
             application/json:
@@ -7214,6 +8078,12 @@ paths:
               schema:
                 $ref: '#/components/schemas/RenderErrorResponse'
           description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
         "500":
           content:
             application/json:
@@ -7222,248 +8092,12 @@ paths:
           description: Internal Server Error
       security:
       - api_key:
-        - VIEWER
+        - ADMIN
       - tokenizer:
-        - VIEWER
-      summary: Get rule overall status timeline
+        - ADMIN
+      summary: Get users by role id
       tags:
-      - rules
-  /api/v2/rules/{id}/history/stats:
-    get:
-      deprecated: false
-      description: Returns trigger and resolution statistics for a rule in the selected
-        time range.
-      operationId: GetRuleHistoryStats
-      parameters:
-      - in: query
-        name: start
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: end
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/RulestatehistorytypesStats'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get rule history stats
-      tags:
-      - rules
-  /api/v2/rules/{id}/history/timeline:
-    get:
-      deprecated: false
-      description: Returns paginated timeline entries for rule state transitions.
-      operationId: GetRuleHistoryTimeline
-      parameters:
-      - in: query
-        name: start
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: end
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: state
-        schema:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
-      - in: query
-        name: filterExpression
-        schema:
-          type: string
-      - in: query
-        name: limit
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: order
-        schema:
-          $ref: '#/components/schemas/Querybuildertypesv5OrderDirection'
-      - in: query
-        name: cursor
-        schema:
-          type: string
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/RulestatehistorytypesRuleStateTimelineResponse'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get rule history timeline
-      tags:
-      - rules
-  /api/v2/rules/{id}/history/top_contributors:
-    get:
-      deprecated: false
-      description: Returns top label combinations contributing to rule firing in the
-        selected time range.
-      operationId: GetRuleHistoryTopContributors
-      parameters:
-      - in: query
-        name: start
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: query
-        name: end
-        required: true
-        schema:
-          format: int64
-          type: integer
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/RulestatehistorytypesRuleStateHistoryContributorResponse'
-                    nullable: true
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - VIEWER
-      - tokenizer:
-        - VIEWER
-      summary: Get top contributors to rule firing
-      tags:
-      - rules
+      - users
   /api/v2/sessions:
     delete:
       deprecated: false
@@ -7622,6 +8256,408 @@ paths:
       summary: Rotate session
       tags:
       - sessions
+  /api/v2/users:
+    get:
+      deprecated: false
+      description: This endpoint lists all users for the organization
+      operationId: ListUsers
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/TypesUser'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: List users v2
+      tags:
+      - users
+  /api/v2/users/{id}:
+    get:
+      deprecated: false
+      description: This endpoint returns the user by id
+      operationId: GetUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserWithRoles'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user by user id
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint updates the user by id
+      operationId: UpdateUser
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesUpdatableUser'
+      responses:
+        "204":
+          description: No Content
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update user v2
+      tags:
+      - users
+  /api/v2/users/{id}/roles:
+    get:
+      deprecated: false
+      description: This endpoint returns the user roles by user id
+      operationId: GetRolesByUserID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesRole'
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get user roles
+      tags:
+      - users
+    post:
+      deprecated: false
+      description: This endpoint assigns the role to the user roles by user id
+      operationId: SetRoleByUserID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesPostableRole'
+      responses:
+        "200":
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Set user roles
+      tags:
+      - users
+  /api/v2/users/{id}/roles/{roleId}:
+    delete:
+      deprecated: false
+      description: This endpoint removes a role from the user by user id and role
+        id
+      operationId: RemoveUserRoleByUserIDAndRoleID
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: roleId
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Remove a role from user
+      tags:
+      - users
+  /api/v2/users/me:
+    get:
+      deprecated: false
+      description: This endpoint returns the user I belong to
+      operationId: GetMyUser
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/AuthtypesUserWithRoles'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - tokenizer: []
+      summary: Get my user v2
+      tags:
+      - users
+    put:
+      deprecated: false
+      description: This endpoint updates the user I belong to
+      operationId: UpdateMyUserV2
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/TypesUpdatableUser'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - tokenizer: []
+      summary: Update my user v2
+      tags:
+      - users
   /api/v2/zeus/hosts:
     get:
       deprecated: false

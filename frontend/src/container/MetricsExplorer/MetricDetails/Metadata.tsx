@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { Button, Collapse, Input, Select, Spin, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,

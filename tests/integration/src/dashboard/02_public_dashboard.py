@@ -1,3 +1,4 @@
+from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 
@@ -7,6 +8,7 @@ from sqlalchemy import sql
 from wiremock.resources.mappings import Mapping
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
+from fixtures.metrics import Metrics
 from fixtures.types import Operation, SigNoz, TestContainerDocker
 
 
@@ -74,8 +76,36 @@ def test_public_dashboard_widget_query_range(
     signoz: SigNoz,
     create_user_admin: Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
+    insert_metrics: Callable[[List[Metrics]], None],
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Insert metric data so the widget query returns results instead of 404
+    now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
+    metrics: List[Metrics] = [
+        Metrics(
+            metric_name="container.cpu.time",
+            labels={"service": "test-service"},
+            timestamp=now - timedelta(minutes=5),
+            value=100.0,
+            temporality="Cumulative",
+        ),
+        Metrics(
+            metric_name="container.cpu.time",
+            labels={"service": "test-service"},
+            timestamp=now - timedelta(minutes=3),
+            value=200.0,
+            temporality="Cumulative",
+        ),
+        Metrics(
+            metric_name="container.cpu.time",
+            labels={"service": "test-service"},
+            timestamp=now - timedelta(minutes=1),
+            value=300.0,
+            temporality="Cumulative",
+        ),
+    ]
+    insert_metrics(metrics)
 
     dashboard_req = {
         "title": "Test Widget Query Range Dashboard",
@@ -145,7 +175,7 @@ def test_public_dashboard_widget_query_range(
         ),
         json={
             "timeRangeEnabled": False,
-            "defaultTimeRange": "10s",
+            "defaultTimeRange": "10m",
         },
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,

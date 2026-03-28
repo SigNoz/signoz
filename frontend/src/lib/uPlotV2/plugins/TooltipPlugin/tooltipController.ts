@@ -21,6 +21,7 @@ export function createInitialControllerState(): TooltipControllerState {
 		hoverActive: false,
 		isAnySeriesActive: false,
 		pinned: false,
+		clickData: null,
 		style: { transform: '', pointerEvents: 'none' },
 		horizontalOffset: 0,
 		verticalOffset: 0,

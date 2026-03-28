@@ -56,6 +56,7 @@ const ROUTES = {
 	BILLING: '/settings/billing',
 	ROLES_SETTINGS: '/settings/roles',
 	ROLE_DETAILS: '/settings/roles/:roleId',
+	MEMBERS_SETTINGS: '/settings/members',
 	SUPPORT: '/support',
 	LOGS_SAVE_VIEWS: '/logs/saved-views',
 	TRACES_SAVE_VIEWS: '/traces/saved-views',
@@ -85,6 +86,7 @@ const ROUTES = {
 	METER_EXPLORER_VIEWS: '/meter/explorer/views',
 	HOME_PAGE: '/',
 	PUBLIC_DASHBOARD: '/public/dashboard/:dashboardId',
+	SERVICE_ACCOUNTS_SETTINGS: '/settings/service-accounts',
 } as const;
 
 export default ROUTES;

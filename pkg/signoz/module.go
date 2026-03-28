@@ -56,7 +56,7 @@ type Modules struct {
 	OrgGetter        organization.Getter
 	OrgSetter        organization.Setter
 	Preference       preference.Module
-	User             user.Module
+	UserSetter       user.Setter
 	UserGetter       user.Getter
 	SavedView        savedview.Module
 	Apdex            apdex.Module
@@ -64,7 +64,6 @@ type Modules struct {
 	QuickFilter      quickfilter.Module
 	TraceFunnel      tracefunnel.Module
 	RawDataExport    rawdataexport.Module
-	RuleStateHistory rulestatehistory.Module
 	AuthDomain       authdomain.Module
 	Session          session.Module
 	Services         services.Module
@@ -72,6 +71,7 @@ type Modules struct {
 	MetricsExplorer  metricsexplorer.Module
 	Promote          promote.Module
 	ServiceAccount   serviceaccount.Module
+	RuleStateHistory rulestatehistory.Module
 }
 
 func NewModules(
@@ -92,10 +92,11 @@ func NewModules(
 	config Config,
 	dashboard dashboard.Module,
 	userGetter user.Getter,
+	userRoleStore authtypes.UserRoleStore,
 ) Modules {
 	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
 	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	user := impluser.NewModule(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User)
+	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
@@ -105,18 +106,18 @@ func NewModules(
 		SavedView:        implsavedview.NewModule(sqlstore),
 		Apdex:            implapdex.NewModule(sqlstore),
 		Dashboard:        dashboard,
-		User:             user,
+		UserSetter:       userSetter,
 		UserGetter:       userGetter,
 		QuickFilter:      quickfilter,
 		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
 		RawDataExport:    implrawdataexport.NewModule(querier),
-		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		AuthDomain:       implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:          implsession.NewModule(providerSettings, authNs, user, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
 		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
 		Services:         implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
 		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 	}
 }

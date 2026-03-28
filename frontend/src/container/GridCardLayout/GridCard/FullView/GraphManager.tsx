@@ -1,9 +1,12 @@
 import { memo, useCallback, useEffect, useState } from 'react';
 import { Button, Input } from 'antd';
-import { CheckboxChangeEvent } from 'antd/es/checkbox';
+import type { CheckboxChangeEvent } from 'antd/es/checkbox';
 import { ResizeTable } from 'components/ResizeTable';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 
 import { getGraphManagerTableColumns } from './TableRender/GraphManagerColumns';
 import { ExtendedChartDataset, GraphManagerProps } from './types';
@@ -34,7 +37,7 @@ function GraphManager({
 	}, [data, options]);
 
 	const { notifications } = useNotifications();
-	const { isDashboardLocked } = useDashboard();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 
 	const checkBoxOnChangeHandler = useCallback(
 		(e: CheckboxChangeEvent, index: number): void => {

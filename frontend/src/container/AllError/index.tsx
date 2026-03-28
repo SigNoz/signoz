@@ -14,9 +14,9 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { ColumnType, TablePaginationConfig } from 'antd/es/table';
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnType, TablePaginationConfig } from 'antd/es/table';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
+import type { ColumnsType } from 'antd/lib/table';
 import { FilterConfirmProps } from 'antd/lib/table/interface';
 import logEvent from 'api/common/logEvent';
 import getAll from 'api/errors/getAll';

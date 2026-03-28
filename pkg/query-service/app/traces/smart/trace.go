@@ -2,10 +2,11 @@ package smart
 
 import (
 	"errors"
+	"log/slog"
 	"strconv"
 
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
-	"go.uber.org/zap"
 )
 
 // SmartTraceAlgorithm is an algorithm to find the target span and build a tree of spans around it with the given levelUp and levelDown parameters and the given spanLimit
@@ -53,7 +54,7 @@ func SmartTraceAlgorithm(payload []basemodel.SearchSpanResponseItem, targetSpanI
 			break
 		}
 		if err != nil {
-			zap.L().Error("Error during BreadthFirstSearch()", zap.Error(err))
+			slog.Error("error during breadth first search", signozerrors.Attr(err))
 			return nil, err
 		}
 	}
@@ -191,7 +192,7 @@ func buildSpanTrees(spansPtr *[]*SpanForTraceDetails) ([]*SpanForTraceDetails, e
 
 		// If the parent span is not found, add current span to list of roots
 		if parent == nil {
-			// zap.L().Debug("Parent Span not found parent_id: ", span.ParentID)
+			// slog.Debug("parent span not found", "parent_id", span.ParentID)
 			roots = append(roots, span)
 			span.ParentID = ""
 			continue

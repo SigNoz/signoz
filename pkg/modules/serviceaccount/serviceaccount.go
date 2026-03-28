@@ -15,6 +15,9 @@ type Module interface {
 	// Gets a service account by id.
 	Get(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
 
+	// Gets or creates a service account by name
+	GetOrCreate(context.Context, *serviceaccounttypes.ServiceAccount) (*serviceaccounttypes.ServiceAccount, error)
+
 	// Gets a service account by id without fetching roles.
 	GetWithoutRoles(context.Context, valuer.UUID, valuer.UUID) (*serviceaccounttypes.ServiceAccount, error)
 
@@ -40,7 +43,7 @@ type Module interface {
 	ListFactorAPIKey(context.Context, valuer.UUID) ([]*serviceaccounttypes.FactorAPIKey, error)
 
 	// Updates an existing API key for a service account
-	UpdateFactorAPIKey(context.Context, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
+	UpdateFactorAPIKey(context.Context, valuer.UUID, valuer.UUID, *serviceaccounttypes.FactorAPIKey) error
 
 	// Revokes an existing API key for a service account
 	RevokeFactorAPIKey(context.Context, valuer.UUID, valuer.UUID) error

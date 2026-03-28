@@ -92,6 +92,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 		isPinned: false,
 		dismiss: jest.fn(),
 		viaSync: false,
+		clickData: null,
 	} as TooltipTestProps;
 
 	return render(

@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -694,9 +695,10 @@ func TestBaseRule_FilterNewSeries(t *testing.T) {
 
 			options := clickhouseReader.NewOptions("", "", "archiveNamespace")
 			reader := clickhouseReader.NewReader(
+				slog.Default(),
 				nil,
 				telemetryStore,
-				prometheustest.New(context.Background(), settings, prometheus.Config{}, telemetryStore),
+				prometheustest.New(context.Background(), settings, prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore),
 				"",
 				time.Second,
 				nil,

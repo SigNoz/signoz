@@ -1,8 +1,8 @@
 import { useCallback, useMemo } from 'react';
 import { useMutation, useQuery, useQueryClient } from 'react-query';
 import { generatePath, useLocation } from 'react-router-dom';
-import { FilterValue, SorterResult } from 'antd/es/table/interface';
-import { TablePaginationConfig, TableProps } from 'antd/lib';
+import { TablePaginationConfig, TableProps } from 'antd';
+import type { FilterValue, SorterResult } from 'antd/es/table/interface';
 import deleteAlerts from 'api/alerts/delete';
 import get from 'api/alerts/get';
 import getAll from 'api/alerts/getAll';
@@ -20,7 +20,6 @@ import AlertHistory from 'container/AlertHistory';
 import { TIMELINE_TABLE_PAGE_SIZE } from 'container/AlertHistory/constants';
 import { AlertDetailsTab, TimelineFilter } from 'container/AlertHistory/types';
 import { urlKey } from 'container/AllError/utils';
-import { RelativeTimeMap } from 'container/TopNav/DateTimeSelectionV2/constants';
 import useAxiosError from 'hooks/useAxiosError';
 import { useNotifications } from 'hooks/useNotifications';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -47,6 +46,8 @@ import { PayloadProps } from 'types/api/alerts/get';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { nanoToMilli } from 'utils/timeUtils';
 
+const DEFAULT_TIME_RANGE = '30m';
+
 export const useAlertHistoryQueryParams = (): {
 	ruleId: string | null;
 	startTime: number;
@@ -61,8 +62,8 @@ export const useAlertHistoryQueryParams = (): {
 	const relativeTimeParam = params.get(QueryParams.relativeTime);
 
 	const relativeTime =
-		(relativeTimeParam === 'null' ? null : relativeTimeParam) ??
-		RelativeTimeMap['6hr'];
+		(relativeTimeParam === 'null' ? null : relativeTimeParam) ||
+		DEFAULT_TIME_RANGE;
 
 	const intStartTime = parseInt(startTime || '0', 10);
 	const intEndTime = parseInt(endTime || '0', 10);

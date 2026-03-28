@@ -69,9 +69,6 @@ jest.mock('antd', () => {
 					))}
 				</div>
 			)),
-		Skeleton: jest
-			.fn()
-			.mockImplementation(() => <div data-testid="skeleton-mock" />),
 		Typography: {
 			Text: jest
 				.fn()

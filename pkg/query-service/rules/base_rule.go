@@ -22,7 +22,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 // BaseRule contains common fields and methods for all rule types
@@ -380,7 +379,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 		Limit(1).
 		Scan(ctx, &orgID)
 	if err != nil {
-		r.logger.ErrorContext(ctx, "failed to get org ids", "error", err)
+		r.logger.ErrorContext(ctx, "failed to get org ids", errors.Attr(err))
 		return
 	}
 
@@ -415,10 +414,9 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	}
 
 	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, toRuleStateHistoryTypes(itemsToAdd)); err != nil {
-		zap.L().Error("error while recording rule state history", zap.Error(err), zap.Any("itemsToAdd", itemsToAdd))
+		r.logger.ErrorContext(ctx, "error while recording rule state history", errors.Attr(err), slog.Any("itemsToAdd", itemsToAdd))
 		return err
 	}
-
 	r.handledRestart = true
 
 	return nil

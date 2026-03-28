@@ -612,6 +612,34 @@
 		}
 	},
 	{
+		"dataSource": "deno",
+		"label": "Deno",
+		"imgUrl": "/Logos/deno.svg",
+		"tags": [
+			"apm/traces",
+			"logs",
+			"metrics"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"deno",
+			"deno monitoring",
+			"deno observability",
+			"javascript",
+			"js",
+			"ts",
+			"typescript",
+			"opentelemetry deno",
+			"observability",
+			"metrics",
+			"logs",
+			"traces",
+			"tracing"
+		],
+		"id": "deno",
+		"link": "/docs/instrumentation/opentelemetry-deno/"
+	},
+	{
 		"dataSource": "javascript",
 		"label": "JavaScript",
 		"tags": [
@@ -1828,15 +1856,33 @@
 		],
 		"module": "logs",
 		"relatedSearchKeywords": [
+			"apache",
 			"application log file collection",
+			"c#",
+			"c++",
 			"collect",
 			"collect logs from file",
 			"collect logs from log file",
+			"cpp",
+			"csharp",
 			"custom log file monitoring",
+			"deno",
+			"django",
+			"dotnet",
+			"elixir",
+			"express",
 			"file",
 			"file based logging",
 			"filebeat alternative",
+			"flask",
 			"from-log-file",
+			"go",
+			"golang",
+			"java",
+			"javascript",
+			"js",
+			"kotlin",
+			"linux",
 			"log",
 			"log file ingestion",
 			"log file to signoz",
@@ -1844,7 +1890,29 @@
 			"log tailing with otel",
 			"logging",
 			"logs",
-			"otel file logs"
+			"macos",
+			"mongodb",
+			"mysql",
+			"nestjs",
+			"nextjs",
+			"nginx",
+			"otel file logs",
+			"php",
+			"postgres",
+			"postgresql",
+			"python",
+			"rails",
+			"react",
+			"redis",
+			"ruby",
+			"rust",
+			"scala",
+			"spring",
+			"swift",
+			"ts",
+			"typescript",
+			"vue",
+			"windows"
 		],
 		"link": "/docs/userguide/collect_logs_from_file/"
 	},
@@ -5208,7 +5276,7 @@
 	{
 		"dataSource": "prometheus-metrics",
 		"label": "Prometheus Metrics",
-		"imgUrl": "/Logos/other-metrics.svg",
+		"imgUrl": "/Logos/prometheus.svg",
 		"tags": [
 			"metrics",
 			"infrastructure monitoring"
@@ -5809,5 +5877,340 @@
 				}
 			]
 		}
+	},
+	{
+		"dataSource": "rust-metrics",
+		"label": "Rust Metrics",
+		"imgUrl": "/Logos/rust.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"opentelemetry rust",
+			"otel rust",
+			"rust",
+			"rust metrics",
+			"rust monitoring",
+			"rust observability"
+		],
+		"id": "rust-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-rust/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-rust/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-rust/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-rust/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-rust/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "ruby-metrics",
+		"label": "Ruby Metrics",
+		"imgUrl": "/Logos/ruby-on-rails.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"opentelemetry ruby",
+			"otel ruby",
+			"ruby",
+			"ruby metrics",
+			"ruby monitoring",
+			"ruby observability",
+			"ruby on rails metrics"
+		],
+		"id": "ruby-metrics",
+		"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-ruby/",
+		"question": {
+			"desc": "What is your Environment?",
+			"type": "select",
+			"entityID": "environment",
+			"options": [
+				{
+					"key": "vm",
+					"label": "VM",
+					"imgUrl": "/Logos/vm.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-ruby/"
+				},
+				{
+					"key": "k8s",
+					"label": "Kubernetes",
+					"imgUrl": "/Logos/kubernetes.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-ruby/"
+				},
+				{
+					"key": "windows",
+					"label": "Windows",
+					"imgUrl": "/Logos/windows.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-ruby/"
+				},
+				{
+					"key": "docker",
+					"label": "Docker",
+					"imgUrl": "/Logos/docker.svg",
+					"link": "/docs/metrics-management/send-metrics/applications/opentelemetry-ruby/"
+				}
+			]
+		}
+	},
+	{
+		"dataSource": "statsd",
+		"label": "StatsD",
+		"imgUrl": "/Logos/statsd.svg",
+		"tags": [
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"metrics",
+			"statsd",
+			"statsd metrics",
+			"statsd monitoring",
+			"statsd observability"
+		],
+		"id": "statsd",
+		"link": "/docs/userguide/opentelemetry-statsd/"
+	},
+	{
+		"dataSource": "nvidia-dcgm",
+		"label": "Nvidia DCGM",
+		"imgUrl": "/Logos/nvidia-dcgm.svg",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "infra-monitoring-hosts",
+		"relatedSearchKeywords": [
+			"dcgm",
+			"gpu monitoring",
+			"infrastructure monitoring",
+			"nvidia",
+			"nvidia dcgm",
+			"nvidia metrics"
+		],
+		"id": "nvidia-dcgm",
+		"link": "/docs/metrics-management/nvidia-dcgm-metrics/"
+	},
+	{
+		"dataSource": "slurm",
+		"label": "Slurm",
+		"imgUrl": "/Logos/slurm.svg",
+		"tags": [
+			"infrastructure monitoring"
+		],
+		"module": "infra-monitoring-hosts",
+		"relatedSearchKeywords": [
+			"infrastructure monitoring",
+			"slurm",
+			"slurm cluster monitoring",
+			"slurm metrics"
+		],
+		"id": "slurm",
+		"link": "/docs/metrics-management/slurm-metrics/"
+	},
+	{
+		"dataSource": "ollama-monitoring",
+		"label": "Ollama",
+		"imgUrl": "/Logos/ollama.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"ollama",
+			"ollama monitoring",
+			"otel ollama",
+			"traces",
+			"tracing"
+		],
+		"id": "ollama-monitoring",
+		"link": "/docs/ollama-monitoring/"
+	},
+	{
+		"dataSource": "haystack-monitoring",
+		"label": "Haystack",
+		"imgUrl": "/Logos/haystack.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"haystack",
+			"haystack monitoring",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel haystack",
+			"traces",
+			"tracing"
+		],
+		"id": "haystack-monitoring",
+		"link": "/docs/haystack-monitoring/"
+	},
+	{
+		"dataSource": "openrouter-observability",
+		"label": "OpenRouter",
+		"imgUrl": "/Logos/openrouter.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"openrouter",
+			"openrouter monitoring",
+			"otel openrouter",
+			"traces",
+			"tracing"
+		],
+		"id": "openrouter-observability",
+		"link": "/docs/openrouter-observability/"
+	},
+	{
+		"dataSource": "huggingface-observability",
+		"label": "Hugging Face",
+		"imgUrl": "/Logos/huggingface.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"hugging face monitoring",
+			"huggingface",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel huggingface",
+			"traces",
+			"tracing"
+		],
+		"id": "huggingface-observability",
+		"link": "/docs/huggingface-observability/"
+	},
+	{
+		"dataSource": "mistral-observability",
+		"label": "Mistral AI",
+		"imgUrl": "/Logos/mistral.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"mistral",
+			"mistral ai",
+			"monitoring",
+			"observability",
+			"otel mistral",
+			"traces",
+			"tracing"
+		],
+		"id": "mistral-observability",
+		"link": "/docs/mistral-observability/"
+	},
+	{
+		"dataSource": "openclaw-observability",
+		"label": "OpenClaw",
+		"imgUrl": "/Logos/openclaw.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"openclaw",
+			"otel openclaw",
+			"traces",
+			"tracing"
+		],
+		"id": "openclaw-observability",
+		"link": "/docs/openclaw-monitoring/"
+	},
+	{
+		"dataSource": "claude-agent-monitoring",
+		"label": "Claude Agent SDK",
+		"imgUrl": "/Logos/claude-code.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"anthropic",
+			"claude",
+			"claude agent",
+			"claude agent sdk",
+			"claude sdk",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel claude",
+			"traces",
+			"tracing"
+		],
+		"id": "claude-agent-monitoring",
+		"link": "/docs/claude-agent-monitoring/"
+	},
+	{
+		"dataSource": "render-metrics",
+		"label": "Render",
+		"imgUrl": "/Logos/render.svg",
+		"tags": [
+			"infrastructure monitoring",
+			"metrics"
+		],
+		"module": "metrics",
+		"relatedSearchKeywords": [
+			"infrastructure",
+			"metrics",
+			"monitoring",
+			"observability",
+			"paas",
+			"render",
+			"render metrics",
+			"render monitoring"
+		],
+		"id": "render-metrics",
+		"link": "/docs/metrics-management/render-metrics/"
 	}
 ]

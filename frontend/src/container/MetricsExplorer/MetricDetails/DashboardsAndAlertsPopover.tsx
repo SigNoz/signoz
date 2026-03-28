@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { generatePath } from 'react-router-dom';
 import { Color } from '@signozhq/design-tokens';
-import { Dropdown, Typography } from 'antd';
-import { Skeleton } from 'antd/lib';
+import { Dropdown, Skeleton, Typography } from 'antd';
 import {
 	useGetMetricAlerts,
 	useGetMetricDashboards,

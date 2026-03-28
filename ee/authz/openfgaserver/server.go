@@ -16,7 +16,6 @@ type Server struct {
 }
 
 func NewOpenfgaServer(ctx context.Context, pkgAuthzService authz.AuthZ) (*Server, error) {
-
 	return &Server{
 		pkgAuthzService: pkgAuthzService,
 	}, nil
@@ -24,6 +23,10 @@ func NewOpenfgaServer(ctx context.Context, pkgAuthzService authz.AuthZ) (*Server
 
 func (server *Server) Start(ctx context.Context) error {
 	return server.pkgAuthzService.Start(ctx)
+}
+
+func (server *Server) Healthy() <-chan struct{} {
+	return server.pkgAuthzService.Healthy()
 }
 
 func (server *Server) Stop(ctx context.Context) error {

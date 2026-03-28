@@ -11,8 +11,7 @@ import {
 import { restrictToVerticalAxis } from '@dnd-kit/modifiers';
 import { arrayMove, SortableContext, useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Row, Space, Table, Typography } from 'antd';
-import { RowProps } from 'antd/lib';
+import { Button, Modal, Row, RowProps, Space, Table, Typography } from 'antd';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
@@ -20,8 +19,8 @@ import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
@@ -88,7 +87,7 @@ function VariablesSettings({
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	const { notifications } = useNotifications();

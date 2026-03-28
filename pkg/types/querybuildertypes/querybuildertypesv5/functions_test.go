@@ -600,6 +600,14 @@ func TestApplyFunction(t *testing.T) {
 		want     []float64
 	}{
 		{
+			name: "test with empty series",
+			function: Function{
+				Name: FunctionNameRunningDiff,
+			},
+			values: []float64{},
+			want:   []float64{},
+		},
+		{
 			name: "cutOffMin function",
 			function: Function{
 				Name: FunctionNameCutOffMin,

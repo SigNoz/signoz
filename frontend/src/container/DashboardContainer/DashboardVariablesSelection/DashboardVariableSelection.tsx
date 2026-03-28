@@ -3,14 +3,14 @@ import { memo, useCallback, useEffect, useMemo } from 'react';
 import { useSelector } from 'react-redux';
 import { Row } from 'antd';
 import { ALL_SELECTED_VALUE } from 'components/NewSelect/utils';
+import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import {
 	useDashboardVariables,
 	useDashboardVariablesSelector,
 } from 'hooks/dashboard/useDashboardVariables';
 import useVariablesFromUrl from 'hooks/dashboard/useVariablesFromUrl';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { initializeDefaultVariables } from 'providers/Dashboard/initializeDefaultVariables';
 import { updateDashboardVariablesStore } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStore';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import {
 	enqueueDescendantsOfVariable,
 	enqueueFetchOfAllVariables,
@@ -19,23 +19,23 @@ import {
 import { AppState } from 'store/reducers';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { useShallow } from 'zustand/react/shallow';
 
 import VariableItem from './VariableItem';
 
 import './DashboardVariableSelection.styles.scss';
 
 function DashboardVariableSelection(): JSX.Element | null {
-	const {
-		setSelectedDashboard,
-		updateLocalStorageDashboardVariables,
-	} = useDashboard();
+	const { dashboardId, setSelectedDashboard } = useDashboardStore(
+		useShallow((s) => ({
+			dashboardId: s.selectedDashboard?.id ?? '',
+			setSelectedDashboard: s.setSelectedDashboard,
+		})),
+	);
 
-	const { updateUrlVariable, getUrlVariables } = useVariablesFromUrl();
+	const { updateUrlVariable } = useVariablesFromUrl();
 
 	const { dashboardVariables } = useDashboardVariables();
-	const dashboardId = useDashboardVariablesSelector(
-		(state) => state.dashboardId,
-	);
 	const sortedVariablesArray = useDashboardVariablesSelector(
 		(state) => state.sortedVariablesArray,
 	);
@@ -49,15 +49,6 @@ function DashboardVariableSelection(): JSX.Element | null {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	useEffect(() => {
-		// Initialize variables with default values if not in URL
-		initializeDefaultVariables(
-			dashboardVariables,
-			getUrlVariables,
-			updateUrlVariable,
-		);
-	}, [getUrlVariables, updateUrlVariable, dashboardVariables]);
 
 	// Memoize the order key to avoid unnecessary triggers
 	const variableOrderKey = useMemo(() => {
@@ -92,7 +83,13 @@ function DashboardVariableSelection(): JSX.Element | null {
 			// This makes localStorage much lighter by avoiding storing all individual values
 			const variable = dashboardVariables[id] || dashboardVariables[name];
 			const isDynamic = variable.type === 'DYNAMIC';
-			updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
+			updateLocalStorageDashboardVariable(
+				dashboardId,
+				name,
+				value,
+				allSelected,
+				isDynamic,
+			);
 
 			if (allSelected) {
 				updateUrlVariable(name || id, ALL_SELECTED_VALUE);
@@ -160,13 +157,7 @@ function DashboardVariableSelection(): JSX.Element | null {
 			// Safe to call synchronously now that the store already has the updated value.
 			enqueueDescendantsOfVariable(name);
 		},
-		[
-			dashboardId,
-			dashboardVariables,
-			updateLocalStorageDashboardVariables,
-			updateUrlVariable,
-			setSelectedDashboard,
-		],
+		[dashboardId, dashboardVariables, updateUrlVariable, setSelectedDashboard],
 	);
 
 	return (

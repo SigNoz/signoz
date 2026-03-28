@@ -18,8 +18,7 @@ import {
 	TowerControl,
 	Workflow,
 } from 'lucide-react';
-
-export type UserRole = 'ADMIN' | 'EDITOR' | 'AUTHOR' | 'VIEWER';
+import { ROLES } from 'types/roles';
 
 export type CmdAction = {
 	id: string;
@@ -28,7 +27,7 @@ export type CmdAction = {
 	keywords?: string;
 	section?: string;
 	icon?: React.ReactNode;
-	roles?: UserRole[];
+	roles?: ROLES[];
 	perform: () => void;
 };
 

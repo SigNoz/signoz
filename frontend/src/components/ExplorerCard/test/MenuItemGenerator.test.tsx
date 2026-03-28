@@ -13,7 +13,8 @@ jest.mock('react-router-dom', () => ({
 	}),
 }));
 
-jest.mock('antd/es/form/Form', () => ({
+jest.mock('antd', () => ({
+	...jest.requireActual('antd'),
 	useForm: jest.fn().mockReturnValue({
 		onFinish: jest.fn(),
 	}),

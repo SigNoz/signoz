@@ -2,6 +2,7 @@ package anomaly
 
 import (
 	"context"
+	"log/slog"
 	"math"
 	"time"
 
@@ -10,8 +11,9 @@ import (
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/postprocess"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.uber.org/zap"
 )
 
 var (
@@ -61,7 +63,11 @@ func (p *BaseSeasonalProvider) getQueryParams(req *GetAnomaliesRequest) *anomaly
 }
 
 func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID, params *anomalyQueryParams) (*anomalyQueryResults, error) {
-	zap.L().Info("fetching results for current period", zap.Any("currentPeriodQuery", params.CurrentPeriodQuery))
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.CodeNamespace:    "anomaly",
+		instrumentationtypes.CodeFunctionName: "getResults",
+	})
+	slog.InfoContext(ctx, "fetching results for current period", "current_period_query", params.CurrentPeriodQuery)
 	currentPeriodResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.CurrentPeriodQuery)
 	if err != nil {
 		return nil, err
@@ -72,7 +78,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	zap.L().Info("fetching results for past period", zap.Any("pastPeriodQuery", params.PastPeriodQuery))
+	slog.InfoContext(ctx, "fetching results for past period", "past_period_query", params.PastPeriodQuery)
 	pastPeriodResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.PastPeriodQuery)
 	if err != nil {
 		return nil, err
@@ -83,7 +89,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	zap.L().Info("fetching results for current season", zap.Any("currentSeasonQuery", params.CurrentSeasonQuery))
+	slog.InfoContext(ctx, "fetching results for current season", "current_season_query", params.CurrentSeasonQuery)
 	currentSeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.CurrentSeasonQuery)
 	if err != nil {
 		return nil, err
@@ -94,7 +100,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	zap.L().Info("fetching results for past season", zap.Any("pastSeasonQuery", params.PastSeasonQuery))
+	slog.InfoContext(ctx, "fetching results for past season", "past_season_query", params.PastSeasonQuery)
 	pastSeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.PastSeasonQuery)
 	if err != nil {
 		return nil, err
@@ -105,7 +111,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	zap.L().Info("fetching results for past 2 season", zap.Any("past2SeasonQuery", params.Past2SeasonQuery))
+	slog.InfoContext(ctx, "fetching results for past 2 season", "past_2_season_query", params.Past2SeasonQuery)
 	past2SeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.Past2SeasonQuery)
 	if err != nil {
 		return nil, err
@@ -116,7 +122,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 		return nil, err
 	}
 
-	zap.L().Info("fetching results for past 3 season", zap.Any("past3SeasonQuery", params.Past3SeasonQuery))
+	slog.InfoContext(ctx, "fetching results for past 3 season", "past_3_season_query", params.Past3SeasonQuery)
 	past3SeasonResults, _, err := p.querierV2.QueryRange(ctx, orgID, params.Past3SeasonQuery)
 	if err != nil {
 		return nil, err
@@ -229,17 +235,17 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 		if predictedValue < 0 {
 			// this should not happen (except when the data has extreme outliers)
 			// we will use the moving avg of the previous period series in this case
-			zap.L().Warn("predictedValue is less than 0", zap.Float64("predictedValue", predictedValue), zap.Any("labels", series.Labels))
+			slog.Warn("predicted value is less than 0", "predicted_value", predictedValue, "labels", series.Labels)
 			predictedValue = p.getMovingAvg(prevSeries, movingAvgWindowSize, idx)
 		}
 
-		zap.L().Debug("predictedSeries",
-			zap.Float64("movingAvg", movingAvg),
-			zap.Float64("avg", avg),
-			zap.Float64("mean", mean),
-			zap.Any("labels", series.Labels),
-			zap.Float64("predictedValue", predictedValue),
-			zap.Float64("curr", curr.Value),
+		slog.Debug("predicted series",
+			"moving_avg", movingAvg,
+			"avg", avg,
+			"mean", mean,
+			"labels", series.Labels,
+			"predicted_value", predictedValue,
+			"curr", curr.Value,
 		)
 		predictedSeries.Points = append(predictedSeries.Points, v3.Point{
 			Timestamp: curr.Timestamp,
@@ -412,7 +418,7 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 
 		for _, series := range result.Series {
 			stdDev := p.getStdDev(series)
-			zap.L().Info("stdDev", zap.Float64("stdDev", stdDev), zap.Any("labels", series.Labels))
+			slog.InfoContext(ctx, "computed standard deviation", "std_dev", stdDev, "labels", series.Labels)
 
 			pastPeriodSeries := p.getMatchingSeries(pastPeriodResult, series)
 			currentSeasonSeries := p.getMatchingSeries(currentSeasonResult, series)
@@ -425,7 +431,7 @@ func (p *BaseSeasonalProvider) getAnomalies(ctx context.Context, orgID valuer.UU
 			pastSeasonSeriesAvg := p.getAvg(pastSeasonSeries)
 			past2SeasonSeriesAvg := p.getAvg(past2SeasonSeries)
 			past3SeasonSeriesAvg := p.getAvg(past3SeasonSeries)
-			zap.L().Info("getAvg", zap.Float64("prevSeriesAvg", prevSeriesAvg), zap.Float64("currentSeasonSeriesAvg", currentSeasonSeriesAvg), zap.Float64("pastSeasonSeriesAvg", pastSeasonSeriesAvg), zap.Float64("past2SeasonSeriesAvg", past2SeasonSeriesAvg), zap.Float64("past3SeasonSeriesAvg", past3SeasonSeriesAvg), zap.Any("labels", series.Labels))
+			slog.InfoContext(ctx, "computed averages", "prev_series_avg", prevSeriesAvg, "current_season_series_avg", currentSeasonSeriesAvg, "past_season_series_avg", pastSeasonSeriesAvg, "past_2_season_series_avg", past2SeasonSeriesAvg, "past_3_season_series_avg", past3SeasonSeriesAvg, "labels", series.Labels)
 
 			predictedSeries := p.getPredictedSeries(
 				series,

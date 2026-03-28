@@ -1,4 +1,4 @@
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import getSpans from 'api/trace/getSpans';
 // eslint-disable-next-line no-restricted-imports
 import { Dispatch, Store } from 'redux';

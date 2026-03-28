@@ -3,13 +3,15 @@ package telemetrytraces
 import (
 	"context"
 	"fmt"
+	"log/slog"
 	"strings"
+
+	"github.com/huandu/go-sqlbuilder"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
 )
 
 type cteNode struct {
@@ -96,9 +98,9 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 	finalArgs := querybuilder.PrependArgs(cteArgs, finalStmt.Args)
 
 	b.stmtBuilder.logger.DebugContext(ctx, "Final trace operator query built",
-		"operator_expression", b.operator.Expression,
-		"cte_count", len(cteFragments),
-		"args_count", len(finalArgs))
+		slog.String("operator_expression", b.operator.Expression),
+		slog.Int("cte_count", len(cteFragments)),
+		slog.Int("args_count", len(finalArgs)))
 
 	return &qbtypes.Statement{
 		Query:    finalSQL,
@@ -188,12 +190,12 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	}
 
 	keySelectors := getKeySelectors(*query)
-	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", "query_name", queryName, "key_selectors", keySelectors)
+	b.stmtBuilder.logger.DebugContext(ctx, "Key selectors for query", slog.String("query_name", queryName), slog.Any("key_selectors", keySelectors))
 	keys, _, err := b.stmtBuilder.metadataStore.GetKeysMulti(ctx, keySelectors)
 	if err != nil {
 		return "", err
 	}
-	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", "query_name", queryName, "keys_count", len(keys))
+	b.stmtBuilder.logger.DebugContext(ctx, "Retrieved keys for query", slog.String("query_name", queryName), slog.Int("keys_count", len(keys)))
 
 	// Build resource filter CTE for this specific query
 	resourceFilterCTEName := fmt.Sprintf("__resource_filter_%s", cteName)
@@ -204,11 +206,11 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 
 	if resourceStmt != nil && resourceStmt.Query != "" {
 		b.stmtBuilder.logger.DebugContext(ctx, "Built resource filter CTE for query",
-			"query_name", queryName,
-			"resource_filter_cte_name", resourceFilterCTEName)
+			slog.String("query_name", queryName),
+			slog.String("resource_filter_cte_name", resourceFilterCTEName))
 		b.addCTE(resourceFilterCTEName, resourceStmt.Query, resourceStmt.Args, nil)
 	} else {
-		b.stmtBuilder.logger.DebugContext(ctx, "No resource filter needed for query", "query_name", queryName)
+		b.stmtBuilder.logger.DebugContext(ctx, "No resource filter needed for query", slog.String("query_name", queryName))
 		resourceFilterCTEName = ""
 	}
 
@@ -228,7 +230,7 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 	)
 
 	if query.Filter != nil && query.Filter.Expression != "" {
-		b.stmtBuilder.logger.DebugContext(ctx, "Applying filter to query CTE", "query_name", queryName, "filter", query.Filter.Expression)
+		b.stmtBuilder.logger.DebugContext(ctx, "Applying filter to query CTE", slog.String("query_name", queryName), slog.String("filter", query.Filter.Expression))
 		filterWhereClause, err := querybuilder.PrepareWhereClause(
 			query.Filter.Expression,
 			querybuilder.FilterExprVisitorOpts{
@@ -240,27 +242,27 @@ func (b *traceOperatorCTEBuilder) buildQueryCTE(ctx context.Context, queryName s
 			}, b.start, b.end,
 		)
 		if err != nil {
-			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", "error", err, "filter", query.Filter.Expression)
+			b.stmtBuilder.logger.ErrorContext(ctx, "Failed to prepare where clause", errors.Attr(err), slog.String("filter", query.Filter.Expression))
 			return "", err
 		}
 		if filterWhereClause != nil {
-			b.stmtBuilder.logger.DebugContext(ctx, "Adding where clause", "where_clause", filterWhereClause.WhereClause)
+			b.stmtBuilder.logger.DebugContext(ctx, "Adding where clause", slog.Any("where_clause", filterWhereClause.WhereClause))
 			sb.AddWhereClause(filterWhereClause.WhereClause)
 		} else {
-			b.stmtBuilder.logger.WarnContext(ctx, "PrepareWhereClause returned nil", "filter", query.Filter.Expression)
+			b.stmtBuilder.logger.WarnContext(ctx, "PrepareWhereClause returned nil", slog.String("filter", query.Filter.Expression))
 		}
 	} else {
 		if query.Filter == nil {
-			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "query_name", queryName, "reason", "filter is nil")
+			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", slog.String("query_name", queryName), slog.String("reason", "filter is nil"))
 		} else {
-			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", "query_name", queryName, "reason", "filter expression is empty")
+			b.stmtBuilder.logger.DebugContext(ctx, "No filter for query CTE", slog.String("query_name", queryName), slog.String("reason", "filter expression is empty"))
 		}
 	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 	b.stmtBuilder.logger.DebugContext(ctx, "Built query CTE",
-		"query_name", queryName,
-		"cte_name", cteName)
+		slog.String("query_name", queryName),
+		slog.String("cte_name", cteName))
 	dependencies := []string{}
 	if resourceFilterCTEName != "" {
 		dependencies = append(dependencies, resourceFilterCTEName)
@@ -317,10 +319,10 @@ func (b *traceOperatorCTEBuilder) buildOperatorCTE(ctx context.Context, op qbtyp
 	}
 
 	b.stmtBuilder.logger.DebugContext(ctx, "Built operator CTE",
-		"operator", op.StringValue(),
-		"cte_name", cteName,
-		"left_cte", leftCTE,
-		"right_cte", rightCTE)
+		slog.String("operator", op.StringValue()),
+		slog.String("cte_name", cteName),
+		slog.String("left_cte", leftCTE),
+		slog.String("right_cte", rightCTE))
 	b.addCTE(cteName, sql, args, dependsOn)
 	return cteName, nil
 }
@@ -453,7 +455,7 @@ func (b *traceOperatorCTEBuilder) buildListQuery(ctx context.Context, selectFrom
 		colExpr, err := b.stmtBuilder.fm.ColumnExpressionFor(ctx, &field, keys)
 		if err != nil {
 			b.stmtBuilder.logger.WarnContext(ctx, "failed to map select field",
-				"field", field.Name, "error", err)
+				slog.String("field", field.Name), errors.Attr(err))
 			continue
 		}
 		sb.SelectMore(colExpr)
@@ -759,7 +761,7 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 			} else {
 				b.stmtBuilder.logger.WarnContext(ctx,
 					"ignoring order by field that's not available in trace context",
-					"field", orderBy.Key.Name)
+					slog.String("field", orderBy.Key.Name))
 			}
 		}
 	}

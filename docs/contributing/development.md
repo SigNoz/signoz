@@ -100,7 +100,7 @@ This command:
 
 3. Create a `.env` file in this directory:
    ```env
-   FRONTEND_API_ENDPOINT=http://localhost:8080
+   VITE_FRONTEND_API_ENDPOINT=http://localhost:8080
    ```
 
 4. Start the development server:

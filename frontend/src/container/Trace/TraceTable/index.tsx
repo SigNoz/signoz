@@ -1,8 +1,12 @@
 import { HTMLAttributes } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
-import { TableProps, Tag, Typography } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import {
+	TableColumnsType as ColumnsType,
+	TableProps,
+	Tag,
+	Typography,
+} from 'antd';
 import { ResizeTable } from 'components/ResizeTable';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import ROUTES from 'constants/routes';

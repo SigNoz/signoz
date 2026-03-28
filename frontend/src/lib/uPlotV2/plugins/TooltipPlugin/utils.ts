@@ -125,6 +125,7 @@ export function createInitialViewState(): TooltipViewState {
 		contents: null,
 		hasPlot: false,
 		dismiss: (): void => {},
+		clickData: null,
 	};
 }
 
