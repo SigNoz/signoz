@@ -275,6 +275,17 @@ func (d *DaemonSetsRepo) getTopDaemonSetGroups(ctx context.Context, orgID valuer
 	return topDaemonSetGroups, allDaemonSetGroups, nil
 }
 
+func (d *DaemonSetsRepo) GetMetricsExistenceAndEarliestTime(ctx context.Context) (uint64, uint64, error) {
+	names := []string{}
+	for _, metricName := range metricNamesForWorkloads {
+		names = append(names, metricName)
+	}
+	for _, metricName := range metricNamesForDaemonSets {
+		names = append(names, metricName)
+	}
+	return d.reader.GetMetricsExistenceAndEarliestTime(ctx, names)
+}
+
 func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, orgID valuer.UUID, req model.DaemonSetListRequest) (model.DaemonSetListResponse, error) {
 	resp := model.DaemonSetListResponse{}
 
@@ -291,6 +302,22 @@ func (d *DaemonSetsRepo) GetDaemonSetList(ctx context.Context, orgID valuer.UUID
 		resp.Type = model.ResponseTypeList
 	} else {
 		resp.Type = model.ResponseTypeGroupedList
+	}
+
+	if count, minFirstReportedUnixMilli, err := d.GetMetricsExistenceAndEarliestTime(ctx); err == nil {
+		if count == 0 {
+			resp.SentAnyMetricsData = false
+			resp.Records = []model.DaemonSetListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
+		resp.SentAnyMetricsData = true
+		if req.End < int64(minFirstReportedUnixMilli) {
+			resp.EndTimeBeforeRetention = true
+			resp.Records = []model.DaemonSetListRecord{}
+			resp.Total = 0
+			return resp, nil
+		}
 	}
 
 	step := int64(math.Max(float64(common.MinAllowedStepInterval(req.Start, req.End)), 60))

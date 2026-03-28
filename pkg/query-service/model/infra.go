@@ -86,9 +86,11 @@ type ProcessListRequest struct {
 }
 
 type ProcessListResponse struct {
-	Type    ResponseType        `json:"type"`
-	Records []ProcessListRecord `json:"records"`
-	Total   int                 `json:"total"`
+	Type                   ResponseType        `json:"type"`
+	Records                []ProcessListRecord `json:"records"`
+	Total                  int                 `json:"total"`
+	SentAnyMetricsData     bool                `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                `json:"endTimeBeforeRetention"`
 }
 
 type ProcessListRecord struct {
@@ -112,9 +114,11 @@ type PodListRequest struct {
 }
 
 type PodListResponse struct {
-	Type    ResponseType    `json:"type"`
-	Records []PodListRecord `json:"records"`
-	Total   int             `json:"total"`
+	Type                   ResponseType    `json:"type"`
+	Records                []PodListRecord `json:"records"`
+	Total                  int             `json:"total"`
+	SentAnyMetricsData     bool            `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool            `json:"endTimeBeforeRetention"`
 }
 
 func (r *PodListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -190,9 +194,11 @@ type NodeListRequest struct {
 }
 
 type NodeListResponse struct {
-	Type    ResponseType     `json:"type"`
-	Records []NodeListRecord `json:"records"`
-	Total   int              `json:"total"`
+	Type                   ResponseType     `json:"type"`
+	Records                []NodeListRecord `json:"records"`
+	Total                  int              `json:"total"`
+	SentAnyMetricsData     bool             `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool             `json:"endTimeBeforeRetention"`
 }
 
 func (r *NodeListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -251,9 +257,11 @@ type NamespaceListRequest struct {
 }
 
 type NamespaceListResponse struct {
-	Type    ResponseType          `json:"type"`
-	Records []NamespaceListRecord `json:"records"`
-	Total   int                   `json:"total"`
+	Type                   ResponseType          `json:"type"`
+	Records                []NamespaceListRecord `json:"records"`
+	Total                  int                   `json:"total"`
+	SentAnyMetricsData     bool                  `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                  `json:"endTimeBeforeRetention"`
 }
 
 func (r *NamespaceListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -300,9 +308,11 @@ type ClusterListRequest struct {
 }
 
 type ClusterListResponse struct {
-	Type    ResponseType        `json:"type"`
-	Records []ClusterListRecord `json:"records"`
-	Total   int                 `json:"total"`
+	Type                   ResponseType        `json:"type"`
+	Records                []ClusterListRecord `json:"records"`
+	Total                  int                 `json:"total"`
+	SentAnyMetricsData     bool                `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                `json:"endTimeBeforeRetention"`
 }
 
 func (r *ClusterListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -354,9 +364,11 @@ type DeploymentListRequest struct {
 }
 
 type DeploymentListResponse struct {
-	Type    ResponseType           `json:"type"`
-	Records []DeploymentListRecord `json:"records"`
-	Total   int                    `json:"total"`
+	Type                   ResponseType           `json:"type"`
+	Records                []DeploymentListRecord `json:"records"`
+	Total                  int                    `json:"total"`
+	SentAnyMetricsData     bool                   `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                   `json:"endTimeBeforeRetention"`
 }
 
 func (r *DeploymentListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -433,9 +445,11 @@ type DaemonSetListRequest struct {
 }
 
 type DaemonSetListResponse struct {
-	Type    ResponseType          `json:"type"`
-	Records []DaemonSetListRecord `json:"records"`
-	Total   int                   `json:"total"`
+	Type                   ResponseType          `json:"type"`
+	Records                []DaemonSetListRecord `json:"records"`
+	Total                  int                   `json:"total"`
+	SentAnyMetricsData     bool                  `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                  `json:"endTimeBeforeRetention"`
 }
 
 func (r *DaemonSetListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -512,9 +526,11 @@ type StatefulSetListRequest struct {
 }
 
 type StatefulSetListResponse struct {
-	Type    ResponseType            `json:"type"`
-	Records []StatefulSetListRecord `json:"records"`
-	Total   int                     `json:"total"`
+	Type                   ResponseType            `json:"type"`
+	Records                []StatefulSetListRecord `json:"records"`
+	Total                  int                     `json:"total"`
+	SentAnyMetricsData     bool                    `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool                    `json:"endTimeBeforeRetention"`
 }
 
 func (r *StatefulSetListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -591,9 +607,11 @@ type JobListRequest struct {
 }
 
 type JobListResponse struct {
-	Type    ResponseType    `json:"type"`
-	Records []JobListRecord `json:"records"`
-	Total   int             `json:"total"`
+	Type                   ResponseType    `json:"type"`
+	Records                []JobListRecord `json:"records"`
+	Total                  int             `json:"total"`
+	SentAnyMetricsData     bool            `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool            `json:"endTimeBeforeRetention"`
 }
 
 func (r *JobListResponse) SortBy(orderBy *v3.OrderBy) {
@@ -680,9 +698,11 @@ type VolumeListRequest struct {
 }
 
 type VolumeListResponse struct {
-	Type    ResponseType       `json:"type"`
-	Records []VolumeListRecord `json:"records"`
-	Total   int                `json:"total"`
+	Type                   ResponseType       `json:"type"`
+	Records                []VolumeListRecord `json:"records"`
+	Total                  int                `json:"total"`
+	SentAnyMetricsData     bool               `json:"sentAnyMetricsData"`
+	EndTimeBeforeRetention bool               `json:"endTimeBeforeRetention"`
 }
 
 func (r *VolumeListResponse) SortBy(orderBy *v3.OrderBy) {

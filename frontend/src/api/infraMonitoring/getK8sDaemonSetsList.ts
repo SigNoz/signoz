@@ -43,8 +43,8 @@ export interface K8sDaemonSetsListResponse {
 		records: K8sDaemonSetsData[];
 		groups: null;
 		total: number;
-		sentAnyHostMetricsData: boolean;
-		isSendingK8SAgentMetrics: boolean;
+		sentAnyMetricsData: boolean;
+		endTimeBeforeRetention: boolean;
 	};
 }
 

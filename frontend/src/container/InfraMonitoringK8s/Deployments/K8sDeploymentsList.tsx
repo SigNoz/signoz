@@ -34,6 +34,7 @@ import {
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import { getK8sEmptyState } from '../K8sEmptyState';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -328,6 +329,9 @@ function K8sDeploymentsList({
 		data,
 	]);
 	const totalCount = data?.payload?.data?.total || 0;
+	const sentAnyMetricsData = data?.payload?.data?.sentAnyMetricsData ?? false;
+	const endTimeBeforeRetention =
+		data?.payload?.data?.endTimeBeforeRetention ?? false;
 
 	const formattedDeploymentsData = useMemo(
 		() => formatDataForTable(deploymentsData, groupBy),
@@ -667,6 +671,18 @@ function K8sDeploymentsList({
 	const showTableLoadingState =
 		(isFetching || isLoading) && formattedDeploymentsData.length === 0;
 
+	const emptyState = getK8sEmptyState({
+		sentAnyMetricsData,
+		endTimeBeforeRetention,
+		entityName: 'deployment',
+		isLoading,
+		isFetching,
+		hasRecords: formattedDeploymentsData.length > 0,
+		hasFilters: queryFilters?.items?.length > 0,
+		isError,
+		errorMessage: data?.error ?? '',
+	});
+
 	return (
 		<div className="k8s-list">
 			<K8sHeader
@@ -681,56 +697,44 @@ function K8sDeploymentsList({
 				entity={K8sCategory.NODES}
 				showAutoRefresh={!selectedDeploymentData}
 			/>
-			{isError && <Typography>{data?.error || 'Something went wrong'}</Typography>}
+			{emptyState}
 
-			<Table
-				className={classNames('k8s-list-table', 'deployments-list-table', {
-					'expanded-deployments-list-table': isGroupedByAttribute,
-				})}
-				dataSource={showTableLoadingState ? [] : formattedDeploymentsData}
-				columns={columns}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					total: totalCount,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: onPaginationChange,
-				}}
-				scroll={{ x: true }}
-				loading={{
-					spinning: showTableLoadingState,
-					indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
-				}}
-				locale={{
-					emptyText: showTableLoadingState ? null : (
-						<div className="no-filtered-hosts-message-container">
-							<div className="no-filtered-hosts-message-content">
-								<img
-									src="/Icons/emptyState.svg"
-									alt="thinking-emoji"
-									className="empty-state-svg"
-								/>
-
-								<Typography.Text className="no-filtered-hosts-message">
-									This query had no results. Edit your query and try again!
-								</Typography.Text>
-							</div>
-						</div>
-					),
-				}}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
-					className: 'clickable-row',
-				})}
-				expandable={{
-					expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
-					expandIcon: expandRowIconRenderer,
-					expandedRowKeys,
-				}}
-			/>
+			{!emptyState && (
+				<Table
+					className={classNames('k8s-list-table', 'deployments-list-table', {
+						'expanded-deployments-list-table': isGroupedByAttribute,
+					})}
+					dataSource={showTableLoadingState ? [] : formattedDeploymentsData}
+					columns={columns}
+					pagination={{
+						current: currentPage,
+						pageSize,
+						total: totalCount,
+						showSizeChanger: true,
+						hideOnSinglePage: false,
+						onChange: onPaginationChange,
+					}}
+					scroll={{ x: true }}
+					loading={{
+						spinning: showTableLoadingState,
+						indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
+					}}
+					locale={{
+						emptyText: null,
+					}}
+					tableLayout="fixed"
+					onChange={handleTableChange}
+					onRow={(record): { onClick: () => void; className: string } => ({
+						onClick: (): void => handleRowClick(record),
+						className: 'clickable-row',
+					})}
+					expandable={{
+						expandedRowRender: isGroupedByAttribute ? expandedRowRender : undefined,
+						expandIcon: expandRowIconRenderer,
+						expandedRowKeys,
+					}}
+				/>
+			)}
 
 			<DeploymentDetails
 				deployment={selectedDeploymentData}
