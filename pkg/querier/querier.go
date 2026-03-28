@@ -748,6 +748,14 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	// Check for errors
 	for _, err := range errs {
 		if err != nil {
+			// If the context was canceled (e.g., the client disconnected or
+			// navigated away), return immediately. Retrying with a canceled
+			// context would fail again, and this is not a server-side error
+			// worth logging at ERROR level.
+			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+				return nil, err
+			}
+
 			// If any query failed, fall back to full execution
 			q.logger.ErrorContext(ctx, "parallel query execution failed", errors.Attr(err))
 			result, err := query.Execute(ctx)
