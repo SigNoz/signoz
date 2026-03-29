@@ -16,58 +16,58 @@ func NewModule() cloudintegration.Module {
 	return &module{}
 }
 
-func (m *module) CreateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
+func (module *module) CreateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "create account is not supported")
 }
 
-func (m *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
+func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get account is not supported")
 }
 
-func (m *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
+func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list accounts is not supported")
 }
 
-func (m *module) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
+func (module *module) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "update account is not supported")
 }
 
-func (m *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
+func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "disconnect account is not supported")
 }
 
-func (m *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService) error {
+func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "create service is not supported")
 }
 
-func (m *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*cloudintegrationtypes.Service, error) {
+func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Service, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get service is not supported")
 }
 
-func (m *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
+func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list services metadata is not supported")
 }
 
-func (m *module) UpdateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService) error {
+func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "update service is not supported")
 }
 
-func (m *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get connection artifact is not supported")
 }
 
-func (m *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
+func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "agent check-in is not supported")
 }
 
-func (m *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
+func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get dashboard by ID is not supported")
 }
 
-func (m *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list dashboards is not supported")
 }
 
-func (m *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
+func (module *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get cloud provider is not supported")
 }

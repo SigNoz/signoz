@@ -2,6 +2,7 @@ package cloudintegrationtypes
 
 import (
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -45,22 +46,28 @@ type GettableServicesMetadata struct {
 	Services []*ServiceMetadata `json:"services" required:"true" nullable:"false"`
 }
 
+// Service represents a cloud integration service with its definition,
+// cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled)
 type Service struct {
 	ServiceDefinition
-	ServiceConfig *ServiceConfig `json:"serviceConfig" required:"false" nullable:"false"`
+	CloudIntegrationService *CloudIntegrationService `json:"cloudIntegrationService" required:"true" nullable:"true"`
 }
-
-type GettableService = Service
 
 type UpdatableService struct {
 	Config *ServiceConfig `json:"config" required:"true" nullable:"false"`
+}
+
+// Update sets the service config.
+func (service *CloudIntegrationService) Update(config *ServiceConfig) {
+	service.Config = config
+	service.UpdatedAt = time.Now()
 }
 
 type ServiceDefinition struct {
 	ServiceDefinitionMetadata
 	Overview         string              `json:"overview" required:"true"` // markdown
 	Assets           Assets              `json:"assets" required:"true"`
-	SupportedSignals SupportedSignals    `json:"supported_signals" required:"true"`
+	SupportedSignals SupportedSignals    `json:"supportedSignals" required:"true"`
 	DataCollected    DataCollected       `json:"dataCollected" required:"true"`
 	Strategy         *CollectionStrategy `json:"telemetryCollectionStrategy" required:"true" nullable:"false"`
 }
@@ -121,19 +128,38 @@ type CollectedMetric struct {
 }
 
 // AWSCollectionStrategy represents signal collection strategy for AWS services.
-// this is AWS specific.
-// NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents.
 type AWSCollectionStrategy struct {
-	Metrics   *AWSMetricsStrategy `json:"aws_metrics,omitempty"`
-	Logs      *AWSLogsStrategy    `json:"aws_logs,omitempty"`
-	S3Buckets map[string][]string `json:"s3_buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
+	Metrics   *AWSMetricsStrategy `json:"metrics,omitempty"`
+	Logs      *AWSLogsStrategy    `json:"logs,omitempty"`
+	S3Buckets map[string][]string `json:"s3Buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
+}
+
+// OldAWSCollectionStrategy is the backward-compatible snake_case form of AWSCollectionStrategy,
+// used in the legacy integration_config response field for older agents.
+type OldAWSCollectionStrategy struct {
+	Provider  string                 `json:"provider"`
+	Metrics   *OldAWSMetricsStrategy `json:"aws_metrics,omitempty"`
+	Logs      *OldAWSLogsStrategy    `json:"aws_logs,omitempty"`
+	S3Buckets map[string][]string    `json:"s3_buckets,omitempty"`
+}
+
+// OldAWSMetricsStrategy is the snake_case form of AWSMetricsStrategy for older agents.
+type OldAWSMetricsStrategy struct {
+	StreamFilters []struct {
+		Namespace   string   `json:"Namespace"`
+		MetricNames []string `json:"MetricNames,omitempty"`
+	} `json:"cloudwatch_metric_stream_filters"`
+}
+
+// OldAWSLogsStrategy is the snake_case form of AWSLogsStrategy for older agents.
+type OldAWSLogsStrategy struct {
+	Subscriptions []struct {
+		LogGroupNamePrefix string `json:"log_group_name_prefix"`
+		FilterPattern      string `json:"filter_pattern"`
+	} `json:"cloudwatch_logs_subscriptions"`
 }
 
 // AWSMetricsStrategy represents metrics collection strategy for AWS services.
-// this is AWS specific.
-// NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents.
 type AWSMetricsStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
 	StreamFilters []struct {
@@ -141,23 +167,20 @@ type AWSMetricsStrategy struct {
 		// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
 		Namespace   string   `json:"Namespace"`
 		MetricNames []string `json:"MetricNames,omitempty"`
-	} `json:"cloudwatch_metric_stream_filters"`
+	} `json:"cloudwatchMetricStreamFilters"`
 }
 
 // AWSLogsStrategy represents logs collection strategy for AWS services.
-// this is AWS specific.
-// NOTE: this structure is still using snake case, for backward compatibility,
-// with existing agents.
 type AWSLogsStrategy struct {
 	Subscriptions []struct {
 		// subscribe to all logs groups with specified prefix.
 		// eg: `/aws/rds/`
-		LogGroupNamePrefix string `json:"log_group_name_prefix"`
+		LogGroupNamePrefix string `json:"logGroupNamePrefix"`
 
 		// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
 		// "" implies no filtering is required.
-		FilterPattern string `json:"filter_pattern"`
-	} `json:"cloudwatch_logs_subscriptions"`
+		FilterPattern string `json:"filterPattern"`
+	} `json:"cloudwatchLogsSubscriptions"`
 }
 
 // Dashboard represents a dashboard definition for cloud integration.
@@ -170,12 +193,115 @@ type Dashboard struct {
 	Definition  dashboardtypes.StorableDashboardData `json:"definition,omitempty"`
 }
 
+func NewCloudIntegrationService(serviceID ServiceID, cloudIntegrationID valuer.UUID, config *ServiceConfig) *CloudIntegrationService {
+	return &CloudIntegrationService{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		Type:               serviceID,
+		Config:             config,
+		CloudIntegrationID: cloudIntegrationID,
+	}
+}
+
+func NewCloudIntegrationServiceFromStorable(stored *StorableCloudIntegrationService, config *ServiceConfig) *CloudIntegrationService {
+	return &CloudIntegrationService{
+		Identifiable:       stored.Identifiable,
+		TimeAuditable:      stored.TimeAuditable,
+		Type:               stored.Type,
+		Config:             config,
+		CloudIntegrationID: stored.CloudIntegrationID,
+	}
+}
+
+// awsOlderIntegrationConfig converts a ProviderIntegrationConfig into the legacy snake_case
+// IntegrationConfig format consumed by older AWS agents. Returns nil if AWS config is absent.
+func awsOlderIntegrationConfig(cfg *ProviderIntegrationConfig) *IntegrationConfig {
+	if cfg == nil || cfg.AWS == nil {
+		return nil
+	}
+	awsCfg := cfg.AWS
+
+	older := &IntegrationConfig{
+		EnabledRegions: awsCfg.EnabledRegions,
+	}
+
+	if awsCfg.Telemetry == nil {
+		return older
+	}
+
+	// Older agents expect a "provider" field and fully snake_case keys inside telemetry.
+	oldTelemetry := &OldAWSCollectionStrategy{
+		Provider:  CloudProviderTypeAWS.StringValue(),
+		S3Buckets: awsCfg.Telemetry.S3Buckets,
+	}
+
+	if awsCfg.Telemetry.Metrics != nil {
+		// Convert camelCase cloudwatchMetricStreamFilters → snake_case cloudwatch_metric_stream_filters
+		oldMetrics := &OldAWSMetricsStrategy{}
+		for _, f := range awsCfg.Telemetry.Metrics.StreamFilters {
+			oldMetrics.StreamFilters = append(oldMetrics.StreamFilters, struct {
+				Namespace   string   `json:"Namespace"`
+				MetricNames []string `json:"MetricNames,omitempty"`
+			}{Namespace: f.Namespace, MetricNames: f.MetricNames})
+		}
+		oldTelemetry.Metrics = oldMetrics
+	}
+
+	if awsCfg.Telemetry.Logs != nil {
+		// Convert camelCase cloudwatchLogsSubscriptions → snake_case cloudwatch_logs_subscriptions
+		oldLogs := &OldAWSLogsStrategy{}
+		for _, s := range awsCfg.Telemetry.Logs.Subscriptions {
+			oldLogs.Subscriptions = append(oldLogs.Subscriptions, struct {
+				LogGroupNamePrefix string `json:"log_group_name_prefix"`
+				FilterPattern      string `json:"filter_pattern"`
+			}{LogGroupNamePrefix: s.LogGroupNamePrefix, FilterPattern: s.FilterPattern})
+		}
+		oldTelemetry.Logs = oldLogs
+	}
+
+	older.Telemetry = oldTelemetry
+	return older
+}
+
+func NewServiceMetadata(definition ServiceDefinition, enabled bool) *ServiceMetadata {
+	return &ServiceMetadata{
+		ServiceDefinitionMetadata: definition.ServiceDefinitionMetadata,
+		Enabled:                   enabled,
+	}
+}
+
+func NewService(def ServiceDefinition, storableService *CloudIntegrationService) *Service {
+	return &Service{
+		ServiceDefinition:       def,
+		CloudIntegrationService: storableService,
+	}
+}
+
 // UTILS
 
 // GetCloudIntegrationDashboardID returns the dashboard id for a cloud integration, given the cloud provider, service id, and dashboard id.
 // This is used to generate unique dashboard ids for cloud integration, and also to parse the dashboard id to get the cloud provider and service id when needed.
 func GetCloudIntegrationDashboardID(cloudProvider CloudProviderType, svcID, dashboardID string) string {
 	return fmt.Sprintf("cloud-integration--%s--%s--%s", cloudProvider, svcID, dashboardID)
+}
+
+// ParseCloudIntegrationDashboardID parses a dashboard id generated by GetCloudIntegrationDashboardID
+// into its constituent parts (cloudProvider, serviceID, dashboardID).
+func ParseCloudIntegrationDashboardID(id string) (CloudProviderType, string, string, error) {
+	parts := strings.SplitN(id, "--", 4)
+	if len(parts) != 4 || parts[0] != "cloud-integration" {
+		return CloudProviderType{}, "", "", errors.New(errors.TypeNotFound, ErrCodeCloudIntegrationNotFound, "invalid cloud integration dashboard id")
+	}
+	provider, err := NewCloudProvider(parts[1])
+	if err != nil {
+		return CloudProviderType{}, "", "", err
+	}
+	return provider, parts[2], parts[3], nil
 }
 
 // GetDashboardsFromAssets returns the list of dashboards for the cloud provider service from definition.

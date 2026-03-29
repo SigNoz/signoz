@@ -135,7 +135,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, userGetter user.Getter, userSetter user.Setter) cloudintegration.Module {
+		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, userGetter user.Getter, userSetter user.Setter) (cloudintegration.Module, error) {
 			return implcloudintegration.NewModule(store, config.Global, zeus, gateway, licensing, userGetter, userSetter)
 		},
 	)

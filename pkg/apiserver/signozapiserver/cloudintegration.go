@@ -59,7 +59,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Description:         "This endpoint gets an account for the specified cloud provider",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(citypes.GettableAccount),
+			Response:            new(citypes.Account),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusNotFound},
@@ -139,7 +139,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 			Description:         "This endpoint gets a service for the specified cloud provider",
 			Request:             nil,
 			RequestContentType:  "",
-			Response:            new(citypes.GettableService),
+			Response:            new(citypes.Service),
 			ResponseContentType: "application/json",
 			SuccessStatusCode:   http.StatusOK,
 			ErrorStatusCodes:    []int{},
@@ -150,7 +150,7 @@ func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
 		return err
 	}
 
-	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/services/{service_id}", handler.New(
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.UpdateService),
 		handler.OpenAPIDef{
 			ID:                  "UpdateService",

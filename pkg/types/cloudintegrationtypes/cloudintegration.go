@@ -16,6 +16,9 @@ var (
 	ErrCodeUnsupported                          = errors.MustNewCode("cloud_integration_unsupported")
 	ErrCodeCloudIntegrationNotFound             = errors.MustNewCode("cloud_integration_not_found")
 	ErrCodeCloudIntegrationAlreadyExists        = errors.MustNewCode("cloud_integration_already_exists")
+	ErrCodeCloudIntegrationAlreadyConnected     = errors.MustNewCode("cloud_integration_already_connected")
+	ErrCodeCloudIntegrationRemoved              = errors.MustNewCode("cloud_integration_removed")
+	ErrCodeInvalidInput                         = errors.MustNewCode("cloud_integration_invalid_input")
 	ErrCodeCloudIntegrationServiceNotFound      = errors.MustNewCode("cloud_integration_service_not_found")
 	ErrCodeCloudIntegrationServiceAlreadyExists = errors.MustNewCode("cloud_integration_service_already_exists")
 )
@@ -70,7 +73,7 @@ func (r *StorableAgentReport) Scan(src any) error {
 // Value creates value to be stored in DB.
 func (r *StorableAgentReport) Value() (driver.Value, error) {
 	if r == nil {
-		return nil, errors.NewInternalf(errors.CodeInternal, "agent report is nil")
+		return nil, nil
 	}
 
 	serialized, err := json.Marshal(r)
@@ -84,7 +87,7 @@ func (r *StorableAgentReport) Value() (driver.Value, error) {
 }
 
 func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, error) {
-	configBytes, err := account.Config.MarshalJSON()
+	configBytes, err := account.Config.ToJSON()
 	if err != nil {
 		return nil, err
 	}
@@ -97,4 +100,16 @@ func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, e
 		AccountID:     nil, // updated during agent check in
 		OrgID:         account.OrgID,
 	}, nil
+}
+
+// NewStorableCloudIntegrationService creates a new StorableCloudIntegrationService with
+// generated ID and timestamps from a CloudIntegrationService and its serialized config JSON.
+func NewStorableCloudIntegrationService(svc *CloudIntegrationService, configJSON string) *StorableCloudIntegrationService {
+	return &StorableCloudIntegrationService{
+		Identifiable:       svc.Identifiable,
+		TimeAuditable:      svc.TimeAuditable,
+		Type:               svc.Type,
+		Config:             configJSON,
+		CloudIntegrationID: svc.CloudIntegrationID,
+	}
 }

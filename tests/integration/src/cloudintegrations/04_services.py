@@ -5,45 +5,50 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
 
+CLOUD_PROVIDER = "aws"
+SERVICE_ID = "rds"
+
+
+def test_apply_license(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    make_http_mocks: Callable[[types.TestContainerDocker, list], None],
+    get_token: Callable[[str, str], str],
+) -> None:
+    """Apply a license so that subsequent cloud integration calls succeed."""
+    add_license(signoz, make_http_mocks, get_token)
 
 def test_list_services_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Test listing available services without specifying an account."""
+    """List available services without specifying a cloud_integration_id."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    cloud_provider = "aws"
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-
     response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
+        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
-    response_data = response.json()
-    data = response_data.get("data", response_data)
+    data = response.json()["data"]
     assert "services" in data, "Response should contain 'services' field"
-    assert isinstance(data["services"], list), "Services should be a list"
-    assert len(data["services"]) > 0, "Should have at least one service available"
+    assert isinstance(data["services"], list), "services should be a list"
+    assert len(data["services"]) > 0, "services list should be non-empty"
 
-    # Verify service structure
     service = data["services"][0]
     assert "id" in service, "Service should have 'id' field"
     assert "title" in service, "Service should have 'title' field"
     assert "icon" in service, "Service should have 'icon' field"
+    assert "enabled" in service, "Service should have 'enabled' field"
 
 
 def test_list_services_with_account(
@@ -52,46 +57,29 @@ def test_list_services_with_account(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test listing services for a specific connected account."""
+    """List services filtered to a specific account — all disabled by default."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a test account and do check-in
-    cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
-    account_id = account_data["account_id"]
-
-    cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
-
-    # List services for the account
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services?cloud_account_id={cloud_account_id}"
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services?cloud_integration_id={account_id}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
-    response_data = response.json()
-    data = response_data.get("data", response_data)
+    data = response.json()["data"]
     assert "services" in data, "Response should contain 'services' field"
-    assert isinstance(data["services"], list), "Services should be a list"
-    assert len(data["services"]) > 0, "Should have at least one service available"
+    assert len(data["services"]) > 0, "services list should be non-empty"
 
-    # Services should include config field (may be null if not configured)
-    service = data["services"][0]
-    assert "id" in service, "Service should have 'id' field"
-    assert "title" in service, "Service should have 'title' field"
-    assert "icon" in service, "Service should have 'icon' field"
+    for svc in data["services"]:
+        assert "enabled" in svc, "Each service should have 'enabled' field"
+        assert svc["enabled"] is False, f"Service {svc['id']} should be disabled before any config is set"
 
 
 def test_get_service_details_without_account(
@@ -99,45 +87,27 @@ def test_get_service_details_without_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Test getting service details without specifying an account."""
+    """Get full service definition without specifying an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    cloud_provider = "aws"
-    # First get the list of services to get a valid service ID
-    list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get(list_endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    list_data = list_response.json().get("data", list_response.json())
-    assert len(list_data["services"]) > 0, "Should have at least one service"
-    service_id = list_data["services"][0]["id"]
-
-    # Get service details
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}"
     response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
-    response_data = response.json()
-    data = response_data.get("data", response_data)
-
-    # Verify service details structure
-    assert "id" in data, "Service details should have 'id' field"
-    assert data["id"] == service_id, "Service ID should match requested ID"
-    assert "title" in data, "Service details should have 'title' field"
-    assert "overview" in data, "Service details should have 'overview' field"
-    # assert assets to had list of dashboards
-    assert "assets" in data, "Service details should have 'assets' field"
-    assert isinstance(data["assets"], dict), "Assets should be a dictionary"
+    data = response.json()["data"]
+    assert data["id"] == SERVICE_ID, f"id should be '{SERVICE_ID}'"
+    assert "title" in data, "Service should have 'title'"
+    assert "overview" in data, "Service should have 'overview' (markdown)"
+    assert "assets" in data, "Service should have 'assets'"
+    assert isinstance(data["assets"]["dashboards"], list), "assets.dashboards should be a list"
+    assert "telemetryCollectionStrategy" in data, "Service should have 'telemetryCollectionStrategy'"
+    assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
 
 
 def test_get_service_details_with_account(
@@ -146,102 +116,46 @@ def test_get_service_details_with_account(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test getting service details for a specific connected account."""
+    """Get service details with account context — cloudIntegrationService is null before first UpdateService."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a test account and do check-in
-    cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
-    account_id = account_data["account_id"]
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
 
-    cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
-
-    # Get list of services first
-    list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get(list_endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    list_data = list_response.json().get("data", list_response.json())
-    assert len(list_data["services"]) > 0, "Should have at least one service"
-    service_id = list_data["services"][0]["id"]
-
-    # Get service details with account
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}?cloud_account_id={cloud_account_id}"
     response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
+    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
 
-    response_data = response.json()
-    data = response_data.get("data", response_data)
-
-    # Verify service details structure
-    assert "id" in data, "Service details should have 'id' field"
-    assert data["id"] == service_id, "Service ID should match requested ID"
-    assert "title" in data, "Service details should have 'title' field"
-    assert "overview" in data, "Service details should have 'overview' field"
-    assert "assets" in data, "Service details should have 'assets' field"
-    assert "config" in data, "Service details should have 'config' field"
-    assert "status" in data, "Config should have 'status' field"
+    data = response.json()["data"]
+    assert data["id"] == SERVICE_ID
+    assert data["cloudIntegrationService"] is None, \
+        "cloudIntegrationService should be null before any service config is set"
 
 
-def test_get_service_details_invalid_service(
+def test_get_service_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ) -> None:
-    """Test getting details for a non-existent service."""
+    """Get a non-existent service ID returns 400 (invalid service ID is a bad request)."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    cloud_provider = "aws"
-    fake_service_id = "non-existent-service"
-
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}"
     response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/non-existent-service"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404, got {response.status_code}"
-
-
-def test_list_services_unsupported_provider(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    """Test listing services for an unsupported cloud provider."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    cloud_provider = "gcp"  # Unsupported provider
-    endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-
-    response = requests.get(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.BAD_REQUEST
-    ), f"Expected 400, got {response.status_code}"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"
 
 
 def test_update_service_config(
@@ -250,239 +164,123 @@ def test_update_service_config(
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test updating service configuration for a connected account."""
+    """Enable a service and verify the config is persisted via GET."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a test account and do check-in
-    cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
-    account_id = account_data["account_id"]
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
 
-    cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    put_response = requests.put(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        timeout=10,
     )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
-    # Get list of services to pick a valid service ID
-    list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get(list_endpoint),
+    assert put_response.status_code == HTTPStatus.NO_CONTENT, \
+        f"Expected 204, got {put_response.status_code}: {put_response.text}"
+
+    get_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    list_data = list_response.json().get("data", list_response.json())
-    assert len(list_data["services"]) > 0, "Should have at least one service"
-    service_id = list_data["services"][0]["id"]
-
-    # Update service configuration
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
-
-    config_payload = {
-        "cloud_account_id": cloud_account_id,
-        "config": {
-            "metrics": {"enabled": True},
-            "logs": {"enabled": True},
-        },
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=config_payload,
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {response.status_code}"
-
-    response_data = response.json()
-    data = response_data.get("data", response_data)
-
-    # Verify response structure
-    assert "id" in data, "Response should contain 'id' field"
-    assert data["id"] == service_id, "Service ID should match"
-    assert "config" in data, "Response should contain 'config' field"
-    assert "metrics" in data["config"], "Config should contain 'metrics' field"
-    assert "logs" in data["config"], "Config should contain 'logs' field"
+    assert get_response.status_code == HTTPStatus.OK
+    data = get_response.json()["data"]
+    svc = data["cloudIntegrationService"]
+    assert svc is not None, "cloudIntegrationService should be non-null after UpdateService"
+    assert svc["config"]["aws"]["metrics"]["enabled"] is True, "metrics should be enabled"
+    assert svc["config"]["aws"]["logs"]["enabled"] is True, "logs should be enabled"
+    assert svc["cloudIntegrationId"] == account_id, "cloudIntegrationId should match the account"
 
 
-def test_update_service_config_without_account(
-    signoz: types.SigNoz,
-    create_user_admin: types.Operation,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-) -> None:
-    """Test updating service config without a connected account should fail."""
-    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    cloud_provider = "aws"
-
-    # Get a valid service ID
-    list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get(list_endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=10,
-    )
-
-    list_data = list_response.json().get("data", list_response.json())
-    service_id = list_data["services"][0]["id"]
-
-    # Try to update config with non-existent account
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
-
-    fake_cloud_account_id = str(uuid.uuid4())
-    config_payload = {
-        "cloud_account_id": fake_cloud_account_id,
-        "config": {
-            "metrics": {"enabled": True},
-        },
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=config_payload,
-        timeout=10,
-    )
-
-    assert (
-        response.status_code == HTTPStatus.INTERNAL_SERVER_ERROR
-    ), f"Expected 500 for non-existent account, got {response.status_code}"
-
-
-def test_update_service_config_invalid_service(
+def test_update_service_config_disable(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     create_cloud_integration_account: Callable,
 ) -> None:
-    """Test updating config for a non-existent service should fail."""
+    """Enable then disable a service — config change is persisted."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a test account and do check-in
-    cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
-    account_id = account_data["account_id"]
-
-    cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
-    )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
-
-    # Try to update config for invalid service
-    fake_service_id = "non-existent-service"
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{fake_service_id}/config"
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+    endpoint = signoz.self.host_configs["8080"].get(
+        f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
     )
 
-    config_payload = {
-        "cloud_account_id": cloud_account_id,
-        "config": {
-            "metrics": {"enabled": True},
-        },
-    }
-
-    response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
+    # Enable
+    r = requests.put(
+        endpoint,
         headers={"Authorization": f"Bearer {admin_token}"},
-        json=config_payload,
+        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        timeout=10,
+    )
+    assert r.status_code == HTTPStatus.NO_CONTENT, f"Enable failed: {r.status_code}: {r.text}"
+
+    # Disable
+    r = requests.put(
+        endpoint,
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": False}, "logs": {"enabled": False}}}},
+        timeout=10,
+    )
+    assert r.status_code == HTTPStatus.NO_CONTENT, f"Disable failed: {r.status_code}: {r.text}"
+
+    get_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert (
-        response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404 for invalid service, got {response.status_code}"
+    assert get_response.status_code == HTTPStatus.OK
+    svc = get_response.json()["data"]["cloudIntegrationService"]
+    assert svc is not None, "cloudIntegrationService should still be present after disable"
+    assert svc["config"]["aws"]["metrics"]["enabled"] is False, "metrics should be disabled"
+    assert svc["config"]["aws"]["logs"]["enabled"] is False, "logs should be disabled"
 
 
-def test_update_service_config_disable_service(
+def test_update_service_account_not_found(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
 ) -> None:
-    """Test disabling a service by updating config with enabled=false."""
+    """PUT with a non-existent account UUID returns 404."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Create a test account and do check-in
-    cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
-    account_id = account_data["account_id"]
-
-    cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
-        signoz, admin_token, cloud_provider, account_id, cloud_account_id
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{uuid.uuid4()}/services/{SERVICE_ID}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}}}},
+        timeout=10,
     )
-    assert (
-        response.status_code == HTTPStatus.OK
-    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
-    # Get a valid service
-    list_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/services"
-    list_response = requests.get(
-        signoz.self.host_configs["8080"].get(list_endpoint),
+    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
+
+
+def test_list_services_unsupported_provider(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+) -> None:
+    """List services for an unsupported cloud provider returns 400."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/cloud_integrations/gcp/services"),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    list_data = list_response.json().get("data", list_response.json())
-    service_id = list_data["services"][0]["id"]
-
-    # First enable the service
-    endpoint = (
-        f"/api/v1/cloud-integrations/{cloud_provider}/services/{service_id}/config"
-    )
-
-    enable_payload = {
-        "cloud_account_id": cloud_account_id,
-        "config": {
-            "metrics": {"enabled": True},
-        },
-    }
-
-    enable_response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=enable_payload,
-        timeout=10,
-    )
-
-    assert enable_response.status_code == HTTPStatus.OK, "Failed to enable service"
-
-    # Now disable the service
-    disable_payload = {
-        "cloud_account_id": cloud_account_id,
-        "config": {
-            "metrics": {"enabled": False},
-            "logs": {"enabled": False},
-        },
-    }
-
-    disable_response = requests.post(
-        signoz.self.host_configs["8080"].get(endpoint),
-        headers={"Authorization": f"Bearer {admin_token}"},
-        json=disable_payload,
-        timeout=10,
-    )
-
-    assert (
-        disable_response.status_code == HTTPStatus.OK
-    ), f"Expected 200, got {disable_response.status_code}"
-
-    response_data = disable_response.json()
-    data = response_data.get("data", response_data)
-
-    # Verify service is disabled
-    assert data["config"]["metrics"]["enabled"] is False, "Metrics should be disabled"
-    assert data["config"]["logs"]["enabled"] is False, "Logs should be disabled"
+    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"

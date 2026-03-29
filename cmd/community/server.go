@@ -94,8 +94,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			return querier.NewHandler(ps, q, a)
 		},
-		func(_ cloudintegrationtypes.Store, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ user.Getter, _ user.Setter) cloudintegration.Module {
-			return implcloudintegration.NewModule()
+		func(_ cloudintegrationtypes.Store, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ user.Getter, _ user.Setter) (cloudintegration.Module, error) {
+			return implcloudintegration.NewModule(), nil
 		},
 	)
 	if err != nil {

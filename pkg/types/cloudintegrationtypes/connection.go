@@ -3,6 +3,7 @@ package cloudintegrationtypes
 import (
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -33,8 +34,8 @@ type GettableAccountWithArtifact struct {
 }
 
 type AgentCheckInRequest struct {
-	ProviderAccountID  string `json:"providerAccountId" required:"false"`
-	CloudIntegrationID string `json:"cloudIntegrationId" required:"false"`
+	ProviderAccountID  string      `json:"providerAccountId" required:"false"`
+	CloudIntegrationID valuer.UUID `json:"cloudIntegrationId" required:"false"`
 
 	Data map[string]any `json:"data" required:"true" nullable:"true"`
 }
@@ -67,8 +68,8 @@ type GettableAgentCheckInResponse struct {
 // IntegrationConfig older integration config struct for backward compatibility,
 // this will be eventually removed once agents are updated to use new struct.
 type IntegrationConfig struct {
-	EnabledRegions []string               `json:"enabled_regions" required:"true" nullable:"false"` // backward compatible
-	Telemetry      *AWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`       // backward compatible
+	EnabledRegions []string                  `json:"enabled_regions" required:"true" nullable:"false"` // backward compatible
+	Telemetry      *OldAWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`       // backward compatible
 }
 
 type ProviderIntegrationConfig struct {
@@ -85,4 +86,41 @@ type SignozCredentials struct {
 	SigNozAPIKey string // PAT
 	IngestionURL string
 	IngestionKey string
+}
+
+// NewGettableAgentCheckInResponse constructs a backward-compatible response from an AgentCheckInResponse.
+// It populates the old snake_case fields (account_id, cloud_account_id, integration_config, removed_at)
+// from the new camelCase fields so older agents continue to work unchanged.
+// The provider parameter controls which provider-specific block is mapped into the legacy integration_config.
+func NewGettableAgentCheckInResponse(provider CloudProviderType, resp *AgentCheckInResponse) *GettableAgentCheckInResponse {
+	gettable := &GettableAgentCheckInResponse{
+		AccountID:            resp.CloudIntegrationID,
+		CloudAccountID:       resp.ProviderAccountID,
+		OlderRemovedAt:       resp.RemovedAt,
+		AgentCheckInResponse: *resp,
+	}
+
+	switch provider {
+	case CloudProviderTypeAWS:
+		gettable.OlderIntegrationConfig = awsOlderIntegrationConfig(resp.IntegrationConfig)
+	}
+
+	return gettable
+}
+
+// Validate checks that the request uses either old fields (account_id, cloud_account_id) or
+// new fields (cloudIntegrationId, providerAccountId), never a mix of both.
+func (req *PostableAgentCheckInRequest) Validate() error {
+	hasOldFields := req.ID != "" || req.AccountID != ""
+	hasNewFields := !req.CloudIntegrationID.IsZero() || req.ProviderAccountID != ""
+
+	if hasOldFields && hasNewFields {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"request must use either old fields (account_id, cloud_account_id) or new fields (cloudIntegrationId, providerAccountId), not both")
+	}
+	if !hasOldFields && !hasNewFields {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"request must provide either old fields (account_id, cloud_account_id) or new fields (cloudIntegrationId, providerAccountId)")
+	}
+	return nil
 }

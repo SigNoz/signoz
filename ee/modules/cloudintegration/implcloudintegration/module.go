@@ -2,6 +2,8 @@ package implcloudintegration
 
 import (
 	"context"
+	"fmt"
+	"sort"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
@@ -38,8 +40,11 @@ func NewModule(
 	licensing licensing.Licensing,
 	userGetter user.Getter,
 	userSetter user.Setter,
-) cloudintegration.Module {
-	awsCloudProviderModule := implcloudprovider.NewAWSCloudProvider()
+) (cloudintegration.Module, error) {
+	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider()
+	if err != nil {
+		return nil, err
+	}
 	azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
 	cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
 		cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
@@ -55,7 +60,7 @@ func NewModule(
 		userGetter:        userGetter,
 		userSetter:        userSetter,
 		cloudProvidersMap: cloudProvidersMap,
-	}
+	}, nil
 }
 
 func (module *module) CreateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
@@ -122,51 +127,357 @@ func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudi
 }
 
 func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
-	panic("unimplemented")
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	storableAccount, err := module.store.GetAccountByID(ctx, orgID, accountID, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudintegrationtypes.NewAccountFromStorable(storableAccount)
+}
+
+// ListAccounts return only agent connected accounts
+func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	storableAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+	if err != nil {
+		return nil, err
+	}
+
+	return cloudintegrationtypes.NewAccountsFromStorables(storableAccounts)
 }
 
 func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, req *cloudintegrationtypes.AgentCheckInRequest) (*cloudintegrationtypes.AgentCheckInResponse, error) {
-	panic("unimplemented")
-}
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
 
-func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService) error {
-	panic("unimplemented")
-}
+	connectedAccount, err := module.store.GetConnectedAccount(ctx, orgID, provider, req.ProviderAccountID)
+	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+		return nil, err
+	}
 
-func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
-	panic("unimplemented")
-}
+	// If a different integration is already connected to this provider account ID, reject the check-in.
+	// Allow re-check-in from the same integration (e.g. agent restarting).
+	if connectedAccount != nil && connectedAccount.ID != req.CloudIntegrationID {
+		errMessage := fmt.Sprintf("provider account id %s is already connected to cloud integration id %s", req.ProviderAccountID, connectedAccount.ID)
+		return nil, errors.New(errors.TypeAlreadyExists, cloudintegrationtypes.ErrCodeCloudIntegrationAlreadyConnected, errMessage)
+	}
 
-func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
-	panic("unimplemented")
-}
+	account, err := module.store.GetAccountByID(ctx, orgID, req.CloudIntegrationID, provider)
+	if err != nil {
+		return nil, err
+	}
 
-func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID string) (*cloudintegrationtypes.Service, error) {
-	panic("unimplemented")
-}
+	account.AccountID = &req.ProviderAccountID
+	account.LastAgentReport = &cloudintegrationtypes.StorableAgentReport{
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            req.Data,
+	}
 
-func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
-	panic("unimplemented")
-}
+	err = module.store.UpdateAccount(ctx, account)
+	if err != nil {
+		return nil, err
+	}
 
-func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	panic("unimplemented")
-}
+	// If account has been removed (disconnected), return a minimal response with empty integration config.
+	// The agent doesn't act on config for removed accounts.
+	if account.RemovedAt != nil {
+		return &cloudintegrationtypes.AgentCheckInResponse{
+			CloudIntegrationID: account.ID.StringValue(),
+			ProviderAccountID:  req.ProviderAccountID,
+			IntegrationConfig:  &cloudintegrationtypes.ProviderIntegrationConfig{},
+			RemovedAt:          account.RemovedAt,
+		}, nil
+	}
 
-func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
-	panic("unimplemented")
+	// Get account as domain object for config access (enabled regions, etc.)
+	accountDomain, err := cloudintegrationtypes.NewAccountFromStorable(account)
+	if err != nil {
+		return nil, err
+	}
+
+	cloudProvider, err := module.GetCloudProvider(provider)
+	if err != nil {
+		return nil, err
+	}
+
+	storedServices, err := module.store.ListServices(ctx, req.CloudIntegrationID)
+	if err != nil {
+		return nil, err
+	}
+
+	// Delegate integration config building entirely to the provider module
+	integrationConfig, err := cloudProvider.BuildIntegrationConfig(accountDomain, storedServices)
+	if err != nil {
+		return nil, err
+	}
+
+	return &cloudintegrationtypes.AgentCheckInResponse{
+		CloudIntegrationID: account.ID.StringValue(),
+		ProviderAccountID:  req.ProviderAccountID,
+		IntegrationConfig:  integrationConfig,
+		RemovedAt:          account.RemovedAt,
+	}, nil
 }
 
 func (module *module) UpdateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
-	panic("unimplemented")
+	_, err := module.licensing.GetActive(ctx, account.OrgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	storableAccount, err := cloudintegrationtypes.NewStorableCloudIntegration(account)
+	if err != nil {
+		return err
+	}
+
+	return module.store.UpdateAccount(ctx, storableAccount)
 }
 
-func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService) error {
-	panic("unimplemented")
+func (module *module) DisconnectAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	return module.store.RemoveAccount(ctx, orgID, accountID, provider)
 }
 
-func (m *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
-	if cloudProviderModule, ok := m.cloudProvidersMap[provider]; ok {
+func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, integrationID *valuer.UUID) ([]*cloudintegrationtypes.ServiceMetadata, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	cloudProvider, err := module.GetCloudProvider(provider)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceDefinitions, err := cloudProvider.ListServiceDefinitions()
+	if err != nil {
+		return nil, err
+	}
+
+	enabledServiceIDs := map[string]bool{}
+	if integrationID != nil {
+		_, err := module.store.GetAccountByID(ctx, orgID, *integrationID, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		storedServices, err := module.store.ListServices(ctx, *integrationID)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, svc := range storedServices {
+			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(svc.Config)
+			if err != nil {
+				return nil, err
+			}
+
+			if cloudProvider.IsServiceEnabled(serviceConfig) {
+				enabledServiceIDs[svc.Type.StringValue()] = true
+			}
+		}
+	}
+
+	resp := make([]*cloudintegrationtypes.ServiceMetadata, 0, len(serviceDefinitions))
+	for _, serviceDefinition := range serviceDefinitions {
+		resp = append(resp, cloudintegrationtypes.NewServiceMetadata(serviceDefinition, enabledServiceIDs[serviceDefinition.ID]))
+	}
+
+	return resp, nil
+}
+
+func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integrationID *valuer.UUID, serviceID cloudintegrationtypes.ServiceID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Service, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	cloudProvider, err := module.GetCloudProvider(provider)
+	if err != nil {
+		return nil, err
+	}
+
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(serviceID)
+	if err != nil {
+		return nil, err
+	}
+
+	var integrationService *cloudintegrationtypes.CloudIntegrationService
+
+	if integrationID != nil {
+		_, err := module.store.GetAccountByID(ctx, orgID, *integrationID, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		storedService, err := module.store.GetServiceByServiceID(ctx, *integrationID, serviceID)
+		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
+			return nil, err
+		}
+		if storedService != nil {
+			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(storedService.Config)
+			if err != nil {
+				return nil, err
+			}
+
+			integrationService = cloudintegrationtypes.NewCloudIntegrationServiceFromStorable(storedService, serviceConfig)
+		}
+	}
+
+	return cloudintegrationtypes.NewService(*serviceDefinition, integrationService), nil
+}
+
+func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, service *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	cloudProvider, err := module.GetCloudProvider(provider)
+	if err != nil {
+		return err
+	}
+
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(service.Type)
+	if err != nil {
+		return err
+	}
+
+	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(service.Config, serviceDefinition.SupportedSignals)
+	if err != nil {
+		return err
+	}
+
+	return module.store.CreateService(ctx, cloudintegrationtypes.NewStorableCloudIntegrationService(service, configJSON))
+}
+
+func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	cloudProvider, err := module.GetCloudProvider(provider)
+	if err != nil {
+		return err
+	}
+
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(integrationService.Type)
+	if err != nil {
+		return err
+	}
+
+	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(integrationService.Config, serviceDefinition.SupportedSignals)
+	if err != nil {
+		return err
+	}
+
+	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(integrationService, configJSON)
+
+	return module.store.UpdateService(ctx, storableService)
+}
+
+func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	var allDashboards []*dashboardtypes.Dashboard
+
+	for provider := range module.cloudProvidersMap {
+		cloudProvider, err := module.GetCloudProvider(provider)
+		if err != nil {
+			return nil, err
+		}
+
+		connectedAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, storableAccount := range connectedAccounts {
+			storedServices, err := module.store.ListServices(ctx, storableAccount.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, storedSvc := range storedServices {
+				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(storedSvc.Config)
+				if err != nil || !cloudProvider.IsMetricsEnabled(serviceConfig) {
+					continue
+				}
+
+				svcDef, err := cloudProvider.GetServiceDefinition(storedSvc.Type)
+				if err != nil || svcDef == nil {
+					continue
+				}
+
+				dashboards := cloudintegrationtypes.GetDashboardsFromAssets(
+					storedSvc.Type.StringValue(),
+					orgID,
+					provider,
+					storableAccount.CreatedAt,
+					svcDef.Assets,
+				)
+				allDashboards = append(allDashboards, dashboards...)
+			}
+		}
+	}
+
+	sort.Slice(allDashboards, func(i, j int) bool {
+		return allDashboards[i].ID < allDashboards[j].ID
+	})
+
+	return allDashboards, nil
+}
+
+func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	_, _, _, err = cloudintegrationtypes.ParseCloudIntegrationDashboardID(id)
+	if err != nil {
+		return nil, err
+	}
+
+	allDashboards, err := module.listDashboards(ctx, orgID)
+	if err != nil {
+		return nil, err
+	}
+
+	for _, d := range allDashboards {
+		if d.ID == id {
+			return d, nil
+		}
+	}
+
+	return nil, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration dashboard not found")
+}
+
+func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	_, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	return module.listDashboards(ctx, orgID)
+}
+
+func (module *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
+	if cloudProviderModule, ok := module.cloudProvidersMap[provider]; ok {
 		return cloudProviderModule, nil
 	}
 

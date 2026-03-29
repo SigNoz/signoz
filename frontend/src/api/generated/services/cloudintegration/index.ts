@@ -629,6 +629,103 @@ export const useUpdateAccount = <
 	return useMutation(mutationOptions);
 };
 /**
+ * This endpoint updates a service for the specified cloud provider
+ * @summary Update service
+ */
+export const updateService = (
+	{ cloudProvider, id, serviceId }: UpdateServicePathParameters,
+	cloudintegrationtypesUpdatableServiceDTO: BodyType<CloudintegrationtypesUpdatableServiceDTO>,
+) => {
+	return GeneratedAPIInstance<void>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/accounts/${id}/services/${serviceId}`,
+		method: 'PUT',
+		headers: { 'Content-Type': 'application/json' },
+		data: cloudintegrationtypesUpdatableServiceDTO,
+	});
+};
+
+export const getUpdateServiceMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateService>>,
+		TError,
+		{
+			pathParams: UpdateServicePathParameters;
+			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+		},
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof updateService>>,
+	TError,
+	{
+		pathParams: UpdateServicePathParameters;
+		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+	},
+	TContext
+> => {
+	const mutationKey = ['updateService'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof updateService>>,
+		{
+			pathParams: UpdateServicePathParameters;
+			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+		}
+	> = (props) => {
+		const { pathParams, data } = props ?? {};
+
+		return updateService(pathParams, data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type UpdateServiceMutationResult = NonNullable<
+	Awaited<ReturnType<typeof updateService>>
+>;
+export type UpdateServiceMutationBody = BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+export type UpdateServiceMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Update service
+ */
+export const useUpdateService = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof updateService>>,
+		TError,
+		{
+			pathParams: UpdateServicePathParameters;
+			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+		},
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof updateService>>,
+	TError,
+	{
+		pathParams: UpdateServicePathParameters;
+		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
+	},
+	TContext
+> => {
+	const mutationOptions = getUpdateServiceMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
  * This endpoint is called by the deployed agent to check in
  * @summary Agent check-in
  */
@@ -940,102 +1037,4 @@ export const invalidateGetService = async (
 	);
 
 	return queryClient;
-};
-
-/**
- * This endpoint updates a service for the specified cloud provider
- * @summary Update service
- */
-export const updateService = (
-	{ cloudProvider, serviceId }: UpdateServicePathParameters,
-	cloudintegrationtypesUpdatableServiceDTO: BodyType<CloudintegrationtypesUpdatableServiceDTO>,
-) => {
-	return GeneratedAPIInstance<void>({
-		url: `/api/v1/cloud_integrations/${cloudProvider}/services/${serviceId}`,
-		method: 'PUT',
-		headers: { 'Content-Type': 'application/json' },
-		data: cloudintegrationtypesUpdatableServiceDTO,
-	});
-};
-
-export const getUpdateServiceMutationOptions = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateService>>,
-		TError,
-		{
-			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-		},
-		TContext
-	>;
-}): UseMutationOptions<
-	Awaited<ReturnType<typeof updateService>>,
-	TError,
-	{
-		pathParams: UpdateServicePathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-	},
-	TContext
-> => {
-	const mutationKey = ['updateService'];
-	const { mutation: mutationOptions } = options
-		? options.mutation &&
-		  'mutationKey' in options.mutation &&
-		  options.mutation.mutationKey
-			? options
-			: { ...options, mutation: { ...options.mutation, mutationKey } }
-		: { mutation: { mutationKey } };
-
-	const mutationFn: MutationFunction<
-		Awaited<ReturnType<typeof updateService>>,
-		{
-			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-		}
-	> = (props) => {
-		const { pathParams, data } = props ?? {};
-
-		return updateService(pathParams, data);
-	};
-
-	return { mutationFn, ...mutationOptions };
-};
-
-export type UpdateServiceMutationResult = NonNullable<
-	Awaited<ReturnType<typeof updateService>>
->;
-export type UpdateServiceMutationBody = BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-export type UpdateServiceMutationError = ErrorType<RenderErrorResponseDTO>;
-
-/**
- * @summary Update service
- */
-export const useUpdateService = <
-	TError = ErrorType<RenderErrorResponseDTO>,
-	TContext = unknown
->(options?: {
-	mutation?: UseMutationOptions<
-		Awaited<ReturnType<typeof updateService>>,
-		TError,
-		{
-			pathParams: UpdateServicePathParameters;
-			data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-		},
-		TContext
-	>;
-}): UseMutationResult<
-	Awaited<ReturnType<typeof updateService>>,
-	TError,
-	{
-		pathParams: UpdateServicePathParameters;
-		data: BodyType<CloudintegrationtypesUpdatableServiceDTO>;
-	},
-	TContext
-> => {
-	const mutationOptions = getUpdateServiceMutationOptions(options);
-
-	return useMutation(mutationOptions);
 };

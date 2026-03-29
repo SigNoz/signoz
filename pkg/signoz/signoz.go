@@ -25,6 +25,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -98,7 +99,7 @@ func New(
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
-	cloudIntegrationCallback func(cloudintegrationtypes.Store, zeus.Zeus, gateway.Gateway, licensing.Licensing, user.Getter, user.Setter) cloudintegration.Module,
+	cloudIntegrationCallback func(cloudintegrationtypes.Store, zeus.Zeus, gateway.Gateway, licensing.Licensing, user.Getter, user.Setter) (cloudintegration.Module, error),
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -412,12 +413,18 @@ func New(
 		return nil, err
 	}
 
-	// Initialize all modules
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore)
+	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
+	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 
 	cloudIntegrationStore := pkgimplcloudintegration.NewStore(sqlstore)
-	cloudIntegrationModule := cloudIntegrationCallback(cloudIntegrationStore, zeus, gateway, licensing, userGetter, modules.UserSetter)
-	modules = modules.SetCloudIntegrationModule(cloudIntegrationModule)
+	cloudIntegrationModule, err := cloudIntegrationCallback(cloudIntegrationStore, zeus, gateway, licensing, userGetter, userSetter)
+	if err != nil {
+		return nil, err
+	}
+
+	// Initialize all modules
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, userSetter, orgSetter, quickfilter, cloudIntegrationModule)
 
 	// Initialize identN resolver
 	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)

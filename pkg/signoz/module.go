@@ -17,13 +17,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
@@ -39,7 +37,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
@@ -92,39 +89,32 @@ func NewModules(
 	dashboard dashboard.Module,
 	userGetter user.Getter,
 	userRoleStore authtypes.UserRoleStore,
+	userSetter user.Setter,
+	orgSetter organization.Setter,
+	quickfilter quickfilter.Module,
+	cloudIntegrationModule cloudintegration.Module,
 ) Modules {
-	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
-		OrgGetter:       orgGetter,
-		OrgSetter:       orgSetter,
-		Preference:      implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
-		SavedView:       implsavedview.NewModule(sqlstore),
-		Apdex:           implapdex.NewModule(sqlstore),
-		Dashboard:       dashboard,
-		UserSetter:      userSetter,
-		UserGetter:      userGetter,
-		QuickFilter:     quickfilter,
-		TraceFunnel:     impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
-		RawDataExport:   implrawdataexport.NewModule(querier),
-		AuthDomain:      implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
-		Session:         implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
-		SpanPercentile:  implspanpercentile.NewModule(querier, providerSettings),
-		Services:        implservices.NewModule(querier, telemetryStore),
-		MetricsExplorer: implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
-		Promote:         implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:  implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		OrgGetter:        orgGetter,
+		OrgSetter:        orgSetter,
+		Preference:       implpreference.NewModule(implpreference.NewStore(sqlstore), preferencetypes.NewAvailablePreference()),
+		SavedView:        implsavedview.NewModule(sqlstore),
+		Apdex:            implapdex.NewModule(sqlstore),
+		Dashboard:        dashboard,
+		UserSetter:       userSetter,
+		UserGetter:       userGetter,
+		QuickFilter:      quickfilter,
+		TraceFunnel:      impltracefunnel.NewModule(impltracefunnel.NewStore(sqlstore)),
+		RawDataExport:    implrawdataexport.NewModule(querier),
+		AuthDomain:       implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs),
+		Session:          implsession.NewModule(providerSettings, authNs, userSetter, userGetter, implauthdomain.NewModule(implauthdomain.NewStore(sqlstore), authNs), tokenizer, orgGetter),
+		SpanPercentile:   implspanpercentile.NewModule(querier, providerSettings),
+		Services:         implservices.NewModule(querier, telemetryStore),
+		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
+		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
+		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, emailing, providerSettings),
+		CloudIntegration: cloudIntegrationModule,
 	}
-}
-
-// SetCloudIntegrationModule sets cloud integration module in Modules
-// TODO: find a better way to set the module,
-// why this was done: cloud integration depends on few modules like userSetter which are initialized in NewModules and other deps like zeus/gateway is not present
-// cloud integration is initialized via callback depending on flavor of Signoz ee/community
-func (modules Modules) SetCloudIntegrationModule(module cloudintegration.Module) Modules {
-	modules.CloudIntegration = module
-	return modules
 }
