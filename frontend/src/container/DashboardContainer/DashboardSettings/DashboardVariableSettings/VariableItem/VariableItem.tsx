@@ -348,6 +348,11 @@ function VariableItem({
 	]);
 
 	const handleSave = (): void => {
+		// Block save if name validation failed (e.g. duplicate or whitespace)
+		if (errorName) {
+			return;
+		}
+
 		// Check for cyclic dependencies
 		const newVariable = {
 			name: variableName,

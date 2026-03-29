@@ -15,6 +15,8 @@ import { Button, Modal, Row, RowProps, Space, Table, Typography } from 'antd';
 import { VariablesSettingsTabHandle } from 'container/DashboardContainer/DashboardDescription/types';
 import { convertVariablesToDbFormat } from 'container/DashboardContainer/DashboardVariablesSelection/util';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { getFiltersFromKeyValue } from 'hooks/dashboard/utils';
+import { addTagFiltersToDashboard } from './addTagFiltersToDashboard';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
@@ -256,14 +258,58 @@ function VariablesSettings({
 	};
 
 	const handleDeleteConfirm = (): void => {
+		const deletedVariable = variableToDelete.current;
 		const newVariablesArr = variablesTableData.filter(
 			(variable: IDashboardVariable) =>
-				variable.id !== variableToDelete?.current?.id,
+				variable.id !== deletedVariable?.id,
 		);
 
 		const updatedVariables = convertVariablesToDbFormat(newVariablesArr);
 
-		updateVariables(updatedVariables);
+		// When deleting a DYNAMIC variable, remove its filter references from all
+		// panel queries so no dangling AND/OR operators are left in expressions.
+		let dashboardToUpdate = selectedDashboard;
+		if (deletedVariable?.type === 'DYNAMIC' && selectedDashboard) {
+			const tagFilter = getFiltersFromKeyValue(
+				deletedVariable.dynamicVariablesAttribute || '',
+				`$${deletedVariable.name}`,
+				'',
+				'IN',
+			);
+			dashboardToUpdate = addTagFiltersToDashboard(
+				selectedDashboard,
+				tagFilter,
+				[],
+				false,
+			);
+		}
+
+		if (!dashboardToUpdate) {
+			variableToDelete.current = null;
+			setDeleteVariableModal(false);
+			return;
+		}
+
+		updateMutation.mutateAsync(
+			{
+				id: dashboardToUpdate.id,
+				data: {
+					...dashboardToUpdate.data,
+					variables: updatedVariables,
+				},
+			},
+			{
+				onSuccess: (updatedDashboard) => {
+					if (updatedDashboard.data) {
+						setSelectedDashboard(updatedDashboard.data);
+						notifications.success({
+							message: t('variable_updated_successfully'),
+						});
+					}
+				},
+			},
+		);
+
 		variableToDelete.current = null;
 		setDeleteVariableModal(false);
 	};
