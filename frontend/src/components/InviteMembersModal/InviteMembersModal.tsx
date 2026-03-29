@@ -1,10 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { Callout } from '@signozhq/callout';
-import { Style } from '@signozhq/design-tokens';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { Button, Callout, DialogFooter, DialogWrapper, Input } from '@signozhq/ui';
 import { ChevronDown, CircleAlert, Plus, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
 import inviteUsers from 'api/v1/invite/bulk/create';
@@ -225,6 +221,43 @@ function InviteMembersModal({
 			width="wide"
 			className="invite-members-modal"
 			disableOutsideClick={false}
+			footer={
+				<DialogFooter className="invite-members-modal__footer">
+					<Button
+						variant="dashed"
+						color="secondary"
+						size="sm"
+						className="add-another-member-button"
+						prefix={<Plus size={12} />}
+						onClick={addRow}
+					>
+						Add another
+					</Button>
+
+					<div className="invite-members-modal__footer-right">
+						<Button
+							type="button"
+							variant="solid"
+							color="secondary"
+							size="sm"
+							onClick={resetAndClose}
+							prefix={<X size={12} />}
+						>
+							Cancel
+						</Button>
+
+						<Button
+							variant="solid"
+							color="primary"
+							size="sm"
+							onClick={handleSubmit}
+							disabled={isSubmitDisabled}
+						>
+							{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
+						</Button>
+					</div>
+				</DialogFooter>
+			}
 		>
 			<div className="invite-members-modal__content">
 				<div className="invite-members-modal__table">
@@ -273,9 +306,8 @@ function InviteMembersModal({
 												className="remove-team-member-button"
 												onClick={(): void => removeRow(row.id)}
 												aria-label="Remove row"
-											>
-												<Trash2 size={12} />
-											</Button>
+												prefix={<Trash2 size={12} />}
+											/>
 										)}
 									</div>
 								</div>
@@ -291,46 +323,11 @@ function InviteMembersModal({
 						showIcon
 						icon={<CircleAlert size={12} />}
 						className="invite-team-members-error-callout"
-						description={getValidationErrorMessage()}
-					/>
+					>
+						{getValidationErrorMessage()}
+					</Callout>
 				)}
 			</div>
-
-			<DialogFooter className="invite-members-modal__footer">
-				<Button
-					variant="dashed"
-					color="secondary"
-					size="sm"
-					className="add-another-member-button"
-					prefixIcon={<Plus size={12} color={Style.L1_FOREGROUND} />}
-					onClick={addRow}
-				>
-					Add another
-				</Button>
-
-				<div className="invite-members-modal__footer-right">
-					<Button
-						type="button"
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={resetAndClose}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-
-					<Button
-						variant="solid"
-						color="primary"
-						size="sm"
-						onClick={handleSubmit}
-						disabled={isSubmitDisabled}
-					>
-						{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
-					</Button>
-				</div>
-			</DialogFooter>
 		</DialogWrapper>
 	);
 }

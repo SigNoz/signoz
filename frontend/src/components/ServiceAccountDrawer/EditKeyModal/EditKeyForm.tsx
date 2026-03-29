@@ -1,10 +1,7 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Badge } from '@signozhq/badge';
-import { Button } from '@signozhq/button';
+import { Badge, Button, Input, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
@@ -72,7 +69,7 @@ function EditKeyForm({
 							<ToggleGroup
 								type="single"
 								value={field.value}
-								onValueChange={(val): void => {
+								onChange={(val: string): void => {
 									if (val) {
 										field.onChange(val);
 									}
@@ -131,33 +128,7 @@ function EditKeyForm({
 				</div>
 			</form>
 
-			<div className="edit-key-modal__footer">
-				<Button
-					type="button"
-					className="edit-key-modal__footer-danger"
-					onClick={onRevokeClick}
-				>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
-				<div className="edit-key-modal__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={onClose}>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						type="submit"
-						form={FORM_ID}
-						variant="solid"
-						color="primary"
-						size="sm"
-						loading={isSaving}
-						disabled={!isDirty}
-					>
-						Save Changes
-					</Button>
-				</div>
-			</div>
+
 		</>
 	);
 }

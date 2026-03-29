@@ -1,19 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
-import { Badge } from '@signozhq/badge';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
-import { DrawerWrapper } from '@signozhq/drawer';
-import {
-	Check,
-	ChevronDown,
-	Copy,
-	LockKeyhole,
-	RefreshCw,
-	Trash2,
-	X,
-} from '@signozhq/icons';
-import { Input } from '@signozhq/input';
+import { Badge, Button, DialogFooter, DialogWrapper, DrawerWrapper, Input } from '@signozhq/ui';
+import { Check, ChevronDown, Copy, LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { Select } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -210,6 +198,56 @@ function EditMemberDrawer({
 
 	const joinedOnLabel = isInvited ? 'Invited On' : 'Joined On';
 
+	const drawerFooter = (
+		<div className="edit-member-drawer__footer">
+			<div className="edit-member-drawer__footer-left">
+				<Button
+					className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
+					onClick={(): void => setShowDeleteConfirm(true)}
+					prefix={<Trash2 size={12} />}
+				>
+					{isInvited ? 'Revoke Invite' : 'Delete Member'}
+				</Button>
+
+				<div className="edit-member-drawer__footer-divider" />
+				<Button
+					className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+					onClick={handleGenerateResetLink}
+					disabled={isGeneratingLink}
+					prefix={<RefreshCw size={12} />}
+				>
+					{isGeneratingLink
+						? 'Generating...'
+						: isInvited
+						? 'Copy Invite Link'
+						: 'Generate Password Reset Link'}
+				</Button>
+			</div>
+
+			<div className="edit-member-drawer__footer-right">
+				<Button
+					variant="solid"
+					color="secondary"
+					size="sm"
+					onClick={handleClose}
+					prefix={<X size={14} />}
+				>
+					Cancel
+				</Button>
+
+				<Button
+					variant="solid"
+					color="primary"
+					size="sm"
+					disabled={!isDirty || isSaving}
+					onClick={handleSave}
+				>
+					{isSaving ? 'Saving...' : 'Save Member Details'}
+				</Button>
+			</div>
+		</div>
+	);
+
 	const drawerContent = (
 		<div className="edit-member-drawer__layout">
 			<div className="edit-member-drawer__body">
@@ -282,49 +320,6 @@ function EditMemberDrawer({
 					)}
 				</div>
 			</div>
-
-			<div className="edit-member-drawer__footer">
-				<div className="edit-member-drawer__footer-left">
-					<Button
-						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-						onClick={(): void => setShowDeleteConfirm(true)}
-					>
-						<Trash2 size={12} />
-						{isInvited ? 'Revoke Invite' : 'Delete Member'}
-					</Button>
-
-					<div className="edit-member-drawer__footer-divider" />
-					<Button
-						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-						onClick={handleGenerateResetLink}
-						disabled={isGeneratingLink}
-					>
-						<RefreshCw size={12} />
-						{isGeneratingLink
-							? 'Generating...'
-							: isInvited
-							? 'Copy Invite Link'
-							: 'Generate Password Reset Link'}
-					</Button>
-				</div>
-
-				<div className="edit-member-drawer__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
-						<X size={14} />
-						Cancel
-					</Button>
-
-					<Button
-						variant="solid"
-						color="primary"
-						size="sm"
-						disabled={!isDirty || isSaving}
-						onClick={handleSave}
-					>
-						{isSaving ? 'Saving...' : 'Save Member Details'}
-					</Button>
-				</div>
-			</div>
 		</div>
 	);
 
@@ -354,14 +349,13 @@ function EditMemberDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
-				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Member Details' }}
-				content={drawerContent}
+				title="Member Details"
+				footer={drawerFooter}
 				className="edit-member-drawer"
-			/>
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<DialogWrapper
 				open={showResetLinkDialog}
@@ -391,7 +385,7 @@ function EditMemberDrawer({
 							color="secondary"
 							size="sm"
 							onClick={handleCopyResetLink}
-							prefixIcon={
+							prefix={
 								hasCopiedResetLink ? <Check size={12} /> : <Copy size={12} />
 							}
 							className="reset-link-dialog__copy-btn"
@@ -423,8 +417,8 @@ function EditMemberDrawer({
 						color="secondary"
 						size="sm"
 						onClick={(): void => setShowDeleteConfirm(false)}
+						prefix={<X size={12} />}
 					>
-						<X size={12} />
 						Cancel
 					</Button>
 					<Button
@@ -433,8 +427,8 @@ function EditMemberDrawer({
 						size="sm"
 						disabled={isDeleting}
 						onClick={handleDelete}
+						prefix={<Trash2 size={12} />}
 					>
-						<Trash2 size={12} />
 						{isDeleting ? 'Processing...' : deleteConfirmLabel}
 					</Button>
 				</DialogFooter>

@@ -1,7 +1,8 @@
 import { useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { DialogWrapper } from '@signozhq/dialog';
+import { Button, DialogFooter, DialogWrapper } from '@signozhq/ui';
+import { Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -22,7 +23,7 @@ import { useTimezone } from 'providers/Timezone';
 import { RevokeKeyContent } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
 import type { FormValues } from './types';
-import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
+import { DEFAULT_FORM_VALUES, ExpiryMode, FORM_ID } from './types';
 
 import './EditKeyModal.styles.scss';
 
@@ -161,13 +162,62 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 			}
 			showCloseButton={!isRevokeConfirmOpen}
 			disableOutsideClick={false}
+			footer={
+				isRevokeConfirmOpen ? (
+					<DialogFooter className="delete-dialog__footer">
+						<Button
+							variant="solid"
+							color="secondary"
+							size="sm"
+							onClick={(): void => setIsRevokeConfirmOpen(false)}
+							prefix={<X size={12} />}
+						>
+							Cancel
+						</Button>
+						<Button
+							variant="solid"
+							color="destructive"
+							size="sm"
+							loading={isRevoking}
+							onClick={handleRevoke}
+							prefix={<Trash2 size={12} />}
+						>
+							Revoke Key
+						</Button>
+					</DialogFooter>
+				) : (
+					<div className="edit-key-modal__footer">
+						<Button
+							type="button"
+							className="edit-key-modal__footer-danger"
+							onClick={(): void => setIsRevokeConfirmOpen(true)}
+							prefix={<Trash2 size={12} />}
+						>
+							Revoke Key
+						</Button>
+						<div className="edit-key-modal__footer-right">
+							<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+								Cancel
+							</Button>
+							<Button
+								asChild
+								variant="solid"
+								color="primary"
+								size="sm"
+								loading={isSaving}
+								disabled={!isDirty}
+							>
+								<button type="submit" form={FORM_ID}>
+									Save Changes
+								</button>
+							</Button>
+						</div>
+					</div>
+				)
+			}
 		>
 			{isRevokeConfirmOpen ? (
-				<RevokeKeyContent
-					isRevoking={isRevoking}
-					onCancel={(): void => setIsRevokeConfirmOpen(false)}
-					onConfirm={handleRevoke}
-				/>
+				<RevokeKeyContent />
 			) : (
 				<EditKeyForm
 					register={register}

@@ -1,6 +1,5 @@
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { Button, DialogFooter, DialogWrapper } from '@signozhq/ui';
 import { Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -23,34 +22,12 @@ export interface RevokeKeyContentProps {
 	onConfirm: () => void;
 }
 
-export function RevokeKeyContent({
-	isRevoking,
-	onCancel,
-	onConfirm,
-}: RevokeKeyContentProps): JSX.Element {
+export function RevokeKeyContent(): JSX.Element {
 	return (
-		<>
-			<p className="delete-dialog__body">
-				Revoking this key will permanently invalidate it. Any systems using this key
-				will lose access immediately.
-			</p>
-			<DialogFooter className="delete-dialog__footer">
-				<Button variant="solid" color="secondary" size="sm" onClick={onCancel}>
-					<X size={12} />
-					Cancel
-				</Button>
-				<Button
-					variant="solid"
-					color="destructive"
-					size="sm"
-					loading={isRevoking}
-					onClick={onConfirm}
-				>
-					<Trash2 size={12} />
-					Revoke Key
-				</Button>
-			</DialogFooter>
-		</>
+		<p className="delete-dialog__body">
+			Revoking this key will permanently invalidate it. Any systems using this key
+			will lose access immediately.
+		</p>
 	);
 }
 
@@ -116,12 +93,31 @@ function RevokeKeyModal(): JSX.Element {
 			className="alert-dialog delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={false}
+			footer={
+				<DialogFooter className="delete-dialog__footer">
+					<Button
+						variant="solid"
+						color="secondary"
+						size="sm"
+						onClick={handleCancel}
+						prefix={<X size={12} />}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="solid"
+						color="destructive"
+						size="sm"
+						loading={isRevoking}
+						onClick={handleConfirm}
+						prefix={<Trash2 size={12} />}
+					>
+						Revoke Key
+					</Button>
+				</DialogFooter>
+			}
 		>
-			<RevokeKeyContent
-				isRevoking={isRevoking}
-				onCancel={handleCancel}
-				onConfirm={handleConfirm}
-			/>
+			<RevokeKeyContent />
 		</DialogWrapper>
 	);
 }

@@ -1,9 +1,7 @@
 import { Controller, useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { Button, DialogFooter, DialogWrapper, Input } from '@signozhq/ui';
 import { X } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -106,6 +104,33 @@ function CreateServiceAccountModal(): JSX.Element {
 			width="narrow"
 			className="create-sa-modal"
 			disableOutsideClick={false}
+			footer={
+				<DialogFooter className="create-sa-modal__footer">
+					<Button
+						type="button"
+						variant="solid"
+						color="secondary"
+						size="sm"
+						onClick={handleClose}
+						prefix={<X size={12} />}
+					>
+						Cancel
+					</Button>
+
+					<Button
+						asChild
+						variant="solid"
+						color="primary"
+						size="sm"
+						loading={isSubmitting}
+						disabled={!isValid}
+					>
+						<button type="submit" form="create-sa-form">
+							Create Service Account
+						</button>
+					</Button>
+				</DialogFooter>
+			}
 		>
 			<div className="create-sa-modal__content">
 				<form
@@ -198,31 +223,6 @@ function CreateServiceAccountModal(): JSX.Element {
 					</div>
 				</form>
 			</div>
-
-			<DialogFooter className="create-sa-modal__footer">
-				<Button
-					type="button"
-					variant="solid"
-					color="secondary"
-					size="sm"
-					onClick={handleClose}
-				>
-					<X size={12} />
-					Cancel
-				</Button>
-
-				<Button
-					type="submit"
-					form="create-sa-form"
-					variant="solid"
-					color="primary"
-					size="sm"
-					loading={isSubmitting}
-					disabled={!isValid}
-				>
-					Create Service Account
-				</Button>
-			</DialogFooter>
 		</DialogWrapper>
 	);
 }

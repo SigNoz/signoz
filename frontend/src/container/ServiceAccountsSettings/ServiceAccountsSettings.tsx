@@ -1,8 +1,7 @@
 import { useCallback, useEffect, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
+import { Button, Input } from '@signozhq/ui';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
-import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
 import {
@@ -247,9 +246,9 @@ function ServiceAccountsSettings(): JSX.Element {
 							size="sm"
 							color="secondary"
 							className="sa-settings-filter-trigger"
+							suffix={<ChevronDown size={12} className="sa-settings-filter-trigger__chevron" />}
 						>
 							<span>{filterLabel}</span>
-							<ChevronDown size={12} className="sa-settings-filter-trigger__chevron" />
 						</Button>
 					</Dropdown>
 
@@ -264,7 +263,6 @@ function ServiceAccountsSettings(): JSX.Element {
 								setPage(1);
 							}}
 							className="sa-settings-search-input"
-							color="secondary"
 						/>
 					</div>
 
@@ -275,8 +273,8 @@ function ServiceAccountsSettings(): JSX.Element {
 						onClick={async (): Promise<void> => {
 							await setIsCreateModalOpen(true);
 						}}
+						prefix={<Plus size={12} />}
 					>
-						<Plus size={12} />
 						New Service Account
 					</Button>
 				</div>

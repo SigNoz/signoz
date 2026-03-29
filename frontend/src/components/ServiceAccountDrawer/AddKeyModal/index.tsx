@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
-import { DialogWrapper } from '@signozhq/dialog';
+import { Button, DialogWrapper } from '@signozhq/ui';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -21,7 +21,7 @@ import { parseAsBoolean, useQueryState } from 'nuqs';
 import KeyCreatedPhase from './KeyCreatedPhase';
 import KeyFormPhase from './KeyFormPhase';
 import type { FormValues } from './types';
-import { DEFAULT_FORM_VALUES, ExpiryMode, Phase, PHASE_TITLES } from './types';
+import { DEFAULT_FORM_VALUES, ExpiryMode, Phase, PHASE_TITLES, FORM_ID } from './types';
 
 import './AddKeyModal.styles.scss';
 
@@ -152,6 +152,29 @@ function AddKeyModal(): JSX.Element {
 			className="add-key-modal"
 			showCloseButton
 			disableOutsideClick={false}
+			footer={
+				phase === Phase.FORM && (
+					<div className="add-key-modal__footer">
+						<div className="add-key-modal__footer-right">
+							<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+								Cancel
+							</Button>
+							<Button
+								asChild
+								variant="solid"
+								color="primary"
+								size="sm"
+								loading={isSubmitting}
+								disabled={!isValid}
+							>
+								<button type="submit" form={FORM_ID}>
+									Create Key
+								</button>
+							</Button>
+						</div>
+					</div>
+				)
+			}
 		>
 			{phase === Phase.FORM && (
 				<KeyFormPhase

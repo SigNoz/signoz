@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { KeyRound, X } from '@signozhq/icons';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
@@ -96,17 +96,15 @@ function buildColumns({
 				<Tooltip title={isDisabled ? 'Service account disabled' : 'Revoke Key'}>
 					<Button
 						variant="ghost"
-						size="xs"
+						size="icon"
 						color="destructive"
 						disabled={isDisabled}
 						onClick={(e): void => {
 							e.stopPropagation();
 							onRevokeClick(record.id);
 						}}
-						className="keys-tab__revoke-btn"
-					>
-						<X size={12} />
-					</Button>
+						prefix={<X size={12} />}
+					/>
 				</Tooltip>
 			),
 		},
@@ -173,8 +171,9 @@ function KeysTab({
 						await setIsAddKeyOpen(true);
 					}}
 					disabled={isDisabled}
+					prefix={<span style={{ marginRight: 4 }}>+</span>}
 				>
-					+ Add your first key
+					Add your first key
 				</Button>
 			</div>
 		);

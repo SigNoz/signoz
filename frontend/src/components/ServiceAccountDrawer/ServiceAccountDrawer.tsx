@@ -1,9 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { Button } from '@signozhq/button';
-import { DrawerWrapper } from '@signozhq/drawer';
+import { Button, DrawerWrapper, ToggleGroup, ToggleGroupItem } from '@signozhq/ui';
 import { Key, LayoutGrid, Plus, PowerOff, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
-import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
@@ -180,13 +178,78 @@ function ServiceAccountDrawer({
 		setIsDisableOpen,
 	]);
 
+	const drawerFooter = (
+		<div className="sa-drawer__footer">
+			{activeTab === ServiceAccountDrawerTab.Keys ? (
+				<Pagination
+					current={keysPage}
+					pageSize={PAGE_SIZE}
+					total={keys.length}
+					showTotal={(total: number, range: number[]): JSX.Element => (
+						<>
+							<span className="sa-drawer__pagination-range">
+								{range[0]} &#8212; {range[1]}
+							</span>
+							<span className="sa-drawer__pagination-total"> of {total}</span>
+						</>
+					)}
+					showSizeChanger={false}
+					hideOnSinglePage
+					onChange={(page): void => {
+						void setKeysPage(page);
+					}}
+					className="sa-drawer__keys-pagination"
+				/>
+			) : (
+				<>
+					{!isDisabled && (
+						<Button
+							variant="ghost"
+							color="destructive"
+							className="sa-drawer__footer-btn"
+							onClick={(): void => {
+								setIsDisableOpen(true);
+							}}
+							prefix={<PowerOff size={12} />}
+						>
+							Disable Service Account
+						</Button>
+					)}
+					{!isDisabled && (
+						<div className="sa-drawer__footer-right">
+							<Button
+								variant="solid"
+								color="secondary"
+								size="sm"
+								onClick={handleClose}
+								prefix={<X size={14} />}
+							>
+								Cancel
+							</Button>
+							<Button
+								variant="solid"
+								color="primary"
+								size="sm"
+								loading={isSaving}
+								disabled={!isDirty}
+								onClick={handleSave}
+							>
+								Save Changes
+							</Button>
+						</div>
+					)}
+				</>
+			)}
+		</div>
+	);
+
 	const drawerContent = (
 		<div className="sa-drawer__layout">
 			<div className="sa-drawer__tabs">
 				<ToggleGroup
 					type="single"
 					value={activeTab}
-					onValueChange={(val): void => {
+					onChange={(val: string): void => {
 						if (val) {
 							setActiveTab(val as ServiceAccountDrawerTab);
 							if (val !== ServiceAccountDrawerTab.Keys) {
@@ -224,8 +287,8 @@ function ServiceAccountDrawer({
 						onClick={(): void => {
 							setIsAddKeyOpen(true);
 						}}
+						prefix={<Plus size={12} />}
 					>
-						<Plus size={12} />
 						Add Key
 					</Button>
 				)}
@@ -274,69 +337,6 @@ function ServiceAccountDrawer({
 					</>
 				)}
 			</div>
-
-			<div className="sa-drawer__footer">
-				{activeTab === ServiceAccountDrawerTab.Keys ? (
-					<Pagination
-						current={keysPage}
-						pageSize={PAGE_SIZE}
-						total={keys.length}
-						showTotal={(total: number, range: number[]): JSX.Element => (
-							<>
-								<span className="sa-drawer__pagination-range">
-									{range[0]} &#8212; {range[1]}
-								</span>
-								<span className="sa-drawer__pagination-total"> of {total}</span>
-							</>
-						)}
-						showSizeChanger={false}
-						hideOnSinglePage
-						onChange={(page): void => {
-							void setKeysPage(page);
-						}}
-						className="sa-drawer__keys-pagination"
-					/>
-				) : (
-					<>
-						{!isDisabled && (
-							<Button
-								variant="ghost"
-								color="destructive"
-								className="sa-drawer__footer-btn"
-								onClick={(): void => {
-									setIsDisableOpen(true);
-								}}
-							>
-								<PowerOff size={12} />
-								Disable Service Account
-							</Button>
-						)}
-						{!isDisabled && (
-							<div className="sa-drawer__footer-right">
-								<Button
-									variant="solid"
-									color="secondary"
-									size="sm"
-									onClick={handleClose}
-								>
-									<X size={14} />
-									Cancel
-								</Button>
-								<Button
-									variant="solid"
-									color="primary"
-									size="sm"
-									loading={isSaving}
-									disabled={!isDirty}
-									onClick={handleSave}
-								>
-									Save Changes
-								</Button>
-							</div>
-						)}
-					</>
-				)}
-			</div>
 		</div>
 	);
 
@@ -350,14 +350,13 @@ function ServiceAccountDrawer({
 					}
 				}}
 				direction="right"
-				type="panel"
 				showCloseButton
-				showOverlay={false}
-				allowOutsideClick
-				header={{ title: 'Service Account Details' }}
-				content={drawerContent}
+				title="Service Account Details"
 				className="sa-drawer"
-			/>
+				footer={drawerFooter}
+			>
+				{drawerContent}
+			</DrawerWrapper>
 
 			<DisableAccountModal />
 

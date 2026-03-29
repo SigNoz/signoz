@@ -1,6 +1,5 @@
 import { useQueryClient } from 'react-query';
-import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
+import { Button, DialogFooter, DialogWrapper } from '@signozhq/ui';
 import { PowerOff, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -81,27 +80,34 @@ function DisableAccountModal(): JSX.Element {
 			className="alert-dialog sa-disable-dialog"
 			showCloseButton={false}
 			disableOutsideClick={false}
+			footer={
+				<DialogFooter className="sa-disable-dialog__footer">
+					<Button
+						variant="solid"
+						color="secondary"
+						size="sm"
+						onClick={handleCancel}
+						prefix={<X size={12} />}
+					>
+						Cancel
+					</Button>
+					<Button
+						variant="solid"
+						color="destructive"
+						size="sm"
+						loading={isDisabling}
+						onClick={handleConfirm}
+						prefix={<PowerOff size={12} />}
+					>
+						Disable
+					</Button>
+				</DialogFooter>
+			}
 		>
 			<p className="sa-disable-dialog__body">
 				Disabling this service account will revoke access for all its keys. Any
 				systems using this account will lose access immediately.
 			</p>
-			<DialogFooter className="sa-disable-dialog__footer">
-				<Button variant="solid" color="secondary" size="sm" onClick={handleCancel}>
-					<X size={12} />
-					Cancel
-				</Button>
-				<Button
-					variant="solid"
-					color="destructive"
-					size="sm"
-					loading={isDisabling}
-					onClick={handleConfirm}
-				>
-					<PowerOff size={12} />
-					Disable
-				</Button>
-			</DialogFooter>
 		</DialogWrapper>
 	);
 }

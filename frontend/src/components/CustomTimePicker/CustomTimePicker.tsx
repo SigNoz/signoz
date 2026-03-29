@@ -7,7 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useLocation } from 'react-router-dom';
-import { Button } from '@signozhq/button';
+import { Button } from '@signozhq/ui';
 import { Input, InputRef, Popover, Tooltip } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
@@ -661,8 +661,8 @@ function CustomTimePicker({
 							className="zoom-out-btn"
 							onClick={handleZoomOut}
 							disabled={zoomOutDisabled}
-							data-testid="zoom-out-btn"
-							prefixIcon={<ZoomOut size={14} />}
+							testId="zoom-out-btn"
+							prefix={<ZoomOut size={14} />}
 						/>
 					</span>
 				</Tooltip>
