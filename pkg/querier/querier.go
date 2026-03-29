@@ -433,12 +433,13 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 		if len(missingMetrics) == 1 {
 			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+		} else {
+			parts := make([]string, len(missingMetrics))
+			for i, m := range missingMetrics {
+				parts[i] = lastSeenStr(m)
+			}
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
 		}
-		parts := make([]string, len(missingMetrics))
-		for i, m := range missingMetrics {
-			parts[i] = lastSeenStr(m)
-		}
-		dormantMetricsWarningMsg = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
 	}
 	preseededResults := make(map[string]any)
 	for _, name := range missingMetrics { // at this point missing metrics will not have any non existent metrics, only normal ones
