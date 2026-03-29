@@ -1,17 +1,16 @@
-import { Collapse, Tooltip } from 'antd';
-import { useIsDarkMode } from 'hooks/useDarkMode';
-import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
-import { Copy, Check } from 'lucide-react';
-import keys from 'lodash-es/keys';
-import map from 'lodash-es/map';
-import { ITraceTree } from 'types/api/trace/getTraceItem';
+import { Collapse } from "antd";
+import { useIsDarkMode } from "hooks/useDarkMode";
+import keys from "lodash-es/keys";
+import map from "lodash-es/map";
+import { ITraceTree } from "types/api/trace/getTraceItem";
 
-import EllipsedButton from '../EllipsedButton';
-import { CustomSubText, CustomSubTitle } from '../styles';
-import EventStartTime from './EventStartTime';
-import RelativeStartTime from './RelativeStartTime';
+import CopyIconButton from "../CopyIconButton";
+import EllipsedButton from "../EllipsedButton";
+import { CustomSubText, CustomSubTitle } from "../styles";
+import EventStartTime from "./EventStartTime";
+import RelativeStartTime from "./RelativeStartTime";
 
-import '../Tags/Tags.styles.scss';
+import "../Tags/Tags.styles.scss";
 
 const { Panel } = Collapse;
 
@@ -22,17 +21,16 @@ function ErrorTag({
 	firstSpanStartTime,
 }: ErrorTagProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
-	const { copyToClipboard, isCopied, id: copiedId } = useCopyToClipboard();
 
 	return (
 		<>
-			{map(event, ({ attributeMap, name, timeUnixNano }) => {
+			{map(event, ({ attributeMap, name, timeUnixNano }, eventIndex) => {
 				const attributes = keys(attributeMap);
 
 				return (
 					<Collapse
 						key={`${name}${JSON.stringify(attributeMap)}`}
-						defaultActiveKey={[name || attributeMap.event, 'timestamp']}
+						defaultActiveKey={[name || attributeMap.event, "timestamp"]}
 						expandIconPosition="right"
 					>
 						<Panel
@@ -48,31 +46,20 @@ function ErrorTag({
 								<EventStartTime timeUnixNano={timeUnixNano} />
 							)}
 
-							{map(attributes, (event) => {
-								const value = attributeMap[event];
+							{map(attributes, (attrKey) => {
+								const value = attributeMap[attrKey];
 								const isEllipsed = value.length > 24;
+								const uniquePrefix = `evt-${eventIndex}-${attrKey}`;
 
 								return (
-									<>
+									<div key={uniquePrefix}>
 										<CustomSubTitle>
-											{event}
-											<Tooltip title={isCopied && copiedId === `evt-key-${event}` ? 'Copied!' : 'Copy key'}>
-												<span
-													className="copy-icon-button"
-													role="button"
-													tabIndex={0}
-													onClick={(): void => copyToClipboard(event, `evt-key-${event}`)}
-													onKeyDown={(e): void => {
-														if (e.key === 'Enter' || e.key === ' ') copyToClipboard(event, `evt-key-${event}`);
-													}}
-												>
-													{isCopied && copiedId === `evt-key-${event}` ? (
-														<Check size={12} />
-													) : (
-														<Copy size={12} />
-													)}
-												</span>
-											</Tooltip>
+											{attrKey}
+											<CopyIconButton
+												text={attrKey}
+												copyId={`${uniquePrefix}-key`}
+												label="Copy key"
+											/>
 										</CustomSubTitle>
 										<div className="event-value-container">
 											<CustomSubText
@@ -86,7 +73,7 @@ function ErrorTag({
 												{isEllipsed && (
 													<EllipsedButton
 														{...{
-															event,
+															event: attrKey,
 															onToggleHandler,
 															setText,
 															value,
@@ -94,25 +81,13 @@ function ErrorTag({
 													/>
 												)}
 											</CustomSubText>
-											<Tooltip title={isCopied && copiedId === `evt-val-${event}` ? 'Copied!' : 'Copy value'}>
-												<span
-													className="copy-icon-button"
-													role="button"
-													tabIndex={0}
-													onClick={(): void => copyToClipboard(value, `evt-val-${event}`)}
-													onKeyDown={(e): void => {
-														if (e.key === 'Enter' || e.key === ' ') copyToClipboard(value, `evt-val-${event}`);
-													}}
-												>
-													{isCopied && copiedId === `evt-val-${event}` ? (
-														<Check size={12} />
-													) : (
-														<Copy size={12} />
-													)}
-												</span>
-											</Tooltip>
+											<CopyIconButton
+												text={value}
+												copyId={`${uniquePrefix}-val`}
+												label="Copy value"
+											/>
 										</div>
-									</>
+									</div>
 								);
 							})}
 						</Panel>
@@ -124,7 +99,7 @@ function ErrorTag({
 }
 
 interface ErrorTagProps {
-	event: ITraceTree['event'];
+	event: ITraceTree["event"];
 	onToggleHandler: (isOpen: boolean) => void;
 	setText: (text: { subText: string; text: string }) => void;
 	firstSpanStartTime?: number;
