@@ -749,10 +749,13 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	for _, err := range errs {
 		if err != nil {
 			// If the context was canceled (e.g., the client disconnected or
-			// navigated away), return immediately. Retrying with a canceled
-			// context would fail again, and this is not a server-side error
-			// worth logging at ERROR level.
-			if errors.Is(err, context.Canceled) || errors.Is(err, context.DeadlineExceeded) {
+			// navigated away) or deadline exceeded, return immediately.
+			// Retrying with a canceled context would fail again, and this
+			// is not a server-side error worth logging at ERROR level.
+			// We check ctx.Err() directly because errors.Is cannot
+			// traverse wrapped errors whose wrapper does not implement
+			// the Unwrap interface.
+			if ctx.Err() != nil {
 				return nil, err
 			}
 
