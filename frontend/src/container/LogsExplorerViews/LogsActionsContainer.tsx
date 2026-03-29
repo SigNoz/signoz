@@ -92,7 +92,10 @@ function LogsActionsContainer({
 								/>
 							</div>
 							<div className="download-options-container">
-								<DownloadOptionsMenu dataSource={DataSource.LOGS} />
+								<DownloadOptionsMenu
+									dataSource={DataSource.LOGS}
+									selectedColumns={options?.selectColumns}
+								/>
 							</div>
 							<div className="format-options-container">
 								<LogsFormatOptionsMenu

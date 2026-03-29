@@ -81,28 +81,6 @@ func TestGetSelectedSpans_MultipleRoots(t *testing.T) {
 	assert.Equal(t, "root1-op", entryPoint, "metadata comes from first root")
 }
 
-// isSelectedSpanIDUnCollapsed=true opens only the selected span's direct children,
-// not deeper descendants.
-//
-//	root → selected (expanded)
-//	          ├─ child1 ✓
-//	          │    └─ grandchild ✗  (only one level opened)
-//	          └─ child2 ✓
-func TestGetSelectedSpans_ExpandedSelectedSpan(t *testing.T) {
-	root := mkSpan("root", "svc",
-		mkSpan("selected", "svc",
-			mkSpan("child1", "svc", mkSpan("grandchild", "svc")),
-			mkSpan("child2", "svc"),
-		),
-	)
-	spanMap := buildSpanMap(root)
-	spans, _, _, _ := GetSelectedSpans([]string{}, "selected", []*model.Span{root}, spanMap, true)
-
-	// root and selected are on the auto-uncollapsed path; child1/child2 are direct
-	// children of the expanded selected span; grandchild stays hidden.
-	assert.Equal(t, []string{"root", "selected", "child1", "child2"}, spanIDs(spans))
-}
-
 // Multiple spans uncollapsed simultaneously: children of all uncollapsed spans
 // are visible at once.
 //
@@ -183,7 +161,7 @@ func TestGetSelectedSpans_PathReturnedInUncollapsed(t *testing.T) {
 	spanMap := buildSpanMap(root)
 	spans, uncollapsed, _, _ := GetSelectedSpans([]string{}, "selected", []*model.Span{root}, spanMap, false)
 
-	assert.Equal(t, []string{"root", "parent"}, uncollapsed)
+	assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 	assert.Equal(t, []string{"root", "parent", "selected"}, spanIDs(spans))
 }
 
@@ -206,7 +184,7 @@ func TestGetSelectedSpans_SiblingsNotExpanded(t *testing.T) {
 	// children of root sort alphabetically: parent < unrelated; unrelated-child stays hidden
 	assert.Equal(t, []string{"root", "parent", "selected", "unrelated"}, spanIDs(spans))
 	// only the path nodes are tracked as uncollapsed — unrelated is not
-	assert.Equal(t, []string{"root", "parent"}, uncollapsed)
+	assert.ElementsMatch(t, []string{"root", "parent"}, uncollapsed)
 }
 
 // An unknown selectedSpanID must not panic; returns a window from index 0.
@@ -318,6 +296,119 @@ func TestGetSelectedSpans_WindowShiftsAtStart(t *testing.T) {
 	assert.Equal(t, 500, len(spans))
 	assert.Equal(t, "span0", spans[0].SpanID, "window clamped to start of trace")
 	assert.Equal(t, "span10", spans[10].SpanID, "selected span still in window")
+}
+
+// Auto-expanded span IDs from ALL branches are returned in
+// updatedUncollapsedSpans. Only internal nodes (spans with children) are
+// tracked — leaf spans are never added.
+//
+//	root (selected)
+//	  ├─ childA (internal ✓)
+//	  │    └─ grandchildA (internal ✓)
+//	  │         └─ leafA (leaf ✗)
+//	  └─ childB (internal ✓)
+//	       └─ grandchildB (internal ✓)
+//	            └─ leafB (leaf ✗)
+func TestGetSelectedSpans_AutoExpandedSpansReturnedInUncollapsed(t *testing.T) {
+	root := mkSpan("root", "svc",
+		mkSpan("childA", "svc",
+			mkSpan("grandchildA", "svc",
+				mkSpan("leafA", "svc"),
+			),
+		),
+		mkSpan("childB", "svc",
+			mkSpan("grandchildB", "svc",
+				mkSpan("leafB", "svc"),
+			),
+		),
+	)
+	spanMap := buildSpanMap(root)
+	_, uncollapsed, _, _ := GetSelectedSpans([]string{}, "root", []*model.Span{root}, spanMap, true)
+
+	// all internal nodes across both branches must be tracked
+	assert.Contains(t, uncollapsed, "root")
+	assert.Contains(t, uncollapsed, "childA", "internal node depth 1, branch A")
+	assert.Contains(t, uncollapsed, "childB", "internal node depth 1, branch B")
+	assert.Contains(t, uncollapsed, "grandchildA", "internal node depth 2, branch A")
+	assert.Contains(t, uncollapsed, "grandchildB", "internal node depth 2, branch B")
+	// leaves have no children to show — never added to uncollapsedSpans
+	assert.NotContains(t, uncollapsed, "leafA", "leaf spans are never added to uncollapsedSpans")
+	assert.NotContains(t, uncollapsed, "leafB", "leaf spans are never added to uncollapsedSpans")
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// maxDepthForSelectedSpanChildren boundary tests
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Depth is measured from the selected span, not the trace root.
+// Ancestors appear via the path-to-root logic, not the depth limit.
+// Each depth level has two children to confirm the limit is enforced on all
+// branches, not just the first.
+//
+//	root
+//	  └─ A                           ancestor ✓ (path-to-root)
+//	       └─ selected
+//	            ├─ d1a               depth 1 ✓
+//	            │    ├─ d2a          depth 2 ✓
+//	            │    │    ├─ d3a     depth 3 ✓
+//	            │    │    │    ├─ d4a   depth 4 ✓
+//	            │    │    │    │    ├─ d5a  depth 5 ✓
+//	            │    │    │    │    │    └─ d6a  depth 6 ✗
+//	            │    │    │    │    └─ d5b  depth 5 ✓
+//	            │    │    │    └─ d4b   depth 4 ✓
+//	            │    │    └─ d3b     depth 3 ✓
+//	            │    └─ d2b          depth 2 ✓
+//	            └─ d1b               depth 1 ✓
+func TestGetSelectedSpans_DepthCountedFromSelectedSpan(t *testing.T) {
+	selected := mkSpan("selected", "svc",
+		mkSpan("d1a", "svc",
+			mkSpan("d2a", "svc",
+				mkSpan("d3a", "svc",
+					mkSpan("d4a", "svc",
+						mkSpan("d5a", "svc",
+							mkSpan("d6a", "svc"), // depth 6 — excluded
+						),
+						mkSpan("d5b", "svc"), // depth 5 — included
+					),
+					mkSpan("d4b", "svc"), // depth 4 — included
+				),
+				mkSpan("d3b", "svc"), // depth 3 — included
+			),
+			mkSpan("d2b", "svc"), // depth 2 — included
+		),
+		mkSpan("d1b", "svc"), // depth 1 — included
+	)
+	root := mkSpan("root", "svc", mkSpan("A", "svc", selected))
+
+	spanMap := buildSpanMap(root)
+	spans, _, _, _ := GetSelectedSpans([]string{}, "selected", []*model.Span{root}, spanMap, true)
+	ids := spanIDs(spans)
+
+	assert.Contains(t, ids, "root", "ancestor shown via path-to-root")
+	assert.Contains(t, ids, "A", "ancestor shown via path-to-root")
+	for _, id := range []string{"d1a", "d1b", "d2a", "d2b", "d3a", "d3b", "d4a", "d4b", "d5a", "d5b"} {
+		assert.Contains(t, ids, id, "depth ≤ 5 — must be included")
+	}
+	assert.NotContains(t, ids, "d6a", "depth 6 > limit — excluded")
+}
+
+func TestGetAllSpans(t *testing.T) {
+	root := mkSpan("root", "svc",
+		mkSpan("childA", "svc",
+			mkSpan("grandchildA", "svc",
+				mkSpan("leafA", "svc2"),
+			),
+		),
+		mkSpan("childB", "svc3",
+			mkSpan("grandchildB", "svc",
+				mkSpan("leafB", "svc2"),
+			),
+		),
+	)
+	spans, rootServiceName, rootEntryPoint := GetAllSpans([]*model.Span{root})
+	assert.ElementsMatch(t, spanIDs(spans), []string{"root", "childA", "grandchildA", "leafA", "childB", "grandchildB", "leafB"})
+	assert.Equal(t, rootServiceName, "svc")
+	assert.Equal(t, rootEntryPoint, "root-op")
 }
 
 func mkSpan(id, service string, children ...*model.Span) *model.Span {
