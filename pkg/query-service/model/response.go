@@ -641,7 +641,82 @@ func (s *ServiceItem) MarshalJSON() ([]byte, error) {
 	if math.IsInf(s.Percentile99, 0) || math.IsNaN(s.Percentile99) {
 		s.Percentile99 = 0
 	}
+	if math.IsInf(s.FourXXRate, 0) || math.IsNaN(s.FourXXRate) {
+		s.FourXXRate = 0
+	}
 
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	})
+}
+
+func (s *ServiceOverviewItem) MarshalJSON() ([]byte, error) {
+	type Alias ServiceOverviewItem
+	if math.IsInf(s.Percentile50, 0) || math.IsNaN(s.Percentile50) {
+		s.Percentile50 = 0
+	}
+	if math.IsInf(s.Percentile95, 0) || math.IsNaN(s.Percentile95) {
+		s.Percentile95 = 0
+	}
+	if math.IsInf(s.Percentile99, 0) || math.IsNaN(s.Percentile99) {
+		s.Percentile99 = 0
+	}
+	if math.IsInf(s.CallRate, 0) || math.IsNaN(s.CallRate) {
+		s.CallRate = 0
+	}
+	if math.IsInf(s.ErrorRate, 0) || math.IsNaN(s.ErrorRate) {
+		s.ErrorRate = 0
+	}
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(s),
+	})
+}
+
+func (t *TopOperationsItem) MarshalJSON() ([]byte, error) {
+	type Alias TopOperationsItem
+	if math.IsInf(t.Percentile50, 0) || math.IsNaN(t.Percentile50) {
+		t.Percentile50 = 0
+	}
+	if math.IsInf(t.Percentile95, 0) || math.IsNaN(t.Percentile95) {
+		t.Percentile95 = 0
+	}
+	if math.IsInf(t.Percentile99, 0) || math.IsNaN(t.Percentile99) {
+		t.Percentile99 = 0
+	}
+	return json.Marshal(&struct {
+		*Alias
+	}{
+		Alias: (*Alias)(t),
+	})
+}
+
+func (s *ServiceMapDependencyResponseItem) MarshalJSON() ([]byte, error) {
+	type Alias ServiceMapDependencyResponseItem
+	if math.IsInf(s.CallRate, 0) || math.IsNaN(s.CallRate) {
+		s.CallRate = 0
+	}
+	if math.IsInf(s.ErrorRate, 0) || math.IsNaN(s.ErrorRate) {
+		s.ErrorRate = 0
+	}
+	if math.IsInf(s.P99, 0) || math.IsNaN(s.P99) {
+		s.P99 = 0
+	}
+	if math.IsInf(s.P95, 0) || math.IsNaN(s.P95) {
+		s.P95 = 0
+	}
+	if math.IsInf(s.P90, 0) || math.IsNaN(s.P90) {
+		s.P90 = 0
+	}
+	if math.IsInf(s.P75, 0) || math.IsNaN(s.P75) {
+		s.P75 = 0
+	}
+	if math.IsInf(s.P50, 0) || math.IsNaN(s.P50) {
+		s.P50 = 0
+	}
 	return json.Marshal(&struct {
 		*Alias
 	}{
