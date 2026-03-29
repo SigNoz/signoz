@@ -1,5 +1,7 @@
-import { Collapse } from 'antd';
+import { Collapse, Tooltip } from 'antd';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useCopyToClipboard } from 'hooks/useCopyToClipboard';
+import { Copy, Check } from 'lucide-react';
 import keys from 'lodash-es/keys';
 import map from 'lodash-es/map';
 import { ITraceTree } from 'types/api/trace/getTraceItem';
@@ -8,6 +10,8 @@ import EllipsedButton from '../EllipsedButton';
 import { CustomSubText, CustomSubTitle } from '../styles';
 import EventStartTime from './EventStartTime';
 import RelativeStartTime from './RelativeStartTime';
+
+import '../Tags/Tags.styles.scss';
 
 const { Panel } = Collapse;
 
@@ -18,6 +22,7 @@ function ErrorTag({
 	firstSpanStartTime,
 }: ErrorTagProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
+	const { copyToClipboard, isCopied, id: copiedId } = useCopyToClipboard();
 
 	return (
 		<>
@@ -49,26 +54,64 @@ function ErrorTag({
 
 								return (
 									<>
-										<CustomSubTitle>{event}</CustomSubTitle>
-										<CustomSubText
-											ellipsis={{
-												rows: isEllipsed ? 1 : 0,
-											}}
-											isDarkMode={isDarkMode}
-										>
-											{value}
-											<br />
-											{isEllipsed && (
-												<EllipsedButton
-													{...{
-														event,
-														onToggleHandler,
-														setText,
-														value,
+										<CustomSubTitle>
+											{event}
+											<Tooltip title={isCopied && copiedId === `evt-key-${event}` ? 'Copied!' : 'Copy key'}>
+												<span
+													className="copy-icon-button"
+													role="button"
+													tabIndex={0}
+													onClick={(): void => copyToClipboard(event, `evt-key-${event}`)}
+													onKeyDown={(e): void => {
+														if (e.key === 'Enter' || e.key === ' ') copyToClipboard(event, `evt-key-${event}`);
 													}}
-												/>
-											)}
-										</CustomSubText>
+												>
+													{isCopied && copiedId === `evt-key-${event}` ? (
+														<Check size={12} />
+													) : (
+														<Copy size={12} />
+													)}
+												</span>
+											</Tooltip>
+										</CustomSubTitle>
+										<div className="event-value-container">
+											<CustomSubText
+												ellipsis={{
+													rows: isEllipsed ? 1 : 0,
+												}}
+												isDarkMode={isDarkMode}
+											>
+												{value}
+												<br />
+												{isEllipsed && (
+													<EllipsedButton
+														{...{
+															event,
+															onToggleHandler,
+															setText,
+															value,
+														}}
+													/>
+												)}
+											</CustomSubText>
+											<Tooltip title={isCopied && copiedId === `evt-val-${event}` ? 'Copied!' : 'Copy value'}>
+												<span
+													className="copy-icon-button"
+													role="button"
+													tabIndex={0}
+													onClick={(): void => copyToClipboard(value, `evt-val-${event}`)}
+													onKeyDown={(e): void => {
+														if (e.key === 'Enter' || e.key === ' ') copyToClipboard(value, `evt-val-${event}`);
+													}}
+												>
+													{isCopied && copiedId === `evt-val-${event}` ? (
+														<Check size={12} />
+													) : (
+														<Copy size={12} />
+													)}
+												</span>
+											</Tooltip>
+										</div>
 									</>
 								);
 							})}

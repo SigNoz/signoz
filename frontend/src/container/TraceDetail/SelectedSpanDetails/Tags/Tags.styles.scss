@@ -14,6 +14,43 @@
 	}
 }
 
+.copy-icon-button {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	cursor: pointer;
+	opacity: 0.5;
+	margin-left: 6px;
+	padding: 2px;
+	border-radius: 2px;
+	vertical-align: middle;
+	transition: opacity 0.2s ease;
+
+	&:hover {
+		opacity: 1;
+	}
+
+	&:focus-visible {
+		outline: 1px solid var(--bg-robin-400);
+		opacity: 1;
+	}
+}
+
+.event-value-container {
+	display: flex;
+	align-items: flex-start;
+
+	> .ant-typography {
+		flex: 1;
+	}
+
+	> .copy-icon-button {
+		margin-top: 4px;
+		margin-left: 4px;
+		flex-shrink: 0;
+	}
+}
+
 .lightMode {
 	.tagTooltip {
 		.ant-tooltip-content {
