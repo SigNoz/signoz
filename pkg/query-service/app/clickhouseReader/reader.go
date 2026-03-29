@@ -1338,10 +1338,15 @@ func (r *ClickHouseReader) GetDependencyGraph(ctx context.Context, queryParams *
 }
 
 func getLocalTableName(tableName string) string {
-
 	tableNameSplit := strings.Split(tableName, ".")
-	return tableNameSplit[0] + "." + strings.Split(tableNameSplit[1], "distributed_")[1]
-
+	if len(tableNameSplit) < 2 {
+		return tableName
+	}
+	distributedSplit := strings.Split(tableNameSplit[1], "distributed_")
+	if len(distributedSplit) < 2 {
+		return tableNameSplit[0] + "." + tableNameSplit[1]
+	}
+	return tableNameSplit[0] + "." + distributedSplit[1]
 }
 
 func (r *ClickHouseReader) setTTLLogs(ctx context.Context, orgID string, params *model.TTLParams) (*model.SetTTLResponseItem, *model.ApiError) {
@@ -2455,8 +2460,7 @@ func (r *ClickHouseReader) GetDisks(ctx context.Context) (*[]model.DiskItem, *mo
 func getLocalTableNameArray(tableNames []string) []string {
 	var localTableNames []string
 	for _, name := range tableNames {
-		tableNameSplit := strings.Split(name, ".")
-		localTableNames = append(localTableNames, tableNameSplit[0]+"."+strings.Split(tableNameSplit[1], "distributed_")[1])
+		localTableNames = append(localTableNames, getLocalTableName(name))
 	}
 	return localTableNames
 }

@@ -204,15 +204,15 @@ func FilterSeriesPoints(seriesList []*v3.Series, missStart, missEnd int64, stepI
 		copy(points, series.Points)
 
 		// Filter the first point that is not a complete aggregation window
-		if series.Points[0].Timestamp < missStart {
+		if len(points) > 0 && series.Points[0].Timestamp < missStart {
 			// Remove the first point
 			points = points[1:]
 		}
 
 		// filter the last point if it is not a complete aggregation window
 		// adding or condition to handle the end time is equal to a complete window end https://github.com/SigNoz/signoz/pull/7212#issuecomment-2703677190
-		if (!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
-			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd) {
+		if len(points) > 0 && ((!endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd-(missEnd%stepMs)) ||
+			(endCompleteWindow && series.Points[len(series.Points)-1].Timestamp == missEnd)) {
 			// Remove the last point
 			points = points[:len(points)-1]
 		}

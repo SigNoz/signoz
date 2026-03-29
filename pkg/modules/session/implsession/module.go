@@ -70,7 +70,11 @@ func (module *module) GetSessionContext(ctx context.Context, email valuer.Email,
 	users = slices.DeleteFunc(users, func(user *types.User) bool { return user.ErrIfDeleted() != nil })
 
 	// Since email is a valuer, we can be sure that it is a valid email and we can split it to get the domain name.
-	name := strings.Split(email.String(), "@")[1]
+	emailParts := strings.Split(email.String(), "@")
+	if len(emailParts) < 2 {
+		return nil, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid email format: missing domain")
+	}
+	name := emailParts[1]
 
 	if len(users) == 0 {
 		context.Exists = false

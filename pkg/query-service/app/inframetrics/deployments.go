@@ -251,10 +251,16 @@ func (d *DeploymentsRepo) getTopDeploymentGroups(ctx context.Context, orgID valu
 
 	if req.OrderBy.Order == v3.DirectionDesc {
 		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			if len(formattedResponse[0].Series[i].Points) == 0 || len(formattedResponse[0].Series[j].Points) == 0 {
+				return false
+			}
 			return formattedResponse[0].Series[i].Points[0].Value > formattedResponse[0].Series[j].Points[0].Value
 		})
 	} else {
 		sort.Slice(formattedResponse[0].Series, func(i, j int) bool {
+			if len(formattedResponse[0].Series[i].Points) == 0 || len(formattedResponse[0].Series[j].Points) == 0 {
+				return false
+			}
 			return formattedResponse[0].Series[i].Points[0].Value < formattedResponse[0].Series[j].Points[0].Value
 		})
 	}
