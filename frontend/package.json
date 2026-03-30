@@ -164,6 +164,7 @@
     "vite-plugin-html": "3.2.2",
     "web-vitals": "^0.2.4",
     "xstate": "^4.31.0",
+    "zod": "4.3.6",
     "zustand": "5.0.11"
   },
   "browserslist": {

@@ -14,7 +14,7 @@ function HostsListControls({
 	showAutoRefresh,
 }: {
 	handleFiltersChange: (value: IBuilderQuery['filters']) => void;
-	filters: IBuilderQuery['filters'];
+	filters: IBuilderQuery['filters'] | null;
 	showAutoRefresh: boolean;
 }): JSX.Element {
 	const currentQuery = initialQueriesMap[DataSource.METRICS];
