@@ -18,6 +18,10 @@ import (
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
+const (
+	batchCheckItemErrorMessage = "::AUTHZ-CHECK-ERROR::"
+)
+
 var (
 	openfgaDefaultStore = valuer.NewString("signoz")
 )
@@ -126,6 +130,11 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 
 	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
 	for id, tuple := range tupleReq {
+		// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
+		if checkErr := checkResponse.Result[id].GetError(); checkErr != nil {
+			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
+		}
+
 		response[id] = &authtypes.TupleKeyAuthorization{
 			Tuple:      tuple,
 			Authorized: checkResponse.Result[id].GetAllowed(),
@@ -340,4 +349,13 @@ func (server *Server) getStoreIDandModelID() (string, string) {
 	modelID := server.modelID
 
 	return storeID, modelID
+}
+
+func (server *Server) getCheckError(checkErr *openfgav1.CheckError) error {
+	switch checkErr.GetCode().(type) {
+	case *openfgav1.CheckError_InputError:
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, checkErr.GetMessage())
+	default:
+		return errors.New(errors.TypeInternal, errors.CodeInternal, checkErr.GetMessage())
+	}
 }

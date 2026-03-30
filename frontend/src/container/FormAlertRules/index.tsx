@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQueryClient } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
@@ -44,6 +44,7 @@ import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
 
 import BasicInfo from './BasicInfo';
@@ -330,13 +331,18 @@ function FormAlertRules({
 		}
 	}, [alertDef, currentQuery?.queryType, queryOptions]);
 
-	const onCancelHandler = useCallback(() => {
-		urlQuery.delete(QueryParams.compositeQuery);
-		urlQuery.delete(QueryParams.panelTypes);
-		urlQuery.delete(QueryParams.ruleId);
-		urlQuery.delete(QueryParams.relativeTime);
-		safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`);
-	}, [safeNavigate, urlQuery]);
+	const onCancelHandler = useCallback(
+		(e?: React.MouseEvent) => {
+			urlQuery.delete(QueryParams.compositeQuery);
+			urlQuery.delete(QueryParams.panelTypes);
+			urlQuery.delete(QueryParams.ruleId);
+			urlQuery.delete(QueryParams.relativeTime);
+			safeNavigate(`${ROUTES.LIST_ALL_ALERT}?${urlQuery.toString()}`, {
+				newTab: !!e && isModifierKeyPressed(e),
+			});
+		},
+		[safeNavigate, urlQuery],
+	);
 
 	// onQueryCategoryChange handles changes to query category
 	// in state as well as sets additional defaults
