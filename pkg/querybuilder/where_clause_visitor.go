@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"slices"
 	"strconv"
 	"strings"
 
@@ -164,12 +165,12 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts, startNs uint64
 		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
-	if cond == "" {
-		cond = SkipConditionLiteral
+	// The visitor returns exactly SkipConditionLiteral (never a substring) when
+	// there are no evaluable conditions; replace it with the no-op SQL literal.
+	// TODO(nitya): In this case we can choose to ignore resource_filter_cte
+	if cond == "" || cond == SkipConditionLiteral {
+		cond = TrueConditionLiteral
 	}
-
-	// Replace all SkipConditionLiteral with TrueConditionLiteral
-	cond = strings.ReplaceAll(cond, SkipConditionLiteral, TrueConditionLiteral)
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
 
@@ -219,7 +220,7 @@ func (v *filterExpressionVisitor) Visit(tree antlr.ParseTree) any {
 	case *grammar.KeyContext:
 		return v.VisitKey(t)
 	default:
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 }
 
@@ -269,7 +270,7 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
 			// filter out SkipConditionLiteral no-op conditions (e.g. non-resource attributes in resource filter)
 			// to avoid producing compound expressions like "(SkipConditionLiteral AND SkipConditionLiteral)"
-			if condExpr == SkipConditionLiteral {
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
 				continue
 			}
 			unaryExpressionConditions = append(unaryExpressionConditions, condExpr)
@@ -295,7 +296,7 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 	// Check if this is a NOT expression
 	if ctx.NOT() != nil {
 		// NOT (SkipConditionLiteral) -> SkipConditionLiteral
-		if result == SkipConditionLiteral {
+		if slices.Contains(SkippableConditionLiterals, result) {
 			return result
 		}
 		return fmt.Sprintf("NOT (%s)", result)
@@ -332,7 +333,7 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 
 		if v.fullTextColumn == nil {
 			v.errors = append(v.errors, "full text search is not supported")
-			return SkipConditionLiteral
+			return ErrorConditionLiteral
 		}
 		child := ctx.GetChild(0)
 		var searchText string
@@ -350,18 +351,18 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 				searchText = valCtx.KEY().GetText()
 			} else {
 				v.errors = append(v.errors, fmt.Sprintf("unsupported value type: %s", valCtx.GetText()))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
 			}
 		}
 		cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(searchText), v.builder, v.startNs, v.endNs)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-			return SkipConditionLiteral
+			return ErrorConditionLiteral
 		}
 		return cond
 	}
 
-	return SkipConditionLiteral // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
 // VisitComparison handles all comparison operators
@@ -370,7 +371,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 
 	// no keys resolved; VisitKey already recorded the error, skip this condition
 	if len(keys) == 0 {
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 
 	// this is used to skip the resource filtering on main table if
@@ -399,9 +400,15 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, nil, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
+			}
+			if slices.Contains(SkippableConditionLiterals, condition) {
+				continue
 			}
 			conds = append(conds, condition)
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		// if there is only one condition, return it directly, one less `()` wrapper
 		if len(conds) == 1 {
@@ -453,7 +460,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 					case []any:
 						if len(varValues) == 0 {
 							v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
-							return SkipConditionLiteral
+							return ErrorConditionLiteral
 						}
 						values = varValues
 					case any:
@@ -471,9 +478,15 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, values, v.builder, v.startNs, v.endNs)
 			if err != nil {
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
+			}
+			if slices.Contains(SkippableConditionLiterals, condition) {
+				continue
 			}
 			conds = append(conds, condition)
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -503,25 +516,31 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		case float64:
 			if _, ok := value2.(float64); !ok {
 				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected number for both operands", keys[0].Name))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
 			}
 		case string:
 			if _, ok := value2.(string); !ok {
 				v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: expected string for both operands", keys[0].Name))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
 			}
 		default:
 			v.errors = append(v.errors, fmt.Sprintf("value type mismatch for key %s: operands must be number or string", keys[0].Name))
-			return SkipConditionLiteral
+			return ErrorConditionLiteral
 		}
 
 		var conds []string
 		for _, key := range keys {
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, []any{value1, value2}, v.builder, v.startNs, v.endNs)
 			if err != nil {
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
+			}
+			if slices.Contains(SkippableConditionLiterals, condition) {
+				continue
 			}
 			conds = append(conds, condition)
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -552,7 +571,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 				case []any:
 					if len(varValues) == 0 {
 						v.errors = append(v.errors, fmt.Sprintf("malformed request payload: variable `%s` used in expression has an empty list value", strings.TrimPrefix(var_, "$")))
-						return SkipConditionLiteral
+						return ErrorConditionLiteral
 					}
 					value = varValues[0]
 				case any:
@@ -605,9 +624,15 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 			condition, err := v.conditionBuilder.ConditionFor(context.Background(), key, op, value, v.builder, v.startNs, v.endNs)
 			if err != nil {
 				v.errors = append(v.errors, fmt.Sprintf("failed to build condition: %s", err.Error()))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
+			}
+			if slices.Contains(SkippableConditionLiterals, condition) {
+				continue
 			}
 			conds = append(conds, condition)
+		}
+		if len(conds) == 0 {
+			return SkipConditionLiteral
 		}
 		if len(conds) == 1 {
 			return conds[0]
@@ -618,7 +643,7 @@ func (v *filterExpressionVisitor) VisitComparison(ctx *grammar.ComparisonContext
 		return v.builder.Or(conds...)
 	}
 
-	return SkipConditionLiteral // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
 // warnIfLikeWithoutWildcards adds a guidance warning when LIKE/ILIKE is used without wildcards
@@ -681,12 +706,12 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 
 	if v.fullTextColumn == nil {
 		v.errors = append(v.errors, "full text search is not supported")
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 	cond, err := v.conditionBuilder.ConditionFor(context.Background(), v.fullTextColumn, qbtypes.FilterOperatorRegexp, FormatFullTextSearch(text), v.builder, v.startNs, v.endNs)
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 
 	return cond
@@ -711,19 +736,19 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 	} else {
 		// Default fallback
 		v.errors = append(v.errors, fmt.Sprintf("unknown function `%s`", ctx.GetText()))
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 	params := v.Visit(ctx.FunctionParamList()).([]any)
 
 	if len(params) < 2 {
 		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key and value parameters", functionName))
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 
 	keys, ok := params[0].([]*telemetrytypes.TelemetryFieldKey)
 	if !ok {
 		v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be a field key", functionName))
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	}
 
 	// filter arrays from keys
@@ -736,7 +761,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 		}
 		if len(filteredKeys) == 0 {
 			v.errors = append(v.errors, fmt.Sprintf("function `%s` expects key parameter to be an array field; no array fields found", functionName))
-			return SkipConditionLiteral
+			return ErrorConditionLiteral
 		}
 		keys = filteredKeys
 	}
@@ -761,7 +786,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 					v.mainErrorURL = "https://signoz.io/docs/userguide/functions-reference/#hastoken-function"
 				}
 				v.errors = append(v.errors, fmt.Sprintf("function `%s` expects value parameter to be a string", functionName))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
 			}
 			conds = append(conds, fmt.Sprintf("hasToken(LOWER(%s), LOWER(%s))", key.Name, v.builder.Var(value[0])))
 		} else {
@@ -772,7 +797,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 					fieldName, err = v.fieldMapper.FieldFor(context.Background(), key)
 					if err != nil {
 						v.errors = append(v.errors, fmt.Sprintf("failed to get field name for key %s: %s", key.Name, err.Error()))
-						return SkipConditionLiteral
+						return ErrorConditionLiteral
 					}
 				} else {
 					fieldName, _ = v.jsonKeyToKey(context.Background(), key, qbtypes.FilterOperatorUnknown, value)
@@ -783,7 +808,7 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 					v.mainErrorURL = "https://signoz.io/docs/userguide/search-troubleshooting/#function-supports-only-body-json-search"
 				}
 				v.errors = append(v.errors, fmt.Sprintf("function `%s` supports only body JSON search", functionName))
-				return SkipConditionLiteral
+				return ErrorConditionLiteral
 			}
 
 			var cond string
@@ -828,7 +853,7 @@ func (v *filterExpressionVisitor) VisitFunctionParam(ctx *grammar.FunctionParamC
 		return v.Visit(ctx.Array())
 	}
 
-	return SkipConditionLiteral // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
 // VisitArray handles array literals
@@ -846,7 +871,7 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		number, err := strconv.ParseFloat(ctx.NUMBER().GetText(), 64)
 		if err != nil {
 			v.errors = append(v.errors, fmt.Sprintf("failed to parse number %s", ctx.NUMBER().GetText()))
-			return SkipConditionLiteral
+			return ErrorConditionLiteral
 		}
 		return number
 	} else if ctx.BOOL() != nil {
@@ -861,7 +886,7 @@ func (v *filterExpressionVisitor) VisitValue(ctx *grammar.ValueContext) any {
 		return ctx.KEY().GetText()
 	}
 
-	return SkipConditionLiteral // Should not happen with valid input
+	return ErrorConditionLiteral // Should not happen with valid input
 }
 
 // VisitKey handles field/column references

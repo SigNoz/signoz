@@ -5,8 +5,13 @@ import (
 )
 
 const (
-	TrueConditionLiteral = "true"
-	SkipConditionLiteral = "__skip__"
+	TrueConditionLiteral  = "true"
+	SkipConditionLiteral  = "__skip__"
+	ErrorConditionLiteral = "__skip_because_of_error__"
+)
+
+var (
+	SkippableConditionLiterals = []string{TrueConditionLiteral, SkipConditionLiteral, ErrorConditionLiteral}
 )
 
 var (

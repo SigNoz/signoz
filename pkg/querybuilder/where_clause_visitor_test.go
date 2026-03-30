@@ -681,10 +681,10 @@ func TestVisitKey(t *testing.T) {
 // Key behavioral rules:
 //
 //   resourceConditionBuilder:
-//     attr key (a,b,c)          → TrueConditionLiteral
+//     attr key (a,b,c)          → SkipConditionLiteral (no resource match)
 //     resource key (x,y,z)      → "{name}_cond"
-//     full-text / function call → TrueConditionLiteral (skipped)
-//     unknown key               → "" (ignored; IgnoreNotFoundKeys=true)
+//     full-text / function call → SkipConditionLiteral (skipped)
+//     unknown key               → SkipConditionLiteral (ignored; IgnoreNotFoundKeys=true)
 //
 //   conditionBuilder:
 //     any key (a,b,c,x,y,z)    → "{name}_cond"
@@ -693,13 +693,15 @@ func TestVisitKey(t *testing.T) {
 //     unknown key               → error (IgnoreNotFoundKeys=false)
 //
 //   __all__ variable (IN/NOT IN $service where service="__all__"):
-//     → TrueConditionLiteral in both configurations
+//     → SkipConditionLiteral in both configurations
+//     (PrepareWhereClause converts the final SkipConditionLiteral to TrueConditionLiteral)
 //
-//   TrueConditionLiteral ("true") propagation rules (both configs):
-//     • In AND: stripped as no-op; if ALL branches are TrueConditionLiteral
-//               → propagates upward
-//     • In OR:  short-circuits the entire OR immediately
-//     • NOT(TrueConditionLiteral) → TrueConditionLiteral (guard)
+//   SkipConditionLiteral propagation rules (both configs):
+//     • In AND: filtered out as no-op; if ALL branches are SkipConditionLiteral
+//               → AND returns SkipConditionLiteral which propagates upward
+//     • In OR:  short-circuits the entire OR immediately (returns SkipConditionLiteral)
+//     • NOT(SkipConditionLiteral) → SkipConditionLiteral (guard in VisitUnaryExpression)
+//     • PrepareWhereClause converts a top-level SkipConditionLiteral to TrueConditionLiteral ("WHERE true")
 //
 // Test cases with wantErrSB=true use PrepareWhereClause directly to verify
 // that SB returns an error (instead of calling buildSQLOpts which fatalf's).
@@ -886,7 +888,7 @@ func TestVisitComparison_NOT(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
-			// Unary NOT on an attribute key: NOT(TrueConditionLiteral) → TrueConditionLiteral.
+			// Unary NOT on an attribute key: NOT(SkipConditionLiteral) → SkipConditionLiteral (guard).
 			name:    "NOT attribute key",
 			expr:    "NOT a = 'a'",
 			wantRSB: "WHERE true",
@@ -899,7 +901,7 @@ func TestVisitComparison_NOT(t *testing.T) {
 			wantSB:  "WHERE true",
 		},
 		{
-			// RSB: NOT(true) → true stripped by AND; x_cond survives.
+			// RSB: NOT(SkipConditionLiteral) → SkipConditionLiteral; stripped from AND; x_cond survives.
 			name:    "NOT attribute AND resource",
 			expr:    "NOT a = 'a' AND x = 'x'",
 			wantRSB: "WHERE x_cond",
@@ -966,8 +968,9 @@ func TestVisitComparison_NOT(t *testing.T) {
 	}
 }
 
-// TestVisitComparison_OR covers OR expressions including the SkipResourceFilter override:
-// when OR is present, sbOpts overrides SkipResourceFilter=false so resource keys become visible.
+// TestVisitComparison_OR covers OR expressions. PrepareWhereClause auto-resets
+// SkipResourceFilter to false when an OR token is detected in the expression,
+// so resource keys become visible in sbOpts for all cases in this suite.
 func TestVisitComparison_OR(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
@@ -1022,7 +1025,7 @@ func TestVisitComparison_OR(t *testing.T) {
 			wantSB:  "WHERE ((a_cond AND x_cond) OR (b_cond AND y_cond))",
 		},
 		{
-			// RSB: NOT(a→true) → TrueConditionLiteral → OR short-circuits.
+			// RSB: NOT(a→SkipConditionLiteral) → SkipConditionLiteral → OR short-circuits.
 			name:    "NOT attr OR resource with OR override",
 			expr:    "NOT a = 'a' OR x = 'x'",
 			wantRSB: "WHERE true",
@@ -1036,7 +1039,7 @@ func TestVisitComparison_OR(t *testing.T) {
 			wantSB:  "WHERE (a_cond OR b_cond OR c_cond)",
 		},
 		{
-			// RSB: a→true → OR short-circuits; paren passes; NOT(true) → true.
+			// RSB: a→SkipConditionLiteral → OR short-circuits; paren passes through; NOT(SkipConditionLiteral) → SkipConditionLiteral.
 			name:    "NOT of three-way OR",
 			expr:    "NOT (a = 'a' OR b = 'b' OR x = 'x')",
 			wantRSB: "WHERE true",
@@ -1095,22 +1098,23 @@ func TestVisitComparison_Precedence(t *testing.T) {
 			wantSB:  "WHERE ((a_cond AND b_cond) OR (x_cond AND y_cond))",
 		},
 		{
-			// RSB: NOT(a→true)→true stripped; NOT(x_cond) remains.
+			// RSB: NOT(a→SkipConditionLiteral)→SkipConditionLiteral stripped from AND; NOT(x_cond) remains.
 			name:    "NOT attr AND NOT resource",
 			expr:    "NOT a = 'a' AND NOT x = 'x'",
 			wantRSB: "WHERE NOT (x_cond)",
 			wantSB:  "WHERE NOT (a_cond)",
 		},
 		{
-			// RSB: NOT(a→true)→TrueConditionLiteral → OR short-circuits.
+			// RSB: NOT(a→SkipConditionLiteral)→SkipConditionLiteral → OR short-circuits.
 			name:    "NOT attr OR NOT resource",
 			expr:    "NOT a = 'a' OR NOT x = 'x'",
 			wantRSB: "WHERE true",
 			wantSB:  "WHERE (NOT (a_cond) OR NOT (x_cond))",
 		},
 		{
-			// Parses as: (NOT a='v') OR (b='v' AND x='v')
-			// RSB: NOT(true)→true; (true AND x_cond)→x_cond; true OR x_cond → true.
+			// Parses as: (NOT a='a') OR (b='b' AND x='x')
+			// RSB: NOT(a→SkipConditionLiteral)→SkipConditionLiteral; (SkipConditionLiteral AND x_cond)→x_cond;
+			//      SkipConditionLiteral OR x_cond → SkipConditionLiteral short-circuits OR.
 			name:    "complex NOT OR AND",
 			expr:    "NOT a = 'a' OR b = 'b' AND x = 'x'",
 			wantRSB: "WHERE true",
@@ -1142,7 +1146,7 @@ func TestVisitComparison_Parens(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
-			// RSB: TrueConditionLiteral passes through. SB: VisitPrimary adds parens.
+			// RSB: SkipConditionLiteral passes through unwrapped. SB: VisitPrimary wraps in parens.
 			name:    "single attribute key in parens",
 			expr:    "(a = 'a')",
 			wantRSB: "WHERE true",
@@ -1190,7 +1194,8 @@ func TestVisitComparison_Parens(t *testing.T) {
 			wantSB:  "WHERE true",
 		},
 		{
-			// RSB: inner NOT a→TrueConditionLiteral; paren passes through; outer NOT(true)→true.
+			// RSB: inner NOT(a→SkipConditionLiteral)→SkipConditionLiteral; paren passes through;
+			//      outer NOT(SkipConditionLiteral)→SkipConditionLiteral.
 			// SB: structural parens accumulate around each NOT.
 			name:    "double NOT via parens",
 			expr:    "NOT (NOT a = 'a')",
@@ -1198,14 +1203,15 @@ func TestVisitComparison_Parens(t *testing.T) {
 			wantSB:  "WHERE NOT ((NOT (a_cond)))",
 		},
 		{
-			// All attrs → TrueConditionLiteral propagated through AND; NOT(true)→true.
+			// RSB: all attrs → SkipConditionLiteral filtered from AND → AND returns SkipConditionLiteral;
+			//      paren passes through; NOT(SkipConditionLiteral) → SkipConditionLiteral.
 			name:    "NOT of parenthesized all-attribute AND",
 			expr:    "NOT (a = 'a' AND b = 'b')",
 			wantRSB: "WHERE true",
 			wantSB:  "WHERE NOT (((a_cond AND b_cond)))",
 		},
 		{
-			// a→TrueConditionLiteral short-circuits OR; paren passes through; NOT(true)→true.
+			// RSB: a→SkipConditionLiteral short-circuits OR; paren passes through; NOT(SkipConditionLiteral)→SkipConditionLiteral.
 			name:    "NOT of parenthesized mixed OR attr short-circuits",
 			expr:    "NOT (a = 'a' OR x = 'x')",
 			wantRSB: "WHERE true",
@@ -1257,7 +1263,7 @@ func TestVisitComparison_FullText(t *testing.T) {
 			wantSB:  "WHERE body_cond",
 		},
 		{
-			// RSB: NOT(true)→true. SB: structural NOT applied.
+			// RSB: NOT(FT→SkipConditionLiteral)→SkipConditionLiteral. SB: structural NOT applied.
 			name:    "NOT full-text term",
 			expr:    "NOT 'hello'",
 			wantRSB: "WHERE true",
@@ -1313,7 +1319,7 @@ func TestVisitComparison_FullText(t *testing.T) {
 			wantSB:  "WHERE NOT (((body_cond AND a_cond)))",
 		},
 		{
-			// RSB: NOT(FT→true)→true stripped; x_cond survives.
+			// RSB: NOT(FT→SkipConditionLiteral)→SkipConditionLiteral stripped from AND; x_cond survives.
 			name:    "NOT full-text AND resource",
 			expr:    "NOT 'hello' AND x = 'x'",
 			wantRSB: "WHERE x_cond",
@@ -1352,6 +1358,13 @@ func TestVisitComparison_FullText(t *testing.T) {
 			expr:    "'hello' OR x IN $service",
 			wantRSB: "WHERE true",
 			wantSB:  "WHERE true",
+		},
+		{
+			// SB: body_cond
+			name:    "full-text with sentinel value",
+			expr:    SkipConditionLiteral,
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE body_cond",
 		},
 	}
 	for _, tt := range tests {
@@ -1422,8 +1435,8 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 			wantSB:  "WHERE true",
 		},
 		{
-			// NOT (x IN $service): TrueConditionLiteral; VisitPrimary passes through;
-			// NOT(TrueConditionLiteral) → TrueConditionLiteral.
+			// NOT (x IN $service): __all__ → SkipConditionLiteral; VisitPrimary passes through;
+			// NOT(SkipConditionLiteral) → SkipConditionLiteral.
 			name:    "NOT of allVariable IN",
 			expr:    "NOT (x IN $service)",
 			wantRSB: "WHERE true",
@@ -1515,7 +1528,7 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 			wantErrSB: true,
 		},
 		{
-			// RSB: NOT(true)→true stripped by AND; y_cond remains.
+			// RSB: NOT(has→SkipConditionLiteral)→SkipConditionLiteral stripped from AND; y_cond remains.
 			name:      "NOT of has AND resource key",
 			expr:      "NOT has(a, 'hello') AND y = 'y'",
 			wantRSB:   "WHERE y_cond",
@@ -1549,47 +1562,134 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 }
 
 // TestVisitComparison_UnknownKeys covers unknown key handling.
-// rsbOpts has IgnoreNotFoundKeys=true → VisitComparison returns "" which is silently
-// dropped from AND/OR; an all-"" AND collapses to TrueConditionLiteral.
+// rsbOpts has IgnoreNotFoundKeys=true → VisitComparison returns SkipConditionLiteral
+// (no keys resolved); SkipConditionLiteral short-circuits OR and is stripped from AND.
 // sbOpts has IgnoreNotFoundKeys=false → key lookup appends an error.
 func TestVisitComparison_UnknownKeys(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 	tests := []visitComparisonCase{
 		{
-			// RSB: "" dropped from AND; x_cond survives.
+			// RSB: unknown_key → SkipConditionLiteral (no keys resolved); stripped from AND; x_cond survives.
 			name:      "unknown key AND resource",
 			expr:      "unknown_key = 'val' AND x = 'x'",
 			wantRSB:   "WHERE x_cond",
 			wantErrSB: true,
 		},
 		{
-			// RSB: "" dropped from OR; only x_cond remains (no OR wrapper).
+			// RSB: unknown_key not found (IgnoreNotFoundKeys=true) → SkipConditionLiteral;
+			//      SkipConditionLiteral short-circuits OR → x_cond never evaluated → WHERE true.
 			name:      "unknown key OR resource",
 			expr:      "unknown_key = 'val' OR x = 'x'",
 			wantRSB:   "WHERE true",
 			wantErrSB: true,
 		},
 		{
-			// RSB: "" dropped; a→TrueConditionLiteral short-circuits OR.
+			// RSB: unknown_key → SkipConditionLiteral short-circuits OR → WHERE true (a=a never evaluated).
 			name:      "unknown key OR attribute",
 			expr:      "unknown_key = 'val' OR a = 'a'",
 			wantRSB:   "WHERE true",
 			wantErrSB: true,
 		},
 		{
-			// RSB: both → ""; AND has no real conditions → PrepareWhereClause → "true".
+			// RSB: both → SkipConditionLiteral; all stripped from AND → AND returns SkipConditionLiteral → WHERE true.
 			name:      "all unknown keys in AND",
 			expr:      "unk1 = 'v' AND unk2 = 'v'",
 			wantRSB:   "WHERE true",
 			wantErrSB: true,
 		},
 		{
-			// RSB: "" from VisitComparison; VisitUnaryExpression guard returns "";
-			// PrepareWhereClause converts empty to "true".
+			// RSB: unknown_key → SkipConditionLiteral; NOT(SkipConditionLiteral) → SkipConditionLiteral (guard);
+			//      PrepareWhereClause converts to WHERE true.
 			name:      "NOT of unknown key",
 			expr:      "NOT unknown_key = 'val'",
 			wantRSB:   "WHERE true",
 			wantErrSB: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
+			if err == nil {
+				expr, _ := result.WhereClause.Build()
+				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
+			}
+			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
+			if err == nil {
+				expr, _ := result.WhereClause.Build()
+				assert.Equal(t, tt.wantSB, expr, "conditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantSB, expr)
+			}
+		})
+	}
+}
+
+// TestVisitComparison_SkippableLiteralValues guards against two distinct collision risks
+// involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):
+func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
+	rsbOpts, sbOpts := visitComparisonOpts()
+
+	tests := []visitComparisonCase{
+		{
+			// rsbOpts: a is attr → SkipConditionLiteral → WHERE true.
+			// sbOpts:  conditionBuilder ignores value → WHERE a_cond.
+			name:    "value equals TrueConditionLiteral",
+			expr:    fmt.Sprintf("a = '%s'", TrueConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE a_cond",
+		},
+		{
+			name:    "value equals SkipConditionLiteral",
+			expr:    fmt.Sprintf("a = '%s'", SkipConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE a_cond",
+		},
+		{
+			name:    "value equals ErrorConditionLiteral",
+			expr:    fmt.Sprintf("a = '%s'", ErrorConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE a_cond",
+		},
+		{
+			// IN list whose members are all sentinel literals.
+			name:    "IN list containing all sentinel literals",
+			expr:    fmt.Sprintf("a IN ('%s', '%s', '%s')", TrueConditionLiteral, SkipConditionLiteral, ErrorConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE a_cond",
+		},
+		{
+			// Both a and b are attribute keys → rsbOpts → WHERE true.
+			// sbOpts → two real conditions joined by AND.
+			name:    "AND with sentinel value on one branch",
+			expr:    fmt.Sprintf("a = '%s' AND b = 'real_value'", SkipConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE (a_cond AND b_cond)",
+		},
+		{
+			// rsbOpts: NOT(SkipConditionLiteral) → SkipConditionLiteral → WHERE true.
+			// sbOpts: NOT wraps the real condition.
+			name:    "NOT with sentinel value",
+			expr:    fmt.Sprintf("NOT a = '%s'", TrueConditionLiteral),
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE NOT (a_cond)",
+		},
+		{
+			// SkipConditionLiteral as a bare full-text search term.
+			// rsbOpts: SkipFullTextFilter=true → SkipConditionLiteral → WHERE true.
+			// sbOpts:  full-text search on body column → WHERE body_cond.
+			name:    "full text search with SkipConditionLiteral",
+			expr:    SkipConditionLiteral,
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE body_cond",
+		},
+		{
+			// TrueConditionLiteral as a bare full-text search term.
+			// rsbOpts: SkipFullTextFilter=true → SkipConditionLiteral → WHERE true.
+			// sbOpts:  full-text search on body column → WHERE body_cond.
+			name:    "full text search with TrueConditionLiteral",
+			expr:    TrueConditionLiteral,
+			wantRSB: "WHERE true",
+			wantSB:  "WHERE body_cond",
 		},
 	}
 	for _, tt := range tests {
