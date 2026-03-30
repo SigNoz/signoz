@@ -244,8 +244,8 @@ func (v *filterExpressionVisitor) VisitOrExpression(ctx *grammar.OrExpressionCon
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
 			// In an OR, a single unevaluable branch makes the entire expression unevaluable,
 			// so short-circuit immediately.
-			if condExpr == SkipConditionLiteral {
-				return SkipConditionLiteral
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
+				return condExpr
 			}
 			andExpressionConditions = append(andExpressionConditions, condExpr)
 		}
@@ -269,7 +269,7 @@ func (v *filterExpressionVisitor) VisitAndExpression(ctx *grammar.AndExpressionC
 	unaryExpressionConditions := make([]string, 0, len(unaryExpressions))
 	for _, expr := range unaryExpressions {
 		if condExpr, ok := v.Visit(expr).(string); ok && condExpr != "" {
-			// filter out SkipConditionLiteral no-op conditions (e.g. non-resource attributes in resource filter)
+			// filter out skippable no-op conditions (e.g. non-resource attributes in resource filter)
 			// to avoid producing compound expressions like "(SkipConditionLiteral AND SkipConditionLiteral)"
 			if slices.Contains(SkippableConditionLiterals, condExpr) {
 				continue
@@ -296,7 +296,7 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 
 	// Check if this is a NOT expression
 	if ctx.NOT() != nil {
-		// NOT (SkipConditionLiteral) -> SkipConditionLiteral
+		// NOT (skippable) -> propagate the skippable literal unchanged
 		if slices.Contains(SkippableConditionLiterals, result) {
 			return result
 		}
@@ -310,14 +310,14 @@ func (v *filterExpressionVisitor) VisitUnaryExpression(ctx *grammar.UnaryExpress
 func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any {
 	if ctx.OrExpression() != nil {
 		// This is a parenthesized expression
-		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok && condExpr != "" {
-			// Don't wrap SkipConditionLiteral in parentheses - it's a no-op condition
-			if condExpr == SkipConditionLiteral {
-				return SkipConditionLiteral
+		if condExpr, ok := v.Visit(ctx.OrExpression()).(string); ok {
+			// Don't wrap skippable literals in parentheses — pass them through as-is
+			if slices.Contains(SkippableConditionLiterals, condExpr) {
+				return condExpr
 			}
 			return fmt.Sprintf("(%s)", condExpr)
 		}
-		return SkipConditionLiteral
+		return ErrorConditionLiteral
 	} else if ctx.Comparison() != nil {
 		return v.Visit(ctx.Comparison())
 	} else if ctx.FunctionCall() != nil {

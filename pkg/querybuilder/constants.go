@@ -11,7 +11,7 @@ const (
 )
 
 var (
-	SkippableConditionLiterals = []string{TrueConditionLiteral, SkipConditionLiteral, ErrorConditionLiteral}
+	SkippableConditionLiterals = []string{SkipConditionLiteral, ErrorConditionLiteral}
 )
 
 var (
