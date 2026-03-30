@@ -481,7 +481,7 @@ func (module *module) GetCloudProvider(provider cloudintegrationtypes.CloudProvi
 		return cloudProviderModule, nil
 	}
 
-	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "cloud provider is not supported")
+	return nil, errors.NewInvalidInputf(cloudintegrationtypes.ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
 func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {

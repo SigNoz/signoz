@@ -198,6 +198,92 @@ def test_update_account(
     ), "Regions should reflect the update"
 
 
+def test_update_account_after_checkin_preserves_connected_status(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Updating config after agent check-in must not remove the account from the connected list.
+
+    Regression test: previously, updating an account would reset account_id to NULL,
+    causing the account to disappear from the connected accounts listing
+    (which filters on account_id IS NOT NULL).
+    """
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # 1. Create account
+    account = create_cloud_integration_account(
+        admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
+    )
+    account_id = account["id"]
+    provider_account_id = str(uuid.uuid4())
+
+    # 2. Agent checks in — sets account_id and last_agent_report
+    checkin = simulate_agent_checkin(
+        signoz, admin_token, CLOUD_PROVIDER, account_id, provider_account_id
+    )
+    assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
+
+    # 3. Verify the account appears in the connected list
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK
+    accounts_before = list_response.json()["data"]["accounts"]
+    found_before = next(
+        (a for a in accounts_before if a["id"] == account_id), None
+    )
+    assert found_before is not None, "Account should be listed after check-in"
+
+    # 4. Update account config
+    updated_regions = ["us-east-1", "us-west-2"]
+    update_response = requests.put(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"regions": updated_regions}}},
+        timeout=10,
+    )
+    assert (
+        update_response.status_code == HTTPStatus.NO_CONTENT
+    ), f"Expected 204, got {update_response.status_code}"
+
+    # 5. Verify the account still appears in the connected list with correct fields
+    list_response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert list_response.status_code == HTTPStatus.OK
+    accounts_after = list_response.json()["data"]["accounts"]
+    found_after = next(
+        (a for a in accounts_after if a["id"] == account_id), None
+    )
+    assert (
+        found_after is not None
+    ), "Account must still be listed after config update (account_id should not be reset)"
+    assert (
+        found_after["providerAccountId"] == provider_account_id
+    ), "providerAccountId should be preserved after update"
+    assert (
+        found_after["agentReport"] is not None
+    ), "agentReport should be preserved after update"
+    assert found_after["config"]["aws"]["regions"] == updated_regions, (
+        "Config should reflect the update"
+    )
+    assert (
+        found_after["removedAt"] is None
+    ), "removedAt should still be null"
+
+
 def test_disconnect_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument

@@ -49,6 +49,11 @@ func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := postableConnectionArtifact.Validate(provider); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	accountConfig, err := cloudintegrationtypes.NewAccountConfigFromPostableArtifact(provider, postableConnectionArtifact)
 	if err != nil {
 		render.Error(rw, err)

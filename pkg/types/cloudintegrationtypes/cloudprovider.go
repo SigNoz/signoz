@@ -16,7 +16,7 @@ var (
 	CloudProviderTypeAzure = CloudProviderType{valuer.NewString("azure")}
 
 	// errors.
-	ErrCodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provider")
+	ErrCodeCloudProviderInvalidInput = errors.MustNewCode("cloud_integration_invalid_cloud_provider")
 
 	AWSIntegrationUserEmail   = valuer.MustNewEmail("aws-integration@signoz.io")
 	AzureIntegrationUserEmail = valuer.MustNewEmail("azure-integration@signoz.io")

@@ -129,7 +129,7 @@ func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *
 		}, nil
 	}
 
-	return nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "unsupported provider type")
+	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
 func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*ConnectionArtifactRequest, error) {
@@ -146,7 +146,7 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 		}, nil
 	}
 
-	return nil, errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput, "unsupported provider type")
+	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
 // ToJSON return JSON bytes for the provider's config

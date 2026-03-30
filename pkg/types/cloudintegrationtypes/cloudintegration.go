@@ -88,14 +88,24 @@ func NewStorableCloudIntegration(account *Account) (*StorableCloudIntegration, e
 		return nil, err
 	}
 
-	return &StorableCloudIntegration{
+	storableAccount := &StorableCloudIntegration{
 		Identifiable:  account.Identifiable,
 		TimeAuditable: account.TimeAuditable,
 		Provider:      account.Provider,
 		Config:        string(configBytes),
-		AccountID:     nil, // updated during agent check in
+		AccountID:     account.ProviderAccountID,
 		OrgID:         account.OrgID,
-	}, nil
+		RemovedAt:     account.RemovedAt,
+	}
+
+	if account.AgentReport != nil {
+		storableAccount.LastAgentReport = &StorableAgentReport{
+			TimestampMillis: account.AgentReport.TimestampMillis,
+			Data:            account.AgentReport.Data,
+		}
+	}
+
+	return storableAccount, nil
 }
 
 // NewStorableCloudIntegrationService creates a new StorableCloudIntegrationService with
