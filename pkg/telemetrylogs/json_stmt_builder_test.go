@@ -858,7 +858,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL))",
+				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND dynamicElement(body_v2.`user.name`, 'String') IS NULL))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
