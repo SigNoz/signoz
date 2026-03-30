@@ -6,6 +6,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"go.opentelemetry.io/otel/metric"
 )
@@ -14,9 +15,9 @@ import (
 // A flush is triggered when either BatchSize events accumulate or
 // FlushInterval elapses, whichever comes first.
 type Batcher struct {
-	logger  *slog.Logger
-	config  Config
-	metrics *telemetry
+	settings factory.ScopedProviderSettings
+	config   Config
+	metrics  *telemetry
 
 	batchC chan []audittypes.AuditEvent
 
@@ -29,23 +30,23 @@ type Batcher struct {
 	goroutinesWg sync.WaitGroup
 }
 
-func New(logger *slog.Logger, config Config, meter metric.Meter) (*Batcher, error) {
-	metrics, err := newTelemetry(meter)
+func New(settings factory.ScopedProviderSettings, config Config) (*Batcher, error) {
+	metrics, err := newTelemetry(settings.Meter())
 	if err != nil {
 		return nil, err
 	}
 
 	b := &Batcher{
-		batchC:  make(chan []audittypes.AuditEvent, config.BatchSize),
-		logger:  logger,
-		config:  config,
-		metrics: metrics,
-		queue:   make([]audittypes.AuditEvent, 0, config.BufferSize),
-		moreC:   make(chan struct{}, 1),
-		stopC:   make(chan struct{}),
+		batchC:   make(chan []audittypes.AuditEvent, config.BatchSize),
+		settings: settings,
+		config:   config,
+		metrics:  metrics,
+		queue:    make([]audittypes.AuditEvent, 0, config.BufferSize),
+		moreC:    make(chan struct{}, 1),
+		stopC:    make(chan struct{}),
 	}
 
-	_, err = meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
+	_, err = settings.Meter().RegisterCallback(func(_ context.Context, o metric.Observer) error {
 		o.ObserveInt64(b.metrics.bufferSize, int64(b.queueLen()))
 		return nil
 	}, b.metrics.bufferSize)
@@ -94,7 +95,7 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 
 	if len(b.queue) >= b.config.BufferSize {
 		b.metrics.eventsDropped.Add(ctx, 1)
-		b.logger.WarnContext(ctx, "audit event dropped, buffer full", slog.Int("buffer_size", b.config.BufferSize))
+		b.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("buffer_size", b.config.BufferSize))
 		return
 	}
 
