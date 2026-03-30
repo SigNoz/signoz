@@ -223,9 +223,14 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 		}
 
 		conditions = append(conditions, indexCond)
-		// Switch operator to EXISTS since indexed paths on assumedNotNull, indexes will always have a default value
-		// So we flip the operator to Exists and filter the rows that actually have the value
-		operator = qbtypes.FilterOperatorExists
+
+		// Switch operator to EXISTS except when operator is NOT EXISTS since
+		// indexed paths on assumedNotNull, indexes will always have a default
+		// value so we flip the operator to Exists and filter the rows that
+		// actually have the value
+		if operator != qbtypes.FilterOperatorNotExists {
+			operator = qbtypes.FilterOperatorExists
+		}
 	}
 
 	var formattedValue any = value
@@ -306,10 +311,16 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 		// since we've filtered the value type out of the dynamic array, we need to change the field data corresponding to the value type
 		localKeyCopy.FieldDataType = telemetrytypes.MappingJSONDataTypeToFieldDataType[telemetrytypes.ScalerTypeToArrayType[c.valueType]]
 
+		primitiveType := c.valueType.StringValue()
+		// check if value is an array
+		if c.valueType.IsArray {
+			primitiveType = c.valueType.ScalerType
+		}
+
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
 		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			c.valueType.StringValue(),
-			c.valueType.StringValue(),
+			primitiveType,
+			primitiveType,
 			baseArrayDynamicExpr)
 	}
 	typedArrayExpr := func() string {
