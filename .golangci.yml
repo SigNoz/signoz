@@ -3,6 +3,8 @@ linters:
   default: none
   enable:
     - bodyclose
+    - staticcheck
+    - godot
     - depguard
     - errcheck
     - forbidigo
