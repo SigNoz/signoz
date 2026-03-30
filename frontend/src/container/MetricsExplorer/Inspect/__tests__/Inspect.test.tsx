@@ -8,9 +8,15 @@ import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
+import { INITIAL_INSPECT_METRICS_OPTIONS } from '../constants';
 import Inspect from '../Inspect';
-import { InspectMetricsSeries, MetricType } from '../types';
-import { InspectionStep } from '../types';
+import {
+	InspectionStep,
+	InspectMetricsSeries,
+	MetricType,
+	UseInspectMetricsReturnData,
+} from '../types';
+import * as useInspectMetricsModule from '../useInspectMetrics';
 
 const queryClient = new QueryClient();
 const mockTimeSeries: InspectMetricsSeries[] = [
@@ -77,16 +83,26 @@ mockResizeObserver.mockImplementation(() => ({
 }));
 window.ResizeObserver = mockResizeObserver;
 
+const baseHookReturn: UseInspectMetricsReturnData = {
+	inspectMetricsTimeSeries: [],
+	inspectMetricsStatusCode: 200,
+	isInspectMetricsLoading: false,
+	isInspectMetricsError: false,
+	formattedInspectMetricsTimeSeries: [[], []],
+	spaceAggregationLabels: [],
+	metricInspectionOptions: INITIAL_INSPECT_METRICS_OPTIONS,
+	dispatchMetricInspectionOptions: jest.fn(),
+	inspectionStep: InspectionStep.COMPLETED,
+	isInspectMetricsRefetching: false,
+	spaceAggregatedSeriesMap: new Map(),
+	aggregatedTimeSeries: [],
+	timeAggregatedSeriesMap: new Map(),
+	reset: jest.fn(),
+};
+
 describe('Inspect', () => {
 	const defaultProps = {
-		inspectMetricsTimeSeries: mockTimeSeries,
-		formattedInspectMetricsTimeSeries: [],
-		metricUnit: '',
 		metricName: 'test_metric',
-		metricType: MetricType.GAUGE,
-		spaceAggregationSeriesMap: new Map(),
-		inspectionStep: InspectionStep.COMPLETED,
-		resetInspection: jest.fn(),
 		isOpen: true,
 		onClose: jest.fn(),
 	};
@@ -96,6 +112,12 @@ describe('Inspect', () => {
 	});
 
 	it('renders all components', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			inspectMetricsTimeSeries: mockTimeSeries,
+			aggregatedTimeSeries: mockTimeSeries,
+		});
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -110,6 +132,11 @@ describe('Inspect', () => {
 	});
 
 	it('renders loading state', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			isInspectMetricsLoading: true,
+		});
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -122,6 +149,11 @@ describe('Inspect', () => {
 	});
 
 	it('renders empty state', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			inspectMetricsTimeSeries: [],
+		});
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -134,6 +166,11 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			isInspectMetricsError: true,
+		});
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -146,6 +183,11 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state with 400 status code', () => {
+		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
+			...baseHookReturn,
+			inspectMetricsStatusCode: 400,
+		});
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
