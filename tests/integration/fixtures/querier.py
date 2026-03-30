@@ -246,6 +246,11 @@ def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
         return values[0].get("value")
     return None
 
+def get_all_warnings(response_json: Dict) -> List[Dict]:
+    return response_json.get("data",{}).get("warning", {}).get("warnings", [])
+
+def get_error_message(response_json: Dict) -> str:
+    return response_json.get("error", {}).get("message", "")
 
 def compare_values(
     v1: float,
