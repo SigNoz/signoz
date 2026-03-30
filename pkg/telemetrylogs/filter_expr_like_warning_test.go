@@ -1,7 +1,9 @@
 package telemetrylogs
 
 import (
+	"context"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -10,12 +12,15 @@ import (
 
 // TestLikeAndILikeWithoutWildcards_Warns Tests that LIKE/ILIKE without wildcards add warnings and include docs URL
 func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
+	ctx := context.Background()
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -33,7 +38,7 @@ func TestLikeAndILikeWithoutWildcards_Warns(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 
@@ -49,9 +54,11 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -69,7 +76,7 @@ func TestLikeAndILikeWithWildcards_NoWarn(t *testing.T) {
 
 	for _, expr := range tests {
 		t.Run(expr, func(t *testing.T) {
-			clause, err := querybuilder.PrepareWhereClause(expr, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(expr, opts)
 			require.NoError(t, err)
 			require.NotNil(t, clause)
 

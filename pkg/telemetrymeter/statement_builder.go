@@ -122,7 +122,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 		stepSec,
 	))
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -147,13 +147,16 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDeltaFastPath(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", nil, err
 		}
@@ -205,7 +208,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 	))
 
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -233,13 +236,16 @@ func (b *meterQueryStatementBuilder) buildTemporalAggDelta(
 
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", nil, err
 		}
@@ -278,7 +284,7 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 		stepSec,
 	))
 	for _, g := range query.GroupBy {
-		col, err := b.fm.ColumnExpressionFor(ctx, &g.TelemetryFieldKey, keys)
+		col, err := b.fm.ColumnExpressionFor(ctx, start, end, &g.TelemetryFieldKey, keys)
 		if err != nil {
 			return "", nil, err
 		}
@@ -300,13 +306,16 @@ func (b *meterQueryStatementBuilder) buildTemporalAggCumulativeOrUnspecified(
 	)
 	if query.Filter != nil && query.Filter.Expression != "" {
 		filterWhere, err = querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           b.logger,
 			FieldMapper:      b.fm,
 			ConditionBuilder: b.cb,
 			FieldKeys:        keys,
 			FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels"},
 			Variables:        variables,
-		}, start, end)
+			StartNs:          start,
+			EndNs:            end,
+		})
 		if err != nil {
 			return "", nil, err
 		}

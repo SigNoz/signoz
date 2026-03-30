@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"strings"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -18,7 +19,7 @@ func limitString(s string, maxLen int) string {
 }
 
 // Function to build a complete field key map for testing all scenarios
-func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
+func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytypes.TelemetryFieldKey {
 	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {
 			{
@@ -943,6 +944,9 @@ func buildCompleteFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 	for _, keys := range keysMap {
 		for _, key := range keys {
 			key.Signal = telemetrytypes.SignalLogs
+			if key.FieldContext == telemetrytypes.FieldContextResource {
+				key.Evolutions = mockEvolutionData(releaseTime)
+			}
 		}
 	}
 
@@ -1007,4 +1011,25 @@ func buildCompleteFieldKeyMapCollision() map[string][]*telemetrytypes.TelemetryF
 		}
 	}
 	return keysMap
+}
+
+func mockEvolutionData(releaseTime time.Time) []*telemetrytypes.EvolutionEntry {
+	return []*telemetrytypes.EvolutionEntry{
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resources_string",
+			FieldContext: telemetrytypes.FieldContextResource,
+			ColumnType:   "Map(LowCardinality(String), String)",
+			FieldName:    "__all__",
+			ReleaseTime:  time.Unix(0, 0),
+		},
+		{
+			Signal:       telemetrytypes.SignalLogs,
+			ColumnName:   "resource",
+			ColumnType:   "JSON()",
+			FieldContext: telemetrytypes.FieldContextResource,
+			FieldName:    "__all__",
+			ReleaseTime:  releaseTime,
+		},
+	}
 }
