@@ -79,10 +79,7 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 
 	if len(b.queue) >= b.config.BufferSize {
 		b.dropped++
-		b.logger.WarnContext(ctx, "audit event dropped, buffer full",
-			slog.Int64("total_dropped", b.dropped),
-			slog.Int("capacity", b.config.BufferSize),
-		)
+		b.logger.WarnContext(ctx, "audit event dropped, buffer full", slog.Int64("total_dropped", b.dropped), slog.Int("buffer_size", b.config.BufferSize))
 		return
 	}
 
