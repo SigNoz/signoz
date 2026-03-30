@@ -22,18 +22,18 @@ func newConditionBuilder(fm qbtypes.FieldMapper) qbtypes.ConditionBuilder {
 
 func (c *conditionBuilder) ConditionFor(
 	ctx context.Context,
+	startNs uint64,
+	endNs uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	operator qbtypes.FilterOperator,
 	value any,
 	sb *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
 	if operator.IsStringSearchOperator() {
 		value = querybuilder.FormatValueForContains(value)
 	}
 
-	fieldName, err := c.fm.FieldFor(ctx, key)
+	fieldName, err := c.fm.FieldFor(ctx, startNs, endNs, key)
 	if err != nil {
 		return "", err
 	}

@@ -503,9 +503,9 @@ func (s *store) buildFilterClause(ctx context.Context, filter qbtypes.Filter, st
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "labels", FieldContext: telemetrytypes.FieldContextAttribute},
 	}
 
-	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
-	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
-	prepared, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
+	opts.StartNs = querybuilder.ToNanoSecs(uint64(startMillis))
+	opts.EndNs = querybuilder.ToNanoSecs(uint64(endMillis))
+	prepared, err := querybuilder.PrepareWhereClause(expression, opts)
 	if err != nil {
 		return nil, err
 	}
