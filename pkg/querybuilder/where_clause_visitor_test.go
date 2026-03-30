@@ -727,12 +727,12 @@ type resourceConditionBuilder struct{}
 
 func (b *resourceConditionBuilder) ConditionFor(
 	_ context.Context,
+	_ uint64,
+	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
@@ -746,12 +746,12 @@ type conditionBuilder struct{}
 
 func (b *conditionBuilder) ConditionFor(
 	_ context.Context,
+	_ uint64,
+	_ uint64,
 	key *telemetrytypes.TelemetryFieldKey,
 	_ qbtypes.FilterOperator,
 	_ any,
 	_ *sqlbuilder.SelectBuilder,
-	_ uint64,
-	_ uint64,
 ) (string, error) {
 
 	return fmt.Sprintf("%s_cond", key.Name), nil
@@ -865,13 +865,13 @@ func TestVisitComparison_AND(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -953,13 +953,13 @@ func TestVisitComparison_NOT(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1049,13 +1049,13 @@ func TestVisitComparison_OR(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1124,13 +1124,13 @@ func TestVisitComparison_Precedence(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1221,13 +1221,13 @@ func TestVisitComparison_Parens(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1370,13 +1370,13 @@ func TestVisitComparison_FullText(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1473,13 +1473,13 @@ func TestVisitComparison_AllVariable(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1546,13 +1546,13 @@ func TestVisitComparison_FunctionCalls(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1609,13 +1609,13 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
@@ -1695,13 +1695,13 @@ func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			result, err := PrepareWhereClause(tt.expr, rsbOpts, 0, 0)
+			result, err := PrepareWhereClause(tt.expr, rsbOpts)
 			assert.Equal(t, tt.wantErrRSB, err != nil, "resourceConditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
 				assert.Equal(t, tt.wantRSB, expr, "resourceConditionBuilder SQL mismatch:\n  want: %s\n   got: %s", tt.wantRSB, expr)
 			}
-			result, err = PrepareWhereClause(tt.expr, sbOpts, 0, 0)
+			result, err = PrepareWhereClause(tt.expr, sbOpts)
 			assert.Equal(t, tt.wantErrSB, err != nil, "conditionBuilder: error expectation mismatch")
 			if err == nil {
 				expr, _ := result.WhereClause.Build()
