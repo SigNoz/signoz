@@ -5,21 +5,22 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/uptrace/bun"
 )
 
 var (
 	ErrCodeUserRoleAlreadyExists = errors.MustNewCode("user_role_already_exists")
-	ErrCodeUserRolesNotFound      = errors.MustNewCode("user_roles_not_found")
+	ErrCodeUserRolesNotFound     = errors.MustNewCode("user_roles_not_found")
 )
 
 type UserRole struct {
 	bun.BaseModel `bun:"table:user_role,alias:user_role"`
 
 	ID        valuer.UUID `bun:"id,pk,type:text" json:"id" required:"true"`
-	UserID    valuer.UUID `bun:"user_id" json:"user_id"`
-	RoleID    valuer.UUID `bun:"role_id" json:"role_id"`
+	UserID    valuer.UUID `bun:"user_id" json:"userId"`
+	RoleID    valuer.UUID `bun:"role_id" json:"roleId"`
 	CreatedAt time.Time   `bun:"created_at" json:"createdAt"`
 	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt"`
 
@@ -47,6 +48,11 @@ func NewUserRoles(userID valuer.UUID, roles []*Role) []*UserRole {
 	return userRoles
 }
 
+type UserWithRoles struct {
+	*types.User
+	UserRoles []*UserRole `json:"userRoles"`
+}
+
 type UserRoleStore interface {
 	// create user roles in bulk
 	CreateUserRoles(ctx context.Context, userRoles []*UserRole) error
@@ -59,4 +65,7 @@ type UserRoleStore interface {
 
 	// delete user role entries by user id
 	DeleteUserRoles(ctx context.Context, userID valuer.UUID) error
+
+	// delete a single user role entry by user id and role id
+	DeleteUserRoleByUserIDAndRoleID(ctx context.Context, userID valuer.UUID, roleID valuer.UUID) error
 }

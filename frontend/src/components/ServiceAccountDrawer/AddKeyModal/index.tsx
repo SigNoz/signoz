@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
+import { useCopyToClipboard } from 'react-use';
 import { DialogWrapper } from '@signozhq/dialog';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
@@ -105,19 +106,23 @@ function AddKeyModal(): JSX.Element {
 		});
 	}
 
+	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopy = useCallback(async (): Promise<void> => {
 		if (!createdKey?.key) {
 			return;
 		}
-		try {
-			await navigator.clipboard.writeText(createdKey.key);
-			setHasCopied(true);
-			setTimeout(() => setHasCopied(false), 2000);
-			toast.success('Key copied to clipboard', { richColors: true });
-		} catch {
+
+		copyToClipboard(createdKey.key);
+		setHasCopied(true);
+		setTimeout(() => setHasCopied(false), 2000);
+		toast.success('Key copied to clipboard', { richColors: true });
+	}, [copyToClipboard, createdKey?.key]);
+
+	useEffect(() => {
+		if (copyState.error) {
 			toast.error('Failed to copy key', { richColors: true });
 		}
-	}, [createdKey]);
+	}, [copyState.error]);
 
 	const handleClose = useCallback((): void => {
 		setIsAddKeyOpen(null);

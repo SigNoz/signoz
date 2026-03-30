@@ -4,16 +4,10 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
-	useUpdateUser,
+	useUpdateUserDeprecated,
 } from 'api/generated/services/users';
 import { MemberStatus } from 'container/MembersSettings/utils';
-import {
-	fireEvent,
-	render,
-	screen,
-	userEvent,
-	waitFor,
-} from 'tests/test-utils';
+import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { ROLES } from 'types/roles';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -50,7 +44,7 @@ jest.mock('@signozhq/dialog', () => ({
 
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
-	useUpdateUser: jest.fn(),
+	useUpdateUserDeprecated: jest.fn(),
 	getResetPasswordToken: jest.fn(),
 }));
 
@@ -63,6 +57,16 @@ jest.mock('@signozhq/sonner', () => ({
 		success: jest.fn(),
 		error: jest.fn(),
 	},
+}));
+
+const mockCopyToClipboard = jest.fn();
+const mockCopyState = { value: undefined, error: undefined };
+
+jest.mock('react-use', () => ({
+	useCopyToClipboard: (): [typeof mockCopyState, typeof mockCopyToClipboard] => [
+		mockCopyState,
+		mockCopyToClipboard,
+	],
 }));
 
 const mockUpdateMutate = jest.fn();
@@ -105,7 +109,7 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		(useUpdateUser as jest.Mock).mockReturnValue({
+		(useUpdateUserDeprecated as jest.Mock).mockReturnValue({
 			mutate: mockUpdateMutate,
 			isLoading: false,
 		});
@@ -130,7 +134,7 @@ describe('EditMemberDrawer', () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+		(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
 			mutate: mockUpdateMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
@@ -239,7 +243,7 @@ describe('EditMemberDrawer', () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+		(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
 			mutate: mockUpdateMutate.mockImplementation(() => {
 				options?.mutation?.onSuccess?.();
 			}),
@@ -280,7 +284,7 @@ describe('EditMemberDrawer', () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
 			const mockToast = jest.mocked(toast);
 
-			(useUpdateUser as jest.Mock).mockImplementation((options) => ({
+			(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
 				mutate: mockUpdateMutate.mockImplementation(() => {
 					options?.mutation?.onError?.({});
 				}),
@@ -361,30 +365,12 @@ describe('EditMemberDrawer', () => {
 	});
 
 	describe('Generate Password Reset Link', () => {
-		const mockWriteText = jest.fn().mockResolvedValue(undefined);
-		let clipboardSpy: jest.SpyInstance | undefined;
-
-		beforeAll(() => {
-			Object.defineProperty(navigator, 'clipboard', {
-				value: { writeText: (): Promise<void> => Promise.resolve() },
-				configurable: true,
-				writable: true,
-			});
-		});
-
 		beforeEach(() => {
-			mockWriteText.mockClear();
-			clipboardSpy = jest
-				.spyOn(navigator.clipboard, 'writeText')
-				.mockImplementation(mockWriteText);
+			mockCopyToClipboard.mockClear();
 			mockGetResetPasswordToken.mockResolvedValue({
 				status: 'success',
 				data: { token: 'reset-tok-abc', id: 'user-1' },
 			});
-		});
-
-		afterEach(() => {
-			clipboardSpy?.mockRestore();
 		});
 
 		it('calls getResetPasswordToken and opens the reset link dialog with the generated link', async () => {
@@ -421,7 +407,7 @@ describe('EditMemberDrawer', () => {
 			});
 			expect(dialog).toHaveTextContent('reset-tok-abc');
 
-			fireEvent.click(screen.getByRole('button', { name: /^copy$/i }));
+			await user.click(screen.getByRole('button', { name: /^copy$/i }));
 
 			await waitFor(() => {
 				expect(mockToast.success).toHaveBeenCalledWith(
@@ -430,7 +416,7 @@ describe('EditMemberDrawer', () => {
 				);
 			});
 
-			expect(mockWriteText).toHaveBeenCalledWith(
+			expect(mockCopyToClipboard).toHaveBeenCalledWith(
 				expect.stringContaining('reset-tok-abc'),
 			);
 			expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument();

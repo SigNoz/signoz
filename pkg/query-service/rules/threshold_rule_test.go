@@ -36,7 +36,7 @@ func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 		AlertName: "Eval Backward Compatibility Test without recovery target",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -152,7 +152,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -206,7 +206,7 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -267,7 +267,7 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -328,7 +328,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 		AlertName: "Links to traces test",
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -382,7 +382,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},

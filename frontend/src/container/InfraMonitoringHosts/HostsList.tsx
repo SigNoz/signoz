@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -11,15 +10,16 @@ import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
 import {
-	getFiltersFromParams,
-	getOrderByFromParams,
-} from 'container/InfraMonitoringK8s/commonUtils';
-import { INFRA_MONITORING_K8S_PARAMS_KEYS } from 'container/InfraMonitoringK8s/constants';
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringFiltersHosts,
+	useInfraMonitoringOrderByHosts,
+} from 'container/InfraMonitoringK8s/hooks';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
 import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Filter } from 'lucide-react';
+import { parseAsString, useQueryState } from 'nuqs';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
@@ -35,50 +35,29 @@ function HostsList(): JSX.Element {
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(1);
-	const [filters, setFilters] = useState<IBuilderQuery['filters']>(() => {
-		const filters = getFiltersFromParams(
-			searchParams,
-			INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS,
-		);
-		if (!filters) {
-			return {
-				items: [],
-				op: 'and',
-			};
-		}
-		return filters;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [filters, setFilters] = useInfraMonitoringFiltersHosts();
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderByHosts();
+
 	const [showFilters, setShowFilters] = useState<boolean>(true);
 
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams));
+	const [selectedHostName, setSelectedHostName] = useQueryState(
+		'hostName',
+		parseAsString.withDefault(''),
+	);
 
 	const handleOrderByChange = (
-		orderBy: {
+		orderByValue: {
 			columnName: string;
 			order: 'asc' | 'desc';
 		} | null,
 	): void => {
-		setOrderBy(orderBy);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(orderBy),
-		});
+		setOrderBy(orderByValue);
 	};
-
-	const [selectedHostName, setSelectedHostName] = useState<string | null>(() => {
-		const hostName = searchParams.get('hostName');
-		return hostName || null;
-	});
 
 	const handleHostClick = (hostName: string): void => {
 		setSelectedHostName(hostName);
-		setSearchParams({ ...searchParams, hostName });
 	};
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
@@ -154,12 +133,8 @@ function HostsList(): JSX.Element {
 	const handleFiltersChange = useCallback(
 		(value: IBuilderQuery['filters']): void => {
 			const isNewFilterAdded = value?.items?.length !== filters?.items?.length;
-			setFilters(value);
+			setFilters(value ?? null);
 			handleChangeQueryData('filters', value);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(value),
-			});
 			if (isNewFilterAdded) {
 				setCurrentPage(1);
 
@@ -171,8 +146,7 @@ function HostsList(): JSX.Element {
 				}
 			}
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[filters],
+		[filters, setFilters, setCurrentPage, handleChangeQueryData],
 	);
 
 	useEffect(() => {
@@ -184,7 +158,7 @@ function HostsList(): JSX.Element {
 	}, [data?.payload?.data?.total]);
 
 	const selectedHostData = useMemo(() => {
-		if (!selectedHostName) {
+		if (!selectedHostName?.trim()) {
 			return null;
 		}
 		return (
@@ -260,6 +234,7 @@ function HostsList(): JSX.Element {
 						pageSize={pageSize}
 						setPageSize={setPageSize}
 						setOrderBy={handleOrderByChange}
+						orderBy={orderBy}
 					/>
 				</div>
 			</div>

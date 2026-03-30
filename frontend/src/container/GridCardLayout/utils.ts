@@ -4,6 +4,122 @@ import { isEmpty, isEqual } from 'lodash-es';
 import { Dashboard, Widgets } from 'types/api/dashboard/getAll';
 import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
 
+export type PanelMap = Record<
+	string,
+	{ widgets: Layout[]; collapsed: boolean }
+>;
+
+export interface RowCollapseResult {
+	updatedLayout: Layout[];
+	updatedPanelMap: PanelMap;
+}
+
+/**
+ * Pure function that computes the new layout and panelMap after toggling a
+ * row's collapsed state. All inputs are treated as immutable — no input object
+ * is mutated, so it is safe to pass frozen objects from the zustand store.
+ */
+// eslint-disable-next-line sonarjs/cognitive-complexity
+export function applyRowCollapse(
+	id: string,
+	dashboardLayout: Layout[],
+	currentPanelMap: PanelMap,
+): RowCollapseResult {
+	// Deep-copy the row's own properties so we can mutate our local copy.
+	const rowProperties = {
+		...currentPanelMap[id],
+		widgets: [...(currentPanelMap[id]?.widgets ?? [])],
+	};
+
+	// Shallow-copy each entry's widgets array so inner .map() calls are safe.
+	const updatedPanelMap: PanelMap = Object.fromEntries(
+		Object.entries(currentPanelMap).map(([k, v]) => [
+			k,
+			{ ...v, widgets: [...v.widgets] },
+		]),
+	);
+
+	let updatedDashboardLayout = [...dashboardLayout];
+
+	if (rowProperties.collapsed === true) {
+		// ── EXPAND ──────────────────────────────────────────────────────────────
+		rowProperties.collapsed = false;
+		const widgetsInsideTheRow = rowProperties.widgets;
+
+		let maxY = 0;
+		widgetsInsideTheRow.forEach((w) => {
+			maxY = Math.max(maxY, w.y + w.h);
+		});
+		const currentRowWidget = dashboardLayout.find((w) => w.i === id);
+		if (currentRowWidget && widgetsInsideTheRow.length) {
+			maxY -= currentRowWidget.h + currentRowWidget.y;
+		}
+
+		const idxCurrentRow = dashboardLayout.findIndex((w) => w.i === id);
+		for (let j = idxCurrentRow + 1; j < dashboardLayout.length; j++) {
+			updatedDashboardLayout[j] = {
+				...updatedDashboardLayout[j],
+				y: updatedDashboardLayout[j].y + maxY,
+			};
+			if (updatedPanelMap[updatedDashboardLayout[j].i]) {
+				updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
+					updatedDashboardLayout[j].i
+				].widgets.map((w) => ({ ...w, y: w.y + maxY }));
+			}
+		}
+		updatedDashboardLayout = [...updatedDashboardLayout, ...widgetsInsideTheRow];
+	} else {
+		// ── COLLAPSE ─────────────────────────────────────────────────────────────
+		rowProperties.collapsed = true;
+		const currentIdx = dashboardLayout.findIndex((w) => w.i === id);
+
+		let widgetsInsideTheRow: Layout[] = [];
+		let isPanelMapUpdated = false;
+		for (let j = currentIdx + 1; j < dashboardLayout.length; j++) {
+			if (currentPanelMap[dashboardLayout[j].i]) {
+				rowProperties.widgets = widgetsInsideTheRow;
+				widgetsInsideTheRow = [];
+				isPanelMapUpdated = true;
+				break;
+			} else {
+				widgetsInsideTheRow.push(dashboardLayout[j]);
+			}
+		}
+		if (!isPanelMapUpdated) {
+			rowProperties.widgets = widgetsInsideTheRow;
+		}
+
+		let maxY = 0;
+		widgetsInsideTheRow.forEach((w) => {
+			maxY = Math.max(maxY, w.y + w.h);
+		});
+		const currentRowWidget = dashboardLayout[currentIdx];
+		if (currentRowWidget && widgetsInsideTheRow.length) {
+			maxY -= currentRowWidget.h + currentRowWidget.y;
+		}
+
+		for (let j = currentIdx + 1; j < updatedDashboardLayout.length; j++) {
+			updatedDashboardLayout[j] = {
+				...updatedDashboardLayout[j],
+				y: updatedDashboardLayout[j].y + maxY,
+			};
+			if (updatedPanelMap[updatedDashboardLayout[j].i]) {
+				updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
+					updatedDashboardLayout[j].i
+				].widgets.map((w) => ({ ...w, y: w.y + maxY }));
+			}
+		}
+
+		updatedDashboardLayout = updatedDashboardLayout.filter(
+			(widget) => !rowProperties.widgets.some((w: Layout) => w.i === widget.i),
+		);
+	}
+
+	updatedPanelMap[id] = { ...rowProperties };
+
+	return { updatedLayout: updatedDashboardLayout, updatedPanelMap };
+}
+
 export const removeUndefinedValuesFromLayout = (layout: Layout[]): Layout[] =>
 	layout.map((obj) =>
 		Object.fromEntries(
