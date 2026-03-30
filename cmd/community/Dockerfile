@@ -18,6 +18,10 @@ RUN chmod 755 /root /root/signoz
 
 # Security: run as non-root user
 RUN addgroup --system --gid 1001 signoz && adduser --system --uid 1001 --ingroup signoz signoz
+
+# Create data directory with correct ownership for SQLite database
+RUN mkdir -p /var/lib/signoz && chown signoz:signoz /var/lib/signoz
+
 USER signoz
 
 ENTRYPOINT ["./signoz", "server"]
