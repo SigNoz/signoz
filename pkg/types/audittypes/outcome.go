@@ -1,4 +1,4 @@
-package auditortypes
+package audittypes
 
 import "github.com/SigNoz/signoz/pkg/valuer"
 

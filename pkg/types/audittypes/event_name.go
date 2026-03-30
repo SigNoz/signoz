@@ -1,4 +1,4 @@
-package auditortypes
+package audittypes
 
 // EventName is a typed wrapper for audit event names, ensuring not every
 // string qualifies as an event name.
