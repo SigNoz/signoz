@@ -283,6 +283,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 	missingMetrics := []string{}
+	missingMetricQueries := []string{}
 
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
@@ -375,6 +376,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 					q.logger.DebugContext(ctx, "fetched metric temporalities and types", slog.Any("metric_temporality", metricTemporality), slog.Any("metric_types", metricTypes))
 				}
+				presentAggregations := []qbtypes.MetricAggregation{}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
@@ -385,13 +387,19 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 						continue
 					}
-
+					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
 				}
+				if len(presentAggregations) == 0 {
+					missingMetricQueries = append(missingMetricQueries, spec.Name)
+					steps[spec.Name] = spec.StepInterval
+					continue
+				}
+				spec.Aggregations = presentAggregations
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
@@ -416,8 +424,9 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
 		for _, missingMetricName := range missingMetrics {
 			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
-				nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
+				continue
 			}
+			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
 		}
 		if len(nonExistentMetrics) == 1 {
 			return nil, errors.NewNotFoundf(errors.CodeNotFound, "could not find the metric %s", nonExistentMetrics[0])
@@ -442,7 +451,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	preseededResults := make(map[string]any)
-	for _, name := range missingMetrics { // at this point missing metrics will not have any non existent metrics, only normal ones
+	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
 		switch req.RequestType {
 		case qbtypes.RequestTypeTimeSeries:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
