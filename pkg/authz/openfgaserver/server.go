@@ -132,9 +132,7 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 	for id, tuple := range tupleReq {
 		// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
 		if checkErr := checkResponse.Result[id].GetError(); checkErr != nil {
-			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage,
-				errors.Attr(server.getCheckError(checkErr)),
-			)
+			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
 		}
 
 		response[id] = &authtypes.TupleKeyAuthorization{
