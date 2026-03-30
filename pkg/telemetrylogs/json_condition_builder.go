@@ -3,6 +3,7 @@ package telemetrylogs
 import (
 	"fmt"
 	"slices"
+	"strings"
 
 	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -156,6 +157,47 @@ func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONA
 	return c.buildPrimitiveTerminalCondition(node, operator, value, sb)
 }
 
+func getEmptyValue(elemType telemetrytypes.JSONDataType) any {
+	switch elemType {
+	case telemetrytypes.String:
+		return ""
+	case telemetrytypes.Int64, telemetrytypes.Float64, telemetrytypes.Bool:
+		return 0
+	default:
+		return nil
+	}
+}
+
+func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
+	fieldPath := node.FieldPath()
+	if strings.Contains(fieldPath, telemetrytypes.ArraySepSuffix) {
+		return "", errors.NewInternalf(CodeArrayNavigationFailed, "can not build index condition for array field %s", fieldPath)
+	}
+
+	elemType := node.TerminalConfig.ElemType
+	dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
+	indexedExpr := assumeNotNull(dynamicExpr)
+
+	// switch the operator and value for exists and not exists
+	switch operator {
+	case qbtypes.FilterOperatorExists:
+		operator = qbtypes.FilterOperatorNotEqual
+		value = getEmptyValue(elemType)
+	case qbtypes.FilterOperatorNotExists:
+		operator = qbtypes.FilterOperatorEqual
+		value = getEmptyValue(elemType)
+	default:
+		// do nothing
+	}
+
+	cond, err := c.applyOperator(sb, indexedExpr, operator, value)
+	if err != nil {
+		return "", err
+	}
+
+	return cond, nil
+}
+
 // buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
 // it handles the data type collisions and utilizes indexes for the condition if available
 func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
@@ -166,18 +208,17 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 		formattedValue = querybuilder.FormatValueForContains(value)
 	}
 
-	elemType := node.TerminalConfig.ElemType
-	dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, elemType.StringValue())
+	dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.TerminalConfig.ElemType.StringValue())
 	fieldExpr := dynamicExpr
 
-	// if operator is negative and has a value comparison(excluding Exists/Not Exists), we need to assume that the field exists everywhere
+	// if operator is negative and has a value comparison i.e. excluding EXISTS and NOT EXISTS, we need to assume that the field exists everywhere
 	//
 	// Note: here applyNotCondition will return true only if; top level path is being queried and operator is a negative operator
 	// Otherwise this code will be triggered by buildAccessNodeBranches; Where operator would've been already inverted if needed.
 	yes, _ := applyNotCondition(operator)
 	if yes {
 		switch operator {
-		case qbtypes.FilterOperatorExists:
+		case qbtypes.FilterOperatorNotExists:
 			// skip
 		default:
 			fieldExpr = assumeNotNull(dynamicExpr)
@@ -190,46 +231,20 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 	//
 	// Note: Indexing code doesn't get executed for Array Nested fields because they can not be indexed
 	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
-		return index.Type == elemType && index.ColumnExpression == fieldPath
+		return index.Type == node.TerminalConfig.ElemType && index.ColumnExpression == fieldPath
 	})
-	if elemType.IndexSupported && indexed {
-		indexedExpr := assumeNotNull(dynamicExpr)
-		emptyValue := func() any {
-			switch elemType {
-			case telemetrytypes.String:
-				return ""
-			case telemetrytypes.Int64, telemetrytypes.Float64, telemetrytypes.Bool:
-				return 0
-			default:
-				return nil
-			}
-		}()
-
-		// switch the operator and value for exists and not exists
-		switch operator {
-		case qbtypes.FilterOperatorExists:
-			operator = qbtypes.FilterOperatorNotEqual
-			value = emptyValue
-		case qbtypes.FilterOperatorNotExists:
-			operator = qbtypes.FilterOperatorEqual
-			value = emptyValue
-		default:
-			// do nothing
-		}
-
-		indexedExpr, indexedComparisonValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, indexedExpr, operator)
-		cond, err := c.applyOperator(sb, indexedExpr, operator, indexedComparisonValue)
+	if node.TerminalConfig.ElemType.IndexSupported && indexed {
+		indexCond, err := c.terminalIndexedCondition(node, operator, formattedValue, sb)
 		if err != nil {
 			return "", err
 		}
-
 		// if qb has a definitive value, we can skip adding a condition to
 		// check the existence of the path in the json column
-		if value != emptyValue {
-			return cond, nil
+		if value != getEmptyValue(node.TerminalConfig.ElemType) {
+			return indexCond, nil
 		}
 
-		conditions = append(conditions, cond)
+		conditions = append(conditions, indexCond)
 		// Switch operator to EXISTS since indexed paths on assumedNotNull, indexes will always have a default value
 		// So we flip the operator to Exists and filter the rows that actually have the value
 		operator = qbtypes.FilterOperatorExists
