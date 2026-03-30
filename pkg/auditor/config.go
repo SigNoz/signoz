@@ -91,16 +91,16 @@ func NewConfigFactory() factory.ConfigFactory {
 
 func (c Config) Validate() error {
 	if c.BufferSize <= 0 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor buffer_size must be greater than 0")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::buffer_size must be greater than 0")
 	}
 	if c.BatchSize <= 0 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor batch_size must be greater than 0")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::batch_size must be greater than 0")
 	}
 	if c.FlushInterval <= 0 {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor flush_interval must be greater than 0")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::flush_interval must be greater than 0")
 	}
 	if c.BatchSize > c.BufferSize {
-		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor batch_size must not exceed buffer_size")
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::batch_size must not exceed auditor::buffer_size")
 	}
 	return nil
 }
