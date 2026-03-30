@@ -190,7 +190,8 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 		// do nothing
 	}
 
-	cond, err := c.applyOperator(sb, indexedExpr, operator, value)
+	indexedExpr, formattedValue := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, indexedExpr, operator)
+	cond, err := c.applyOperator(sb, indexedExpr, operator, formattedValue)
 	if err != nil {
 		return "", err
 	}
@@ -203,29 +204,6 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	fieldPath := node.FieldPath()
 	conditions := []string{}
-	var formattedValue any = value
-	if operator.IsStringSearchOperator() {
-		formattedValue = querybuilder.FormatValueForContains(value)
-	}
-
-	dynamicExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.TerminalConfig.ElemType.StringValue())
-	fieldExpr := dynamicExpr
-
-	// if operator is negative and has a value comparison i.e. excluding EXISTS and NOT EXISTS, we need to assume that the field exists everywhere
-	//
-	// Note: here applyNotCondition will return true only if; top level path is being queried and operator is a negative operator
-	// Otherwise this code will be triggered by buildAccessNodeBranches; Where operator would've been already inverted if needed.
-	yes, _ := applyNotCondition(operator)
-	if yes {
-		switch operator {
-		case qbtypes.FilterOperatorNotExists:
-			// skip
-		default:
-			fieldExpr = assumeNotNull(dynamicExpr)
-		}
-	}
-
-	fieldExpr, formattedValue = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, fieldExpr, operator)
 
 	// utilize indexes for the condition if available
 	//
@@ -234,13 +212,13 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 		return index.Type == node.TerminalConfig.ElemType && index.ColumnExpression == fieldPath
 	})
 	if node.TerminalConfig.ElemType.IndexSupported && indexed {
-		indexCond, err := c.terminalIndexedCondition(node, operator, formattedValue, sb)
+		indexCond, err := c.terminalIndexedCondition(node, operator, value, sb)
 		if err != nil {
 			return "", err
 		}
 		// if qb has a definitive value, we can skip adding a condition to
 		// check the existence of the path in the json column
-		if value != getEmptyValue(node.TerminalConfig.ElemType) {
+		if value != nil && value != getEmptyValue(node.TerminalConfig.ElemType) {
 			return indexCond, nil
 		}
 
@@ -250,6 +228,30 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 		operator = qbtypes.FilterOperatorExists
 	}
 
+	var formattedValue any = value
+	if operator.IsStringSearchOperator() {
+		formattedValue = querybuilder.FormatValueForContains(value)
+	}
+
+	fieldExpr := fmt.Sprintf("dynamicElement(%s, '%s')", fieldPath, node.TerminalConfig.ElemType.StringValue())
+
+	// if operator is negative and has a value comparison i.e. excluding EXISTS and NOT EXISTS, we need to assume that the field exists everywhere
+	//
+	// Note: here applyNotCondition will return true only if; top level path is being queried and operator is a negative operator
+	// Otherwise this code will be triggered by buildAccessNodeBranches; Where operator would've been already inverted if needed.
+	if node.IsNonNestedPath() {
+		yes, _ := applyNotCondition(operator)
+		if yes {
+			switch operator {
+			case qbtypes.FilterOperatorNotExists:
+				// skip
+			default:
+				fieldExpr = assumeNotNull(fieldExpr)
+			}
+		}
+	}
+
+	fieldExpr, formattedValue = querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, formattedValue, fieldExpr, operator)
 	cond, err := c.applyOperator(sb, fieldExpr, operator, formattedValue)
 	if err != nil {
 		return "", err

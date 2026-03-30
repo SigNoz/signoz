@@ -791,7 +791,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 			},
 			expected: TestExpected{
 				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) <> ? AND dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), nil, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		// ── indexed not-equal: assumeNotNull wrapping + no path index ─────────
@@ -819,8 +819,8 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 				Limit:  10,
 			},
 			expected: TestExpected{
-				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) IS NOT NULL))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), nil, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((assumeNotNull(dynamicElement(body_v2.`user.name`, 'String')) = ? AND dynamicElement(body_v2.`user.name`, 'String') IS NOT NULL))",
+				Args:        []any{uint64(1747945619), uint64(1747983448), "", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 
