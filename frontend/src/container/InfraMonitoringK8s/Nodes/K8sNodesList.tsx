@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -24,6 +24,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
@@ -437,7 +439,25 @@ function K8sNodesList({
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
 	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
-	const handleRowClick = (record: K8sNodesRowData): void => {
+	const openNodeInNewTab = (record: K8sNodesRowData): void => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
+	};
+
+	const handleRowClick = (
+		record: K8sNodesRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			openNodeInNewTab(record);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setSelectedNodeUID(record.nodeUID);
@@ -502,8 +522,14 @@ function K8sNodesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(
+							record,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (isModifierKeyPressed(event)) {
+									openNodeInNewTab(record);
+									return;
+								}
 								setSelectedNodeUID(record.nodeUID);
 							},
 							className: 'expanded-clickable-row',
@@ -694,8 +720,10 @@ function K8sNodesList({
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(
+					record,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{
