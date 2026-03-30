@@ -16,7 +16,7 @@ import (
 
 func TestProviderStartStop(t *testing.T) {
 	providerSettings := instrumentationtest.New().ToProviderSettings()
-	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "postgres"}, sqlmock.QueryMatcherRegexp)
+	sqlstore := sqlstoretest.New(sqlstore.Config{Provider: "sqlite"}, sqlmock.QueryMatcherRegexp)
 
 	expectedModel := `module base 
 	type user`
@@ -26,12 +26,9 @@ func TestProviderStartStop(t *testing.T) {
 	storeRows := sqlstore.Mock().NewRows([]string{"id", "name", "created_at", "updated_at"}).AddRow("01K3V0NTN47MPTMEV1PD5ST6ZC", "signoz", time.Now(), time.Now())
 	sqlstore.Mock().ExpectQuery("SELECT (.+) FROM store WHERE (.+)").WillReturnRows(storeRows)
 
-	authModelCollectionRows := sqlstore.Mock().NewRows([]string{"authorization_model_id"}).AddRow("01K44QQKXR6F729W160NFCJT58")
-	sqlstore.Mock().ExpectQuery("SELECT DISTINCT (.+)  FROM authorization_model WHERE store (.+) ORDER BY (.+)").WillReturnRows(authModelCollectionRows)
-
-	modelRows := sqlstore.Mock().NewRows([]string{"authorization_model_id", "schema_version", "type", "type_definition", "serialized_protobuf"}).
-		AddRow("01K44QQKXR6F729W160NFCJT58", "1.1", "", "", "")
-	sqlstore.Mock().ExpectQuery("SELECT authorization_model_id, schema_version, type, type_definition, serialized_protobuf FROM authorization_model WHERE authorization_model_id = (.+)  AND store = (.+)").WithArgs("01K44QQKXR6F729W160NFCJT58", "01K3V0NTN47MPTMEV1PD5ST6ZC").WillReturnRows(modelRows)
+	authModelRows := sqlstore.Mock().NewRows([]string{"authorization_model_id", "schema_version", "serialized_protobuf"}).
+		AddRow("01K44QQKXR6F729W160NFCJT58", "1.1", []byte(""))
+	sqlstore.Mock().ExpectQuery("SELECT (.+) FROM authorization_model WHERE (.+)").WillReturnRows(authModelRows)
 
 	sqlstore.Mock().ExpectExec("INSERT INTO authorization_model (.+) VALUES (.+)").WillReturnResult(sqlmock.NewResult(1, 1))
 
