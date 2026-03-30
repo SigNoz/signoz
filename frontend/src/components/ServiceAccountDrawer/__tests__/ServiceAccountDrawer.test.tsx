@@ -37,10 +37,10 @@ const activeAccountResponse = {
 	updatedAt: '2026-01-02T00:00:00Z',
 };
 
-const disabledAccountResponse = {
+const deletedAccountResponse = {
 	...activeAccountResponse,
 	id: 'sa-2',
-	status: 'DISABLED',
+	status: 'DELETED',
 };
 
 function renderDrawer(
@@ -219,7 +219,7 @@ describe('ServiceAccountDrawer', () => {
 	it('deleted account shows read-only name, no Save button, no Delete button', async () => {
 		server.use(
 			rest.get('*/api/v1/service_accounts/sa-2', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: disabledAccountResponse })),
+				res(ctx.status(200), ctx.json({ data: deletedAccountResponse })),
 			),
 			rest.get('*/api/v1/service_accounts/sa-2/keys', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
