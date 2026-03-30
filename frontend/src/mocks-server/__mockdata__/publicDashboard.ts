@@ -1,11 +1,10 @@
-import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
 export const publishedPublicDashboardMeta = {
 	status: 'success',
 	data: {
 		timeRangeEnabled: true,
-		defaultTimeRange: DEFAULT_TIME_RANGE,
+		defaultTimeRange: '30m',
 		publicPath: '/public/dashboard/019ac98e-383f-7e9f-b716-d15bcb6be4bb',
 	},
 };
@@ -171,7 +170,7 @@ export const publicDashboardResponse = {
 		},
 		publicDashboard: {
 			timeRangeEnabled: true,
-			defaultTimeRange: DEFAULT_TIME_RANGE,
+			defaultTimeRange: '30m',
 			publicPath: '/public/dashboard/019ad04e-8591-7013-879b-a2af376e4708',
 		},
 	},
