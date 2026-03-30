@@ -235,9 +235,7 @@ def test_update_account_after_checkin_preserves_connected_status(
     )
     assert list_response.status_code == HTTPStatus.OK
     accounts_before = list_response.json()["data"]["accounts"]
-    found_before = next(
-        (a for a in accounts_before if a["id"] == account_id), None
-    )
+    found_before = next((a for a in accounts_before if a["id"] == account_id), None)
     assert found_before is not None, "Account should be listed after check-in"
 
     # 4. Update account config
@@ -264,9 +262,7 @@ def test_update_account_after_checkin_preserves_connected_status(
     )
     assert list_response.status_code == HTTPStatus.OK
     accounts_after = list_response.json()["data"]["accounts"]
-    found_after = next(
-        (a for a in accounts_after if a["id"] == account_id), None
-    )
+    found_after = next((a for a in accounts_after if a["id"] == account_id), None)
     assert (
         found_after is not None
     ), "Account must still be listed after config update (account_id should not be reset)"
@@ -276,12 +272,10 @@ def test_update_account_after_checkin_preserves_connected_status(
     assert (
         found_after["agentReport"] is not None
     ), "agentReport should be preserved after update"
-    assert found_after["config"]["aws"]["regions"] == updated_regions, (
-        "Config should reflect the update"
-    )
     assert (
-        found_after["removedAt"] is None
-    ), "removedAt should still be null"
+        found_after["config"]["aws"]["regions"] == updated_regions
+    ), "Config should reflect the update"
+    assert found_after["removedAt"] is None, "removedAt should still be null"
 
 
 def test_disconnect_account(
