@@ -8,7 +8,9 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"go.opentelemetry.io/otel/attribute"
 	"go.opentelemetry.io/otel/metric"
+	"go.opentelemetry.io/otel/trace"
 )
 
 // Batcher buffers audit events and flushes them in batches.
@@ -90,11 +92,15 @@ func (b *Batcher) Start(ctx context.Context) error {
 // Add enqueues an audit event for batched export.
 // If the buffer is full the event is dropped and a warning is logged.
 func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
+	ctx, span := b.settings.Tracer().Start(ctx, "auditorbatcher.Add", trace.WithAttributes(attribute.String("audit.event_name", event.EventName.String())))
+	defer span.End()
+
 	b.queueMtx.Lock()
 	defer b.queueMtx.Unlock()
 
 	if len(b.queue) >= b.config.BufferSize {
 		b.metrics.eventsDropped.Add(ctx, 1)
+		span.SetAttributes(attribute.Bool("audit.dropped", true))
 		b.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("buffer_size", b.config.BufferSize))
 		return
 	}
