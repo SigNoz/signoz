@@ -1,6 +1,5 @@
 import { useCallback } from 'react';
 import { Badge } from '@signozhq/badge';
-import { Callout } from '@signozhq/callout';
 import { LockKeyhole } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -9,6 +8,9 @@ import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
+
+import SaveErrorItem from './SaveErrorItem';
+import type { SaveError } from './utils';
 
 interface OverviewTabProps {
 	account: ServiceAccountRow;
@@ -22,7 +24,7 @@ interface OverviewTabProps {
 	rolesError?: boolean;
 	rolesErrorObj?: APIError | undefined;
 	onRefetchRoles?: () => void;
-	saveErrors?: string[];
+	saveErrors?: SaveError[];
 }
 
 function OverviewTab({
@@ -156,19 +158,14 @@ function OverviewTab({
 
 			{saveErrors.length > 0 && (
 				<div className="sa-drawer__save-errors">
-					<Callout
-						type="error"
-						size="small"
-						showIcon
-						message="Failed to save changes"
-						description={
-							<ul className="sa-drawer__save-errors-list">
-								{saveErrors.map((errMsg) => (
-									<li key={errMsg}>{errMsg}</li>
-								))}
-							</ul>
-						}
-					/>
+					{saveErrors.map(({ context, apiError, onRetry }) => (
+						<SaveErrorItem
+							key={context}
+							context={context}
+							apiError={apiError}
+							onRetry={onRetry}
+						/>
+					))}
 				</div>
 			)}
 		</>

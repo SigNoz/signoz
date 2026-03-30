@@ -11,6 +11,7 @@ import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 export interface RoleUpdateFailure {
 	roleName: string;
 	error: unknown;
+	onRetry: () => Promise<void>;
 }
 
 interface UseServiceAccountRoleManagerResult {
@@ -36,6 +37,14 @@ export function useServiceAccountRoleManager(
 	const { mutateAsync: createRole } = useCreateServiceAccountRole();
 	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole();
 
+	const invalidateRoles = useCallback(
+		() =>
+			queryClient.invalidateQueries(
+				getGetServiceAccountRolesQueryKey({ id: accountId }),
+			),
+		[accountId, queryClient],
+	);
+
 	const applyDiff = useCallback(
 		async (
 			localRoleIds: string[],
@@ -56,43 +65,44 @@ export function useServiceAccountRoleManager(
 				(r) => r.id && !desiredRoleIds.has(r.id),
 			);
 
-			const addedPromises = addedRoles.map((role) =>
-				createRole({
-					pathParams: { id: accountId },
-					data: { id: role.id },
-				}),
+			const allOperations = [
+				...addedRoles.map((role) => ({
+					role,
+					run: (): ReturnType<typeof createRole> =>
+						createRole({ pathParams: { id: accountId }, data: { id: role.id } }),
+				})),
+				...removedRoles.map((role) => ({
+					role,
+					run: (): ReturnType<typeof deleteRole> =>
+						deleteRole({ pathParams: { id: accountId, rid: role.id } }),
+				})),
+			];
+
+			const results = await Promise.allSettled(
+				allOperations.map((op) => op.run()),
 			);
 
-			const removedPromises = removedRoles.map((role) =>
-				deleteRole({
-					pathParams: { id: accountId, rid: role.id },
-				}),
-			);
+			await invalidateRoles();
 
-			const allSettled = await Promise.allSettled([
-				...addedPromises,
-				...removedPromises,
-			]);
-
-			const allRoles = [...addedRoles, ...removedRoles];
 			const failures: RoleUpdateFailure[] = [];
-			allSettled.forEach((result, index) => {
+			results.forEach((result, index) => {
 				if (result.status === 'rejected') {
+					const { role, run } = allOperations[index];
 					failures.push({
-						roleName: allRoles[index]?.name ?? 'unknown',
+						roleName: role.name ?? 'unknown',
 						error: result.reason,
+						onRetry: async (): Promise<void> => {
+							await run();
+							await invalidateRoles();
+						},
 					});
 				}
 			});
 
-			await queryClient.invalidateQueries(
-				getGetServiceAccountRolesQueryKey({ id: accountId }),
-			);
-
 			return failures;
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-		[accountId, currentRoles, createRole, deleteRole, queryClient],
+		[accountId, currentRoles, createRole, deleteRole, invalidateRoles],
 	);
 
 	return {

@@ -32,12 +32,14 @@ import {
 	parseAsStringEnum,
 	useQueryState,
 } from 'nuqs';
+import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';
 import OverviewTab from './OverviewTab';
+import type { SaveError } from './utils';
 import { ServiceAccountDrawerTab } from './utils';
 
 import './ServiceAccountDrawer.styles.scss';
@@ -81,7 +83,7 @@ function ServiceAccountDrawer({
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
-	const [saveErrors, setSaveErrors] = useState<string[]>([]);
+	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
 
 	const queryClient = useQueryClient();
 
@@ -154,6 +156,59 @@ function ServiceAccountDrawer({
 
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
 
+	const toSaveApiError = useCallback(
+		(err: unknown): APIError =>
+			convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
+			toAPIError(err as AxiosError<RenderErrorResponseDTO>),
+		[],
+	);
+
+	const retryNameUpdate = useCallback(async (): Promise<void> => {
+		if (!account) {
+			return;
+		}
+		try {
+			await updateMutateAsync({
+				pathParams: { id: account.id },
+				data: { name: localName },
+			});
+			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
+			refetchAccount();
+			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+		} catch (err) {
+			setSaveErrors((prev) =>
+				prev.map((e) =>
+					e.context === 'Name update' ? { ...e, apiError: toSaveApiError(err) } : e,
+				),
+			);
+		}
+	}, [
+		account,
+		localName,
+		updateMutateAsync,
+		refetchAccount,
+		queryClient,
+		toSaveApiError,
+	]);
+	const makeRoleRetry = useCallback(
+		(
+			context: string,
+			rawRetry: () => Promise<void>,
+		) => async (): Promise<void> => {
+			try {
+				await rawRetry();
+				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+			} catch (err) {
+				setSaveErrors((prev) =>
+					prev.map((e) =>
+						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+					),
+				);
+			}
+		},
+		[toSaveApiError],
+	);
+
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
 			return;
@@ -169,24 +224,25 @@ function ServiceAccountDrawer({
 				applyDiff(localRoles, availableRoles),
 			]);
 
-			const errors: string[] = [];
+			const errors: SaveError[] = [];
 
 			if (nameResult.status === 'rejected') {
-				const apiError = convertToApiError(
-					nameResult.reason as AxiosError<RenderErrorResponseDTO>,
-				);
-				const message = apiError?.getErrorMessage() ?? 'Unknown error';
-				errors.push(`Name: ${message}`);
+				errors.push({
+					context: 'Name update',
+					apiError: toSaveApiError(nameResult.reason),
+					onRetry: retryNameUpdate,
+				});
 			}
 
 			const roleFailures: RoleUpdateFailure[] =
 				rolesResult.status === 'fulfilled' ? rolesResult.value : [];
 			for (const failure of roleFailures) {
-				const apiError = convertToApiError(
-					failure.error as AxiosError<RenderErrorResponseDTO>,
-				);
-				const message = apiError?.getErrorMessage() ?? 'Unknown error';
-				errors.push(`Role '${failure.roleName}': ${message}`);
+				const context = `Role '${failure.roleName}'`;
+				errors.push({
+					context,
+					apiError: toSaveApiError(failure.error),
+					onRetry: makeRoleRetry(context, failure.onRetry),
+				});
 			}
 
 			if (errors.length > 0) {
@@ -214,6 +270,9 @@ function ServiceAccountDrawer({
 		refetchAccount,
 		onSuccess,
 		queryClient,
+		toSaveApiError,
+		retryNameUpdate,
+		makeRoleRetry,
 	]);
 
 	const handleClose = useCallback((): void => {
