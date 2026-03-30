@@ -201,7 +201,7 @@ func (r *HavingExpressionRewriter) preSubstituteComplexKeys(expression string) s
 	type kv struct{ k, v string }
 	var pairs []kv
 	for k, v := range r.columnMap {
-		if isNestedFunctionCallKey(k) {
+		if isComplexKey(k) {
 			pairs = append(pairs, kv{k, v})
 		}
 	}
@@ -216,25 +216,37 @@ func (r *HavingExpressionRewriter) preSubstituteComplexKeys(expression string) s
 	return expression
 }
 
-// isNestedFunctionCallKey returns true for keys that look like a function call whose
-// argument contains another function call (e.g. "avg(sum(cpu_usage))").
-func isNestedFunctionCallKey(key string) bool {
-	idx := strings.IndexByte(key, '(')
-	if idx < 0 {
-		return false
+// isComplexKey returns true for keys that the ANTLR grammar cannot parse directly and
+// therefore need regex pre-substitution before parsing. This covers:
+//   - Nested function calls: "avg(sum(cpu_usage))" — the functionArg rule only accepts IDENTIFIER.
+//   - Keys containing quoted strings: "countif(level = \"error\")" — the grammar has no string-literal token.
+func isComplexKey(key string) bool {
+	if strings.ContainsAny(key, `'"`) {
+		return true
 	}
-	return strings.ContainsRune(key[idx+1:], '(')
+	_, after, found := strings.Cut(key, "(")
+	return found && strings.ContainsRune(after, '(')
 }
 
 // rewriteAndValidate is the single-pass implementation used by all RewriteFor* methods.
 //
 // Validation layers:
-//  1. Quoted string literals detected in the expression → descriptive error.
+//  0. Complex columnMap keys (nested calls, quoted-string arguments) are substituted via
+//     regex before parsing, so references like countif(level="error") survive into step 1.
+//  1. Quoted string literals that remain after step 0 are not valid aggregation references
+//     → descriptive error ("aggregator results are numeric").
 //  2. The visitor runs on the parse tree, rewriting and collecting invalid references.
 //     Unknown references (including unrecognised function calls) → lists valid references.
 //  3. ANTLR syntax errors → error with messages referencing the original token names.
 func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
-	// Layer 1 – reject quoted string literals.
+	// Save the user-visible expression before pre-substitution for use in suggestions.
+	original := strings.TrimSpace(expression)
+
+	// Pre-substitute any columnMap keys that the grammar cannot parse (nested calls,
+	// quoted-string arguments, etc.) before checking for bare string literals.
+	expression = r.preSubstituteComplexKeys(expression)
+
+	// Layer 1 – reject quoted string literals that were not part of a valid aggregation key.
 	for _, ch := range expression {
 		if ch == '\'' || ch == '"' {
 			return "", errors.NewInvalidInputf(
@@ -243,9 +255,6 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			).WithAdditional("Aggregator results are numeric")
 		}
 	}
-
-	// Pre-substitute any columnMap keys that the grammar cannot parse (nested calls).
-	expression = r.preSubstituteComplexKeys(expression)
 
 	// Parse the expression once.
 	input := antlr.NewInputStream(expression)
@@ -299,11 +308,93 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 		if detail == "" {
 			detail = "check the expression syntax"
 		}
+		additional := []string{detail}
+		// For single-error expressions, try to produce an actionable suggestion.
+		if len(allSyntaxErrors) == 1 {
+			if s := havingSuggestion(allSyntaxErrors[0], original); s != "" {
+				additional = append(additional, "Suggestion: `"+s+"`")
+			}
+		}
 		return "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Syntax error in `Having` expression",
-		).WithAdditional(detail)
+		).WithAdditional(additional...)
 	}
 
 	return result, nil
+}
+
+// havingSuggestion returns a corrected expression string to show as a suggestion when
+// the error matches a well-known single-mistake pattern, or "" when no suggestion
+// can be formed. Only call this when there is exactly one syntax error.
+//
+// Recognised patterns (all produce a minimal, valid completion):
+//  1. Bare aggregation — comparison operator expected at EOF:    count()            → count() > 0
+//  2. Missing right operand after comparison op at EOF:          count() >          → count() > 0
+//  3. Unclosed parenthesis — only ) expected at EOF:             (total > 100       → (total > 100)
+//  4. Dangling AND/OR at end of expression:                      total > 100 AND    → total > 100
+//  5. Leading OR at position 0:                                  OR total > 100     → total > 100
+func havingSuggestion(se *SyntaxErr, original string) string {
+	trimmed := strings.TrimSpace(original)
+	upper := strings.ToUpper(trimmed)
+
+	if se.TokenTxt == "EOF" {
+		// Pattern 1: bare aggregation reference — comparison operator is expected.
+		// e.g.  count()  →  count() > 0
+		if expectedContains(se, ">") {
+			return trimmed + " > 0"
+		}
+
+		// Pattern 2: comparison operator already written but right operand missing.
+		// e.g.  count() >  →  count() > 0
+		if expectedContains(se, "number") && endsWithComparisonOp(trimmed) {
+			return trimmed + " 0"
+		}
+
+		// Pattern 3: unclosed parenthesis — only ) (and possibly ,) expected.
+		// e.g.  (total > 100 AND count() < 500  →  (total > 100 AND count() < 500)
+		if expectedContains(se, ")") && !expectedContains(se, "number") {
+			return trimmed + ")"
+		}
+
+		// Pattern 4: dangling AND or OR at end of expression.
+		// e.g.  total > 100 AND  →  total > 100
+		if strings.HasSuffix(upper, " AND") {
+			return strings.TrimSpace(trimmed[:len(trimmed)-4])
+		}
+		if strings.HasSuffix(upper, " OR") {
+			return strings.TrimSpace(trimmed[:len(trimmed)-3])
+		}
+
+		return ""
+	}
+
+	// Pattern 5: leading OR at position 0.
+	// e.g.  OR total > 100  →  total > 100
+	if se.TokenTxt == "'OR'" && se.Col == 0 && strings.HasPrefix(upper, "OR ") {
+		return strings.TrimSpace(trimmed[3:])
+	}
+
+	return ""
+}
+
+// expectedContains reports whether label is present in se.Expected.
+func expectedContains(se *SyntaxErr, label string) bool {
+	for _, e := range se.Expected {
+		if e == label {
+			return true
+		}
+	}
+	return false
+}
+
+// endsWithComparisonOp reports whether s ends with a comparison operator token
+// (longer operators are checked first to avoid ">=" being matched by ">").
+func endsWithComparisonOp(s string) bool {
+	for _, op := range []string{">=", "<=", "!=", "<>", "==", ">", "<", "="} {
+		if strings.HasSuffix(s, op) {
+			return true
+		}
+	}
+	return false
 }

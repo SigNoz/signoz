@@ -18,17 +18,49 @@ func toTraceAggregations(logs []qbtypes.LogAggregation) []qbtypes.TraceAggregati
 	return out
 }
 
-func TestRewriteForLogsAndTraces(t *testing.T) {
-	tests := []struct {
-		name           string
-		expression     string
-		aggregations   []qbtypes.LogAggregation
-		wantExpression string
-		wantErr        bool
-		wantErrMsg     string
-		wantAdditional []string
-	}{
-		// --- Happy path: reference types (alias, expression, __result variants) ---
+type logsAndTracesTestCase struct {
+	name           string
+	expression     string
+	aggregations   []qbtypes.LogAggregation
+	wantExpression string
+	wantErr        bool
+	wantErrMsg     string
+	wantAdditional []string
+}
+
+func runLogsAndTracesTests(t *testing.T, tests []logsAndTracesTestCase) {
+	t.Helper()
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			r := NewHavingExpressionRewriter()
+			traceAggs := toTraceAggregations(tt.aggregations)
+			gotLogs, errLogs := r.RewriteForLogs(tt.expression, tt.aggregations)
+			r2 := NewHavingExpressionRewriter()
+			gotTraces, errTraces := r2.RewriteForTraces(tt.expression, traceAggs)
+			if tt.wantErr {
+				require.Error(t, errLogs)
+				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
+				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
+				assert.Equal(t, tt.wantAdditional, additionalLogs)
+				require.Error(t, errTraces)
+				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
+				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
+				assert.Equal(t, tt.wantAdditional, additionalTraces)
+			} else {
+				require.NoError(t, errLogs)
+				assert.Equal(t, tt.wantExpression, gotLogs)
+				require.NoError(t, errTraces)
+				assert.Equal(t, tt.wantExpression, gotTraces)
+			}
+		})
+	}
+}
+
+// TestRewriteForLogsAndTraces_ReferenceTypes covers the different ways an aggregation
+// result can be referenced in a HAVING expression: by alias, by expression text, by
+// __result shorthand, and by __resultN index.
+func TestRewriteForLogsAndTraces_ReferenceTypes(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
 			name:       "alias reference",
 			expression: "total_logs > 1000",
@@ -70,9 +102,43 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 > 100",
 		},
-		// --- Happy path: boolean logic (AND, OR, NOT, parentheses, implicit AND) ---
 		{
-			name:       "two comparisons without boolean connector",
+			name:       "reserved keyword as alias",
+			expression: "sum > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "sum"},
+			},
+			wantExpression: "__result_0 > 100",
+		},
+		{
+			name:       "comparison between two aggregation references",
+			expression: "error_count > warn_count AND errors = warnings",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(errors)", Alias: "error_count"},
+				{Expression: "sum(warnings)", Alias: "warn_count"},
+				{Expression: "sum(errors)", Alias: "errors"},
+				{Expression: "sum(warnings)", Alias: "warnings"},
+			},
+			wantExpression: "__result_0 > __result_1 AND __result_2 = __result_3",
+		},
+		{
+			name:       "mixed alias and expression reference",
+			expression: "error_count > 10 AND count() < 1000",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+				{Expression: "countIf(level='error')", Alias: "error_count"},
+			},
+			wantExpression: "__result_1 > 10 AND __result_0 < 1000",
+		},
+	})
+}
+
+// TestRewriteForLogsAndTraces_BooleanOperators covers explicit AND/OR/NOT, implicit AND
+// (adjacent comparisons), parenthesised groups, and associated error cases.
+func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
+		{
+			name:       "implicit AND between two comparisons",
 			expression: "total > 100 count() < 500",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
@@ -89,13 +155,24 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantExpression: "(__result_0 > 100 AND __result_1 < 500) OR __result_0 > 10000",
 		},
 		{
-			name:       "mixed alias and expression reference",
-			expression: "error_count > 10 AND count() < 1000",
+			name:       "OR with three operands",
+			expression: "a > 1 OR b > 2 OR c > 3",
 			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()"},
-				{Expression: "countIf(level='error')", Alias: "error_count"},
+				{Expression: "count()", Alias: "a"},
+				{Expression: "count()", Alias: "b"},
+				{Expression: "count()", Alias: "c"},
 			},
-			wantExpression: "__result_1 > 10 AND __result_0 < 1000",
+			wantExpression: "__result_0 > 1 OR __result_1 > 2 OR __result_2 > 3",
+		},
+		{
+			name:       "nested parentheses with OR and AND",
+			expression: "(a > 10 OR b > 20) AND c > 5",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "a"},
+				{Expression: "count()", Alias: "b"},
+				{Expression: "count()", Alias: "c"},
+			},
+			wantExpression: "(__result_0 > 10 OR __result_1 > 20) AND __result_2 > 5",
 		},
 		{
 			name:       "NOT on grouped expression",
@@ -106,7 +183,98 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "NOT (__result_0 > 100 AND __result_1 < 500)",
 		},
-		// --- Happy path: arithmetic operators (+, -, *, /, %) ---
+		{
+			name:       "NOT with single comparison",
+			expression: "NOT (total > 100)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "NOT (__result_0 > 100)",
+		},
+		{
+			name:       "NOT without parentheses on function call",
+			expression: "NOT count() > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "NOT (__result_0 > 100)",
+		},
+		{
+			name:       "NOT without parentheses on alias",
+			expression: "NOT total > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "NOT (__result_0 > 100)",
+		},
+		// Error cases
+		{
+			name:       "double NOT without valid grouping",
+			expression: "NOT NOT (count() > 100)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:4 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'NOT'"},
+		},
+		{
+			name:       "dangling AND at end",
+			expression: "total_logs > 100 AND",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:20 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF", "Suggestion: `total_logs > 100`"},
+		},
+		{
+			name:       "dangling OR at start",
+			expression: "OR total_logs > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'", "Suggestion: `total_logs > 100`"},
+		},
+		{
+			name:       "dangling OR at end",
+			expression: "total > 100 OR",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:14 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF", "Suggestion: `total > 100`"},
+		},
+		{
+			name:       "consecutive AND operators",
+			expression: "total_logs > 100 AND AND count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:21 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'AND'"},
+		},
+		{
+			name:       "AND followed immediately by OR",
+			expression: "total > 100 AND OR count() < 50",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:16 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'"},
+		},
+	})
+}
+
+// TestRewriteForLogsAndTraces_Arithmetic covers arithmetic operators (+, -, *, /, %),
+// all comparison operators, and numeric literal forms.
+func TestRewriteForLogsAndTraces_Arithmetic(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
 			name:       "arithmetic on aggregations",
 			expression: "sum_a + sum_b > 1000",
@@ -116,7 +284,6 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 + __result_1 > 1000",
 		},
-		// --- Happy path: comparison operators (=, ==, !=, <>, <, <=, >, >=) ---
 		{
 			name:       "comparison operators != <> ==",
 			expression: "total != 0 AND count() <> 0 AND total == 100",
@@ -133,9 +300,8 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 < 100 AND __result_0 <= 500 AND __result_0 > 10 AND __result_0 >= 50",
 		},
-		// --- Happy path: numeric literals (negative, float, scientific notation) ---
 		{
-			name:       "numeric literals",
+			name:       "numeric literals: negative, float, scientific notation",
 			expression: "total > -10 AND total > 500.5 AND total > 1e6",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "total"},
@@ -143,7 +309,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantExpression: "__result_0 > -10 AND __result_0 > 500.5 AND __result_0 > 1e6",
 		},
 		{
-			name:       "arithmetic modulo subtraction division multiplication",
+			name:       "arithmetic: modulo, subtraction, division, multiplication",
 			expression: "cnt % 10 = 0 AND cnt - 10 > 0 AND errors / total > 0.05 AND cnt * 2 > 100",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()", Alias: "cnt"},
@@ -152,84 +318,32 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "__result_0 % 10 = 0 AND __result_0 - 10 > 0 AND __result_1 / __result_2 > 0.05 AND __result_0 * 2 > 100",
 		},
-		// --- Happy path: OR with multiple operands ---
+	})
+}
+
+// TestRewriteForLogsAndTraces_QuotedStringKeys covers aggregation expressions that
+// contain quoted string arguments (e.g. countIf(level='error')). These keys cannot
+// be parsed by the ANTLR grammar directly and are pre-substituted before parsing.
+// Both single-quoted and double-quoted variants are tested, including implicit AND.
+func TestRewriteForLogsAndTraces_QuotedStringKeys(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
-			name:       "OR with three operands",
-			expression: "a > 1 OR b > 2 OR c > 3",
+			// Implicit AND: two adjacent comparisons are joined with AND by the grammar.
+			// Both single-quoted and double-quoted strings in aggregation expressions are pre-substituted.
+			name:       "quoted string in aggregation expression referenced directly in having",
+			expression: "countIf(level='error') > 0 countIf(level=\"info\") > 0",
 			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "a"},
-				{Expression: "count()", Alias: "b"},
-				{Expression: "count()", Alias: "c"},
+				{Expression: "countIf(level='error')"},
+				{Expression: `countIf(level="info")`},
 			},
-			wantExpression: "__result_0 > 1 OR __result_1 > 2 OR __result_2 > 3",
+			wantExpression: "__result_0 > 0 AND __result_1 > 0",
 		},
-		{
-			name:       "NOT with single comparison",
-			expression: "NOT (total > 100)",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantExpression: "NOT (__result_0 > 100)",
-		},
-		{
-			name:       "NOT without parentheses",
-			expression: "NOT count() > 100",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()"},
-			},
-			wantExpression: "NOT (__result_0 > 100)",
-		},
-		{
-			name:       "NOT without parentheses on alias",
-			expression: "NOT total > 100",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantExpression: "NOT (__result_0 > 100)",
-		},
-		// --- Error: NOT syntax ---
-		{
-			name:       "double NOT without valid grouping",
-			expression: "NOT NOT (count() > 100)",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:4 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'NOT'"},
-		},
-		{
-			name:       "nested parentheses with OR and AND",
-			expression: "(a > 10 OR b > 20) AND c > 5",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "a"},
-				{Expression: "count()", Alias: "b"},
-				{Expression: "count()", Alias: "c"},
-			},
-			wantExpression: "(__result_0 > 10 OR __result_1 > 20) AND __result_2 > 5",
-		},
-		// --- Happy path: comparison between two aggregation references ---
-		{
-			name:       "comparison between aggregations",
-			expression: "error_count > warn_count AND errors = warnings",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "sum(errors)", Alias: "error_count"},
-				{Expression: "sum(warnings)", Alias: "warn_count"},
-				{Expression: "sum(errors)", Alias: "errors"},
-				{Expression: "sum(warnings)", Alias: "warnings"},
-			},
-			wantExpression: "__result_0 > __result_1 AND __result_2 = __result_3",
-		},
-		// --- Happy path: edge case (reserved keyword used as alias) ---
-		{
-			name:       "reserved keyword as alias",
-			expression: "sum > 100",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "sum"},
-			},
-			wantExpression: "__result_0 > 100",
-		},
-		// --- Happy path: empty or whitespace-only expression ---
+	})
+}
+
+// TestRewriteForLogsAndTraces_EdgeCases covers empty and whitespace-only expressions.
+func TestRewriteForLogsAndTraces_EdgeCases(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
 			name:       "empty expression",
 			expression: "",
@@ -246,111 +360,13 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantExpression: "",
 		},
-		// --- Error: bare operand / missing comparison operator ---
-		{
-			name:       "bare expression (function call)",
-			expression: "count()",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:7 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
-		},
-		{
-			name:       "bare operand without comparison",
-			expression: "total_logs",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
-		},
-		// --- Error: parentheses mismatch (unclosed, unexpected, empty) ---
-		{
-			name:       "unclosed parenthesis",
-			expression: "(total_logs > 100 AND count() < 500",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:35 expecting one of {), ,} but got EOF"},
-		},
-		{
-			name:       "unexpected closing parenthesis",
-			expression: "total_logs > 100)",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:16 extraneous input ')' expecting <EOF>"},
-		},
-		{
-			name:       "dangling AND at end",
-			expression: "total_logs > 100 AND",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:20 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF"},
-		},
-		{
-			name:       "dangling OR at start",
-			expression: "OR total_logs > 100",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'"},
-		},
-		// --- Error: dangling or malformed boolean operators (AND, OR) ---
-		{
-			name:       "consecutive boolean operators",
-			expression: "total_logs > 100 AND AND count() < 500",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total_logs"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:21 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'AND'"},
-		},
-		// --- Error: invalid operand types (string literals, boolean literal) ---
-		{
-			name:       "string literal as comparison value",
-			expression: "sum(bytes) = 'xyz'",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "sum(bytes)"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "`Having` expression contains string literals",
-			wantAdditional: []string{"Aggregator results are numeric"},
-		},
-		{
-			name:       "string literal without quotes as comparison value",
-			expression: "sum(bytes) = xyz",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "sum(bytes)"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [xyz]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(bytes)]"},
-		},
-		{
-			name:       "double-quoted string literal",
-			expression: `total > "threshold"`,
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "`Having` expression contains string literals",
-			wantAdditional: []string{"Aggregator results are numeric"},
-		},
-		// --- Error: invalid or unknown references ---
+	})
+}
+
+// TestRewriteForLogsAndTraces_ErrorInvalidReferences covers errors produced when the
+// expression contains identifiers or function calls that do not match any aggregation.
+func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
 			name:       "unknown identifier",
 			expression: "unknown_alias > 100",
@@ -402,18 +418,16 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantErrMsg:     "Invalid references in `Having` expression: [__result_9]",
 			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
 		},
-		// --- Error: boolean literal as comparison value ---
 		{
-			name:       "boolean literal as comparison value",
-			expression: "count() > true",
+			name:       "__result_1 out of range for single aggregation",
+			expression: "__result_1 > 100",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
 			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {(, ), IDENTIFIER, number} but got 'true'"},
+			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
 		},
-		// --- Error: invalid function calls (cascaded, wrong args) ---
 		{
 			name:       "cascaded function calls",
 			expression: "sum(count()) > 100",
@@ -424,7 +438,76 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
 			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
 		},
-		// --- Error: standalone parentheses ---
+		{
+			name:       "function call with multiple args not in column map",
+			expression: "sum(a, b) > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(a)"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, sum(a)]"},
+		},
+		{
+			name:       "unquoted string value treated as unknown identifier",
+			expression: "sum(bytes) = xyz",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(bytes)"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [xyz]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, sum(bytes)]"},
+		},
+	})
+}
+
+// TestRewriteForLogsAndTraces_ErrorSyntax covers expressions that produce syntax errors:
+// malformed structure (bare operands, mismatched parentheses, missing operators) and
+// invalid operand types (string literals, boolean literals).
+func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
+		// Bare operands
+		{
+			name:       "bare function call without comparison",
+			expression: "count()",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:7 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF", "Suggestion: `count() > 0`"},
+		},
+		{
+			name:       "bare identifier without comparison",
+			expression: "total_logs",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:10 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF", "Suggestion: `total_logs > 0`"},
+		},
+		// Parenthesis mismatches
+		{
+			name:       "unclosed parenthesis",
+			expression: "(total_logs > 100 AND count() < 500",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:35 expecting one of {), ,} but got EOF", "Suggestion: `(total_logs > 100 AND count() < 500)`"},
+		},
+		{
+			name:       "unexpected closing parenthesis",
+			expression: "total_logs > 100)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total_logs"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:16 extraneous input ')' expecting <EOF>"},
+		},
 		{
 			name:       "only opening parenthesis",
 			expression: "(",
@@ -455,7 +538,7 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantErrMsg:     "Syntax error in `Having` expression",
 			wantAdditional: []string{"line 1:1 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got ')'"},
 		},
-		// --- Error: missing comparison operands or operator ---
+		// Missing operands or operator
 		{
 			name:       "missing left operand",
 			expression: "> 100",
@@ -474,10 +557,10 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:9 expecting one of {(, ), IDENTIFIER, number} but got EOF"},
+			wantAdditional: []string{"line 1:9 expecting one of {(, ), IDENTIFIER, number} but got EOF", "Suggestion: `count() > 0`"},
 		},
 		{
-			name:       "missing operator",
+			name:       "missing comparison operator",
 			expression: "count() 100",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
@@ -486,74 +569,38 @@ func TestRewriteForLogsAndTraces(t *testing.T) {
 			wantErrMsg:     "Syntax error in `Having` expression",
 			wantAdditional: []string{"line 1:8 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got '100'"},
 		},
+		// Invalid operand types
 		{
-			name:       "dangling OR at end",
-			expression: "total > 100 OR",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:14 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got EOF"},
-		},
-		{
-			name:       "AND OR without second operand",
-			expression: "total > 100 AND OR count() < 50",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "count()", Alias: "total"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:16 expecting one of {(, ), AND, IDENTIFIER, NOT, number} but got 'OR'"},
-		},
-		// --- Error: invalid function call (not in column map) ---
-		{
-			name:       "function call with multiple args not in column map",
-			expression: "sum(a, b) > 100",
-			aggregations: []qbtypes.LogAggregation{
-				{Expression: "sum(a)"},
-			},
-			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [sum]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(a)]"},
-		},
-		// --- Error: out-of-range __result index ---
-		{
-			name:       "__result_1 out of range for single aggregation",
-			expression: "__result_1 > 100",
+			name:       "boolean literal as comparison value",
+			expression: "count() > true",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
 			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:10 expecting one of {(, ), IDENTIFIER, number} but got 'true'"},
 		},
-	}
-
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			r := NewHavingExpressionRewriter()
-			traceAggs := toTraceAggregations(tt.aggregations)
-			gotLogs, errLogs := r.RewriteForLogs(tt.expression, tt.aggregations)
-			r2 := NewHavingExpressionRewriter()
-			gotTraces, errTraces := r2.RewriteForTraces(tt.expression, traceAggs)
-			if tt.wantErr {
-				require.Error(t, errLogs)
-				assert.ErrorContains(t, errLogs, tt.wantErrMsg)
-				_, _, _, _, _, additionalLogs := errors.Unwrapb(errLogs)
-				assert.Equal(t, tt.wantAdditional, additionalLogs)
-				require.Error(t, errTraces)
-				assert.ErrorContains(t, errTraces, tt.wantErrMsg)
-				_, _, _, _, _, additionalTraces := errors.Unwrapb(errTraces)
-				assert.Equal(t, tt.wantAdditional, additionalTraces)
-			} else {
-				require.NoError(t, errLogs)
-				assert.Equal(t, tt.wantExpression, gotLogs)
-				require.NoError(t, errTraces)
-				assert.Equal(t, tt.wantExpression, gotTraces)
-			}
-		})
-	}
+		{
+			name:       "single-quoted string literal as comparison value",
+			expression: "sum(bytes) = 'xyz'",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "sum(bytes)"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "`Having` expression contains string literals",
+			wantAdditional: []string{"Aggregator results are numeric"},
+		},
+		{
+			name:       "double-quoted string literal as comparison value",
+			expression: `total > "threshold"`,
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "`Having` expression contains string literals",
+			wantAdditional: []string{"Aggregator results are numeric"},
+		},
+	})
 }
 
 func TestRewriteForMetrics(t *testing.T) {
