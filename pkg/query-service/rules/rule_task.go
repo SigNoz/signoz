@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -12,10 +11,9 @@ import (
 	opentracing "github.com/opentracing/opentracing-go"
 
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
-	ruletypes "github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
@@ -95,7 +93,7 @@ func (g *RuleTask) Pause(b bool) {
 
 type QueryOrigin struct{}
 
-func NewQueryOriginContext(ctx context.Context, data map[string]interface{}) context.Context {
+func NewQueryOriginContext(ctx context.Context, data map[string]any) context.Context {
 	return context.WithValue(ctx, QueryOrigin{}, data)
 }
 
@@ -111,7 +109,7 @@ func (g *RuleTask) Run(ctx context.Context) {
 		return
 	}
 
-	ctx = NewQueryOriginContext(ctx, map[string]interface{}{
+	ctx = NewQueryOriginContext(ctx, map[string]any{
 		"ruleRuleTask": map[string]string{
 			"name": g.Name(),
 		},
@@ -163,8 +161,8 @@ func (g *RuleTask) Stop() {
 }
 
 func (g *RuleTask) hash() uint64 {
-	l := labels.New(
-		labels.Label{Name: "name", Value: g.name},
+	l := ruletypes.New(
+		ruletypes.Label{Name: "name", Value: g.name},
 	)
 	return l.Hash()
 }
@@ -180,7 +178,7 @@ func (g *RuleTask) ThresholdRules() []*ThresholdRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -265,7 +263,7 @@ func (g *RuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*RuleTask)
 	if !ok {
-		return fmt.Errorf("invalid from task for copy")
+		return errors.NewInternalf(errors.CodeInternal, "invalid from task for copy")
 	}
 	g.evaluationTime = from.evaluationTime
 	g.lastEvaluation = from.lastEvaluation

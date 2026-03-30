@@ -110,11 +110,8 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {
@@ -209,13 +206,13 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 					// Create fingerprint data
 					fingerprint := uint64(12345)
 					labelsJSON := `{"__name__":"test_metric"}`
-					fingerprintData := [][]interface{}{
+					fingerprintData := [][]any{
 						{fingerprint, labelsJSON},
 					}
 					fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
 
 					// Create samples data from test case values, calculating timestamps relative to baseTime
-					validSamplesData := make([][]interface{}, 0)
+					validSamplesData := make([][]any, 0)
 					for _, v := range tc.Values {
 						// Skip NaN and Inf values in the samples data
 						if math.IsNaN(v.Value) || math.IsInf(v.Value, 0) {
@@ -223,7 +220,7 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 						}
 						// Calculate timestamp relative to baseTime
 						sampleTimestamp := baseTime.Add(v.Offset).UnixMilli()
-						validSamplesData = append(validSamplesData, []interface{}{
+						validSamplesData = append(validSamplesData, []any{
 							"test_metric",
 							fingerprint,
 							sampleTimestamp,
@@ -263,11 +260,8 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {

@@ -346,7 +346,6 @@ func makeRulesManager(
 		MetadataStore:          metadataStore,
 		Prometheus:             prometheus,
 		Context:                context.Background(),
-		Reader:                 ch,
 		Querier:                querier,
 		Logger:                 providerSettings.Logger,
 		Cache:                  cache,
@@ -355,7 +354,7 @@ func makeRulesManager(
 		Alertmanager:           alertmanager,
 		RuleStore:              ruleStore,
 		MaintenanceStore:       maintenanceStore,
-		SqlStore:               sqlstore,
+		SQLStore:               sqlstore,
 		QueryParser:            queryParser,
 		RuleStateHistoryModule: ruleStateHistoryModule,
 	}

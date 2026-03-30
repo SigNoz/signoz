@@ -194,22 +194,22 @@ func (receiver *SummaryService) GetMetricsSummary(ctx context.Context, orgID val
 		return nil
 	})
 
-	g.Go(func() error {
-		var metrics []string
-		var metricsAlerts []metrics_explorer.Alert
-		metrics = append(metrics, metricName)
-		data, err := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, metrics)
-		if err != nil {
-			return err
-		}
-		if rulesLists, ok := data[metricName]; ok {
-			for _, rule := range rulesLists {
-				metricsAlerts = append(metricsAlerts, metrics_explorer.Alert{AlertName: rule.AlertName, AlertID: rule.Id})
-			}
-		}
-		metricDetailsDTO.Alerts = metricsAlerts
-		return nil
-	})
+	// g.Go(func() error {
+	// 	var metrics []string
+	// 	var metricsAlerts []metrics_explorer.Alert
+	// 	metrics = append(metrics, metricName)
+	// 	data, err := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, metrics)
+	// 	if err != nil {
+	// 		return err
+	// 	}
+	// 	if rulesLists, ok := data[metricName]; ok {
+	// 		for _, rule := range rulesLists {
+	// 			metricsAlerts = append(metricsAlerts, metrics_explorer.Alert{AlertName: rule.AlertName, AlertID: rule.Id})
+	// 		}
+	// 	}
+	// 	metricDetailsDTO.Alerts = metricsAlerts
+	// 	return nil
+	// })
 
 	// Wait for all goroutines and handle any errors
 	if err := g.Wait(); err != nil {
@@ -366,20 +366,20 @@ func (receiver *SummaryService) GetRelatedMetrics(ctx context.Context, params *m
 		return nil
 	})
 
-	g.Go(func() error {
-		rulesData, apiError := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, metricNames)
-		if apiError != nil {
-			return apiError
-		}
-		for s, gettableRules := range rulesData {
-			var metricsRules []metrics_explorer.Alert
-			for _, rule := range gettableRules {
-				metricsRules = append(metricsRules, metrics_explorer.Alert{AlertID: rule.Id, AlertName: rule.AlertName})
-			}
-			alertsRelatedData[s] = metricsRules
-		}
-		return nil
-	})
+	// g.Go(func() error {
+	// 	rulesData, apiError := receiver.rulesManager.GetAlertDetailsForMetricNames(ctx, metricNames)
+	// 	if apiError != nil {
+	// 		return apiError
+	// 	}
+	// 	for s, gettableRules := range rulesData {
+	// 		var metricsRules []metrics_explorer.Alert
+	// 		for _, rule := range gettableRules {
+	// 			metricsRules = append(metricsRules, metrics_explorer.Alert{AlertID: rule.Id, AlertName: rule.AlertName})
+	// 		}
+	// 		alertsRelatedData[s] = metricsRules
+	// 	}
+	// 	return nil
+	// })
 
 	// Check for context cancellation before waiting
 	if ctx.Err() != nil {

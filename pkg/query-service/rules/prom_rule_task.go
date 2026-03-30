@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -187,7 +186,7 @@ func (g *PromRuleTask) PromRules() []*PromRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -268,7 +267,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*PromRuleTask)
 	if !ok {
-		return fmt.Errorf("you can only copy rule groups with same type")
+		return errors.NewInternalf(errors.CodeInternal, "you can only copy rule groups with same type")
 	}
 
 	g.evaluationTime = from.evaluationTime
