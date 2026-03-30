@@ -41,6 +41,8 @@ type TelemetryFieldKey struct {
 	JSONPlan     JSONAccessPlan      `json:"-"`
 	Indexes      []JSONDataTypeIndex `json:"-"`
 	Materialized bool                `json:"-"` // refers to promoted in case of body.... fields
+
+	Evolutions []*EvolutionEntry `json:"-"`
 }
 
 func (f *TelemetryFieldKey) KeyNameContainsArray() bool {
@@ -119,6 +121,7 @@ func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
 	f.Indexes = src.Indexes
 	f.Materialized = src.Materialized
 	f.JSONPlan = src.JSONPlan
+	f.Evolutions = src.Evolutions
 }
 
 func (f *TelemetryFieldKey) Equal(key *TelemetryFieldKey) bool {
