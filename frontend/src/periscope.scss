@@ -80,7 +80,11 @@
 		color: var(--bg-forest-400) !important;
 		border-radius: 2px;
 		border: 1px solid color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-		background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent) !important;
+		background: color-mix(
+			in srgb,
+			var(--bg-forest-500) 10%,
+			transparent
+		) !important;
 		box-shadow: none !important;
 	}
 
@@ -88,7 +92,11 @@
 		color: var(--bg-amber-500) !important;
 		border-radius: 2px;
 		border: 1px solid color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
-		background: color-mix(in srgb, var(--bg-amber-400) 10%, transparent) !important;
+		background: color-mix(
+			in srgb,
+			var(--bg-amber-400) 10%,
+			transparent
+		) !important;
 		box-shadow: none !important;
 	}
 
