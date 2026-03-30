@@ -4,12 +4,16 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"maps"
 	"slices"
 	"strings"
+
+	"github.com/google/uuid"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
+	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
@@ -19,7 +23,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/opamptypes"
 	"github.com/SigNoz/signoz/pkg/types/pipelinetypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
 
 	"log/slog"
 )
@@ -33,17 +36,99 @@ type LogParsingPipelineController struct {
 	Repo
 
 	GetIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error)
+	// TODO(Piyush): remove with qbv5 migration
+	reader interfaces.Reader
 }
 
 func NewLogParsingPipelinesController(
 	sqlStore sqlstore.SQLStore,
 	getIntegrationPipelines func(context.Context, string) ([]pipelinetypes.GettablePipeline, error),
+	reader interfaces.Reader,
 ) (*LogParsingPipelineController, error) {
 	repo := NewRepo(sqlStore)
 	return &LogParsingPipelineController{
 		Repo:                    repo,
 		GetIntegrationPipelines: getIntegrationPipelines,
+		reader:                  reader,
 	}, nil
+}
+
+// enrichPipelinesFilters resolves the type (tag vs resource) for filter keys that are
+// missing type info, by looking them up in the store.
+//
+// TODO(Piyush): remove with qbv5 migration
+func (pc *LogParsingPipelineController) enrichPipelinesFilters(
+	ctx context.Context, pipelines []pipelinetypes.GettablePipeline,
+) ([]pipelinetypes.GettablePipeline, error) {
+	// Collect names of non-static keys that are missing type info.
+	// Static fields (body, trace_id, etc.) are intentionally Unspecified and map
+	// to top-level OTEL fields — they do not need enrichment.
+	unspecifiedNames := map[string]struct{}{}
+	for _, p := range pipelines {
+		if p.Filter != nil {
+			for _, item := range p.Filter.Items {
+				if item.Key.Type == v3.AttributeKeyTypeUnspecified {
+					// Skip static fields
+					if _, isStatic := constants.StaticFieldsLogsV3[item.Key.Key]; isStatic {
+						continue
+					}
+					// Skip enrich body.* fields
+					if strings.HasPrefix(item.Key.Key, "body.") {
+						continue
+					}
+					unspecifiedNames[item.Key.Key] = struct{}{}
+				}
+			}
+		}
+	}
+	if len(unspecifiedNames) == 0 {
+		return pipelines, nil
+	}
+
+	logFields, apiErr := pc.reader.GetLogFieldsFromNames(ctx, slices.Collect(maps.Keys(unspecifiedNames)))
+	if apiErr != nil {
+		slog.ErrorContext(ctx, "failed to fetch log fields for pipeline filter enrichment", "error", apiErr)
+		return pipelines, apiErr
+	}
+
+	// Build a simple name → AttributeKeyType map from the response.
+	fieldTypes := map[string]v3.AttributeKeyType{}
+	for _, f := range append(logFields.Selected, logFields.Interesting...) {
+		switch f.Type {
+		case constants.Resources:
+			fieldTypes[f.Name] = v3.AttributeKeyTypeResource
+		case constants.Attributes:
+			fieldTypes[f.Name] = v3.AttributeKeyTypeTag
+		}
+	}
+
+	// Set the resolved type on each untyped filter key in-place.
+	for i := range pipelines {
+		if pipelines[i].Filter != nil {
+			for j := range pipelines[i].Filter.Items {
+				key := &pipelines[i].Filter.Items[j].Key
+				if key.Type == v3.AttributeKeyTypeUnspecified {
+					// Skip static fields
+					if _, isStatic := constants.StaticFieldsLogsV3[key.Key]; isStatic {
+						continue
+					}
+					// Skip enrich body.* fields
+					if strings.HasPrefix(key.Key, "body.") {
+						continue
+					}
+
+					if t, ok := fieldTypes[key.Key]; ok {
+						key.Type = t
+					} else {
+						// default to attribute
+						key.Type = v3.AttributeKeyTypeTag
+					}
+				}
+			}
+		}
+	}
+
+	return pipelines, nil
 }
 
 // PipelinesResponse is used to prepare http response for pipelines config related requests
@@ -131,38 +216,32 @@ func (ic *LogParsingPipelineController) ValidatePipelines(ctx context.Context,
 	return err
 }
 
-func (ic *LogParsingPipelineController) getDefaultPipelines() ([]pipelinetypes.GettablePipeline, error) {
-	defaultPipelines := []pipelinetypes.GettablePipeline{}
-	if querybuilder.BodyJSONQueryEnabled {
-		preprocessingPipeline := pipelinetypes.GettablePipeline{
-			StoreablePipeline: pipelinetypes.StoreablePipeline{
-				Name:    "Default Pipeline - PreProcessing Body",
-				Alias:   "NormalizeBodyDefault",
-				Enabled: true,
-			},
-			Filter: &v3.FilterSet{
-				Items: []v3.FilterItem{
-					{
-						Key: v3.AttributeKey{
-							Key: "body",
-						},
-						Operator: v3.FilterOperatorExists,
-					},
-				},
-			},
-			Config: []pipelinetypes.PipelineOperator{
+func (ic *LogParsingPipelineController) getNormalizePipeline() pipelinetypes.GettablePipeline {
+	return pipelinetypes.GettablePipeline{
+		StoreablePipeline: pipelinetypes.StoreablePipeline{
+			Name:    "Default Pipeline - PreProcessing Body",
+			Alias:   "NormalizeBodyDefault",
+			Enabled: true,
+		},
+		Filter: &v3.FilterSet{
+			Items: []v3.FilterItem{
 				{
-					ID:      uuid.NewString(),
-					Type:    "normalize",
-					Enabled: true,
-					If:      "body != nil",
+					Key: v3.AttributeKey{
+						Key: "body",
+					},
+					Operator: v3.FilterOperatorExists,
 				},
 			},
-		}
-
-		defaultPipelines = append(defaultPipelines, preprocessingPipeline)
+		},
+		Config: []pipelinetypes.PipelineOperator{
+			{
+				ID:      uuid.NewString(),
+				Type:    "normalize",
+				Enabled: true,
+				If:      "body != nil",
+			},
+		},
 	}
-	return defaultPipelines, nil
 }
 
 // Returns effective list of pipelines including user created
@@ -175,7 +254,7 @@ func (ic *LogParsingPipelineController) getEffectivePipelinesByVersion(
 	if version >= 0 {
 		savedPipelines, err := ic.getPipelinesByVersion(ctx, orgID.String(), version)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, "error", err)
+			slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, errors.Attr(err))
 			return nil, err
 		}
 		result = savedPipelines
@@ -227,7 +306,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 ) (*PipelinesResponse, error) {
 	pipelines, err := ic.getEffectivePipelinesByVersion(ctx, orgId, version)
 	if err != nil {
-		slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, "error", err)
+		slog.ErrorContext(ctx, "failed to get pipelines for version", "version", version, errors.Attr(err))
 		return nil, err
 	}
 
@@ -235,7 +314,7 @@ func (ic *LogParsingPipelineController) GetPipelinesByVersion(
 	if version >= 0 {
 		cv, err := agentConf.GetConfigVersion(ctx, orgId, opamptypes.ElementTypeLogPipelines, version)
 		if err != nil {
-			slog.ErrorContext(ctx, "failed to get config for version", "version", version, "error", err)
+			slog.ErrorContext(ctx, "failed to get config for version", "version", version, errors.Attr(err))
 			return nil, err
 		}
 		configVersion = cv
@@ -261,7 +340,12 @@ func (ic *LogParsingPipelineController) PreviewLogsPipelines(
 	ctx context.Context,
 	request *PipelinesPreviewRequest,
 ) (*PipelinesPreviewResponse, error) {
-	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, request.Pipelines, request.Logs)
+	pipelines, err := ic.enrichPipelinesFilters(ctx, request.Pipelines)
+	if err != nil {
+		return nil, err
+	}
+
+	result, collectorLogs, err := SimulatePipelinesProcessing(ctx, pipelines, request.Logs)
 	if err != nil {
 		return nil, err
 	}
@@ -278,6 +362,17 @@ func (pc *LogParsingPipelineController) AgentFeatureType() agentConf.AgentFeatur
 }
 
 // Implements agentConf.AgentFeature interface.
+// RecommendAgentConfig generates the collector config to be sent to agents.
+// The normalize pipeline (when BodyJSONQueryEnabled) is injected here, after
+// rawPipelineData is serialized. So it is only present in the config sent to
+// the collector and never persisted to the database as part of the user's pipeline list.
+//
+// NOTE: The configId sent to agents is derived from the pipeline version number
+// (e.g. "LogPipelines:5"), not the YAML content. If server-side logic changes
+// the generated YAML without bumping the version (e.g. toggling BodyJSONQueryEnabled
+// or updating operator IfExpressions), agents that already applied that version will
+// not re-apply the new config. In such cases, users must save a new pipeline version
+// via the API to force agents to pick up the change.
 func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	orgId valuer.UUID,
 	currentConfYaml []byte,
@@ -287,22 +382,8 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	if configVersion != nil {
 		pipelinesVersion = configVersion.Version
 	}
-
-	pipelinesResp, err := pc.GetPipelinesByVersion(
-		context.Background(), orgId, pipelinesVersion,
-	)
-	if err != nil {
-		return nil, "", err
-	}
-
-	// recommend default pipelines along with user created pipelines
-	defaultPipelines, err := pc.getDefaultPipelines()
-	if err != nil {
-		return nil, "", model.InternalError(fmt.Errorf("failed to get default pipelines: %w", err))
-	}
-	pipelinesResp.Pipelines = append(pipelinesResp.Pipelines, defaultPipelines...)
-
-	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, pipelinesResp.Pipelines)
+	ctx := context.Background()
+	pipelinesResp, err := pc.GetPipelinesByVersion(ctx, orgId, pipelinesVersion)
 	if err != nil {
 		return nil, "", err
 	}
@@ -310,6 +391,21 @@ func (pc *LogParsingPipelineController) RecommendAgentConfig(
 	rawPipelineData, err := json.Marshal(pipelinesResp.Pipelines)
 	if err != nil {
 		return nil, "", errors.WrapInternalf(err, CodeRawPipelinesMarshalFailed, "could not serialize pipelines to JSON")
+	}
+
+	enrichedPipelines, err := pc.enrichPipelinesFilters(ctx, pipelinesResp.Pipelines)
+	if err != nil {
+		return nil, "", err
+	}
+
+	if querybuilder.BodyJSONQueryEnabled {
+		// add default normalize pipeline at the beginning, only for sending to collector
+		enrichedPipelines = append([]pipelinetypes.GettablePipeline{pc.getNormalizePipeline()}, enrichedPipelines...)
+	}
+
+	updatedConf, err := GenerateCollectorConfigWithPipelines(currentConfYaml, enrichedPipelines)
+	if err != nil {
+		return nil, "", err
 	}
 
 	return updatedConf, string(rawPipelineData), nil

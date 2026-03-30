@@ -9,7 +9,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
 )
@@ -30,13 +29,13 @@ func (handler *handler) Create(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(roletypes.PostableRole)
+	req := new(authtypes.PostableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return
 	}
 
-	role := roletypes.NewRole(req.Name, req.Description, roletypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
+	role := authtypes.NewRole(req.Name, req.Description, authtypes.RoleTypeCustom, valuer.MustNewUUID(claims.OrgID))
 	err = handler.authz.Create(ctx, valuer.MustNewUUID(claims.OrgID), role)
 	if err != nil {
 		render.Error(rw, err)
@@ -56,7 +55,7 @@ func (handler *handler) Get(rw http.ResponseWriter, r *http.Request) {
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
 		return
 	}
 	roleID, err := valuer.NewUUID(id)
@@ -84,7 +83,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 	id, ok := mux.Vars(r)["id"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "id is missing from the request"))
 		return
 	}
 	roleID, err := valuer.NewUUID(id)
@@ -95,7 +94,7 @@ func (handler *handler) GetObjects(rw http.ResponseWriter, r *http.Request) {
 
 	relationStr, ok := mux.Vars(r)["relation"]
 	if !ok {
-		render.Error(rw, errors.New(errors.TypeInvalidInput, roletypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
+		render.Error(rw, errors.New(errors.TypeInvalidInput, authtypes.ErrCodeRoleInvalidInput, "relation is missing from the request"))
 		return
 	}
 	relation, err := authtypes.NewRelation(relationStr)
@@ -150,7 +149,7 @@ func (handler *handler) Patch(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	req := new(roletypes.PatchableRole)
+	req := new(authtypes.PatchableRole)
 	if err := binding.JSON.BindBody(r.Body, req); err != nil {
 		render.Error(rw, err)
 		return

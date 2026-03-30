@@ -1,9 +1,8 @@
 import { sentryVitePlugin } from '@sentry/vite-plugin';
 import react from '@vitejs/plugin-react';
-import { readFileSync } from 'fs';
 import { resolve } from 'path';
 import { visualizer } from 'rollup-plugin-visualizer';
-import type { Plugin, UserConfig } from 'vite';
+import type { Plugin, TransformResult, UserConfig } from 'vite';
 import { defineConfig, loadEnv } from 'vite';
 import vitePluginChecker from 'vite-plugin-checker';
 import viteCompression from 'vite-plugin-compression';
@@ -14,15 +13,14 @@ import tsconfigPaths from 'vite-tsconfig-paths';
 function rawMarkdownPlugin(): Plugin {
 	return {
 		name: 'raw-markdown',
-		transform(_, id): any {
-			if (id.endsWith('.md')) {
-				const content = readFileSync(id, 'utf-8');
-				return {
-					code: `export default ${JSON.stringify(content)};`,
-					map: null,
-				};
+		transform(code, id): TransformResult | undefined {
+			if (!id.endsWith('.md')) {
+				return undefined;
 			}
-			return undefined;
+			return {
+				code: `export default ${JSON.stringify(code)};`,
+				map: null,
+			};
 		},
 	};
 }
@@ -71,7 +69,7 @@ export default defineConfig(
 			);
 		}
 
-		if (env.NODE_ENV === 'production') {
+		if (mode === 'production') {
 			plugins.push(
 				ViteImageOptimizer({
 					jpeg: { quality: 80 },
@@ -102,22 +100,25 @@ export default defineConfig(
 			},
 			define: {
 				// TODO: Remove this in favor of import.meta.env
-				'process.env': JSON.stringify({
-					NODE_ENV: mode,
-					FRONTEND_API_ENDPOINT: env.VITE_FRONTEND_API_ENDPOINT,
-					WEBSOCKET_API_ENDPOINT: env.VITE_WEBSOCKET_API_ENDPOINT,
-					PYLON_APP_ID: env.VITE_PYLON_APP_ID,
-					PYLON_IDENTITY_SECRET: env.VITE_PYLON_IDENTITY_SECRET,
-					APPCUES_APP_ID: env.VITE_APPCUES_APP_ID,
-					POSTHOG_KEY: env.VITE_POSTHOG_KEY,
-					SENTRY_AUTH_TOKEN: env.VITE_SENTRY_AUTH_TOKEN,
-					SENTRY_ORG: env.VITE_SENTRY_ORG,
-					SENTRY_PROJECT_ID: env.VITE_SENTRY_PROJECT_ID,
-					SENTRY_DSN: env.VITE_SENTRY_DSN,
-					TUNNEL_URL: env.VITE_TUNNEL_URL,
-					TUNNEL_DOMAIN: env.VITE_TUNNEL_DOMAIN,
-					DOCS_BASE_URL: env.VITE_DOCS_BASE_URL,
-				}),
+				'process.env.NODE_ENV': JSON.stringify(mode),
+				'process.env.FRONTEND_API_ENDPOINT': JSON.stringify(
+					env.VITE_FRONTEND_API_ENDPOINT,
+				),
+				'process.env.WEBSOCKET_API_ENDPOINT': JSON.stringify(
+					env.VITE_WEBSOCKET_API_ENDPOINT,
+				),
+				'process.env.PYLON_APP_ID': JSON.stringify(env.VITE_PYLON_APP_ID),
+				'process.env.PYLON_IDENTITY_SECRET': JSON.stringify(
+					env.VITE_PYLON_IDENTITY_SECRET,
+				),
+				'process.env.APPCUES_APP_ID': JSON.stringify(env.VITE_APPCUES_APP_ID),
+				'process.env.POSTHOG_KEY': JSON.stringify(env.VITE_POSTHOG_KEY),
+				'process.env.SENTRY_ORG': JSON.stringify(env.VITE_SENTRY_ORG),
+				'process.env.SENTRY_PROJECT_ID': JSON.stringify(env.VITE_SENTRY_PROJECT_ID),
+				'process.env.SENTRY_DSN': JSON.stringify(env.VITE_SENTRY_DSN),
+				'process.env.TUNNEL_URL': JSON.stringify(env.VITE_TUNNEL_URL),
+				'process.env.TUNNEL_DOMAIN': JSON.stringify(env.VITE_TUNNEL_DOMAIN),
+				'process.env.DOCS_BASE_URL': JSON.stringify(env.VITE_DOCS_BASE_URL),
 			},
 			build: {
 				sourcemap: true,

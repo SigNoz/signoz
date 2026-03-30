@@ -15,7 +15,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/gorilla/mux"
@@ -109,7 +108,7 @@ func (handler *handler) Update(rw http.ResponseWriter, r *http.Request) {
 
 	diff := 0
 	// Allow multiple deletions for API key requests; enforce for others
-	if authType, ok := ctxtypes.AuthTypeFromContext(ctx); ok && authType == ctxtypes.AuthTypeTokenizer {
+	if claims.IdentNProvider == authtypes.IdentNProviderTokenizer.StringValue() {
 		diff = 1
 	}
 

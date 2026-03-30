@@ -6,13 +6,12 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/types/roletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 )
 
 type AuthZ interface {
-	factory.Service
+	factory.ServiceWithHealthy
 
 	// CheckWithTupleCreation takes upon the responsibility for generating the tuples alongside everything Check does.
 	CheckWithTupleCreation(context.Context, authtypes.Claims, valuer.UUID, authtypes.Relation, authtypes.Typeable, []authtypes.Selector, []authtypes.Selector) error
@@ -30,10 +29,10 @@ type AuthZ interface {
 	ListObjects(context.Context, string, authtypes.Relation, authtypes.Typeable) ([]*authtypes.Object, error)
 
 	// Creates the role.
-	Create(context.Context, valuer.UUID, *roletypes.Role) error
+	Create(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Gets the role if it exists or creates one.
-	GetOrCreate(context.Context, valuer.UUID, *roletypes.Role) (*roletypes.Role, error)
+	GetOrCreate(context.Context, valuer.UUID, *authtypes.Role) (*authtypes.Role, error)
 
 	// Gets the objects associated with the given role and relation.
 	GetObjects(context.Context, valuer.UUID, valuer.UUID, authtypes.Relation) ([]*authtypes.Object, error)
@@ -42,7 +41,7 @@ type AuthZ interface {
 	GetResources(context.Context) []*authtypes.Resource
 
 	// Patches the role.
-	Patch(context.Context, valuer.UUID, *roletypes.Role) error
+	Patch(context.Context, valuer.UUID, *authtypes.Role) error
 
 	// Patches the objects in authorization server associated with the given role and relation
 	PatchObjects(context.Context, valuer.UUID, string, authtypes.Relation, []*authtypes.Object, []*authtypes.Object) error
@@ -51,19 +50,19 @@ type AuthZ interface {
 	Delete(context.Context, valuer.UUID, valuer.UUID) error
 
 	// Gets the role
-	Get(context.Context, valuer.UUID, valuer.UUID) (*roletypes.Role, error)
+	Get(context.Context, valuer.UUID, valuer.UUID) (*authtypes.Role, error)
 
 	// Gets the role by org_id and name
-	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*roletypes.Role, error)
+	GetByOrgIDAndName(context.Context, valuer.UUID, string) (*authtypes.Role, error)
 
 	// Lists all the roles for the organization.
-	List(context.Context, valuer.UUID) ([]*roletypes.Role, error)
+	List(context.Context, valuer.UUID) ([]*authtypes.Role, error)
 
 	//  Lists all the roles for the organization filtered by name
-	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*roletypes.Role, error)
+	ListByOrgIDAndNames(context.Context, valuer.UUID, []string) ([]*authtypes.Role, error)
 
 	//  Lists all the roles for the organization filtered by ids
-	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*roletypes.Role, error)
+	ListByOrgIDAndIDs(context.Context, valuer.UUID, []valuer.UUID) ([]*authtypes.Role, error)
 
 	// Grants a role to the subject based on role name.
 	Grant(context.Context, valuer.UUID, []string, string) error
@@ -75,7 +74,7 @@ type AuthZ interface {
 	ModifyGrant(context.Context, valuer.UUID, []string, []string, string) error
 
 	// Bootstrap the managed roles.
-	CreateManagedRoles(context.Context, valuer.UUID, []*roletypes.Role) error
+	CreateManagedRoles(context.Context, valuer.UUID, []*authtypes.Role) error
 
 	// Bootstrap managed roles transactions and user assignments
 	CreateManagedUserRoleTransactions(context.Context, valuer.UUID, valuer.UUID) error

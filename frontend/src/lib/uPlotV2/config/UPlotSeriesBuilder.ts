@@ -4,6 +4,7 @@ import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
 import { generateGradientFill } from '../utils/generateGradientFill';
+import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
 	BarAlignment,
 	ConfigBuilder,
@@ -146,20 +147,8 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series.Points> {
-		const {
-			lineWidth,
-			pointSize,
-			pointsBuilder,
-			pointsFilter,
-			drawStyle,
-			showPoints,
-		} = this.props;
+		const { lineWidth, pointSize, pointsFilter } = this.props;
 
-		/**
-		 * If pointSize is not provided, use the lineWidth * POINT_SIZE_FACTOR
-		 * to determine the point size.
-		 * POINT_SIZE_FACTOR is 2, so the point size will be 2x the line width.
-		 */
 		const resolvedPointSize =
 			pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * POINT_SIZE_FACTOR;
 
@@ -168,17 +157,37 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			fill: resolvedLineColor,
 			size: resolvedPointSize,
 			filter: pointsFilter || undefined,
+			show: this.resolvePointsShow(),
 		};
 
-		if (pointsBuilder) {
-			pointsConfig.show = pointsBuilder;
-		} else if (drawStyle === DrawStyle.Points) {
-			pointsConfig.show = true;
-		} else {
-			pointsConfig.show = !!showPoints;
+		// When spanGaps is in threshold (numeric) mode, points hidden by default
+		// become invisible when isolated by injected gap-nulls (no line connects
+		// to them). Use a gap-based filter to show only those isolated points as
+		// dots. Do NOT set show=true here — the filter is called with show=false
+		// and returns specific indices to render; setting show=true would cause
+		// uPlot to call filter with show=true which short-circuits the logic and
+		// renders all points.
+		if (this.shouldApplyIsolatedPointFilter(pointsConfig.show)) {
+			pointsConfig.filter = isolatedPointFilter;
 		}
 
 		return pointsConfig;
+	}
+
+	private resolvePointsShow(): Series.Points['show'] {
+		const { pointsBuilder, drawStyle, showPoints } = this.props;
+		if (pointsBuilder) {
+			return pointsBuilder;
+		}
+		if (drawStyle === DrawStyle.Points) {
+			return true;
+		}
+		return !!showPoints;
+	}
+
+	private shouldApplyIsolatedPointFilter(show: Series.Points['show']): boolean {
+		const { drawStyle, pointsFilter } = this.props;
+		return drawStyle === DrawStyle.Line && !pointsFilter && !show;
 	}
 
 	private getLineColor(): string {
@@ -212,7 +221,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		return {
 			scale: scaleKey,
 			label,
-			spanGaps: typeof spanGaps === 'boolean' ? spanGaps : false,
+			// When spanGaps is numeric, we always disable uPlot's internal
+			// spanGaps behavior and rely on data-prep to implement the
+			// threshold-based null handling. When spanGaps is boolean we
+			// map it directly. When spanGaps is undefined we fall back to
+			// the default of true.
+			spanGaps: typeof spanGaps === 'number' ? false : spanGaps ?? true,
 			value: (): string => '',
 			pxAlign: true,
 			show,

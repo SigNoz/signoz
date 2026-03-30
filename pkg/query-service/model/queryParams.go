@@ -333,6 +333,7 @@ type GetWaterfallSpansForTraceWithMetadataParams struct {
 	SelectedSpanID              string   `json:"selectedSpanId"`
 	IsSelectedSpanIDUnCollapsed bool     `json:"isSelectedSpanIDUnCollapsed"`
 	UncollapsedSpans            []string `json:"uncollapsedSpans"`
+	Limit                       uint     `json:"limit"`
 }
 
 type GetFlamegraphSpansForTraceParams struct {

@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/prometheus/common/model"
+
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
@@ -66,7 +67,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 func (provider *provider) Start(ctx context.Context) error {
 	if err := provider.service.SyncServers(ctx); err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 		return err
 	}
 
@@ -78,7 +79,7 @@ func (provider *provider) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := provider.service.SyncServers(ctx); err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 			}
 		}
 	}

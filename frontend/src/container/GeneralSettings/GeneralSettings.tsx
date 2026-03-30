@@ -464,14 +464,10 @@ function GeneralSettings({
 		onModalToggleHandler(type);
 	};
 
-	const {
-		isCloudUser: isCloudUserVal,
-		isEnterpriseSelfHostedUser,
-	} = useGetTenantLicense();
+	const { isCloudUser: isCloudUserVal } = useGetTenantLicense();
 
 	const isAdmin = user.role === USER_ROLES.ADMIN;
-	const showCustomDomainSettings =
-		(isCloudUserVal || isEnterpriseSelfHostedUser) && isAdmin;
+	const showCustomDomainSettings = isCloudUserVal && isAdmin;
 
 	const renderConfig = [
 		{

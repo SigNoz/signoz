@@ -9,7 +9,6 @@
 		.api-quick-filters-header {
 			padding: 12px;
 			border-bottom: 1px solid var(--bg-slate-400);
-			border-right: 1px solid var(--bg-slate-400);
 
 			display: flex;
 			align-items: center;
@@ -26,6 +25,7 @@
 		width: 100%;
 
 		.toolbar {
+			border-top: 0px;
 			border-bottom: 1px solid var(--bg-slate-400);
 		}
 
@@ -144,6 +144,10 @@
 				background: var(--bg-ink-300);
 			}
 
+			.expanded-clickable-row {
+				cursor: pointer;
+			}
+
 			.error-rate {
 				width: 120px;
 			}
@@ -216,6 +220,18 @@
 }
 
 .lightMode {
+	.api-quick-filter-left-section {
+		.api-quick-filters-header {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+	}
+
+	.api-module-right-section {
+		.toolbar {
+			border-bottom: 1px solid var(--bg-vanilla-300);
+		}
+	}
+
 	.no-filtered-domains-message-container {
 		.no-filtered-domains-message-content {
 			.no-filtered-domains-message {
