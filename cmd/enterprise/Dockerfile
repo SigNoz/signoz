@@ -16,4 +16,8 @@ COPY frontend/build/ /etc/signoz/web/
 
 RUN chmod 755 /root /root/signoz
 
+# Security: run as non-root user
+RUN addgroup --system --gid 1001 signoz && adduser --system --uid 1001 --ingroup signoz signoz
+USER signoz
+
 ENTRYPOINT ["./signoz", "server"]
