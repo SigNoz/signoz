@@ -2,6 +2,7 @@ package telemetrylogs
 
 import (
 	"context"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -34,7 +35,7 @@ func TestJSONStmtBuilder_TimeSeries(t *testing.T) {
 	enable, disable := jsonQueryTestUtil(t)
 	enable()
 	defer disable()
-	statementBuilder := buildJSONTestStatementBuilder(t)
+	statementBuilder := buildJSONTestStatementBuilder(t, false)
 
 	cases := []struct {
 		name                string
@@ -180,7 +181,7 @@ func TestJSONStmtBuilder_PrimitivePaths(t *testing.T) {
 	enable()
 	defer disable()
 
-	statementBuilder := buildJSONTestStatementBuilder(t)
+	statementBuilder := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -521,7 +522,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 	enable()
 	defer disable()
 
-	statementBuilder := buildJSONTestStatementBuilder(t)
+	statementBuilder := buildJSONTestStatementBuilder(t, false)
 	cases := []struct {
 		name        string
 		filter      string
@@ -788,7 +789,7 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 	enable()
 	defer disable()
 
-	statementBuilder := buildIndexedJSONTestStatementBuilder(t)
+	statementBuilder := buildJSONTestStatementBuilder(t, true)
 	cases := []struct {
 		name        string
 		query       qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]
@@ -918,19 +919,11 @@ func TestJSONStmtBuilder_IndexedPaths(t *testing.T) {
 		})
 	}
 }
-func buildTestTelemetryMetadataStore(t *testing.T) *telemetrytypestest.MockMetadataStore {
+func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetrytypestest.MockMetadataStore {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.SetStaticFields(IntrinsicFields)
 	types, _ := telemetrytypes.TestJSONTypeSet()
 	for path, jsonTypes := range types {
-		// promoted := false
-
-		// split := strings.Split(path, telemetrytypes.ArraySep)
-		// if slices.Contains(promotedPaths, split[0]) {
-		// 	promoted = true
-		// }
-		// Create a TelemetryFieldKey for each JSONDataType for this path
-		// Since a path can have multiple types, we create one key per type
 		for _, jsonType := range jsonTypes {
 			key := &telemetrytypes.TelemetryFieldKey{
 				Name:          path,
@@ -938,13 +931,24 @@ func buildTestTelemetryMetadataStore(t *testing.T) *telemetrytypestest.MockMetad
 				FieldContext:  telemetrytypes.FieldContextBody,
 				FieldDataType: telemetrytypes.MappingJSONDataTypeToFieldDataType[jsonType],
 				JSONDataType:  &jsonType,
-				// Materialized:  promoted,
 			}
+			if addIndexes {
+				idx := slices.IndexFunc(telemetrytypes.TestIndexedPaths, func(entry telemetrytypes.TestIndexedPathEntry) bool {
+					return entry.Path == path && entry.Type == jsonType
+				})
+				if idx >= 0 {
+					key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
+						Type: jsonType,
+					})
+				}
+			}
+
 			err := key.SetJSONAccessPlan(telemetrytypes.JSONColumnMetadata{
 				BaseColumn:     LogsV2BodyV2Column,
 				PromotedColumn: LogsV2BodyPromotedColumn,
 			}, types)
 			require.NoError(t, err)
+
 			mockMetadataStore.SetKey(key)
 		}
 	}
@@ -952,54 +956,8 @@ func buildTestTelemetryMetadataStore(t *testing.T) *telemetrytypestest.MockMetad
 	return mockMetadataStore
 }
 
-// findTerminalNode returns the first terminal JSONAccessNode reachable from node.
-// For non-array indexed paths the plan has exactly one node and it is itself terminal.
-func findTerminalNode(node *telemetrytypes.JSONAccessNode) *telemetrytypes.JSONAccessNode {
-	if node.IsTerminal {
-		return node
-	}
-	for _, branch := range node.Branches {
-		if t := findTerminalNode(branch); t != nil {
-			return t
-		}
-	}
-	return nil
-}
-
-// buildIndexedTestTelemetryMetadataStore extends buildTestTelemetryMetadataStore
-// by wiring key.Indexes for every entry in telemetrytypes.TestIndexedPaths.
-// ColumnExpression is derived from the terminal node's FieldPath so it exactly
-// matches what buildPrimitiveTerminalCondition compares against.
-func buildIndexedTestTelemetryMetadataStore(t *testing.T) *telemetrytypestest.MockMetadataStore {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t)
-
-	for _, entry := range telemetrytypes.TestIndexedPaths {
-		keys, ok := mockMetadataStore.KeysMap[entry.Path]
-		if !ok {
-			continue
-		}
-		for _, key := range keys {
-			if key.JSONDataType == nil || *key.JSONDataType != entry.Type {
-				continue
-			}
-			for _, planNode := range key.JSONPlan {
-				terminal := findTerminalNode(planNode)
-				if terminal == nil {
-					continue
-				}
-				key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
-					Type:             entry.Type,
-					ColumnExpression: terminal.FieldPath(),
-				})
-			}
-		}
-	}
-
-	return mockMetadataStore
-}
-
-func buildJSONTestStatementBuilder(t *testing.T) *logQueryStatementBuilder {
-	mockMetadataStore := buildTestTelemetryMetadataStore(t)
+func buildJSONTestStatementBuilder(t *testing.T, addIndexes bool) *logQueryStatementBuilder {
+	mockMetadataStore := buildTestTelemetryMetadataStore(t, addIndexes)
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
@@ -1028,36 +986,6 @@ func buildJSONTestStatementBuilder(t *testing.T) *logQueryStatementBuilder {
 	)
 
 	return statementBuilder
-}
-
-func buildIndexedJSONTestStatementBuilder(t *testing.T) *logQueryStatementBuilder {
-	mockMetadataStore := buildIndexedTestTelemetryMetadataStore(t)
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
-
-	resourceFilterFM := resourcefilter.NewFieldMapper()
-	resourceFilterCB := resourcefilter.NewConditionBuilder(resourceFilterFM)
-
-	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
-	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		resourceFilterFM,
-		resourceFilterCB,
-		mockMetadataStore,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-	)
-
-	return NewLogQueryStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		mockMetadataStore,
-		fm,
-		cb,
-		resourceFilterStmtBuilder,
-		aggExprRewriter,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-	)
 }
 
 func jsonQueryTestUtil(_ *testing.T) (func(), func()) {

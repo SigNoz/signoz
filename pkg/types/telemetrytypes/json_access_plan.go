@@ -164,6 +164,15 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 			Key:      pb.key,
 			ElemType: *pb.key.JSONDataType,
 		}
+		// Fill in ColumnExpression for any indexes that match this terminal's type
+		// and haven't had their expression set yet (e.g. from test setup or new indexes).
+		// Production indexes already carry the expression from the metadata store.
+		fieldPath := node.FieldPath()
+		for i := range pb.key.Indexes {
+			if pb.key.Indexes[i].Type == *pb.key.JSONDataType && pb.key.Indexes[i].ColumnExpression == "" {
+				pb.key.Indexes[i].ColumnExpression = fieldPath
+			}
+		}
 	} else {
 		var err error
 		if hasJSON {
