@@ -40,7 +40,12 @@ import {
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
-import { useInfraMonitoringCategory, useInfraMonitoringFilters } from './hooks';
+import {
+	useInfraMonitoringCategory,
+	useInfraMonitoringFilters,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringOrderBy,
+} from './hooks';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
 import K8sNodesList from './Nodes/K8sNodesList';
@@ -55,6 +60,9 @@ export default function InfraMonitoringK8s(): JSX.Element {
 
 	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
 	const [, setFilters] = useInfraMonitoringFilters();
+	const [, setGroupBy] = useInfraMonitoringGroupBy();
+	const [, setOrderBy] = useInfraMonitoringOrderBy();
+
 	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
@@ -307,6 +315,8 @@ export default function InfraMonitoringK8s(): JSX.Element {
 			setSelectedCategory(key[0] as string);
 			// Reset filters
 			setFilters(null);
+			setOrderBy(null);
+			setGroupBy(null);
 			handleChangeQueryData('filters', { items: [], op: 'and' });
 		}
 	};
