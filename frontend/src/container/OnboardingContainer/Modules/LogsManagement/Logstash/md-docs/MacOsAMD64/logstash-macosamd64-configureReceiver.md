@@ -13,7 +13,7 @@ receivers:
     operators: []
 ```
 
-Here we have used port 2255 for listening in TCP protocol, but you can change it to a port you want. You can read more about tcplog reciver [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/tcplogreceiver).
+Here we have used port 2255 for listening in TCP protocol, but you can change it to a port you want. You can read more about tcplog receiver [here](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/tcplogreceiver).
 
 &nbsp;
 
@@ -33,7 +33,7 @@ Add the following to your **logstash config** to forward the logs to otel collec
 ```bash
 output {
   tcp {
-    codec => json_lines # this is required otherwise it will send eveything in a single line
+    codec => json_lines # this is required otherwise it will send everything in a single line
     host => "localhost"
     port => 2255
   }

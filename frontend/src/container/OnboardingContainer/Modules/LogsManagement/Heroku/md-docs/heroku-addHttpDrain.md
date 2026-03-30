@@ -13,7 +13,7 @@ heroku drains:add https://<TENANT_NAME>:{{SIGNOZ_INGESTION_KEY}}@ingest.{{REGION
 
 &nbsp;
 
-`<TENANT_NAME>` should be raplaced with the name of your SigNoz instance.
+`<TENANT_NAME>` should be replaced with the name of your SigNoz instance.
 
 For example, if your SigNoz instance URL is `https://cpvo-test.us.signoz.cloud` the `TENANT_NAME` is `cpvo-test`. 
 

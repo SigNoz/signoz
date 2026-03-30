@@ -50,7 +50,7 @@ function ApDexMetrics({
 						servicename,
 						tagFilterItems,
 						topLevelOperationsRoute,
-						threashold: thresholdValue || 0,
+						threshold: thresholdValue || 0,
 						delta: delta || false,
 						metricsBuckets: metricsBuckets || [],
 						dotMetricsEnabled,

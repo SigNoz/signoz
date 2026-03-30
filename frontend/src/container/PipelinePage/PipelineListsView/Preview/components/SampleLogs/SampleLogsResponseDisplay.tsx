@@ -9,7 +9,7 @@ function SampleLogsResponseDisplay({
 	if (isError) {
 		return (
 			<div className="sample-logs-notice-container">
-				An error occured while querying sample logs
+				An error occurred while querying sample logs
 			</div>
 		);
 	}

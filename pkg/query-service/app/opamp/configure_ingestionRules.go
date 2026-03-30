@@ -69,7 +69,7 @@ func UpsertControlProcessors(ctx context.Context, signal string,
 	return hash, nil
 }
 
-// addIngestionControlToAgent adds ingestion contorl rules to agent config
+// addIngestionControlToAgent adds ingestion control rules to agent config
 func addIngestionControlToAgent(agent *model.Agent, signal string, processors map[string]interface{}, withLB bool) (string, error) {
 	confHash := ""
 	config := agent.Config

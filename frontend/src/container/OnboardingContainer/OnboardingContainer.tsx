@@ -95,7 +95,7 @@ export const useCases = {
 		id: ModulesMap.AzureMonitoring,
 		title: 'Azure Monitoring',
 		desc:
-			'Monitor your traces, logs and metrics for Azure services like AKS, Container Apps, App Service etc.',
+			'Monitor your traces, logs and metrics for Azure services like ASK, Container Apps, App Service etc.',
 	},
 };
 

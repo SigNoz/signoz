@@ -130,19 +130,19 @@ func TestQueryRangeRequest_UnmarshalJSON_ErrorMessages(t *testing.T) {
 			assert.Contains(t, err.Error(), tt.wantErrMsg)
 
 			// Check if it's an error from our package using Unwrapb
-			_, _, _, _, _, additionals := errors.Unwrapb(err)
+			_, _, _, _, _, additional := errors.Unwrapb(err)
 
 			// Check additional hints if we have any
-			if len(additionals) > 0 {
+			if len(additional) > 0 {
 				for _, hint := range tt.wantAdditionalHints {
 					found := false
-					for _, additional := range additionals {
+					for _, additional := range additional {
 						if strings.Contains(additional, hint) {
 							found = true
 							break
 						}
 					}
-					assert.True(t, found, "Expected to find hint '%s' in additionals: %v", hint, additionals)
+					assert.True(t, found, "Expected to find hint '%s' in additional: %v", hint, additional)
 				}
 			}
 		})

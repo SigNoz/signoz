@@ -137,14 +137,14 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 			"Found %d syntax errors while parsing the search expression.",
 			len(parserErrorListener.SyntaxErrors),
 		)
-		additionals := make([]string, len(parserErrorListener.SyntaxErrors))
+		additional := make([]string, len(parserErrorListener.SyntaxErrors))
 		for _, err := range parserErrorListener.SyntaxErrors {
 			if err.Error() != "" {
-				additionals = append(additionals, err.Error())
+				additional = append(additional, err.Error())
 			}
 		}
 
-		return nil, combinedErrors.WithAdditional(additionals...).WithUrl(searchTroubleshootingGuideURL)
+		return nil, combinedErrors.WithAdditional(additional...).WithUrl(searchTroubleshootingGuideURL)
 	}
 
 	// Visit the parse tree with our ClickHouse visitor

@@ -1437,7 +1437,7 @@ func TestQueryRangeFormula(t *testing.T) {
 			expectErr: false,
 		},
 		{
-			desc: "Unknow variable in expression",
+			desc: "Unknown variable in expression",
 			compositeQuery: v3.CompositeQuery{
 				PanelType: v3.PanelTypeGraph,
 				QueryType: v3.QueryTypeBuilder,

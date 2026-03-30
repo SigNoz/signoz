@@ -1,11 +1,11 @@
 import { SettingPeriod } from 'container/GeneralSettings';
 
-const converIntoHr = (value: number, peroid: SettingPeriod): number => {
-	if (peroid === 'day') {
+const converIntoHr = (value: number, period: SettingPeriod): number => {
+	if (period === 'day') {
 		return value * 24;
 	}
 
-	if (peroid === 'hr') {
+	if (period === 'hr') {
 		return value;
 	}
 

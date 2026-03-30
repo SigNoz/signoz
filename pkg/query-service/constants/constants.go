@@ -228,7 +228,7 @@ const (
 )
 
 // ReservedColumnTargetAliases identifies result value from a user
-// written clickhouse query. The column alias indcate which value is
+// written clickhouse query. The column alias indicate which value is
 // to be considered as final result (or target)
 var ReservedColumnTargetAliases = map[string]struct{}{
 	"__result": {},

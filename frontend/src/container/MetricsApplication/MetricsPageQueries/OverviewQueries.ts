@@ -115,7 +115,7 @@ export const apDexTracesQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperationsRoute,
-	threashold,
+	threshold,
 }: ApDexProps): QueryBuilderData => {
 	const autoCompleteDataA: BaseAutocompleteData = {
 		dataType: DataTypes.Float64,
@@ -178,7 +178,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
-			value: convertMilSecToNanoSec(threashold),
+			value: convertMilSecToNanoSec(threshold),
 		},
 		{
 			id: '',
@@ -211,7 +211,7 @@ export const apDexTracesQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['<='],
-			value: convertMilSecToNanoSec(threashold * 4),
+			value: convertMilSecToNanoSec(threshold * 4),
 		},
 		{
 			id: '',
@@ -284,7 +284,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 	servicename,
 	tagFilterItems,
 	topLevelOperationsRoute,
-	threashold,
+	threshold,
 	delta,
 	metricsBuckets,
 	dotMetricsEnabled,
@@ -358,7 +358,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000, metricsBuckets),
+			value: getNearestHighestBucketValue(threshold * 1000, metricsBuckets),
 		},
 		{
 			id: '',
@@ -394,7 +394,7 @@ export const apDexMetricsQueryBuilderQueries = ({
 				type: MetricsType.Tag,
 			},
 			op: OPERATORS['='],
-			value: getNearestHighestBucketValue(threashold * 1000 * 4, metricsBuckets),
+			value: getNearestHighestBucketValue(threshold * 1000 * 4, metricsBuckets),
 		},
 		{
 			id: '',

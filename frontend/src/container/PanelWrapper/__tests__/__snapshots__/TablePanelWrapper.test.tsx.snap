@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`Table panel wrappper tests table should render fine with the query response and column units 1`] = `
+exports[`Table panel wrapper tests table should render fine with the query response and column units 1`] = `
 .c1 {
   position: absolute;
   right: -0.313rem;

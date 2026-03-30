@@ -169,7 +169,7 @@ func (provider *provider) Get(ctx context.Context, orgID valuer.UUID, cacheKey s
 
 		fromCache := cloneable.Clone()
 
-		// check the type compatbility between the src and dest
+		// check the type compatibility between the src and dest
 		srcv := reflect.ValueOf(fromCache)
 		if !srcv.Type().AssignableTo(dstv.Type()) {
 			return errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "unassignable: (src: \"%s\", dst: \"%s\")", srcv.Type().String(), dstv.Type().String())

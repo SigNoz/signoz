@@ -215,7 +215,7 @@ function OptionsMenu({
 				showAddNewColumnContainer ? 'active' : '',
 			)}
 			onClick={(event): void => {
-				// this is to restrict click events to propogate to parent
+				// this is to restrict click events to propagate to parent
 				event.stopPropagation();
 			}}
 		>

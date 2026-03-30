@@ -306,7 +306,7 @@ function QueryBuilderSearch({
 			};
 		});
 
-		// If in infra monitoring or metrics explorer, only run the onChange query when editing is finsished.
+		// If in infra monitoring or metrics explorer, only run the onChange query when editing is finished.
 		if (isInfraMonitoring || isMetricsExplorer) {
 			if (!isEditingTag) {
 				onChange(initialTagFilters);
@@ -353,7 +353,7 @@ function QueryBuilderSearch({
 
 	const userOs = getUserOperatingSystem();
 
-	// conditional changes here to use a seperate component to render the example queries based on the option group label
+	// conditional changes here to use a separate component to render the example queries based on the option group label
 	const customRendererForLogsExplorer = options.map((option) => (
 		<Select.Option
 			key={`${option.label}-${option.type || ''}-${option.dataType || ''}`}

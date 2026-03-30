@@ -236,7 +236,7 @@ describe.skip('LogsExplorerViews Pagination', () => {
 		setupServer(capturedPayloads);
 	});
 
-	afterAll((): void => {
+	after all((): void => {
 		// Use fake timers after the tests are done.
 		jest.useFakeTimers();
 		// Explicitly set the fake system time if needed by other tests

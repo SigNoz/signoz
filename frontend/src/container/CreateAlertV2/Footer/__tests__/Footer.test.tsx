@@ -193,7 +193,7 @@ describe('Footer', () => {
 		).toBeDisabled();
 	});
 
-	it('create and test buttons are disabled when notifcation channels are missing and routing policies are disabled', () => {
+	it('create and test buttons are disabled when notification channels are missing and routing policies are disabled', () => {
 		jest.spyOn(createAlertState, 'useCreateAlertState').mockReturnValueOnce({
 			...mockAlertContextState,
 			notificationSettings: {

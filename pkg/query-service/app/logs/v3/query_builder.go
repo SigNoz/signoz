@@ -544,7 +544,7 @@ func PrepareLogsQuery(start, end int64, queryType v3.QueryType, panelType v3.Pan
 				query = AddLimitToQuery(query, mq.PageSize)
 			}
 
-			// add offset to the query only if it is not orderd by timestamp.
+			// add offset to the query only if it is not ordered by timestamp.
 			if !IsOrderByTs(mq.OrderBy) {
 				query = AddOffsetToQuery(query, mq.Offset)
 			}

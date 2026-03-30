@@ -212,7 +212,7 @@ describe('Explorer', () => {
 		expect(yAxisUnitSelector).not.toBeInTheDocument();
 	});
 
-	it('should not render y axis unit selector for mutliple metrics with same unit', () => {
+	it('should not render y axis unit selector for multiple metrics with same unit', () => {
 		(useSearchParams as jest.Mock).mockReturnValueOnce([
 			new URLSearchParams({ isOneChartPerQueryEnabled: 'true' }),
 			mockSetSearchParams,

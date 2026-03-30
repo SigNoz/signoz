@@ -157,7 +157,7 @@ The `handler.New` function ties the HTTP handler to OpenAPI metadata via `OpenAP
   - `Request` is a Go type that describes the request body or form.
   - `RequestContentType` is usually `"application/json"` or `"application/x-www-form-urlencoded"` (for callbacks like SAML).
 - **RequestQuery**:
-  - `RequestQuery` is a Go type that descirbes query url params.
+  - `RequestQuery` is a Go type that describes query url params.
 - **RequestExamples**: An array of `handler.OpenAPIExample` that provide concrete request payloads in the generated spec. See [Adding request examples](#adding-request-examples) below.
 - **Response / ResponseContentType**:
   - `Response` is the Go type for the successful response payload.

@@ -218,7 +218,7 @@ java -jar cloudwatch_exporter-0.15.5-jar-with-dependencies.jar 9106 aws-rds-post
 
 4. Verify the CloudWatch metrics
 
-Visit the http://localhost:9106/metrics and confirm the `aws_rds_*` metrics are avialable.
+Visit the http://localhost:9106/metrics and confirm the `aws_rds_*` metrics are available.
 
 #### Set up the OTEL Collector
 

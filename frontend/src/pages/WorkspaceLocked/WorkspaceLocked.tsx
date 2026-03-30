@@ -241,7 +241,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 				</Row>
 			),
 		},
-		// #TODO: comming soon
+		// #TODO: coming soon
 		// {
 		// 	key: '3',
 		// 	label: 'Our Pricing',

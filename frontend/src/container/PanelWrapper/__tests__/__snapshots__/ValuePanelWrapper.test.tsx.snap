@@ -1,6 +1,6 @@
 // Jest Snapshot v1, https://jestjs.io/docs/snapshot-testing
 
-exports[`Value panel wrappper tests should render tooltip when there are conflicting thresholds 1`] = `
+exports[`Value panel wrapper tests should render tooltip when there are conflicting thresholds 1`] = `
 .c1 {
   height: 100%;
   display: -webkit-box;

@@ -159,7 +159,7 @@ function PipelineListsView({
 	const handleAlert = useCallback(
 		({
 			title,
-			descrition,
+			description,
 			buttontext,
 			onCancel,
 			onOk,
@@ -168,7 +168,7 @@ function PipelineListsView({
 			modal.confirm({
 				title: <AlertModalTitle>{title}</AlertModalTitle>,
 				icon: <ExclamationCircleOutlined />,
-				content: <AlertContentWrapper>{descrition}</AlertContentWrapper>,
+				content: <AlertContentWrapper>{description}</AlertContentWrapper>,
 				okText: <span className={`${className}-ok-text`}>{buttontext}</span>,
 				cancelText: <span>{t('cancel')}</span>,
 				onOk,
@@ -205,7 +205,7 @@ function PipelineListsView({
 		(record: PipelineData) => (): void => {
 			handleAlert({
 				title: `${t('delete_pipeline')} : ${record.name}?`,
-				descrition: t('delete_pipeline_description'),
+				description: t('delete_pipeline_description'),
 				buttontext: t('delete'),
 				onOk: pipelineDeleteHandler(record),
 				className: 'delete-pipeline',
@@ -323,7 +323,7 @@ function PipelineListsView({
 				});
 				handleAlert({
 					title: t('reorder_pipeline'),
-					descrition: t('reorder_pipeline_description'),
+					description: t('reorder_pipeline_description'),
 					buttontext: t('reorder'),
 					onOk: updatePipelineSequence(updatedRows),
 					onCancel: onCancelPipelineSequence(rawData),
@@ -614,7 +614,7 @@ interface ExpandRowConfig {
 
 export interface AlertMessage {
 	title: string;
-	descrition: string;
+	description: string;
 	buttontext: string;
 	onOk: VoidFunction;
 	onCancel?: VoidFunction;

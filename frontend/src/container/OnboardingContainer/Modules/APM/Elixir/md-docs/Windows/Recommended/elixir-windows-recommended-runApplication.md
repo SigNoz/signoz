@@ -40,7 +40,7 @@ end
 
 **Step 2. Configure Application**
 
-You need to configure your application to send telemtry data by adding the follwing config to your `runtime.exs` file:
+You need to configure your application to send telemetry data by adding the following config to your `runtime.exs` file:
 
 ```elixir
 config :opentelemetry, :resource, service: %{name: "{{MYAPP}}"}

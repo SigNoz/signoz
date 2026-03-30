@@ -52,7 +52,7 @@ function SearchFields({
 	}, [parsedQuery]);
 
 	// syncKeyPrefix initiates re-render. useful in situations like
-	// delete field (in search panel). this method allows condiitonally
+	// delete field (in search panel). this method allows conditionally
 	// setting keyPrefix as doing it on every update of query initiates
 	// a re-render. this is a problem for text fields where input focus goes away.
 	const syncKeyPrefix = (): void => {

@@ -1891,7 +1891,7 @@ func Test_querier_Logs_runWindowBasedListQueryDesc(t *testing.T) {
 			expectedTimestamps: []int64{1722237800000000000, 1722237700000000000, 1722208830000000000, 1722208820000000000, 1722208810000000000},
 		},
 		{
-			name:           "dont allow pagination to get more than speficied limit",
+			name:           "dont allow pagination to get more than specified limit",
 			queryResponses: []queryResponse{},
 			queryParams: queryParams{
 				start:    1722171576000000000,

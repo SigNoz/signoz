@@ -1,5 +1,5 @@
 
-Once you are done intrumenting your Java application, you can run it using the below command
+Once you are done instrumenting your Java application, you can run it using the below command
 
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \

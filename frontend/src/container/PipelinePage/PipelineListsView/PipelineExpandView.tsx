@@ -68,7 +68,7 @@ function PipelineExpandView({
 		(record: ProcessorData) => (): void => {
 			handleAlert({
 				title: `${t('delete_processor')} : ${record.name}?`,
-				descrition: t('delete_processor_description'),
+				description: t('delete_processor_description'),
 				buttontext: t('delete'),
 				onOk: deleteProcessorHandler(record),
 			});
@@ -173,7 +173,7 @@ function PipelineExpandView({
 				);
 				handleAlert({
 					title: t('reorder_processor'),
-					descrition: t('reorder_processor_description'),
+					description: t('reorder_processor_description'),
 					buttontext: t('reorder'),
 					onOk: reorderProcessorRow(updatedRow),
 					onCancel: onCancelReorderProcessorRow(),

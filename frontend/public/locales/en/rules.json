@@ -1,5 +1,5 @@
 {
-	"preview_chart_unexpected_error": "An unexpeced error occurred updating the chart, please check your query.",
+	"preview_chart_unexpected_error": "An unexpected error occurred updating the chart, please check your query.",
 	"preview_chart_threshold_label": "Threshold",
 	"placeholder_label_key_pair": "Click here to enter a label (key value pairs)",
 	"button_yes": "Yes",

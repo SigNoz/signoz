@@ -213,7 +213,7 @@ func (q *querier) runBuilderQuery(
 	}
 
 	// What is happening here?
-	// We are only caching the graph panel queries. A non-existant cache key means that the query is not cached.
+	// We are only caching the graph panel queries. A non-existent cache key means that the query is not cached.
 	// If the query is not cached, we execute the query and return the result without caching it.
 	if _, ok := cacheKeys[queryName]; !ok || params.NoCache {
 		q.logger.InfoContext(ctx, "skipping cache for metrics query", "query_name", queryName, "start", start, "end", end, "step", builderQuery.StepInterval, "no_cache", params.NoCache, "cache_key", cacheKeys[queryName])

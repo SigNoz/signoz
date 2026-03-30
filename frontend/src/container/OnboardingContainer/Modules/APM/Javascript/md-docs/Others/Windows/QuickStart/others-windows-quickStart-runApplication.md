@@ -1,4 +1,4 @@
-Once you are done intrumenting your JavaScript application, you can run it as you normally would.
+Once you are done instrumenting your JavaScript application, you can run it as you normally would.
 
 For example:
 

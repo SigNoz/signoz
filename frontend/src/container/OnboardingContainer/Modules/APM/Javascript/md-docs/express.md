@@ -28,7 +28,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create tracing.js file
 
-This file will have your SigNoz cloud endpoint and service name configued as values of `url` and `SERVICE_NAME` respectively.
+This file will have your SigNoz cloud endpoint and service name configured as values of `url` and `SERVICE_NAME` respectively.
 
 ```js
 // tracing.js
@@ -95,7 +95,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create tracing.js file
 
-This file will have your service name configued as value for `SERVICE_NAME`.
+This file will have your service name configured as value for `SERVICE_NAME`.
 
 ```js
 // tracing.js
@@ -156,7 +156,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create tracing.js file
 
-This file will have your service name configued as value for `SERVICE_NAME`.
+This file will have your service name configured as value for `SERVICE_NAME`.
 
 ```js
 // tracing.js

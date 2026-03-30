@@ -51,7 +51,7 @@ function MessagingQueuesGraph(): JSX.Element {
 
 	const messagingQueueCustomTooltipText = (): HTMLDivElement => {
 		const customText = document.createElement('div');
-		customText.textContent = 'Click on co-ordinate to view details';
+		customText.textContent = 'Click on coordinate to view details';
 		customText.style.paddingTop = '8px';
 		customText.style.paddingBottom = '2px';
 		customText.style.color = '#fff';

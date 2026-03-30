@@ -86,7 +86,7 @@ function EvaluationCadencePreview({
 		}
 		return buildAlertScheduleFromCustomSchedule(
 			advancedOptions.evaluationCadence.custom.repeatEvery,
-			advancedOptions.evaluationCadence.custom.occurence,
+			advancedOptions.evaluationCadence.custom.occurrence,
 			advancedOptions.evaluationCadence.custom.startAt,
 			15,
 		);

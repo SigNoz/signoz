@@ -90,7 +90,7 @@ function LogLiveTail({ getLogsAggregate }: Props): JSX.Element {
 
 	const firstLogsId = useMemo(() => logs[0]?.id, [logs]);
 
-	// This ref depicts thats whether the live tail is played from paused state or not.
+	// This ref depicts that's whether the live tail is played from paused state or not.
 	const liveTailSourceRef = useRef<EventSource>();
 
 	useEffect(() => {

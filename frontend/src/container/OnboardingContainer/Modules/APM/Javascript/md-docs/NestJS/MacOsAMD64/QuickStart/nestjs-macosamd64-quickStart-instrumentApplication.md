@@ -65,7 +65,7 @@ const tracer = require('./tracer')
 &nbsp;
 
 ### Step 4: Start the tracer
-In the `async function boostrap` section of the application code, initialize the tracer as follows:
+In the `async function bootstrap` section of the application code, initialize the tracer as follows:
 
 ```bash
 const tracer = require('./tracer')

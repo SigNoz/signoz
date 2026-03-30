@@ -12,7 +12,7 @@ type Query interface {
 	Fingerprint() string
 	// Window returns [from, to) in epoch‑ms so cache can slice/merge.
 	Window() (startMS, endMS uint64)
-	// Execute runs the query; implementors must be side‑effect‑free.
+	// Execute runs the query; implementers must be side‑effect‑free.
 	Execute(ctx context.Context) (*Result, error)
 }
 

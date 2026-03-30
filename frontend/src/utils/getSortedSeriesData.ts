@@ -1,6 +1,6 @@
 import { QueryData } from 'types/api/widgets/getQuery';
 
-// Sorting the series data in desending matter for plotting cummulative bar chart.
+// Sorting the series data in desending matter for plotting cumulative bar chart.
 export const getSortedSeriesData = (
 	result: QueryData[] | undefined,
 ): QueryData[] => {

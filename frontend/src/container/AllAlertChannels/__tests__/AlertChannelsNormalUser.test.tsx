@@ -44,7 +44,7 @@ describe('Alert Channels Settings List page (Normal User)', () => {
 			);
 		});
 
-		it('Should check if "New Alert Channel" Button is visble and disabled', async () => {
+		it('Should check if "New Alert Channel" Button is visible and disabled', async () => {
 			const newAlertButton = screen.getByRole('button', {
 				name: 'plus button_new_channel',
 			});

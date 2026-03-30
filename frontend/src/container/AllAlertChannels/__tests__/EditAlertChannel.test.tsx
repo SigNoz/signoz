@@ -70,7 +70,7 @@ describe('Should check if the edit alert channel is properly displayed ', () => 
 		});
 	});
 
-	it('Should check if Recepient label, input, and help text are displayed properly ', () => {
+	it('Should check if Recipient label, input, and help text are displayed properly ', () => {
 		testLabelInputAndHelpValue({
 			labelText: 'field_slack_recipient',
 			testId: 'slack-channel-textbox',

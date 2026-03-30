@@ -24,7 +24,7 @@ cd tests/integration
 uv sync
 ```
 
-> **_NOTE:_**  the build backend could throw an error while installing `psycopg2`, pleae see https://www.psycopg.org/docs/install.html#build-prerequisites
+> **_NOTE:_**  the build backend could throw an error while installing `psycopg2`, please see https://www.psycopg.org/docs/install.html#build-prerequisites
 
 ### Starting the Test Environment
 

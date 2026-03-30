@@ -19,7 +19,7 @@ import (
 var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
-	// written clickhouse query. The column alias indcate which value is
+	// written clickhouse query. The column alias indicate which value is
 	// to be considered as final result (or target)
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )

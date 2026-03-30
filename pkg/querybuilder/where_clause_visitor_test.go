@@ -437,7 +437,7 @@ func TestVisitKey(t *testing.T) {
 			expectedWarnings:   []string{"ambiguous"},
 			expectedMainWrnURL: "https://signoz.io/docs/userguide/field-context-data-types/",
 		},
-		// These 3 unit tests have both attibute.custom_field and custom_field in the map
+		// These 3 unit tests have both attribute.custom_field and custom_field in the map
 		{
 			name:    "only custom_field is selected",
 			keyText: "custom_field",

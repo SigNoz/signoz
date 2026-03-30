@@ -98,7 +98,7 @@ describe('useQueryBuilderOperations - Empty Aggregate Attribute Type', () => {
 	});
 
 	describe('handleChangeAggregatorAttribute', () => {
-		it('should set AVG operators when type is empty but key is present - unkown metric', () => {
+		it('should set AVG operators when type is empty but key is present - unknown metric', () => {
 			const result = renderHookWithProps();
 			const newAttribute: BaseAutocompleteData = {
 				key: 'new_metric',

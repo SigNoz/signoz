@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your Java application, you can run it using the below command
+Once you are done instrumenting your Java application, you can run it using the below command
 
 ```bash
 java -javaagent:<path>/opentelemetry-javaagent.jar -jar <my-app>.jar

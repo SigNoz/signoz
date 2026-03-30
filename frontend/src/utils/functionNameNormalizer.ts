@@ -15,7 +15,7 @@ export const normalizeFunctionName = (functionName: string): string => {
 		cutoffmax: QueryFunctionsTypes.CUTOFF_MAX,
 		clampmin: QueryFunctionsTypes.CLAMP_MIN,
 		clampmax: QueryFunctionsTypes.CLAMP_MAX,
-		absolut: QueryFunctionsTypes.ABSOLUTE,
+		absolute: QueryFunctionsTypes.ABSOLUTE,
 		runningdiff: QueryFunctionsTypes.RUNNING_DIFF,
 		log2: QueryFunctionsTypes.LOG_2,
 		log10: QueryFunctionsTypes.LOG_10,

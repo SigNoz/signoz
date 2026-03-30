@@ -62,9 +62,9 @@ func prettyToken(p antlr.Parser, tType int) (string, bool) {
 	}
 
 	// literal name (the quoted punctuation that ANTLR generates)
-	lits := p.GetLiteralNames()
-	if tType >= 0 && tType < len(lits) && lits[tType] != "" {
-		return lits[tType], true
+	list := p.GetLiteralNames()
+	if tType >= 0 && tType < len(list) && list[tType] != "" {
+		return list[tType], true
 	}
 
 	// symbolic name as last resort (but hide WS, EOF, …)
@@ -213,9 +213,9 @@ func pGetTokenType(p antlr.Parser, tName string) int {
 
 // tokenName prefers literal > symbolic > numeric.
 func tokenName(p antlr.Parser, tType int) string {
-	lits := p.GetLiteralNames()
-	if tType >= 0 && tType < len(lits) && lits[tType] != "" {
-		return lits[tType]
+	list := p.GetLiteralNames()
+	if tType >= 0 && tType < len(list) && list[tType] != "" {
+		return list[tType]
 	}
 	syms := p.GetSymbolicNames()
 	if tType >= 0 && tType < len(syms) && syms[tType] != "" {

@@ -47,7 +47,7 @@ describe('GroupByFilter', () => {
 		callCount = 0;
 		jest.clearAllMocks();
 	});
-	afterAll(() => {
+	after all(() => {
 		server.close();
 	});
 

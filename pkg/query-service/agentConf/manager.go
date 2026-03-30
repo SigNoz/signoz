@@ -55,7 +55,7 @@ type ManagerOptions struct {
 }
 
 func Initiate(options *ManagerOptions) (*Manager, error) {
-	// featureType must be unqiue across registered AgentFeatures.
+	// featureType must be unique across registered AgentFeatures.
 	agentFeatureByType := map[AgentFeatureType]AgentFeature{}
 	for _, feature := range options.AgentFeatures {
 		featureType := feature.AgentFeatureType()

@@ -98,7 +98,7 @@ export const INITIAL_ADVANCED_OPTIONS_STATE: AdvancedOptionsState = {
 		custom: {
 			repeatEvery: 'day',
 			startAt: dayjs().format('HH:mm:ss'),
-			occurence: [],
+			occurrence: [],
 			timezone: TIMEZONE_DATA[0].value,
 		},
 		rrule: {

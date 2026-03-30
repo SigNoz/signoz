@@ -378,7 +378,7 @@ describe('CreateAlertV2 Context Utils', () => {
 					repeatEvery: 'week',
 					startAt: '12:00:00',
 					timezone: 'America/New_York',
-					occurence: ['Monday', 'Friday'],
+					occurrence: ['Monday', 'Friday'],
 				},
 				rrule: { date: dayjs(), startAt: '10:00:00', rrule: 'test-rrule' },
 			};

@@ -20,7 +20,7 @@ import {
 	setVisibleColumns,
 } from './utils';
 
-import './DynamicColumnTable.syles.scss';
+import './DynamicColumnTable.styles.scss';
 
 function DynamicColumnTable({
 	tablesource,

@@ -1,4 +1,4 @@
-## Integreation: Messaging Queue 
+## Integration: Messaging Queue 
 
 This package contains the `api`, and `translation` logic to support messaging queue features.
 

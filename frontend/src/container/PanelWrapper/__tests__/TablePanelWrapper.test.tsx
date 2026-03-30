@@ -8,7 +8,7 @@ import {
 	tablePanelWidgetQuery,
 } from './tablePanelWrapperHelper';
 
-describe('Table panel wrappper tests', () => {
+describe('Table panel wrapper tests', () => {
 	it('table should render fine with the query response and column units', () => {
 		const { container, getByText } = render(
 			<TablePanelWrapper

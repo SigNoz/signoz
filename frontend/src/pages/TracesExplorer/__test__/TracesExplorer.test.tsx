@@ -526,7 +526,7 @@ describe('TracesExplorer - ', () => {
 		server.resetHandlers();
 	});
 
-	afterAll(() => {
+	after all(() => {
 		server.close();
 		cleanup();
 	});

@@ -38,7 +38,7 @@ func PostProcessResult(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 	// We do that by applying a reduce function to each series
 	applyReduceTo(result, queryRangeParams)
 
-	// expressions are executed at query serivce so the value of time.now in the invdividual
+	// expressions are executed at query service so the value of time.now in the invdividual
 	// queries will be different so for table panel we are making it same.
 	if queryRangeParams.CompositeQuery.PanelType == v3.PanelTypeTable {
 		tablePanelResultProcessor(result)

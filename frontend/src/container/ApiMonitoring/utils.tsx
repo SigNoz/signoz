@@ -1363,7 +1363,7 @@ export const createFiltersForSelectedRowData = (
 // First query payload for endpoint metrics
 // Second query payload for endpoint status code table
 // Third query payload for endpoint dropdown selection
-// Fourth query payload for endpoint dependant services
+// Fourth query payload for endpoint dependent services
 // Fifth query payload for endpoint response status count bar chart
 // Sixth query payload for endpoint response status code latency bar chart
 export const getEndPointDetailsQueryPayload = (

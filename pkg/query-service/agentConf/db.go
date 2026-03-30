@@ -123,7 +123,7 @@ func (r *Repo) insertConfig(
 	// allowing empty elements for logs - use case is deleting all pipelines
 	if len(elements) == 0 && c.ElementType != opamptypes.ElementTypeLogPipelines {
 		slog.ErrorContext(ctx, "insert config called with no elements", "element_type", c.ElementType.StringValue())
-		return errors.NewInvalidInputf(CodeConfigElementsRequired, "config must have atleast one element")
+		return errors.NewInvalidInputf(CodeConfigElementsRequired, "config must have at least one element")
 	}
 
 	if c.Version != 0 {

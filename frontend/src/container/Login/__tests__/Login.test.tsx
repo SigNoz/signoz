@@ -604,7 +604,7 @@ describe('Login Component', () => {
 			await user.type(passwordInput, 'testpassword');
 			await user.click(loginButton);
 
-			// do not test for the request paramters here. Reference: https://mswjs.io/docs/best-practices/avoid-request-assertions
+			// do not test for the request parameters here. Reference: https://mswjs.io/docs/best-practices/avoid-request-assertions
 			// rather test for the effects of the request
 			await waitFor(() => {
 				expect(localStorage.getItem('AUTH_TOKEN')).toBe('mock-access-token');

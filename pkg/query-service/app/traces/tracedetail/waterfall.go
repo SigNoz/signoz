@@ -255,7 +255,7 @@ func GetSelectedSpans(uncollapsedSpans []string, selectedSpanID string, traceRoo
 
 	// get the 0.4*[span limit] before the interested span index
 	startIndex := selectedSpanIndex - int(SPAN_LIMIT_PER_REQUEST_FOR_WATERFALL*0.4)
-	// get the 0.6*[span limit] after the intrested span index
+	// get the 0.6*[span limit] after the interested span index
 	endIndex := selectedSpanIndex + int(SPAN_LIMIT_PER_REQUEST_FOR_WATERFALL*0.6)
 
 	// adjust the sliding window according to the available left and right spaces.

@@ -17,7 +17,7 @@ func TestClickHouseFilterExtractor_GroupByColumns(t *testing.T) {
 		wantError          bool
 	}{
 		{
-			name:        "CH64 - Only select query get's extracted and parsed",
+			name:        "CH64 - Only select query gets extracted and parsed",
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{
@@ -651,7 +651,7 @@ func TestClickHouseFilterExtractor_SimpleCHQueries(t *testing.T) {
 			},
 		},
 		{
-			name:        "CH64 - Only select query get's extracted and parsed",
+			name:        "CH64 - Only select query gets extracted and parsed",
 			query:       `SELECT avg(value) FROM metrics WHERE 'cpu' = metric_name GROUP BY region;CREATE DATABASE mydb; DELETE FROM metrics WHERE metric_name = 'memory';`,
 			wantMetrics: []string{"cpu"},
 			wantGroupByColumns: []ColumnInfo{

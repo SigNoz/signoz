@@ -54,7 +54,7 @@ const RULE_VIEW_TEST_ID = 'rrule-view';
 const SAVE_CUSTOM_SCHEDULE_TEXT = 'Save Custom Schedule';
 
 describe('EvaluationCadenceDetails', () => {
-	it('should render the evaluation cadence details component with editor mode in daily occurence by default', () => {
+	it('should render the evaluation cadence details component with editor mode in daily occurrence by default', () => {
 		render(
 			<EvaluationCadenceDetails
 				isOpen
@@ -103,7 +103,7 @@ describe('EvaluationCadenceDetails', () => {
 		expect(screen.getByText(SAVE_CUSTOM_SCHEDULE_TEXT)).toBeInTheDocument();
 	});
 
-	it('when showing weekly occurence, the occurence options should be rendered', () => {
+	it('when showing weekly occurrence, the occurrence options should be rendered', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
@@ -135,7 +135,7 @@ describe('EvaluationCadenceDetails', () => {
 		expect(screen.queryByTestId(NO_SCHEDULE_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	it('render schedule preview in weekly occurence when days are selected', () => {
+	it('render schedule preview in weekly occurrence when days are selected', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
@@ -146,7 +146,7 @@ describe('EvaluationCadenceDetails', () => {
 							...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 								.custom,
 							repeatEvery: 'week',
-							occurence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+							occurrence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
 						},
 					},
 				},
@@ -165,7 +165,7 @@ describe('EvaluationCadenceDetails', () => {
 		expect(screen.queryByTestId(NO_SCHEDULE_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	it('when showing monthly occurence, the occurence options should be rendered', () => {
+	it('when showing monthly occurrence, the occurrence options should be rendered', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
@@ -197,7 +197,7 @@ describe('EvaluationCadenceDetails', () => {
 		expect(screen.queryByTestId(NO_SCHEDULE_TEST_ID)).not.toBeInTheDocument();
 	});
 
-	it('render schedule preview in monthly occurence when days are selected', () => {
+	it('render schedule preview in monthly occurrence when days are selected', () => {
 		jest.spyOn(alertState, 'useCreateAlertState').mockReturnValueOnce(
 			createMockAlertContextState({
 				advancedOptions: {
@@ -208,7 +208,7 @@ describe('EvaluationCadenceDetails', () => {
 							...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 								.custom,
 							repeatEvery: 'month',
-							occurence: ['1'],
+							occurrence: ['1'],
 						},
 					},
 				},
@@ -258,7 +258,7 @@ describe('EvaluationCadenceDetails', () => {
 					...INITIAL_ADVANCED_OPTIONS_STATE_WITH_CUSTOM_SCHEDULE.evaluationCadence
 						.custom,
 					// today selected by default
-					occurence: [new Date().getDate().toString()],
+					occurrence: [new Date().getDate().toString()],
 				},
 			},
 		});

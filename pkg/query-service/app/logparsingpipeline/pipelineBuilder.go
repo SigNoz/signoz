@@ -135,7 +135,7 @@ func getOperators(ops []pipelinetypes.PipelineOperator) ([]pipelinetypes.Pipelin
 					fieldsNotNilCheck, err := fieldsReferencedInExprNotNilCheck(expression)
 					if err != nil {
 						return nil, fmt.Errorf(
-							"could'nt generate nil check for fields referenced in value expr of add operator %s: %w",
+							"couldn't generate nil check for fields referenced in value expr of add operator %s: %w",
 							operator.Name, err,
 						)
 					}

@@ -166,7 +166,7 @@ func (u *User) UpdateStatus(status valuer.String) error {
 		return errors.WithAdditionalf(err, "cannot update status of a deleted user")
 	}
 
-	// not udpates allowed from active to pending state
+	// not updates allowed from active to pending state
 	if status == UserStatusPendingInvite && u.Status == UserStatusActive {
 		return errors.New(errors.TypeUnsupported, errors.CodeUnsupported, "cannot move user to pending state from active state")
 	}

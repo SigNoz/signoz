@@ -1156,7 +1156,7 @@ describe('removeKeysFromExpression', () => {
 				true,
 			);
 
-			// Should remove one occurence as this case in itself is invalid to have multiple variable expressions for the same key
+			// Should remove one occurrence as this case in itself is invalid to have multiple variable expressions for the same key
 			expect(result).toBe(
 				"deployment.environment = $env1 deployment.environment = 'default'",
 			);

@@ -31,7 +31,7 @@ type GoogleConfig struct {
 	// Map of workspace domain to admin email for service account impersonation
 	// The service account will impersonate this admin to call the directory API
 	// Use "*" as key for wildcard/default that matches any domain
-	// Example: {"example.com": "admin@exmaple.com", "*": "fallbackadmin@company.com"}
+	// Example: {"example.com": "admin@example.com", "*": "fallbackadmin@company.com"}
 	DomainToAdminEmail map[string]valuer.Email `json:"domainToAdminEmail,omitempty"`
 
 	// If true, fetch transitive group membership (recursive - groups that contains other groups)

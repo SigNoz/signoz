@@ -29,7 +29,7 @@ def test_managed_roles_create_on_register(
     assert response.json()["status"] == "success"
     data = response.json()["data"]
 
-    # since this check happens immediately post registeration, all the managed roles should be present.
+    # since this check happens immediately post registration, all the managed roles should be present.
     assert len(data) == 4
     role_names = {role["name"] for role in data}
     expected_names = {
@@ -78,7 +78,7 @@ def test_root_user_signoz_admin_assignment(
     org_id = admin_role_entry["orgId"]
 
     # to be super sure of authorization server, let's validate the tuples in DB as well.
-    # todo[@vikrantgupta25]: replace this with role memebers handler once built.
+    # todo[@vikrantgupta25]: replace this with role members handler once built.
     with signoz.sqlstore.conn.connect() as conn:
         # verify the entry present for role assignment
         tuple_object_id = f"organization/{org_id}/role/signoz-admin"
@@ -130,7 +130,7 @@ def test_anonymous_user_signoz_anonymous_assignment(
     org_id = admin_role_entry["orgId"]
 
     # to be super sure of authorization server, let's validate the tuples in DB as well.
-    # todo[@vikrantgupta25]: replace this with role memebers handler once built.
+    # todo[@vikrantgupta25]: replace this with role members handler once built.
     with signoz.sqlstore.conn.connect() as conn:
         # verify the entry present for role assignment
         tuple_object_id = f"organization/{org_id}/role/signoz-anonymous"

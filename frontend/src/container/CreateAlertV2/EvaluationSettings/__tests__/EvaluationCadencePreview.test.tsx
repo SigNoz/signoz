@@ -31,7 +31,7 @@ describe('EvaluationCadencePreview', () => {
 						custom: {
 							repeatEvery: 'week',
 							startAt: '00:00:00',
-							occurence: [],
+							occurrence: [],
 							timezone: TIMEZONE_DATA[0].value,
 						},
 					},

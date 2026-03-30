@@ -95,7 +95,7 @@ function RuleOptions({
 			<Select.Option value="1">{t('option_above')}</Select.Option>
 			<Select.Option value="2">{t('option_below')}</Select.Option>
 
-			{/* hide equal and not eqaul in case of analmoy based alert */}
+			{/* hide equal and not equal in case of analmoy based alert */}
 
 			{ruleType !== 'anomaly_rule' && (
 				<>

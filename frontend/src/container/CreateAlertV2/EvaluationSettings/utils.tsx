@@ -241,7 +241,7 @@ export function generateDailyOccurrences(
 
 export function buildAlertScheduleFromCustomSchedule(
 	repeatEvery: string,
-	occurence: string[],
+	occurrence: string[],
 	startAt: string,
 	maxOccurrences = 10,
 ): Date[] | null {
@@ -250,7 +250,7 @@ export function buildAlertScheduleFromCustomSchedule(
 		let occurrences: Date[] = [];
 
 		if (repeatEvery === 'month') {
-			const targetDays = occurence
+			const targetDays = occurrence
 				.map((day) => parseInt(day, 10))
 				.filter((day) => !Number.isNaN(day));
 			occurrences = generateMonthlyOccurrences(
@@ -261,7 +261,7 @@ export function buildAlertScheduleFromCustomSchedule(
 				maxOccurrences,
 			);
 		} else if (repeatEvery === 'week') {
-			const targetWeekdays = occurence
+			const targetWeekdays = occurrence
 				.map((day) => WEEKDAY_MAP[day.toLowerCase()])
 				.filter((day) => day !== undefined);
 			occurrences = generateWeeklyOccurrences(

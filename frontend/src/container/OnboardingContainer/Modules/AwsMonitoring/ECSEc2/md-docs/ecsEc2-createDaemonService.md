@@ -4,7 +4,7 @@ Using the template we downloaded and the SigNoz OpenTelemetry Collector configur
 
 ### Step 1: Set the environment variable
 
-Set the environment variable by running the below command uisng your AWS CLI:
+Set the environment variable by running the below command using your AWS CLI:
 
 ```bash
 export CLUSTER_NAME=<YOUR-ECS-CLUSTER-NAME>

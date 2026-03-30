@@ -19,7 +19,7 @@ beforeAll(() => {
 	});
 });
 
-afterAll(() => {
+after all(() => {
 	// restore
 	delete (HTMLElement.prototype as any).scrollIntoView;
 });

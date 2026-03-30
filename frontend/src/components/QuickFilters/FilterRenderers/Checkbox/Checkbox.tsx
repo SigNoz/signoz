@@ -349,7 +349,7 @@ export default function CheckboxFilter(props: ICheckboxProps): JSX.Element {
 					switch (runningOperator) {
 						case 'in':
 							if (checked) {
-								// if it's an IN operator then if we are checking another value it get's added to the
+								// if it's an IN operator then if we are checking another value it gets added to the
 								// filter clause. example -  key IN [value1, currentSelectedValue]
 								if (isArray(currentFilter.value)) {
 									const newFilter = {

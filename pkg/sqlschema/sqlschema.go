@@ -37,7 +37,7 @@ type SQLOperator interface {
 	// Returns a list of SQL statements to alter the input table to the new table. It converts all unique constraints to unique indices and drops the unique constraints.
 	AlterTable(*Table, []*UniqueConstraint, *Table) [][]byte
 
-	// Returns a list of SQL statements to recreate a table. In recreating the table, it converts all unqiue constraints to indices and copies data from the old table.
+	// Returns a list of SQL statements to recreate a table. In recreating the table, it converts all unique constraints to indices and copies data from the old table.
 	RecreateTable(*Table, []*UniqueConstraint) [][]byte
 
 	// Returns a list of SQL statements to create an index.

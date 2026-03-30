@@ -2737,35 +2737,35 @@
 		}
 	},
 	{
-		"dataSource": "aks",
+		"dataSource": "ask",
 		"label": "Azure Kubernetes Service",
 		"tags": [
 			"Azure"
 		],
 		"module": "apm",
 		"relatedSearchKeywords": [
-			"aks",
-			"aks logs",
-			"aks metrics collection",
-			"aks observability",
-			"aks opentelemetry integration",
-			"aks telemetry",
-			"aks to signoz",
+			"ask",
+			"ask logs",
+			"ask metrics collection",
+			"ask observability",
+			"ask opentelemetry integration",
+			"ask telemetry",
+			"ask to signoz",
 			"apm",
 			"application performance monitoring",
 			"azure",
 			"azure k8s monitoring",
 			"azure kubernetes service",
-			"collect logs from aks",
+			"collect logs from ask",
 			"k8s",
 			"kubernetes",
-			"monitor aks cluster",
+			"monitor ask cluster",
 			"service",
 			"traces",
 			"tracing"
 		],
 		"imgUrl": "/Logos/azure-app-service.svg",
-		"link": "/docs/azure-monitoring/aks/"
+		"link": "/docs/azure-monitoring/ask/"
 	},
 	{
 		"dataSource": "azure-container-apps",

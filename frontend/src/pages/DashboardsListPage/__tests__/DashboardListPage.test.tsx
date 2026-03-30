@@ -39,7 +39,7 @@ describe('dashboard list page', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByText, getByTestId } = render(
 			<MemoryRouter
-				initialEntries={['/dashbords?columnKey=asgard&order=stones&page=1']}
+				initialEntries={['/dashboards?columnKey=asgard&order=stones&page=1']}
 			>
 				<DashboardsList />
 			</MemoryRouter>,
@@ -61,7 +61,7 @@ describe('dashboard list page', () => {
 		(useLocation as jest.Mock).mockReturnValue(mockLocation);
 		const { getByText, getByTestId } = render(
 			<MemoryRouter
-				initialEntries={['/dashbords?columnKey=createdAt&order=descend&page=1']}
+				initialEntries={['/dashboards?columnKey=createdAt&order=descend&page=1']}
 			>
 				<DashboardsList />
 			</MemoryRouter>,
@@ -79,7 +79,7 @@ describe('dashboard list page', () => {
 		const { getByText, getByTestId } = render(
 			<MemoryRouter
 				initialEntries={[
-					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+					'/dashboards?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
 				<DashboardsList />
@@ -120,7 +120,7 @@ describe('dashboard list page', () => {
 		const { getByText, getByTestId, queryByText } = render(
 			<MemoryRouter
 				initialEntries={[
-					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+					'/dashboards?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
 				<DashboardsList />
@@ -147,7 +147,7 @@ describe('dashboard list page', () => {
 		const { getByText } = render(
 			<MemoryRouter
 				initialEntries={[
-					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+					'/dashboards?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
 				<DashboardsList />
@@ -177,7 +177,7 @@ describe('dashboard list page', () => {
 		const { getByText, getByTestId } = render(
 			<MemoryRouter
 				initialEntries={[
-					'/dashbords?columnKey=createdAt&order=descend&page=1&search=tho',
+					'/dashboards?columnKey=createdAt&order=descend&page=1&search=tho',
 				]}
 			>
 				<DashboardsList />

@@ -3788,7 +3788,7 @@ func (r *ClickHouseReader) GetLatestReceivedMetric(
 	// at least 1 metric name must be specified.
 	// this query can be too slow otherwise.
 	if len(metricNames) < 1 {
-		return nil, model.BadRequest(fmt.Errorf("atleast 1 metric name must be specified"))
+		return nil, model.BadRequest(fmt.Errorf("at least 1 metric name must be specified"))
 	}
 
 	quotedMetricNames := []string{}

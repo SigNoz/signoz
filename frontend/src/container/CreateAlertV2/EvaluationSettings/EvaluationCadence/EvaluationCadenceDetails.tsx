@@ -67,12 +67,12 @@ function EvaluationCadenceDetails({
 			: EVALUATION_CADENCE_REPEAT_EVERY_MONTH_OPTIONS;
 
 	useEffect(() => {
-		if (!evaluationCadence.custom.occurence.length) {
+		if (!evaluationCadence.custom.occurrence.length) {
 			const today = new Date();
 			const dayOfWeek = today.getDay();
 			const dayOfMonth = today.getDate();
 
-			const occurence =
+			const occurrence =
 				evaluationCadence.custom.repeatEvery === 'week'
 					? EVALUATION_CADENCE_REPEAT_EVERY_WEEK_OPTIONS[dayOfWeek].value
 					: dayOfMonth.toString();
@@ -81,7 +81,7 @@ function EvaluationCadenceDetails({
 				...evaluationCadence,
 				custom: {
 					...evaluationCadence.custom,
-					occurence: [occurence],
+					occurrence: [occurrence],
 				},
 			});
 		}
@@ -101,7 +101,7 @@ function EvaluationCadenceDetails({
 							custom: {
 								...evaluationCadence.custom,
 								repeatEvery: value,
-								occurence: [],
+								occurrence: [],
 							},
 						})
 					}
@@ -116,14 +116,14 @@ function EvaluationCadenceDetails({
 					<Typography.Text>ON DAY(S)</Typography.Text>
 					<Select
 						options={occurenceOptions}
-						value={evaluationCadence.custom.occurence || null}
+						value={evaluationCadence.custom.occurrence || null}
 						mode="multiple"
 						onChange={(value): void =>
 							setEvaluationCadence({
 								...evaluationCadence,
 								custom: {
 									...evaluationCadence.custom,
-									occurence: value,
+									occurrence: value,
 								},
 							})
 						}
@@ -253,7 +253,7 @@ function EvaluationCadenceDetails({
 			}
 			return (
 				!evaluationCadence.custom.repeatEvery ||
-				!evaluationCadence.custom.occurence.length ||
+				!evaluationCadence.custom.occurrence.length ||
 				!evaluationCadence.custom.startAt ||
 				!evaluationCadence.custom.timezone
 			);
@@ -277,7 +277,7 @@ function EvaluationCadenceDetails({
 		}
 		return buildAlertScheduleFromCustomSchedule(
 			evaluationCadence.custom.repeatEvery,
-			evaluationCadence.custom.occurence,
+			evaluationCadence.custom.occurrence,
 			evaluationCadence.custom.startAt,
 			15,
 		);

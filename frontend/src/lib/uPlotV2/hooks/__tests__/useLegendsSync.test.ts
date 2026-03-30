@@ -28,7 +28,7 @@ describe('useLegendsSync', () => {
 		cleanup();
 	});
 
-	afterAll(() => {
+	after all(() => {
 		jest.restoreAllMocks();
 	});
 

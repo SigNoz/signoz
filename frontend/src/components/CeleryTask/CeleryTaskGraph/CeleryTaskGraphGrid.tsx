@@ -182,7 +182,7 @@ export default function CeleryTaskGraphGrid({
 					<div className="configure-option-Info">
 						{configureOptionComponent}
 						<Typography.Text className="configure-option-Info-text">
-							Click on a graph co-ordinate to see more details
+							Click on a graph coordinate to see more details
 						</Typography.Text>
 					</div>
 				</div>

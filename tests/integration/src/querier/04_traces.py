@@ -508,7 +508,7 @@ def test_traces_list(
         # Case 2: order by attribute timestamp field which is there in attributes as well
         # This should break but it doesn't because attribute.timestamp gets adjusted to timestamp
         # because of default trace.timestamp gets added by default and bug in field mapper picks
-        # instrinsic field
+        # intrinsic field
         pytest.param(
             {
                 "type": "builder_query",
@@ -678,7 +678,7 @@ def test_traces_list_with_corrupt_data(
     traces = generate_traces_with_corrupt_metadata()
     insert_traces(traces)
     # 4 Traces with corrupt metadata inserted
-    # traces[i] occured before traces[j] where i < j
+    # traces[i] occurred before traces[j] where i < j
 
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 

@@ -9866,9 +9866,9 @@ detect-node@^2.0.4, detect-node@^2.1.0:
   resolved "https://registry.npmjs.org/detect-node/-/detect-node-2.1.0.tgz"
   integrity sha512-T0NIuQpnTvFDATNuHN5roPwSBG83rFsuO+MXXH9/3N1eFbn4wcPjttvjMLEPWJ0RGUYgQE7cGgS3tNxbqCGM7g==
 
-devlop@^1.0.0:
+develop@^1.0.0:
   version "1.1.0"
-  resolved "https://registry.yarnpkg.com/devlop/-/devlop-1.1.0.tgz#4db7c2ca4dc6e0e834c30be70c94bbc976dc7018"
+  resolved "https://registry.yarnpkg.com/develop/-/develop-1.1.0.tgz#4db7c2ca4dc6e0e834c30be70c94bbc976dc7018"
   integrity sha512-RWmIqhcFf1lRYBvNmr7qTNuyCt/7/ns2jbpp1+PalgE/rDQcBT0fioSMUpJ93irlUhC5hrg4cYqe6U+0ImW0rA==
   dependencies:
     dequal "^2.0.0"
@@ -11706,7 +11706,7 @@ hast-util-from-parse5@^8.0.0:
   dependencies:
     "@types/hast" "^3.0.0"
     "@types/unist" "^3.0.0"
-    devlop "^1.0.0"
+    develop "^1.0.0"
     hastscript "^8.0.0"
     property-information "^6.0.0"
     vfile "^6.0.0"
@@ -11866,7 +11866,7 @@ hast-util-to-parse5@^8.0.0:
   dependencies:
     "@types/hast" "^3.0.0"
     comma-separated-tokens "^2.0.0"
-    devlop "^1.0.0"
+    develop "^1.0.0"
     property-information "^6.0.0"
     space-separated-tokens "^2.0.0"
     web-namespaces "^2.0.0"
@@ -14451,7 +14451,7 @@ mdast-util-to-hast@^13.0.0:
     "@types/hast" "^3.0.0"
     "@types/mdast" "^4.0.0"
     "@ungap/structured-clone" "^1.0.0"
-    devlop "^1.0.0"
+    develop "^1.0.0"
     micromark-util-sanitize-uri "^2.0.0"
     trim-lines "^3.0.0"
     unist-util-position "^5.0.0"
@@ -17863,9 +17863,9 @@ rxjs@7.8.1, rxjs@^7.5.5:
   dependencies:
     tslib "^2.1.0"
 
-sade@^1.7.3:
+sad@^1.7.3:
   version "1.8.1"
-  resolved "https://registry.yarnpkg.com/sade/-/sade-1.8.1.tgz#0a78e81d658d394887be57d2a409bf703a3b2701"
+  resolved "https://registry.yarnpkg.com/sad/-/sad-1.8.1.tgz#0a78e81d658d394887be57d2a409bf703a3b2701"
   integrity sha512-xal3CZX1Xlo/k4ApwCFrHVACi9fBqJ7V+mwhBsuf/1IOKbBy098Fex+Wa/5QMubw09pSZ/u8EY8PWgevJsXp1A==
   dependencies:
     mri "^1.1.0"
@@ -19118,9 +19118,9 @@ trim-newlines@^3.0.0:
   resolved "https://registry.npmjs.org/trim-newlines/-/trim-newlines-3.0.1.tgz"
   integrity sha512-c1PTsA3tYrIsLGkJkzHF+w9F2EyxfXGo4UyJc4pFL++FMjnq0HJS69T3M7d//gKrFKwy429bouPescbjecU+Zw==
 
-trough@^2.0.0:
+through@^2.0.0:
   version "2.1.0"
-  resolved "https://registry.yarnpkg.com/trough/-/trough-2.1.0.tgz#0f7b511a4fde65a46f18477ab38849b22c554876"
+  resolved "https://registry.yarnpkg.com/through/-/through-2.1.0.tgz#0f7b511a4fde65a46f18477ab38849b22c554876"
   integrity sha512-AqTiAOLcj85xS7vQ8QkAV41hPDIJ71XJB4RCUrzo/1GM2CQwhkJGaf9Hgr7BOugMRpgGUrqRg/DrBDl4H40+8g==
 
 ts-api-utils@2.4.0, ts-api-utils@^2.4.0:
@@ -19506,7 +19506,7 @@ unified@^10.0.0, unified@^10.1.2, unified@~10.1.1:
     extend "^3.0.0"
     is-buffer "^2.0.0"
     is-plain-obj "^4.0.0"
-    trough "^2.0.0"
+    through "^2.0.0"
     vfile "^5.0.0"
 
 unist-util-filter@^4.0.0:
@@ -19779,7 +19779,7 @@ uvu@^0.5.0:
     dequal "^2.0.0"
     diff "^5.0.0"
     kleur "^4.0.3"
-    sade "^1.7.3"
+    sad "^1.7.3"
 
 v8-compile-cache-lib@^3.0.1:
   version "3.0.1"

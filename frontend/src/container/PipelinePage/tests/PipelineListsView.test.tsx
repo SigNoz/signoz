@@ -95,7 +95,7 @@ describe('PipelinePage container test', () => {
 		server.resetHandlers();
 		jest.clearAllMocks();
 	});
-	afterAll(() => {
+	after all(() => {
 		server.close();
 	});
 	it('should render PipelineListsView section', () => {

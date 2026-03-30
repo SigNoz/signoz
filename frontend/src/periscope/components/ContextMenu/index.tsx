@@ -157,4 +157,4 @@ ContextMenu.defaultProps = {
 export default ContextMenu;
 
 // ENHANCEMENT:
-// 1. Adjust postion based on variable height of items. Currently hardcoded to 254px. Same for width.
+// 1. Adjust position based on variable height of items. Currently hardcoded to 254px. Same for width.

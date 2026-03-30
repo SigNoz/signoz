@@ -55,7 +55,7 @@ beforeAll(() => {
 	server.listen();
 });
 
-afterAll(() => {
+after all(() => {
 	server.close();
 });
 

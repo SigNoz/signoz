@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your python application, you can run it using this command
+Once you are done instrumenting your python application, you can run it using this command
 
 ```bash
 OTEL_RESOURCE_ATTRIBUTES=service.name={{MYAPP}} \

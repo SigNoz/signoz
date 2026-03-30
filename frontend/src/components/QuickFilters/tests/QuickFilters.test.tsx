@@ -124,7 +124,7 @@ afterEach(() => {
 	jest.clearAllMocks();
 });
 
-afterAll(() => {
+after all(() => {
 	server.close();
 });
 

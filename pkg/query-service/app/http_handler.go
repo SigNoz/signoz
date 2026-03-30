@@ -4566,7 +4566,7 @@ func (aH *APIHandler) queryRangeV3(ctx context.Context, queryRangeParams *v3.Que
 	postprocess.ApplyMetricLimit(result, queryRangeParams)
 
 	aH.sendQueryResultEvents(r, result, queryRangeParams, "v3")
-	// only adding applyFunctions instead of postProcess since experssion are
+	// only adding applyFunctions instead of postProcess since expression are
 	// are executed in clickhouse directly and we wanted to add support for timeshift
 	if queryRangeParams.CompositeQuery.QueryType == v3.QueryTypeBuilder {
 		postprocess.ApplyFunctions(result, queryRangeParams)

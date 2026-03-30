@@ -77,7 +77,7 @@ const tracer = require('./tracer')
     
 
 **Step 4.** Start the tracer<br></br>
-In the `async function boostrap` section of the application code, initialize the tracer as follows: 
+In the `async function bootstrap` section of the application code, initialize the tracer as follows: 
 
 ```jsx
 const tracer = require('./tracer')

@@ -1,6 +1,6 @@
 &nbsp;
 
-Once you are done intrumenting your python application, you can run it using these commands
+Once you are done instrumenting your python application, you can run it using these commands
 
 ### Step 1: Run OTel Collector
  Run this command inside the `otelcol-contrib` directory that you created in the install Otel Collector step

@@ -267,7 +267,7 @@ func (d *Dispatcher) Stop() {
 }
 
 // notifyFunc is a function that performs notification for the alert
-// with the given fingerprint. It aborts on context cancelation.
+// with the given fingerprint. It aborts on context cancellation.
 // Returns false iff notifying failed.
 type notifyFunc func(context.Context, ...*types.Alert) bool
 

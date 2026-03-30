@@ -311,7 +311,7 @@ function MessagingQueuesTable({
 				<div className="no-data-style">
 					<Typography.Text>
 						{selectedView === MessagingQueuesViewType.consumerLag.value
-							? 'Click on a co-ordinate above to see the details'
+							? 'Click on a coordinate above to see the details'
 							: 'Click on a row above to see the details'}
 					</Typography.Text>
 					<Skeleton />

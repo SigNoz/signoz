@@ -95,7 +95,7 @@ type namespaceConfig struct {
 	MetadataTable         string
 }
 
-// Connecto defines how to connect to the database
+// Connect defines how to connect to the database
 type Connector func(cfg *namespaceConfig) (clickhouse.Conn, error)
 
 // Options store storage plugin related configs

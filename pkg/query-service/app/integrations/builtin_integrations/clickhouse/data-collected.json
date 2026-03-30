@@ -867,19 +867,19 @@
       "name": "ClickHouseProfileEvents_ExecuteShellCommand"
     },
     {
-      "description": "Number of compressed bytes written by external processing (sorting/aggragating/joining)",
+      "description": "Number of compressed bytes written by external processing (sorting/aggregating/joining)",
       "type": "counter",
       "unit": "Number",
       "name": "ClickHouseProfileEvents_ExternalProcessingCompressedBytesTotal"
     },
     {
-      "description": "Amount of data (uncompressed, before compression) written by external processing (sorting/aggragating/joining)",
+      "description": "Amount of data (uncompressed, before compression) written by external processing (sorting/aggregating/joining)",
       "type": "counter",
       "unit": "Bytes",
       "name": "ClickHouseProfileEvents_ExternalProcessingUncompressedBytesTotal"
     },
     {
-      "description": "Number of files used by external processing (sorting/aggragating/joining)",
+      "description": "Number of files used by external processing (sorting/aggregating/joining)",
       "type": "counter",
       "unit": "Number",
       "name": "ClickHouseProfileEvents_ExternalProcessingFilesTotal"

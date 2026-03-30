@@ -337,7 +337,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 
 			var parts []string
 
-			// We need to build uniqe cache query for BuilderQuery
+			// We need to build unique cache query for BuilderQuery
 			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
 			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))
 			parts = append(parts, fmt.Sprintf("aggregate=%s", query.AggregateOperator))
@@ -396,7 +396,7 @@ func (c *cacheKeyGenerator) GenerateKeys(params *v3.QueryRangeParamsV3) map[stri
 				continue
 			}
 
-			// We need to build uniqe cache query for BuilderQuery
+			// We need to build unique cache query for BuilderQuery
 
 			parts = append(parts, fmt.Sprintf("source=%s", query.DataSource))
 			parts = append(parts, fmt.Sprintf("step=%d", query.StepInterval))

@@ -233,7 +233,7 @@ export async function GetMetricQueryRange(
 		});
 		legendMap = v5Result.legendMap;
 
-		// atleast one query should be there to make call to v5 api
+		// at least one query should be there to make call to v5 api
 		if (
 			v5Result.queryPayload.compositeQuery.queries.length === 0 &&
 			!publicQueryMeta?.isPublic

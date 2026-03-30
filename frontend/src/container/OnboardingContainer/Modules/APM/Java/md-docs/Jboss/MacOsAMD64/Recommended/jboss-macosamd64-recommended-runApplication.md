@@ -1,4 +1,4 @@
-Once you are done intrumenting your Java application, you can run it using the below commands
+Once you are done instrumenting your Java application, you can run it using the below commands
 &nbsp;
 
 ### Step 1: Run OTel Collector

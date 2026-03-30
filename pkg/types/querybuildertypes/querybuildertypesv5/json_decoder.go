@@ -117,8 +117,8 @@ func wrapUnmarshalError(err error, errorFormat string, args ...interface{}) erro
 	}
 
 	// If it's already one of our wrapped errors with additional context, return as-is
-	_, _, _, _, _, additionals := errors.Unwrapb(err)
-	if len(additionals) > 0 {
+	_, _, _, _, _, additional := errors.Unwrapb(err)
+	if len(additional) > 0 {
 		return err
 	}
 
@@ -144,7 +144,7 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 	}
 
 	// Extract the underlying error details
-	_, _, innerMsg, _, _, additionals := errors.Unwrapb(err)
+	_, _, innerMsg, _, _, additional := errors.Unwrapb(err)
 
 	// Create a new error with the provided format
 	newErr := errors.NewInvalidInputf(
@@ -155,8 +155,8 @@ func wrapValidationError(err error, contextIdentifier string, errorFormat string
 	)
 
 	// Add any additional context from the inner error
-	if len(additionals) > 0 {
-		newErr = newErr.WithAdditional(additionals...)
+	if len(additional) > 0 {
+		newErr = newErr.WithAdditional(additional...)
 	}
 
 	return newErr

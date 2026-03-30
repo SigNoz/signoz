@@ -17,7 +17,7 @@ window.ResizeObserver =
 		unobserve: jest.fn(),
 	}));
 
-describe('Value panel wrappper tests', () => {
+describe('Value panel wrapper tests', () => {
 	it('should render value panel correctly with yaxis unit', () => {
 		const { getByText } = render(
 			<ValuePanelWrapper
@@ -28,7 +28,7 @@ describe('Value panel wrappper tests', () => {
 			/>,
 		);
 
-		// selected y axis unit as miliseconds (ms)
+		// selected y axis unit as milliseconds (ms)
 		expect(getByText('295.43')).toBeInTheDocument();
 		expect(getByText('ms')).toBeInTheDocument();
 	});

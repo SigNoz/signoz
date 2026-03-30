@@ -34,7 +34,7 @@ function ApDexTraces({
 						servicename,
 						tagFilterItems,
 						topLevelOperationsRoute,
-						threashold: thresholdValue || 0,
+						threshold: thresholdValue || 0,
 					}),
 					clickhouse_sql: [],
 					id: uuid(),

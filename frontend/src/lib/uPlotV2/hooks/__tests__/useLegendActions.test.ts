@@ -30,7 +30,7 @@ describe('useLegendActions', () => {
 			.mockImplementation(() => {});
 	});
 
-	afterAll(() => {
+	after all(() => {
 		jest.restoreAllMocks();
 	});
 

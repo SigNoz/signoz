@@ -1064,7 +1064,7 @@ func TestStmtBuilderBodyField(t *testing.T) {
 			} else {
 				if err != nil {
 					_, _, _, _, _, add := errors.Unwrapb(err)
-					t.Logf("error additionals: %v", add)
+					t.Logf("error additional: %v", add)
 				}
 				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, q.Query)
@@ -1154,7 +1154,7 @@ func TestStmtBuilderBodyFullTextSearch(t *testing.T) {
 			} else {
 				if err != nil {
 					_, _, _, _, _, add := errors.Unwrapb(err)
-					t.Logf("error additionals: %v", add)
+					t.Logf("error additional: %v", add)
 				}
 				require.NoError(t, err)
 				require.Equal(t, c.expected.Query, q.Query)

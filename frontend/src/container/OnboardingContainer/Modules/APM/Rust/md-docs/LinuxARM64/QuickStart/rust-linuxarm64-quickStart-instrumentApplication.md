@@ -72,7 +72,7 @@ project_root/
 |-- .env
 ```
 
-In your environnement file, paste the below variables which will be used in the next steps.
+In your environment file, paste the below variables which will be used in the next steps.
 
 ```rust
 PORT=3000 // If it is a web app pass port or else you can ignore this variable

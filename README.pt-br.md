@@ -22,7 +22,7 @@
 
 SigNoz auxilia os desenvolvedores a monitorarem aplicativos e solucionar problemas em seus aplicativos implantados. SigNoz usa rastreamento distribuído para obter visibilidade em sua pilha de software. 
 
-👉 Você pode verificar métricas como latência p99, taxas de erro em seus serviços, requisições às APIs externas e endpoints individuais.
+👉 Você pode verificar métricas como latência p99, taxas de error em seus serviços, requisições às APIs externas e endpoints individuais.
 
 👉 Você pode encontrar a causa raiz do problema acessando os rastreamentos exatos que estão causando o problema e verificar os quadros detalhados de cada requisição individual.
 
@@ -45,11 +45,11 @@ Venha dizer oi para nós no [Slack](https://signoz.io/slack) 👋
 
 ## Funções:
 
-- Métricas de visão geral do aplicativo, como RPS, latências de percentual 50/90/99 e taxa de erro
+- Métricas de visão geral do aplicativo, como RPS, latências de percentual 50/90/99 e taxa de error
 - Endpoints mais lentos em seu aplicativo
 - Visualize o rastreamento preciso de requisições de rede para descobrir problemas em serviços downstream, consultas lentas de banco de dados, chamadas para serviços de terceiros, como gateways de pagamento, etc. 
-- Filtre os rastreamentos por nome de serviço, operação, latência, erro, tags / anotações.
-- Execute agregações em dados de rastreamento (eventos / extensões) para obter métricas de negócios relevantes, como por exemplo, você pode obter a taxa de erro e a latência do 99º percentil de `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
+- Filtre os rastreamentos por gnome de serviço, operação, latência, error, tags / anotações.
+- Execute agregações em dados de rastreamento (eventos / extensões) para obter métricas de negócios relevantes, como por exemplo, você pode obter a taxa de error e a latência do 99º percentile de `customer_type: gold` or `deployment_version: v2` or `external_call: paypal`
 - Interface de Usuário unificada para métricas e rastreios. Não há necessidade de mudar de Prometheus para Jaeger para depurar problemas.
 
 <br /><br />
@@ -62,7 +62,7 @@ Sendo desenvolvedores, achamos irritante contar com fornecedores de SaaS de cód
 
 Queríamos fazer uma versão auto-hospedada e de código aberto de ferramentas como DataDog, NewRelic para empresas que têm preocupações com privacidade e segurança em ter dados de clientes indo para serviços de terceiros. 
 
-Ser open source também oferece controle completo de sua configuração, amostragem e tempos de atividade. Você também pode construir módulos sobre o SigNoz para estender recursos específicos do negócio.
+Set open source também oferece controle completo de sua configuração, amostragem e tempos de atividade. Você também pode construir módulos sobre o SigNoz para estender recursos específicos do negócio.
 
 ### Linguagens Suportadas:
 
@@ -86,7 +86,7 @@ Você pode encontrar a lista completa de linguagens aqui - https://opentelemetry
 
 Siga as etapas listadas [aqui](https://signoz.io/docs/install/docker/) para instalar usando o Docker.
 
-Esse [guia para solução de problemas](https://signoz.io/docs/install/troubleshooting/) pode ser útil se você enfrentar quaisquer problemas. 
+Esse [guia para solução de problemas](https://signoz.io/docs/install/troubleshooting/) pode set útil se você enfrentar quaisquer problemas. 
 
 <p>&nbsp  </p>
   
@@ -104,7 +104,7 @@ Siga as etapas listadas [aqui](https://signoz.io/docs/deployment/helm_chart) par
 
 ### SigNoz ou Prometheus
 
-Prometheus é bom se você quiser apenas fazer métricas. Mas se você quiser ter uma experiência perfeita entre métricas e rastreamentos, a experiência atual de unir Prometheus e Jaeger não é ótima.
+Prometheus é bom se você quiser apenas fazer métricas. Mas se você quiser ter uma experiência perfeita entre métricas e rastreamentos, a experiência actual de unir Prometheus e Jaeger não é ótima.
 
 Nosso objetivo é fornecer uma interface do usuário integrada entre métricas e rastreamentos - semelhante ao que fornecedores de SaaS como o Datadog fornecem - e fornecer filtragem e agregação avançada sobre rastreamentos, algo que a Jaeger atualmente carece. 
 
@@ -117,7 +117,7 @@ Jaeger só faz rastreamento distribuído. SigNoz faz métricas e rastreia, e tam
 Além disso, SigNoz tem alguns recursos mais avançados do que Jaeger:
 
 - A interface de usuário do Jaegar não mostra nenhuma métrica em traces ou em traces filtrados
-- Jaeger não pode obter agregados em rastros filtrados. Por exemplo, latência p99 de solicitações que possuem tag - customer_type='premium'. Isso pode ser feito facilmente com SigNoz.
+- Jaeger não pode obter agregados em rastros filtrados. Por exemplo, latência p99 de solicitações que possuem tag - customer_type='premium'. Isso pode set feito facilmente com SigNoz.
 
 <br /><br />
 

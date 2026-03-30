@@ -421,7 +421,7 @@ function QueryBuilderSearchV2(
 						]);
 						return;
 					}
-					// this is for adding subsequent comma seperated values
+					// this is for adding subsequent comma separated values
 					const newSearch = [...tagValue];
 					newSearch[newSearch.length === 0 ? 0 : newSearch.length - 1] = value;
 					const newSearchValue = newSearch.join(',');
@@ -875,7 +875,7 @@ function QueryBuilderSearchV2(
 	// keep the use effects pure!
 	// if the tags lacks the ID then the above use effect will add it to query
 	// and then the below use effect will take care of adding it to the tags.
-	// keep the tags in sycn with current query.
+	// keep the tags in sync with current query.
 	useEffect(() => {
 		// convert the query and tags to same format before comparison
 		if (!isEqual(getInitTags(query), tags)) {

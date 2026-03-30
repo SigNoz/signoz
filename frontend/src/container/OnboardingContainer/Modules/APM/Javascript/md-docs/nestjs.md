@@ -28,7 +28,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create `tracer.ts` file
 
-This file will have your SigNoz cloud endpoint and service name configued as values of `url` and `SERVICE_NAME` respectively.
+This file will have your SigNoz cloud endpoint and service name configured as values of `url` and `SERVICE_NAME` respectively.
 
 ```js
 'use strict';
@@ -78,7 +78,7 @@ const tracer = require('./tracer')
     
 Step 4. Start the tracer
 
-In the `async function boostrap` section of the application code `(Ex —> In main.ts)`, initialize the tracer as follows: 
+In the `async function bootstrap` section of the application code `(Ex —> In main.ts)`, initialize the tracer as follows: 
 
 ```jsx
 const tracer = require('./tracer')
@@ -123,7 +123,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create `tracer.ts` file
 
-This file will have your service name configued as value for `SERVICE_NAME`.
+This file will have your service name configured as value for `SERVICE_NAME`.
 
 ```js
 'use strict';
@@ -174,7 +174,7 @@ const tracer = require('./tracer')
 
 Step 4. Start the tracer
 
-In the `async function boostrap` section of the application code, initialize the tracer as follows: 
+In the `async function bootstrap` section of the application code, initialize the tracer as follows: 
 
 ```jsx
 const tracer = require('./tracer')
@@ -213,7 +213,7 @@ npm install --save @opentelemetry/exporter-trace-otlp-http@^0.45.0
 
 Step 2. Create `tracer.ts` file
 
-This file will have your service name configued as value for `SERVICE_NAME`.
+This file will have your service name configured as value for `SERVICE_NAME`.
 
 ```js
 'use strict';
@@ -264,7 +264,7 @@ const tracer = require('./tracer')
 
 Step 4. Start the tracer
 
-In the `async function boostrap` section of the application code, initialize the tracer as follows: 
+In the `async function bootstrap` section of the application code, initialize the tracer as follows: 
 
 ```jsx
 const tracer = require('./tracer')

@@ -26,9 +26,9 @@ function EditCustomSchedule({
 						<>
 							<Typography.Text>on</Typography.Text>
 							<Typography.Text className="highlight">
-								{advancedOptions.evaluationCadence.custom.occurence
+								{advancedOptions.evaluationCadence.custom.occurrence
 									.map(
-										(occurence) => occurence.charAt(0).toUpperCase() + occurence.slice(1),
+										(occurrence) => occurrence.charAt(0).toUpperCase() + occurrence.slice(1),
 									)
 									.join(', ')}
 							</Typography.Text>

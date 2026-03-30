@@ -1,8 +1,8 @@
-import AzureMonitoring_azureAks_setupCentralCollector from '../Modules/AzureMonitoring/AKS/aks-installCentralCollector.md';
-import AzureMonitoring_azureAks_sendLogs from '../Modules/AzureMonitoring/AKS/aks-logs.md';
-import AzureMonitoring_azureAks_sendMetrics from '../Modules/AzureMonitoring/AKS/aks-metrics.md';
-import AzureMonitoring_azureAks_setupAzureEventsHub from '../Modules/AzureMonitoring/AKS/aks-setupEventsHub.md';
-import AzureMonitoring_azureAks_sendTraces from '../Modules/AzureMonitoring/AKS/aks-tracing.md';
+import AzureMonitoring_azureAks_setupCentralCollector from '../Modules/AzureMonitoring/ASK/aks-installCentralCollector.md';
+import AzureMonitoring_azureAks_sendLogs from '../Modules/AzureMonitoring/ASK/aks-logs.md';
+import AzureMonitoring_azureAks_sendMetrics from '../Modules/AzureMonitoring/ASK/aks-metrics.md';
+import AzureMonitoring_azureAks_setupAzureEventsHub from '../Modules/AzureMonitoring/ASK/aks-setupEventsHub.md';
+import AzureMonitoring_azureAks_sendTraces from '../Modules/AzureMonitoring/ASK/aks-tracing.md';
 // Azure App Service
 import AzureMonitoring_azureAppService_setupCentralCollector from '../Modules/AzureMonitoring/AppService/appService-installCentralCollector.md';
 import AzureMonitoring_azureAppService_sendLogs from '../Modules/AzureMonitoring/AppService/appService-logs.md';
@@ -36,7 +36,7 @@ import AzureMonitoring_azureVm_setupCentralCollector from '../Modules/AzureMonit
 import AzureMonitoring_azureVm_setupAzureEventsHub from '../Modules/AzureMonitoring/Vm/vm-setupEventsHub.md';
 
 export const AzureMonitoringDocFilePaths = {
-	// Azure  AKS
+	// Azure  ASK
 	AzureMonitoring_azureAks_setupCentralCollector,
 	AzureMonitoring_azureAks_setupAzureEventsHub,
 	AzureMonitoring_azureAks_sendTraces,

@@ -1368,7 +1368,7 @@ func (s *Series) RemoveDuplicatePoints() {
 		return
 	}
 
-	// priortize the last point
+	// prioritize the last point
 	// this is to handle the case where the same point is sent twice
 	// the last point is the most recent point adjusted for the flux interval
 

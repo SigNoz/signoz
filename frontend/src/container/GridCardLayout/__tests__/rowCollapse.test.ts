@@ -65,9 +65,9 @@ describe('applyRowCollapse – does not mutate frozen inputs', () => {
 
 	it('leaves the original layout array untouched after collapse', () => {
 		const layout = makeLayout();
-		const originalY = layout[1].y; // w1.y before collapse
+		const originally = layout[1].y; // w1.y before collapse
 		applyRowCollapse(ROW_ID, layout, makeExpandedPanelMap());
-		expect(layout[1].y).toBe(originalY);
+		expect(layout[1].y).toBe(originally);
 	});
 
 	it('leaves the original panelMap untouched after collapse', () => {

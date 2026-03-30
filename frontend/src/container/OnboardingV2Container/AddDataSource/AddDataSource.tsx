@@ -309,7 +309,7 @@ function OnboardingAddDataSource(): JSX.Element {
 	};
 
 	// Base Assumption:
-	// Environment is the last question in the onboarding flow and no more question will be shown regarless of the configuration
+	// Environment is the last question in the onboarding flow and no more question will be shown regardless of the configuration
 	// We will have to handle this in the future
 	const handleSelectEnvironment = (
 		selectedEnvironment: any,

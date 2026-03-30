@@ -33,7 +33,7 @@ type StorableFactorAPIKey struct {
 type FactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name             string      `json:"name" requrired:"true"`
+	Name             string      `json:"name" required:"true"`
 	Key              string      `json:"key" required:"true"`
 	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
 	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
@@ -48,7 +48,7 @@ type GettableFactorAPIKeyWithKey struct {
 type GettableFactorAPIKey struct {
 	types.Identifiable
 	types.TimeAuditable
-	Name             string      `json:"name" requrired:"true"`
+	Name             string      `json:"name" required:"true"`
 	ExpiresAt        uint64      `json:"expiresAt" required:"true"`
 	LastObservedAt   time.Time   `json:"lastObservedAt" required:"true"`
 	ServiceAccountID valuer.UUID `json:"serviceAccountId" required:"true"`

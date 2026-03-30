@@ -1,7 +1,7 @@
 <p align="center">
   <img src="https://res.cloudinary.com/dcv3epinx/image/upload/v1618904450/signoz-images/LogoGithub_sigfbu.svg" alt="SigNoz-logo" width="240" />
 
-  <p align="center">Überwache deine Anwendungen und behebe Probleme in deinen bereitgestellten Anwendungen. SigNoz ist eine Open Source Alternative zu DataDog, New Relic, etc.</p>
+  <p align="center">Überwache define Anwendungen und behebe Problem in deinen bereitgestellten Anwendungen. SigNoz ist eine Open Source Alternative zu DataDog, New Relic, etc.</p>
 </p>
 
 <p align="center">
@@ -22,7 +22,7 @@
 
 ##
 
-SigNoz hilft Entwicklern, Anwendungen zu überwachen und Probleme in ihren bereitgestellten Anwendungen zu beheben. Mit SigNoz können Sie Folgendes tun:
+SigNoz hilft Entwicklern, Anwendungen zu überwachen und Problem in ihren bereitgestellten Anwendungen zu beheben. Mit SigNoz können Sie Folgendes tun:
 
 👉 Visualisieren Sie Metriken, Traces und Logs in einer einzigen Oberfläche.
 
@@ -32,7 +32,7 @@ SigNoz hilft Entwicklern, Anwendungen zu überwachen und Probleme in ihren berei
 
 👉 Führen Sie Aggregationen auf Trace-Daten durch, um geschäftsrelevante Metriken zu erhalten.
 
-👉 Filtern und Abfragen von Logs, Erstellen von Dashboards und Benachrichtigungen basierend auf Attributen in den Logs.
+👉 Filtern und Abfragen von Logs, Erstellen von Dashboards und Benachrichtigungen basierend auf Attribute in den Logs.
 
 👉 Automatische Aufzeichnung von Ausnahmen in Python, Java, Ruby und Javascript.
 
@@ -76,10 +76,10 @@ Sag Hi zu uns auf [Slack](https://signoz.io/slack) 👋
 
 ## Funktionen:
 
-- Einheitliche Benutzeroberfläche für Metriken, Traces und Logs. Keine Notwendigkeit, zwischen Prometheus und Jaeger zu wechseln, um Probleme zu debuggen oder ein separates Log-Tool wie Elastic neben Ihrer Metriken- und Traces-Stack zu verwenden.
+- Einheitliche Benutzeroberfläche für Metriken, Traces und Logs. Keine Notwendigkeit, zwischen Prometheus und Jaeger zu wechseln, um Problem zu debuggen oder ein separates Log-Tool wie Elastic neben Ihrer Metriken- und Traces-Stack zu verwenden.
 - Überblick über Anwendungsmetriken wie RPS, Latenzzeiten des 50tes/90tes/99tes Perzentils und Fehlerquoten.
 - Langsamste Endpunkte in Ihrer Anwendung.
-- Zeigen Sie genaue Anfragetraces an, um Probleme in nachgelagerten Diensten, langsamen Datenbankabfragen oder Aufrufen von Drittanbieterdiensten wie Zahlungsgateways zu identifizieren.
+- Zeigen Sie genaue Anfragetraces an, um Problem in nachgelagerten Diensten, langsamen Datenbankabfragen oder Aufrufen von Drittanbieterdiensten wie Zahlungsgateways zu identifizieren.
 - Filtern Sie Traces nach Dienstname, Operation, Latenz, Fehler, Tags/Annotationen.
 - Führen Sie Aggregationen auf Trace-Daten (Ereignisse/Spans) durch, um geschäftsrelevante Metriken zu erhalten. Beispielsweise können Sie die Fehlerquote und die 99tes Perzentillatenz für `customer_type: gold` oder `deployment_version: v2` oder `external_call: paypal` erhalten.
 - Native Unterstützung für OpenTelemetry-Logs, erweiterten Log-Abfrage-Builder und automatische Log-Sammlung aus dem Kubernetes-Cluster.
@@ -91,15 +91,15 @@ Sag Hi zu uns auf [Slack](https://signoz.io/slack) 👋
 
 ## Wieso SigNoz?
 
-Als Entwickler fanden wir es anstrengend, uns für jede kleine Funktion, die wir haben wollten, auf Closed Source SaaS Anbieter verlassen zu müssen. Closed Source Anbieter überraschen ihre Kunden zum Monatsende oft mit hohen Rechnungen, die keine Transparenz bzgl. der Kostenaufteilung bieten.
+Also Entwickler fanden wir es anstrengend, uns für jede kleine Function, die wir haben wollten, auf Closed Source SaaS Anbieter verlassen zu müssen. Closed Source Anbieter überraschen ihre Kunden zum Monatsende oft mit hohen Rechnungen, die keine Transparenz bzgl. der Kostenaufteilung bieten.
 
 Wir wollten eine selbst gehostete, Open Source Variante von Lösungen wie DataDog, NewRelic für Firmen anbieten, die Datenschutz und Sicherheitsbedenken haben, bei der Weitergabe von Kundendaten an Drittanbieter.
 
-Open Source gibt dir außerdem die totale Kontrolle über deine Konfiguration, Stichprobenentnahme und Betriebszeit. Du kannst des Weiteren neue Module auf Basis von SigNoz bauen, die erweiterte, geschäftsspezifische Funktionen anbieten.
+Open Source gibt dir außerdem die totale Kontrolle über define Konfiguration, Stichprobenentnahme und Betriebszeit. Du kannst des Weiteren neue Module auf Basis von SigNoz bauen, die erweiterte, geschäftsspezifische Funktionen anbieten.
 
 ### Languages supported:
 
-Wir unterstützen [OpenTelemetry](https://opentelemetry.io) als Bibliothek, mit der Sie Ihre Anwendungen instrumentieren können. Daher wird jedes von OpenTelemetry unterstützte Framework und jede Sprache auch von SignNoz unterstützt. Einige der wichtigsten unterstützten Sprachen sind:
+Wir unterstützen [OpenTelemetry](https://opentelemetry.io) also Bibliothek, mit der Sie Ihre Anwendungen instrumentieren können. Daher wird jedes von OpenTelemetry unterstützte Framework und jede Sprache auch von SignNoz unterstützt. Einige der wichtigsten unterstützten Sprachen sind:
 
 - Java
 - Python
@@ -119,7 +119,7 @@ Hier findest du die vollständige Liste von unterstützten Programmiersprachen -
 
 ### Bereitstellung mit Docker
 
-Bitte folge den [hier](https://signoz.io/docs/install/docker/) aufgelisteten Schritten um deine Anwendung mit Docker bereitzustellen.
+Bitte folge den [hier](https://signoz.io/docs/install/docker/) aufgelisteten Schritten um define Anwendung mit Docker bereitzustellen.
 
 Die [Anleitungen zur Fehlerbehebung](https://signoz.io/docs/install/troubleshooting/) könnten hilfreich sein, falls du auf irgendwelche Schwierigkeiten stößt.
 
@@ -127,7 +127,7 @@ Die [Anleitungen zur Fehlerbehebung](https://signoz.io/docs/install/troubleshoot
 
 ### Deploy in Kubernetes using Helm
 
-Bitte folge den [hier](https://signoz.io/docs/deployment/helm_chart) aufgelisteten Schritten, um deine Anwendung mit Helm Charts bereitzustellen.
+Bitte folge den [hier](https://signoz.io/docs/deployment/helm_chart) aufgelisteten Schritten, um define Anwendung mit Helm Charts bereitzustellen.
 
 <br /><br />
 
@@ -143,7 +143,7 @@ Unser Ziel ist es, eine integrierte Benutzeroberfläche aus Metriken und Einzels
 
 ### SigNoz vs Jaeger
 
-Jaeger kümmert sich nur um verteilte Einzelschritt-Fehlersuche. SigNoz erstellt sowohl Metriken als auch Einzelschritt-Fehlersuche, daneben haben wir auch Protokoll Verwaltung auf unserem Plan.
+Jaeger kümmert sich nur um verteilte Einzelschritt-Fehlersuche. SigNoz erstellt sowohl Metriken also auch Einzelschritt-Fehlersuche, daneben haben wir auch Protokoll Verwaltung auf unserem Plan.
 
 Außerdem hat SigNoz noch mehr spezielle Funktionen im Vergleich zu Jaeger:
 
@@ -173,14 +173,14 @@ Wir haben Benchmarks veröffentlicht, die Loki mit SigNoz vergleichen. Schauen S
 
 ## Zum Projekt beitragen
 
-Wir ❤️ Beiträge zum Projekt, egal ob große oder kleine. Bitte lies dir zuerst die [CONTRIBUTING.md](CONTRIBUTING.md), durch, bevor du anfängst, Beiträge zu SigNoz zu machen.
+Wir ❤️ Beiträge zum Projekt, equal ob große oder kleine. Bitte lies dir zuerst die [CONTRIBUTING.md](CONTRIBUTING.md), durch, bevor du anfängst, Beiträge zu SigNoz zu machen.
 Du bist dir nicht sicher, wie du anfangen sollst? Schreib uns einfach auf dem #contributing Kanal in unserer [slack community](https://signoz.io/slack)
 
 <br /><br />
 
 ## Dokumentation
 
-Du findest unsere Dokumentation unter https://signoz.io/docs/. Falls etwas unverständlich ist oder fehlt, öffne gerne ein Github Issue mit dem Label `documentation` oder schreib uns über den Community Slack Channel.
+Du findest unsere Dokumentation under https://signoz.io/docs/. Falls etwas unverständlich ist oder fehlt, öffne gerne ein Github Issue mit dem Label `documentation` oder schreib uns über den Community Slack Channel.
 
 <br /><br />
 

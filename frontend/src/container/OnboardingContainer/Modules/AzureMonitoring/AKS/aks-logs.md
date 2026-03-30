@@ -1,6 +1,6 @@
 ## Prerequisite
 
-- An AKS cluster
+- An ASK cluster
 - Central Collector Setup
 
 &nbsp;

@@ -23,7 +23,7 @@ function GraphManager({
 	yAxisUnit,
 	onToggleModelHandler,
 	setGraphsVisibilityStates,
-	graphsVisibilityStates = [], // not trimed
+	graphsVisibilityStates = [], // not trimmed
 	lineChartRef,
 	parentChartRef,
 	options,

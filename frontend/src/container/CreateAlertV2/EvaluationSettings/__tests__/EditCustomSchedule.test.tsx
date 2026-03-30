@@ -30,7 +30,7 @@ describe('EditCustomSchedule', () => {
 						custom: {
 							repeatEvery: 'day',
 							startAt: '00:00:00',
-							occurence: [],
+							occurrence: [],
 							timezone: TIMEZONE_DATA[0].value,
 						},
 					},
@@ -64,7 +64,7 @@ describe('EditCustomSchedule', () => {
 						custom: {
 							repeatEvery: 'week',
 							startAt: '00:00:00',
-							occurence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
+							occurrence: ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'],
 							timezone: TIMEZONE_DATA[0].value,
 						},
 					},
@@ -100,7 +100,7 @@ describe('EditCustomSchedule', () => {
 						custom: {
 							repeatEvery: 'month',
 							startAt: '00:00:00',
-							occurence: ['1'],
+							occurrence: ['1'],
 							timezone: TIMEZONE_DATA[0].value,
 						},
 					},

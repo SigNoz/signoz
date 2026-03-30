@@ -717,7 +717,7 @@ function NewWidget({
 		 * we need this extra handling for superset query because we cannot keep this in sync with current query
 		 * always.we do not sync superset query in the initQueryBuilderData because that function is called on all stage and run
 		 * actions. we do not want that as we loose out on superset functionalities if we do the same. hence initialising the superset query
-		 * on mount here with the currentQuery in the begining itself
+		 * on mount here with the currentQuery in the beginning itself
 		 */
 		setSupersetQuery(currentQuery);
 

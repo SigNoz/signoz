@@ -234,19 +234,19 @@ func (module *setter) UpdateUserDeprecated(ctx context.Context, orgID valuer.UUI
 		return nil, errors.WithAdditionalf(err, "cannot update deleted user")
 	}
 
-	requestor, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(updatedBy))
+	requester, err := module.getter.GetDeprecatedUserByOrgIDAndID(ctx, orgID, valuer.MustNewUUID(updatedBy))
 	if err != nil {
 		return nil, err
 	}
 
 	roleChange := user.Role != "" && user.Role != existingUser.Role
 
-	if roleChange && requestor.Role != types.RoleAdmin {
+	if roleChange && requester.Role != types.RoleAdmin {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "only admins can change roles")
 	}
 
 	// make sure the user is not demoting self from admin
-	if roleChange && existingUser.ID == requestor.ID && existingUser.Role == types.RoleAdmin && user.Role != types.RoleAdmin {
+	if roleChange && existingUser.ID == requester.ID && existingUser.Role == types.RoleAdmin && user.Role != types.RoleAdmin {
 		return nil, errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot change self role")
 	}
 

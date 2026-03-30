@@ -67,7 +67,7 @@ export interface ApDexProps {
 	servicename: IServiceName['servicename'];
 	tagFilterItems: TagFilterItem[];
 	topLevelOperationsRoute: string[];
-	threashold: number;
+	threshold: number;
 }
 
 export interface TableRendererProps {

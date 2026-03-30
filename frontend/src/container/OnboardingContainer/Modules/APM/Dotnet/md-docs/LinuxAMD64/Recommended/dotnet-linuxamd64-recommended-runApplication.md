@@ -1,5 +1,5 @@
 &nbsp;
-Once you are done intrumenting your .NET application, you can run it using the below commands
+Once you are done instrumenting your .NET application, you can run it using the below commands
 &nbsp;
 
 ### Step 1: Run OTel Collector

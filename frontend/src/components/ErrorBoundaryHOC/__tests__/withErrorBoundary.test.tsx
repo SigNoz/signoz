@@ -108,7 +108,7 @@ describe('withErrorBoundary', () => {
 		console.error = jest.fn();
 	});
 
-	afterAll(() => {
+	after all(() => {
 		console.error = originalError;
 	});
 

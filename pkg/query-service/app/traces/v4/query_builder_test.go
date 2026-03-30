@@ -215,7 +215,7 @@ func Test_getSelectLabels(t *testing.T) {
 			want: " kind_string as `spanKind`, status_message as `statusMessage`, trace_id as `traceID`, span_id as `spanID`, resource_string_service$$name as `serviceName`, attribute_string_http$$route as `httpRoute`, kind as `kind`",
 		},
 		{
-			name: "non depricated Columns",
+			name: "non deprecated Columns",
 			args: args{
 				groupBy: []v3.AttributeKey{
 					{Key: "name", DataType: v3.AttributeKeyDataTypeString, Type: v3.AttributeKeyTypeTag},

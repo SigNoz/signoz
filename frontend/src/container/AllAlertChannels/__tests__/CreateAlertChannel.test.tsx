@@ -82,7 +82,7 @@ describe('Create Alert Channel', () => {
 				testId: 'webhook-url-textbox',
 			});
 		});
-		it('Should check if Recepient label, input, and help text are displayed properly ', () => {
+		it('Should check if Recipient label, input, and help text are displayed properly ', () => {
 			testLabelInputAndHelpValue({
 				labelText: 'field_slack_recipient',
 				testId: 'slack-channel-textbox',

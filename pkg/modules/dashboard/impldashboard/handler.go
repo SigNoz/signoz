@@ -352,7 +352,7 @@ func (handler *handler) GetPublicWidgetQueryRange(rw http.ResponseWriter, r *htt
 	} else {
 		timeRange, err := time.ParseDuration(publicDashboard.DefaultTimeRange)
 		if err != nil {
-			// this should't happen as we shouldn't let such values in DB
+			// this shouldn't happen as we shouldn't let such values in DB
 			panic(err)
 		}
 
