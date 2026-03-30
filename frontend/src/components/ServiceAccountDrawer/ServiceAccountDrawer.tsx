@@ -154,7 +154,11 @@ function ServiceAccountDrawer({
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
-	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
+	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount({
+		mutation: {
+			retry: 2,
+		},
+	});
 
 	const toSaveApiError = useCallback(
 		(err: unknown): APIError =>
@@ -190,6 +194,12 @@ function ServiceAccountDrawer({
 		queryClient,
 		toSaveApiError,
 	]);
+
+	const handleNameChange = useCallback((name: string): void => {
+		setLocalName(name);
+		setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
+	}, []);
+
 	const makeRoleRetry = useCallback(
 		(
 			context: string,
@@ -363,7 +373,7 @@ function ServiceAccountDrawer({
 							<OverviewTab
 								account={account}
 								localName={localName}
-								onNameChange={setLocalName}
+								onNameChange={handleNameChange}
 								localRoles={localRoles}
 								onRolesChange={setLocalRoles}
 								isDisabled={isDeleted}
