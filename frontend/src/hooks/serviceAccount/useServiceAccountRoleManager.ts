@@ -109,7 +109,6 @@ export function useServiceAccountRoleManager(
 
 			return failures;
 		},
-		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[accountId, currentRoles, createRole, deleteRole, invalidateRoles],
 	);
 

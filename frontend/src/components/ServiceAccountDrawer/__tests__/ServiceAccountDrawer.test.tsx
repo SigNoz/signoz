@@ -167,11 +167,7 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(updateSpy).toHaveBeenCalledWith(
-				expect.objectContaining({
-					name: 'CI Bot',
-				}),
-			);
+			expect(updateSpy).not.toHaveBeenCalled();
 			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					id: '019c24aa-2248-7585-a129-4188b3473c27',
@@ -275,5 +271,171 @@ describe('ServiceAccountDrawer', () => {
 				/An unexpected error occurred while fetching service account details/i,
 			),
 		).toBeInTheDocument();
+	});
+});
+
+describe('ServiceAccountDrawer – save-error UX', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: activeAccountResponse })),
+			),
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: listRolesSuccessResponse.data.filter(
+							(r) => r.name === 'signoz-admin',
+						),
+					}),
+				),
+			),
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('name update failure shows SaveErrorItem with "Name update" context', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'name update failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		const nameInput = await screen.findByDisplayValue('CI Bot');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		expect(
+			await screen.findByText(/Name update.*name update failed/i, undefined, {
+				timeout: 5000,
+			}),
+		).toBeInTheDocument();
+	});
+
+	it('role update failure shows SaveErrorItem with the role name context', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'role assign failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		// Add the signoz-viewer role (which is not currently assigned)
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		expect(
+			await screen.findByText(
+				/Role 'signoz-viewer'.*role assign failed/i,
+				undefined,
+				{
+					timeout: 5000,
+				},
+			),
+		).toBeInTheDocument();
+	});
+
+	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		// First: PUT always fails so the error appears
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'name update failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		const nameInput = await screen.findByDisplayValue('CI Bot');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'Retry Test');
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await screen.findByText(/Name update.*name update failed/i, undefined, {
+			timeout: 5000,
+		});
+
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+
+		const retryBtn = screen.getByRole('button', { name: /Retry/i });
+		await user.click(retryBtn);
+
+		// Error item should be removed after successful retry
+		await waitFor(() => {
+			expect(
+				screen.queryByText(/Name update.*name update failed/i),
+			).not.toBeInTheDocument();
+		});
 	});
 });

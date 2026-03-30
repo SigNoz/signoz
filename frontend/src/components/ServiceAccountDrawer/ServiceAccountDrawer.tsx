@@ -23,7 +23,6 @@ import {
 	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
-import type { RoleUpdateFailure } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
 	parseAsBoolean,
@@ -219,6 +218,34 @@ function ServiceAccountDrawer({
 		[toSaveApiError],
 	);
 
+	const retryRolesUpdate = useCallback(async (): Promise<void> => {
+		try {
+			const failures = await applyDiff(localRoles, availableRoles);
+			if (failures.length === 0) {
+				setSaveErrors((prev) => prev.filter((e) => e.context !== 'Roles update'));
+			} else {
+				setSaveErrors((prev) => {
+					const rest = prev.filter((e) => e.context !== 'Roles update');
+					const roleErrors = failures.map((f) => {
+						const ctx = `Role '${f.roleName}'`;
+						return {
+							context: ctx,
+							apiError: toSaveApiError(f.error),
+							onRetry: makeRoleRetry(ctx, f.onRetry),
+						};
+					});
+					return [...rest, ...roleErrors];
+				});
+			}
+		} catch (err) {
+			setSaveErrors((prev) =>
+				prev.map((e) =>
+					e.context === 'Roles update' ? { ...e, apiError: toSaveApiError(err) } : e,
+				),
+			);
+		}
+	}, [localRoles, availableRoles, applyDiff, toSaveApiError, makeRoleRetry]);
+
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
 			return;
@@ -226,11 +253,16 @@ function ServiceAccountDrawer({
 		setSaveErrors([]);
 		setIsSaving(true);
 		try {
+			const namePromise =
+				localName !== (account.name ?? '')
+					? updateMutateAsync({
+							pathParams: { id: account.id },
+							data: { name: localName },
+					  })
+					: Promise.resolve();
+
 			const [nameResult, rolesResult] = await Promise.allSettled([
-				updateMutateAsync({
-					pathParams: { id: account.id },
-					data: { name: localName },
-				}),
+				namePromise,
 				applyDiff(localRoles, availableRoles),
 			]);
 
@@ -244,15 +276,21 @@ function ServiceAccountDrawer({
 				});
 			}
 
-			const roleFailures: RoleUpdateFailure[] =
-				rolesResult.status === 'fulfilled' ? rolesResult.value : [];
-			for (const failure of roleFailures) {
-				const context = `Role '${failure.roleName}'`;
+			if (rolesResult.status === 'rejected') {
 				errors.push({
-					context,
-					apiError: toSaveApiError(failure.error),
-					onRetry: makeRoleRetry(context, failure.onRetry),
+					context: 'Roles update',
+					apiError: toSaveApiError(rolesResult.reason),
+					onRetry: retryRolesUpdate,
 				});
+			} else {
+				for (const failure of rolesResult.value) {
+					const context = `Role '${failure.roleName}'`;
+					errors.push({
+						context,
+						apiError: toSaveApiError(failure.error),
+						onRetry: makeRoleRetry(context, failure.onRetry),
+					});
+				}
 			}
 
 			if (errors.length > 0) {
@@ -261,10 +299,10 @@ function ServiceAccountDrawer({
 				toast.success('Service account updated successfully', {
 					richColors: true,
 				});
+				onSuccess({ closeDrawer: false });
 			}
 
 			refetchAccount();
-			onSuccess({ closeDrawer: false });
 			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
 		} finally {
 			setIsSaving(false);
@@ -283,6 +321,7 @@ function ServiceAccountDrawer({
 		toSaveApiError,
 		retryNameUpdate,
 		makeRoleRetry,
+		retryRolesUpdate,
 	]);
 
 	const handleClose = useCallback((): void => {

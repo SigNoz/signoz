@@ -23,10 +23,11 @@ function SaveErrorItem({
 
 	return (
 		<div className="sa-error-item">
-			<Button
-				type="button"
+			<div
+				role="button"
+				tabIndex={0}
 				className="sa-error-item__header"
-				disabled={isRetrying}
+				aria-disabled={isRetrying}
 				onClick={(): void => {
 					if (!isRetrying) {
 						setExpanded((prev) => !prev);
@@ -41,6 +42,7 @@ function SaveErrorItem({
 					<Button
 						type="button"
 						aria-label="Retry"
+						size="xs"
 						onClick={async (e): Promise<void> => {
 							e.stopPropagation();
 							setIsRetrying(true);
@@ -58,7 +60,7 @@ function SaveErrorItem({
 				{!isRetrying && (
 					<ChevronIcon size={14} className="sa-error-item__chevron" />
 				)}
-			</Button>
+			</div>
 
 			{expanded && !isRetrying && (
 				<div className="sa-error-item__body">
