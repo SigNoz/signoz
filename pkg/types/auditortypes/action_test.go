@@ -14,11 +14,6 @@ func TestActionPastTense(t *testing.T) {
 		{ActionCreate, "created"},
 		{ActionUpdate, "updated"},
 		{ActionDelete, "deleted"},
-		{ActionLogin, "login"},
-		{ActionLogout, "logout"},
-		{ActionLock, "locked"},
-		{ActionUnlock, "unlocked"},
-		{ActionRevoke, "revoked"},
 	}
 
 	for _, tt := range tests {
@@ -30,15 +25,10 @@ func TestActionPastTense(t *testing.T) {
 
 func TestActionEnum(t *testing.T) {
 	values := Action{}.Enum()
-	assert.Len(t, values, 8)
+	assert.Len(t, values, 3)
 	assert.Contains(t, values, ActionCreate)
 	assert.Contains(t, values, ActionUpdate)
 	assert.Contains(t, values, ActionDelete)
-	assert.Contains(t, values, ActionLogin)
-	assert.Contains(t, values, ActionLogout)
-	assert.Contains(t, values, ActionLock)
-	assert.Contains(t, values, ActionUnlock)
-	assert.Contains(t, values, ActionRevoke)
 }
 
 func TestOutcomeEnum(t *testing.T) {
@@ -60,8 +50,8 @@ func TestPrincipalTypeEnum(t *testing.T) {
 func TestActionCategoryEnum(t *testing.T) {
 	values := ActionCategory{}.Enum()
 	assert.Len(t, values, 4)
-	assert.Contains(t, values, CategoryAccessControl)
-	assert.Contains(t, values, CategoryConfigurationChange)
-	assert.Contains(t, values, CategoryDataAccess)
-	assert.Contains(t, values, CategorySystemEvent)
+	assert.Contains(t, values, ActionCategoryAccessControl)
+	assert.Contains(t, values, ActionCategoryConfigurationChange)
+	assert.Contains(t, values, ActionCategoryDataAccess)
+	assert.Contains(t, values, ActionCategorySystemEvent)
 }

@@ -6,7 +6,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestEventName(t *testing.T) {
+func TestNewEventName(t *testing.T) {
 	tests := []struct {
 		name         string
 		resourceName string
@@ -32,37 +32,7 @@ func TestEventName(t *testing.T) {
 			want:         "dashboard.deleted",
 		},
 		{
-			name:         "session login",
-			resourceName: "session",
-			action:       ActionLogin,
-			want:         "session.login",
-		},
-		{
-			name:         "session logout",
-			resourceName: "session",
-			action:       ActionLogout,
-			want:         "session.logout",
-		},
-		{
-			name:         "dashboard locked",
-			resourceName: "dashboard",
-			action:       ActionLock,
-			want:         "dashboard.locked",
-		},
-		{
-			name:         "dashboard unlocked",
-			resourceName: "dashboard",
-			action:       ActionUnlock,
-			want:         "dashboard.unlocked",
-		},
-		{
-			name:         "serviceaccount apikey revoked",
-			resourceName: "serviceaccount.apikey",
-			action:       ActionRevoke,
-			want:         "serviceaccount.apikey.revoked",
-		},
-		{
-			name:         "user role changed",
+			name:         "user role updated (sub-resource)",
 			resourceName: "user.role",
 			action:       ActionUpdate,
 			want:         "user.role.updated",
@@ -71,8 +41,8 @@ func TestEventName(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			got := EventName(tt.resourceName, tt.action)
-			assert.Equal(t, tt.want, got)
+			got := NewEventName(tt.resourceName, tt.action)
+			assert.Equal(t, tt.want, got.String())
 		})
 	}
 }
