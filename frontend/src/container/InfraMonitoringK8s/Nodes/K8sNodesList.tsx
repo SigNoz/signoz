@@ -24,7 +24,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isModifierKeyPressed } from 'utils/app';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
@@ -442,7 +442,12 @@ function K8sNodesList({
 	const openNodeInNewTab = (record: K8sNodesRowData): void => {
 		const newParams = new URLSearchParams(searchParams);
 		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
-		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
 	};
 
 	const handleRowClick = (

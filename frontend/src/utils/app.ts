@@ -59,6 +59,11 @@ export function buildAbsolutePath({
 	urlQueryString?: string;
 }): string {
 	const { pathname } = getLocation();
+
+	if (!relativePath) {
+		return urlQueryString ? `${pathname}?${urlQueryString}` : pathname;
+	}
+
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 

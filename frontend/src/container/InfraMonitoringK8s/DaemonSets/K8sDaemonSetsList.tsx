@@ -25,7 +25,7 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isModifierKeyPressed } from 'utils/app';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
@@ -464,7 +464,12 @@ function K8sDaemonSetsList({
 			INFRA_MONITORING_K8S_PARAMS_KEYS.DAEMONSET_UID,
 			record.daemonsetUID,
 		);
-		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
 	};
 
 	const handleRowClick = (

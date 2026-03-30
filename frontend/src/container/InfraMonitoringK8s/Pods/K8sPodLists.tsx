@@ -27,7 +27,7 @@ import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
-import { isModifierKeyPressed } from 'utils/app';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
@@ -500,7 +500,12 @@ function K8sPodsList({
 	const openPodInNewTab = (record: K8sPodsRowData): void => {
 		const newParams = new URLSearchParams(searchParams);
 		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
-		openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
 	};
 
 	const handleRowClick = (
