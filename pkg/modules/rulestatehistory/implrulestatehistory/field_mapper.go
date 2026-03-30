@@ -30,7 +30,7 @@ func newFieldMapper() qbtypes.FieldMapper {
 	return &fieldMapper{}
 }
 
-func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) {
+func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) (*schema.Column, error) { //nolint:unparam
 	name := strings.TrimSpace(key.Name)
 	if col, ok := ruleStateHistoryColumns[name]; ok {
 		return col, nil
