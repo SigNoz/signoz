@@ -1,4 +1,4 @@
-package auditorbatcher
+package auditorserver
 
 import "time"
 
