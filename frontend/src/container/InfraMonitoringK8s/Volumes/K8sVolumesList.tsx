@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -17,25 +17,30 @@ import logEvent from 'api/common/logEvent';
 import { K8sVolumesListPayload } from 'api/infraMonitoring/getK8sVolumesList';
 import classNames from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
 import { useGetK8sVolumesList } from 'hooks/infraMonitoring/useGetK8sVolumesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import {
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringOrderBy,
+	useInfraMonitoringVolumeUID,
+} from '../hooks';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -50,6 +55,7 @@ import VolumeDetails from './VolumeDetails';
 
 import '../InfraMonitoringK8s.styles.scss';
 import './K8sVolumesList.styles.scss';
+
 function K8sVolumesList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
@@ -63,55 +69,23 @@ function K8sVolumesList({
 		(state) => state.globalTime,
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(() => {
-		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
-		if (page) {
-			return parseInt(page, 10);
-		}
-		return 1;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
-
-	useEffect(() => {
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams, true));
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 
-	const [selectedVolumeUID, setselectedVolumeUID] = useState<string | null>(
-		() => {
-			const volumeUID = searchParams.get(
-				INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
-			);
-			if (volumeUID) {
-				return volumeUID;
-			}
-			return null;
-		},
-	);
+	const [
+		selectedVolumeUID,
+		setselectedVolumeUID,
+	] = useInfraMonitoringVolumeUID();
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.VOLUMES);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
-		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
-		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
-		}
-		return [];
-	});
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
 
 	const [
 		selectedRowData,
@@ -138,7 +112,7 @@ function K8sVolumesList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -315,26 +289,15 @@ function K8sVolumesList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
+				setOrderBy({
 					columnName: sorter.field as string,
 					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
 				});
 			} else {
 				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
 			}
 		},
-		[searchParams, setSearchParams],
+		[setCurrentPage, setOrderBy],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -413,10 +376,6 @@ function K8sVolumesList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedVolumeUID(record.volumeUID);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID]: record.volumeUID,
-			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -445,11 +404,6 @@ function K8sVolumesList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -546,13 +500,6 @@ function K8sVolumesList({
 
 	const handleCloseVolumeDetail = (): void => {
 		setselectedVolumeUID(null);
-		setSearchParams({
-			...Object.fromEntries(
-				Array.from(searchParams.entries()).filter(
-					([key]) => key !== INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID,
-				),
-			),
-		});
 	};
 
 	const handleGroupByChange = useCallback(
@@ -573,10 +520,6 @@ function K8sVolumesList({
 
 			setCurrentPage(1);
 			setGroupBy(groupBy);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
-			});
 			setExpandedRowKeys([]);
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
@@ -585,7 +528,7 @@ function K8sVolumesList({
 				category: InfraMonitoringEvents.Volumes,
 			});
 		},
-		[groupByFiltersData?.payload?.attributeKeys, searchParams, setSearchParams],
+		[groupByFiltersData?.payload?.attributeKeys, setCurrentPage, setGroupBy],
 	);
 
 	useEffect(() => {

@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
+import { useSelector } from 'react-redux';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -29,12 +29,17 @@ import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import {
+	useInfraMonitoringClusterName,
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringOrderBy,
+} from '../hooks';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -49,6 +54,7 @@ import {
 
 import '../InfraMonitoringK8s.styles.scss';
 import './K8sClustersList.styles.scss';
+
 function K8sClustersList({
 	isFiltersVisible,
 	handleFilterVisibilityChange,
@@ -62,54 +68,20 @@ function K8sClustersList({
 		(state) => state.globalTime,
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
+	const [searchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(() => {
-		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
-		if (page) {
-			return parseInt(page, 10);
-		}
-		return 1;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
+	const [
+		selectedClusterName,
+		setselectedClusterName,
+	] = useInfraMonitoringClusterName();
+
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
-	useEffect(() => {
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
-
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams, false));
-
-	const [selectedClusterName, setselectedClusterName] = useState<string | null>(
-		() => {
-			const clusterName = searchParams.get(
-				INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME,
-			);
-			if (clusterName) {
-				return clusterName;
-			}
-			return null;
-		},
-	);
-
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.CLUSTERS);
-
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
-		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
-		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
-		}
-		return [];
-	});
 
 	const [
 		selectedRowData,
@@ -136,7 +108,7 @@ function K8sClustersList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -374,26 +346,15 @@ function K8sClustersList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
+				setOrderBy({
 					columnName: sorter.field as string,
 					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
 				});
 			} else {
 				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
 			}
 		},
-		[searchParams, setSearchParams],
+		[setCurrentPage, setOrderBy],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -477,10 +438,6 @@ function K8sClustersList({
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedClusterName(record.clusterUID);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME]: record.clusterUID,
-			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -509,11 +466,6 @@ function K8sClustersList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -610,25 +562,11 @@ function K8sClustersList({
 
 	const handleCloseClusterDetail = (): void => {
 		setselectedClusterName(null);
-		setSearchParams({
-			...Object.fromEntries(
-				Array.from(searchParams.entries()).filter(
-					([key]) =>
-						![
-							INFRA_MONITORING_K8S_PARAMS_KEYS.CLUSTER_NAME,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
-						].includes(key),
-				),
-			),
-		});
 	};
 
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const groupBy = [];
+			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
 				const element = (value[index] as unknown) as string;
@@ -638,17 +576,13 @@ function K8sClustersList({
 				);
 
 				if (key) {
-					groupBy.push(key);
+					newGroupBy.push(key);
 				}
 			}
 
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
-			setGroupBy(groupBy);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
-			});
+			setGroupBy(newGroupBy);
 			setExpandedRowKeys([]);
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -656,7 +590,7 @@ function K8sClustersList({
 				category: InfraMonitoringEvents.Cluster,
 			});
 		},
-		[groupByFiltersData, searchParams, setSearchParams],
+		[groupByFiltersData, setCurrentPage, setGroupBy],
 	);
 
 	useEffect(() => {

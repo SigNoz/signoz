@@ -1,4 +1,4 @@
-import React, { useCallback, useMemo } from 'react';
+import React, { useCallback, useMemo, useState } from 'react';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Skeleton,
@@ -116,8 +116,12 @@ export default function HostsListTable({
 	pageSize,
 	setOrderBy,
 	setPageSize,
+	orderBy,
 }: HostsListTableProps): JSX.Element {
-	const columns = useMemo(() => getHostsListColumns(), []);
+	const [defaultOrderBy] = useState(orderBy);
+	const columns = useMemo(() => getHostsListColumns(defaultOrderBy), [
+		defaultOrderBy,
+	]);
 
 	const sentAnyHostMetricsData = useMemo(
 		() => data?.payload?.data?.sentAnyHostMetricsData || false,

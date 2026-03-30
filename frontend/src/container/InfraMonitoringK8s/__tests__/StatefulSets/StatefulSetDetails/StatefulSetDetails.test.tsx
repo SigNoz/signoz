@@ -8,9 +8,12 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import StatefulSetDetails from 'container/InfraMonitoringK8s/StatefulSets/StatefulSetDetails/StatefulSetDetails';
+import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
 import store from 'store';
 
 const queryClient = new QueryClient();
+
+const Wrapper = withNuqsTestingAdapter({ searchParams: {} });
 
 describe('StatefulSetDetails', () => {
 	const mockStatefulSet = {
@@ -23,17 +26,19 @@ describe('StatefulSetDetails', () => {
 
 	it('should render modal with relevant metadata', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<StatefulSetDetails
-							statefulSet={mockStatefulSet}
-							isModalTimeSelection
-							onClose={mockOnClose}
-						/>
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<StatefulSetDetails
+								statefulSet={mockStatefulSet}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const statefulSetNameElements = screen.getAllByText('test-stateful-set');
@@ -47,17 +52,19 @@ describe('StatefulSetDetails', () => {
 
 	it('should render modal with 4 tabs', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<StatefulSetDetails
-							statefulSet={mockStatefulSet}
-							isModalTimeSelection
-							onClose={mockOnClose}
-						/>
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<StatefulSetDetails
+								statefulSet={mockStatefulSet}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const metricsTab = screen.getByText('Metrics');
@@ -75,17 +82,19 @@ describe('StatefulSetDetails', () => {
 
 	it('default tab should be metrics', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<StatefulSetDetails
-							statefulSet={mockStatefulSet}
-							isModalTimeSelection
-							onClose={mockOnClose}
-						/>
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<StatefulSetDetails
+								statefulSet={mockStatefulSet}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const metricsTab = screen.getByRole('radio', { name: 'Metrics' });
@@ -94,17 +103,19 @@ describe('StatefulSetDetails', () => {
 
 	it('should switch to events tab when events tab is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<StatefulSetDetails
-							statefulSet={mockStatefulSet}
-							isModalTimeSelection
-							onClose={mockOnClose}
-						/>
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<StatefulSetDetails
+								statefulSet={mockStatefulSet}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const eventsTab = screen.getByRole('radio', { name: 'Events' });
@@ -115,17 +126,19 @@ describe('StatefulSetDetails', () => {
 
 	it('should close modal when close button is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<StatefulSetDetails
-							statefulSet={mockStatefulSet}
-							isModalTimeSelection
-							onClose={mockOnClose}
-						/>
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<StatefulSetDetails
+								statefulSet={mockStatefulSet}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const closeButton = screen.getByRole('button', { name: 'Close' });

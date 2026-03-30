@@ -4,6 +4,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render } from '@testing-library/react';
 import * as useGetHostListHooks from 'hooks/infraMonitoring/useGetHostList';
+import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
 import store from 'store';
@@ -18,6 +19,16 @@ jest.mock('lib/getMinMax', () => ({
 		maxTime: 1713738000000,
 		isValidShortHandDateTimeFormat: jest.fn().mockReturnValue(true),
 	})),
+}));
+jest.mock('container/TopNav/DateTimeSelectionV2', () => ({
+	__esModule: true,
+	default: (): JSX.Element => (
+		<div data-testid="date-time-selection">Date Time</div>
+	),
+}));
+jest.mock('components/HostMetricsDetail', () => ({
+	__esModule: true,
+	default: (): null => null,
 }));
 jest.mock('components/CustomTimePicker/CustomTimePicker', () => ({
 	__esModule: true,
@@ -53,19 +64,6 @@ jest.mock('react-router-dom', () => {
 		useLocation: jest.fn().mockReturnValue({
 			pathname: ROUTES.INFRASTRUCTURE_MONITORING_HOSTS,
 		}),
-	};
-});
-jest.mock('react-router-dom-v5-compat', () => {
-	const actual = jest.requireActual('react-router-dom-v5-compat');
-	return {
-		...actual,
-		useSearchParams: jest
-			.fn()
-			.mockReturnValue([
-				{ get: jest.fn(), entries: jest.fn().mockReturnValue([]) },
-				jest.fn(),
-			]),
-		useNavigationType: (): any => 'PUSH',
 	};
 });
 jest.mock('hooks/useSafeNavigate', () => ({
@@ -127,29 +125,35 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
+const Wrapper = withNuqsTestingAdapter({ searchParams: {} });
+
 describe('HostsList', () => {
 	it('renders hosts list table', () => {
 		const { container } = render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<HostsList />
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<Provider store={store}>
+							<HostsList />
+						</Provider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 		expect(container.querySelector('.hosts-list-table')).toBeInTheDocument();
 	});
 
 	it('renders filters', () => {
 		const { container } = render(
-			<QueryClientProvider client={queryClient}>
-				<MemoryRouter>
-					<Provider store={store}>
-						<HostsList />
-					</Provider>
-				</MemoryRouter>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<MemoryRouter>
+						<Provider store={store}>
+							<HostsList />
+						</Provider>
+					</MemoryRouter>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 		expect(container.querySelector('.filters')).toBeInTheDocument();
 	});
