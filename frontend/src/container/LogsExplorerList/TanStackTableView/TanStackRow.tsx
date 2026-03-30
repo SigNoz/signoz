@@ -56,15 +56,19 @@ function TanStackRowCells({
 		onSetActiveLog?.(currentLog);
 	}, [currentLog, isActiveLog, onClearActiveLog, onSetActiveLog]);
 
+	const visibleCells = row.getVisibleCells();
+	const lastCellIndex = visibleCells.length - 1;
+
 	return (
 		<>
-			{row.getVisibleCells().map((cell) => {
+			{visibleCells.map((cell, index) => {
 				const columnKey = cell.column.id;
+				const isLastCell = index === lastCellIndex;
 				return (
 					<TableCellStyled
 						$isDragColumn={false}
 						$isLogIndicator={columnKey === 'state-indicator'}
-						$hasSingleColumn={row.getVisibleCells().length <= 2}
+						$hasSingleColumn={visibleCells.length <= 2}
 						$isDarkMode={isDarkMode}
 						key={cell.id}
 						fontSize={fontSize}
@@ -72,34 +76,16 @@ function TanStackRowCells({
 						onClick={handleShowLogDetails}
 					>
 						{flexRender(cell.column.columnDef.cell, cell.getContext())}
+						{isLastCell && isLogsExplorerPage && (
+							<LogLinesActionButtons
+								handleShowContext={handleShowContext}
+								onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
+								customClassName="table-view-log-actions"
+							/>
+						)}
 					</TableCellStyled>
 				);
 			})}
-			<TableCellStyled
-				$isDragColumn={false}
-				$isLogIndicator={false}
-				$hasSingleColumn={false}
-				$isDarkMode={isDarkMode}
-				fontSize={fontSize}
-				className="logs-table-filler-cell"
-				onClick={handleShowLogDetails}
-			/>
-			{isLogsExplorerPage && (
-				<TableCellStyled
-					$isDragColumn={false}
-					$isLogIndicator={false}
-					$hasSingleColumn={false}
-					$isDarkMode={isDarkMode}
-					fontSize={fontSize}
-					className="table-actions-cell"
-				>
-					<LogLinesActionButtons
-						handleShowContext={handleShowContext}
-						onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
-						customClassName="table-view-log-actions"
-					/>
-				</TableCellStyled>
-			)}
 		</>
 	);
 }
