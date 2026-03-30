@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
@@ -25,6 +25,8 @@ import { ChevronDown, ChevronRight } from 'lucide-react';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { FeatureKeys } from '../../../constants/features';
 import { useAppContext } from '../../../providers/App/App';
@@ -389,7 +391,25 @@ function K8sVolumesList({
 		);
 	}, [selectedVolumeUID, volumesData, groupBy.length, nestedVolumesData]);
 
-	const handleRowClick = (record: K8sVolumesRowData): void => {
+	const openVolumeInNewTab = (record: K8sVolumesRowData): void => {
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.VOLUME_UID, record.volumeUID);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
+	};
+
+	const handleRowClick = (
+		record: K8sVolumesRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			openVolumeInNewTab(record);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedVolumeUID(record.volumeUID);
@@ -453,8 +473,14 @@ function K8sVolumesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(
+							record,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (event && isModifierKeyPressed(event)) {
+									openVolumeInNewTab(record);
+									return;
+								}
 								setselectedVolumeUID(record.volumeUID);
 							},
 							className: 'expanded-clickable-row',
@@ -640,8 +666,10 @@ function K8sVolumesList({
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(
+					record,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{

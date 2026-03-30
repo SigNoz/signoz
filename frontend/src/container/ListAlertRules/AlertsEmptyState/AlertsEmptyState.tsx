@@ -1,12 +1,13 @@
-import { useCallback, useState } from 'react';
+import React, { useCallback, useState } from 'react';
 import { PlusOutlined } from '@ant-design/icons';
 import { Button, Divider, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import ROUTES from 'constants/routes';
 import useComponentPermission from 'hooks/useComponentPermission';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
+import { isModifierKeyPressed } from 'utils/app';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';
@@ -29,6 +30,7 @@ const alertLogEvents = (
 
 export function AlertsEmptyState(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 	const [addNewAlert] = useComponentPermission(
 		['add_new_alert', 'action'],
 		user.role,
@@ -36,10 +38,13 @@ export function AlertsEmptyState(): JSX.Element {
 
 	const [loading, setLoading] = useState(false);
 
-	const onClickNewAlertHandler = useCallback(() => {
-		setLoading(false);
-		history.push(ROUTES.ALERTS_NEW);
-	}, []);
+	const onClickNewAlertHandler = useCallback(
+		(e: React.MouseEvent) => {
+			setLoading(false);
+			safeNavigate(ROUTES.ALERTS_NEW, { newTab: isModifierKeyPressed(e) });
+		},
+		[safeNavigate],
+	);
 
 	return (
 		<div className="alert-list-container">
