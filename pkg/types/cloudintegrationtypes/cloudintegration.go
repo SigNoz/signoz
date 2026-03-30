@@ -72,10 +72,6 @@ func (r *StorableAgentReport) Scan(src any) error {
 
 // Value creates value to be stored in DB.
 func (r *StorableAgentReport) Value() (driver.Value, error) {
-	if r == nil {
-		return nil, nil
-	}
-
 	serialized, err := json.Marshal(r)
 	if err != nil {
 		return nil, errors.WrapInternalf(
