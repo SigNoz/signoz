@@ -19,7 +19,7 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';

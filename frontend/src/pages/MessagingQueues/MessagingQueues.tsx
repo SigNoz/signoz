@@ -9,7 +9,8 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
-import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import {
 	KAFKA_SETUP_DOC_LINK,

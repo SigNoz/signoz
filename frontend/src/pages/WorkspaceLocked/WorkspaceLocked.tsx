@@ -28,7 +28,7 @@ import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';

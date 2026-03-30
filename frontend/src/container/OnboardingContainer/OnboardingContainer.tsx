@@ -18,7 +18,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';

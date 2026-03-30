@@ -7,7 +7,7 @@ import useComponentPermission from 'hooks/useComponentPermission';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { useAppContext } from 'providers/App/App';
 import { DataSource } from 'types/common/queryBuilder';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import AlertInfoCard from './AlertInfoCard';
 import { ALERT_CARDS, ALERT_INFO_LINKS } from './alertLinks';

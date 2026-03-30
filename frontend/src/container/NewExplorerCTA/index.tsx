@@ -4,7 +4,7 @@ import { Badge, Button } from 'antd';
 import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { Undo } from 'lucide-react';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { buttonText, RIBBON_STYLES } from './config';
 

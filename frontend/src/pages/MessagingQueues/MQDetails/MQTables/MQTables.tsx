@@ -28,7 +28,8 @@ import {
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';

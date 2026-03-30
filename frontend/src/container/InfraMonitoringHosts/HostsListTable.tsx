@@ -11,7 +11,8 @@ import {
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
-import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import {

@@ -28,7 +28,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';

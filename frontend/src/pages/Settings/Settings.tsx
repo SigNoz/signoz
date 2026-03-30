@@ -16,7 +16,8 @@ import history from 'lib/history';
 import { Cog } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
-import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { getRoutes } from './utils';
 

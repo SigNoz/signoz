@@ -21,7 +21,7 @@ import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';

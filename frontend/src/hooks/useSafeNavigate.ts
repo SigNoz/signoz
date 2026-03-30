@@ -123,9 +123,9 @@ export const useSafeNavigate = (
 				);
 			}
 
-			const shouldOpenNewTab = options?.newTab;
+			const shouldOpenInNewTab = options?.newTab;
 
-			if (shouldOpenNewTab) {
+			if (shouldOpenInNewTab) {
 				const targetPath =
 					typeof to === 'string'
 						? to

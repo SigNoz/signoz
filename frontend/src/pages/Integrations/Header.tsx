@@ -3,7 +3,7 @@ import ROUTES from 'constants/routes';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import './Integrations.styles.scss';

@@ -1,4 +1,5 @@
-import { isModifierKeyPressed, openInNewTab } from '../navigation';
+import { isModifierKeyPressed } from '../app';
+import { openInNewTab } from '../navigation';
 
 describe('navigation utilities', () => {
 	const originalWindowOpen = window.open;

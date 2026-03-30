@@ -49,9 +49,9 @@ import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
-import { isModifierKeyPressed } from 'utils/navigation';
 
 import { getLocalStorageGraphVisibilityState } from '../utils';
 import { PANEL_TYPES_VS_FULL_VIEW_TABLE } from './contants';

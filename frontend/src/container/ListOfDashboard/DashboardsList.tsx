@@ -82,7 +82,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';

@@ -16,7 +16,8 @@ import { isUndefined } from 'lodash-es';
 import { urlKey } from 'pages/ErrorDetails/utils';
 import { useTimezone } from 'providers/Timezone';
 import { PayloadProps as GetByErrorTypeAndServicePayload } from 'types/api/errors/getByErrorTypeAndService';
-import { isModifierKeyPressed, openInNewTab } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { keyToExclude } from './config';
 import { DashedContainer, EditorContainer, EventContainer } from './styles';

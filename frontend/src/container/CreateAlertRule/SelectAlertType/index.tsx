@@ -6,7 +6,7 @@ import { ALERTS_DATA_SOURCE_MAP } from 'constants/alerts';
 import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { getOptionList } from './config';
 import { AlertTypeCard, SelectTypeContainer } from './styles';

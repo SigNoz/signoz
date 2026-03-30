@@ -44,8 +44,8 @@ import { QueryFunction } from 'types/api/v5/queryRange';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 import { compositeQueryToQueryEnvelope } from 'utils/compositeQueryToQueryEnvelope';
-import { isModifierKeyPressed } from 'utils/navigation';
 
 import BasicInfo from './BasicInfo';
 import ChartPreview from './ChartPreview';

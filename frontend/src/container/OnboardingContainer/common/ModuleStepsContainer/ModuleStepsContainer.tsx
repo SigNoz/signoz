@@ -15,7 +15,7 @@ import { hasFrameworks } from 'container/OnboardingContainer/utils/dataSourceUti
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty, isNull } from 'lodash-es';
 import { UserPlus } from 'lucide-react';
-import { isModifierKeyPressed } from 'utils/navigation';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { useOnboardingContext } from '../../context/OnboardingContext';
 import {
