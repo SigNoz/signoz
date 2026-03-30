@@ -6,12 +6,15 @@ import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination, Skeleton } from 'antd';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getListServiceAccountsQueryKey,
 	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
 } from 'api/generated/services/serviceaccount';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
@@ -20,6 +23,7 @@ import {
 	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
+import type { RoleUpdateFailure } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
 	parseAsBoolean,
@@ -77,6 +81,7 @@ function ServiceAccountDrawer({
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
+	const [saveErrors, setSaveErrors] = useState<string[]>([]);
 
 	const queryClient = useQueryClient();
 
@@ -106,6 +111,7 @@ function ServiceAccountDrawer({
 			setLocalName(account.name ?? '');
 			setKeysPage(1);
 		}
+		setSaveErrors([]);
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [account?.id]);
 
@@ -152,6 +158,7 @@ function ServiceAccountDrawer({
 		if (!account || !isDirty) {
 			return;
 		}
+		setSaveErrors([]);
 		setIsSaving(true);
 		try {
 			const [nameResult, rolesResult] = await Promise.allSettled([
@@ -162,20 +169,34 @@ function ServiceAccountDrawer({
 				applyDiff(localRoles, availableRoles),
 			]);
 
-			const roleFailures =
-				rolesResult.status === 'fulfilled' ? rolesResult.value : 0;
-			if (nameResult.status === 'fulfilled' && roleFailures === 0) {
+			const errors: string[] = [];
+
+			if (nameResult.status === 'rejected') {
+				const apiError = convertToApiError(
+					nameResult.reason as AxiosError<RenderErrorResponseDTO>,
+				);
+				const message = apiError?.getErrorMessage() ?? 'Unknown error';
+				errors.push(`Name: ${message}`);
+			}
+
+			const roleFailures: RoleUpdateFailure[] =
+				rolesResult.status === 'fulfilled' ? rolesResult.value : [];
+			for (const failure of roleFailures) {
+				const apiError = convertToApiError(
+					failure.error as AxiosError<RenderErrorResponseDTO>,
+				);
+				const message = apiError?.getErrorMessage() ?? 'Unknown error';
+				errors.push(`Role '${failure.roleName}': ${message}`);
+			}
+
+			if (errors.length > 0) {
+				setSaveErrors(errors);
+			} else {
 				toast.success('Service account updated successfully', {
 					richColors: true,
 				});
 			}
-			if (nameResult.status === 'rejected') {
-				const reason = nameResult.reason as { message?: string } | undefined;
-				toast.error(
-					`Failed to update name: ${reason?.message ?? 'Unknown error'}`,
-					{ duration: 6000, richColors: true },
-				);
-			}
+
 			refetchAccount();
 			onSuccess({ closeDrawer: false });
 			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
@@ -202,6 +223,7 @@ function ServiceAccountDrawer({
 		setActiveTab(null);
 		setKeysPage(null);
 		setEditKeyId(null);
+		setSaveErrors([]);
 	}, [
 		setSelectedAccountId,
 		setActiveTab,
@@ -291,6 +313,7 @@ function ServiceAccountDrawer({
 								rolesError={rolesError}
 								rolesErrorObj={rolesErrorObj}
 								onRefetchRoles={refetchRoles}
+								saveErrors={saveErrors}
 							/>
 						)}
 						{activeTab === ServiceAccountDrawerTab.Keys && (

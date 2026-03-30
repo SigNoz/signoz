@@ -1,6 +1,5 @@
 import { useCallback, useMemo } from 'react';
 import { useQueryClient } from 'react-query';
-import { toast } from '@signozhq/sonner';
 import {
 	getGetServiceAccountRolesQueryKey,
 	useCreateServiceAccountRole,
@@ -9,13 +8,18 @@ import {
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 
+export interface RoleUpdateFailure {
+	roleName: string;
+	error: unknown;
+}
+
 interface UseServiceAccountRoleManagerResult {
 	currentRoles: AuthtypesRoleDTO[];
 	isLoading: boolean;
 	applyDiff: (
 		localRoleIds: string[],
 		availableRoles: AuthtypesRoleDTO[],
-	) => Promise<number>;
+	) => Promise<RoleUpdateFailure[]>;
 }
 
 export function useServiceAccountRoleManager(
@@ -36,7 +40,7 @@ export function useServiceAccountRoleManager(
 		async (
 			localRoleIds: string[],
 			availableRoles: AuthtypesRoleDTO[],
-		): Promise<number> => {
+		): Promise<RoleUpdateFailure[]> => {
 			const currentRoleIds = new Set(
 				currentRoles.map((r) => r.id).filter(Boolean),
 			);
@@ -71,12 +75,13 @@ export function useServiceAccountRoleManager(
 			]);
 
 			const allRoles = [...addedRoles, ...removedRoles];
-			let failureCount = 0;
+			const failures: RoleUpdateFailure[] = [];
 			allSettled.forEach((result, index) => {
 				if (result.status === 'rejected') {
-					failureCount += 1;
-					const roleName = allRoles[index]?.name ?? 'unknown';
-					toast.error(`Failed to update role: ${roleName}`, { duration: 6000 });
+					failures.push({
+						roleName: allRoles[index]?.name ?? 'unknown',
+						error: result.reason,
+					});
 				}
 			});
 
@@ -84,7 +89,7 @@ export function useServiceAccountRoleManager(
 				getGetServiceAccountRolesQueryKey({ id: accountId }),
 			);
 
-			return failureCount;
+			return failures;
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[accountId, currentRoles, createRole, deleteRole, queryClient],

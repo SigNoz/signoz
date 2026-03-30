@@ -1,5 +1,6 @@
 import { useCallback } from 'react';
 import { Badge } from '@signozhq/badge';
+import { Callout } from '@signozhq/callout';
 import { LockKeyhole } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -21,6 +22,7 @@ interface OverviewTabProps {
 	rolesError?: boolean;
 	rolesErrorObj?: APIError | undefined;
 	onRefetchRoles?: () => void;
+	saveErrors?: string[];
 }
 
 function OverviewTab({
@@ -35,6 +37,7 @@ function OverviewTab({
 	rolesError,
 	rolesErrorObj,
 	onRefetchRoles,
+	saveErrors = [],
 }: OverviewTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -150,6 +153,24 @@ function OverviewTab({
 					<Badge color="vanilla">{formatTimestamp(account.updatedAt)}</Badge>
 				</div>
 			</div>
+
+			{saveErrors.length > 0 && (
+				<div className="sa-drawer__save-errors">
+					<Callout
+						type="error"
+						size="small"
+						showIcon
+						message="Failed to save changes"
+						description={
+							<ul className="sa-drawer__save-errors-list">
+								{saveErrors.map((errMsg) => (
+									<li key={errMsg}>{errMsg}</li>
+								))}
+							</ul>
+						}
+					/>
+				</div>
+			)}
 		</>
 	);
 }
