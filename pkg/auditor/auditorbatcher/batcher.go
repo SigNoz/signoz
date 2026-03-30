@@ -6,20 +6,18 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/codes"
 	"go.opentelemetry.io/otel/metric"
 	"go.opentelemetry.io/otel/trace"
 )
 
-// Batch is a set of audit events ready for export along with a trace context.
-// The consumer must call Span.End() after processing the batch.
-type Batch struct {
-	Ctx    context.Context
-	Events []audittypes.AuditEvent
-	Span   trace.Span
-}
+// ExportFunc is called by the batcher to export a batch of audit events.
+// The context carries the active trace span for the export operation.
+type ExportFunc func(ctx context.Context, events []audittypes.AuditEvent) error
 
 // Batcher buffers audit events and flushes them in batches.
 // A flush is triggered when either BatchSize events accumulate or
@@ -28,8 +26,7 @@ type Batcher struct {
 	settings factory.ScopedProviderSettings
 	config   Config
 	metrics  *telemetry
-
-	batchC chan Batch
+	exportFn ExportFunc
 
 	queue    []audittypes.AuditEvent
 	queueMtx sync.Mutex
@@ -40,17 +37,17 @@ type Batcher struct {
 	goroutinesWg sync.WaitGroup
 }
 
-func New(settings factory.ScopedProviderSettings, config Config) (*Batcher, error) {
+func New(settings factory.ScopedProviderSettings, config Config, exportFn ExportFunc) (*Batcher, error) {
 	metrics, err := newTelemetry(settings.Meter())
 	if err != nil {
 		return nil, err
 	}
 
 	b := &Batcher{
-		batchC:   make(chan Batch, config.BatchSize),
 		settings: settings,
 		config:   config,
 		metrics:  metrics,
+		exportFn: exportFn,
 		queue:    make([]audittypes.AuditEvent, 0, config.BufferSize),
 		moreC:    make(chan struct{}, 1),
 		stopC:    make(chan struct{}),
@@ -80,7 +77,6 @@ func (b *Batcher) Start(ctx context.Context) error {
 			select {
 			case <-b.stopC:
 				b.drain(ctx)
-				close(b.batchC)
 				return
 			case <-b.moreC:
 				if b.queueLen() >= b.config.BatchSize {
@@ -109,25 +105,12 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 	if len(b.queue) >= b.config.BufferSize {
 		b.metrics.eventsDropped.Add(ctx, 1)
 		span.SetAttributes(attribute.Bool("audit.dropped", true))
-		b.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("buffer_size", b.config.BufferSize))
+		b.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("audit.buffer_size", b.config.BufferSize))
 		return
 	}
 
 	b.queue = append(b.queue, event)
 	b.setMore()
-}
-
-// Receive returns a channel that yields batches ready for export.
-// Each Batch carries a trace span started at flush time. The consumer
-// must call Batch.Span.End() after processing.
-func (b *Batcher) Receive() <-chan Batch {
-	return b.batchC
-}
-
-// RecordWriteError increments the write error counter. Call this from
-// the consumer when an export attempt fails.
-func (b *Batcher) RecordWriteError(ctx context.Context) {
-	b.metrics.writeErrors.Add(ctx, 1)
 }
 
 // Stop signals the background loop to drain remaining events and shut down.
@@ -143,14 +126,25 @@ func (b *Batcher) queueLen() int {
 	return len(b.queue)
 }
 
+func (b *Batcher) export(ctx context.Context, events []audittypes.AuditEvent) {
+	ctx, span := b.settings.Tracer().Start(ctx, "auditorbatcher.Export", trace.WithAttributes(attribute.Int("audit.batch_size", len(events))))
+	defer span.End()
+
+	b.metrics.eventsEmitted.Add(ctx, int64(len(events)))
+	if err := b.exportFn(ctx, events); err != nil {
+		b.metrics.writeErrors.Add(ctx, 1)
+		span.RecordError(err)
+		span.SetStatus(codes.Error, err.Error())
+		b.settings.Logger().ErrorContext(ctx, "audit batch export failed", errors.Attr(err), slog.Int("audit.batch_size", len(events)))
+	}
+}
+
 func (b *Batcher) flush(ctx context.Context) {
 	events := b.next()
 	if len(events) == 0 {
 		return
 	}
-	b.metrics.eventsEmitted.Add(ctx, int64(len(events)))
-	batchCtx, span := b.settings.Tracer().Start(ctx, "auditorbatcher.Export", trace.WithAttributes(attribute.Int("audit.batch_size", len(events))))
-	b.batchC <- Batch{Ctx: batchCtx, Events: events, Span: span}
+	b.export(ctx, events)
 }
 
 func (b *Batcher) drain(ctx context.Context) {
@@ -159,9 +153,7 @@ func (b *Batcher) drain(ctx context.Context) {
 		if len(events) == 0 {
 			return
 		}
-		b.metrics.eventsEmitted.Add(ctx, int64(len(events)))
-		batchCtx, span := b.settings.Tracer().Start(ctx, "auditorbatcher.Export", trace.WithAttributes(attribute.Int("audit.batch_size", len(events))))
-		b.batchC <- Batch{Ctx: batchCtx, Events: events, Span: span}
+		b.export(ctx, events)
 	}
 }
 
