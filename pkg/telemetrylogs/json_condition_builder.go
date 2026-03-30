@@ -300,7 +300,7 @@ func (c *jsonConditionBuilder) buildTerminalArrayCondition(node *telemetrytypes.
 	return conditions[0], nil
 }
 
-// buildArrayMembershipCondition builds condition of the part where Arrays becomes primitive types
+// buildArrayMembershipCondition builds condition of the part where Arrays becomes primitive typed Arrays
 // e.g. [300, 404, 500], and value operations will work on the array elements
 func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
