@@ -1,25 +1,26 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
-import { Key, LayoutGrid, Plus, PowerOff, X } from '@signozhq/icons';
+import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination, Skeleton } from 'antd';
-import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
+	getListServiceAccountsQueryKey,
 	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
 } from 'api/generated/services/serviceaccount';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
-import { AxiosError } from 'axios';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import {
 	ServiceAccountRow,
+	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
+import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
 	parseAsBoolean,
 	parseAsInteger,
@@ -30,7 +31,7 @@ import {
 import { toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
-import DisableAccountModal from './DisableAccountModal';
+import DeleteAccountModal from './DeleteAccountModal';
 import KeysTab from './KeysTab';
 import OverviewTab from './OverviewTab';
 import { ServiceAccountDrawerTab } from './utils';
@@ -69,12 +70,15 @@ function ServiceAccountDrawer({
 		SA_QUERY_PARAMS.ADD_KEY,
 		parseAsBoolean.withDefault(false),
 	);
-	const [, setIsDisableOpen] = useQueryState(
-		SA_QUERY_PARAMS.DISABLE_SA,
+	const [, setIsDeleteOpen] = useQueryState(
+		SA_QUERY_PARAMS.DELETE_SA,
 		parseAsBoolean.withDefault(false),
 	);
 	const [localName, setLocalName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
+	const [isSaving, setIsSaving] = useState(false);
+
+	const queryClient = useQueryClient();
 
 	const {
 		data: accountData,
@@ -93,21 +97,30 @@ function ServiceAccountDrawer({
 		[accountData],
 	);
 
+	const { currentRoles, applyDiff } = useServiceAccountRoleManager(
+		selectedAccountId ?? '',
+	);
+
 	useEffect(() => {
 		if (account) {
 			setLocalName(account.name ?? '');
-			setLocalRoles(account.roles ?? []);
 			setKeysPage(1);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [account?.id]);
 
-	const isDisabled = account?.status?.toUpperCase() !== 'ACTIVE';
+	useEffect(() => {
+		setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
+	}, [currentRoles]);
+
+	const isDeleted =
+		account?.status?.toUpperCase() === ServiceAccountStatus.Deleted;
 
 	const isDirty =
 		account !== null &&
 		(localName !== (account.name ?? '') ||
-			JSON.stringify(localRoles) !== JSON.stringify(account.roles ?? []));
+			JSON.stringify([...localRoles].sort()) !==
+				JSON.stringify([...currentRoles.map((r) => r.id).filter(Boolean)].sort()));
 
 	const {
 		roles: availableRoles,
@@ -133,39 +146,57 @@ function ServiceAccountDrawer({
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
-	const { mutate: updateAccount, isLoading: isSaving } = useUpdateServiceAccount(
-		{
-			mutation: {
-				onSuccess: () => {
-					toast.success('Service account updated successfully', {
-						richColors: true,
-					});
-					refetchAccount();
-					onSuccess({ closeDrawer: false });
-				},
-				onError: (error) => {
-					const errMessage =
-						convertToApiError(
-							error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-						)?.getErrorMessage() || 'Failed to update service account';
-					toast.error(errMessage, { richColors: true });
-				},
-			},
-		},
-	);
+	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
 
-	function handleSave(): void {
+	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
 			return;
 		}
-		updateAccount({
-			pathParams: { id: account.id },
-			data: { name: localName, email: account.email, roles: localRoles },
-		});
-	}
+		setIsSaving(true);
+		try {
+			const [nameResult, rolesResult] = await Promise.allSettled([
+				updateMutateAsync({
+					pathParams: { id: account.id },
+					data: { name: localName },
+				}),
+				applyDiff(localRoles, availableRoles),
+			]);
+
+			const roleFailures =
+				rolesResult.status === 'fulfilled' ? rolesResult.value : 0;
+			if (nameResult.status === 'fulfilled' && roleFailures === 0) {
+				toast.success('Service account updated successfully', {
+					richColors: true,
+				});
+			}
+			if (nameResult.status === 'rejected') {
+				const reason = nameResult.reason as { message?: string } | undefined;
+				toast.error(
+					`Failed to update name: ${reason?.message ?? 'Unknown error'}`,
+					{ duration: 6000, richColors: true },
+				);
+			}
+			refetchAccount();
+			onSuccess({ closeDrawer: false });
+			queryClient.invalidateQueries(getListServiceAccountsQueryKey());
+		} finally {
+			setIsSaving(false);
+		}
+	}, [
+		account,
+		isDirty,
+		localName,
+		localRoles,
+		availableRoles,
+		updateMutateAsync,
+		applyDiff,
+		refetchAccount,
+		onSuccess,
+		queryClient,
+	]);
 
 	const handleClose = useCallback((): void => {
-		setIsDisableOpen(null);
+		setIsDeleteOpen(null);
 		setIsAddKeyOpen(null);
 		setSelectedAccountId(null);
 		setActiveTab(null);
@@ -177,7 +208,7 @@ function ServiceAccountDrawer({
 		setKeysPage,
 		setEditKeyId,
 		setIsAddKeyOpen,
-		setIsDisableOpen,
+		setIsDeleteOpen,
 	]);
 
 	const drawerContent = (
@@ -220,7 +251,7 @@ function ServiceAccountDrawer({
 						variant="outlined"
 						size="sm"
 						color="secondary"
-						disabled={isDisabled}
+						disabled={isDeleted}
 						onClick={(): void => {
 							setIsAddKeyOpen(true);
 						}}
@@ -254,7 +285,7 @@ function ServiceAccountDrawer({
 								onNameChange={setLocalName}
 								localRoles={localRoles}
 								onRolesChange={setLocalRoles}
-								isDisabled={isDisabled}
+								isDisabled={isDeleted}
 								availableRoles={availableRoles}
 								rolesLoading={rolesLoading}
 								rolesError={rolesError}
@@ -266,7 +297,7 @@ function ServiceAccountDrawer({
 							<KeysTab
 								keys={keys}
 								isLoading={keysLoading}
-								isDisabled={isDisabled}
+								isDisabled={isDeleted}
 								currentPage={keysPage}
 								pageSize={PAGE_SIZE}
 							/>
@@ -298,20 +329,20 @@ function ServiceAccountDrawer({
 					/>
 				) : (
 					<>
-						{!isDisabled && (
+						{!isDeleted && (
 							<Button
 								variant="ghost"
 								color="destructive"
 								className="sa-drawer__footer-btn"
 								onClick={(): void => {
-									setIsDisableOpen(true);
+									setIsDeleteOpen(true);
 								}}
 							>
-								<PowerOff size={12} />
-								Disable Service Account
+								<Trash2 size={12} />
+								Delete Service Account
 							</Button>
 						)}
-						{!isDisabled && (
+						{!isDeleted && (
 							<div className="sa-drawer__footer-right">
 								<Button
 									variant="solid"
@@ -359,7 +390,7 @@ function ServiceAccountDrawer({
 				className="sa-drawer"
 			/>
 
-			<DisableAccountModal />
+			<DeleteAccountModal />
 
 			<AddKeyModal />
 		</>

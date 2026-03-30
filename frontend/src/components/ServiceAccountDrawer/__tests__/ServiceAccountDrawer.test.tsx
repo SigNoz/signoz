@@ -23,7 +23,9 @@ jest.mock('@signozhq/sonner', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_STATUS_ENDPOINT = '*/api/v1/service_accounts/sa-1/status';
+const SA_DELETE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
+const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_accounts/:id/roles/:rid';
 
 const activeAccountResponse = {
 	id: 'sa-1',
@@ -67,7 +69,23 @@ describe('ServiceAccountDrawer', () => {
 			rest.put(SA_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
-			rest.put(SA_STATUS_ENDPOINT, (_, res, ctx) =>
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: listRolesSuccessResponse.data.filter(
+							(r) => r.name === 'signoz-admin',
+						),
+					}),
+				),
+			),
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
 		);
@@ -115,8 +133,6 @@ describe('ServiceAccountDrawer', () => {
 			expect(updateSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					name: 'CI Bot Updated',
-					email: 'ci-bot@signoz.io',
-					roles: ['signoz-admin'],
 				}),
 			);
 			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: false });
@@ -125,11 +141,16 @@ describe('ServiceAccountDrawer', () => {
 
 	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
 		const updateSpy = jest.fn();
+		const roleSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
 			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
 				updateSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
+				roleSpy(await req.json());
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -148,19 +169,24 @@ describe('ServiceAccountDrawer', () => {
 		await waitFor(() => {
 			expect(updateSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
-					roles: expect.arrayContaining(['signoz-admin', 'signoz-viewer']),
+					name: 'CI Bot',
+				}),
+			);
+			expect(roleSpy).toHaveBeenCalledWith(
+				expect.objectContaining({
+					id: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
 		});
 	});
 
-	it('"Disable Service Account" opens confirm dialog; confirming sends correct status payload', async () => {
-		const statusSpy = jest.fn();
+	it('"Delete Service Account" opens confirm dialog; confirming sends delete request', async () => {
+		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_STATUS_ENDPOINT, async (req, res, ctx) => {
-				statusSpy(await req.json());
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -170,19 +196,19 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		await user.click(
-			screen.getByRole('button', { name: /Disable Service Account/i }),
+			screen.getByRole('button', { name: /Delete Service Account/i }),
 		);
 
 		const dialog = await screen.findByRole('dialog', {
-			name: /Disable service account CI Bot/i,
+			name: /Delete service account CI Bot/i,
 		});
 		expect(dialog).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /^Disable$/i });
+		const confirmBtns = screen.getAllByRole('button', { name: /^Delete$/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {
-			expect(statusSpy).toHaveBeenCalledWith({ status: 'DISABLED' });
+			expect(deleteSpy).toHaveBeenCalled();
 		});
 
 		await waitFor(() => {
@@ -190,12 +216,15 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('disabled account shows read-only name, no Save button, no Disable button', async () => {
+	it('deleted account shows read-only name, no Save button, no Delete button', async () => {
 		server.use(
 			rest.get('*/api/v1/service_accounts/sa-2', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: disabledAccountResponse })),
 			),
 			rest.get('*/api/v1/service_accounts/sa-2/keys', (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get('*/api/v1/service_accounts/sa-2/roles', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -208,7 +237,7 @@ describe('ServiceAccountDrawer', () => {
 			screen.queryByRole('button', { name: /Save Changes/i }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', { name: /Disable Service Account/i }),
+			screen.queryByRole('button', { name: /Delete Service Account/i }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
 	});
