@@ -13,11 +13,10 @@ import (
 // A flush is triggered when either Size events accumulate or
 // FlushInterval elapses, whichever comes first.
 type Batcher struct {
-	// C is the channel on which batched events are sent for export.
-	C chan []audittypes.AuditEvent
-
 	logger *slog.Logger
 	config Config
+
+	batchC chan []audittypes.AuditEvent
 
 	queue    []audittypes.AuditEvent
 	queueMtx sync.Mutex
@@ -33,7 +32,7 @@ type Batcher struct {
 
 func New(logger *slog.Logger, config Config) *Batcher {
 	return &Batcher{
-		C:      make(chan []audittypes.AuditEvent, config.Size),
+		batchC: make(chan []audittypes.AuditEvent, config.Size),
 		logger: logger,
 		config: config,
 		queue:  make([]audittypes.AuditEvent, 0, config.Capacity),
@@ -55,7 +54,7 @@ func (b *Batcher) Start(ctx context.Context) error {
 			select {
 			case <-b.stopC:
 				b.drain()
-				close(b.C)
+				close(b.batchC)
 				return
 			case <-b.moreC:
 				if b.queueLen() >= b.config.Size {
@@ -91,6 +90,12 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 	b.setMore()
 }
 
+// Receive returns a channel that yields batches of audit events ready for export.
+// The channel is closed when the batcher is stopped and all remaining events are drained.
+func (b *Batcher) Receive() <-chan []audittypes.AuditEvent {
+	return b.batchC
+}
+
 // Stop signals the background loop to drain remaining events and shut down.
 func (b *Batcher) Stop(ctx context.Context) error {
 	close(b.stopC)
@@ -109,7 +114,7 @@ func (b *Batcher) flush() {
 	if len(batch) == 0 {
 		return
 	}
-	b.C <- batch
+	b.batchC <- batch
 }
 
 func (b *Batcher) drain() {
@@ -118,7 +123,7 @@ func (b *Batcher) drain() {
 		if len(batch) == 0 {
 			return
 		}
-		b.C <- batch
+		b.batchC <- batch
 	}
 }
 
