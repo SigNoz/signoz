@@ -18,6 +18,7 @@ type provider struct {
 	settings  factory.ScopedProviderSettings
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
+	pgxPool   *pgxpool.Pool
 	dialect   *dialect
 	formatter sqlstore.SQLFormatter
 }
@@ -37,7 +38,7 @@ func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, 
 	})
 }
 
-func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStore, error) {
+func New(ctx context.Context, providerSettings factory.ProviderSettings, config sqlstore.Config, hooks ...sqlstore.SQLStoreHook) (sqlstore.SQLStoreWithPgxPool, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/sqlstore/postgressqlstore")
 
 	pgConfig, err := pgxpool.ParseConfig(config.Postgres.DSN)
@@ -62,6 +63,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:  settings,
 		sqldb:     sqldb,
 		bundb:     bunDB,
+		pgxPool:   pool,
 		dialect:   new(dialect),
 		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
@@ -73,6 +75,10 @@ func (provider *provider) BunDB() *bun.DB {
 
 func (provider *provider) SQLDB() *sql.DB {
 	return provider.sqldb
+}
+
+func (provider *provider) Pool() *pgxpool.Pool {
+	return provider.pgxPool
 }
 
 func (provider *provider) Dialect() sqlstore.SQLDialect {

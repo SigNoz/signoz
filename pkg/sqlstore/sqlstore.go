@@ -5,6 +5,7 @@ import (
 	"database/sql"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/jackc/pgx/v5/pgxpool"
 	"github.com/uptrace/bun"
 )
 
@@ -35,6 +36,12 @@ type SQLStore interface {
 
 	// WrapAlreadyExistsErrf wraps the given error with the given message and returns it.
 	WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error
+}
+
+type SQLStoreWithPgxPool interface {
+	SQLStore
+
+	Pool() *pgxpool.Pool
 }
 
 type SQLStoreHook interface {

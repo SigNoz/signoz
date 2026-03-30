@@ -9,18 +9,23 @@ import (
 	"github.com/openfga/openfga/pkg/storage/sqlite"
 )
 
-func NewSQLStore(sqlstore sqlstore.SQLStore) (storage.OpenFGADatastore, error) {
-	switch sqlstore.BunDB().Dialect().Name().String() {
+func NewSQLStore(store sqlstore.SQLStore) (storage.OpenFGADatastore, error) {
+	switch store.BunDB().Dialect().Name().String() {
 	case "sqlite":
-		return sqlite.NewWithDB(sqlstore.SQLDB(), &sqlcommon.Config{
+		return sqlite.NewWithDB(store.SQLDB(), &sqlcommon.Config{
 			MaxTuplesPerWriteField: 100,
 			MaxTypesPerModelField:  100,
 		})
 	case "pg":
-		return postgres.NewWithDB(sqlstore.SQLDB(), nil, &sqlcommon.Config{
+		pgStore, ok := store.(sqlstore.SQLStoreWithPgxPool)
+		if !ok {
+			panic(errors.New(errors.TypeInternal, errors.CodeInternal, "postgressqlstore should implement SQLStoreWithPgxPool"))
+		}
+
+		return postgres.NewWithDB(pgStore.Pool(), nil, &sqlcommon.Config{
 			MaxTuplesPerWriteField: 100,
 			MaxTypesPerModelField:  100,
 		})
 	}
-	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid store type: %s", sqlstore.BunDB().Dialect().Name().String())
+	return nil, errors.Newf(errors.TypeInvalidInput, errors.CodeInvalidInput, "invalid store type: %s", store.BunDB().Dialect().Name().String())
 }
