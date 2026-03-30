@@ -270,7 +270,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
-				const row = table.getRowModel().rows[index];
+				const row = tableRows[index];
 				if (!row) {
 					return null;
 				}
@@ -297,7 +297,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				isLogsExplorerPage,
 				onClearActiveLog,
 				onSetActiveLog,
-				table,
+				tableRows,
 				tableViewProps.fontSize,
 			],
 		);
