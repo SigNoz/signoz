@@ -209,7 +209,7 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 	//
 	// Note: Indexing code doesn't get executed for Array Nested fields because they can not be indexed
 	indexed := slices.ContainsFunc(node.TerminalConfig.Key.Indexes, func(index telemetrytypes.JSONDataTypeIndex) bool {
-		return index.Type == node.TerminalConfig.ElemType && index.ColumnExpression == fieldPath
+		return index.Type == node.TerminalConfig.ElemType
 	})
 	if node.TerminalConfig.ElemType.IndexSupported && indexed {
 		indexCond, err := c.terminalIndexedCondition(node, operator, value, sb)

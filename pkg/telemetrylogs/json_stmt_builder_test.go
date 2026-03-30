@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
@@ -938,7 +939,8 @@ func buildTestTelemetryMetadataStore(t *testing.T, addIndexes bool) *telemetryty
 				})
 				if idx >= 0 {
 					key.Indexes = append(key.Indexes, telemetrytypes.JSONDataTypeIndex{
-						Type: jsonType,
+						Type:             jsonType,
+						ColumnExpression: schemamigrator.JSONSubColumnIndexExpr(LogsV2BodyV2Column, path, jsonType.StringValue()),
 					})
 				}
 			}
