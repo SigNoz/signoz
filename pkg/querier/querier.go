@@ -387,16 +387,15 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 						continue
 					}
-					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
+					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 				}
 				if len(presentAggregations) == 0 {
 					missingMetricQueries = append(missingMetricQueries, spec.Name)
-					steps[spec.Name] = spec.StepInterval
 					continue
 				}
 				spec.Aggregations = presentAggregations
