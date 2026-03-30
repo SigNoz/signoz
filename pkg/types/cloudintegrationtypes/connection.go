@@ -19,46 +19,6 @@ type AWSConnectionArtifactRequest struct {
 
 type PostableConnectionArtifact = ConnectionArtifactRequest
 
-// Validate checks that the connection artifact request has a valid provider-specific block
-// with non-empty, valid regions and a valid deployment region.
-func (req *ConnectionArtifactRequest) Validate(provider CloudProviderType) error {
-	switch provider {
-	case CloudProviderTypeAWS:
-		if req.Aws == nil {
-			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-				"aws configuration is required")
-		}
-		return req.Aws.Validate()
-	}
-	return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
-		"invalid cloud provider: %s", provider)
-}
-
-// Validate checks that the AWS connection artifact request has a valid deployment region
-// and a non-empty list of valid regions.
-func (req *AWSConnectionArtifactRequest) Validate() error {
-	if req.DeploymentRegion == "" {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"deploymentRegion is required")
-	}
-	if _, ok := ValidAWSRegions[req.DeploymentRegion]; !ok {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
-			"invalid deployment region: %s", req.DeploymentRegion)
-	}
-
-	if len(req.Regions) == 0 {
-		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
-			"at least one region is required")
-	}
-	for _, region := range req.Regions {
-		if _, ok := ValidAWSRegions[region]; !ok {
-			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
-				"invalid AWS region: %s", region)
-		}
-	}
-	return nil
-}
-
 type ConnectionArtifact struct {
 	// required till new providers are added
 	Aws *AWSConnectionArtifact `json:"aws" required:"true" nullable:"false"`
@@ -146,6 +106,46 @@ func NewGettableAgentCheckInResponse(provider CloudProviderType, resp *AgentChec
 	}
 
 	return gettable
+}
+
+// Validate checks that the connection artifact request has a valid provider-specific block
+// with non-empty, valid regions and a valid deployment region.
+func (req *ConnectionArtifactRequest) Validate(provider CloudProviderType) error {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if req.Aws == nil {
+			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+				"aws configuration is required")
+		}
+		return req.Aws.Validate()
+	}
+	return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
+		"invalid cloud provider: %s", provider)
+}
+
+// Validate checks that the AWS connection artifact request has a valid deployment region
+// and a non-empty list of valid regions.
+func (req *AWSConnectionArtifactRequest) Validate() error {
+	if req.DeploymentRegion == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"deploymentRegion is required")
+	}
+	if _, ok := ValidAWSRegions[req.DeploymentRegion]; !ok {
+		return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
+			"invalid deployment region: %s", req.DeploymentRegion)
+	}
+
+	if len(req.Regions) == 0 {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"at least one region is required")
+	}
+	for _, region := range req.Regions {
+		if _, ok := ValidAWSRegions[region]; !ok {
+			return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
+				"invalid AWS region: %s", region)
+		}
+	}
+	return nil
 }
 
 // Validate checks that the request uses either old fields (account_id, cloud_account_id) or

@@ -149,6 +149,38 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
+func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
+	if updatable.Config == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"config is required")
+	}
+
+	switch provider {
+	case CloudProviderTypeAWS:
+		if updatable.Config.AWS == nil {
+			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+				"aws configuration is required")
+		}
+
+		if len(updatable.Config.AWS.Regions) == 0 {
+			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+				"at least one region is required")
+		}
+
+		for _, region := range updatable.Config.AWS.Regions {
+			if _, ok := ValidAWSRegions[region]; !ok {
+				return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
+					"invalid AWS region: %s", region)
+			}
+		}
+	default:
+		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
+			"invalid cloud provider: %s", provider.StringValue())
+	}
+
+	return nil
+}
+
 // ToJSON return JSON bytes for the provider's config
 // thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
 // NOTE: this entertains first non-null provider's config

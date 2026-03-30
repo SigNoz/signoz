@@ -176,6 +176,11 @@ func (handler *handler) UpdateAccount(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := req.Validate(provider); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	account, err := handler.module.GetAccount(ctx, valuer.MustNewUUID(claims.OrgID), cloudIntegrationID, provider)
 	if err != nil {
 		render.Error(rw, err)
