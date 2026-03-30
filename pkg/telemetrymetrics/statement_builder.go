@@ -607,7 +607,10 @@ func (b *MetricQueryStatementBuilder) BuildFinalSelect(
 
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForMetrics(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 	} else {
