@@ -39,10 +39,14 @@ def test_create_account(
     assert "id" in data, "Response data should contain 'id' field"
     assert len(data["id"]) > 0, "id should be a non-empty UUID string"
 
-    assert "connectionArtifact" in data, "Response data should contain 'connectionArtifact' field"
+    assert (
+        "connectionArtifact" in data
+    ), "Response data should contain 'connectionArtifact' field"
     artifact = data["connectionArtifact"]
     assert "aws" in artifact, "connectionArtifact should contain 'aws' field"
-    assert "connectionURL" in artifact["aws"], "connectionArtifact.aws should contain 'connectionURL'"
+    assert (
+        "connectionURL" in artifact["aws"]
+    ), "connectionArtifact.aws should contain 'connectionURL'"
 
     connection_url = artifact["aws"]["connectionURL"]
     assert (

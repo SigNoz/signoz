@@ -68,7 +68,9 @@ def create_cloud_integration_account(
         try:
             admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
             for account_id, cloud_provider in created_accounts:
-                delete_endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts/{account_id}"
+                delete_endpoint = (
+                    f"/api/v1/cloud_integrations/{cloud_provider}/accounts/{account_id}"
+                )
                 r = requests.delete(
                     signoz.self.host_configs["8080"].get(delete_endpoint),
                     headers={"Authorization": f"Bearer {admin_token}"},

@@ -23,6 +23,7 @@ def test_apply_license(
     """Apply a license so that subsequent cloud integration calls succeed."""
     add_license(signoz, make_http_mocks, get_token)
 
+
 def test_list_services_without_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
@@ -32,12 +33,16 @@ def test_list_services_without_account(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get(f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services"),
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services"
+        ),
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200, got {response.status_code}"
 
     data = response.json()["data"]
     assert "services" in data, "Response should contain 'services' field"
@@ -71,7 +76,9 @@ def test_list_services_with_account(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200, got {response.status_code}"
 
     data = response.json()["data"]
     assert "services" in data, "Response should contain 'services' field"
@@ -79,7 +86,9 @@ def test_list_services_with_account(
 
     for svc in data["services"]:
         assert "enabled" in svc, "Each service should have 'enabled' field"
-        assert svc["enabled"] is False, f"Service {svc['id']} should be disabled before any config is set"
+        assert (
+            svc["enabled"] is False
+        ), f"Service {svc['id']} should be disabled before any config is set"
 
 
 def test_get_service_details_without_account(
@@ -98,16 +107,24 @@ def test_get_service_details_without_account(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200, got {response.status_code}"
 
     data = response.json()["data"]
     assert data["id"] == SERVICE_ID, f"id should be '{SERVICE_ID}'"
     assert "title" in data, "Service should have 'title'"
     assert "overview" in data, "Service should have 'overview' (markdown)"
     assert "assets" in data, "Service should have 'assets'"
-    assert isinstance(data["assets"]["dashboards"], list), "assets.dashboards should be a list"
-    assert "telemetryCollectionStrategy" in data, "Service should have 'telemetryCollectionStrategy'"
-    assert data["cloudIntegrationService"] is None, "cloudIntegrationService should be null without account context"
+    assert isinstance(
+        data["assets"]["dashboards"], list
+    ), "assets.dashboards should be a list"
+    assert (
+        "telemetryCollectionStrategy" in data
+    ), "Service should have 'telemetryCollectionStrategy'"
+    assert (
+        data["cloudIntegrationService"] is None
+    ), "cloudIntegrationService should be null without account context"
 
 
 def test_get_service_details_with_account(
@@ -131,12 +148,15 @@ def test_get_service_details_with_account(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200, got {response.status_code}"
 
     data = response.json()["data"]
     assert data["id"] == SERVICE_ID
-    assert data["cloudIntegrationService"] is None, \
-        "cloudIntegrationService should be null before any service config is set"
+    assert (
+        data["cloudIntegrationService"] is None
+    ), "cloudIntegrationService should be null before any service config is set"
 
 
 def test_get_service_not_found(
@@ -155,7 +175,9 @@ def test_get_service_not_found(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.BAD_REQUEST
+    ), f"Expected 400, got {response.status_code}"
 
 
 def test_update_service_config(
@@ -175,12 +197,15 @@ def test_update_service_config(
             f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
         ),
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        json={
+            "config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}
+        },
         timeout=10,
     )
 
-    assert put_response.status_code == HTTPStatus.NO_CONTENT, \
-        f"Expected 204, got {put_response.status_code}: {put_response.text}"
+    assert (
+        put_response.status_code == HTTPStatus.NO_CONTENT
+    ), f"Expected 204, got {put_response.status_code}: {put_response.text}"
 
     get_response = requests.get(
         signoz.self.host_configs["8080"].get(
@@ -194,10 +219,16 @@ def test_update_service_config(
     assert get_response.status_code == HTTPStatus.OK
     data = get_response.json()["data"]
     svc = data["cloudIntegrationService"]
-    assert svc is not None, "cloudIntegrationService should be non-null after UpdateService"
-    assert svc["config"]["aws"]["metrics"]["enabled"] is True, "metrics should be enabled"
+    assert (
+        svc is not None
+    ), "cloudIntegrationService should be non-null after UpdateService"
+    assert (
+        svc["config"]["aws"]["metrics"]["enabled"] is True
+    ), "metrics should be enabled"
     assert svc["config"]["aws"]["logs"]["enabled"] is True, "logs should be enabled"
-    assert svc["cloudIntegrationId"] == account_id, "cloudIntegrationId should match the account"
+    assert (
+        svc["cloudIntegrationId"] == account_id
+    ), "cloudIntegrationId should match the account"
 
 
 def test_update_service_config_disable(
@@ -219,19 +250,29 @@ def test_update_service_config_disable(
     r = requests.put(
         endpoint,
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}},
+        json={
+            "config": {"aws": {"metrics": {"enabled": True}, "logs": {"enabled": True}}}
+        },
         timeout=10,
     )
-    assert r.status_code == HTTPStatus.NO_CONTENT, f"Enable failed: {r.status_code}: {r.text}"
+    assert (
+        r.status_code == HTTPStatus.NO_CONTENT
+    ), f"Enable failed: {r.status_code}: {r.text}"
 
     # Disable
     r = requests.put(
         endpoint,
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"config": {"aws": {"metrics": {"enabled": False}, "logs": {"enabled": False}}}},
+        json={
+            "config": {
+                "aws": {"metrics": {"enabled": False}, "logs": {"enabled": False}}
+            }
+        },
         timeout=10,
     )
-    assert r.status_code == HTTPStatus.NO_CONTENT, f"Disable failed: {r.status_code}: {r.text}"
+    assert (
+        r.status_code == HTTPStatus.NO_CONTENT
+    ), f"Disable failed: {r.status_code}: {r.text}"
 
     get_response = requests.get(
         signoz.self.host_configs["8080"].get(
@@ -244,8 +285,12 @@ def test_update_service_config_disable(
 
     assert get_response.status_code == HTTPStatus.OK
     svc = get_response.json()["data"]["cloudIntegrationService"]
-    assert svc is not None, "cloudIntegrationService should still be present after disable"
-    assert svc["config"]["aws"]["metrics"]["enabled"] is False, "metrics should be disabled"
+    assert (
+        svc is not None
+    ), "cloudIntegrationService should still be present after disable"
+    assert (
+        svc["config"]["aws"]["metrics"]["enabled"] is False
+    ), "metrics should be disabled"
     assert svc["config"]["aws"]["logs"]["enabled"] is False, "logs should be disabled"
 
 
@@ -266,7 +311,9 @@ def test_update_service_account_not_found(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.NOT_FOUND, f"Expected 404, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"Expected 404, got {response.status_code}"
 
 
 def test_list_services_unsupported_provider(
@@ -283,4 +330,6 @@ def test_list_services_unsupported_provider(
         timeout=10,
     )
 
-    assert response.status_code == HTTPStatus.BAD_REQUEST, f"Expected 400, got {response.status_code}"
+    assert (
+        response.status_code == HTTPStatus.BAD_REQUEST
+    ), f"Expected 400, got {response.status_code}"
