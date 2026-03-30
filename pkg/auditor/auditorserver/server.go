@@ -15,6 +15,8 @@ import (
 	"go.opentelemetry.io/otel/trace"
 )
 
+var _ factory.ServiceWithHealthy = (*Server)(nil)
+
 // ExportFunc is called by the server to export a batch of audit events.
 // The context carries the active trace span for the export operation.
 type ExportFunc func(ctx context.Context, events []audittypes.AuditEvent) error
@@ -41,6 +43,10 @@ type Server struct {
 	// moreC signals the flush goroutine that new events are available.
 	moreC chan struct{}
 
+	// healthyC is closed once Start has registered the flush goroutine.
+	// Also serves as the Healthy() signal for factory.ServiceWithHealthy.
+	healthyC chan struct{}
+
 	// stopC signals the flush goroutine to drain and shut down.
 	stopC chan struct{}
 
@@ -64,6 +70,7 @@ func New(settings factory.ScopedProviderSettings, config Config, exportFn Export
 		exportFn: exportFn,
 		queue:    make([]audittypes.AuditEvent, 0, config.BufferSize),
 		moreC:    make(chan struct{}, 1),
+		healthyC: make(chan struct{}),
 		stopC:    make(chan struct{}),
 	}
 
@@ -81,6 +88,8 @@ func New(settings factory.ScopedProviderSettings, config Config, exportFn Export
 // Start runs the background flush loop. It blocks until Stop is called.
 func (server *Server) Start(ctx context.Context) error {
 	server.goroutinesWg.Add(1)
+	close(server.healthyC)
+
 	go func() {
 		defer server.goroutinesWg.Done()
 
@@ -102,7 +111,6 @@ func (server *Server) Start(ctx context.Context) error {
 		}
 	}()
 
-	<-server.stopC
 	server.goroutinesWg.Wait()
 	return nil
 }
@@ -127,8 +135,15 @@ func (server *Server) Add(ctx context.Context, event audittypes.AuditEvent) {
 	server.setMore()
 }
 
+// Healthy returns a channel that is closed once the server is ready to accept events.
+func (server *Server) Healthy() <-chan struct{} {
+	return server.healthyC
+}
+
 // Stop signals the background loop to drain remaining events and shut down.
+// It blocks until all buffered events have been exported.
 func (server *Server) Stop(ctx context.Context) error {
+	<-server.healthyC
 	close(server.stopC)
 	server.goroutinesWg.Wait()
 	return nil
