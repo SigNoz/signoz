@@ -146,7 +146,11 @@
 
 .lightMode {
 	.bg-dot-pattern {
-		background: radial-gradient(circle, var(--l3-background) 1px, transparent 1px);
+		background: radial-gradient(
+			circle,
+			var(--l3-background) 1px,
+			transparent 1px
+		);
 		background-size: 12px 12px;
 	}
 

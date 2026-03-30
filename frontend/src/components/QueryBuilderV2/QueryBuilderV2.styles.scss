@@ -345,7 +345,11 @@
 			.query-name {
 				border-radius: 0px 2px 2px 0px !important;
 				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
-				background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent) !important;
+				background: color-mix(
+					in srgb,
+					var(--bg-sakura-500) 10%,
+					transparent
+				) !important;
 
 				color: var(--bg-sakura-400) !important;
 				font-family: 'Space Mono';

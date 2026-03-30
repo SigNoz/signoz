@@ -10,7 +10,8 @@ $custom-border-color: #2c3044;
 	&.ant-select-focused {
 		.ant-select-selector {
 			border-color: var(--bg-robin-500);
-			box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 		}
 	}
 
@@ -107,7 +108,8 @@ $custom-border-color: #2c3044;
 	&.ant-select-focused {
 		.ant-select-selector {
 			border-color: var(--bg-robin-500);
-			box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 		}
 	}
 
@@ -127,15 +129,24 @@ $custom-border-color: #2c3044;
 		// Style for active tag (keyboard navigation)
 		&-active {
 			border-color: var(--bg-robin-500) !important;
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 15%,
+				transparent
+			) !important;
 			outline: 2px solid color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 		}
 
 		// Style for selected tags (via keyboard or mouse selection)
 		&-selected {
 			border-color: var(--bg-robin-500) !important;
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent) !important;
-			box-shadow: 0 0 0 2px color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 15%,
+				transparent
+			) !important;
+			box-shadow: 0 0 0 2px
+				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
 		}
 
 		.ant-select-selection-item-content {
@@ -183,7 +194,11 @@ $custom-border-color: #2c3044;
 		}
 
 		&-option-selected {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 15%,
+				transparent
+			) !important;
 		}
 	}
 }
@@ -594,7 +609,8 @@ $custom-border-color: #2c3044;
 // Custom scrollbar styling (shared between components)
 @mixin custom-scrollbar {
 	scrollbar-width: thin;
-	scrollbar-color: color-mix(in srgb, var(--border) 30%, transparent) color-mix(in srgb, var(--border) 60%, transparent);
+	scrollbar-color: color-mix(in srgb, var(--border) 30%, transparent)
+		color-mix(in srgb, var(--border) 60%, transparent);
 
 	&::-webkit-scrollbar {
 		width: 6px;
@@ -620,7 +636,8 @@ $custom-border-color: #2c3044;
 // Subtle nested scrollbar styling
 @mixin nested-scrollbar {
 	scrollbar-width: thin;
-	scrollbar-color: color-mix(in srgb, var(--border) 20%, transparent) color-mix(in srgb, var(--border) 60%, transparent);
+	scrollbar-color: color-mix(in srgb, var(--border) 20%, transparent)
+		color-mix(in srgb, var(--border) 60%, transparent);
 
 	&::-webkit-scrollbar {
 		width: 4px;

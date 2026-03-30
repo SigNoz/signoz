@@ -257,7 +257,11 @@
 						> tr {
 							&:nth-child(odd),
 							&:hover > td {
-								background: color-mix(in srgb, var(--l1-foreground) 1%, transparent) !important;
+								background: color-mix(
+									in srgb,
+									var(--l1-foreground) 1%,
+									transparent
+								) !important;
 							}
 
 							> td {

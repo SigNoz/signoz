@@ -46,7 +46,11 @@
 			color: var(--bg-sakura-400) !important;
 
 			border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
-			background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-sakura-500) 10%,
+				transparent
+			) !important;
 
 			&:hover {
 				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 40%, transparent) !important;
@@ -76,5 +80,3 @@
 		}
 	}
 }
-
-

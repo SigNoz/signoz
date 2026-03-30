@@ -120,12 +120,20 @@
 		}
 
 		.active {
-			background-color: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-200) 4%,
+				transparent
+			) !important;
 		}
 
 		.data-time-live:hover {
 			&.ant-btn-text {
-				background-color: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+				background-color: color-mix(
+					in srgb,
+					var(--bg-robin-200) 4%,
+					transparent
+				) !important;
 			}
 		}
 
@@ -157,7 +165,11 @@
 
 		.date-time-options-btn:hover {
 			&.ant-btn-text {
-				background-color: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+				background-color: color-mix(
+					in srgb,
+					var(--bg-robin-200) 4%,
+					transparent
+				) !important;
 			}
 		}
 	}
@@ -407,7 +419,6 @@
 		}
 	}
 }
-
 
 @media (min-width: 1400px) {
 	.date-time-selector {

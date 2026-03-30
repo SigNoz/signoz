@@ -32,9 +32,11 @@
 		letter-spacing: -0.07px;
 
 		.ant-table-cell-row-hover {
-			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-robin-200) 4%,
+				transparent
+			) !important;
 		}
 	}
 }
-
-

@@ -385,11 +385,7 @@
 
 					border-radius: 4px;
 					border: 1px solid var(--border);
-					background: linear-gradient(
-						139deg,
-						var(--card) 0%,
-						var(--card) 98.68%
-					);
+					background: linear-gradient(139deg, var(--card) 0%, var(--card) 98.68%);
 					box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 					backdrop-filter: blur(20px);
 
@@ -664,7 +660,6 @@
 		border-color: color-mix(in srgb, var(--bg-aqua-500) 20%, transparent);
 	}
 }
-
 
 .linked-spans-tab-btn {
 	display: flex;

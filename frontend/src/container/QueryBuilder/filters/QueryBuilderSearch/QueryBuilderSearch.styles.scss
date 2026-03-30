@@ -80,7 +80,11 @@
 	}
 
 	.show-all-filter-props:hover {
-		background: color-mix(in srgb, var(--l1-foreground) 4%, transparent) !important;
+		background: color-mix(
+			in srgb,
+			var(--l1-foreground) 4%,
+			transparent
+		) !important;
 	}
 
 	.example-queries {
@@ -288,7 +292,6 @@
 		}
 	}
 }
-
 
 .span-scope-selector {
 	width: 160px;

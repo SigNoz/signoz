@@ -70,7 +70,8 @@
 		border-radius: 4px;
 
 		&__summary-section {
-			border-bottom: 1px solid color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
+			border-bottom: 1px solid
+				color-mix(in srgb, var(--bg-cherry-500) 20%, transparent);
 		}
 
 		&__summary {

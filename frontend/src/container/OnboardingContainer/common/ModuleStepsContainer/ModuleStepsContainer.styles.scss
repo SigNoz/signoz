@@ -183,22 +183,46 @@
 
 .lightMode {
 	.entity-value {
-		background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
-		border-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
+		background-color: color-mix(
+			in srgb,
+			var(--bg-robin-500) 10%,
+			transparent
+		) !important;
+		border-color: color-mix(
+			in srgb,
+			var(--bg-robin-500) 10%,
+			transparent
+		) !important;
 	}
 
 	.environment,
 	.supported-language {
 		&.selected {
 			color: var(--bg-robin-500);
-			background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
-			border-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 10%,
+				transparent
+			) !important;
+			border-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 10%,
+				transparent
+			) !important;
 		}
 
 		&:hover {
 			color: var(--bg-robin-500);
-			background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
-			border-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent) !important;
+			background-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 10%,
+				transparent
+			) !important;
+			border-color: color-mix(
+				in srgb,
+				var(--bg-robin-500) 10%,
+				transparent
+			) !important;
 		}
 	}
 

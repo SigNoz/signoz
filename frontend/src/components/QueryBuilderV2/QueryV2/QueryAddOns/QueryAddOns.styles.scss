@@ -174,7 +174,11 @@
 
 							&[aria-selected='true'] {
 								// background-color: rgba(78, 116, 248, 0.7) !important;
-								background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+								background: color-mix(
+									in srgb,
+									var(--bg-robin-200) 4%,
+									transparent
+								) !important;
 							}
 						}
 					}

@@ -68,7 +68,11 @@
 
 				&.tag {
 					border-radius: 50px;
-					background: color-mix(in srgb, var(--bg-sienna-400) 10%, transparent) !important;
+					background: color-mix(
+						in srgb,
+						var(--bg-sienna-400) 10%,
+						transparent
+					) !important;
 					color: var(--bg-sienna-400) !important;
 
 					.dot {
@@ -106,7 +110,11 @@
 
 				&.scope {
 					border-radius: 50px;
-					background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent) !important;
+					background: color-mix(
+						in srgb,
+						var(--bg-robin-400) 10%,
+						transparent
+					) !important;
 					color: var(--bg-robin-400) !important;
 
 					.dot {
@@ -197,5 +205,3 @@
 		}
 	}
 }
-
-

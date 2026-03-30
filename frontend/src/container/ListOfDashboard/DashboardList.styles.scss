@@ -147,7 +147,8 @@
 								gap: 4px;
 								height: 28px;
 								border-radius: 20px;
-								border: 1px solid color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
+								border: 1px solid
+									color-mix(in srgb, var(--bg-sienna-500) 20%, transparent);
 								background: color-mix(in srgb, var(--bg-sienna-500) 10%, transparent);
 								color: var(--bg-sienna-400);
 								text-align: center;

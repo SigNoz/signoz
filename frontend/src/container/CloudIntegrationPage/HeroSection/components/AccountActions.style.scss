@@ -87,7 +87,11 @@
 			justify-content: center;
 			height: 14px;
 			width: 14px;
-			background-color: color-mix(in srgb, var(--border) 20%, transparent); /* #C0C1C3 with 0.2 opacity */
+			background-color: color-mix(
+				in srgb,
+				var(--border) 20%,
+				transparent
+			); /* #C0C1C3 with 0.2 opacity */
 			border-radius: 2px;
 		}
 	}

@@ -72,7 +72,11 @@
 			background: color-mix(in srgb, var(--bg-robin-200) 2%, transparent);
 		}
 		> tr:hover > td {
-			background: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-robin-200) 4%,
+				transparent
+			) !important;
 		}
 	}
 

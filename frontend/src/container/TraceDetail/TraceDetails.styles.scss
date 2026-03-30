@@ -6,7 +6,8 @@
 	}
 
 	::-webkit-scrollbar-track {
-		box-shadow: inset 0 0 6px color-mix(in srgb, var(--background) 30%, transparent);
+		box-shadow: inset 0 0 6px
+			color-mix(in srgb, var(--background) 30%, transparent);
 	}
 
 	&.dark {

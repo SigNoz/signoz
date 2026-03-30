@@ -106,7 +106,11 @@
 		&-line {
 			flex: 1;
 			height: 8px;
-			background-image: radial-gradient(circle, var(--l3-background) 1px, transparent 2px);
+			background-image: radial-gradient(
+				circle,
+				var(--l3-background) 1px,
+				transparent 2px
+			);
 			background-size: 8px 11px;
 			background-position: top left;
 			padding: 6px;

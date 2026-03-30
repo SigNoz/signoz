@@ -162,7 +162,8 @@
 		display: flex;
 		align-items: center;
 		margin-right: 8px;
-		border-right: 1px solid color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
+		border-right: 1px solid
+			color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
 		padding-right: 8px;
 	}
 }

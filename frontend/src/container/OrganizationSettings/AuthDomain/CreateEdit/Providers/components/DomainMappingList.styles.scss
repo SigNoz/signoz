@@ -65,7 +65,11 @@
 		}
 
 		&:hover {
-			background: color-mix(in srgb, var(--bg-cherry-500) 10%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-cherry-500) 10%,
+				transparent
+			) !important;
 			opacity: 0.9 !important;
 			color: var(--destructive) !important;
 
@@ -76,7 +80,11 @@
 
 		&:active {
 			opacity: 0.7 !important;
-			background: color-mix(in srgb, var(--bg-cherry-500) 15%, transparent) !important;
+			background: color-mix(
+				in srgb,
+				var(--bg-cherry-500) 15%,
+				transparent
+			) !important;
 		}
 	}
 

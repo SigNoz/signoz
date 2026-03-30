@@ -106,10 +106,12 @@
 			height: 28px;
 			width: 20px !important;
 			justify-content: center;
-			border-left: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+			border-left: 1px solid
+				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 			border-radius: 0px 2px 2px 0px;
 			background: color-mix(in srgb, var(--bg-robin-400) 30%, transparent);
-			border-right: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+			border-right: 1px solid
+				color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 			margin-right: 0px;
 
 			svg {
@@ -119,11 +121,13 @@
 	}
 	.non-closable-tag {
 		padding-right: 7px;
-		border-right: 1px solid color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
+		border-right: 1px solid
+			color-mix(in srgb, var(--bg-robin-400) 20%, transparent);
 	}
 
 	.red-tag.non-closable-tag {
-		border-right: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
+		border-right: 1px solid
+			color-mix(in srgb, var(--bg-sakura-500) 20%, transparent) !important;
 	}
 
 	.red-tag {
@@ -134,8 +138,10 @@
 
 		.ant-tag-close-icon {
 			background: color-mix(in srgb, var(--bg-sakura-500) 30%, transparent);
-			border-left: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-			border-right: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+			border-left: 1px solid
+				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
+			border-right: 1px solid
+				color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
 
 			svg {
 				fill: var(--bg-sakura-500);

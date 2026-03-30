@@ -36,7 +36,11 @@
 .dotted-line {
 	flex: 1;
 	height: 8px;
-	background-image: radial-gradient(circle, var(--l3-border) 1px, transparent 1px);
+	background-image: radial-gradient(
+		circle,
+		var(--l3-border) 1px,
+		transparent 1px
+	);
 	background-size: 8px 8px;
 	background-repeat: repeat-x;
 	background-position: center;

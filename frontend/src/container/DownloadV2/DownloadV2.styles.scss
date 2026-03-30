@@ -37,7 +37,11 @@
 
 			.action-btns:hover {
 				&.ant-btn-text {
-					background-color: color-mix(in srgb, var(--bg-robin-200) 4%, transparent) !important;
+					background-color: color-mix(
+						in srgb,
+						var(--bg-robin-200) 4%,
+						transparent
+					) !important;
 				}
 			}
 

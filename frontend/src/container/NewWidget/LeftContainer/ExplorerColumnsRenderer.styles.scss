@@ -49,7 +49,11 @@
 				padding: 4px;
 				min-width: 200px;
 				border-radius: 2px;
-				border: 1px solid var(--colorBorder, color-mix(in srgb, var(--bg-robin-300) 12%, transparent));
+				border: 1px solid
+					var(
+						--colorBorder,
+						color-mix(in srgb, var(--bg-robin-300) 12%, transparent)
+					);
 				background: var(--l1-border);
 				cursor: unset;
 
@@ -135,4 +139,3 @@
 		}
 	}
 }
-

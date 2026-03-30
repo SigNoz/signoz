@@ -138,7 +138,10 @@
 
 	&__category {
 		width: 100%;
-		color: var(--greyscale-vanilla-opacity-40060, color-mix(in srgb, var(--border) 60%, transparent));
+		color: var(
+			--greyscale-vanilla-opacity-40060,
+			color-mix(in srgb, var(--border) 60%, transparent)
+		);
 		font-family: Inter;
 		font-size: 13px;
 		font-style: normal;
@@ -725,11 +728,7 @@
 		// border-right: 1px solid var(--l2-border);
 
 		.perlian-bg {
-			background: radial-gradient(
-				circle,
-				var(--l2-foreground) 10%,
-				transparent 0
-			);
+			background: radial-gradient(circle, var(--l2-foreground) 10%, transparent 0);
 			background-size: 12px 12px;
 			opacity: 1;
 			-webkit-mask-image: radial-gradient(
@@ -748,7 +747,10 @@
 		.ant-btn-default {
 			border: none !important;
 			box-shadow: none;
-			background: var(--greyscale-zinc-opacity-zinc-8, color-mix(in srgb, var(--bg-robin-200) 8%, transparent));
+			background: var(
+				--greyscale-zinc-opacity-zinc-8,
+				color-mix(in srgb, var(--bg-robin-200) 8%, transparent)
+			);
 		}
 	}
 
@@ -775,7 +777,10 @@
 				border: none !important;
 				box-shadow: none;
 				border-radius: var(--Radii-radius-round, 9999px);
-				background: var(--greyscale-zinc-opacity-zinc-8, color-mix(in srgb, var(--bg-robin-200) 8%, transparent));
+				background: var(
+					--greyscale-zinc-opacity-zinc-8,
+					color-mix(in srgb, var(--bg-robin-200) 8%, transparent)
+				);
 				width: 100%;
 			}
 
@@ -1532,7 +1537,11 @@
 	.onboarding-product-setup-container {
 		&_left-section {
 			.perlian-bg {
-				background: radial-gradient(circle, var(--l2-foreground) 10%, transparent 0);
+				background: radial-gradient(
+					circle,
+					var(--l2-foreground) 10%,
+					transparent 0
+				);
 				background-size: 12px 12px;
 				opacity: 1;
 				-webkit-mask-image: radial-gradient(
@@ -1541,7 +1550,6 @@
 					rgba(255, 255, 255, 0) 56.77%
 				);
 			}
-
 		}
 
 		&_right-section {

@@ -458,7 +458,11 @@
 
 				transition: all 0.08s ease, background 0s, border 0s;
 
-				background: linear-gradient(180deg, transparent 0%, var(--l1-background) 27.11%);
+				background: linear-gradient(
+					180deg,
+					transparent 0%,
+					var(--l1-background) 27.11%
+				);
 
 				&::-webkit-scrollbar {
 					width: 0.1rem;
@@ -1371,7 +1375,11 @@
 			.secondary-nav-items {
 				border-top: 1px solid var(--l3-border);
 
-				background: linear-gradient(180deg, transparent 0%, var(--l1-background) 27.11%);
+				background: linear-gradient(
+					180deg,
+					transparent 0%,
+					var(--l1-background) 27.11%
+				);
 
 				.collapse-expand-handlers {
 					svg {

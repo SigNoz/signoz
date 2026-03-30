@@ -41,12 +41,7 @@
 		justify-content: center;
 		align-items: center;
 		border: 1px solid var(--l2-border);
-		background: linear-gradient(
-				0deg,
-				transparent 0%,
-				transparent 100%
-			),
-			#0b0c0e;
+		background: linear-gradient(0deg, transparent 0%, transparent 100%), #0b0c0e;
 
 		.ant-card-body {
 			height: 100%;
