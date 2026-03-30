@@ -3,6 +3,7 @@ import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
 import { Progress, TabsProps, Tag, Tooltip, Typography } from 'antd';
 import { TableColumnType as ColumnType } from 'antd';
+import { SortOrder } from 'antd/lib/table/interface';
 import {
 	HostData,
 	HostListPayload,
@@ -20,6 +21,7 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
+import { OrderBySchemaType } from '../InfraMonitoringK8s/schemas';
 import HostsList from './HostsList';
 
 import './InfraMonitoring.styles.scss';
@@ -105,6 +107,7 @@ export interface HostsListTableProps {
 		orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
 	) => void;
 	setPageSize: (pageSize: number) => void;
+	orderBy: OrderBySchemaType;
 }
 
 export interface EmptyOrLoadingViewProps {
@@ -127,6 +130,17 @@ export const getHostListsQuery = (): HostListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
+function mapOrderByToSortOrder(
+	column: string,
+	orderBy: OrderBySchemaType,
+): SortOrder | undefined {
+	return orderBy?.columnName === column
+		? orderBy?.order === 'asc'
+			? 'ascend'
+			: 'descend'
+		: undefined;
+}
+
 export const getTabsItems = (): TabsProps['items'] => [
 	{
 		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
@@ -135,7 +149,9 @@ export const getTabsItems = (): TabsProps['items'] => [
 	},
 ];
 
-export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
+export const getHostsListColumns = (
+	orderBy: OrderBySchemaType,
+): ColumnType<HostRowData>[] => [
 	{
 		title: <div className="hostname-column-header">Hostname</div>,
 		dataIndex: 'hostName',
@@ -164,6 +180,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		key: 'cpu',
 		width: 100,
 		sorter: true,
+		defaultSortOrder: mapOrderByToSortOrder('cpu', orderBy),
 		align: 'right',
 	},
 	{
@@ -179,6 +196,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		key: 'memory',
 		width: 100,
 		sorter: true,
+		defaultSortOrder: mapOrderByToSortOrder('memory', orderBy),
 		align: 'right',
 	},
 	{
@@ -187,6 +205,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		key: 'wait',
 		width: 100,
 		sorter: true,
+		defaultSortOrder: mapOrderByToSortOrder('wait', orderBy),
 		align: 'right',
 	},
 	{
@@ -195,6 +214,7 @@ export const getHostsListColumns = (): ColumnType<HostRowData>[] => [
 		key: 'load15',
 		width: 100,
 		sorter: true,
+		defaultSortOrder: mapOrderByToSortOrder('load15', orderBy),
 		align: 'right',
 	},
 ];

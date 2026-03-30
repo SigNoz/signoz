@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tag, Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import {
 	K8sDeploymentsData,
 	K8sDeploymentsListPayload,
