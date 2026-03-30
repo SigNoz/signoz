@@ -23,22 +23,36 @@ type ExportFunc func(ctx context.Context, events []audittypes.AuditEvent) error
 // A flush is triggered when either BatchSize events accumulate or
 // FlushInterval elapses, whichever comes first.
 type Server struct {
+	// settings provides logger, meter, and tracer for instrumentation.
 	settings factory.ScopedProviderSettings
-	config   Config
-	metrics  *telemetry
+
+	// config holds buffer size, batch size, and flush interval.
+	config Config
+
+	// exportFn is called with each batch of events ready for export.
 	exportFn ExportFunc
 
-	queue    []audittypes.AuditEvent
+	// queue holds buffered events waiting to be batched.
+	queue []audittypes.AuditEvent
+
+	// queueMtx guards access to queue.
 	queueMtx sync.Mutex
 
+	// moreC signals the flush goroutine that new events are available.
 	moreC chan struct{}
+
+	// stopC signals the flush goroutine to drain and shut down.
 	stopC chan struct{}
 
+	// goroutinesWg tracks the background flush goroutine.
 	goroutinesWg sync.WaitGroup
+
+	// metrics holds OTel counters and gauges for observability.
+	metrics *serverMetrics
 }
 
 func New(settings factory.ScopedProviderSettings, config Config, exportFn ExportFunc) (*Server, error) {
-	metrics, err := newTelemetry(settings.Meter())
+	metrics, err := newServerMetrics(settings.Meter())
 	if err != nil {
 		return nil, err
 	}

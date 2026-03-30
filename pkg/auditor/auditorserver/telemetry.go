@@ -5,14 +5,14 @@ import (
 	"go.opentelemetry.io/otel/metric"
 )
 
-type telemetry struct {
+type serverMetrics struct {
 	eventsEmitted metric.Int64Counter
 	writeErrors   metric.Int64Counter
 	eventsDropped metric.Int64Counter
 	bufferSize    metric.Int64ObservableGauge
 }
 
-func newTelemetry(meter metric.Meter) (*telemetry, error) {
+func newServerMetrics(meter metric.Meter) (*serverMetrics, error) {
 	var errs error
 
 	eventsEmitted, err := meter.Int64Counter("signoz.audit.events.emitted", metric.WithDescription("Total number of audit events emitted for export."))
@@ -39,7 +39,7 @@ func newTelemetry(meter metric.Meter) (*telemetry, error) {
 		return nil, errs
 	}
 
-	return &telemetry{
+	return &serverMetrics{
 		eventsEmitted: eventsEmitted,
 		writeErrors:   writeErrors,
 		eventsDropped: eventsDropped,
