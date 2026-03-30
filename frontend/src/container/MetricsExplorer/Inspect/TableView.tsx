@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Flex, Table, Typography } from 'antd';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { InspectMetricsSeries } from './types';
 
 import { TableViewProps } from './types';
 import { formatTimestampToFullDateTime } from './utils';

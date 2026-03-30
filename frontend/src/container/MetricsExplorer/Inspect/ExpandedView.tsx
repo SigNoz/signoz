@@ -4,7 +4,7 @@ import { Color } from '@signozhq/design-tokens';
 import type { TableColumnsType as ColumnsType } from 'antd';
 import { Card, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { InspectMetricsSeries } from './types';
 import classNames from 'classnames';
 import ResizeTable from 'components/ResizeTable/ResizeTable';
 import { DataType } from 'container/LogDetailedView/TableView';

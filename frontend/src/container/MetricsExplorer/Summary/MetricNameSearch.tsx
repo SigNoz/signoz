@@ -9,16 +9,14 @@ import {
 	Popover,
 	Spin,
 } from 'antd';
+import { useListMetrics } from 'api/generated/services/metrics';
 import { Filter } from 'api/v5/v5';
 import {
 	convertExpressionToFilters,
 	convertFiltersToExpression,
 } from 'components/QueryBuilderV2/utils';
-import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
-import { useGetMetricsListFilterValues } from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
 import { Search } from 'lucide-react';
-import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
 function MetricNameSearch({
 	queryFilterExpression,
@@ -44,25 +42,24 @@ function MetricNameSearch({
 	}, [isPopoverOpen]);
 
 	const {
-		data: metricNameFilterValuesData,
+		data: metricNameListData,
 		isLoading: isLoadingMetricNameFilterValues,
 		isError: isErrorMetricNameFilterValues,
-	} = useGetMetricsListFilterValues(
+	} = useListMetrics(
 		{
 			searchText: debouncedSearchString,
-			filterKey: 'metric_name',
-			filterAttributeKeyDataType: DataTypes.String,
 			limit: 10,
 		},
 		{
-			enabled: isPopoverOpen,
-			refetchOnWindowFocus: false,
-			queryKey: [
-				REACT_QUERY_KEY.GET_METRICS_LIST_FILTER_VALUES,
-				'metric_name',
-				debouncedSearchString,
-				isPopoverOpen,
-			],
+			query: {
+				enabled: isPopoverOpen,
+				refetchOnWindowFocus: false,
+				queryKey: [
+					'listMetricsForSearch',
+					debouncedSearchString,
+					isPopoverOpen,
+				],
+			},
 		},
 	);
 
@@ -95,8 +92,9 @@ function MetricNameSearch({
 	);
 
 	const metricNameFilterValues = useMemo(
-		() => metricNameFilterValuesData?.payload?.data?.filterValues || [],
-		[metricNameFilterValuesData],
+		() =>
+			metricNameListData?.data?.metrics?.map((m) => m.metricName) || [],
+		[metricNameListData],
 	);
 
 	const handleKeyDown = useCallback(

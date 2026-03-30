@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
+import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -21,6 +21,7 @@ import {
 	GraphPopoverOptions,
 	InspectProps,
 	MetricInspectionAction,
+	MetricType,
 } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
@@ -48,10 +49,12 @@ function Inspect({
 	] = useState<GraphPopoverOptions | null>(null);
 	const [showExpandedView, setShowExpandedView] = useState(false);
 
-	const { data: metricDetailsData } = useGetMetricDetails(
-		appliedMetricName ?? '',
+	const { data: metricDetailsData } = useGetMetricMetadata(
+		{ metricName: appliedMetricName ?? '' },
 		{
-			enabled: !!appliedMetricName,
+			query: {
+				enabled: !!appliedMetricName,
+			},
 		},
 	);
 
@@ -119,12 +122,12 @@ function Inspect({
 	);
 
 	const selectedMetricType = useMemo(
-		() => metricDetailsData?.payload?.data?.metadata?.metric_type,
+		() => metricDetailsData?.data?.type as unknown as MetricType,
 		[metricDetailsData],
 	);
 
 	const selectedMetricUnit = useMemo(
-		() => metricDetailsData?.payload?.data?.metadata?.unit,
+		() => metricDetailsData?.data?.unit,
 		[metricDetailsData],
 	);
 

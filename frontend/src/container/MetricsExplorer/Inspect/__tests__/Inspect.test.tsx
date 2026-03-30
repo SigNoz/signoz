@@ -2,10 +2,8 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import * as useInspectMetricsHooks from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
-import * as useGetMetricDetailsHooks from 'hooks/metricsExplorer/useGetMetricDetails';
+import { InspectMetricsSeries, MetricType } from '../types';
+import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
@@ -24,7 +22,6 @@ const mockTimeSeries: InspectMetricsSeries[] = [
 			{ timestamp: 1234567891000, value: '20' },
 		],
 		labels: { label1: 'value1' },
-		labelsArray: [{ label: 'label1', value: 'value1' }],
 	},
 ];
 
@@ -52,28 +49,18 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 	},
 } as any);
 
-jest.spyOn(useGetMetricDetailsHooks, 'useGetMetricDetails').mockReturnValue({
+jest.spyOn(metricsGeneratedAPI, 'useGetMetricMetadata').mockReturnValue({
 	data: {
-		metricDetails: {
-			metricName: 'test_metric',
-			metricType: MetricType.GAUGE,
+		data: {
+			type: MetricType.GAUGE,
+			unit: '',
+			description: '',
+			temporality: '',
+			isMonotonic: false,
 		},
+		status: 'success',
 	},
 } as any);
-
-jest
-	.spyOn(useInspectMetricsHooks, 'useGetInspectMetricsDetails')
-	.mockReturnValue({
-		data: {
-			payload: {
-				data: {
-					series: mockTimeSeries,
-				},
-				status: 'success',
-			},
-		},
-		isLoading: false,
-	} as any);
 
 jest.mock('react-router-dom', () => ({
 	...jest.requireActual('react-router-dom'),
@@ -123,18 +110,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders loading state', () => {
-		jest
-			.spyOn(useInspectMetricsHooks, 'useGetInspectMetricsDetails')
-			.mockReturnValue({
-				data: {
-					payload: {
-						data: {
-							series: [],
-						},
-					},
-				},
-				isLoading: true,
-			} as any);
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -147,18 +123,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders empty state', () => {
-		jest
-			.spyOn(useInspectMetricsHooks, 'useGetInspectMetricsDetails')
-			.mockReturnValue({
-				data: {
-					payload: {
-						data: {
-							series: [],
-						},
-					},
-				},
-				isLoading: false,
-			} as any);
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -171,19 +136,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state', () => {
-		jest
-			.spyOn(useInspectMetricsHooks, 'useGetInspectMetricsDetails')
-			.mockReturnValue({
-				data: {
-					payload: {
-						data: {
-							series: [],
-						},
-					},
-				},
-				isLoading: false,
-				isError: true,
-			} as any);
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -196,14 +149,7 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state with 400 status code', () => {
-		jest
-			.spyOn(useInspectMetricsHooks, 'useGetInspectMetricsDetails')
-			.mockReturnValue({
-				data: {
-					statusCode: 400,
-				},
-				isError: false,
-			} as any);
+
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>

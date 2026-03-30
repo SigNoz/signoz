@@ -1,10 +1,28 @@
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
 import {
 	IBuilderQuery,
 	TagFilter,
 } from 'types/api/queryBuilder/queryBuilderData';
 import { AlignedData } from 'uplot';
+
+export enum MetricType {
+	SUM = 'sum',
+	GAUGE = 'gauge',
+	HISTOGRAM = 'histogram',
+	SUMMARY = 'summary',
+	EXPONENTIAL_HISTOGRAM = 'exponentialhistogram',
+}
+
+export interface InspectMetricsTimestampValue {
+	timestamp: number;
+	value: string;
+}
+
+export interface InspectMetricsSeries {
+	title?: string;
+	strokeColor?: string;
+	labels: Record<string, string>;
+	values: InspectMetricsTimestampValue[];
+}
 
 export type InspectProps = {
 	metricName: string;
@@ -107,6 +125,7 @@ export interface MetricInspectionOptions {
 	spaceAggregationOption: SpaceAggregationOptions | undefined;
 	spaceAggregationLabels: string[];
 	filters: TagFilter;
+	filterExpression: string;
 }
 
 export interface MetricInspectionState {
@@ -119,7 +138,7 @@ export type MetricInspectionAction =
 	| { type: 'SET_TIME_AGGREGATION_INTERVAL'; payload: number }
 	| { type: 'SET_SPACE_AGGREGATION_OPTION'; payload: SpaceAggregationOptions }
 	| { type: 'SET_SPACE_AGGREGATION_LABELS'; payload: string[] }
-	| { type: 'SET_FILTERS'; payload: TagFilter }
+	| { type: 'SET_FILTERS'; payload: { filters: TagFilter; expression: string } }
 	| { type: 'RESET_INSPECTION' }
 	| { type: 'APPLY_METRIC_INSPECTION_OPTIONS' };
 

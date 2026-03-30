@@ -3,7 +3,7 @@ import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import { Filter } from 'api/v5/v5';
-import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
+import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
 import APIError from 'types/api/error';
@@ -54,16 +54,16 @@ describe('MetricsTable', () => {
 	});
 
 	jest
-		.spyOn(useGetMetricsListFilterValues, 'useGetMetricsListFilterValues')
+		.spyOn(metricsGeneratedAPI, 'useListMetrics')
 		.mockReturnValue({
 			data: {
-				statusCode: 200,
-				payload: {
-					status: 'success',
-					data: {
-						filterValues: ['metric1', 'metric2'],
-					},
+				data: {
+					metrics: [
+						{ metricName: 'metric1', description: '', type: '', unit: '', temporality: '', isMonotonic: false },
+						{ metricName: 'metric2', description: '', type: '', unit: '', temporality: '', isMonotonic: false },
+					],
 				},
+				status: 'success',
 			},
 			isLoading: false,
 			isError: false,

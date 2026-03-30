@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetricType } from 'container/MetricsExplorer/Inspect/types';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
 

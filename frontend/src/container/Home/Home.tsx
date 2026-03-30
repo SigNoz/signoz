@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/no-duplicate-string */
-import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
@@ -7,6 +7,7 @@ import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
+import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -15,9 +16,7 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
 import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
-import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -126,38 +125,7 @@ export default function Home(): JSX.Element {
 	);
 
 	// Detect Metrics
-	const query = useMemo(() => {
-		const baseQuery = getMetricsListQuery();
-
-		let queryStartTime = startTime;
-		let queryEndTime = endTime;
-
-		if (!startTime || !endTime) {
-			const now = new Date();
-			const startTime = new Date(now.getTime() - homeInterval);
-			const endTime = now;
-
-			queryStartTime = startTime.getTime();
-			queryEndTime = endTime.getTime();
-		}
-
-		return {
-			...baseQuery,
-			limit: 10,
-			offset: 0,
-			filters: {
-				items: [],
-				op: 'AND',
-			},
-			start: queryStartTime,
-			end: queryEndTime,
-		};
-	}, [startTime, endTime]);
-
-	const { data: metricsData } = useGetMetricsList(query, {
-		enabled: !!query,
-		queryKey: ['metricsList', query],
-	});
+	const { data: metricsOnboardingData } = useGetMetricsOnboardingStatus();
 
 	const [isLogsIngestionActive, setIsLogsIngestionActive] = useState(false);
 	const [isTracesIngestionActive, setIsTracesIngestionActive] = useState(false);
@@ -283,14 +251,12 @@ export default function Home(): JSX.Element {
 	}, [tracesData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
-		const metricsDataTotal = metricsData?.payload?.data?.total ?? 0;
-
-		if (metricsDataTotal > 0) {
+		if (metricsOnboardingData?.data?.hasMetrics) {
 			setIsMetricsIngestionActive(true);
 			handleUpdateChecklistDoneItem('ADD_DATA_SOURCE');
 			handleUpdateChecklistDoneItem('SEND_METRICS');
 		}
-	}, [metricsData, handleUpdateChecklistDoneItem]);
+	}, [metricsOnboardingData, handleUpdateChecklistDoneItem]);
 
 	useEffect(() => {
 		logEvent('Homepage: Visited', {});

@@ -244,6 +244,7 @@ func NewManager(o *ManagerOptions) (*Manager, error) {
 }
 
 func (m *Manager) Start(ctx context.Context) {
+	return
 	if err := m.initiate(ctx); err != nil {
 		m.logger.ErrorContext(ctx, "failed to initialize alerting rules manager", errors.Attr(err))
 	}

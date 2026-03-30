@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { InspectMetricsSeries } from '../types';
 
 import TableView from '../TableView';
 import {
@@ -19,12 +19,6 @@ describe('TableView', () => {
 				{ timestamp: 1234567891000, value: '20' },
 			],
 			labels: { label1: 'value1' },
-			labelsArray: [
-				{
-					label: 'label1',
-					value: 'value1',
-				},
-			],
 		},
 		{
 			strokeColor: '#fff',
@@ -34,12 +28,6 @@ describe('TableView', () => {
 				{ timestamp: 1234567891000, value: '40' },
 			],
 			labels: { label2: 'value2' },
-			labelsArray: [
-				{
-					label: 'label2',
-					value: 'value2',
-				},
-			],
 		},
 	];
 
@@ -57,6 +45,7 @@ describe('TableView', () => {
 				items: [],
 				op: 'AND',
 			},
+			filterExpression: '',
 		},
 		isInspectMetricsRefetching: false,
 	};

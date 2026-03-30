@@ -1,6 +1,6 @@
 import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetricType } from './types';
 import {
 	BarChart,
 	BarChart2,
@@ -81,6 +81,7 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 			items: [],
 			op: 'AND',
 		},
+		filterExpression: '',
 	},
 	appliedOptions: {
 		timeAggregationOption: undefined,
@@ -91,6 +92,7 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 			items: [],
 			op: 'AND',
 		},
+		filterExpression: '',
 	},
 };
 

@@ -1,5 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { InspectMetricsSeries } from '../types';
 
 import GraphPopover from '../GraphPopover';
 import { GraphPopoverOptions, InspectionStep } from '../types';
@@ -16,7 +16,6 @@ describe('GraphPopover', () => {
 				{ timestamp: 1672531260000, value: '43.456' },
 			],
 			labels: {},
-			labelsArray: [],
 		},
 	};
 	const mockSpaceAggregationSeriesMap: Map<

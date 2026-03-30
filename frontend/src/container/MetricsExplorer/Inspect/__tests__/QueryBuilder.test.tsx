@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsService from 'api/generated/services/metrics';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetricType } from '../types';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
@@ -93,6 +93,7 @@ describe('QueryBuilder', () => {
 				items: [],
 				op: 'and',
 			},
+			filterExpression: '',
 		},
 		dispatchMetricInspectionOptions: jest.fn(),
 		metricType: MetricType.SUM,
@@ -103,6 +104,7 @@ describe('QueryBuilder', () => {
 				items: [],
 				op: 'and',
 			},
+			filterExpression: '',
 		} as any,
 		setCurrentQuery: jest.fn(),
 	};

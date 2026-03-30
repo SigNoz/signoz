@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { InspectMetricsSeries } from '../types';
 
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
@@ -25,7 +25,6 @@ describe('ExpandedView', () => {
 		labels: {
 			host_id: 'test-id',
 		},
-		labelsArray: [],
 		title: 'TS1',
 	};
 
@@ -70,6 +69,7 @@ describe('ExpandedView', () => {
 			items: [],
 			op: 'AND',
 		},
+		filterExpression: '',
 	};
 
 	it('renders entire time series for a raw data inspection', () => {
