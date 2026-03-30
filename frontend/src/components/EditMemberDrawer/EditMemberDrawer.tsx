@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+import { useCopyToClipboard } from 'react-use';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
@@ -177,26 +178,30 @@ function EditMemberDrawer({
 		}
 	}, [member, isInvited, setLinkType, onClose]);
 
+	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopyResetLink = useCallback(async (): Promise<void> => {
 		if (!resetLink) {
 			return;
 		}
-		try {
-			await navigator.clipboard.writeText(resetLink);
-			setHasCopiedResetLink(true);
-			setTimeout(() => setHasCopiedResetLink(false), 2000);
-			toast.success(
-				linkType === 'invite'
-					? 'Invite link copied to clipboard'
-					: 'Reset link copied to clipboard',
-				{ richColors: true },
-			);
-		} catch {
+		copyToClipboard(resetLink);
+
+		setHasCopiedResetLink(true);
+		setTimeout(() => setHasCopiedResetLink(false), 2000);
+		toast.success(
+			linkType === 'invite'
+				? 'Invite link copied to clipboard'
+				: 'Reset link copied to clipboard',
+			{ richColors: true },
+		);
+	}, [resetLink, copyToClipboard, linkType]);
+
+	useEffect(() => {
+		if (copyState.error) {
 			toast.error('Failed to copy link', {
 				richColors: true,
 			});
 		}
-	}, [resetLink, linkType]);
+	}, [copyState.error]);
 
 	const handleClose = useCallback((): void => {
 		setShowDeleteConfirm(false);

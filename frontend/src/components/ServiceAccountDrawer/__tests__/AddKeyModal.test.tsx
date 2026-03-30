@@ -9,6 +9,16 @@ jest.mock('@signozhq/sonner', () => ({
 	toast: { success: jest.fn(), error: jest.fn() },
 }));
 
+const mockCopyToClipboard = jest.fn();
+const mockCopyState = { value: undefined, error: undefined };
+
+jest.mock('react-use', () => ({
+	useCopyToClipboard: (): [typeof mockCopyState, typeof mockCopyToClipboard] => [
+		mockCopyState,
+		mockCopyToClipboard,
+	],
+}));
+
 const mockToast = jest.mocked(toast);
 
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys';
@@ -35,16 +45,9 @@ function renderModal(): ReturnType<typeof render> {
 }
 
 describe('AddKeyModal', () => {
-	beforeAll(() => {
-		Object.defineProperty(navigator, 'clipboard', {
-			value: { writeText: jest.fn().mockResolvedValue(undefined) },
-			configurable: true,
-			writable: true,
-		});
-	});
-
 	beforeEach(() => {
 		jest.clearAllMocks();
+		mockCopyToClipboard.mockClear();
 		server.use(
 			rest.post(SA_KEYS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(201), ctx.json(createdKeyResponse)),
@@ -90,9 +93,6 @@ describe('AddKeyModal', () => {
 
 	it('copy button writes key to clipboard and shows toast.success', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const writeTextSpy = jest
-			.spyOn(navigator.clipboard, 'writeText')
-			.mockResolvedValue(undefined);
 
 		renderModal();
 
@@ -115,14 +115,12 @@ describe('AddKeyModal', () => {
 		await user.click(copyBtn);
 
 		await waitFor(() => {
-			expect(writeTextSpy).toHaveBeenCalledWith('snz_abc123xyz456secret');
+			expect(mockCopyToClipboard).toHaveBeenCalledWith('snz_abc123xyz456secret');
 			expect(mockToast.success).toHaveBeenCalledWith(
 				'Key copied to clipboard',
 				expect.anything(),
 			);
 		});
-
-		writeTextSpy.mockRestore();
 	});
 
 	it('Cancel button closes the modal', async () => {

@@ -17,6 +17,8 @@ import history from 'lib/history';
 import { Cog } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { getRoutes } from './utils';
 
@@ -198,12 +200,6 @@ function SettingsPage(): JSX.Element {
 		],
 	);
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
-
-	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
-	};
-
 	const onClickHandler = useCallback(
 		(key: string, event: MouseEvent | null) => {
 			const params = new URLSearchParams(search);
@@ -212,7 +208,7 @@ function SettingsPage(): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
+				if (event && isModifierKeyPressed(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
