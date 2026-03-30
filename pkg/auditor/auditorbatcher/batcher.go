@@ -7,14 +7,16 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	"go.opentelemetry.io/otel/metric"
 )
 
 // Batcher buffers audit events and flushes them in batches.
 // A flush is triggered when either BatchSize events accumulate or
 // FlushInterval elapses, whichever comes first.
 type Batcher struct {
-	logger *slog.Logger
-	config Config
+	logger  *slog.Logger
+	config  Config
+	metrics *telemetry
 
 	batchC chan []audittypes.AuditEvent
 
@@ -25,20 +27,33 @@ type Batcher struct {
 	stopC chan struct{}
 
 	goroutinesWg sync.WaitGroup
-
-	// dropped counts events dropped due to a full buffer.
-	dropped int64
 }
 
-func New(logger *slog.Logger, config Config) *Batcher {
-	return &Batcher{
-		batchC: make(chan []audittypes.AuditEvent, config.BatchSize),
-		logger: logger,
-		config: config,
-		queue:  make([]audittypes.AuditEvent, 0, config.BufferSize),
-		moreC:  make(chan struct{}, 1),
-		stopC:  make(chan struct{}),
+func New(logger *slog.Logger, config Config, meter metric.Meter) (*Batcher, error) {
+	metrics, err := newTelemetry(meter)
+	if err != nil {
+		return nil, err
 	}
+
+	b := &Batcher{
+		batchC:  make(chan []audittypes.AuditEvent, config.BatchSize),
+		logger:  logger,
+		config:  config,
+		metrics: metrics,
+		queue:   make([]audittypes.AuditEvent, 0, config.BufferSize),
+		moreC:   make(chan struct{}, 1),
+		stopC:   make(chan struct{}),
+	}
+
+	_, err = meter.RegisterCallback(func(_ context.Context, o metric.Observer) error {
+		o.ObserveInt64(b.metrics.bufferSize, int64(b.queueLen()))
+		return nil
+	}, b.metrics.bufferSize)
+	if err != nil {
+		return nil, err
+	}
+
+	return b, nil
 }
 
 // Start runs the background flush loop. It blocks until Stop is called.
@@ -53,15 +68,15 @@ func (b *Batcher) Start(ctx context.Context) error {
 		for {
 			select {
 			case <-b.stopC:
-				b.drain()
+				b.drain(ctx)
 				close(b.batchC)
 				return
 			case <-b.moreC:
 				if b.queueLen() >= b.config.BatchSize {
-					b.flush()
+					b.flush(ctx)
 				}
 			case <-ticker.C:
-				b.flush()
+				b.flush(ctx)
 			}
 		}
 	}()
@@ -78,8 +93,8 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 	defer b.queueMtx.Unlock()
 
 	if len(b.queue) >= b.config.BufferSize {
-		b.dropped++
-		b.logger.WarnContext(ctx, "audit event dropped, buffer full", slog.Int64("total_dropped", b.dropped), slog.Int("buffer_size", b.config.BufferSize))
+		b.metrics.eventsDropped.Add(ctx, 1)
+		b.logger.WarnContext(ctx, "audit event dropped, buffer full", slog.Int("buffer_size", b.config.BufferSize))
 		return
 	}
 
@@ -91,6 +106,12 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 // The channel is closed when the batcher is stopped and all remaining events are drained.
 func (b *Batcher) Receive() <-chan []audittypes.AuditEvent {
 	return b.batchC
+}
+
+// RecordWriteError increments the write error counter. Call this from
+// the consumer when an export attempt fails.
+func (b *Batcher) RecordWriteError(ctx context.Context) {
+	b.metrics.writeErrors.Add(ctx, 1)
 }
 
 // Stop signals the background loop to drain remaining events and shut down.
@@ -106,20 +127,22 @@ func (b *Batcher) queueLen() int {
 	return len(b.queue)
 }
 
-func (b *Batcher) flush() {
+func (b *Batcher) flush(ctx context.Context) {
 	batch := b.next()
 	if len(batch) == 0 {
 		return
 	}
+	b.metrics.eventsEmitted.Add(ctx, int64(len(batch)))
 	b.batchC <- batch
 }
 
-func (b *Batcher) drain() {
+func (b *Batcher) drain(ctx context.Context) {
 	for b.queueLen() > 0 {
 		batch := b.next()
 		if len(batch) == 0 {
 			return
 		}
+		b.metrics.eventsEmitted.Add(ctx, int64(len(batch)))
 		b.batchC <- batch
 	}
 }
