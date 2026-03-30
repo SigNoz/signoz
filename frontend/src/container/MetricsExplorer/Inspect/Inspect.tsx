@@ -122,14 +122,13 @@ function Inspect({
 	);
 
 	const selectedMetricType = useMemo(
-		() => metricDetailsData?.data?.type as unknown as MetricType,
+		() => (metricDetailsData?.data?.type as unknown) as MetricType,
 		[metricDetailsData],
 	);
 
-	const selectedMetricUnit = useMemo(
-		() => metricDetailsData?.data?.unit,
-		[metricDetailsData],
-	);
+	const selectedMetricUnit = useMemo(() => metricDetailsData?.data?.unit, [
+		metricDetailsData,
+	]);
 
 	const aggregateAttribute = useMemo(
 		() => ({

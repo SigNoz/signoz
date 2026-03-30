@@ -1,7 +1,7 @@
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from '../types';
 
 import TableView from '../TableView';
+import { InspectMetricsSeries } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -41,10 +41,6 @@ describe('TableView', () => {
 			timeAggregationOption: TimeAggregationOptions.MAX,
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 			spaceAggregationLabels: ['host_name'],
-			filters: {
-				items: [],
-				op: 'AND',
-			},
 			filterExpression: '',
 		},
 		isInspectMetricsRefetching: false,

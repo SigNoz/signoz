@@ -54,11 +54,7 @@ function MetricNameSearch({
 			query: {
 				enabled: isPopoverOpen,
 				refetchOnWindowFocus: false,
-				queryKey: [
-					'listMetricsForSearch',
-					debouncedSearchString,
-					isPopoverOpen,
-				],
+				queryKey: ['listMetricsForSearch', debouncedSearchString, isPopoverOpen],
 			},
 		},
 	);
@@ -92,8 +88,7 @@ function MetricNameSearch({
 	);
 
 	const metricNameFilterValues = useMemo(
-		() =>
-			metricNameListData?.data?.metrics?.map((m) => m.metricName) || [],
+		() => metricNameListData?.data?.metrics?.map((m) => m.metricName) || [],
 		[metricNameListData],
 	);
 

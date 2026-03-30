@@ -2,11 +2,11 @@
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
-import { InspectMetricsSeries, MetricType } from '../types';
 import store from 'store';
 import { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
+import { InspectMetricsSeries, MetricType } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -56,10 +56,6 @@ describe('GraphView', () => {
 			spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 			spaceAggregationLabels: ['host_name'],
 			timeAggregationOption: TimeAggregationOptions.MAX,
-			filters: {
-				items: [],
-				op: 'AND',
-			},
 			filterExpression: '',
 		},
 		isInspectMetricsRefetching: false,

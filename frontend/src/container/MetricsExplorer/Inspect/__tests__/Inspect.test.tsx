@@ -2,7 +2,6 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries, MetricType } from '../types';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
@@ -10,6 +9,7 @@ import store from 'store';
 import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import Inspect from '../Inspect';
+import { InspectMetricsSeries, MetricType } from '../types';
 import { InspectionStep } from '../types';
 
 const queryClient = new QueryClient();
@@ -110,7 +110,6 @@ describe('Inspect', () => {
 	});
 
 	it('renders loading state', () => {
-
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -123,7 +122,6 @@ describe('Inspect', () => {
 	});
 
 	it('renders empty state', () => {
-
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -136,7 +134,6 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state', () => {
-
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>
@@ -149,7 +146,6 @@ describe('Inspect', () => {
 	});
 
 	it('renders error state with 400 status code', () => {
-
 		render(
 			<QueryClientProvider client={queryClient}>
 				<Provider store={store}>

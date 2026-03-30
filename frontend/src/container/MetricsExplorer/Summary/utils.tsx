@@ -6,7 +6,6 @@ import {
 	MetricsexplorertypesTreemapEntryDTO,
 	MetricsexplorertypesTreemapModeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-
 import { Filter } from 'api/v5/v5';
 import { getUniversalNameFromMetricUnit } from 'components/YAxisUnitSelector/utils';
 
@@ -75,7 +74,6 @@ export const getMetricsTableColumns = (
 		sorter: true,
 	},
 ];
-
 
 function ValidateRowValueWrapper({
 	value,

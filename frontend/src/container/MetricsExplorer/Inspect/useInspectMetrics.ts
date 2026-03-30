@@ -8,8 +8,8 @@ import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
 	GraphPopoverData,
-	InspectMetricsSeries,
 	InspectionStep,
+	InspectMetricsSeries,
 	MetricInspectionAction,
 	MetricInspectionState,
 	UseInspectMetricsReturnData,
@@ -62,8 +62,7 @@ const metricInspectionReducer = (
 				...state,
 				currentOptions: {
 					...state.currentOptions,
-					filters: action.payload.filters,
-					filterExpression: action.payload.expression,
+					filterExpression: action.payload,
 				},
 			};
 		case 'APPLY_METRIC_INSPECTION_OPTIONS':
@@ -107,16 +106,25 @@ export function useInspectMetrics(
 		isError: isInspectMetricsError,
 		isRefetching: isInspectMetricsRefetching,
 	} = useQuery({
-		queryKey: ['inspectMetrics', metricName, start, end, metricInspectionOptions.appliedOptions.filterExpression],
+		queryKey: [
+			'inspectMetrics',
+			metricName,
+			start,
+			end,
+			metricInspectionOptions.appliedOptions.filterExpression,
+		],
 		queryFn: ({ signal }) =>
-			inspectMetrics({
-				metricName: metricName ?? '',
-				start,
-				end,
-				filter: metricInspectionOptions.appliedOptions.filterExpression
-					? { expression: metricInspectionOptions.appliedOptions.filterExpression }
-					: undefined,
-			}, signal),
+			inspectMetrics(
+				{
+					metricName: metricName ?? '',
+					start,
+					end,
+					filter: metricInspectionOptions.appliedOptions.filterExpression
+						? { expression: metricInspectionOptions.appliedOptions.filterExpression }
+						: undefined,
+				},
+				signal,
+			),
 		enabled: !!metricName,
 		keepPreviousData: true,
 	});

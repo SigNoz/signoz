@@ -33,7 +33,7 @@ function MetricFilters({
 			});
 			dispatchMetricInspectionOptions({
 				type: 'SET_FILTERS',
-				payload: { filters: tagFilter, expression },
+				payload: expression,
 			});
 		},
 		[currentQuery, dispatchMetricInspectionOptions, setCurrentQuery],

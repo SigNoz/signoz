@@ -4,13 +4,13 @@ import { Provider } from 'react-redux';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsService from 'api/generated/services/metrics';
-import { MetricType } from '../types';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import QueryBuilder from '../QueryBuilder';
+import { MetricType } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -89,10 +89,6 @@ describe('QueryBuilder', () => {
 			timeAggregationOption: TimeAggregationOptions.AVG,
 			spaceAggregationLabels: [],
 			spaceAggregationOption: SpaceAggregationOptions.AVG_BY,
-			filters: {
-				items: [],
-				op: 'and',
-			},
 			filterExpression: '',
 		},
 		dispatchMetricInspectionOptions: jest.fn(),

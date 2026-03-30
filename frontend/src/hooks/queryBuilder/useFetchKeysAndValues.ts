@@ -45,6 +45,7 @@ type IuseFetchKeysAndValues = {
  * @returns an object containing the fetched attribute keys, results, and the status of the fetch
  */
 
+// eslint-disable-next-line max-params
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
@@ -54,6 +55,7 @@ export const useFetchKeysAndValues = (
 	isInfraMonitoring?: boolean,
 	entity?: K8sCategory | null,
 	isMetricsExplorer?: boolean,
+	// eslint-disable-next-line max-params
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);
@@ -151,6 +153,7 @@ export const useFetchKeysAndValues = (
 	);
 
 	function isAttributeValuesResponse(
+		// eslint-disable-next-line @typescript-eslint/no-explicit-any
 		payload: any,
 	): payload is IAttributeValuesResponse {
 		return (
@@ -223,13 +226,11 @@ export const useFetchKeysAndValues = (
 				payload = response.payload;
 			}
 
-			if (payload) {
-				if (isAttributeValuesResponse(payload)) {
-					const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
-					const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
-					setResults(key ? payload[key] || [] : []);
-					return;
-				}
+			if (payload && isAttributeValuesResponse(payload)) {
+				const dataType = filterAttributeKey?.dataType ?? DataTypes.String;
+				const key = DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY[dataType];
+				setResults(key ? payload[key] || [] : []);
+				return;
 			}
 		} catch (e) {
 			console.error(e);

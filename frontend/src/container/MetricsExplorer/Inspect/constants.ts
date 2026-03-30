@@ -1,6 +1,5 @@
 import { ForwardRefExoticComponent, RefAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { MetricType } from './types';
 import {
 	BarChart,
 	BarChart2,
@@ -10,6 +9,7 @@ import {
 	LucideProps,
 } from 'lucide-react';
 
+import { MetricType } from './types';
 import {
 	MetricInspectionState,
 	SpaceAggregationOptions,
@@ -77,10 +77,6 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 		timeAggregationInterval: undefined,
 		spaceAggregationOption: undefined,
 		spaceAggregationLabels: [],
-		filters: {
-			items: [],
-			op: 'AND',
-		},
 		filterExpression: '',
 	},
 	appliedOptions: {
@@ -88,10 +84,6 @@ export const INITIAL_INSPECT_METRICS_OPTIONS: MetricInspectionState = {
 		timeAggregationInterval: undefined,
 		spaceAggregationOption: undefined,
 		spaceAggregationLabels: [],
-		filters: {
-			items: [],
-			op: 'AND',
-		},
 		filterExpression: '',
 	},
 };

@@ -1,7 +1,7 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from '../types';
 
 import GraphPopover from '../GraphPopover';
+import { InspectMetricsSeries } from '../types';
 import { GraphPopoverOptions, InspectionStep } from '../types';
 
 describe('GraphPopover', () => {

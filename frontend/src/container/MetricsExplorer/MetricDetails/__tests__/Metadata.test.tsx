@@ -179,7 +179,10 @@ describe('Metadata', () => {
 
 		const temporalitySelect = screen.getByTestId('temporality-select');
 		expect(temporalitySelect).toBeInTheDocument();
-		await userEvent.selectOptions(temporalitySelect, MetrictypesTemporalityDTO.cumulative);
+		await userEvent.selectOptions(
+			temporalitySelect,
+			MetrictypesTemporalityDTO.cumulative,
+		);
 
 		const unitSelect = screen.getByTestId('unit-select');
 		expect(unitSelect).toBeInTheDocument();
