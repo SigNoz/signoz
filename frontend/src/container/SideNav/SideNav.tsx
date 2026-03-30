@@ -62,8 +62,8 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
-import { showErrorNotification } from 'utils/error';
 import { isModifierKeyPressed } from 'utils/app';
+import { showErrorNotification } from 'utils/error';
 import { openInNewTab } from 'utils/navigation';
 
 import { useCmdK } from '../../providers/cmdKProvider';
