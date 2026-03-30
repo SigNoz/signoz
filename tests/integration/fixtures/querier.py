@@ -524,7 +524,9 @@ def get_column_data_from_response(response_json: Dict, column_name: str) -> List
     if not results:
         return []
     rows = results[0].get("rows") or []
-    return [row["data"][column_name] for row in rows if column_name in row.get("data", {})]
+    return [
+        row["data"][column_name] for row in rows if column_name in row.get("data", {})
+    ]
 
 
 def assert_scalar_result_order(

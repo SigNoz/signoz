@@ -10,7 +10,7 @@ import requests
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.logs import Logs
-from fixtures.querier import make_query_request, get_column_data_from_response
+from fixtures.querier import get_column_data_from_response, make_query_request
 
 TESTDATA_DIR = os.path.join(os.path.dirname(__file__), "..", "..", "testdata")
 FILTER_EXPRESSIONS_FILE = os.path.join(TESTDATA_DIR, "filter_expressions_10000.txt")
@@ -267,7 +267,7 @@ def test_filter_expressions_no_server_error(
                 }
             ],
         )
-    
+
     failures: List[str] = []
     with ThreadPoolExecutor(max_workers=40) as executor:
         with open(FILTER_EXPRESSIONS_FILE, encoding="utf-8") as f:
