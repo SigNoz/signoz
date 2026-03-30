@@ -127,7 +127,7 @@ func (server *Server) Add(ctx context.Context, event audittypes.AuditEvent) {
 	if len(server.queue) >= server.config.BufferSize {
 		server.metrics.eventsDropped.Add(ctx, 1)
 		span.SetAttributes(attribute.Bool("audit.dropped", true))
-		server.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("audit.buffer_size", server.config.BufferSize))
+		server.settings.Logger().WarnContext(ctx, "audit event dropped, buffer full", slog.Int("audit_buffer_size", server.config.BufferSize))
 		return
 	}
 
@@ -164,7 +164,7 @@ func (server *Server) export(ctx context.Context, events []audittypes.AuditEvent
 		server.metrics.writeErrors.Add(ctx, 1)
 		span.RecordError(err)
 		span.SetStatus(codes.Error, err.Error())
-		server.settings.Logger().ErrorContext(ctx, "audit batch export failed", errors.Attr(err), slog.Int("audit.batch_size", len(events)))
+		server.settings.Logger().ErrorContext(ctx, "audit batch export failed", errors.Attr(err), slog.Int("audit_batch_size", len(events)))
 	}
 }
 

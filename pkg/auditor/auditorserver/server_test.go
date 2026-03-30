@@ -2,12 +2,12 @@ package auditorserver
 
 import (
 	"context"
-	"fmt"
 	"sync"
 	"sync/atomic"
 	"testing"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
@@ -48,7 +48,7 @@ func TestStart_Stop(t *testing.T) {
 	done := make(chan error, 1)
 	go func() { done <- server.Start(context.Background()) }()
 
-	server.Stop(context.Background())
+	require.NoError(t, server.Stop(context.Background()))
 
 	select {
 	case err := <-done:
@@ -76,7 +76,7 @@ func TestAdd_FlushesOnBatchSize(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go server.Start(ctx)
+	go func() { _ = server.Start(ctx) }()
 
 	for i := 0; i < 3; i++ {
 		server.Add(ctx, newTestEvent("dashboard", audittypes.ActionCreate))
@@ -88,7 +88,7 @@ func TestAdd_FlushesOnBatchSize(t *testing.T) {
 		return len(exported) == 3
 	}, 2*time.Second, 10*time.Millisecond)
 
-	server.Stop(ctx)
+	require.NoError(t, server.Stop(ctx))
 }
 
 func TestAdd_FlushesOnInterval(t *testing.T) {
@@ -106,7 +106,7 @@ func TestAdd_FlushesOnInterval(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go server.Start(ctx)
+	go func() { _ = server.Start(ctx) }()
 
 	server.Add(ctx, newTestEvent("user", audittypes.ActionUpdate))
 
@@ -114,7 +114,7 @@ func TestAdd_FlushesOnInterval(t *testing.T) {
 		return exported.Load() == 1
 	}, 2*time.Second, 10*time.Millisecond)
 
-	server.Stop(ctx)
+	require.NoError(t, server.Stop(ctx))
 }
 
 func TestAdd_DropsWhenBufferFull(t *testing.T) {
@@ -148,13 +148,13 @@ func TestStop_DrainsRemainingEvents(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go server.Start(ctx)
+	go func() { _ = server.Start(ctx) }()
 
 	for i := 0; i < 5; i++ {
 		server.Add(ctx, newTestEvent("alert-rule", audittypes.ActionCreate))
 	}
 
-	server.Stop(ctx)
+	require.NoError(t, server.Stop(ctx))
 
 	assert.Equal(t, int64(5), exported.Load())
 }
@@ -167,14 +167,14 @@ func TestAdd_ContinuesAfterExportFailure(t *testing.T) {
 
 	server, err := New(settings, config, func(_ context.Context, _ []audittypes.AuditEvent) error {
 		calls.Add(1)
-		return fmt.Errorf("connection refused")
+		return errors.New(errors.TypeInternal, errors.CodeInternal, "connection refused")
 	})
 	require.NoError(t, err)
 
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go server.Start(ctx)
+	go func() { _ = server.Start(ctx) }()
 
 	server.Add(ctx, newTestEvent("user", audittypes.ActionDelete))
 	server.Add(ctx, newTestEvent("user", audittypes.ActionDelete))
@@ -183,7 +183,7 @@ func TestAdd_ContinuesAfterExportFailure(t *testing.T) {
 		return calls.Load() >= 1
 	}, 2*time.Second, 10*time.Millisecond)
 
-	server.Stop(ctx)
+	require.NoError(t, server.Stop(ctx))
 }
 
 func TestAdd_ConcurrentSafety(t *testing.T) {
@@ -201,7 +201,7 @@ func TestAdd_ConcurrentSafety(t *testing.T) {
 	ctx, cancel := context.WithCancel(context.Background())
 	defer cancel()
 
-	go server.Start(ctx)
+	go func() { _ = server.Start(ctx) }()
 
 	var wg sync.WaitGroup
 	for i := 0; i < 100; i++ {
@@ -213,7 +213,7 @@ func TestAdd_ConcurrentSafety(t *testing.T) {
 	}
 	wg.Wait()
 
-	server.Stop(ctx)
+	require.NoError(t, server.Stop(ctx))
 
 	assert.Equal(t, int64(100), exported.Load())
 }
