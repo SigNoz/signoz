@@ -10,7 +10,7 @@ import (
 )
 
 // Batcher buffers audit events and flushes them in batches.
-// A flush is triggered when either Size events accumulate or
+// A flush is triggered when either BatchSize events accumulate or
 // FlushInterval elapses, whichever comes first.
 type Batcher struct {
 	logger *slog.Logger
@@ -32,10 +32,10 @@ type Batcher struct {
 
 func New(logger *slog.Logger, config Config) *Batcher {
 	return &Batcher{
-		batchC: make(chan []audittypes.AuditEvent, config.Size),
+		batchC: make(chan []audittypes.AuditEvent, config.BatchSize),
 		logger: logger,
 		config: config,
-		queue:  make([]audittypes.AuditEvent, 0, config.Capacity),
+		queue:  make([]audittypes.AuditEvent, 0, config.BufferSize),
 		moreC:  make(chan struct{}, 1),
 		stopC:  make(chan struct{}),
 	}
@@ -57,7 +57,7 @@ func (b *Batcher) Start(ctx context.Context) error {
 				close(b.batchC)
 				return
 			case <-b.moreC:
-				if b.queueLen() >= b.config.Size {
+				if b.queueLen() >= b.config.BatchSize {
 					b.flush()
 				}
 			case <-ticker.C:
@@ -77,11 +77,11 @@ func (b *Batcher) Add(ctx context.Context, event audittypes.AuditEvent) {
 	b.queueMtx.Lock()
 	defer b.queueMtx.Unlock()
 
-	if len(b.queue) >= b.config.Capacity {
+	if len(b.queue) >= b.config.BufferSize {
 		b.dropped++
 		b.logger.WarnContext(ctx, "audit event dropped, buffer full",
 			slog.Int64("total_dropped", b.dropped),
-			slog.Int("capacity", b.config.Capacity),
+			slog.Int("capacity", b.config.BufferSize),
 		)
 		return
 	}
@@ -135,7 +135,7 @@ func (b *Batcher) next() []audittypes.AuditEvent {
 		return nil
 	}
 
-	n := min(b.config.Size, len(b.queue))
+	n := min(b.config.BatchSize, len(b.queue))
 
 	batch := make([]audittypes.AuditEvent, n)
 	copy(batch, b.queue[:n])

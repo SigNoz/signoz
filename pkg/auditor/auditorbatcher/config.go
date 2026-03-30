@@ -3,15 +3,15 @@ package auditorbatcher
 import "time"
 
 type Config struct {
-	// Capacity is the maximum number of events that can be buffered.
+	// BufferSize is the maximum number of events that can be buffered.
 	// When full, new events are dropped (fail-open).
-	Capacity int
+	BufferSize int
 
-	// Size is the maximum number of events per export batch.
-	Size int
+	// BatchSize is the maximum number of events per export batch.
+	BatchSize int
 
 	// FlushInterval is the maximum time between flushes.
-	// A flush is triggered when either Size events accumulate or
+	// A flush is triggered when either BatchSize events accumulate or
 	// FlushInterval elapses, whichever comes first.
 	FlushInterval time.Duration
 }
