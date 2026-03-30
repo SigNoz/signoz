@@ -5,9 +5,9 @@ import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
 import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
+import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
-import { useGetMetricsOnboardingStatus } from 'api/generated/services/metrics';
 import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
@@ -17,6 +17,7 @@ import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
@@ -80,7 +81,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.LOGS,
 			},
@@ -90,7 +91,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
@@ -105,7 +106,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.TRACES,
 			},
@@ -115,7 +116,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
