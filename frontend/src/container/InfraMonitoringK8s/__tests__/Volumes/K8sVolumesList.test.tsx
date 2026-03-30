@@ -4,6 +4,7 @@ import { MemoryRouter } from 'react-router-dom-v5-compat';
 import { FeatureKeys } from 'constants/features';
 import K8sVolumesList from 'container/InfraMonitoringK8s/Volumes/K8sVolumesList';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { IAppContext, IUser } from 'providers/App/types';
 import { QueryBuilderProvider } from 'providers/QueryBuilder';
 // eslint-disable-next-line no-restricted-imports
@@ -61,7 +62,7 @@ const mockVolumesResponse = {
 
 /** Renders K8sVolumesList with a real Redux store so dispatched actions affect state. */
 function renderWithRealStore(
-	initialEntries?: string[],
+	initialEntries?: Record<string, any>,
 ): { testStore: ReturnType<typeof createStore> } {
 	const testStore = createStore(reducers, applyMiddleware(thunk as any));
 	const queryClient = new QueryClient({
@@ -69,17 +70,19 @@ function renderWithRealStore(
 	});
 
 	render(
-		<QueryClientProvider client={queryClient}>
-			<QueryBuilderProvider>
-				<MemoryRouter initialEntries={initialEntries}>
-					<K8sVolumesList
-						isFiltersVisible={false}
-						handleFilterVisibilityChange={jest.fn()}
-						quickFiltersLastUpdated={-1}
-					/>
-				</MemoryRouter>
-			</QueryBuilderProvider>
-		</QueryClientProvider>,
+		<NuqsTestingAdapter searchParams={initialEntries}>
+			<QueryClientProvider client={queryClient}>
+				<QueryBuilderProvider>
+					<MemoryRouter>
+						<K8sVolumesList
+							isFiltersVisible={false}
+							handleFilterVisibilityChange={jest.fn()}
+							quickFiltersLastUpdated={-1}
+						/>
+					</MemoryRouter>
+				</QueryBuilderProvider>
+			</QueryClientProvider>
+		</NuqsTestingAdapter>,
 	);
 
 	return { testStore };
@@ -264,7 +267,7 @@ describe('K8sVolumesList', () => {
 		const user = userEvent.setup();
 		let apiCallCount = 0;
 		server.use(
-			rest.post('http://localhost/api/v1/pvcs/list', (_req, res, ctx) => {
+			rest.post('http://localhost/api/v1/pvcs/list', async (_req, res, ctx) => {
 				apiCallCount += 1;
 				return res(ctx.status(200), ctx.json(mockVolumesResponse));
 			}),
@@ -280,6 +283,15 @@ describe('K8sVolumesList', () => {
 		await waitFor(async () => {
 			const cells = await screen.findAllByText('test-pvc');
 			expect(cells.length).toBeGreaterThan(1);
+		});
+
+		// Wait for nuqs URL state to fully propagate to the component
+		// The selectedVolumeUID is managed via nuqs (async URL state),
+		// so we need to ensure the state has settled before dispatching time changes
+		await act(async () => {
+			await new Promise((resolve) => {
+				setTimeout(resolve, 0);
+			});
 		});
 
 		const countAfterClick = apiCallCount;
@@ -309,11 +321,6 @@ describe('K8sVolumesList', () => {
 	it('does not re-fetch groupedByRowData when time range changes after expanding a volume row with groupBy', async () => {
 		const user = userEvent.setup();
 		const groupByValue = [{ key: 'k8s_namespace_name' }];
-		const groupByParam = encodeURIComponent(JSON.stringify(groupByValue));
-
-		const initialEntries = [
-			`/volumes?${INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY}=${groupByParam}`,
-		];
 
 		let groupedByRowDataCallCount = 0;
 		server.use(
@@ -346,7 +353,9 @@ describe('K8sVolumesList', () => {
 			),
 		);
 
-		const { testStore } = renderWithRealStore(initialEntries);
+		const { testStore } = renderWithRealStore({
+			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupByValue),
+		});
 
 		await waitFor(async () => {
 			const elements = await screen.findAllByText('test-namespace');
