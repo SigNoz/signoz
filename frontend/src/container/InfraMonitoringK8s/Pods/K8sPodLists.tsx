@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -75,8 +74,6 @@ function K8sPodsList({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-
-	const [searchParams] = useSearchParams();
 
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
@@ -468,7 +465,7 @@ function K8sPodsList({
 	}, [selectedRowData, fetchGroupedByRowData]);
 
 	const openPodInNewTab = (record: K8sPodsRowData): void => {
-		const newParams = new URLSearchParams(searchParams);
+		const newParams = new URLSearchParams(document.location.search);
 		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
 		openInNewTab(
 			buildAbsolutePath({

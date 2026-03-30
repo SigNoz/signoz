@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -72,7 +71,6 @@ function K8sNodesList({
 		(state) => state.globalTime,
 	);
 
-	const [searchParams] = useSearchParams();
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
 
@@ -416,7 +414,7 @@ function K8sNodesList({
 	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
 	const openNodeInNewTab = (record: K8sNodesRowData): void => {
-		const newParams = new URLSearchParams(searchParams);
+		const newParams = new URLSearchParams(document.location.search);
 		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
 		openInNewTab(
 			buildAbsolutePath({

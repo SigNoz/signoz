@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -72,7 +71,6 @@ function K8sNamespacesList({
 		(state) => state.globalTime,
 	);
 
-	const [searchParams] = useSearchParams();
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
 
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
@@ -435,7 +433,7 @@ function K8sNamespacesList({
 	]);
 
 	const openNamespaceInNewTab = (record: K8sNamespacesRowData): void => {
-		const newParams = new URLSearchParams(searchParams);
+		const newParams = new URLSearchParams(document.location.search);
 		newParams.set(
 			INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
 			record.namespaceUID,

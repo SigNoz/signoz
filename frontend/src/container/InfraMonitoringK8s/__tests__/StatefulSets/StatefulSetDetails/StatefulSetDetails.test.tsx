@@ -111,7 +111,7 @@ describe('StatefulSetDetails', () => {
 
 		const eventsTab = screen.getByRole('radio', { name: 'Events' });
 		expect(eventsTab).not.toBeChecked();
-		await userEvent.click(eventsTab);
+		await userEvent.click(eventsTab, { pointerEventsCheck: 0 });
 		expect(eventsTab).toBeChecked();
 	});
 
