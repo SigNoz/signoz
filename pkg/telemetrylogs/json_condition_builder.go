@@ -270,18 +270,14 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 
 func (c *jsonConditionBuilder) buildTerminalArrayCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	conditions := []string{}
-	// if the value type is not an array
-	// TODO(piyush): Confirm the Query built for Array case and add testcases for it later
-	if !c.valueType.IsArray {
-		// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
-		if operator.IsStringSearchOperator() {
-			formattedValue := querybuilder.FormatValueForContains(value)
-			arrayCond, err := c.buildArrayMembershipCondition(node, operator, formattedValue, sb)
-			if err != nil {
-				return "", err
-			}
-			conditions = append(conditions, arrayCond)
+	// if operator is a String search Operator, then we need to build one more String comparison condition along with the Strict match condition
+	if operator.IsStringSearchOperator() {
+		formattedValue := querybuilder.FormatValueForContains(value)
+		arrayCond, err := c.buildArrayMembershipCondition(node, operator, formattedValue, sb)
+		if err != nil {
+			return "", err
 		}
+		conditions = append(conditions, arrayCond)
 
 		// switch operator for array membership checks
 		switch operator {
@@ -297,7 +293,11 @@ func (c *jsonConditionBuilder) buildTerminalArrayCondition(node *telemetrytypes.
 		return "", err
 	}
 	conditions = append(conditions, arrayCond)
-	return sb.Or(conditions...), nil
+	if len(conditions) > 1 {
+		return sb.Or(conditions...), nil
+	}
+
+	return conditions[0], nil
 }
 
 // buildArrayMembershipCondition builds condition of the part where Arrays becomes primitive types
