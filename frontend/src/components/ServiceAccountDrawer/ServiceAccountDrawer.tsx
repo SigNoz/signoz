@@ -108,13 +108,12 @@ function ServiceAccountDrawer({
 	);
 
 	useEffect(() => {
-		if (account) {
-			setLocalName(account.name ?? '');
+		if (account?.id) {
+			setLocalName(account?.name ?? '');
 			setKeysPage(1);
 		}
 		setSaveErrors([]);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [account?.id]);
+	}, [account?.id, account?.name, setKeysPage]);
 
 	useEffect(() => {
 		setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
@@ -153,11 +152,8 @@ function ServiceAccountDrawer({
 		}
 	}, [keysLoading, keys.length, keysPage, setKeysPage]);
 
-	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount({
-		mutation: {
-			retry: 2,
-		},
-	});
+	// the retry for this mutation is safe due to the api being idempotent on backend
+	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
 
 	const toSaveApiError = useCallback(
 		(err: unknown): APIError =>

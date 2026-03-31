@@ -34,16 +34,9 @@ export function useServiceAccountRoleManager(
 		data?.data,
 	]);
 
-	const { mutateAsync: createRole } = useCreateServiceAccountRole({
-		mutation: {
-			retry: 2,
-		},
-	});
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
-		mutation: {
-			retry: 2,
-		},
-	});
+	// the retry for these mutations is safe due to being idempotent on backend
+	const { mutateAsync: createRole } = useCreateServiceAccountRole();
+	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole();
 
 	const invalidateRoles = useCallback(
 		() =>
