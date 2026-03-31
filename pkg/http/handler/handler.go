@@ -4,6 +4,7 @@ import (
 	"net/http"
 	"slices"
 
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/swaggest/openapi-go"
@@ -20,9 +21,11 @@ type Handler interface {
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
+	auditDef    *AuditDef
+	auditor     auditor.Auditor
 }
 
-func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
+func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
 	// Remove duplicate error status codes
 	openAPIDef.ErrorStatusCodes = slices.DeleteFunc(openAPIDef.ErrorStatusCodes, func(statusCode int) bool {
 		return statusCode == http.StatusUnauthorized || statusCode == http.StatusForbidden || statusCode == http.StatusInternalServerError
@@ -36,13 +39,21 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef) Handler {
 		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
 	}
 
-	return &handler{
+	h := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
 	}
+	for _, opt := range opts {
+		opt(h)
+	}
+	return h
 }
 
 func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
+	if handler.auditDef != nil && handler.auditor != nil {
+		handler.serveWithAudit(rw, req)
+		return
+	}
 	handler.handlerFunc.ServeHTTP(rw, req)
 }
 
