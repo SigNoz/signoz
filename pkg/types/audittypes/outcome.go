@@ -2,19 +2,19 @@ package audittypes
 
 import (
 	"github.com/SigNoz/signoz/pkg/valuer"
-	otellog "go.opentelemetry.io/otel/log"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 // Outcome represents the result of an audited operation.
 type Outcome struct {
 	valuer.String
-	severity     otellog.Severity
+	severity     plog.SeverityNumber
 	severityText string
 }
 
 var (
-	OutcomeSuccess = Outcome{valuer.NewString("success"), otellog.SeverityInfo, "INFO"}
-	OutcomeFailure = Outcome{valuer.NewString("failure"), otellog.SeverityError, "ERROR"}
+	OutcomeSuccess = Outcome{valuer.NewString("success"), plog.SeverityNumberInfo, "INFO"}
+	OutcomeFailure = Outcome{valuer.NewString("failure"), plog.SeverityNumberError, "ERROR"}
 )
 
 func (Outcome) Enum() []any {
@@ -24,12 +24,12 @@ func (Outcome) Enum() []any {
 	}
 }
 
-// Severity returns the OTel log severity for this outcome.
-func (o Outcome) Severity() otellog.Severity {
+// Severity returns the plog severity number for this outcome.
+func (o Outcome) Severity() plog.SeverityNumber {
 	return o.severity
 }
 
-// SeverityText returns the OTel severity text for this outcome.
+// SeverityText returns the severity text for this outcome.
 func (o Outcome) SeverityText() string {
 	return o.severityText
 }

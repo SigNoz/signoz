@@ -1,62 +1,66 @@
 package audittypes
 
 import (
+	"encoding/hex"
 	"fmt"
 
-	otellog "go.opentelemetry.io/otel/log"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/collector/pdata/pcommon"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
-// ToLogRecord converts an AuditEvent into a complete OTel SDK log Record
-// with body, severity, all signoz.audit.* attributes, and transport context attributes.
-func (event AuditEvent) ToLogRecord() sdklog.Record {
-	var record sdklog.Record
+// ToLogRecord populates a plog.LogRecord with all audit event fields:
+// body, severity, event name, all signoz.audit.* attributes, and transport context attributes.
+func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
+	dest.SetTimestamp(pcommon.NewTimestampFromTime(event.Timestamp))
+	dest.SetObservedTimestamp(pcommon.NewTimestampFromTime(event.Timestamp))
+	dest.Body().SetStr(event.setBody())
+	dest.SetEventName(event.EventName.String())
+	dest.SetSeverityNumber(event.Outcome.Severity())
+	dest.SetSeverityText(event.Outcome.SeverityText())
 
-	record.SetTimestamp(event.Timestamp)
-	record.SetBody(otellog.StringValue(event.setBody()))
-	record.SetEventName(event.EventName.String())
-	record.SetSeverity(event.Outcome.Severity())
-	record.SetSeverityText(event.Outcome.SeverityText())
+	if event.TraceID != "" {
+		if tid, err := parseTraceID(event.TraceID); err == nil {
+			dest.SetTraceID(tid)
+		}
+	}
+	if event.SpanID != "" {
+		if sid, err := parseSpanID(event.SpanID); err == nil {
+			dest.SetSpanID(sid)
+		}
+	}
 
-	attrs := make([]otellog.KeyValue, 0, 20)
+	attrs := dest.Attributes()
 
 	// Principal attributes
-	attrs = append(attrs,
-		otellog.String("signoz.audit.principal.id", event.PrincipalID),
-		otellog.String("signoz.audit.principal.email", event.PrincipalEmail),
-		otellog.String("signoz.audit.principal.type", event.PrincipalType.StringValue()),
-		otellog.String("signoz.audit.principal.org_id", event.PrincipalOrgID),
-	)
-	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.identn_provider", event.IdentNProvider)
+	attrs.PutStr("signoz.audit.principal.id", event.PrincipalID)
+	attrs.PutStr("signoz.audit.principal.email", event.PrincipalEmail)
+	attrs.PutStr("signoz.audit.principal.type", event.PrincipalType.StringValue())
+	attrs.PutStr("signoz.audit.principal.org_id", event.PrincipalOrgID)
+	putStrIfNotEmpty(attrs, "signoz.audit.identn_provider", event.IdentNProvider)
 
 	// Action attributes
-	attrs = append(attrs,
-		otellog.String("signoz.audit.action", event.Action.StringValue()),
-		otellog.String("signoz.audit.action_category", event.ActionCategory.StringValue()),
-		otellog.String("signoz.audit.outcome", event.Outcome.StringValue()),
-	)
+	attrs.PutStr("signoz.audit.action", event.Action.StringValue())
+	attrs.PutStr("signoz.audit.action_category", event.ActionCategory.StringValue())
+	attrs.PutStr("signoz.audit.outcome", event.Outcome.StringValue())
 
 	// Resource attributes
-	attrs = append(attrs, otellog.String("signoz.audit.resource.name", event.ResourceName))
-	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.resource.id", event.ResourceID)
+	attrs.PutStr("signoz.audit.resource.name", event.ResourceName)
+	putStrIfNotEmpty(attrs, "signoz.audit.resource.id", event.ResourceID)
 
 	// Error attributes (on failure)
-	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.type", event.ErrorType)
-	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.code", event.ErrorCode)
-	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.message", event.ErrorMessage)
+	putStrIfNotEmpty(attrs, "signoz.audit.error.type", event.ErrorType)
+	putStrIfNotEmpty(attrs, "signoz.audit.error.code", event.ErrorCode)
+	putStrIfNotEmpty(attrs, "signoz.audit.error.message", event.ErrorMessage)
 
 	// Transport context attributes
-	attrs = appendStringIfNotEmpty(attrs, "http.request.method", event.HTTPMethod)
-	attrs = appendStringIfNotEmpty(attrs, "http.route", event.HTTPRoute)
+	putStrIfNotEmpty(attrs, "http.request.method", event.HTTPMethod)
+	putStrIfNotEmpty(attrs, "http.route", event.HTTPRoute)
 	if event.HTTPStatusCode != 0 {
-		attrs = append(attrs, otellog.Int("http.response.status_code", event.HTTPStatusCode))
+		attrs.PutInt("http.response.status_code", int64(event.HTTPStatusCode))
 	}
-	attrs = appendStringIfNotEmpty(attrs, "url.path", event.URLPath)
-	attrs = appendStringIfNotEmpty(attrs, "client.address", event.ClientAddress)
-	attrs = appendStringIfNotEmpty(attrs, "user_agent.original", event.UserAgent)
-
-	record.AddAttributes(attrs...)
-	return record
+	putStrIfNotEmpty(attrs, "url.path", event.URLPath)
+	putStrIfNotEmpty(attrs, "client.address", event.ClientAddress)
+	putStrIfNotEmpty(attrs, "user_agent.original", event.UserAgent)
 }
 
 func (event AuditEvent) setBody() string {
@@ -67,9 +71,28 @@ func (event AuditEvent) setBody() string {
 	return fmt.Sprintf("%s (%s) failed to %s %s %s: %s (%s)", event.PrincipalEmail, event.PrincipalID, event.Action.StringValue(), event.ResourceName, event.ResourceID, event.ErrorType, event.ErrorCode)
 }
 
-func appendStringIfNotEmpty(attrs []otellog.KeyValue, key, value string) []otellog.KeyValue {
+func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
 	if value != "" {
-		return append(attrs, otellog.String(key, value))
+		attrs.PutStr(key, value)
 	}
-	return attrs
+}
+
+func parseTraceID(s string) (pcommon.TraceID, error) {
+	b, err := hex.DecodeString(s)
+	if err != nil || len(b) != 16 {
+		return pcommon.TraceID{}, fmt.Errorf("invalid trace id: %s", s)
+	}
+	var tid pcommon.TraceID
+	copy(tid[:], b)
+	return tid, nil
+}
+
+func parseSpanID(s string) (pcommon.SpanID, error) {
+	b, err := hex.DecodeString(s)
+	if err != nil || len(b) != 8 {
+		return pcommon.SpanID{}, fmt.Errorf("invalid span id: %s", s)
+	}
+	var sid pcommon.SpanID
+	copy(sid[:], b)
+	return sid, nil
 }

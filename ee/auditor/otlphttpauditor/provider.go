@@ -1,9 +1,12 @@
 package otlphttpauditor
 
 import (
+	"bytes"
+	"compress/gzip"
 	"context"
 	"fmt"
 	"log/slog"
+	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
@@ -11,17 +14,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
+	"go.opentelemetry.io/collector/pdata/plog"
 )
 
 var _ auditor.Auditor = (*provider)(nil)
 
 type provider struct {
-	settings  factory.ScopedProviderSettings
-	licensing licensing.Licensing
-	server    *auditorserver.Server
-	exporter  *otlploghttp.Exporter
+	settings   factory.ScopedProviderSettings
+	licensing  licensing.Licensing
+	server     *auditorserver.Server
+	marshaler  plog.ProtoMarshaler
+	httpClient *http.Client
+	endpoint   string
+	compress   bool
 }
 
 func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
@@ -30,19 +35,22 @@ func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.A
 	})
 }
 
-func newProvider(ctx context.Context, providerSettings factory.ProviderSettings, config auditor.Config, lic licensing.Licensing) (auditor.Auditor, error) {
+func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config auditor.Config, lic licensing.Licensing) (auditor.Auditor, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/auditor/otlphttpauditor")
 
-	opts := buildExporterOptions(config.OTLPHTTP)
-	exporter, err := otlploghttp.New(ctx, opts...)
-	if err != nil {
-		return nil, fmt.Errorf("failed to create otlploghttp exporter: %w", err)
+	scheme := "https"
+	if config.OTLPHTTP.Insecure {
+		scheme = "http"
 	}
+	endpoint := fmt.Sprintf("%s://%s%s", scheme, config.OTLPHTTP.Endpoint, config.OTLPHTTP.URLPath)
 
 	p := &provider{
-		settings:  settings,
-		licensing: lic,
-		exporter:  exporter,
+		settings:   settings,
+		licensing:  lic,
+		marshaler:  plog.ProtoMarshaler{},
+		httpClient: &http.Client{Timeout: config.OTLPHTTP.Timeout},
+		endpoint:   endpoint,
+		compress:   config.OTLPHTTP.Compression == "gzip",
 	}
 
 	server, err := auditorserver.New(
@@ -80,58 +88,73 @@ func (p *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
 	p.server.Add(ctx, event)
 }
 
+func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
+	logs := plog.NewLogs()
+	rl := logs.ResourceLogs().AppendEmpty()
+	rl.Resource().Attributes().PutStr("service.name", "signoz")
+	sl := rl.ScopeLogs().AppendEmpty()
+	sl.Scope().SetName("signoz.audit")
+
+	for i := range events {
+		events[i].ToLogRecord(sl.LogRecords().AppendEmpty())
+	}
+
+	body, err := p.marshaler.MarshalLogs(logs)
+	if err != nil {
+		return fmt.Errorf("failed to marshal audit logs: %w", err)
+	}
+
+	return p.send(ctx, body)
+}
+
+func (p *provider) send(ctx context.Context, body []byte) error {
+	var reader *bytes.Reader
+
+	if p.compress {
+		var buf bytes.Buffer
+		gz := gzip.NewWriter(&buf)
+		if _, err := gz.Write(body); err != nil {
+			return fmt.Errorf("failed to gzip audit logs: %w", err)
+		}
+		if err := gz.Close(); err != nil {
+			return fmt.Errorf("failed to close gzip writer: %w", err)
+		}
+		reader = bytes.NewReader(buf.Bytes())
+	} else {
+		reader = bytes.NewReader(body)
+	}
+
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.endpoint, reader)
+	if err != nil {
+		return fmt.Errorf("failed to create audit export request: %w", err)
+	}
+
+	req.Header.Set("Content-Type", "application/x-protobuf")
+	if p.compress {
+		req.Header.Set("Content-Encoding", "gzip")
+	}
+
+	resp, err := p.httpClient.Do(req)
+	if err != nil {
+		return fmt.Errorf("audit export request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	if resp.StatusCode >= 400 {
+		return fmt.Errorf("audit export returned status %d", resp.StatusCode)
+	}
+
+	return nil
+}
+
 func (p *provider) Start(ctx context.Context) error {
 	return p.server.Start(ctx)
 }
 
 func (p *provider) Stop(ctx context.Context) error {
-	if err := p.server.Stop(ctx); err != nil {
-		return err
-	}
-
-	return p.exporter.Shutdown(ctx)
+	return p.server.Stop(ctx)
 }
 
 func (p *provider) Healthy() <-chan struct{} {
 	return p.server.Healthy()
-}
-
-func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
-	records := make([]sdklog.Record, len(events))
-	for i := range events {
-		records[i] = events[i].ToLogRecord()
-	}
-
-	return p.exporter.Export(ctx, records)
-}
-
-func buildExporterOptions(config auditor.OTLPHTTPConfig) []otlploghttp.Option {
-	opts := []otlploghttp.Option{
-		otlploghttp.WithEndpoint(config.Endpoint),
-		otlploghttp.WithURLPath(config.URLPath),
-		otlploghttp.WithTimeout(config.Timeout),
-	}
-
-	if config.Insecure {
-		opts = append(opts, otlploghttp.WithInsecure())
-	}
-
-	if config.Compression == "gzip" {
-		opts = append(opts, otlploghttp.WithCompression(otlploghttp.GzipCompression))
-	}
-
-	if len(config.Headers) > 0 {
-		opts = append(opts, otlploghttp.WithHeaders(config.Headers))
-	}
-
-	if config.Retry.Enabled {
-		opts = append(opts, otlploghttp.WithRetry(otlploghttp.RetryConfig{
-			Enabled:         true,
-			InitialInterval: config.Retry.InitialInterval,
-			MaxInterval:     config.Retry.MaxInterval,
-			MaxElapsedTime:  config.Retry.MaxElapsedTime,
-		}))
-	}
-
-	return opts
 }
