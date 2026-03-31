@@ -18,15 +18,11 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 	dest.SetSeverityNumber(event.Outcome.Severity())
 	dest.SetSeverityText(event.Outcome.SeverityText())
 
-	if event.TraceID != "" {
-		if tid, err := parseTraceID(event.TraceID); err == nil {
-			dest.SetTraceID(tid)
-		}
+	if tid, ok := parseTraceID(event.TraceID); ok {
+		dest.SetTraceID(tid)
 	}
-	if event.SpanID != "" {
-		if sid, err := parseSpanID(event.SpanID); err == nil {
-			dest.SetSpanID(sid)
-		}
+	if sid, ok := parseSpanID(event.SpanID); ok {
+		dest.SetSpanID(sid)
 	}
 
 	attrs := dest.Attributes()
@@ -77,22 +73,22 @@ func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
 	}
 }
 
-func parseTraceID(s string) (pcommon.TraceID, error) {
+func parseTraceID(s string) (pcommon.TraceID, bool) {
 	b, err := hex.DecodeString(s)
 	if err != nil || len(b) != 16 {
-		return pcommon.TraceID{}, fmt.Errorf("invalid trace id: %s", s)
+		return pcommon.TraceID{}, false
 	}
 	var tid pcommon.TraceID
 	copy(tid[:], b)
-	return tid, nil
+	return tid, true
 }
 
-func parseSpanID(s string) (pcommon.SpanID, error) {
+func parseSpanID(s string) (pcommon.SpanID, bool) {
 	b, err := hex.DecodeString(s)
 	if err != nil || len(b) != 8 {
-		return pcommon.SpanID{}, fmt.Errorf("invalid span id: %s", s)
+		return pcommon.SpanID{}, false
 	}
 	var sid pcommon.SpanID
 	copy(sid[:], b)
-	return sid, nil
+	return sid, true
 }

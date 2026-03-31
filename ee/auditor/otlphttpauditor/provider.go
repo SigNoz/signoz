@@ -7,6 +7,7 @@ import (
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/auditor"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -60,7 +61,7 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 		p.export,
 	)
 	if err != nil {
-		return nil, fmt.Errorf("failed to create auditor server: %w", err)
+		return nil, errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to create auditor server")
 	}
 
 	p.server = server

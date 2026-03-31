@@ -4,14 +4,13 @@ import (
 	"bytes"
 	"compress/gzip"
 	"context"
-	"errors"
-	"fmt"
 	"io"
 	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"go.opentelemetry.io/collector/pdata/plog"
 	collogspb "go.opentelemetry.io/proto/otlp/collector/logs/v1"
@@ -24,6 +23,8 @@ const (
 	maxHTTPResponseReadBytes = 64 * 1024
 	protobufContentType      = "application/x-protobuf"
 )
+
+var errCodeAuditExport = errors.MustNewCode("audit_export")
 
 // retryableError wraps an error that can be retried, optionally with a server-suggested delay.
 type retryableError struct {
@@ -47,7 +48,7 @@ func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) e
 
 	request, err := p.marshaler.MarshalLogs(logs)
 	if err != nil {
-		return fmt.Errorf("failed to marshal audit logs: %w", err)
+		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to marshal audit logs")
 	}
 
 	return p.send(ctx, request)
@@ -100,10 +101,10 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
 		if _, err := gz.Write(request); err != nil {
-			return fmt.Errorf("failed to gzip audit logs: %w", err)
+			return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to gzip audit logs")
 		}
 		if err := gz.Close(); err != nil {
-			return fmt.Errorf("failed to close gzip writer: %w", err)
+			return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to close gzip writer")
 		}
 		body = &buf
 	} else {
@@ -112,7 +113,7 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.endpoint, body)
 	if err != nil {
-		return fmt.Errorf("failed to create audit export request: %w", err)
+		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to create audit export request")
 	}
 
 	req.Header.Set("Content-Type", protobufContentType)
@@ -122,7 +123,7 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 
 	resp, err := p.httpClient.Do(req)
 	if err != nil {
-		return fmt.Errorf("failed to make an HTTP request: %w", err)
+		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to make an HTTP request")
 	}
 	defer func() {
 		_, _ = io.CopyN(io.Discard, resp.Body, maxHTTPResponseReadBytes)
@@ -138,9 +139,9 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 
 	var formattedErr error
 	if respStatus != nil {
-		formattedErr = fmt.Errorf("error exporting audit logs, request to %s responded with HTTP Status Code %d, Message=%s, Details=%v", p.endpoint, resp.StatusCode, respStatus.Message, respStatus.Details)
+		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d, Message=%s, Details=%v", p.endpoint, resp.StatusCode, respStatus.Message, respStatus.Details)
 	} else {
-		formattedErr = fmt.Errorf("error exporting audit logs, request to %s responded with HTTP Status Code %d", p.endpoint, resp.StatusCode)
+		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d", p.endpoint, resp.StatusCode)
 	}
 
 	if isRetryableStatusCode(resp.StatusCode) {
