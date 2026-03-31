@@ -112,9 +112,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
-		if errorsJSON := render.ErrorFromBody(writer.BodyBytes()); errorsJSON != nil {
-			errorCode = errorsJSON.Code
-		}
+		errorCode = render.ErrorCodeFromBody(writer.BodyBytes())
 	}
 
 	event := audittypes.NewAuditEventFromHTTPRequest(
