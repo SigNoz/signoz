@@ -1,7 +1,7 @@
 package units
 
 const (
-	// base 10 (SI prefixes)
+	// base 10 (SI prefixes).
 	Bit       float64 = 1e0
 	Kilobit           = Bit * 1e3
 	Megabit           = Bit * 1e6
@@ -26,7 +26,7 @@ const (
 	Ronnabyte  = Byte * 1e27
 	Quettabyte = Byte * 1e30
 
-	// base 2 (IEC prefixes)
+	// base 2 (IEC prefixes).
 	Kibibit = Bit * 1024
 	Mebibit = Kibibit * 1024
 	Gibibit = Mebibit * 1024
@@ -63,7 +63,7 @@ func (*dataConverter) Name() string {
 // kibi = Ki, mebi = Mi, gibi = Gi, tebi = Ti, pibi = Pi
 // kilo = k, mega = M, giga = G, tera = T, peta = P
 // exa = E, zetta = Z, yotta = Y
-// byte = By, bit = bit
+// byte = By, bit = bit.
 func FromDataUnit(u Unit) float64 {
 	switch u {
 	case "bytes", "By": // base 2

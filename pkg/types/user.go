@@ -199,7 +199,7 @@ func (u *User) ErrIfRoot() error {
 }
 
 // ErrIfDeleted returns an error if the user is in deleted state.
-// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfDeleted() error {
 	if u.Status == UserStatusDeleted {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusDeleted, "unsupported operation for deleted user")
@@ -208,7 +208,7 @@ func (u *User) ErrIfDeleted() error {
 }
 
 // ErrIfPending returns an error if the user is in pending invite state.
-// This error can be enriched with specific operation by the called using errors.WithAdditionalf
+// This error can be enriched with specific operation by the called using errors.WithAdditionalf.
 func (u *User) ErrIfPending() error {
 	if u.Status == UserStatusPendingInvite {
 		return errors.New(errors.TypeUnsupported, ErrCodeUserStatusPendingInvite, "unsupported operation for pending user")

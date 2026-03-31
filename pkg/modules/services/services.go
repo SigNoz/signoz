@@ -9,14 +9,14 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// Handler exposes HTTP handler for services_qbv5
+// Handler exposes HTTP handler for services_qbv5.
 type Handler interface {
 	Get(http.ResponseWriter, *http.Request)
 	GetTopOperations(http.ResponseWriter, *http.Request)
 	GetEntryPointOperations(http.ResponseWriter, *http.Request)
 }
 
-// Module represents the services QBv5 module interface
+// Module represents the services QBv5 module interface.
 type Module interface {
 	Get(ctx context.Context, orgID valuer.UUID, req *servicetypesv1.Request) ([]*servicetypesv1.ResponseItem, error)
 	FetchTopLevelOperations(ctx context.Context, start time.Time, services []string) (map[string][]string, error)

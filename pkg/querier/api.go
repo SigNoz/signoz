@@ -182,7 +182,7 @@ func (handler *handler) QueryRawStream(rw http.ResponseWriter, req *http.Request
 }
 
 // TODO(srikanthccv): everything done here can be done on frontend as well
-// For the time being I am adding a helper function
+// For the time being I am adding a helper function.
 func (handler *handler) ReplaceVariables(rw http.ResponseWriter, req *http.Request) {
 
 	var queryRangeRequest qbtypes.QueryRangeRequest
@@ -241,7 +241,7 @@ func (handler *handler) logEvent(ctx context.Context, referrer string, event *qb
 		return
 	}
 
-	if !(event.LogsUsed || event.MetricsUsed || event.TracesUsed) {
+	if !event.LogsUsed && !event.MetricsUsed && !event.TracesUsed {
 		return
 	}
 

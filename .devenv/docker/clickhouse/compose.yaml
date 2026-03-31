@@ -27,8 +27,8 @@ services:
       - ${PWD}/fs/tmp/var/lib/clickhouse/user_scripts/:/var/lib/clickhouse/user_scripts/
       - ${PWD}/../../../deploy/common/clickhouse/custom-function.xml:/etc/clickhouse-server/custom-function.xml
     ports:
-      - '127.0.0.1:8123:8123'
-      - '127.0.0.1:9000:9000'
+      - "127.0.0.1:8123:8123"
+      - "127.0.0.1:9000:9000"
     tty: true
     healthcheck:
       test:
@@ -47,13 +47,16 @@ services:
         condition: service_healthy
     environment:
       - CLICKHOUSE_SKIP_USER_SETUP=1
+    networks:
+      - default
+      - signoz-devenv
   zookeeper:
     image: signoz/zookeeper:3.7.1
     container_name: zookeeper
     volumes:
       - ${PWD}/fs/tmp/zookeeper:/bitnami/zookeeper
     ports:
-      - '127.0.0.1:2181:2181'
+      - "127.0.0.1:2181:2181"
     environment:
       - ALLOW_ANONYMOUS_LOGIN=yes
     healthcheck:
@@ -74,12 +77,19 @@ services:
     entrypoint:
       - /bin/sh
     command:
-    - -c 
-    - |
-      /signoz-otel-collector migrate bootstrap &&
-      /signoz-otel-collector migrate sync up &&
-      /signoz-otel-collector migrate async up
+      - -c
+      - |
+        /signoz-otel-collector migrate bootstrap &&
+        /signoz-otel-collector migrate sync up &&
+        /signoz-otel-collector migrate async up
     depends_on:
       clickhouse:
         condition: service_healthy
     restart: on-failure
+    networks:
+      - default
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    name: signoz-devenv

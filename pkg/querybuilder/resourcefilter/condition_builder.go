@@ -54,7 +54,7 @@ func (b *defaultConditionBuilder) ConditionFor(
 ) (string, error) {
 
 	if key.FieldContext != telemetrytypes.FieldContextResource {
-		return "true", nil
+		return querybuilder.SkipConditionLiteral, nil
 	}
 
 	// except for in, not in, between, not between all other operators should have formatted value

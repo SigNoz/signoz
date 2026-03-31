@@ -33,7 +33,7 @@ func (c *CachedBucket) Clone() *CachedBucket {
 	}
 }
 
-// CachedData represents the full cached data for a query
+// CachedData represents the full cached data for a query.
 type CachedData struct {
 	Buckets  []*CachedBucket `json:"buckets"`
 	Warnings []string        `json:"warnings"`

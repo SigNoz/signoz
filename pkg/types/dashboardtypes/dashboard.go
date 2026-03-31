@@ -203,11 +203,12 @@ func addStatsFromStorableDashboard(dashboard *StorableDashboard, stats map[strin
 						for _, queryData := range builderQueryData {
 							data, ok := queryData.(map[string]interface{})
 							if ok {
-								if data["dataSource"] == "traces" {
+								switch data["dataSource"] {
+								case "traces":
 									stats["dashboard.panels.traces.count"] = stats["dashboard.panels.traces.count"].(int64) + 1
-								} else if data["dataSource"] == "metrics" {
+								case "metrics":
 									stats["dashboard.panels.metrics.count"] = stats["dashboard.panels.metrics.count"].(int64) + 1
-								} else if data["dataSource"] == "logs" {
+								case "logs":
 									stats["dashboard.panels.logs.count"] = stats["dashboard.panels.logs.count"].(int64) + 1
 								}
 							}
@@ -349,7 +350,7 @@ func (dashboard *Dashboard) GetWidgetQuery(startTime, endTime, widgetIndex uint6
 		return nil, errors.Wrapf(err, errors.TypeInvalidInput, ErrCodeDashboardInvalidData, "invalid dashboard data")
 	}
 
-	if widgetIndex < 0 || int(widgetIndex) >= len(data.Widgets) {
+	if int(widgetIndex) >= len(data.Widgets) {
 		return nil, errors.Newf(errors.TypeInvalidInput, ErrCodeDashboardInvalidInput, "widget with index %v doesn't exist", widgetIndex)
 	}
 
