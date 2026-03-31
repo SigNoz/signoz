@@ -64,11 +64,11 @@ func NewAuditEventFromHTTPRequest(
 	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 
 	return AuditEvent{
-		Timestamp:                     time.Now(),
-		TraceID:                       traceID,
-		SpanID:                        spanID,
-		Body:                          newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
-		EventName:                     NewEventName(resourceAttributes.ResourceName, auditAttributes.Action),
+		Timestamp:           time.Now(),
+		TraceID:             traceID,
+		SpanID:              spanID,
+		Body:                newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
+		EventName:           NewEventName(resourceAttributes.ResourceName, auditAttributes.Action),
 		AuditAttributes:     auditAttributes,
 		PrincipalAttributes: principalAttributes,
 		ResourceAttributes:  resourceAttributes,

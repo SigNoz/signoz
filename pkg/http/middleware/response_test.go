@@ -14,8 +14,8 @@ func TestResponseCapture(t *testing.T) {
 	t.Parallel()
 
 	testCases := []struct {
-		name           string
-		handler        http.HandlerFunc
+		name               string
+		handler            http.HandlerFunc
 		expectedStatus     int
 		expectedBodyBytes  string
 		expectedClientBody string

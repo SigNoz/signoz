@@ -15,50 +15,50 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 	spanID := oteltrace.SpanID{1, 2, 3, 4, 5, 6, 7, 8}
 
 	testCases := []struct {
-		name         string
-		method       string
-		path         string
-		route        string
-		statusCode   int
-		action       Action
-		category     ActionCategory
-		claims       authtypes.Claims
-		resourceID   string
-		resourceName string
-		errorType   string
-		errorCode   string
+		name            string
+		method          string
+		path            string
+		route           string
+		statusCode      int
+		action          Action
+		category        ActionCategory
+		claims          authtypes.Claims
+		resourceID      string
+		resourceName    string
+		errorType       string
+		errorCode       string
 		expectedOutcome Outcome
-		expectedBody     string
+		expectedBody    string
 	}{
 		{
-			name:         "Success_DashboardCreated",
-			method:       http.MethodPost,
-			path:         "/api/v1/dashboards",
-			route:        "/api/v1/dashboards",
-			statusCode:   http.StatusOK,
-			action:       ActionCreate,
-			category:     ActionCategoryConfigurationChange,
-			claims:       authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
-			resourceID:   "019b-5678-efgh-9012",
-			resourceName: "dashboard",
-			expectedOutcome:  OutcomeSuccess,
-			expectedBody:     "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard 019b-5678-efgh-9012",
+			name:            "Success_DashboardCreated",
+			method:          http.MethodPost,
+			path:            "/api/v1/dashboards",
+			route:           "/api/v1/dashboards",
+			statusCode:      http.StatusOK,
+			action:          ActionCreate,
+			category:        ActionCategoryConfigurationChange,
+			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
+			resourceID:      "019b-5678-efgh-9012",
+			resourceName:    "dashboard",
+			expectedOutcome: OutcomeSuccess,
+			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678-efgh-9012)",
 		},
 		{
-			name:         "Failure_ForbiddenDashboardUpdate",
-			method:       http.MethodPut,
-			path:         "/api/v1/dashboards/019b-5678-efgh-9012",
-			route:        "/api/v1/dashboards/{id}",
-			statusCode:   http.StatusForbidden,
-			action:       ActionUpdate,
-			category:     ActionCategoryConfigurationChange,
-			claims:       authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
-			resourceID:   "019b-5678-efgh-9012",
-			resourceName: "dashboard",
-			errorType: "forbidden",
-			errorCode: "authz_forbidden",
-			expectedOutcome:  OutcomeFailure,
-			expectedBody:     "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard 019b-5678-efgh-9012: forbidden (authz_forbidden)",
+			name:            "Failure_ForbiddenDashboardUpdate",
+			method:          http.MethodPut,
+			path:            "/api/v1/dashboards/019b-5678-efgh-9012",
+			route:           "/api/v1/dashboards/{id}",
+			statusCode:      http.StatusForbidden,
+			action:          ActionUpdate,
+			category:        ActionCategoryConfigurationChange,
+			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
+			resourceID:      "019b-5678-efgh-9012",
+			resourceName:    "dashboard",
+			errorType:       "forbidden",
+			errorCode:       "authz_forbidden",
+			expectedOutcome: OutcomeFailure,
+			expectedBody:    "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard (019b-5678-efgh-9012): forbidden (authz_forbidden)",
 		},
 	}
 
