@@ -4,7 +4,6 @@ import (
 	"net/http"
 	"slices"
 
-	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/swaggest/openapi-go"
@@ -21,8 +20,7 @@ type Handler interface {
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
-	auditDef    *AuditDef
-	auditor     auditor.Auditor
+	auditDef *AuditDef
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -50,10 +48,6 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 }
 
 func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
-	if handler.auditDef != nil && handler.auditor != nil {
-		handler.serveWithAudit(rw, req)
-		return
-	}
 	handler.handlerFunc.ServeHTTP(rw, req)
 }
 
