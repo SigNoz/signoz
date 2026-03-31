@@ -39,7 +39,8 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 		providerSettings.TracerProvider,
 		providerSettings.MeterProvider,
 		client.WithTimeout(config.OTLPHTTP.Timeout),
-		client.WithRetryCount(0),
+		client.WithRetryCount(retryCountFromConfig(config.OTLPHTTP.Retry)),
+		retrierOption(config.OTLPHTTP.Retry),
 	)
 	if err != nil {
 		return nil, err

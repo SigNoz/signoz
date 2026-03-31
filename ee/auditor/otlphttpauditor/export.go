@@ -6,7 +6,6 @@ import (
 	"io"
 	"log/slog"
 	"net/http"
-	"time"
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -38,46 +37,10 @@ func (provider *provider) export(ctx context.Context, events []audittypes.AuditE
 	return nil
 }
 
-func (provider *provider) send(ctx context.Context, body []byte) error {
-	retryCfg := provider.config.OTLPHTTP.Retry
-	if !retryCfg.Enabled {
-		return provider.sendOnce(ctx, body)
-	}
-
-	interval := retryCfg.InitialInterval
-	deadline := time.Now().Add(retryCfg.MaxElapsedTime)
-
-	for {
-		err := provider.sendOnce(ctx, body)
-		if err == nil {
-			return nil
-		}
-
-		var re *retryableError
-		if !errors.As(err, &re) || time.Now().After(deadline) {
-			return err
-		}
-
-		wait := interval
-		if re.delay > 0 {
-			wait = re.delay
-		}
-
-		provider.settings.Logger().WarnContext(ctx, "audit export attempt failed with error %s, retrying in %s", err.Error(), wait.String())
-
-		select {
-		case <-ctx.Done():
-			return ctx.Err()
-		case <-time.After(wait):
-		}
-
-		interval = min(interval*2, retryCfg.MaxInterval)
-	}
-}
-
-// Posts a protobuf-encoded OTLP request to the configured endpoint and returns a *retryableError for status codes that should be retried.
+// Posts a protobuf-encoded OTLP request to the configured endpoint.
+// Retries are handled by the underlying heimdall HTTP client.
 // Ref: https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/otlphttpexporter/otlp.go
-func (provider *provider) sendOnce(ctx context.Context, body []byte) error {
+func (provider *provider) send(ctx context.Context, body []byte) error {
 	req, err := http.NewRequestWithContext(ctx, http.MethodPost, provider.config.OTLPHTTP.Endpoint.String(), bytes.NewReader(body))
 	if err != nil {
 		return err
@@ -128,18 +91,11 @@ func (provider *provider) onSuccess(ctx context.Context, res *http.Response) {
 func (provider *provider) onErr(res *http.Response) error {
 	status := readResponseStatus(res)
 
-	var err error
 	if status != nil {
-		err = errors.Newf(errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "request to %s responded with status code %d, Message=%s, Details=%v", provider.config.OTLPHTTP.Endpoint.String(), res.StatusCode, status.Message, status.Details)
-	} else {
-		err = errors.Newf(errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "request to %s responded with status code %d", provider.config.OTLPHTTP.Endpoint.String(), res.StatusCode)
+		return errors.Newf(errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "request to %s responded with status code %d, Message=%s, Details=%v", provider.config.OTLPHTTP.Endpoint.String(), res.StatusCode, status.Message, status.Details)
 	}
 
-	if isRetryableStatusCode(res.StatusCode) {
-		return newRetryableError(err, res)
-	}
-
-	return err
+	return errors.Newf(errors.TypeInternal, auditor.ErrCodeAuditExportFailed, "request to %s responded with status code %d", provider.config.OTLPHTTP.Endpoint.String(), res.StatusCode)
 }
 
 // Reads at most maxHTTPResponseReadBytes from the response body.
