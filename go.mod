@@ -64,6 +64,7 @@ require (
 	github.com/uptrace/bun/dialect/sqlitedialect v1.2.9
 	github.com/uptrace/bun/extra/bunotel v1.2.9
 	go.opentelemetry.io/collector/confmap v1.51.0
+	go.opentelemetry.io/collector/exporter/exporterhelper v0.144.0
 	go.opentelemetry.io/collector/otelcol v0.144.0
 	go.opentelemetry.io/collector/pdata v1.51.0
 	go.opentelemetry.io/contrib/config v0.10.0
@@ -142,7 +143,6 @@ require (
 	go.opentelemetry.io/collector/client v1.50.0 // indirect
 	go.opentelemetry.io/collector/config/configoptional v1.50.0 // indirect
 	go.opentelemetry.io/collector/config/configretry v1.50.0 // indirect
-	go.opentelemetry.io/collector/exporter/exporterhelper v0.144.0 // indirect
 	go.opentelemetry.io/collector/internal/componentalias v0.145.0 // indirect
 	go.opentelemetry.io/collector/pdata/xpdata v0.144.0 // indirect
 	go.yaml.in/yaml/v2 v2.4.3 // indirect
