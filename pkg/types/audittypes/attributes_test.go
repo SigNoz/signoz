@@ -13,29 +13,29 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 	testCases := []struct {
 		name        string
 		statusCode  int
-		wantOutcome Outcome
+		expectedOutcome Outcome
 	}{
 		{
 			name:        "200_Success",
 			statusCode:  200,
-			wantOutcome: OutcomeSuccess,
+			expectedOutcome: OutcomeSuccess,
 		},
 		{
 			name:        "399_Success",
 			statusCode:  399,
-			wantOutcome: OutcomeSuccess,
+			expectedOutcome: OutcomeSuccess,
 		},
 		{
 			name:        "400_Failure",
 			statusCode:  400,
-			wantOutcome: OutcomeFailure,
+			expectedOutcome: OutcomeFailure,
 		},
 	}
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
 			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, ActionUpdate, ActionCategoryConfigurationChange, claims)
-			assert.Equal(t, testCase.wantOutcome, attrs.Outcome)
+			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
 		})
 	}
 }
@@ -44,17 +44,17 @@ func TestNewPrincipalAttributesFromClaims_PrincipalType(t *testing.T) {
 	testCases := []struct {
 		name              string
 		identNProvider    string
-		wantPrincipalType PrincipalType
+		expectedPrincipalType PrincipalType
 	}{
 		{
 			name:              "Tokenizer_User",
 			identNProvider:    "tokenizer",
-			wantPrincipalType: PrincipalTypeUser,
+			expectedPrincipalType: PrincipalTypeUser,
 		},
 		{
 			name:              "APIKey_ServiceAccount",
 			identNProvider:    "api_key",
-			wantPrincipalType: PrincipalTypeServiceAccount,
+			expectedPrincipalType: PrincipalTypeServiceAccount,
 		},
 	}
 
@@ -68,7 +68,7 @@ func TestNewPrincipalAttributesFromClaims_PrincipalType(t *testing.T) {
 			}
 
 			attrs := NewPrincipalAttributesFromClaims(claims)
-			assert.Equal(t, testCase.wantPrincipalType, attrs.PrincipalType)
+			assert.Equal(t, testCase.expectedPrincipalType, attrs.PrincipalType)
 		})
 	}
 }

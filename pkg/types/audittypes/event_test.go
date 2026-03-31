@@ -27,8 +27,8 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		resourceName string
 		errorType   string
 		errorCode   string
-		wantOutcome Outcome
-		wantBody     string
+		expectedOutcome Outcome
+		expectedBody     string
 	}{
 		{
 			name:         "Success_DashboardCreated",
@@ -41,8 +41,8 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			claims:       authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
 			resourceID:   "019b-5678-efgh-9012",
 			resourceName: "dashboard",
-			wantOutcome:  OutcomeSuccess,
-			wantBody:     "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard 019b-5678-efgh-9012",
+			expectedOutcome:  OutcomeSuccess,
+			expectedBody:     "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard 019b-5678-efgh-9012",
 		},
 		{
 			name:         "Failure_ForbiddenDashboardUpdate",
@@ -57,8 +57,8 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			resourceName: "dashboard",
 			errorType: "forbidden",
 			errorCode: "authz_forbidden",
-			wantOutcome:  OutcomeFailure,
-			wantBody:     "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard 019b-5678-efgh-9012: forbidden (authz_forbidden)",
+			expectedOutcome:  OutcomeFailure,
+			expectedBody:     "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard 019b-5678-efgh-9012: forbidden (authz_forbidden)",
 		},
 	}
 
@@ -81,8 +81,8 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 				testCase.errorCode,
 			)
 
-			assert.Equal(t, testCase.wantOutcome, event.AuditAttributes.Outcome)
-			assert.Equal(t, testCase.wantBody, event.Body)
+			assert.Equal(t, testCase.expectedOutcome, event.AuditAttributes.Outcome)
+			assert.Equal(t, testCase.expectedBody, event.Body)
 			assert.Equal(t, testCase.resourceName, event.ResourceAttributes.ResourceName)
 			assert.Equal(t, testCase.resourceID, event.ResourceAttributes.ResourceID)
 			assert.Equal(t, testCase.action, event.AuditAttributes.Action)

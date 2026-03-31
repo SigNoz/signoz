@@ -16,9 +16,9 @@ func TestResponseCapture(t *testing.T) {
 	testCases := []struct {
 		name           string
 		handler        http.HandlerFunc
-		wantStatus     int
-		wantBodyBytes  string
-		wantClientBody string
+		expectedStatus     int
+		expectedBodyBytes  string
+		expectedClientBody string
 	}{
 		{
 			name: "Success_DoesNotCaptureBody",
@@ -26,9 +26,9 @@ func TestResponseCapture(t *testing.T) {
 				rw.WriteHeader(http.StatusOK)
 				_, _ = rw.Write([]byte(`{"status":"success","data":{"id":"123"}}`))
 			},
-			wantStatus:     http.StatusOK,
-			wantBodyBytes:  "",
-			wantClientBody: `{"status":"success","data":{"id":"123"}}`,
+			expectedStatus:     http.StatusOK,
+			expectedBodyBytes:  "",
+			expectedClientBody: `{"status":"success","data":{"id":"123"}}`,
 		},
 		{
 			name: "Error_CapturesBody",
@@ -36,9 +36,9 @@ func TestResponseCapture(t *testing.T) {
 				rw.WriteHeader(http.StatusForbidden)
 				_, _ = rw.Write([]byte(`{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`))
 			},
-			wantStatus:     http.StatusForbidden,
-			wantBodyBytes:  `{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`,
-			wantClientBody: `{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`,
+			expectedStatus:     http.StatusForbidden,
+			expectedBodyBytes:  `{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`,
+			expectedClientBody: `{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`,
 		},
 		{
 			name: "Error_TruncatesAtMaxCapture",
@@ -46,9 +46,9 @@ func TestResponseCapture(t *testing.T) {
 				rw.WriteHeader(http.StatusInternalServerError)
 				_, _ = rw.Write([]byte(strings.Repeat("x", maxResponseBodyCapture+100)))
 			},
-			wantStatus:     http.StatusInternalServerError,
-			wantBodyBytes:  strings.Repeat("x", maxResponseBodyCapture) + "...",
-			wantClientBody: strings.Repeat("x", maxResponseBodyCapture+100),
+			expectedStatus:     http.StatusInternalServerError,
+			expectedBodyBytes:  strings.Repeat("x", maxResponseBodyCapture) + "...",
+			expectedClientBody: strings.Repeat("x", maxResponseBodyCapture+100),
 		},
 		{
 			name: "NoContent_SuppressesWrite",
@@ -56,9 +56,9 @@ func TestResponseCapture(t *testing.T) {
 				rw.WriteHeader(http.StatusNoContent)
 				_, _ = rw.Write([]byte("should be suppressed"))
 			},
-			wantStatus:     http.StatusNoContent,
-			wantBodyBytes:  "",
-			wantClientBody: "",
+			expectedStatus:     http.StatusNoContent,
+			expectedBodyBytes:  "",
+			expectedClientBody: "",
 		},
 	}
 
@@ -80,9 +80,9 @@ func TestResponseCapture(t *testing.T) {
 
 			clientBody, _ := io.ReadAll(resp.Body)
 
-			assert.Equal(t, testCase.wantStatus, captured.StatusCode())
-			assert.Equal(t, testCase.wantBodyBytes, string(captured.BodyBytes()))
-			assert.Equal(t, testCase.wantClientBody, string(clientBody))
+			assert.Equal(t, testCase.expectedStatus, captured.StatusCode())
+			assert.Equal(t, testCase.expectedBodyBytes, string(captured.BodyBytes()))
+			assert.Equal(t, testCase.expectedClientBody, string(clientBody))
 		})
 	}
 }
