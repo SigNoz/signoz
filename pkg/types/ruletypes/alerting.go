@@ -13,7 +13,7 @@ import (
 )
 
 const (
-	// how long before re-sending the alert
+	// how long before re-sending the alert.
 	ResolvedRetention = 15 * time.Minute
 	TestAlertPostFix  = "_TEST_ALERT"
 	AlertTimeFormat   = "2006-01-02 15:04:05"
@@ -167,7 +167,7 @@ func (rc *RuleCondition) ShouldEval(series *qbtypes.TimeSeries) bool {
 	return !rc.RequireMinPoints || len(series.Values) >= rc.RequiredNumPoints
 }
 
-// QueryType is a shorthand method to get query type
+// QueryType is a shorthand method to get query type.
 func (rc *RuleCondition) QueryType() QueryType {
 	return rc.CompositeQuery.QueryType
 }

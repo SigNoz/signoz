@@ -5,7 +5,7 @@ import (
 	"github.com/open-feature/go-sdk/openfeature"
 )
 
-// Consumer facing interface for the feature registry
+// Consumer facing interface for the feature registry.
 type Registry interface {
 	// Returns the feature and the resolution detail for the given name
 	Get(name Name) (*Feature, openfeature.ProviderResolutionDetail, error)
@@ -17,12 +17,12 @@ type Registry interface {
 	List() []*Feature
 }
 
-// Concrete implementation of the Registry interface
+// Concrete implementation of the Registry interface.
 type registry struct {
 	features map[Name]*Feature
 }
 
-// Validates and builds a new registry from a list of features
+// Validates and builds a new registry from a list of features.
 func NewRegistry(features ...*Feature) (Registry, error) {
 	registry := &registry{features: make(map[Name]*Feature)}
 

@@ -14,7 +14,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// Test for querySamples method
+// Test for querySamples method.
 func TestClient_QuerySamples(t *testing.T) {
 	ctx := context.Background()
 	cols := make([]cmock.ColumnType, 0)

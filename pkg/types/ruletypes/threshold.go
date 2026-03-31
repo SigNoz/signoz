@@ -203,7 +203,7 @@ func sortThresholds(thresholds []BasicRuleThreshold) {
 	})
 }
 
-// convertToRuleUnit converts the given value from the target unit to the rule unit
+// convertToRuleUnit converts the given value from the target unit to the rule unit.
 func (b BasicRuleThreshold) convertToRuleUnit(val float64, ruleUnit string) float64 {
 	unitConverter := units.ConverterFromUnit(units.Unit(b.TargetUnit))
 	// convert the target value to the y-axis unit
@@ -214,12 +214,12 @@ func (b BasicRuleThreshold) convertToRuleUnit(val float64, ruleUnit string) floa
 	return value.F
 }
 
-// target returns the target value in the rule unit
+// target returns the target value in the rule unit.
 func (b BasicRuleThreshold) target(ruleUnit string) float64 {
 	return b.convertToRuleUnit(*b.TargetValue, ruleUnit)
 }
 
-// recoveryTarget returns the recovery target value in the rule unit
+// recoveryTarget returns the recovery target value in the rule unit.
 func (b BasicRuleThreshold) recoveryTarget(ruleUnit string) float64 {
 	return b.convertToRuleUnit(*b.RecoveryTarget, ruleUnit)
 }
@@ -335,7 +335,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 			}
 			// use min value from the series
 			if shouldAlert {
-				var minValue float64 = math.Inf(1)
+				var minValue = math.Inf(1)
 				for _, smpl := range series.Values {
 					if smpl.Value < minValue {
 						minValue = smpl.Value
@@ -351,7 +351,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 				}
 			}
 			if shouldAlert {
-				var maxValue float64 = math.Inf(-1)
+				var maxValue = math.Inf(-1)
 				for _, smpl := range series.Values {
 					if smpl.Value > maxValue {
 						maxValue = smpl.Value
@@ -403,23 +403,24 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 		}
 		avg := sum / count
 		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
-		if b.CompareOperator == ValueIsAbove {
+		switch b.CompareOperator {
+		case ValueIsAbove:
 			if avg > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsBelow {
+		case ValueIsBelow:
 			if avg < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsEq {
+		case ValueIsEq:
 			if avg == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsNotEq {
+		case ValueIsNotEq:
 			if avg != target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueOutsideBounds {
+		case ValueOutsideBounds:
 			if math.Abs(avg) >= target {
 				shouldAlert = true
 			}
@@ -435,23 +436,24 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 			sum += smpl.Value
 		}
 		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
-		if b.CompareOperator == ValueIsAbove {
+		switch b.CompareOperator {
+		case ValueIsAbove:
 			if sum > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsBelow {
+		case ValueIsBelow:
 			if sum < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsEq {
+		case ValueIsEq:
 			if sum == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsNotEq {
+		case ValueIsNotEq:
 			if sum != target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueOutsideBounds {
+		case ValueOutsideBounds:
 			if math.Abs(sum) >= target {
 				shouldAlert = true
 			}
@@ -460,19 +462,20 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 		// If the last sample matches the condition, the rule is firing.
 		shouldAlert = false
 		alertSmpl = Sample{Point: Point{V: series.Values[len(series.Values)-1].Value}, Metric: lbls}
-		if b.CompareOperator == ValueIsAbove {
+		switch b.CompareOperator {
+		case ValueIsAbove:
 			if series.Values[len(series.Values)-1].Value > target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsBelow {
+		case ValueIsBelow:
 			if series.Values[len(series.Values)-1].Value < target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsEq {
+		case ValueIsEq:
 			if series.Values[len(series.Values)-1].Value == target {
 				shouldAlert = true
 			}
-		} else if b.CompareOperator == ValueIsNotEq {
+		case ValueIsNotEq:
 			if series.Values[len(series.Values)-1].Value != target {
 				shouldAlert = true
 			}

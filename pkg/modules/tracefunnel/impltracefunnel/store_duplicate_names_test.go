@@ -12,7 +12,7 @@ import (
 	"github.com/stretchr/testify/mock"
 )
 
-// Test that Create method properly validates duplicate names
+// Test that Create method properly validates duplicate names.
 func TestModule_Create_DuplicateNameValidation(t *testing.T) {
 	mockStore := new(MockStore)
 	module := NewModule(mockStore)
@@ -37,7 +37,7 @@ func TestModule_Create_DuplicateNameValidation(t *testing.T) {
 	mockStore.AssertExpectations(t)
 }
 
-// Test that Update method properly validates duplicate names
+// Test that Update method properly validates duplicate names.
 func TestModule_Update_DuplicateNameValidation(t *testing.T) {
 	mockStore := new(MockStore)
 	module := NewModule(mockStore)
@@ -65,7 +65,7 @@ func TestModule_Update_DuplicateNameValidation(t *testing.T) {
 	mockStore.AssertExpectations(t)
 }
 
-// MockStore for testing
+// MockStore for testing.
 type MockStore struct {
 	mock.Mock
 }

@@ -4,14 +4,13 @@ setupCommonMocks();
 
 import { QueryClient, QueryClientProvider } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
-import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { render, waitFor } from '@testing-library/react';
 import { FeatureKeys } from 'constants/features';
 import K8sVolumesList from 'container/InfraMonitoringK8s/Volumes/K8sVolumesList';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { IAppContext, IUser } from 'providers/App/types';
-import store from 'store';
 import { LicenseResModel } from 'types/api/licensesV3/getActive';
 
 const queryClient = new QueryClient({
@@ -81,8 +80,8 @@ describe('K8sVolumesList - useGetAggregateKeys Category Regression', () => {
 
 	it('should call aggregate keys API with k8s_volume_capacity', async () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
+			<NuqsTestingAdapter>
+				<QueryClientProvider client={queryClient}>
 					<MemoryRouter>
 						<K8sVolumesList
 							isFiltersVisible={false}
@@ -90,8 +89,8 @@ describe('K8sVolumesList - useGetAggregateKeys Category Regression', () => {
 							quickFiltersLastUpdated={-1}
 						/>
 					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+				</QueryClientProvider>
+			</NuqsTestingAdapter>,
 		);
 
 		await waitFor(() => {
@@ -130,8 +129,8 @@ describe('K8sVolumesList - useGetAggregateKeys Category Regression', () => {
 			} as IAppContext);
 
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
+			<NuqsTestingAdapter>
+				<QueryClientProvider client={queryClient}>
 					<MemoryRouter>
 						<K8sVolumesList
 							isFiltersVisible={false}
@@ -139,8 +138,8 @@ describe('K8sVolumesList - useGetAggregateKeys Category Regression', () => {
 							quickFiltersLastUpdated={-1}
 						/>
 					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+				</QueryClientProvider>
+			</NuqsTestingAdapter>,
 		);
 
 		await waitFor(() => {

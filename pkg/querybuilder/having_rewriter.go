@@ -12,7 +12,7 @@ type HavingExpressionRewriter struct {
 	columnMap map[string]string
 }
 
-// NewHavingExpressionRewriter creates a new having expression rewriter
+// NewHavingExpressionRewriter creates a new having expression rewriter.
 func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	return &HavingExpressionRewriter{
 		columnMap: make(map[string]string),

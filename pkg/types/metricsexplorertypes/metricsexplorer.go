@@ -125,12 +125,12 @@ type MetricMetadata struct {
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
-// MarshalBinary implements cachetypes.Cacheable interface
+// MarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// UnmarshalBinary implements cachetypes.Cacheable interface
+// UnmarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, m)
 }
@@ -340,4 +340,40 @@ type ListMetric struct {
 // ListMetricsResponse represents the response for the list metrics endpoint.
 type ListMetricsResponse struct {
 	Metrics []ListMetric `json:"metrics" required:"true" nullable:"true"`
+}
+
+// MetricsOnboardingResponse is the response for the lightweight metrics onboarding check.
+type MetricsOnboardingResponse struct {
+	HasMetrics bool `json:"hasMetrics" required:"true"`
+}
+
+// InspectMetricsRequest is the request for inspecting raw metric data points.
+type InspectMetricsRequest struct {
+	MetricName string          `json:"metricName" required:"true"`
+	Start      int64           `json:"start" required:"true"`
+	End        int64           `json:"end" required:"true"`
+	Filter     *qbtypes.Filter `json:"filter,omitempty"`
+}
+
+// Validate ensures the request is valid.
+func (r *InspectMetricsRequest) Validate() error {
+	if r.MetricName == "" {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "metricName is required")
+	}
+	if r.Start <= 0 || r.End <= 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start and end must be positive")
+	}
+	if r.Start >= r.End {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "start must be less than end")
+	}
+	maxRange := int64(30 * 60 * 1000) // 30 minutes in milliseconds
+	if r.End-r.Start > maxRange {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "time range must not exceed 30 minutes")
+	}
+	return nil
+}
+
+// InspectMetricsResponse is the response for the inspect metrics endpoint.
+type InspectMetricsResponse struct {
+	Series []*qbtypes.TimeSeries `json:"series" required:"true" nullable:"true"`
 }

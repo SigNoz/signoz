@@ -25,7 +25,7 @@ func (r *rowsWithHooks) Close() error {
 
 	// mark as closed and run the onClose hook
 	r.closed = true
-	if err := r.Rows.Err(); err != nil {
+	if err := r.Err(); err != nil {
 		r.event.Err = err
 	}
 	closeErr := r.Rows.Close()

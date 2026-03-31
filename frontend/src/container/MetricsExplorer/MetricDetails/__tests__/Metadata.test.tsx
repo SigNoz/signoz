@@ -5,7 +5,6 @@ import {
 	MetrictypesTemporalityDTO,
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
 import {
 	UniversalYAxisUnit,
 	YAxisUnitSelectorProps,
@@ -180,7 +179,10 @@ describe('Metadata', () => {
 
 		const temporalitySelect = screen.getByTestId('temporality-select');
 		expect(temporalitySelect).toBeInTheDocument();
-		await userEvent.selectOptions(temporalitySelect, Temporality.CUMULATIVE);
+		await userEvent.selectOptions(
+			temporalitySelect,
+			MetrictypesTemporalityDTO.cumulative,
+		);
 
 		const unitSelect = screen.getByTestId('unit-select');
 		expect(unitSelect).toBeInTheDocument();

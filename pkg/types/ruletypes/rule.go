@@ -47,7 +47,7 @@ func NewStatsFromRules(rules []*Rule) map[string]any {
 	return stats
 }
 
-// RuleAlert represents an alert associated with a rule, used when filtering by metric name
+// RuleAlert represents an alert associated with a rule, used when filtering by metric name.
 type RuleAlert struct {
 	AlertName string
 	AlertID   string

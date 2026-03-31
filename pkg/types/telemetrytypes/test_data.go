@@ -4,8 +4,8 @@ package telemetrytypes
 // Test JSON Type Set Data Setup
 // ============================================================================
 
-// TestJSONTypeSet returns a map of path->types for testing
-// This represents the type information available in the test JSON structure
+// TestJSONTypeSet returns a map of path->types for testing.
+// This represents the type information available in the test JSON structure.
 func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
 	types := map[string][]JSONDataType{
 		"user.name":                                           {String},
