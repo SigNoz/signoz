@@ -32,7 +32,7 @@ func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
 				{Expression: "count()", Alias: "total"},
 				{Expression: "avg(duration)", Alias: "avg_duration"},
 			},
-			expectedExpression: "(__result_0 > 100 AND __result_1 < 500) OR __result_0 > 10000",
+			expectedExpression: "(((__result_0 > 100 AND __result_1 < 500)) OR __result_0 > 10000)",
 		},
 		{
 			name:             "__result reference for single aggregation",
@@ -57,7 +57,7 @@ func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
 				{Expression: "count()", Alias: ""},
 				{Expression: "sum(bytes)", Alias: ""},
 			},
-			expectedExpression: "__result_0 > 100 AND __result_1 < 1000",
+			expectedExpression: "(__result_0 > 100 AND __result_1 < 1000)",
 		},
 		{
 			name:             "mixed aliases and expressions",
@@ -66,7 +66,7 @@ func TestHavingExpressionRewriter_LogQueries(t *testing.T) {
 				{Expression: "count()", Alias: ""},
 				{Expression: "countIf(level='error')", Alias: "error_count"},
 			},
-			expectedExpression: "__result_1 > 10 AND __result_0 < 1000",
+			expectedExpression: "(__result_1 > 10 AND __result_0 < 1000)",
 		},
 		{
 			name:             "string literal in having expression",

@@ -44,11 +44,14 @@ type HavingExpressionListener interface {
 	// EnterFunctionCall is called when entering the functionCall production.
 	EnterFunctionCall(c *FunctionCallContext)
 
-	// EnterFunctionArgs is called when entering the functionArgs production.
-	EnterFunctionArgs(c *FunctionArgsContext)
+	// EnterFunctionArgList is called when entering the functionArgList production.
+	EnterFunctionArgList(c *FunctionArgListContext)
 
-	// EnterFunctionArg is called when entering the functionArg production.
-	EnterFunctionArg(c *FunctionArgContext)
+	// EnterFuncArg is called when entering the funcArg production.
+	EnterFuncArg(c *FuncArgContext)
+
+	// EnterFuncArgToken is called when entering the funcArgToken production.
+	EnterFuncArgToken(c *FuncArgTokenContext)
 
 	// EnterIdentifier is called when entering the identifier production.
 	EnterIdentifier(c *IdentifierContext)
@@ -89,11 +92,14 @@ type HavingExpressionListener interface {
 	// ExitFunctionCall is called when exiting the functionCall production.
 	ExitFunctionCall(c *FunctionCallContext)
 
-	// ExitFunctionArgs is called when exiting the functionArgs production.
-	ExitFunctionArgs(c *FunctionArgsContext)
+	// ExitFunctionArgList is called when exiting the functionArgList production.
+	ExitFunctionArgList(c *FunctionArgListContext)
 
-	// ExitFunctionArg is called when exiting the functionArg production.
-	ExitFunctionArg(c *FunctionArgContext)
+	// ExitFuncArg is called when exiting the funcArg production.
+	ExitFuncArg(c *FuncArgContext)
+
+	// ExitFuncArgToken is called when exiting the funcArgToken production.
+	ExitFuncArgToken(c *FuncArgTokenContext)
 
 	// ExitIdentifier is called when exiting the identifier production.
 	ExitIdentifier(c *IdentifierContext)

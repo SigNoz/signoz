@@ -70,11 +70,19 @@ term
     ;
 
 /*
- * Factors: atoms or parenthesized operands for arithmetic grouping.
- * E.g.: (sum(a) + sum(b)) * 2 > 100
+ * Factors: atoms, parenthesized operands, or unary-signed sub-factors.
+ * E.g.: (sum(a) + sum(b)) * 2 > 100, -count() > 0, -(avg(x) + 1) > 0
+ *
+ * Note: the lexer's NUMBER rule includes an optional SIGN prefix, so a bare
+ * negative literal like -10 is a single NUMBER token and is handled by atom,
+ * not by the unary rule here. Unary sign applies when the operand following
+ * the sign is a non-literal: a function call, an identifier, or a parenthesised
+ * expression. As a result, `count()-10 > 0` is always rejected: after `count()`
+ * the lexer produces NUMBER(-10), which is not a valid compOp or binary operator.
  */
 factor
-    : LPAREN operand RPAREN
+    : (PLUS | MINUS) factor
+    | LPAREN operand RPAREN
     | atom
     ;
 
@@ -83,37 +91,67 @@ factor
  *   - aggregate function calls:  count(), sum(bytes), avg(duration)
  *   - identifier references:     aliases, result refs (__result, __result_0, __result0)
  *   - numeric literals:          100, 0.5, 1e6
+ *   - string literals:           'xyz' — recognized so we can give a friendly error
  *
- * Quoted string literals are intentionally excluded — HAVING expressions
- * compare aggregate results which are always numeric.
+ * String literals in HAVING are always invalid (aggregator results are numeric),
+ * but we accept them here so the visitor can produce a clear error message instead
+ * of a raw syntax error.
  */
 atom
     : functionCall
     | identifier
     | NUMBER
+    | STRING
     ;
 
 /*
- * Aggregate function calls:
- *   - count()
- *   - sum(bytes)
- *   - avg(duration_nano)
+ * Aggregate function calls, e.g.:
+ *   count(), sum(bytes), avg(duration_nano)
+ *   countIf(level='error'), sumIf(bytes, status > 400)
+ *   p99(duration), avg(sum(cpu_usage))
  *
- * Arguments are restricted to a single column identifier.
- * Nested function calls are not valid in HAVING expressions —
- * reference nested aggregations by alias or expression string instead.
+ * Function arguments are parsed as a permissive token sequence (funcArgToken+)
+ * so that complex aggregation expressions — including nested function calls and
+ * filter predicates with string literals — can be referenced verbatim in the
+ * HAVING expression. The visitor looks up the full call text (whitespace-free,
+ * via ctx.GetText()) in the column map, which stores normalized (space-stripped)
+ * aggregation expression keys.
  */
 functionCall
-    : IDENTIFIER LPAREN functionArgs? RPAREN
+    : IDENTIFIER LPAREN functionArgList? RPAREN
     ;
 
-functionArgs
-    : functionArg ( COMMA functionArg )*
+functionArgList
+    : funcArg ( COMMA funcArg )*
     ;
 
-// Function argument: a column being aggregated (e.g. bytes, duration_nano)
-functionArg
+/*
+ * A single function argument is one or more consecutive arg-tokens.
+ * Commas at the top level separate arguments; closing parens terminate the list.
+ */
+funcArg
+    : funcArgToken+
+    ;
+
+/*
+ * Permissive token set for function argument content. Covers:
+ *   - simple identifiers:     bytes, duration
+ *   - string literals:        'error', "info"
+ *   - numeric literals:       200, 3.14
+ *   - comparison operators:   level='error', status > 400
+ *   - arithmetic operators:   x + y
+ *   - boolean connectives:    level='error' AND status=200
+ *   - balanced parens:        nested calls like sum(duration)
+ */
+funcArgToken
     : IDENTIFIER
+    | STRING
+    | NUMBER
+    | BOOL
+    | EQUALS | NOT_EQUALS | NEQ | LT | LE | GT | GE
+    | PLUS | MINUS | STAR | SLASH | PERCENT
+    | NOT | AND | OR
+    | LPAREN funcArgToken* RPAREN
     ;
 
 // Identifier references: aliases, field names, result references
@@ -173,6 +211,14 @@ NUMBER
 //         service.name, span.duration
 IDENTIFIER
     : [a-zA-Z_] [a-zA-Z0-9_]* ( '.' [a-zA-Z_] [a-zA-Z0-9_]* )*
+    ;
+
+// Quoted string literals (single or double-quoted).
+// These are valid tokens inside function arguments (e.g. countIf(level='error'))
+// but are always rejected in comparison-operand position by the visitor.
+STRING
+    : '\'' (~'\'')* '\''
+    | '"' (~'"')* '"'
     ;
 
 // Skip whitespace

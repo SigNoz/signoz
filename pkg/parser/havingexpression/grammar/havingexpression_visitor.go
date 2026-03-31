@@ -44,11 +44,14 @@ type HavingExpressionVisitor interface {
 	// Visit a parse tree produced by HavingExpressionParser#functionCall.
 	VisitFunctionCall(ctx *FunctionCallContext) interface{}
 
-	// Visit a parse tree produced by HavingExpressionParser#functionArgs.
-	VisitFunctionArgs(ctx *FunctionArgsContext) interface{}
+	// Visit a parse tree produced by HavingExpressionParser#functionArgList.
+	VisitFunctionArgList(ctx *FunctionArgListContext) interface{}
 
-	// Visit a parse tree produced by HavingExpressionParser#functionArg.
-	VisitFunctionArg(ctx *FunctionArgContext) interface{}
+	// Visit a parse tree produced by HavingExpressionParser#funcArg.
+	VisitFuncArg(ctx *FuncArgContext) interface{}
+
+	// Visit a parse tree produced by HavingExpressionParser#funcArgToken.
+	VisitFuncArgToken(ctx *FuncArgTokenContext) interface{}
 
 	// Visit a parse tree produced by HavingExpressionParser#identifier.
 	VisitIdentifier(ctx *IdentifierContext) interface{}

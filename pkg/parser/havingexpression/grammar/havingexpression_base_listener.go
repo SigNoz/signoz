@@ -93,17 +93,23 @@ func (s *BaseHavingExpressionListener) EnterFunctionCall(ctx *FunctionCallContex
 // ExitFunctionCall is called when production functionCall is exited.
 func (s *BaseHavingExpressionListener) ExitFunctionCall(ctx *FunctionCallContext) {}
 
-// EnterFunctionArgs is called when production functionArgs is entered.
-func (s *BaseHavingExpressionListener) EnterFunctionArgs(ctx *FunctionArgsContext) {}
+// EnterFunctionArgList is called when production functionArgList is entered.
+func (s *BaseHavingExpressionListener) EnterFunctionArgList(ctx *FunctionArgListContext) {}
 
-// ExitFunctionArgs is called when production functionArgs is exited.
-func (s *BaseHavingExpressionListener) ExitFunctionArgs(ctx *FunctionArgsContext) {}
+// ExitFunctionArgList is called when production functionArgList is exited.
+func (s *BaseHavingExpressionListener) ExitFunctionArgList(ctx *FunctionArgListContext) {}
 
-// EnterFunctionArg is called when production functionArg is entered.
-func (s *BaseHavingExpressionListener) EnterFunctionArg(ctx *FunctionArgContext) {}
+// EnterFuncArg is called when production funcArg is entered.
+func (s *BaseHavingExpressionListener) EnterFuncArg(ctx *FuncArgContext) {}
 
-// ExitFunctionArg is called when production functionArg is exited.
-func (s *BaseHavingExpressionListener) ExitFunctionArg(ctx *FunctionArgContext) {}
+// ExitFuncArg is called when production funcArg is exited.
+func (s *BaseHavingExpressionListener) ExitFuncArg(ctx *FuncArgContext) {}
+
+// EnterFuncArgToken is called when production funcArgToken is entered.
+func (s *BaseHavingExpressionListener) EnterFuncArgToken(ctx *FuncArgTokenContext) {}
+
+// ExitFuncArgToken is called when production funcArgToken is exited.
+func (s *BaseHavingExpressionListener) ExitFuncArgToken(ctx *FuncArgTokenContext) {}
 
 // EnterIdentifier is called when production identifier is entered.
 func (s *BaseHavingExpressionListener) EnterIdentifier(ctx *IdentifierContext) {}

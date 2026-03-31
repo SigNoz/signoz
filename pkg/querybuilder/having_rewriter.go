@@ -18,6 +18,7 @@ func NewHavingExpressionRewriter() *HavingExpressionRewriter {
 	}
 }
 
+// RewriteForTraces rewrites and validates the HAVING expression for a traces query.
 func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregations []qbtypes.TraceAggregation) (string, error) {
 	if len(strings.TrimSpace(expression)) == 0 {
 		return "", nil
@@ -26,6 +27,7 @@ func (r *HavingExpressionRewriter) RewriteForTraces(expression string, aggregati
 	return r.rewriteAndValidate(expression)
 }
 
+// RewriteForLogs rewrites and validates the HAVING expression for a logs query.
 func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregations []qbtypes.LogAggregation) (string, error) {
 	if len(strings.TrimSpace(expression)) == 0 {
 		return "", nil
@@ -34,6 +36,7 @@ func (r *HavingExpressionRewriter) RewriteForLogs(expression string, aggregation
 	return r.rewriteAndValidate(expression)
 }
 
+// RewriteForMetrics rewrites and validates the HAVING expression for a metrics query.
 func (r *HavingExpressionRewriter) RewriteForMetrics(expression string, aggregations []qbtypes.MetricAggregation) (string, error) {
 	if len(strings.TrimSpace(expression)) == 0 {
 		return "", nil
@@ -53,6 +56,9 @@ func (r *HavingExpressionRewriter) buildTraceColumnMap(aggregations []qbtypes.Tr
 		}
 
 		r.columnMap[agg.Expression] = sqlColumn
+		if normalized := strings.ReplaceAll(agg.Expression, " ", ""); normalized != agg.Expression {
+			r.columnMap[normalized] = sqlColumn
+		}
 
 		r.columnMap[fmt.Sprintf("__result%d", idx)] = sqlColumn
 
@@ -73,6 +79,9 @@ func (r *HavingExpressionRewriter) buildLogColumnMap(aggregations []qbtypes.LogA
 		}
 
 		r.columnMap[agg.Expression] = sqlColumn
+		if normalized := strings.ReplaceAll(agg.Expression, " ", ""); normalized != agg.Expression {
+			r.columnMap[normalized] = sqlColumn
+		}
 
 		r.columnMap[fmt.Sprintf("__result%d", idx)] = sqlColumn
 

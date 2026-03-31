@@ -56,11 +56,15 @@ func (v *BaseHavingExpressionVisitor) VisitFunctionCall(ctx *FunctionCallContext
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseHavingExpressionVisitor) VisitFunctionArgs(ctx *FunctionArgsContext) interface{} {
+func (v *BaseHavingExpressionVisitor) VisitFunctionArgList(ctx *FunctionArgListContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 
-func (v *BaseHavingExpressionVisitor) VisitFunctionArg(ctx *FunctionArgContext) interface{} {
+func (v *BaseHavingExpressionVisitor) VisitFuncArg(ctx *FuncArgContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
+func (v *BaseHavingExpressionVisitor) VisitFuncArgToken(ctx *FuncArgTokenContext) interface{} {
 	return v.VisitChildren(ctx)
 }
 

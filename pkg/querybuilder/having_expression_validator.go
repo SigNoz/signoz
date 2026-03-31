@@ -1,13 +1,13 @@
 package querybuilder
 
 import (
-	"regexp"
 	"sort"
 	"strings"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	grammar "github.com/SigNoz/signoz/pkg/parser/havingexpression/grammar"
 	"github.com/antlr4-go/antlr/v4"
+	"github.com/huandu/go-sqlbuilder"
 )
 
 // havingExpressionRewriteVisitor walks the parse tree of a HavingExpression in a single
@@ -25,15 +25,17 @@ import (
 //   - FunctionCallContext looks the full call text (without whitespace, since WS is
 //     skipped) up in columnMap; if found the SQL column name is returned, otherwise the
 //     function name is added to invalid without recursing into its arguments.
-//
-// Complex columnMap keys whose argument contains nested function calls (e.g.
-// "avg(sum(cpu_usage))") cannot be parsed by the grammar, so they are substituted via
-// a targeted regex pre-pass in rewriteAndValidate before this visitor runs.
+//     The grammar now accepts complex function arguments (nested calls, string predicates),
+//     so all aggregation expression forms can be looked up directly via ctx.GetText().
+//   - STRING atoms (string literals in comparison position) set hasStringLiteral so a
+//     friendly "aggregator results are numeric" error can be returned.
 type havingExpressionRewriteVisitor struct {
-	columnMap    map[string]string
-	validColumns map[string]bool // TO-side values; identifiers already in SQL form pass through
-	invalid      []string
-	seen         map[string]bool
+	columnMap        map[string]string
+	validColumns     map[string]bool // TO-side values; identifiers already in SQL form pass through
+	invalid          []string
+	seen             map[string]bool
+	hasStringLiteral bool
+	sb               *sqlbuilder.SelectBuilder
 }
 
 func newHavingExpressionRewriteVisitor(columnMap map[string]string) *havingExpressionRewriteVisitor {
@@ -45,6 +47,7 @@ func newHavingExpressionRewriteVisitor(columnMap map[string]string) *havingExpre
 		columnMap:    columnMap,
 		validColumns: validColumns,
 		seen:         make(map[string]bool),
+		sb:           sqlbuilder.NewSelectBuilder(),
 	}
 }
 
@@ -65,7 +68,10 @@ func (v *havingExpressionRewriteVisitor) visitOrExpression(ctx grammar.IOrExpres
 	for i, ae := range andExprs {
 		parts[i] = v.visitAndExpression(ae)
 	}
-	return strings.Join(parts, " OR ")
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return v.sb.Or(parts...)
 }
 
 // visitAndExpression joins ALL primaries with " AND ".
@@ -78,23 +84,26 @@ func (v *havingExpressionRewriteVisitor) visitAndExpression(ctx grammar.IAndExpr
 	for i, p := range primaries {
 		parts[i] = v.visitPrimary(p)
 	}
-	return strings.Join(parts, " AND ")
+	if len(parts) == 1 {
+		return parts[0]
+	}
+	return v.sb.And(parts...)
 }
 
 func (v *havingExpressionRewriteVisitor) visitPrimary(ctx grammar.IPrimaryContext) string {
 	if ctx.OrExpression() != nil {
 		inner := v.visitOrExpression(ctx.OrExpression())
 		if ctx.NOT() != nil {
-			return "NOT (" + inner + ")"
+			return v.sb.Not(inner)
 		}
-		return "(" + inner + ")"
+		return v.sb.And(inner)
 	}
 	if ctx.Comparison() == nil {
 		return ""
 	}
 	inner := v.visitComparison(ctx.Comparison())
 	if ctx.NOT() != nil {
-		return "NOT (" + inner + ")"
+		return v.sb.Not(inner)
 	}
 	return inner
 }
@@ -135,8 +144,16 @@ func (v *havingExpressionRewriteVisitor) visitTerm(ctx grammar.ITermContext) str
 }
 
 func (v *havingExpressionRewriteVisitor) visitFactor(ctx grammar.IFactorContext) string {
+	if ctx.Factor() != nil {
+		// Unary sign: (PLUS | MINUS) factor
+		sign := "+"
+		if ctx.MINUS() != nil {
+			sign = "-"
+		}
+		return sign + v.visitFactor(ctx.Factor())
+	}
 	if ctx.Operand() != nil {
-		return "(" + v.visitOperand(ctx.Operand()) + ")"
+		return v.sb.And(v.visitOperand(ctx.Operand()))
 	}
 	if ctx.Atom() == nil {
 		return ""
@@ -151,13 +168,21 @@ func (v *havingExpressionRewriteVisitor) visitAtom(ctx grammar.IAtomContext) str
 	if ctx.Identifier() != nil {
 		return v.visitIdentifier(ctx.Identifier())
 	}
-	// NUMBER token
-	return ctx.NUMBER().GetText()
+	if ctx.STRING() != nil {
+		// String literals are never valid aggregation results; flag for a friendly error.
+		v.hasStringLiteral = true
+		return ctx.STRING().GetText()
+	}
+	text := ctx.NUMBER().GetText()
+	return text
 }
 
-// visitFunctionCall looks the full call text up in columnMap (WS is skipped so GetText
-// has no spaces, e.g. "sum(bytes)"). If found, returns the SQL column name. Otherwise
-// records the function name as invalid without recursing into the arguments.
+// visitFunctionCall looks the full call text up in columnMap. WS tokens are skipped by
+// the lexer, so ctx.GetText() returns the expression with all whitespace removed
+// (e.g. "countIf(level='error')", "avg(sum(cpu_usage))", "count_distinct(a,b)").
+// The column map stores both the original expression and a space-stripped version as
+// keys, so the lookup is whitespace-insensitive regardless of how the user typed it.
+// If not found, the function name is recorded as invalid.
 func (v *havingExpressionRewriteVisitor) visitFunctionCall(ctx grammar.IFunctionCallContext) string {
 	fullText := ctx.GetText()
 	if col, ok := v.columnMap[fullText]; ok {
@@ -190,71 +215,19 @@ func (v *havingExpressionRewriteVisitor) visitIdentifier(ctx grammar.IIdentifier
 	return name
 }
 
-// preSubstituteComplexKeys applies regex substitution for columnMap entries whose keys
-// cannot be parsed by the grammar. Specifically, a function-call key whose argument
-// part itself contains parentheses (e.g. "avg(sum(cpu_usage))") is a nested call that
-// the grammar's functionArg rule (IDENTIFIER only) cannot represent. These keys are
-// substituted before ANTLR parsing so the resulting expression is grammar-valid.
-//
-// Keys are applied longest-first to avoid partial replacements.
-func (r *HavingExpressionRewriter) preSubstituteComplexKeys(expression string) string {
-	type kv struct{ k, v string }
-	var pairs []kv
-	for k, v := range r.columnMap {
-		if isComplexKey(k) {
-			pairs = append(pairs, kv{k, v})
-		}
-	}
-	if len(pairs) == 0 {
-		return expression
-	}
-	sort.Slice(pairs, func(i, j int) bool { return len(pairs[i].k) > len(pairs[j].k) })
-	for _, p := range pairs {
-		pat := regexp.MustCompile(`\b` + regexp.QuoteMeta(p.k))
-		expression = pat.ReplaceAllString(expression, p.v)
-	}
-	return expression
-}
-
-// isComplexKey returns true for keys that the ANTLR grammar cannot parse directly and
-// therefore need regex pre-substitution before parsing. This covers:
-//   - Nested function calls: "avg(sum(cpu_usage))" — the functionArg rule only accepts IDENTIFIER.
-//   - Keys containing quoted strings: "countif(level = \"error\")" — the grammar has no string-literal token.
-func isComplexKey(key string) bool {
-	if strings.ContainsAny(key, `'"`) {
-		return true
-	}
-	_, after, found := strings.Cut(key, "(")
-	return found && strings.ContainsRune(after, '(')
-}
-
 // rewriteAndValidate is the single-pass implementation used by all RewriteFor* methods.
 //
 // Validation layers:
-//  0. Complex columnMap keys (nested calls, quoted-string arguments) are substituted via
-//     regex before parsing, so references like countif(level="error") survive into step 1.
-//  1. Quoted string literals that remain after step 0 are not valid aggregation references
-//     → descriptive error ("aggregator results are numeric").
-//  2. The visitor runs on the parse tree, rewriting and collecting invalid references.
+//  1. The visitor runs on the parse tree, rewriting and collecting invalid references.
 //     Unknown references (including unrecognised function calls) → lists valid references.
+//     The grammar now supports complex function arguments (nested calls, string predicates)
+//     so all aggregation expression forms are handled directly by the parser without any
+//     regex pre-substitution.
+//  2. String literals in comparison-operand position → descriptive error
+//     ("aggregator results are numeric").
 //  3. ANTLR syntax errors → error with messages referencing the original token names.
 func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string, error) {
-	// Save the user-visible expression before pre-substitution for use in suggestions.
 	original := strings.TrimSpace(expression)
-
-	// Pre-substitute any columnMap keys that the grammar cannot parse (nested calls,
-	// quoted-string arguments, etc.) before checking for bare string literals.
-	expression = r.preSubstituteComplexKeys(expression)
-
-	// Layer 1 – reject quoted string literals that were not part of a valid aggregation key.
-	for _, ch := range expression {
-		if ch == '\'' || ch == '"' {
-			return "", errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"`Having` expression contains string literals",
-			).WithAdditional("Aggregator results are numeric")
-		}
-	}
 
 	// Parse the expression once.
 	input := antlr.NewInputStream(expression)
@@ -273,12 +246,24 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 
 	tree := p.Query()
 
-	// Layer 2 – run the combined visitor and report any unresolved references.
+	// Layer 1 – run the combined visitor and report any unresolved references.
 	// This runs before the syntax error check so that expressions with recoverable
 	// parse errors (e.g. sum(count())) still produce an actionable "invalid reference"
 	// message rather than a raw syntax error.
 	v := newHavingExpressionRewriteVisitor(r.columnMap)
 	result := v.visitQuery(tree)
+
+	// Layer 2 – string literals in comparison-operand position (atom rule).
+	// The grammar accepts STRING tokens in atom so the parser can recover and continue,
+	// but the visitor flags them; aggregator results are always numeric.
+	// This is checked before invalid references so that "contains string literals" takes
+	// priority when a bare string literal is also an unresolvable operand.
+	if v.hasStringLiteral {
+		return "", errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"`Having` expression contains string literals",
+		).WithAdditional("Aggregator results are numeric")
+	}
 
 	if len(v.invalid) > 0 {
 		sort.Strings(v.invalid)
