@@ -101,7 +101,7 @@
     "crypto-js": "4.2.0",
     "d3-hierarchy": "3.1.2",
     "dayjs": "^1.10.7",
-    "dompurify": "3.2.4",
+    "dompurify": "3.3.2",
     "dotenv": "8.2.0",
     "event-source-polyfill": "1.0.31",
     "eventemitter3": "5.0.1",
