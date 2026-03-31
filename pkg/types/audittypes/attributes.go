@@ -11,20 +11,20 @@ import (
 )
 
 // Audit attributes — Action (What)
-type AuditEventAuditAttributes struct {
+type AuditAttributes struct {
 	Action         Action         `json:"action"`
 	ActionCategory ActionCategory `json:"actionCategory"`
 	Outcome        Outcome        `json:"outcome"`
 	IdentNProvider string         `json:"identnProvider,omitempty"`
 }
 
-func NewAuditEventAuditAttributesFromHTTP(statusCode int, action Action, category ActionCategory, claims authtypes.Claims) AuditEventAuditAttributes {
+func NewAuditAttributesFromHTTP(statusCode int, action Action, category ActionCategory, claims authtypes.Claims) AuditAttributes {
 	outcome := OutcomeFailure
 	if statusCode >= 200 && statusCode < 400 {
 		outcome = OutcomeSuccess
 	}
 
-	return AuditEventAuditAttributes{
+	return AuditAttributes{
 		Action:         action,
 		ActionCategory: category,
 		Outcome:        outcome,
@@ -32,7 +32,7 @@ func NewAuditEventAuditAttributesFromHTTP(statusCode int, action Action, categor
 	}
 }
 
-func (attributes AuditEventAuditAttributes) Put(dest pcommon.Map) {
+func (attributes AuditAttributes) Put(dest pcommon.Map) {
 	dest.PutStr("signoz.audit.action", attributes.Action.StringValue())
 	dest.PutStr("signoz.audit.action_category", attributes.ActionCategory.StringValue())
 	dest.PutStr("signoz.audit.outcome", attributes.Outcome.StringValue())
@@ -40,14 +40,14 @@ func (attributes AuditEventAuditAttributes) Put(dest pcommon.Map) {
 }
 
 // Audit attributes — Principal (Who)
-type AuditEventPrincipalAttributes struct {
+type PrincipalAttributes struct {
 	PrincipalID    valuer.UUID   `json:"principalId"`
 	PrincipalEmail valuer.Email  `json:"principalEmail"`
 	PrincipalType  PrincipalType `json:"principalType"`
 	PrincipalOrgID valuer.UUID   `json:"principalOrgId"`
 }
 
-func NewAuditEventPrincipalAttributesFromClaims(claims authtypes.Claims) AuditEventPrincipalAttributes {
+func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttributes {
 	principalID, _ := valuer.NewUUID(claims.UserID)
 	principalEmail, _ := valuer.NewEmail(claims.Email)
 	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
@@ -58,7 +58,7 @@ func NewAuditEventPrincipalAttributesFromClaims(claims authtypes.Claims) AuditEv
 		principalType = PrincipalTypeServiceAccount
 	}
 
-	return AuditEventPrincipalAttributes{
+	return PrincipalAttributes{
 		PrincipalID:    principalID,
 		PrincipalEmail: principalEmail,
 		PrincipalType:  principalType,
@@ -66,7 +66,7 @@ func NewAuditEventPrincipalAttributesFromClaims(claims authtypes.Claims) AuditEv
 	}
 }
 
-func (attributes AuditEventPrincipalAttributes) Put(dest pcommon.Map) {
+func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 	dest.PutStr("signoz.audit.principal.id", attributes.PrincipalID.StringValue())
 	dest.PutStr("signoz.audit.principal.email", attributes.PrincipalEmail.String())
 	dest.PutStr("signoz.audit.principal.type", attributes.PrincipalType.StringValue())
@@ -74,46 +74,46 @@ func (attributes AuditEventPrincipalAttributes) Put(dest pcommon.Map) {
 }
 
 // Audit attributes — Resource (On What)
-type AuditEventResourceAttributes struct {
+type ResourceAttributes struct {
 	ResourceID   string `json:"resourceId,omitempty"`
 	ResourceName string `json:"resourceName"`
 }
 
-func NewAuditEventResourceAttributes(resourceID, resourceName string) AuditEventResourceAttributes {
-	return AuditEventResourceAttributes{
+func NewResourceAttributes(resourceID, resourceName string) ResourceAttributes {
+	return ResourceAttributes{
 		ResourceID:   resourceID,
 		ResourceName: resourceName,
 	}
 }
 
-func (attributes AuditEventResourceAttributes) Put(dest pcommon.Map) {
+func (attributes ResourceAttributes) Put(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, "signoz.audit.resource.name", attributes.ResourceName)
 	putStrIfNotEmpty(dest, "signoz.audit.resource.id", attributes.ResourceID)
 }
 
 // Audit attributes — Error (When outcome is failure)
-type AuditEventErrorAttributes struct {
-	ErrorType    string `json:"errorType,omitempty"`
-	ErrorCode    string `json:"errorCode,omitempty"`
-	ErrorMessage string `json:"errorMessage,omitempty"`
+// Error messages are intentionally excluded to avoid leaking sensitive or
+// PII data into audit logs. The error type and code are sufficient for
+// filtering and alerting; investigators can correlate via trace ID.
+type ErrorAttributes struct {
+	ErrorType string `json:"errorType,omitempty"`
+	ErrorCode string `json:"errorCode,omitempty"`
 }
 
-func NewAuditEventErrorAttributes(errorType, errorCode, errorMessage string) AuditEventErrorAttributes {
-	return AuditEventErrorAttributes{
-		ErrorType:    errorType,
-		ErrorCode:    errorCode,
-		ErrorMessage: errorMessage,
+func NewErrorAttributes(errorType, errorCode string) ErrorAttributes {
+	return ErrorAttributes{
+		ErrorType: errorType,
+		ErrorCode: errorCode,
 	}
 }
 
-func (attributes AuditEventErrorAttributes) Put(dest pcommon.Map) {
+func (attributes ErrorAttributes) Put(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, "signoz.audit.error.type", attributes.ErrorType)
 	putStrIfNotEmpty(dest, "signoz.audit.error.code", attributes.ErrorCode)
-	putStrIfNotEmpty(dest, "signoz.audit.error.message", attributes.ErrorMessage)
 }
 
 // Audit attributes — Transport Context (Where/How)
-type AuditEventTransportAttributes struct {
+type TransportAttributes struct {
 	HTTPMethod     string `json:"httpMethod,omitempty"`
 	HTTPRoute      string `json:"httpRoute,omitempty"`
 	HTTPStatusCode int    `json:"httpStatusCode,omitempty"`
@@ -122,8 +122,8 @@ type AuditEventTransportAttributes struct {
 	UserAgent      string `json:"userAgent,omitempty"`
 }
 
-func NewAuditEventTransportAttributesFromHTTP(req *http.Request, route string, statusCode int) AuditEventTransportAttributes {
-	return AuditEventTransportAttributes{
+func NewTransportAttributesFromHTTP(req *http.Request, route string, statusCode int) TransportAttributes {
+	return TransportAttributes{
 		HTTPMethod:     req.Method,
 		HTTPRoute:      route,
 		HTTPStatusCode: statusCode,
@@ -133,7 +133,7 @@ func NewAuditEventTransportAttributesFromHTTP(req *http.Request, route string, s
 	}
 }
 
-func (attributes AuditEventTransportAttributes) Put(dest pcommon.Map) {
+func (attributes TransportAttributes) Put(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, string(semconv.HTTPRequestMethodKey), attributes.HTTPMethod)
 	putStrIfNotEmpty(dest, string(semconv.HTTPRouteKey), attributes.HTTPRoute)
 	if attributes.HTTPStatusCode != 0 {
@@ -150,7 +150,7 @@ func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
 	}
 }
 
-func newBody(auditAttributes AuditEventAuditAttributes, principalAttributes AuditEventPrincipalAttributes, resourceAttributes AuditEventResourceAttributes, errorAttributes AuditEventErrorAttributes) string {
+func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttributes, resourceAttributes ResourceAttributes, errorAttributes ErrorAttributes) string {
 	if auditAttributes.Outcome == OutcomeSuccess {
 		return fmt.Sprintf("%s (%s) %s %s %s", principalAttributes.PrincipalEmail, principalAttributes.PrincipalID, auditAttributes.Action.PastTense(), resourceAttributes.ResourceName, resourceAttributes.ResourceID)
 	}

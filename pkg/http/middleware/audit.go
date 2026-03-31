@@ -109,11 +109,11 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	span := trace.SpanFromContext(req.Context())
 
 	// extract error details.
-	var errorType, errorCode, errorMessage string
+	var errorType, errorCode string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
 		if errorsJSON := render.ErrorFromBody(writer.BodyBytes()); errorsJSON != nil {
-			errorCode, errorMessage = errorsJSON.Code, errorsJSON.Message
+			errorCode = errorsJSON.Code
 		}
 	}
 
@@ -130,7 +130,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		def.ResourceName,
 		errorType,
 		errorCode,
-		errorMessage,
 	)
 
 	middleware.auditor.Audit(req.Context(), event)

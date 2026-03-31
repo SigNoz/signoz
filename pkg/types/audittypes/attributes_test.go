@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-func TestNewAuditEventAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
+func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 	claims := authtypes.Claims{IdentNProvider: "tokenizer"}
 
 	testCases := []struct {
@@ -34,13 +34,13 @@ func TestNewAuditEventAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 
 	for _, testCase := range testCases {
 		t.Run(testCase.name, func(t *testing.T) {
-			attrs := NewAuditEventAuditAttributesFromHTTP(testCase.statusCode, ActionUpdate, ActionCategoryConfigurationChange, claims)
+			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, ActionUpdate, ActionCategoryConfigurationChange, claims)
 			assert.Equal(t, testCase.wantOutcome, attrs.Outcome)
 		})
 	}
 }
 
-func TestNewAuditEventPrincipalAttributesFromClaims_PrincipalType(t *testing.T) {
+func TestNewPrincipalAttributesFromClaims_PrincipalType(t *testing.T) {
 	testCases := []struct {
 		name              string
 		identNProvider    string
@@ -67,7 +67,7 @@ func TestNewAuditEventPrincipalAttributesFromClaims_PrincipalType(t *testing.T) 
 				IdentNProvider: testCase.identNProvider,
 			}
 
-			attrs := NewAuditEventPrincipalAttributesFromClaims(claims)
+			attrs := NewPrincipalAttributesFromClaims(claims)
 			assert.Equal(t, testCase.wantPrincipalType, attrs.PrincipalType)
 		})
 	}

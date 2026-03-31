@@ -25,10 +25,9 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		claims       authtypes.Claims
 		resourceID   string
 		resourceName string
-		errorType    string
-		errorCode    string
-		errorMessage string
-		wantOutcome  Outcome
+		errorType   string
+		errorCode   string
+		wantOutcome Outcome
 		wantBody     string
 	}{
 		{
@@ -56,9 +55,8 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			claims:       authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: "tokenizer"},
 			resourceID:   "019b-5678-efgh-9012",
 			resourceName: "dashboard",
-			errorType:    "forbidden",
-			errorCode:    "authz_forbidden",
-			errorMessage: "only admins can access this resource",
+			errorType: "forbidden",
+			errorCode: "authz_forbidden",
 			wantOutcome:  OutcomeFailure,
 			wantBody:     "viewer@acme.com (019aaaaa-bbbb-7000-8000-cccc00000002) failed to update dashboard 019b-5678-efgh-9012: forbidden (authz_forbidden)",
 		},
@@ -81,23 +79,21 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 				testCase.resourceName,
 				testCase.errorType,
 				testCase.errorCode,
-				testCase.errorMessage,
 			)
 
-			assert.Equal(t, testCase.wantOutcome, event.AuditEventAuditAttributes.Outcome)
+			assert.Equal(t, testCase.wantOutcome, event.AuditAttributes.Outcome)
 			assert.Equal(t, testCase.wantBody, event.Body)
-			assert.Equal(t, testCase.resourceName, event.AuditEventResourceAttributes.ResourceName)
-			assert.Equal(t, testCase.resourceID, event.AuditEventResourceAttributes.ResourceID)
-			assert.Equal(t, testCase.action, event.AuditEventAuditAttributes.Action)
-			assert.Equal(t, testCase.category, event.AuditEventAuditAttributes.ActionCategory)
-			assert.Equal(t, testCase.route, event.AuditEventTransportAttributes.HTTPRoute)
-			assert.Equal(t, testCase.statusCode, event.AuditEventTransportAttributes.HTTPStatusCode)
-			assert.Equal(t, testCase.method, event.AuditEventTransportAttributes.HTTPMethod)
+			assert.Equal(t, testCase.resourceName, event.ResourceAttributes.ResourceName)
+			assert.Equal(t, testCase.resourceID, event.ResourceAttributes.ResourceID)
+			assert.Equal(t, testCase.action, event.AuditAttributes.Action)
+			assert.Equal(t, testCase.category, event.AuditAttributes.ActionCategory)
+			assert.Equal(t, testCase.route, event.TransportAttributes.HTTPRoute)
+			assert.Equal(t, testCase.statusCode, event.TransportAttributes.HTTPStatusCode)
+			assert.Equal(t, testCase.method, event.TransportAttributes.HTTPMethod)
 			assert.Equal(t, traceID, event.TraceID)
 			assert.Equal(t, spanID, event.SpanID)
-			assert.Equal(t, testCase.errorType, event.AuditEventErrorAttributes.ErrorType)
-			assert.Equal(t, testCase.errorCode, event.AuditEventErrorAttributes.ErrorCode)
-			assert.Equal(t, testCase.errorMessage, event.AuditEventErrorAttributes.ErrorMessage)
+			assert.Equal(t, testCase.errorType, event.ErrorAttributes.ErrorType)
+			assert.Equal(t, testCase.errorCode, event.ErrorAttributes.ErrorCode)
 		})
 	}
 }

@@ -28,19 +28,19 @@ type AuditEvent struct {
 	EventName EventName `json:"eventName"`
 
 	// Custom Audit Attributes - Action
-	AuditEventAuditAttributes AuditEventAuditAttributes `json:"auditAttributes"`
+	AuditAttributes AuditAttributes `json:"auditAttributes"`
 
 	// Custom Audit Attributes - Principal
-	AuditEventPrincipalAttributes AuditEventPrincipalAttributes `json:"principalAttributes,omitempty"`
+	PrincipalAttributes PrincipalAttributes `json:"principalAttributes,omitempty"`
 
 	// Custom Audit Attributes - Resource
-	AuditEventResourceAttributes AuditEventResourceAttributes `json:"resourceAttributes,omitempty"`
+	ResourceAttributes ResourceAttributes `json:"resourceAttributes,omitempty"`
 
 	// Custom Audit Attributes - Error
-	AuditEventErrorAttributes AuditEventErrorAttributes `json:"errorAttributes,omitempty"`
+	ErrorAttributes ErrorAttributes `json:"errorAttributes,omitempty"`
 
 	// Custom Audit Attributes - Transport Context
-	AuditEventTransportAttributes AuditEventTransportAttributes `json:"transportAttributes,omitempty"`
+	TransportAttributes TransportAttributes `json:"transportAttributes,omitempty"`
 }
 
 func NewAuditEventFromHTTPRequest(
@@ -56,13 +56,12 @@ func NewAuditEventFromHTTPRequest(
 	resourceName string,
 	errorType string,
 	errorCode string,
-	errorMessage string,
 ) AuditEvent {
-	auditAttributes := NewAuditEventAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
-	principalAttributes := NewAuditEventPrincipalAttributesFromClaims(claims)
-	resourceAttributes := NewAuditEventResourceAttributes(resourceID, resourceName)
-	errorAttributes := NewAuditEventErrorAttributes(errorType, errorCode, errorMessage)
-	transportAttributes := NewAuditEventTransportAttributesFromHTTP(req, route, statusCode)
+	auditAttributes := NewAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
+	principalAttributes := NewPrincipalAttributesFromClaims(claims)
+	resourceAttributes := NewResourceAttributes(resourceID, resourceName)
+	errorAttributes := NewErrorAttributes(errorType, errorCode)
+	transportAttributes := NewTransportAttributesFromHTTP(req, route, statusCode)
 
 	return AuditEvent{
 		Timestamp:                     time.Now(),
@@ -70,11 +69,11 @@ func NewAuditEventFromHTTPRequest(
 		SpanID:                        spanID,
 		Body:                          newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
 		EventName:                     NewEventName(resourceAttributes.ResourceName, auditAttributes.Action),
-		AuditEventAuditAttributes:     auditAttributes,
-		AuditEventPrincipalAttributes: principalAttributes,
-		AuditEventResourceAttributes:  resourceAttributes,
-		AuditEventErrorAttributes:     errorAttributes,
-		AuditEventTransportAttributes: transportAttributes,
+		AuditAttributes:     auditAttributes,
+		PrincipalAttributes: principalAttributes,
+		ResourceAttributes:  resourceAttributes,
+		ErrorAttributes:     errorAttributes,
+		TransportAttributes: transportAttributes,
 	}
 }
 
@@ -104,8 +103,8 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 	dest.SetEventName(event.EventName.String())
 
 	// Set severity based on outcome
-	dest.SetSeverityNumber(event.AuditEventAuditAttributes.Outcome.Severity())
-	dest.SetSeverityText(event.AuditEventAuditAttributes.Outcome.SeverityText())
+	dest.SetSeverityNumber(event.AuditAttributes.Outcome.Severity())
+	dest.SetSeverityText(event.AuditAttributes.Outcome.SeverityText())
 
 	// Set trace and span IDs if present
 	if event.TraceID.IsValid() {
@@ -119,17 +118,17 @@ func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
 	attrs := dest.Attributes()
 
 	// Audit attributes
-	event.AuditEventAuditAttributes.Put(attrs)
+	event.AuditAttributes.Put(attrs)
 
 	// Principal attributes
-	event.AuditEventPrincipalAttributes.Put(attrs)
+	event.PrincipalAttributes.Put(attrs)
 
 	// Resource attributes
-	event.AuditEventResourceAttributes.Put(attrs)
+	event.ResourceAttributes.Put(attrs)
 
 	// Error attributes
-	event.AuditEventErrorAttributes.Put(attrs)
+	event.ErrorAttributes.Put(attrs)
 
 	// Transport context attributes
-	event.AuditEventTransportAttributes.Put(attrs)
+	event.TransportAttributes.Put(attrs)
 }
