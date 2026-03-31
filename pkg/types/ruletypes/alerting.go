@@ -18,7 +18,7 @@ import (
 // rule engine
 
 const (
-	// how long before re-sending the alert
+	// how long before re-sending the alert.
 	ResolvedRetention = 15 * time.Minute
 	TestAlertPostFix  = "_TEST_ALERT"
 )
@@ -210,7 +210,7 @@ func (rc *RuleCondition) ShouldEval(series *v3.Series) bool {
 	return !rc.RequireMinPoints || len(series.Points) >= rc.RequiredNumPoints
 }
 
-// QueryType is a shorthand method to get query type
+// QueryType is a shorthand method to get query type.
 func (rc *RuleCondition) QueryType() v3.QueryType {
 	if rc.CompositeQuery != nil {
 		return rc.CompositeQuery.QueryType
@@ -218,7 +218,7 @@ func (rc *RuleCondition) QueryType() v3.QueryType {
 	return v3.QueryTypeUnknown
 }
 
-// String is useful in printing rule condition in logs
+// String is useful in printing rule condition in logs.
 func (rc *RuleCondition) String() string {
 	if rc == nil {
 		return ""

@@ -1461,10 +1461,10 @@ func TestAdjustKeys(t *testing.T) {
 			if c.expectedGroupBy != nil {
 				require.Len(t, c.query.GroupBy, len(c.expectedGroupBy))
 				for i, expected := range c.expectedGroupBy {
-					require.Equal(t, expected.TelemetryFieldKey.Name, c.query.GroupBy[i].TelemetryFieldKey.Name, "group by field %d name should match", i)
-					require.Equal(t, expected.TelemetryFieldKey.FieldContext, c.query.GroupBy[i].TelemetryFieldKey.FieldContext, "group by field %d context should match", i)
-					require.Equal(t, expected.TelemetryFieldKey.FieldDataType, c.query.GroupBy[i].TelemetryFieldKey.FieldDataType, "group by field %d data type should match", i)
-					require.Equal(t, expected.TelemetryFieldKey.Materialized, c.query.GroupBy[i].TelemetryFieldKey.Materialized, "group by field %d materialized should match", i)
+					require.Equal(t, expected.Name, c.query.GroupBy[i].Name, "group by field %d name should match", i)
+					require.Equal(t, expected.FieldContext, c.query.GroupBy[i].FieldContext, "group by field %d context should match", i)
+					require.Equal(t, expected.FieldDataType, c.query.GroupBy[i].FieldDataType, "group by field %d data type should match", i)
+					require.Equal(t, expected.Materialized, c.query.GroupBy[i].Materialized, "group by field %d materialized should match", i)
 				}
 			}
 
@@ -1472,10 +1472,10 @@ func TestAdjustKeys(t *testing.T) {
 			if c.expectedOrder != nil {
 				require.Len(t, c.query.Order, len(c.expectedOrder))
 				for i, expected := range c.expectedOrder {
-					require.Equal(t, expected.Key.TelemetryFieldKey.Name, c.query.Order[i].Key.TelemetryFieldKey.Name, "order field %d name should match", i)
-					require.Equal(t, expected.Key.TelemetryFieldKey.FieldContext, c.query.Order[i].Key.TelemetryFieldKey.FieldContext, "order field %d context should match", i)
-					require.Equal(t, expected.Key.TelemetryFieldKey.FieldDataType, c.query.Order[i].Key.TelemetryFieldKey.FieldDataType, "order field %d data type should match", i)
-					require.Equal(t, expected.Key.TelemetryFieldKey.Materialized, c.query.Order[i].Key.TelemetryFieldKey.Materialized, "order field %d materialized should match", i)
+					require.Equal(t, expected.Key.Name, c.query.Order[i].Key.Name, "order field %d name should match", i)
+					require.Equal(t, expected.Key.FieldContext, c.query.Order[i].Key.FieldContext, "order field %d context should match", i)
+					require.Equal(t, expected.Key.FieldDataType, c.query.Order[i].Key.FieldDataType, "order field %d data type should match", i)
+					require.Equal(t, expected.Key.Materialized, c.query.Order[i].Key.Materialized, "order field %d materialized should match", i)
 					require.Equal(t, expected.Direction, c.query.Order[i].Direction, "order field %d direction should match", i)
 				}
 			}

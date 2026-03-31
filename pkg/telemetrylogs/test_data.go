@@ -7,7 +7,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// Helper function to limit string length for display
+// Helper function to limit string length for display.
 func limitString(s string, maxLen int) string {
 	s = strings.ReplaceAll(s, "\n", " ")
 	s = strings.ReplaceAll(s, "\t", " ")
@@ -18,7 +18,7 @@ func limitString(s string, maxLen int) string {
 	return s[:maxLen-3] + "..."
 }
 
-// Function to build a complete field key map for testing all scenarios
+// Function to build a complete field key map for testing all scenarios.
 func buildCompleteFieldKeyMap(releaseTime time.Time) map[string][]*telemetrytypes.TelemetryFieldKey {
 	keysMap := map[string][]*telemetrytypes.TelemetryFieldKey{
 		"service.name": {

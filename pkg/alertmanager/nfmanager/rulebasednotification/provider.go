@@ -216,7 +216,7 @@ func (r *provider) Match(ctx context.Context, orgID string, ruleID string, set m
 // the nested structure takes precedence. That means we will replace an existing leaf at any
 // intermediate path with a map so we can materialize the deeper structure.
 // TODO(srikanthccv): we need a better solution to handle this, remove the following
-// when we update the expr to support dotted keys
+// when we update the expr to support dotted keys.
 func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.LabelSet) map[string]interface{} {
 	env := make(map[string]interface{})
 

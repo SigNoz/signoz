@@ -15,7 +15,7 @@ type PromQuery struct {
 	Legend string `json:"legend,omitempty"`
 }
 
-// Copy creates a deep copy of the PromQuery
+// Copy creates a deep copy of the PromQuery.
 func (q PromQuery) Copy() PromQuery {
 	return q // shallow copy is sufficient
 }
