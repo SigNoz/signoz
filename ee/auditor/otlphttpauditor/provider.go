@@ -28,16 +28,9 @@ type provider struct {
 }
 
 func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
-	return factory.NewProviderFactory(
-		factory.MustNewName("otlphttp"),
-		newProviderFunc(licensing),
-	)
-}
-
-func newProviderFunc(licensing licensing.Licensing) factory.NewProviderFunc[auditor.Auditor, auditor.Config] {
-	return func(ctx context.Context, providerSettings factory.ProviderSettings, config auditor.Config) (auditor.Auditor, error) {
+	return factory.NewProviderFactory(factory.MustNewName("otlphttp"), func(ctx context.Context, providerSettings factory.ProviderSettings, config auditor.Config) (auditor.Auditor, error) {
 		return newProvider(ctx, providerSettings, config, licensing)
-	}
+	})
 }
 
 func newProvider(ctx context.Context, providerSettings factory.ProviderSettings, config auditor.Config, lic licensing.Licensing) (auditor.Auditor, error) {
@@ -93,7 +86,7 @@ func (p *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
 		return
 	}
 
-	event.Body = buildBody(event)
+	event.Body = audittypes.BuildBody(event)
 	p.server.Add(ctx, event)
 }
 
