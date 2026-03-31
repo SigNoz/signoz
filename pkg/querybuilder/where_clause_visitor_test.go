@@ -1626,7 +1626,7 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 }
 
 // TestVisitComparison_SkippableLiteralValues guards against two distinct collision risks
-// involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):
+// involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):.
 func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 
