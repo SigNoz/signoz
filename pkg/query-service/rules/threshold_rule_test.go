@@ -941,7 +941,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		queryString := "SELECT any"
 		telemetryStore.Mock().
 			ExpectQuery(queryString).
-			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil).
+			WithArgs(nil, nil, nil, nil, nil, nil, nil, nil, nil, nil).
 			WillReturnRows(rows)
 
 		querier := prepareQuerierForLogs(telemetryStore, keysMap)
