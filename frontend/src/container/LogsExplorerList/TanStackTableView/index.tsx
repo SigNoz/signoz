@@ -302,10 +302,13 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			],
 		);
 
+		const flatHeaders = useMemo(
+			() => table.getFlatHeaders().filter((header) => !header.isPlaceholder),
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+			[tanstackColumns],
+		);
+
 		const tableHeader = useCallback(() => {
-			const flatHeaders = table
-				.getFlatHeaders()
-				.filter((header) => !header.isPlaceholder);
 			const orderedColumnsById = new Map(
 				orderedColumns.map((column) => [getColumnId(column), column] as const),
 			);
@@ -341,28 +344,12 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									/>
 								);
 							})}
-							{/* not needed in header */}
-							{/* <TableHeaderCellStyled
-								aria-hidden
-								$isDragColumn={false}
-								$isDarkMode={isDarkMode}
-								fontSize={tableViewProps.fontSize}
-								className="logs-table-filler-header"
-							/>
-							{isLogsExplorerPage && (
-								<TableHeaderCellStyled
-									aria-hidden
-									$isDragColumn={false}
-									$isDarkMode={isDarkMode}
-									fontSize={tableViewProps.fontSize}
-									className="logs-table-actions-header"
-								/>
-							)} */}
 						</tr>
 					</SortableContext>
 				</DndContext>
 			);
 		}, [
+			flatHeaders,
 			handleDragEnd,
 			hasSingleColumn,
 			isDarkMode,
@@ -371,9 +358,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onRemoveColumn,
 			isAtMinimumRemovableColumns,
 			sensors,
-			table,
 			tableViewProps.fontSize,
-			// isLogsExplorerPage,
 		]);
 
 		const handleEndReached = useCallback(
@@ -403,6 +388,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 					data={tableData}
 					totalCount={tableRows.length}
+					increaseViewportBy={{ top: 500, bottom: 500 }}
 					initialTopMostItemIndex={
 						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
 					}
