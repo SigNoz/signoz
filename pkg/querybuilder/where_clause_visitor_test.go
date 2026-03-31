@@ -15,7 +15,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value
+// TestPrepareWhereClause_EmptyVariableList ensures PrepareWhereClause errors when a variable has an empty list value.
 func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	tests := []struct {
 		name        string
@@ -78,7 +78,7 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	}
 }
 
-// createTestVisitor creates a filterExpressionVisitor for testing VisitKey
+// createTestVisitor creates a filterExpressionVisitor for testing VisitKey.
 func createTestVisitor(fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey, ignoreNotFoundKeys bool) *filterExpressionVisitor {
 	return &filterExpressionVisitor{
 		logger:             slog.Default(),
@@ -89,7 +89,7 @@ func createTestVisitor(fieldKeys map[string][]*telemetrytypes.TelemetryFieldKey,
 	}
 }
 
-// parseKeyContext parses a key string and returns the KeyContext for testing
+// parseKeyContext parses a key string and returns the KeyContext for testing.
 func parseKeyContext(keyText string) *grammar.KeyContext {
 	input := antlr.NewInputStream(keyText + " = 1") // Add minimal expression to parse key
 	lexer := grammar.NewFilterQueryLexer(input)
@@ -116,7 +116,7 @@ func parseKeyContext(keyText string) *grammar.KeyContext {
 	return nil
 }
 
-// TestVisitKey tests the VisitKey method of filterExpressionVisitor
+// TestVisitKey tests the VisitKey method of filterExpressionVisitor.
 func TestVisitKey(t *testing.T) {
 	tests := []struct {
 		name               string
@@ -1626,7 +1626,7 @@ func TestVisitComparison_UnknownKeys(t *testing.T) {
 }
 
 // TestVisitComparison_SkippableLiteralValues guards against two distinct collision risks
-// involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):
+// involving SkippableConditionLiterals ("true", "__skip__", "__skip_because_of_error__"):.
 func TestVisitComparison_SkippableLiteralValues(t *testing.T) {
 	rsbOpts, sbOpts := visitComparisonOpts()
 

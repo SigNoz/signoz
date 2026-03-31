@@ -125,12 +125,12 @@ type MetricMetadata struct {
 	IsMonotonic bool                    `json:"isMonotonic" required:"true"`
 }
 
-// MarshalBinary implements cachetypes.Cacheable interface
+// MarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) MarshalBinary() ([]byte, error) {
 	return json.Marshal(m)
 }
 
-// UnmarshalBinary implements cachetypes.Cacheable interface
+// UnmarshalBinary implements cachetypes.Cacheable interface.
 func (m *MetricMetadata) UnmarshalBinary(data []byte) error {
 	return json.Unmarshal(data, m)
 }

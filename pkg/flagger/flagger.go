@@ -115,7 +115,7 @@ func (f *flagger) Boolean(ctx context.Context, flag featuretypes.Name, evalCtx f
 	for _, client := range f.clients {
 		value, err := client.BooleanValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().ErrorContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
+			f.settings.Logger().ErrorContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Domain()))
 			continue
 		}
 
@@ -148,7 +148,7 @@ func (f *flagger) String(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	for _, client := range f.clients {
 		value, err := client.StringValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Domain()))
 			continue
 		}
 
@@ -181,7 +181,7 @@ func (f *flagger) Float(ctx context.Context, flag featuretypes.Name, evalCtx fea
 	for _, client := range f.clients {
 		value, err := client.FloatValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Domain()))
 			continue
 		}
 
@@ -214,7 +214,7 @@ func (f *flagger) Int(ctx context.Context, flag featuretypes.Name, evalCtx featu
 	for _, client := range f.clients {
 		value, err := client.IntValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Domain()))
 			continue
 		}
 
@@ -247,7 +247,7 @@ func (f *flagger) Object(ctx context.Context, flag featuretypes.Name, evalCtx fe
 	for _, client := range f.clients {
 		value, err := client.ObjectValue(ctx, flag.String(), defaultValue, evalCtx.Ctx())
 		if err != nil {
-			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Name()))
+			f.settings.Logger().WarnContext(ctx, "failed to get value from client", errors.Attr(err), slog.Any("flag", flag), slog.String("client", client.Metadata().Domain()))
 			continue
 		}
 

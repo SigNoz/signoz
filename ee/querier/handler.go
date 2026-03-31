@@ -79,7 +79,7 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		// Build step intervals from the anomaly query
 		stepIntervals := make(map[string]uint64)
 		if anomalyQuery.StepInterval.Duration > 0 {
-			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Duration.Seconds())
+			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Seconds())
 		}
 
 		finalResp := &qbtypes.QueryRangeResponse{

@@ -82,14 +82,14 @@ var jsonExtractFunctions = map[string]string{
 	"jsonextractkeysandvalues": "JSONExtractKeysAndValues",
 }
 
-// isFunctionPresentInStore checks if a function name exists in the function store map
+// isFunctionPresentInStore checks if a function name exists in the function store map.
 func isFunctionPresentInStore(funcName string, funcStore map[string]string) bool {
 	_, exists := funcStore[strings.ToLower(funcName)]
 	return exists
 }
 
 // isReservedSelectKeyword checks if a keyword is a reserved keyword for the SELECT statement
-// We're only including those which can appear in the SELECT statement without being quoted
+// We're only including those which can appear in the SELECT statement without being quoted.
 func isReservedSelectKeyword(keyword string) bool {
 	return strings.ToUpper(keyword) == parser.KeywordSelect || strings.ToUpper(keyword) == parser.KeywordFrom
 }
@@ -185,7 +185,7 @@ func extractOriginFieldFromExpr(expr parser.Expr) (string, error) {
 	return "", nil
 }
 
-// containsJSONExtractFunction checks if an expression contains a JSON extraction function
+// containsJSONExtractFunction checks if an expression contains a JSON extraction function.
 func containsJSONExtractFunction(expr parser.Expr) bool {
 	if expr == nil {
 		return false

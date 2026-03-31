@@ -86,15 +86,15 @@ func buildTestFieldKeyMap(signal telemetrytypes.Signal) map[string][]*telemetryt
 	return keysMap
 }
 
-// Test constants - values are in nanoseconds as expected by the resource filter builder
+// Test constants - values are in nanoseconds as expected by the resource filter builder.
 const (
-	// 1747947419000000000 ns = 1747947419 seconds
+	// 1747947419000000000 ns = 1747947419 seconds.
 	testStartNs = uint64(1747947419000000000)
-	// 1747983448000000000 ns = 1747983448 seconds
+	// 1747983448000000000 ns = 1747983448 seconds.
 	testEndNs = uint64(1747983448000000000)
-	// Expected bucket start = 1747947419 - 1800 = 1747945619
+	// Expected bucket start = 1747947419 - 1800 = 1747945619.
 	expectedBucketStart = uint64(1747945619)
-	// Expected bucket end = 1747983448
+	// Expected bucket end = 1747983448.
 	expectedBucketEnd = uint64(1747983448)
 )
 

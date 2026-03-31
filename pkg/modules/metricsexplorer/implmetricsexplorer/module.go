@@ -60,7 +60,7 @@ func NewModule(ts telemetrystore.TelemetryStore, telemetryMetadataStore telemetr
 	}
 }
 
-// TODO(srikanthccv): use metadata store to fetch metric metadata
+// TODO(srikanthccv): use metadata store to fetch metric metadata.
 func (m *module) ListMetrics(ctx context.Context, orgID valuer.UUID, params *metricsexplorertypes.ListMetricsParams) (*metricsexplorertypes.ListMetricsResponse, error) {
 	ctx = m.withMetricsExplorerContext(ctx, "ListMetrics")
 

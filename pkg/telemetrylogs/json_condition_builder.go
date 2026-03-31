@@ -32,7 +32,7 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
 }
 
-// BuildCondition builds the full WHERE condition for body_v2 JSON paths
+// BuildCondition builds the full WHERE condition for body_v2 JSON paths.
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	baseCond, err := c.emitPlannedCondition(operator, value, sb)
 	if err != nil {
@@ -58,17 +58,10 @@ func (c *jsonConditionBuilder) emitPlannedCondition(operator qbtypes.FilterOpera
 		}
 		conditions = append(conditions, condition)
 	}
-	baseCond := sb.Or(conditions...)
 
-	// path index
-	if operator.AddDefaultExistsFilter() {
-		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
-		return sb.And(baseCond, pathIndex), nil
-	}
-	return baseCond, nil
+	return sb.Or(conditions...), nil
 }
 
-// buildPlanCondition recursively traverses a single JSONPlan and builds condition
 func (c *jsonConditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "navigation failed, current node is nil")

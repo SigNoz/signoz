@@ -20,7 +20,7 @@ var (
 	aggRe = regexp.MustCompile(`^__result_(\d+)$`)
 	// legacyReservedColumnTargetAliases identifies result value from a user
 	// written clickhouse query. The column alias indcate which value is
-	// to be considered as final result (or target)
+	// to be considered as final result (or target).
 	legacyReservedColumnTargetAliases = []string{"__result", "__value", "result", "res", "value"}
 )
 
@@ -30,7 +30,7 @@ var (
 // * Time-series - *qbtypes.TimeSeriesData
 // * Scalar      - *qbtypes.ScalarData
 // * Raw         - *qbtypes.RawData
-// * Distribution- *qbtypes.DistributionData
+// * Distribution- *qbtypes.DistributionData.
 func consume(rows driver.Rows, kind qbtypes.RequestType, queryWindow *qbtypes.TimeRange, step qbtypes.Step, queryName string) (any, error) {
 	var (
 		payload any
@@ -69,7 +69,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 	}
 	seriesMap := map[sKey]*qbtypes.TimeSeries{}
 
-	stepMs := uint64(step.Duration.Milliseconds())
+	stepMs := uint64(step.Milliseconds())
 
 	// Helper function to check if a timestamp represents a partial value
 	isPartialValue := func(timestamp int64) bool {
@@ -431,7 +431,7 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	}, nil
 }
 
-// numericAsFloat converts numeric types to float64 efficiently
+// numericAsFloat converts numeric types to float64 efficiently.
 func numericAsFloat(v any) float64 {
 	switch x := v.(type) {
 	case float64:

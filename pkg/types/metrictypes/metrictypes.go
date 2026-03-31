@@ -257,7 +257,7 @@ func (s SpaceAggregation) Percentile() float64 {
 }
 
 // MetricTableHints is a struct that contains tables to use instead of the derived tables
-// from the start and end time, for internal use only when we need to override the derived tables
+// from the start and end time, for internal use only when we need to override the derived tables.
 type MetricTableHints struct {
 	TimeSeriesTableName string
 	SamplesTableName    string

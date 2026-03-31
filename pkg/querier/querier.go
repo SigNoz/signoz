@@ -43,7 +43,7 @@ type querier struct {
 	meterStmtBuilder         qbtypes.StatementBuilder[qbtypes.MetricAggregation]
 	traceOperatorStmtBuilder qbtypes.TraceOperatorStatementBuilder
 	bucketCache              BucketCache
-	liveDataRefreshSeconds   time.Duration
+	liveDataRefresh          time.Duration
 }
 
 var _ Querier = (*querier)(nil)
@@ -72,11 +72,11 @@ func New(
 		meterStmtBuilder:         meterStmtBuilder,
 		traceOperatorStmtBuilder: traceOperatorStmtBuilder,
 		bucketCache:              bucketCache,
-		liveDataRefreshSeconds:   5,
+		liveDataRefresh:          5 * time.Second,
 	}
 }
 
-// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present
+// extractShiftFromBuilderQuery extracts the shift value from timeShift function if present.
 func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int64 {
 	for _, fn := range spec.Functions {
 		if fn.Name == qbtypes.FunctionNameTimeShift && len(fn.Args) > 0 {
@@ -97,7 +97,7 @@ func extractShiftFromBuilderQuery[T any](spec qbtypes.QueryBuilderQuery[T]) int6
 	return 0
 }
 
-// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function
+// adjustTimeRangeForShift adjusts the time range based on the shift value from timeShift function.
 func adjustTimeRangeForShift[T any](spec qbtypes.QueryBuilderQuery[T], tr qbtypes.TimeRange, kind qbtypes.RequestType) qbtypes.TimeRange {
 	// Only apply time shift for time series and scalar queries
 	// Raw/list queries don't support timeshift
@@ -186,7 +186,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -203,7 +203,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -233,7 +233,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						newStep := qbtypes.Step{
 							Duration: time.Second * time.Duration(querybuilder.MinAllowedStepIntervalForMetric(req.Start, req.End)),
 						}
-						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+						intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 						spec.StepInterval = newStep
 					}
 				}
@@ -271,7 +271,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					newStep := qbtypes.Step{
 						Duration: time.Second * time.Duration(querybuilder.MinAllowedStepInterval(req.Start, req.End)),
 					}
-					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Duration.Seconds()))
+					intervalWarnings = append(intervalWarnings, fmt.Sprintf(intervalWarn, spec.Name, spec.StepInterval.Seconds(), newStep.Seconds()))
 					spec.StepInterval = newStep
 				}
 				req.CompositeQuery.Queries[idx].Spec = spec
@@ -488,7 +488,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 	}
 	updatedLogID := ""
 
-	ticker := time.NewTicker(time.Duration(q.liveDataRefreshSeconds) * time.Second)
+	ticker := time.NewTicker(q.liveDataRefresh)
 	defer ticker.Stop()
 
 	// we are creating a custom ticker wrapper to trigger it instantly
@@ -639,7 +639,7 @@ func (q *querier) run(
 	// or go to related logs/traces from a point in line/bar chart with correct time range
 	stepIntervals := make(map[string]uint64, len(steps))
 	for name, step := range steps {
-		stepIntervals[name] = uint64(step.Duration.Seconds())
+		stepIntervals[name] = uint64(step.Seconds())
 	}
 	for _, query := range req.CompositeQuery.Queries {
 		if query.Type == qbtypes.QueryTypeFormula {
@@ -680,7 +680,7 @@ func (q *querier) run(
 	return resp, nil
 }
 
-// executeWithCache executes a query using the bucket cache
+// executeWithCache executes a query using the bucket cache.
 func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query qbtypes.Query, step qbtypes.Step, _ bool) (*qbtypes.Result, error) {
 	// Get cached data and missing ranges
 	cachedResult, missingRanges := q.bucketCache.GetMissRanges(ctx, orgID, query, step)
@@ -783,7 +783,7 @@ func (q *querier) executeWithCache(ctx context.Context, orgID valuer.UUID, query
 	return mergedResult, nil
 }
 
-// createRangedQuery creates a copy of the query with a different time range
+// createRangedQuery creates a copy of the query with a different time range.
 func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtypes.TimeRange) qbtypes.Query {
 	// this is called in a goroutine, so we create a copy of the query to avoid race conditions
 	switch qt := originalQuery.(type) {
@@ -833,7 +833,7 @@ func (q *querier) createRangedQuery(originalQuery qbtypes.Query, timeRange qbtyp
 	}
 }
 
-// mergeResults merges cached result with fresh results
+// mergeResults merges cached result with fresh results.
 func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) *qbtypes.Result {
 	if cached == nil {
 		if len(fresh) == 1 {
@@ -897,7 +897,7 @@ func (q *querier) mergeResults(cached *qbtypes.Result, fresh []*qbtypes.Result) 
 	return merged
 }
 
-// mergeTimeSeriesResults merges time series data
+// mergeTimeSeriesResults merges time series data.
 func (q *querier) mergeTimeSeriesResults(cachedValue *qbtypes.TimeSeriesData, freshResults []*qbtypes.Result) *qbtypes.TimeSeriesData {
 
 	// Map to store merged series by aggregation index and series key

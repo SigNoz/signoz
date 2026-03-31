@@ -14,7 +14,7 @@ const (
 	TelemetrySignal = "telemetry.signal"
 	// QueryDuration is the query time-range bucket label (e.g. "<1h", "<24h").
 	QueryDuration = "query.duration"
-	// PanelType is the panel type: "timeseries", "list", "value"
+	// PanelType is the panel type: "timeseries", "list", "value".
 	PanelType = "panel.type"
 	// QueryType is the query type: "promql", "clickhouse_sql", "builder_query".
 	QueryType = "query.type"

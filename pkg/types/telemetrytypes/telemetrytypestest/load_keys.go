@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// LoadFieldKeysFromJSON loads telemetry field keys from a JSON file
+// LoadFieldKeysFromJSON loads telemetry field keys from a JSON file.
 func LoadFieldKeysFromJSON(filePath string) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	jsonData, err := os.ReadFile(filePath)
 	if err != nil {
@@ -23,7 +23,7 @@ func LoadFieldKeysFromJSON(filePath string) (map[string][]*telemetrytypes.Teleme
 	return result, nil
 }
 
-// LoadFieldKeysFromJSONString loads telemetry field keys from a JSON string
+// LoadFieldKeysFromJSONString loads telemetry field keys from a JSON string.
 func LoadFieldKeysFromJSONString(jsonStr string) (map[string][]*telemetrytypes.TelemetryFieldKey, error) {
 	var result map[string][]*telemetrytypes.TelemetryFieldKey
 	if err := json.Unmarshal([]byte(jsonStr), &result); err != nil {
