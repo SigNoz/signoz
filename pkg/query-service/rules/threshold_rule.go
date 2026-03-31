@@ -72,7 +72,11 @@ func (r *ThresholdRule) Type() ruletypes.RuleType {
 
 func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
 	r.logger.InfoContext(
-		ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
+		ctx, "prepare query range request v5",
+		slog.Int64("ts", ts.UnixMilli()),
+		slog.Int64("eval_window", r.evalWindow.Milliseconds()),
+		slog.Int64("eval_delay", r.evalDelay.Milliseconds()),
+		slog.String("rule.id", r.ID()),
 	)
 
 	startTs, endTs := r.Timestamps(ts)
@@ -176,7 +180,7 @@ func (r *ThresholdRule) GetSelectedQuery(ctx context.Context) string {
 	if r.ruleCondition.SelectedQuery != "" {
 		return r.ruleCondition.SelectedQuery
 	}
-	r.logger.WarnContext(ctx, "missing selected query", "rule_name", r.Name())
+	r.logger.WarnContext(ctx, "missing selected query", "rule.id", r.ID())
 	return r.ruleCondition.SelectedQueryName()
 }
 
@@ -203,7 +207,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 			results = append(results, tsData)
 		} else {
 			// NOTE: should not happen but just to ensure we don't miss it if it happens for some reason
-			r.logger.WarnContext(ctx, "expected qbtypes.TimeSeriesData but got", "item_type", reflect.TypeOf(item))
+			r.logger.WarnContext(ctx, "expected qbtypes.TimeSeriesData but got", "rule.id", r.ID(), "item_type", reflect.TypeOf(item).String())
 		}
 	}
 
@@ -229,7 +233,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 	var resultVector ruletypes.Vector
 
 	if queryResult == nil || len(queryResult.Aggregations) == 0 || queryResult.Aggregations[0] == nil {
-		r.logger.WarnContext(ctx, "query result is nil", "rule_name", r.Name(), "query_name", selectedQuery)
+		r.logger.WarnContext(ctx, "query result is nil", "rule.id", r.ID(), "query_name", selectedQuery)
 		return resultVector, nil
 	}
 
@@ -239,7 +243,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", errors.Attr(filterErr), "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "error filtering new series, ", errors.Attr(filterErr), "rule.id", r.ID())
 		} else {
 			seriesToProcess = filteredSeries
 		}
@@ -247,7 +251,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 
 	for _, series := range seriesToProcess {
 		if !r.Condition().ShouldEval(series) {
-			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "rule_id", r.ID(), "num_points", len(series.Values), "required_points", r.Condition().RequiredNumPoints)
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "rule.id", r.ID(), "num_points", len(series.Values), "required_points", r.Condition().RequiredNumPoints)
 			continue
 		}
 		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
@@ -298,7 +302,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		// todo(aniket): handle different threshold
 		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
-		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
+		r.logger.DebugContext(ctx, "Alert template data for rule", "rule.id", r.ID(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
@@ -317,7 +321,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData)
+				r.logger.ErrorContext(ctx, "expanding alert template failed", "rule.id", r.ID(), errors.Attr(err), "data", tmplData)
 			}
 			return result
 		}
@@ -349,13 +353,13 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		case ruletypes.AlertTypeTraces:
 			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
+				r.logger.InfoContext(ctx, "adding traces link to annotations", "rule.id", r.ID(), "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
 				annotations = append(annotations, ruletypes.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
 			}
 		case ruletypes.AlertTypeLogs:
 			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
 			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
+				r.logger.InfoContext(ctx, "adding logs link to annotations", "rule.id", r.ID(), "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
 				annotations = append(annotations, ruletypes.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
 			}
 		}
@@ -382,7 +386,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 	}
 
-	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
+	r.logger.InfoContext(ctx, "number of alerts found", "rule.id", r.ID(), "alerts_count", len(alerts))
 
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
@@ -410,7 +414,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLabels)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
+			r.logger.ErrorContext(ctx, "error marshaling labels", "rule.id", r.ID(), errors.Attr(err), "labels", a.Labels)
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
@@ -419,7 +423,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				delete(r.Active, fp)
 			}
 			if a.State != ruletypes.StateInactive {
-				r.logger.DebugContext(ctx, "converting firing alert to inActive", "name", r.Name())
+				r.logger.DebugContext(ctx, "converting firing alert to inactive", "rule.id", r.ID())
 				a.State = ruletypes.StateInactive
 				a.ResolvedAt = ts
 				itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
@@ -437,7 +441,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 
 		if a.State == ruletypes.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
-			r.logger.DebugContext(ctx, "converting pending alert to firing", "name", r.Name())
+			r.logger.DebugContext(ctx, "converting pending alert to firing", "rule.id", r.ID())
 			a.State = ruletypes.StateFiring
 			a.FiredAt = ts
 			state := ruletypes.StateFiring
@@ -467,7 +471,7 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				state = ruletypes.StateFiring
 			}
 			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
+			r.logger.DebugContext(ctx, "converting alert state", "rule.id", r.ID(), "state", state)
 			itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),

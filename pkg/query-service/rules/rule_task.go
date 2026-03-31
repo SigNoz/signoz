@@ -327,7 +327,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule.id", rule.ID(), "maintenance", m)
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -335,7 +335,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
+			g.logger.InfoContext(ctx, "rule should be skipped", "rule.id", rule.ID())
 			continue
 		}
 
@@ -367,7 +367,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", "rule.id", rule.ID(), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.
