@@ -42,12 +42,27 @@ export const useOrderedColumns = ({
 		[columns, draggedColumns],
 	);
 
-	const orderedColumns = baseColumns;
+	const orderedColumns = useMemo(() => {
+		const stateIndicatorIndex = baseColumns.findIndex(
+			(column) => column.key === 'state-indicator',
+		);
+		if (stateIndicatorIndex <= 0) {
+			return baseColumns;
+		}
+		const pinned = baseColumns[stateIndicatorIndex];
+		const rest = baseColumns.filter((_, i) => i !== stateIndicatorIndex);
+		return [pinned, ...rest];
+	}, [baseColumns]);
 
 	const handleDragEnd = useCallback(
 		(event: DragEndEvent): void => {
 			const { active, over } = event;
 			if (!over || active.id === over.id) {
+				return;
+			}
+
+			// Don't allow moving the state-indicator column
+			if (String(active.id) === 'state-indicator') {
 				return;
 			}
 
