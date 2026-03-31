@@ -2,11 +2,11 @@ package otlphttpauditor
 
 import (
 	"context"
-	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
 	"github.com/SigNoz/signoz/pkg/factory"
+	client "github.com/SigNoz/signoz/pkg/http/client"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/version"
@@ -22,7 +22,7 @@ type provider struct {
 	build      version.Build
 	server     *auditorserver.Server
 	marshaler  plog.ProtoMarshaler
-	httpClient *http.Client
+	httpClient *client.Client
 }
 
 func NewFactory(licensing licensing.Licensing, build version.Build) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
@@ -34,13 +34,24 @@ func NewFactory(licensing licensing.Licensing, build version.Build) factory.Prov
 func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config auditor.Config, licensing licensing.Licensing, build version.Build) (auditor.Auditor, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/auditor/otlphttpauditor")
 
+	httpClient, err := client.New(
+		settings.Logger(),
+		providerSettings.TracerProvider,
+		providerSettings.MeterProvider,
+		client.WithTimeout(config.OTLPHTTP.Timeout),
+		client.WithRetryCount(0),
+	)
+	if err != nil {
+		return nil, err
+	}
+
 	provider := &provider{
 		settings:   settings,
 		config:     config,
 		licensing:  licensing,
 		build:      build,
 		marshaler:  plog.ProtoMarshaler{},
-		httpClient: &http.Client{Timeout: config.OTLPHTTP.Timeout},
+		httpClient: httpClient,
 	}
 
 	server, err := auditorserver.New(settings,
