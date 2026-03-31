@@ -2,17 +2,14 @@ package otlphttpauditor
 
 import (
 	"context"
-	"fmt"
-	"log/slog"
 	"net/http"
 
 	"github.com/SigNoz/signoz/pkg/auditor"
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/auditor/auditorserver"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/SigNoz/signoz/pkg/version"
 	"go.opentelemetry.io/collector/pdata/plog"
 )
 
@@ -22,78 +19,67 @@ type provider struct {
 	settings   factory.ScopedProviderSettings
 	config     auditor.Config
 	licensing  licensing.Licensing
+	build      version.Build
 	server     *auditorserver.Server
 	marshaler  plog.ProtoMarshaler
 	httpClient *http.Client
-	endpoint   string
 }
 
-func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
+func NewFactory(licensing licensing.Licensing, build version.Build) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("otlphttp"), func(ctx context.Context, providerSettings factory.ProviderSettings, config auditor.Config) (auditor.Auditor, error) {
-		return newProvider(ctx, providerSettings, config, licensing)
+		return newProvider(ctx, providerSettings, config, licensing, build)
 	})
 }
 
-func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config auditor.Config, lic licensing.Licensing) (auditor.Auditor, error) {
+func newProvider(_ context.Context, providerSettings factory.ProviderSettings, config auditor.Config, licensing licensing.Licensing, build version.Build) (auditor.Auditor, error) {
 	settings := factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/ee/auditor/otlphttpauditor")
 
-	scheme := "https"
-	if config.OTLPHTTP.Insecure {
-		scheme = "http"
-	}
-
-	p := &provider{
+	provider := &provider{
 		settings:   settings,
 		config:     config,
-		licensing:  lic,
+		licensing:  licensing,
+		build:      build,
 		marshaler:  plog.ProtoMarshaler{},
 		httpClient: &http.Client{Timeout: config.OTLPHTTP.Timeout},
-		endpoint:   fmt.Sprintf("%s://%s%s", scheme, config.OTLPHTTP.Endpoint, config.OTLPHTTP.URLPath),
 	}
 
-	server, err := auditorserver.New(
-		settings,
+	server, err := auditorserver.New(settings,
 		auditorserver.Config{
 			BufferSize:    config.BufferSize,
 			BatchSize:     config.BatchSize,
 			FlushInterval: config.FlushInterval,
 		},
-		p.export,
+		provider.export,
 	)
 	if err != nil {
-		return nil, errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to create auditor server")
+		return nil, err
 	}
 
-	p.server = server
-	return p, nil
-}
-
-func (provider *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
-	if event.PrincipalOrgID == "" {
-		return
-	}
-
-	orgID, err := valuer.NewUUID(event.PrincipalOrgID)
-	if err != nil {
-		provider.settings.Logger().WarnContext(ctx, "audit event dropped, invalid org_id", slog.String("org_id", event.PrincipalOrgID))
-		return
-	}
-
-	if _, err := provider.licensing.GetActive(ctx, orgID); err != nil {
-		return
-	}
-
-	provider.server.Add(ctx, event)
+	provider.server = server
+	return provider, nil
 }
 
 func (provider *provider) Start(ctx context.Context) error {
 	return provider.server.Start(ctx)
 }
 
-func (provider *provider) Stop(ctx context.Context) error {
-	return provider.server.Stop(ctx)
+func (provider *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
+	if event.PrincipalOrgID.IsZero() {
+		provider.settings.Logger().WarnContext(ctx, "audit event dropped as org_id is zero")
+		return
+	}
+
+	if _, err := provider.licensing.GetActive(ctx, event.PrincipalOrgID); err != nil {
+		return
+	}
+
+	provider.server.Add(ctx, event)
 }
 
 func (provider *provider) Healthy() <-chan struct{} {
 	return provider.server.Healthy()
+}
+
+func (provider *provider) Stop(ctx context.Context) error {
+	return provider.server.Stop(ctx)
 }
