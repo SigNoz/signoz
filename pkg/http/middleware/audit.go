@@ -16,7 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
 const (
@@ -100,26 +99,16 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		return
 	}
 
+	// extract claims
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
+
+	// extract status code
 	statusCode := writer.StatusCode()
 
-	// Pre-extract principal.
-	principalID, _ := valuer.NewUUID(claims.UserID)
-	principalEmail, _ := valuer.NewEmail(claims.Email)
-	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
-
-	// Pre-extract trace context.
+	// extract traces.
 	span := trace.SpanFromContext(req.Context())
-	var traceID, spanID string
-	if span.SpanContext().HasTraceID() {
-		traceID = span.SpanContext().TraceID().String()
-	}
 
-	if span.SpanContext().HasSpanID() {
-		spanID = span.SpanContext().SpanID().String()
-	}
-
-	// Pre-extract error details.
+	// extract error details.
 	var errorType, errorCode, errorMessage string
 	if statusCode >= 400 {
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
@@ -128,24 +117,21 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		}
 	}
 
-	event := audittypes.NewAuditEventFromHTTPRequest(req, audittypes.AuditEventContext{
-		Action:         def.Action,
-		ActionCategory: def.Category,
-		ResourceName:   def.ResourceName,
-		ResourceID:     resourceIDFromRequest(req, def.ResourceIDParam),
-		PrincipalID:    principalID,
-		PrincipalEmail: principalEmail,
-		PrincipalType:  principalTypeFromClaims(claims),
-		PrincipalOrgID: principalOrgID,
-		IdentNProvider: claims.IdentNProvider,
-		StatusCode:     statusCode,
-		ErrorType:      errorType,
-		ErrorCode:      errorCode,
-		ErrorMessage:   errorMessage,
-		RouteTemplate:  routeTemplate,
-		TraceID:        traceID,
-		SpanID:         spanID,
-	})
+	event := audittypes.NewAuditEventFromHTTPRequest(
+		req,
+		routeTemplate,
+		statusCode,
+		span.SpanContext().TraceID(),
+		span.SpanContext().SpanID(),
+		def.Action,
+		def.Category,
+		claims,
+		resourceIDFromRequest(req, def.ResourceIDParam),
+		def.ResourceName,
+		errorType,
+		errorCode,
+		errorMessage,
+	)
 
 	middleware.auditor.Audit(req.Context(), event)
 }
@@ -183,12 +169,4 @@ func resourceIDFromRequest(req *http.Request, param string) string {
 	}
 
 	return vars[param]
-}
-
-func principalTypeFromClaims(claims authtypes.Claims) audittypes.PrincipalType {
-	if claims.IdentNProvider == "api_key" {
-		return audittypes.PrincipalTypeServiceAccount
-	}
-
-	return audittypes.PrincipalTypeUser
 }

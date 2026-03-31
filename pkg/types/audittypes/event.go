@@ -1,126 +1,81 @@
 package audittypes
 
 import (
-	"encoding/hex"
-	"fmt"
 	"net/http"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/valuer"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"go.opentelemetry.io/collector/pdata/pcommon"
 	"go.opentelemetry.io/collector/pdata/plog"
-	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
+	oteltrace "go.opentelemetry.io/otel/trace"
 )
 
-// AuditEventContext carries pre-extracted fields that the caller provides
-// because audittypes cannot depend on mux, authtypes, or read from context.
-type AuditEventContext struct {
-	// Action (from AuditDef).
-	Action         Action
-	ActionCategory ActionCategory
-	ResourceName   string
-	ResourceID     string
-
-	// Principal (pre-extracted from claims by the caller).
-	PrincipalID    valuer.UUID
-	PrincipalEmail valuer.Email
-	PrincipalType  PrincipalType
-	PrincipalOrgID valuer.UUID
-	IdentNProvider string
-
-	// Response (from the response capture).
-	StatusCode int
-
-	// Error (pre-extracted by the caller from the response body).
-	ErrorType    string
-	ErrorCode    string
-	ErrorMessage string
-
-	// Route template (pre-extracted from mux by the caller).
-	RouteTemplate string
-
-	// Trace context (pre-extracted from span context by the caller).
-	TraceID string
-	SpanID  string
-}
-
-// NewAuditEventFromHTTPRequest constructs an AuditEvent from an HTTP request
-// and a caller-provided AuditEventContext. Transport fields (method, path,
-// remote addr, user-agent) are read directly from the request. Everything
-// else comes from the context struct to avoid mux/authtypes/context dependencies.
-func NewAuditEventFromHTTPRequest(req *http.Request, ctx AuditEventContext) AuditEvent {
-	event := AuditEvent{
-		Timestamp:      time.Now(),
-		TraceID:        ctx.TraceID,
-		SpanID:         ctx.SpanID,
-		EventName:      NewEventName(ctx.ResourceName, ctx.Action),
-		PrincipalID:    ctx.PrincipalID,
-		PrincipalEmail: ctx.PrincipalEmail,
-		PrincipalType:  ctx.PrincipalType,
-		PrincipalOrgID: ctx.PrincipalOrgID,
-		IdentNProvider: ctx.IdentNProvider,
-		Action:         ctx.Action,
-		ActionCategory: ctx.ActionCategory,
-		ResourceName:   ctx.ResourceName,
-		ResourceID:     ctx.ResourceID,
-		HTTPMethod:     req.Method,
-		HTTPRoute:      ctx.RouteTemplate,
-		HTTPStatusCode: ctx.StatusCode,
-		URLPath:        req.URL.Path,
-		ClientAddress:  req.RemoteAddr,
-		UserAgent:      req.UserAgent(),
-	}
-
-	if ctx.StatusCode >= 400 {
-		event.Outcome = OutcomeFailure
-		event.ErrorType = ctx.ErrorType
-		event.ErrorCode = ctx.ErrorCode
-		event.ErrorMessage = ctx.ErrorMessage
-	} else {
-		event.Outcome = OutcomeSuccess
-	}
-
-	return event
-}
-
-// AuditEvent represents a single audit log event.
-// Fields are ordered following the OTel LogRecord structure.
 type AuditEvent struct {
-	// OTel LogRecord intrinsic fields
+	// OTel LogRecord Intrinsic
 	Timestamp time.Time `json:"timestamp"`
-	TraceID   string    `json:"traceId,omitempty"`
-	SpanID    string    `json:"spanId,omitempty"`
-	Body      string    `json:"body"`
+
+	// OTel LogRecord Intrinsic
+	TraceID oteltrace.TraceID `json:"traceId,omitempty"`
+
+	// OTel LogRecord Intrinsic
+	SpanID oteltrace.SpanID `json:"spanId,omitempty"`
+
+	// OTel LogRecord Intrinsic
+	Body string `json:"body"`
+
+	// OTel LogRecord Intrinsic
 	EventName EventName `json:"eventName"`
 
-	// Audit attributes — Principal (Who)
-	PrincipalID    valuer.UUID   `json:"principalId"`
-	PrincipalEmail valuer.Email  `json:"principalEmail"`
-	PrincipalType  PrincipalType `json:"principalType"`
-	PrincipalOrgID valuer.UUID   `json:"principalOrgId"`
-	IdentNProvider string        `json:"identnProvider,omitempty"`
+	// Custom Audit Attributes - Action
+	AuditEventAuditAttributes AuditEventAuditAttributes `json:"auditAttributes"`
 
-	// Audit attributes — Action (What)
-	Action         Action         `json:"action"`
-	ActionCategory ActionCategory `json:"actionCategory"`
-	Outcome        Outcome        `json:"outcome"`
+	// Custom Audit Attributes - Principal
+	AuditEventPrincipalAttributes AuditEventPrincipalAttributes `json:"principalAttributes,omitempty"`
 
-	// Audit attributes — Resource (On What)
-	ResourceName string `json:"resourceName"`
-	ResourceID   string `json:"resourceId,omitempty"`
+	// Custom Audit Attributes - Resource
+	AuditEventResourceAttributes AuditEventResourceAttributes `json:"resourceAttributes,omitempty"`
 
-	// Audit attributes — Error (When outcome is failure)
-	ErrorType    string `json:"errorType,omitempty"`
-	ErrorCode    string `json:"errorCode,omitempty"`
-	ErrorMessage string `json:"errorMessage,omitempty"`
+	// Custom Audit Attributes - Error
+	AuditEventErrorAttributes AuditEventErrorAttributes `json:"errorAttributes,omitempty"`
 
-	// Transport Context (Where/How)
-	HTTPMethod     string `json:"httpMethod,omitempty"`
-	HTTPRoute      string `json:"httpRoute,omitempty"`
-	HTTPStatusCode int    `json:"httpStatusCode,omitempty"`
-	URLPath        string `json:"urlPath,omitempty"`
-	ClientAddress  string `json:"clientAddress,omitempty"`
-	UserAgent      string `json:"userAgent,omitempty"`
+	// Custom Audit Attributes - Transport Context
+	AuditEventTransportAttributes AuditEventTransportAttributes `json:"transportAttributes,omitempty"`
+}
+
+func NewAuditEventFromHTTPRequest(
+	req *http.Request,
+	route string,
+	statusCode int,
+	traceID oteltrace.TraceID,
+	spanID oteltrace.SpanID,
+	action Action,
+	actionCategory ActionCategory,
+	claims authtypes.Claims,
+	resourceID string,
+	resourceName string,
+	errorType string,
+	errorCode string,
+	errorMessage string,
+) AuditEvent {
+	auditAttributes := NewAuditEventAuditAttributesFromHTTP(statusCode, action, actionCategory, claims)
+	principalAttributes := NewAuditEventPrincipalAttributesFromClaims(claims)
+	resourceAttributes := NewAuditEventResourceAttributes(resourceID, resourceName)
+	errorAttributes := NewAuditEventErrorAttributes(errorType, errorCode, errorMessage)
+	transportAttributes := NewAuditEventTransportAttributesFromHTTP(req, route, statusCode)
+
+	return AuditEvent{
+		Timestamp:                     time.Now(),
+		TraceID:                       traceID,
+		SpanID:                        spanID,
+		Body:                          newBody(auditAttributes, principalAttributes, resourceAttributes, errorAttributes),
+		EventName:                     NewEventName(resourceAttributes.ResourceName, auditAttributes.Action),
+		AuditEventAuditAttributes:     auditAttributes,
+		AuditEventPrincipalAttributes: principalAttributes,
+		AuditEventResourceAttributes:  resourceAttributes,
+		AuditEventErrorAttributes:     errorAttributes,
+		AuditEventTransportAttributes: transportAttributes,
+	}
 }
 
 func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, scope string) plog.Logs {
@@ -140,88 +95,41 @@ func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, s
 }
 
 func (event AuditEvent) ToLogRecord(dest plog.LogRecord) {
+	// Set timestamps
 	dest.SetTimestamp(pcommon.NewTimestampFromTime(event.Timestamp))
 	dest.SetObservedTimestamp(pcommon.NewTimestampFromTime(event.Timestamp))
-	dest.Body().SetStr(event.setBody())
-	dest.SetEventName(event.EventName.String())
-	dest.SetSeverityNumber(event.Outcome.Severity())
-	dest.SetSeverityText(event.Outcome.SeverityText())
 
-	if tid, ok := parseTraceID(event.TraceID); ok {
-		dest.SetTraceID(tid)
+	// Set body and event name
+	dest.Body().SetStr(event.Body)
+	dest.SetEventName(event.EventName.String())
+
+	// Set severity based on outcome
+	dest.SetSeverityNumber(event.AuditEventAuditAttributes.Outcome.Severity())
+	dest.SetSeverityText(event.AuditEventAuditAttributes.Outcome.SeverityText())
+
+	// Set trace and span IDs if present
+	if event.TraceID.IsValid() {
+		dest.SetTraceID(pcommon.TraceID(event.TraceID))
 	}
-	if sid, ok := parseSpanID(event.SpanID); ok {
-		dest.SetSpanID(sid)
+
+	if event.SpanID.IsValid() {
+		dest.SetSpanID(pcommon.SpanID(event.SpanID))
 	}
 
 	attrs := dest.Attributes()
 
-	// Principal attributes
-	attrs.PutStr("signoz.audit.principal.id", event.PrincipalID.StringValue())
-	attrs.PutStr("signoz.audit.principal.email", event.PrincipalEmail.String())
-	attrs.PutStr("signoz.audit.principal.type", event.PrincipalType.StringValue())
-	attrs.PutStr("signoz.audit.principal.org_id", event.PrincipalOrgID.StringValue())
-	putStrIfNotEmpty(attrs, "signoz.audit.identn_provider", event.IdentNProvider)
+	// Audit attributes
+	event.AuditEventAuditAttributes.Put(attrs)
 
-	// Action attributes
-	attrs.PutStr("signoz.audit.action", event.Action.StringValue())
-	attrs.PutStr("signoz.audit.action_category", event.ActionCategory.StringValue())
-	attrs.PutStr("signoz.audit.outcome", event.Outcome.StringValue())
+	// Principal attributes
+	event.AuditEventPrincipalAttributes.Put(attrs)
 
 	// Resource attributes
-	attrs.PutStr("signoz.audit.resource.name", event.ResourceName)
-	putStrIfNotEmpty(attrs, "signoz.audit.resource.id", event.ResourceID)
+	event.AuditEventResourceAttributes.Put(attrs)
 
-	// Error attributes (on failure)
-	putStrIfNotEmpty(attrs, "signoz.audit.error.type", event.ErrorType)
-	putStrIfNotEmpty(attrs, "signoz.audit.error.code", event.ErrorCode)
-	putStrIfNotEmpty(attrs, "signoz.audit.error.message", event.ErrorMessage)
+	// Error attributes
+	event.AuditEventErrorAttributes.Put(attrs)
 
 	// Transport context attributes
-	putStrIfNotEmpty(attrs, "http.request.method", event.HTTPMethod)
-	putStrIfNotEmpty(attrs, "http.route", event.HTTPRoute)
-	if event.HTTPStatusCode != 0 {
-		attrs.PutInt("http.response.status_code", int64(event.HTTPStatusCode))
-	}
-	putStrIfNotEmpty(attrs, "url.path", event.URLPath)
-	putStrIfNotEmpty(attrs, "client.address", event.ClientAddress)
-	putStrIfNotEmpty(attrs, "user_agent.original", event.UserAgent)
-}
-
-func (event AuditEvent) setBody() string {
-	if event.Outcome == OutcomeSuccess {
-		return fmt.Sprintf("%s (%s) %s %s %s", event.PrincipalEmail, event.PrincipalID, event.Action.PastTense(), event.ResourceName, event.ResourceID)
-	}
-
-	return fmt.Sprintf("%s (%s) failed to %s %s %s: %s (%s)", event.PrincipalEmail, event.PrincipalID, event.Action.StringValue(), event.ResourceName, event.ResourceID, event.ErrorType, event.ErrorCode)
-}
-
-func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
-	if value != "" {
-		attrs.PutStr(key, value)
-	}
-}
-
-func parseTraceID(s string) (pcommon.TraceID, bool) {
-	b, err := hex.DecodeString(s)
-	if err != nil || len(b) != 16 {
-		return pcommon.TraceID{}, false
-	}
-
-	var tid pcommon.TraceID
-	copy(tid[:], b)
-
-	return tid, true
-}
-
-func parseSpanID(s string) (pcommon.SpanID, bool) {
-	b, err := hex.DecodeString(s)
-	if err != nil || len(b) != 8 {
-		return pcommon.SpanID{}, false
-	}
-
-	var sid pcommon.SpanID
-	copy(sid[:], b)
-
-	return sid, true
+	event.AuditEventTransportAttributes.Put(attrs)
 }
