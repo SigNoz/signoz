@@ -1,8 +1,13 @@
 import { Dispatch, SetStateAction } from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, TabsProps, Tag, Tooltip, Typography } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import {
+	Progress,
+	TableColumnType as ColumnType,
+	Tag,
+	Tooltip,
+	Typography,
+} from 'antd';
 import { SortOrder } from 'antd/lib/table/interface';
 import {
 	HostData,
@@ -13,8 +18,6 @@ import {
 	FiltersType,
 	IQuickFiltersConfig,
 } from 'components/QuickFilters/types';
-import TabLabel from 'components/TabLabel';
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { TriangleAlert } from 'lucide-react';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
@@ -22,9 +25,6 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 
 import { OrderBySchemaType } from '../InfraMonitoringK8s/schemas';
-import HostsList from './HostsList';
-
-import './InfraMonitoring.styles.scss';
 
 export interface HostRowData {
 	key?: string;
@@ -140,14 +140,6 @@ function mapOrderByToSortOrder(
 			: 'descend'
 		: undefined;
 }
-
-export const getTabsItems = (): TabsProps['items'] => [
-	{
-		label: <TabLabel label="List View" isDisabled={false} tooltipText="" />,
-		key: PANEL_TYPES.LIST,
-		children: <HostsList />,
-	},
-];
 
 export const getHostsListColumns = (
 	orderBy: OrderBySchemaType,
