@@ -1,4 +1,4 @@
-package auditortypes
+package audittypes
 
 import (
 	"context"
