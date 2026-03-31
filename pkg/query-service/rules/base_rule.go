@@ -8,6 +8,7 @@ import (
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
@@ -17,6 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -95,6 +97,8 @@ type BaseRule struct {
 	// newGroupEvalDelay is the grace period for new alert groups
 	newGroupEvalDelay valuer.TextDuration
 
+	ruleStateHistoryModule rulestatehistory.Module
+
 	queryParser queryparser.QueryParser
 }
 
@@ -139,6 +143,12 @@ func WithQueryParser(queryParser queryparser.QueryParser) RuleOption {
 func WithMetadataStore(metadataStore telemetrytypes.MetadataStore) RuleOption {
 	return func(r *BaseRule) {
 		r.metadataStore = metadataStore
+	}
+}
+
+func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
+	return func(r *BaseRule) {
+		r.ruleStateHistoryModule = module
 	}
 }
 
@@ -399,98 +409,56 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 }
 
 func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
-	r.logger.DebugContext(ctx, "recording rule state history", "ruleid", r.ID(), "prevState", prevState, "currentState", currentState, "itemsToAdd", itemsToAdd)
-	revisedItemsToAdd := map[uint64]model.RuleStateHistory{}
+	if r.ruleStateHistoryModule == nil {
+		return nil
+	}
 
-	lastSavedState, err := r.reader.GetLastSavedRuleStateHistory(ctx, r.ID())
-	if err != nil {
+	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, toRuleStateHistoryTypes(itemsToAdd)); err != nil {
+		r.logger.ErrorContext(ctx, "error while recording rule state history", errors.Attr(err), slog.Any("itemsToAdd", itemsToAdd))
 		return err
-	}
-	// if the query-service has been restarted, or the rule has been modified (which re-initializes the rule),
-	// the state would reset so we need to add the corresponding state changes to previously saved states
-	if !r.handledRestart && len(lastSavedState) > 0 {
-		r.logger.DebugContext(ctx, "handling restart", "ruleid", r.ID(), "lastSavedState", lastSavedState)
-		l := map[uint64]model.RuleStateHistory{}
-		for _, item := range itemsToAdd {
-			l[item.Fingerprint] = item
-		}
-
-		shouldSkip := map[uint64]bool{}
-
-		for _, item := range lastSavedState {
-			// for the last saved item with fingerprint, check if there is a corresponding entry in the current state
-			currentState, ok := l[item.Fingerprint]
-			if !ok {
-				// there was a state change in the past, but not in the current state
-				// if the state was firing, then we should add a resolved state change
-				if item.State == model.StateFiring || item.State == model.StateNoData {
-					item.State = model.StateInactive
-					item.StateChanged = true
-					item.UnixMilli = time.Now().UnixMilli()
-					revisedItemsToAdd[item.Fingerprint] = item
-				}
-				// there is nothing to do if the prev state was normal
-			} else {
-				if item.State != currentState.State {
-					item.State = currentState.State
-					item.StateChanged = true
-					item.UnixMilli = time.Now().UnixMilli()
-					revisedItemsToAdd[item.Fingerprint] = item
-				}
-			}
-			// do not add this item to revisedItemsToAdd as it is already processed
-			shouldSkip[item.Fingerprint] = true
-		}
-		r.logger.DebugContext(ctx, "after lastSavedState loop", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
-
-		// if there are any new state changes that were not saved, add them to the revised items
-		for _, item := range itemsToAdd {
-			if _, ok := revisedItemsToAdd[item.Fingerprint]; !ok && !shouldSkip[item.Fingerprint] {
-				revisedItemsToAdd[item.Fingerprint] = item
-			}
-		}
-		r.logger.DebugContext(ctx, "after itemsToAdd loop", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
-
-		newState := model.StateInactive
-		for _, item := range revisedItemsToAdd {
-			if item.State == model.StateFiring || item.State == model.StateNoData {
-				newState = model.StateFiring
-				break
-			}
-		}
-		r.logger.DebugContext(ctx, "newState", "ruleid", r.ID(), "newState", newState)
-
-		// if there is a change in the overall state, update the overall state
-		if lastSavedState[0].OverallState != newState {
-			for fingerprint, item := range revisedItemsToAdd {
-				item.OverallState = newState
-				item.OverallStateChanged = true
-				revisedItemsToAdd[fingerprint] = item
-			}
-		}
-		r.logger.DebugContext(ctx, "revisedItemsToAdd after newState", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
-
-	} else {
-		for _, item := range itemsToAdd {
-			revisedItemsToAdd[item.Fingerprint] = item
-		}
-	}
-
-	if len(revisedItemsToAdd) > 0 && r.reader != nil {
-		r.logger.DebugContext(ctx, "writing rule state history", "ruleid", r.ID(), "revisedItemsToAdd", revisedItemsToAdd)
-
-		entries := make([]model.RuleStateHistory, 0, len(revisedItemsToAdd))
-		for _, item := range revisedItemsToAdd {
-			entries = append(entries, item)
-		}
-		err := r.reader.AddRuleStateHistory(ctx, entries)
-		if err != nil {
-			r.logger.ErrorContext(ctx, "error while inserting rule state history", errors.Attr(err), "itemsToAdd", itemsToAdd)
-		}
 	}
 	r.handledRestart = true
 
 	return nil
+}
+
+// TODO(srikanthccv): remove these when v3 is cleaned up
+func toRuleStateHistoryTypes(entries []model.RuleStateHistory) []rulestatehistorytypes.RuleStateHistory {
+	converted := make([]rulestatehistorytypes.RuleStateHistory, 0, len(entries))
+	for _, entry := range entries {
+		converted = append(converted, rulestatehistorytypes.RuleStateHistory{
+			RuleID:              entry.RuleID,
+			RuleName:            entry.RuleName,
+			OverallState:        toRuleStateHistoryAlertState(entry.OverallState),
+			OverallStateChanged: entry.OverallStateChanged,
+			State:               toRuleStateHistoryAlertState(entry.State),
+			StateChanged:        entry.StateChanged,
+			UnixMilli:           entry.UnixMilli,
+			Labels:              rulestatehistorytypes.LabelsString(entry.Labels),
+			Fingerprint:         entry.Fingerprint,
+			Value:               entry.Value,
+		})
+	}
+	return converted
+}
+
+func toRuleStateHistoryAlertState(state model.AlertState) rulestatehistorytypes.AlertState {
+	switch state {
+	case model.StateInactive:
+		return rulestatehistorytypes.StateInactive
+	case model.StatePending:
+		return rulestatehistorytypes.StatePending
+	case model.StateRecovering:
+		return rulestatehistorytypes.StateRecovering
+	case model.StateFiring:
+		return rulestatehistorytypes.StateFiring
+	case model.StateNoData:
+		return rulestatehistorytypes.StateNoData
+	case model.StateDisabled:
+		return rulestatehistorytypes.StateDisabled
+	default:
+		return rulestatehistorytypes.StateInactive
+	}
 }
 
 func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {

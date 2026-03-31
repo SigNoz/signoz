@@ -28,6 +28,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
@@ -41,6 +42,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -65,6 +67,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -90,6 +93,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 		if err != nil {
 			return task, err

@@ -1,8 +1,17 @@
+import { toast } from '@signozhq/sonner';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
+import { StatusCodes } from 'http-status-codes';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import APIError from 'types/api/error';
 
 import InviteMembersModal from '../InviteMembersModal';
+
+const makeApiError = (message: string, code = StatusCodes.CONFLICT): APIError =>
+	new APIError({
+		httpStatusCode: code,
+		error: { code: 'already_exists', message, url: '', errors: [] },
+	});
 
 jest.mock('api/v1/invite/create');
 jest.mock('api/v1/invite/bulk/create');
@@ -139,6 +148,90 @@ describe('InviteMembersModal', () => {
 			);
 			expect(mockInviteUsers).not.toHaveBeenCalled();
 			expect(onComplete).toHaveBeenCalled();
+		});
+	});
+
+	describe('error handling', () => {
+		it('shows BE message on single invite 409', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			mockSendInvite.mockRejectedValue(
+				makeApiError('An invite already exists for this email: single@signoz.io'),
+			);
+
+			render(<InviteMembersModal {...defaultProps} />);
+
+			await user.type(
+				screen.getAllByPlaceholderText('john@signoz.io')[0],
+				'single@signoz.io',
+			);
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByText('Viewer'));
+			await user.click(
+				screen.getByRole('button', { name: /invite team members/i }),
+			);
+
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalledWith(
+					'An invite already exists for this email: single@signoz.io',
+					expect.anything(),
+				);
+			});
+		});
+
+		it('shows BE message on bulk invite 409', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			mockInviteUsers.mockRejectedValue(
+				makeApiError('An invite already exists for this email: alice@signoz.io'),
+			);
+
+			render(<InviteMembersModal {...defaultProps} />);
+
+			const emailInputs = screen.getAllByPlaceholderText('john@signoz.io');
+			await user.type(emailInputs[0], 'alice@signoz.io');
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByText('Viewer'));
+
+			await user.type(emailInputs[1], 'bob@signoz.io');
+			await user.click(screen.getAllByText('Select roles')[0]);
+			const editorOptions = await screen.findAllByText('Editor');
+			await user.click(editorOptions[editorOptions.length - 1]);
+
+			await user.click(
+				screen.getByRole('button', { name: /invite team members/i }),
+			);
+
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalledWith(
+					'An invite already exists for this email: alice@signoz.io',
+					expect.anything(),
+				);
+			});
+		});
+
+		it('shows BE message on generic error', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			mockSendInvite.mockRejectedValue(
+				makeApiError('Internal server error', StatusCodes.INTERNAL_SERVER_ERROR),
+			);
+
+			render(<InviteMembersModal {...defaultProps} />);
+
+			await user.type(
+				screen.getAllByPlaceholderText('john@signoz.io')[0],
+				'single@signoz.io',
+			);
+			await user.click(screen.getAllByText('Select roles')[0]);
+			await user.click(await screen.findByText('Viewer'));
+			await user.click(
+				screen.getByRole('button', { name: /invite team members/i }),
+			);
+
+			await waitFor(() => {
+				expect(toast.error).toHaveBeenCalledWith(
+					'Internal server error',
+					expect.anything(),
+				);
+			});
 		});
 	});
 

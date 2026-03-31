@@ -56,8 +56,8 @@ export interface AlertRuleStats {
 	totalPastTriggers: number;
 	currentTriggersSeries: CurrentTriggersSeries;
 	pastTriggersSeries: CurrentTriggersSeries | null;
-	currentAvgResolutionTime: number;
-	pastAvgResolutionTime: number;
+	currentAvgResolutionTime: string;
+	pastAvgResolutionTime: string;
 	currentAvgResolutionTimeSeries: CurrentTriggersSeries;
 	pastAvgResolutionTimeSeries: any | null;
 }

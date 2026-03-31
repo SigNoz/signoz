@@ -4,6 +4,7 @@ import (
 	"strings"
 	"testing"
 
+	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -31,7 +32,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -39,7 +47,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "B",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -61,7 +74,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -194,7 +214,14 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 						{
@@ -232,7 +259,12 @@ func TestQueryRangeRequest_ValidateAllQueriesNotDisabled(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "sum(duration)",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 					},
@@ -366,7 +398,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -374,7 +411,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[TraceAggregation]{
 								Name:     "A",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalTraces,
+								Aggregations: []TraceAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalTraces,
 							},
 						},
 					},
@@ -396,7 +438,12 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[LogAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{
+									{
+										Expression: "count()",
+									},
+								},
+								Signal: telemetrytypes.SignalLogs,
 							},
 						},
 						{
@@ -404,7 +451,14 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 							Spec: QueryBuilderQuery[MetricAggregation]{
 								Name:     "X",
 								Disabled: true,
-								Signal:   telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{
+									{
+										MetricName:       "test",
+										TimeAggregation:  metrictypes.TimeAggregationAvg,
+										SpaceAggregation: metrictypes.SpaceAggregationMax,
+									},
+								},
+								Signal: telemetrytypes.SignalMetrics,
 							},
 						},
 					},
@@ -427,7 +481,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},
@@ -581,7 +637,9 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 								Name:   "A",
 								Signal: telemetrytypes.SignalLogs,
 								Aggregations: []LogAggregation{
-									{Expression: "count()"},
+									{
+										Expression: "count()",
+									},
 								},
 							},
 						},

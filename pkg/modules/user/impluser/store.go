@@ -667,3 +667,22 @@ func (store *store) GetUsersByEmailsOrgIDAndStatuses(ctx context.Context, orgID 
 
 	return users, nil
 }
+
+func (store *store) GetUsersByOrgIDAndRoleID(ctx context.Context, orgID valuer.UUID, roleID valuer.UUID) ([]*types.User, error) {
+	users := []*types.User{}
+
+	err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(&users).
+		Join(`JOIN user_role ON user_role.user_id = "users".id`).
+		Where(`"users".org_id = ?`, orgID).
+		Where("user_role.role_id = ?", roleID).
+		Scan(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	return users, nil
+}
