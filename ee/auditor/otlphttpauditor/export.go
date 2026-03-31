@@ -7,13 +7,14 @@ import (
 	"errors"
 	"fmt"
 	"io"
+	"log/slog"
 	"net/http"
 	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
-	"go.opentelemetry.io/collector/exporter/exporterhelper"
 	"go.opentelemetry.io/collector/pdata/plog"
+	collogspb "go.opentelemetry.io/proto/otlp/collector/logs/v1"
 	"google.golang.org/protobuf/proto"
 
 	spb "google.golang.org/genproto/googleapis/rpc/status"
@@ -23,6 +24,15 @@ const (
 	maxHTTPResponseReadBytes = 64 * 1024
 	protobufContentType      = "application/x-protobuf"
 )
+
+// retryableError wraps an error that can be retried, optionally with a server-suggested delay.
+type retryableError struct {
+	err   error
+	delay time.Duration
+}
+
+func (e *retryableError) Error() string { return e.err.Error() }
+func (e *retryableError) Unwrap() error { return e.err }
 
 func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
 	logs := plog.NewLogs()
@@ -43,12 +53,50 @@ func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) e
 	return p.send(ctx, request)
 }
 
-// send posts a protobuf-encoded OTLP request to the configured endpoint.
+// send posts the request with internal retry for retryable errors.
+// Uses exponential backoff from config, honouring Retry-After when available.
+func (p *provider) send(ctx context.Context, request []byte) error {
+	retryCfg := p.config.OTLPHTTP.Retry
+	if !retryCfg.Enabled {
+		return p.sendOnce(ctx, request)
+	}
+
+	interval := retryCfg.InitialInterval
+	deadline := time.Now().Add(retryCfg.MaxElapsedTime)
+
+	for {
+		err := p.sendOnce(ctx, request)
+		if err == nil {
+			return nil
+		}
+
+		var re *retryableError
+		if !errors.As(err, &re) || time.Now().After(deadline) {
+			return err
+		}
+
+		wait := interval
+		if re.delay > 0 {
+			wait = re.delay
+		}
+
+		select {
+		case <-ctx.Done():
+			return ctx.Err()
+		case <-time.After(wait):
+		}
+
+		interval = min(interval*2, retryCfg.MaxInterval)
+	}
+}
+
+// sendOnce posts a protobuf-encoded OTLP request to the configured endpoint.
+// Returns a *retryableError for status codes that should be retried.
 // Follows the OTel Collector's otlphttpexporter pattern:
 // https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/otlphttpexporter/otlp.go
-func (p *provider) send(ctx context.Context, request []byte) error {
+func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 	var body io.Reader
-	if p.compress {
+	if p.config.OTLPHTTP.Compression == "gzip" {
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
 		if _, err := gz.Write(request); err != nil {
@@ -68,7 +116,7 @@ func (p *provider) send(ctx context.Context, request []byte) error {
 	}
 
 	req.Header.Set("Content-Type", protobufContentType)
-	if p.compress {
+	if p.config.OTLPHTTP.Compression == "gzip" {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
@@ -82,6 +130,7 @@ func (p *provider) send(ctx context.Context, request []byte) error {
 	}()
 
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
+		p.handlePartialSuccess(resp)
 		return nil
 	}
 
@@ -94,17 +143,43 @@ func (p *provider) send(ctx context.Context, request []byte) error {
 		formattedErr = fmt.Errorf("error exporting audit logs, request to %s responded with HTTP Status Code %d", p.endpoint, resp.StatusCode)
 	}
 
-	if isThrottleError(resp.StatusCode) {
-		if retryAfter := parseRetryAfter(resp); retryAfter > 0 {
-			return exporterhelper.NewThrottleRetry(formattedErr, retryAfter)
-		}
+	if isRetryableStatusCode(resp.StatusCode) {
+		return &retryableError{err: formattedErr, delay: parseRetryAfter(resp)}
 	}
 
 	return formattedErr
 }
 
-func isThrottleError(code int) bool {
-	return code == http.StatusTooManyRequests || code == http.StatusServiceUnavailable
+// handlePartialSuccess parses the ExportLogsServiceResponse from a 2xx response
+// and logs a warning if any log records were rejected.
+func (p *provider) handlePartialSuccess(resp *http.Response) {
+	respBytes, err := readResponseBody(resp)
+	if err != nil || respBytes == nil {
+		return
+	}
+
+	exportResponse := &collogspb.ExportLogsServiceResponse{}
+	if err := proto.Unmarshal(respBytes, exportResponse); err != nil {
+		return
+	}
+
+	ps := exportResponse.GetPartialSuccess()
+	if ps == nil {
+		return
+	}
+
+	if ps.GetErrorMessage() != "" || ps.GetRejectedLogRecords() != 0 {
+		p.settings.Logger().WarnContext(context.Background(), "partial success response", slog.String("message", ps.GetErrorMessage()), slog.Int64("dropped_log_records", ps.GetRejectedLogRecords()))
+	}
+}
+
+func isRetryableStatusCode(code int) bool {
+	switch code {
+	case http.StatusTooManyRequests, http.StatusBadGateway, http.StatusServiceUnavailable, http.StatusGatewayTimeout:
+		return true
+	default:
+		return false
+	}
 }
 
 // parseRetryAfter parses the Retry-After header value.

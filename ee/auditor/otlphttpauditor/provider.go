@@ -19,12 +19,12 @@ var _ auditor.Auditor = (*provider)(nil)
 
 type provider struct {
 	settings   factory.ScopedProviderSettings
+	config     auditor.Config
 	licensing  licensing.Licensing
 	server     *auditorserver.Server
 	marshaler  plog.ProtoMarshaler
 	httpClient *http.Client
 	endpoint   string
-	compress   bool
 }
 
 func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
@@ -40,15 +40,14 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 	if config.OTLPHTTP.Insecure {
 		scheme = "http"
 	}
-	endpoint := fmt.Sprintf("%s://%s%s", scheme, config.OTLPHTTP.Endpoint, config.OTLPHTTP.URLPath)
 
 	p := &provider{
 		settings:   settings,
+		config:     config,
 		licensing:  lic,
 		marshaler:  plog.ProtoMarshaler{},
 		httpClient: &http.Client{Timeout: config.OTLPHTTP.Timeout},
-		endpoint:   endpoint,
-		compress:   config.OTLPHTTP.Compression == "gzip",
+		endpoint:   fmt.Sprintf("%s://%s%s", scheme, config.OTLPHTTP.Endpoint, config.OTLPHTTP.URLPath),
 	}
 
 	server, err := auditorserver.New(
