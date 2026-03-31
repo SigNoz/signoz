@@ -1,13 +1,6 @@
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { AlignedData } from 'uplot';
-
-export enum MetricType {
-	SUM = 'sum',
-	GAUGE = 'gauge',
-	HISTOGRAM = 'histogram',
-	SUMMARY = 'summary',
-	EXPONENTIAL_HISTOGRAM = 'exponentialhistogram',
-}
 
 export interface InspectMetricsTimestampValue {
 	timestamp: number;
@@ -29,7 +22,6 @@ export type InspectProps = {
 
 export interface UseInspectMetricsReturnData {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
-	inspectMetricsStatusCode: number;
 	isInspectMetricsLoading: boolean;
 	isInspectMetricsError: boolean;
 	formattedInspectMetricsTimeSeries: AlignedData;
@@ -48,7 +40,7 @@ export interface GraphViewProps {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
 	metricUnit: string | undefined;
 	metricName: string | null;
-	metricType?: MetricType | undefined;
+	metricType?: MetrictypesTypeDTO | undefined;
 	formattedInspectMetricsTimeSeries: AlignedData;
 	resetInspection: () => void;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;

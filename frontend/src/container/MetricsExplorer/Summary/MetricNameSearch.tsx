@@ -9,7 +9,10 @@ import {
 	Popover,
 	Spin,
 } from 'antd';
-import { useListMetrics } from 'api/generated/services/metrics';
+import {
+	getListMetricsQueryKey,
+	useListMetrics,
+} from 'api/generated/services/metrics';
 import { Filter } from 'api/v5/v5';
 import {
 	convertExpressionToFilters,
@@ -54,7 +57,14 @@ function MetricNameSearch({
 			query: {
 				enabled: isPopoverOpen,
 				refetchOnWindowFocus: false,
-				queryKey: ['listMetricsForSearch', debouncedSearchString, isPopoverOpen],
+				queryKey: [
+					...getListMetricsQueryKey({
+						searchText: debouncedSearchString,
+						limit: 10,
+					}),
+					'search',
+					isPopoverOpen,
+				],
 			},
 		},
 	);

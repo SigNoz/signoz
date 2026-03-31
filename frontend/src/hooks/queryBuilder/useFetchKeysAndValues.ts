@@ -45,7 +45,6 @@ type IuseFetchKeysAndValues = {
  * @returns an object containing the fetched attribute keys, results, and the status of the fetch
  */
 
-// eslint-disable-next-line max-params
 export const useFetchKeysAndValues = (
 	searchValue: string,
 	query: IBuilderQuery,
@@ -55,7 +54,6 @@ export const useFetchKeysAndValues = (
 	isInfraMonitoring?: boolean,
 	entity?: K8sCategory | null,
 	isMetricsExplorer?: boolean,
-	// eslint-disable-next-line max-params
 ): IuseFetchKeysAndValues => {
 	const [keys, setKeys] = useState<BaseAutocompleteData[]>([]);
 	const [exampleQueries, setExampleQueries] = useState<TagFilter[]>([]);

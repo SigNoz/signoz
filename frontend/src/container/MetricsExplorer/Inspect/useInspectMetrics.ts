@@ -169,8 +169,6 @@ export function useInspectMetrics(
 		});
 	}, [inspectMetricsData, isDarkMode]);
 
-	const inspectMetricsStatusCode = 200;
-
 	// Evaluate inspection step
 	const currentInspectionStep = useMemo(() => {
 		if (metricInspectionOptions.currentOptions.spaceAggregationOption) {
@@ -280,7 +278,6 @@ export function useInspectMetrics(
 
 	return {
 		inspectMetricsTimeSeries,
-		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,

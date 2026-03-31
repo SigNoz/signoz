@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from 'react-query';
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import * as metricsGeneratedAPI from 'api/generated/services/metrics';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
@@ -13,7 +14,6 @@ import Inspect from '../Inspect';
 import {
 	InspectionStep,
 	InspectMetricsSeries,
-	MetricType,
 	UseInspectMetricsReturnData,
 } from '../types';
 import * as useInspectMetricsModule from '../useInspectMetrics';
@@ -58,7 +58,7 @@ jest.spyOn(appContextHooks, 'useAppContext').mockReturnValue({
 jest.spyOn(metricsGeneratedAPI, 'useGetMetricMetadata').mockReturnValue({
 	data: {
 		data: {
-			type: MetricType.GAUGE,
+			type: MetrictypesTypeDTO.gauge,
 			unit: '',
 			description: '',
 			temporality: '',
@@ -85,7 +85,6 @@ window.ResizeObserver = mockResizeObserver;
 
 const baseHookReturn: UseInspectMetricsReturnData = {
 	inspectMetricsTimeSeries: [],
-	inspectMetricsStatusCode: 200,
 	isInspectMetricsLoading: false,
 	isInspectMetricsError: false,
 	formattedInspectMetricsTimeSeries: [[], []],
@@ -169,23 +168,6 @@ describe('Inspect', () => {
 		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
 			...baseHookReturn,
 			isInspectMetricsError: true,
-		});
-
-		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<Inspect {...defaultProps} />
-				</Provider>
-			</QueryClientProvider>,
-		);
-
-		expect(screen.getByTestId('inspect-metrics-error')).toBeInTheDocument();
-	});
-
-	it('renders error state with 400 status code', () => {
-		jest.spyOn(useInspectMetricsModule, 'useInspectMetrics').mockReturnValue({
-			...baseHookReturn,
-			inspectMetricsStatusCode: 400,
 		});
 
 		render(

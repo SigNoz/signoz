@@ -21,7 +21,6 @@ import {
 	GraphPopoverOptions,
 	InspectProps,
 	MetricInspectionAction,
-	MetricType,
 } from './types';
 import { useInspectMetrics } from './useInspectMetrics';
 
@@ -96,7 +95,6 @@ function Inspect({
 
 	const {
 		inspectMetricsTimeSeries,
-		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,
@@ -121,10 +119,9 @@ function Inspect({
 		[dispatchMetricInspectionOptions],
 	);
 
-	const selectedMetricType = useMemo(
-		() => (metricDetailsData?.data?.type as unknown) as MetricType,
-		[metricDetailsData],
-	);
+	const selectedMetricType = useMemo(() => metricDetailsData?.data?.type, [
+		metricDetailsData,
+	]);
 
 	const selectedMetricUnit = useMemo(() => metricDetailsData?.data?.unit, [
 		metricDetailsData,
@@ -182,11 +179,8 @@ function Inspect({
 			);
 		}
 
-		if (isInspectMetricsError || inspectMetricsStatusCode !== 200) {
-			const errorMessage =
-				inspectMetricsStatusCode === 400
-					? 'The time range is too large. Please modify it to be within 30 minutes.'
-					: 'Error loading inspect metrics.';
+		if (isInspectMetricsError) {
+			const errorMessage = 'Error loading inspect metrics.';
 
 			return (
 				<div
@@ -263,7 +257,6 @@ function Inspect({
 		isInspectMetricsLoading,
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
-		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,

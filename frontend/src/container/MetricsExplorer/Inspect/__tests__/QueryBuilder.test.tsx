@@ -4,13 +4,13 @@ import { Provider } from 'react-redux';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsService from 'api/generated/services/metrics';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
 import ROUTES from '../../../../constants/routes';
 import { LicenseEvent } from '../../../../types/api/licensesV3/getActive';
 import QueryBuilder from '../QueryBuilder';
-import { MetricType } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -92,7 +92,7 @@ describe('QueryBuilder', () => {
 			filterExpression: '',
 		},
 		dispatchMetricInspectionOptions: jest.fn(),
-		metricType: MetricType.SUM,
+		metricType: MetrictypesTypeDTO.sum,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
 		currentQuery: {

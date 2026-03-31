@@ -2,11 +2,12 @@
 import { Provider } from 'react-redux';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import store from 'store';
 import { AlignedData } from 'uplot';
 
 import GraphView from '../GraphView';
-import { InspectMetricsSeries, MetricType } from '../types';
+import { InspectMetricsSeries } from '../types';
 import {
 	InspectionStep,
 	SpaceAggregationOptions,
@@ -42,7 +43,7 @@ describe('GraphView', () => {
 		] as AlignedData,
 		metricUnit: '',
 		metricName: 'test_metric',
-		metricType: MetricType.GAUGE,
+		metricType: MetrictypesTypeDTO.gauge,
 		spaceAggregationSeriesMap: new Map(),
 		inspectionStep: InspectionStep.COMPLETED,
 		setPopoverOptions: jest.fn(),
