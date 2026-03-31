@@ -15,12 +15,13 @@ type ServeOpenAPIFunc func(openapi.OperationContext)
 type Handler interface {
 	http.Handler
 	ServeOpenAPI(openapi.OperationContext)
+	AuditDef() *AuditDef
 }
 
 type handler struct {
 	handlerFunc http.HandlerFunc
 	openAPIDef  OpenAPIDef
-	auditDef *AuditDef
+	auditDef    *AuditDef
 }
 
 func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Handler {
@@ -37,14 +38,16 @@ func New(handlerFunc http.HandlerFunc, openAPIDef OpenAPIDef, opts ...Option) Ha
 		openAPIDef.ErrorStatusCodes = append(openAPIDef.ErrorStatusCodes, http.StatusUnauthorized, http.StatusForbidden)
 	}
 
-	h := &handler{
+	handler := &handler{
 		handlerFunc: handlerFunc,
 		openAPIDef:  openAPIDef,
 	}
+
 	for _, opt := range opts {
-		opt(h)
+		opt(handler)
 	}
-	return h
+
+	return handler
 }
 
 func (handler *handler) ServeHTTP(rw http.ResponseWriter, req *http.Request) {
@@ -125,5 +128,8 @@ func (handler *handler) ServeOpenAPI(opCtx openapi.OperationContext) {
 			openapi.WithHTTPStatus(statusCode),
 		)
 	}
+}
 
+func (handler *handler) AuditDef() *AuditDef {
+	return handler.auditDef
 }

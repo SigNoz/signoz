@@ -55,6 +55,8 @@ func ErrorFromBody(body []byte) *errors.JSON {
 }
 
 func ErrorTypeFromStatusCode(statusCode int) string {
+	// We are losing the exact type information here, but we can at least capture the error code and message for better observability.
+	// To get the exact type, we would need some changes in the render package to include the error type in the response, which we can consider in the future if there is a need for it.
 	switch statusCode {
 	case http.StatusBadRequest:
 		return errors.TypeInvalidInput.String()

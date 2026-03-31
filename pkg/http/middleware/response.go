@@ -9,18 +9,20 @@ import (
 )
 
 const (
-	maxResponseBodyCapture = 4096 // At most 4k bytes from response bodies.
+	maxResponseBodyCapture int = 4096 // At most 4k bytes from response bodies.
 )
 
-// responseCapture wraps an http.ResponseWriter to capture the status code,
+// Wraps an http.ResponseWriter to capture the status code,
 // write errors, and (for error responses) a bounded slice of the body.
-// Used by the logging+audit middleware to avoid double-wrapping.
 type responseCapture interface {
 	http.ResponseWriter
+
 	// StatusCode returns the HTTP status code written to the response.
 	StatusCode() int
+
 	// WriteError returns the error (if any) from the downstream Write call.
 	WriteError() error
+
 	// BodyBytes returns the captured response body bytes. Only populated
 	// for error responses (status >= 400).
 	BodyBytes() []byte
@@ -99,6 +101,7 @@ func (writer *nonFlushingResponseCapture) WriteHeader(statusCode int) {
 	if statusCode >= 400 {
 		writer.captureBody = true
 	}
+
 	writer.rw.WriteHeader(statusCode)
 }
 
@@ -116,9 +119,11 @@ func (writer *nonFlushingResponseCapture) Write(data []byte) (int, error) {
 	if writer.captureBody {
 		writer.captureResponseBody(data)
 	}
+
 	if err != nil {
 		writer.writeError = err
 	}
+
 	return n, err
 }
 
@@ -128,6 +133,7 @@ func (writer *nonFlushingResponseCapture) Hijack() (net.Conn, *bufio.ReadWriter,
 	if ok {
 		return hj.Hijack()
 	}
+
 	return nil, nil, errors.NewInternalf(errors.CodeInternal, "cannot cast underlying response writer to Hijacker")
 }
 

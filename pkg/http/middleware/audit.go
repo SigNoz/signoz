@@ -23,9 +23,6 @@ const (
 	logMessage = "::RECEIVED-REQUEST::"
 )
 
-// Audit is a middleware that captures HTTP responses for request logging
-// and audit event emission. It wraps the response writer once to avoid
-// double-wrapping.
 type Audit struct {
 	logger         *slog.Logger
 	excludedRoutes map[string]struct{}
@@ -69,13 +66,12 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 
 		statusCode, writeErr := writer.StatusCode(), writer.WriteError()
 
-		// Audit: emit event if the matched handler declares an AuditDef.
-		middleware.emitAuditEvent(req, writer, path)
-
-		// Logging.
+		// Logging or Audit: skip if the matched route is in the excluded list. This allows us to exclude noisy routes (e.g. health checks) from both logging and audit.
 		if _, ok := middleware.excludedRoutes[path]; ok {
 			return
 		}
+
+		middleware.emitAuditEvent(req, writer, path)
 
 		fields = append(fields,
 			string(semconv.HTTPResponseStatusCodeKey), statusCode,
@@ -94,13 +90,6 @@ func (middleware *Audit) Wrap(next http.Handler) http.Handler {
 	})
 }
 
-// ---------------------------------------------------------------------------
-// Audit event emission
-// ---------------------------------------------------------------------------
-
-// emitAuditEvent checks if the matched route's handler carries an AuditDef
-// and, if so, builds and emits an audit event. Fail-open: any error during
-// event construction is silently ignored.
 func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string) {
 	if middleware.auditor == nil {
 		return
@@ -133,8 +122,6 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	// Pre-extract error details.
 	var errorType, errorCode, errorMessage string
 	if statusCode >= 400 {
-		// We are losing the exact type information here, but we can at least capture the error code and message for better observability.
-		// To get the exact type, we would need some changes in the render package to include the error type in the response, which we can consider in the future if there is a need for it.
 		errorType = render.ErrorTypeFromStatusCode(statusCode)
 		if errorsJSON := render.ErrorFromBody(writer.BodyBytes()); errorsJSON != nil {
 			errorCode, errorMessage = errorsJSON.Code, errorsJSON.Message
@@ -163,20 +150,21 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	middleware.auditor.Audit(req.Context(), event)
 }
 
-// auditDefFromRequest extracts the AuditDef from the matched route's handler.
-// Returns nil if the handler does not implement handler.AuditDefProvider.
 func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 	route := mux.CurrentRoute(req)
 	if route == nil {
 		return nil
 	}
 
-	h := route.GetHandler()
-	if h == nil {
+	actualHandler := route.GetHandler()
+	if actualHandler == nil {
 		return nil
 	}
 
-	provider, ok := h.(handler.AuditDefProvider)
+	// The type assertion is necessary because route.GetHandler() returns
+	// http.Handler, and not every http.Handler on the mux is a handler.Handler
+	// (e.g. middleware wrappers, raw http.HandlerFunc registrations).
+	provider, ok := actualHandler.(handler.Handler)
 	if !ok {
 		return nil
 	}
@@ -184,9 +172,6 @@ func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 	return provider.AuditDef()
 }
 
-// resourceIDFromRequest extracts the resource ID from gorilla/mux path
-// parameters. Returns an empty string when the param is not configured or
-// not present.
 func resourceIDFromRequest(req *http.Request, param string) string {
 	if param == "" {
 		return ""
@@ -200,9 +185,6 @@ func resourceIDFromRequest(req *http.Request, param string) string {
 	return vars[param]
 }
 
-// principalTypeFromClaims derives the principal type from authentication
-// claims. API key authentication maps to service_account; everything else
-// maps to user.
 func principalTypeFromClaims(claims authtypes.Claims) audittypes.PrincipalType {
 	if claims.IdentNProvider == "api_key" {
 		return audittypes.PrincipalTypeServiceAccount
