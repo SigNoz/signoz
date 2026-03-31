@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { FullScreen, FullScreenHandle } from 'react-full-screen';
 import { ItemCallback, Layout } from 'react-grid-layout';
+import { useIsFetching } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useDispatch } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Form, Input, Modal, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -12,6 +12,7 @@ import cx from 'classnames';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { QueryParams } from 'constants/query';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import { themeColors } from 'constants/theme';
 import { DEFAULT_ROW_NAME } from 'container/DashboardContainer/DashboardDescription/utils';
 import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
@@ -31,7 +32,10 @@ import {
 	X,
 } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import {
+	selectIsDashboardLocked,
+	useDashboardStore,
+} from 'providers/Dashboard/store/useDashboardStore';
 import { sortLayout } from 'providers/Dashboard/util';
 import { UpdateTimeInterval } from 'store/actions';
 import { Widgets } from 'types/api/dashboard/getAll';
@@ -44,6 +48,7 @@ import DashboardEmptyState from './DashboardEmptyState/DashboardEmptyState';
 import GridCard from './GridCard';
 import { Card, CardContainer, ReactGridLayout } from './styles';
 import {
+	applyRowCollapse,
 	hasColumnWidthsChanged,
 	removeUndefinedValuesFromLayout,
 } from './utils';
@@ -61,6 +66,9 @@ interface GraphLayoutProps {
 function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	const { handle, enableDrillDown = false } = props;
 	const { safeNavigate } = useSafeNavigate();
+	const isDashboardFetching =
+		useIsFetching([REACT_QUERY_KEY.DASHBOARD_BY_ID]) > 0;
+
 	const {
 		selectedDashboard,
 		layouts,
@@ -68,12 +76,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		panelMap,
 		setPanelMap,
 		setSelectedDashboard,
-		isDashboardLocked,
-		dashboardQueryRangeCalled,
-		setDashboardQueryRangeCalled,
-		isDashboardFetching,
 		columnWidths,
-	} = useDashboard();
+	} = useDashboardStore();
+	const isDashboardLocked = useDashboardStore(selectIsDashboardLocked);
 	const { data } = selectedDashboard || {};
 	const { pathname } = useLocation();
 	const dispatch = useDispatch();
@@ -136,25 +141,6 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 	useEffect(() => {
 		setDashboardLayout(sortLayout(layouts));
 	}, [layouts]);
-
-	useEffect(() => {
-		setDashboardQueryRangeCalled(false);
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, []);
-
-	useEffect(() => {
-		const timeoutId = setTimeout(() => {
-			// Send Sentry event if query_range is not called within expected timeframe (2 mins) when there are widgets
-			if (!dashboardQueryRangeCalled && data?.widgets?.length) {
-				Sentry.captureEvent({
-					message: `Dashboard query range not called within expected timeframe even when there are ${data?.widgets?.length} widgets`,
-					level: 'warning',
-				});
-			}
-		}, 120000);
-
-		return (): void => clearTimeout(timeoutId);
-	}, [dashboardQueryRangeCalled, data?.widgets?.length]);
 
 	const logEventCalledRef = useRef(false);
 	useEffect(() => {
@@ -283,12 +269,9 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 			return;
 		}
 
-		currentWidget.title = newTitle;
-		const updatedWidgets = selectedDashboard?.data?.widgets?.filter(
-			(e) => e.id !== currentSelectRowId,
+		const updatedWidgets = selectedDashboard?.data?.widgets?.map((e) =>
+			e.id === currentSelectRowId ? { ...e, title: newTitle } : e,
 		);
-
-		updatedWidgets?.push(currentWidget);
 
 		const updatedSelectedDashboard: Props = {
 			id: selectedDashboard.id,
@@ -331,88 +314,13 @@ function GraphLayout(props: GraphLayoutProps): JSX.Element {
 		if (!selectedDashboard) {
 			return;
 		}
-		const rowProperties = { ...currentPanelMap[id] };
-		const updatedPanelMap = { ...currentPanelMap };
-
-		let updatedDashboardLayout = [...dashboardLayout];
-		if (rowProperties.collapsed === true) {
-			rowProperties.collapsed = false;
-			const widgetsInsideTheRow = rowProperties.widgets;
-			let maxY = 0;
-			widgetsInsideTheRow.forEach((w) => {
-				maxY = Math.max(maxY, w.y + w.h);
-			});
-			const currentRowWidget = dashboardLayout.find((w) => w.i === id);
-			if (currentRowWidget && widgetsInsideTheRow.length) {
-				maxY -= currentRowWidget.h + currentRowWidget.y;
-			}
-
-			const idxCurrentRow = dashboardLayout.findIndex((w) => w.i === id);
-
-			for (let j = idxCurrentRow + 1; j < dashboardLayout.length; j++) {
-				updatedDashboardLayout[j].y += maxY;
-				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
-						...w,
-						y: w.y + maxY,
-					}));
-				}
-			}
-			updatedDashboardLayout = [...updatedDashboardLayout, ...widgetsInsideTheRow];
-		} else {
-			rowProperties.collapsed = true;
-			const currentIdx = dashboardLayout.findIndex((w) => w.i === id);
-
-			let widgetsInsideTheRow: Layout[] = [];
-			let isPanelMapUpdated = false;
-			for (let j = currentIdx + 1; j < dashboardLayout.length; j++) {
-				if (currentPanelMap[dashboardLayout[j].i]) {
-					rowProperties.widgets = widgetsInsideTheRow;
-					widgetsInsideTheRow = [];
-					isPanelMapUpdated = true;
-					break;
-				} else {
-					widgetsInsideTheRow.push(dashboardLayout[j]);
-				}
-			}
-			if (!isPanelMapUpdated) {
-				rowProperties.widgets = widgetsInsideTheRow;
-			}
-			let maxY = 0;
-			widgetsInsideTheRow.forEach((w) => {
-				maxY = Math.max(maxY, w.y + w.h);
-			});
-			const currentRowWidget = dashboardLayout[currentIdx];
-			if (currentRowWidget && widgetsInsideTheRow.length) {
-				maxY -= currentRowWidget.h + currentRowWidget.y;
-			}
-			for (let j = currentIdx + 1; j < updatedDashboardLayout.length; j++) {
-				updatedDashboardLayout[j].y += maxY;
-				if (updatedPanelMap[updatedDashboardLayout[j].i]) {
-					updatedPanelMap[updatedDashboardLayout[j].i].widgets = updatedPanelMap[
-						updatedDashboardLayout[j].i
-					].widgets.map((w) => ({
-						...w,
-						y: w.y + maxY,
-					}));
-				}
-			}
-
-			updatedDashboardLayout = updatedDashboardLayout.filter(
-				(widget) => !rowProperties.widgets.some((w: Layout) => w.i === widget.i),
-			);
-		}
-		setCurrentPanelMap((prev) => ({
-			...prev,
-			...updatedPanelMap,
-			[id]: {
-				...rowProperties,
-			},
-		}));
-
-		setDashboardLayout(sortLayout(updatedDashboardLayout));
+		const { updatedLayout, updatedPanelMap } = applyRowCollapse(
+			id,
+			dashboardLayout,
+			currentPanelMap,
+		);
+		setCurrentPanelMap((prev) => ({ ...prev, ...updatedPanelMap }));
+		setDashboardLayout(sortLayout(updatedLayout));
 	};
 
 	const handleDragStop: ItemCallback = (_, oldItem, newItem): void => {

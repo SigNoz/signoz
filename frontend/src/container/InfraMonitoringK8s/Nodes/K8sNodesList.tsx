@@ -1,7 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -16,23 +15,34 @@ import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sNodesListPayload } from 'api/infraMonitoring/getK8sNodesList';
 import { InfraMonitoringEvents } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
 import { useGetK8sNodesList } from 'hooks/infraMonitoring/useGetK8sNodesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import {
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringEventsFilters,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringLogFilters,
+	useInfraMonitoringNodeUID,
+	useInfraMonitoringOrderBy,
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from '../hooks';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -60,50 +70,24 @@ function K8sNodesList({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(() => {
-		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
-		if (page) {
-			return parseInt(page, 10);
-		}
-		return 1;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
 
-	useEffect(() => {
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
-
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams, false));
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 
-	const [selectedNodeUID, setSelectedNodeUID] = useState<string | null>(() => {
-		const nodeUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID);
-		if (nodeUID) {
-			return nodeUID;
-		}
-		return null;
-	});
+	const [selectedNodeUID, setSelectedNodeUID] = useInfraMonitoringNodeUID();
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.NODES);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
-		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
-		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
-		}
-		return [];
-	});
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+
+	// These params are used only for clearing in handleCloseNodeDetail
+	const [, setView] = useInfraMonitoringView();
+	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
+	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
+	const [, setLogFilters] = useInfraMonitoringLogFilters();
 
 	const [selectedRowData, setSelectedRowData] = useState<K8sNodesRowData | null>(
 		null,
@@ -129,7 +113,7 @@ function K8sNodesList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -182,25 +166,28 @@ function K8sNodesList({
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const groupedByRowDataQueryKey = useMemo(() => {
+		// be careful with what you serialize from selectedRowData
+		// since it's react node, it could contain circular references
+		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
 		if (selectedNodeUID) {
 			return [
 				'nodeList',
 				JSON.stringify(queryFilters),
 				JSON.stringify(orderBy),
-				JSON.stringify(selectedRowData),
+				selectedRowDataKey,
 			];
 		}
 		return [
 			'nodeList',
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			JSON.stringify(selectedRowData),
+			selectedRowDataKey,
 			String(minTime),
 			String(maxTime),
 		];
@@ -259,7 +246,7 @@ function K8sNodesList({
 			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		if (groupBy.length > 0) {
 			queryPayload.groupBy = groupBy;
@@ -365,26 +352,15 @@ function K8sNodesList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
+				setOrderBy({
 					columnName: sorter.field as string,
 					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
 				});
 			} else {
 				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
 			}
 		},
-		[searchParams, setSearchParams],
+		[setCurrentPage, setOrderBy],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -437,14 +413,28 @@ function K8sNodesList({
 		return nodesData.find((node) => node.nodeUID === selectedNodeUID) || null;
 	}, [selectedNodeUID, groupBy.length, nodesData, nestedNodesData]);
 
-	const handleRowClick = (record: K8sNodesRowData): void => {
+	const openNodeInNewTab = (record: K8sNodesRowData): void => {
+		const newParams = new URLSearchParams(document.location.search);
+		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID, record.nodeUID);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
+	};
+
+	const handleRowClick = (
+		record: K8sNodesRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			openNodeInNewTab(record);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setSelectedNodeUID(record.nodeUID);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID]: record.nodeUID,
-			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -473,11 +463,6 @@ function K8sNodesList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -502,8 +487,14 @@ function K8sNodesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(
+							record,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (isModifierKeyPressed(event)) {
+									openNodeInNewTab(record);
+									return;
+								}
 								setSelectedNodeUID(record.nodeUID);
 							},
 							className: 'expanded-clickable-row',
@@ -569,45 +560,31 @@ function K8sNodesList({
 
 	const handleCloseNodeDetail = (): void => {
 		setSelectedNodeUID(null);
-		setSearchParams({
-			...Object.fromEntries(
-				Array.from(searchParams.entries()).filter(
-					([key]) =>
-						![
-							INFRA_MONITORING_K8S_PARAMS_KEYS.NODE_UID,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
-						].includes(key),
-				),
-			),
-		});
+		setView(null);
+		setTracesFilters(null);
+		setEventsFilters(null);
+		setLogFilters(null);
 	};
 
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const groupBy = [];
+			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
 				const element = (value[index] as unknown) as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
-					(key) => key.key === element,
+					(k) => k.key === element,
 				);
 
 				if (key) {
-					groupBy.push(key);
+					newGroupBy.push(key);
 				}
 			}
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
-			setGroupBy(groupBy);
+			setGroupBy(newGroupBy);
 			setExpandedRowKeys([]);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
-			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -615,7 +592,7 @@ function K8sNodesList({
 				category: InfraMonitoringEvents.Node,
 			});
 		},
-		[groupByFiltersData, searchParams, setSearchParams],
+		[groupByFiltersData, setCurrentPage, setGroupBy],
 	);
 
 	useEffect(() => {
@@ -694,8 +671,10 @@ function K8sNodesList({
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(
+					record,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{

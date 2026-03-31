@@ -7,7 +7,7 @@ import ROUTES from 'constants/routes';
 import useUpdatedQuery from 'container/GridCardLayout/useResolveQuery';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useNotifications } from 'hooks/useNotifications';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { AppState } from 'store/reducers';
 import { Query, TagFilterItem } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, MetricAggregateOperator } from 'types/common/queryBuilder';
@@ -79,7 +79,7 @@ export function useNavigateToExplorer(): (
 	);
 
 	const { getUpdatedQuery } = useUpdatedQuery();
-	const { selectedDashboard } = useDashboard();
+	const { selectedDashboard } = useDashboardStore();
 	const { notifications } = useNotifications();
 
 	return useCallback(

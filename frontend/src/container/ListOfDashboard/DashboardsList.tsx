@@ -82,6 +82,7 @@ import {
 	Widgets,
 } from 'types/api/dashboard/getAll';
 import APIError from 'types/api/error';
+import { isModifierKeyPressed } from 'utils/app';
 
 import DashboardTemplatesModal from './DashboardTemplates/DashboardTemplatesModal';
 import ImportJSON from './ImportJSON';
@@ -372,11 +373,7 @@ function DashboardsList(): JSX.Element {
 
 				const onClickHandler = (event: React.MouseEvent<HTMLElement>): void => {
 					event.stopPropagation();
-					if (event.metaKey || event.ctrlKey) {
-						window.open(getLink(), '_blank');
-					} else {
-						safeNavigate(getLink());
-					}
+					safeNavigate(getLink(), { newTab: isModifierKeyPressed(event) });
 					logEvent('Dashboard List: Clicked on dashboard', {
 						dashboardId: dashboard.id,
 						dashboardName: dashboard.name,

@@ -32,6 +32,8 @@ import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -236,7 +238,7 @@ function Application(): JSX.Element {
 			timestamp: number,
 			apmToTraceQuery: Query,
 			isViewLogsClicked?: boolean,
-		): (() => void) => (): void => {
+		): ((e: React.MouseEvent) => void) => (e: React.MouseEvent): void => {
 			const endTime = secondsToMilliseconds(timestamp);
 			const startTime = secondsToMilliseconds(timestamp - stepInterval);
 
@@ -260,7 +262,11 @@ function Application(): JSX.Element {
 				queryString,
 			);
 
-			history.push(newPath);
+			if (isModifierKeyPressed(e)) {
+				openInNewTab(newPath);
+			} else {
+				history.push(newPath);
+			}
 		},
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[stepInterval],

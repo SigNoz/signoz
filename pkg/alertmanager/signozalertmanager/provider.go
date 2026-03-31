@@ -4,8 +4,9 @@ import (
 	"context"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/prometheus/common/model"
+
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 
 	amConfig "github.com/prometheus/alertmanager/config"
 
@@ -66,7 +67,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 
 func (provider *provider) Start(ctx context.Context) error {
 	if err := provider.service.SyncServers(ctx); err != nil {
-		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+		provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 		return err
 	}
 
@@ -78,7 +79,7 @@ func (provider *provider) Start(ctx context.Context) error {
 			return nil
 		case <-ticker.C:
 			if err := provider.service.SyncServers(ctx); err != nil {
-				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", "error", err)
+				provider.settings.Logger().ErrorContext(ctx, "failed to sync alertmanager servers", errors.Attr(err))
 			}
 		}
 	}
@@ -216,7 +217,7 @@ func (provider *provider) GetConfig(ctx context.Context, orgID string) (*alertma
 }
 
 func (provider *provider) SetDefaultConfig(ctx context.Context, orgID string) error {
-	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Config.Global, provider.config.Signoz.Config.Route, orgID)
+	config, err := alertmanagertypes.NewDefaultConfig(provider.config.Signoz.Global, provider.config.Signoz.Route, orgID)
 	if err != nil {
 		return err
 	}

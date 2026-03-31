@@ -12,6 +12,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/apdex"
 	"github.com/SigNoz/signoz/pkg/modules/apdex/implapdex"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/fields"
@@ -22,6 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
@@ -38,23 +42,26 @@ import (
 )
 
 type Handlers struct {
-	SavedView             savedview.Handler
-	Apdex                 apdex.Handler
-	Dashboard             dashboard.Handler
-	QuickFilter           quickfilter.Handler
-	TraceFunnel           tracefunnel.Handler
-	RawDataExport         rawdataexport.Handler
-	SpanPercentile        spanpercentile.Handler
-	Services              services.Handler
-	MetricsExplorer       metricsexplorer.Handler
-	Global                global.Handler
-	FlaggerHandler        flagger.Handler
-	GatewayHandler        gateway.Handler
-	Fields                fields.Handler
-	AuthzHandler          authz.Handler
-	ZeusHandler           zeus.Handler
-	QuerierHandler        querier.Handler
-	ServiceAccountHandler serviceaccount.Handler
+	SavedView               savedview.Handler
+	Apdex                   apdex.Handler
+	Dashboard               dashboard.Handler
+	QuickFilter             quickfilter.Handler
+	TraceFunnel             tracefunnel.Handler
+	RawDataExport           rawdataexport.Handler
+	SpanPercentile          spanpercentile.Handler
+	Services                services.Handler
+	MetricsExplorer         metricsexplorer.Handler
+	Global                  global.Handler
+	FlaggerHandler          flagger.Handler
+	GatewayHandler          gateway.Handler
+	Fields                  fields.Handler
+	AuthzHandler            authz.Handler
+	ZeusHandler             zeus.Handler
+	QuerierHandler          querier.Handler
+	ServiceAccountHandler   serviceaccount.Handler
+	RegistryHandler         factory.Handler
+	CloudIntegrationHandler cloudintegration.Handler
+	RuleStateHistory        rulestatehistory.Handler
 }
 
 func NewHandlers(
@@ -69,24 +76,28 @@ func NewHandlers(
 	telemetryMetadataStore telemetrytypes.MetadataStore,
 	authz authz.AuthZ,
 	zeusService zeus.Zeus,
+	registryHandler factory.Handler,
 ) Handlers {
 	return Handlers{
-		SavedView:             implsavedview.NewHandler(modules.SavedView),
-		Apdex:                 implapdex.NewHandler(modules.Apdex),
-		Dashboard:             impldashboard.NewHandler(modules.Dashboard, providerSettings),
-		QuickFilter:           implquickfilter.NewHandler(modules.QuickFilter),
-		TraceFunnel:           impltracefunnel.NewHandler(modules.TraceFunnel),
-		RawDataExport:         implrawdataexport.NewHandler(modules.RawDataExport),
-		Services:              implservices.NewHandler(modules.Services),
-		MetricsExplorer:       implmetricsexplorer.NewHandler(modules.MetricsExplorer),
-		SpanPercentile:        implspanpercentile.NewHandler(modules.SpanPercentile),
-		Global:                signozglobal.NewHandler(global),
-		FlaggerHandler:        flagger.NewHandler(flaggerService),
-		GatewayHandler:        gateway.NewHandler(gatewayService),
-		Fields:                implfields.NewHandler(providerSettings, telemetryMetadataStore),
-		AuthzHandler:          signozauthzapi.NewHandler(authz),
-		ZeusHandler:           zeus.NewHandler(zeusService, licensing),
-		QuerierHandler:        querierHandler,
-		ServiceAccountHandler: implserviceaccount.NewHandler(modules.ServiceAccount),
+		SavedView:               implsavedview.NewHandler(modules.SavedView),
+		Apdex:                   implapdex.NewHandler(modules.Apdex),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
+		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
+		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
+		Services:                implservices.NewHandler(modules.Services),
+		MetricsExplorer:         implmetricsexplorer.NewHandler(modules.MetricsExplorer),
+		SpanPercentile:          implspanpercentile.NewHandler(modules.SpanPercentile),
+		Global:                  signozglobal.NewHandler(global),
+		FlaggerHandler:          flagger.NewHandler(flaggerService),
+		GatewayHandler:          gateway.NewHandler(gatewayService),
+		Fields:                  implfields.NewHandler(providerSettings, telemetryMetadataStore),
+		AuthzHandler:            signozauthzapi.NewHandler(authz),
+		ZeusHandler:             zeus.NewHandler(zeusService, licensing),
+		QuerierHandler:          querierHandler,
+		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
+		RegistryHandler:         registryHandler,
+		CloudIntegrationHandler: implcloudintegration.NewHandler(),
+		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 	}
 }

@@ -17,7 +17,7 @@ var (
 	ErrUnsupportedSignal = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal type")
 )
 
-// Configuration for different signal types
+// Configuration for different signal types.
 type signalConfig struct {
 	dbName    string
 	tableName string
@@ -34,7 +34,7 @@ var signalConfigs = map[telemetrytypes.Signal]signalConfig{
 	},
 }
 
-// Generic resource filter statement builder
+// Generic resource filter statement builder.
 type resourceFilterStatementBuilder[T any] struct {
 	logger           *slog.Logger
 	fieldMapper      qbtypes.FieldMapper
@@ -46,13 +46,13 @@ type resourceFilterStatementBuilder[T any] struct {
 	jsonKeyToKey   qbtypes.JsonKeyToFieldFunc
 }
 
-// Ensure interface compliance at compile time
+// Ensure interface compliance at compile time.
 var (
 	_ qbtypes.StatementBuilder[qbtypes.TraceAggregation] = (*resourceFilterStatementBuilder[qbtypes.TraceAggregation])(nil)
 	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*resourceFilterStatementBuilder[qbtypes.LogAggregation])(nil)
 )
 
-// Constructor functions
+// NewTraceResourceFilterStatementBuilder creates a new trace resource filter statement builder.
 func NewTraceResourceFilterStatementBuilder(
 	settings factory.ProviderSettings,
 	fieldMapper qbtypes.FieldMapper,
@@ -111,7 +111,7 @@ func (b *resourceFilterStatementBuilder[T]) getKeySelectors(query qbtypes.QueryB
 	return filteredKeySelectors
 }
 
-// Build builds a SQL query based on the given parameters
+// Build builds a SQL query based on the given parameters.
 func (b *resourceFilterStatementBuilder[T]) Build(
 	ctx context.Context,
 	start uint64,
@@ -146,9 +146,9 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	}, nil
 }
 
-// addConditions adds both filter and time conditions to the query
+// addConditions adds both filter and time conditions to the query.
 func (b *resourceFilterStatementBuilder[T]) addConditions(
-	_ context.Context,
+	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
 	start, end uint64,
 	query qbtypes.QueryBuilderQuery[T],
@@ -160,6 +160,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 
 		// warnings would be encountered as part of the main condition already
 		filterWhereClause, err := querybuilder.PrepareWhereClause(query.Filter.Expression, querybuilder.FilterExprVisitorOpts{
+			Context:            ctx,
 			Logger:             b.logger,
 			FieldMapper:        b.fieldMapper,
 			ConditionBuilder:   b.conditionBuilder,
@@ -171,7 +172,9 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 			// there is no need for "key" not found error for resource filtering
 			IgnoreNotFoundKeys: true,
 			Variables:          variables,
-		}, start, end)
+			StartNs:            start,
+			EndNs:              end,
+		})
 
 		if err != nil {
 			return err
@@ -186,7 +189,7 @@ func (b *resourceFilterStatementBuilder[T]) addConditions(
 	return nil
 }
 
-// addTimeFilter adds time-based filtering conditions
+// addTimeFilter adds time-based filtering conditions.
 func (b *resourceFilterStatementBuilder[T]) addTimeFilter(sb *sqlbuilder.SelectBuilder, start, end uint64) {
 	// Convert nanoseconds to seconds and adjust start bucket
 	startBucket := start/querybuilder.NsToSeconds - querybuilder.BucketAdjustment

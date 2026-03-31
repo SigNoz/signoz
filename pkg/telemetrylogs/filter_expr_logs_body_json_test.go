@@ -1,8 +1,10 @@
 package telemetrylogs
 
 import (
+	"context"
 	"fmt"
 	"testing"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
@@ -11,14 +13,16 @@ import (
 	"github.com/stretchr/testify/require"
 )
 
-// TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search
+// TestFilterExprLogsBodyJSON tests a comprehensive set of query patterns for body JSON search.
 func TestFilterExprLogsBodyJSON(t *testing.T) {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 	// Define a comprehensive set of field keys to support all test cases
-	keys := buildCompleteFieldKeyMap()
+	releaseTime := time.Date(2024, 1, 15, 10, 0, 0, 0, time.UTC)
+	keys := buildCompleteFieldKeyMap(releaseTime)
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          context.Background(),
 		Logger:           instrumentationtest.New().Logger(),
 		FieldMapper:      fm,
 		ConditionBuilder: cb,
@@ -161,7 +165,7 @@ func TestFilterExprLogsBodyJSON(t *testing.T) {
 	for _, tc := range testCases {
 		t.Run(fmt.Sprintf("%s: %s", tc.category, limitString(tc.query, 50)), func(t *testing.T) {
 
-			clause, err := querybuilder.PrepareWhereClause(tc.query, opts, 0, 0)
+			clause, err := querybuilder.PrepareWhereClause(tc.query, opts)
 
 			if tc.shouldPass {
 				if err != nil {

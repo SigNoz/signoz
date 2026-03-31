@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Tag, Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import get from 'api/browser/localstorage/get';
 import set from 'api/browser/localstorage/set';
 import {
@@ -17,6 +16,7 @@ import {
 	ValidateColumnValueWrapper,
 } from './commonUtils';
 import { DEFAULT_PAGE_SIZE, K8sCategory } from './constants';
+import { OrderBySchemaType } from './schemas';
 
 import './InfraMonitoringK8s.styles.scss';
 
@@ -148,7 +148,7 @@ export const dummyColumnConfig = {
 	className: 'column column-dummy',
 };
 
-const columnsConfig = [
+const columnsConfig: ColumnType<K8sPodsRowData>[] = [
 	{
 		title: <div className="column-header pod-name-header">Pod Name</div>,
 		dataIndex: 'podName',
@@ -231,7 +231,7 @@ const columnsConfig = [
 	// },
 ];
 
-export const namespaceColumnConfig = {
+export const namespaceColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Namespace</div>,
 	dataIndex: 'namespace',
 	key: 'namespace',
@@ -242,7 +242,7 @@ export const namespaceColumnConfig = {
 	className: 'column column-namespace',
 };
 
-export const nodeColumnConfig = {
+export const nodeColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Node</div>,
 	dataIndex: 'node',
 	key: 'node',
@@ -253,7 +253,7 @@ export const nodeColumnConfig = {
 	className: 'column column-node',
 };
 
-export const clusterColumnConfig = {
+export const clusterColumnConfig: ColumnType<K8sPodsRowData> = {
 	title: <div className="column-header">Cluster</div>,
 	dataIndex: 'cluster',
 	key: 'cluster',
@@ -264,7 +264,7 @@ export const clusterColumnConfig = {
 	className: 'column column-cluster',
 };
 
-export const columnConfigMap = {
+export const columnConfigMap: Record<string, ColumnType<K8sPodsRowData>> = {
 	namespace: namespaceColumnConfig,
 	node: nodeColumnConfig,
 	cluster: clusterColumnConfig,
@@ -273,8 +273,9 @@ export const columnConfigMap = {
 export const getK8sPodsListColumns = (
 	addedColumns: IEntityColumn[],
 	groupBy: IBuilderQuery['groupBy'],
+	defaultOrderBy: OrderBySchemaType,
 ): ColumnType<K8sPodsRowData>[] => {
-	const updatedColumnsConfig = [...columnsConfig];
+	const updatedColumnsConfig: ColumnType<K8sPodsRowData>[] = [...columnsConfig];
 
 	for (const column of addedColumns) {
 		const config = columnConfigMap[column.id as keyof typeof columnConfigMap];
@@ -293,7 +294,14 @@ export const getK8sPodsListColumns = (
 		return filteredColumns as ColumnType<K8sPodsRowData>[];
 	}
 
-	return updatedColumnsConfig as ColumnType<K8sPodsRowData>[];
+	for (const column of updatedColumnsConfig) {
+		if (column.sorter && column.key === defaultOrderBy?.columnName) {
+			column.defaultSortOrder =
+				defaultOrderBy?.order === 'asc' ? 'ascend' : 'descend';
+		}
+	}
+
+	return updatedColumnsConfig;
 };
 
 const dotToUnder: Record<string, keyof K8sPodsData['meta']> = {

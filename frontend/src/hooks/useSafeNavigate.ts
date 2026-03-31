@@ -105,6 +105,7 @@ export const useSafeNavigate = (
 	const location = useLocation();
 
 	const safeNavigate = useCallback(
+		// eslint-disable-next-line sonarjs/cognitive-complexity
 		(to: string | SafeNavigateParams, options?: NavigateOptions) => {
 			const currentUrl = new URL(
 				`${location.pathname}${location.search}`,
@@ -122,8 +123,9 @@ export const useSafeNavigate = (
 				);
 			}
 
-			// If newTab is true, open in new tab and return early
-			if (options?.newTab) {
+			const shouldOpenInNewTab = options?.newTab;
+
+			if (shouldOpenInNewTab) {
 				const targetPath =
 					typeof to === 'string'
 						? to

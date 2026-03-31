@@ -86,6 +86,8 @@ go.mod @therealpandey
 /pkg/types/alertmanagertypes @srikanthccv
 /pkg/alertmanager/ @srikanthccv
 /pkg/ruler/ @srikanthccv
+/pkg/modules/rulestatehistory/ @srikanthccv
+/pkg/types/rulestatehistorytypes/ @srikanthccv
 
 # Correlation-adjacent
 
@@ -105,7 +107,7 @@ go.mod @therealpandey
 /pkg/modules/authdomain/ @vikrantgupta25
 /pkg/modules/role/ @vikrantgupta25
 
-# IdentN Owners 
+# IdentN Owners
 /pkg/identn/ @vikrantgupta25
 /pkg/http/middleware/identn.go @vikrantgupta25
 

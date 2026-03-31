@@ -1,0 +1,97 @@
+---
+globs: **/*.store.ts
+alwaysApply: false
+---
+# State Management: React Query, nuqs, Zustand
+
+Use the following stack. Do **not** introduce or recommend Redux or React Context for shared/global state.
+
+## Server state → React Query
+
+- **Use for:** API responses, time-series data, caching, background refetch, retries, stale/refresh.
+- **Do not use Redux/Context** to store or mirror data that comes from React Query (e.g. do not dispatch API results into Redux).
+- Prefer generated React Query hooks from `frontend/src/api/generated` when available.
+- Keep server state in React Query; expose it via hooks that return the query result (and optionally memoized derived values). Do not duplicate it in Redux or Context.
+
+```tsx
+// ✅ GOOD: single source of truth from React Query
+export function useAppStateHook() {
+  const { data, isError } = useQuery(...)
+  const memoizedConfigs = useMemo(() => ({ ... }), [data?.configs])
+  return { configs: memoizedConfigs, isError, ... }
+}
+
+// ❌ BAD: copying React Query result into Redux
+dispatch({ type: UPDATE_LATEST_VERSION, payload: queryResponse.data })
+```
+
+## URL state → nuqs
+
+- **Use for:** shareable state, filters, time range, selected values, pagination, view state that belongs in the URL.
+- **Do not use Redux/Context** for state that should be shareable or reflected in the URL.
+- Use [nuqs](https://nuqs.dev/docs/basic-usage) for typed, type-safe URL search params. Avoid ad-hoc `useSearchParams` encoding/decoding.
+- Keep URL payload small; respect browser URL length limits (e.g. Chrome ~2k chars). Do not put large datasets or sensitive data in query params.
+
+```tsx
+// ✅ GOOD: nuqs for filters / time range / selection
+const [timeRange, setTimeRange] = useQueryState('timeRange', parseAsString.withDefault('1h'))
+const [page, setPage] = useQueryState('page', parseAsInteger.withDefault(1))
+
+// ❌ BAD: Redux/Context for shareable or URL-synced state
+const { timeRange } = useContext(SomeContext)
+```
+
+## Client state → Zustand
+
+- **Use for:** global/client state, cross-component state, feature flags, complex or large client objects (e.g. dashboard state, query builder state).
+- **Do not use Redux or React Context** for global or feature-level client state.
+- Prefer small, domain-scoped stores (e.g. DashboardStore, QueryBuilderStore).
+
+### Zustand best practices (align with eslint-plugin-zustand-rules)
+
+- **One store per module.** Do not define multiple `create()` calls in the same file; use one store per module (or compose slices into one store).
+- **Always use selectors.** Call the store hook with a selector so only the used slice triggers re-renders. Never use `useStore()` with no selector.
+
+```tsx
+// ✅ GOOD: selector — re-renders only when isDashboardLocked changes
+const isLocked = useDashboardStore(state => state.isDashboardLocked)
+
+// ❌ BAD: no selector — re-renders on any store change
+const state = useDashboardStore()
+```
+
+- **Never mutate state directly.** Update only via `set` or `setState` (or `getState()` + `set` for reads). No `state.foo = x` or `state.bears += 1` inside actions.
+
+```tsx
+// ✅ GOOD: use set
+increment: () => set(state => ({ bears: state.bears + 1 }))
+
+// ❌ BAD: direct mutation
+increment: () => { state.bears += 1 }
+```
+
+- **State properties before actions.** In the store object, list all state fields first, then action functions.
+- **Split into slices when state is large.** If a store has many top-level properties (e.g. more than 5–10), split into slice factories and combine with one `create()`.
+
+```tsx
+// ✅ GOOD: slices for large state
+const createBearSlice = set => ({ bears: 0, addBear: () => set(s => ({ bears: s.bears + 1 })) })
+const createFishSlice = set => ({ fish: 0, addFish: () => set(s => ({ fish: s.fish + 1 })) })
+const useStore = create(set => ({ ...createBearSlice(set), ...createFishSlice(set) }))
+```
+
+- **In projects using Zustand:** add `eslint-plugin-zustand-rules` and extend `plugin:zustand-rules/recommended` to enforce these rules automatically.
+
+## Local state → React state only
+
+- **Use useState/useReducer** for: component-local UI state, form inputs, toggles, hover state, data that never leaves the component.
+- Do not use Zustand, Redux, or Context for state that is purely local to one component or a small subtree.
+
+## Summary
+
+| State type        | Use              | Avoid              |
+|-------------------|------------------|--------------------|
+| Server / API      | React Query      | Redux, Context     |
+| URL / shareable   | nuqs             | Redux, Context     |
+| Global client     | Zustand          | Redux, Context     |
+| Local UI          | useState/useReducer | Zustand, Redux, Context |

@@ -444,8 +444,6 @@ function LogsExplorerViewsContainer({
 						isLoading={isLoading}
 						isError={isError}
 						isSuccess={isSuccess}
-						minTime={minTime}
-						maxTime={maxTime}
 					/>
 				)}
 

@@ -1,6 +1,5 @@
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { PendingInvite } from 'types/api/user/getPendingInvites';
 import { UserResponse } from 'types/api/user/getUser';
 
 import MembersSettings from '../MembersSettings';
@@ -13,7 +12,6 @@ jest.mock('@signozhq/sonner', () => ({
 }));
 
 const USERS_ENDPOINT = '*/api/v1/user';
-const INVITES_ENDPOINT = '*/api/v1/invite';
 
 const mockUsers: UserResponse[] = [
 	{
@@ -21,7 +19,8 @@ const mockUsers: UserResponse[] = [
 		displayName: 'Alice Smith',
 		email: 'alice@signoz.io',
 		role: 'ADMIN',
-		createdAt: 1700000000,
+		status: 'active',
+		createdAt: '2024-01-01T00:00:00.000Z',
 		organization: 'TestOrg',
 		orgId: 'org-1',
 	},
@@ -30,20 +29,30 @@ const mockUsers: UserResponse[] = [
 		displayName: 'Bob Jones',
 		email: 'bob@signoz.io',
 		role: 'VIEWER',
-		createdAt: 1700000001,
+		status: 'active',
+		createdAt: '2024-01-02T00:00:00.000Z',
 		organization: 'TestOrg',
 		orgId: 'org-1',
 	},
-];
-
-const mockInvites: PendingInvite[] = [
 	{
 		id: 'inv-1',
+		displayName: '',
 		email: 'charlie@signoz.io',
-		name: 'Charlie',
 		role: 'EDITOR',
-		createdAt: 1700000002,
-		token: 'tok-abc',
+		status: 'pending_invite',
+		createdAt: '2024-01-03T00:00:00.000Z',
+		organization: 'TestOrg',
+		orgId: 'org-1',
+	},
+	{
+		id: 'user-3',
+		displayName: 'Dave Deleted',
+		email: 'dave@signoz.io',
+		role: 'VIEWER',
+		status: 'deleted',
+		createdAt: '2024-01-04T00:00:00.000Z',
+		organization: 'TestOrg',
+		orgId: 'org-1',
 	},
 ];
 
@@ -54,9 +63,6 @@ describe('MembersSettings (integration)', () => {
 			rest.get(USERS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockUsers })),
 			),
-			rest.get(INVITES_ENDPOINT, (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: mockInvites })),
-			),
 		);
 	});
 
@@ -64,14 +70,16 @@ describe('MembersSettings (integration)', () => {
 		server.resetHandlers();
 	});
 
-	it('loads and displays active users and pending invites', async () => {
+	it('loads and displays active users, pending invites, and deleted members', async () => {
 		render(<MembersSettings />);
 
 		await screen.findByText('Alice Smith');
 		expect(screen.getByText('Bob Jones')).toBeInTheDocument();
 		expect(screen.getByText('charlie@signoz.io')).toBeInTheDocument();
+		expect(screen.getByText('Dave Deleted')).toBeInTheDocument();
 		expect(screen.getAllByText('ACTIVE')).toHaveLength(2);
 		expect(screen.getByText('INVITED')).toBeInTheDocument();
+		expect(screen.getByText('DELETED')).toBeInTheDocument();
 	});
 
 	it('filters to pending invites via the filter dropdown', async () => {
@@ -107,7 +115,7 @@ describe('MembersSettings (integration)', () => {
 		expect(screen.queryByText('charlie@signoz.io')).not.toBeInTheDocument();
 	});
 
-	it('opens EditMemberDrawer when a member row is clicked', async () => {
+	it('opens EditMemberDrawer when an active member row is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		render(<MembersSettings />);
@@ -115,6 +123,16 @@ describe('MembersSettings (integration)', () => {
 		await user.click(await screen.findByText('Alice Smith'));
 
 		await screen.findByText('Member Details');
+	});
+
+	it('does not open EditMemberDrawer when a deleted member row is clicked', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		render(<MembersSettings />);
+
+		await user.click(await screen.findByText('Dave Deleted'));
+
+		expect(screen.queryByText('Member Details')).not.toBeInTheDocument();
 	});
 
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {

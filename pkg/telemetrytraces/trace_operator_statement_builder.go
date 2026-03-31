@@ -2,12 +2,13 @@ package telemetrytraces
 
 import (
 	"context"
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"log/slog"
 )
 
 type traceOperatorStatementBuilder struct {
@@ -69,8 +70,8 @@ func (b *traceOperatorStatementBuilder) Build(
 	}
 
 	b.logger.DebugContext(ctx, "Building trace operator query",
-		"expression", query.Expression,
-		"request_type", requestType)
+		slog.String("expression", query.Expression),
+		slog.Any("request_type", requestType))
 
 	// Build the CTE-based query
 	builder := &traceOperatorCTEBuilder{

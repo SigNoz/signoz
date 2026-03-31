@@ -13,6 +13,7 @@ import { cloneDeep, debounce } from 'lodash-es';
 import APIError from 'types/api/error';
 import { ROLES } from 'types/roles';
 import { EMAIL_REGEX } from 'utils/app';
+import { popupContainer } from 'utils/selectPopupContainer';
 import { v4 as uuid } from 'uuid';
 
 import './InviteMembersModal.styles.scss';
@@ -201,19 +202,8 @@ function InviteMembersModal({
 			onComplete?.();
 		} catch (err) {
 			const apiErr = err as APIError;
-			if (apiErr?.getHttpStatusCode() === 409) {
-				toast.error(
-					touchedRows.length === 1
-						? `${touchedRows[0].email} is already a member`
-						: 'Invite for one or more users already exists',
-					{ richColors: true },
-				);
-			} else {
-				const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-				toast.error(`Failed to send invites: ${errorMessage}`, {
-					richColors: true,
-				});
-			}
+			const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
+			toast.error(errorMessage, { richColors: true });
 		} finally {
 			setIsSubmitting(false);
 		}
@@ -254,6 +244,8 @@ function InviteMembersModal({
 											value={row.email}
 											onChange={(e): void => updateEmail(row.id, e.target.value)}
 											className="team-member-email-input"
+											name={`invite-email-${row.id}`}
+											autoComplete="email"
 										/>
 										{emailValidity[row.id] === false && row.email.trim() !== '' && (
 											<span className="email-error-message">Invalid email address</span>
@@ -266,10 +258,7 @@ function InviteMembersModal({
 											className="team-member-role-select"
 											placeholder="Select roles"
 											suffixIcon={<ChevronDown size={14} />}
-											getPopupContainer={(triggerNode): HTMLElement =>
-												(triggerNode?.closest('.invite-members-modal') as HTMLElement) ||
-												document.body
-											}
+											getPopupContainer={popupContainer}
 										>
 											<Select.Option value="VIEWER">Viewer</Select.Option>
 											<Select.Option value="EDITOR">Editor</Select.Option>

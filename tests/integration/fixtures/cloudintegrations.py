@@ -1,7 +1,7 @@
 """Fixtures for cloud integration tests."""
 
 from http import HTTPStatus
-from typing import Callable, Optional
+from typing import Callable
 
 import pytest
 import requests
@@ -18,14 +18,12 @@ def create_cloud_integration_account(
     request: pytest.FixtureRequest,
     signoz: types.SigNoz,
 ) -> Callable[[str, str], dict]:
-    created_account_id: Optional[str] = None
-    cloud_provider_used: Optional[str] = None
+    created_accounts: list[tuple[str, str]] = []
 
     def _create(
         admin_token: str,
         cloud_provider: str = "aws",
     ) -> dict:
-        nonlocal created_account_id, cloud_provider_used
         endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/generate-connection-url"
 
         request_payload = {
@@ -52,35 +50,31 @@ def create_cloud_integration_account(
         ), f"Failed to create test account: {response.status_code}"
 
         data = response.json().get("data", response.json())
-        created_account_id = data.get("account_id")
-        cloud_provider_used = cloud_provider
+        created_accounts.append((data.get("account_id"), cloud_provider))
 
         return data
-
-    def _disconnect(admin_token: str, cloud_provider: str) -> requests.Response:
-        assert created_account_id
-        disconnect_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{created_account_id}/disconnect"
-        return requests.post(
-            signoz.self.host_configs["8080"].get(disconnect_endpoint),
-            headers={"Authorization": f"Bearer {admin_token}"},
-            timeout=10,
-        )
 
     # Yield factory to the test
     yield _create
 
-    # Post-test cleanup: generate admin token and disconnect the created account
-    if created_account_id and cloud_provider_used:
+    # Post-test cleanup: disconnect all created accounts
+    if created_accounts:
         get_token = request.getfixturevalue("get_token")
         try:
             admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-            r = _disconnect(admin_token, cloud_provider_used)
-            if r.status_code != HTTPStatus.OK:
-                logger.info(
-                    "Disconnect cleanup returned %s for account %s",
-                    r.status_code,
-                    created_account_id,
+            for account_id, cloud_provider in created_accounts:
+                disconnect_endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts/{account_id}/disconnect"
+                r = requests.post(
+                    signoz.self.host_configs["8080"].get(disconnect_endpoint),
+                    headers={"Authorization": f"Bearer {admin_token}"},
+                    timeout=10,
                 )
-            logger.info("Cleaned up test account: %s", created_account_id)
+                if r.status_code != HTTPStatus.OK:
+                    logger.info(
+                        "Disconnect cleanup returned %s for account %s",
+                        r.status_code,
+                        account_id,
+                    )
+                logger.info("Cleaned up test account: %s", account_id)
         except Exception as exc:  # pylint: disable=broad-except
             logger.info("Post-test disconnect cleanup failed: %s", exc)

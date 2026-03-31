@@ -12,10 +12,11 @@ var (
 	TypeCanceled               = typ{"canceled"}
 	TypeTimeout                = typ{"timeout"}
 	TypeUnexpected             = typ{"unexpected"} // Generic mismatch of expectations
+	TypeFatal                  = typ{"fatal"}     // Unrecoverable failure (e.g. panic)
 	TypeLicenseUnavailable     = typ{"license-unavailable"}
 )
 
-// Defines custom error types
+// Defines custom error types.
 type typ struct{ s string }
 
 func (t typ) String() string {

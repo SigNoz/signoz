@@ -12,12 +12,12 @@ var (
 		"url.full":       "http.url",
 	}
 
-	// LogsBackwardCompatKeys contains bidirectional mappings for logs
-	// Currently empty, can be extended in the future
+	// LogsBackwardCompatKeys contains bidirectional mappings for logs.
+	// Currently empty, can be extended in the future.
 	LogsBackwardCompatKeys = BackwardCompatibleKeyMap{}
 
-	// MetricsBackwardCompatKeys contains bidirectional mappings for metrics
-	// Currently empty, can be extended in the future
+	// MetricsBackwardCompatKeys contains bidirectional mappings for metrics.
+	// Currently empty, can be extended in the future.
 	MetricsBackwardCompatKeys = BackwardCompatibleKeyMap{}
 )
 

@@ -101,11 +101,11 @@ func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, sta
 }
 
 func newDomainIDForState(domainID valuer.UUID) string {
-	return strings.Replace(domainID.String(), "-", ":", -1)
+	return strings.ReplaceAll(domainID.String(), "-", ":")
 }
 
 func newDomainIDFromState(state string) (valuer.UUID, error) {
-	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
+	return valuer.NewUUID(strings.ReplaceAll(state, ":", "-"))
 }
 
 func (typ Identity) MarshalBinary() ([]byte, error) {
@@ -128,7 +128,7 @@ func (typ *Identity) ToClaims() Claims {
 
 type AuthNStore interface {
 	// Get user and factor password by email and orgID.
-	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, error)
+	GetActiveUserAndFactorPasswordByEmailAndOrgID(ctx context.Context, email string, orgID valuer.UUID) (*types.User, *types.FactorPassword, []*UserRole, error)
 
 	// Get org domain from id.
 	GetAuthDomainFromID(ctx context.Context, domainID valuer.UUID) (*AuthDomain, error)

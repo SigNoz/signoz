@@ -38,6 +38,7 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.LogResourceKeysTblName,
 		DBName,
 		AttributesMetadataLocalTableName,
+		ColumnEvolutionMetadataTableName,
 	)
 }
 
@@ -174,9 +175,10 @@ func TestApplyBackwardCompatibleKeys(t *testing.T) {
 			hasTraces := false
 			hasLogs := false
 			for _, key := range tt.inputKeys {
-				if key.Signal == telemetrytypes.SignalTraces {
+				switch key.Signal {
+				case telemetrytypes.SignalTraces:
 					hasTraces = true
-				} else if key.Signal == telemetrytypes.SignalLogs {
+				case telemetrytypes.SignalLogs:
 					hasLogs = true
 				}
 			}

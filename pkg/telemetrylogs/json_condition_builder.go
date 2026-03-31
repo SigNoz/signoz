@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -30,7 +31,7 @@ func NewJSONConditionBuilder(key *telemetrytypes.TelemetryFieldKey, valueType te
 	return &jsonConditionBuilder{key: key, valueType: telemetrytypes.MappingFieldDataTypeToJSONDataType[valueType]}
 }
 
-// BuildCondition builds the full WHERE condition for body_json JSON paths
+// BuildCondition builds the full WHERE condition for body_v2 JSON paths.
 func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	conditions := []string{}
 	for _, node := range c.key.JSONPlan {
@@ -40,10 +41,17 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 		}
 		conditions = append(conditions, condition)
 	}
-	return sb.Or(conditions...), nil
+	baseCond := sb.Or(conditions...)
+
+	// path index
+	if operator.AddDefaultExistsFilter() {
+		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+		return sb.And(baseCond, pathIndex), nil
+	}
+	return baseCond, nil
 }
 
-// emitPlannedCondition handles paths with array traversal
+// emitPlannedCondition handles paths with array traversal.
 func (c *jsonConditionBuilder) emitPlannedCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	// Build traversal + terminal recursively per-hop
 	compiled, err := c.recurseArrayHops(node, operator, value, sb)
@@ -53,7 +61,7 @@ func (c *jsonConditionBuilder) emitPlannedCondition(node *telemetrytypes.JSONAcc
 	return compiled, nil
 }
 
-// buildTerminalCondition creates the innermost condition
+// buildTerminalCondition creates the innermost condition.
 func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if node.TerminalConfig.ElemType.IsArray {
 		conditions := []string{}
@@ -92,11 +100,11 @@ func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONA
 }
 
 // buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
-// it handles the data type collisions and utilizes indexes for the condition if available
+// it handles the data type collisions and utilizes indexes for the condition if available.
 func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	fieldPath := node.FieldPath()
 	conditions := []string{}
-	var formattedValue any = value
+	var formattedValue = value
 	if operator.IsStringSearchOperator() {
 		formattedValue = querybuilder.FormatValueForContains(value)
 	}
@@ -163,7 +171,7 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 	return conditions[0], nil
 }
 
-// buildArrayMembershipCondition handles array membership checks
+// buildArrayMembershipCondition handles array membership checks.
 func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
 	localKeyCopy := *node.TerminalConfig.Key
@@ -200,7 +208,7 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 	return fmt.Sprintf("arrayExists(%s -> %s, %s)", key, op, arrayExpr), nil
 }
 
-// recurseArrayHops recursively builds array traversal conditions
+// recurseArrayHops recursively builds array traversal conditions.
 func (c *jsonConditionBuilder) recurseArrayHops(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "navigation failed, current node is nil")
@@ -288,9 +296,9 @@ func (c *jsonConditionBuilder) applyOperator(sb *sqlbuilder.SelectBuilder, field
 		}
 		return sb.NotIn(fieldExpr, values...), nil
 	case qbtypes.FilterOperatorExists:
-		return fmt.Sprintf("%s IS NOT NULL", fieldExpr), nil
+		return sb.IsNotNull(fieldExpr), nil
 	case qbtypes.FilterOperatorNotExists:
-		return fmt.Sprintf("%s IS NULL", fieldExpr), nil
+		return sb.IsNull(fieldExpr), nil
 	// between and not between
 	case qbtypes.FilterOperatorBetween, qbtypes.FilterOperatorNotBetween:
 		values, ok := value.([]any)

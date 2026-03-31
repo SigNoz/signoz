@@ -2,6 +2,8 @@ import ROUTES from 'constants/routes';
 
 import { CustomTimeType, Option, Time, TimeFrame } from './types';
 
+export const DEFAULT_TIME_RANGE = '30m';
+
 export const Options: Option[] = [
 	{ value: '5m', label: 'Last 5 minutes' },
 	{ value: '15m', label: 'Last 15 minutes' },
@@ -110,7 +112,7 @@ export const convertOldTimeToNewValidCustomTimeFormat = (
 		return `${match[1]}${unit}` as CustomTimeType;
 	}
 
-	return '30m';
+	return DEFAULT_TIME_RANGE;
 };
 
 export const getDefaultOption = (route: string): Time => {
@@ -154,6 +156,7 @@ export const routesToSkip = [
 	ROUTES.ALL_DASHBOARD,
 	ROUTES.ORG_SETTINGS,
 	ROUTES.MEMBERS_SETTINGS,
+	ROUTES.SERVICE_ACCOUNTS_SETTINGS,
 	ROUTES.INGESTION_SETTINGS,
 	ROUTES.API_KEYS,
 	ROUTES.ERROR_DETAIL,

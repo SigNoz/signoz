@@ -102,6 +102,7 @@
 
 			.progress-container {
 				width: 158px;
+
 				.ant-progress {
 					margin: 0;
 
@@ -185,6 +186,7 @@
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}
 	}
+
 	.ant-drawer-close {
 		padding: 0px;
 	}
@@ -369,9 +371,11 @@
 			.ant-table-cell:nth-child(n + 3) {
 				padding-right: 24px;
 			}
+
 			.column-header-right {
 				text-align: right;
 			}
+
 			.ant-table-tbody > tr > td {
 				border-bottom: none;
 			}

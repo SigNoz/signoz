@@ -19,8 +19,8 @@ import { useDashboardVariables } from 'hooks/dashboard/useDashboardVariables';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
 import { useNotifications } from 'hooks/useNotifications';
 import { PenLine, Trash2 } from 'lucide-react';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 
 import { TVariableMode } from './types';
@@ -87,7 +87,7 @@ function VariablesSettings({
 
 	const { t } = useTranslation(['dashboard']);
 
-	const { selectedDashboard, setSelectedDashboard } = useDashboard();
+	const { selectedDashboard, setSelectedDashboard } = useDashboardStore();
 	const { dashboardVariables } = useDashboardVariables();
 
 	const { notifications } = useNotifications();

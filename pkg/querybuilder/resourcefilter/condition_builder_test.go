@@ -4,7 +4,6 @@ import (
 	"context"
 	"testing"
 
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -17,7 +16,7 @@ func TestConditionBuilder(t *testing.T) {
 	testCases := []struct {
 		name         string
 		key          *telemetrytypes.TelemetryFieldKey
-		op           querybuildertypesv5.FilterOperator
+		op           qbtypes.FilterOperator
 		value        any
 		expected     string
 		expectedArgs []any
@@ -29,7 +28,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorEqual,
+			op:           qbtypes.FilterOperatorEqual,
 			value:        "watch",
 			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') = ? AND labels LIKE ? AND labels LIKE ?",
 			expectedArgs: []any{"watch", "%k8s.namespace.name%", `%k8s.namespace.name":"watch%`},
@@ -40,7 +39,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorNotEqual,
+			op:           qbtypes.FilterOperatorNotEqual,
 			value:        "redis",
 			expected:     "simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND labels NOT LIKE ?",
 			expectedArgs: []any{"redis", `%k8s.namespace.name":"redis%`},
@@ -51,7 +50,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorLike,
+			op:           qbtypes.FilterOperatorLike,
 			value:        "_mango%",
 			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
 			expectedArgs: []any{"_mango%", "%k8s.namespace.name%", `%k8s.namespace.name%_mango%%`},
@@ -62,7 +61,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorNotLike,
+			op:           qbtypes.FilterOperatorNotLike,
 			value:        "_mango%",
 			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?)",
 			expectedArgs: []any{"_mango%"},
@@ -73,7 +72,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorContains,
+			op:           qbtypes.FilterOperatorContains,
 			value:        "banana",
 			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) LIKE LOWER(?) AND labels LIKE ? AND LOWER(labels) LIKE LOWER(?)",
 			expectedArgs: []any{"%banana%", "%k8s.namespace.name%", `%k8s.namespace.name%banana%`},
@@ -96,7 +95,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorNotContains,
+			op:           qbtypes.FilterOperatorNotContains,
 			value:        "banana",
 			expected:     "LOWER(simpleJSONExtractString(labels, 'k8s.namespace.name')) NOT LIKE LOWER(?)",
 			expectedArgs: []any{"%banana%"},
@@ -107,7 +106,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorIn,
+			op:           qbtypes.FilterOperatorIn,
 			value:        []any{"watch", "redis"},
 			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') = ? OR simpleJSONExtractString(labels, 'k8s.namespace.name') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
 			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name%", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
@@ -118,7 +117,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorNotIn,
+			op:           qbtypes.FilterOperatorNotIn,
 			value:        []any{"watch", "redis"},
 			expected:     "(simpleJSONExtractString(labels, 'k8s.namespace.name') <> ? AND simpleJSONExtractString(labels, 'k8s.namespace.name') <> ?) AND (labels NOT LIKE ? AND labels NOT LIKE ?)",
 			expectedArgs: []any{"watch", "redis", "%k8s.namespace.name\":\"watch%", "%k8s.namespace.name\":\"redis%"},
@@ -129,7 +128,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorExists,
+			op:           qbtypes.FilterOperatorExists,
 			expected:     "simpleJSONHas(labels, 'k8s.namespace.name') = ? AND labels LIKE ?",
 			expectedArgs: []any{true, "%k8s.namespace.name%"},
 		},
@@ -139,7 +138,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorNotExists,
+			op:           qbtypes.FilterOperatorNotExists,
 			expected:     "simpleJSONHas(labels, 'k8s.namespace.name') <> ?",
 			expectedArgs: []any{true},
 		},
@@ -149,7 +148,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "test_num",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorEqual,
+			op:           qbtypes.FilterOperatorEqual,
 			value:        1,
 			expected:     "simpleJSONExtractString(labels, 'test_num') = ? AND labels LIKE ? AND labels LIKE ?",
 			expectedArgs: []any{"1", "%test_num%", "%test_num\":\"1%"},
@@ -160,7 +159,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "test_num",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorGreaterThan,
+			op:           qbtypes.FilterOperatorGreaterThan,
 			value:        1,
 			expected:     "simpleJSONExtractString(labels, 'test_num') > ? AND labels LIKE ?",
 			expectedArgs: []any{"1", "%test_num%"},
@@ -171,7 +170,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "test_num",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorIn,
+			op:           qbtypes.FilterOperatorIn,
 			value:        []any{1, 2},
 			expected:     "(simpleJSONExtractString(labels, 'test_num') = ? OR simpleJSONExtractString(labels, 'test_num') = ?) AND labels LIKE ? AND (labels LIKE ? OR labels LIKE ?)",
 			expectedArgs: []any{"1", "2", "%test_num%", "%test_num\":\"1%", "%test_num\":\"2%"},
@@ -182,7 +181,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "test_num",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorBetween,
+			op:           qbtypes.FilterOperatorBetween,
 			value:        []any{1, 2},
 			expected:     "labels LIKE ? AND simpleJSONExtractString(labels, 'test_num') BETWEEN ? AND ?",
 			expectedArgs: []any{"%test_num%", "1", "2"},
@@ -193,7 +192,7 @@ func TestConditionBuilder(t *testing.T) {
 				Name:         "k8s.namespace.name",
 				FieldContext: telemetrytypes.FieldContextResource,
 			},
-			op:           querybuildertypesv5.FilterOperatorRegexp,
+			op:           qbtypes.FilterOperatorRegexp,
 			value:        "ban.*",
 			expected:     "match(simpleJSONExtractString(labels, 'k8s.namespace.name'), ?) AND labels LIKE ?",
 			expectedArgs: []any{"ban.*", "%k8s.namespace.name%"},
@@ -206,7 +205,7 @@ func TestConditionBuilder(t *testing.T) {
 	for _, tc := range testCases {
 		sb := sqlbuilder.NewSelectBuilder()
 		t.Run(tc.name, func(t *testing.T) {
-			cond, err := conditionBuilder.ConditionFor(context.Background(), tc.key, tc.op, tc.value, sb, 0, 0)
+			cond, err := conditionBuilder.ConditionFor(context.Background(), 0, 0, tc.key, tc.op, tc.value, sb)
 			sb.Where(cond)
 
 			if tc.expectedErr != nil {

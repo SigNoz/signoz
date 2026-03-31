@@ -8,6 +8,7 @@ import {
 	BellDot,
 	Binoculars,
 	Book,
+	Bot,
 	Boxes,
 	BugIcon,
 	Building2,
@@ -357,6 +358,13 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Users size={16} />,
 				isEnabled: false,
 				itemKey: 'members',
+			},
+			{
+				key: ROUTES.SERVICE_ACCOUNTS_SETTINGS,
+				label: 'Service Accounts',
+				icon: <Bot size={16} />,
+				isEnabled: false,
+				itemKey: 'service-accounts',
 			},
 			{
 				key: ROUTES.API_KEYS,

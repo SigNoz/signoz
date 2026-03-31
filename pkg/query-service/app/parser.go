@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+
 	"math"
 	"net/http"
 	"sort"
@@ -14,12 +15,16 @@ import (
 	"text/template"
 	"time"
 
+	signozerrors "github.com/SigNoz/signoz/pkg/errors"
+
 	"github.com/SigNoz/signoz/pkg/types/thirdpartyapitypes"
 
+	"log/slog"
+
 	"github.com/SigNoz/govaluate"
+
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/kafka"
 	queues2 "github.com/SigNoz/signoz/pkg/query-service/app/integrations/messagingQueues/queues"
-	"log/slog"
 
 	"github.com/gorilla/mux"
 	promModel "github.com/prometheus/common/model"
@@ -741,7 +746,7 @@ func chTransformQuery(query string, variables map[string]interface{}) {
 	transformer := chVariables.NewQueryTransformer(query, varsForTransform)
 	transformedQuery, err := transformer.Transform()
 	if err != nil {
-		slog.Warn("failed to transform clickhouse query", "query", query, "error", err)
+		slog.Warn("failed to transform clickhouse query", "query", query, signozerrors.Attr(err))
 	}
 	slog.Info("transformed clickhouse query", "transformed_query", transformedQuery, "original_query", query)
 }

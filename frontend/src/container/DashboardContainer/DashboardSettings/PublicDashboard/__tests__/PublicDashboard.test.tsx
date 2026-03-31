@@ -1,20 +1,21 @@
 import { useCopyToClipboard } from 'react-use';
 import { toast } from '@signozhq/sonner';
 import { fireEvent, within } from '@testing-library/react';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { StatusCodes } from 'http-status-codes';
 import {
 	publishedPublicDashboardMeta,
 	unpublishedPublicDashboardMeta,
 } from 'mocks-server/__mockdata__/publicDashboard';
 import { rest, server } from 'mocks-server/server';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 import { USER_ROLES } from 'types/roles';
 
 import PublicDashboardSetting from '../index';
 
 // Mock dependencies
-jest.mock('providers/Dashboard/Dashboard');
+jest.mock('providers/Dashboard/store/useDashboardStore');
 jest.mock('react-use', () => ({
 	...jest.requireActual('react-use'),
 	useCopyToClipboard: jest.fn(),
@@ -26,14 +27,13 @@ jest.mock('@signozhq/sonner', () => ({
 	},
 }));
 
-const mockUseDashboard = jest.mocked(useDashboard);
+const mockUseDashboard = jest.mocked(useDashboardStore);
 const mockUseCopyToClipboard = jest.mocked(useCopyToClipboard);
 const mockToast = jest.mocked(toast);
 
 // Test constants
 const MOCK_DASHBOARD_ID = 'test-dashboard-id';
 const MOCK_PUBLIC_PATH = '/public/dashboard/test-dashboard-id';
-const DEFAULT_TIME_RANGE = '30m';
 const DASHBOARD_VARIABLES_WARNING =
 	"Dashboard variables won't work in public dashboards";
 
@@ -67,10 +67,10 @@ beforeEach(() => {
 	// Mock window.open
 	window.open = jest.fn();
 
-	// Mock useDashboard
+	// Mock useDashboardStore
 	mockUseDashboard.mockReturnValue(({
 		selectedDashboard: mockSelectedDashboard,
-	} as unknown) as ReturnType<typeof useDashboard>);
+	} as unknown) as ReturnType<typeof useDashboardStore>);
 
 	// Mock useCopyToClipboard
 	mockUseCopyToClipboard.mockReturnValue(([

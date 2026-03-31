@@ -84,7 +84,7 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 	}
 }
 
-// implement custom json unmarshaler for the QueryEnvelope
+// implement custom json unmarshaler for the QueryEnvelope.
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
 		Type QueryType       `json:"type"`
@@ -202,7 +202,7 @@ func (c *CompositeQuery) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
+// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages.
 func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	type Alias CompositeQuery
 
@@ -393,6 +393,77 @@ func (r *QueryRangeRequest) HasOrderSpecified() bool {
 	return false
 }
 
+// UseDefaultOrderBy applies UseDefaultOrderByForListQuery to every query in the
+// composite query when the request type is a list query (raw, raw_stream, trace).
+func (r *QueryRangeRequest) UseDefaultOrderBy() {
+
+	// Based on the request type, handle default order-bys
+	switch r.RequestType {
+	case RequestTypeRaw, RequestTypeRawStream, RequestTypeTrace:
+		for idx := range r.CompositeQuery.Queries {
+			r.CompositeQuery.Queries[idx].UseDefaultOrderByForListQuery()
+		}
+	}
+
+}
+
+// UseDefaultOrderByForListQuery applies a default timestamp-descending order
+// for list/raw queries when no explicit order is specified. This is intended
+// for raw data listing endpoints (e.g. export, list views) where a sensible
+// default sort is needed, not for aggregation or timeseries queries.
+func (q *QueryEnvelope) UseDefaultOrderByForListQuery() {
+	if len(q.GetOrder()) > 0 {
+		return
+	}
+
+	switch q.Spec.(type) {
+	case QueryBuilderQuery[TraceAggregation],
+		QueryBuilderTraceOperator:
+		q.SetOrder(
+			[]OrderBy{
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalTraces,
+							FieldContext:  telemetrytypes.FieldContextSpan,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+					Direction: OrderDirectionDesc,
+				},
+			},
+		)
+	case QueryBuilderQuery[LogAggregation]:
+		q.SetOrder(
+			[]OrderBy{
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "timestamp",
+							Signal:        telemetrytypes.SignalLogs,
+							FieldContext:  telemetrytypes.FieldContextLog,
+							FieldDataType: telemetrytypes.FieldDataTypeNumber,
+						},
+					},
+					Direction: OrderDirectionDesc,
+				},
+				{
+					Key: OrderByKey{
+						TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{
+							Name:          "id",
+							Signal:        telemetrytypes.SignalLogs,
+							FieldContext:  telemetrytypes.FieldContextLog,
+							FieldDataType: telemetrytypes.FieldDataTypeString,
+						},
+					},
+					Direction: OrderDirectionDesc,
+				},
+			},
+		)
+	}
+}
+
 func (r *QueryRangeRequest) FuncsForQuery(name string) []Function {
 	funcs := []Function{}
 	for _, query := range r.CompositeQuery.Queries {
@@ -437,6 +508,16 @@ func (r *QueryRangeRequest) IsAnomalyRequest() (*QueryBuilderQuery[MetricAggrega
 	return &q, hasAnomaly
 }
 
+func (r *QueryRangeRequest) TraceOperatorQueryIndex() int {
+	for idx, query := range r.CompositeQuery.Queries {
+		switch query.Spec.(type) {
+		case QueryBuilderTraceOperator:
+			return idx
+		}
+	}
+	return -1
+}
+
 // We do not support fill gaps for these queries. Maybe support in future?
 func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	for _, query := range r.CompositeQuery.Queries {
@@ -454,7 +535,7 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	return false
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryRangeRequest

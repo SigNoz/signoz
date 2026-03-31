@@ -249,13 +249,14 @@ export const handleGraphClick = async ({
 	}
 };
 
-export const errorDetails = (error: APIError): string => {
-	const { message, errors } = error.getErrorDetails()?.error || {};
+export const errorDetails = (error: APIError | Error): string => {
+	const { message, errors } =
+		(error instanceof APIError ? error.getErrorDetails()?.error : null) || {};
 
 	const details =
-		errors?.length > 0
+		errors && errors.length > 0
 			? `\n\nDetails: ${errors.map((e) => e.message).join('\n')}`
 			: '';
-	const errorDetails = `${message} ${details}`;
-	return errorDetails || 'Unknown error occurred';
+	const errorDetails = `${message ?? error.message} ${details}`;
+	return errorDetails.trim() || 'Unknown error occurred';
 };

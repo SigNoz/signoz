@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 )
 
-// TestAdjustTimeRangeForShift tests the time range adjustment logic
+// TestAdjustTimeRangeForShift tests the time range adjustment logic.
 func TestAdjustTimeRangeForShift(t *testing.T) {
 	tests := []struct {
 		name           string
@@ -121,7 +121,7 @@ func TestAdjustTimeRangeForShift(t *testing.T) {
 	}
 }
 
-// TestExtractShiftFromBuilderQuery tests the shift extraction logic
+// TestExtractShiftFromBuilderQuery tests the shift extraction logic.
 func TestExtractShiftFromBuilderQuery(t *testing.T) {
 	tests := []struct {
 		name            string
