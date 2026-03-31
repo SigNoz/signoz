@@ -1,13 +1,17 @@
 package middleware
 
 import (
+	"log/slog"
+	"net"
 	"net/http"
 	"time"
 
 	"github.com/gorilla/mux"
 	jsoniter "github.com/json-iterator/go"
+	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 
+	"github.com/SigNoz/signoz/pkg/auditor"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/http/render"
@@ -18,10 +22,89 @@ import (
 
 var jsonAPI = jsoniter.ConfigCompatibleWithStandardLibrary
 
+const (
+	logMessage = "::RECEIVED-REQUEST::"
+)
+
+// Audit is a middleware that captures HTTP responses for request logging
+// and audit event emission. It wraps the response writer once to avoid
+// double-wrapping.
+type Audit struct {
+	logger         *slog.Logger
+	excludedRoutes map[string]struct{}
+	auditor        auditor.Auditor
+}
+
+func NewAudit(logger *slog.Logger, excludedRoutes []string, auditor auditor.Auditor) *Audit {
+	excludedRoutesMap := make(map[string]struct{})
+	for _, route := range excludedRoutes {
+		excludedRoutesMap[route] = struct{}{}
+	}
+
+	return &Audit{
+		logger:         logger.With(slog.String("pkg", pkgname)),
+		excludedRoutes: excludedRoutesMap,
+		auditor:        auditor,
+	}
+}
+
+func (middleware *Audit) Wrap(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(rw http.ResponseWriter, req *http.Request) {
+		start := time.Now()
+		host, port, _ := net.SplitHostPort(req.Host)
+		path, err := mux.CurrentRoute(req).GetPathTemplate()
+		if err != nil {
+			path = req.URL.Path
+		}
+
+		fields := []any{
+			string(semconv.ClientAddressKey), req.RemoteAddr,
+			string(semconv.UserAgentOriginalKey), req.UserAgent(),
+			string(semconv.ServerAddressKey), host,
+			string(semconv.ServerPortKey), port,
+			string(semconv.HTTPRequestSizeKey), req.ContentLength,
+			string(semconv.HTTPRouteKey), path,
+		}
+
+		responseBuffer := &byteBuffer{}
+		writer := newResponseCapture(rw, responseBuffer)
+		next.ServeHTTP(writer, req)
+
+		statusCode, writeErr := writer.StatusCode(), writer.WriteError()
+
+		// Audit: emit event if the matched handler declares an AuditDef.
+		middleware.emitAuditEvent(req, writer, path)
+
+		// Logging.
+		if _, ok := middleware.excludedRoutes[path]; ok {
+			return
+		}
+
+		fields = append(fields,
+			string(semconv.HTTPResponseStatusCodeKey), statusCode,
+			string(semconv.HTTPServerRequestDurationName), time.Since(start),
+		)
+		if writeErr != nil {
+			fields = append(fields, errors.Attr(writeErr))
+			middleware.logger.ErrorContext(req.Context(), logMessage, fields...)
+		} else {
+			if responseBuffer.Len() != 0 {
+				fields = append(fields, "response.body", responseBuffer.String())
+			}
+
+			middleware.logger.InfoContext(req.Context(), logMessage, fields...)
+		}
+	})
+}
+
+// ---------------------------------------------------------------------------
+// Audit event emission
+// ---------------------------------------------------------------------------
+
 // emitAuditEvent checks if the matched route's handler carries an AuditDef
 // and, if so, builds and emits an audit event. Fail-open: any error during
 // event construction is silently ignored.
-func (middleware *Logging) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string) {
+func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCapture, routeTemplate string) {
 	if middleware.auditor == nil {
 		return
 	}
