@@ -250,7 +250,7 @@ type Builder struct {
 	add  []Label
 }
 
-// NewBuilder returns a new LabelsBuilder
+// NewBuilder returns a new LabelsBuilder.
 func NewBuilder(base ...Label) *Builder {
 	return &Builder{
 		base: base,

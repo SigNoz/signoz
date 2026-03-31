@@ -173,11 +173,15 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
 		return ruletypes.Vector{*missingDataAlert}, nil
+	} else if !hasData {
+		r.logger.WarnContext(ctx, "no anomaly result", slog.String("rule.id", r.ID()))
+		return ruletypes.Vector{}, nil
 	}
 
 	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.Aggregations[0].AnomalyScores)
+	// TODO(srikanthccv): this could be noisy but we do this to answer false alert requests
 	r.logger.InfoContext(ctx, "anomaly scores", slog.String("rule.id", r.ID()), slog.String("anomaly.scores", string(scoresJSON)))
 
 	// Filter out new series if newGroupEvalDelay is configured
