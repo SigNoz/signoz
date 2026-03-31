@@ -1,8 +1,8 @@
 package audittypes
 
 import (
-	"fmt"
 	"net/http"
+	"strings"
 
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -12,9 +12,9 @@ import (
 
 // Audit attributes — Action (What).
 type AuditAttributes struct {
-	Action         Action         `json:"action"`
-	ActionCategory ActionCategory `json:"actionCategory"`
-	Outcome        Outcome        `json:"outcome"`
+	Action         Action         `json:"action"`         // guaranteed to be present
+	ActionCategory ActionCategory `json:"actionCategory"` // guaranteed to be present
+	Outcome        Outcome        `json:"outcome"`        // guaranteed to be present
 	IdentNProvider string         `json:"identnProvider,omitempty"`
 }
 
@@ -76,7 +76,7 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 // Audit attributes — Resource (On What).
 type ResourceAttributes struct {
 	ResourceID   string `json:"resourceId,omitempty"`
-	ResourceName string `json:"resourceName"`
+	ResourceName string `json:"resourceName"` // guaranteed to be present
 }
 
 func NewResourceAttributes(resourceID, resourceName string) ResourceAttributes {
@@ -151,9 +151,62 @@ func putStrIfNotEmpty(attrs pcommon.Map, key, value string) {
 }
 
 func newBody(auditAttributes AuditAttributes, principalAttributes PrincipalAttributes, resourceAttributes ResourceAttributes, errorAttributes ErrorAttributes) string {
-	if auditAttributes.Outcome == OutcomeSuccess {
-		return fmt.Sprintf("%s (%s) %s %s %s", principalAttributes.PrincipalEmail, principalAttributes.PrincipalID, auditAttributes.Action.PastTense(), resourceAttributes.ResourceName, resourceAttributes.ResourceID)
+	var b strings.Builder
+
+	// Principal: "email (id)" or "id" or "email" or omitted.
+	hasEmail := principalAttributes.PrincipalEmail.String() != ""
+	hasID := !principalAttributes.PrincipalID.IsZero()
+	if hasEmail {
+		b.WriteString(principalAttributes.PrincipalEmail.String())
+		if hasID {
+			b.WriteString(" (")
+			b.WriteString(principalAttributes.PrincipalID.StringValue())
+			b.WriteString(")")
+		}
+	} else if hasID {
+		b.WriteString(principalAttributes.PrincipalID.StringValue())
 	}
 
-	return fmt.Sprintf("%s (%s) failed to %s %s %s: %s (%s)", principalAttributes.PrincipalEmail, principalAttributes.PrincipalID, auditAttributes.Action.StringValue(), resourceAttributes.ResourceName, resourceAttributes.ResourceID, errorAttributes.ErrorType, errorAttributes.ErrorCode)
+	// Action: " created" or " failed to create".
+	if b.Len() > 0 {
+		b.WriteString(" ")
+	}
+	if auditAttributes.Outcome == OutcomeSuccess {
+		b.WriteString(auditAttributes.Action.PastTense())
+	} else {
+		b.WriteString("failed to ")
+		b.WriteString(auditAttributes.Action.StringValue())
+	}
+
+	// Resource: " name (id)" or " name".
+	b.WriteString(" ")
+	b.WriteString(resourceAttributes.ResourceName)
+	if resourceAttributes.ResourceID != "" {
+		b.WriteString(" (")
+		b.WriteString(resourceAttributes.ResourceID)
+		b.WriteString(")")
+	}
+
+	// Error suffix (failure only): ": type (code)" or ": type" or ": (code)" or omitted.
+	if auditAttributes.Outcome == OutcomeFailure {
+		errorType := errorAttributes.ErrorType
+		errorCode := errorAttributes.ErrorCode
+		if errorType != "" || errorCode != "" {
+			b.WriteString(": ")
+			if errorType != "" && errorCode != "" {
+				b.WriteString(errorType)
+				b.WriteString(" (")
+				b.WriteString(errorCode)
+				b.WriteString(")")
+			} else if errorType != "" {
+				b.WriteString(errorType)
+			} else {
+				b.WriteString("(")
+				b.WriteString(errorCode)
+				b.WriteString(")")
+			}
+		}
+	}
+
+	return b.String()
 }
