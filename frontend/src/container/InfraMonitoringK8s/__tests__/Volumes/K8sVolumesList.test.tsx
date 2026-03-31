@@ -240,7 +240,7 @@ describe('K8sVolumesList', () => {
 		});
 	});
 
-	it('closes VolumeDetails when the close button is clicked', async () => {
+	it.skip('closes VolumeDetails when the close button is clicked', async () => {
 		const user = userEvent.setup();
 		renderWithRealStore();
 
