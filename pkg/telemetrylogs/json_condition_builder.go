@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"slices"
 
+	schemamigrator "github.com/SigNoz/signoz-otel-collector/cmd/signozschemamigrator/schema_migrator"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -40,8 +41,14 @@ func (c *jsonConditionBuilder) buildJSONCondition(operator qbtypes.FilterOperato
 		}
 		conditions = append(conditions, condition)
 	}
+	baseCond := sb.Or(conditions...)
 
-	return sb.Or(conditions...), nil
+	// path index
+	if operator.AddDefaultExistsFilter() {
+		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+		return sb.And(baseCond, pathIndex), nil
+	}
+	return baseCond, nil
 }
 
 // emitPlannedCondition handles paths with array traversal
