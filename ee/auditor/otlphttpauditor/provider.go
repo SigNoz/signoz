@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
 var _ auditor.Auditor = (*provider)(nil)
@@ -93,6 +94,15 @@ func (p *provider) Stop(ctx context.Context) error {
 
 func (p *provider) Healthy() <-chan struct{} {
 	return p.server.Healthy()
+}
+
+func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
+	records := make([]sdklog.Record, len(events))
+	for i := range events {
+		records[i] = events[i].ToLogRecord()
+	}
+
+	return p.exporter.Export(ctx, records)
 }
 
 func buildExporterOptions(config auditor.OTLPHTTPConfig) []otlploghttp.Option {

@@ -13,16 +13,10 @@ func (event AuditEvent) ToLogRecord() sdklog.Record {
 	var record sdklog.Record
 
 	record.SetTimestamp(event.Timestamp)
-	record.SetBody(otellog.StringValue(buildBody(event)))
+	record.SetBody(otellog.StringValue(event.setBody()))
 	record.SetEventName(event.EventName.String())
-
-	if event.Outcome == OutcomeSuccess {
-		record.SetSeverity(otellog.SeverityInfo)
-		record.SetSeverityText("INFO")
-	} else {
-		record.SetSeverity(otellog.SeverityError)
-		record.SetSeverityText("ERROR")
-	}
+	record.SetSeverity(event.Outcome.Severity())
+	record.SetSeverityText(event.Outcome.SeverityText())
 
 	attrs := make([]otellog.KeyValue, 0, 20)
 
@@ -33,9 +27,7 @@ func (event AuditEvent) ToLogRecord() sdklog.Record {
 		otellog.String("signoz.audit.principal.type", event.PrincipalType.StringValue()),
 		otellog.String("signoz.audit.principal.org_id", event.PrincipalOrgID),
 	)
-	if event.IdentNProvider != "" {
-		attrs = append(attrs, otellog.String("signoz.audit.identn_provider", event.IdentNProvider))
-	}
+	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.identn_provider", event.IdentNProvider)
 
 	// Action attributes
 	attrs = append(attrs,
@@ -46,49 +38,38 @@ func (event AuditEvent) ToLogRecord() sdklog.Record {
 
 	// Resource attributes
 	attrs = append(attrs, otellog.String("signoz.audit.resource.name", event.ResourceName))
-	if event.ResourceID != "" {
-		attrs = append(attrs, otellog.String("signoz.audit.resource.id", event.ResourceID))
-	}
+	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.resource.id", event.ResourceID)
 
 	// Error attributes (on failure)
-	if event.ErrorType != "" {
-		attrs = append(attrs, otellog.String("signoz.audit.error.type", event.ErrorType))
-	}
-	if event.ErrorCode != "" {
-		attrs = append(attrs, otellog.String("signoz.audit.error.code", event.ErrorCode))
-	}
-	if event.ErrorMessage != "" {
-		attrs = append(attrs, otellog.String("signoz.audit.error.message", event.ErrorMessage))
-	}
+	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.type", event.ErrorType)
+	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.code", event.ErrorCode)
+	attrs = appendStringIfNotEmpty(attrs, "signoz.audit.error.message", event.ErrorMessage)
 
 	// Transport context attributes
-	if event.HTTPMethod != "" {
-		attrs = append(attrs, otellog.String("http.request.method", event.HTTPMethod))
-	}
-	if event.HTTPRoute != "" {
-		attrs = append(attrs, otellog.String("http.route", event.HTTPRoute))
-	}
+	attrs = appendStringIfNotEmpty(attrs, "http.request.method", event.HTTPMethod)
+	attrs = appendStringIfNotEmpty(attrs, "http.route", event.HTTPRoute)
 	if event.HTTPStatusCode != 0 {
 		attrs = append(attrs, otellog.Int("http.response.status_code", event.HTTPStatusCode))
 	}
-	if event.URLPath != "" {
-		attrs = append(attrs, otellog.String("url.path", event.URLPath))
-	}
-	if event.ClientAddress != "" {
-		attrs = append(attrs, otellog.String("client.address", event.ClientAddress))
-	}
-	if event.UserAgent != "" {
-		attrs = append(attrs, otellog.String("user_agent.original", event.UserAgent))
-	}
+	attrs = appendStringIfNotEmpty(attrs, "url.path", event.URLPath)
+	attrs = appendStringIfNotEmpty(attrs, "client.address", event.ClientAddress)
+	attrs = appendStringIfNotEmpty(attrs, "user_agent.original", event.UserAgent)
 
 	record.AddAttributes(attrs...)
 	return record
 }
 
-func buildBody(event AuditEvent) string {
+func (event AuditEvent) setBody() string {
 	if event.Outcome == OutcomeSuccess {
 		return fmt.Sprintf("%s (%s) %s %s %s", event.PrincipalEmail, event.PrincipalID, event.Action.PastTense(), event.ResourceName, event.ResourceID)
 	}
 
 	return fmt.Sprintf("%s (%s) failed to %s %s %s: %s (%s)", event.PrincipalEmail, event.PrincipalID, event.Action.StringValue(), event.ResourceName, event.ResourceID, event.ErrorType, event.ErrorCode)
+}
+
+func appendStringIfNotEmpty(attrs []otellog.KeyValue, key, value string) []otellog.KeyValue {
+	if value != "" {
+		return append(attrs, otellog.String(key, value))
+	}
+	return attrs
 }
