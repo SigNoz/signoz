@@ -68,32 +68,32 @@ func newProvider(_ context.Context, providerSettings factory.ProviderSettings, c
 	return p, nil
 }
 
-func (p *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
+func (provider *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
 	if event.PrincipalOrgID == "" {
 		return
 	}
 
 	orgID, err := valuer.NewUUID(event.PrincipalOrgID)
 	if err != nil {
-		p.settings.Logger().WarnContext(ctx, "audit event dropped, invalid org_id", slog.String("org_id", event.PrincipalOrgID))
+		provider.settings.Logger().WarnContext(ctx, "audit event dropped, invalid org_id", slog.String("org_id", event.PrincipalOrgID))
 		return
 	}
 
-	if _, err := p.licensing.GetActive(ctx, orgID); err != nil {
+	if _, err := provider.licensing.GetActive(ctx, orgID); err != nil {
 		return
 	}
 
-	p.server.Add(ctx, event)
+	provider.server.Add(ctx, event)
 }
 
-func (p *provider) Start(ctx context.Context) error {
-	return p.server.Start(ctx)
+func (provider *provider) Start(ctx context.Context) error {
+	return provider.server.Start(ctx)
 }
 
-func (p *provider) Stop(ctx context.Context) error {
-	return p.server.Stop(ctx)
+func (provider *provider) Stop(ctx context.Context) error {
+	return provider.server.Stop(ctx)
 }
 
-func (p *provider) Healthy() <-chan struct{} {
-	return p.server.Healthy()
+func (provider *provider) Healthy() <-chan struct{} {
+	return provider.server.Healthy()
 }

@@ -35,7 +35,7 @@ type retryableError struct {
 func (e *retryableError) Error() string { return e.err.Error() }
 func (e *retryableError) Unwrap() error { return e.err }
 
-func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
+func (provider *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
 	logs := plog.NewLogs()
 	rl := logs.ResourceLogs().AppendEmpty()
 	rl.Resource().Attributes().PutStr("service.name", "signoz")
@@ -46,27 +46,27 @@ func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) e
 		events[i].ToLogRecord(sl.LogRecords().AppendEmpty())
 	}
 
-	request, err := p.marshaler.MarshalLogs(logs)
+	request, err := provider.marshaler.MarshalLogs(logs)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to marshal audit logs")
 	}
 
-	return p.send(ctx, request)
+	return provider.send(ctx, request)
 }
 
 // send posts the request with internal retry for retryable errors.
 // Uses exponential backoff from config, honouring Retry-After when available.
-func (p *provider) send(ctx context.Context, request []byte) error {
-	retryCfg := p.config.OTLPHTTP.Retry
+func (provider *provider) send(ctx context.Context, request []byte) error {
+	retryCfg := provider.config.OTLPHTTP.Retry
 	if !retryCfg.Enabled {
-		return p.sendOnce(ctx, request)
+		return provider.sendOnce(ctx, request)
 	}
 
 	interval := retryCfg.InitialInterval
 	deadline := time.Now().Add(retryCfg.MaxElapsedTime)
 
 	for {
-		err := p.sendOnce(ctx, request)
+		err := provider.sendOnce(ctx, request)
 		if err == nil {
 			return nil
 		}
@@ -95,9 +95,9 @@ func (p *provider) send(ctx context.Context, request []byte) error {
 // Returns a *retryableError for status codes that should be retried.
 // Follows the OTel Collector's otlphttpexporter pattern:
 // https://github.com/open-telemetry/opentelemetry-collector/blob/main/exporter/otlphttpexporter/otlp.go
-func (p *provider) sendOnce(ctx context.Context, request []byte) error {
+func (provider *provider) sendOnce(ctx context.Context, request []byte) error {
 	var body io.Reader
-	if p.config.OTLPHTTP.Compression == "gzip" {
+	if provider.config.OTLPHTTP.Compression == "gzip" {
 		var buf bytes.Buffer
 		gz := gzip.NewWriter(&buf)
 		if _, err := gz.Write(request); err != nil {
@@ -111,17 +111,17 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 		body = bytes.NewReader(request)
 	}
 
-	req, err := http.NewRequestWithContext(ctx, http.MethodPost, p.endpoint, body)
+	req, err := http.NewRequestWithContext(ctx, http.MethodPost, provider.endpoint, body)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to create audit export request")
 	}
 
 	req.Header.Set("Content-Type", protobufContentType)
-	if p.config.OTLPHTTP.Compression == "gzip" {
+	if provider.config.OTLPHTTP.Compression == "gzip" {
 		req.Header.Set("Content-Encoding", "gzip")
 	}
 
-	resp, err := p.httpClient.Do(req)
+	resp, err := provider.httpClient.Do(req)
 	if err != nil {
 		return errors.Wrapf(err, errors.TypeInternal, errCodeAuditExport, "failed to make an HTTP request")
 	}
@@ -131,7 +131,7 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 	}()
 
 	if resp.StatusCode >= 200 && resp.StatusCode <= 299 {
-		p.handlePartialSuccess(resp)
+		provider.handlePartialSuccess(resp)
 		return nil
 	}
 
@@ -139,9 +139,9 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 
 	var formattedErr error
 	if respStatus != nil {
-		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d, Message=%s, Details=%v", p.endpoint, resp.StatusCode, respStatus.Message, respStatus.Details)
+		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d, Message=%s, Details=%v", provider.endpoint, resp.StatusCode, respStatus.Message, respStatus.Details)
 	} else {
-		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d", p.endpoint, resp.StatusCode)
+		formattedErr = errors.Newf(errors.TypeInternal, errCodeAuditExport, "error exporting audit logs, request to %s responded with HTTP Status Code %d", provider.endpoint, resp.StatusCode)
 	}
 
 	if isRetryableStatusCode(resp.StatusCode) {
@@ -153,7 +153,7 @@ func (p *provider) sendOnce(ctx context.Context, request []byte) error {
 
 // handlePartialSuccess parses the ExportLogsServiceResponse from a 2xx response
 // and logs a warning if any log records were rejected.
-func (p *provider) handlePartialSuccess(resp *http.Response) {
+func (provider *provider) handlePartialSuccess(resp *http.Response) {
 	respBytes, err := readResponseBody(resp)
 	if err != nil || respBytes == nil {
 		return
@@ -170,7 +170,7 @@ func (p *provider) handlePartialSuccess(resp *http.Response) {
 	}
 
 	if ps.GetErrorMessage() != "" || ps.GetRejectedLogRecords() != 0 {
-		p.settings.Logger().WarnContext(context.Background(), "partial success response", slog.String("message", ps.GetErrorMessage()), slog.Int64("dropped_log_records", ps.GetRejectedLogRecords()))
+		provider.settings.Logger().WarnContext(context.Background(), "partial success response", slog.String("message", ps.GetErrorMessage()), slog.Int64("dropped_log_records", ps.GetRejectedLogRecords()))
 	}
 }
 
