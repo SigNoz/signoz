@@ -115,7 +115,48 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	}
 
 	claims, _ := authtypes.ClaimsFromContext(req.Context())
-	event := buildAuditEvent(req, writer.StatusCode(), writer.BodyBytes(), *def, claims, routeTemplate)
+	statusCode := writer.StatusCode()
+
+	// Pre-extract principal.
+	principalID, _ := valuer.NewUUID(claims.UserID)
+	principalEmail, _ := valuer.NewEmail(claims.Email)
+	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
+
+	// Pre-extract trace context.
+	span := trace.SpanFromContext(req.Context())
+	var traceID, spanID string
+	if span.SpanContext().HasTraceID() {
+		traceID = span.SpanContext().TraceID().String()
+	}
+	if span.SpanContext().HasSpanID() {
+		spanID = span.SpanContext().SpanID().String()
+	}
+
+	// Pre-extract error details.
+	var errorType, errorCode, errorMessage string
+	if statusCode >= 400 {
+		errorType = errorTypeFromStatusCode(statusCode)
+		errorCode, errorMessage = parseErrorResponse(writer.BodyBytes())
+	}
+
+	event := audittypes.NewAuditEventFromHTTPRequest(req, audittypes.AuditEventContext{
+		Action:         def.Action,
+		ActionCategory: def.Category,
+		ResourceName:   def.ResourceName,
+		ResourceID:     resourceIDFromRequest(req, def.ResourceIDParam),
+		PrincipalID:    principalID,
+		PrincipalEmail: principalEmail,
+		PrincipalType:  principalTypeFromClaims(claims),
+		PrincipalOrgID: principalOrgID,
+		IdentNProvider: claims.IdentNProvider,
+		StatusCode:     statusCode,
+		ErrorType:      errorType,
+		ErrorCode:      errorCode,
+		ErrorMessage:   errorMessage,
+		RouteTemplate:  routeTemplate,
+		TraceID:        traceID,
+		SpanID:         spanID,
+	})
 	middleware.auditor.Audit(req.Context(), event)
 }
 
@@ -135,57 +176,6 @@ func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 		return nil
 	}
 	return provider.AuditDef()
-}
-
-// buildAuditEvent constructs an AuditEvent from the request, captured
-// response, audit definition, and authenticated claims.
-func buildAuditEvent(req *http.Request, statusCode int, body []byte, def handler.AuditDef, claims authtypes.Claims, routeTemplate string) audittypes.AuditEvent {
-	event := audittypes.AuditEvent{
-		Timestamp:      time.Now(),
-		EventName:      audittypes.NewEventName(def.ResourceName, def.Action),
-		Action:         def.Action,
-		ActionCategory: def.Category,
-		ResourceName:   def.ResourceName,
-		ResourceID:     resourceIDFromRequest(req, def.ResourceIDParam),
-		HTTPMethod:     req.Method,
-		HTTPRoute:      routeTemplate,
-		HTTPStatusCode: statusCode,
-		URLPath:        req.URL.Path,
-		ClientAddress:  req.RemoteAddr,
-		UserAgent:      req.UserAgent(),
-	}
-
-	// Principal.
-	principalID, _ := valuer.NewUUID(claims.UserID)
-	principalEmail, _ := valuer.NewEmail(claims.Email)
-	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
-	event.PrincipalID = principalID
-	event.PrincipalEmail = principalEmail
-	event.PrincipalType = principalTypeFromClaims(claims)
-	event.PrincipalOrgID = principalOrgID
-	event.IdentNProvider = claims.IdentNProvider
-
-	// Trace context.
-	span := trace.SpanFromContext(req.Context())
-	if span.SpanContext().HasTraceID() {
-		event.TraceID = span.SpanContext().TraceID().String()
-	}
-	if span.SpanContext().HasSpanID() {
-		event.SpanID = span.SpanContext().SpanID().String()
-	}
-
-	// Outcome and error details.
-	if statusCode >= 400 {
-		event.Outcome = audittypes.OutcomeFailure
-		event.ErrorType = errorTypeFromStatusCode(statusCode)
-		code, message := parseErrorResponse(body)
-		event.ErrorCode = code
-		event.ErrorMessage = message
-	} else {
-		event.Outcome = audittypes.OutcomeSuccess
-	}
-
-	return event
 }
 
 // resourceIDFromRequest extracts the resource ID from gorilla/mux path

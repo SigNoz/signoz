@@ -3,6 +3,7 @@ package audittypes
 import (
 	"encoding/hex"
 	"fmt"
+	"net/http"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -10,6 +11,77 @@ import (
 	"go.opentelemetry.io/collector/pdata/plog"
 	semconv "go.opentelemetry.io/otel/semconv/v1.10.0"
 )
+
+// AuditEventContext carries pre-extracted fields that the caller provides
+// because audittypes cannot depend on mux, authtypes, or read from context.
+type AuditEventContext struct {
+	// Action (from AuditDef).
+	Action         Action
+	ActionCategory ActionCategory
+	ResourceName   string
+	ResourceID     string
+
+	// Principal (pre-extracted from claims by the caller).
+	PrincipalID    valuer.UUID
+	PrincipalEmail valuer.Email
+	PrincipalType  PrincipalType
+	PrincipalOrgID valuer.UUID
+	IdentNProvider string
+
+	// Response (from the response capture).
+	StatusCode int
+
+	// Error (pre-extracted by the caller from the response body).
+	ErrorType    string
+	ErrorCode    string
+	ErrorMessage string
+
+	// Route template (pre-extracted from mux by the caller).
+	RouteTemplate string
+
+	// Trace context (pre-extracted from span context by the caller).
+	TraceID string
+	SpanID  string
+}
+
+// NewAuditEventFromHTTPRequest constructs an AuditEvent from an HTTP request
+// and a caller-provided AuditEventContext. Transport fields (method, path,
+// remote addr, user-agent) are read directly from the request. Everything
+// else comes from the context struct to avoid mux/authtypes/context dependencies.
+func NewAuditEventFromHTTPRequest(req *http.Request, ctx AuditEventContext) AuditEvent {
+	event := AuditEvent{
+		Timestamp:      time.Now(),
+		TraceID:        ctx.TraceID,
+		SpanID:         ctx.SpanID,
+		EventName:      NewEventName(ctx.ResourceName, ctx.Action),
+		PrincipalID:    ctx.PrincipalID,
+		PrincipalEmail: ctx.PrincipalEmail,
+		PrincipalType:  ctx.PrincipalType,
+		PrincipalOrgID: ctx.PrincipalOrgID,
+		IdentNProvider: ctx.IdentNProvider,
+		Action:         ctx.Action,
+		ActionCategory: ctx.ActionCategory,
+		ResourceName:   ctx.ResourceName,
+		ResourceID:     ctx.ResourceID,
+		HTTPMethod:     req.Method,
+		HTTPRoute:      ctx.RouteTemplate,
+		HTTPStatusCode: ctx.StatusCode,
+		URLPath:        req.URL.Path,
+		ClientAddress:  req.RemoteAddr,
+		UserAgent:      req.UserAgent(),
+	}
+
+	if ctx.StatusCode >= 400 {
+		event.Outcome = OutcomeFailure
+		event.ErrorType = ctx.ErrorType
+		event.ErrorCode = ctx.ErrorCode
+		event.ErrorMessage = ctx.ErrorMessage
+	} else {
+		event.Outcome = OutcomeSuccess
+	}
+
+	return event
+}
 
 // AuditEvent represents a single audit log event.
 // Fields are ordered following the OTel LogRecord structure.
