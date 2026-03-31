@@ -4,8 +4,8 @@ import { getColorsForSeverityLabels, isRedLike } from '../utils';
 
 describe('getColorsForSeverityLabels', () => {
 	it('should return slate for blank labels', () => {
-		expect(getColorsForSeverityLabels('', 0)).toBe(Color.BG_SLATE_300);
-		expect(getColorsForSeverityLabels('   ', 0)).toBe(Color.BG_SLATE_300);
+		expect(getColorsForSeverityLabels('', 0)).toBe(Color.BG_VANILLA_400);
+		expect(getColorsForSeverityLabels('   ', 0)).toBe(Color.BG_VANILLA_400);
 	});
 
 	it('should return correct colors for known severity variants', () => {

@@ -2,13 +2,17 @@ import { useCallback, useEffect, useMemo } from 'react';
 import { useHistory } from 'react-router-dom';
 import { Pagination, Skeleton } from 'antd';
 import { useListRoles } from 'api/generated/services/role';
-import { RoletypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import ROUTES from 'constants/routes';
 import useUrlQuery from 'hooks/useUrlQuery';
 import LineClampedText from 'periscope/components/LineClampedText/LineClampedText';
 import { useTimezone } from 'providers/Timezone';
+import { RoleType } from 'types/roles';
 import { toAPIError } from 'utils/errorUtils';
+
+import { IS_ROLE_DETAILS_AND_CRUD_ENABLED } from '../config';
 
 import '../RolesSettings.styles.scss';
 
@@ -16,7 +20,7 @@ const PAGE_SIZE = 20;
 
 type DisplayItem =
 	| { type: 'section'; label: string; count?: number }
-	| { type: 'role'; role: RoletypesRoleDTO };
+	| { type: 'role'; role: AuthtypesRoleDTO };
 
 interface RolesListingTableProps {
 	searchQuery: string;
@@ -68,11 +72,15 @@ function RolesListingTable({
 	}, [roles, searchQuery]);
 
 	const managedRoles = useMemo(
-		() => filteredRoles.filter((role) => role.type?.toLowerCase() === 'managed'),
+		() =>
+			filteredRoles.filter(
+				(role) => role.type?.toLowerCase() === RoleType.MANAGED,
+			),
 		[filteredRoles],
 	);
 	const customRoles = useMemo(
-		() => filteredRoles.filter((role) => role.type?.toLowerCase() === 'custom'),
+		() =>
+			filteredRoles.filter((role) => role.type?.toLowerCase() === RoleType.CUSTOM),
 		[filteredRoles],
 	);
 
@@ -174,9 +182,34 @@ function RolesListingTable({
 		);
 	}
 
+	const navigateToRole = (roleId: string): void => {
+		history.push(ROUTES.ROLE_DETAILS.replace(':roleId', roleId));
+	};
+
 	// todo: use table from periscope when its available for consumption
-	const renderRow = (role: RoletypesRoleDTO): JSX.Element => (
-		<div key={role.id} className="roles-table-row">
+	const renderRow = (role: AuthtypesRoleDTO): JSX.Element => (
+		<div
+			key={role.id}
+			className={`roles-table-row ${
+				IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 'roles-table-row--clickable' : ''
+			}`}
+			role="button"
+			tabIndex={IS_ROLE_DETAILS_AND_CRUD_ENABLED ? 0 : -1}
+			onClick={(): void => {
+				if (IS_ROLE_DETAILS_AND_CRUD_ENABLED && role.id) {
+					navigateToRole(role.id);
+				}
+			}}
+			onKeyDown={(e): void => {
+				if (
+					IS_ROLE_DETAILS_AND_CRUD_ENABLED &&
+					(e.key === 'Enter' || e.key === ' ') &&
+					role.id
+				) {
+					navigateToRole(role.id);
+				}
+			}}
+		>
 			<div className="roles-table-cell roles-table-cell--name">
 				{role.name ?? '—'}
 			</div>

@@ -14,7 +14,7 @@ import {
 	verticalListSortingStrategy,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
-import { Button, Modal, Typography } from 'antd';
+import { Button, Modal } from 'antd';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { GripVertical, Pencil, Plus, Trash2 } from 'lucide-react';
 import {
@@ -134,11 +134,16 @@ function ContextLinks({
 
 	return (
 		<div className="context-links-container">
-			<Typography.Text className="context-links-text">
-				Context Links
-			</Typography.Text>
-
 			<div className="context-links-list">
+				<Button
+					type="default"
+					className="add-context-link-button"
+					icon={<Plus size={12} />}
+					style={{ width: '100%' }}
+					onClick={handleAddContextLink}
+				>
+					Add Context Link
+				</Button>
 				<OverlayScrollbar>
 					<DndContext
 						sensors={sensors}
@@ -160,16 +165,6 @@ function ContextLinks({
 						</SortableContext>
 					</DndContext>
 				</OverlayScrollbar>
-
-				{/* button to add context link */}
-				<Button
-					type="primary"
-					className="add-context-link-button"
-					icon={<Plus size={12} />}
-					onClick={handleAddContextLink}
-				>
-					Context Link
-				</Button>
 			</div>
 
 			<Modal

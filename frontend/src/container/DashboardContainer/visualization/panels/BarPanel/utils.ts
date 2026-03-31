@@ -5,18 +5,12 @@ import { getInitialStackedBands } from 'container/DashboardContainer/visualizati
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
-import {
-	DrawStyle,
-	LineInterpolation,
-	LineStyle,
-	VisibilityMode,
-} from 'lib/uPlotV2/config/types';
+import { DrawStyle } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { get } from 'lodash-es';
 import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
-import { QueryData } from 'types/api/widgets/getQuery';
 import { AlignedData } from 'uplot';
 
 import { PanelMode } from '../types';
@@ -49,7 +43,7 @@ export function prepareBarPanelConfig({
 	currentQuery: Query;
 	onClick: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
@@ -63,7 +57,12 @@ export function prepareBarPanelConfig({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const builder = buildBaseConfig({
-		widget,
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		onClick,
 		onDragSelect,
@@ -76,13 +75,17 @@ export function prepareBarPanelConfig({
 		stepInterval: minStepInterval,
 	});
 
+	if (!(apiResponse && apiResponse?.data?.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
+
 	if (widget.stackedBarChart) {
-		const seriesCount = (apiResponse?.data?.result?.length ?? 0) + 1; // +1 for 1-based uPlot series indices
+		const seriesCount = (apiResponse.data.result.length ?? 0) + 1; // +1 for 1-based uPlot series indices
 		builder.setBands(getInitialStackedBands(seriesCount));
 	}
 
-	const seriesList: QueryData[] = apiResponse?.data?.result || [];
-	seriesList.forEach((series) => {
+	apiResponse.data.result.forEach((series) => {
 		const baseLabelName = getLabelName(
 			series.metric,
 			series.queryName || '', // query
@@ -98,14 +101,8 @@ export function prepareBarPanelConfig({
 		builder.addSeries({
 			scaleKey: 'y',
 			drawStyle: DrawStyle.Bar,
-			panelType: PANEL_TYPES.BAR,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: false,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: VisibilityMode.Never,
-			pointSize: 5,
 			isDarkMode,
 			stepInterval: currentStepInterval,
 		});

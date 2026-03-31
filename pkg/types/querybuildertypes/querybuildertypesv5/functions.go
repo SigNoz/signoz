@@ -102,6 +102,10 @@ func (fn FunctionName) Validate() error {
 
 // ApplyFunction applies the given function to the result data
 func ApplyFunction(fn Function, result *TimeSeries) *TimeSeries {
+	if len(result.Values) == 0 {
+		return result
+	}
+
 	// Extract the function name and arguments
 	name := fn.Name
 	args := fn.Args

@@ -1,6 +1,5 @@
 import { useMemo } from 'react';
-import { Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { TableColumnsType as ColumnsType, Typography } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';

@@ -1,4 +1,3 @@
-import random
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
@@ -10,13 +9,13 @@ from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.metrics import Metrics
 from fixtures.querier import (
     build_builder_query,
-    get_all_series,
     get_series_values,
     make_query_request,
 )
 from fixtures.utils import get_testdata_file_path
 
 FILE = get_testdata_file_path("gauge_data_1h.jsonl")
+
 
 @pytest.mark.parametrize(
     "time_agg, space_agg, service, num_elements, start_val, first_val, twentieth_min_val, after_twentieth_min_val",
@@ -50,7 +49,7 @@ def test_for_one_service(
     start_val: float,
     first_val: float,
     twentieth_min_val: float,
-    after_twentieth_min_val: float ## web service has a gap of 10 mins after the 20th minute
+    after_twentieth_min_val: float,  ## web service has a gap of 10 mins after the 20th minute
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)
@@ -84,6 +83,7 @@ def test_for_one_service(
     assert result_values[19]["value"] == twentieth_min_val
     assert result_values[20]["value"] == after_twentieth_min_val
 
+
 @pytest.mark.parametrize(
     "time_agg, space_agg, start_val, first_val, twentieth_min_val, twenty_first_min_val, thirty_first_min_val",
     [
@@ -105,8 +105,8 @@ def test_for_multiple_aggregations(
     start_val: float,
     first_val: float,
     twentieth_min_val: float,
-    twenty_first_min_val: float, ## web service has a gap of 10 mins after the 20th minute
-    thirty_first_min_val: float
+    twenty_first_min_val: float,  ## web service has a gap of 10 mins after the 20th minute
+    thirty_first_min_val: float,
 ) -> None:
     now = datetime.now(tz=timezone.utc).replace(second=0, microsecond=0)
     start_ms = int((now - timedelta(minutes=65)).timestamp() * 1000)

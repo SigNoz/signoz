@@ -6,15 +6,27 @@
 // - Handling multiple rows correctly
 // - Handling widgets with different heights
 
+import { ReactNode } from 'react';
 import { I18nextProvider } from 'react-i18next';
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import { screen } from '@testing-library/react';
 import { PANEL_TYPES } from 'constants/queryBuilder';
-import { DashboardProvider } from 'providers/Dashboard/Dashboard';
+import { useDashboardBootstrap } from 'hooks/dashboard/useDashboardBootstrap';
+
+function DashboardBootstrapWrapper({
+	dashboardId,
+	children,
+}: {
+	dashboardId: string;
+	children: ReactNode;
+}): JSX.Element {
+	useDashboardBootstrap(dashboardId);
+	// eslint-disable-next-line react/jsx-no-useless-fragment
+	return <>{children}</>;
+}
 import { PreferenceContextProvider } from 'providers/preferences/context/PreferenceContextProvider';
 import i18n from 'ReactI18';
 import {
-	fireEvent,
 	getByText as getByTextUtil,
 	render,
 	userEvent,
@@ -36,7 +48,7 @@ const checkStackSeriesState = (
 	expect(getByTextUtil(container, 'Stack series')).toBeInTheDocument();
 
 	const stackSeriesSection = container.querySelector(
-		'section > .stack-chart',
+		'.stack-chart',
 	) as HTMLElement;
 	expect(stackSeriesSection).toBeInTheDocument();
 
@@ -310,15 +322,15 @@ describe('Stacking bar in new panel', () => {
 
 		const { container, getByText } = render(
 			<I18nextProvider i18n={i18n}>
-				<DashboardProvider>
+				<DashboardBootstrapWrapper dashboardId="">
 					<PreferenceContextProvider>
 						<NewWidget
+							dashboardId=""
+							selectedDashboard={undefined}
 							selectedGraph={PANEL_TYPES.BAR}
-							fillSpans={undefined}
-							yAxisUnit={undefined}
 						/>
 					</PreferenceContextProvider>
-				</DashboardProvider>
+				</DashboardBootstrapWrapper>
 			</I18nextProvider>,
 		);
 
@@ -326,7 +338,7 @@ describe('Stacking bar in new panel', () => {
 		expect(getByText('Stack series')).toBeInTheDocument();
 
 		// Verify section exists
-		const section = container.querySelector('section > .stack-chart');
+		const section = container.querySelector('.stack-chart');
 		expect(section).toBeInTheDocument();
 
 		// Verify switch is present and enabled (ant-switch-checked)
@@ -342,9 +354,8 @@ describe('Stacking bar in new panel', () => {
 const STACKING_STATE_ATTR = 'data-stacking-state';
 
 describe('when switching to BAR panel type', () => {
-	jest.setTimeout(10000);
-
 	beforeEach(() => {
+		jest.useFakeTimers();
 		jest.clearAllMocks();
 
 		// Mock useSearchParams to return the expected values
@@ -354,15 +365,23 @@ describe('when switching to BAR panel type', () => {
 		]);
 	});
 
+	afterEach(() => {
+		jest.useRealTimers();
+	});
+
 	it('should preserve saved stacking value of true', async () => {
+		const user = userEvent.setup({
+			advanceTimers: jest.advanceTimersByTime.bind(jest),
+		});
+
 		const { getByTestId, getByText, container } = render(
-			<DashboardProvider>
+			<DashboardBootstrapWrapper dashboardId="">
 				<NewWidget
+					dashboardId=""
+					selectedDashboard={undefined}
 					selectedGraph={PANEL_TYPES.BAR}
-					fillSpans={undefined}
-					yAxisUnit={undefined}
 				/>
-			</DashboardProvider>,
+			</DashboardBootstrapWrapper>,
 		);
 
 		expect(getByTestId('panel-change-select')).toHaveAttribute(
@@ -370,7 +389,7 @@ describe('when switching to BAR panel type', () => {
 			'true',
 		);
 
-		await userEvent.click(getByText('Bar')); // Panel Type Selected
+		await user.click(getByText('Bar')); // Panel Type Selected
 
 		// find dropdown with - .ant-select-dropdown
 		const panelDropdown = document.querySelector(
@@ -380,7 +399,7 @@ describe('when switching to BAR panel type', () => {
 
 		// Select TimeSeries from dropdown
 		const option = within(panelDropdown).getByText('Time Series');
-		fireEvent.click(option);
+		await user.click(option);
 
 		expect(getByTestId('panel-change-select')).toHaveAttribute(
 			STACKING_STATE_ATTR,
@@ -395,7 +414,7 @@ describe('when switching to BAR panel type', () => {
 		expect(panelTypeDropdown2).toBeInTheDocument();
 
 		expect(getByTextUtil(panelTypeDropdown2, 'Time Series')).toBeInTheDocument();
-		fireEvent.click(getByTextUtil(panelTypeDropdown2, 'Time Series'));
+		await user.click(getByTextUtil(panelTypeDropdown2, 'Time Series'));
 
 		// find dropdown with - .ant-select-dropdown
 		const panelDropdown2 = document.querySelector(
@@ -403,7 +422,7 @@ describe('when switching to BAR panel type', () => {
 		) as HTMLElement;
 		// // Select BAR from dropdown
 		const BarOption = within(panelDropdown2).getByText('Bar');
-		fireEvent.click(BarOption);
+		await user.click(BarOption);
 
 		// Stack series should be true
 		checkStackSeriesState(container, true);

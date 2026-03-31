@@ -1,5 +1,5 @@
 import update from 'react-addons-update';
-import { ColumnType } from 'antd/lib/table/interface';
+import { TableColumnType as ColumnType } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { cloneDeep } from 'lodash-es';

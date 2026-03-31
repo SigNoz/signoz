@@ -6,7 +6,7 @@ import {
 	useMemo,
 } from 'react';
 import { notification } from 'antd';
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 
 type Notification = {
 	notifications: NotificationInstance;

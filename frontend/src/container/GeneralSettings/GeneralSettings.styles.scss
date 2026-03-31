@@ -1,0 +1,152 @@
+.general-settings-page {
+	max-width: 768px;
+	margin: 0 auto;
+	padding: var(--padding-8) 0 var(--padding-16);
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-12);
+}
+
+.general-settings-header {
+	display: flex;
+	flex-direction: column;
+	gap: var(--spacing-2);
+}
+
+.general-settings-title {
+	font-size: var(--paragraph-medium-500-font-size);
+	font-weight: var(--paragraph-medium-500-font-weight);
+	line-height: 32px;
+	letter-spacing: -0.08px;
+	color: var(--l1-foreground);
+}
+
+.general-settings-subtitle {
+	font-size: var(--font-size-sm);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+	color: var(--l2-foreground);
+}
+
+.retention-controls-container {
+	border: 1px solid var(--l2-border);
+	border-radius: 4px;
+	overflow: hidden;
+}
+
+.retention-controls-header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 var(--padding-4);
+	height: 50px;
+	background: var(--l2-background);
+	border-bottom: 1px solid var(--l2-border);
+}
+
+.retention-controls-header-label {
+	font-size: var(--font-size-xs);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-24);
+	letter-spacing: 0.48px;
+	text-transform: uppercase;
+	color: var(--l2-foreground);
+}
+
+.retention-row {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	padding: 0 var(--padding-4);
+	height: 52px;
+	background: var(--l2-background);
+
+	& + & {
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.retention-row-label {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-3);
+	font-size: var(--font-size-sm);
+	font-weight: var(--font-weight-medium);
+	line-height: var(--line-height-20);
+	letter-spacing: -0.07px;
+	color: var(--l1-foreground);
+
+	svg {
+		color: var(--l2-foreground);
+		flex-shrink: 0;
+	}
+}
+
+.retention-row-controls {
+	display: flex;
+	align-items: center;
+	gap: var(--spacing-4);
+}
+
+.retention-input-group {
+	display: flex;
+	align-items: flex-start;
+
+	// todo: https://github.com/SigNoz/components/issues/116
+	input[type='number'] {
+		display: flex;
+		width: 120px;
+		height: 32px;
+		align-items: center;
+		gap: var(--spacing-2);
+		border-radius: 2px 0 0 2px;
+		border: 1px solid var(--l2-border);
+		background: transparent;
+		text-align: left;
+		-moz-appearance: textfield;
+		appearance: textfield;
+		color: var(--l1-foreground);
+		font-size: var(--font-size-xs);
+		font-weight: var(--font-weight-normal);
+		line-height: 16px;
+		box-shadow: none;
+
+		&::-webkit-outer-spin-button,
+		&::-webkit-inner-spin-button {
+			-webkit-appearance: none;
+			margin: 0;
+		}
+
+		&:disabled {
+			opacity: 0.8;
+			cursor: not-allowed;
+		}
+	}
+
+	.ant-select {
+		.ant-select-selector {
+			display: flex;
+			height: 32px;
+			padding: 6px 6px 6px 8px;
+			align-items: center;
+			gap: var(--spacing-2);
+			border: 1px solid var(--l2-border);
+			background: var(--l2-background);
+			width: 80px;
+			border-left: none;
+		}
+	}
+}
+
+.retention-error-text {
+	font-size: var(--font-size-xs);
+	color: var(--accent-amber);
+	font-style: italic;
+}
+
+.retention-modal-description {
+	margin: 0;
+	color: var(--l1-foreground);
+	font-size: var(--font-size-sm);
+	line-height: 22px;
+}

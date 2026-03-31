@@ -9,13 +9,11 @@ import {
 import ReactDragListView from 'react-drag-listview';
 import { ResizeCallbackData } from 'react-resizable';
 import { Table } from 'antd';
-import { ColumnsType } from 'antd/lib/table';
+import type { ColumnsType } from 'antd/lib/table';
 import cx from 'classnames';
 import { dragColumnParams } from 'hooks/useDragColumns/configs';
 import { getColumnWidth, RowData } from 'lib/query/createTableColumnsFromQuery';
 import { debounce, set } from 'lodash-es';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
-import { Widgets } from 'types/api/dashboard/getAll';
 
 import ResizableHeader from './ResizableHeader';
 import { DragSpanStyle } from './styles';
@@ -26,30 +24,25 @@ function ResizeTable({
 	columns,
 	onDragColumn,
 	pagination,
-	widgetId,
-	shouldPersistColumnWidths = false,
+	columnWidths,
+	onColumnWidthsChange,
 	...restProps
 }: ResizeTableProps): JSX.Element {
 	const [columnsData, setColumns] = useState<ColumnsType>([]);
-	const { setColumnWidths, selectedDashboard } = useDashboard();
-
-	const columnWidths = shouldPersistColumnWidths
-		? (selectedDashboard?.data?.widgets?.find(
-				(widget) => widget.id === widgetId,
-		  ) as Widgets)?.columnWidths
-		: undefined;
+	const onColumnWidthsChangeRef = useRef(onColumnWidthsChange);
 
 	const updateAllColumnWidths = useRef(
 		debounce((widthsConfig: Record<string, number>) => {
-			if (!widgetId || !shouldPersistColumnWidths) {
+			if (!onColumnWidthsChangeRef.current) {
 				return;
 			}
-			setColumnWidths?.((prev) => ({
-				...prev,
-				[widgetId]: widthsConfig,
-			}));
+			onColumnWidthsChangeRef.current(widthsConfig);
 		}, 1000),
 	).current;
+
+	useEffect(() => {
+		onColumnWidthsChangeRef.current = onColumnWidthsChange;
+	}, [onColumnWidthsChange]);
 
 	const handleResize = useCallback(
 		(index: number) => (
@@ -75,7 +68,7 @@ function ResizeTable({
 				...col,
 				...(onDragColumn && {
 					title: (
-						<DragSpanStyle className="dragHandler">
+						<DragSpanStyle className="dragHandler" data-testid="drag-column-title">
 							{col?.title?.toString() || ''}
 						</DragSpanStyle>
 					),
@@ -106,31 +99,31 @@ function ResizeTable({
 	}, [mergedColumns, pagination, restProps]);
 
 	useEffect(() => {
-		if (columns) {
-			// Apply stored column widths from widget configuration
-			const columnsWithStoredWidths = columns.map((col) => {
-				const dataIndex = (col as RowData).dataIndex as string;
-				if (dataIndex && columnWidths) {
-					const width = getColumnWidth(dataIndex, columnWidths);
-					if (width) {
-						return {
-							...col,
-							width, // Apply stored width
-						};
-					}
-				}
-				return col;
-			});
-
-			setColumns(columnsWithStoredWidths);
-		}
-	}, [columns, columnWidths]);
-
-	useEffect(() => {
-		if (!shouldPersistColumnWidths) {
+		if (!columns) {
 			return;
 		}
-		// Collect all column widths in a single object
+
+		const columnsWithStoredWidths = columns.map((col) => {
+			const dataIndex = (col as RowData).dataIndex as string;
+			if (dataIndex && columnWidths) {
+				const width = getColumnWidth(dataIndex, columnWidths);
+				if (width) {
+					return { ...col, width };
+				}
+			}
+			return col;
+		});
+
+		setColumns(columnsWithStoredWidths);
+	}, [columns, columnWidths]);
+
+	const lastReportedWidthsRef = useRef<Record<string, number>>({});
+
+	useEffect(() => {
+		if (!onColumnWidthsChange) {
+			return;
+		}
+
 		const newColumnWidths: Record<string, number> = {};
 
 		mergedColumns.forEach((col) => {
@@ -140,11 +133,20 @@ function ResizeTable({
 			}
 		});
 
-		// Only update if there are actual widths to set
-		if (Object.keys(newColumnWidths).length > 0) {
+		if (Object.keys(newColumnWidths).length === 0) {
+			return;
+		}
+
+		const last = lastReportedWidthsRef.current;
+		const hasChange =
+			Object.keys(newColumnWidths).length !== Object.keys(last).length ||
+			Object.keys(newColumnWidths).some((k) => newColumnWidths[k] !== last[k]);
+
+		if (hasChange) {
+			lastReportedWidthsRef.current = newColumnWidths;
 			updateAllColumnWidths(newColumnWidths);
 		}
-	}, [mergedColumns, updateAllColumnWidths, shouldPersistColumnWidths]);
+	}, [mergedColumns, updateAllColumnWidths, onColumnWidthsChange]);
 
 	return onDragColumn ? (
 		<ReactDragListView.DragColumn {...dragColumnParams} onDragEnd={onDragColumn}>

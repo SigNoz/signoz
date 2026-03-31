@@ -17,10 +17,11 @@ import { DOCS_BASE_URL } from 'constants/app';
 import ROUTES from 'constants/routes';
 import { useGetGlobalConfig } from 'hooks/globalConfig/useGetGlobalConfig';
 import useDebouncedFn from 'hooks/useDebouncedFunction';
-import history from 'lib/history';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { isEmpty } from 'lodash-es';
 import { CheckIcon, Goal, UserPlus, X } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { isModifierKeyPressed } from 'utils/app';
 
 import OnboardingIngestionDetails from '../IngestionDetails/IngestionDetails';
 import InviteTeamMembers from '../InviteTeamMembers/InviteTeamMembers';
@@ -143,6 +144,7 @@ const allGroupedDataSources = groupDataSourcesByTags(
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function OnboardingAddDataSource(): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	const [groupedDataSources, setGroupedDataSources] = useState<{
 		[tag: string]: Entity[];
 	}>(allGroupedDataSources);
@@ -413,7 +415,10 @@ function OnboardingAddDataSource(): JSX.Element {
 		]);
 	}, [org]);
 
-	const handleUpdateCurrentStep = (step: number): void => {
+	const handleUpdateCurrentStep = (
+		step: number,
+		event?: React.MouseEvent,
+	): void => {
 		setCurrentStep(step);
 
 		if (step === 1) {
@@ -443,43 +448,45 @@ function OnboardingAddDataSource(): JSX.Element {
 				...setupStepItemsBase.slice(2),
 			]);
 		} else if (step === 3) {
+			let targetPath: string;
 			switch (selectedDataSource?.module) {
 				case 'apm':
-					history.push(ROUTES.APPLICATION);
+					targetPath = ROUTES.APPLICATION;
 					break;
 				case 'logs':
-					history.push(ROUTES.LOGS);
+					targetPath = ROUTES.LOGS;
 					break;
 				case 'metrics':
-					history.push(ROUTES.METRICS_EXPLORER);
+					targetPath = ROUTES.METRICS_EXPLORER;
 					break;
 				case 'dashboards':
-					history.push(ROUTES.ALL_DASHBOARD);
+					targetPath = ROUTES.ALL_DASHBOARD;
 					break;
 				case 'infra-monitoring-hosts':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_HOSTS);
+					targetPath = ROUTES.INFRASTRUCTURE_MONITORING_HOSTS;
 					break;
 				case 'infra-monitoring-k8s':
-					history.push(ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES);
+					targetPath = ROUTES.INFRASTRUCTURE_MONITORING_KUBERNETES;
 					break;
 				case 'messaging-queues-kafka':
-					history.push(ROUTES.MESSAGING_QUEUES_KAFKA);
+					targetPath = ROUTES.MESSAGING_QUEUES_KAFKA;
 					break;
 				case 'messaging-queues-celery':
-					history.push(ROUTES.MESSAGING_QUEUES_CELERY_TASK);
+					targetPath = ROUTES.MESSAGING_QUEUES_CELERY_TASK;
 					break;
 				case 'integrations':
-					history.push(ROUTES.INTEGRATIONS);
+					targetPath = ROUTES.INTEGRATIONS;
 					break;
 				case 'home':
-					history.push(ROUTES.HOME);
+					targetPath = ROUTES.HOME;
 					break;
 				case 'api-monitoring':
-					history.push(ROUTES.API_MONITORING);
+					targetPath = ROUTES.API_MONITORING;
 					break;
 				default:
-					history.push(ROUTES.APPLICATION);
+					targetPath = ROUTES.APPLICATION;
 			}
+			safeNavigate(targetPath, { newTab: !!event && isModifierKeyPressed(event) });
 		}
 	};
 
@@ -619,6 +626,11 @@ function OnboardingAddDataSource(): JSX.Element {
 		);
 	};
 
+	const progressText = `Get Started (${Math.min(
+		currentStep + 1,
+		setupStepItems.length,
+	)}/${setupStepItems.length})`;
+
 	return (
 		<div className="onboarding-v2">
 			<Layout>
@@ -628,7 +640,7 @@ function OnboardingAddDataSource(): JSX.Element {
 							<X
 								size={14}
 								className="onboarding-header-container-close-icon"
-								onClick={(): void => {
+								onClick={(e): void => {
 									logEvent(
 										`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CLOSE_ONBOARDING_CLICKED}`,
 										{
@@ -636,10 +648,10 @@ function OnboardingAddDataSource(): JSX.Element {
 										},
 									);
 
-									history.push(ROUTES.HOME);
+									safeNavigate(ROUTES.HOME, { newTab: isModifierKeyPressed(e) });
 								}}
 							/>
-							<Typography.Text>Get Started (2/4)</Typography.Text>
+							<Typography.Text>{progressText}</Typography.Text>
 						</div>
 
 						<div className="header-right-section">
@@ -963,7 +975,7 @@ function OnboardingAddDataSource(): JSX.Element {
 													type="primary"
 													disabled={!selectedDataSource}
 													shape="round"
-													onClick={(): void => {
+													onClick={(e): void => {
 														logEvent(
 															`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONFIGURED_PRODUCT}`,
 															{
@@ -977,7 +989,9 @@ function OnboardingAddDataSource(): JSX.Element {
 															selectedEnvironment || selectedFramework || selectedDataSource;
 
 														if (currentEntity?.internalRedirect && currentEntity?.link) {
-															history.push(currentEntity.link);
+															safeNavigate(currentEntity.link, {
+																newTab: isModifierKeyPressed(e),
+															});
 														} else {
 															handleUpdateCurrentStep(2);
 														}
@@ -1048,7 +1062,7 @@ function OnboardingAddDataSource(): JSX.Element {
 									<Button
 										type="primary"
 										shape="round"
-										onClick={(): void => {
+										onClick={(e): void => {
 											logEvent(
 												`${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.BASE}: ${ONBOARDING_V3_ANALYTICS_EVENTS_MAP?.CONTINUE_BUTTON_CLICKED}`,
 												{
@@ -1060,7 +1074,7 @@ function OnboardingAddDataSource(): JSX.Element {
 											);
 
 											handleFilterByCategory('All');
-											handleUpdateCurrentStep(3);
+											handleUpdateCurrentStep(3, e);
 										}}
 									>
 										Continue

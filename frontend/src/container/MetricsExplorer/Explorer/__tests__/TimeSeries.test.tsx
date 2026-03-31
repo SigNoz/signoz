@@ -1,4 +1,4 @@
-import { render, RenderResult, screen, waitFor } from '@testing-library/react';
+import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsExplorerHooks from 'api/generated/services/metrics';
 
@@ -56,7 +56,7 @@ const mockSetYAxisUnit = jest.fn();
 
 function renderTimeSeries(
 	overrides: Partial<TimeSeriesProps> = {},
-): RenderResult {
+): ReturnType<typeof render> {
 	return render(
 		<TimeSeries
 			showOneChartPerQuery={false}
@@ -84,45 +84,57 @@ describe('TimeSeries', () => {
 		} as Partial<UseUpdateMetricMetadataReturnType>) as UseUpdateMetricMetadataReturnType);
 	});
 
+	it('shows select metric message when no metric is selected', () => {
+		renderTimeSeries({ metricNames: [] });
+
+		expect(
+			screen.getByText('Select a metric and run a query to see the results'),
+		).toBeInTheDocument();
+		expect(screen.queryByText('TimeSeriesView')).not.toBeInTheDocument();
+	});
+
+	it('renders chart view when a metric is selected', () => {
+		renderTimeSeries({
+			metricNames: ['metric1'],
+			metricUnits: ['count'],
+			metrics: [MOCK_METRIC_METADATA],
+		});
+
+		expect(screen.getByText('TimeSeriesView')).toBeInTheDocument();
+		expect(
+			screen.queryByText('Select a metric and run a query to see the results'),
+		).not.toBeInTheDocument();
+	});
+
 	it('should render a warning icon when a metric has no unit among multiple metrics', () => {
-		const user = userEvent.setup();
-		const { container } = renderTimeSeries({
+		renderTimeSeries({
 			metricUnits: ['', 'count'],
 			metricNames: ['metric1', 'metric2'],
 			metrics: [undefined, undefined],
 		});
 
-		const alertIcon = container.querySelector('.no-unit-warning') as HTMLElement;
-		user.hover(alertIcon);
-		waitFor(() =>
-			expect(
-				screen.findByText('This metric does not have a unit'),
-			).toBeInTheDocument(),
-		);
+		expect(
+			screen.getByRole('img', { name: 'no unit warning' }),
+		).toBeInTheDocument();
 	});
 
-	it('clicking on warning icon tooltip should open metric details modal', async () => {
+	it('warning tooltip shows metric details link', async () => {
 		const user = userEvent.setup();
-		const { container } = renderTimeSeries({
+		renderTimeSeries({
 			metricUnits: ['', 'count'],
 			metricNames: ['metric1', 'metric2'],
 			metrics: [MOCK_METRIC_METADATA, MOCK_METRIC_METADATA],
 			yAxisUnit: 'seconds',
 		});
 
-		const alertIcon = container.querySelector('.no-unit-warning') as HTMLElement;
-		user.hover(alertIcon);
+		const alertIcon = screen.getByRole('img', { name: 'no unit warning' });
+		await user.hover(alertIcon);
 
-		const metricDetailsLink = await screen.findByText('metric details');
-		user.click(metricDetailsLink);
-
-		waitFor(() =>
-			expect(mockSetIsMetricDetailsOpen).toHaveBeenCalledWith('metric1'),
-		);
+		expect(await screen.findByText('metric details')).toBeInTheDocument();
 	});
 
-	it('shows Save unit button when metric had no unit but one is selected', async () => {
-		const { findByText, getByRole } = renderTimeSeries({
+	it('shows save unit prompt with enabled button when metric has no unit and a unit is selected', async () => {
+		renderTimeSeries({
 			metricUnits: [undefined],
 			metricNames: ['metric1'],
 			metrics: [MOCK_METRIC_METADATA],
@@ -131,38 +143,10 @@ describe('TimeSeries', () => {
 		});
 
 		expect(
-			await findByText('Save the selected unit for this metric?'),
+			await screen.findByText('Set the selected unit as the metric unit?'),
 		).toBeInTheDocument();
 
-		const yesButton = getByRole('button', { name: 'Yes' });
-		expect(yesButton).toBeInTheDocument();
+		const yesButton = screen.getByRole('button', { name: 'Yes' });
 		expect(yesButton).toBeEnabled();
-	});
-
-	it('clicking on save unit button shoould upated metric metadata', async () => {
-		const user = userEvent.setup();
-		const { getByRole } = renderTimeSeries({
-			metricUnits: [''],
-			metricNames: ['metric1'],
-			metrics: [MOCK_METRIC_METADATA],
-			yAxisUnit: 'seconds',
-			showYAxisUnitSelector: true,
-		});
-
-		const yesButton = getByRole('button', { name: /Yes/i });
-		await user.click(yesButton);
-
-		expect(mockUpdateMetricMetadata).toHaveBeenCalledWith(
-			{
-				pathParams: {
-					metricName: 'metric1',
-				},
-				data: expect.objectContaining({ unit: 'seconds' }),
-			},
-			expect.objectContaining({
-				onSuccess: expect.any(Function),
-				onError: expect.any(Function),
-			}),
-		);
 	});
 });

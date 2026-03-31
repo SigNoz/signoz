@@ -1,6 +1,31 @@
 .custom-time-picker {
 	display: flex;
-	flex-direction: column;
+	flex-direction: row;
+	align-items: center;
+	gap: 4px;
+
+	.zoom-out-btn {
+		display: flex;
+		align-items: center;
+		justify-content: center;
+		flex-shrink: 0;
+		color: var(--foreground);
+		border: 1px solid var(--border);
+		border-radius: 2px;
+		box-shadow: none;
+		padding: 10px;
+		height: 33px;
+
+		&:hover:not(:disabled) {
+			color: var(--bg-vanilla-100);
+			background: var(--primary);
+		}
+
+		&:disabled {
+			opacity: 0.5;
+			cursor: not-allowed;
+		}
+	}
 
 	.timeSelection-input {
 		&:hover {

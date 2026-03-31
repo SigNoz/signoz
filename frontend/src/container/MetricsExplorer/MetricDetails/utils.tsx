@@ -5,7 +5,7 @@ import {
 	MetrictypesTypeDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { SpaceAggregation, TimeAggregation } from 'api/v5/v5';
-import { initialQueriesMap } from 'constants/queryBuilder';
+import { initialQueriesMap, toAttributeType } from 'constants/queryBuilder';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
@@ -87,15 +87,26 @@ export function getMetricDetailsQuery(
 	metricType: MetrictypesTypeDTO | undefined,
 	filter?: { key: string; value: string },
 	groupBy?: string,
+	limit?: number,
+	isMonotonic?: boolean,
 ): Query {
 	let timeAggregation;
 	let spaceAggregation;
 	let aggregateOperator;
+	const isNonMonotonicSum =
+		metricType === MetrictypesTypeDTO.sum && isMonotonic === false;
+
 	switch (metricType) {
 		case MetrictypesTypeDTO.sum:
-			timeAggregation = 'rate';
-			spaceAggregation = 'sum';
-			aggregateOperator = 'rate';
+			if (isNonMonotonicSum) {
+				timeAggregation = 'avg';
+				spaceAggregation = 'avg';
+				aggregateOperator = 'avg';
+			} else {
+				timeAggregation = 'rate';
+				spaceAggregation = 'sum';
+				aggregateOperator = 'rate';
+			}
 			break;
 		case MetrictypesTypeDTO.gauge:
 			timeAggregation = 'avg';
@@ -120,6 +131,8 @@ export function getMetricDetailsQuery(
 			break;
 	}
 
+	const attributeType = toAttributeType(metricType, isMonotonic);
+
 	return {
 		...initialQueriesMap[DataSource.METRICS],
 		builder: {
@@ -128,8 +141,8 @@ export function getMetricDetailsQuery(
 					...initialQueriesMap[DataSource.METRICS].builder.queryData[0],
 					aggregateAttribute: {
 						key: metricName,
-						type: metricType ?? '',
-						id: `${metricName}----${metricType}---string--`,
+						type: attributeType,
+						id: `${metricName}----${attributeType}---string--`,
 						dataType: DataTypes.String,
 					},
 					aggregations: [
@@ -170,6 +183,7 @@ export function getMetricDetailsQuery(
 								},
 						  ]
 						: [],
+					...(limit ? { limit } : {}),
 				},
 			],
 			queryFormulas: [],

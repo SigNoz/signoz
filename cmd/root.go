@@ -4,9 +4,10 @@ import (
 	"log/slog"
 	"os"
 
-	"github.com/SigNoz/signoz/pkg/version"
 	"github.com/spf13/cobra"
-	"go.uber.org/zap" //nolint:depguard
+
+	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/version"
 )
 
 var RootCmd = &cobra.Command{
@@ -19,15 +20,9 @@ var RootCmd = &cobra.Command{
 }
 
 func Execute(logger *slog.Logger) {
-	zapLogger := newZapLogger()
-	zap.ReplaceGlobals(zapLogger)
-	defer func() {
-		_ = zapLogger.Sync()
-	}()
-
 	err := RootCmd.Execute()
 	if err != nil {
-		logger.ErrorContext(RootCmd.Context(), "error running command", "error", err)
+		logger.ErrorContext(RootCmd.Context(), "error running command", errors.Attr(err))
 		os.Exit(1)
 	}
 }

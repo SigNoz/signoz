@@ -12,7 +12,7 @@ import {
 	Tag,
 	Typography,
 } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';

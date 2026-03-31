@@ -6,7 +6,7 @@ import {
 	useCallback,
 	useMemo,
 } from 'react';
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
 import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
 import { ColumnTypeRender } from 'components/Logs/TableView/types';

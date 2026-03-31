@@ -1,4 +1,6 @@
 // ** Helpers
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import { createIdFromObjectFields } from 'lib/createIdFromObjectFields';
 import { createNewBuilderItemName } from 'lib/newQueryBuilder/createNewBuilderItemName';
 import { IAttributeValuesResponse } from 'types/api/queryBuilder/getAttributesValues';
@@ -177,7 +179,7 @@ export const initialQueryBuilderFormValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MetricAggregateOperator.COUNT,
+			timeAggregation: MetricAggregateOperator.AVG,
 			spaceAggregation: MetricAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
@@ -225,7 +227,7 @@ export const initialQueryBuilderFormMeterValues: IBuilderQuery = {
 		{
 			metricName: '',
 			temporality: '',
-			timeAggregation: MeterAggregateOperator.COUNT,
+			timeAggregation: MeterAggregateOperator.AVG,
 			spaceAggregation: MeterAggregateOperator.SUM,
 			reduceTo: ReduceOperators.AVG,
 		},
@@ -369,6 +371,31 @@ export enum ATTRIBUTE_TYPES {
 	GAUGE = 'Gauge',
 	HISTOGRAM = 'Histogram',
 	EXPONENTIAL_HISTOGRAM = 'ExponentialHistogram',
+}
+
+const METRIC_TYPE_TO_ATTRIBUTE_TYPE: Record<
+	MetrictypesTypeDTO,
+	ATTRIBUTE_TYPES
+> = {
+	[MetrictypesTypeDTO.sum]: ATTRIBUTE_TYPES.SUM,
+	[MetrictypesTypeDTO.gauge]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.histogram]: ATTRIBUTE_TYPES.HISTOGRAM,
+	[MetrictypesTypeDTO.summary]: ATTRIBUTE_TYPES.GAUGE,
+	[MetrictypesTypeDTO.exponentialhistogram]:
+		ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
+};
+
+export function toAttributeType(
+	metricType: MetrictypesTypeDTO | undefined,
+	isMonotonic?: boolean,
+): ATTRIBUTE_TYPES | '' {
+	if (!metricType) {
+		return '';
+	}
+	if (metricType === MetrictypesTypeDTO.sum && isMonotonic === false) {
+		return ATTRIBUTE_TYPES.GAUGE;
+	}
+	return METRIC_TYPE_TO_ATTRIBUTE_TYPE[metricType] || '';
 }
 
 export type IQueryBuilderState = 'search';
@@ -521,4 +548,50 @@ export const DATA_TYPE_VS_ATTRIBUTE_VALUES_KEY: Record<
 	[DataTypes.ArrayString]: 'stringAttributeValues',
 	[DataTypes.ArrayBool]: 'boolAttributeValues',
 	[DataTypes.EMPTY]: 'stringAttributeValues',
+};
+
+export const listViewInitialLogQuery: Query = {
+	...initialQueriesMap.logs,
+	builder: {
+		...initialQueriesMap.logs.builder,
+		queryData: [
+			{
+				...initialQueriesMap.logs.builder.queryData[0],
+				aggregateOperator: LogsAggregatorOperator.NOOP,
+				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+				offset: 0,
+				pageSize: 100,
+			},
+		],
+	},
+};
+
+export const PANEL_TYPES_INITIAL_QUERY: Record<PANEL_TYPES, Query> = {
+	[PANEL_TYPES.TIME_SERIES]: initialQueriesMap.metrics,
+	[PANEL_TYPES.VALUE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.TABLE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.LIST]: listViewInitialLogQuery,
+	[PANEL_TYPES.TRACE]: initialQueriesMap.traces,
+	[PANEL_TYPES.BAR]: initialQueriesMap.metrics,
+	[PANEL_TYPES.PIE]: initialQueriesMap.metrics,
+	[PANEL_TYPES.HISTOGRAM]: initialQueriesMap.metrics,
+	[PANEL_TYPES.EMPTY_WIDGET]: initialQueriesMap.metrics,
+};
+
+export const listViewInitialTraceQuery: Query = {
+	// it should be the above commented query
+	...initialQueriesMap.traces,
+	builder: {
+		...initialQueriesMap.traces.builder,
+		queryData: [
+			{
+				...initialQueriesMap.traces.builder.queryData[0],
+				aggregateOperator: LogsAggregatorOperator.NOOP,
+				orderBy: [{ columnName: 'timestamp', order: 'desc' }],
+				offset: 0,
+				pageSize: 10,
+				selectColumns: defaultTraceSelectedColumns,
+			},
+		],
+	},
 };

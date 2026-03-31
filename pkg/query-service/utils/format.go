@@ -7,10 +7,11 @@ import (
 	"strconv"
 	"strings"
 
+	"log/slog"
+
 	"github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/metrics"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"go.uber.org/zap"
 )
 
 // ValidateAndCastValue validates and casts the value of a key to the corresponding data type of the key
@@ -209,7 +210,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 		case uint8, uint16, uint32, uint64, int, int8, int16, int32, int64, float32, float64, bool:
 			return strings.Join(strings.Fields(fmt.Sprint(x)), ",")
 		default:
-			zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x[0])))
+			slog.Error("invalid type for formatted value", "type", reflect.TypeOf(x[0]))
 			return "[]"
 		}
 	case []string:
@@ -226,7 +227,7 @@ func ClickHouseFormattedValue(v interface{}) string {
 		str += "]"
 		return str
 	default:
-		zap.L().Error("invalid type for formatted value", zap.Any("type", reflect.TypeOf(x)))
+		slog.Error("invalid type for formatted value", "type", reflect.TypeOf(x))
 		return ""
 	}
 }

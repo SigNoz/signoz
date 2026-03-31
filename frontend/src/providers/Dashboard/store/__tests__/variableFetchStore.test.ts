@@ -25,7 +25,7 @@ function resetStore(): void {
 
 function mockContext(overrides: Partial<VariableFetchContext> = {}): void {
 	getVariableDependencyContextSpy.mockReturnValue({
-		doAllVariablesHaveValuesSelected: false,
+		doAllQueryVariablesHaveValuesSelected: false,
 		variableTypes: {},
 		dynamicVariableOrder: [],
 		dependencyData: null,
@@ -175,9 +175,9 @@ describe('variableFetchStore', () => {
 			expect(storeSnapshot.cycleIds.b).toBe(1);
 		});
 
-		it('should set dynamic variables to waiting when not all variables have values', () => {
+		it('should set dynamic variables to waiting when not all query variables have values', () => {
 			mockContext({
-				doAllVariablesHaveValuesSelected: false,
+				doAllQueryVariablesHaveValuesSelected: false,
 				dependencyData: buildDependencyData({ order: [] }),
 				variableTypes: { dyn1: 'DYNAMIC' },
 				dynamicVariableOrder: ['dyn1'],
@@ -190,9 +190,9 @@ describe('variableFetchStore', () => {
 			expect(storeSnapshot.states.dyn1).toBe('waiting');
 		});
 
-		it('should set dynamic variables to loading when all variables have values', () => {
+		it('should set dynamic variables to loading when all query variables have values', () => {
 			mockContext({
-				doAllVariablesHaveValuesSelected: true,
+				doAllQueryVariablesHaveValuesSelected: true,
 				dependencyData: buildDependencyData({ order: [] }),
 				variableTypes: { dyn1: 'DYNAMIC' },
 				dynamicVariableOrder: ['dyn1'],
@@ -522,6 +522,78 @@ describe('variableFetchStore', () => {
 			enqueueDescendantsOfVariable('a');
 
 			expect(variableFetchStore.getSnapshot().states.b).toBe('revalidating');
+		});
+
+		it('should enqueue dynamic variables immediately when all query variables are settled', () => {
+			mockContext({
+				dependencyData: buildDependencyData({
+					transitiveDescendants: { customVar: [] },
+					parentDependencyGraph: {},
+				}),
+				variableTypes: { q1: 'QUERY', customVar: 'CUSTOM', dyn1: 'DYNAMIC' },
+				dynamicVariableOrder: ['dyn1'],
+			});
+
+			variableFetchStore.update((d) => {
+				d.states.q1 = 'idle';
+				d.states.customVar = 'idle';
+				d.states.dyn1 = 'idle';
+			});
+
+			enqueueDescendantsOfVariable('customVar');
+
+			const snapshot = variableFetchStore.getSnapshot();
+			expect(snapshot.states.dyn1).toBe('loading');
+			expect(snapshot.cycleIds.dyn1).toBe(1);
+		});
+
+		it('should set dynamic variables to waiting when query variables are not yet settled', () => {
+			// a is a query variable still loading; changing customVar should queue dyn1 as waiting
+			mockContext({
+				dependencyData: buildDependencyData({
+					transitiveDescendants: { customVar: [] },
+					parentDependencyGraph: {},
+				}),
+				variableTypes: { a: 'QUERY', customVar: 'CUSTOM', dyn1: 'DYNAMIC' },
+				dynamicVariableOrder: ['dyn1'],
+			});
+
+			variableFetchStore.update((d) => {
+				d.states.a = 'loading';
+				d.states.customVar = 'idle';
+				d.states.dyn1 = 'idle';
+			});
+
+			enqueueDescendantsOfVariable('customVar');
+
+			expect(variableFetchStore.getSnapshot().states.dyn1).toBe('waiting');
+		});
+
+		it('should set dynamic variables to waiting when a query descendant is now loading', () => {
+			// a -> b (QUERY), dyn1 (DYNAMIC). When a changes, b starts loading,
+			// so dyn1 should wait until b settles.
+			mockContext({
+				dependencyData: buildDependencyData({
+					transitiveDescendants: { a: ['b'] },
+					parentDependencyGraph: { b: ['a'] },
+				}),
+				variableTypes: { a: 'QUERY', b: 'QUERY', dyn1: 'DYNAMIC' },
+				dynamicVariableOrder: ['dyn1'],
+			});
+
+			variableFetchStore.update((d) => {
+				d.states.a = 'idle';
+				d.states.b = 'idle';
+				d.states.dyn1 = 'idle';
+			});
+
+			enqueueDescendantsOfVariable('a');
+
+			const snapshot = variableFetchStore.getSnapshot();
+			// b's parent (a) is idle → b starts loading
+			expect(snapshot.states.b).toBe('loading');
+			// dyn1 must wait because b is now loading (not settled)
+			expect(snapshot.states.dyn1).toBe('waiting');
 		});
 	});
 });

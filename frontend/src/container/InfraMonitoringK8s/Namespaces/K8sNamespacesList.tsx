@@ -1,37 +1,48 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
 	Spin,
 	Table,
+	TableColumnType as ColumnType,
 	TablePaginationConfig,
 	TableProps,
 	Typography,
 } from 'antd';
-import { ColumnType, SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
 import { K8sNamespacesListPayload } from 'api/infraMonitoring/getK8sNamespacesList';
 import { InfraMonitoringEvents } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
 import { useGetK8sNamespacesList } from 'hooks/infraMonitoring/useGetK8sNamespacesList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChevronDown, ChevronRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import {
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringEventsFilters,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringLogFilters,
+	useInfraMonitoringNamespaceUID,
+	useInfraMonitoringOrderBy,
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from '../hooks';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import { usePageSize } from '../utils';
@@ -61,53 +72,25 @@ function K8sNamespacesList({
 	);
 
 	const [expandedRowKeys, setExpandedRowKeys] = useState<string[]>([]);
-	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(() => {
-		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
-		if (page) {
-			return parseInt(page, 10);
-		}
-		return 1;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
 
-	useEffect(() => {
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
 
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams, true));
-
-	const [selectedNamespaceUID, setselectedNamespaceUID] = useState<
-		string | null
-	>(() => {
-		const namespaceUID = searchParams.get(
-			INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
-		);
-		if (namespaceUID) {
-			return namespaceUID;
-		}
-		return null;
-	});
+	const [
+		selectedNamespaceUID,
+		setselectedNamespaceUID,
+	] = useInfraMonitoringNamespaceUID();
 
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.NAMESPACES);
 
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
-		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
-		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
-		}
-		return [];
-	});
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+
+	const [, setView] = useInfraMonitoringView();
+	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
+	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
+	const [, setLogFilters] = useInfraMonitoringLogFilters();
 
 	const [
 		selectedRowData,
@@ -134,7 +117,7 @@ function K8sNamespacesList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -187,25 +170,28 @@ function K8sNamespacesList({
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData, groupBy]);
 
 	const groupedByRowDataQueryKey = useMemo(() => {
+		// be careful with what you serialize from selectedRowData
+		// since it's react node, it could contain circular references
+		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
 		if (selectedNamespaceUID) {
 			return [
 				'namespaceList',
 				JSON.stringify(queryFilters),
 				JSON.stringify(orderBy),
-				JSON.stringify(selectedRowData),
+				selectedRowDataKey,
 			];
 		}
 		return [
 			'namespaceList',
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			JSON.stringify(selectedRowData),
+			selectedRowDataKey,
 			String(minTime),
 			String(maxTime),
 		];
@@ -264,7 +250,7 @@ function K8sNamespacesList({
 			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		if (groupBy.length > 0) {
 			queryPayload.groupBy = groupBy;
@@ -374,26 +360,15 @@ function K8sNamespacesList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
+				setOrderBy({
 					columnName: sorter.field as string,
 					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
 				});
 			} else {
 				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
 			}
 		},
-		[searchParams, setSearchParams],
+		[setCurrentPage, setOrderBy],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -457,14 +432,31 @@ function K8sNamespacesList({
 		nestedNamespacesData,
 	]);
 
-	const handleRowClick = (record: K8sNamespacesRowData): void => {
+	const openNamespaceInNewTab = (record: K8sNamespacesRowData): void => {
+		const newParams = new URLSearchParams(document.location.search);
+		newParams.set(
+			INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
+			record.namespaceUID,
+		);
+		openInNewTab(
+			buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: newParams.toString(),
+			}),
+		);
+	};
+
+	const handleRowClick = (
+		record: K8sNamespacesRowData,
+		event: React.MouseEvent,
+	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			openNamespaceInNewTab(record);
+			return;
+		}
 		if (groupBy.length === 0) {
 			setSelectedRowData(null);
 			setselectedNamespaceUID(record.namespaceUID);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID]: record.namespaceUID,
-			});
 		} else {
 			handleGroupByRowClick(record);
 		}
@@ -493,11 +485,6 @@ function K8sNamespacesList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (
@@ -521,8 +508,14 @@ function K8sNamespacesList({
 							indicator: <Spin indicator={<LoadingOutlined size={14} spin />} />,
 						}}
 						showHeader={false}
-						onRow={(record): { onClick: () => void; className: string } => ({
-							onClick: (): void => {
+						onRow={(
+							record,
+						): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+							onClick: (event: React.MouseEvent): void => {
+								if (isModifierKeyPressed(event)) {
+									openNamespaceInNewTab(record);
+									return;
+								}
 								setselectedNamespaceUID(record.namespaceUID);
 							},
 							className: 'expanded-clickable-row',
@@ -588,20 +581,10 @@ function K8sNamespacesList({
 
 	const handleCloseNamespaceDetail = (): void => {
 		setselectedNamespaceUID(null);
-		setSearchParams({
-			...Object.fromEntries(
-				Array.from(searchParams.entries()).filter(
-					([key]) =>
-						![
-							INFRA_MONITORING_K8S_PARAMS_KEYS.NAMESPACE_UID,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
-						].includes(key),
-				),
-			),
-		});
+		setView(null);
+		setTracesFilters(null);
+		setEventsFilters(null);
+		setLogFilters(null);
 	};
 
 	const handleGroupByChange = useCallback(
@@ -624,10 +607,6 @@ function K8sNamespacesList({
 			setCurrentPage(1);
 			setGroupBy(groupBy);
 			setExpandedRowKeys([]);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
-			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -635,7 +614,7 @@ function K8sNamespacesList({
 				category: InfraMonitoringEvents.Namespace,
 			});
 		},
-		[groupByFiltersData, searchParams, setSearchParams],
+		[groupByFiltersData, setCurrentPage, setGroupBy],
 	);
 
 	useEffect(() => {
@@ -714,8 +693,10 @@ function K8sNamespacesList({
 				}}
 				tableLayout="fixed"
 				onChange={handleTableChange}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => handleRowClick(record),
+				onRow={(
+					record,
+				): { onClick: (event: React.MouseEvent) => void; className: string } => ({
+					onClick: (event: React.MouseEvent): void => handleRowClick(record, event),
 					className: 'clickable-row',
 				})}
 				expandable={{

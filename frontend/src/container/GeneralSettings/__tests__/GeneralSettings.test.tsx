@@ -1,4 +1,5 @@
 import setRetentionApiV2 from 'api/settings/setRetentionV2';
+import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import {
 	fireEvent,
 	render,
@@ -35,14 +36,19 @@ jest.mock('hooks/useComponentPermission', () => ({
 }));
 
 jest.mock('hooks/useGetTenantLicense', () => ({
-	useGetTenantLicense: (): { isCloudUser: boolean } => ({
+	useGetTenantLicense: jest.fn(() => ({
 		isCloudUser: false,
-	}),
+	})),
 }));
 
 jest.mock('container/GeneralSettingsCloud', () => ({
 	__esModule: true,
-	default: (): null => null,
+	default: (): JSX.Element => <div data-testid="general-settings-cloud" />,
+}));
+
+jest.mock('container/CustomDomainSettings', () => ({
+	__esModule: true,
+	default: (): JSX.Element => <div data-testid="custom-domain-settings" />,
 }));
 
 // Mock data
@@ -93,10 +99,12 @@ const mockDisksWithoutS3: IDiskType[] = [
 	},
 ];
 
-describe('GeneralSettings - S3 Logs Retention', () => {
-	const BUTTON_SELECTOR = 'button[type="button"]';
-	const PRIMARY_BUTTON_CLASS = 'ant-btn-primary';
+const getLogsRow = (): HTMLElement => {
+	const logsLabel = screen.getByText('Logs');
+	return logsLabel.closest('.retention-row') as HTMLElement;
+};
 
+describe('GeneralSettings - S3 Logs Retention', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
 		(setRetentionApiV2 as jest.Mock).mockResolvedValue({
@@ -121,21 +129,20 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			// Find the Logs card
-			const logsCard = screen.getByText('Logs').closest('.ant-card');
-			expect(logsCard).toBeInTheDocument();
+			const logsRow = getLogsRow();
+			expect(logsRow).toBeInTheDocument();
 
-			// Find all inputs in the Logs card - there should be 2 (total retention + S3)
-			const inputs = logsCard?.querySelectorAll('input[type="text"]');
+			// Find all inputs in the Logs row - there should be 2 (total retention + S3)
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
 			expect(inputs).toHaveLength(2);
 
 			// The second input is the S3 retention field
-			const s3Input = inputs?.[1] as HTMLInputElement;
+			const s3Input = inputs[1] as HTMLInputElement;
 
 			// Find the S3 dropdown (next sibling of the S3 input)
-			const s3Dropdown = s3Input?.nextElementSibling?.querySelector(
-				'.ant-select-selector',
-			) as HTMLElement;
+			const s3Dropdown = s3Input
+				?.closest('.retention-row-controls')
+				?.querySelectorAll('.ant-select-selector')[1] as HTMLElement;
 			expect(s3Dropdown).toBeInTheDocument();
 
 			// Click the S3 dropdown to open it
@@ -155,16 +162,13 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await user.clear(s3Input);
 			await user.type(s3Input, '5');
 
-			// Find the save button in the Logs card
-			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
-			// The primary button should be the save button
-			const saveButton = Array.from(buttons || []).find((btn) =>
-				btn.className.includes(PRIMARY_BUTTON_CLASS),
+			// Find the save button in the Logs row
+			const saveButton = logsRow.querySelector(
+				'button:not([disabled])',
 			) as HTMLButtonElement;
-
 			expect(saveButton).toBeInTheDocument();
 
-			// Wait for button to be enabled (it should enable after value changes)
+			// Wait for button to be enabled
 			await waitFor(() => {
 				expect(saveButton).not.toBeDisabled();
 			});
@@ -205,8 +209,8 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			);
 
 			// Verify S3 field is visible
-			const logsCard = screen.getByText('Logs').closest('.ant-card');
-			const inputs = logsCard?.querySelectorAll('input[type="text"]');
+			const logsRow = getLogsRow();
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
 			expect(inputs).toHaveLength(2); // Total + S3
 		});
 	});
@@ -227,19 +231,18 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			// Find the Logs card
-			const logsCard = screen.getByText('Logs').closest('.ant-card');
-			expect(logsCard).toBeInTheDocument();
+			const logsRow = getLogsRow();
+			expect(logsRow).toBeInTheDocument();
 
 			// Only 1 input should be visible (total retention, no S3)
-			const inputs = logsCard?.querySelectorAll('input[type="text"]');
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
 			expect(inputs).toHaveLength(1);
 
 			// Change total retention value
-			const totalInput = inputs?.[0] as HTMLInputElement;
+			const totalInput = inputs[0] as HTMLInputElement;
 
 			// First, change the dropdown to Days (it defaults to Months)
-			const totalDropdown = totalInput?.nextElementSibling?.querySelector(
+			const totalDropdown = logsRow.querySelector(
 				'.ant-select-selector',
 			) as HTMLElement;
 			await user.click(totalDropdown);
@@ -263,14 +266,12 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await user.type(totalInput, '60');
 
 			// Find the save button
-			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
-			const saveButton = Array.from(buttons || []).find((btn) =>
-				btn.className.includes(PRIMARY_BUTTON_CLASS),
+			const saveButton = logsRow.querySelector(
+				'button:not([disabled])',
 			) as HTMLButtonElement;
-
 			expect(saveButton).toBeInTheDocument();
 
-			// Wait for button to be enabled (ensures all state updates have settled)
+			// Wait for button to be enabled
 			await waitFor(() => {
 				expect(saveButton).not.toBeDisabled();
 			});
@@ -312,22 +313,21 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			// Find the Logs card
-			const logsCard = screen.getByText('Logs').closest('.ant-card');
-			const inputs = logsCard?.querySelectorAll('input[type="text"]');
+			const logsRow = getLogsRow();
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
 
-			// Total retention: 720 hours = 30 days = 1 month (displays as 1 Month)
-			const totalInput = inputs?.[0] as HTMLInputElement;
+			// Total retention: 30 days = 1 month (displays as 1 Month)
+			const totalInput = inputs[0] as HTMLInputElement;
 			expect(totalInput.value).toBe('1');
 
-			// S3 retention: 24 day
-			const s3Input = inputs?.[1] as HTMLInputElement;
+			// S3 retention: 24 days
+			const s3Input = inputs[1] as HTMLInputElement;
 			expect(s3Input.value).toBe('24');
 
 			// Verify dropdowns: total shows Months, S3 shows Days
-			const dropdowns = logsCard?.querySelectorAll('.ant-select-selection-item');
-			expect(dropdowns?.[0]).toHaveTextContent('Months');
-			expect(dropdowns?.[1]).toHaveTextContent('Days');
+			const dropdowns = logsRow.querySelectorAll('.ant-select-selection-item');
+			expect(dropdowns[0]).toHaveTextContent('Months');
+			expect(dropdowns[1]).toHaveTextContent('Days');
 		});
 	});
 
@@ -347,24 +347,22 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 				/>,
 			);
 
-			// Find the Logs card
-			const logsCard = screen.getByText('Logs').closest('.ant-card');
-			expect(logsCard).toBeInTheDocument();
+			const logsRow = getLogsRow();
+			expect(logsRow).toBeInTheDocument();
 
-			// Find the save button
-			const buttons = logsCard?.querySelectorAll(BUTTON_SELECTOR);
-			const saveButton = Array.from(buttons || []).find((btn) =>
-				btn.className.includes(PRIMARY_BUTTON_CLASS),
+			// Find the save button by accessible name within the Logs row
+			const allSaveButtons = screen.getAllByRole('button', { name: /save/i });
+			const saveButton = allSaveButtons.find((btn) =>
+				logsRow.contains(btn),
 			) as HTMLButtonElement;
-
 			expect(saveButton).toBeInTheDocument();
 
-			// Verify save button is disabled on initial load (no changes, S3 disabled with -1)
+			// Verify save button is disabled on initial load
 			expect(saveButton).toBeDisabled();
 
 			// Find the total retention input
-			const inputs = logsCard?.querySelectorAll('input[type="text"]');
-			const totalInput = inputs?.[0] as HTMLInputElement;
+			const inputs = logsRow.querySelectorAll('input[type="number"]');
+			const totalInput = inputs[0] as HTMLInputElement;
 
 			// Change total retention value to trigger button enable
 			await user.clear(totalInput);
@@ -383,6 +381,64 @@ describe('GeneralSettings - S3 Logs Retention', () => {
 			await waitFor(() => {
 				expect(saveButton).toBeDisabled();
 			});
+		});
+	});
+
+	describe('Cloud User Rendering', () => {
+		beforeEach(() => {
+			(useGetTenantLicense as jest.Mock).mockReturnValue({
+				isCloudUser: true,
+			});
+		});
+
+		it('should render CustomDomainSettings and GeneralSettingsCloud for cloud admin', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(screen.getByTestId('custom-domain-settings')).toBeInTheDocument();
+			expect(screen.getByTestId('general-settings-cloud')).toBeInTheDocument();
+		});
+	});
+
+	describe('Non-cloud user rendering', () => {
+		beforeEach(() => {
+			(useGetTenantLicense as jest.Mock).mockReturnValue({
+				isCloudUser: false,
+			});
+		});
+
+		it('should not render CustomDomainSettings or GeneralSettingsCloud', () => {
+			render(
+				<GeneralSettings
+					metricsTtlValuesPayload={mockMetricsRetention}
+					tracesTtlValuesPayload={mockTracesRetention}
+					logsTtlValuesPayload={mockLogsRetentionWithS3}
+					getAvailableDiskPayload={mockDisksWithS3}
+					metricsTtlValuesRefetch={jest.fn()}
+					tracesTtlValuesRefetch={jest.fn()}
+					logsTtlValuesRefetch={jest.fn()}
+				/>,
+			);
+
+			expect(
+				screen.queryByTestId('custom-domain-settings'),
+			).not.toBeInTheDocument();
+			expect(
+				screen.queryByTestId('general-settings-cloud'),
+			).not.toBeInTheDocument();
+
+			// Save buttons should be visible for non-cloud users (these are from retentions)
+			const saveButtons = screen.getAllByRole('button', { name: /save/i });
+			expect(saveButtons.length).toBeGreaterThan(0);
 		});
 	});
 });

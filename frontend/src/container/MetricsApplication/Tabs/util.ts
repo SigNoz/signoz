@@ -1,4 +1,4 @@
-import { Dispatch, SetStateAction, useMemo, useRef } from 'react';
+import React, { Dispatch, SetStateAction, useMemo, useRef } from 'react';
 import { QueryParams } from 'constants/query';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
@@ -22,6 +22,7 @@ import {
 } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { Tags } from 'types/reducer/trace';
+import { isModifierKeyPressed } from 'utils/app';
 import { secondsToMilliseconds } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -42,7 +43,7 @@ interface OnViewTracePopupClickProps {
 	apmToTraceQuery: Query;
 	isViewLogsClicked?: boolean;
 	stepInterval?: number;
-	safeNavigate: (url: string) => void;
+	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
 }
 
 interface OnViewAPIMonitoringPopupClickProps {
@@ -51,8 +52,7 @@ interface OnViewAPIMonitoringPopupClickProps {
 	stepInterval?: number;
 	domainName: string;
 	isError: boolean;
-
-	safeNavigate: (url: string) => void;
+	safeNavigate: (url: string, options?: { newTab?: boolean }) => void;
 }
 
 export function generateExplorerPath(
@@ -93,8 +93,8 @@ export function onViewTracePopupClick({
 	isViewLogsClicked,
 	stepInterval,
 	safeNavigate,
-}: OnViewTracePopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewTracePopupClickProps): (e?: React.MouseEvent) => void {
+	return (e?: React.MouseEvent): void => {
 		const endTime = secondsToMilliseconds(timestamp);
 		const startTime = secondsToMilliseconds(timestamp - (stepInterval || 60));
 
@@ -118,7 +118,7 @@ export function onViewTracePopupClick({
 			queryString,
 		);
 
-		safeNavigate(newPath);
+		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 }
 
@@ -149,8 +149,8 @@ export function onViewAPIMonitoringPopupClick({
 	isError,
 	stepInterval,
 	safeNavigate,
-}: OnViewAPIMonitoringPopupClickProps): VoidFunction {
-	return (): void => {
+}: OnViewAPIMonitoringPopupClickProps): (e?: React.MouseEvent) => void {
+	return (e?: React.MouseEvent): void => {
 		const endTime = timestamp + (stepInterval || 60);
 		const startTime = timestamp - (stepInterval || 60);
 		const filters = {
@@ -190,7 +190,7 @@ export function onViewAPIMonitoringPopupClick({
 			filters,
 		);
 
-		safeNavigate(newPath);
+		safeNavigate(newPath, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 }
 

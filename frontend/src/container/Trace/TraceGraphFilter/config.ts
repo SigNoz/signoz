@@ -1,4 +1,4 @@
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 
 interface Dropdown {
 	key: string;

@@ -1,0 +1,90 @@
+.roles-select {
+	width: 100%;
+
+	// todo: styles should easeup once upgrade to select from periscope
+	.ant-select-selector {
+		min-height: 32px;
+		background-color: var(--l2-background) !important;
+		border: 1px solid var(--border) !important;
+		border-radius: 2px;
+		padding: 2px var(--padding-2) !important;
+		display: flex;
+		align-items: center;
+		flex-wrap: wrap;
+	}
+
+	.ant-select-selection-overflow {
+		display: flex;
+		flex-wrap: wrap;
+		align-items: center;
+		gap: var(--spacing-1);
+		padding: 2px 0;
+	}
+
+	.ant-select-selection-overflow-item {
+		display: flex;
+		align-items: center;
+	}
+
+	.ant-select-selection-item {
+		display: flex;
+		align-items: center;
+		height: 22px;
+		font-size: var(--font-size-sm);
+		color: var(--l1-foreground);
+		background: var(--l3-background);
+		border: 1px solid var(--border);
+		border-radius: 2px;
+		padding: 0 var(--padding-1) 0 6px;
+		line-height: var(--line-height-20);
+		letter-spacing: -0.07px;
+		margin: 0;
+	}
+
+	.ant-select-selection-item-remove {
+		display: flex;
+		align-items: center;
+		color: var(--foreground);
+		margin-left: 2px;
+	}
+
+	.ant-select-selection-placeholder {
+		font-size: var(--font-size-sm);
+		color: var(--l3-foreground);
+	}
+
+	.ant-select-arrow {
+		color: var(--foreground);
+	}
+
+	&.ant-select-focused .ant-select-selector,
+	&:not(.ant-select-disabled):hover .ant-select-selector {
+		border-color: var(--primary) !important;
+	}
+}
+
+.roles-select-error {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--spacing-3);
+	padding: var(--padding-1) var(--padding-2);
+	color: var(--destructive);
+	font-size: var(--font-size-xs);
+
+	&__msg {
+		display: flex;
+		align-items: center;
+		gap: var(--spacing-3);
+	}
+
+	&__retry-btn {
+		display: flex;
+		align-items: center;
+		background: none;
+		border: none;
+		cursor: pointer;
+		padding: 2px;
+		color: var(--destructive);
+	}
+}

@@ -1,10 +1,14 @@
 import { useCallback, useEffect, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { Compass, Crosshair, X } from 'lucide-react';
+import { AppState } from 'store/reducers';
+import { GlobalReducer } from 'types/reducer/globalTime';
 
 import { PANEL_TYPES } from '../../../constants/queryBuilder';
 import ROUTES from '../../../constants/routes';
@@ -29,6 +33,9 @@ function MetricDetails({
 }: MetricDetailsProps): JSX.Element {
 	const isDarkMode = useIsDarkMode();
 	const { handleExplorerTabChange } = useHandleExplorerTabChange();
+	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
+		(state) => state.globalTime,
+	);
 
 	const {
 		data: metricMetadataResponse,
@@ -73,7 +80,14 @@ function MetricDetails({
 
 	const goToMetricsExplorerwithSelectedMetric = useCallback(() => {
 		if (metricName) {
-			const compositeQuery = getMetricDetailsQuery(metricName, metadata?.type);
+			const compositeQuery = getMetricDetailsQuery(
+				metricName,
+				metadata?.type,
+				undefined,
+				undefined,
+				undefined,
+				metadata?.isMonotonic,
+			);
 			handleExplorerTabChange(
 				PANEL_TYPES.TIME_SERIES,
 				{
@@ -82,6 +96,7 @@ function MetricDetails({
 					id: metricName,
 				},
 				ROUTES.METRICS_EXPLORER_EXPLORER,
+				true,
 			);
 			logEvent(MetricsExplorerEvents.OpenInExplorerClicked, {
 				[MetricsExplorerEventKeys.MetricName]: metricName,
@@ -89,7 +104,12 @@ function MetricDetails({
 				[MetricsExplorerEventKeys.Modal]: 'metric-details',
 			});
 		}
-	}, [metricName, handleExplorerTabChange, metadata?.type]);
+	}, [
+		metricName,
+		handleExplorerTabChange,
+		metadata?.type,
+		metadata?.isMonotonic,
+	]);
 
 	useEffect(() => {
 		logEvent(MetricsExplorerEvents.ModalOpened, {
@@ -99,6 +119,21 @@ function MetricDetails({
 
 	const isActionButtonDisabled =
 		!metricName || isLoadingMetricMetadata || isErrorMetricMetadata;
+
+	const handleDrawerClose = useCallback(
+		(e: React.MouseEvent | React.KeyboardEvent): void => {
+			if ('key' in e && e.key === 'Escape') {
+				const openPopover = document.querySelector(
+					'.metric-details-popover:not(.ant-popover-hidden)',
+				);
+				if (openPopover) {
+					return;
+				}
+			}
+			onClose();
+		},
+		[onClose],
+	);
 
 	return (
 		<Drawer
@@ -137,7 +172,7 @@ function MetricDetails({
 				</div>
 			}
 			placement="right"
-			onClose={onClose}
+			onClose={handleDrawerClose}
 			open={isOpen}
 			style={{
 				overscrollBehavior: 'contain',
@@ -157,7 +192,13 @@ function MetricDetails({
 					isLoadingMetricMetadata={isLoadingMetricMetadata}
 					refetchMetricMetadata={refetchMetricMetadata}
 				/>
-				<AllAttributes metricName={metricName} metricType={metadata?.type} />
+				<AllAttributes
+					metricName={metricName}
+					metricType={metadata?.type}
+					isMonotonic={metadata?.isMonotonic}
+					minTime={minTime}
+					maxTime={maxTime}
+				/>
 			</div>
 		</Drawer>
 	);

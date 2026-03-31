@@ -33,10 +33,6 @@ import type {
 	RotateSession200,
 } from '../sigNoz.schemas';
 
-type AwaitedInput<T> = PromiseLike<T> | T;
-
-type Awaited<O> = O extends AwaitedInput<infer T> ? T : never;
-
 /**
  * This endpoint creates a session for a user using google callback
  * @summary Create session by google callback

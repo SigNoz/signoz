@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useQueryClient } from 'react-query';
-import { Button, Collapse, Input, Select, Skeleton, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
+import { Button, Collapse, Input, Select, Spin, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
 import {
 	invalidateGetMetricMetadata,
@@ -334,7 +334,7 @@ function Metadata({
 						e.stopPropagation();
 						setIsEditing(true);
 					}}
-					disabled={isUpdatingMetricsMetadata}
+					disabled={isUpdatingMetricsMetadata || isLoadingMetricMetadata}
 				>
 					<Edit2 size={14} />
 					<Typography.Text>Edit</Typography.Text>
@@ -345,6 +345,7 @@ function Metadata({
 		isEditing,
 		isErrorMetricMetadata,
 		isUpdatingMetricsMetadata,
+		isLoadingMetricMetadata,
 		cancelEdit,
 		handleSave,
 	]);
@@ -359,7 +360,11 @@ function Metadata({
 					</div>
 				),
 				key: 'metric-metadata',
-				children: isErrorMetricMetadata ? (
+				children: isLoadingMetricMetadata ? (
+					<div className="metrics-accordion-loading-state">
+						<Spin size="small" />
+					</div>
+				) : isErrorMetricMetadata ? (
 					<div className="metric-metadata-error-state">
 						<MetricDetailsErrorState
 							refetch={refetchMetricMetadata}
@@ -381,19 +386,12 @@ function Metadata({
 		[
 			actionButton,
 			columns,
+			isLoadingMetricMetadata,
 			isErrorMetricMetadata,
 			refetchMetricMetadata,
 			tableData,
 		],
 	);
-
-	if (isLoadingMetricMetadata) {
-		return (
-			<div className="metrics-metadata-skeleton-container">
-				<Skeleton active paragraph={{ rows: 8 }} />
-			</div>
-		);
-	}
 
 	return (
 		<Collapse

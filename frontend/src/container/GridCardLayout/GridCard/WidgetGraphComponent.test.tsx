@@ -39,7 +39,7 @@ const mockProps: WidgetGraphComponentProps = {
 		columnUnits: {},
 		description: '',
 		fillSpans: false,
-		id: '17f905f6-d355-46bd-a78e-cbc87e6f58cc',
+		id: 'w-17f905f6-d355-46bd-a78e-cbc87e6f58cc',
 		mergeAllActiveQueries: false,
 		nullZeroValues: 'zero',
 		opacity: '1',
@@ -161,13 +161,16 @@ const mockProps: WidgetGraphComponentProps = {
 };
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
 		selectedDashboard: {
 			data: {
 				variables: [],
 			},
 		},
+		setLayouts: jest.fn(),
+		setSelectedDashboard: jest.fn(),
+		setColumnWidths: jest.fn(),
 	}),
 }));
 

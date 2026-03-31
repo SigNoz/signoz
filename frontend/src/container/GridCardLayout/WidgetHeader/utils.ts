@@ -1,4 +1,4 @@
-import { MenuItemType } from 'antd/es/menu/hooks/useItems';
+import type { MenuItemType } from 'antd/es/menu/hooks/useItems';
 
 import { MenuItemKeys } from './contants';
 import { MenuItem } from './types';

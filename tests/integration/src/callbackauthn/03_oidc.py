@@ -532,3 +532,54 @@ def test_oidc_empty_name_uses_fallback(
     assert found_user is not None
     assert found_user["role"] == "VIEWER"
     # Note: displayName may be empty - this is a known limitation
+
+
+def test_oidc_sso_login_activates_pending_invite_user(
+    signoz: SigNoz,
+    idp: TestContainerIDP,
+    driver: webdriver.Chrome,
+    create_user_idp_with_groups: Callable[[str, str, bool, List[str]], None],
+    idp_login: Callable[[str, str], None],
+    get_token: Callable[[str, str], str],
+    get_session_context: Callable[[str], str],
+) -> None:
+    """
+    Verify that an invited user (pending_invite) who logs in via OIDC SSO is
+    auto-activated with the role from the invite, not the SSO default/group role.
+
+    1. Admin invites user as ADMIN
+    2. User exists in IDP with 'signoz-viewers' group (would normally get VIEWER)
+    3. SSO login activates the user with VIEWER role (SSO wins)
+    """
+    email = "sso-pending-invite@oidc.integration.test"
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    # Invite user as ADMIN
+    response = requests.post(
+        signoz.self.host_configs["8080"].get("/api/v1/invite"),
+        json={"email": email, "role": "ADMIN", "name": "OIDC SSO Pending User"},
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=2,
+    )
+    assert response.status_code == HTTPStatus.CREATED
+
+    # Create IDP user in viewer group — SSO would normally assign VIEWER
+    create_user_idp_with_groups(email, "password123", True, ["signoz-viewers"])
+
+    perform_oidc_login(
+        signoz, idp, driver, get_session_context, idp_login, email, "password123"
+    )
+
+    # User should be active with ADMIN role from invite, not VIEWER from SSO
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        timeout=2,
+        headers={"Authorization": f"Bearer {admin_token}"},
+    )
+    found_user = next(
+        (user for user in response.json()["data"] if user["email"] == email),
+        None,
+    )
+    assert found_user is not None
+    assert found_user["status"] == "active"
+    assert found_user["role"] == "VIEWER"

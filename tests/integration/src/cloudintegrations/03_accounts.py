@@ -57,9 +57,12 @@ def test_list_connected_accounts_with_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # List accounts
     endpoint = f"/api/v1/cloud-integrations/{cloud_provider}/accounts"
@@ -161,9 +164,12 @@ def test_update_account_config(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Update account configuration
     endpoint = (
@@ -226,9 +232,12 @@ def test_disconnect_account(
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
+    assert (
+        response.status_code == HTTPStatus.OK
+    ), f"Expected 200 for agent check-in, got {response.status_code}: {response.text}"
 
     # Disconnect the account
     endpoint = (

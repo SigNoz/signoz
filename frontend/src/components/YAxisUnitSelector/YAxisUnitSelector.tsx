@@ -1,7 +1,7 @@
 import { useMemo } from 'react';
 import { WarningFilled } from '@ant-design/icons';
 import { Select, Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import classNames from 'classnames';
 
 import { UniversalYAxisUnitMappings } from './constants';

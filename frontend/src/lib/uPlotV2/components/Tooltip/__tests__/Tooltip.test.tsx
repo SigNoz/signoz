@@ -83,7 +83,7 @@ function createUPlotInstance(cursorIdx: number | null): uPlot {
 function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 	const defaultProps: TooltipTestProps = {
 		uPlotInstance: createUPlotInstance(null),
-		timezone: 'UTC',
+		timezone: { value: 'UTC', name: 'UTC', offset: '0', searchIndex: '0' },
 		content: [],
 		showTooltipHeader: true,
 		// TooltipRenderArgs (not used directly in component but required by type)
@@ -92,6 +92,7 @@ function renderTooltip(props: Partial<TooltipTestProps> = {}): RenderResult {
 		isPinned: false,
 		dismiss: jest.fn(),
 		viaSync: false,
+		clickData: null,
 	} as TooltipTestProps;
 
 	return render(

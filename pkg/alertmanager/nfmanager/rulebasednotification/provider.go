@@ -2,6 +2,7 @@ package rulebasednotification
 
 import (
 	"context"
+	"log/slog"
 	"strings"
 	"sync"
 
@@ -266,7 +267,7 @@ func (r *provider) convertLabelSetToEnv(ctx context.Context, labelSet model.Labe
 	}
 
 	if logForReview {
-		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", "labels", labelSet)
+		r.settings.Logger().InfoContext(ctx, "found label set with conflicting prefix dotted keys", slog.Any("labels", labelSet))
 	}
 
 	return env

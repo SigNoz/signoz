@@ -32,13 +32,13 @@ const createMockPlot = (series: MockSeries[] = []): uPlot =>
 
 interface TestComponentProps {
 	plot?: uPlot;
-	widgetId?: string;
+	id?: string;
 	shouldSaveSelectionPreference?: boolean;
 }
 
 const TestComponent = ({
 	plot,
-	widgetId,
+	id,
 	shouldSaveSelectionPreference,
 }: TestComponentProps): JSX.Element => {
 	const {
@@ -49,17 +49,13 @@ const TestComponent = ({
 		onFocusSeries,
 	} = usePlotContext();
 	const handleInit = (): void => {
-		if (
-			!plot ||
-			!widgetId ||
-			typeof shouldSaveSelectionPreference !== 'boolean'
-		) {
+		if (!plot || !id || typeof shouldSaveSelectionPreference !== 'boolean') {
 			return;
 		}
 
 		setPlotContextInitialState({
 			uPlotInstance: plot,
-			widgetId,
+			id,
 			shouldSaveSelectionPreference,
 		});
 	};
@@ -148,11 +144,7 @@ describe('PlotContext', () => {
 
 		render(
 			<PlotContextProvider>
-				<TestComponent
-					plot={plot}
-					widgetId="widget-123"
-					shouldSaveSelectionPreference
-				/>
+				<TestComponent plot={plot} id="widget-123" shouldSaveSelectionPreference />
 			</PlotContextProvider>,
 		);
 
@@ -199,7 +191,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-visibility"
+						id="widget-visibility"
 						shouldSaveSelectionPreference
 					/>
 				</PlotContextProvider>,
@@ -240,7 +232,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-reset"
+						id="widget-reset"
 						shouldSaveSelectionPreference
 					/>
 				</PlotContextProvider>,
@@ -290,7 +282,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-toggle"
+						id="widget-toggle"
 						shouldSaveSelectionPreference
 					/>
 				</PlotContextProvider>,
@@ -316,7 +308,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-missing-series"
+						id="widget-missing-series"
 						shouldSaveSelectionPreference
 					/>
 				</PlotContextProvider>,
@@ -341,7 +333,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-no-persist"
+						id="widget-no-persist"
 						shouldSaveSelectionPreference={false}
 					/>
 				</PlotContextProvider>,
@@ -379,7 +371,7 @@ describe('PlotContext', () => {
 				<PlotContextProvider>
 					<TestComponent
 						plot={plot}
-						widgetId="widget-focus"
+						id="widget-focus"
 						shouldSaveSelectionPreference={false}
 					/>
 				</PlotContextProvider>,

@@ -1,5 +1,5 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { NotificationInstance } from 'antd/es/notification/interface';
+import type { NotificationInstance } from 'antd/es/notification/interface';
 import { NavigateToExplorerProps } from 'components/CeleryTask/useNavigateToExplorer';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { PANEL_TYPES } from 'constants/queryBuilder';
@@ -249,13 +249,14 @@ export const handleGraphClick = async ({
 	}
 };
 
-export const errorDetails = (error: APIError): string => {
-	const { message, errors } = error.getErrorDetails()?.error || {};
+export const errorDetails = (error: APIError | Error): string => {
+	const { message, errors } =
+		(error instanceof APIError ? error.getErrorDetails()?.error : null) || {};
 
 	const details =
-		errors?.length > 0
+		errors && errors.length > 0
 			? `\n\nDetails: ${errors.map((e) => e.message).join('\n')}`
 			: '';
-	const errorDetails = `${message} ${details}`;
-	return errorDetails || 'Unknown error occurred';
+	const errorDetails = `${message ?? error.message} ${details}`;
+	return errorDetails.trim() || 'Unknown error occurred';
 };

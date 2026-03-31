@@ -1,5 +1,4 @@
-import { Empty, Table, Tooltip } from 'antd';
-import { ColumnProps } from 'antd/es/table';
+import { Empty, Table, TableColumnProps as ColumnProps, Tooltip } from 'antd';
 
 import './FunnelTable.styles.scss';
 

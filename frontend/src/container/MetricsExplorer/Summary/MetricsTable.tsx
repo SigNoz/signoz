@@ -8,8 +8,9 @@ import {
 	Tooltip,
 	Typography,
 } from 'antd';
-import { SorterResult } from 'antd/es/table/interface';
+import type { SorterResult } from 'antd/es/table/interface';
 import { Querybuildertypesv5OrderDirectionDTO } from 'api/generated/services/sigNoz.schemas';
+import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import { Info } from 'lucide-react';
 
 import { MetricsListItemRowData, MetricsTableProps } from './types';
@@ -18,6 +19,7 @@ import { getMetricsTableColumns } from './utils';
 function MetricsTable({
 	isLoading,
 	isError,
+	error,
 	data,
 	pageSize,
 	currentPage,
@@ -71,54 +73,55 @@ function MetricsTable({
 					<Info size={16} />
 				</Tooltip>
 			</div>
-			<Table
-				loading={{
-					spinning: isLoading,
-					indicator: (
-						<Spin
-							data-testid="metrics-table-loading-state"
-							indicator={<LoadingOutlined size={14} spin />}
-						/>
-					),
-				}}
-				dataSource={data}
-				columns={getMetricsTableColumns(queryFilterExpression, onFilterChange)}
-				locale={{
-					emptyText: isLoading ? null : (
-						<div
-							className="no-metrics-message-container"
-							data-testid={
-								isError ? 'metrics-table-error-state' : 'metrics-table-empty-state'
-							}
-						>
-							<img
-								src="/Icons/emptyState.svg"
-								alt="thinking-emoji"
-								className="empty-state-svg"
+			{isError && error ? (
+				<ErrorInPlace error={error} />
+			) : (
+				<Table
+					loading={{
+						spinning: isLoading,
+						indicator: (
+							<Spin
+								data-testid="metrics-table-loading-state"
+								indicator={<LoadingOutlined size={14} spin />}
 							/>
-							<Typography.Text className="no-metrics-message">
-								{isError
-									? 'Error fetching metrics. If the problem persists, please contact support.'
-									: 'This query had no results. Edit your query and try again!'}
-							</Typography.Text>
-						</div>
-					),
-				}}
-				tableLayout="fixed"
-				onChange={handleTableChange}
-				pagination={{
-					current: currentPage,
-					pageSize,
-					showSizeChanger: true,
-					hideOnSinglePage: false,
-					onChange: onPaginationChange,
-					total: totalCount,
-				}}
-				onRow={(record): { onClick: () => void; className: string } => ({
-					onClick: (): void => openMetricDetails(record.key, 'list'),
-					className: 'clickable-row',
-				})}
-			/>
+						),
+					}}
+					dataSource={data}
+					columns={getMetricsTableColumns(queryFilterExpression, onFilterChange)}
+					locale={{
+						emptyText: isLoading ? null : (
+							<div
+								className="no-metrics-message-container"
+								data-testid="metrics-table-empty-state"
+							>
+								<img
+									src="/Icons/emptyState.svg"
+									alt="thinking-emoji"
+									className="empty-state-svg"
+								/>
+								<Typography.Text className="no-metrics-message">
+									This query had no results. Edit your query and try again!
+								</Typography.Text>
+							</div>
+						),
+					}}
+					tableLayout="fixed"
+					onChange={handleTableChange}
+					pagination={{
+						current: currentPage,
+						pageSize,
+						showSizeChanger: true,
+						hideOnSinglePage: false,
+						onChange: onPaginationChange,
+						total: totalCount,
+					}}
+					onRow={(record): Record<string, unknown> => ({
+						onClick: (event: React.MouseEvent): void =>
+							openMetricDetails(record.key, 'list', event),
+						className: 'clickable-row',
+					})}
+				/>
+			)}
 		</div>
 	);
 }

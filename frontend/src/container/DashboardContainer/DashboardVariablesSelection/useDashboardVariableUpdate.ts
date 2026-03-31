@@ -1,11 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
 import { useCallback } from 'react';
 import { useAddDynamicVariableToPanels } from 'hooks/dashboard/useAddDynamicVariableToPanels';
+import { updateLocalStorageDashboardVariable } from 'hooks/dashboard/useDashboardFromLocalStorage';
 import { useUpdateDashboard } from 'hooks/dashboard/useUpdateDashboard';
-import { useDashboard } from 'providers/Dashboard/Dashboard';
 import { IDashboardVariables } from 'providers/Dashboard/store/dashboardVariables/dashboardVariablesStoreTypes';
+import { useDashboardStore } from 'providers/Dashboard/store/useDashboardStore';
 import { IDashboardVariable } from 'types/api/dashboard/getAll';
 import { v4 as uuidv4 } from 'uuid';
+import { useShallow } from 'zustand/react/shallow';
 
 import { convertVariablesToDbFormat } from './util';
 
@@ -37,11 +39,16 @@ interface UseDashboardVariableUpdateReturn {
 
 export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn => {
 	const {
+		dashboardId,
 		selectedDashboard,
 		setSelectedDashboard,
-		updateLocalStorageDashboardVariables,
-	} = useDashboard();
-
+	} = useDashboardStore(
+		useShallow((s) => ({
+			dashboardId: s.selectedDashboard?.id ?? '',
+			selectedDashboard: s.selectedDashboard,
+			setSelectedDashboard: s.setSelectedDashboard,
+		})),
+	);
 	const addDynamicVariableToPanels = useAddDynamicVariableToPanels();
 	const updateMutation = useUpdateDashboard();
 
@@ -59,7 +66,13 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				// This makes localStorage much lighter and more efficient.
 				// currently all the variables are dynamic
 				const isDynamic = true;
-				updateLocalStorageDashboardVariables(name, value, allSelected, isDynamic);
+				updateLocalStorageDashboardVariable(
+					dashboardId,
+					name,
+					value,
+					allSelected,
+					isDynamic,
+				);
 
 				if (selectedDashboard) {
 					setSelectedDashboard((prev) => {
@@ -67,17 +80,18 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 							const oldVariables = prev?.data.variables;
 							// this is added to handle case where we have two different
 							// schemas for variable response
-							if (oldVariables?.[id]) {
-								oldVariables[id] = {
-									...oldVariables[id],
+							const updatedVariables = { ...oldVariables };
+							if (updatedVariables?.[id]) {
+								updatedVariables[id] = {
+									...updatedVariables[id],
 									selectedValue: value,
 									allSelected,
 									haveCustomValuesSelected,
 								};
 							}
-							if (oldVariables?.[name]) {
-								oldVariables[name] = {
-									...oldVariables[name],
+							if (updatedVariables?.[name]) {
+								updatedVariables[name] = {
+									...updatedVariables[name],
 									selectedValue: value,
 									allSelected,
 									haveCustomValuesSelected,
@@ -87,9 +101,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 								...prev,
 								data: {
 									...prev?.data,
-									variables: {
-										...oldVariables,
-									},
+									variables: updatedVariables,
 								},
 							};
 						}
@@ -98,11 +110,7 @@ export const useDashboardVariableUpdate = (): UseDashboardVariableUpdateReturn =
 				}
 			}
 		},
-		[
-			selectedDashboard,
-			setSelectedDashboard,
-			updateLocalStorageDashboardVariables,
-		],
+		[dashboardId, selectedDashboard, setSelectedDashboard],
 	);
 
 	const updateVariables = useCallback(

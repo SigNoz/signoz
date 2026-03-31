@@ -1,4 +1,4 @@
-import { ColumnsType } from 'antd/es/table';
+import type { TableColumnsType as ColumnsType } from 'antd';
 import { ServicesList } from 'types/api/metrics/getService';
 
 import {
