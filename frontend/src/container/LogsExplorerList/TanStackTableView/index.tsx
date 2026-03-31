@@ -40,10 +40,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
 import { getInfinityDefaultStyles } from '../InfinityTableView/config';
-import {
-	TableHeaderCellStyled,
-	TanStackTableStyled,
-} from '../InfinityTableView/styles';
+import { TanStackTableStyled } from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
@@ -81,6 +78,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 	): JSX.Element {
 		const { pathname } = useLocation();
 		const virtuosoRef = useRef<TableVirtuosoHandle | null>(null);
+		// could avoid this if directly use forwardedRef in TableVirtuoso, but need to verify if it causes any issue with react-virtuoso internal ref handling
 		useImperativeHandle(
 			forwardedRef,
 			() => virtuosoRef.current as TableVirtuosoHandle,
@@ -114,7 +112,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onColumnOrderChange: onColumnOrderChange as (columns: unknown[]) => void,
 		});
 
-		// Column sizing (persisted)
+		// Column sizing (persisted). stored to localStorage.
 		const { columnSizing, setColumnSizing } = useColumnSizingPersistence(
 			orderedColumns,
 		);
@@ -129,6 +127,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		);
 
 		// Table data (TanStack row data shape)
+		// useTableView sends flattened log data. this would not be needed once we move to new log details view
 		const tableData = useMemo<TanStackTableRowData[]>(
 			() =>
 				dataSource
@@ -146,7 +145,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		// TanStack columns + table instance
 		const tanstackColumns = useMemo<ColumnDef<TanStackTableRowData>[]>(
 			() =>
-				orderedColumns.map((column) => {
+				orderedColumns.map((column, index) => {
 					const isStateIndicator = column.key === 'state-indicator';
 					const isExpand = column.key === 'expand';
 					const isFixedColumn = isStateIndicator || isExpand;
@@ -160,9 +159,9 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 							character.toUpperCase(),
 						),
 						accessorFn: (row): unknown => row.log[column.key as keyof TableRecord],
-						enableResizing: !isFixedColumn,
+						enableResizing: !isFixedColumn && index !== orderedColumns.length - 1,
 						minSize: fixedWidth ?? minWidthPx,
-						size: fixedWidth,
+						size: fixedWidth, // last column gets remaining space, so don't set initial size to avoid conflict with resizing
 						maxSize: fixedWidth,
 						cell: ({ row, getValue }): ReactElement | string | number | null => {
 							if (!column.render) {
@@ -209,6 +208,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[tableViewProps.logs],
 		);
 
+		// this is already written in parent. Check if this is needed.
 		useEffect(() => {
 			const activeLogIndex = tableViewProps.activeLogIndex ?? -1;
 			if (activeLogIndex < 0 || activeLogIndex >= tableRows.length) {
@@ -270,7 +270,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
-				const row = table.getRowModel().rows[index];
+				const row = tableRows[index];
 				if (!row) {
 					return null;
 				}
@@ -297,15 +297,18 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				isLogsExplorerPage,
 				onClearActiveLog,
 				onSetActiveLog,
-				table,
+				tableRows,
 				tableViewProps.fontSize,
 			],
 		);
 
+		const flatHeaders = useMemo(
+			() => table.getFlatHeaders().filter((header) => !header.isPlaceholder),
+			// eslint-disable-next-line react-hooks/exhaustive-deps
+			[tanstackColumns],
+		);
+
 		const tableHeader = useCallback(() => {
-			const flatHeaders = table
-				.getFlatHeaders()
-				.filter((header) => !header.isPlaceholder);
 			const orderedColumnsById = new Map(
 				orderedColumns.map((column) => [getColumnId(column), column] as const),
 			);
@@ -341,27 +344,12 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									/>
 								);
 							})}
-							<TableHeaderCellStyled
-								aria-hidden
-								$isDragColumn={false}
-								$isDarkMode={isDarkMode}
-								fontSize={tableViewProps.fontSize}
-								className="logs-table-filler-header"
-							/>
-							{isLogsExplorerPage && (
-								<TableHeaderCellStyled
-									aria-hidden
-									$isDragColumn={false}
-									$isDarkMode={isDarkMode}
-									fontSize={tableViewProps.fontSize}
-									className="logs-table-actions-header"
-								/>
-							)}
 						</tr>
 					</SortableContext>
 				</DndContext>
 			);
 		}, [
+			flatHeaders,
 			handleDragEnd,
 			hasSingleColumn,
 			isDarkMode,
@@ -370,9 +358,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onRemoveColumn,
 			isAtMinimumRemovableColumns,
 			sensors,
-			table,
 			tableViewProps.fontSize,
-			isLogsExplorerPage,
 		]);
 
 		const handleEndReached = useCallback(
@@ -402,16 +388,17 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
 					data={tableData}
 					totalCount={tableRows.length}
+					increaseViewportBy={{ top: 500, bottom: 500 }}
 					initialTopMostItemIndex={
 						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
 					}
 					fixedHeaderContent={tableHeader}
-					itemContent={itemContent}
+					itemContent={itemContent} // why both itemContent and customTableRow is needed? td
 					components={{
 						Table: ({ style, children }): JSX.Element => (
 							<TanStackTableStyled style={style}>
 								<colgroup>
-									{orderedColumns.map((column) => {
+									{orderedColumns.map((column, colIndex) => {
 										const columnId = getColumnId(column);
 										const isFixedColumn =
 											column.key === 'expand' || column.key === 'state-indicator';
@@ -421,6 +408,13 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										const effectiveWidth = persistedWidth ?? computedWidth;
 										if (isFixedColumn) {
 											return <col key={columnId} className="tanstack-fixed-col" />;
+										}
+										// Last data column should stretch to fill remaining space
+										const isLastColumn = colIndex === orderedColumns.length - 1;
+										if (isLastColumn) {
+											return (
+												<col key={columnId} style={{ minWidth: `${minWidthPx}px` }} />
+											);
 										}
 										const widthPx =
 											effectiveWidth != null
@@ -433,15 +427,12 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 											/>
 										);
 									})}
-									<col key="logs-table-filler-col" className="tanstack-filler-col" />
-									{isLogsExplorerPage && (
-										<col key="logs-table-actions-col" className="tanstack-actions-col" />
-									)}
+									{/* filler and actions cols no longer needed — last data col stretches to fill remaining space */}
 								</colgroup>
 								{children}
 							</TanStackTableStyled>
 						),
-						TableRow: customTableRow,
+						TableRow: customTableRow, // tr
 					}}
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: handleEndReached }

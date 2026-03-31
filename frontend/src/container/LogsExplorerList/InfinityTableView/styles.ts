@@ -33,7 +33,7 @@ export const TanStackTableStyled = styled(TableStyled)`
 		overflow: hidden;
 		min-width: 0;
 		box-sizing: border-box;
-		vertical-align: top;
+		vertical-align: middle;
 	}
 
 	& td.table-actions-cell {
