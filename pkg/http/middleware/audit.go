@@ -7,7 +7,6 @@ import (
 	"time"
 
 	"github.com/gorilla/mux"
-	jsoniter "github.com/json-iterator/go"
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 	"go.opentelemetry.io/otel/trace"
 
@@ -19,8 +18,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
-
-var jsonAPI = jsoniter.ConfigCompatibleWithStandardLibrary
 
 const (
 	logMessage = "::RECEIVED-REQUEST::"
@@ -128,6 +125,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	if span.SpanContext().HasTraceID() {
 		traceID = span.SpanContext().TraceID().String()
 	}
+
 	if span.SpanContext().HasSpanID() {
 		spanID = span.SpanContext().SpanID().String()
 	}
@@ -135,8 +133,12 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 	// Pre-extract error details.
 	var errorType, errorCode, errorMessage string
 	if statusCode >= 400 {
-		errorType = errorTypeFromStatusCode(statusCode)
-		errorCode, errorMessage = parseErrorResponse(writer.BodyBytes())
+		// We are losing the exact type information here, but we can at least capture the error code and message for better observability.
+		// To get the exact type, we would need some changes in the render package to include the error type in the response, which we can consider in the future if there is a need for it.
+		errorType = render.ErrorTypeFromStatusCode(statusCode)
+		if errorsJSON := render.ErrorFromBody(writer.BodyBytes()); errorsJSON != nil {
+			errorCode, errorMessage = errorsJSON.Code, errorsJSON.Message
+		}
 	}
 
 	event := audittypes.NewAuditEventFromHTTPRequest(req, audittypes.AuditEventContext{
@@ -157,6 +159,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		TraceID:        traceID,
 		SpanID:         spanID,
 	})
+
 	middleware.auditor.Audit(req.Context(), event)
 }
 
@@ -167,14 +170,17 @@ func auditDefFromRequest(req *http.Request) *handler.AuditDef {
 	if route == nil {
 		return nil
 	}
+
 	h := route.GetHandler()
 	if h == nil {
 		return nil
 	}
+
 	provider, ok := h.(handler.AuditDefProvider)
 	if !ok {
 		return nil
 	}
+
 	return provider.AuditDef()
 }
 
@@ -185,10 +191,12 @@ func resourceIDFromRequest(req *http.Request, param string) string {
 	if param == "" {
 		return ""
 	}
+
 	vars := mux.Vars(req)
 	if vars == nil {
 		return ""
 	}
+
 	return vars[param]
 }
 
@@ -199,47 +207,6 @@ func principalTypeFromClaims(claims authtypes.Claims) audittypes.PrincipalType {
 	if claims.IdentNProvider == "api_key" {
 		return audittypes.PrincipalTypeServiceAccount
 	}
+
 	return audittypes.PrincipalTypeUser
-}
-
-// parseErrorResponse attempts to extract the error code and message from a
-// response body formatted as render.ErrorResponse. Returns zero values on
-// parse failure (fail-open).
-func parseErrorResponse(body []byte) (code string, message string) {
-	if len(body) == 0 {
-		return "", ""
-	}
-	var resp render.ErrorResponse
-	if err := jsonAPI.Unmarshal(body, &resp); err != nil {
-		return "", ""
-	}
-	if resp.Error == nil {
-		return "", ""
-	}
-	return resp.Error.Code, resp.Error.Message
-}
-
-// errorTypeFromStatusCode maps an HTTP status code to the corresponding error
-// type string. This is the reverse of the mapping in render.Error().
-func errorTypeFromStatusCode(statusCode int) string {
-	switch statusCode {
-	case http.StatusBadRequest:
-		return errors.TypeInvalidInput.String()
-	case http.StatusUnauthorized:
-		return errors.TypeUnauthenticated.String()
-	case http.StatusForbidden:
-		return errors.TypeForbidden.String()
-	case http.StatusNotFound:
-		return errors.TypeNotFound.String()
-	case http.StatusConflict:
-		return errors.TypeAlreadyExists.String()
-	case http.StatusUnavailableForLegalReasons:
-		return errors.TypeLicenseUnavailable.String()
-	case http.StatusNotImplemented:
-		return errors.TypeUnsupported.String()
-	case http.StatusGatewayTimeout:
-		return errors.TypeTimeout.String()
-	default:
-		return errors.TypeInternal.String()
-	}
 }
