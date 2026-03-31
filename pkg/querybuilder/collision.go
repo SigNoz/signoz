@@ -147,12 +147,7 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 			// So we can safely override the context and data type
 
 			actions = append(actions, fmt.Sprintf("Overriding key: %s to %s", key, intrinsicOrCalculatedField))
-			key.FieldContext = intrinsicOrCalculatedField.FieldContext
-			key.FieldDataType = intrinsicOrCalculatedField.FieldDataType
-			key.JSONDataType = intrinsicOrCalculatedField.JSONDataType
-			key.Indexes = intrinsicOrCalculatedField.Indexes
-			key.Materialized = intrinsicOrCalculatedField.Materialized
-			key.JSONPlan = intrinsicOrCalculatedField.JSONPlan
+			key.OverrideMetadataFrom(intrinsicOrCalculatedField)
 			return actions
 
 		}
@@ -198,13 +193,9 @@ func AdjustKey(key *telemetrytypes.TelemetryFieldKey, keys map[string][]*telemet
 		if !key.Equal(matchingKey) {
 			actions = append(actions, fmt.Sprintf("Adjusting key %s to %s", key, matchingKey))
 		}
+
 		key.Name = matchingKey.Name
-		key.FieldContext = matchingKey.FieldContext
-		key.FieldDataType = matchingKey.FieldDataType
-		key.JSONDataType = matchingKey.JSONDataType
-		key.Indexes = matchingKey.Indexes
-		key.Materialized = matchingKey.Materialized
-		key.JSONPlan = matchingKey.JSONPlan
+		key.OverrideMetadataFrom(matchingKey)
 
 		return actions
 	} else {

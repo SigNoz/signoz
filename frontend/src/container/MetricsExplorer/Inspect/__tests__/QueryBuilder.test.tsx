@@ -4,7 +4,7 @@ import { Provider } from 'react-redux';
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import * as metricsService from 'api/generated/services/metrics';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import * as appContextHooks from 'providers/App/App';
 import store from 'store';
 
@@ -89,13 +89,10 @@ describe('QueryBuilder', () => {
 			timeAggregationOption: TimeAggregationOptions.AVG,
 			spaceAggregationLabels: [],
 			spaceAggregationOption: SpaceAggregationOptions.AVG_BY,
-			filters: {
-				items: [],
-				op: 'and',
-			},
+			filterExpression: '',
 		},
 		dispatchMetricInspectionOptions: jest.fn(),
-		metricType: MetricType.SUM,
+		metricType: MetrictypesTypeDTO.sum,
 		inspectionStep: InspectionStep.TIME_AGGREGATION,
 		inspectMetricsTimeSeries: [],
 		currentQuery: {
@@ -103,6 +100,7 @@ describe('QueryBuilder', () => {
 				items: [],
 				op: 'and',
 			},
+			filterExpression: '',
 		} as any,
 		setCurrentQuery: jest.fn(),
 	};

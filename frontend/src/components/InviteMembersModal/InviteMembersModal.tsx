@@ -202,19 +202,8 @@ function InviteMembersModal({
 			onComplete?.();
 		} catch (err) {
 			const apiErr = err as APIError;
-			if (apiErr?.getHttpStatusCode() === 409) {
-				toast.error(
-					touchedRows.length === 1
-						? `${touchedRows[0].email} is already a member`
-						: 'Invite for one or more users already exists',
-					{ richColors: true },
-				);
-			} else {
-				const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-				toast.error(`Failed to send invites: ${errorMessage}`, {
-					richColors: true,
-				});
-			}
+			const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
+			toast.error(errorMessage, { richColors: true });
 		} finally {
 			setIsSubmitting(false);
 		}

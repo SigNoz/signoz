@@ -1,7 +1,13 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import {
 	LoadingOutlined,
 	SearchOutlined,
@@ -46,6 +52,7 @@ import {
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 import { getGraphType } from 'utils/getGraphType';
 import { getSortedSeriesData } from 'utils/getSortedSeriesData';
 
@@ -290,9 +297,11 @@ function FullView({
 											<Button
 												className="switch-edit-btn"
 												disabled={response.isFetching || response.isLoading}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													if (dashboardEditView) {
-														safeNavigate(dashboardEditView);
+														safeNavigate(dashboardEditView, {
+															newTab: isModifierKeyPressed(e),
+														});
 													}
 												}}
 											>

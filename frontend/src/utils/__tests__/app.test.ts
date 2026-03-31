@@ -80,6 +80,15 @@ describe('buildAbsolutePath', () => {
 			expect(result).toBe(`${BASE_PATH}/?search=test`);
 		});
 
+		it('should preserve pathname without adding trailing slash for empty relative path', () => {
+			mockLocation(`${BASE_PATH}`);
+			const result = buildAbsolutePath({
+				relativePath: '',
+				urlQueryString: 'search=test',
+			});
+			expect(result).toBe(`${BASE_PATH}?search=test`);
+		});
+
 		it('should handle relative path starting with forward slash', () => {
 			mockLocation(`${BASE_PATH}/`);
 			const result = buildAbsolutePath({ relativePath: '/users' });

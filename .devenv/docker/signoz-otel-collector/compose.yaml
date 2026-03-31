@@ -3,7 +3,7 @@ services:
     image: signoz/signoz-otel-collector:v0.142.0
     container_name: signoz-otel-collector-dev
     entrypoint:
-    - /bin/sh
+      - /bin/sh
     command:
       - -c
       - |
@@ -35,3 +35,10 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
+    networks:
+      - default
+      - signoz-devenv
+
+networks:
+  signoz-devenv:
+    name: signoz-devenv

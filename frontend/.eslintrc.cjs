@@ -206,6 +206,25 @@ module.exports = {
 	},
 	overrides: [
 		{
+			files: ['src/**/*.{jsx,tsx,ts}'],
+			excludedFiles: [
+				'**/*.test.{js,jsx,ts,tsx}',
+				'**/*.spec.{js,jsx,ts,tsx}',
+				'**/__tests__/**/*.{js,jsx,ts,tsx}',
+			],
+			rules: {
+				'no-restricted-properties': [
+					'error',
+					{
+						object: 'navigator',
+						property: 'clipboard',
+						message:
+							'Do not use navigator.clipboard directly since it does not work well with specific browsers. Use hook useCopyToClipboard from react-use library. https://streamich.github.io/react-use/?path=/story/side-effects-usecopytoclipboard--docs',
+					},
+				],
+			},
+		},
+		{
 			files: [
 				'**/*.test.{js,jsx,ts,tsx}',
 				'**/*.spec.{js,jsx,ts,tsx}',

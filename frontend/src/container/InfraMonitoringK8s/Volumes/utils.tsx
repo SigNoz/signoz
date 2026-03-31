@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tag, Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import {
 	K8sVolumesData,
 	K8sVolumesListPayload,
@@ -75,7 +74,7 @@ export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
+	orderBy: { columnName: 'usage', order: 'desc' },
 });
 
 const columnsConfig = [

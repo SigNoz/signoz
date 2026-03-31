@@ -58,8 +58,14 @@ func (c *jsonConditionBuilder) emitPlannedCondition(operator qbtypes.FilterOpera
 		}
 		conditions = append(conditions, condition)
 	}
+	baseCond := sb.Or(conditions...)
 
-	return sb.Or(conditions...), nil
+	// path index
+	if operator.AddDefaultExistsFilter() {
+		pathIndex := fmt.Sprintf(`has(%s, '%s')`, schemamigrator.JSONPathsIndexExpr(LogsV2BodyV2Column), c.key.ArrayParentPaths()[0])
+		return sb.And(baseCond, pathIndex), nil
+	}
+	return baseCond, nil
 }
 
 // buildPlanCondition recursively traverses a single JSONPlan and builds condition

@@ -60,6 +60,11 @@ export function buildAbsolutePath({
 	urlQueryString?: string;
 }): string {
 	const { pathname } = getLocation();
+
+	if (!relativePath) {
+		return urlQueryString ? `${pathname}?${urlQueryString}` : pathname;
+	}
+
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
@@ -74,6 +79,15 @@ export function buildAbsolutePath({
 }
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Returns true if the user is holding Cmd (Mac) or Ctrl (Windows/Linux)
+ * during a click event, or if the middle mouse button is used —
+ * the universal "open in new tab" modifiers.
+ */
+export const isModifierKeyPressed = (
+	event: MouseEvent | React.MouseEvent,
+): boolean => event.metaKey || event.ctrlKey || event.button === 1;
 
 export function toISOString(
 	date: Date | string | number | null | undefined,
