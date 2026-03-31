@@ -12,10 +12,10 @@ import (
 
 // Audit attributes — Action (What).
 type AuditAttributes struct {
-	Action         Action         `json:"action"`         // guaranteed to be present
-	ActionCategory ActionCategory `json:"actionCategory"` // guaranteed to be present
-	Outcome        Outcome        `json:"outcome"`        // guaranteed to be present
-	IdentNProvider string         `json:"identnProvider,omitempty"`
+	Action         Action         // guaranteed to be present
+	ActionCategory ActionCategory // guaranteed to be present
+	Outcome        Outcome        // guaranteed to be present
+	IdentNProvider string
 }
 
 func NewAuditAttributesFromHTTP(statusCode int, action Action, category ActionCategory, claims authtypes.Claims) AuditAttributes {
@@ -41,10 +41,10 @@ func (attributes AuditAttributes) Put(dest pcommon.Map) {
 
 // Audit attributes — Principal (Who).
 type PrincipalAttributes struct {
-	PrincipalID    valuer.UUID   `json:"principalId"`
-	PrincipalEmail valuer.Email  `json:"principalEmail"`
-	PrincipalType  PrincipalType `json:"principalType"`
-	PrincipalOrgID valuer.UUID   `json:"principalOrgId"`
+	PrincipalType  PrincipalType
+	PrincipalID    valuer.UUID
+	PrincipalEmail valuer.Email
+	PrincipalOrgID valuer.UUID
 }
 
 func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttributes {
@@ -59,9 +59,9 @@ func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttribut
 	}
 
 	return PrincipalAttributes{
+		PrincipalType:  principalType,
 		PrincipalID:    principalID,
 		PrincipalEmail: principalEmail,
-		PrincipalType:  principalType,
 		PrincipalOrgID: principalOrgID,
 	}
 }
@@ -75,8 +75,8 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 
 // Audit attributes — Resource (On What).
 type ResourceAttributes struct {
-	ResourceID   string `json:"resourceId,omitempty"`
-	ResourceName string `json:"resourceName"` // guaranteed to be present
+	ResourceID   string
+	ResourceName string // guaranteed to be present
 }
 
 func NewResourceAttributes(resourceID, resourceName string) ResourceAttributes {
@@ -96,8 +96,8 @@ func (attributes ResourceAttributes) Put(dest pcommon.Map) {
 // PII data into audit logs. The error type and code are sufficient for
 // filtering and alerting; investigators can correlate via trace ID.
 type ErrorAttributes struct {
-	ErrorType string `json:"errorType,omitempty"`
-	ErrorCode string `json:"errorCode,omitempty"`
+	ErrorType string
+	ErrorCode string
 }
 
 func NewErrorAttributes(errorType, errorCode string) ErrorAttributes {
@@ -114,12 +114,12 @@ func (attributes ErrorAttributes) Put(dest pcommon.Map) {
 
 // Audit attributes — Transport Context (Where/How).
 type TransportAttributes struct {
-	HTTPMethod     string `json:"httpMethod,omitempty"`
-	HTTPRoute      string `json:"httpRoute,omitempty"`
-	HTTPStatusCode int    `json:"httpStatusCode,omitempty"`
-	URLPath        string `json:"urlPath,omitempty"`
-	ClientAddress  string `json:"clientAddress,omitempty"`
-	UserAgent      string `json:"userAgent,omitempty"`
+	HTTPMethod     string
+	HTTPRoute      string
+	HTTPStatusCode int
+	URLPath        string
+	ClientAddress  string
+	UserAgent      string
 }
 
 func NewTransportAttributesFromHTTP(req *http.Request, route string, statusCode int) TransportAttributes {

@@ -13,34 +13,34 @@ import (
 
 type AuditEvent struct {
 	// OTel LogRecord Intrinsic
-	Timestamp time.Time `json:"timestamp"`
+	Timestamp time.Time
 
 	// OTel LogRecord Intrinsic
-	TraceID oteltrace.TraceID `json:"traceId,omitempty"`
+	TraceID oteltrace.TraceID
 
 	// OTel LogRecord Intrinsic
-	SpanID oteltrace.SpanID `json:"spanId,omitempty"`
+	SpanID oteltrace.SpanID
 
 	// OTel LogRecord Intrinsic
-	Body string `json:"body"`
+	Body string
 
 	// OTel LogRecord Intrinsic
-	EventName EventName `json:"eventName"`
+	EventName EventName
 
 	// Custom Audit Attributes - Action
-	AuditAttributes AuditAttributes `json:"auditAttributes"`
+	AuditAttributes AuditAttributes
 
 	// Custom Audit Attributes - Principal
-	PrincipalAttributes PrincipalAttributes `json:"principalAttributes,omitempty"`
+	PrincipalAttributes PrincipalAttributes
 
 	// Custom Audit Attributes - Resource
-	ResourceAttributes ResourceAttributes `json:"resourceAttributes,omitempty"`
+	ResourceAttributes ResourceAttributes
 
 	// Custom Audit Attributes - Error
-	ErrorAttributes ErrorAttributes `json:"errorAttributes,omitempty"`
+	ErrorAttributes ErrorAttributes
 
 	// Custom Audit Attributes - Transport Context
-	TransportAttributes TransportAttributes `json:"transportAttributes,omitempty"`
+	TransportAttributes TransportAttributes
 }
 
 func NewAuditEventFromHTTPRequest(
