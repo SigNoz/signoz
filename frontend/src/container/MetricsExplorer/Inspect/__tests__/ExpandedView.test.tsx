@@ -1,11 +1,11 @@
 import { render, screen } from '@testing-library/react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 
 import {
 	SPACE_AGGREGATION_OPTIONS_FOR_EXPANDED_VIEW,
 	TIME_AGGREGATION_OPTIONS,
 } from '../constants';
 import ExpandedView from '../ExpandedView';
+import { InspectMetricsSeries } from '../types';
 import {
 	GraphPopoverData,
 	InspectionStep,
@@ -25,7 +25,6 @@ describe('ExpandedView', () => {
 		labels: {
 			host_id: 'test-id',
 		},
-		labelsArray: [],
 		title: 'TS1',
 	};
 
@@ -66,10 +65,7 @@ describe('ExpandedView', () => {
 		timeAggregationInterval: 60,
 		spaceAggregationOption: SpaceAggregationOptions.MAX_BY,
 		spaceAggregationLabels: ['host_name'],
-		filters: {
-			items: [],
-			op: 'AND',
-		},
+		filterExpression: '',
 	};
 
 	it('renders entire time series for a raw data inspection', () => {

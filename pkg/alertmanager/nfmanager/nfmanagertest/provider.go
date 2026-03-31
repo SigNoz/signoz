@@ -9,7 +9,7 @@ import (
 	"github.com/prometheus/common/model"
 )
 
-// MockNotificationManager is a simple mock implementation of NotificationManager
+// MockNotificationManager is a simple mock implementation of NotificationManager.
 type MockNotificationManager struct {
 	configs      map[string]*alertmanagertypes.NotificationConfig
 	routes       map[string]*alertmanagertypes.RoutePolicy
@@ -17,7 +17,7 @@ type MockNotificationManager struct {
 	errors       map[string]error
 }
 
-// NewMock creates a new mock notification manager
+// NewMock creates a new mock notification manager.
 func NewMock() *MockNotificationManager {
 	return &MockNotificationManager{
 		configs:      make(map[string]*alertmanagertypes.NotificationConfig),
