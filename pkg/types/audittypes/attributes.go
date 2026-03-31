@@ -10,7 +10,7 @@ import (
 	semconv "go.opentelemetry.io/otel/semconv/v1.26.0"
 )
 
-// Audit attributes — Action (What)
+// Audit attributes — Action (What).
 type AuditAttributes struct {
 	Action         Action         `json:"action"`
 	ActionCategory ActionCategory `json:"actionCategory"`
@@ -39,7 +39,7 @@ func (attributes AuditAttributes) Put(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, "signoz.audit.identn_provider", attributes.IdentNProvider)
 }
 
-// Audit attributes — Principal (Who)
+// Audit attributes — Principal (Who).
 type PrincipalAttributes struct {
 	PrincipalID    valuer.UUID   `json:"principalId"`
 	PrincipalEmail valuer.Email  `json:"principalEmail"`
@@ -73,7 +73,7 @@ func (attributes PrincipalAttributes) Put(dest pcommon.Map) {
 	dest.PutStr("signoz.audit.principal.org_id", attributes.PrincipalOrgID.StringValue())
 }
 
-// Audit attributes — Resource (On What)
+// Audit attributes — Resource (On What).
 type ResourceAttributes struct {
 	ResourceID   string `json:"resourceId,omitempty"`
 	ResourceName string `json:"resourceName"`
@@ -112,7 +112,7 @@ func (attributes ErrorAttributes) Put(dest pcommon.Map) {
 	putStrIfNotEmpty(dest, "signoz.audit.error.code", attributes.ErrorCode)
 }
 
-// Audit attributes — Transport Context (Where/How)
+// Audit attributes — Transport Context (Where/How).
 type TransportAttributes struct {
 	HTTPMethod     string `json:"httpMethod,omitempty"`
 	HTTPRoute      string `json:"httpRoute,omitempty"`
