@@ -382,7 +382,7 @@ require (
 	golang.org/x/tools v0.41.0 // indirect
 	google.golang.org/genproto/googleapis/api v0.0.0-20260203192932-546029d2fa20 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20260128011058-8636f8732409
-	google.golang.org/grpc v1.78.0 // indirect
+	google.golang.org/grpc v1.79.3 // indirect
 	gopkg.in/telebot.v3 v3.3.8 // indirect
 	k8s.io/client-go v0.35.0 // indirect
 	k8s.io/klog/v2 v2.130.1 // indirect
