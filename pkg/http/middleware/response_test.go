@@ -24,7 +24,7 @@ func TestResponseCapture(t *testing.T) {
 			name: "Success_DoesNotCaptureBody",
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusOK)
-				rw.Write([]byte(`{"status":"success","data":{"id":"123"}}`))
+				_, _ = rw.Write([]byte(`{"status":"success","data":{"id":"123"}}`))
 			},
 			wantStatus:     http.StatusOK,
 			wantBodyBytes:  "",
@@ -34,7 +34,7 @@ func TestResponseCapture(t *testing.T) {
 			name: "Error_CapturesBody",
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusForbidden)
-				rw.Write([]byte(`{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`))
+				_, _ = rw.Write([]byte(`{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`))
 			},
 			wantStatus:     http.StatusForbidden,
 			wantBodyBytes:  `{"status":"error","error":{"code":"authz_forbidden","message":"forbidden"}}`,
@@ -44,7 +44,7 @@ func TestResponseCapture(t *testing.T) {
 			name: "Error_TruncatesAtMaxCapture",
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusInternalServerError)
-				rw.Write([]byte(strings.Repeat("x", maxResponseBodyCapture+100)))
+				_, _ = rw.Write([]byte(strings.Repeat("x", maxResponseBodyCapture+100)))
 			},
 			wantStatus:     http.StatusInternalServerError,
 			wantBodyBytes:  strings.Repeat("x", maxResponseBodyCapture) + "...",
@@ -54,7 +54,7 @@ func TestResponseCapture(t *testing.T) {
 			name: "NoContent_SuppressesWrite",
 			handler: func(rw http.ResponseWriter, req *http.Request) {
 				rw.WriteHeader(http.StatusNoContent)
-				rw.Write([]byte("should be suppressed"))
+				_, _ = rw.Write([]byte("should be suppressed"))
 			},
 			wantStatus:     http.StatusNoContent,
 			wantBodyBytes:  "",
