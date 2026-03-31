@@ -659,7 +659,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		// }
 
 		if fieldKeySelector.MetricContext != nil {
-			fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
+			fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricName)+"%"))
 		}
 
 		conds = append(conds, sb.And(fieldConds...))
@@ -747,7 +747,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 		fieldConds = append(fieldConds, sb.NotLike("attr_name", "\\_\\_%"))
 
 		if fieldKeySelector.MetricContext != nil {
-			fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
+			fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricName)+"%"))
 		}
 
 		conds = append(conds, sb.And(fieldConds...))
