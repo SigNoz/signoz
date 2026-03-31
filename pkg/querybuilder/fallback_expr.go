@@ -214,7 +214,10 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloat(tblFieldName)
-			} else if hasString(v) {
+			} else {
+				// Any mix that is not all-floats (e.g. [bool, float64], [bool], all-strings)
+				// must be stringified: passing a Go bool as UInt8 against a String column
+				// causes ClickHouse error 386 "no supertype for String and UInt8".
 				_, value = castString(tblFieldName), toStrings(v)
 			}
 		case bool:
