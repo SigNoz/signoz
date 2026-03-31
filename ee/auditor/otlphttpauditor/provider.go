@@ -11,20 +11,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	otellog "go.opentelemetry.io/otel/log"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
-	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
 var _ auditor.Auditor = (*provider)(nil)
 
 type provider struct {
-	settings       factory.ScopedProviderSettings
-	licensing      licensing.Licensing
-	server         *auditorserver.Server
-	processor      *accumulatingProcessor
-	loggerProvider *sdklog.LoggerProvider
-	logger         otellog.Logger
+	settings  factory.ScopedProviderSettings
+	licensing licensing.Licensing
+	server    *auditorserver.Server
+	exporter  *otlploghttp.Exporter
 }
 
 func NewFactory(licensing licensing.Licensing) factory.ProviderFactory[auditor.Auditor, auditor.Config] {
@@ -42,16 +38,10 @@ func newProvider(ctx context.Context, providerSettings factory.ProviderSettings,
 		return nil, fmt.Errorf("failed to create otlploghttp exporter: %w", err)
 	}
 
-	processor := newAccumulatingProcessor(exporter)
-	loggerProvider := sdklog.NewLoggerProvider(sdklog.WithProcessor(processor))
-	logger := loggerProvider.Logger("signoz.audit")
-
 	p := &provider{
-		settings:       settings,
-		licensing:      lic,
-		processor:      processor,
-		loggerProvider: loggerProvider,
-		logger:         logger,
+		settings:  settings,
+		licensing: lic,
+		exporter:  exporter,
 	}
 
 	server, err := auditorserver.New(
@@ -86,7 +76,6 @@ func (p *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
 		return
 	}
 
-	event.Body = audittypes.BuildBody(event)
 	p.server.Add(ctx, event)
 }
 
@@ -99,7 +88,7 @@ func (p *provider) Stop(ctx context.Context) error {
 		return err
 	}
 
-	return p.loggerProvider.Shutdown(ctx)
+	return p.exporter.Shutdown(ctx)
 }
 
 func (p *provider) Healthy() <-chan struct{} {

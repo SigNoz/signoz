@@ -1,16 +1,19 @@
 package audittypes
 
 import (
+	"fmt"
+
 	otellog "go.opentelemetry.io/otel/log"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
-// ToLogRecord converts an AuditEvent into an OTel log API Record
-// with all signoz.audit.* attributes and transport context attributes.
-func ToLogRecord(event AuditEvent) otellog.Record {
-	var record otellog.Record
+// ToLogRecord converts an AuditEvent into a complete OTel SDK log Record
+// with body, severity, all signoz.audit.* attributes, and transport context attributes.
+func (event AuditEvent) ToLogRecord() sdklog.Record {
+	var record sdklog.Record
 
 	record.SetTimestamp(event.Timestamp)
-	record.SetBody(otellog.StringValue(event.Body))
+	record.SetBody(otellog.StringValue(buildBody(event)))
 	record.SetEventName(event.EventName.String())
 
 	if event.Outcome == OutcomeSuccess {
@@ -80,4 +83,12 @@ func ToLogRecord(event AuditEvent) otellog.Record {
 
 	record.AddAttributes(attrs...)
 	return record
+}
+
+func buildBody(event AuditEvent) string {
+	if event.Outcome == OutcomeSuccess {
+		return fmt.Sprintf("%s (%s) %s %s %s", event.PrincipalEmail, event.PrincipalID, event.Action.PastTense(), event.ResourceName, event.ResourceID)
+	}
+
+	return fmt.Sprintf("%s (%s) failed to %s %s %s: %s (%s)", event.PrincipalEmail, event.PrincipalID, event.Action.StringValue(), event.ResourceName, event.ResourceID, event.ErrorType, event.ErrorCode)
 }

@@ -4,13 +4,14 @@ import (
 	"context"
 
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+	sdklog "go.opentelemetry.io/otel/sdk/log"
 )
 
 func (p *provider) export(ctx context.Context, events []audittypes.AuditEvent) error {
+	records := make([]sdklog.Record, len(events))
 	for i := range events {
-		record := audittypes.ToLogRecord(events[i])
-		p.logger.Emit(ctx, record)
+		records[i] = events[i].ToLogRecord()
 	}
 
-	return p.processor.FlushBatch(ctx)
+	return p.exporter.Export(ctx, records)
 }
