@@ -1,6 +1,7 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+/* eslint-disable no-nested-ternary */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useSearchParams } from 'react-router-dom-v5-compat';
 import * as Sentry from '@sentry/react';
 import logEvent from 'api/common/logEvent';
@@ -27,6 +28,8 @@ import { AppState } from 'store/reducers';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import InspectModal from '../Inspect';
@@ -245,7 +248,15 @@ function Summary(): JSX.Element {
 	const openMetricDetails = (
 		metricName: string,
 		view: 'list' | 'treemap',
+		event?: React.MouseEvent,
 	): void => {
+		if (event && isModifierKeyPressed(event)) {
+			const newParams = new URLSearchParams(searchParams);
+			newParams.set(IS_METRIC_DETAILS_OPEN_KEY, 'true');
+			newParams.set(SELECTED_METRIC_NAME_KEY, metricName);
+			openInNewTab(`${window.location.pathname}?${newParams.toString()}`);
+			return;
+		}
 		setSelectedMetricName(metricName);
 		setIsMetricDetailsOpen(true);
 		setSearchParams({

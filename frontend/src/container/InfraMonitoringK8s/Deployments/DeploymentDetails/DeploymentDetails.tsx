@@ -2,7 +2,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import type { RadioChangeEvent } from 'antd/lib';
@@ -16,15 +15,15 @@ import {
 	initialQueryState,
 } from 'constants/queryBuilder';
 import ROUTES from 'constants/routes';
-import {
-	filterDuplicateFilters,
-	getFiltersFromParams,
-} from 'container/InfraMonitoringK8s/commonUtils';
-import {
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
-	K8sCategory,
-} from 'container/InfraMonitoringK8s/constants';
+import { filterDuplicateFilters } from 'container/InfraMonitoringK8s/commonUtils';
+import { K8sCategory } from 'container/InfraMonitoringK8s/constants';
 import { QUERY_KEYS } from 'container/InfraMonitoringK8s/EntityDetailsUtils/utils';
+import {
+	useInfraMonitoringEventsFilters,
+	useInfraMonitoringLogFilters,
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from 'container/InfraMonitoringK8s/hooks';
 import {
 	CustomTimeType,
 	Time,
@@ -97,23 +96,21 @@ function DeploymentDetails({
 			: (selectedTime as Time),
 	);
 
-	const [searchParams, setSearchParams] = useSearchParams();
-	const [selectedView, setSelectedView] = useState<VIEWS>(() => {
-		const view = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
-		if (view) {
-			return view as VIEWS;
-		}
-		return VIEWS.METRICS;
-	});
+	const [selectedView, setSelectedView] = useInfraMonitoringView();
+	const [logFiltersParam, setLogFiltersParam] = useInfraMonitoringLogFilters();
+	const [
+		tracesFiltersParam,
+		setTracesFiltersParam,
+	] = useInfraMonitoringTracesFilters();
+	const [
+		eventsFiltersParam,
+		setEventsFiltersParam,
+	] = useInfraMonitoringEventsFilters();
 	const isDarkMode = useIsDarkMode();
 
 	const initialFilters = useMemo(() => {
-		const urlView = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW);
-		const queryKey =
-			urlView === VIEW_TYPES.LOGS
-				? INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS
-				: INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS;
-		const filters = getFiltersFromParams(searchParams, queryKey);
+		const filters =
+			selectedView === VIEW_TYPES.LOGS ? logFiltersParam : tracesFiltersParam;
 		if (filters) {
 			return filters;
 		}
@@ -147,16 +144,14 @@ function DeploymentDetails({
 	}, [
 		deployment?.meta.k8s_deployment_name,
 		deployment?.meta.k8s_namespace_name,
-		searchParams,
+		selectedView,
+		logFiltersParam,
+		tracesFiltersParam,
 	]);
 
 	const initialEventsFilters = useMemo(() => {
-		const filters = getFiltersFromParams(
-			searchParams,
-			INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
-		);
-		if (filters) {
-			return filters;
+		if (eventsFiltersParam) {
+			return eventsFiltersParam;
 		}
 		return {
 			op: 'AND',
@@ -185,7 +180,7 @@ function DeploymentDetails({
 				},
 			],
 		};
-	}, [deployment?.meta.k8s_deployment_name, searchParams]);
+	}, [deployment?.meta.k8s_deployment_name, eventsFiltersParam]);
 
 	const [logAndTracesFilters, setLogAndTracesFilters] = useState<
 		IBuilderQuery['filters']
@@ -226,13 +221,9 @@ function DeploymentDetails({
 
 	const handleTabChange = (e: RadioChangeEvent): void => {
 		setSelectedView(e.target.value);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: e.target.value,
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(null),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(null),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(null),
-		});
+		setLogFiltersParam(null);
+		setTracesFiltersParam(null);
+		setEventsFiltersParam(null);
 		logEvent(InfraMonitoringEvents.TabChanged, {
 			entity: InfraMonitoringEvents.K8sEntity,
 			page: InfraMonitoringEvents.DetailedPage,
@@ -309,13 +300,8 @@ function DeploymentDetails({
 					),
 				};
 
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
-				});
+				setLogFiltersParam(updatedFilters);
+				setSelectedView(view);
 
 				return updatedFilters;
 			});
@@ -354,13 +340,8 @@ function DeploymentDetails({
 					),
 				};
 
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
-				});
+				setTracesFiltersParam(updatedFilters);
+				setSelectedView(view);
 
 				return updatedFilters;
 			});
@@ -403,13 +384,8 @@ function DeploymentDetails({
 					),
 				};
 
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS]: JSON.stringify(
-						updatedFilters,
-					),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW]: view,
-				});
+				setEventsFiltersParam(updatedFilters);
+				setSelectedView(view);
 
 				return updatedFilters;
 			});

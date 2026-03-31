@@ -36,6 +36,28 @@ var unquotedDottedNamePattern = regexp.MustCompile(`(?:^|[{,(\s])([a-zA-Z_][a-zA
 // This is a common mistake when migrating to UTF-8 syntax.
 var quotedMetricOutsideBracesPattern = regexp.MustCompile(`"([^"]+)"\s*\{`)
 
+// tryEnhancePromQLExecError attempts to convert a PromQL execution error into
+// a properly typed error. Returns nil if the error is not a recognized execution error.
+func tryEnhancePromQLExecError(execErr error) error {
+	var eqc promql.ErrQueryCanceled
+	var eqt promql.ErrQueryTimeout
+	var es promql.ErrStorage
+	switch {
+	case errors.As(execErr, &eqc):
+		return errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled").WithAdditional(eqc.Error())
+	case errors.As(execErr, &eqt):
+		return errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timed out").WithAdditional(eqt.Error())
+	case errors.Is(execErr, context.DeadlineExceeded):
+		return errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timed out")
+	case errors.Is(execErr, context.Canceled):
+		return errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
+	case errors.As(execErr, &es):
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", execErr)
+	default:
+		return nil
+	}
+}
+
 // enhancePromQLError adds helpful context to PromQL parse errors,
 // particularly for UTF-8 syntax migration issues where metric and label
 // names containing dots need to be quoted.
@@ -213,27 +235,20 @@ func (q *promqlQuery) Execute(ctx context.Context) (*qbv5.Result, error) {
 		time.Unix(0, end),
 		q.query.Step.Duration,
 	)
-
 	if err != nil {
+		// NewRangeQuery can fail with execution errors (e.g. context deadline exceeded)
+		// during the query queue/scheduling stage, not just parse errors.
+		if err := tryEnhancePromQLExecError(err); err != nil {
+			return nil, err
+		}
+
 		return nil, enhancePromQLError(query, err)
 	}
 
 	res := qry.Exec(ctx)
 	if res.Err != nil {
-		var eqc promql.ErrQueryCanceled
-		var eqt promql.ErrQueryTimeout
-		var es promql.ErrStorage
-		switch {
-		case errors.As(res.Err, &eqc):
-			return nil, errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
-		case errors.As(res.Err, &eqt):
-			return nil, errors.Newf(errors.TypeTimeout, errors.CodeTimeout, "query timeout")
-		case errors.As(res.Err, &es):
-			return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)
-		}
-
-		if errors.Is(res.Err, context.Canceled) {
-			return nil, errors.Newf(errors.TypeCanceled, errors.CodeCanceled, "query canceled")
+		if err := tryEnhancePromQLExecError(res.Err); err != nil {
+			return nil, err
 		}
 
 		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "query execution error: %v", res.Err)

@@ -940,7 +940,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			).
 			WillReturnRows(samplesRows)
 
-		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
@@ -1061,7 +1061,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			WithArgs("test_metric", "__name__", "test_metric").
 			WillReturnRows(fingerprintRows)
 
-		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
 		var target float64 = 0
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
@@ -1281,7 +1281,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			).
 			WillReturnRows(samplesRows)
 
-		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
+		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
 		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
@@ -1441,7 +1441,7 @@ func TestPromRule_NoData(t *testing.T) {
 			promProvider := prometheustest.New(
 				context.Background(),
 				instrumentationtest.New().ToProviderSettings(),
-				prometheus.Config{},
+				prometheus.Config{Timeout: 2 * time.Minute},
 				telemetryStore,
 			)
 			defer func() {
@@ -1590,7 +1590,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			promProvider := prometheustest.New(
 				context.Background(),
 				instrumentationtest.New().ToProviderSettings(),
-				prometheus.Config{},
+				prometheus.Config{Timeout: 2 * time.Minute},
 				telemetryStore,
 			)
 			defer func() {
@@ -1748,7 +1748,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			promProvider := prometheustest.New(
 				context.Background(),
 				instrumentationtest.New().ToProviderSettings(),
-				prometheus.Config{LookbackDelta: lookBackDelta},
+				prometheus.Config{Timeout: 2 * time.Minute, LookbackDelta: lookBackDelta},
 				telemetryStore,
 			)
 			defer func() {

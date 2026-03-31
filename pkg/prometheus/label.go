@@ -6,6 +6,8 @@ import (
 	"github.com/prometheus/prometheus/promql"
 )
 
+const FingerprintAsPromLabelName string = "fingerprint"
+
 func RemoveExtraLabels(res *promql.Result, labelsToRemove ...string) error {
 	if len(labelsToRemove) == 0 || res == nil {
 		return nil

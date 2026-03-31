@@ -1,6 +1,7 @@
 package querybuilder
 
 import (
+	"context"
 	"log/slog"
 	"strings"
 	"testing"
@@ -54,11 +55,12 @@ func TestPrepareWhereClause_EmptyVariableList(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			opts := FilterExprVisitorOpts{
+				Context:   context.Background(),
 				FieldKeys: keys,
 				Variables: tt.variables,
 			}
 
-			_, err := PrepareWhereClause(tt.expr, opts, 0, 0)
+			_, err := PrepareWhereClause(tt.expr, opts)
 
 			if tt.expectError {
 				if err == nil {
@@ -467,7 +469,7 @@ func TestVisitKey(t *testing.T) {
 			expectedWarnings:   nil,
 			expectedMainWrnURL: "",
 		},
-				{
+		{
 			name:    "only attribute.custom_field is selected",
 			keyText: "attribute.attribute.custom_field",
 			fieldKeys: map[string][]*telemetrytypes.TelemetryFieldKey{
