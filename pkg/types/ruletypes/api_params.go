@@ -255,6 +255,41 @@ func (r *PostableRule) processRuleDefaults() {
 			}
 		}
 	}
+
+	// Sync threshold-level channels to top-level preferredChannels for multi-threshold alerts
+	// This ensures GetMatchers() in sqlalertmanagerstore/config.go can find the channels
+	r.syncPreferredChannelsFromThresholds()
+}
+
+// syncPreferredChannelsFromThresholds collects all unique channel names from thresholds
+// and sets them at the rule level, ensuring alertmanager routing works correctly.
+func (r *PostableRule) syncPreferredChannelsFromThresholds() {
+	if r.RuleCondition == nil || r.RuleCondition.Thresholds == nil {
+		return
+	}
+
+	// If preferredChannels is already set, don't override it
+	if len(r.PreferredChannels) > 0 {
+		return
+	}
+
+	// Collect unique channels from all thresholds
+	channels := make(map[string]struct{})
+	if basicThresholds, ok := r.RuleCondition.Thresholds.Spec.(BasicRuleThresholds); ok {
+		for _, threshold := range basicThresholds {
+			for _, channel := range threshold.Channels {
+				channels[channel] = struct{}{}
+			}
+		}
+	}
+
+	// Set preferredChannels with collected unique channel names
+	if len(channels) > 0 {
+		r.PreferredChannels = make([]string, 0, len(channels))
+		for channel := range channels {
+			r.PreferredChannels = append(r.PreferredChannels, channel)
+		}
+	}
 }
 
 func (r *PostableRule) MarshalJSON() ([]byte, error) {

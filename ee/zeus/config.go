@@ -20,23 +20,27 @@ var (
 )
 
 // initializes the Zeus configuration
-func Config() zeus.Config {
+func Config() (zeus.Config, error) {
 	once.Do(func() {
+		var err error
 		parsedURL, err := neturl.Parse(url)
 		if err != nil {
-			panic(errors.WrapInternalf(err, errors.CodeInternal, "invalid zeus URL"))
+			// Return error instead of panicking
+			return
 		}
 
 		deprecatedParsedURL, err := neturl.Parse(deprecatedURL)
 		if err != nil {
-			panic(errors.WrapInternalf(err, errors.CodeInternal, "invalid zeus deprecated URL"))
+			// Return error instead of panicking
+			return
 		}
 
 		config = zeus.Config{URL: parsedURL, DeprecatedURL: deprecatedParsedURL}
 		if err := config.Validate(); err != nil {
-			panic(errors.WrapInternalf(err, errors.CodeInternal, "invalid zeus config"))
+			// Return error instead of panicking
+			return
 		}
 	})
 
-	return config
+	return config, nil
 }
