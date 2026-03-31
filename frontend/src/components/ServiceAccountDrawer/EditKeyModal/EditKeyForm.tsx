@@ -15,11 +15,7 @@ export interface EditKeyFormProps {
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;
 	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null;
-	isSaving: boolean;
-	isDirty: boolean;
 	onSubmit: () => void;
-	onClose: () => void;
-	onRevokeClick: () => void;
 	formatTimezoneAdjustedTimestamp: (ts: string, format: string) => string;
 }
 
@@ -28,11 +24,7 @@ function EditKeyForm({
 	control,
 	expiryMode,
 	keyItem,
-	isSaving,
-	isDirty,
 	onSubmit,
-	onClose,
-	onRevokeClick,
 	formatTimezoneAdjustedTimestamp,
 }: EditKeyFormProps): JSX.Element {
 	return (

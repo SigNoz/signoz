@@ -16,11 +16,6 @@ import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsString, useQueryState } from 'nuqs';
 
-export interface RevokeKeyContentProps {
-	isRevoking: boolean;
-	onCancel: () => void;
-	onConfirm: () => void;
-}
 
 export function RevokeKeyContent(): JSX.Element {
 	return (

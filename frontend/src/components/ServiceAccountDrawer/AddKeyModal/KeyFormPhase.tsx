@@ -12,20 +12,14 @@ export interface KeyFormPhaseProps {
 	register: UseFormRegister<FormValues>;
 	control: Control<FormValues>;
 	expiryMode: ExpiryMode;
-	isSubmitting: boolean;
-	isValid: boolean;
 	onSubmit: () => void;
-	onClose: () => void;
 }
 
 function KeyFormPhase({
 	register,
 	control,
 	expiryMode,
-	isSubmitting,
-	isValid,
 	onSubmit,
-	onClose,
 }: KeyFormPhaseProps): JSX.Element {
 	return (
 		<>

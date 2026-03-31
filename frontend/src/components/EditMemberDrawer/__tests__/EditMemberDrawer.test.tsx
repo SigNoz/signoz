@@ -12,35 +12,40 @@ import { ROLES } from 'types/roles';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
-jest.mock('@signozhq/drawer', () => ({
-	DrawerWrapper: ({
-		content,
-		open,
-	}: {
-		content?: ReactNode;
-		open: boolean;
-	}): JSX.Element | null => (open ? <div>{content}</div> : null),
-}));
-
-jest.mock('@signozhq/dialog', () => ({
-	DialogWrapper: ({
-		children,
-		open,
-		title,
-	}: {
-		children?: ReactNode;
-		open: boolean;
-		title?: string;
-	}): JSX.Element | null =>
-		open ? (
-			<div role="dialog" aria-label={title}>
-				{children}
-			</div>
-		) : null,
-	DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
-		<div>{children}</div>
-	),
-}));
+jest.mock('@signozhq/ui', () => {
+	const actual = jest.requireActual('@signozhq/ui');
+	return {
+		...actual,
+		DrawerWrapper: ({
+			children,
+			open,
+		}: {
+			children?: ReactNode;
+			open: boolean;
+		}): JSX.Element | null => (open ? <div>{children}</div> : null),
+		DialogWrapper: ({
+			children,
+			open,
+			title,
+			footer,
+		}: {
+			children?: ReactNode;
+			open: boolean;
+			title?: string;
+			footer?: ReactNode;
+		}): JSX.Element | null =>
+			open ? (
+				<div role="dialog" aria-label={title}>
+					{title}
+					{children}
+					{footer}
+				</div>
+			) : null,
+		DialogFooter: ({ children }: { children?: ReactNode }): JSX.Element => (
+			<div>{children}</div>
+		),
+	};
+});
 
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
