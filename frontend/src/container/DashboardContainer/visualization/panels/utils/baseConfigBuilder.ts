@@ -1,5 +1,6 @@
 import { Timezone } from 'components/CustomTimePicker/timezoneUtils';
 import { PANEL_TYPES } from 'constants/queryBuilder';
+import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import onClickPlugin, {
 	OnClickPluginOpts,
 } from 'lib/uPlotLib/plugins/onClickPlugin';
@@ -9,28 +10,32 @@ import {
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { ThresholdsDrawHookOptions } from 'lib/uPlotV2/hooks/types';
-import { Widgets } from 'types/api/dashboard/getAll';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
 import uPlot from 'uplot';
 
 import { PanelMode } from '../types';
 
 export interface BaseConfigBuilderProps {
-	widget: Widgets;
-	apiResponse: MetricRangePayloadProps;
+	id: string;
+	thresholds?: ThresholdProps[];
+	apiResponse?: MetricRangePayloadProps;
 	isDarkMode: boolean;
 	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect?: (startTime: number, endTime: number) => void;
 	timezone?: Timezone;
-	panelMode: PanelMode;
+	panelMode?: PanelMode;
 	panelType: PANEL_TYPES;
 	minTimeScale?: number;
 	maxTimeScale?: number;
 	stepInterval?: number;
+	isLogScale?: boolean;
+	yAxisUnit?: string;
+	softMin?: number;
+	softMax?: number;
 }
 
 export function buildBaseConfig({
-	widget,
+	id,
 	isDarkMode,
 	onClick,
 	onDragSelect,
@@ -38,9 +43,14 @@ export function buildBaseConfig({
 	timezone,
 	panelMode,
 	panelType,
+	thresholds,
 	minTimeScale,
 	maxTimeScale,
 	stepInterval,
+	isLogScale,
+	yAxisUnit,
+	softMin,
+	softMax,
 }: BaseConfigBuilderProps): UPlotConfigBuilder {
 	const tzDate = timezone
 		? (timestamp: number): Date =>
@@ -48,28 +58,27 @@ export function buildBaseConfig({
 		: undefined;
 
 	const builder = new UPlotConfigBuilder({
+		id,
 		onDragSelect,
-		widgetId: widget.id,
 		tzDate,
 		shouldSaveSelectionPreference: panelMode === PanelMode.DASHBOARD_VIEW,
-		selectionPreferencesSource: [
-			PanelMode.DASHBOARD_VIEW,
-			PanelMode.STANDALONE_VIEW,
-		].includes(panelMode)
-			? SelectionPreferencesSource.LOCAL_STORAGE
+		selectionPreferencesSource: panelMode
+			? [PanelMode.DASHBOARD_VIEW, PanelMode.STANDALONE_VIEW].includes(panelMode)
+				? SelectionPreferencesSource.LOCAL_STORAGE
+				: SelectionPreferencesSource.IN_MEMORY
 			: SelectionPreferencesSource.IN_MEMORY,
 		stepInterval,
 	});
 
 	const thresholdOptions: ThresholdsDrawHookOptions = {
 		scaleKey: 'y',
-		thresholds: (widget.thresholds || []).map((threshold) => ({
+		thresholds: (thresholds || []).map((threshold) => ({
 			thresholdValue: threshold.thresholdValue ?? 0,
 			thresholdColor: threshold.thresholdColor,
 			thresholdUnit: threshold.thresholdUnit,
 			thresholdLabel: threshold.thresholdLabel,
 		})),
-		yAxisUnit: widget.yAxisUnit,
+		yAxisUnit: yAxisUnit,
 	};
 
 	builder.addThresholds(thresholdOptions);
@@ -79,8 +88,8 @@ export function buildBaseConfig({
 		time: true,
 		min: minTimeScale,
 		max: maxTimeScale,
-		logBase: widget.isLogScale ? 10 : undefined,
-		distribution: widget.isLogScale
+		logBase: isLogScale ? 10 : undefined,
+		distribution: isLogScale
 			? DistributionType.Logarithmic
 			: DistributionType.Linear,
 	});
@@ -91,11 +100,11 @@ export function buildBaseConfig({
 		time: false,
 		min: undefined,
 		max: undefined,
-		softMin: widget.softMin ?? undefined,
-		softMax: widget.softMax ?? undefined,
+		softMin: softMin,
+		softMax: softMax,
 		thresholds: thresholdOptions,
-		logBase: widget.isLogScale ? 10 : undefined,
-		distribution: widget.isLogScale
+		logBase: isLogScale ? 10 : undefined,
+		distribution: isLogScale
 			? DistributionType.Logarithmic
 			: DistributionType.Linear,
 	});
@@ -114,7 +123,7 @@ export function buildBaseConfig({
 		show: true,
 		side: 2,
 		isDarkMode,
-		isLogScale: widget.isLogScale,
+		isLogScale,
 		panelType,
 	});
 
@@ -123,8 +132,8 @@ export function buildBaseConfig({
 		show: true,
 		side: 3,
 		isDarkMode,
-		isLogScale: widget.isLogScale,
-		yAxisUnit: widget.yAxisUnit,
+		isLogScale,
+		yAxisUnit,
 		panelType,
 	});
 

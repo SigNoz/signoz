@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { defaultTraceSelectedColumns } from 'container/OptionsMenu/constants';
 import {

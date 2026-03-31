@@ -1,4 +1,4 @@
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import { PrecisionOption, PrecisionOptionsEnum } from 'components/Graph/types';
 import CustomCheckBox from 'container/GridCardLayout/GridCard/FullView/TableRender/CustomCheckBox';
 

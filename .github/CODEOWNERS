@@ -1,8 +1,6 @@
 # CODEOWNERS info: https://help.github.com/en/articles/about-code-owners
 
-# Owners are automatically requested for review for PRs that changes code
-
-# that they own.
+# Owners are automatically requested for review for PRs that changes code that they own.
 
 /frontend/ @SigNoz/frontend-maintainers
 
@@ -11,8 +9,10 @@
 /frontend/src/container/OnboardingV2Container/onboarding-configs/onboarding-config-with-links.json @makeavish
 /frontend/src/container/OnboardingV2Container/AddDataSource/AddDataSource.tsx @makeavish
 
-/deploy/ @SigNoz/devops
-.github @SigNoz/devops
+# CI
+/deploy/ @therealpandey
+.github @therealpandey
+go.mod @therealpandey
 
 # Scaffold Owners
 
@@ -86,6 +86,8 @@
 /pkg/types/alertmanagertypes @srikanthccv
 /pkg/alertmanager/ @srikanthccv
 /pkg/ruler/ @srikanthccv
+/pkg/modules/rulestatehistory/ @srikanthccv
+/pkg/types/rulestatehistorytypes/ @srikanthccv
 
 # Correlation-adjacent
 
@@ -104,6 +106,10 @@
 /pkg/modules/organization/ @vikrantgupta25
 /pkg/modules/authdomain/ @vikrantgupta25
 /pkg/modules/role/ @vikrantgupta25
+
+# IdentN Owners
+/pkg/identn/ @vikrantgupta25
+/pkg/http/middleware/identn.go @vikrantgupta25
 
 # Integration tests
 
@@ -127,12 +133,15 @@
 /frontend/src/pages/DashboardsListPage/ @SigNoz/pulse-frontend
 /frontend/src/container/ListOfDashboard/ @SigNoz/pulse-frontend
 
+# Dashboard Widget Page
+/frontend/src/pages/DashboardWidget/ @SigNoz/pulse-frontend
+/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
+
 ## Dashboard Page
 
 /frontend/src/pages/DashboardPage/ @SigNoz/pulse-frontend
 /frontend/src/container/DashboardContainer/ @SigNoz/pulse-frontend
 /frontend/src/container/GridCardLayout/ @SigNoz/pulse-frontend
-/frontend/src/container/NewWidget/ @SigNoz/pulse-frontend
 
 ## Public Dashboard Page
 

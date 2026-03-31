@@ -1,4 +1,5 @@
 import { useCallback, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import { Button, Col, Divider, Popover, Row, Select, Space } from 'antd';
@@ -11,6 +12,7 @@ import LogsFilters from 'container/LogsFilters';
 import LogsSearchFilter from 'container/LogsSearchFilter';
 import LogsTable from 'container/LogsTable';
 import history from 'lib/history';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

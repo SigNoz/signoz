@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { Tabs as AntDTabs, TabsProps } from 'antd';
 

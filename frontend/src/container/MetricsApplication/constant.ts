@@ -1,5 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-
 import { DownloadOptions } from 'container/Download/Download.types';
 import { MenuItemKeys } from 'container/GridCardLayout/WidgetHeader/contants';
 import {

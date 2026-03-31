@@ -1,5 +1,4 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-import { ColumnType } from 'antd/es/table';
+import { TableColumnType as ColumnType } from 'antd';
 import { convertUnit } from 'container/NewWidget/RightContainer/dataFormatCategories';
 import { ThresholdProps } from 'container/NewWidget/RightContainer/Threshold/types';
 import { QUERY_TABLE_CONFIG } from 'container/QueryTable/config';
@@ -49,7 +48,7 @@ function evaluateCondition(
  * @param columnUnit - The current unit of the value.
  * @returns A boolean indicating whether the value meets the threshold condition.
  */
-function evaluateThresholdWithConvertedValue(
+export function evaluateThresholdWithConvertedValue(
 	value: number,
 	thresholdValue: number,
 	thresholdOperator?: string,

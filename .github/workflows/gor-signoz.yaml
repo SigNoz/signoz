@@ -24,19 +24,19 @@ jobs:
       - name: dotenv-frontend
         working-directory: frontend
         run: |
-          echo 'INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
-          echo 'SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> .env
-          echo 'SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> .env
-          echo 'SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> .env
-          echo 'SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> .env
-          echo 'SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> .env
-          echo 'TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
-          echo 'TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
-          echo 'POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
-          echo 'PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
-          echo 'APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
-          echo 'PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
-          echo 'DOCS_BASE_URL="https://signoz.io"' >> .env
+          echo 'VITE_INTERCOM_APP_ID="${{ secrets.INTERCOM_APP_ID }}"' > .env
+          echo 'VITE_SEGMENT_ID="${{ secrets.SEGMENT_ID }}"' >> .env
+          echo 'VITE_SENTRY_AUTH_TOKEN="${{ secrets.SENTRY_AUTH_TOKEN }}"' >> .env
+          echo 'VITE_SENTRY_ORG="${{ secrets.SENTRY_ORG }}"' >> .env
+          echo 'VITE_SENTRY_PROJECT_ID="${{ secrets.SENTRY_PROJECT_ID }}"' >> .env
+          echo 'VITE_SENTRY_DSN="${{ secrets.SENTRY_DSN }}"' >> .env
+          echo 'VITE_TUNNEL_URL="${{ secrets.TUNNEL_URL }}"' >> .env
+          echo 'VITE_TUNNEL_DOMAIN="${{ secrets.TUNNEL_DOMAIN }}"' >> .env
+          echo 'VITE_POSTHOG_KEY="${{ secrets.POSTHOG_KEY }}"' >> .env
+          echo 'VITE_PYLON_APP_ID="${{ secrets.PYLON_APP_ID }}"' >> .env
+          echo 'VITE_APPCUES_APP_ID="${{ secrets.APPCUES_APP_ID }}"' >> .env
+          echo 'VITE_PYLON_IDENTITY_SECRET="${{ secrets.PYLON_IDENTITY_SECRET }}"' >> .env
+          echo 'VITE_DOCS_BASE_URL="https://signoz.io"' >> .env
       - name: node-setup
         uses: actions/setup-node@v5
         with:

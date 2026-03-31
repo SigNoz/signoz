@@ -1,6 +1,4 @@
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable @typescript-eslint/ban-ts-comment */
-/* eslint-disable no-param-reassign */
 import { histogramBucketSizes } from '@grafana/data';
 import { QueryData } from 'types/api/widgets/getQuery';
 import uPlot, { AlignedData } from 'uplot';
@@ -143,7 +141,6 @@ export function histogram(
 
 	const bins = [...hist.values()];
 
-	// eslint-disable-next-line @typescript-eslint/no-unused-expressions
 	sort && bins.sort((a, b) => sort(a.value, b.value));
 
 	const values = Array(bins.length);

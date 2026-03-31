@@ -1,4 +1,5 @@
 import GetSearchFields from 'api/logs/GetSearchFields';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import AppActions from 'types/actions';
 import { SET_FIELDS } from 'types/actions/logs';

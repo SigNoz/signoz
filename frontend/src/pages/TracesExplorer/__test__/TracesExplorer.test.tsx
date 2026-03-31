@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { MemoryRouter } from 'react-router-dom-v5-compat';
 import userEvent from '@testing-library/user-event';
 import { ENVIRONMENT } from 'constants/env';

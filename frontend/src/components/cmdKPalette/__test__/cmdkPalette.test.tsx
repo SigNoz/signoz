@@ -21,8 +21,6 @@ beforeAll(() => {
 
 afterAll(() => {
 	// restore
-	// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-	// @ts-ignore
 	delete (HTMLElement.prototype as any).scrollIntoView;
 });
 
@@ -84,13 +82,13 @@ jest.mock('lib/history', () => {
 
 // Mock ResizeObserver for Jest/jsdom
 class ResizeObserver {
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, class-methods-use-this
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	observe() {}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, class-methods-use-this
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	unobserve() {}
 
-	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type, class-methods-use-this
+	// eslint-disable-next-line @typescript-eslint/explicit-function-return-type
 	disconnect() {}
 }
 

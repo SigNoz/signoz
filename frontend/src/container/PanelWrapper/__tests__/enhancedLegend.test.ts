@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { Dimensions } from 'hooks/useDimensions';
 import { LegendPosition } from 'types/api/dashboard/getAll';
 

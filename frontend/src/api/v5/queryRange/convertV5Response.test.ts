@@ -1,4 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { SuccessResponse } from 'types/api';
 import {
 	MetricRangePayloadV5,

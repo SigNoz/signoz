@@ -20,7 +20,6 @@ function LogContext({
 	contextQuery,
 	isEdit,
 }: LogContextProps): JSX.Element {
-	// eslint-disable-next-line react/jsx-no-useless-fragment
 	if (!contextQuery) {
 		return <></>;
 	}

@@ -1,6 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 import {
 	MouseEvent,
 	useCallback,
@@ -10,6 +7,7 @@ import {
 	useState,
 } from 'react';
 import { useMutation } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
 import {
@@ -64,13 +62,16 @@ import { AppState } from 'store/reducers';
 import AppReducer from 'types/reducer/app';
 import { USER_ROLES } from 'types/roles';
 import { checkVersionState } from 'utils/app';
+import { isModifierKeyPressed } from 'utils/app';
 import { showErrorNotification } from 'utils/error';
+import { openInNewTab } from 'utils/navigation';
 
 import { useCmdK } from '../../providers/cmdKProvider';
 import { routeConfig } from './config';
 import { getQueryString } from './helper';
 import {
 	defaultMoreMenuItems,
+	getUserSettingsDropdownMenuItems,
 	helpSupportDropdownMenuItems as DefaultHelpSupportDropdownMenuItems,
 	helpSupportMenuItem,
 	primaryMenuItems,
@@ -306,8 +307,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		icon: <Cog size={16} />,
 	};
 
-	const isCtrlMetaKey = (e: MouseEvent): boolean => e.ctrlKey || e.metaKey;
-
 	const isLatestVersion = checkVersionState(currentVersion, latestVersion);
 
 	const [
@@ -436,10 +435,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const isWorkspaceBlocked = trialInfo?.workSpaceBlock || false;
 
-	const openInNewTab = (path: string): void => {
-		window.open(path, '_blank');
-	};
-
 	const onClickGetStarted = (event: MouseEvent): void => {
 		logEvent('Sidebar: Menu clicked', {
 			menuRoute: '/get-started',
@@ -450,7 +445,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			? ROUTES.GET_STARTED_WITH_CLOUD
 			: ROUTES.GET_STARTED;
 
-		if (isCtrlMetaKey(event)) {
+		if (isModifierKeyPressed(event)) {
 			openInNewTab(onboaringRoute);
 		} else {
 			history.push(onboaringRoute);
@@ -465,7 +460,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			const queryString = getQueryString(availableParams || [], params);
 
 			if (pathname !== key) {
-				if (event && isCtrlMetaKey(event)) {
+				if (event && isModifierKeyPressed(event)) {
 					openInNewTab(`${key}?${queryString.join('&')}`);
 				} else {
 					history.push(`${key}?${queryString.join('&')}`, {
@@ -487,48 +482,12 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const userSettingsDropdownMenuItems: MenuProps['items'] = useMemo(
 		() =>
-			[
-				{
-					key: 'label',
-					label: (
-						<div className="user-settings-dropdown-logged-in-section">
-							<span className="user-settings-dropdown-label-text">LOGGED IN AS</span>
-							<span className="user-settings-dropdown-label-email">{user.email}</span>
-						</div>
-					),
-					disabled: true,
-					dataTestId: 'logged-in-as-nav-item',
-				},
-				{ type: 'divider' as const },
-				{
-					key: 'account',
-					label: 'Account Settings',
-					dataTestId: 'account-settings-nav-item',
-				},
-				{
-					key: 'workspace',
-					label: 'Workspace Settings',
-					disabled: isWorkspaceBlocked,
-					dataTestId: 'workspace-settings-nav-item',
-				},
-				...(isEnterpriseSelfHostedUser || isCommunityEnterpriseUser
-					? [
-							{
-								key: 'license',
-								label: 'Manage License',
-								dataTestId: 'manage-license-nav-item',
-							},
-					  ]
-					: []),
-				{ type: 'divider' as const },
-				{
-					key: 'logout',
-					label: (
-						<span className="user-settings-dropdown-logout-section">Sign out</span>
-					),
-					dataTestId: 'logout-nav-item',
-				},
-			].filter(Boolean),
+			getUserSettingsDropdownMenuItems({
+				userEmail: user.email,
+				isWorkspaceBlocked,
+				isEnterpriseSelfHostedUser,
+				isCommunityEnterpriseUser,
+			}),
 		[
 			isEnterpriseSelfHostedUser,
 			isCommunityEnterpriseUser,
@@ -664,7 +623,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 	const handleMenuItemClick = (event: MouseEvent, item: SidebarItem): void => {
 		if (item.key === ROUTES.SETTINGS) {
-			if (isCtrlMetaKey(event)) {
+			if (isModifierKeyPressed(event)) {
 				openInNewTab(settingsRoute);
 			} else {
 				history.push(settingsRoute);
@@ -842,6 +801,7 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleHelpSupportMenuItemClick = (info: SidebarItem): void => {
 		const item = helpSupportDropdownMenuItems.find(
 			(item) => !('type' in item) && item.key === info.key,
@@ -851,6 +811,8 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			window.open(item.url, '_blank');
 		}
 
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
+
 		if (item && !('type' in item)) {
 			logEvent('Help Popover: Item clicked', {
 				menuRoute: item.key,
@@ -859,15 +821,21 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 
 			switch (item.key) {
 				case ROUTES.SHORTCUTS:
-					history.push(ROUTES.SHORTCUTS);
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(ROUTES.SHORTCUTS);
+					} else {
+						history.push(ROUTES.SHORTCUTS);
+					}
 					break;
 				case 'invite-collaborators':
-					history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					if (event && isModifierKeyPressed(event)) {
+						openInNewTab(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					} else {
+						history.push(`${ROUTES.ORG_SETTINGS}#invite-team-members`);
+					}
 					break;
 				case 'chat-support':
 					if (window.pylon) {
-						// eslint-disable-next-line @typescript-eslint/ban-ts-comment
-						// @ts-ignore
 						window.Pylon('show');
 					}
 					break;
@@ -881,8 +849,9 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		}
 	};
 
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	const handleSettingsMenuItemClick = (info: SidebarItem): void => {
-		const item = userSettingsDropdownMenuItems.find(
+		const item = (userSettingsDropdownMenuItems ?? []).find(
 			(item) => item?.key === info.key,
 		);
 		let menuLabel = '';
@@ -898,15 +867,37 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			menuRoute: item?.key,
 			menuLabel,
 		});
+
+		const event = (info as SidebarItem & { domEvent?: MouseEvent }).domEvent;
+
 		switch (info.key) {
 			case 'account':
-				history.push(ROUTES.MY_SETTINGS);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.MY_SETTINGS);
+				} else {
+					history.push(ROUTES.MY_SETTINGS);
+				}
 				break;
 			case 'workspace':
-				history.push(ROUTES.SETTINGS);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SETTINGS);
+				} else {
+					history.push(ROUTES.SETTINGS);
+				}
 				break;
 			case 'license':
-				history.push(ROUTES.LIST_LICENSES);
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.LIST_LICENSES);
+				} else {
+					history.push(ROUTES.LIST_LICENSES);
+				}
+				break;
+			case 'keyboard-shortcuts':
+				if (event && isModifierKeyPressed(event)) {
+					openInNewTab(ROUTES.SHORTCUTS);
+				} else {
+					history.push(ROUTES.SHORTCUTS);
+				}
 				break;
 			case 'logout':
 				Logout();
@@ -954,7 +945,6 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 						<div className="brand-company-meta">
 							<div
 								className="brand-logo"
-								// eslint-disable-next-line react/no-unknown-property
 								onClick={(event: MouseEvent): void => {
 									// Current home page
 									onClickHandler(ROUTES.HOME, event);

@@ -1,5 +1,3 @@
-/* eslint-disable @typescript-eslint/naming-convention */
-
 export const OPERATORS = {
 	IN: 'IN',
 	LIKE: 'LIKE',
@@ -85,7 +83,6 @@ export const DEPRECATED_OPERATORS_MAP = {
 
 export const NON_VALUE_OPERATORS = [OPERATORS.EXISTS];
 
-// eslint-disable-next-line @typescript-eslint/naming-convention
 export enum QUERY_BUILDER_KEY_TYPES {
 	STRING = 'string',
 	NUMBER = 'number',

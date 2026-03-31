@@ -20,7 +20,6 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 	);
 
 	if (!width) {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		return <th {...restProps} className="resizable-header" />;
 	}
 
@@ -33,7 +32,6 @@ function ResizableHeader(props: ResizableHeaderProps): JSX.Element {
 			draggableOpts={enableUserSelectHack}
 			minConstraints={[150, 0]}
 		>
-			{/* eslint-disable-next-line react/jsx-props-no-spreading */}
 			<th {...restProps} className="resizable-header" />
 		</Resizable>
 	);

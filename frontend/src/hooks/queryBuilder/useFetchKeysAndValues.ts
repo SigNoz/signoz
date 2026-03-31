@@ -197,7 +197,6 @@ export const useFetchKeysAndValues = (
 		value: string,
 		query: IBuilderQuery,
 		keys: BaseAutocompleteData[],
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 	): Promise<void> => {
 		if (!value) {
 			return;

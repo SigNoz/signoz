@@ -3,7 +3,7 @@ import { useHistory, useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Select, Spin, Tooltip } from 'antd';
-import { DefaultOptionType } from 'antd/es/select';
+import type { DefaultOptionType } from 'antd/es/select';
 import { SelectMaxTagPlaceholder } from 'components/MessagingQueues/MQCommon/MQCommon';
 import { QueryParams } from 'constants/query';
 import { History, Location } from 'history';

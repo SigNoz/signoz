@@ -211,7 +211,6 @@ function InviteTeamMembers({
 										handleEmailChange(e, member)
 									}
 									addonAfter={
-										// eslint-disable-next-line no-nested-ternary
 										emailValidity[member.id!] === undefined ? null : emailValidity[
 												member.id!
 										  ] ? (

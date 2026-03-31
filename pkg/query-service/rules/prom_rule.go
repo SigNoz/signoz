@@ -7,9 +7,11 @@ import (
 	"log/slog"
 	"time"
 
+	"github.com/prometheus/prometheus/model/labels"
+	"github.com/prometheus/prometheus/promql"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/formatter"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	"github.com/SigNoz/signoz/pkg/query-service/model"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
@@ -18,8 +20,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/prometheus/prometheus/promql"
 )
 
 type PromRule struct {
@@ -155,7 +157,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", "error", filterErr, "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "Error filtering new series, ", errors.Attr(filterErr), "rule_name", r.Name())
 		} else {
 			matrixToProcess = filteredSeries
 		}
@@ -185,7 +187,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 
 func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	prevState := r.State()
-	valueFormatter := formatter.FromUnit(r.Unit())
+	valueFormatter := units.FormatterFromUnit(r.Unit())
 
 	// prepare query, run query get data and filter the data based on the threshold
 	results, err := r.buildAndRunQuery(ctx, ts)
@@ -232,7 +234,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), "error", err, "data", tmplData)
+				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), errors.Attr(err), "data", tmplData)
 			}
 			return result
 		}
@@ -310,7 +312,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLables)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", "error", err, "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "rule_name", r.Name())
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
@@ -461,12 +463,12 @@ func toCommonSeries(series promql.Series) v3.Series {
 		Points:      make([]v3.Point, 0),
 	}
 
-	for _, lbl := range series.Metric {
+	series.Metric.Range(func(lbl labels.Label) {
 		commonSeries.Labels[lbl.Name] = lbl.Value
 		commonSeries.LabelsArray = append(commonSeries.LabelsArray, map[string]string{
 			lbl.Name: lbl.Value,
 		})
-	}
+	})
 
 	for _, f := range series.Floats {
 		commonSeries.Points = append(commonSeries.Points, v3.Point{

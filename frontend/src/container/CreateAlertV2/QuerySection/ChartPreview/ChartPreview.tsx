@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import YAxisUnitSelector from 'components/YAxisUnitSelector';
 import { YAxisSource } from 'components/YAxisUnitSelector/types';

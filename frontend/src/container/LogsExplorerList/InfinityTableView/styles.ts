@@ -1,4 +1,3 @@
-/* eslint-disable no-nested-ternary */
 import { themeColors } from 'constants/theme';
 import { FontSize } from 'container/OptionsMenu/types';
 import styled from 'styled-components';
@@ -70,12 +69,8 @@ export const TableRowStyled = styled.tr<{
 
 	&:hover {
 		${TableCellStyled} {
-			${({ $isActiveLog, $isDarkMode }): string =>
-				$isActiveLog
-					? getActiveLogBackground()
-					: `background-color: ${
-							!$isDarkMode ? 'var(--bg-vanilla-200)' : 'rgba(171, 189, 255, 0.04)'
-					  }`}
+			${({ $isDarkMode, $logType }): string =>
+				getActiveLogBackground(true, $isDarkMode, $logType)}
 		}
 		.log-line-action-buttons {
 			display: flex;

@@ -1,10 +1,10 @@
-/* eslint-disable sonarjs/cognitive-complexity */
-import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useSelector } from 'react-redux';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
-import { RadioChangeEvent } from 'antd/lib';
+import type { RadioChangeEvent } from 'antd/lib';
 import cx from 'classnames';
 import { LogType } from 'components/Logs/LogStateIndicator/LogStateIndicator';
 import QuerySearch from 'components/QueryBuilderV2/QueryV2/QuerySearch/QuerySearch';
@@ -49,12 +49,14 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
 
 import './LogDetails.styles.scss';
 
+/* eslint-disable-next-line sonarjs/cognitive-complexity */
 function LogDetailInner({
 	log,
 	onClose,
@@ -109,6 +111,7 @@ function LogDetailInner({
 
 	// Keyboard navigation - handle up/down arrow keys
 	// Only listen when in OVERVIEW tab
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 	useEffect(() => {
 		if (
 			!logs ||
@@ -219,7 +222,7 @@ function LogDetailInner({
 	};
 
 	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (): void => {
+	const handleOpenInExplorer = (e?: React.MouseEvent): void => {
 		const queryParams = {
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
@@ -232,7 +235,9 @@ function LogDetailInner({
 				),
 			),
 		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
+			newTab: !!e && isModifierKeyPressed(e),
+		});
 	};
 
 	const handleQueryExpressionChange = useCallback(
@@ -424,7 +429,6 @@ function LogDetailInner({
 					>
 						<Radio.Button
 							className={
-								// eslint-disable-next-line sonarjs/no-duplicate-string
 								selectedView === VIEW_TYPES.OVERVIEW ? 'selected_view tab' : 'tab'
 							}
 							value={VIEW_TYPES.OVERVIEW}
@@ -573,11 +577,9 @@ function LogDetailInner({
 function LogDetail(props: LogDetailProps): JSX.Element {
 	const { log } = props;
 	if (!log) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 
-	// eslint-disable-next-line react/jsx-props-no-spreading
 	return <LogDetailInner {...(props as LogDetailInnerProps)} />;
 }
 

@@ -8,8 +8,10 @@ import {
 	useMemo,
 	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import logEvent from 'api/common/logEvent';
+import DownloadOptionsMenu from 'components/DownloadOptionsMenu/DownloadOptionsMenu';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ListViewOrderBy from 'components/OrderBy/ListViewOrderBy';
 import { ResizeTable } from 'components/ResizeTable';
@@ -125,7 +127,6 @@ function ListView({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 
@@ -237,6 +238,11 @@ function ListView({
 						dataSource={DataSource.TRACES}
 					/>
 				</div>
+
+				<DownloadOptionsMenu
+					dataSource={DataSource.TRACES}
+					selectedColumns={options?.selectColumns}
+				/>
 
 				<TraceExplorerControls
 					isLoading={isFetching}

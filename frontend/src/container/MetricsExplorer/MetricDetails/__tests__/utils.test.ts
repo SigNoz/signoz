@@ -1,5 +1,8 @@
-import { Temporality } from 'api/metricsExplorer/getMetricDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import {
+	MetrictypesTemporalityDTO,
+	MetrictypesTypeDTO,
+} from 'api/generated/services/sigNoz.schemas';
+import { ATTRIBUTE_TYPES } from 'constants/queryBuilder';
 
 import {
 	determineIsMonotonic,
@@ -10,35 +13,48 @@ import {
 describe('MetricDetails utils', () => {
 	describe('determineIsMonotonic', () => {
 		it('should return true for histogram metrics', () => {
-			expect(determineIsMonotonic(MetricType.HISTOGRAM)).toBe(true);
+			expect(determineIsMonotonic(MetrictypesTypeDTO.histogram)).toBe(true);
 		});
 
 		it('should return true for exponential histogram metrics', () => {
-			expect(determineIsMonotonic(MetricType.EXPONENTIAL_HISTOGRAM)).toBe(true);
-		});
-
-		it('should return false for gauge metrics', () => {
-			expect(determineIsMonotonic(MetricType.GAUGE)).toBe(false);
-		});
-
-		it('should return false for summary metrics', () => {
-			expect(determineIsMonotonic(MetricType.SUMMARY)).toBe(false);
-		});
-
-		it('should return true for sum metrics with cumulative temporality', () => {
-			expect(determineIsMonotonic(MetricType.SUM, Temporality.CUMULATIVE)).toBe(
+			expect(determineIsMonotonic(MetrictypesTypeDTO.exponentialhistogram)).toBe(
 				true,
 			);
 		});
 
+		it('should return false for gauge metrics', () => {
+			expect(determineIsMonotonic(MetrictypesTypeDTO.gauge)).toBe(false);
+		});
+
+		it('should return false for summary metrics', () => {
+			expect(determineIsMonotonic(MetrictypesTypeDTO.summary)).toBe(false);
+		});
+
+		it('should return true for sum metrics with cumulative temporality', () => {
+			expect(
+				determineIsMonotonic(
+					MetrictypesTypeDTO.sum,
+					MetrictypesTemporalityDTO.cumulative,
+				),
+			).toBe(true);
+		});
+
 		it('should return false for sum metrics with delta temporality', () => {
-			expect(determineIsMonotonic(MetricType.SUM, Temporality.DELTA)).toBe(false);
+			expect(
+				determineIsMonotonic(
+					MetrictypesTypeDTO.sum,
+					MetrictypesTemporalityDTO.delta,
+				),
+			).toBe(false);
 		});
 
 		it('should return false by default', () => {
-			expect(determineIsMonotonic('' as MetricType, '' as Temporality)).toBe(
-				false,
-			);
+			expect(
+				determineIsMonotonic(
+					'' as MetrictypesTypeDTO,
+					'' as MetrictypesTemporalityDTO,
+				),
+			).toBe(false);
 		});
 	});
 
@@ -115,13 +131,16 @@ describe('MetricDetails utils', () => {
 		const API_GATEWAY = 'api-gateway';
 
 		it('should create correct query for SUM metric type', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUM);
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.sum,
+			);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.SUM,
+				ATTRIBUTE_TYPES.SUM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('rate');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('rate');
@@ -129,13 +148,16 @@ describe('MetricDetails utils', () => {
 		});
 
 		it('should create correct query for GAUGE metric type', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.GAUGE);
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.gauge,
+			);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.GAUGE,
+				ATTRIBUTE_TYPES.GAUGE,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('avg');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('avg');
@@ -143,13 +165,16 @@ describe('MetricDetails utils', () => {
 		});
 
 		it('should create correct query for SUMMARY metric type', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUMMARY);
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.summary,
+			);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.SUMMARY,
+				ATTRIBUTE_TYPES.GAUGE,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
@@ -157,13 +182,16 @@ describe('MetricDetails utils', () => {
 		});
 
 		it('should create correct query for HISTOGRAM metric type', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.HISTOGRAM);
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.histogram,
+			);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.HISTOGRAM,
+				ATTRIBUTE_TYPES.HISTOGRAM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
@@ -173,14 +201,14 @@ describe('MetricDetails utils', () => {
 		it('should create correct query for EXPONENTIAL_HISTOGRAM metric type', () => {
 			const query = getMetricDetailsQuery(
 				TEST_METRIC_NAME,
-				MetricType.EXPONENTIAL_HISTOGRAM,
+				MetrictypesTypeDTO.exponentialhistogram,
 			);
 
 			expect(query.builder.queryData[0]?.aggregateAttribute?.key).toBe(
 				TEST_METRIC_NAME,
 			);
 			expect(query.builder.queryData[0]?.aggregateAttribute?.type).toBe(
-				MetricType.EXPONENTIAL_HISTOGRAM,
+				ATTRIBUTE_TYPES.EXPONENTIAL_HISTOGRAM,
 			);
 			expect(query.builder.queryData[0]?.aggregateOperator).toBe('noop');
 			expect(query.builder.queryData[0]?.timeAggregation).toBe('noop');
@@ -203,7 +231,7 @@ describe('MetricDetails utils', () => {
 			const filter = { key: 'service', value: API_GATEWAY };
 			const query = getMetricDetailsQuery(
 				TEST_METRIC_NAME,
-				MetricType.SUM,
+				MetrictypesTypeDTO.sum,
 				filter,
 			);
 
@@ -221,7 +249,7 @@ describe('MetricDetails utils', () => {
 			const groupBy = 'service';
 			const query = getMetricDetailsQuery(
 				TEST_METRIC_NAME,
-				MetricType.SUM,
+				MetrictypesTypeDTO.sum,
 				undefined,
 				groupBy,
 			);
@@ -236,7 +264,7 @@ describe('MetricDetails utils', () => {
 			const groupBy = 'endpoint';
 			const query = getMetricDetailsQuery(
 				TEST_METRIC_NAME,
-				MetricType.SUM,
+				MetrictypesTypeDTO.sum,
 				filter,
 				groupBy,
 			);
@@ -250,7 +278,10 @@ describe('MetricDetails utils', () => {
 		});
 
 		it('should not include filters or groupBy when not provided', () => {
-			const query = getMetricDetailsQuery(TEST_METRIC_NAME, MetricType.SUM);
+			const query = getMetricDetailsQuery(
+				TEST_METRIC_NAME,
+				MetrictypesTypeDTO.sum,
+			);
 
 			expect(query.builder.queryData[0]?.filters?.items).toHaveLength(0);
 			expect(query.builder.queryData[0]?.groupBy).toHaveLength(0);

@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import localStorageGet from 'api/browser/localstorage/get';
 import localStorageSet from 'api/browser/localstorage/set';

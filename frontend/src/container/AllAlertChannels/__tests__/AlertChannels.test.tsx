@@ -74,7 +74,7 @@ describe('Alert Channels Settings List page', () => {
 			});
 
 			await waitFor(() => {
-				expect(successNotification).toBeCalledWith({
+				expect(successNotification).toHaveBeenCalledWith({
 					message: 'Success',
 					description: 'channel_delete_success',
 				});

@@ -39,7 +39,6 @@ describe('TopErrors', () => {
 	const V5_QUERY_RANGE_API_PATH = '*/api/v5/query_range';
 
 	const mockProps = {
-		// eslint-disable-next-line sonarjs/no-duplicate-string
 		domainName: 'test-domain',
 		timeRange: {
 			startTime: 1000000000,
@@ -100,7 +99,6 @@ describe('TopErrors', () => {
 											},
 											{ name: 'count()', fieldDataType: 'int64', fieldContext: '' },
 										],
-										// eslint-disable-next-line sonarjs/no-duplicate-string
 										data: [['/api/test', '500', 'Internal Server Error', 10]],
 									},
 								],
@@ -140,7 +138,6 @@ describe('TopErrors', () => {
 	});
 
 	it('renders component correctly', async () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		const { container } = render(<TopErrors {...mockProps} />);
 
 		// Check if the title and toggle are rendered
@@ -168,7 +165,6 @@ describe('TopErrors', () => {
 			),
 		);
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
 		// Wait for error state
@@ -186,7 +182,6 @@ describe('TopErrors', () => {
 		const navigateMock = jest.fn();
 		(useNavigateToExplorer as jest.Mock).mockReturnValue(navigateMock);
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		const { container } = render(<TopErrors {...mockProps} />);
 
 		// Wait for data to load
@@ -234,7 +229,6 @@ describe('TopErrors', () => {
 	});
 
 	it('updates endpoint filter when dropdown value changes', async () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
 		// Wait for initial load
@@ -253,7 +247,6 @@ describe('TopErrors', () => {
 	});
 
 	it('handles status message toggle correctly', async () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
 		// Wait for initial load
@@ -286,7 +279,6 @@ describe('TopErrors', () => {
 	});
 
 	it('includes toggle state in query key for cache busting', async () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
 		// Wait for initial load
@@ -319,7 +311,6 @@ describe('TopErrors', () => {
 			false,
 		);
 
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<TopErrors {...mockProps} />);
 
 		// Wait for the API call to be made

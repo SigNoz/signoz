@@ -1,4 +1,3 @@
-/* eslint-disable prefer-destructuring */
 import React, { useState } from 'react';
 import { CheckOutlined, CopyOutlined } from '@ant-design/icons';
 import cx from 'classnames';
@@ -18,6 +17,7 @@ function CodeCopyBtn({
 		let copiedText = '';
 		if (children && Array.isArray(children)) {
 			setIsSnippetCopied(true);
+			// eslint-disable-next-line no-restricted-properties
 			navigator.clipboard.writeText(children[0].props.children[0]).finally(() => {
 				copiedText = (children[0].props.children[0] as string).slice(0, 200); // slicing is done due to the limitation in accepted char length in attributes
 				setTimeout(() => {

@@ -1,4 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
 import WidgetHeader from 'container/GridCardLayout/WidgetHeader';
 import { fireEvent, render } from 'tests/test-utils';
 
@@ -13,8 +12,8 @@ jest.mock('react-router-dom', () => ({
 }));
 
 // Mock useDashabord hook
-jest.mock('providers/Dashboard/Dashboard', () => ({
-	useDashboard: (): any => ({
+jest.mock('providers/Dashboard/store/useDashboardStore', () => ({
+	useDashboardStore: (): any => ({
 		selectedDashboard: {
 			data: {
 				variables: [],

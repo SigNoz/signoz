@@ -10,9 +10,9 @@ import getLabelName from 'lib/getLabelName';
 import { OnClickPluginOpts } from 'lib/uPlotLib/plugins/onClickPlugin';
 import {
 	DrawStyle,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
-	VisibilityMode,
 } from 'lib/uPlotV2/config/types';
 import { UPlotConfigBuilder } from 'lib/uPlotV2/config/UPlotConfigBuilder';
 import { isInvalidPlotValue } from 'lib/uPlotV2/utils/dataUtils';
@@ -66,13 +66,14 @@ export const prepareUPlotConfig = ({
 	widget: Widgets;
 	isDarkMode: boolean;
 	currentQuery: Query;
-	onClick: OnClickPluginOpts['onClick'];
+	onClick?: OnClickPluginOpts['onClick'];
 	onDragSelect: (startTime: number, endTime: number) => void;
-	apiResponse: MetricRangePayloadProps;
+	apiResponse?: MetricRangePayloadProps;
 	timezone: Timezone;
 	panelMode: PanelMode;
 	minTimeScale?: number;
 	maxTimeScale?: number;
+	// eslint-disable-next-line sonarjs/cognitive-complexity
 }): UPlotConfigBuilder => {
 	const stepIntervals: ExecStats['stepIntervals'] = get(
 		apiResponse,
@@ -82,7 +83,12 @@ export const prepareUPlotConfig = ({
 	const minStepInterval = Math.min(...Object.values(stepIntervals));
 
 	const builder = buildBaseConfig({
-		widget,
+		id: widget.id,
+		thresholds: widget.thresholds,
+		yAxisUnit: widget.yAxisUnit,
+		softMin: widget.softMin ?? undefined,
+		softMax: widget.softMax ?? undefined,
+		isLogScale: widget.isLogScale,
 		isDarkMode,
 		onClick,
 		onDragSelect,
@@ -95,7 +101,12 @@ export const prepareUPlotConfig = ({
 		stepInterval: minStepInterval,
 	});
 
-	apiResponse.data?.result?.forEach((series) => {
+	if (!(apiResponse && apiResponse.data.result)) {
+		// if no data, return the builder without adding any series
+		return builder;
+	}
+
+	apiResponse.data.result.forEach((series) => {
 		const hasSingleValidPoint = hasSingleVisiblePointForSeries(series);
 		const baseLabelName = getLabelName(
 			series.metric,
@@ -112,15 +123,14 @@ export const prepareUPlotConfig = ({
 			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: true,
-			lineStyle: LineStyle.Solid,
-			lineInterpolation: LineInterpolation.Spline,
-			showPoints: hasSingleValidPoint
-				? VisibilityMode.Always
-				: VisibilityMode.Never,
+			spanGaps: widget.spanGaps ?? true,
+			lineStyle: widget.lineStyle || LineStyle.Solid,
+			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
+			showPoints:
+				widget.showPoints || hasSingleValidPoint ? true : !!widget.showPoints,
 			pointSize: 5,
+			fillMode: widget.fillMode || FillMode.None,
 			isDarkMode,
-			panelType: PANEL_TYPES.TIME_SERIES,
 		});
 	});
 

@@ -1,7 +1,9 @@
 import { useEffect, useRef, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { CaretRightFilled } from '@ant-design/icons';
 import { Popover } from 'antd';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { UpdateTagIsError } from 'store/actions/trace/updateIsTagsError';

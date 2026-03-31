@@ -4,8 +4,8 @@ import {
 	SetStateAction,
 	useEffect,
 	useMemo,
-	useState,
 } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
 import { ENTITY_VERSION_V5 } from 'constants/app';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
@@ -15,6 +15,7 @@ import TimeSeriesView from 'container/TimeSeriesView/TimeSeriesView';
 import { convertDataValueToMs } from 'container/TimeSeriesView/utils';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
+import useUrlYAxisUnit from 'hooks/useUrlYAxisUnit';
 import { AppState } from 'store/reducers';
 import { Warning } from 'types/api';
 import APIError from 'types/api/error';
@@ -51,13 +52,8 @@ function TimeSeriesViewContainer({
 		return isValid.every(Boolean);
 	}, [currentQuery]);
 
-	const [yAxisUnit, setYAxisUnit] = useState<string>(
-		isValidToConvertToMs ? 'ms' : 'short',
-	);
-
-	const onUnitChangeHandler = (value: string): void => {
-		setYAxisUnit(value);
-	};
+	const defaultUnit = isValidToConvertToMs ? 'ms' : 'short';
+	const { yAxisUnit, onUnitChange } = useUrlYAxisUnit(defaultUnit);
 
 	const { selectedTime: globalSelectedTime, maxTime, minTime } = useSelector<
 		AppState,
@@ -76,7 +72,6 @@ function TimeSeriesViewContainer({
 	);
 
 	if (queryKeyRef) {
-		// eslint-disable-next-line no-param-reassign
 		queryKeyRef.current = queryKey;
 	}
 
@@ -121,7 +116,7 @@ function TimeSeriesViewContainer({
 	return (
 		<div className="trace-explorer-time-series-view-container">
 			<div className="trace-explorer-time-series-view-container-header">
-				<BuilderUnitsFilter onChange={onUnitChangeHandler} yAxisUnit={yAxisUnit} />
+				<BuilderUnitsFilter onChange={onUnitChange} yAxisUnit={yAxisUnit} />
 			</div>
 			<TimeSeriesView
 				isFilterApplied={isFilterApplied}

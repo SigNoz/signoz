@@ -1,7 +1,6 @@
 import { HTMLAttributes } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Table } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { Progress, Table, TableColumnsType as ColumnsType } from 'antd';
 import logEvent from 'api/common/logEvent';
 import { ConditionalAlertPopover } from 'container/AlertHistory/AlertPopover/AlertPopover';
 import AlertLabels from 'pages/AlertDetails/AlertHeader/AlertLabels/AlertLabels';

@@ -22,11 +22,17 @@ type RootConfig struct {
 }
 
 type OrgConfig struct {
-	Name string `mapstructure:"name"`
+	ID   valuer.UUID `mapstructure:"id"`
+	Name string      `mapstructure:"name"`
 }
 
 type PasswordConfig struct {
-	Reset ResetConfig `mapstructure:"reset"`
+	Invite InviteConfig `mapstructure:"invite"`
+	Reset  ResetConfig  `mapstructure:"reset"`
+}
+
+type InviteConfig struct {
+	MaxTokenLifetime time.Duration `mapstructure:"max_token_lifetime"`
 }
 
 type ResetConfig struct {
@@ -45,6 +51,9 @@ func newConfig() factory.Config {
 				AllowSelf:        false,
 				MaxTokenLifetime: 6 * time.Hour,
 			},
+			Invite: InviteConfig{
+				MaxTokenLifetime: 48 * time.Hour,
+			},
 		},
 		Root: RootConfig{
 			Enabled: false,
@@ -58,6 +67,10 @@ func newConfig() factory.Config {
 func (c Config) Validate() error {
 	if c.Password.Reset.MaxTokenLifetime <= 0 {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::password::reset::max_token_lifetime must be positive")
+	}
+
+	if c.Password.Invite.MaxTokenLifetime <= 0 {
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "user::password::invite::max_token_lifetime must be positive")
 	}
 
 	if c.Root.Enabled {

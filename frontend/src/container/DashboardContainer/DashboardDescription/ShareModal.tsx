@@ -39,7 +39,6 @@ function ShareModal({
 		}
 	}, [state.error, state.value, t, notifications]);
 
-	// eslint-disable-next-line arrow-body-style
 	const GetFooterComponent = useMemo(() => {
 		return (
 			<>

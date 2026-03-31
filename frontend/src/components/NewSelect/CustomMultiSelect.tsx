@@ -1,9 +1,4 @@
-/* eslint-disable jsx-a11y/no-static-element-interactions */
-/* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/function-component-definition */
 import React, {
 	useCallback,
 	useEffect,
@@ -406,6 +401,7 @@ const CustomMultiSelect: React.FC<CustomMultiSelectProps> = ({
 
 		const textToCopy = selectedTexts.join(', ');
 
+		// eslint-disable-next-line no-restricted-properties
 		navigator.clipboard.writeText(textToCopy).catch(console.error);
 	}, [selectedChips, selectedValues]);
 

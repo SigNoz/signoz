@@ -6,12 +6,14 @@ import (
 	"encoding/json"
 	"log/slog"
 
+	"github.com/uptrace/bun"
+	"github.com/uptrace/bun/migrate"
+
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/transition"
-	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/migrate"
 )
 
 type migrateRulesV4ToV5 struct {
@@ -55,7 +57,7 @@ func (migration *migrateRulesV4ToV5) getLogDuplicateKeys(ctx context.Context) ([
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		migration.logger.WarnContext(ctx, "failed to query log duplicate keys", "error", err)
+		migration.logger.WarnContext(ctx, "failed to query log duplicate keys", errors.Attr(err))
 		return nil, nil
 	}
 	defer rows.Close()
@@ -64,7 +66,7 @@ func (migration *migrateRulesV4ToV5) getLogDuplicateKeys(ctx context.Context) ([
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			migration.logger.WarnContext(ctx, "failed to scan log duplicate key", "error", err)
+			migration.logger.WarnContext(ctx, "failed to scan log duplicate key", errors.Attr(err))
 			continue
 		}
 		keys = append(keys, key)
@@ -85,7 +87,7 @@ func (migration *migrateRulesV4ToV5) getTraceDuplicateKeys(ctx context.Context) 
 
 	rows, err := migration.telemetryStore.ClickhouseDB().Query(ctx, query)
 	if err != nil {
-		migration.logger.WarnContext(ctx, "failed to query trace duplicate keys", "error", err)
+		migration.logger.WarnContext(ctx, "failed to query trace duplicate keys", errors.Attr(err))
 		return nil, nil
 	}
 	defer rows.Close()
@@ -94,7 +96,7 @@ func (migration *migrateRulesV4ToV5) getTraceDuplicateKeys(ctx context.Context) 
 	for rows.Next() {
 		var key string
 		if err := rows.Scan(&key); err != nil {
-			migration.logger.WarnContext(ctx, "failed to scan trace duplicate key", "error", err)
+			migration.logger.WarnContext(ctx, "failed to scan trace duplicate key", errors.Attr(err))
 			continue
 		}
 		keys = append(keys, key)
@@ -151,10 +153,10 @@ func (migration *migrateRulesV4ToV5) Up(ctx context.Context, db *bun.DB) error {
 		}
 
 		if version == "" {
-			migration.logger.WarnContext(ctx, "unexpected empty version for rule", "rule_id", rule.ID)
+			migration.logger.WarnContext(ctx, "unexpected empty version for rule", slog.String("rule_id", rule.ID))
 		}
 
-		migration.logger.InfoContext(ctx, "migrating rule v4 to v5", "rule_id", rule.ID, "current_version", version)
+		migration.logger.InfoContext(ctx, "migrating rule v4 to v5", slog.String("rule_id", rule.ID), slog.String("current_version", version))
 
 		// Check if the queries envelope already exists and is non-empty
 		hasQueriesEnvelope := false
@@ -169,14 +171,14 @@ func (migration *migrateRulesV4ToV5) Up(ctx context.Context, db *bun.DB) error {
 		if hasQueriesEnvelope {
 			// already has queries envelope, just bump version
 			// this is because user made a mistake of choosing version
-			migration.logger.InfoContext(ctx, "rule already has queries envelope, bumping version", "rule_id", rule.ID)
+			migration.logger.InfoContext(ctx, "rule already has queries envelope, bumping version", slog.String("rule_id", rule.ID))
 			rule.Data["version"] = "v5"
 		} else {
 			// old format, run full migration
-			migration.logger.InfoContext(ctx, "rule has old format, running full migration", "rule_id", rule.ID)
+			migration.logger.InfoContext(ctx, "rule has old format, running full migration", slog.String("rule_id", rule.ID))
 			updated := alertsMigrator.Migrate(ctx, rule.Data)
 			if !updated {
-				migration.logger.WarnContext(ctx, "expected updated to be true but got false", "rule_id", rule.ID)
+				migration.logger.WarnContext(ctx, "expected updated to be true but got false", slog.String("rule_id", rule.ID))
 				continue
 			}
 			rule.Data["version"] = "v5"
@@ -198,7 +200,7 @@ func (migration *migrateRulesV4ToV5) Up(ctx context.Context, db *bun.DB) error {
 		count++
 	}
 	if count != 0 {
-		migration.logger.InfoContext(ctx, "migrate v4 alerts", "count", count)
+		migration.logger.InfoContext(ctx, "migrate v4 alerts", slog.Int("count", count))
 	}
 
 	return tx.Commit()

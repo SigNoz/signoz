@@ -1,4 +1,10 @@
-import React, { createContext, useContext, useState } from 'react';
+import React, {
+	// eslint-disable-next-line no-restricted-imports
+	createContext,
+	// eslint-disable-next-line no-restricted-imports
+	useContext,
+	useState,
+} from 'react';
 
 interface AlertRuleContextType {
 	alertRuleState: string | undefined;

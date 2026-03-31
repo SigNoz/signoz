@@ -1,17 +1,18 @@
-import { PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 import { calculateWidthBasedOnStepInterval } from 'lib/uPlotV2/utils';
 import uPlot, { Series } from 'uplot';
 
+import { generateGradientFill } from '../utils/generateGradientFill';
+import { isolatedPointFilter } from '../utils/seriesPointsFilter';
 import {
 	BarAlignment,
 	ConfigBuilder,
 	DrawStyle,
+	FillMode,
 	LineInterpolation,
 	LineStyle,
 	SeriesProps,
-	VisibilityMode,
 } from './types';
 
 /**
@@ -23,6 +24,9 @@ import {
  * Path builders are static and shared across all instances of UPlotSeriesBuilder
  */
 let builders: PathBuilders | null = null;
+
+const DEFAULT_LINE_WIDTH = 2;
+export const POINT_SIZE_FACTOR = 2.5;
 export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	constructor(props: SeriesProps) {
 		super(props);
@@ -50,10 +54,10 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series> {
-		const { lineWidth, lineStyle, lineCap, fillColor } = this.props;
+		const { lineWidth, lineStyle, lineCap, fillColor, fillMode } = this.props;
 		const lineConfig: Partial<Series> = {
 			stroke: resolvedLineColor,
-			width: lineWidth ?? 2,
+			width: lineWidth ?? DEFAULT_LINE_WIDTH,
 		};
 
 		if (lineStyle === LineStyle.Dashed) {
@@ -64,12 +68,26 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 			lineConfig.cap = lineCap;
 		}
 
-		if (fillColor) {
-			lineConfig.fill = fillColor;
-		} else if (this.props.panelType === PANEL_TYPES.BAR) {
-			lineConfig.fill = resolvedLineColor;
-		} else if (this.props.panelType === PANEL_TYPES.HISTOGRAM) {
-			lineConfig.fill = `${resolvedLineColor}40`;
+		/**
+		 * Configure area fill based on draw style and fill mode:
+		 * - bar charts always use a solid fill with the series color
+		 * - histogram uses the same color with a fixed alpha suffix for translucency
+		 * - for other series, an explicit fillMode controls whether we use a solid fill
+		 *   or a vertical gradient from the series color to transparent
+		 */
+		const finalFillColor = fillColor ?? resolvedLineColor;
+
+		if (this.props.drawStyle === DrawStyle.Bar) {
+			lineConfig.fill = finalFillColor;
+		} else if (this.props.drawStyle === DrawStyle.Histogram) {
+			lineConfig.fill = `${finalFillColor}40`;
+		} else if (fillMode && fillMode !== FillMode.None) {
+			if (fillMode === FillMode.Solid) {
+				lineConfig.fill = finalFillColor;
+			} else if (fillMode === FillMode.Gradient) {
+				lineConfig.fill = (self: uPlot): CanvasGradient =>
+					generateGradientFill(self, finalFillColor, 'rgba(0, 0, 0, 0)');
+			}
 		}
 
 		return lineConfig;
@@ -129,34 +147,47 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 	}: {
 		resolvedLineColor: string;
 	}): Partial<Series.Points> {
-		const {
-			lineWidth,
-			pointSize,
-			pointsBuilder,
-			pointsFilter,
-			drawStyle,
-			showPoints,
-		} = this.props;
+		const { lineWidth, pointSize, pointsFilter } = this.props;
+
+		const resolvedPointSize =
+			pointSize ?? (lineWidth ?? DEFAULT_LINE_WIDTH) * POINT_SIZE_FACTOR;
+
 		const pointsConfig: Partial<Series.Points> = {
 			stroke: resolvedLineColor,
 			fill: resolvedLineColor,
-			size: !pointSize || pointSize < (lineWidth ?? 2) ? undefined : pointSize,
+			size: resolvedPointSize,
 			filter: pointsFilter || undefined,
+			show: this.resolvePointsShow(),
 		};
 
-		if (pointsBuilder) {
-			pointsConfig.show = pointsBuilder;
-		} else if (drawStyle === DrawStyle.Points) {
-			pointsConfig.show = true;
-		} else if (showPoints === VisibilityMode.Never) {
-			pointsConfig.show = false;
-		} else if (showPoints === VisibilityMode.Always) {
-			pointsConfig.show = true;
-		} else {
-			pointsConfig.show = false; // default to hidden
+		// When spanGaps is in threshold (numeric) mode, points hidden by default
+		// become invisible when isolated by injected gap-nulls (no line connects
+		// to them). Use a gap-based filter to show only those isolated points as
+		// dots. Do NOT set show=true here — the filter is called with show=false
+		// and returns specific indices to render; setting show=true would cause
+		// uPlot to call filter with show=true which short-circuits the logic and
+		// renders all points.
+		if (this.shouldApplyIsolatedPointFilter(pointsConfig.show)) {
+			pointsConfig.filter = isolatedPointFilter;
 		}
 
 		return pointsConfig;
+	}
+
+	private resolvePointsShow(): Series.Points['show'] {
+		const { pointsBuilder, drawStyle, showPoints } = this.props;
+		if (pointsBuilder) {
+			return pointsBuilder;
+		}
+		if (drawStyle === DrawStyle.Points) {
+			return true;
+		}
+		return !!showPoints;
+	}
+
+	private shouldApplyIsolatedPointFilter(show: Series.Points['show']): boolean {
+		const { drawStyle, pointsFilter } = this.props;
+		return drawStyle === DrawStyle.Line && !pointsFilter && !show;
 	}
 
 	private getLineColor(): string {
@@ -190,7 +221,12 @@ export class UPlotSeriesBuilder extends ConfigBuilder<SeriesProps, Series> {
 		return {
 			scale: scaleKey,
 			label,
-			spanGaps: typeof spanGaps === 'boolean' ? spanGaps : false,
+			// When spanGaps is numeric, we always disable uPlot's internal
+			// spanGaps behavior and rely on data-prep to implement the
+			// threshold-based null handling. When spanGaps is boolean we
+			// map it directly. When spanGaps is undefined we fall back to
+			// the default of true.
+			spanGaps: typeof spanGaps === 'number' ? false : spanGaps ?? true,
 			value: (): string => '',
 			pxAlign: true,
 			show,
@@ -231,7 +267,7 @@ function getPathBuilder({
 		throw new Error('Required uPlot path builders are not available');
 	}
 
-	if (drawStyle === DrawStyle.Bar) {
+	if (drawStyle === DrawStyle.Bar || drawStyle === DrawStyle.Histogram) {
 		const pathBuilders = uPlot.paths;
 		return getBarPathBuilder({
 			pathBuilders,

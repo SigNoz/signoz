@@ -1,7 +1,3 @@
-/* eslint-disable @typescript-eslint/no-explicit-any */
-/* eslint-disable react/jsx-props-no-spreading */
-/* eslint-disable prefer-destructuring */
-/* eslint-disable sonarjs/no-duplicate-string */
 import { QueryClient, QueryClientProvider, UseQueryResult } from 'react-query';
 import { render, screen, waitFor } from '@testing-library/react';
 import { getEndPointDetailsQueryPayload } from 'container/ApiMonitoring/utils';
@@ -111,9 +107,7 @@ describe('EndPointMetrics - V5 Query Payload Tests', () => {
 			</QueryClientProvider>,
 		);
 
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 	describe('1. V5 Query Payload with Filters', () => {
-		// eslint-disable-next-line sonarjs/cognitive-complexity
 		it('sends correct V5 payload structure with domain and endpoint filters', async () => {
 			(GetMetricQueryRange as jest.Mock).mockResolvedValue(mockSuccessResponse);
 

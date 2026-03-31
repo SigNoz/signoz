@@ -14,12 +14,19 @@ import (
 	"github.com/uptrace/bun/dialect/pgdialect"
 )
 
+var _ Pooler = new(provider)
+
 type provider struct {
 	settings  factory.ScopedProviderSettings
 	sqldb     *sql.DB
 	bundb     *sqlstore.BunDB
+	pgxPool   *pgxpool.Pool
 	dialect   *dialect
 	formatter sqlstore.SQLFormatter
+}
+
+type Pooler interface {
+	Pool() *pgxpool.Pool
 }
 
 func NewFactory(hookFactories ...factory.ProviderFactory[sqlstore.SQLStoreHook, sqlstore.Config]) factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config] {
@@ -62,6 +69,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 		settings:  settings,
 		sqldb:     sqldb,
 		bundb:     bunDB,
+		pgxPool:   pool,
 		dialect:   new(dialect),
 		formatter: newFormatter(bunDB.Dialect()),
 	}, nil
@@ -73,6 +81,10 @@ func (provider *provider) BunDB() *bun.DB {
 
 func (provider *provider) SQLDB() *sql.DB {
 	return provider.sqldb
+}
+
+func (provider *provider) Pool() *pgxpool.Pool {
+	return provider.pgxPool
 }
 
 func (provider *provider) Dialect() sqlstore.SQLDialect {
@@ -101,7 +113,7 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
 	var pgErr *pgconn.PgError
-	if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+	if errors.As(err, &pgErr) && (pgErr.Code == "23505" || pgErr.Code == "23503") {
 		return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 	}
 

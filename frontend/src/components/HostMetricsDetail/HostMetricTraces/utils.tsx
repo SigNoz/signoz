@@ -1,5 +1,4 @@
-import { Tag, Typography } from 'antd';
-import { ColumnsType } from 'antd/es/table';
+import { TableColumnsType as ColumnsType, Tag, Typography } from 'antd';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getMs } from 'container/Trace/Filters/Panel/PanelBody/Duration/util';
 import {

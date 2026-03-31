@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"math"
 	"strings"
+	"log/slog"
 	"testing"
 	"time"
 
@@ -35,7 +36,7 @@ func TestThresholdRuleEvalBackwardCompat(t *testing.T) {
 		AlertName: "Eval Backward Compatibility Test without recovery target",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -151,7 +152,7 @@ func TestPrepareLinksToLogs(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -205,7 +206,7 @@ func TestPrepareLinksToLogsV5(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeLogs,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -266,7 +267,7 @@ func TestPrepareLinksToTracesV5(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -327,7 +328,7 @@ func TestPrepareLinksToTraces(t *testing.T) {
 		AlertName: "Links to traces test",
 		AlertType: ruletypes.AlertTypeTraces,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -381,7 +382,7 @@ func TestThresholdRuleLabelNormalization(t *testing.T) {
 		AlertName: "Tricky Condition Tests",
 		AlertType: ruletypes.AlertTypeMetric,
 		RuleType:  ruletypes.RuleTypeThreshold,
-		Evaluation: &ruletypes.EvaluationEnvelope{ruletypes.RollingEvaluation, ruletypes.RollingWindow{
+		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: valuer.MustParseTextDuration("5m"),
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
@@ -778,7 +779,7 @@ func TestThresholdRuleUnitCombinations(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -893,7 +894,7 @@ func TestThresholdRuleNoData(t *testing.T) {
 		)
 		assert.NoError(t, err)
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore), "", time.Duration(time.Second), nil, readerCache, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1013,7 +1014,7 @@ func TestThresholdRuleTracesLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1150,7 +1151,7 @@ func TestThresholdRuleLogsLink(t *testing.T) {
 		}
 
 		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore), "", time.Duration(time.Second), nil, nil, options)
 
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
@@ -1417,7 +1418,7 @@ func TestMultipleThresholdRule(t *testing.T) {
 			},
 		)
 		require.NoError(t, err)
-		reader := clickhouseReader.NewReader(nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore), "", time.Second, nil, readerCache, options)
+		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore), "", time.Second, nil, readerCache, options)
 		rule, err := NewThresholdRule("69", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 		rule.TemporalityMap = map[string]map[v3.Temporality]bool{
 			"signoz_calls_total": {
@@ -2219,8 +2220,8 @@ func TestThresholdEval_RequireMinPoints(t *testing.T) {
 			)
 			require.NoError(t, err)
 
-			prometheusProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{}, telemetryStore)
-			reader := clickhouseReader.NewReader(nil, telemetryStore, prometheusProvider, "", time.Second, nil, readerCache, options)
+			prometheusProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
+			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, prometheusProvider, "", time.Second, nil, readerCache, options)
 
 			rule, err := NewThresholdRule("some-id", valuer.GenerateUUID(), &postableRule, reader, nil, logger)
 			t.Run(fmt.Sprintf("%d Version=%s, %s", idx, version, c.description), func(t *testing.T) {

@@ -1,4 +1,5 @@
 import { memo, useMemo } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { useDispatch, useSelector } from 'react-redux';
 import { FastBackwardOutlined } from '@ant-design/icons';
 import { Button, Divider } from 'antd';
@@ -11,6 +12,7 @@ import { Pagination } from 'hooks/queryPagination';
 import { getMinMaxForSelectedTime } from 'lib/getMinMax';
 import { FlatLogData } from 'lib/logs/flatLogData';
 import { OrderPreferenceItems } from 'pages/Logs/config';
+// eslint-disable-next-line no-restricted-imports
 import { Dispatch } from 'redux';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';

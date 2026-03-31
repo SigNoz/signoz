@@ -1,5 +1,3 @@
-/* eslint-disable react/jsx-props-no-spreading */
-
 import { useMemo, useState } from 'react';
 import { Button, Flex, Select } from 'antd';
 import cx from 'classnames';
@@ -46,7 +44,6 @@ export default function Function({
 	const hasValue = !isNil(funcData.args?.[0]?.value);
 
 	if (hasValue) {
-		// eslint-disable-next-line prefer-destructuring
 		functionValue = funcData.args?.[0]?.value;
 	}
 
@@ -69,7 +66,6 @@ export default function Function({
 		normalizedFunctionName === QueryFunctionsTypes.ANOMALY;
 
 	if (normalizedFunctionName === QueryFunctionsTypes.ANOMALY) {
-		// eslint-disable-next-line react/jsx-no-useless-fragment
 		return <></>;
 	}
 

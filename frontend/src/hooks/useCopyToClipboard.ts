@@ -39,6 +39,7 @@ export function useCopyToClipboard(
 
 	const copyToClipboard = useCallback(
 		(text: string, id?: ID): void => {
+			// eslint-disable-next-line no-restricted-properties
 			navigator.clipboard.writeText(text).then(() => {
 				if (timeoutRef.current) {
 					clearTimeout(timeoutRef.current);

@@ -1,4 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
+// eslint-disable-next-line no-restricted-imports
 import { connect, useDispatch, useSelector } from 'react-redux';
 import { RouteComponentProps, withRouter } from 'react-router-dom';
 import { useNavigationType, useSearchParams } from 'react-router-dom-v5-compat';
@@ -21,6 +22,7 @@ import getTimeString from 'lib/getTimeString';
 import { cloneDeep, isObject } from 'lodash-es';
 import { Undo } from 'lucide-react';
 import { useTimezone } from 'providers/Timezone';
+// eslint-disable-next-line no-restricted-imports
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
@@ -28,6 +30,7 @@ import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { addCustomTimeRange } from 'utils/customTimeRangeUtils';
+import { persistTimeDurationForRoute } from 'utils/metricsTimeStorageUtils';
 import { normalizeTimeToMs } from 'utils/timeUtils';
 import { v4 as uuid } from 'uuid';
 
@@ -232,20 +235,7 @@ function DateTimeSelection({
 
 	const updateLocalStorageForRoutes = useCallback(
 		(value: Time | string): void => {
-			const preRoutes = getLocalStorageKey(LOCALSTORAGE.METRICS_TIME_IN_DURATION);
-			if (preRoutes !== null) {
-				const preRoutesObject = JSON.parse(preRoutes);
-
-				const preRoute = {
-					...preRoutesObject,
-				};
-				preRoute[location.pathname] = value;
-
-				setLocalStorageKey(
-					LOCALSTORAGE.METRICS_TIME_IN_DURATION,
-					JSON.stringify(preRoute),
-				);
-			}
+			persistTimeDurationForRoute(location.pathname, String(value));
 		},
 		[location.pathname],
 	);
@@ -736,6 +726,7 @@ function DateTimeSelection({
 						showRecentlyUsed={showRecentlyUsed}
 						minTime={minTimeForDateTimePicker}
 						maxTime={maxTimeForDateTimePicker}
+						isModalTimeSelection={isModalTimeSelection}
 					/>
 
 					{showAutoRefresh && selectedTime !== 'custom' && (

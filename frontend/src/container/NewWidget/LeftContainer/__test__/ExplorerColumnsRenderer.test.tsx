@@ -1,6 +1,3 @@
-/* eslint-disable sonarjs/no-duplicate-string */
-/* eslint-disable sonarjs/cognitive-complexity */
-/* eslint-disable react/jsx-props-no-spreading */
 import React from 'react';
 import { DropResult } from 'react-beautiful-dnd';
 import { QueryClient, QueryClientProvider } from 'react-query';

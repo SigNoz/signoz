@@ -441,7 +441,7 @@ describe('Footer utils', () => {
 											reduceTo: undefined,
 											spaceAggregation: 'sum',
 											temporality: undefined,
-											timeAggregation: 'count',
+											timeAggregation: 'avg',
 										},
 									],
 									disabled: false,

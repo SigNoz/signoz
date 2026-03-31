@@ -104,7 +104,6 @@ function Overview({
 		<div className="overview-container">
 			<Collapse
 				defaultActiveKey={['1']}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -132,7 +131,6 @@ function Overview({
 											monaco.editor.remeasureFonts();
 										});
 									}}
-									// eslint-disable-next-line react/jsx-no-bind
 									beforeMount={setEditorTheme}
 								/>
 								<Divider
@@ -161,7 +159,6 @@ function Overview({
 				className="attribute-table"
 				defaultActiveKey={['1']}
 				bordered={false}
-				// eslint-disable-next-line react/no-unstable-nested-components
 				expandIcon={(props): ReactNode =>
 					props.isActive ? <ChevronDown size={14} /> : <ChevronRight size={14} />
 				}
@@ -169,7 +166,6 @@ function Overview({
 					{
 						key: '1',
 						label: (
-							// eslint-disable-next-line jsx-a11y/click-events-have-key-events, jsx-a11y/no-static-element-interactions
 							<div
 								className="attribute-tab-header"
 								onClick={toogleAttributePanelOpenState}

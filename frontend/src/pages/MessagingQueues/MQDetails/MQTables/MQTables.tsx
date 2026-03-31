@@ -1,5 +1,3 @@
-/* eslint-disable no-nested-ternary */
-/* eslint-disable react/require-default-props */
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useMutation } from 'react-query';
 import { useHistory, useLocation } from 'react-router-dom';
@@ -30,6 +28,8 @@ import {
 	setConfigDetail,
 } from 'pages/MessagingQueues/MessagingQueuesUtils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
+import { isModifierKeyPressed } from 'utils/app';
+import { openInNewTab } from 'utils/navigation';
 import { formatNumericValue } from 'utils/numericUtils';
 
 import { getTableDataForProducerLatencyOverview } from './MQTableUtils';
@@ -80,7 +80,12 @@ export function getColumns(
 								onClick={(e): void => {
 									e.preventDefault();
 									e.stopPropagation();
-									history.push(`/services/${encodeURIComponent(text)}`);
+									const path = `/services/${encodeURIComponent(text)}`;
+									if (isModifierKeyPressed(e)) {
+										openInNewTab(path);
+									} else {
+										history.push(path);
+									}
 								}}
 							>
 								{text}

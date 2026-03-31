@@ -1,9 +1,8 @@
-/* eslint-disable simple-import-sort/imports */
 import type { UseQueryResult } from 'react-query';
-import { render, screen } from 'tests/test-utils';
-
+import { HistogramChartProps } from 'container/DashboardContainer/visualization/charts/types';
 import { PanelMode } from 'container/DashboardContainer/visualization/panels/types';
 import { LegendPosition } from 'lib/uPlotV2/components/types';
+import { render, screen } from 'tests/test-utils';
 import { Widgets } from 'types/api/dashboard/getAll';
 import {
 	MetricQueryRangeSuccessResponse,
@@ -11,7 +10,6 @@ import {
 } from 'types/api/metrics/getQueryRange';
 
 import HistogramPanel from '../HistogramPanel';
-import { HistogramChartProps } from 'container/DashboardContainer/visualization/charts/types';
 
 jest.mock('hooks/useDimensions', () => ({
 	useResizeObserver: jest.fn().mockReturnValue({ width: 800, height: 400 }),

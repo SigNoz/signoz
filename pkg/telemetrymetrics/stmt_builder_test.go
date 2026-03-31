@@ -122,7 +122,7 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "test_histogram_percentile",
+			name:        "test_histogram_percentile1",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -132,6 +132,7 @@ func TestStatementBuilder(t *testing.T) {
 						MetricName:       "signoz_latency",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Delta,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
 					},
 				},
@@ -187,7 +188,7 @@ func TestStatementBuilder(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name:        "test_histogram_percentile",
+			name:        "test_histogram_percentile2",
 			requestType: qbtypes.RequestTypeTimeSeries,
 			query: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
 				Signal:       telemetrytypes.SignalMetrics,
@@ -197,6 +198,7 @@ func TestStatementBuilder(t *testing.T) {
 						MetricName:       "http_server_duration_bucket",
 						Type:             metrictypes.HistogramType,
 						Temporality:      metrictypes.Cumulative,
+						TimeAggregation:  metrictypes.TimeAggregationRate,
 						SpaceAggregation: metrictypes.SpaceAggregationPercentile95,
 					},
 				},
@@ -211,7 +213,7 @@ func TestStatementBuilder(t *testing.T) {
 			},
 			expected: qbtypes.Statement{
 				Query: "WITH __temporal_aggregation_cte AS (SELECT ts, `service.name`, `le`, multiIf(row_number() OVER rate_window = 1, nan, (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) < 0, per_series_value / (ts - lagInFrame(ts, 1) OVER rate_window), (per_series_value - lagInFrame(per_series_value, 1) OVER rate_window) / (ts - lagInFrame(ts, 1) OVER rate_window)) AS per_series_value FROM (SELECT fingerprint, toStartOfInterval(toDateTime(intDiv(unix_milli, 1000)), toIntervalSecond(30)) AS ts, `service.name`, `le`, max(value) AS per_series_value FROM signoz_metrics.distributed_samples_v4 AS points INNER JOIN (SELECT fingerprint, JSONExtractString(labels, 'service.name') AS `service.name`, JSONExtractString(labels, 'le') AS `le` FROM signoz_metrics.time_series_v4_6hrs WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli <= ? AND LOWER(temporality) LIKE LOWER(?) AND __normalized = ? GROUP BY fingerprint, `service.name`, `le`) AS filtered_time_series ON points.fingerprint = filtered_time_series.fingerprint WHERE metric_name IN (?) AND unix_milli >= ? AND unix_milli < ? GROUP BY fingerprint, ts, `service.name`, `le` ORDER BY fingerprint, ts) WINDOW rate_window AS (PARTITION BY fingerprint ORDER BY fingerprint, ts)), __spatial_aggregation_cte AS (SELECT ts, `service.name`, `le`, sum(per_series_value) AS value FROM __temporal_aggregation_cte WHERE isNaN(per_series_value) = ? GROUP BY ts, `service.name`, `le`) SELECT ts, `service.name`, histogramQuantile(arrayMap(x -> toFloat64(x), groupArray(le)), groupArray(value), 0.950) AS value FROM __spatial_aggregation_cte GROUP BY `service.name`, ts ORDER BY `service.name`, ts",
-				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", false, "http_server_duration_bucket", uint64(1747947390000), uint64(1747983420000), 0},
+				Args:  []any{"http_server_duration_bucket", uint64(1747936800000), uint64(1747983420000), "cumulative", false, "http_server_duration_bucket", uint64(1747947360000), uint64(1747983420000), 0},
 			},
 			expectedErr: nil,
 		},

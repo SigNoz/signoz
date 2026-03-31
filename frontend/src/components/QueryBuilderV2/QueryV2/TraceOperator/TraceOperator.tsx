@@ -1,6 +1,3 @@
-/* eslint-disable react/require-default-props */
-/* eslint-disable sonarjs/no-duplicate-string */
-
 import { useCallback } from 'react';
 import { Button, Tooltip, Typography } from 'antd';
 import cx from 'classnames';

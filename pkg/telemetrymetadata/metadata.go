@@ -5,6 +5,10 @@ import (
 	"fmt"
 	"log/slog"
 	"strings"
+	"time"
+
+	"github.com/huandu/go-sqlbuilder"
+	"golang.org/x/exp/maps"
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -13,11 +17,11 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrymetrics"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
+	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
+	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	"github.com/SigNoz/signoz/pkg/types/metrictypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/huandu/go-sqlbuilder"
-	"golang.org/x/exp/maps"
 )
 
 var (
@@ -31,23 +35,24 @@ var (
 )
 
 type telemetryMetaStore struct {
-	logger                    *slog.Logger
-	telemetrystore            telemetrystore.TelemetryStore
-	tracesDBName              string
-	tracesFieldsTblName       string
-	spanAttributesKeysTblName string
-	indexV3TblName            string
-	metricsDBName             string
-	metricsFieldsTblName      string
-	meterDBName               string
-	meterFieldsTblName        string
-	logsDBName                string
-	logsFieldsTblName         string
-	logAttributeKeysTblName   string
-	logResourceKeysTblName    string
-	logsV2TblName             string
-	relatedMetadataDBName     string
-	relatedMetadataTblName    string
+	logger                         *slog.Logger
+	telemetrystore                 telemetrystore.TelemetryStore
+	tracesDBName                   string
+	tracesFieldsTblName            string
+	spanAttributesKeysTblName      string
+	indexV3TblName                 string
+	metricsDBName                  string
+	metricsFieldsTblName           string
+	meterDBName                    string
+	meterFieldsTblName             string
+	logsDBName                     string
+	logsFieldsTblName              string
+	logAttributeKeysTblName        string
+	logResourceKeysTblName         string
+	logsV2TblName                  string
+	relatedMetadataDBName          string
+	relatedMetadataTblName         string
+	columnEvolutionMetadataTblName string
 
 	fm                 qbtypes.FieldMapper
 	conditionBuilder   qbtypes.ConditionBuilder
@@ -76,31 +81,33 @@ func NewTelemetryMetaStore(
 	logResourceKeysTblName string,
 	relatedMetadataDBName string,
 	relatedMetadataTblName string,
+	columnEvolutionMetadataTblName string,
 ) telemetrytypes.MetadataStore {
 	metadataSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrymetadata")
 
 	t := &telemetryMetaStore{
-		logger:                    metadataSettings.Logger(),
-		telemetrystore:            telemetrystore,
-		tracesDBName:              tracesDBName,
-		tracesFieldsTblName:       tracesFieldsTblName,
-		spanAttributesKeysTblName: spanAttributesKeysTblName,
-		indexV3TblName:            indexV3TblName,
-		metricsDBName:             metricsDBName,
-		metricsFieldsTblName:      metricsFieldsTblName,
-		meterDBName:               meterDBName,
-		meterFieldsTblName:        meterFieldsTblName,
-		logsDBName:                logsDBName,
-		logsV2TblName:             logsV2TblName,
-		logsFieldsTblName:         logsFieldsTblName,
-		logAttributeKeysTblName:   logAttributeKeysTblName,
-		logResourceKeysTblName:    logResourceKeysTblName,
-		relatedMetadataDBName:     relatedMetadataDBName,
-		relatedMetadataTblName:    relatedMetadataTblName,
+		logger:                         metadataSettings.Logger(),
+		telemetrystore:                 telemetrystore,
+		tracesDBName:                   tracesDBName,
+		tracesFieldsTblName:            tracesFieldsTblName,
+		spanAttributesKeysTblName:      spanAttributesKeysTblName,
+		indexV3TblName:                 indexV3TblName,
+		metricsDBName:                  metricsDBName,
+		metricsFieldsTblName:           metricsFieldsTblName,
+		meterDBName:                    meterDBName,
+		meterFieldsTblName:             meterFieldsTblName,
+		logsDBName:                     logsDBName,
+		logsV2TblName:                  logsV2TblName,
+		logsFieldsTblName:              logsFieldsTblName,
+		logAttributeKeysTblName:        logAttributeKeysTblName,
+		logResourceKeysTblName:         logResourceKeysTblName,
+		relatedMetadataDBName:          relatedMetadataDBName,
+		relatedMetadataTblName:         relatedMetadataTblName,
+		columnEvolutionMetadataTblName: columnEvolutionMetadataTblName,
 		jsonColumnMetadata: map[telemetrytypes.Signal]map[telemetrytypes.FieldContext]telemetrytypes.JSONColumnMetadata{
 			telemetrytypes.SignalLogs: {
 				telemetrytypes.FieldContextBody: telemetrytypes.JSONColumnMetadata{
-					BaseColumn:     telemetrylogs.LogsV2BodyJSONColumn,
+					BaseColumn:     telemetrylogs.LogsV2BodyV2Column,
 					PromotedColumn: telemetrylogs.LogsV2BodyPromotedColumn,
 				},
 			},
@@ -118,6 +125,11 @@ func NewTelemetryMetaStore(
 
 // tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "tracesTblStatementToFieldKeys",
+	})
 	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.tracesDBName, t.indexV3TblName)
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
@@ -139,6 +151,12 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 
 // getTracesKeys returns the keys from the spans that match the field selection criteria
 func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getTracesKeys",
+	})
+
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
 	}
@@ -313,6 +331,11 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 
 // logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table
 func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "logsTblStatementToFieldKeys",
+	})
 	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.logsDBName, t.logsV2TblName)
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
@@ -334,6 +357,12 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 
 // getLogsKeys returns the keys from the spans that match the field selection criteria
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getLogsKeys",
+	})
+
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
 	}
@@ -558,11 +587,16 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	if querybuilder.BodyJSONQueryEnabled {
 		bodyJSONPaths, finished, err := t.buildBodyJSONPaths(ctx, fieldKeySelectors) // LIKE for pattern matching
 		if err != nil {
-			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", "error", err)
+			t.logger.ErrorContext(ctx, "failed to extract body JSON paths", errors.Attr(err))
 		}
 		keys = append(keys, bodyJSONPaths...)
 		complete = complete && finished
 	}
+
+	if _, err := t.updateColumnEvolutionMetadataForKeys(ctx, keys); err != nil {
+		return nil, false, err
+	}
+
 	return keys, complete, nil
 }
 
@@ -583,6 +617,11 @@ func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
 
 // getMetricsKeys returns the keys from the metrics that match the field selection criteria
 func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getMetricsKeys",
+	})
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
 	}
@@ -685,6 +724,12 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 
 // getMeterKeys returns the keys from the meter metrics that match the field selection criteria
 func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getMeterSourceMetricKeys",
+	})
+
 	if len(fieldKeySelectors) == 0 {
 		return nil, true, nil
 	}
@@ -973,6 +1018,11 @@ func (t *telemetryMetaStore) GetKey(ctx context.Context, fieldKeySelector *telem
 }
 
 func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) ([]string, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  fieldValueSelector.Signal.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getRelatedValues",
+	})
 
 	// nothing to return as "related" value if there is nothing to filter on
 	if fieldValueSelector.ExistingQuery == "" {
@@ -986,18 +1036,18 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		FieldDataType: fieldValueSelector.FieldDataType,
 	}
 
-	selectColumn, err := t.fm.FieldFor(ctx, key)
+	selectColumn, err := t.fm.FieldFor(ctx, 0, 0, key)
 
 	if err != nil {
 		// we don't have a explicit column to select from the related metadata table
 		// so we will select either from resource_attributes or attributes table
 		// in that order
-		resourceColumn, _ := t.fm.FieldFor(ctx, &telemetrytypes.TelemetryFieldKey{
+		resourceColumn, _ := t.fm.FieldFor(ctx, 0, 0, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextResource,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
 		})
-		attributeColumn, _ := t.fm.FieldFor(ctx, &telemetrytypes.TelemetryFieldKey{
+		attributeColumn, _ := t.fm.FieldFor(ctx, 0, 0, &telemetrytypes.TelemetryFieldKey{
 			Name:          key.Name,
 			FieldContext:  telemetrytypes.FieldContextAttribute,
 			FieldDataType: telemetrytypes.FieldDataTypeString,
@@ -1018,15 +1068,16 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 		}
 
 		whereClause, err := querybuilder.PrepareWhereClause(fieldValueSelector.ExistingQuery, querybuilder.FilterExprVisitorOpts{
+			Context:          ctx,
 			Logger:           t.logger,
 			FieldMapper:      t.fm,
 			ConditionBuilder: t.conditionBuilder,
 			FieldKeys:        keys,
-		}, 0, 0)
+		})
 		if err == nil {
 			sb.AddWhereClause(whereClause.WhereClause)
 		} else {
-			t.logger.WarnContext(ctx, "error parsing existing query for related values", "error", err)
+			t.logger.WarnContext(ctx, "error parsing existing query for related values", errors.Attr(err))
 		}
 	}
 
@@ -1046,20 +1097,20 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 			// search on attributes
 			key.FieldContext = telemetrytypes.FieldContextAttribute
-			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 
 			// search on resource
 			key.FieldContext = telemetrytypes.FieldContextResource
-			cond, err = t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err = t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
 			key.FieldContext = origContext
 		} else {
-			cond, err := t.conditionBuilder.ConditionFor(ctx, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb, 0, 0)
+			cond, err := t.conditionBuilder.ConditionFor(ctx, 0, 0, key, qbtypes.FilterOperatorContains, fieldValueSelector.Value, sb)
 			if err == nil {
 				conds = append(conds, cond)
 			}
@@ -1081,7 +1132,7 @@ func (t *telemetryMetaStore) getRelatedValues(ctx context.Context, fieldValueSel
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "query for related values", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "query for related values", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1118,6 +1169,11 @@ func (t *telemetryMetaStore) GetRelatedValues(ctx context.Context, fieldValueSel
 }
 
 func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getSpanFieldValues",
+	})
 	// build the query to get the keys from the spans that match the field selection criteria
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
@@ -1202,6 +1258,11 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 }
 
 func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getLogFieldValues",
+	})
 	// build the query to get the keys from the spans that match the field selection criteria
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
@@ -1285,6 +1346,11 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 
 // getMetricFieldValues returns field values and whether the result is complete
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getMetricFieldValues",
+	})
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
 		limit = 50
@@ -1373,6 +1439,11 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 
 // getIntrinsicMetricFieldValues returns values, isSearchComplete, error
 func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector, limit int) (*telemetrytypes.TelemetryFieldValues, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getIntrinsicMetricFieldValues",
+	})
 	key, ok := telemetrymetrics.IntrinsicMetricFieldDefinitions[fieldValueSelector.Name]
 	if !ok {
 		return &telemetrytypes.TelemetryFieldValues{}, nil
@@ -1446,6 +1517,11 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 }
 
 func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getMeterSourceMetricFieldValues",
+	})
 	sb := sqlbuilder.Select("DISTINCT arrayJoin(JSONExtractKeysAndValues(labels, 'String')) AS attr").
 		From(t.meterDBName + "." + t.meterFieldsTblName)
 
@@ -1631,8 +1707,10 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 	if err != nil {
 		return nil, nil, err
 	}
-	// TODO: return error after table migration are run
-	meterMetricsTemporality, meterMetricsTypes, _ := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
+	meterMetricsTemporality, meterMetricsTypes, err := t.fetchMeterSourceMetricsTemporalityAndType(ctx, metricNames...)
+	if err != nil {
+		return nil, nil, err
+	}
 
 	// For metrics not found in the database, set to Unknown
 	for _, metricName := range metricNames {
@@ -1660,6 +1738,11 @@ func (t *telemetryMetaStore) FetchTemporalityAndTypeMulti(ctx context.Context, q
 }
 
 func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context, queryTimeRangeStartTs, queryTimeRangeEndTs uint64, metricNames ...string) (map[string][]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "fetchMetricsTemporalityAndType",
+	})
 	temporalities := make(map[string][]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
 
@@ -1688,7 +1771,7 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching metric temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching metric temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1721,6 +1804,11 @@ func (t *telemetryMetaStore) fetchMetricsTemporalityAndType(ctx context.Context,
 }
 
 func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx context.Context, metricNames ...string) (map[string]metrictypes.Temporality, map[string]metrictypes.Type, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "fetchMeterSourceMetricsTemporalityAndType",
+	})
 	temporalities := make(map[string]metrictypes.Temporality)
 	types := make(map[string]metrictypes.Type)
 
@@ -1728,6 +1816,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 		"metric_name",
 		"argMax(temporality, unix_milli) as temporality",
 		"any(type) AS type",
+		"any(is_monotonic) as is_monotonic",
 	).From(t.meterDBName + "." + t.meterFieldsTblName)
 
 	// Filter by metric names (in the temporality column due to data mix-up)
@@ -1738,7 +1827,7 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 
 	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
 
-	t.logger.DebugContext(ctx, "fetching meter metrics temporality", "query", query, "args", args)
+	t.logger.DebugContext(ctx, "fetching meter metrics temporality", slog.String("query", query), slog.Any("args", args))
 
 	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
 	if err != nil {
@@ -1765,6 +1854,113 @@ func (t *telemetryMetaStore) fetchMeterSourceMetricsTemporalityAndType(ctx conte
 	return temporalities, types, nil
 }
 
+func (k *telemetryMetaStore) fetchEvolutionEntryFromClickHouse(ctx context.Context, selectors []*telemetrytypes.EvolutionSelector) ([]*telemetrytypes.EvolutionEntry, error) {
+	sb := sqlbuilder.NewSelectBuilder()
+	sb.Select("signal", "column_name", "column_type", "field_context", "field_name", "version", "release_time")
+	sb.From(fmt.Sprintf("%s.%s", k.relatedMetadataDBName, k.columnEvolutionMetadataTblName))
+	sb.OrderBy("release_time ASC")
+
+	var clauses []string
+	for _, selector := range selectors {
+		var clause string
+
+		if selector.FieldContext != telemetrytypes.FieldContextUnspecified {
+			clause = sb.E("field_context", selector.FieldContext)
+		}
+
+		clause = sb.And(clause,
+			sb.Or(sb.E("field_name", selector.FieldName), sb.E("field_name", "__all__")),
+		)
+
+		clauses = append(clauses, sb.And(sb.E("signal", selector.Signal), clause))
+	}
+	sb.Where(sb.Or(clauses...))
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	var entries []*telemetrytypes.EvolutionEntry
+	rows, err := k.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	for rows.Next() {
+		var entry telemetrytypes.EvolutionEntry
+		var releaseTimeNs float64
+		if err := rows.Scan(
+			&entry.Signal,
+			&entry.ColumnName,
+			&entry.ColumnType,
+			&entry.FieldContext,
+			&entry.FieldName,
+			&entry.Version,
+			&releaseTimeNs,
+		); err != nil {
+			return nil, err
+		}
+		// Convert nanoseconds to time.Time
+		releaseTime := time.Unix(0, int64(releaseTimeNs))
+		entry.ReleaseTime = releaseTime
+		entries = append(entries, &entry)
+	}
+
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+
+	return entries, nil
+}
+
+// Get retrieves all evolutions for the given selectors from DB.
+func (k *telemetryMetaStore) updateColumnEvolutionMetadataForKeys(ctx context.Context, keysToUpdate []*telemetrytypes.TelemetryFieldKey) (map[string][]*telemetrytypes.EvolutionEntry, error) {
+
+	var metadataKeySelectors []*telemetrytypes.EvolutionSelector
+	for _, keySelector := range keysToUpdate {
+		selector := &telemetrytypes.EvolutionSelector{
+			Signal:       keySelector.Signal,
+			FieldContext: keySelector.FieldContext,
+			FieldName:    keySelector.Name,
+		}
+		metadataKeySelectors = append(metadataKeySelectors, selector)
+	}
+
+	evolutions, err := k.fetchEvolutionEntryFromClickHouse(ctx, metadataKeySelectors)
+	if err != nil {
+		return nil, errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to fetch evolution from clickhouse %s", err.Error())
+	}
+
+	evolutionsByUniqueKey := make(map[string][]*telemetrytypes.EvolutionEntry)
+	for _, evolution := range evolutions {
+		key := &telemetrytypes.EvolutionSelector{
+			Signal:       evolution.Signal,
+			FieldContext: evolution.FieldContext,
+			FieldName:    evolution.FieldName,
+		}
+		evolutionsByUniqueKey[key.QualifiedName()] = append(evolutionsByUniqueKey[key.QualifiedName()], evolution)
+	}
+
+	if len(keysToUpdate) > 0 {
+		for i, key := range keysToUpdate {
+			selector := &telemetrytypes.EvolutionSelector{
+				Signal:       key.Signal,
+				FieldContext: key.FieldContext,
+				FieldName:    "__all__",
+			}
+			// first check if there is evolutions that with field name as __all__
+			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
+				keysToUpdate[i].Evolutions = keyEvolutions
+			}
+			// then check for specific field name
+			selector.FieldName = key.Name
+			if keyEvolutions, ok := evolutionsByUniqueKey[selector.QualifiedName()]; ok {
+				keysToUpdate[i].Evolutions = keyEvolutions
+			}
+		}
+	}
+	return evolutionsByUniqueKey, nil
+}
+
 // chunkSizeFirstSeenMetricMetadata limits the number of tuples per SQL query to avoid hitting the max_query_size limit.
 //
 // Calculation Logic:
@@ -1786,6 +1982,11 @@ const chunkSizeFirstSeenMetricMetadata = 1600
 // for each metric-attribute-value combination.
 // Returns a map where key is `telemetrytypes.MetricMetadataLookupKey` and value is first_seen in milliseconds.
 func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context, lookupKeys []telemetrytypes.MetricMetadataLookupKey) (map[telemetrytypes.MetricMetadataLookupKey]int64, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "GetFirstSeenFromMetricMetadata",
+	})
 	result := make(map[telemetrytypes.MetricMetadataLookupKey]int64)
 
 	for i := 0; i < len(lookupKeys); i += chunkSizeFirstSeenMetricMetadata {
@@ -1844,4 +2045,38 @@ func (t *telemetryMetaStore) GetFirstSeenFromMetricMetadata(ctx context.Context,
 	}
 
 	return result, nil
+}
+
+func (t *telemetryMetaStore) FetchLastSeenInfoMulti(ctx context.Context, metricNames ...string) (map[string]int64, error) {
+	sb := sqlbuilder.Select(
+		"metric_name",
+		"max(unix_milli)",
+	).
+		From(t.metricsDBName + "." + telemetrymetrics.TimeseriesV4TableName)
+	sb.Where(sb.In("metric_name", metricNames))
+	sb.GroupBy("metric_name")
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	t.logger.DebugContext(ctx, "fetching metric last seen timestamp", slog.String("query", query), slog.Any("args", args))
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to fetch metric last seen info")
+	}
+	defer rows.Close()
+
+	lastSeenInfo := make(map[string]int64)
+	for rows.Next() {
+		var metricName string
+		var unix_milli int64
+		if err := rows.Scan(&metricName, &unix_milli); err != nil {
+			return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to scan last seen info result")
+		}
+		lastSeenInfo[metricName] = unix_milli
+	}
+	if err := rows.Err(); err != nil {
+		return nil, errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "error iterating over metrics temporality rows")
+	}
+	return lastSeenInfo, nil
 }

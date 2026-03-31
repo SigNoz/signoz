@@ -1,4 +1,3 @@
-/* eslint-disable no-restricted-syntax */
 import { ChartData } from 'chart.js';
 
 export const hasData = (data: ChartData): boolean => {

@@ -1,6 +1,6 @@
 import { UseMutateAsyncFunction } from 'react-query';
-import { NotificationInstance } from 'antd/es/notification/interface';
-import { DefaultOptionType } from 'antd/es/select';
+import type { NotificationInstance } from 'antd/es/notification/interface';
+import type { DefaultOptionType } from 'antd/es/select';
 import createDowntimeSchedule from 'api/plannedDowntime/createDowntimeSchedule';
 import { DeleteSchedulePayloadProps } from 'api/plannedDowntime/deleteDowntimeSchedule';
 import {
@@ -137,7 +137,10 @@ export const deleteDowntimeHandler = ({
 
 export const createEditDowntimeSchedule = async (
 	props: DowntimeScheduleUpdatePayload,
-): Promise<SuccessResponse<PayloadProps> | ErrorResponse> => {
+): Promise<
+	| SuccessResponse<PayloadProps>
+	| ErrorResponse<{ code: string; message: string } | string>
+> => {
 	if (props.id) {
 		return updateDowntimeSchedule({ ...props });
 	}

@@ -151,7 +151,6 @@ describe('AllEndPoints', () => {
 	});
 
 	it('renders component correctly', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<AllEndPoints {...mockProps} />);
 
 		// Verify basic component rendering
@@ -162,7 +161,6 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles filter changes', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<AllEndPoints {...mockProps} />);
 
 		// Trigger filter change
@@ -180,7 +178,6 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles group by changes', () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<AllEndPoints {...mockProps} />);
 
 		// Trigger group by change
@@ -191,7 +188,6 @@ describe('AllEndPoints', () => {
 	});
 
 	it('handles row click in grid card', async () => {
-		// eslint-disable-next-line react/jsx-props-no-spreading
 		render(<AllEndPoints {...mockProps} />);
 
 		// Trigger row click

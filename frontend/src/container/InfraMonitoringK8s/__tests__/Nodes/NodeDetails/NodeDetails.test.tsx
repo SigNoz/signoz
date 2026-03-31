@@ -1,17 +1,19 @@
-/* eslint-disable import/first */
-// eslint-disable-next-line import/order
 import setupCommonMocks from '../../commonMocks';
 
 setupCommonMocks();
 
 import { QueryClient, QueryClientProvider } from 'react-query';
+// eslint-disable-next-line no-restricted-imports
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
 import NodeDetails from 'container/InfraMonitoringK8s/Nodes/NodeDetails/NodeDetails';
+import { withNuqsTestingAdapter } from 'nuqs/adapters/testing';
 import store from 'store';
 
 const queryClient = new QueryClient();
+
+const Wrapper = withNuqsTestingAdapter({ searchParams: {} });
 
 describe('NodeDetails', () => {
 	const mockNode = {
@@ -24,13 +26,19 @@ describe('NodeDetails', () => {
 
 	it('should render modal with relevant metadata', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<NodeDetails node={mockNode} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<NodeDetails
+								node={mockNode}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const nodeNameElements = screen.getAllByText('test-node');
@@ -44,13 +52,19 @@ describe('NodeDetails', () => {
 
 	it('should render modal with 4 tabs', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<NodeDetails node={mockNode} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<NodeDetails
+								node={mockNode}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const metricsTab = screen.getByText('Metrics');
@@ -68,13 +82,19 @@ describe('NodeDetails', () => {
 
 	it('default tab should be metrics', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<NodeDetails node={mockNode} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<NodeDetails
+								node={mockNode}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const metricsTab = screen.getByRole('radio', { name: 'Metrics' });
@@ -83,13 +103,19 @@ describe('NodeDetails', () => {
 
 	it('should switch to events tab when events tab is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<NodeDetails node={mockNode} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<NodeDetails
+								node={mockNode}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const eventsTab = screen.getByRole('radio', { name: 'Events' });
@@ -100,13 +126,19 @@ describe('NodeDetails', () => {
 
 	it('should close modal when close button is clicked', () => {
 		render(
-			<QueryClientProvider client={queryClient}>
-				<Provider store={store}>
-					<MemoryRouter>
-						<NodeDetails node={mockNode} isModalTimeSelection onClose={mockOnClose} />
-					</MemoryRouter>
-				</Provider>
-			</QueryClientProvider>,
+			<Wrapper>
+				<QueryClientProvider client={queryClient}>
+					<Provider store={store}>
+						<MemoryRouter>
+							<NodeDetails
+								node={mockNode}
+								isModalTimeSelection
+								onClose={mockOnClose}
+							/>
+						</MemoryRouter>
+					</Provider>
+				</QueryClientProvider>
+			</Wrapper>,
 		);
 
 		const closeButton = screen.getByRole('button', { name: 'Close' });

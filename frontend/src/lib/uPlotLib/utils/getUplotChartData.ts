@@ -152,7 +152,6 @@ const processAnomalyDetectionData = (
 			const { values: predictedValues } = predictedSeries[index];
 			const { values: upperBoundValues } = upperBoundSeries[index];
 			const { values: lowerBoundValues } = lowerBoundSeries[index];
-			// eslint-disable-next-line prefer-destructuring
 			const length = seriesValues.length;
 
 			const timestamps: number[] = new Array(length);

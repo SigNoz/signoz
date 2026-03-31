@@ -1,8 +1,6 @@
-/* eslint-disable sonarjs/no-duplicate-string */
 import { ReactNode } from 'react';
 import { Color } from '@signozhq/design-tokens';
-import { Progress, Tag, Tooltip } from 'antd';
-import { ColumnType } from 'antd/es/table';
+import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import { convertFiltersToExpressionWithExistingQuery } from 'components/QueryBuilderV2/utils';
 import {
 	FiltersType,
@@ -823,7 +821,6 @@ export const getEndPointsQueryPayload = (
 	];
 };
 
-// eslint-disable-next-line sonarjs/cognitive-complexity
 function buildFilterExpression(
 	domainName: string,
 	filters: IBuilderQuery['filters'],
@@ -1020,10 +1017,7 @@ export const getEndPointsColumnsConfig = (
 		sorter: true,
 		align: 'right',
 		className: `column`,
-		render: (
-			errorRate: number | string,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode => (
+		render: (errorRate: number | string): React.ReactNode => (
 			<Progress
 				status="active"
 				percent={Number(
@@ -1033,8 +1027,7 @@ export const getEndPointsColumnsConfig = (
 				)}
 				strokeLinecap="butt"
 				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
+				strokeColor={((): string => {
 					const errorRatePercent = Number((errorRate as number).toFixed(1));
 					if (errorRatePercent >= 90) {
 						return Color.BG_SAKURA_500;
@@ -2422,7 +2415,6 @@ export interface DependentServicesData {
 // Discuss once about type safety of this function
 export const getFormattedDependentServicesData = (
 	data: DependentServicesResponseRow[],
-	// eslint-disable-next-line sonarjs/cognitive-complexity
 ): DependentServicesData[] => {
 	if (!data) {
 		return [];
@@ -2512,18 +2504,14 @@ export const dependentServicesColumns: ColumnType<DependentServicesData>[] = [
 		dataIndex: 'errorPercentage',
 		key: 'errorPercentage',
 		align: 'center',
-		render: (
-			errorPercentage: number | string,
-			// eslint-disable-next-line sonarjs/no-identical-functions
-		): React.ReactNode =>
+		render: (errorPercentage: number | string): React.ReactNode =>
 			errorPercentage !== '-' ? (
 				<Progress
 					status="active"
 					percent={Number((errorPercentage as number).toFixed(2))}
 					strokeLinecap="butt"
 					size="small"
-					strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-					string => {
+					strokeColor={((): string => {
 						const errorPercentagePercent = Number(
 							(errorPercentage as number).toFixed(2),
 						);
@@ -3035,8 +3023,7 @@ export const getAllEndpointsWidgetData = (
 				)}
 				strokeLinecap="butt"
 				size="small"
-				strokeColor={((): // eslint-disable-next-line sonarjs/no-identical-functions
-				string => {
+				strokeColor={((): string => {
 					const errorRatePercent = Number(
 						((errorRate === 'n/a' || errorRate === '-'
 							? 0
@@ -3121,7 +3108,6 @@ export const getRateOverTimeWidgetData = (
 	let legend = domainName;
 	if (endPointName) {
 		const { endpoint } = extractPortAndEndpoint(endPointName);
-		// eslint-disable-next-line sonarjs/no-nested-template-literals
 		legend = `${endpoint}`;
 	}
 
@@ -3172,7 +3158,6 @@ export const getLatencyOverTimeWidgetData = (
 	let legend = domainName;
 	if (endPointName) {
 		const { endpoint } = extractPortAndEndpoint(endPointName);
-		// eslint-disable-next-line sonarjs/no-nested-template-literals
 		legend = `${endpoint}`;
 	}
 

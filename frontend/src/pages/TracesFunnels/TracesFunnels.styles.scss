@@ -1,5 +1,5 @@
-@import './components/Header/Header.styles.scss';
-@import './components/SearchBar/SearchBar.styles.scss';
+@use 'components/Header/Header.styles.scss';
+@use 'components/SearchBar/SearchBar.styles.scss';
 
 .traces-funnels {
 	margin-top: 113px;

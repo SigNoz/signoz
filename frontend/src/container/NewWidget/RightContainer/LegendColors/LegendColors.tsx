@@ -14,6 +14,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { getLegend } from 'lib/dashboard/getQueryResults';
 import getLabelName from 'lib/getLabelName';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
+import throttle from 'lodash-es/throttle';
 import { Palette } from 'lucide-react';
 import { SuccessResponse } from 'types/api';
 import { MetricRangePayloadProps } from 'types/api/metrics/getQueryRange';
@@ -95,13 +96,24 @@ function LegendColors({
 		);
 	};
 
-	// Handle color change
-	const handleColorChange = (label: string, color: string): void => {
-		setCustomLegendColors((prev) => ({
-			...prev,
-			[label]: color,
-		}));
-	};
+	// Handle color change (throttled to avoid excessive updates)
+	const handleColorChange = useMemo(
+		() =>
+			throttle((label: string, color: string): void => {
+				setCustomLegendColors((prev) => ({
+					...prev,
+					[label]: color,
+				}));
+			}, 200), // 200ms is a good compromise between responsiveness and performance
+		[setCustomLegendColors],
+	);
+
+	// Clean up throttled handler on unmount
+	useEffect(() => {
+		return (): void => {
+			handleColorChange.cancel();
+		};
+	}, [handleColorChange]);
 
 	// Reset to default color
 	const resetToDefault = (label: string): void => {

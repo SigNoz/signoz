@@ -98,7 +98,6 @@ function UserGuide({ queryType }: UserGuideProps): JSX.Element {
 						i18nKey="user_guide_ch_step1a"
 						t={t}
 						components={[
-							// eslint-disable-next-line jsx-a11y/control-has-associated-label, jsx-a11y/anchor-has-content
 							<a
 								key={1}
 								target="_blank"
