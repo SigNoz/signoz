@@ -4,22 +4,23 @@ import (
 	"context"
 	"encoding/base64"
 	"fmt"
+	"log/slog"
 	"strconv"
 	"strings"
 	"time"
 
 	"github.com/ClickHouse/clickhouse-go/v2"
 	"github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
+	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 	"github.com/SigNoz/signoz/pkg/types/ctxtypes"
 	"github.com/SigNoz/signoz/pkg/types/instrumentationtypes"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/bytedance/sonic"
 )
 
 type builderQuery[T any] struct {
+	logger         *slog.Logger
 	telemetryStore telemetrystore.TelemetryStore
 	stmtBuilder    qbtypes.StatementBuilder[T]
 	spec           qbtypes.QueryBuilderQuery[T]
@@ -33,6 +34,7 @@ type builderQuery[T any] struct {
 var _ qbtypes.Query = (*builderQuery[any])(nil)
 
 func newBuilderQuery[T any](
+	logger *slog.Logger,
 	telemetryStore telemetrystore.TelemetryStore,
 	stmtBuilder qbtypes.StatementBuilder[T],
 	spec qbtypes.QueryBuilderQuery[T],
@@ -41,6 +43,7 @@ func newBuilderQuery[T any](
 	variables map[string]qbtypes.VariableItem,
 ) *builderQuery[T] {
 	return &builderQuery[T]{
+		logger:         logger,
 		telemetryStore: telemetryStore,
 		stmtBuilder:    stmtBuilder,
 		spec:           spec,
@@ -262,40 +265,6 @@ func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, 
 		return nil, err
 	}
 
-	// merge body_json and promoted into body
-	if q.spec.Signal == telemetrytypes.SignalLogs {
-		switch typedPayload := payload.(type) {
-		case *qbtypes.RawData:
-			for _, rr := range typedPayload.Rows {
-				seeder := func() error {
-					body, ok := rr.Data[telemetrylogs.LogsV2BodyJSONColumn].(map[string]any)
-					if !ok {
-						return nil
-					}
-					promoted, ok := rr.Data[telemetrylogs.LogsV2BodyPromotedColumn].(map[string]any)
-					if !ok {
-						return nil
-					}
-					seed(promoted, body)
-					str, err := sonic.MarshalString(body)
-					if err != nil {
-						return errors.Wrapf(err, errors.TypeInternal, errors.CodeInternal, "failed to marshal body")
-					}
-					rr.Data["body"] = str
-					return nil
-				}
-				err := seeder()
-				if err != nil {
-					return nil, err
-				}
-
-				delete(rr.Data, telemetrylogs.LogsV2BodyJSONColumn)
-				delete(rr.Data, telemetrylogs.LogsV2BodyPromotedColumn)
-			}
-			payload = typedPayload
-		}
-	}
-
 	return &qbtypes.Result{
 		Type:  q.kind,
 		Value: payload,
@@ -340,6 +309,45 @@ func (q *builderQuery[T]) executeWindowList(ctx context.Context) (*qbtypes.Resul
 	totalRows := uint64(0)
 	totalBytes := uint64(0)
 	start := time.Now()
+
+	// Check if filter contains trace_id(s) and optimize time range if needed
+	if q.spec.Signal == telemetrytypes.SignalTraces &&
+		q.spec.Filter != nil && q.spec.Filter.Expression != "" {
+
+		traceIDs, found := telemetrytraces.ExtractTraceIDsFromFilter(q.spec.Filter.Expression)
+		if found && len(traceIDs) > 0 {
+			finder := telemetrytraces.NewTraceTimeRangeFinder(q.telemetryStore)
+
+			traceStart, traceEnd, ok := finder.GetTraceTimeRangeMulti(ctx, traceIDs)
+			traceStartMS := uint64(traceStart) / 1_000_000
+			traceEndMS := uint64(traceEnd) / 1_000_000
+			if !ok {
+				q.logger.DebugContext(ctx, "failed to get trace time range", slog.Any("trace_ids", traceIDs))
+			} else if traceStartMS > 0 && traceEndMS > 0 {
+				// no overlap — nothing to return
+				if uint64(traceStartMS) > toMS || uint64(traceEndMS) < fromMS {
+					return &qbtypes.Result{
+						Type: qbtypes.RequestTypeRaw,
+						Value: &qbtypes.RawData{
+							QueryName: q.spec.Name,
+						},
+						Stats: qbtypes.ExecStats{
+							DurationMS: uint64(time.Since(start).Milliseconds()),
+						},
+					}, nil
+				}
+
+				// clamp window to trace time range before bucketing
+				if uint64(traceStartMS) > fromMS {
+					fromMS = uint64(traceStartMS)
+				}
+				if uint64(traceEndMS) < toMS {
+					toMS = uint64(traceEndMS)
+				}
+				q.logger.DebugContext(ctx, "optimized time range for traces", slog.Any("trace_ids", traceIDs), slog.Uint64("start", fromMS), slog.Uint64("end", toMS))
+			}
+		}
+	}
 
 	// Get buckets and reverse them for ascending order
 	buckets := makeBuckets(fromMS, toMS)
@@ -422,19 +430,4 @@ func decodeCursor(cur string) (int64, error) {
 		return 0, err
 	}
 	return strconv.ParseInt(string(b), 10, 64)
-}
-
-func seed(promoted map[string]any, body map[string]any) {
-	for key, fromValue := range promoted {
-		if toValue, ok := body[key]; !ok {
-			body[key] = fromValue
-		} else {
-			if fromValue, ok := fromValue.(map[string]any); ok {
-				if toValue, ok := toValue.(map[string]any); ok {
-					seed(fromValue, toValue)
-					body[key] = toValue
-				}
-			}
-		}
-	}
 }

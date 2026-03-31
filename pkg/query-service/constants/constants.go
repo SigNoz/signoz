@@ -14,7 +14,6 @@ import (
 const (
 	HTTPHostPort    = "0.0.0.0:8080" // Address to serve http (query service)
 	PrivateHostPort = "0.0.0.0:8085" // Address to server internal services like alert manager
-	DebugHttpPort   = "0.0.0.0:6060" // Address to serve http (pprof)
 	OpAmpWsEndpoint = "0.0.0.0:4320" // address for opamp websocket
 )
 
@@ -27,9 +26,6 @@ const LogsTTL = "logs"
 const SpanSearchScopeRoot = "isroot"
 const SpanSearchScopeEntryPoint = "isentrypoint"
 const OrderBySpanCount = "span_count"
-
-// Deprecated: Use the new emailing service instead
-var InviteEmailTemplate = GetOrDefaultEnv("INVITE_EMAIL_TEMPLATE", "/root/templates/invitation_email.gotmpl")
 
 var MetricsExplorerClickhouseThreads = GetOrDefaultEnvInt("METRICS_EXPLORER_CLICKHOUSE_THREADS", 8)
 var UpdatedMetricsMetadataCachePrefix = GetOrDefaultEnv("METRICS_UPDATED_METADATA_CACHE_KEY", "UPDATED_METRICS_METADATA")

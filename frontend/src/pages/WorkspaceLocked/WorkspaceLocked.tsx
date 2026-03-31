@@ -1,4 +1,5 @@
-import { useCallback, useEffect } from 'react';
+/* eslint-disable react/no-unescaped-entities */
+import React, { useCallback, useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useMutation } from 'react-query';
 import type { TabsProps } from 'antd';
@@ -21,11 +22,13 @@ import updateCreditCardApi from 'api/v1/checkout/create';
 import RefreshPaymentStatus from 'components/RefreshPaymentStatus/RefreshPaymentStatus';
 import ROUTES from 'constants/routes';
 import { useNotifications } from 'hooks/useNotifications';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { CircleArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
 import APIError from 'types/api/error';
 import { LicensePlatform } from 'types/api/licensesV3/getActive';
+import { isModifierKeyPressed } from 'utils/app';
 import { getFormattedDate } from 'utils/timeUtils';
 
 import CustomerStoryCard from './CustomerStoryCard';
@@ -48,6 +51,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 	} = useAppContext();
 	const isAdmin = user.role === 'ADMIN';
 	const { notifications } = useNotifications();
+	const { safeNavigate } = useSafeNavigate();
 
 	const { t } = useTranslation(['workspaceLocked']);
 
@@ -131,10 +135,10 @@ export default function WorkspaceBlocked(): JSX.Element {
 		});
 	};
 
-	const handleViewBilling = (): void => {
+	const handleViewBilling = (e?: React.MouseEvent): void => {
 		logEvent('Workspace Blocked: User Clicked View Billing', {});
 
-		history.push(ROUTES.BILLING);
+		safeNavigate(ROUTES.BILLING, { newTab: !!e && isModifierKeyPressed(e) });
 	};
 
 	const renderCustomerStories = (
@@ -294,7 +298,7 @@ export default function WorkspaceBlocked(): JSX.Element {
 										type="link"
 										size="small"
 										role="button"
-										onClick={handleViewBilling}
+										onClick={(e): void => handleViewBilling(e)}
 									>
 										View Billing
 									</Button>

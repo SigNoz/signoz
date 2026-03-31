@@ -19,6 +19,12 @@ import getUserVersion from 'api/v1/version/get';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import dayjs from 'dayjs';
 import useActiveLicenseV3 from 'hooks/useActiveLicenseV3/useActiveLicenseV3';
+import {
+	IsAdminPermission,
+	IsEditorPermission,
+	IsViewerPermission,
+} from 'hooks/useAuthZ/legacy';
+import { useAuthZ } from 'hooks/useAuthZ/useAuthZ';
 import { useGetFeatureFlag } from 'hooks/useGetFeatureFlag';
 import { useGlobalEventListener } from 'hooks/useGlobalEventListener';
 import { ChangelogSchema } from 'types/api/changelog/getChangelogByVersion';
@@ -34,7 +40,7 @@ import {
 	UserPreference,
 } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import { USER_ROLES } from 'types/roles';
+import { ROLES, USER_ROLES } from 'types/roles';
 
 import { IAppContext, IUser } from './types';
 import { getUserDefaults } from './utils';
@@ -43,7 +49,7 @@ export const AppContext = createContext<IAppContext | undefined>(undefined);
 
 export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// on load of the provider set the user defaults with access token , refresh token from local storage
-	const [user, setUser] = useState<IUser>(() => getUserDefaults());
+	const [defaultUser, setDefaultUser] = useState<IUser>(() => getUserDefaults());
 	const [activeLicense, setActiveLicense] = useState<LicenseResModel | null>(
 		null,
 	);
@@ -70,18 +76,51 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// if logged out and trying to hit any route none of these calls will trigger
 	const {
 		data: userData,
-		isFetching: isFetchingUser,
-		error: userFetchError,
+		isFetching: isFetchingUserData,
+		error: userFetchDataError,
 	} = useQuery({
 		queryFn: get,
 		queryKey: ['/api/v1/user/me'],
 		enabled: isLoggedIn,
 	});
 
+	const {
+		permissions: permissionsResult,
+		isFetching: isFetchingPermissions,
+		error: errorOnPermissions,
+		refetchPermissions,
+	} = useAuthZ([IsAdminPermission, IsEditorPermission, IsViewerPermission], {
+		enabled: isLoggedIn,
+	});
+
+	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
+	const userFetchError = userFetchDataError || errorOnPermissions;
+
+	const userRole = useMemo(() => {
+		if (permissionsResult?.[IsAdminPermission]?.isGranted) {
+			return USER_ROLES.ADMIN;
+		}
+		if (permissionsResult?.[IsEditorPermission]?.isGranted) {
+			return USER_ROLES.EDITOR;
+		}
+		if (permissionsResult?.[IsViewerPermission]?.isGranted) {
+			return USER_ROLES.VIEWER;
+		}
+		// if none of the permissions, so anonymous
+		return USER_ROLES.ANONYMOUS;
+	}, [permissionsResult]);
+
+	const user: IUser = useMemo(() => {
+		return {
+			...defaultUser,
+			role: userRole as ROLES,
+		};
+	}, [defaultUser, userRole]);
+
 	useEffect(() => {
 		if (!isFetchingUser && userData && userData.data) {
 			setLocalStorageApi(LOCALSTORAGE.LOGGED_IN_USER_EMAIL, userData.data.email);
-			setUser((prev) => ({
+			setDefaultUser((prev) => ({
 				...prev,
 				...userData.data,
 			}));
@@ -203,7 +242,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	}, [userPreferencesData, isFetchingUserPreferences, isLoggedIn]);
 
 	function updateUser(user: IUser): void {
-		setUser((prev) => ({
+		setDefaultUser((prev) => ({
 			...prev,
 			...user,
 		}));
@@ -244,7 +283,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 					...org.slice(orgIndex + 1, org.length),
 				];
 				setOrg(updatedOrg);
-				setUser((prev) => {
+				setDefaultUser((prev) => {
 					if (prev.orgId === orgId) {
 						return {
 							...prev,
@@ -272,7 +311,7 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	// global event listener for AFTER_LOGIN event to start the user fetch post all actions are complete
 	useGlobalEventListener('AFTER_LOGIN', (event) => {
 		if (event.detail) {
-			setUser((prev) => ({
+			setDefaultUser((prev) => ({
 				...prev,
 				accessJwt: event.detail.accessJWT,
 				refreshJwt: event.detail.refreshJWT,
@@ -280,12 +319,14 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 			}));
 			setIsLoggedIn(true);
 		}
+
+		refetchPermissions();
 	});
 
 	// global event listener for LOGOUT event to clean the app context state
 	useGlobalEventListener('LOGOUT', () => {
 		setIsLoggedIn(false);
-		setUser(getUserDefaults());
+		setDefaultUser(getUserDefaults());
 		setActiveLicense(null);
 		setTrialInfo(null);
 		setFeatureFlags(null);

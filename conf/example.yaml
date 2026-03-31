@@ -39,6 +39,13 @@ instrumentation:
             host: "0.0.0.0"
             port: 9090
 
+##################### PProf #####################
+pprof:
+  # Whether to enable the pprof server.
+  enabled: true
+  # The address on which the pprof server listens.
+  address: 0.0.0.0:6060
+
 ##################### Web #####################
 web:
   # Whether to enable the web frontend
@@ -137,6 +144,8 @@ telemetrystore:
 
 ##################### Prometheus #####################
 prometheus:
+  # The maximum time a PromQL query is allowed to run before being aborted.
+  timeout: 2m
   active_query_tracker:
     # Whether to enable the active query tracker.
     enabled: true
@@ -308,6 +317,9 @@ user:
       allow_self: true
       # The duration within which a user can reset their password.
       max_token_lifetime: 6h
+    invite:
+      # The duration within which a user can accept their invite.
+      max_token_lifetime: 48h
   root:
     # Whether to enable the root user. When enabled, a root user is provisioned
     # on startup using the email and password below. The root user cannot be
@@ -325,15 +337,18 @@ user:
 ##################### IdentN #####################
 identn:
   tokenizer:
-    # toggle the identN resolver
+    # toggle tokenizer identN
     enabled: true
     # headers to use for tokenizer identN resolver
     headers:
       - Authorization
       - Sec-WebSocket-Protocol
   apikey:
-    # toggle the identN resolver
+    # toggle apikey identN
     enabled: true
     # headers to use for apikey identN resolver
     headers:
       - SIGNOZ-API-KEY
+  impersonation:
+    # toggle impersonation identN, when enabled, all requests will impersonate the root user
+    enabled: false

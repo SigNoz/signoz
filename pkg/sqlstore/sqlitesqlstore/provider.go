@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"fmt"
+	"log/slog"
 	"net/url"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -52,7 +53,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	if err != nil {
 		return nil, err
 	}
-	settings.Logger().InfoContext(ctx, "connected to sqlite", "path", config.Sqlite.Path)
+	settings.Logger().InfoContext(ctx, "connected to sqlite", slog.String("path", config.Sqlite.Path))
 	sqldb.SetMaxOpenConns(config.Connection.MaxOpenConns)
 
 	sqliteDialect := sqlitedialect.New()
@@ -100,7 +101,7 @@ func (provider *provider) WrapNotFoundErrf(err error, code errors.Code, format s
 
 func (provider *provider) WrapAlreadyExistsErrf(err error, code errors.Code, format string, args ...any) error {
 	if sqlite3Err, ok := err.(*sqlite.Error); ok {
-		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY {
+		if sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_UNIQUE || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_PRIMARYKEY || sqlite3Err.Code() == sqlite3.SQLITE_CONSTRAINT_FOREIGNKEY {
 			return errors.Wrapf(err, errors.TypeAlreadyExists, code, format, args...)
 		}
 	}

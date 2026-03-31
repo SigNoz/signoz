@@ -8,6 +8,9 @@ import (
 	"strings"
 	"time"
 
+	sqlbuilder "github.com/huandu/go-sqlbuilder"
+	"golang.org/x/sync/errgroup"
+
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
@@ -25,8 +28,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	sqlbuilder "github.com/huandu/go-sqlbuilder"
-	"golang.org/x/sync/errgroup"
 )
 
 type module struct {
@@ -510,7 +511,7 @@ func (m *module) fetchMetadataFromCache(ctx context.Context, orgID valuer.UUID, 
 		if err := m.cache.Get(ctx, orgID, cacheKey, &cachedMetadata); err == nil {
 			hits[metricName] = &cachedMetadata
 		} else {
-			m.logger.WarnContext(ctx, "cache miss for metric metadata", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "cache miss for metric metadata", slog.String("metric_name", metricName), errors.Attr(err))
 			misses = append(misses, metricName)
 		}
 	}
@@ -566,7 +567,7 @@ func (m *module) fetchUpdatedMetadata(ctx context.Context, orgID valuer.UUID, me
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -626,7 +627,7 @@ func (m *module) fetchTimeseriesMetadata(ctx context.Context, orgID valuer.UUID,
 
 		cacheKey := generateMetricMetadataCacheKey(metricName)
 		if err := m.cache.Set(ctx, orgID, cacheKey, &metricMetadata, 0); err != nil {
-			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", "metric_name", metricName, "error", err)
+			m.logger.WarnContext(ctx, "failed to set metric metadata in cache", slog.String("metric_name", metricName), errors.Attr(err))
 		}
 	}
 
@@ -765,7 +766,7 @@ func (m *module) insertMetricsMetadata(ctx context.Context, orgID valuer.UUID, r
 	}
 	cacheKey := generateMetricMetadataCacheKey(req.MetricName)
 	if err := m.cache.Set(ctx, orgID, cacheKey, metricMetadata, 0); err != nil {
-		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", "metric_name", req.MetricName, "error", err)
+		m.logger.WarnContext(ctx, "failed to set metric metadata in cache after insert", slog.String("metric_name", req.MetricName), errors.Attr(err))
 	}
 
 	return nil
@@ -796,17 +797,17 @@ func (m *module) buildFilterClause(ctx context.Context, filter *qbtypes.Filter, 
 	}
 
 	opts := querybuilder.FilterExprVisitorOpts{
+		Context:          ctx,
 		Logger:           m.logger,
 		FieldMapper:      m.fieldMapper,
 		ConditionBuilder: m.condBuilder,
 		FullTextColumn:   &telemetrytypes.TelemetryFieldKey{Name: "metric_name", FieldContext: telemetrytypes.FieldContextMetric},
 		FieldKeys:        keys,
+		StartNs:          querybuilder.ToNanoSecs(uint64(startMillis)),
+		EndNs:            querybuilder.ToNanoSecs(uint64(endMillis)),
 	}
 
-	startNs := querybuilder.ToNanoSecs(uint64(startMillis))
-	endNs := querybuilder.ToNanoSecs(uint64(endMillis))
-
-	whereClause, err := querybuilder.PrepareWhereClause(expression, opts, startNs, endNs)
+	whereClause, err := querybuilder.PrepareWhereClause(expression, opts)
 	if err != nil {
 		return nil, err
 	}

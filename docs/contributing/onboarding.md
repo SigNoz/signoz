@@ -273,6 +273,7 @@ Options can be simple (direct link) or nested (with another question):
 - Place logo files in `public/Logos/`
 - Use SVG format
 - Reference as `"/Logos/your-logo.svg"`
+- **Fetching Icons**: New icons can be easily fetched from [OpenBrand](https://openbrand.sh/). Use the pattern `https://openbrand.sh/?url=<TARGET_URL>`, where `<TARGET_URL>` is the URL-encoded link to the service's website. For example, to get Render's logo, use [https://openbrand.sh/?url=https%3A%2F%2Frender.com](https://openbrand.sh/?url=https%3A%2F%2Frender.com).
 - **Optimize new SVGs**: Run any newly downloaded SVGs through an optimizer like [SVGOMG (svgo)](https://svgomg.net/) or use `npx svgo public/Logos/your-logo.svg` to minimise their size before committing.
 
 ### 4. Links

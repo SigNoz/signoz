@@ -168,7 +168,7 @@ describe('LogsExplorerViews -', () => {
 		lodsQueryServerRequest();
 		const { queryByTestId } = renderer();
 
-		const periscopeDownloadButtonTestId = 'periscope-btn-download-options';
+		const periscopeDownloadButtonTestId = 'periscope-btn-download-logs';
 		const periscopeFormatButtonTestId = 'periscope-btn-format-options';
 
 		// Test that the periscope button is present

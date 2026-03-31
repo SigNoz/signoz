@@ -1,6 +1,7 @@
 import getLocalStorage from 'api/browser/localstorage/get';
 import { FeatureKeys } from 'constants/features';
 import { SKIP_ONBOARDING } from 'constants/onboarding';
+import dayjs from 'dayjs';
 import { get } from 'lodash-es';
 import { getLocation } from 'utils/getLocation';
 
@@ -59,6 +60,11 @@ export function buildAbsolutePath({
 	urlQueryString?: string;
 }): string {
 	const { pathname } = getLocation();
+
+	if (!relativePath) {
+		return urlQueryString ? `${pathname}?${urlQueryString}` : pathname;
+	}
+
 	// ensure base path always ends with a forward slash
 	const basePath = pathname.endsWith('/') ? pathname : `${pathname}/`;
 
@@ -73,3 +79,28 @@ export function buildAbsolutePath({
 }
 
 export const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+/**
+ * Returns true if the user is holding Cmd (Mac) or Ctrl (Windows/Linux)
+ * during a click event, or if the middle mouse button is used —
+ * the universal "open in new tab" modifiers.
+ */
+export const isModifierKeyPressed = (
+	event: MouseEvent | React.MouseEvent,
+): boolean => event.metaKey || event.ctrlKey || event.button === 1;
+
+export function toISOString(
+	date: Date | string | number | null | undefined,
+): string | null {
+	if (date == null) {
+		return null;
+	}
+
+	const d = dayjs(date);
+
+	if (!d.isValid()) {
+		return null;
+	}
+
+	return d.toISOString();
+}

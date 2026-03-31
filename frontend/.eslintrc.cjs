@@ -193,8 +193,37 @@ module.exports = {
 				],
 			},
 		],
+		'no-restricted-syntax': [
+			'error',
+			{
+				selector:
+					// TODO: Make this generic on removal of redux
+					"CallExpression[callee.property.name='getState'][callee.object.name=/^use/]",
+				message:
+					'Avoid calling .getState() directly. Export a standalone action from the store instead.',
+			},
+		],
 	},
 	overrides: [
+		{
+			files: ['src/**/*.{jsx,tsx,ts}'],
+			excludedFiles: [
+				'**/*.test.{js,jsx,ts,tsx}',
+				'**/*.spec.{js,jsx,ts,tsx}',
+				'**/__tests__/**/*.{js,jsx,ts,tsx}',
+			],
+			rules: {
+				'no-restricted-properties': [
+					'error',
+					{
+						object: 'navigator',
+						property: 'clipboard',
+						message:
+							'Do not use navigator.clipboard directly since it does not work well with specific browsers. Use hook useCopyToClipboard from react-use library. https://streamich.github.io/react-use/?path=/story/side-effects-usecopytoclipboard--docs',
+					},
+				],
+			},
+		},
 		{
 			files: [
 				'**/*.test.{js,jsx,ts,tsx}',
@@ -215,6 +244,14 @@ module.exports = {
 				'@typescript-eslint/explicit-module-boundary-types': 'off',
 				'no-nested-ternary': 'off',
 				'@typescript-eslint/no-unused-vars': 'warn',
+			},
+		},
+		{
+			// Store definition files are the only place .getState() is permitted —
+			// they are the canonical source for standalone action exports.
+			files: ['**/*Store.{ts,tsx}'],
+			rules: {
+				'no-restricted-syntax': 'off',
 			},
 		},
 	],

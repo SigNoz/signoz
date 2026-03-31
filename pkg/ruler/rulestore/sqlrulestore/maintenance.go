@@ -4,6 +4,7 @@ import (
 	"context"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
@@ -135,7 +136,7 @@ func (r *maintenance) DeletePlannedMaintenance(ctx context.Context, id valuer.UU
 		Where("id = ?", id.StringValue()).
 		Exec(ctx)
 	if err != nil {
-		return err
+		return r.sqlstore.WrapAlreadyExistsErrf(err, errors.CodeAlreadyExists, "cannot delete planned maintenance because it is referenced by associated rules, remove the rules from the planned maintenance first")
 	}
 
 	return nil

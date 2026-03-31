@@ -6,14 +6,16 @@ import (
 
 	"time"
 
+	"log/slog"
+
+	"github.com/google/uuid"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	basemodel "github.com/SigNoz/signoz/pkg/query-service/model"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
-	"github.com/google/uuid"
-	"log/slog"
 )
 
 func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) {
@@ -26,6 +28,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 	if err != nil {
 		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "evaluation is invalid: %v", err)
 	}
+
 	if opts.Rule.RuleType == ruletypes.RuleTypeThreshold {
 		// create a threshold rule
 		tr, err := baserules.NewThresholdRule(
@@ -39,6 +42,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -63,6 +67,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 
 		if err != nil {
@@ -88,6 +93,7 @@ func PrepareTaskFunc(opts baserules.PrepareTaskOptions) (baserules.Task, error) 
 			baserules.WithSQLStore(opts.SQLStore),
 			baserules.WithQueryParser(opts.ManagerOpts.QueryParser),
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
+			baserules.WithRuleStateHistoryModule(opts.ManagerOpts.RuleStateHistoryModule),
 		)
 		if err != nil {
 			return task, err
@@ -151,7 +157,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			slog.Error("failed to prepare a new threshold rule for test", "name", alertname, "error", err)
+			slog.Error("failed to prepare a new threshold rule for test", "name", alertname, errors.Attr(err))
 			return 0, basemodel.BadRequest(err)
 		}
 
@@ -173,7 +179,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 		)
 
 		if err != nil {
-			slog.Error("failed to prepare a new promql rule for test", "name", alertname, "error", err)
+			slog.Error("failed to prepare a new promql rule for test", "name", alertname, errors.Attr(err))
 			return 0, basemodel.BadRequest(err)
 		}
 	} else if parsedRule.RuleType == ruletypes.RuleTypeAnomaly {
@@ -193,7 +199,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 			baserules.WithMetadataStore(opts.ManagerOpts.MetadataStore),
 		)
 		if err != nil {
-			slog.Error("failed to prepare a new anomaly rule for test", "name", alertname, "error", err)
+			slog.Error("failed to prepare a new anomaly rule for test", "name", alertname, errors.Attr(err))
 			return 0, basemodel.BadRequest(err)
 		}
 	} else {
@@ -205,7 +211,7 @@ func TestNotification(opts baserules.PrepareTestRuleOptions) (int, *basemodel.Ap
 
 	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		slog.Error("evaluating rule failed", "rule", rule.Name(), "error", err)
+		slog.Error("evaluating rule failed", "rule", rule.Name(), errors.Attr(err))
 		return 0, basemodel.InternalError(fmt.Errorf("rule evaluation failed"))
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Minute, opts.NotifyFunc)

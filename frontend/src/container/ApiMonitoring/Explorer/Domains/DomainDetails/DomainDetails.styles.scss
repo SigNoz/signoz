@@ -700,11 +700,17 @@
 
 		.ant-btn {
 			box-shadow: none;
+			position: relative;
 		}
 
 		.tab {
 			border: 1px solid var(--bg-slate-400);
 			width: 114px;
+			z-index: 1;
+		}
+
+		.tab:hover {
+			z-index: 3;
 		}
 
 		.tab::before {
@@ -715,6 +721,7 @@
 			background: var(--bg-slate-400);
 			color: var(--text-vanilla-100);
 			border: 1px solid var(--bg-slate-400);
+			z-index: 2;
 		}
 
 		.selected_view::before {
@@ -793,14 +800,10 @@
 
 			.ant-table-cell:has(.top-services-item-latency) {
 				text-align: center;
-				opacity: 0.8;
-				background: rgba(171, 189, 255, 0.04);
 			}
 
 			.ant-table-cell:has(.top-services-item-latency-title) {
 				text-align: center;
-				opacity: 0.8;
-				background: rgba(171, 189, 255, 0.04);
 			}
 
 			.ant-table-tbody > tr:hover > td {

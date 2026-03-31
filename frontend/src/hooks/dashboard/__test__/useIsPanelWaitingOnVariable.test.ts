@@ -137,7 +137,7 @@ describe('useIsPanelWaitingOnVariable', () => {
 		expect(result.current).toBe(false);
 	});
 
-	it('should return true for DYNAMIC variable with allSelected=true that is loading', () => {
+	it('should return false for DYNAMIC variable with allSelected=true that is loading but has a selectedValue', () => {
 		setFetchStates({ dyn: 'loading' });
 		setDashboardVariables({
 			variables: {
@@ -152,10 +152,10 @@ describe('useIsPanelWaitingOnVariable', () => {
 		});
 
 		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['dyn']));
-		expect(result.current).toBe(true);
+		expect(result.current).toBe(false);
 	});
 
-	it('should return true for DYNAMIC variable with allSelected=true that is waiting', () => {
+	it('should return false for DYNAMIC variable with allSelected=true that is waiting but has a selectedValue', () => {
 		setFetchStates({ dyn: 'waiting' });
 		setDashboardVariables({
 			variables: {
@@ -170,7 +170,7 @@ describe('useIsPanelWaitingOnVariable', () => {
 		});
 
 		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['dyn']));
-		expect(result.current).toBe(true);
+		expect(result.current).toBe(false);
 	});
 
 	it('should return false for DYNAMIC variable with allSelected=true that is idle', () => {
@@ -312,5 +312,40 @@ describe('useIsPanelWaitingOnVariable', () => {
 
 		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['a']));
 		expect(result.current).toBe(true);
+	});
+
+	it('should find variable by name when store key differs from variable name', () => {
+		setFetchStates({ myVar: 'loading' });
+		setDashboardVariables({
+			variables: {
+				'uuid-abc-123': makeVariable({
+					id: 'uuid-abc-123',
+					name: 'myVar',
+					selectedValue: undefined,
+				}),
+			},
+			variableTypes: { myVar: 'QUERY' },
+		});
+
+		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['myVar']));
+		expect(result.current).toBe(true);
+	});
+
+	it('should respect selectedValue when store key differs from variable name', () => {
+		// When the variable has a value, it should not block even if loading
+		setFetchStates({ myVar: 'loading' });
+		setDashboardVariables({
+			variables: {
+				'uuid-abc-123': makeVariable({
+					id: 'uuid-abc-123',
+					name: 'myVar',
+					selectedValue: 'production',
+				}),
+			},
+			variableTypes: { myVar: 'QUERY' },
+		});
+
+		const { result } = renderHook(() => useIsPanelWaitingOnVariable(['myVar']));
+		expect(result.current).toBe(false);
 	});
 });

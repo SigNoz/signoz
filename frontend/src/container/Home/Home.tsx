@@ -1,4 +1,5 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+/* eslint-disable sonarjs/no-duplicate-string */
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { useMutation, useQuery } from 'react-query';
 import { Color } from '@signozhq/design-tokens';
 import { Compass, Dot, House, Plus, Wrench } from '@signozhq/icons';
@@ -6,16 +7,21 @@ import { Button, Popover } from 'antd';
 import logEvent from 'api/common/logEvent';
 import listUserPreferences from 'api/v1/user/preferences/list';
 import updateUserPreferenceAPI from 'api/v1/user/preferences/name/update';
+import { PersistedAnnouncementBanner } from 'components/AnnouncementBanner';
 import Header from 'components/Header/Header';
 import { ENTITY_VERSION_V5 } from 'constants/app';
+import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
 import { getMetricsListQuery } from 'container/MetricsExplorer/Summary/utils';
+import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetMetricsList } from 'hooks/metricsExplorer/useGetMetricsList';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import cloneDeep from 'lodash-es/cloneDeep';
 import { AnimatePresence } from 'motion/react';
@@ -26,6 +32,7 @@ import { UserPreference } from 'types/api/preferences/preference';
 import { DataSource } from 'types/common/queryBuilder';
 import { USER_ROLES } from 'types/roles';
 import { isIngestionActive } from 'utils/app';
+import { isModifierKeyPressed } from 'utils/app';
 import { popupContainer } from 'utils/selectPopupContainer';
 
 import AlertRules from './AlertRules/AlertRules';
@@ -44,6 +51,7 @@ const homeInterval = 30 * 60 * 1000;
 // eslint-disable-next-line sonarjs/cognitive-complexity
 export default function Home(): JSX.Element {
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 	const isDarkMode = useIsDarkMode();
 
 	const [startTime, setStartTime] = useState<number | null>(null);
@@ -74,7 +82,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.LOGS],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.LOGS,
 			},
@@ -84,7 +92,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.LOGS],
@@ -99,7 +107,7 @@ export default function Home(): JSX.Element {
 			query: initialQueriesMap[DataSource.TRACES],
 			graphType: PANEL_TYPES.VALUE,
 			selectedTime: 'GLOBAL_TIME',
-			globalSelectedInterval: '30m',
+			globalSelectedInterval: DEFAULT_TIME_RANGE,
 			params: {
 				dataSource: DataSource.TRACES,
 			},
@@ -109,7 +117,7 @@ export default function Home(): JSX.Element {
 		{
 			queryKey: [
 				REACT_QUERY_KEY.GET_QUERY_RANGE,
-				'30m',
+				DEFAULT_TIME_RANGE,
 				endTime || Date.now(),
 				startTime || Date.now(),
 				initialQueriesMap[DataSource.TRACES],
@@ -291,6 +299,24 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
+			{IS_SERVICE_ACCOUNTS_ENABLED && (
+				<PersistedAnnouncementBanner
+					type="warning"
+					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
+					message={
+						<>
+							<strong>API Keys</strong> have been deprecated and replaced by{' '}
+							<strong>Service Accounts</strong>. Please migrate to Service Accounts for
+							programmatic API access.
+						</>
+					}
+					action={{
+						label: 'Go to Service Accounts',
+						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+					}}
+				/>
+			)}
+
 			<div className="sticky-header">
 				<Header
 					leftComponent={
@@ -372,11 +398,14 @@ export default function Home(): JSX.Element {
 											role="button"
 											tabIndex={0}
 											className="active-ingestion-card-actions"
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
+												// eslint-disable-next-line sonarjs/no-duplicate-string
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Logs',
 												});
-												history.push(ROUTES.LOGS_EXPLORER);
+												safeNavigate(ROUTES.LOGS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -413,11 +442,13 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Traces',
 												});
-												history.push(ROUTES.TRACES_EXPLORER);
+												safeNavigate(ROUTES.TRACES_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -454,11 +485,13 @@ export default function Home(): JSX.Element {
 											className="active-ingestion-card-actions"
 											role="button"
 											tabIndex={0}
-											onClick={(): void => {
+											onClick={(e: React.MouseEvent): void => {
 												logEvent('Homepage: Ingestion Active Explore clicked', {
 													source: 'Metrics',
 												});
-												history.push(ROUTES.METRICS_EXPLORER);
+												safeNavigate(ROUTES.METRICS_EXPLORER, {
+													newTab: isModifierKeyPressed(e),
+												});
 											}}
 											onKeyDown={(e): void => {
 												if (e.key === 'Enter') {
@@ -508,11 +541,13 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Logs',
 													});
-													history.push(ROUTES.LOGS_EXPLORER);
+													safeNavigate(ROUTES.LOGS_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Logs Explorer
@@ -522,11 +557,13 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Traces',
 													});
-													history.push(ROUTES.TRACES_EXPLORER);
+													safeNavigate(ROUTES.TRACES_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Traces Explorer
@@ -536,11 +573,13 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Wrench size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Metrics',
 													});
-													history.push(ROUTES.METRICS_EXPLORER_EXPLORER);
+													safeNavigate(ROUTES.METRICS_EXPLORER_EXPLORER, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Open Metrics Explorer
@@ -577,11 +616,13 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Dashboards',
 													});
-													history.push(ROUTES.ALL_DASHBOARD);
+													safeNavigate(ROUTES.ALL_DASHBOARD, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create dashboard
@@ -619,11 +660,13 @@ export default function Home(): JSX.Element {
 												type="default"
 												className="periscope-btn secondary"
 												icon={<Plus size={14} />}
-												onClick={(): void => {
+												onClick={(e: React.MouseEvent): void => {
 													logEvent('Homepage: Explore clicked', {
 														source: 'Alerts',
 													});
-													history.push(ROUTES.ALERTS_NEW);
+													safeNavigate(ROUTES.ALERTS_NEW, {
+														newTab: isModifierKeyPressed(e),
+													});
 												}}
 											>
 												Create an alert

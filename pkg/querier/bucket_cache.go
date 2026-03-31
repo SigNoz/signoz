@@ -47,19 +47,19 @@ func (bc *bucketCache) GetMissRanges(
 	// Get query window
 	startMs, endMs := q.Window()
 
-	bc.logger.DebugContext(ctx, "getting miss ranges", "fingerprint", q.Fingerprint(), "start", startMs, "end", endMs)
+	bc.logger.DebugContext(ctx, "getting miss ranges", slog.String("fingerprint", q.Fingerprint()), slog.Uint64("start", startMs), slog.Uint64("end", endMs))
 
 	// Generate cache key
 	cacheKey := bc.generateCacheKey(q)
 
-	bc.logger.DebugContext(ctx, "cache key", "cache_key", cacheKey)
+	bc.logger.DebugContext(ctx, "cache key", slog.String("cache_key", cacheKey))
 
 	// Try to get cached data
 	var data qbtypes.CachedData
 	err := bc.cache.Get(ctx, orgID, cacheKey, &data)
 	if err != nil {
 		if !errors.Ast(err, errors.TypeNotFound) {
-			bc.logger.ErrorContext(ctx, "error getting cached data", "error", err)
+			bc.logger.ErrorContext(ctx, "error getting cached data", errors.Attr(err))
 		}
 		// No cached data, need to fetch entire range
 		missing = []*qbtypes.TimeRange{{From: startMs, To: endMs}}
@@ -71,7 +71,7 @@ func (bc *bucketCache) GetMissRanges(
 
 	// Find missing ranges with step alignment
 	missing = bc.findMissingRangesWithStep(data.Buckets, startMs, endMs, stepMs)
-	bc.logger.DebugContext(ctx, "missing ranges", "missing", missing, "step", stepMs)
+	bc.logger.DebugContext(ctx, "missing ranges", slog.Any("missing", missing), slog.Uint64("step", stepMs))
 
 	// If no cached data overlaps with requested range, return empty result
 	if len(data.Buckets) == 0 {
@@ -105,9 +105,9 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	// If the entire range is within flux interval, skip caching
 	if startMs >= fluxBoundary {
 		bc.logger.DebugContext(ctx, "entire range within flux interval, skipping cache",
-			"start", startMs,
-			"end", endMs,
-			"flux_boundary", fluxBoundary)
+			slog.Uint64("start", startMs),
+			slog.Uint64("end", endMs),
+			slog.Uint64("flux_boundary", fluxBoundary))
 		return
 	}
 
@@ -116,8 +116,8 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 	if endMs > fluxBoundary {
 		cachableEndMs = fluxBoundary
 		bc.logger.DebugContext(ctx, "adjusting end time to exclude flux interval",
-			"original_end", endMs,
-			"cachable_end", cachableEndMs)
+			slog.Uint64("original_end", endMs),
+			slog.Uint64("cachable_end", cachableEndMs))
 	}
 
 	// Generate cache key
@@ -155,11 +155,11 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 		// If after adjustment we have no complete intervals, don't cache
 		if cachableStartMs >= cachableEndMs {
 			bc.logger.DebugContext(ctx, "no complete intervals to cache",
-				"original_start", startMs,
-				"original_end", endMs,
-				"adjusted_start", cachableStartMs,
-				"adjusted_end", cachableEndMs,
-				"step", stepMs)
+				slog.Uint64("original_start", startMs),
+				slog.Uint64("original_end", endMs),
+				slog.Uint64("adjusted_start", cachableStartMs),
+				slog.Uint64("adjusted_end", cachableEndMs),
+				slog.Uint64("step", stepMs))
 			return
 		}
 	}
@@ -187,7 +187,7 @@ func (bc *bucketCache) Put(ctx context.Context, orgID valuer.UUID, q qbtypes.Que
 
 	// Marshal and store in cache
 	if err := bc.cache.Set(ctx, orgID, cacheKey, &updatedData, bc.cacheTTL); err != nil {
-		bc.logger.ErrorContext(ctx, "error setting cached data", "error", err)
+		bc.logger.ErrorContext(ctx, "error setting cached data", errors.Attr(err))
 	}
 }
 
@@ -471,7 +471,7 @@ func (bc *bucketCache) mergeTimeSeriesValues(ctx context.Context, buckets []*qbt
 	for _, bucket := range buckets {
 		var tsData *qbtypes.TimeSeriesData
 		if err := json.Unmarshal(bucket.Value, &tsData); err != nil {
-			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", "error", err)
+			bc.logger.ErrorContext(ctx, "failed to unmarshal time series data", errors.Attr(err))
 			continue
 		}
 
@@ -623,7 +623,7 @@ func (bc *bucketCache) resultToBuckets(ctx context.Context, result *qbtypes.Resu
 	// In the future, we could split large ranges into smaller buckets
 	valueBytes, err := json.Marshal(result.Value)
 	if err != nil {
-		bc.logger.ErrorContext(ctx, "failed to marshal result value", "error", err)
+		bc.logger.ErrorContext(ctx, "failed to marshal result value", errors.Attr(err))
 		return nil
 	}
 

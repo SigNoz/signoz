@@ -5,18 +5,22 @@ import (
 	"fmt"
 	"net"
 	"net/http"
-	_ "net/http/pprof" // http profiler
 	"slices"
 
+	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
+	"go.opentelemetry.io/otel/propagation"
+
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"go.opentelemetry.io/contrib/instrumentation/github.com/gorilla/mux/otelmux"
-	"go.opentelemetry.io/otel/propagation"
 
 	"github.com/gorilla/handlers"
+
+	"github.com/rs/cors"
+	"github.com/soheilhy/cmux"
 
 	"github.com/SigNoz/signoz/ee/query-service/app/api"
 	"github.com/SigNoz/signoz/ee/query-service/rules"
@@ -25,14 +29,15 @@ import (
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/web"
-	"github.com/rs/cors"
-	"github.com/soheilhy/cmux"
+
+	"log/slog"
 
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
 	baseapp "github.com/SigNoz/signoz/pkg/query-service/app"
@@ -47,7 +52,6 @@ import (
 	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
-	"log/slog"
 )
 
 // Server runs HTTP, Mux and a grpc server
@@ -103,6 +107,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Modules.RuleStateHistory,
 		signoz.Querier,
 		signoz.Instrumentation.ToProviderSettings(),
 		signoz.QueryParser,
@@ -133,6 +138,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	logParsingPipelineController, err := logparsingpipeline.NewLogParsingPipelinesController(
 		signoz.SQLStore,
 		integrationsController.GetPipelinesForInstalledIntegrations,
+		reader,
 	)
 	if err != nil {
 		return nil, err
@@ -207,6 +213,7 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 	r := baseapp.NewRouter()
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
 
+	r.Use(middleware.NewRecovery(s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(otelmux.Middleware(
 		"apiserver",
 		otelmux.WithMeterProvider(s.signoz.Instrumentation.MeterProvider()),
@@ -215,7 +222,6 @@ func (s *Server) createPublicServer(apiHandler *api.APIHandler, web web.Web) (*h
 		otelmux.WithFilter(func(r *http.Request) bool {
 			return !slices.Contains([]string{"/api/v1/health"}, r.URL.Path)
 		}),
-		otelmux.WithPublicEndpoint(),
 	))
 	r.Use(middleware.NewIdentN(s.signoz.IdentNResolver, s.signoz.Sharder, s.signoz.Instrumentation.Logger()).Wrap)
 	r.Use(middleware.NewTimeout(s.signoz.Instrumentation.Logger(),
@@ -304,25 +310,16 @@ func (s *Server) Start(ctx context.Context) error {
 		case nil, http.ErrServerClosed, cmux.ErrListenerClosed:
 			// normal exit, nothing to do
 		default:
-			slog.Error("Could not start HTTP server", "error", err)
+			slog.Error("Could not start HTTP server", errors.Attr(err))
 		}
 		s.unavailableChannel <- healthcheck.Unavailable
-	}()
-
-	go func() {
-		slog.Info("Starting pprof server", "addr", baseconst.DebugHttpPort)
-
-		err = http.ListenAndServe(baseconst.DebugHttpPort, nil)
-		if err != nil {
-			slog.Error("Could not start pprof server", "error", err)
-		}
 	}()
 
 	go func() {
 		slog.Info("Starting OpAmp Websocket server", "addr", baseconst.OpAmpWsEndpoint)
 		err := s.opampServer.Start(baseconst.OpAmpWsEndpoint)
 		if err != nil {
-			slog.Error("opamp ws server failed to start", "error", err)
+			slog.Error("opamp ws server failed to start", errors.Attr(err))
 			s.unavailableChannel <- healthcheck.Unavailable
 		}
 	}()
@@ -349,28 +346,29 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, ruleStateHistoryModule rulestatehistory.Module, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &baserules.ManagerOptions{
-		TelemetryStore:      telemetryStore,
-		MetadataStore:       metadataStore,
-		Prometheus:          prometheus,
-		Context:             context.Background(),
-		Reader:              ch,
-		Querier:             querier,
-		Logger:              providerSettings.Logger,
-		Cache:               cache,
-		EvalDelay:           baseconst.GetEvalDelay(),
-		PrepareTaskFunc:     rules.PrepareTaskFunc,
-		PrepareTestRuleFunc: rules.TestNotification,
-		Alertmanager:        alertmanager,
-		OrgGetter:           orgGetter,
-		RuleStore:           ruleStore,
-		MaintenanceStore:    maintenanceStore,
-		SqlStore:            sqlstore,
-		QueryParser:         queryParser,
+		TelemetryStore:         telemetryStore,
+		MetadataStore:          metadataStore,
+		Prometheus:             prometheus,
+		Context:                context.Background(),
+		Reader:                 ch,
+		Querier:                querier,
+		Logger:                 providerSettings.Logger,
+		Cache:                  cache,
+		EvalDelay:              baseconst.GetEvalDelay(),
+		PrepareTaskFunc:        rules.PrepareTaskFunc,
+		PrepareTestRuleFunc:    rules.TestNotification,
+		Alertmanager:           alertmanager,
+		OrgGetter:              orgGetter,
+		RuleStore:              ruleStore,
+		MaintenanceStore:       maintenanceStore,
+		SqlStore:               sqlstore,
+		QueryParser:            queryParser,
+		RuleStateHistoryModule: ruleStateHistoryModule,
 	}
 
 	// create Manager

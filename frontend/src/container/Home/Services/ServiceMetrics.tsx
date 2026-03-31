@@ -1,4 +1,4 @@
-import { memo, useCallback, useEffect, useMemo, useState } from 'react';
+import React, { memo, useCallback, useEffect, useMemo, useState } from 'react';
 import { QueryKey } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { useSelector } from 'react-redux';
@@ -30,6 +30,7 @@ import { ServicesList } from 'types/api/metrics/getService';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { Tags } from 'types/reducer/trace';
 import { USER_ROLES } from 'types/roles';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { FeatureKeys } from '../../../constants/features';
 import { DOCS_LINKS } from '../constants';
@@ -117,7 +118,7 @@ const ServicesListTable = memo(
 		onRowClick,
 	}: {
 		services: ServicesList[];
-		onRowClick: (record: ServicesList) => void;
+		onRowClick: (record: ServicesList, event: React.MouseEvent) => void;
 	}): JSX.Element => (
 		<div className="services-list-container home-data-item-container metrics-services-list">
 			<div className="services-list">
@@ -126,8 +127,8 @@ const ServicesListTable = memo(
 					dataSource={services}
 					pagination={false}
 					className="services-table"
-					onRow={(record): { onClick: () => void } => ({
-						onClick: (): void => onRowClick(record),
+					onRow={(record: ServicesList): Record<string, unknown> => ({
+						onClick: (event: React.MouseEvent): void => onRowClick(record, event),
 					})}
 				/>
 			</div>
@@ -285,11 +286,13 @@ function ServiceMetrics({
 	}, [onUpdateChecklistDoneItem, loadingUserPreferences, servicesExist]);
 
 	const handleRowClick = useCallback(
-		(record: ServicesList) => {
+		(record: ServicesList, event: React.MouseEvent) => {
 			logEvent('Homepage: Service clicked', {
 				serviceName: record.serviceName,
 			});
-			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`);
+			safeNavigate(`${ROUTES.APPLICATION}/${record.serviceName}`, {
+				newTab: isModifierKeyPressed(event),
+			});
 		},
 		[safeNavigate],
 	);

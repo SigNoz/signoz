@@ -24,7 +24,8 @@ const config: Config.InitialOptions = {
 			'<rootDir>/node_modules/@signozhq/icons/dist/index.esm.js',
 		'^react-syntax-highlighter/dist/esm/(.*)$':
 			'<rootDir>/node_modules/react-syntax-highlighter/dist/cjs/$1',
-		'^@signozhq/([^/]+)$': '<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
+		'^@signozhq/(?!ui$)([^/]+)$':
+			'<rootDir>/node_modules/@signozhq/$1/dist/$1.js',
 	},
 	extensionsToTreatAsEsm: ['.ts'],
 	testMatch: ['<rootDir>/src/**/*?(*.)(test).(ts|js)?(x)'],

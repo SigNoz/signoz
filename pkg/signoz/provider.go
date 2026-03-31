@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global/signozglobal"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/identn/apikeyidentn"
+	"github.com/SigNoz/signoz/pkg/identn/impersonationidentn"
 	"github.com/SigNoz/signoz/pkg/identn/tokenizeridentn"
 	"github.com/SigNoz/signoz/pkg/modules/authdomain/implauthdomain"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -33,6 +34,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
+	"github.com/SigNoz/signoz/pkg/pprof"
+	"github.com/SigNoz/signoz/pkg/pprof/httppprof"
+	"github.com/SigNoz/signoz/pkg/pprof/nooppprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/clickhouseprometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
@@ -85,6 +89,13 @@ func NewWebProviderFactories() factory.NamedMap[factory.ProviderFactory[web.Web,
 	return factory.MustNewNamedMap(
 		routerweb.NewFactory(),
 		noopweb.NewFactory(),
+	)
+}
+
+func NewPProfProviderFactories() factory.NamedMap[factory.ProviderFactory[pprof.PProf, pprof.Config]] {
+	return factory.MustNewNamedMap(
+		httppprof.NewFactory(),
+		nooppprof.NewFactory(),
 	)
 }
 
@@ -175,6 +186,10 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewMigrateRulesV4ToV5Factory(sqlstore, telemetryStore),
 		sqlmigration.NewAddStatusUserFactory(sqlstore, sqlschema),
 		sqlmigration.NewDeprecateUserInviteFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdateCloudIntegrationUniqueIndexFactory(sqlstore, sqlschema),
+		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
+		sqlmigration.NewDropUserRoleColumnFactory(sqlstore, sqlschema),
 	)
 }
 
@@ -240,17 +255,17 @@ func NewQuerierProviderFactories(telemetryStore telemetrystore.TelemetryStore, p
 	)
 }
 
-func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, global global.Global, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
+func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.AuthZ, modules Modules, handlers Handlers) factory.NamedMap[factory.ProviderFactory[apiserver.APIServer, apiserver.Config]] {
 	return factory.MustNewNamedMap(
 		signozapiserver.NewFactory(
 			orgGetter,
 			authz,
 			implorganization.NewHandler(modules.OrgGetter, modules.OrgSetter),
-			impluser.NewHandler(modules.User, modules.UserGetter),
+			impluser.NewHandler(modules.UserSetter, modules.UserGetter),
 			implsession.NewHandler(modules.Session),
 			implauthdomain.NewHandler(modules.AuthDomain),
 			implpreference.NewHandler(modules.Preference),
-			signozglobal.NewHandler(global),
+			handlers.Global,
 			implpromote.NewHandler(modules.Promote),
 			handlers.FlaggerHandler,
 			modules.Dashboard,
@@ -259,9 +274,13 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.GatewayHandler,
 			handlers.Fields,
 			handlers.AuthzHandler,
+			handlers.RawDataExport,
 			handlers.ZeusHandler,
 			handlers.QuerierHandler,
 			handlers.ServiceAccountHandler,
+			handlers.RegistryHandler,
+			handlers.CloudIntegrationHandler,
+			handlers.RuleStateHistory,
 		),
 	)
 }
@@ -274,16 +293,17 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	)
 }
 
-func NewIdentNProviderFactories(sqlstore sqlstore.SQLStore, tokenizer tokenizer.Tokenizer) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
+func NewIdentNProviderFactories(sqlstore sqlstore.SQLStore, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, userGetter user.Getter, userConfig user.Config) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
 	return factory.MustNewNamedMap(
+		impersonationidentn.NewFactory(orgGetter, userGetter, userConfig),
 		tokenizeridentn.NewFactory(tokenizer),
 		apikeyidentn.NewFactory(sqlstore),
 	)
 }
 
-func NewGlobalProviderFactories() factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
+func NewGlobalProviderFactories(identNConfig identn.Config) factory.NamedMap[factory.ProviderFactory[global.Global, global.Config]] {
 	return factory.MustNewNamedMap(
-		signozglobal.NewFactory(),
+		signozglobal.NewFactory(identNConfig),
 	)
 }
 

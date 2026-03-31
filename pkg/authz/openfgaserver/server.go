@@ -15,7 +15,12 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 	openfgapkgserver "github.com/openfga/openfga/pkg/server"
+	"github.com/openfga/openfga/pkg/storage"
 	"google.golang.org/protobuf/encoding/protojson"
+)
+
+const (
+	batchCheckItemErrorMessage = "::AUTHZ-CHECK-ERROR::"
 )
 
 var (
@@ -31,20 +36,15 @@ type Server struct {
 	modelID       string
 	mtx           sync.RWMutex
 	stopChan      chan struct{}
+	healthyC      chan struct{}
 }
 
-func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (*Server, error) {
+func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) (*Server, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
-
-	store, err := NewSQLStore(sqlstore)
-	if err != nil {
-		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
-		return nil, err
-	}
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
-		openfgapkgserver.WithDatastore(store),
+		openfgapkgserver.WithDatastore(openfgaDataStore),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 		openfgapkgserver.WithContextPropagationToDatastore(true),
 	}
@@ -61,6 +61,7 @@ func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, co
 		openfgaSchema: openfgaSchema,
 		mtx:           sync.RWMutex{},
 		stopChan:      make(chan struct{}),
+		healthyC:      make(chan struct{}),
 	}, nil
 }
 
@@ -80,8 +81,14 @@ func (server *Server) Start(ctx context.Context) error {
 	server.storeID = storeID
 	server.mtx.Unlock()
 
+	close(server.healthyC)
+
 	<-server.stopChan
 	return nil
+}
+
+func (server *Server) Healthy() <-chan struct{} {
+	return server.healthyC
 }
 
 func (server *Server) Stop(ctx context.Context) error {
@@ -118,6 +125,11 @@ func (server *Server) BatchCheck(ctx context.Context, tupleReq map[string]*openf
 
 	response := make(map[string]*authtypes.TupleKeyAuthorization, len(tupleReq))
 	for id, tuple := range tupleReq {
+		// required because upstream doesn't set the error on the related spans: https://github.com/openfga/openfga/issues/3024
+		if checkErr := checkResponse.Result[id].GetError(); checkErr != nil {
+			server.settings.Logger().ErrorContext(ctx, batchCheckItemErrorMessage, errors.Attr(server.getCheckError(checkErr)))
+		}
+
 		response[id] = &authtypes.TupleKeyAuthorization{
 			Tuple:      tuple,
 			Authorized: checkResponse.Result[id].GetAllowed(),
@@ -332,4 +344,13 @@ func (server *Server) getStoreIDandModelID() (string, string) {
 	modelID := server.modelID
 
 	return storeID, modelID
+}
+
+func (server *Server) getCheckError(checkErr *openfgav1.CheckError) error {
+	switch checkErr.GetCode().(type) {
+	case *openfgav1.CheckError_InputError:
+		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, checkErr.GetMessage())
+	default:
+		return errors.New(errors.TypeInternal, errors.CodeInternal, checkErr.GetMessage())
+	}
 }

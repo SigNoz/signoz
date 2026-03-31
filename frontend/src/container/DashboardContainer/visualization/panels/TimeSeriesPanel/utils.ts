@@ -123,7 +123,7 @@ export const prepareUPlotConfig = ({
 			drawStyle: hasSingleValidPoint ? DrawStyle.Points : DrawStyle.Line,
 			label: label,
 			colorMapping: widget.customLegendColors ?? {},
-			spanGaps: true,
+			spanGaps: widget.spanGaps ?? true,
 			lineStyle: widget.lineStyle || LineStyle.Solid,
 			lineInterpolation: widget.lineInterpolation || LineInterpolation.Spline,
 			showPoints:

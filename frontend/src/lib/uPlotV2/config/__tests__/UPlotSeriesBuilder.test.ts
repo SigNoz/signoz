@@ -1,6 +1,7 @@
 import { themeColors } from 'constants/theme';
 import uPlot from 'uplot';
 
+import { isolatedPointFilter } from '../../utils/seriesPointsFilter';
 import type { SeriesProps } from '../types';
 import { DrawStyle, LineInterpolation, LineStyle } from '../types';
 import { POINT_SIZE_FACTOR, UPlotSeriesBuilder } from '../UPlotSeriesBuilder';
@@ -38,6 +39,37 @@ describe('UPlotSeriesBuilder', () => {
 		expect(config.show).toBe(false);
 		expect(config.pxAlign).toBe(true);
 		expect(typeof config.value).toBe('function');
+	});
+
+	it('maps boolean spanGaps directly to uPlot spanGaps', () => {
+		const trueBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: true,
+			}),
+		);
+		const falseBuilder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: false,
+			}),
+		);
+
+		const trueConfig = trueBuilder.getConfig();
+		const falseConfig = falseBuilder.getConfig();
+
+		expect(trueConfig.spanGaps).toBe(true);
+		expect(falseConfig.spanGaps).toBe(false);
+	});
+
+	it('disables uPlot spanGaps when spanGaps is a number', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				spanGaps: 10000,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.spanGaps).toBe(false);
 	});
 
 	it('uses explicit lineColor when provided, regardless of mapping', () => {
@@ -283,5 +315,51 @@ describe('UPlotSeriesBuilder', () => {
 		const config = builder.getConfig();
 
 		expect(config.points?.filter).toBe(pointsFilter);
+	});
+
+	it('assigns isolatedPointFilter and does not force show=true when spanGaps is numeric and no custom filter', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				spanGaps: 10_000,
+				showPoints: false,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.points?.filter).toBe(isolatedPointFilter);
+		expect(config.points?.show).toBe(false);
+	});
+
+	it('does not assign isolatedPointFilter when a custom pointsFilter is provided alongside numeric spanGaps', () => {
+		const customFilter: uPlot.Series.Points.Filter = jest.fn(() => null);
+
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				spanGaps: 10_000,
+				pointsFilter: customFilter,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.points?.filter).toBe(customFilter);
+	});
+
+	it('does not assign isolatedPointFilter when showPoints is true even with numeric spanGaps', () => {
+		const builder = new UPlotSeriesBuilder(
+			createBaseProps({
+				drawStyle: DrawStyle.Line,
+				spanGaps: 10_000,
+				showPoints: true,
+			}),
+		);
+
+		const config = builder.getConfig();
+
+		expect(config.points?.filter).toBeUndefined();
+		expect(config.points?.show).toBe(true);
 	});
 });
