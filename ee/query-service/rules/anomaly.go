@@ -20,8 +20,6 @@ import (
 
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 
-	querierV5 "github.com/SigNoz/signoz/pkg/querier"
-
 	"github.com/SigNoz/signoz/ee/anomaly"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -37,7 +35,7 @@ type AnomalyRule struct {
 	mtx sync.Mutex
 
 	// querierV5 is used for alerts migrated after the introduction of new query builder
-	querier querierV5.Querier
+	querier querier.Querier
 
 	provider anomaly.Provider
 
@@ -59,7 +57,7 @@ func NewAnomalyRule(
 	opts ...baserules.RuleOption,
 ) (*AnomalyRule, error) {
 
-	logger.Info("creating new AnomalyRule", "rule_id", id)
+	logger.Info("creating new AnomalyRule", slog.String("rule.id", id))
 
 	opts = append(opts, baserules.WithLogger(logger))
 
@@ -83,7 +81,7 @@ func NewAnomalyRule(
 		t.seasonality = anomaly.SeasonalityDaily
 	}
 
-	logger.Info("using seasonality", "seasonality", t.seasonality)
+	logger.Info("using seasonality", slog.String("rule.id", id), slog.String("rule.seasonality", t.seasonality.StringValue()))
 
 	if t.seasonality == anomaly.SeasonalityHourly {
 		t.provider = anomaly.NewHourlyProvider(
@@ -114,7 +112,7 @@ func (r *AnomalyRule) Type() ruletypes.RuleType {
 
 func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
 
-	r.logger.InfoContext(ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.EvalWindow().Milliseconds(), "eval_delay", r.EvalDelay().Milliseconds())
+	r.logger.InfoContext(ctx, "prepare query range request v5", slog.String("rule.id", r.ID()), slog.Int64("ts", ts.UnixMilli()), slog.Int64("eval.window_ms", r.EvalWindow().Milliseconds()), slog.Int64("eval.delay_ms", r.EvalDelay().Milliseconds()))
 
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
@@ -133,7 +131,11 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbt
 	return req, nil
 }
 
-func (r *AnomalyRule) GetSelectedQuery() string {
+func (r *AnomalyRule) SelectedQuery(ctx context.Context) string {
+	if r.Condition().SelectedQuery != "" {
+		return r.Condition().SelectedQuery
+	}
+	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
 	return r.Condition().SelectedQueryName()
 }
 
@@ -145,7 +147,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	}
 
 	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.AnomaliesRequest{
-		Params:      *params,
+		Params:      params,
 		Seasonality: r.seasonality,
 	})
 	if err != nil {
@@ -154,14 +156,14 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 
 	var queryResult *qbtypes.TimeSeriesData
 	for _, result := range anomalies.Results {
-		if result.QueryName == r.GetSelectedQuery() {
+		if result.QueryName == r.SelectedQuery(ctx) {
 			queryResult = result
 			break
 		}
 	}
 
 	if queryResult == nil {
-		r.logger.WarnContext(ctx, "nil qb result", "ts", ts.UnixMilli())
+		r.logger.WarnContext(ctx, "nil qb result", slog.String("rule.id", r.ID()), slog.Int64("ts", ts.UnixMilli()))
 		return ruletypes.Vector{}, nil
 	}
 
@@ -176,7 +178,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 	var resultVector ruletypes.Vector
 
 	scoresJSON, _ := json.Marshal(queryResult.Aggregations[0].AnomalyScores)
-	r.logger.InfoContext(ctx, "anomaly scores", "scores", string(scoresJSON))
+	r.logger.InfoContext(ctx, "anomaly scores", slog.String("rule.id", r.ID()), slog.String("anomaly.scores", string(scoresJSON)))
 
 	// Filter out new series if newGroupEvalDelay is configured
 	seriesToProcess := queryResult.Aggregations[0].AnomalyScores
@@ -184,7 +186,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, seriesToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", errors.Attr(filterErr), "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "error filtering new series", slog.String("rule.id", r.ID()), errors.Attr(filterErr))
 		} else {
 			seriesToProcess = filteredSeries
 		}
@@ -192,7 +194,7 @@ func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, t
 
 	for _, series := range seriesToProcess {
 		if !r.Condition().ShouldEval(series) {
-			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", "ruleid", r.ID(), "numPoints", len(series.Values), "requiredPoints", r.Condition().RequiredNumPoints)
+			r.logger.InfoContext(ctx, "not enough data points to evaluate series, skipping", slog.String("rule.id", r.ID()), slog.Int("series.num_points", len(series.Values)), slog.Int("series.required_points", r.Condition().RequiredNumPoints))
 			continue
 		}
 		results, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
@@ -216,7 +218,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	var res ruletypes.Vector
 	var err error
 
-	r.logger.InfoContext(ctx, "running v5 query")
+	r.logger.InfoContext(ctx, "running v5 query", slog.String("rule.id", r.ID()))
 	res, err = r.buildAndRunQuery(ctx, r.OrgID(), ts)
 
 	if err != nil {
@@ -242,7 +244,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 		value := valueFormatter.Format(smpl.V, r.Unit())
 		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
-		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
+		r.logger.DebugContext(ctx, "alert template data for rule", slog.String("rule.id", r.ID()), slog.String("formatter.name", valueFormatter.Name()), slog.String("alert.value", value), slog.String("alert.threshold", threshold))
 
 		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
 		// Inject some convenience variables that are easier to remember for users
@@ -262,7 +264,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData, "rule_name", r.Name())
+				r.logger.ErrorContext(ctx, "expanding alert template failed", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("alert.template_data", tmplData))
 			}
 			return result
 		}
@@ -292,7 +294,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
+			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", slog.String("rule.id", r.ID()), slog.Any("alert", alerts[h]))
 			err = errors.NewInternalf(errors.CodeInternal, "duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
 			return 0, err
 		}
@@ -311,7 +313,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 	}
 
-	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
+	r.logger.InfoContext(ctx, "number of alerts found", slog.String("rule.id", r.ID()), slog.Int("alert.count", len(alerts)))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -338,7 +340,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLabels)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
+			r.logger.ErrorContext(ctx, "error marshaling labels", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("alert.labels", a.Labels))
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
@@ -393,7 +395,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				state = ruletypes.StateFiring
 			}
 			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
+			r.logger.DebugContext(ctx, "converting alert state", slog.String("rule.id", r.ID()), slog.Any("alert.state", state))
 			itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),

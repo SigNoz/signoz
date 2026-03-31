@@ -381,7 +381,7 @@ func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, curren
 	}
 
 	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, itemsToAdd); err != nil {
-		r.logger.ErrorContext(ctx, "error while recording rule state history", "rule.id", r.ID(), errors.Attr(err), slog.Any("itemsToAdd", itemsToAdd))
+		r.logger.ErrorContext(ctx, "error while recording rule state history", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("items_to_add", itemsToAdd))
 		return err
 	}
 	r.handledRestart = true
@@ -575,7 +575,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
-			r.logger.InfoContext(ctx, "Skipping new series", "rule.id", r.ID(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].Labels)
+			r.logger.InfoContext(ctx, "skipping new series", slog.String("rule.id", r.ID()), slog.Int("series.index", i), slog.Int64("series.max_first_seen", maxFirstSeen), slog.Int64("eval.time_ms", evalTimeMs), slog.Int64("eval.delay_ms", newGroupEvalDelayMs), slog.Any("series.labels", series[i].Labels))
 			continue
 		}
 
@@ -585,7 +585,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 
 	skippedCount := len(series) - len(filteredSeries)
 	if skippedCount > 0 {
-		r.logger.InfoContext(ctx, "filtered new series", "rule.id", r.ID(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
+		r.logger.InfoContext(ctx, "filtered new series", slog.String("rule.id", r.ID()), slog.Int("series.skipped_count", skippedCount), slog.Int("series.total_count", len(series)), slog.Int64("eval.delay_ms", newGroupEvalDelayMs))
 	}
 
 	return filteredSeries, nil
@@ -606,7 +606,7 @@ func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, has
 		return nil
 	}
 
-	r.logger.InfoContext(ctx, "no data found for rule condition", "rule.id", r.ID())
+	r.logger.InfoContext(ctx, "no data found for rule condition", slog.String("rule.id", r.ID()))
 	lbls := ruletypes.NewBuilder()
 	if !r.lastTimestampWithDatapoints.IsZero() {
 		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(ruletypes.AlertTimeFormat))

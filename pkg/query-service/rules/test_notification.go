@@ -90,7 +90,7 @@ func defaultTestNotification(opts PrepareTestRuleOptions) (int, error) {
 
 	alertsFound, err := rule.Eval(ctx, ts)
 	if err != nil {
-		slog.Error("evaluating rule failed", "rule.id", rule.ID(), errors.Attr(err))
+		slog.Error("evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 		return 0, err
 	}
 	rule.SendAlerts(ctx, ts, 0, time.Duration(1*time.Minute), opts.NotifyFunc)
