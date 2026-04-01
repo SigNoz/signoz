@@ -1,4 +1,4 @@
-import { ComponentProps } from 'react';
+import { ComponentProps, memo } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import {
 	getLogIndicatorType,
@@ -11,28 +11,31 @@ import { ILog } from 'types/api/logs/log';
 import { TableRowStyled } from '../InfinityTableView/styles';
 import { TanStackTableRowData } from './types';
 
-type VirtuosoTableRowProps = ComponentProps<
-	NonNullable<TableComponents<TanStackTableRowData>['TableRow']>
->;
-
-export type TanStackCustomTableRowProps = VirtuosoTableRowProps & {
+export type TableRowContext = {
 	activeLog?: ILog | null;
 	activeContextLog?: ILog | null;
 	logsById: Map<string, ILog>;
 };
 
+type VirtuosoTableRowProps = ComponentProps<
+	NonNullable<TableComponents<TanStackTableRowData, TableRowContext>['TableRow']>
+>;
+
+type TanStackCustomTableRowProps = VirtuosoTableRowProps;
+
 function TanStackCustomTableRow({
 	children,
 	item,
-	activeLog,
-	activeContextLog,
-	logsById,
+	context,
 	...props
 }: TanStackCustomTableRowProps): JSX.Element {
 	const { isHighlighted } = useCopyLogLink(item.currentLog.id);
 	const isDarkMode = useIsDarkMode();
 	const rowId = String(item.currentLog.id ?? '');
-	const rowLog = logsById.get(rowId) || item.currentLog;
+	const activeLog = context?.activeLog;
+	const activeContextLog = context?.activeContextLog;
+	const logsById = context?.logsById;
+	const rowLog = logsById?.get(rowId) || item.currentLog;
 	const logType = rowLog
 		? getLogIndicatorType(rowLog)
 		: getLogIndicatorTypeForTable(item.log);
@@ -53,4 +56,18 @@ function TanStackCustomTableRow({
 	);
 }
 
-export default TanStackCustomTableRow;
+export default memo(TanStackCustomTableRow, (prev, next) => {
+	const prevId = String(prev.item.currentLog.id ?? '');
+	const nextId = String(next.item.currentLog.id ?? '');
+	if (prevId !== nextId) {
+		return false;
+	}
+
+	const prevIsActive =
+		prevId === String(prev.context?.activeLog?.id ?? '') ||
+		prevId === String(prev.context?.activeContextLog?.id ?? '');
+	const nextIsActive =
+		nextId === String(next.context?.activeLog?.id ?? '') ||
+		nextId === String(next.context?.activeContextLog?.id ?? '');
+	return prevIsActive === nextIsActive;
+});
