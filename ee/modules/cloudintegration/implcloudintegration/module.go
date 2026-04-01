@@ -392,6 +392,7 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 	return module.store.UpdateService(ctx, storableService)
 }
 
+// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	var allDashboards []*dashboardtypes.Dashboard
 
@@ -442,6 +443,7 @@ func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]
 	return allDashboards, nil
 }
 
+// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -467,6 +469,7 @@ func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, i
 	return nil, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration dashboard not found")
 }
 
+// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
