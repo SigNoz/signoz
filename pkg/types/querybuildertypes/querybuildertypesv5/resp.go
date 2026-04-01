@@ -173,9 +173,9 @@ type ColumnType struct {
 }
 
 var (
-	// for the group by part of the query
+	// for the group by part of the query.
 	ColumnTypeGroup = ColumnType{valuer.NewString("group")}
-	// for the aggregation part of the query
+	// for the aggregation part of the query.
 	ColumnTypeAggregation = ColumnType{valuer.NewString("aggregation")}
 )
 

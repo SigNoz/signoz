@@ -47,7 +47,7 @@ var (
 //   - For lookup: set to 0 (no limit needed for single path)
 //   - For metadata API: set to desired pagination limit
 //
-// searchOperator: LIKE for pattern matching, EQUAL for exact match
+// searchOperator: LIKE for pattern matching, EQUAL for exact match.
 func (t *telemetryMetaStore) fetchBodyJSONPaths(ctx context.Context,
 	fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, []string, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -303,7 +303,7 @@ func (t *telemetryMetaStore) ListLogsJSONIndexes(ctx context.Context, filters ..
 	return indexes, nil
 }
 
-// TODO(Piyush): Remove this if not used in future
+// TODO(Piyush): Remove this if not used in future.
 func (t *telemetryMetaStore) ListJSONValues(ctx context.Context, path string, limit int) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = withTelemetryContext(ctx, "ListJSONValues")
 	path = CleanPathPrefixes(path)
@@ -520,7 +520,7 @@ func (t *telemetryMetaStore) GetPromotedPaths(ctx context.Context, paths ...stri
 	return promotedPaths, nil
 }
 
-// TODO(Piyush): Remove this function
+// TODO(Piyush): Remove this function.
 func CleanPathPrefixes(path string) string {
 	path = strings.TrimPrefix(path, telemetrytypes.BodyJSONStringSearchPrefix)
 	path = strings.TrimPrefix(path, telemetrylogs.BodyV2ColumnPrefix)

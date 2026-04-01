@@ -155,7 +155,7 @@ func (b *base) WithAdditional(a ...string) *base {
 // Otherwise, it returns TypeInternal, the original error string
 // and the error itself.
 //
-//lint:ignore ST1008 we want to return arguments in the 'TCMEUA' order of the struct
+//nolint:staticcheck // ST1008: intentional return order matching struct field order (TCMEUA)
 func Unwrapb(cause error) (typ, Code, string, error, string, []string) {
 	base, ok := cause.(*base)
 	if ok {

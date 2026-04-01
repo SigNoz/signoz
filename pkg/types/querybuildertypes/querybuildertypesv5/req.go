@@ -84,7 +84,7 @@ func (QueryEnvelope) JSONSchemaOneOf() []any {
 	}
 }
 
-// implement custom json unmarshaler for the QueryEnvelope
+// implement custom json unmarshaler for the QueryEnvelope.
 func (q *QueryEnvelope) UnmarshalJSON(data []byte) error {
 	var shadow struct {
 		Type QueryType       `json:"type"`
@@ -202,7 +202,7 @@ func (c *CompositeQuery) PrepareJSONSchema(schema *jsonschema.Schema) error {
 	return nil
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages
+// UnmarshalJSON implements custom JSON unmarshaling to provide better error messages.
 func (c *CompositeQuery) UnmarshalJSON(data []byte) error {
 	type Alias CompositeQuery
 
@@ -535,7 +535,7 @@ func (r *QueryRangeRequest) SkipFillGaps(name string) bool {
 	return false
 }
 
-// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields
+// UnmarshalJSON implements custom JSON unmarshaling to disallow unknown fields.
 func (r *QueryRangeRequest) UnmarshalJSON(data []byte) error {
 	// Define a type alias to avoid infinite recursion
 	type Alias QueryRangeRequest

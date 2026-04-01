@@ -11,7 +11,7 @@ type ClickHouseQuery struct {
 	Legend string `json:"legend,omitempty"`
 }
 
-// Copy creates a deep copy of the ClickHouseQuery
+// Copy creates a deep copy of the ClickHouseQuery.
 func (q ClickHouseQuery) Copy() ClickHouseQuery {
 	return q
 }

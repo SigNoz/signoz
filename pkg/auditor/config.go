@@ -1,6 +1,7 @@
 package auditor
 
 import (
+	"net/url"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/errors"
@@ -10,6 +11,7 @@ import (
 var _ factory.Config = (*Config)(nil)
 
 type Config struct {
+	// Provider specifies the audit export implementation to use.
 	Provider string `mapstructure:"provider"`
 
 	// BufferSize is the async channel capacity for audit events.
@@ -28,17 +30,11 @@ type Config struct {
 // OTLPHTTPConfig holds configuration for the OTLP HTTP exporter provider.
 // Fields map to go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp options.
 type OTLPHTTPConfig struct {
-	// Endpoint is the target host:port (without scheme or path).
-	Endpoint string `mapstructure:"endpoint"`
-
-	// URLPath overrides the default URL path (/v1/logs).
-	URLPath string `mapstructure:"url_path"`
+	// Endpoint is the target scheme://host:port of the OTLP HTTP endpoint.
+	Endpoint *url.URL `mapstructure:"endpoint"`
 
 	// Insecure disables TLS, using HTTP instead of HTTPS.
 	Insecure bool `mapstructure:"insecure"`
-
-	// Compression sets the compression strategy. Supported: "none", "gzip".
-	Compression string `mapstructure:"compression"`
 
 	// Timeout is the maximum duration for an export attempt.
 	Timeout time.Duration `mapstructure:"timeout"`
@@ -71,10 +67,12 @@ func newConfig() factory.Config {
 		BatchSize:     100,
 		FlushInterval: time.Second,
 		OTLPHTTP: OTLPHTTPConfig{
-			Endpoint:    "localhost:4318",
-			URLPath:     "/v1/logs",
-			Compression: "none",
-			Timeout:     10 * time.Second,
+			Endpoint: &url.URL{
+				Scheme: "http",
+				Host:   "localhost:4318",
+				Path:   "/v1/logs",
+			},
+			Timeout: 10 * time.Second,
 			Retry: RetryConfig{
 				Enabled:         true,
 				InitialInterval: 5 * time.Second,
@@ -93,14 +91,24 @@ func (c Config) Validate() error {
 	if c.BufferSize <= 0 {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::buffer_size must be greater than 0")
 	}
+
 	if c.BatchSize <= 0 {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::batch_size must be greater than 0")
 	}
+
 	if c.FlushInterval <= 0 {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::flush_interval must be greater than 0")
 	}
+
 	if c.BatchSize > c.BufferSize {
 		return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::batch_size must not exceed auditor::buffer_size")
 	}
+
+	if c.Provider == "otlphttp" {
+		if c.OTLPHTTP.Endpoint == nil {
+			return errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "auditor::otlphttp::endpoint must be set when provider is otlphttp")
+		}
+	}
+
 	return nil
 }
