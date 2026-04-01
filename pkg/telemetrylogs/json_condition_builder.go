@@ -303,20 +303,10 @@ func (c *jsonConditionBuilder) buildTerminalArrayCondition(node *telemetrytypes.
 // e.g. [300, 404, 500], and value operations will work on the array elements
 func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
-	localKeyCopy := *node.TerminalConfig.Key
 	// create typed array out of a dynamic array
 	filteredDynamicExpr := func() string {
-		primitiveTypes := []string{
-			telemetrytypes.String.StringValue(),
-			telemetrytypes.Int64.StringValue(),
-			telemetrytypes.Float64.StringValue(),
-			telemetrytypes.Bool.StringValue(),
-		}
-
-		filterPrimitives := sb.In("dynamicType(x)", primitiveTypes)
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
-		return fmt.Sprintf("arrayFilter(x->(%s), %s)",
-			filterPrimitives,
+		return fmt.Sprintf("arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), %s)",
 			baseArrayDynamicExpr)
 	}
 	typedArrayExpr := func() string {
@@ -331,7 +321,7 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 	}
 
 	key := "x"
-	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(&localKeyCopy, value, key, operator)
+	fieldExpr, value := querybuilder.DataTypeCollisionHandledFieldName(node.TerminalConfig.Key, value, key, operator)
 	op, err := c.applyOperator(sb, fieldExpr, operator, value)
 	if err != nil {
 		return "", err

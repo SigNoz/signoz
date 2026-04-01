@@ -282,7 +282,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		case string:
 			tblFieldName = castString(tblFieldName)
 		case float64:
-			tblFieldName = castFloat(tblFieldName)
+			tblFieldName = accurateCastFloat(tblFieldName)
 		case bool:
 			tblFieldName = castBool(tblFieldName)
 		case []any:
@@ -297,6 +297,9 @@ func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)"
 func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
 func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
 func castBool(col string) string      { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
+func accurateCastFloat(col string) string {
+	return fmt.Sprintf("accurateCastOrNull(%s, 'Float64')", col)
+}
 
 func allFloats(in []any) bool {
 	for _, x := range in {
