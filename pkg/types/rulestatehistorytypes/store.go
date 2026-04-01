@@ -9,35 +9,11 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
-	"github.com/SigNoz/signoz/pkg/valuer"
-)
-
-type AlertState struct {
-	valuer.String
-}
-
-var (
-	StateInactive   = AlertState{valuer.NewString("inactive")}
-	StatePending    = AlertState{valuer.NewString("pending")}
-	StateRecovering = AlertState{valuer.NewString("recovering")}
-	StateFiring     = AlertState{valuer.NewString("firing")}
-	StateNoData     = AlertState{valuer.NewString("nodata")}
-	StateDisabled   = AlertState{valuer.NewString("disabled")}
 )
 
 type LabelsString string
-
-func (AlertState) Enum() []any {
-	return []any{
-		StateInactive,
-		StatePending,
-		StateRecovering,
-		StateFiring,
-		StateNoData,
-		StateDisabled,
-	}
-}
 
 func (l *LabelsString) Scan(src any) error {
 	switch data := src.(type) {
@@ -90,15 +66,15 @@ type RuleStateHistory struct {
 	RuleID   string `ch:"rule_id"`
 	RuleName string `ch:"rule_name"`
 
-	OverallState        AlertState `ch:"overall_state"`
-	OverallStateChanged bool       `ch:"overall_state_changed"`
+	OverallState        ruletypes.AlertState `ch:"overall_state"`
+	OverallStateChanged bool                 `ch:"overall_state_changed"`
 
-	State        AlertState   `ch:"state"`
-	StateChanged bool         `ch:"state_changed"`
-	UnixMilli    int64        `ch:"unix_milli"`
-	Labels       LabelsString `ch:"labels"`
-	Fingerprint  uint64       `ch:"fingerprint"`
-	Value        float64      `ch:"value"`
+	State        ruletypes.AlertState `ch:"state"`
+	StateChanged bool                 `ch:"state_changed"`
+	UnixMilli    int64                `ch:"unix_milli"`
+	Labels       LabelsString         `ch:"labels"`
+	Fingerprint  uint64               `ch:"fingerprint"`
+	Value        float64              `ch:"value"`
 }
 
 type RuleStateHistoryContributor struct {

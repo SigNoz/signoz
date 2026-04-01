@@ -2313,15 +2313,6 @@ components:
       - status
       - error
       type: object
-    RulestatehistorytypesAlertState:
-      enum:
-      - inactive
-      - pending
-      - recovering
-      - firing
-      - nodata
-      - disabled
-      type: string
     RulestatehistorytypesGettableRuleStateHistory:
       properties:
         fingerprint:
@@ -2333,15 +2324,15 @@ components:
           nullable: true
           type: array
         overallState:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+          $ref: '#/components/schemas/RuletypesAlertState'
         overallStateChanged:
           type: boolean
-        ruleID:
+        ruleId:
           type: string
         ruleName:
           type: string
         state:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+          $ref: '#/components/schemas/RuletypesAlertState'
         stateChanged:
           type: boolean
         unixMilli:
@@ -2351,7 +2342,7 @@ components:
           format: double
           type: number
       required:
-      - ruleID
+      - ruleId
       - ruleName
       - overallState
       - overallStateChanged
@@ -2441,12 +2432,21 @@ components:
           format: int64
           type: integer
         state:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+          $ref: '#/components/schemas/RuletypesAlertState'
       required:
       - state
       - start
       - end
       type: object
+    RuletypesAlertState:
+      enum:
+      - inactive
+      - pending
+      - recovering
+      - firing
+      - nodata
+      - disabled
+      type: string
     ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
@@ -8469,7 +8469,7 @@ paths:
       - in: query
         name: state
         schema:
-          $ref: '#/components/schemas/RulestatehistorytypesAlertState'
+          $ref: '#/components/schemas/RuletypesAlertState'
       - in: query
         name: filterExpression
         schema:

@@ -49,7 +49,6 @@ import (
 	opAmpModel "github.com/SigNoz/signoz/pkg/query-service/app/opamp/model"
 	baseconst "github.com/SigNoz/signoz/pkg/query-service/constants"
 	"github.com/SigNoz/signoz/pkg/query-service/healthcheck"
-	baseint "github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
 	"github.com/SigNoz/signoz/pkg/query-service/utils"
 )
@@ -99,7 +98,6 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 	)
 
 	rm, err := makeRulesManager(
-		reader,
 		signoz.Cache,
 		signoz.Alertmanager,
 		signoz.SQLStore,
@@ -345,7 +343,7 @@ func (s *Server) Stop(ctx context.Context) error {
 	return nil
 }
 
-func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, ruleStateHistoryModule rulestatehistory.Module, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
+func makeRulesManager(cache cache.Cache, alertmanager alertmanager.Alertmanager, sqlstore sqlstore.SQLStore, telemetryStore telemetrystore.TelemetryStore, metadataStore telemetrytypes.MetadataStore, prometheus prometheus.Prometheus, orgGetter organization.Getter, ruleStateHistoryModule rulestatehistory.Module, querier querier.Querier, providerSettings factory.ProviderSettings, queryParser queryparser.QueryParser) (*baserules.Manager, error) {
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
@@ -354,7 +352,6 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		MetadataStore:          metadataStore,
 		Prometheus:             prometheus,
 		Context:                context.Background(),
-		Reader:                 ch,
 		Querier:                querier,
 		Logger:                 providerSettings.Logger,
 		Cache:                  cache,
@@ -365,7 +362,7 @@ func makeRulesManager(ch baseint.Reader, cache cache.Cache, alertmanager alertma
 		OrgGetter:              orgGetter,
 		RuleStore:              ruleStore,
 		MaintenanceStore:       maintenanceStore,
-		SqlStore:               sqlstore,
+		SQLStore:               sqlstore,
 		QueryParser:            queryParser,
 		RuleStateHistoryModule: ruleStateHistoryModule,
 	}
