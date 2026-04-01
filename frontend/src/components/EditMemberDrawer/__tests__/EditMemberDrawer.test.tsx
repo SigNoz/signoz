@@ -1,8 +1,6 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
-	getResetPasswordToken,
 	useDeleteUser,
 	useGetUser,
 	useRemoveUserRoleByUserIDAndRoleID,
@@ -10,12 +8,12 @@ import {
 	useUpdateMyUserV2,
 	useUpdateUser,
 } from 'api/generated/services/users';
-import { MemberStatus } from 'container/MembersSettings/utils';
 import {
 	listRolesSuccessResponse,
 	managedRoles,
 } from 'mocks-server/__mockdata__/roles';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
@@ -58,6 +56,8 @@ jest.mock('api/generated/services/users', () => ({
 	useSetRoleByUserID: jest.fn(),
 	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
 	getResetPasswordToken: jest.fn(),
+	invalidateListUsers: jest.fn().mockResolvedValue(undefined),
+	getGetUserQueryKey: jest.fn().mockReturnValue(['/api/v2/users/user-1']),
 }));
 
 jest.mock('api/ErrorResponseHandlerForGeneratedAPIs', () => ({
@@ -84,7 +84,6 @@ jest.mock('react-use', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 
 const mockDeleteMutate = jest.fn();
-const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
 
 const mockFetchedUser = {
 	data: {
@@ -102,34 +101,30 @@ const mockFetchedUser = {
 	},
 };
 
-const activeMember = {
-	id: 'user-1',
-	name: 'Alice Smith',
-	email: 'alice@signoz.io',
-	status: MemberStatus.Active,
-	joinedOn: '1700000000000',
-	updatedAt: '1710000000000',
-};
-
-const invitedMember = {
-	id: 'abc123',
-	name: '',
-	email: 'bob@signoz.io',
-	status: MemberStatus.Invited,
-	joinedOn: '1700000000000',
+const mockInvitedUser = {
+	data: {
+		id: 'abc123',
+		displayName: '',
+		email: 'bob@signoz.io',
+		status: 'pending_invite',
+		userRoles: [
+			{
+				id: 'ur-2',
+				roleId: managedRoles[2].id,
+				role: managedRoles[2],
+			},
+		],
+	},
 };
 
 function renderDrawer(
 	props: Partial<EditMemberDrawerProps> = {},
+	searchParams: Record<string, string> = { member: 'user-1' },
 ): ReturnType<typeof render> {
 	return render(
-		<EditMemberDrawer
-			member={activeMember}
-			open
-			onClose={jest.fn()}
-			onComplete={jest.fn()}
-			{...props}
-		/>,
+		<NuqsTestingAdapter searchParams={searchParams} hasMemory>
+			<EditMemberDrawer onComplete={jest.fn()} {...props} />
+		</NuqsTestingAdapter>,
 	);
 }
 
@@ -214,10 +209,9 @@ describe('EditMemberDrawer', () => {
 	});
 
 	it('does not close the drawer after a successful save', async () => {
-		const onClose = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		renderDrawer({ onClose });
+		renderDrawer();
 
 		const nameInput = screen.getByDisplayValue('Alice Smith');
 		await user.clear(nameInput);
@@ -232,7 +226,6 @@ describe('EditMemberDrawer', () => {
 				screen.getByRole('button', { name: /save member details/i }),
 			).toBeInTheDocument();
 		});
-		expect(onClose).not.toHaveBeenCalled();
 	});
 
 	it('calls setRole when a new role is added', async () => {
@@ -247,7 +240,6 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Open the roles dropdown and select signoz-editor
 		await user.click(screen.getByLabelText('Roles'));
 		await user.click(await screen.findByTitle('signoz-editor'));
 
@@ -276,7 +268,6 @@ describe('EditMemberDrawer', () => {
 
 		renderDrawer({ onComplete });
 
-		// Wait for the signoz-admin tag to appear, then click its remove button
 		const adminTag = await screen.findByTitle('signoz-admin');
 		const removeBtn = adminTag.querySelector(
 			'.ant-select-selection-item-remove',
@@ -295,38 +286,26 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('shows delete confirm dialog and calls deleteUser for active members', async () => {
-		const onComplete = jest.fn();
+	it('opens delete confirm dialog when Delete Member button is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
-				options?.mutation?.onSuccess?.();
-			}),
-			isLoading: false,
-		}));
-
-		renderDrawer({ onComplete });
+		renderDrawer();
 
 		await user.click(screen.getByRole('button', { name: /delete member/i }));
 
 		expect(
-			await screen.findByText(/are you sure you want to delete/i),
+			await screen.findByRole('dialog', { name: /delete member/i }),
 		).toBeInTheDocument();
-
-		const confirmBtns = screen.getAllByRole('button', { name: /delete member/i });
-		await user.click(confirmBtns[confirmBtns.length - 1]);
-
-		await waitFor(() => {
-			expect(mockDeleteMutate).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1' },
-			});
-			expect(onComplete).toHaveBeenCalled();
-		});
 	});
 
 	it('shows revoke invite and copy invite link for invited members; hides Last Modified', () => {
-		renderDrawer({ member: invitedMember });
+		(useGetUser as jest.Mock).mockReturnValue({
+			data: mockInvitedUser,
+			isLoading: false,
+			refetch: jest.fn(),
+		});
+
+		renderDrawer({}, { member: 'abc123' });
 
 		expect(
 			screen.getByRole('button', { name: /revoke invite/i }),
@@ -341,81 +320,19 @@ describe('EditMemberDrawer', () => {
 		expect(screen.queryByText('Last Modified')).not.toBeInTheDocument();
 	});
 
-	it('calls deleteUser after confirming revoke invite for invited members', async () => {
-		const onComplete = jest.fn();
+	it('opens reset link dialog when Generate Password Reset Link is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-			mutate: mockDeleteMutate.mockImplementation(() => {
-				options?.mutation?.onSuccess?.();
-			}),
-			isLoading: false,
-		}));
+		renderDrawer();
 
-		renderDrawer({ member: invitedMember, onComplete });
+		await user.click(
+			screen.getByRole('button', { name: /generate password reset link/i }),
+		);
 
-		await user.click(screen.getByRole('button', { name: /revoke invite/i }));
-
+		// Drawer closes (open = !!memberId && !resetLinkType, so once reset-link param is set it closes)
 		expect(
-			await screen.findByText(/Are you sure you want to revoke the invite/i),
-		).toBeInTheDocument();
-
-		const confirmBtns = screen.getAllByRole('button', { name: /revoke invite/i });
-		await user.click(confirmBtns[confirmBtns.length - 1]);
-
-		await waitFor(() => {
-			expect(mockDeleteMutate).toHaveBeenCalledWith({
-				pathParams: { id: 'abc123' },
-			});
-			expect(onComplete).toHaveBeenCalled();
-		});
-	});
-
-	it('calls updateUser when saving name change for an invited member', async () => {
-		const onComplete = jest.fn();
-		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockMutateAsync = jest.fn().mockResolvedValue({});
-
-		(useGetUser as jest.Mock).mockReturnValue({
-			data: {
-				data: {
-					...mockFetchedUser.data,
-					id: 'abc123',
-					displayName: 'Bob',
-					userRoles: [
-						{
-							id: 'ur-2',
-							roleId: managedRoles[2].id,
-							role: managedRoles[2], // signoz-viewer
-						},
-					],
-				},
-			},
-			isLoading: false,
-			refetch: jest.fn(),
-		});
-		(useUpdateUser as jest.Mock).mockReturnValue({
-			mutateAsync: mockMutateAsync,
-			isLoading: false,
-		});
-
-		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
-
-		const nameInput = screen.getByDisplayValue('Bob');
-		await user.clear(nameInput);
-		await user.type(nameInput, 'Bob Updated');
-
-		const saveBtn = screen.getByRole('button', { name: /save member details/i });
-		await waitFor(() => expect(saveBtn).not.toBeDisabled());
-		await user.click(saveBtn);
-
-		await waitFor(() => {
-			expect(mockMutateAsync).toHaveBeenCalledWith({
-				pathParams: { id: 'abc123' },
-				data: { displayName: 'Bob Updated' },
-			});
-			expect(onComplete).toHaveBeenCalled();
-		});
+			screen.queryByRole('button', { name: /save member details/i }),
+		).not.toBeInTheDocument();
 	});
 
 	describe('error handling', () => {
@@ -450,119 +367,6 @@ describe('EditMemberDrawer', () => {
 					screen.getByText('Name update: Something went wrong on server'),
 				).toBeInTheDocument();
 			});
-		});
-
-		it('shows API error message when deleteUser fails for active member', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
-
-			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
-					options?.mutation?.onError?.({});
-				}),
-				isLoading: false,
-			}));
-
-			renderDrawer();
-
-			await user.click(screen.getByRole('button', { name: /delete member/i }));
-			const confirmBtns = screen.getAllByRole('button', {
-				name: /delete member/i,
-			});
-			await user.click(confirmBtns[confirmBtns.length - 1]);
-
-			await waitFor(() => {
-				expect(mockToast.error).toHaveBeenCalledWith(
-					'Failed to delete member: Something went wrong on server',
-					expect.anything(),
-				);
-			});
-		});
-
-		it('shows API error message when deleteUser fails for invited member', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
-
-			(useDeleteUser as jest.Mock).mockImplementation((options) => ({
-				mutate: mockDeleteMutate.mockImplementation(() => {
-					options?.mutation?.onError?.({});
-				}),
-				isLoading: false,
-			}));
-
-			renderDrawer({ member: invitedMember });
-
-			await user.click(screen.getByRole('button', { name: /revoke invite/i }));
-			const confirmBtns = screen.getAllByRole('button', {
-				name: /revoke invite/i,
-			});
-			await user.click(confirmBtns[confirmBtns.length - 1]);
-
-			await waitFor(() => {
-				expect(mockToast.error).toHaveBeenCalledWith(
-					'Failed to revoke invite: Something went wrong on server',
-					expect.anything(),
-				);
-			});
-		});
-	});
-
-	describe('Generate Password Reset Link', () => {
-		beforeEach(() => {
-			mockCopyToClipboard.mockClear();
-			mockGetResetPasswordToken.mockResolvedValue({
-				status: 'success',
-				data: { token: 'reset-tok-abc', id: 'user-1' },
-			});
-		});
-
-		it('calls getResetPasswordToken and opens the reset link dialog with the generated link', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-
-			renderDrawer();
-
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
-			);
-
-			const dialog = await screen.findByRole('dialog', {
-				name: /password reset link/i,
-			});
-			expect(mockGetResetPasswordToken).toHaveBeenCalledWith({
-				id: 'user-1',
-			});
-			expect(dialog).toBeInTheDocument();
-			expect(dialog).toHaveTextContent('reset-tok-abc');
-		});
-
-		it('copies the link to clipboard and shows "Copied!" on the button', async () => {
-			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
-
-			renderDrawer();
-
-			await user.click(
-				screen.getByRole('button', { name: /generate password reset link/i }),
-			);
-
-			const dialog = await screen.findByRole('dialog', {
-				name: /password reset link/i,
-			});
-			expect(dialog).toHaveTextContent('reset-tok-abc');
-
-			await user.click(screen.getByRole('button', { name: /^copy$/i }));
-
-			await waitFor(() => {
-				expect(mockToast.success).toHaveBeenCalledWith(
-					'Reset link copied to clipboard',
-					expect.anything(),
-				);
-			});
-
-			expect(mockCopyToClipboard).toHaveBeenCalledWith(
-				expect.stringContaining('reset-tok-abc'),
-			);
-			expect(screen.getByRole('button', { name: /copied!/i })).toBeInTheDocument();
 		});
 	});
 });

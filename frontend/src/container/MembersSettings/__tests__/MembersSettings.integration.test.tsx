@@ -1,5 +1,14 @@
 import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
+import {
+	useDeleteUser,
+	useGetUser,
+	useRemoveUserRoleByUserIDAndRoleID,
+	useSetRoleByUserID,
+	useUpdateMyUserV2,
+	useUpdateUser,
+} from 'api/generated/services/users';
 import { rest, server } from 'mocks-server/server';
+import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent } from 'tests/test-utils';
 
 import MembersSettings from '../MembersSettings';
@@ -9,6 +18,19 @@ jest.mock('@signozhq/sonner', () => ({
 		success: jest.fn(),
 		error: jest.fn(),
 	},
+}));
+
+jest.mock('api/generated/services/users', () => ({
+	useListUsers: jest.requireActual('api/generated/services/users').useListUsers,
+	useDeleteUser: jest.fn(),
+	useGetUser: jest.fn(),
+	useUpdateUser: jest.fn(),
+	useUpdateMyUserV2: jest.fn(),
+	useSetRoleByUserID: jest.fn(),
+	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
+	getResetPasswordToken: jest.fn(),
+	invalidateListUsers: jest.fn().mockResolvedValue(undefined),
+	getGetUserQueryKey: jest.fn().mockReturnValue(['/api/v2/users/user-1']),
 }));
 
 const USERS_ENDPOINT = '*/api/v2/users';
@@ -48,6 +70,26 @@ const mockUsers: TypesUserDTO[] = [
 	},
 ];
 
+const USER_ENDPOINT = '*/api/v2/users/user-1';
+
+const mockFetchedUser = {
+	data: {
+		id: 'user-1',
+		displayName: 'Alice Smith',
+		email: 'alice@signoz.io',
+		status: 'active',
+		userRoles: [],
+	},
+};
+
+function renderPage(): ReturnType<typeof render> {
+	return render(
+		<NuqsTestingAdapter hasMemory>
+			<MembersSettings />
+		</NuqsTestingAdapter>,
+	);
+}
+
 describe('MembersSettings (integration)', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
@@ -55,7 +97,31 @@ describe('MembersSettings (integration)', () => {
 			rest.get(USERS_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: mockUsers })),
 			),
+			rest.get(USER_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(mockFetchedUser)),
+			),
 		);
+		(useGetUser as jest.Mock).mockReturnValue({
+			data: mockFetchedUser,
+			isLoading: false,
+			refetch: jest.fn(),
+		});
+		(useUpdateUser as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+		});
+		(useUpdateMyUserV2 as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+		});
+		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+		});
+		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+		});
+		(useDeleteUser as jest.Mock).mockReturnValue({
+			mutate: jest.fn(),
+			isLoading: false,
+		});
 	});
 
 	afterEach(() => {
@@ -63,7 +129,7 @@ describe('MembersSettings (integration)', () => {
 	});
 
 	it('loads and displays active users, pending invites, and deleted members', async () => {
-		render(<MembersSettings />);
+		renderPage();
 
 		await screen.findByText('Alice Smith');
 		expect(screen.getByText('Bob Jones')).toBeInTheDocument();
@@ -77,7 +143,7 @@ describe('MembersSettings (integration)', () => {
 	it('filters to pending invites via the filter dropdown', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<MembersSettings />);
+		renderPage();
 
 		await screen.findByText('Alice Smith');
 
@@ -93,7 +159,7 @@ describe('MembersSettings (integration)', () => {
 	it('filters members by name using the search input', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<MembersSettings />);
+		renderPage();
 
 		await screen.findByText('Alice Smith');
 
@@ -110,7 +176,7 @@ describe('MembersSettings (integration)', () => {
 	it('opens EditMemberDrawer when an active member row is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<MembersSettings />);
+		renderPage();
 
 		await user.click(await screen.findByText('Alice Smith'));
 
@@ -120,7 +186,7 @@ describe('MembersSettings (integration)', () => {
 	it('does not open EditMemberDrawer when a deleted member row is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<MembersSettings />);
+		renderPage();
 
 		await user.click(await screen.findByText('Dave Deleted'));
 
@@ -130,7 +196,7 @@ describe('MembersSettings (integration)', () => {
 	it('opens InviteMembersModal when "Invite member" button is clicked', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
-		render(<MembersSettings />);
+		renderPage();
 
 		await user.click(screen.getByRole('button', { name: /invite member/i }));
 

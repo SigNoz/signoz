@@ -10,8 +10,10 @@ import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
+import { useQueryState } from 'nuqs';
 import { toISOString } from 'utils/app';
 
+import { MEMBER_QUERY_PARAMS } from './constants';
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
 
 import './MembersSettings.styles.scss';
@@ -29,7 +31,7 @@ function MembersSettings(): JSX.Element {
 	const [searchQuery, setSearchQuery] = useState('');
 	const [filterMode, setFilterMode] = useState<FilterMode>(FilterMode.All);
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
-	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
+	const [, setMemberId] = useQueryState(MEMBER_QUERY_PARAMS.MEMBER);
 
 	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers();
 
@@ -129,13 +131,12 @@ function MembersSettings(): JSX.Element {
 		refetchUsers();
 	}, [refetchUsers]);
 
-	const handleRowClick = useCallback((member: MemberRow): void => {
-		setSelectedMember(member);
-	}, []);
-
-	const handleDrawerClose = useCallback((): void => {
-		setSelectedMember(null);
-	}, []);
+	const handleRowClick = useCallback(
+		(member: MemberRow): void => {
+			setMemberId(member.id);
+		},
+		[setMemberId],
+	);
 
 	const handleMemberEditComplete = useCallback((): void => {
 		refetchUsers();
@@ -211,12 +212,7 @@ function MembersSettings(): JSX.Element {
 				onComplete={handleInviteComplete}
 			/>
 
-			<EditMemberDrawer
-				member={selectedMember}
-				open={selectedMember !== null}
-				onClose={handleDrawerClose}
-				onComplete={handleMemberEditComplete}
-			/>
+			<EditMemberDrawer onComplete={handleMemberEditComplete} />
 		</>
 	);
 }

@@ -1,5 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
-import { useCopyToClipboard } from 'react-use';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
@@ -10,23 +9,23 @@ import { Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
-	getResetPasswordToken,
-	useDeleteUser,
 	useGetUser,
 	useUpdateMyUserV2,
 	useUpdateUser,
 } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
-import { MemberRow } from 'components/MembersTable/MembersTable';
 import RolesSelect, { useRoles } from 'components/RolesSelect';
 import SaveErrorItem from 'components/ServiceAccountDrawer/SaveErrorItem';
 import type { SaveError } from 'components/ServiceAccountDrawer/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
+import { MEMBER_QUERY_PARAMS } from 'container/MembersSettings/constants';
 import { MemberStatus } from 'container/MembersSettings/utils';
+import { toMemberRow } from 'container/MembersSettings/utils';
 import {
 	MemberRoleUpdateFailure,
 	useMemberRoleManager,
 } from 'hooks/member/useMemberRoleManager';
+import { parseAsBoolean, parseAsStringEnum, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
@@ -49,43 +48,40 @@ function areSortedArraysEqual(a: string[], b: string[]): boolean {
 }
 
 export interface EditMemberDrawerProps {
-	member: MemberRow | null;
-	open: boolean;
-	onClose: () => void;
 	onComplete: () => void;
 }
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function EditMemberDrawer({
-	member,
-	open,
-	onClose,
-	onComplete,
-}: EditMemberDrawerProps): JSX.Element {
+function EditMemberDrawer({ onComplete }: EditMemberDrawerProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 	const { user: currentUser } = useAppContext();
+
+	const [memberId, setMemberId] = useQueryState(MEMBER_QUERY_PARAMS.MEMBER);
+	const [, setIsDeleteOpen] = useQueryState(
+		MEMBER_QUERY_PARAMS.DELETE_MEMBER,
+		parseAsBoolean.withDefault(false),
+	);
+	const [resetLinkType, setResetLinkType] = useQueryState(
+		MEMBER_QUERY_PARAMS.RESET_LINK,
+		parseAsStringEnum<'invite' | 'reset'>(['invite', 'reset']),
+	);
+
+	const open = !!memberId && !resetLinkType;
 
 	const [localDisplayName, setLocalDisplayName] = useState('');
 	const [localRoles, setLocalRoles] = useState<string[]>([]);
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
-	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
-	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
-	const [resetLink, setResetLink] = useState<string | null>(null);
-	const [showResetLinkDialog, setShowResetLinkDialog] = useState(false);
-	const [hasCopiedResetLink, setHasCopiedResetLink] = useState(false);
-	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
-
-	const isInvited = member?.status === MemberStatus.Invited;
-	const isSelf = !!member?.id && member.id === currentUser?.id;
 
 	const {
 		data: fetchedUser,
 		isLoading: isFetchingUser,
 		refetch: refetchUser,
-	} = useGetUser(
-		{ id: member?.id ?? '' },
-		{ query: { enabled: open && !!member?.id } },
+	} = useGetUser({ id: memberId ?? '' }, { query: { enabled: !!memberId } });
+
+	const member = useMemo(
+		() => (fetchedUser?.data ? toMemberRow(fetchedUser.data) : null),
+		[fetchedUser],
 	);
 
 	const {
@@ -97,8 +93,8 @@ function EditMemberDrawer({
 	} = useRoles();
 
 	const { fetchedRoleIds, applyDiff } = useMemberRoleManager(
-		member?.id ?? '',
-		open && !!member?.id,
+		memberId ?? '',
+		!!memberId,
 	);
 
 	const fetchedDisplayName =
@@ -117,6 +113,9 @@ function EditMemberDrawer({
 		setLocalRoles(fetchedRoleIds);
 	}, [fetchedRoleIds]);
 
+	const isInvited = member?.status === MemberStatus.Invited;
+	const isSelf = !!memberId && memberId === currentUser?.id;
+
 	const isDirty =
 		member !== null &&
 		fetchedUser != null &&
@@ -125,30 +124,6 @@ function EditMemberDrawer({
 
 	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
 	const { mutateAsync: updateUser } = useUpdateUser();
-
-	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
-		mutation: {
-			onSuccess: (): void => {
-				toast.success(
-					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-					{ richColors: true },
-				);
-				setShowDeleteConfirm(false);
-				onComplete();
-				onClose();
-			},
-			onError: (err): void => {
-				const errMessage =
-					convertToApiError(
-						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'An error occurred';
-				const prefix = isInvited
-					? 'Failed to revoke invite'
-					: 'Failed to delete member';
-				toast.error(`${prefix}: ${errMessage}`, { richColors: true });
-			},
-		},
-	});
 
 	const makeRoleRetry = useCallback(
 		(
@@ -171,7 +146,7 @@ function EditMemberDrawer({
 	);
 
 	const retryNameUpdate = useCallback(async (): Promise<void> => {
-		if (!member) {
+		if (!memberId) {
 			return;
 		}
 		try {
@@ -179,7 +154,7 @@ function EditMemberDrawer({
 				await updateMyUser({ data: { displayName: localDisplayName } });
 			} else {
 				await updateUser({
-					pathParams: { id: member.id },
+					pathParams: { id: memberId },
 					data: { displayName: localDisplayName },
 				});
 			}
@@ -192,10 +167,17 @@ function EditMemberDrawer({
 				),
 			);
 		}
-	}, [member, isSelf, localDisplayName, updateMyUser, updateUser, refetchUser]);
+	}, [
+		memberId,
+		isSelf,
+		localDisplayName,
+		updateMyUser,
+		updateUser,
+		refetchUser,
+	]);
 
 	const handleSave = useCallback(async (): Promise<void> => {
-		if (!member || !isDirty) {
+		if (!memberId || !isDirty) {
 			return;
 		}
 		setSaveErrors([]);
@@ -208,7 +190,7 @@ function EditMemberDrawer({
 				? isSelf
 					? updateMyUser({ data: { displayName: localDisplayName } })
 					: updateUser({
-							pathParams: { id: member.id },
+							pathParams: { id: memberId },
 							data: { displayName: localDisplayName },
 					  })
 				: Promise.resolve();
@@ -274,7 +256,7 @@ function EditMemberDrawer({
 			setIsSaving(false);
 		}
 	}, [
-		member,
+		memberId,
 		isDirty,
 		isSelf,
 		localDisplayName,
@@ -291,68 +273,12 @@ function EditMemberDrawer({
 		onComplete,
 	]);
 
-	const handleDelete = useCallback((): void => {
-		if (!member) {
-			return;
-		}
-		deleteUser({ pathParams: { id: member.id } });
-	}, [member, deleteUser]);
-
-	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
-		if (!member) {
-			return;
-		}
-		setIsGeneratingLink(true);
-		try {
-			const response = await getResetPasswordToken({ id: member.id });
-			if (response?.data?.token) {
-				const link = `${window.location.origin}/password-reset?token=${response.data.token}`;
-				setResetLink(link);
-				setHasCopiedResetLink(false);
-				setLinkType(isInvited ? 'invite' : 'reset');
-				setShowResetLinkDialog(true);
-				onClose();
-			} else {
-				toast.error('Failed to generate password reset link', {
-					richColors: true,
-					position: 'top-right',
-				});
-			}
-		} catch {
-			toast.error('Failed to generate password reset link', {
-				richColors: true,
-				position: 'top-right',
-			});
-		} finally {
-			setIsGeneratingLink(false);
-		}
-	}, [member, isInvited, onClose]);
-
-	const [copyState, copyToClipboard] = useCopyToClipboard();
-	const handleCopyResetLink = useCallback((): void => {
-		if (!resetLink) {
-			return;
-		}
-		copyToClipboard(resetLink);
-		setHasCopiedResetLink(true);
-		setTimeout(() => setHasCopiedResetLink(false), 2000);
-		const message =
-			linkType === 'invite'
-				? 'Invite link copied to clipboard'
-				: 'Reset link copied to clipboard';
-		toast.success(message, { richColors: true });
-	}, [resetLink, copyToClipboard, linkType]);
-
-	useEffect(() => {
-		if (copyState.error) {
-			toast.error('Failed to copy link', { richColors: true });
-		}
-	}, [copyState.error]);
-
 	const handleClose = useCallback((): void => {
-		setShowDeleteConfirm(false);
-		onClose();
-	}, [onClose]);
+		setMemberId(null);
+		setIsDeleteOpen(null);
+		setResetLinkType(null);
+		setSaveErrors([]);
+	}, [setMemberId, setIsDeleteOpen, setResetLinkType]);
 
 	const joinedOnLabel = isInvited ? 'Invited On' : 'Joined On';
 
@@ -500,7 +426,9 @@ function EditMemberDrawer({
 				<div className="edit-member-drawer__footer-left">
 					<Button
 						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-						onClick={(): void => setShowDeleteConfirm(true)}
+						onClick={(): void => {
+							void setIsDeleteOpen(true);
+						}}
 					>
 						<Trash2 size={12} />
 						{isInvited ? 'Revoke Invite' : 'Delete Member'}
@@ -509,13 +437,12 @@ function EditMemberDrawer({
 					<div className="edit-member-drawer__footer-divider" />
 					<Button
 						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-						onClick={handleGenerateResetLink}
-						disabled={isGeneratingLink}
+						onClick={(): void => {
+							void setResetLinkType(isInvited ? 'invite' : 'reset');
+						}}
 					>
 						<RefreshCw size={12} />
-						{isGeneratingLink && 'Generating...'}
-						{!isGeneratingLink && isInvited && 'Copy Invite Link'}
-						{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
+						{isInvited ? 'Copy Invite Link' : 'Generate Password Reset Link'}
 					</Button>
 				</div>
 
@@ -558,26 +485,9 @@ function EditMemberDrawer({
 				className="edit-member-drawer"
 			/>
 
-			<ResetLinkDialog
-				open={showResetLinkDialog}
-				linkType={linkType}
-				resetLink={resetLink}
-				hasCopied={hasCopiedResetLink}
-				onClose={(): void => {
-					setShowResetLinkDialog(false);
-					setLinkType(null);
-				}}
-				onCopy={handleCopyResetLink}
-			/>
+			<DeleteMemberDialog />
 
-			<DeleteMemberDialog
-				open={showDeleteConfirm}
-				isInvited={isInvited}
-				member={member}
-				isDeleting={isDeleting}
-				onClose={(): void => setShowDeleteConfirm(false)}
-				onConfirm={handleDelete}
-			/>
+			<ResetLinkDialog />
 		</>
 	);
 }
