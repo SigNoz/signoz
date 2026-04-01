@@ -11,7 +11,7 @@ import {
 } from 'api/generated/services/serviceaccount';
 import type {
 	RenderErrorResponseDTO,
-	ServiceaccounttypesFactorAPIKeyDTO,
+	ServiceaccounttypesGettableFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
@@ -64,9 +64,9 @@ function RevokeKeyModal(): JSX.Element {
 	const open = !!revokeKeyId && !!accountId;
 
 	const cachedKeys = accountId
-		? queryClient.getQueryData<{ data: ServiceaccounttypesFactorAPIKeyDTO[] }>(
-				getListServiceAccountKeysQueryKey({ id: accountId }),
-		  )
+		? queryClient.getQueryData<{
+				data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
+		  }>(getListServiceAccountKeysQueryKey({ id: accountId }))
 		: null;
 	const keyName = cachedKeys?.data?.find((k) => k.id === revokeKeyId)?.name;
 

@@ -9,6 +9,9 @@ import { ServiceAccountRow } from 'container/ServiceAccountsSettings/utils';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 
+import SaveErrorItem from './SaveErrorItem';
+import type { SaveError } from './utils';
+
 interface OverviewTabProps {
 	account: ServiceAccountRow;
 	localName: string;
@@ -21,6 +24,7 @@ interface OverviewTabProps {
 	rolesError?: boolean;
 	rolesErrorObj?: APIError | undefined;
 	onRefetchRoles?: () => void;
+	saveErrors?: SaveError[];
 }
 
 function OverviewTab({
@@ -35,6 +39,7 @@ function OverviewTab({
 	rolesError,
 	rolesErrorObj,
 	onRefetchRoles,
+	saveErrors = [],
 }: OverviewTabProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
 
@@ -92,11 +97,14 @@ function OverviewTab({
 					<div className="sa-drawer__input-wrapper sa-drawer__input-wrapper--disabled">
 						<div className="sa-drawer__disabled-roles">
 							{localRoles.length > 0 ? (
-								localRoles.map((r) => (
-									<Badge key={r} color="vanilla">
-										{r}
-									</Badge>
-								))
+								localRoles.map((roleId) => {
+									const role = availableRoles.find((r) => r.id === roleId);
+									return (
+										<Badge key={roleId} color="vanilla">
+											{role?.name ?? roleId}
+										</Badge>
+									);
+								})
 							) : (
 								<span className="sa-drawer__input-text">—</span>
 							)}
@@ -126,9 +134,13 @@ function OverviewTab({
 						<Badge color="forest" variant="outline">
 							ACTIVE
 						</Badge>
+					) : account.status?.toUpperCase() === 'DELETED' ? (
+						<Badge color="cherry" variant="outline">
+							DELETED
+						</Badge>
 					) : (
 						<Badge color="vanilla" variant="outline" className="sa-status-badge">
-							DISABLED
+							{account.status ? account.status.toUpperCase() : 'UNKNOWN'}
 						</Badge>
 					)}
 				</div>
@@ -143,6 +155,19 @@ function OverviewTab({
 					<Badge color="vanilla">{formatTimestamp(account.updatedAt)}</Badge>
 				</div>
 			</div>
+
+			{saveErrors.length > 0 && (
+				<div className="sa-drawer__save-errors">
+					{saveErrors.map(({ context, apiError, onRetry }) => (
+						<SaveErrorItem
+							key={context}
+							context={context}
+							apiError={apiError}
+							onRetry={onRetry}
+						/>
+					))}
+				</div>
+			)}
 		</>
 	);
 }

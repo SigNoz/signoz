@@ -148,7 +148,12 @@ func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []
 		return err
 	}
 
-	return provider.Write(ctx, tuples, nil)
+	err = provider.Write(ctx, tuples, nil)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to grant roles: %v to subject: %s", names, subject)
+	}
+
+	return nil
 }
 
 func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleNames []string, updatedRoleNames []string, subject string) error {
@@ -180,7 +185,13 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names [
 	if err != nil {
 		return err
 	}
-	return provider.Write(ctx, nil, tuples)
+
+	err = provider.Write(ctx, nil, tuples)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to revoke roles: %v to subject: %s", names, subject)
+	}
+
+	return nil
 }
 
 func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*authtypes.Role) error {

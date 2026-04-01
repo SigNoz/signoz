@@ -72,12 +72,14 @@ type StorableRole struct {
 }
 
 type Role struct {
+	bun.BaseModel `bun:"table:role"`
+
 	types.Identifiable
 	types.TimeAuditable
-	Name        string        `json:"name" required:"true"`
-	Description string        `json:"description" required:"true"`
-	Type        valuer.String `json:"type" required:"true"`
-	OrgID       valuer.UUID   `json:"orgId" required:"true"`
+	Name        string        `bun:"name,type:string" json:"name" required:"true"`
+	Description string        `bun:"description,type:string"  json:"description" required:"true"`
+	Type        valuer.String `bun:"type,type:string" json:"type" required:"true"`
+	OrgID       valuer.UUID   `bun:"org_id,type:string" json:"orgId" required:"true"`
 }
 
 type PostableRole struct {

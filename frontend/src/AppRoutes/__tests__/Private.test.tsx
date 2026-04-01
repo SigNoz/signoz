@@ -306,11 +306,19 @@ describe('PrivateRoute', () => {
 			);
 		});
 
-		it('should redirect /settings/access-tokens to /settings/api-keys', () => {
+		it('should redirect /settings/access-tokens to /settings/service-accounts', () => {
 			renderPrivateRoute({ initialRoute: '/settings/access-tokens' });
 
 			expect(screen.getByTestId('location-display')).toHaveTextContent(
-				'/settings/api-keys',
+				'/settings/service-accounts',
+			);
+		});
+
+		it('should redirect /settings/api-keys to /settings/service-accounts', () => {
+			renderPrivateRoute({ initialRoute: '/settings/api-keys' });
+
+			expect(screen.getByTestId('location-display')).toHaveTextContent(
+				'/settings/service-accounts',
 			);
 		});
 
