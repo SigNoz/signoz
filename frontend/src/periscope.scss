@@ -29,10 +29,11 @@
 	cursor: pointer;
 
 	&.primary {
-		color: var(--l1-foreground) !important;
-		background-color: var(--bg-robin-500) !important;
+		color: var(--primary-foreground) !important;
+		background-color: var(--primary-background) !important;
 		border: none;
-		box-shadow: 0 2px 0 color-mix(in srgb, var(--bg-robin-500) 9%, transparent);
+		box-shadow: 0 2px 0
+			color-mix(in srgb, var(--primary-background) 9%, transparent);
 	}
 
 	&.secondary {

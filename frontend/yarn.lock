@@ -5551,10 +5551,10 @@
     tailwind-merge "^2.5.2"
     tailwindcss-animate "^1.0.7"
 
-"@signozhq/design-tokens@2.1.1":
-  version "2.1.1"
-  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.1.tgz#9c36d433fd264410713cc0c5ebdd75ce0ebecba3"
-  integrity sha512-SdziCHg5Lwj+6oY6IRUPplaKZ+kTHjbrlhNj//UoAJ8aQLnRdR2F/miPzfSi4vrYw88LtXxNA9J9iJyacCp37A==
+"@signozhq/design-tokens@2.1.4":
+  version "2.1.4"
+  resolved "https://registry.yarnpkg.com/@signozhq/design-tokens/-/design-tokens-2.1.4.tgz#f209da6fbd2ac97ab4434b71472f741009306550"
+  integrity sha512-Ny7/VA5YGFFmZx58jMh7ATFyu7VePaJ4ySmj/DopP1hilmfdxQsKWnpqKaZJWRXrbNkc0gmq3cR7q7Z8nnN7ZQ==
 
 "@signozhq/dialog@^0.0.2":
   version "0.0.2"

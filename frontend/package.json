@@ -54,7 +54,7 @@
     "@signozhq/checkbox": "0.0.2",
     "@signozhq/combobox": "0.0.2",
     "@signozhq/command": "0.0.0",
-    "@signozhq/design-tokens": "2.1.1",
+    "@signozhq/design-tokens": "2.1.4",
     "@signozhq/dialog": "^0.0.2",
     "@signozhq/drawer": "0.0.4",
     "@signozhq/icons": "0.1.0",
