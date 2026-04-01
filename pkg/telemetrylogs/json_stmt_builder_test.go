@@ -591,6 +591,15 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			},
 		},
 		{
+			name:   "Dynamic array element comparison",
+			filter: "body.education[].parameters = 'passed'",
+			expected: TestExpected{
+				WhereClause: "(((arrayExists(`body_v2.education`-> arrayExists(x -> toString(x) = ?, dynamicElement(`body_v2.education`.`parameters`, 'Array(Nullable(Float64))')), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')) OR ((arrayExists(`body_v2.education`-> arrayExists(x -> x = ?, arrayMap(x->dynamicElement(x, 'String'), arrayFilter(x->(dynamicType(x) = 'String'), dynamicElement(`body_v2.education`.`parameters`, 'Array(Dynamic)')))), dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND has(JSONAllPaths(body_v2), 'education')))",
+				Args:        []any{uint64(1747945619), uint64(1747983448), "%passed%", "passed", "%passed%", "passed", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].parameters` is ambiguous, found 2 different combinations of field context / data type: [name=education[].parameters,context=body,datatype=[]float64,jsondatatype=Array(Nullable(Float64)) name=education[].parameters,context=body,datatype=[]dynamic,jsondatatype=Array(Dynamic)]."},
+			},
+		},
+		{
 			name:   "Dynamic array contains String",
 			filter: "body.education[].parameters Contains 'passed'",
 			expected: TestExpected{
