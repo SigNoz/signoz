@@ -2,9 +2,7 @@ package tracedetailtypes
 
 import (
 	"encoding/json"
-	"fmt"
 	"maps"
-	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
@@ -46,7 +44,7 @@ type Event struct {
 // keys can be directly used to query spans and client need to know the actual fields.
 // This pattern should not be copied elsewhere.
 type Span struct {
-	Attributes         map[string]string `json:"attributes"`
+	Attributes         map[string]any    `json:"attributes"`
 	DBName             string            `json:"db_name"`
 	DBOperation        string            `json:"db_operation"`
 	DurationNano       uint64            `json:"duration_nano"`
@@ -134,14 +132,16 @@ type SpanModel struct {
 
 // ToSpan converts a SpanModel (ClickHouse scan result) into a Span for the waterfall response.
 func (item *SpanModel) ToSpan() *Span {
-	// Merge attributes_number, attributes_bool and attributes_string
-	attributes := make(map[string]string)
-	maps.Copy(attributes, item.AttributesString)
-	for k, v := range item.AttributesBool {
-		attributes[k] = fmt.Sprintf("%v", v)
+	// Merge attributes_string, attributes_number, attributes_bool preserving native types
+	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
+	for k, v := range item.AttributesString {
+		attributes[k] = v
 	}
 	for k, v := range item.AttributesNumber {
-		attributes[k] = strconv.FormatFloat(v, 'f', -1, 64)
+		attributes[k] = v
+	}
+	for k, v := range item.AttributesBool {
+		attributes[k] = v
 	}
 
 	resources := make(map[string]string)
