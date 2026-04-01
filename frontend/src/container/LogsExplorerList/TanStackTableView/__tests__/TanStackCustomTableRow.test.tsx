@@ -1,6 +1,8 @@
 import { render, screen } from '@testing-library/react';
 
-import TanStackCustomTableRow from '../TanStackCustomTableRow';
+import TanStackCustomTableRow, {
+	TableRowContext,
+} from '../TanStackCustomTableRow';
 import type { TanStackTableRowData } from '../types';
 
 jest.mock('../../InfinityTableView/styles', () => ({
@@ -26,12 +28,17 @@ const item: TanStackTableRowData = {
 	rowIndex: 0,
 };
 
-/** Required by react-virtuoso `TableRow` / `TableComponents` typing */
 const virtuosoTableRowAttrs = {
 	'data-index': 0,
 	'data-item-index': 0,
 	'data-known-size': 40,
 } as const;
+
+const defaultContext: TableRowContext = {
+	activeLog: null,
+	activeContextLog: null,
+	logsById: new Map(),
+};
 
 describe('TanStackCustomTableRow', () => {
 	it('renders children inside TableRowStyled', () => {
@@ -41,9 +48,7 @@ describe('TanStackCustomTableRow', () => {
 					<TanStackCustomTableRow
 						{...virtuosoTableRowAttrs}
 						item={item}
-						logsById={new Map()}
-						activeLog={null}
-						activeContextLog={null}
+						context={defaultContext}
 					>
 						<td>cell</td>
 					</TanStackCustomTableRow>
@@ -61,9 +66,10 @@ describe('TanStackCustomTableRow', () => {
 					<TanStackCustomTableRow
 						{...virtuosoTableRowAttrs}
 						item={item}
-						logsById={new Map()}
-						activeLog={{ id: 'row-1' } as never}
-						activeContextLog={null}
+						context={{
+							...defaultContext,
+							activeLog: { id: 'row-1' } as never,
+						}}
 					>
 						<td>x</td>
 					</TanStackCustomTableRow>
@@ -83,9 +89,10 @@ describe('TanStackCustomTableRow', () => {
 					<TanStackCustomTableRow
 						{...virtuosoTableRowAttrs}
 						item={item}
-						logsById={new Map([['row-1', logFromMap]])}
-						activeLog={null}
-						activeContextLog={null}
+						context={{
+							...defaultContext,
+							logsById: new Map([['row-1', logFromMap]]),
+						}}
 					>
 						<td>x</td>
 					</TanStackCustomTableRow>

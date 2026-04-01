@@ -12,11 +12,7 @@ import {
 } from 'react';
 import { useLocation } from 'react-router-dom';
 import { useCopyToClipboard } from 'react-use';
-import {
-	TableComponents,
-	TableVirtuoso,
-	TableVirtuosoHandle,
-} from 'react-virtuoso';
+import { TableVirtuoso, TableVirtuosoHandle } from 'react-virtuoso';
 import { DndContext, pointerWithin } from '@dnd-kit/core';
 import {
 	horizontalListSortingStrategy,
@@ -251,23 +247,6 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			[pathname, setCopy],
 		);
 
-		const customTableRow = useCallback<
-			NonNullable<TableComponents<TanStackTableRowData>['TableRow']>
-		>(
-			({ children, item, ...props }) => (
-				<TanStackCustomTableRow
-					{...props}
-					item={item}
-					activeLog={activeLog}
-					activeContextLog={activeContextLog}
-					logsById={logsById}
-				>
-					{children}
-				</TanStackCustomTableRow>
-			),
-			[activeContextLog, activeLog, logsById],
-		);
-
 		const itemContent = useCallback(
 			(index: number): JSX.Element | null => {
 				const row = tableRows[index];
@@ -392,8 +371,9 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					initialTopMostItemIndex={
 						tableViewProps.activeLogIndex !== -1 ? tableViewProps.activeLogIndex : 0
 					}
+					context={{ activeLog, activeContextLog, logsById }}
 					fixedHeaderContent={tableHeader}
-					itemContent={itemContent} // why both itemContent and customTableRow is needed? td
+					itemContent={itemContent}
 					components={{
 						Table: ({ style, children }): JSX.Element => (
 							<TanStackTableStyled style={style}>
@@ -413,7 +393,10 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										const isLastColumn = colIndex === orderedColumns.length - 1;
 										if (isLastColumn) {
 											return (
-												<col key={columnId} style={{ minWidth: `${minWidthPx}px` }} />
+												<col
+													key={columnId}
+													style={{ width: '100%', minWidth: `${minWidthPx}px` }}
+												/>
 											);
 										}
 										const widthPx =
@@ -427,12 +410,11 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 											/>
 										);
 									})}
-									{/* filler and actions cols no longer needed — last data col stretches to fill remaining space */}
 								</colgroup>
 								{children}
 							</TanStackTableStyled>
 						),
-						TableRow: customTableRow, // tr
+						TableRow: TanStackCustomTableRow,
 					}}
 					{...(infitiyTableProps?.onEndReached
 						? { endReached: handleEndReached }
