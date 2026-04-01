@@ -34,9 +34,22 @@ func (server *Server) Stop(ctx context.Context) error {
 }
 
 func (server *Server) CheckWithTupleCreation(ctx context.Context, claims authtypes.Claims, orgID valuer.UUID, relation authtypes.Relation, typeable authtypes.Typeable, selectors []authtypes.Selector, _ []authtypes.Selector) error {
-	subject, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
-	if err != nil {
-		return err
+	subject := ""
+	switch claims.Principal {
+	case authtypes.PrincipalUser:
+		user, err := authtypes.NewSubject(authtypes.TypeableUser, claims.UserID, orgID, nil)
+		if err != nil {
+			return err
+		}
+
+		subject = user
+	case authtypes.PrincipalServiceAccount:
+		serviceAccount, err := authtypes.NewSubject(authtypes.TypeableServiceAccount, claims.ServiceAccountID, orgID, nil)
+		if err != nil {
+			return err
+		}
+
+		subject = serviceAccount
 	}
 
 	tupleSlice, err := typeable.Tuples(subject, relation, selectors, orgID)

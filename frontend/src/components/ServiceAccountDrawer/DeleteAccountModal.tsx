@@ -1,13 +1,13 @@
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
-import { PowerOff, X } from '@signozhq/icons';
+import { Trash2, X } from '@signozhq/icons';
 import { toast } from '@signozhq/sonner';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetServiceAccountQueryKey,
 	invalidateListServiceAccounts,
-	useUpdateServiceAccountStatus,
+	useDeleteServiceAccount,
 } from 'api/generated/services/serviceaccount';
 import type {
 	RenderErrorResponseDTO,
@@ -17,14 +17,14 @@ import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
 
-function DisableAccountModal(): JSX.Element {
+function DeleteAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
 	const [accountId, setAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
-	const [isDisableOpen, setIsDisableOpen] = useQueryState(
-		SA_QUERY_PARAMS.DISABLE_SA,
+	const [isDeleteOpen, setIsDeleteOpen] = useQueryState(
+		SA_QUERY_PARAMS.DELETE_SA,
 		parseAsBoolean.withDefault(false),
 	);
-	const open = !!isDisableOpen && !!accountId;
+	const open = !!isDeleteOpen && !!accountId;
 
 	const cachedAccount = accountId
 		? queryClient.getQueryData<{
@@ -34,13 +34,13 @@ function DisableAccountModal(): JSX.Element {
 	const accountName = cachedAccount?.data?.name;
 
 	const {
-		mutate: updateStatus,
-		isLoading: isDisabling,
-	} = useUpdateServiceAccountStatus({
+		mutate: deleteAccount,
+		isLoading: isDeleting,
+	} = useDeleteServiceAccount({
 		mutation: {
 			onSuccess: async () => {
-				toast.success('Service account disabled', { richColors: true });
-				await setIsDisableOpen(null);
+				toast.success('Service account deleted', { richColors: true });
+				await setIsDeleteOpen(null);
 				await setAccountId(null);
 				await invalidateListServiceAccounts(queryClient);
 			},
@@ -48,7 +48,7 @@ function DisableAccountModal(): JSX.Element {
 				const errMessage =
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to disable service account';
+					)?.getErrorMessage() || 'Failed to delete service account';
 				toast.error(errMessage, { richColors: true });
 			},
 		},
@@ -58,14 +58,13 @@ function DisableAccountModal(): JSX.Element {
 		if (!accountId) {
 			return;
 		}
-		updateStatus({
+		deleteAccount({
 			pathParams: { id: accountId },
-			data: { status: 'DISABLED' },
 		});
 	}
 
 	function handleCancel(): void {
-		setIsDisableOpen(null);
+		setIsDeleteOpen(null);
 	}
 
 	return (
@@ -76,17 +75,18 @@ function DisableAccountModal(): JSX.Element {
 					handleCancel();
 				}
 			}}
-			title={`Disable service account ${accountName ?? ''}?`}
+			title={`Delete service account ${accountName ?? ''}?`}
 			width="narrow"
-			className="alert-dialog sa-disable-dialog"
+			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
 			disableOutsideClick={false}
 		>
-			<p className="sa-disable-dialog__body">
-				Disabling this service account will revoke access for all its keys. Any
-				systems using this account will lose access immediately.
+			<p className="sa-delete-dialog__body">
+				Are you sure you want to delete <strong>{accountName}</strong>? This action
+				cannot be undone. All keys associated with this service account will be
+				permanently removed.
 			</p>
-			<DialogFooter className="sa-disable-dialog__footer">
+			<DialogFooter className="sa-delete-dialog__footer">
 				<Button variant="solid" color="secondary" size="sm" onClick={handleCancel}>
 					<X size={12} />
 					Cancel
@@ -95,15 +95,15 @@ function DisableAccountModal(): JSX.Element {
 					variant="solid"
 					color="destructive"
 					size="sm"
-					loading={isDisabling}
+					loading={isDeleting}
 					onClick={handleConfirm}
 				>
-					<PowerOff size={12} />
-					Disable
+					<Trash2 size={12} />
+					Delete
 				</Button>
 			</DialogFooter>
 		</DialogWrapper>
 	);
 }
 
-export default DisableAccountModal;
+export default DeleteAccountModal;

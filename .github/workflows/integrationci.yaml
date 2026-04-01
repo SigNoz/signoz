@@ -51,6 +51,7 @@ jobs:
           - alerts
           - ingestionkeys
           - rootuser
+          - serviceaccount
         sqlstore-provider:
           - postgres
           - sqlite

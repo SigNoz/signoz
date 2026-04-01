@@ -513,6 +513,7 @@ export const oldRoutes = [
 	'/logs-save-views',
 	'/traces-save-views',
 	'/settings/access-tokens',
+	'/settings/api-keys',
 	'/messaging-queues',
 	'/alerts/edit',
 ];
@@ -523,7 +524,8 @@ export const oldNewRoutesMapping: Record<string, string> = {
 	'/logs-explorer/live': '/logs/logs-explorer/live',
 	'/logs-save-views': '/logs/saved-views',
 	'/traces-save-views': '/traces/saved-views',
-	'/settings/access-tokens': '/settings/api-keys',
+	'/settings/access-tokens': '/settings/service-accounts',
+	'/settings/api-keys': '/settings/service-accounts',
 	'/messaging-queues': '/messaging-queues/overview',
 	'/alerts/edit': '/alerts/overview',
 };

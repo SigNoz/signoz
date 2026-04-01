@@ -1,11 +1,9 @@
 import { RouteTabProps } from 'components/RouteTab/types';
-import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
 import { TFunction } from 'i18next';
 import { ROLES, USER_ROLES } from 'types/roles';
 
 import {
 	alertChannels,
-	apiKeys,
 	billingSettings,
 	createAlertChannels,
 	editAlertChannels,
@@ -64,11 +62,7 @@ export const getRoutes = (
 	settings.push(...alertChannels(t));
 
 	if (isAdmin) {
-		settings.push(...apiKeys(t), ...membersSettings(t));
-
-		if (IS_SERVICE_ACCOUNTS_ENABLED) {
-			settings.push(...serviceAccountsSettings(t));
-		}
+		settings.push(...membersSettings(t), ...serviceAccountsSettings(t));
 	}
 
 	// todo: Sagar - check the condition for role list and details page, to whom we want to serve

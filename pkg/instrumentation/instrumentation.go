@@ -15,12 +15,16 @@ import (
 type Instrumentation interface {
 	// Logger returns the Slog logger.
 	Logger() *slog.Logger
+
 	// MeterProvider returns the OpenTelemetry meter provider.
 	MeterProvider() sdkmetric.MeterProvider
+
 	// TracerProvider returns the OpenTelemetry tracer provider.
 	TracerProvider() sdktrace.TracerProvider
+
 	// PrometheusRegisterer returns the Prometheus registerer.
 	PrometheusRegisterer() prometheus.Registerer
+
 	// ToProviderSettings converts instrumentation to provider settings.
 	ToProviderSettings() factory.ProviderSettings
 }

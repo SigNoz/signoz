@@ -3,8 +3,13 @@ package auditor
 import (
 	"context"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/types/audittypes"
+)
+
+var (
+	ErrCodeAuditExportFailed = errors.MustNewCode("audit_export_failed")
 )
 
 type Auditor interface {

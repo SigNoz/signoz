@@ -1,5 +1,5 @@
 from http import HTTPStatus
-from typing import Callable, Tuple
+from typing import Callable
 
 import requests
 
@@ -9,7 +9,6 @@ from fixtures import types
 def test_change_role(
     signoz: types.SigNoz,
     get_token: Callable[[str, str], str],
-    get_tokens: Callable[[str, str], Tuple[str, str]],
 ):
     admin_token = get_token("admin@integration.test", "password123Z$")
 
@@ -35,9 +34,7 @@ def test_change_role(
     assert response.status_code == HTTPStatus.NO_CONTENT
 
     # Make some API calls as new user
-    new_user_token, new_user_refresh_token = get_tokens(
-        "admin+rolechange@integration.test", "password123Z$"
-    )
+    new_user_token = get_token("admin+rolechange@integration.test", "password123Z$")
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/user/me"),
@@ -78,26 +75,7 @@ def test_change_role(
         headers={"Authorization": f"Bearer {new_user_token}"},
     )
 
-    assert response.status_code == HTTPStatus.UNAUTHORIZED
-
-    # Rotate token for new user
-    response = requests.post(
-        signoz.self.host_configs["8080"].get("/api/v2/sessions/rotate"),
-        json={
-            "refreshToken": new_user_refresh_token,
-        },
-        headers={"Authorization": f"Bearer {new_user_token}"},
-        timeout=2,
-    )
-
     assert response.status_code == HTTPStatus.OK
-
-    # Make some API call again which is protected
-    rotate_response = response.json()["data"]
-    new_user_token, new_user_refresh_token = (
-        rotate_response["accessToken"],
-        rotate_response["refreshToken"],
-    )
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/org/preferences"),
