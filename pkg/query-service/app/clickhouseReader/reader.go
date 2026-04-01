@@ -1281,7 +1281,10 @@ func (r *ClickHouseReader) GetFlamegraphSpansForTrace(ctx context.Context, orgID
 	if totalSpanCount > uint64(clientLimit) {
 		// using trace start and end time if boundary ts are set to zero (or not set)
 		boundaryStart := max(timestamp.MilliToNano(req.BoundaryStartTS), startTime)
-		boundaryEnd := max(timestamp.MilliToNano(req.BoundaryEndTS), endTime)
+		boundaryEnd := timestamp.MilliToNano(req.BoundaryEndTS)
+		if boundaryEnd == 0 {
+			boundaryEnd = endTime
+		}
 
 		selectedSpansForRequest = tracedetail.GetSelectedSpansForFlamegraphForRequest(req.SelectedSpanID, selectedSpans, boundaryStart, boundaryEnd)
 	}
