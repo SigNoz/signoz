@@ -35,13 +35,16 @@ type WaterfallResponse struct {
 
 // Event represents a span event.
 type Event struct {
-	Name         string                 `json:"name,omitempty"`
-	TimeUnixNano uint64                 `json:"timeUnixNano,omitempty"`
-	AttributeMap map[string]interface{} `json:"attributeMap,omitempty"`
-	IsError      bool                   `json:"isError,omitempty"`
+	Name         string         `json:"name,omitempty"`
+	TimeUnixNano uint64         `json:"timeUnixNano,omitempty"`
+	AttributeMap map[string]any `json:"attributeMap,omitempty"`
+	IsError      bool           `json:"isError,omitempty"`
 }
 
-// Span is the v3 span format with separated attributes/resources and snake_case keys.
+// Span represents the span in waterfall response,
+// this uses snake_case keys for response as a special case since these
+// keys can be directly used to query spans and client need to know the actual fields.
+// This pattern should not be copied elsewhere.
 type Span struct {
 	Attributes         map[string]string `json:"attributes"`
 	DBName             string            `json:"db_name"`
