@@ -3,7 +3,7 @@ import { Button } from '@signozhq/button';
 import { KeyRound, X } from '@signozhq/icons';
 import { Skeleton, Table, Tooltip } from 'antd';
 import type { ColumnsType } from 'antd/es/table/interface';
-import type { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import dayjs from 'dayjs';
 import { parseAsBoolean, parseAsString, useQueryState } from 'nuqs';
@@ -14,7 +14,7 @@ import RevokeKeyModal from './RevokeKeyModal';
 import { formatLastObservedAt } from './utils';
 
 interface KeysTabProps {
-	keys: ServiceaccounttypesFactorAPIKeyDTO[];
+	keys: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	isLoading: boolean;
 	isDisabled?: boolean;
 	currentPage: number;
@@ -44,7 +44,7 @@ function buildColumns({
 	isDisabled,
 	onRevokeClick,
 	handleformatLastObservedAt,
-}: BuildColumnsParams): ColumnsType<ServiceaccounttypesFactorAPIKeyDTO> {
+}: BuildColumnsParams): ColumnsType<ServiceaccounttypesGettableFactorAPIKeyDTO> {
 	return [
 		{
 			title: 'Name',
@@ -183,7 +183,7 @@ function KeysTab({
 	return (
 		<>
 			{/* Todo: use new table component from periscope when ready */}
-			<Table<ServiceaccounttypesFactorAPIKeyDTO>
+			<Table<ServiceaccounttypesGettableFactorAPIKeyDTO>
 				columns={columns}
 				dataSource={keys}
 				rowKey="id"

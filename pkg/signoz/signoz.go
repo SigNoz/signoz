@@ -431,7 +431,7 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore, userSetter, orgSetter, quickfilter, cloudIntegrationModule)
 
 	// Initialize identN resolver
-	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)
+	identNFactories := NewIdentNProviderFactories(tokenizer, modules.ServiceAccount, orgGetter, userGetter, config.User)
 	identNResolver, err := identn.NewIdentNResolver(ctx, providerSettings, config.IdentN, identNFactories)
 	if err != nil {
 		return nil, err
