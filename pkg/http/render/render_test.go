@@ -58,6 +58,31 @@ func TestSuccess(t *testing.T) {
 	assert.Equal(t, expected, actual)
 }
 
+func TestErrorCodeFromBody(t *testing.T) {
+	testCases := []struct {
+		name     string
+		body     []byte
+		wantCode string
+	}{
+		{
+			name:     "ValidErrorResponse",
+			body:     []byte(`{"status":"error","error":{"code":"authz_forbidden","message":"only admins can access this resource"}}`),
+			wantCode: "authz_forbidden",
+		},
+		{
+			name:     "InvalidJSON",
+			body:     []byte(`not json`),
+			wantCode: "unset",
+		},
+	}
+
+	for _, testCase := range testCases {
+		t.Run(testCase.name, func(t *testing.T) {
+			assert.Equal(t, testCase.wantCode, ErrorCodeFromBody(testCase.body))
+		})
+	}
+}
+
 func TestError(t *testing.T) {
 	listener, err := net.Listen("tcp", "localhost:0")
 	require.NoError(t, err)

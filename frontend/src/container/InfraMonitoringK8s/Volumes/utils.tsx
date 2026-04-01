@@ -1,6 +1,5 @@
 import { Color } from '@signozhq/design-tokens';
-import { Tag, Tooltip } from 'antd';
-import { TableColumnType as ColumnType } from 'antd';
+import { TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import {
 	K8sVolumesData,
 	K8sVolumesListPayload,
@@ -75,8 +74,76 @@ export const getK8sVolumesListQuery = (): K8sVolumesListPayload => ({
 		items: [],
 		op: 'and',
 	},
-	orderBy: { columnName: 'cpu', order: 'desc' },
+	orderBy: { columnName: 'usage', order: 'desc' },
 });
+
+export const getVolumeListGroupedByRowDataQueryKey = (
+	groupedByMeta: K8sVolumesData['meta'] | undefined,
+	queryFilters: IBuilderQuery['filters'],
+	orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
+	groupBy: IBuilderQuery['groupBy'],
+	minTime: number,
+	maxTime: number,
+): (string | undefined)[] => {
+	// When we have grouped by metadata defined
+	// We need to leave out the min/max time
+	// Otherwise it will cause a loop
+	const groupedByMetaStr = JSON.stringify(groupedByMeta || undefined) ?? '';
+	if (groupedByMetaStr) {
+		return [
+			'volumeList',
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+			groupedByMetaStr,
+		];
+	}
+	return [
+		'volumeList',
+		JSON.stringify(queryFilters),
+		JSON.stringify(orderBy),
+		JSON.stringify(groupBy),
+		groupedByMetaStr,
+		String(minTime),
+		String(maxTime),
+	];
+};
+
+export const getVolumesListQueryKey = (
+	selectedVolumeUID: string | null,
+	pageSize: number,
+	currentPage: number,
+	queryFilters: IBuilderQuery['filters'],
+	orderBy: { columnName: string; order: 'asc' | 'desc' } | null,
+	groupBy: IBuilderQuery['groupBy'],
+	minTime: number,
+	maxTime: number,
+): (string | undefined)[] => {
+	// When selected volume is defined
+	// We need to leave out the min/max time
+	// Otherwise it will cause a loop
+	if (selectedVolumeUID) {
+		return [
+			'volumeList',
+			String(pageSize),
+			String(currentPage),
+			JSON.stringify(queryFilters),
+			JSON.stringify(orderBy),
+			JSON.stringify(groupBy),
+		];
+	}
+
+	return [
+		'volumeList',
+		String(pageSize),
+		String(currentPage),
+		JSON.stringify(queryFilters),
+		JSON.stringify(orderBy),
+		JSON.stringify(groupBy),
+		String(minTime),
+		String(maxTime),
+	];
+};
 
 const columnsConfig = [
 	{

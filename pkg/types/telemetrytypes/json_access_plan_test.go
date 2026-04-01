@@ -18,7 +18,7 @@ const (
 // Helper Functions for Test Data Creation
 // ============================================================================
 
-// makeKey creates a TelemetryFieldKey for testing
+// makeKey creates a TelemetryFieldKey for testing.
 func makeKey(name string, dataType JSONDataType, materialized bool) *TelemetryFieldKey {
 	return &TelemetryFieldKey{
 		Name:         name,

@@ -22,14 +22,22 @@ var (
 	AuthNProviderOIDC          = AuthNProvider{valuer.NewString("oidc")}
 )
 
+var (
+	PrincipalUser           = Principal{valuer.NewString("user")}
+	PrincipalServiceAccount = Principal{valuer.NewString("service_account")}
+)
+
 type AuthNProvider struct{ valuer.String }
 
+type Principal struct{ valuer.String }
+
 type Identity struct {
-	UserID        valuer.UUID    `json:"userId"`
-	OrgID         valuer.UUID    `json:"orgId"`
-	IdenNProvider IdentNProvider `json:"identNProvider"`
-	Email         valuer.Email   `json:"email"`
-	Role          types.Role     `json:"role"`
+	UserID           valuer.UUID    `json:"userId"`
+	ServiceAccountID valuer.UUID    `json:"serviceAccountId"`
+	Principal        Principal      `json:"principal"`
+	OrgID            valuer.UUID    `json:"orgId"`
+	IdenNProvider    IdentNProvider `json:"identNProvider"`
+	Email            valuer.Email   `json:"email"`
 }
 
 type CallbackIdentity struct {
@@ -79,13 +87,34 @@ func NewStateFromString(state string) (State, error) {
 	}, nil
 }
 
-func NewIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, role types.Role, identNProvider IdentNProvider) *Identity {
+func NewIdentity(userID valuer.UUID, serviceAccountID valuer.UUID, principal Principal, orgID valuer.UUID, email valuer.Email, identNProvider IdentNProvider) *Identity {
+	return &Identity{
+		UserID:           userID,
+		ServiceAccountID: serviceAccountID,
+		Principal:        principal,
+		OrgID:            orgID,
+		Email:            email,
+		IdenNProvider:    identNProvider,
+	}
+}
+
+func NewPrincipalUserIdentity(userID valuer.UUID, orgID valuer.UUID, email valuer.Email, identNProvider IdentNProvider) *Identity {
 	return &Identity{
 		UserID:        userID,
+		Principal:     PrincipalUser,
 		OrgID:         orgID,
 		Email:         email,
-		Role:          role,
 		IdenNProvider: identNProvider,
+	}
+}
+
+func NewPrincipalServiceAccountIdentity(serviceAccountID valuer.UUID, orgID valuer.UUID, email valuer.Email, identNProvider IdentNProvider) *Identity {
+	return &Identity{
+		ServiceAccountID: serviceAccountID,
+		Principal:        PrincipalServiceAccount,
+		OrgID:            orgID,
+		Email:            email,
+		IdenNProvider:    identNProvider,
 	}
 }
 
@@ -101,11 +130,11 @@ func NewCallbackIdentity(name string, email valuer.Email, orgID valuer.UUID, sta
 }
 
 func newDomainIDForState(domainID valuer.UUID) string {
-	return strings.Replace(domainID.String(), "-", ":", -1)
+	return strings.ReplaceAll(domainID.String(), "-", ":")
 }
 
 func newDomainIDFromState(state string) (valuer.UUID, error) {
-	return valuer.NewUUID(strings.Replace(state, ":", "-", -1))
+	return valuer.NewUUID(strings.ReplaceAll(state, ":", "-"))
 }
 
 func (typ Identity) MarshalBinary() ([]byte, error) {
@@ -118,11 +147,12 @@ func (typ *Identity) UnmarshalBinary(data []byte) error {
 
 func (typ *Identity) ToClaims() Claims {
 	return Claims{
-		UserID:         typ.UserID.String(),
-		Email:          typ.Email.String(),
-		Role:           typ.Role,
-		OrgID:          typ.OrgID.String(),
-		IdentNProvider: typ.IdenNProvider.StringValue(),
+		UserID:           typ.UserID.String(),
+		ServiceAccountID: typ.ServiceAccountID.String(),
+		Principal:        typ.Principal,
+		Email:            typ.Email.String(),
+		OrgID:            typ.OrgID.String(),
+		IdentNProvider:   typ.IdenNProvider,
 	}
 }
 

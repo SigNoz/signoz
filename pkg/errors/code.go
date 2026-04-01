@@ -21,6 +21,12 @@ var (
 )
 
 var (
+	// Used when reverse engineering an error from a response that doesn't have a code.
+	// This should never be used in the codebase, and if it is, it's a bug that should be fixed by using proper error handling and including error codes in responses.
+	CodeUnset = Code{"unset"}
+)
+
+var (
 	codeRegex = regexp.MustCompile(`^[a-z_]+$`)
 )
 

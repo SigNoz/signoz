@@ -205,7 +205,7 @@ func groupCloudIntegrationRows(rows []*cloudIntegrationRow) []duplicateGroup {
 	return groups
 }
 
-// mergeCloudIntegrationConfigs unions the EnabledRegions from all rows in the group into the keeper's config and updates
+// mergeCloudIntegrationConfigs unions the EnabledRegions from all rows in the group into the keeper's config and updates.
 func mergeCloudIntegrationConfigs(ctx context.Context, tx bun.Tx, group duplicateGroup) error {
 	regionSet := make(map[string]struct{})
 

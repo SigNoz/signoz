@@ -73,7 +73,7 @@ var (
 	PolicyBasedExpression = ExpressionKind{valuer.NewString("policy")}
 )
 
-// RoutePolicy represents the database model for expression routes
+// RoutePolicy represents the database model for expression routes.
 type RoutePolicy struct {
 	bun.BaseModel `bun:"table:route_policy"`
 	types.Identifiable

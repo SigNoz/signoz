@@ -31,7 +31,7 @@ type QueryRef struct {
 	Name string `json:"name"`
 }
 
-// Copy creates a deep copy of QueryRef
+// Copy creates a deep copy of QueryRef.
 func (q QueryRef) Copy() QueryRef {
 	return q
 }
@@ -64,7 +64,7 @@ type QueryBuilderJoin struct {
 	Functions             []Function             `json:"functions,omitempty"`
 }
 
-// Copy creates a deep copy of QueryBuilderJoin
+// Copy creates a deep copy of QueryBuilderJoin.
 func (q QueryBuilderJoin) Copy() QueryBuilderJoin {
 	c := q
 

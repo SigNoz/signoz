@@ -32,7 +32,6 @@ import { v4 as uuid } from 'uuid';
 import { MetricsExplorerEventKeys, MetricsExplorerEvents } from '../events';
 import MetricDetails from '../MetricDetails/MetricDetails';
 import TimeSeries from './TimeSeries';
-import { ExplorerTabs } from './types';
 import {
 	getMetricUnits,
 	splitQueryIntoOneChartPerQuery,
@@ -95,7 +94,6 @@ function Explorer(): JSX.Element {
 	const [disableOneChartPerQuery, toggleDisableOneChartPerQuery] = useState(
 		false,
 	);
-	const [selectedTab] = useState<ExplorerTabs>(ExplorerTabs.TIME_SERIES);
 	const [yAxisUnit, setYAxisUnit] = useState<string | undefined>();
 
 	const unitsLength = useMemo(() => units.length, [units]);
@@ -319,48 +317,21 @@ function Explorer(): JSX.Element {
 					showFunctions={false}
 					version="v3"
 				/>
-				{/* TODO: Enable once we have resolved all related metrics issues */}
-				{/* <Button.Group className="explore-tabs">
-					<Button
-						value={ExplorerTabs.TIME_SERIES}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.TIME_SERIES,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.TIME_SERIES)}
-					>
-						<Typography.Text>Time series</Typography.Text>
-					</Button>
-					<Button
-						value={ExplorerTabs.RELATED_METRICS}
-						className={classNames('tab', {
-							'selected-view': selectedTab === ExplorerTabs.RELATED_METRICS,
-						})}
-						onClick={(): void => setSelectedTab(ExplorerTabs.RELATED_METRICS)}
-					>
-						<Typography.Text>Related</Typography.Text>
-					</Button>
-				</Button.Group> */}
 				<div className="explore-content">
-					{selectedTab === ExplorerTabs.TIME_SERIES && (
-						<TimeSeries
-							showOneChartPerQuery={showOneChartPerQuery}
-							setWarning={setWarning}
-							areAllMetricUnitsSame={areAllMetricUnitsSame}
-							isMetricUnitsLoading={isMetricUnitsLoading}
-							isMetricUnitsError={isMetricUnitsError}
-							metricUnits={units}
-							metricNames={metricNames}
-							metrics={metrics}
-							handleOpenMetricDetails={handleOpenMetricDetails}
-							yAxisUnit={yAxisUnit}
-							setYAxisUnit={setYAxisUnit}
-							showYAxisUnitSelector={showYAxisUnitSelector}
-						/>
-					)}
-					{/* TODO: Enable once we have resolved all related metrics issues */}
-					{/* {selectedTab === ExplorerTabs.RELATED_METRICS && (
-						<RelatedMetrics metricNames={metricNames} />
-					)} */}
+					<TimeSeries
+						showOneChartPerQuery={showOneChartPerQuery}
+						setWarning={setWarning}
+						areAllMetricUnitsSame={areAllMetricUnitsSame}
+						isMetricUnitsLoading={isMetricUnitsLoading}
+						isMetricUnitsError={isMetricUnitsError}
+						metricUnits={units}
+						metricNames={metricNames}
+						metrics={metrics}
+						handleOpenMetricDetails={handleOpenMetricDetails}
+						yAxisUnit={yAxisUnit}
+						setYAxisUnit={setYAxisUnit}
+						showYAxisUnitSelector={showYAxisUnitSelector}
+					/>
 				</div>
 			</div>
 			<ExplorerOptionWrapper

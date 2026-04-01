@@ -1,15 +1,16 @@
-import { useHistory } from 'react-router-dom';
 import { Button, Flex, Typography } from 'antd';
 import ROUTES from 'constants/routes';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import { ArrowRight } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { isModifierKeyPressed } from 'utils/app';
 import { routePermission } from 'utils/permission';
 
 import './Integrations.styles.scss';
 
 function Header(): JSX.Element {
-	const history = useHistory();
 	const { user } = useAppContext();
+	const { safeNavigate } = useSafeNavigate();
 
 	const isGetStartedWithCloudAllowed = routePermission.GET_STARTED_WITH_CLOUD.includes(
 		user.role,
@@ -30,7 +31,11 @@ function Header(): JSX.Element {
 					<Button
 						className="periscope-btn primary view-data-sources-btn"
 						type="primary"
-						onClick={(): void => history.push(ROUTES.GET_STARTED_WITH_CLOUD)}
+						onClick={(e): void =>
+							safeNavigate(ROUTES.GET_STARTED_WITH_CLOUD, {
+								newTab: isModifierKeyPressed(e),
+							})
+						}
 					>
 						<span>View 150+ Data Sources</span>
 						<ArrowRight size={14} />
