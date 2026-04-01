@@ -3,7 +3,7 @@ import * as Sentry from '@sentry/react';
 import { Color } from '@signozhq/design-tokens';
 import { Button, Drawer, Empty, Skeleton, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { useGetMetricDetails } from 'hooks/metricsExplorer/useGetMetricDetails';
+import { useGetMetricMetadata } from 'api/generated/services/metrics';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -48,10 +48,12 @@ function Inspect({
 	] = useState<GraphPopoverOptions | null>(null);
 	const [showExpandedView, setShowExpandedView] = useState(false);
 
-	const { data: metricDetailsData } = useGetMetricDetails(
-		appliedMetricName ?? '',
+	const { data: metricDetailsData } = useGetMetricMetadata(
+		{ metricName: appliedMetricName ?? '' },
 		{
-			enabled: !!appliedMetricName,
+			query: {
+				enabled: !!appliedMetricName,
+			},
 		},
 	);
 
@@ -93,7 +95,6 @@ function Inspect({
 
 	const {
 		inspectMetricsTimeSeries,
-		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,
@@ -118,15 +119,13 @@ function Inspect({
 		[dispatchMetricInspectionOptions],
 	);
 
-	const selectedMetricType = useMemo(
-		() => metricDetailsData?.payload?.data?.metadata?.metric_type,
-		[metricDetailsData],
-	);
+	const selectedMetricType = useMemo(() => metricDetailsData?.data?.type, [
+		metricDetailsData,
+	]);
 
-	const selectedMetricUnit = useMemo(
-		() => metricDetailsData?.payload?.data?.metadata?.unit,
-		[metricDetailsData],
-	);
+	const selectedMetricUnit = useMemo(() => metricDetailsData?.data?.unit, [
+		metricDetailsData,
+	]);
 
 	const aggregateAttribute = useMemo(
 		() => ({
@@ -180,11 +179,8 @@ function Inspect({
 			);
 		}
 
-		if (isInspectMetricsError || inspectMetricsStatusCode !== 200) {
-			const errorMessage =
-				inspectMetricsStatusCode === 400
-					? 'The time range is too large. Please modify it to be within 30 minutes.'
-					: 'Error loading inspect metrics.';
+		if (isInspectMetricsError) {
+			const errorMessage = 'Error loading inspect metrics.';
 
 			return (
 				<div
@@ -261,7 +257,6 @@ function Inspect({
 		isInspectMetricsLoading,
 		isInspectMetricsRefetching,
 		isInspectMetricsError,
-		inspectMetricsStatusCode,
 		inspectMetricsTimeSeries,
 		aggregatedTimeSeries,
 		formattedInspectMetricsTimeSeries,

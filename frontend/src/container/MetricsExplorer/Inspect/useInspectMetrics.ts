@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useMemo, useReducer, useState } from 'react';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
+import { useQuery } from 'react-query';
+import { inspectMetrics } from 'api/generated/services/metrics';
 import { themeColors } from 'constants/theme';
-import { useGetInspectMetricsDetails } from 'hooks/metricsExplorer/useGetInspectMetricsDetails';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { generateColor } from 'lib/uPlotLib/utils/generateColor';
 
@@ -9,6 +9,7 @@ import { INITIAL_INSPECT_METRICS_OPTIONS } from './constants';
 import {
 	GraphPopoverData,
 	InspectionStep,
+	InspectMetricsSeries,
 	MetricInspectionAction,
 	MetricInspectionState,
 	UseInspectMetricsReturnData,
@@ -61,7 +62,7 @@ const metricInspectionReducer = (
 				...state,
 				currentOptions: {
 					...state.currentOptions,
-					filters: action.payload,
+					filterExpression: action.payload,
 				},
 			};
 		case 'APPLY_METRIC_INSPECTION_OPTIONS':
@@ -100,26 +101,58 @@ export function useInspectMetrics(
 	);
 
 	const {
-		data: inspectMetricsData,
+		data: inspectMetricsResponse,
 		isLoading: isInspectMetricsLoading,
 		isError: isInspectMetricsError,
 		isRefetching: isInspectMetricsRefetching,
-	} = useGetInspectMetricsDetails(
-		{
-			metricName: metricName ?? '',
+	} = useQuery({
+		queryKey: [
+			'inspectMetrics',
+			metricName,
 			start,
 			end,
-			filters: metricInspectionOptions.appliedOptions.filters,
-		},
-		{
-			enabled: !!metricName,
-			keepPreviousData: true,
-		},
+			metricInspectionOptions.appliedOptions.filterExpression,
+		],
+		queryFn: ({ signal }) =>
+			inspectMetrics(
+				{
+					metricName: metricName ?? '',
+					start,
+					end,
+					filter: metricInspectionOptions.appliedOptions.filterExpression
+						? { expression: metricInspectionOptions.appliedOptions.filterExpression }
+						: undefined,
+				},
+				signal,
+			),
+		enabled: !!metricName,
+		keepPreviousData: true,
+	});
+
+	const inspectMetricsData = useMemo(
+		() => ({
+			series: (inspectMetricsResponse?.data?.series ?? []).map((s) => {
+				const labels: Record<string, string> = {};
+				for (const l of s.labels ?? []) {
+					if (l.key?.name) {
+						labels[l.key.name] = String(l.value ?? '');
+					}
+				}
+				return {
+					labels,
+					values: (s.values ?? []).map((v) => ({
+						timestamp: v.timestamp ?? 0,
+						value: String(v.value ?? 0),
+					})),
+				};
+			}) as InspectMetricsSeries[],
+		}),
+		[inspectMetricsResponse],
 	);
 	const isDarkMode = useIsDarkMode();
 
 	const inspectMetricsTimeSeries = useMemo(() => {
-		const series = inspectMetricsData?.payload?.data?.series ?? [];
+		const series = inspectMetricsData?.series ?? [];
 
 		return series.map((series, index) => {
 			const title = `TS${index + 1}`;
@@ -135,11 +168,6 @@ export function useInspectMetrics(
 			};
 		});
 	}, [inspectMetricsData, isDarkMode]);
-
-	const inspectMetricsStatusCode = useMemo(
-		() => inspectMetricsData?.statusCode || 200,
-		[inspectMetricsData],
-	);
 
 	// Evaluate inspection step
 	const currentInspectionStep = useMemo(() => {
@@ -231,7 +259,7 @@ export function useInspectMetrics(
 
 	const spaceAggregationLabels = useMemo(() => {
 		const labels = new Set<string>();
-		inspectMetricsData?.payload?.data.series.forEach((series) => {
+		inspectMetricsData?.series?.forEach((series) => {
 			Object.keys(series.labels).forEach((label) => {
 				labels.add(label);
 			});
@@ -250,7 +278,6 @@ export function useInspectMetrics(
 
 	return {
 		inspectMetricsTimeSeries,
-		inspectMetricsStatusCode,
 		isInspectMetricsLoading,
 		isInspectMetricsError,
 		formattedInspectMetricsTimeSeries,

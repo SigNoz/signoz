@@ -37,7 +37,7 @@ func DurationBucket(from, to uint64) string {
 	return ">=1M"
 }
 
-// ToNanoSecs takes epoch and returns it in ns
+// ToNanoSecs takes epoch and returns it in ns.
 func ToNanoSecs(epoch uint64) uint64 {
 	temp := epoch
 	count := 0

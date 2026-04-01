@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
-import { useSearchParams } from 'react-router-dom-v5-compat';
+import { useSelector } from 'react-redux';
 import { LoadingOutlined } from '@ant-design/icons';
 import {
 	Button,
@@ -19,25 +18,34 @@ import logEvent from 'api/common/logEvent';
 import { K8sPodsListPayload } from 'api/infraMonitoring/getK8sPodsList';
 import classNames from 'classnames';
 import { InfraMonitoringEvents } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
 import { useGetK8sPodsList } from 'hooks/infraMonitoring/useGetK8sPodsList';
 import { useGetAggregateKeys } from 'hooks/queryBuilder/useGetAggregateKeys';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { ChevronDown, ChevronRight, CornerDownRight } from 'lucide-react';
+import { useAppContext } from 'providers/App/App';
 import { AppState } from 'store/reducers';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { GlobalReducer } from 'types/reducer/globalTime';
 import { buildAbsolutePath, isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
 
-import { FeatureKeys } from '../../../constants/features';
-import { useAppContext } from '../../../providers/App/App';
-import { getOrderByFromParams } from '../commonUtils';
 import {
 	GetK8sEntityToAggregateAttribute,
 	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategory,
 } from '../constants';
+import {
+	useInfraMonitoringCurrentPage,
+	useInfraMonitoringEventsFilters,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringLogFilters,
+	useInfraMonitoringOrderBy,
+	useInfraMonitoringPodUID,
+	useInfraMonitoringTracesFilters,
+	useInfraMonitoringView,
+} from '../hooks';
 import K8sHeader from '../K8sHeader';
 import LoadingContainer from '../LoadingContainer';
 import {
@@ -66,40 +74,24 @@ function K8sPodsList({
 	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
 		(state) => state.globalTime,
 	);
-	const [searchParams, setSearchParams] = useSearchParams();
 
-	const [currentPage, setCurrentPage] = useState(() => {
-		const page = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE);
-		if (page) {
-			return parseInt(page, 10);
-		}
-		return 1;
-	});
+	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
+	const [groupBy, setGroupBy] = useInfraMonitoringGroupBy();
+	const [orderBy, setOrderBy] = useInfraMonitoringOrderBy();
+	const [defaultOrderBy] = useState(orderBy);
+	const [selectedPodUID, setSelectedPodUID] = useInfraMonitoringPodUID();
+	const [, setView] = useInfraMonitoringView();
+	const [, setTracesFilters] = useInfraMonitoringTracesFilters();
+	const [, setEventsFilters] = useInfraMonitoringEventsFilters();
+	const [, setLogFilters] = useInfraMonitoringLogFilters();
+
 	const [filtersInitialised, setFiltersInitialised] = useState(false);
-
-	useEffect(() => {
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.CURRENT_PAGE]: currentPage.toString(),
-		});
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
 
 	const [addedColumns, setAddedColumns] = useState<IEntityColumn[]>([]);
 
 	const [availableColumns, setAvailableColumns] = useState<IEntityColumn[]>(
 		defaultAvailableColumns,
 	);
-
-	const [groupBy, setGroupBy] = useState<IBuilderQuery['groupBy']>(() => {
-		const groupBy = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY);
-		if (groupBy) {
-			const decoded = decodeURIComponent(groupBy);
-			const parsed = JSON.parse(decoded);
-			return parsed as IBuilderQuery['groupBy'];
-		}
-		return [];
-	});
 
 	const [selectedRowData, setSelectedRowData] = useState<K8sPodsRowData | null>(
 		null,
@@ -153,7 +145,7 @@ function K8sPodsList({
 		if (quickFiltersLastUpdated !== -1) {
 			setCurrentPage(1);
 		}
-	}, [quickFiltersLastUpdated]);
+	}, [quickFiltersLastUpdated, setCurrentPage]);
 
 	useEffect(() => {
 		const addedColumns = JSON.parse(get('k8sPodsAddedColumns') ?? '[]');
@@ -172,19 +164,6 @@ function K8sPodsList({
 		}
 	}, []);
 
-	const [orderBy, setOrderBy] = useState<{
-		columnName: string;
-		order: 'asc' | 'desc';
-	} | null>(() => getOrderByFromParams(searchParams, false));
-
-	const [selectedPodUID, setSelectedPodUID] = useState<string | null>(() => {
-		const podUID = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID);
-		if (podUID) {
-			return podUID;
-		}
-		return null;
-	});
-
 	const { pageSize, setPageSize } = usePageSize(K8sCategory.PODS);
 
 	const query = useMemo(() => {
@@ -197,7 +176,7 @@ function K8sPodsList({
 			filters: queryFilters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 
 		if (groupBy.length > 0) {
@@ -295,25 +274,28 @@ function K8sPodsList({
 			filters,
 			start: Math.floor(minTime / 1000000),
 			end: Math.floor(maxTime / 1000000),
-			orderBy,
+			orderBy: orderBy || baseQuery.orderBy,
 		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [minTime, maxTime, orderBy, selectedRowData]);
 
 	const groupedByRowDataQueryKey = useMemo(() => {
+		// be careful with what you serialize from selectedRowData
+		// since it's react node, it could contain circular references
+		const selectedRowDataKey = JSON.stringify(selectedRowData?.groupedByMeta);
 		if (selectedPodUID) {
 			return [
 				'podList',
 				JSON.stringify(queryFilters),
 				JSON.stringify(orderBy),
-				JSON.stringify(selectedRowData),
+				selectedRowDataKey,
 			];
 		}
 		return [
 			'podList',
 			JSON.stringify(queryFilters),
 			JSON.stringify(orderBy),
-			JSON.stringify(selectedRowData),
+			selectedRowDataKey,
 			String(minTime),
 			String(maxTime),
 		];
@@ -356,10 +338,10 @@ function K8sPodsList({
 		[groupedByRowData, groupBy],
 	);
 
-	const columns = useMemo(() => getK8sPodsListColumns(addedColumns, groupBy), [
-		addedColumns,
-		groupBy,
-	]);
+	const columns = useMemo(
+		() => getK8sPodsListColumns(addedColumns, groupBy, defaultOrderBy),
+		[addedColumns, groupBy, defaultOrderBy],
+	);
 
 	const handleTableChange: TableProps<K8sPodsRowData>['onChange'] = useCallback(
 		(
@@ -377,26 +359,15 @@ function K8sPodsList({
 			}
 
 			if ('field' in sorter && sorter.order) {
-				const currentOrderBy = {
+				setOrderBy({
 					columnName: sorter.field as string,
 					order: (sorter.order === 'ascend' ? 'asc' : 'desc') as 'asc' | 'desc',
-				};
-				setOrderBy(currentOrderBy);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(
-						currentOrderBy,
-					),
 				});
 			} else {
 				setOrderBy(null);
-				setSearchParams({
-					...Object.fromEntries(searchParams.entries()),
-					[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-				});
 			}
 		},
-		[searchParams, setSearchParams],
+		[setCurrentPage, setOrderBy],
 	);
 
 	const { handleChangeQueryData } = useQueryOperations({
@@ -428,28 +399,24 @@ function K8sPodsList({
 
 	const handleGroupByChange = useCallback(
 		(value: IBuilderQuery['groupBy']) => {
-			const groupBy = [];
+			const newGroupBy = [];
 
 			for (let index = 0; index < value.length; index++) {
 				const element = (value[index] as unknown) as string;
 
 				const key = groupByFiltersData?.payload?.attributeKeys?.find(
-					(key) => key.key === element,
+					(k) => k.key === element,
 				);
 
 				if (key) {
-					groupBy.push(key);
+					newGroupBy.push(key);
 				}
 			}
 
 			// Reset pagination on switching to groupBy
 			setCurrentPage(1);
-			setGroupBy(groupBy);
+			setGroupBy(newGroupBy);
 			setExpandedRowKeys([]);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify(groupBy),
-			});
 
 			logEvent(InfraMonitoringEvents.GroupByChanged, {
 				entity: InfraMonitoringEvents.K8sEntity,
@@ -457,7 +424,7 @@ function K8sPodsList({
 				category: InfraMonitoringEvents.Pod,
 			});
 		},
-		[groupByFiltersData, searchParams, setSearchParams],
+		[groupByFiltersData, setCurrentPage, setGroupBy],
 	);
 
 	useEffect(() => {
@@ -498,7 +465,7 @@ function K8sPodsList({
 	}, [selectedRowData, fetchGroupedByRowData]);
 
 	const openPodInNewTab = (record: K8sPodsRowData): void => {
-		const newParams = new URLSearchParams(searchParams);
+		const newParams = new URLSearchParams(document.location.search);
 		newParams.set(INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID, record.podUID);
 		openInNewTab(
 			buildAbsolutePath({
@@ -518,10 +485,6 @@ function K8sPodsList({
 		}
 		if (groupBy.length === 0) {
 			setSelectedPodUID(record.podUID);
-			setSearchParams({
-				...Object.fromEntries(searchParams.entries()),
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID]: record.podUID,
-			});
 			setSelectedRowData(null);
 		} else {
 			handleGroupByRowClick(record);
@@ -536,20 +499,10 @@ function K8sPodsList({
 
 	const handleClosePodDetail = (): void => {
 		setSelectedPodUID(null);
-		setSearchParams({
-			...Object.fromEntries(
-				Array.from(searchParams.entries()).filter(
-					([key]) =>
-						![
-							INFRA_MONITORING_K8S_PARAMS_KEYS.POD_UID,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.VIEW,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.TRACES_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.EVENTS_FILTERS,
-							INFRA_MONITORING_K8S_PARAMS_KEYS.LOG_FILTERS,
-						].includes(key),
-				),
-			),
-		});
+		setView(null);
+		setTracesFilters(null);
+		setEventsFilters(null);
+		setLogFilters(null);
 	};
 
 	const handleAddColumn = useCallback(
@@ -588,9 +541,10 @@ function K8sPodsList({
 		[setAddedColumns, setAvailableColumns],
 	);
 
-	const nestedColumns = useMemo(() => getK8sPodsListColumns(addedColumns, []), [
-		addedColumns,
-	]);
+	const nestedColumns = useMemo(
+		() => getK8sPodsListColumns(addedColumns, [], defaultOrderBy),
+		[addedColumns, defaultOrderBy],
+	);
 
 	const isGroupedByAttribute = groupBy.length > 0;
 
@@ -607,11 +561,6 @@ function K8sPodsList({
 		setSelectedRowData(null);
 		setGroupBy([]);
 		setOrderBy(null);
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.GROUP_BY]: JSON.stringify([]),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.ORDER_BY]: JSON.stringify(null),
-		});
 	};
 
 	const expandedRowRender = (): JSX.Element => (

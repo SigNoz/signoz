@@ -1463,6 +1463,32 @@ export interface GlobaltypesTokenizerConfigDTO {
 	enabled?: boolean;
 }
 
+export interface MetricsexplorertypesInspectMetricsRequestDTO {
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	end: number;
+	filter?: Querybuildertypesv5FilterDTO;
+	/**
+	 * @type string
+	 */
+	metricName: string;
+	/**
+	 * @type integer
+	 * @format int64
+	 */
+	start: number;
+}
+
+export interface MetricsexplorertypesInspectMetricsResponseDTO {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	series: Querybuildertypesv5TimeSeriesDTO[] | null;
+}
+
 export interface MetricsexplorertypesListMetricDTO {
 	/**
 	 * @type string
@@ -1606,6 +1632,13 @@ export interface MetricsexplorertypesMetricMetadataDTO {
 	 * @type string
 	 */
 	unit: string;
+}
+
+export interface MetricsexplorertypesMetricsOnboardingResponseDTO {
+	/**
+	 * @type boolean
+	 */
+	hasMetrics: boolean;
 }
 
 export interface MetricsexplorertypesStatDTO {
@@ -4492,6 +4525,22 @@ export type GetMetricMetadata200 = {
 export type UpdateMetricMetadataPathParameters = {
 	metricName: string;
 };
+export type InspectMetrics200 = {
+	data: MetricsexplorertypesInspectMetricsResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type GetMetricsOnboardingStatus200 = {
+	data: MetricsexplorertypesMetricsOnboardingResponseDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type GetMetricsStats200 = {
 	data: MetricsexplorertypesStatsResponseDTO;
 	/**

@@ -123,7 +123,7 @@ func NewTelemetryMetaStore(
 	return t
 }
 
-// tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table
+// tracesTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the traces table.
 func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -149,7 +149,7 @@ func (t *telemetryMetaStore) tracesTblStatementToFieldKeys(ctx context.Context) 
 	return materialisedKeys, nil
 }
 
-// getTracesKeys returns the keys from the spans that match the field selection criteria
+// getTracesKeys returns the keys from the spans that match the field selection criteria.
 func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalTraces.StringValue(),
@@ -186,7 +186,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	var limit int
 
 	searchTexts := []string{}
-	dataTypes := []telemetrytypes.FieldDataType{}
 
 	conds := []string{}
 	for _, fieldKeySelector := range fieldKeySelectors {
@@ -208,9 +207,6 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 		}
 
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
-		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
-		}
 		// now look at the field context
 		// we don't write most of intrinsic fields to keys table
 		// for this reason we don't want to apply tagType if the field context
@@ -329,7 +325,7 @@ func (t *telemetryMetaStore) getTracesKeys(ctx context.Context, fieldKeySelector
 	return keys, complete, nil
 }
 
-// logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table
+// logsTblStatementToFieldKeys returns materialised attribute/resource/scope keys from the logs table.
 func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([]*telemetrytypes.TelemetryFieldKey, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -355,7 +351,7 @@ func (t *telemetryMetaStore) logsTblStatementToFieldKeys(ctx context.Context) ([
 	return materialisedKeys, nil
 }
 
-// getLogsKeys returns the keys from the spans that match the field selection criteria
+// getLogsKeys returns the keys from the spans that match the field selection criteria.
 func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
@@ -506,14 +502,10 @@ func (t *telemetryMetaStore) getLogsKeys(ctx context.Context, fieldKeySelectors 
 	keys := []*telemetrytypes.TelemetryFieldKey{}
 	rowCount := 0
 	searchTexts := []string{}
-	dataTypes := []telemetrytypes.FieldDataType{}
 
-	// Collect search texts and data types for static field matching
+	// Collect search texts for static field matching
 	for _, fieldKeySelector := range fieldKeySelectors {
 		searchTexts = append(searchTexts, fieldKeySelector.Name)
-		if fieldKeySelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
-			dataTypes = append(dataTypes, fieldKeySelector.FieldDataType)
-		}
 	}
 
 	for rows.Next() {
@@ -615,7 +607,7 @@ func getPriorityForContext(ctx telemetrytypes.FieldContext) int {
 	}
 }
 
-// getMetricsKeys returns the keys from the metrics that match the field selection criteria
+// getMetricsKeys returns the keys from the metrics that match the field selection criteria.
 func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -722,7 +714,7 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 	return keys, complete, nil
 }
 
-// getMeterKeys returns the keys from the meter metrics that match the field selection criteria
+// getMeterKeys returns the keys from the meter metrics that match the field selection criteria.
 func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, fieldKeySelectors []*telemetrytypes.FieldKeySelector) ([]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -798,7 +790,7 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 
 }
 
-// applyBackwardCompatibleKeys adds backward compatible key aliases to the map
+// applyBackwardCompatibleKeys adds backward compatible key aliases to the map.
 func applyBackwardCompatibleKeys(mapOfKeys map[string][]*telemetrytypes.TelemetryFieldKey) {
 	// Get backward compatible keys for all signals
 	backwardCompatKeysBySignal := map[telemetrytypes.Signal]BackwardCompatibleKeyMap{
@@ -885,7 +877,7 @@ func matchesSelectorName(selectorName, target string, matchType telemetrytypes.F
 
 func (t *telemetryMetaStore) GetKeys(ctx context.Context, fieldKeySelector *telemetrytypes.FieldKeySelector) (map[string][]*telemetrytypes.TelemetryFieldKey, bool, error) {
 	var keys []*telemetrytypes.TelemetryFieldKey
-	var complete bool = true
+	var complete = true
 	var err error
 	selectors := []*telemetrytypes.FieldKeySelector{}
 
@@ -1197,12 +1189,13 @@ func (t *telemetryMetaStore) getSpanFieldValues(ctx context.Context, fieldValueS
 	}
 
 	if fieldValueSelector.Value != "" {
-		if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeString {
+		switch fieldValueSelector.FieldDataType {
+		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
+		case telemetrytypes.FieldDataTypeNumber:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		case telemetrytypes.FieldDataTypeUnspecified:
 			// or b/w string and number
 			sb.Where(sb.Or(
 				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
@@ -1284,12 +1277,13 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	}
 
 	if fieldValueSelector.Value != "" {
-		if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeString {
+		switch fieldValueSelector.FieldDataType {
+		case telemetrytypes.FieldDataTypeString:
 			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeNumber {
+		case telemetrytypes.FieldDataTypeNumber:
 			sb.Where(sb.IsNotNull("number_value"))
 			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
-		} else if fieldValueSelector.FieldDataType == telemetrytypes.FieldDataTypeUnspecified {
+		case telemetrytypes.FieldDataTypeUnspecified:
 			// or b/w string and number
 			sb.Where(sb.Or(
 				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
@@ -1344,7 +1338,7 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	return values, complete, nil
 }
 
-// getMetricFieldValues returns field values and whether the result is complete
+// getMetricFieldValues returns field values and whether the result is complete.
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -1437,7 +1431,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	return values, complete, nil
 }
 
-// getIntrinsicMetricFieldValues returns values, isSearchComplete, error
+// getIntrinsicMetricFieldValues returns values, isSearchComplete, error.
 func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector, limit int) (*telemetrytypes.TelemetryFieldValues, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalMetrics.StringValue(),
@@ -1619,10 +1613,10 @@ func populateAllUnspecifiedValues(allUnspecifiedValues *telemetrytypes.Telemetry
 	return complete
 }
 
-// GetAllValues returns all values and whether the result is complete
+// GetAllValues returns all values and whether the result is complete.
 func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	values := &telemetrytypes.TelemetryFieldValues{}
-	var complete bool = true
+	var complete = true
 	var err error
 
 	limit := fieldValueSelector.Limit

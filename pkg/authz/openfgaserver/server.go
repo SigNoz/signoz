@@ -15,6 +15,7 @@ import (
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
 	openfgapkgserver "github.com/openfga/openfga/pkg/server"
+	"github.com/openfga/openfga/pkg/storage"
 	"google.golang.org/protobuf/encoding/protojson"
 )
 
@@ -38,18 +39,12 @@ type Server struct {
 	healthyC      chan struct{}
 }
 
-func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (*Server, error) {
+func NewOpenfgaServer(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) (*Server, error) {
 	scopedProviderSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/authz/openfgaauthz")
-
-	store, err := NewSQLStore(sqlstore)
-	if err != nil {
-		scopedProviderSettings.Logger().DebugContext(ctx, "failed to initialize sqlstore for authz")
-		return nil, err
-	}
 
 	// setup the openfga server
 	opts := []openfgapkgserver.OpenFGAServiceV1Option{
-		openfgapkgserver.WithDatastore(store),
+		openfgapkgserver.WithDatastore(openfgaDataStore),
 		openfgapkgserver.WithLogger(NewLogger(scopedProviderSettings.Logger())),
 		openfgapkgserver.WithContextPropagationToDatastore(true),
 	}
