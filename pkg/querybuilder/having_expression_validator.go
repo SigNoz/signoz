@@ -424,9 +424,10 @@ func expectedContains(se *SyntaxErr, label string) bool {
 func hasUnclosedParen(s string) bool {
 	count := 0
 	for _, c := range s {
-		if c == '(' {
+		switch c {
+		case '(':
 			count++
-		} else if c == ')' {
+		case ')':
 			count--
 		}
 	}
@@ -437,9 +438,10 @@ func hasUnclosedParen(s string) bool {
 func hasUnclosedBracket(s string) bool {
 	count := 0
 	for _, c := range s {
-		if c == '[' {
+		switch c {
+		case '[':
 			count++
-		} else if c == ']' {
+		case ']':
 			count--
 		}
 	}

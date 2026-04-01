@@ -13,7 +13,7 @@ import (
 func toTraceAggregations(logs []qbtypes.LogAggregation) []qbtypes.TraceAggregation {
 	out := make([]qbtypes.TraceAggregation, len(logs))
 	for i, l := range logs {
-		out[i] = qbtypes.TraceAggregation{Expression: l.Expression, Alias: l.Alias}
+		out[i] = qbtypes.TraceAggregation(l)
 	}
 	return out
 }
