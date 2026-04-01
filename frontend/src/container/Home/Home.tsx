@@ -16,7 +16,6 @@ import { ORG_PREFERENCES } from 'constants/orgPreferences';
 import { initialQueriesMap, PANEL_TYPES } from 'constants/queryBuilder';
 import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import ROUTES from 'constants/routes';
-import { IS_SERVICE_ACCOUNTS_ENABLED } from 'container/ServiceAccountsSettings/config';
 import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetQueryRange } from 'hooks/queryBuilder/useGetQueryRange';
 import { useIsDarkMode } from 'hooks/useDarkMode';
@@ -265,23 +264,21 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			{IS_SERVICE_ACCOUNTS_ENABLED && (
-				<PersistedAnnouncementBanner
-					type="warning"
-					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-					message={
-						<>
-							<strong>API Keys</strong> have been deprecated and replaced by{' '}
-							<strong>Service Accounts</strong>. Please migrate to Service Accounts for
-							programmatic API access.
-						</>
-					}
-					action={{
-						label: 'Go to Service Accounts',
-						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-					}}
-				/>
-			)}
+			<PersistedAnnouncementBanner
+				type="warning"
+				storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
+				message={
+					<>
+						<strong>API Keys</strong> have been deprecated and replaced by{' '}
+						<strong>Service Accounts</strong>. Please migrate to Service Accounts for
+						programmatic API access.
+					</>
+				}
+				action={{
+					label: 'Go to Service Accounts',
+					onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+				}}
+			/>
 
 			<div className="sticky-header">
 				<Header

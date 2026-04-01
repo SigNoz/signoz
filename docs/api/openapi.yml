@@ -2447,7 +2447,7 @@ components:
       - start
       - end
       type: object
-    ServiceaccounttypesFactorAPIKey:
+    ServiceaccounttypesGettableFactorAPIKey:
       properties:
         createdAt:
           format: date-time
@@ -2456,8 +2456,6 @@ components:
           minimum: 0
           type: integer
         id:
-          type: string
-        key:
           type: string
         lastObservedAt:
           format: date-time
@@ -2471,7 +2469,6 @@ components:
           type: string
       required:
       - id
-      - key
       - expiresAt
       - lastObservedAt
       - serviceAccountId
@@ -2499,25 +2496,21 @@ components:
       type: object
     ServiceaccounttypesPostableServiceAccount:
       properties:
-        email:
-          type: string
         name:
           type: string
-        roles:
-          items:
-            type: string
-          type: array
       required:
       - name
-      - email
-      - roles
+      type: object
+    ServiceaccounttypesPostableServiceAccountRole:
+      properties:
+        id:
+          type: string
+      required:
+      - id
       type: object
     ServiceaccounttypesServiceAccount:
       properties:
         createdAt:
-          format: date-time
-          type: string
-        deletedAt:
           format: date-time
           type: string
         email:
@@ -2528,9 +2521,57 @@ components:
           type: string
         orgId:
           type: string
-        roles:
+        status:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - name
+      - email
+      - status
+      - orgId
+      type: object
+    ServiceaccounttypesServiceAccountRole:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        role:
+          $ref: '#/components/schemas/AuthtypesRole'
+        roleId:
+          type: string
+        serviceAccountId:
+          type: string
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      - serviceAccountId
+      - roleId
+      - role
+      type: object
+    ServiceaccounttypesServiceAccountWithRoles:
+      properties:
+        createdAt:
+          format: date-time
+          type: string
+        email:
+          type: string
+        id:
+          type: string
+        name:
+          type: string
+        orgId:
+          type: string
+        serviceAccountRoles:
           items:
-            type: string
+            $ref: '#/components/schemas/ServiceaccounttypesServiceAccountRole'
+          nullable: true
           type: array
         status:
           type: string
@@ -2541,10 +2582,9 @@ components:
       - id
       - name
       - email
-      - roles
       - status
       - orgId
-      - deletedAt
+      - serviceAccountRoles
       type: object
     ServiceaccounttypesUpdatableFactorAPIKey:
       properties:
@@ -2556,28 +2596,6 @@ components:
       required:
       - name
       - expiresAt
-      type: object
-    ServiceaccounttypesUpdatableServiceAccount:
-      properties:
-        email:
-          type: string
-        name:
-          type: string
-        roles:
-          items:
-            type: string
-          type: array
-      required:
-      - name
-      - email
-      - roles
-      type: object
-    ServiceaccounttypesUpdatableServiceAccountStatus:
-      properties:
-        status:
-          type: string
-      required:
-      - status
       type: object
     TelemetrytypesFieldContext:
       enum:
@@ -2702,43 +2720,6 @@ components:
       required:
       - id
       type: object
-    TypesGettableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        createdByUser:
-          $ref: '#/components/schemas/TypesUser'
-        expiresAt:
-          format: int64
-          type: integer
-        id:
-          type: string
-        lastUsed:
-          format: int64
-          type: integer
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        updatedByUser:
-          $ref: '#/components/schemas/TypesUser'
-        userId:
-          type: string
-      required:
-      - id
-      type: object
     TypesIdentifiable:
       properties:
         id:
@@ -2792,16 +2773,6 @@ components:
           type: string
       required:
       - id
-      type: object
-    TypesPostableAPIKey:
-      properties:
-        expiresInDays:
-          format: int64
-          type: integer
-        name:
-          type: string
-        role:
-          type: string
       type: object
     TypesPostableBulkInviteRequest:
       properties:
@@ -2859,33 +2830,6 @@ components:
         passwordId:
           type: string
         token:
-          type: string
-      required:
-      - id
-      type: object
-    TypesStorableAPIKey:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        createdBy:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        revoked:
-          type: boolean
-        role:
-          type: string
-        token:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-        updatedBy:
-          type: string
-        userId:
           type: string
       required:
       - id
@@ -4966,222 +4910,6 @@ paths:
       summary: Update org preference
       tags:
       - preferences
-  /api/v1/pats:
-    get:
-      deprecated: false
-      description: This endpoint lists all api keys
-      operationId: ListAPIKeys
-      responses:
-        "200":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    items:
-                      $ref: '#/components/schemas/TypesGettableAPIKey'
-                    type: array
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: OK
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: List api keys
-      tags:
-      - users
-    post:
-      deprecated: false
-      description: This endpoint creates an api key
-      operationId: CreateAPIKey
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesPostableAPIKey'
-      responses:
-        "201":
-          content:
-            application/json:
-              schema:
-                properties:
-                  data:
-                    $ref: '#/components/schemas/TypesGettableAPIKey'
-                  status:
-                    type: string
-                required:
-                - status
-                - data
-                type: object
-          description: Created
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "409":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Conflict
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Create api key
-      tags:
-      - users
-  /api/v1/pats/{id}:
-    delete:
-      deprecated: false
-      description: This endpoint revokes an api key
-      operationId: RevokeAPIKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Revoke api key
-      tags:
-      - users
-    put:
-      deprecated: false
-      description: This endpoint updates an api key
-      operationId: UpdateAPIKey
-      parameters:
-      - in: path
-        name: id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/TypesStorableAPIKey'
-      responses:
-        "204":
-          content:
-            application/json:
-              schema:
-                type: string
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "404":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Not Found
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update api key
-      tags:
-      - users
   /api/v1/public/dashboards/{id}:
     get:
       deprecated: false
@@ -5956,7 +5684,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccount'
+                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccountWithRoles'
                   status:
                     type: string
                 required:
@@ -6010,7 +5738,7 @@ paths:
         content:
           application/json:
             schema:
-              $ref: '#/components/schemas/ServiceaccounttypesUpdatableServiceAccount'
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
       responses:
         "204":
           content:
@@ -6075,7 +5803,7 @@ paths:
                 properties:
                   data:
                     items:
-                      $ref: '#/components/schemas/ServiceaccounttypesFactorAPIKey'
+                      $ref: '#/components/schemas/ServiceaccounttypesGettableFactorAPIKey'
                     type: array
                   status:
                     type: string
@@ -6298,35 +6026,35 @@ paths:
       summary: Updates a service account key
       tags:
       - serviceaccount
-  /api/v1/service_accounts/{id}/status:
-    put:
+  /api/v1/service_accounts/{id}/roles:
+    get:
       deprecated: false
-      description: This endpoint updates an existing service account status
-      operationId: UpdateServiceAccountStatus
+      description: This endpoint gets all the roles for the existing service account
+      operationId: GetServiceAccountRoles
       parameters:
       - in: path
         name: id
         required: true
         schema:
           type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/ServiceaccounttypesUpdatableServiceAccountStatus'
       responses:
-        "204":
+        "200":
           content:
             application/json:
               schema:
-                type: string
-          description: No Content
-        "400":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Bad Request
+                properties:
+                  data:
+                    items:
+                      $ref: '#/components/schemas/AuthtypesRole'
+                    nullable: true
+                    type: array
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
         "401":
           content:
             application/json:
@@ -6356,7 +6084,184 @@ paths:
         - ADMIN
       - tokenizer:
         - ADMIN
-      summary: Updates a service account status
+      summary: Gets service account roles
+      tags:
+      - serviceaccount
+    post:
+      deprecated: false
+      description: This endpoint assigns a role to a service account
+      operationId: CreateServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccountRole'
+      responses:
+        "201":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/TypesIdentifiable'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: Created
+        "400":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Bad Request
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Create service account role
+      tags:
+      - serviceaccount
+  /api/v1/service_accounts/{id}/roles/{rid}:
+    delete:
+      deprecated: false
+      description: This endpoint revokes a role from service account
+      operationId: DeleteServiceAccountRole
+      parameters:
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: rid
+        required: true
+        schema:
+          type: string
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Delete service account role
+      tags:
+      - serviceaccount
+  /api/v1/service_accounts/me:
+    get:
+      deprecated: false
+      description: This endpoint gets my service account
+      operationId: GetMyServiceAccount
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/ServiceaccounttypesServiceAccountWithRoles'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Gets my service account
+      tags:
+      - serviceaccount
+    put:
+      deprecated: false
+      description: This endpoint gets my service account
+      operationId: UpdateMyServiceAccount
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/ServiceaccounttypesPostableServiceAccount'
+      responses:
+        "204":
+          content:
+            application/json:
+              schema:
+                type: string
+          description: No Content
+        "404":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Not Found
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      summary: Updates my service account
       tags:
       - serviceaccount
   /api/v1/user:
