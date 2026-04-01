@@ -41,3 +41,8 @@ type Store interface {
 
 	RunInTx(context.Context, func(ctx context.Context) error) error
 }
+
+type ServiceDefinitionStore interface {
+	List(ctx context.Context, provider CloudProviderType) ([]*ServiceDefinition, error)
+	Get(ctx context.Context, provider CloudProviderType, serviceID ServiceID) (*ServiceDefinition, error)
+}

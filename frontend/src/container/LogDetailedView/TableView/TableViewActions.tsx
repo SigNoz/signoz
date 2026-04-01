@@ -284,6 +284,15 @@ export default function TableViewActions(
 				error,
 			);
 		}
+		// If the value is valid JSON (object or array), pretty-print it for copying
+		try {
+			const parsed = JSON.parse(text);
+			if (typeof parsed === 'object' && parsed !== null) {
+				return JSON.stringify(parsed, null, 2);
+			}
+		} catch {
+			// not JSON, return as-is
+		}
 		return text;
 	}, [fieldData.value]);
 
