@@ -165,7 +165,17 @@ function KeysTab({
 		return (
 			<div className="keys-tab__empty">
 				<KeyRound size={24} className="keys-tab__empty-icon" />
-				<p className="keys-tab__empty-text">No keys. Start by creating one.</p>
+				<p className="keys-tab__empty-text">
+					No keys. Start by creating one.{' '}
+					<a
+						href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts/#step-3-generate-an-api-key"
+						target="_blank"
+						rel="noopener noreferrer"
+						className="keys-tab__learn-more"
+					>
+						Learn more
+					</a>
+				</p>
 				<Button
 					type="button"
 					className="keys-tab__learn-more"

@@ -198,15 +198,14 @@ function ServiceAccountsSettings(): JSX.Element {
 					<h1 className="sa-settings__title">Service Accounts</h1>
 					<p className="sa-settings__subtitle">
 						Overview of service accounts added to this workspace.{' '}
-						{/* Todo: to add doc links */}
-						{/* <a
-							href="https://signoz.io/docs/service-accounts"
+						<a
+							href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="sa-settings__learn-more"
 						>
 							Learn more
-						</a> */}
+						</a>
 					</p>
 				</div>
 
