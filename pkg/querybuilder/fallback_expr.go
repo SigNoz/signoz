@@ -281,7 +281,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		switch v := value.(type) {
 		case string:
 			tblFieldName = castString(tblFieldName)
-		case float64:
+		case float32, float64, int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
 			tblFieldName = accurateCastFloat(tblFieldName)
 		case bool:
 			tblFieldName = castBool(tblFieldName)

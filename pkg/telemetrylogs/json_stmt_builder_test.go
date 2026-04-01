@@ -781,7 +781,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 		},
 		{
 			name:   "dynamic array element comparison",
-			filter: "ids != 1",
+			filter: "ids != '1'",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))",
 				Args:        []any{uint64(1747945619), uint64(1747983448), float64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
