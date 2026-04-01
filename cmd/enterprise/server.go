@@ -35,7 +35,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/signoz"
@@ -129,7 +129,6 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 				return nil, err
 			}
 			return openfgaauthz.NewProviderFactory(sqlstore, openfgaschema.NewSchema().Get(ctx), openfgaDataStore, licensing, dashboardModule), nil
-
 		},
 		func(store sqlstore.SQLStore, settings factory.ProviderSettings, analytics analytics.Analytics, orgGetter organization.Getter, queryParser queryparser.QueryParser, querier querier.Querier, licensing licensing.Licensing) dashboard.Module {
 			return impldashboard.NewModule(pkgimpldashboard.NewStore(store), settings, analytics, orgGetter, queryParser, querier, licensing)
@@ -141,8 +140,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, userGetter user.Getter, userSetter user.Setter) (cloudintegration.Module, error) {
-			return implcloudintegration.NewModule(store, config.Global, zeus, gateway, licensing, userGetter, userSetter)
+		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module) (cloudintegration.Module, error) {
+			return implcloudintegration.NewModule(store, config.Global, zeus, gateway, licensing, serviceAccount)
 		},
 	)
 	if err != nil {

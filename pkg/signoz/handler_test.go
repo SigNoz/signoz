@@ -16,8 +16,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
-	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
-	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -54,11 +52,7 @@ func TestNewHandlers(t *testing.T) {
 	userRoleStore := impluser.NewUserRoleStore(sqlstore, providerSettings)
 
 	userGetter := impluser.NewGetter(impluser.NewStore(sqlstore, providerSettings), userRoleStore, flagger)
-	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
-	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
-	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, nil, nil, user.Config{}, userRoleStore, userGetter)
-
-	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, userSetter, orgSetter, quickfilter, nil)
+	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, nil, nil, nil, nil, nil, nil, nil, queryParser, Config{}, dashboardModule, userGetter, userRoleStore, nil, nil)
 
 	querierHandler := querier.NewHandler(providerSettings, nil, nil)
 	registryHandler := factory.NewHandler(nil)

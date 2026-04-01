@@ -12,23 +12,23 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
-	"github.com/SigNoz/signoz/pkg/modules/user"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
+	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/types/zeustypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 	"github.com/SigNoz/signoz/pkg/zeus"
 )
 
 type module struct {
-	userGetter        user.Getter
-	userSetter        user.Setter
 	store             cloudintegrationtypes.Store
 	gateway           gateway.Gateway
 	zeus              zeus.Zeus
 	licensing         licensing.Licensing
 	globalConfig      global.Config
+	serviceAccount    serviceaccount.Module
 	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule
 }
 
@@ -38,8 +38,7 @@ func NewModule(
 	zeus zeus.Zeus,
 	gateway gateway.Gateway,
 	licensing licensing.Licensing,
-	userGetter user.Getter,
-	userSetter user.Setter,
+	serviceAccount serviceaccount.Module,
 ) (cloudintegration.Module, error) {
 	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider()
 	if err != nil {
@@ -57,8 +56,7 @@ func NewModule(
 		zeus:              zeus,
 		gateway:           gateway,
 		licensing:         licensing,
-		userGetter:        userGetter,
-		userSetter:        userSetter,
+		serviceAccount:    serviceAccount,
 		cloudProvidersMap: cloudProvidersMap,
 	}, nil
 }
@@ -506,67 +504,25 @@ func (module *module) getOrCreateIngestionKey(ctx context.Context, orgID valuer.
 }
 
 func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (string, error) {
-	integrationUser, err := module.getOrCreateIntegrationUser(ctx, orgID, provider)
+	domain := module.serviceAccount.Config().Email.Domain
+	serviceAccount := serviceaccounttypes.NewServiceAccount("integration", domain, serviceaccounttypes.ServiceAccountStatusActive, orgID)
+	serviceAccount, err := module.serviceAccount.GetOrCreate(ctx, orgID, serviceAccount)
+	if err != nil {
+		return "", err
+	}
+	err = module.serviceAccount.SetRoleByName(ctx, orgID, serviceAccount.ID, authtypes.SigNozViewerRoleName)
 	if err != nil {
 		return "", err
 	}
 
-	existingKeys, err := module.userSetter.ListAPIKeys(ctx, orgID)
+	factorAPIKey, err := serviceAccount.NewFactorAPIKey(provider.StringValue(), 0)
 	if err != nil {
 		return "", err
 	}
 
-	keyName := cloudintegrationtypes.NewAPIKeyName(provider)
-
-	for _, key := range existingKeys {
-		if key.Name == keyName && key.UserID == integrationUser.ID {
-			return key.Token, nil
-		}
-	}
-
-	apiKey, err := types.NewStorableAPIKey(keyName, integrationUser.ID, types.RoleViewer, 0)
+	factorAPIKey, err = module.serviceAccount.GetOrCreateFactorAPIKey(ctx, factorAPIKey)
 	if err != nil {
 		return "", err
 	}
-
-	err = module.userSetter.CreateAPIKey(ctx, apiKey)
-	if err != nil {
-		return "", err
-	}
-
-	return apiKey.Token, nil
-}
-
-func (module *module) getOrCreateIntegrationUser(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*types.User, error) {
-	email, err := cloudintegrationtypes.GetCloudProviderEmail(provider)
-	if err != nil {
-		return nil, err
-	}
-
-	// get user by email
-	integrationUser, err := module.userGetter.GetNonDeletedUserByEmailAndOrgID(ctx, email, orgID)
-	if err != nil && !errors.Ast(err, errors.TypeNotFound) {
-		return nil, err
-	}
-
-	// if user found, return
-	if integrationUser != nil {
-		return integrationUser, nil
-	}
-
-	// if user not found, create a new one
-	displayName := cloudintegrationtypes.NewIntegrationUserDisplayName(provider)
-	integrationUser, err = types.NewUser(displayName, email, orgID, types.UserStatusActive)
-	if err != nil {
-		return nil, err
-	}
-
-	password := types.MustGenerateFactorPassword(integrationUser.ID.String())
-
-	err = module.userSetter.CreateUser(ctx, integrationUser, user.WithFactorPassword(password))
-	if err != nil {
-		return nil, err
-	}
-
-	return integrationUser, nil
+	return factorAPIKey.Key, nil
 }

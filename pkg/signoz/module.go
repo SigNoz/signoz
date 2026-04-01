@@ -17,11 +17,13 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer/implmetricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/promote"
 	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter"
+	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
@@ -29,7 +31,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
-	"github.com/SigNoz/signoz/pkg/modules/serviceaccount/implserviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/services"
 	"github.com/SigNoz/signoz/pkg/modules/services/implservices"
 	"github.com/SigNoz/signoz/pkg/modules/session"
@@ -39,6 +40,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/tracefunnel/impltracefunnel"
 	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
@@ -92,11 +94,12 @@ func NewModules(
 	dashboard dashboard.Module,
 	userGetter user.Getter,
 	userRoleStore authtypes.UserRoleStore,
-	userSetter user.Setter,
-	orgSetter organization.Setter,
-	quickfilter quickfilter.Module,
+	serviceAccount serviceaccount.Module,
 	cloudIntegrationModule cloudintegration.Module,
 ) Modules {
+	quickfilter := implquickfilter.NewModule(implquickfilter.NewStore(sqlstore))
+	orgSetter := implorganization.NewSetter(implorganization.NewStore(sqlstore), alertmanager, quickfilter)
+	userSetter := impluser.NewSetter(impluser.NewStore(sqlstore, providerSettings), tokenizer, emailing, providerSettings, orgSetter, authz, analytics, config.User, userRoleStore, userGetter)
 	ruleStore := sqlrulestore.NewRuleStore(sqlstore, queryParser, providerSettings)
 
 	return Modules{
@@ -117,7 +120,7 @@ func NewModules(
 		Services:         implservices.NewModule(querier, telemetryStore),
 		MetricsExplorer:  implmetricsexplorer.NewModule(telemetryStore, telemetryMetadataStore, cache, ruleStore, dashboard, providerSettings, config.MetricsExplorer),
 		Promote:          implpromote.NewModule(telemetryMetadataStore, telemetryStore),
-		ServiceAccount:   implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount),
+		ServiceAccount:   serviceAccount,
 		RuleStateHistory: implrulestatehistory.NewModule(implrulestatehistory.NewStore(telemetryStore, telemetryMetadataStore, providerSettings.Logger)),
 		CloudIntegration: cloudIntegrationModule,
 	}

@@ -24,7 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
-	"github.com/SigNoz/signoz/pkg/modules/user"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/app"
 	"github.com/SigNoz/signoz/pkg/queryparser"
@@ -100,7 +100,7 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 		func(ps factory.ProviderSettings, q querier.Querier, a analytics.Analytics) querier.Handler {
 			return querier.NewHandler(ps, q, a)
 		},
-		func(_ cloudintegrationtypes.Store, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ user.Getter, _ user.Setter) (cloudintegration.Module, error) {
+		func(_ cloudintegrationtypes.Store, _ zeus.Zeus, _ gateway.Gateway, _ licensing.Licensing, _ serviceaccount.Module) (cloudintegration.Module, error) {
 			return implcloudintegration.NewModule(), nil
 		},
 	)
