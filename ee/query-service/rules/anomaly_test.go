@@ -47,7 +47,7 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Test anomaly no data",
 		AlertType: ruletypes.AlertTypeMetric,
-		RuleType:  RuleTypeAnomaly,
+		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: evalWindow,
 			Frequency:  valuer.MustParseTextDuration("1m"),
@@ -120,7 +120,6 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 				&postableRule,
 				nil,
 				logger,
-				nil,
 			)
 			require.NoError(t, err)
 
@@ -150,7 +149,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Test anomaly no data with AbsentFor",
 		AlertType: ruletypes.AlertTypeMetric,
-		RuleType:  RuleTypeAnomaly,
+		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: evalWindow,
 			Frequency:  valuer.MustParseTextDuration("1m"),
@@ -248,7 +247,7 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 				},
 			}
 
-			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, logger, nil)
+			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, logger)
 			require.NoError(t, err)
 
 			rule.provider = &mockAnomalyProvider{

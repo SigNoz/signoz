@@ -97,7 +97,7 @@ func (r *ThresholdRule) prepareQueryRange(ctx context.Context, ts time.Time) (*q
 }
 
 func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lbls ruletypes.Labels) string {
-	selectedQuery := r.GetSelectedQuery(ctx)
+	selectedQuery := r.SelectedQuery(ctx)
 
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
@@ -137,7 +137,7 @@ func (r *ThresholdRule) prepareLinksToLogs(ctx context.Context, ts time.Time, lb
 }
 
 func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, lbls ruletypes.Labels) string {
-	selectedQuery := r.GetSelectedQuery(ctx)
+	selectedQuery := r.SelectedQuery(ctx)
 
 	qr, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
@@ -176,14 +176,6 @@ func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, 
 	return contextlinks.PrepareLinksToTracesV5(start, end, whereClause)
 }
 
-func (r *ThresholdRule) GetSelectedQuery(ctx context.Context) string {
-	if r.ruleCondition.SelectedQuery != "" {
-		return r.ruleCondition.SelectedQuery
-	}
-	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
-	return r.ruleCondition.SelectedQueryName()
-}
-
 func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 	params, err := r.prepareQueryRange(ctx, ts)
 	if err != nil {
@@ -211,7 +203,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 		}
 	}
 
-	selectedQuery := r.GetSelectedQuery(ctx)
+	selectedQuery := r.SelectedQuery(ctx)
 
 	var queryResult *qbtypes.TimeSeriesData
 	for _, res := range results {

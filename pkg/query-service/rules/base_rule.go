@@ -247,6 +247,14 @@ func (r *BaseRule) GeneratorURL() string {
 	return ruletypes.PrepareRuleGeneratorURL(r.ID(), r.source)
 }
 
+func (r *BaseRule) SelectedQuery(ctx context.Context) string {
+	if r.ruleCondition.SelectedQuery != "" {
+		return r.ruleCondition.SelectedQuery
+	}
+	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
+	return r.ruleCondition.SelectedQueryName()
+}
+
 func (r *BaseRule) Unit() string {
 	return r.ruleCondition.CompositeQuery.Unit
 }

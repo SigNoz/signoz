@@ -9,7 +9,6 @@ import (
 	"sync"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
@@ -25,16 +24,12 @@ import (
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
 
-var (
-	RuleTypeAnomaly = ruletypes.RuleType{String: valuer.NewString("anomaly_rule")}
-)
-
 type AnomalyRule struct {
 	*baserules.BaseRule
 
 	mtx sync.Mutex
 
-	// querierV5 is used for alerts migrated after the introduction of new query builder
+	// querier is used for alerts migrated after the introduction of new query builder
 	querier querier.Querier
 
 	provider anomaly.Provider
@@ -53,7 +48,6 @@ func NewAnomalyRule(
 	p *ruletypes.PostableRule,
 	querier querier.Querier,
 	logger *slog.Logger,
-	cache cache.Cache,
 	opts ...baserules.RuleOption,
 ) (*AnomalyRule, error) {
 
@@ -107,12 +101,12 @@ func NewAnomalyRule(
 }
 
 func (r *AnomalyRule) Type() ruletypes.RuleType {
-	return RuleTypeAnomaly
+	return ruletypes.RuleTypeAnomaly
 }
 
-func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) *qbtypes.QueryRangeRequest {
 
-	r.logger.InfoContext(ctx, "prepare query range request v5", slog.String("rule.id", r.ID()), slog.Int64("ts", ts.UnixMilli()), slog.Int64("eval.window_ms", r.EvalWindow().Milliseconds()), slog.Int64("eval.delay_ms", r.EvalDelay().Milliseconds()))
+	r.logger.InfoContext(ctx, "prepare query range request", slog.String("rule.id", r.ID()), slog.Int64("ts", ts.UnixMilli()), slog.Int64("eval.window_ms", r.EvalWindow().Milliseconds()), slog.Int64("eval.delay_ms", r.EvalDelay().Milliseconds()))
 
 	startTs, endTs := r.Timestamps(ts)
 	start, end := startTs.UnixMilli(), endTs.UnixMilli()
@@ -128,23 +122,12 @@ func (r *AnomalyRule) prepareQueryRange(ctx context.Context, ts time.Time) (*qbt
 	}
 	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
 	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
-	return req, nil
-}
-
-func (r *AnomalyRule) SelectedQuery(ctx context.Context) string {
-	if r.Condition().SelectedQuery != "" {
-		return r.Condition().SelectedQuery
-	}
-	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
-	return r.Condition().SelectedQueryName()
+	return req
 }
 
 func (r *AnomalyRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
 
-	params, err := r.prepareQueryRange(ctx, ts)
-	if err != nil {
-		return nil, err
-	}
+	params := r.prepareQueryRange(ctx, ts)
 
 	anomalies, err := r.provider.GetAnomalies(ctx, orgID, &anomaly.AnomaliesRequest{
 		Params:      params,
@@ -222,7 +205,7 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	var res ruletypes.Vector
 	var err error
 
-	r.logger.InfoContext(ctx, "running v5 query", slog.String("rule.id", r.ID()))
+	r.logger.InfoContext(ctx, "running query", slog.String("rule.id", r.ID()))
 	res, err = r.buildAndRunQuery(ctx, r.OrgID(), ts)
 
 	if err != nil {

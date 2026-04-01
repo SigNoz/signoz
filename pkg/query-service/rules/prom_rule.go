@@ -63,16 +63,8 @@ func (r *PromRule) Type() ruletypes.RuleType {
 	return ruletypes.RuleTypeProm
 }
 
-func (r *PromRule) GetSelectedQuery(ctx context.Context) string {
-	if r.ruleCondition.SelectedQuery != "" {
-		return r.ruleCondition.SelectedQuery
-	}
-	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
-	return r.ruleCondition.SelectedQueryName()
-}
-
 func (r *PromRule) getPqlQuery(ctx context.Context) (string, error) {
-	selectedQuery := r.GetSelectedQuery(ctx)
+	selectedQuery := r.SelectedQuery(ctx)
 	for _, item := range r.ruleCondition.CompositeQuery.Queries {
 		switch item.Type {
 		case qbtypes.QueryTypePromQL:
