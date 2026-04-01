@@ -277,6 +277,18 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 				tblFieldName, value = castString(tblFieldName), toStrings(v)
 			}
 		}
+	case telemetrytypes.FieldDataTypeArrayDynamic:
+		switch v := value.(type) {
+		case string:
+			tblFieldName = castString(tblFieldName)
+		case float64:
+			tblFieldName = castFloat(tblFieldName)
+		case bool:
+			tblFieldName = castBool(tblFieldName)
+		case []any:
+			// dynamic array elements will be default casted to string
+			tblFieldName, value = castString(tblFieldName), toStrings(v)
+		}
 	}
 	return tblFieldName, value
 }
@@ -284,6 +296,7 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 func castFloat(col string) string     { return fmt.Sprintf("toFloat64OrNull(%s)", col) }
 func castFloatHack(col string) string { return fmt.Sprintf("toFloat64(%s)", col) }
 func castString(col string) string    { return fmt.Sprintf("toString(%s)", col) }
+func castBool(col string) string      { return fmt.Sprintf("accurateCastOrNull(%s, 'Bool')", col) }
 
 func allFloats(in []any) bool {
 	for _, x := range in {

@@ -306,20 +306,17 @@ func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytype
 	localKeyCopy := *node.TerminalConfig.Key
 	// create typed array out of a dynamic array
 	filteredDynamicExpr := func() string {
-		// Change the field data type from []dynamic to the value type
-		// since we've filtered the value type out of the dynamic array, we need to change the field data corresponding to the value type
-		localKeyCopy.FieldDataType = telemetrytypes.MappingJSONDataTypeToFieldDataType[telemetrytypes.ScalerTypeToArrayType[c.valueType]]
-
-		primitiveType := c.valueType.StringValue()
-		// check if value is an array
-		if c.valueType.IsArray {
-			primitiveType = c.valueType.ScalerType
+		primitiveTypes := []string{
+			telemetrytypes.String.StringValue(),
+			telemetrytypes.Int64.StringValue(),
+			telemetrytypes.Float64.StringValue(),
+			telemetrytypes.Bool.StringValue(),
 		}
 
+		filterPrimitives := sb.In("dynamicType(x)", primitiveTypes)
 		baseArrayDynamicExpr := fmt.Sprintf("dynamicElement(%s, 'Array(Dynamic)')", arrayPath)
-		return fmt.Sprintf("arrayMap(x->dynamicElement(x, '%s'), arrayFilter(x->(dynamicType(x) = '%s'), %s))",
-			primitiveType,
-			primitiveType,
+		return fmt.Sprintf("arrayFilter(x->(%s), %s)",
+			filterPrimitives,
 			baseArrayDynamicExpr)
 	}
 	typedArrayExpr := func() string {

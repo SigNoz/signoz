@@ -49,18 +49,17 @@ func TestJSONTypeSet() (map[string][]JSONDataType, MetadataStore) {
 		"education[].awards[].participated[].team[].branch": {String},
 
 		// ── interests[] ───────────────────────────────────────────────────
-		"interests":                                                           {ArrayJSON},
-		"interests[].entities":                                                {ArrayJSON},
-		"interests[].entities[].reviews":                                      {ArrayJSON},
-		"interests[].entities[].reviews[].entries":                            {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata":                 {ArrayJSON},
-		"interests[].entities[].reviews[].entries[].metadata[].positions":     {ArrayJSON},
+		"interests":                                                                 {ArrayJSON},
+		"interests[].entities":                                                      {ArrayJSON},
+		"interests[].entities[].reviews":                                            {ArrayJSON},
+		"interests[].entities[].reviews[].entries":                                  {ArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata":                       {ArrayJSON},
+		"interests[].entities[].reviews[].entries[].metadata[].positions":           {ArrayJSON},
 		"interests[].entities[].reviews[].entries[].metadata[].positions[].name":    {String},
 		"interests[].entities[].reviews[].entries[].metadata[].positions[].ratings": {ArrayInt64, ArrayString},
-
-		// ── http-events[] ─────────────────────────────────────────────────
-		"http-events":                    {ArrayJSON},
+		"http-events":                     {ArrayJSON},
 		"http-events[].request-info.host": {String},
+		"ids":                             {ArrayDynamic},
 
 		// ── top-level primitives ──────────────────────────────────────────
 		"message":     {String},

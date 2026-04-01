@@ -771,6 +771,16 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 				Args:        []any{uint64(1747945619), uint64(1747983448), []any{[]any{"Piyush", "Tushar"}}, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
+		{
+			name:     "dynamic array element comparison",
+			filter:   "ids Contains 1",
+			expected: TestExpected{},
+		},
+		{
+			name:     "dynamic array element comparison boolean",
+			filter:   "ids = true",
+			expected: TestExpected{},
+		},
 	}
 
 	for _, c := range cases {
