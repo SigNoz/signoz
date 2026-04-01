@@ -109,6 +109,28 @@ func (v *havingExpressionRewriteVisitor) visitPrimary(ctx grammar.IPrimaryContex
 }
 
 func (v *havingExpressionRewriteVisitor) visitComparison(ctx grammar.IComparisonContext) string {
+	if ctx.IN() != nil {
+		if ctx.Operand(0) == nil || ctx.InList() == nil {
+			return ""
+		}
+		lhs := v.visitOperand(ctx.Operand(0))
+		numbers := ctx.InList().AllNUMBER()
+		vals := make([]interface{}, len(numbers))
+		for i, n := range numbers {
+			vals[i] = sqlbuilder.Raw(n.GetText())
+		}
+		if ctx.NOT() != nil {
+			// Here we need to compile because In generates lhs IN $1 syntax
+			sql, _ := v.sb.Args.CompileWithFlavor(v.sb.NotIn(lhs, vals...), sqlbuilder.ClickHouse)
+			return sql
+		}
+		// Here we need to compile because In generates lhs IN $1 syntax
+		sql, _ := v.sb.Args.CompileWithFlavor(v.sb.In(lhs, vals...), sqlbuilder.ClickHouse)
+		return sql
+	}
+	if ctx.CompOp() == nil || ctx.Operand(0) == nil || ctx.Operand(1) == nil {
+		return ""
+	}
 	lhs := v.visitOperand(ctx.Operand(0))
 	op := ctx.CompOp().GetText()
 	rhs := v.visitOperand(ctx.Operand(1))
@@ -272,11 +294,24 @@ func (r *HavingExpressionRewriter) rewriteAndValidate(expression string) (string
 			validKeys = append(validKeys, k)
 		}
 		sort.Strings(validKeys)
+		additional := []string{"Valid references are: [" + strings.Join(validKeys, ", ") + "]"}
+		if len(v.invalid) == 1 {
+			inv := v.invalid[0]
+			// Only suggest for plain identifier typos, not for unresolved function
+			// calls: a function call will appear as "name(" in the expression, and
+			// the closest valid key may itself contain "(" (e.g. "sum(a)"), making
+			// a simple string substitution produce a corrupt expression.
+			isFuncCall := strings.Contains(original, inv+"(")
+			if match, dist := closestMatch(inv, validKeys); !isFuncCall && !strings.Contains(match, "(") && dist <= 3 {
+				corrected := strings.ReplaceAll(original, inv, match)
+				additional = append(additional, "Suggestion: `"+corrected+"`")
+			}
+		}
 		return "", errors.NewInvalidInputf(
 			errors.CodeInvalidInput,
 			"Invalid references in `Having` expression: [%s]",
 			strings.Join(v.invalid, ", "),
-		).WithAdditional("Valid references are: [" + strings.Join(validKeys, ", ") + "]")
+		).WithAdditional(additional...)
 	}
 
 	// Layer 3 – ANTLR syntax errors. We parse the original expression, so error messages
@@ -324,9 +359,23 @@ func havingSuggestion(se *SyntaxErr, original string) string {
 	upper := strings.ToUpper(trimmed)
 
 	if se.TokenTxt == "EOF" {
-		// Pattern 1: bare aggregation reference — comparison operator is expected.
-		// e.g.  count()  →  count() > 0
-		if expectedContains(se, ">") {
+		// Pattern 4: dangling AND or OR at end of expression.
+		// e.g.  total > 100 AND  →  total > 100
+		// Checked before Pattern 1 so that "expr AND" does not match Pattern 1.
+		if strings.HasSuffix(upper, " AND") {
+			return strings.TrimSpace(trimmed[:len(trimmed)-4])
+		}
+		if strings.HasSuffix(upper, " OR") {
+			return strings.TrimSpace(trimmed[:len(trimmed)-3])
+		}
+
+		// Pattern 1: bare aggregation reference — no comparison operator yet.
+		// Detected by: IDENTIFIER in expected (operand-continuation set), expression
+		// does not already end with a comparison operator (Pattern 2 handles that case),
+		// and no unclosed parenthesis (Pattern 3 handles that case).
+		// e.g.  count()     →  count() > 0
+		//       total_logs  →  total_logs > 0
+		if expectedContains(se, "IDENTIFIER") && !endsWithComparisonOp(trimmed) && !hasUnclosedParen(trimmed) {
 			return trimmed + " > 0"
 		}
 
@@ -336,19 +385,11 @@ func havingSuggestion(se *SyntaxErr, original string) string {
 			return trimmed + " 0"
 		}
 
-		// Pattern 3: unclosed parenthesis — only ) (and possibly ,) expected.
+		// Pattern 3: unclosed parenthesis with content inside.
 		// e.g.  (total > 100 AND count() < 500  →  (total > 100 AND count() < 500)
-		if expectedContains(se, ")") && !expectedContains(se, "number") {
+		// Guard len > 1 avoids a useless "()" suggestion for a bare "(".
+		if expectedContains(se, ")") && hasUnclosedParen(trimmed) && len(trimmed) > 1 {
 			return trimmed + ")"
-		}
-
-		// Pattern 4: dangling AND or OR at end of expression.
-		// e.g.  total > 100 AND  →  total > 100
-		if strings.HasSuffix(upper, " AND") {
-			return strings.TrimSpace(trimmed[:len(trimmed)-4])
-		}
-		if strings.HasSuffix(upper, " OR") {
-			return strings.TrimSpace(trimmed[:len(trimmed)-3])
 		}
 
 		return ""
@@ -371,6 +412,55 @@ func expectedContains(se *SyntaxErr, label string) bool {
 		}
 	}
 	return false
+}
+
+// hasUnclosedParen reports whether s contains more '(' than ')'.
+func hasUnclosedParen(s string) bool {
+	count := 0
+	for _, c := range s {
+		if c == '(' {
+			count++
+		} else if c == ')' {
+			count--
+		}
+	}
+	return count > 0
+}
+
+// closestMatch returns the element of candidates with the smallest Levenshtein
+// distance to query, along with that distance.
+func closestMatch(query string, candidates []string) (string, int) {
+	best, bestDist := "", -1
+	for _, c := range candidates {
+		if d := levenshtein(query, c); bestDist < 0 || d < bestDist {
+			best, bestDist = c, d
+		}
+	}
+	return best, bestDist
+}
+
+// levenshtein computes the edit distance between a and b.
+func levenshtein(a, b string) int {
+	ra, rb := []rune(a), []rune(b)
+	la, lb := len(ra), len(rb)
+	row := make([]int, lb+1)
+	for j := range row {
+		row[j] = j
+	}
+	for i := 1; i <= la; i++ {
+		prev := row[0]
+		row[0] = i
+		for j := 1; j <= lb; j++ {
+			tmp := row[j]
+			if ra[i-1] == rb[j-1] {
+				row[j] = prev
+			} else {
+				row[j] = 1 + min(prev, min(row[j], row[j-1]))
+			}
+			prev = tmp
+		}
+	}
+	return row[lb]
 }
 
 // endsWithComparisonOp reports whether s ends with a comparison operator token

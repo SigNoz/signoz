@@ -25,20 +25,24 @@ andExpression
     ;
 
 // Primary: an optionally negated expression.
-// NOT can be applied to a parenthesized expression or a bare comparison.
+// NOT can be applied to a parenthesized expression or a bare comparison / IN-test.
 // E.g.: NOT (count() > 100 AND sum(bytes) < 500)
 //       NOT count() > 100
+//       count() IN (1, 2, 3)      -- NOT here is part of comparison, see below
+//       count() NOT IN (1, 2, 3)
 primary
     : NOT? LPAREN orExpression RPAREN
     | NOT? comparison
     ;
 
 /*
- * Comparison between two arithmetic operands.
+ * Comparison between two arithmetic operands, or an IN / NOT IN membership test.
  * E.g.: count() > 100, total_duration >= 500, __result_0 != 0
+ *       count() IN (1, 2, 3), sum(bytes) NOT IN (0, -1)
  */
 comparison
     : operand compOp operand
+    | operand NOT? IN LPAREN inList RPAREN
     ;
 
 compOp
@@ -49,6 +53,14 @@ compOp
     | LE
     | GT
     | GE
+    ;
+
+/*
+ * IN-list: a comma-separated list of numeric literals.
+ * E.g.: (1, 2, 3), (100, 200, 500)
+ */
+inList
+    : NUMBER ( COMMA NUMBER )*
     ;
 
 /*
@@ -189,6 +201,7 @@ PERCENT : '%' ;
 NOT : [Nn][Oo][Tt] ;
 AND : [Aa][Nn][Dd] ;
 OR  : [Oo][Rr] ;
+IN  : [Ii][Nn] ;
 
 // Boolean constants (case-insensitive)
 BOOL

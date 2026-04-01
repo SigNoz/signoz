@@ -36,6 +36,7 @@ var friendly = map[string]string{
 
 	// literals / identifiers
 	"NUMBER":      "number",
+	"STRING":      "string",
 	"BOOL":        "boolean",
 	"QUOTED_TEXT": "quoted text",
 	"KEY":         "field name (ex: service.name)",
@@ -159,6 +160,13 @@ func (l *ErrorListener) SyntaxError(
 		uniq := map[string]struct{}{}
 		for _, iv := range set.GetIntervals() {
 			for t := iv.Start; t <= iv.Stop; t++ {
+				// Exclude the offending token itself from the expected set.
+				// ANTLR's error recovery sometimes leaves the offending token in
+				// the follow-set, producing a contradictory message like
+				// "expecting NOT but got 'NOT'".
+				if t == err.TokenType {
+					continue
+				}
 				sym := tokenName(p, t)
 				if sym == "KEY" {
 					if !hasValueLiterals {

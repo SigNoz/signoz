@@ -63,6 +63,12 @@ func (s *BaseHavingExpressionListener) EnterCompOp(ctx *CompOpContext) {}
 // ExitCompOp is called when production compOp is exited.
 func (s *BaseHavingExpressionListener) ExitCompOp(ctx *CompOpContext) {}
 
+// EnterInList is called when production inList is entered.
+func (s *BaseHavingExpressionListener) EnterInList(ctx *InListContext) {}
+
+// ExitInList is called when production inList is exited.
+func (s *BaseHavingExpressionListener) ExitInList(ctx *InListContext) {}
+
 // EnterOperand is called when production operand is entered.
 func (s *BaseHavingExpressionListener) EnterOperand(ctx *OperandContext) {}
 

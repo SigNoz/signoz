@@ -29,6 +29,9 @@ type HavingExpressionVisitor interface {
 	// Visit a parse tree produced by HavingExpressionParser#compOp.
 	VisitCompOp(ctx *CompOpContext) interface{}
 
+	// Visit a parse tree produced by HavingExpressionParser#inList.
+	VisitInList(ctx *InListContext) interface{}
+
 	// Visit a parse tree produced by HavingExpressionParser#operand.
 	VisitOperand(ctx *OperandContext) interface{}
 

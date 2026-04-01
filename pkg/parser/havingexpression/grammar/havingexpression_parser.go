@@ -39,88 +39,97 @@ func havingexpressionParserInit() {
 	staticData.SymbolicNames = []string{
 		"", "LPAREN", "RPAREN", "COMMA", "EQUALS", "NOT_EQUALS", "NEQ", "LT",
 		"LE", "GT", "GE", "PLUS", "MINUS", "STAR", "SLASH", "PERCENT", "NOT",
-		"AND", "OR", "BOOL", "NUMBER", "IDENTIFIER", "STRING", "WS",
+		"AND", "OR", "IN", "BOOL", "NUMBER", "IDENTIFIER", "STRING", "WS",
 	}
 	staticData.RuleNames = []string{
 		"query", "expression", "orExpression", "andExpression", "primary", "comparison",
-		"compOp", "operand", "term", "factor", "atom", "functionCall", "functionArgList",
-		"funcArg", "funcArgToken", "identifier",
+		"compOp", "inList", "operand", "term", "factor", "atom", "functionCall",
+		"functionArgList", "funcArg", "funcArgToken", "identifier",
 	}
 	staticData.PredictionContextCache = antlr.NewPredictionContextCache()
 	staticData.serializedATN = []int32{
-		4, 1, 23, 162, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
+		4, 1, 24, 183, 2, 0, 7, 0, 2, 1, 7, 1, 2, 2, 7, 2, 2, 3, 7, 3, 2, 4, 7,
 		4, 2, 5, 7, 5, 2, 6, 7, 6, 2, 7, 7, 7, 2, 8, 7, 8, 2, 9, 7, 9, 2, 10, 7,
 		10, 2, 11, 7, 11, 2, 12, 7, 12, 2, 13, 7, 13, 2, 14, 7, 14, 2, 15, 7, 15,
-		1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 41, 8, 2, 10, 2,
-		12, 2, 44, 9, 2, 1, 3, 1, 3, 1, 3, 1, 3, 5, 3, 50, 8, 3, 10, 3, 12, 3,
-		53, 9, 3, 1, 4, 3, 4, 56, 8, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4, 3, 4, 63,
-		8, 4, 1, 4, 3, 4, 66, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 1, 6, 1, 6, 1, 7, 1,
-		7, 1, 7, 1, 7, 1, 7, 1, 7, 5, 7, 80, 8, 7, 10, 7, 12, 7, 83, 9, 7, 1, 8,
-		1, 8, 1, 8, 1, 8, 1, 8, 1, 8, 5, 8, 91, 8, 8, 10, 8, 12, 8, 94, 9, 8, 1,
-		9, 1, 9, 1, 9, 1, 9, 1, 9, 1, 9, 1, 9, 3, 9, 103, 8, 9, 1, 10, 1, 10, 1,
-		10, 1, 10, 3, 10, 109, 8, 10, 1, 11, 1, 11, 1, 11, 3, 11, 114, 8, 11, 1,
-		11, 1, 11, 1, 12, 1, 12, 1, 12, 5, 12, 121, 8, 12, 10, 12, 12, 12, 124,
-		9, 12, 1, 13, 4, 13, 127, 8, 13, 11, 13, 12, 13, 128, 1, 14, 1, 14, 1,
-		14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14,
-		1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 1, 14, 5, 14, 152, 8,
-		14, 10, 14, 12, 14, 155, 9, 14, 1, 14, 3, 14, 158, 8, 14, 1, 15, 1, 15,
-		1, 15, 0, 2, 14, 16, 16, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24,
-		26, 28, 30, 0, 3, 1, 0, 4, 10, 1, 0, 11, 12, 1, 0, 13, 15, 181, 0, 32,
-		1, 0, 0, 0, 2, 35, 1, 0, 0, 0, 4, 37, 1, 0, 0, 0, 6, 45, 1, 0, 0, 0, 8,
-		65, 1, 0, 0, 0, 10, 67, 1, 0, 0, 0, 12, 71, 1, 0, 0, 0, 14, 73, 1, 0, 0,
-		0, 16, 84, 1, 0, 0, 0, 18, 102, 1, 0, 0, 0, 20, 108, 1, 0, 0, 0, 22, 110,
-		1, 0, 0, 0, 24, 117, 1, 0, 0, 0, 26, 126, 1, 0, 0, 0, 28, 157, 1, 0, 0,
-		0, 30, 159, 1, 0, 0, 0, 32, 33, 3, 2, 1, 0, 33, 34, 5, 0, 0, 1, 34, 1,
-		1, 0, 0, 0, 35, 36, 3, 4, 2, 0, 36, 3, 1, 0, 0, 0, 37, 42, 3, 6, 3, 0,
-		38, 39, 5, 18, 0, 0, 39, 41, 3, 6, 3, 0, 40, 38, 1, 0, 0, 0, 41, 44, 1,
-		0, 0, 0, 42, 40, 1, 0, 0, 0, 42, 43, 1, 0, 0, 0, 43, 5, 1, 0, 0, 0, 44,
-		42, 1, 0, 0, 0, 45, 51, 3, 8, 4, 0, 46, 47, 5, 17, 0, 0, 47, 50, 3, 8,
-		4, 0, 48, 50, 3, 8, 4, 0, 49, 46, 1, 0, 0, 0, 49, 48, 1, 0, 0, 0, 50, 53,
-		1, 0, 0, 0, 51, 49, 1, 0, 0, 0, 51, 52, 1, 0, 0, 0, 52, 7, 1, 0, 0, 0,
-		53, 51, 1, 0, 0, 0, 54, 56, 5, 16, 0, 0, 55, 54, 1, 0, 0, 0, 55, 56, 1,
-		0, 0, 0, 56, 57, 1, 0, 0, 0, 57, 58, 5, 1, 0, 0, 58, 59, 3, 4, 2, 0, 59,
-		60, 5, 2, 0, 0, 60, 66, 1, 0, 0, 0, 61, 63, 5, 16, 0, 0, 62, 61, 1, 0,
-		0, 0, 62, 63, 1, 0, 0, 0, 63, 64, 1, 0, 0, 0, 64, 66, 3, 10, 5, 0, 65,
-		55, 1, 0, 0, 0, 65, 62, 1, 0, 0, 0, 66, 9, 1, 0, 0, 0, 67, 68, 3, 14, 7,
-		0, 68, 69, 3, 12, 6, 0, 69, 70, 3, 14, 7, 0, 70, 11, 1, 0, 0, 0, 71, 72,
-		7, 0, 0, 0, 72, 13, 1, 0, 0, 0, 73, 74, 6, 7, -1, 0, 74, 75, 3, 16, 8,
-		0, 75, 81, 1, 0, 0, 0, 76, 77, 10, 2, 0, 0, 77, 78, 7, 1, 0, 0, 78, 80,
-		3, 16, 8, 0, 79, 76, 1, 0, 0, 0, 80, 83, 1, 0, 0, 0, 81, 79, 1, 0, 0, 0,
-		81, 82, 1, 0, 0, 0, 82, 15, 1, 0, 0, 0, 83, 81, 1, 0, 0, 0, 84, 85, 6,
-		8, -1, 0, 85, 86, 3, 18, 9, 0, 86, 92, 1, 0, 0, 0, 87, 88, 10, 2, 0, 0,
-		88, 89, 7, 2, 0, 0, 89, 91, 3, 18, 9, 0, 90, 87, 1, 0, 0, 0, 91, 94, 1,
-		0, 0, 0, 92, 90, 1, 0, 0, 0, 92, 93, 1, 0, 0, 0, 93, 17, 1, 0, 0, 0, 94,
-		92, 1, 0, 0, 0, 95, 96, 7, 1, 0, 0, 96, 103, 3, 18, 9, 0, 97, 98, 5, 1,
-		0, 0, 98, 99, 3, 14, 7, 0, 99, 100, 5, 2, 0, 0, 100, 103, 1, 0, 0, 0, 101,
-		103, 3, 20, 10, 0, 102, 95, 1, 0, 0, 0, 102, 97, 1, 0, 0, 0, 102, 101,
-		1, 0, 0, 0, 103, 19, 1, 0, 0, 0, 104, 109, 3, 22, 11, 0, 105, 109, 3, 30,
-		15, 0, 106, 109, 5, 20, 0, 0, 107, 109, 5, 22, 0, 0, 108, 104, 1, 0, 0,
-		0, 108, 105, 1, 0, 0, 0, 108, 106, 1, 0, 0, 0, 108, 107, 1, 0, 0, 0, 109,
-		21, 1, 0, 0, 0, 110, 111, 5, 21, 0, 0, 111, 113, 5, 1, 0, 0, 112, 114,
-		3, 24, 12, 0, 113, 112, 1, 0, 0, 0, 113, 114, 1, 0, 0, 0, 114, 115, 1,
-		0, 0, 0, 115, 116, 5, 2, 0, 0, 116, 23, 1, 0, 0, 0, 117, 122, 3, 26, 13,
-		0, 118, 119, 5, 3, 0, 0, 119, 121, 3, 26, 13, 0, 120, 118, 1, 0, 0, 0,
-		121, 124, 1, 0, 0, 0, 122, 120, 1, 0, 0, 0, 122, 123, 1, 0, 0, 0, 123,
-		25, 1, 0, 0, 0, 124, 122, 1, 0, 0, 0, 125, 127, 3, 28, 14, 0, 126, 125,
-		1, 0, 0, 0, 127, 128, 1, 0, 0, 0, 128, 126, 1, 0, 0, 0, 128, 129, 1, 0,
-		0, 0, 129, 27, 1, 0, 0, 0, 130, 158, 5, 21, 0, 0, 131, 158, 5, 22, 0, 0,
-		132, 158, 5, 20, 0, 0, 133, 158, 5, 19, 0, 0, 134, 158, 5, 4, 0, 0, 135,
-		158, 5, 5, 0, 0, 136, 158, 5, 6, 0, 0, 137, 158, 5, 7, 0, 0, 138, 158,
-		5, 8, 0, 0, 139, 158, 5, 9, 0, 0, 140, 158, 5, 10, 0, 0, 141, 158, 5, 11,
-		0, 0, 142, 158, 5, 12, 0, 0, 143, 158, 5, 13, 0, 0, 144, 158, 5, 14, 0,
-		0, 145, 158, 5, 15, 0, 0, 146, 158, 5, 16, 0, 0, 147, 158, 5, 17, 0, 0,
-		148, 158, 5, 18, 0, 0, 149, 153, 5, 1, 0, 0, 150, 152, 3, 28, 14, 0, 151,
-		150, 1, 0, 0, 0, 152, 155, 1, 0, 0, 0, 153, 151, 1, 0, 0, 0, 153, 154,
-		1, 0, 0, 0, 154, 156, 1, 0, 0, 0, 155, 153, 1, 0, 0, 0, 156, 158, 5, 2,
-		0, 0, 157, 130, 1, 0, 0, 0, 157, 131, 1, 0, 0, 0, 157, 132, 1, 0, 0, 0,
-		157, 133, 1, 0, 0, 0, 157, 134, 1, 0, 0, 0, 157, 135, 1, 0, 0, 0, 157,
-		136, 1, 0, 0, 0, 157, 137, 1, 0, 0, 0, 157, 138, 1, 0, 0, 0, 157, 139,
-		1, 0, 0, 0, 157, 140, 1, 0, 0, 0, 157, 141, 1, 0, 0, 0, 157, 142, 1, 0,
-		0, 0, 157, 143, 1, 0, 0, 0, 157, 144, 1, 0, 0, 0, 157, 145, 1, 0, 0, 0,
-		157, 146, 1, 0, 0, 0, 157, 147, 1, 0, 0, 0, 157, 148, 1, 0, 0, 0, 157,
-		149, 1, 0, 0, 0, 158, 29, 1, 0, 0, 0, 159, 160, 5, 21, 0, 0, 160, 31, 1,
-		0, 0, 0, 15, 42, 49, 51, 55, 62, 65, 81, 92, 102, 108, 113, 122, 128, 153,
-		157,
+		2, 16, 7, 16, 1, 0, 1, 0, 1, 0, 1, 1, 1, 1, 1, 2, 1, 2, 1, 2, 5, 2, 43,
+		8, 2, 10, 2, 12, 2, 46, 9, 2, 1, 3, 1, 3, 1, 3, 1, 3, 5, 3, 52, 8, 3, 10,
+		3, 12, 3, 55, 9, 3, 1, 4, 3, 4, 58, 8, 4, 1, 4, 1, 4, 1, 4, 1, 4, 1, 4,
+		3, 4, 65, 8, 4, 1, 4, 3, 4, 68, 8, 4, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1,
+		5, 3, 5, 76, 8, 5, 1, 5, 1, 5, 1, 5, 1, 5, 1, 5, 3, 5, 83, 8, 5, 1, 6,
+		1, 6, 1, 7, 1, 7, 1, 7, 5, 7, 90, 8, 7, 10, 7, 12, 7, 93, 9, 7, 1, 8, 1,
+		8, 1, 8, 1, 8, 1, 8, 1, 8, 5, 8, 101, 8, 8, 10, 8, 12, 8, 104, 9, 8, 1,
+		9, 1, 9, 1, 9, 1, 9, 1, 9, 1, 9, 5, 9, 112, 8, 9, 10, 9, 12, 9, 115, 9,
+		9, 1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 1, 10, 3, 10, 124, 8, 10,
+		1, 11, 1, 11, 1, 11, 1, 11, 3, 11, 130, 8, 11, 1, 12, 1, 12, 1, 12, 3,
+		12, 135, 8, 12, 1, 12, 1, 12, 1, 13, 1, 13, 1, 13, 5, 13, 142, 8, 13, 10,
+		13, 12, 13, 145, 9, 13, 1, 14, 4, 14, 148, 8, 14, 11, 14, 12, 14, 149,
+		1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1,
+		15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15, 1, 15,
+		5, 15, 173, 8, 15, 10, 15, 12, 15, 176, 9, 15, 1, 15, 3, 15, 179, 8, 15,
+		1, 16, 1, 16, 1, 16, 0, 2, 16, 18, 17, 0, 2, 4, 6, 8, 10, 12, 14, 16, 18,
+		20, 22, 24, 26, 28, 30, 32, 0, 3, 1, 0, 4, 10, 1, 0, 11, 12, 1, 0, 13,
+		15, 204, 0, 34, 1, 0, 0, 0, 2, 37, 1, 0, 0, 0, 4, 39, 1, 0, 0, 0, 6, 47,
+		1, 0, 0, 0, 8, 67, 1, 0, 0, 0, 10, 82, 1, 0, 0, 0, 12, 84, 1, 0, 0, 0,
+		14, 86, 1, 0, 0, 0, 16, 94, 1, 0, 0, 0, 18, 105, 1, 0, 0, 0, 20, 123, 1,
+		0, 0, 0, 22, 129, 1, 0, 0, 0, 24, 131, 1, 0, 0, 0, 26, 138, 1, 0, 0, 0,
+		28, 147, 1, 0, 0, 0, 30, 178, 1, 0, 0, 0, 32, 180, 1, 0, 0, 0, 34, 35,
+		3, 2, 1, 0, 35, 36, 5, 0, 0, 1, 36, 1, 1, 0, 0, 0, 37, 38, 3, 4, 2, 0,
+		38, 3, 1, 0, 0, 0, 39, 44, 3, 6, 3, 0, 40, 41, 5, 18, 0, 0, 41, 43, 3,
+		6, 3, 0, 42, 40, 1, 0, 0, 0, 43, 46, 1, 0, 0, 0, 44, 42, 1, 0, 0, 0, 44,
+		45, 1, 0, 0, 0, 45, 5, 1, 0, 0, 0, 46, 44, 1, 0, 0, 0, 47, 53, 3, 8, 4,
+		0, 48, 49, 5, 17, 0, 0, 49, 52, 3, 8, 4, 0, 50, 52, 3, 8, 4, 0, 51, 48,
+		1, 0, 0, 0, 51, 50, 1, 0, 0, 0, 52, 55, 1, 0, 0, 0, 53, 51, 1, 0, 0, 0,
+		53, 54, 1, 0, 0, 0, 54, 7, 1, 0, 0, 0, 55, 53, 1, 0, 0, 0, 56, 58, 5, 16,
+		0, 0, 57, 56, 1, 0, 0, 0, 57, 58, 1, 0, 0, 0, 58, 59, 1, 0, 0, 0, 59, 60,
+		5, 1, 0, 0, 60, 61, 3, 4, 2, 0, 61, 62, 5, 2, 0, 0, 62, 68, 1, 0, 0, 0,
+		63, 65, 5, 16, 0, 0, 64, 63, 1, 0, 0, 0, 64, 65, 1, 0, 0, 0, 65, 66, 1,
+		0, 0, 0, 66, 68, 3, 10, 5, 0, 67, 57, 1, 0, 0, 0, 67, 64, 1, 0, 0, 0, 68,
+		9, 1, 0, 0, 0, 69, 70, 3, 16, 8, 0, 70, 71, 3, 12, 6, 0, 71, 72, 3, 16,
+		8, 0, 72, 83, 1, 0, 0, 0, 73, 75, 3, 16, 8, 0, 74, 76, 5, 16, 0, 0, 75,
+		74, 1, 0, 0, 0, 75, 76, 1, 0, 0, 0, 76, 77, 1, 0, 0, 0, 77, 78, 5, 19,
+		0, 0, 78, 79, 5, 1, 0, 0, 79, 80, 3, 14, 7, 0, 80, 81, 5, 2, 0, 0, 81,
+		83, 1, 0, 0, 0, 82, 69, 1, 0, 0, 0, 82, 73, 1, 0, 0, 0, 83, 11, 1, 0, 0,
+		0, 84, 85, 7, 0, 0, 0, 85, 13, 1, 0, 0, 0, 86, 91, 5, 21, 0, 0, 87, 88,
+		5, 3, 0, 0, 88, 90, 5, 21, 0, 0, 89, 87, 1, 0, 0, 0, 90, 93, 1, 0, 0, 0,
+		91, 89, 1, 0, 0, 0, 91, 92, 1, 0, 0, 0, 92, 15, 1, 0, 0, 0, 93, 91, 1,
+		0, 0, 0, 94, 95, 6, 8, -1, 0, 95, 96, 3, 18, 9, 0, 96, 102, 1, 0, 0, 0,
+		97, 98, 10, 2, 0, 0, 98, 99, 7, 1, 0, 0, 99, 101, 3, 18, 9, 0, 100, 97,
+		1, 0, 0, 0, 101, 104, 1, 0, 0, 0, 102, 100, 1, 0, 0, 0, 102, 103, 1, 0,
+		0, 0, 103, 17, 1, 0, 0, 0, 104, 102, 1, 0, 0, 0, 105, 106, 6, 9, -1, 0,
+		106, 107, 3, 20, 10, 0, 107, 113, 1, 0, 0, 0, 108, 109, 10, 2, 0, 0, 109,
+		110, 7, 2, 0, 0, 110, 112, 3, 20, 10, 0, 111, 108, 1, 0, 0, 0, 112, 115,
+		1, 0, 0, 0, 113, 111, 1, 0, 0, 0, 113, 114, 1, 0, 0, 0, 114, 19, 1, 0,
+		0, 0, 115, 113, 1, 0, 0, 0, 116, 117, 7, 1, 0, 0, 117, 124, 3, 20, 10,
+		0, 118, 119, 5, 1, 0, 0, 119, 120, 3, 16, 8, 0, 120, 121, 5, 2, 0, 0, 121,
+		124, 1, 0, 0, 0, 122, 124, 3, 22, 11, 0, 123, 116, 1, 0, 0, 0, 123, 118,
+		1, 0, 0, 0, 123, 122, 1, 0, 0, 0, 124, 21, 1, 0, 0, 0, 125, 130, 3, 24,
+		12, 0, 126, 130, 3, 32, 16, 0, 127, 130, 5, 21, 0, 0, 128, 130, 5, 23,
+		0, 0, 129, 125, 1, 0, 0, 0, 129, 126, 1, 0, 0, 0, 129, 127, 1, 0, 0, 0,
+		129, 128, 1, 0, 0, 0, 130, 23, 1, 0, 0, 0, 131, 132, 5, 22, 0, 0, 132,
+		134, 5, 1, 0, 0, 133, 135, 3, 26, 13, 0, 134, 133, 1, 0, 0, 0, 134, 135,
+		1, 0, 0, 0, 135, 136, 1, 0, 0, 0, 136, 137, 5, 2, 0, 0, 137, 25, 1, 0,
+		0, 0, 138, 143, 3, 28, 14, 0, 139, 140, 5, 3, 0, 0, 140, 142, 3, 28, 14,
+		0, 141, 139, 1, 0, 0, 0, 142, 145, 1, 0, 0, 0, 143, 141, 1, 0, 0, 0, 143,
+		144, 1, 0, 0, 0, 144, 27, 1, 0, 0, 0, 145, 143, 1, 0, 0, 0, 146, 148, 3,
+		30, 15, 0, 147, 146, 1, 0, 0, 0, 148, 149, 1, 0, 0, 0, 149, 147, 1, 0,
+		0, 0, 149, 150, 1, 0, 0, 0, 150, 29, 1, 0, 0, 0, 151, 179, 5, 22, 0, 0,
+		152, 179, 5, 23, 0, 0, 153, 179, 5, 21, 0, 0, 154, 179, 5, 20, 0, 0, 155,
+		179, 5, 4, 0, 0, 156, 179, 5, 5, 0, 0, 157, 179, 5, 6, 0, 0, 158, 179,
+		5, 7, 0, 0, 159, 179, 5, 8, 0, 0, 160, 179, 5, 9, 0, 0, 161, 179, 5, 10,
+		0, 0, 162, 179, 5, 11, 0, 0, 163, 179, 5, 12, 0, 0, 164, 179, 5, 13, 0,
+		0, 165, 179, 5, 14, 0, 0, 166, 179, 5, 15, 0, 0, 167, 179, 5, 16, 0, 0,
+		168, 179, 5, 17, 0, 0, 169, 179, 5, 18, 0, 0, 170, 174, 5, 1, 0, 0, 171,
+		173, 3, 30, 15, 0, 172, 171, 1, 0, 0, 0, 173, 176, 1, 0, 0, 0, 174, 172,
+		1, 0, 0, 0, 174, 175, 1, 0, 0, 0, 175, 177, 1, 0, 0, 0, 176, 174, 1, 0,
+		0, 0, 177, 179, 5, 2, 0, 0, 178, 151, 1, 0, 0, 0, 178, 152, 1, 0, 0, 0,
+		178, 153, 1, 0, 0, 0, 178, 154, 1, 0, 0, 0, 178, 155, 1, 0, 0, 0, 178,
+		156, 1, 0, 0, 0, 178, 157, 1, 0, 0, 0, 178, 158, 1, 0, 0, 0, 178, 159,
+		1, 0, 0, 0, 178, 160, 1, 0, 0, 0, 178, 161, 1, 0, 0, 0, 178, 162, 1, 0,
+		0, 0, 178, 163, 1, 0, 0, 0, 178, 164, 1, 0, 0, 0, 178, 165, 1, 0, 0, 0,
+		178, 166, 1, 0, 0, 0, 178, 167, 1, 0, 0, 0, 178, 168, 1, 0, 0, 0, 178,
+		169, 1, 0, 0, 0, 178, 170, 1, 0, 0, 0, 179, 31, 1, 0, 0, 0, 180, 181, 5,
+		22, 0, 0, 181, 33, 1, 0, 0, 0, 18, 44, 51, 53, 57, 64, 67, 75, 82, 91,
+		102, 113, 123, 129, 134, 143, 149, 174, 178,
 	}
 	deserializer := antlr.NewATNDeserializer(nil)
 	staticData.atn = deserializer.Deserialize(staticData.serializedATN)
@@ -177,11 +186,12 @@ const (
 	HavingExpressionParserNOT        = 16
 	HavingExpressionParserAND        = 17
 	HavingExpressionParserOR         = 18
-	HavingExpressionParserBOOL       = 19
-	HavingExpressionParserNUMBER     = 20
-	HavingExpressionParserIDENTIFIER = 21
-	HavingExpressionParserSTRING     = 22
-	HavingExpressionParserWS         = 23
+	HavingExpressionParserIN         = 19
+	HavingExpressionParserBOOL       = 20
+	HavingExpressionParserNUMBER     = 21
+	HavingExpressionParserIDENTIFIER = 22
+	HavingExpressionParserSTRING     = 23
+	HavingExpressionParserWS         = 24
 )
 
 // HavingExpressionParser rules.
@@ -193,15 +203,16 @@ const (
 	HavingExpressionParserRULE_primary         = 4
 	HavingExpressionParserRULE_comparison      = 5
 	HavingExpressionParserRULE_compOp          = 6
-	HavingExpressionParserRULE_operand         = 7
-	HavingExpressionParserRULE_term            = 8
-	HavingExpressionParserRULE_factor          = 9
-	HavingExpressionParserRULE_atom            = 10
-	HavingExpressionParserRULE_functionCall    = 11
-	HavingExpressionParserRULE_functionArgList = 12
-	HavingExpressionParserRULE_funcArg         = 13
-	HavingExpressionParserRULE_funcArgToken    = 14
-	HavingExpressionParserRULE_identifier      = 15
+	HavingExpressionParserRULE_inList          = 7
+	HavingExpressionParserRULE_operand         = 8
+	HavingExpressionParserRULE_term            = 9
+	HavingExpressionParserRULE_factor          = 10
+	HavingExpressionParserRULE_atom            = 11
+	HavingExpressionParserRULE_functionCall    = 12
+	HavingExpressionParserRULE_functionArgList = 13
+	HavingExpressionParserRULE_funcArg         = 14
+	HavingExpressionParserRULE_funcArgToken    = 15
+	HavingExpressionParserRULE_identifier      = 16
 )
 
 // IQueryContext is an interface to support dynamic dispatch.
@@ -306,11 +317,11 @@ func (p *HavingExpressionParser) Query() (localctx IQueryContext) {
 	p.EnterRule(localctx, 0, HavingExpressionParserRULE_query)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(32)
+		p.SetState(34)
 		p.Expression()
 	}
 	{
-		p.SetState(33)
+		p.SetState(35)
 		p.Match(HavingExpressionParserEOF)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -428,7 +439,7 @@ func (p *HavingExpressionParser) Expression() (localctx IExpressionContext) {
 	p.EnterRule(localctx, 2, HavingExpressionParserRULE_expression)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(35)
+		p.SetState(37)
 		p.OrExpression()
 	}
 
@@ -580,10 +591,10 @@ func (p *HavingExpressionParser) OrExpression() (localctx IOrExpressionContext) 
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(37)
+		p.SetState(39)
 		p.AndExpression()
 	}
-	p.SetState(42)
+	p.SetState(44)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -592,7 +603,7 @@ func (p *HavingExpressionParser) OrExpression() (localctx IOrExpressionContext) 
 
 	for _la == HavingExpressionParserOR {
 		{
-			p.SetState(38)
+			p.SetState(40)
 			p.Match(HavingExpressionParserOR)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -600,11 +611,11 @@ func (p *HavingExpressionParser) OrExpression() (localctx IOrExpressionContext) 
 			}
 		}
 		{
-			p.SetState(39)
+			p.SetState(41)
 			p.AndExpression()
 		}
 
-		p.SetState(44)
+		p.SetState(46)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -760,18 +771,18 @@ func (p *HavingExpressionParser) AndExpression() (localctx IAndExpressionContext
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(45)
+		p.SetState(47)
 		p.Primary()
 	}
-	p.SetState(51)
+	p.SetState(53)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 	_la = p.GetTokenStream().LA(1)
 
-	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&7542786) != 0 {
-		p.SetState(49)
+	for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&14882818) != 0 {
+		p.SetState(51)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -780,7 +791,7 @@ func (p *HavingExpressionParser) AndExpression() (localctx IAndExpressionContext
 		switch p.GetTokenStream().LA(1) {
 		case HavingExpressionParserAND:
 			{
-				p.SetState(46)
+				p.SetState(48)
 				p.Match(HavingExpressionParserAND)
 				if p.HasError() {
 					// Recognition error - abort rule
@@ -788,13 +799,13 @@ func (p *HavingExpressionParser) AndExpression() (localctx IAndExpressionContext
 				}
 			}
 			{
-				p.SetState(47)
+				p.SetState(49)
 				p.Primary()
 			}
 
 		case HavingExpressionParserLPAREN, HavingExpressionParserPLUS, HavingExpressionParserMINUS, HavingExpressionParserNOT, HavingExpressionParserNUMBER, HavingExpressionParserIDENTIFIER, HavingExpressionParserSTRING:
 			{
-				p.SetState(48)
+				p.SetState(50)
 				p.Primary()
 			}
 
@@ -803,7 +814,7 @@ func (p *HavingExpressionParser) AndExpression() (localctx IAndExpressionContext
 			goto errorExit
 		}
 
-		p.SetState(53)
+		p.SetState(55)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -953,7 +964,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 	p.EnterRule(localctx, 8, HavingExpressionParserRULE_primary)
 	var _la int
 
-	p.SetState(65)
+	p.SetState(67)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -962,7 +973,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 5, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
-		p.SetState(55)
+		p.SetState(57)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -971,7 +982,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 
 		if _la == HavingExpressionParserNOT {
 			{
-				p.SetState(54)
+				p.SetState(56)
 				p.Match(HavingExpressionParserNOT)
 				if p.HasError() {
 					// Recognition error - abort rule
@@ -981,7 +992,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 
 		}
 		{
-			p.SetState(57)
+			p.SetState(59)
 			p.Match(HavingExpressionParserLPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -989,11 +1000,11 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 			}
 		}
 		{
-			p.SetState(58)
+			p.SetState(60)
 			p.OrExpression()
 		}
 		{
-			p.SetState(59)
+			p.SetState(61)
 			p.Match(HavingExpressionParserRPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1003,7 +1014,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
-		p.SetState(62)
+		p.SetState(64)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -1012,7 +1023,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 
 		if _la == HavingExpressionParserNOT {
 			{
-				p.SetState(61)
+				p.SetState(63)
 				p.Match(HavingExpressionParserNOT)
 				if p.HasError() {
 					// Recognition error - abort rule
@@ -1022,7 +1033,7 @@ func (p *HavingExpressionParser) Primary() (localctx IPrimaryContext) {
 
 		}
 		{
-			p.SetState(64)
+			p.SetState(66)
 			p.Comparison()
 		}
 
@@ -1054,6 +1065,11 @@ type IComparisonContext interface {
 	AllOperand() []IOperandContext
 	Operand(i int) IOperandContext
 	CompOp() ICompOpContext
+	IN() antlr.TerminalNode
+	LPAREN() antlr.TerminalNode
+	InList() IInListContext
+	RPAREN() antlr.TerminalNode
+	NOT() antlr.TerminalNode
 
 	// IsComparisonContext differentiates from other interfaces.
 	IsComparisonContext()
@@ -1148,6 +1164,38 @@ func (s *ComparisonContext) CompOp() ICompOpContext {
 	return t.(ICompOpContext)
 }
 
+func (s *ComparisonContext) IN() antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserIN, 0)
+}
+
+func (s *ComparisonContext) LPAREN() antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserLPAREN, 0)
+}
+
+func (s *ComparisonContext) InList() IInListContext {
+	var t antlr.RuleContext
+	for _, ctx := range s.GetChildren() {
+		if _, ok := ctx.(IInListContext); ok {
+			t = ctx.(antlr.RuleContext)
+			break
+		}
+	}
+
+	if t == nil {
+		return nil
+	}
+
+	return t.(IInListContext)
+}
+
+func (s *ComparisonContext) RPAREN() antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserRPAREN, 0)
+}
+
+func (s *ComparisonContext) NOT() antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserNOT, 0)
+}
+
 func (s *ComparisonContext) GetRuleContext() antlr.RuleContext {
 	return s
 }
@@ -1181,18 +1229,85 @@ func (s *ComparisonContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 func (p *HavingExpressionParser) Comparison() (localctx IComparisonContext) {
 	localctx = NewComparisonContext(p, p.GetParserRuleContext(), p.GetState())
 	p.EnterRule(localctx, 10, HavingExpressionParserRULE_comparison)
-	p.EnterOuterAlt(localctx, 1)
-	{
-		p.SetState(67)
-		p.operand(0)
+	var _la int
+
+	p.SetState(82)
+	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
 	}
-	{
-		p.SetState(68)
-		p.CompOp()
-	}
-	{
-		p.SetState(69)
-		p.operand(0)
+
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 7, p.GetParserRuleContext()) {
+	case 1:
+		p.EnterOuterAlt(localctx, 1)
+		{
+			p.SetState(69)
+			p.operand(0)
+		}
+		{
+			p.SetState(70)
+			p.CompOp()
+		}
+		{
+			p.SetState(71)
+			p.operand(0)
+		}
+
+	case 2:
+		p.EnterOuterAlt(localctx, 2)
+		{
+			p.SetState(73)
+			p.operand(0)
+		}
+		p.SetState(75)
+		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
+		_la = p.GetTokenStream().LA(1)
+
+		if _la == HavingExpressionParserNOT {
+			{
+				p.SetState(74)
+				p.Match(HavingExpressionParserNOT)
+				if p.HasError() {
+					// Recognition error - abort rule
+					goto errorExit
+				}
+			}
+
+		}
+		{
+			p.SetState(77)
+			p.Match(HavingExpressionParserIN)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(78)
+			p.Match(HavingExpressionParserLPAREN)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(79)
+			p.InList()
+		}
+		{
+			p.SetState(80)
+			p.Match(HavingExpressionParserRPAREN)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+
+	case antlr.ATNInvalidAltNumber:
+		goto errorExit
 	}
 
 errorExit:
@@ -1325,7 +1440,7 @@ func (p *HavingExpressionParser) CompOp() (localctx ICompOpContext) {
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(71)
+		p.SetState(84)
 		_la = p.GetTokenStream().LA(1)
 
 		if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&2032) != 0) {
@@ -1334,6 +1449,161 @@ func (p *HavingExpressionParser) CompOp() (localctx ICompOpContext) {
 			p.GetErrorHandler().ReportMatch(p)
 			p.Consume()
 		}
+	}
+
+errorExit:
+	if p.HasError() {
+		v := p.GetError()
+		localctx.SetException(v)
+		p.GetErrorHandler().ReportError(p, v)
+		p.GetErrorHandler().Recover(p, v)
+		p.SetError(nil)
+	}
+	p.ExitRule()
+	return localctx
+	goto errorExit // Trick to prevent compiler error if the label is not used
+}
+
+// IInListContext is an interface to support dynamic dispatch.
+type IInListContext interface {
+	antlr.ParserRuleContext
+
+	// GetParser returns the parser.
+	GetParser() antlr.Parser
+
+	// Getter signatures
+	AllNUMBER() []antlr.TerminalNode
+	NUMBER(i int) antlr.TerminalNode
+	AllCOMMA() []antlr.TerminalNode
+	COMMA(i int) antlr.TerminalNode
+
+	// IsInListContext differentiates from other interfaces.
+	IsInListContext()
+}
+
+type InListContext struct {
+	antlr.BaseParserRuleContext
+	parser antlr.Parser
+}
+
+func NewEmptyInListContext() *InListContext {
+	var p = new(InListContext)
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = HavingExpressionParserRULE_inList
+	return p
+}
+
+func InitEmptyInListContext(p *InListContext) {
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, nil, -1)
+	p.RuleIndex = HavingExpressionParserRULE_inList
+}
+
+func (*InListContext) IsInListContext() {}
+
+func NewInListContext(parser antlr.Parser, parent antlr.ParserRuleContext, invokingState int) *InListContext {
+	var p = new(InListContext)
+
+	antlr.InitBaseParserRuleContext(&p.BaseParserRuleContext, parent, invokingState)
+
+	p.parser = parser
+	p.RuleIndex = HavingExpressionParserRULE_inList
+
+	return p
+}
+
+func (s *InListContext) GetParser() antlr.Parser { return s.parser }
+
+func (s *InListContext) AllNUMBER() []antlr.TerminalNode {
+	return s.GetTokens(HavingExpressionParserNUMBER)
+}
+
+func (s *InListContext) NUMBER(i int) antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserNUMBER, i)
+}
+
+func (s *InListContext) AllCOMMA() []antlr.TerminalNode {
+	return s.GetTokens(HavingExpressionParserCOMMA)
+}
+
+func (s *InListContext) COMMA(i int) antlr.TerminalNode {
+	return s.GetToken(HavingExpressionParserCOMMA, i)
+}
+
+func (s *InListContext) GetRuleContext() antlr.RuleContext {
+	return s
+}
+
+func (s *InListContext) ToStringTree(ruleNames []string, recog antlr.Recognizer) string {
+	return antlr.TreesStringTree(s, ruleNames, recog)
+}
+
+func (s *InListContext) EnterRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(HavingExpressionListener); ok {
+		listenerT.EnterInList(s)
+	}
+}
+
+func (s *InListContext) ExitRule(listener antlr.ParseTreeListener) {
+	if listenerT, ok := listener.(HavingExpressionListener); ok {
+		listenerT.ExitInList(s)
+	}
+}
+
+func (s *InListContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
+	switch t := visitor.(type) {
+	case HavingExpressionVisitor:
+		return t.VisitInList(s)
+
+	default:
+		return t.VisitChildren(s)
+	}
+}
+
+func (p *HavingExpressionParser) InList() (localctx IInListContext) {
+	localctx = NewInListContext(p, p.GetParserRuleContext(), p.GetState())
+	p.EnterRule(localctx, 14, HavingExpressionParserRULE_inList)
+	var _la int
+
+	p.EnterOuterAlt(localctx, 1)
+	{
+		p.SetState(86)
+		p.Match(HavingExpressionParserNUMBER)
+		if p.HasError() {
+			// Recognition error - abort rule
+			goto errorExit
+		}
+	}
+	p.SetState(91)
+	p.GetErrorHandler().Sync(p)
+	if p.HasError() {
+		goto errorExit
+	}
+	_la = p.GetTokenStream().LA(1)
+
+	for _la == HavingExpressionParserCOMMA {
+		{
+			p.SetState(87)
+			p.Match(HavingExpressionParserCOMMA)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+		{
+			p.SetState(88)
+			p.Match(HavingExpressionParserNUMBER)
+			if p.HasError() {
+				// Recognition error - abort rule
+				goto errorExit
+			}
+		}
+
+		p.SetState(93)
+		p.GetErrorHandler().Sync(p)
+		if p.HasError() {
+			goto errorExit
+		}
+		_la = p.GetTokenStream().LA(1)
 	}
 
 errorExit:
@@ -1479,25 +1749,25 @@ func (p *HavingExpressionParser) operand(_p int) (localctx IOperandContext) {
 	localctx = NewOperandContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx IOperandContext = localctx
 	var _ antlr.ParserRuleContext = _prevctx // TODO: To prevent unused variable warning.
-	_startState := 14
-	p.EnterRecursionRule(localctx, 14, HavingExpressionParserRULE_operand, _p)
+	_startState := 16
+	p.EnterRecursionRule(localctx, 16, HavingExpressionParserRULE_operand, _p)
 	var _la int
 
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(74)
+		p.SetState(95)
 		p.term(0)
 	}
 
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
-	p.SetState(81)
+	p.SetState(102)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
-	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 6, p.GetParserRuleContext())
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 9, p.GetParserRuleContext())
 	if p.HasError() {
 		goto errorExit
 	}
@@ -1509,14 +1779,14 @@ func (p *HavingExpressionParser) operand(_p int) (localctx IOperandContext) {
 			_prevctx = localctx
 			localctx = NewOperandContext(p, _parentctx, _parentState)
 			p.PushNewRecursionContext(localctx, _startState, HavingExpressionParserRULE_operand)
-			p.SetState(76)
+			p.SetState(97)
 
 			if !(p.Precpred(p.GetParserRuleContext(), 2)) {
 				p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
 				goto errorExit
 			}
 			{
-				p.SetState(77)
+				p.SetState(98)
 				_la = p.GetTokenStream().LA(1)
 
 				if !(_la == HavingExpressionParserPLUS || _la == HavingExpressionParserMINUS) {
@@ -1527,17 +1797,17 @@ func (p *HavingExpressionParser) operand(_p int) (localctx IOperandContext) {
 				}
 			}
 			{
-				p.SetState(78)
+				p.SetState(99)
 				p.term(0)
 			}
 
 		}
-		p.SetState(83)
+		p.SetState(104)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
 		}
-		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 6, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 9, p.GetParserRuleContext())
 		if p.HasError() {
 			goto errorExit
 		}
@@ -1691,25 +1961,25 @@ func (p *HavingExpressionParser) term(_p int) (localctx ITermContext) {
 	localctx = NewTermContext(p, p.GetParserRuleContext(), _parentState)
 	var _prevctx ITermContext = localctx
 	var _ antlr.ParserRuleContext = _prevctx // TODO: To prevent unused variable warning.
-	_startState := 16
-	p.EnterRecursionRule(localctx, 16, HavingExpressionParserRULE_term, _p)
+	_startState := 18
+	p.EnterRecursionRule(localctx, 18, HavingExpressionParserRULE_term, _p)
 	var _la int
 
 	var _alt int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(85)
+		p.SetState(106)
 		p.Factor()
 	}
 
 	p.GetParserRuleContext().SetStop(p.GetTokenStream().LT(-1))
-	p.SetState(92)
+	p.SetState(113)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
-	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 7, p.GetParserRuleContext())
+	_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 10, p.GetParserRuleContext())
 	if p.HasError() {
 		goto errorExit
 	}
@@ -1721,14 +1991,14 @@ func (p *HavingExpressionParser) term(_p int) (localctx ITermContext) {
 			_prevctx = localctx
 			localctx = NewTermContext(p, _parentctx, _parentState)
 			p.PushNewRecursionContext(localctx, _startState, HavingExpressionParserRULE_term)
-			p.SetState(87)
+			p.SetState(108)
 
 			if !(p.Precpred(p.GetParserRuleContext(), 2)) {
 				p.SetError(antlr.NewFailedPredicateException(p, "p.Precpred(p.GetParserRuleContext(), 2)", ""))
 				goto errorExit
 			}
 			{
-				p.SetState(88)
+				p.SetState(109)
 				_la = p.GetTokenStream().LA(1)
 
 				if !((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&57344) != 0) {
@@ -1739,17 +2009,17 @@ func (p *HavingExpressionParser) term(_p int) (localctx ITermContext) {
 				}
 			}
 			{
-				p.SetState(89)
+				p.SetState(110)
 				p.Factor()
 			}
 
 		}
-		p.SetState(94)
+		p.SetState(115)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
 		}
-		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 7, p.GetParserRuleContext())
+		_alt = p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 10, p.GetParserRuleContext())
 		if p.HasError() {
 			goto errorExit
 		}
@@ -1916,10 +2186,10 @@ func (s *FactorContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 
 func (p *HavingExpressionParser) Factor() (localctx IFactorContext) {
 	localctx = NewFactorContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 18, HavingExpressionParserRULE_factor)
+	p.EnterRule(localctx, 20, HavingExpressionParserRULE_factor)
 	var _la int
 
-	p.SetState(102)
+	p.SetState(123)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -1929,7 +2199,7 @@ func (p *HavingExpressionParser) Factor() (localctx IFactorContext) {
 	case HavingExpressionParserPLUS, HavingExpressionParserMINUS:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(95)
+			p.SetState(116)
 			_la = p.GetTokenStream().LA(1)
 
 			if !(_la == HavingExpressionParserPLUS || _la == HavingExpressionParserMINUS) {
@@ -1940,14 +2210,14 @@ func (p *HavingExpressionParser) Factor() (localctx IFactorContext) {
 			}
 		}
 		{
-			p.SetState(96)
+			p.SetState(117)
 			p.Factor()
 		}
 
 	case HavingExpressionParserLPAREN:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(97)
+			p.SetState(118)
 			p.Match(HavingExpressionParserLPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1955,11 +2225,11 @@ func (p *HavingExpressionParser) Factor() (localctx IFactorContext) {
 			}
 		}
 		{
-			p.SetState(98)
+			p.SetState(119)
 			p.operand(0)
 		}
 		{
-			p.SetState(99)
+			p.SetState(120)
 			p.Match(HavingExpressionParserRPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -1970,7 +2240,7 @@ func (p *HavingExpressionParser) Factor() (localctx IFactorContext) {
 	case HavingExpressionParserNUMBER, HavingExpressionParserIDENTIFIER, HavingExpressionParserSTRING:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(101)
+			p.SetState(122)
 			p.Atom()
 		}
 
@@ -2113,32 +2383,32 @@ func (s *AtomContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 
 func (p *HavingExpressionParser) Atom() (localctx IAtomContext) {
 	localctx = NewAtomContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 20, HavingExpressionParserRULE_atom)
-	p.SetState(108)
+	p.EnterRule(localctx, 22, HavingExpressionParserRULE_atom)
+	p.SetState(129)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 
-	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 9, p.GetParserRuleContext()) {
+	switch p.GetInterpreter().AdaptivePredict(p.BaseParser, p.GetTokenStream(), 12, p.GetParserRuleContext()) {
 	case 1:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(104)
+			p.SetState(125)
 			p.FunctionCall()
 		}
 
 	case 2:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(105)
+			p.SetState(126)
 			p.Identifier()
 		}
 
 	case 3:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(106)
+			p.SetState(127)
 			p.Match(HavingExpressionParserNUMBER)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2149,7 +2419,7 @@ func (p *HavingExpressionParser) Atom() (localctx IAtomContext) {
 	case 4:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(107)
+			p.SetState(128)
 			p.Match(HavingExpressionParserSTRING)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2283,12 +2553,12 @@ func (s *FunctionCallContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 
 func (p *HavingExpressionParser) FunctionCall() (localctx IFunctionCallContext) {
 	localctx = NewFunctionCallContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 22, HavingExpressionParserRULE_functionCall)
+	p.EnterRule(localctx, 24, HavingExpressionParserRULE_functionCall)
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(110)
+		p.SetState(131)
 		p.Match(HavingExpressionParserIDENTIFIER)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -2296,29 +2566,29 @@ func (p *HavingExpressionParser) FunctionCall() (localctx IFunctionCallContext) 
 		}
 	}
 	{
-		p.SetState(111)
+		p.SetState(132)
 		p.Match(HavingExpressionParserLPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
 			goto errorExit
 		}
 	}
-	p.SetState(113)
+	p.SetState(134)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 	_la = p.GetTokenStream().LA(1)
 
-	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&8388594) != 0 {
+	if (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&16252914) != 0 {
 		{
-			p.SetState(112)
+			p.SetState(133)
 			p.FunctionArgList()
 		}
 
 	}
 	{
-		p.SetState(115)
+		p.SetState(136)
 		p.Match(HavingExpressionParserRPAREN)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -2469,15 +2739,15 @@ func (s *FunctionArgListContext) Accept(visitor antlr.ParseTreeVisitor) interfac
 
 func (p *HavingExpressionParser) FunctionArgList() (localctx IFunctionArgListContext) {
 	localctx = NewFunctionArgListContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 24, HavingExpressionParserRULE_functionArgList)
+	p.EnterRule(localctx, 26, HavingExpressionParserRULE_functionArgList)
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(117)
+		p.SetState(138)
 		p.FuncArg()
 	}
-	p.SetState(122)
+	p.SetState(143)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2486,7 +2756,7 @@ func (p *HavingExpressionParser) FunctionArgList() (localctx IFunctionArgListCon
 
 	for _la == HavingExpressionParserCOMMA {
 		{
-			p.SetState(118)
+			p.SetState(139)
 			p.Match(HavingExpressionParserCOMMA)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2494,11 +2764,11 @@ func (p *HavingExpressionParser) FunctionArgList() (localctx IFunctionArgListCon
 			}
 		}
 		{
-			p.SetState(119)
+			p.SetState(140)
 			p.FuncArg()
 		}
 
-		p.SetState(124)
+		p.SetState(145)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -2639,24 +2909,24 @@ func (s *FuncArgContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 
 func (p *HavingExpressionParser) FuncArg() (localctx IFuncArgContext) {
 	localctx = NewFuncArgContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 26, HavingExpressionParserRULE_funcArg)
+	p.EnterRule(localctx, 28, HavingExpressionParserRULE_funcArg)
 	var _la int
 
 	p.EnterOuterAlt(localctx, 1)
-	p.SetState(126)
+	p.SetState(147)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
 	}
 	_la = p.GetTokenStream().LA(1)
 
-	for ok := true; ok; ok = ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&8388594) != 0) {
+	for ok := true; ok; ok = ((int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&16252914) != 0) {
 		{
-			p.SetState(125)
+			p.SetState(146)
 			p.FuncArgToken()
 		}
 
-		p.SetState(128)
+		p.SetState(149)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
@@ -2902,10 +3172,10 @@ func (s *FuncArgTokenContext) Accept(visitor antlr.ParseTreeVisitor) interface{}
 
 func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) {
 	localctx = NewFuncArgTokenContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 28, HavingExpressionParserRULE_funcArgToken)
+	p.EnterRule(localctx, 30, HavingExpressionParserRULE_funcArgToken)
 	var _la int
 
-	p.SetState(157)
+	p.SetState(178)
 	p.GetErrorHandler().Sync(p)
 	if p.HasError() {
 		goto errorExit
@@ -2915,7 +3185,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserIDENTIFIER:
 		p.EnterOuterAlt(localctx, 1)
 		{
-			p.SetState(130)
+			p.SetState(151)
 			p.Match(HavingExpressionParserIDENTIFIER)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2926,7 +3196,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserSTRING:
 		p.EnterOuterAlt(localctx, 2)
 		{
-			p.SetState(131)
+			p.SetState(152)
 			p.Match(HavingExpressionParserSTRING)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2937,7 +3207,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserNUMBER:
 		p.EnterOuterAlt(localctx, 3)
 		{
-			p.SetState(132)
+			p.SetState(153)
 			p.Match(HavingExpressionParserNUMBER)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2948,7 +3218,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserBOOL:
 		p.EnterOuterAlt(localctx, 4)
 		{
-			p.SetState(133)
+			p.SetState(154)
 			p.Match(HavingExpressionParserBOOL)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2959,7 +3229,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserEQUALS:
 		p.EnterOuterAlt(localctx, 5)
 		{
-			p.SetState(134)
+			p.SetState(155)
 			p.Match(HavingExpressionParserEQUALS)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2970,7 +3240,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserNOT_EQUALS:
 		p.EnterOuterAlt(localctx, 6)
 		{
-			p.SetState(135)
+			p.SetState(156)
 			p.Match(HavingExpressionParserNOT_EQUALS)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2981,7 +3251,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserNEQ:
 		p.EnterOuterAlt(localctx, 7)
 		{
-			p.SetState(136)
+			p.SetState(157)
 			p.Match(HavingExpressionParserNEQ)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -2992,7 +3262,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserLT:
 		p.EnterOuterAlt(localctx, 8)
 		{
-			p.SetState(137)
+			p.SetState(158)
 			p.Match(HavingExpressionParserLT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3003,7 +3273,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserLE:
 		p.EnterOuterAlt(localctx, 9)
 		{
-			p.SetState(138)
+			p.SetState(159)
 			p.Match(HavingExpressionParserLE)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3014,7 +3284,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserGT:
 		p.EnterOuterAlt(localctx, 10)
 		{
-			p.SetState(139)
+			p.SetState(160)
 			p.Match(HavingExpressionParserGT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3025,7 +3295,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserGE:
 		p.EnterOuterAlt(localctx, 11)
 		{
-			p.SetState(140)
+			p.SetState(161)
 			p.Match(HavingExpressionParserGE)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3036,7 +3306,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserPLUS:
 		p.EnterOuterAlt(localctx, 12)
 		{
-			p.SetState(141)
+			p.SetState(162)
 			p.Match(HavingExpressionParserPLUS)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3047,7 +3317,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserMINUS:
 		p.EnterOuterAlt(localctx, 13)
 		{
-			p.SetState(142)
+			p.SetState(163)
 			p.Match(HavingExpressionParserMINUS)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3058,7 +3328,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserSTAR:
 		p.EnterOuterAlt(localctx, 14)
 		{
-			p.SetState(143)
+			p.SetState(164)
 			p.Match(HavingExpressionParserSTAR)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3069,7 +3339,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserSLASH:
 		p.EnterOuterAlt(localctx, 15)
 		{
-			p.SetState(144)
+			p.SetState(165)
 			p.Match(HavingExpressionParserSLASH)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3080,7 +3350,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserPERCENT:
 		p.EnterOuterAlt(localctx, 16)
 		{
-			p.SetState(145)
+			p.SetState(166)
 			p.Match(HavingExpressionParserPERCENT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3091,7 +3361,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserNOT:
 		p.EnterOuterAlt(localctx, 17)
 		{
-			p.SetState(146)
+			p.SetState(167)
 			p.Match(HavingExpressionParserNOT)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3102,7 +3372,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserAND:
 		p.EnterOuterAlt(localctx, 18)
 		{
-			p.SetState(147)
+			p.SetState(168)
 			p.Match(HavingExpressionParserAND)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3113,7 +3383,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserOR:
 		p.EnterOuterAlt(localctx, 19)
 		{
-			p.SetState(148)
+			p.SetState(169)
 			p.Match(HavingExpressionParserOR)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3124,27 +3394,27 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 	case HavingExpressionParserLPAREN:
 		p.EnterOuterAlt(localctx, 20)
 		{
-			p.SetState(149)
+			p.SetState(170)
 			p.Match(HavingExpressionParserLPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
 				goto errorExit
 			}
 		}
-		p.SetState(153)
+		p.SetState(174)
 		p.GetErrorHandler().Sync(p)
 		if p.HasError() {
 			goto errorExit
 		}
 		_la = p.GetTokenStream().LA(1)
 
-		for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&8388594) != 0 {
+		for (int64(_la) & ^0x3f) == 0 && ((int64(1)<<_la)&16252914) != 0 {
 			{
-				p.SetState(150)
+				p.SetState(171)
 				p.FuncArgToken()
 			}
 
-			p.SetState(155)
+			p.SetState(176)
 			p.GetErrorHandler().Sync(p)
 			if p.HasError() {
 				goto errorExit
@@ -3152,7 +3422,7 @@ func (p *HavingExpressionParser) FuncArgToken() (localctx IFuncArgTokenContext) 
 			_la = p.GetTokenStream().LA(1)
 		}
 		{
-			p.SetState(156)
+			p.SetState(177)
 			p.Match(HavingExpressionParserRPAREN)
 			if p.HasError() {
 				// Recognition error - abort rule
@@ -3260,10 +3530,10 @@ func (s *IdentifierContext) Accept(visitor antlr.ParseTreeVisitor) interface{} {
 
 func (p *HavingExpressionParser) Identifier() (localctx IIdentifierContext) {
 	localctx = NewIdentifierContext(p, p.GetParserRuleContext(), p.GetState())
-	p.EnterRule(localctx, 30, HavingExpressionParserRULE_identifier)
+	p.EnterRule(localctx, 32, HavingExpressionParserRULE_identifier)
 	p.EnterOuterAlt(localctx, 1)
 	{
-		p.SetState(159)
+		p.SetState(180)
 		p.Match(HavingExpressionParserIDENTIFIER)
 		if p.HasError() {
 			// Recognition error - abort rule
@@ -3286,14 +3556,14 @@ errorExit:
 
 func (p *HavingExpressionParser) Sempred(localctx antlr.RuleContext, ruleIndex, predIndex int) bool {
 	switch ruleIndex {
-	case 7:
+	case 8:
 		var t *OperandContext = nil
 		if localctx != nil {
 			t = localctx.(*OperandContext)
 		}
 		return p.Operand_Sempred(t, predIndex)
 
-	case 8:
+	case 9:
 		var t *TermContext = nil
 		if localctx != nil {
 			t = localctx.(*TermContext)

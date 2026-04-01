@@ -282,7 +282,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:4 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got 'NOT'"},
+			wantAdditional: []string{"line 1:4 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, number, string} but got 'NOT'"},
 		},
 		{
 			name:       "dangling AND at end",
@@ -292,7 +292,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:20 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got EOF", "Suggestion: `total_logs > 100`"},
+			wantAdditional: []string{"line 1:20 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF", "Suggestion: `total_logs > 100`"},
 		},
 		{
 			name:       "dangling OR at start",
@@ -302,7 +302,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got 'OR'", "Suggestion: `total_logs > 100`"},
+			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got 'OR'", "Suggestion: `total_logs > 100`"},
 		},
 		{
 			name:       "dangling OR at end",
@@ -312,7 +312,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:14 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got EOF", "Suggestion: `total > 100`"},
+			wantAdditional: []string{"line 1:14 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF", "Suggestion: `total > 100`"},
 		},
 		{
 			name:       "consecutive AND operators",
@@ -322,7 +322,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:21 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got 'AND'"},
+			wantAdditional: []string{"line 1:21 expecting one of {'*', '+', '-', (, ), IDENTIFIER, NOT, number, string} but got 'AND'"},
 		},
 		{
 			name:       "AND followed immediately by OR",
@@ -332,7 +332,7 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:16 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got 'OR'"},
+			wantAdditional: []string{"line 1:16 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got 'OR'"},
 		},
 	})
 }
@@ -390,7 +390,7 @@ func TestRewriteForLogsAndTraces_UnarySigns(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:7 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got '-10'"},
+			wantAdditional: []string{"line 1:7 expecting one of {'*', '+', '-', (, ), IDENTIFIER, string} but got '-10'"},
 		},
 	})
 }
@@ -465,6 +465,90 @@ func TestRewriteForLogsAndTraces_QuotedStringKeys(t *testing.T) {
 	})
 }
 
+// TestRewriteForLogsAndTraces_InOperator covers IN and NOT IN expressions.
+func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
+	runLogsAndTracesTests(t, []logsAndTracesTestCase{
+		{
+			name:       "IN with numeric list",
+			expression: "count() IN (1, 2, 3)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 IN (1, 2, 3)",
+		},
+		{
+			name:       "NOT IN with numeric list",
+			expression: "count() NOT IN (1, 2, 3)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 NOT IN (1, 2, 3)",
+		},
+		{
+			name:       "NOT IN with mixed list",
+			expression: "count() NOT IN (1,'2', 3)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:18 expecting one of {IDENTIFIER, number} but got ''2''"},
+		},
+		{
+			name:       "IN via alias",
+			expression: "total IN (100, 200, 500)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 IN (100, 200, 500)",
+		},
+		{
+			name:       "NOT IN via alias",
+			expression: "total NOT IN (0, -1)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantExpression: "__result_0 NOT IN (0, -1)",
+		},
+		{
+			name:       "IN combined with AND",
+			expression: "count() IN (1, 2, 3) AND sum(bytes) > 1000",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+				{Expression: "sum(bytes)"},
+			},
+			wantExpression: "(__result_0 IN (1, 2, 3) AND __result_1 > 1000)",
+		},
+		{
+			name:       "NOT IN combined with OR",
+			expression: "count() NOT IN (0, -1) OR sum(bytes) > 1000",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+				{Expression: "sum(bytes)"},
+			},
+			wantExpression: "(__result_0 NOT IN (0, -1) OR __result_1 > 1000)",
+		},
+		{
+			name:       "IN with single value",
+			expression: "count() IN (42)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 IN (42)",
+		},
+		{
+			name:       "IN with unknown reference",
+			expression: "ghost IN (1, 2, 3)",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+		},
+	})
+}
+
 // TestRewriteForLogsAndTraces_EdgeCases covers empty and whitespace-only expressions.
 func TestRewriteForLogsAndTraces_EdgeCases(t *testing.T) {
 	runLogsAndTracesTests(t, []logsAndTracesTestCase{
@@ -502,6 +586,16 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
 		},
 		{
+			name:       "typo in identifier suggests closest match",
+			expression: "totol > 100",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()", Alias: "total"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Invalid references in `Having` expression: [totol]",
+			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]", "Suggestion: `total > 100`"},
+		},
+		{
 			name:       "expression not in column map",
 			expression: "sum(missing_field) > 100",
 			aggregations: []qbtypes.LogAggregation{
@@ -530,7 +624,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Invalid references in `Having` expression: [__result]",
-			wantAdditional: []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]"},
+			wantAdditional: []string{"Valid references are: [__result0, __result1, count(), sum(bytes)]", "Suggestion: `__result0 > 100`"},
 		},
 		{
 			name:       "out-of-range __result_N index",
@@ -540,7 +634,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Invalid references in `Having` expression: [__result_9]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
 		},
 		{
 			name:       "__result_1 out of range for single aggregation",
@@ -550,7 +644,7 @@ func TestRewriteForLogsAndTraces_ErrorInvalidReferences(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Invalid references in `Having` expression: [__result_1]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, count()]"},
+			wantAdditional: []string{"Valid references are: [__result, __result0, count()]", "Suggestion: `__result > 100`"},
 		},
 		{
 			name:       "cascaded function calls",
@@ -599,7 +693,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:7 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF", "Suggestion: `count() > 0`"},
+			wantAdditional: []string{"line 1:7 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `count() > 0`"},
 		},
 		{
 			name:       "bare identifier without comparison",
@@ -609,7 +703,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF", "Suggestion: `total_logs > 0`"},
+			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `total_logs > 0`"},
 		},
 		// Parenthesis mismatches
 		{
@@ -640,7 +734,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:1 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got EOF"},
+			wantAdditional: []string{"line 1:1 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got EOF"},
 		},
 		{
 			name:       "only closing parenthesis",
@@ -650,7 +744,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got ')'"},
+			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, AND, IDENTIFIER, NOT, number, string} but got ')'"},
 		},
 		{
 			name:       "empty parentheses",
@@ -660,7 +754,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:1 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got ')'"},
+			wantAdditional: []string{"line 1:1 expecting one of {'*', '+', '-', (, AND, IDENTIFIER, NOT, number, string} but got ')'"},
 		},
 		// Missing operands or operator
 		{
@@ -671,7 +765,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, STRING, number} but got '>'; line 1:5 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got EOF"},
+			wantAdditional: []string{"line 1:0 expecting one of {'*', '+', '-', (, ), AND, IDENTIFIER, NOT, number, string} but got '>'; line 1:5 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF"},
 		},
 		{
 			name:       "missing right operand",
@@ -681,7 +775,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, STRING, number} but got EOF", "Suggestion: `count() > 0`"},
+			wantAdditional: []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `count() > 0`"},
 		},
 		{
 			name:       "missing comparison operator",
@@ -691,7 +785,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:8 expecting one of {!=, '+', <, <=, <>, =, >, >=} but got '100'"},
+			wantAdditional: []string{"line 1:8 expecting one of {'*', '+', '-', (, ), IDENTIFIER, string} but got '100'"},
 		},
 		// Invalid operand types
 		{
@@ -703,7 +797,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, STRING, number} but got 'true'"},
+			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got 'true'"},
 		},
 		{
 			// false is equally invalid as a comparison operand.
@@ -714,7 +808,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, STRING, number} but got 'false'"},
+			wantAdditional: []string{"line 1:10 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got 'false'"},
 		},
 		{
 			name:       "single-quoted string literal as comparison value",
@@ -878,8 +972,8 @@ func TestRewriteForMetrics(t *testing.T) {
 				},
 			},
 			wantErr:        true,
-			wantErrMsg:     "Invalid references in `Having` expression: [cpu_usage]",
-			wantAdditional: []string{"Valid references are: [__result, __result0, sum(cpu_usage)]"},
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:9 expecting one of {'*', '+', '-', (, ), IDENTIFIER, number, string} but got EOF", "Suggestion: `cpu_usage > 0`"},
 		},
 		// --- Error: aggregation not in column map ---
 		{

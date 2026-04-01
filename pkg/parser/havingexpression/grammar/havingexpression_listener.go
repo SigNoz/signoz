@@ -29,6 +29,9 @@ type HavingExpressionListener interface {
 	// EnterCompOp is called when entering the compOp production.
 	EnterCompOp(c *CompOpContext)
 
+	// EnterInList is called when entering the inList production.
+	EnterInList(c *InListContext)
+
 	// EnterOperand is called when entering the operand production.
 	EnterOperand(c *OperandContext)
 
@@ -76,6 +79,9 @@ type HavingExpressionListener interface {
 
 	// ExitCompOp is called when exiting the compOp production.
 	ExitCompOp(c *CompOpContext)
+
+	// ExitInList is called when exiting the inList production.
+	ExitInList(c *InListContext)
 
 	// ExitOperand is called when exiting the operand production.
 	ExitOperand(c *OperandContext)
