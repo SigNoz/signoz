@@ -108,9 +108,9 @@ describe('globalTime/utils', () => {
 
 		it('should parse relative time strings using getMinMaxForSelectedTime', () => {
 			const result = parseSelectedTime('15m');
-			const now = Date.now() * 1000000;
+			const now = Date.now() * NANO_SECOND_MULTIPLIER;
 			// 15 minutes in nanoseconds
-			const fifteenMinutesNs = 15 * 60 * 1000 * 1000000;
+			const fifteenMinutesNs = 15 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
 
 			expect(result.maxTime).toBe(now);
 			expect(result.minTime).toBe(now - fifteenMinutesNs);

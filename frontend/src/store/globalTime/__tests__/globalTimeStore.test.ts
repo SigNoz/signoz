@@ -158,8 +158,8 @@ describe('globalTimeStore', () => {
 			});
 
 			const { minTime, maxTime } = result.current.getMinMaxTime();
-			const now = Date.now() * 1000000;
-			const fifteenMinutesNs = 15 * 60 * 1000 * 1000000;
+			const now = Date.now() * NANO_SECOND_MULTIPLIER;
+			const fifteenMinutesNs = 15 * 60 * 1000 * NANO_SECOND_MULTIPLIER;
 
 			expect(maxTime).toBe(now);
 			expect(minTime).toBe(now - fifteenMinutesNs);
