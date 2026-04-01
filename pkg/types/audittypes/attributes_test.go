@@ -9,7 +9,7 @@ import (
 )
 
 func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
-	claims := authtypes.Claims{IdentNProvider: "tokenizer"}
+	claims := authtypes.Claims{IdentNProvider: authtypes.IdentNProviderTokenizer}
 
 	testCases := []struct {
 		name            string
@@ -37,39 +37,6 @@ func TestNewAuditAttributesFromHTTP_OutcomeBoundary(t *testing.T) {
 		t.Run(testCase.name, func(t *testing.T) {
 			attrs := NewAuditAttributesFromHTTP(testCase.statusCode, ActionUpdate, ActionCategoryConfigurationChange, claims)
 			assert.Equal(t, testCase.expectedOutcome, attrs.Outcome)
-		})
-	}
-}
-
-func TestNewPrincipalAttributesFromClaims_PrincipalType(t *testing.T) {
-	testCases := []struct {
-		name                  string
-		identNProvider        string
-		expectedPrincipalType PrincipalType
-	}{
-		{
-			name:                  "Tokenizer_User",
-			identNProvider:        "tokenizer",
-			expectedPrincipalType: PrincipalTypeUser,
-		},
-		{
-			name:                  "APIKey_ServiceAccount",
-			identNProvider:        "api_key",
-			expectedPrincipalType: PrincipalTypeServiceAccount,
-		},
-	}
-
-	for _, testCase := range testCases {
-		t.Run(testCase.name, func(t *testing.T) {
-			claims := authtypes.Claims{
-				UserID:         "019a1234-abcd-7000-8000-567800000001",
-				Email:          "test@acme.com",
-				OrgID:          "019a-0000-0000-0001",
-				IdentNProvider: testCase.identNProvider,
-			}
-
-			attrs := NewPrincipalAttributesFromClaims(claims)
-			assert.Equal(t, testCase.expectedPrincipalType, attrs.PrincipalType)
 		})
 	}
 }

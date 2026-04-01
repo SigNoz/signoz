@@ -75,6 +75,8 @@ func ErrorTypeFromStatusCode(statusCode int) string {
 		return errors.TypeCanceled.String()
 	case http.StatusGatewayTimeout:
 		return errors.TypeTimeout.String()
+	case http.StatusUnavailableForLegalReasons:
+		return errors.TypeLicenseUnavailable.String()
 	default:
 		return errors.TypeInternal.String()
 	}

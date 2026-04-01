@@ -15,7 +15,7 @@ type AuditAttributes struct {
 	Action         Action         // guaranteed to be present
 	ActionCategory ActionCategory // guaranteed to be present
 	Outcome        Outcome        // guaranteed to be present
-	IdentNProvider string
+	IdentNProvider authtypes.IdentNProvider
 }
 
 func NewAuditAttributesFromHTTP(statusCode int, action Action, category ActionCategory, claims authtypes.Claims) AuditAttributes {
@@ -36,12 +36,12 @@ func (attributes AuditAttributes) Put(dest pcommon.Map) {
 	dest.PutStr("signoz.audit.action", attributes.Action.StringValue())
 	dest.PutStr("signoz.audit.action_category", attributes.ActionCategory.StringValue())
 	dest.PutStr("signoz.audit.outcome", attributes.Outcome.StringValue())
-	putStrIfNotEmpty(dest, "signoz.audit.identn_provider", attributes.IdentNProvider)
+	putStrIfNotEmpty(dest, "signoz.audit.identn_provider", attributes.IdentNProvider.StringValue())
 }
 
 // Audit attributes — Principal (Who).
 type PrincipalAttributes struct {
-	PrincipalType  PrincipalType
+	PrincipalType  authtypes.Principal
 	PrincipalID    valuer.UUID
 	PrincipalEmail valuer.Email
 	PrincipalOrgID valuer.UUID
@@ -52,14 +52,8 @@ func NewPrincipalAttributesFromClaims(claims authtypes.Claims) PrincipalAttribut
 	principalEmail, _ := valuer.NewEmail(claims.Email)
 	principalOrgID, _ := valuer.NewUUID(claims.OrgID)
 
-	// TODO: Read from claims once we have a more robust identity provider system. For now, we only distinguish between user and service account based on the presence of an API key.
-	principalType := PrincipalTypeUser
-	if claims.IdentNProvider == "api_key" {
-		principalType = PrincipalTypeServiceAccount
-	}
-
 	return PrincipalAttributes{
-		PrincipalType:  principalType,
+		PrincipalType:  claims.Principal,
 		PrincipalID:    principalID,
 		PrincipalEmail: principalEmail,
 		PrincipalOrgID: principalOrgID,
