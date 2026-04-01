@@ -62,30 +62,30 @@ type CloudProviderModule interface {
 	GetConnectionArtifact(ctx context.Context, creds *citypes.SignozCredentials, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
 	// ListServiceDefinitions returns all service definitions for this cloud provider.
-	ListServiceDefinitions() ([]citypes.ServiceDefinition, error)
+	ListServiceDefinitions(ctx context.Context) ([]*citypes.ServiceDefinition, error)
 
 	// GetServiceDefinition returns the service definition for the given service ID.
-	GetServiceDefinition(serviceID citypes.ServiceID) (*citypes.ServiceDefinition, error)
+	GetServiceDefinition(ctx context.Context, serviceID citypes.ServiceID) (*citypes.ServiceDefinition, error)
 
 	// IsServiceEnabled returns true if the service has at least one signal (logs or metrics) enabled.
-	IsServiceEnabled(config *citypes.ServiceConfig) bool
+	IsServiceEnabled(ctx context.Context, config *citypes.ServiceConfig) bool
 
 	// IsMetricsEnabled returns true if the service config has metrics explicitly enabled.
 	// Used to gate dashboard availability — dashboards are only shown when metrics are enabled.
-	IsMetricsEnabled(config *citypes.ServiceConfig) bool
+	IsMetricsEnabled(ctx context.Context, config *citypes.ServiceConfig) bool
 
 	// ServiceConfigFromStorableServiceConfig converts a stored service's provider-specific JSON config
 	// into a *ServiceConfig wrapper.
-	ServiceConfigFromStorableServiceConfig(config string) (*citypes.ServiceConfig, error)
+	ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*citypes.ServiceConfig, error)
 
 	// StorableConfigFromServiceConfig serializes a ServiceConfig into the raw provider-specific
 	// JSON string suitable for storing in StorableCloudIntegrationService.Config.
 	// It strips any signal config (logs/metrics) that the service's SupportedSignals declares unsupported.
-	StorableConfigFromServiceConfig(cfg *citypes.ServiceConfig, supported citypes.SupportedSignals) (string, error)
+	StorableConfigFromServiceConfig(ctx context.Context, cfg *citypes.ServiceConfig, supported citypes.SupportedSignals) (string, error)
 
 	// BuildIntegrationConfig compiles the provider-specific integration config from the account
 	// and list of configured services. This is the config returned to the agent on check-in.
-	BuildIntegrationConfig(account *citypes.Account, services []*citypes.StorableCloudIntegrationService) (*citypes.ProviderIntegrationConfig, error)
+	BuildIntegrationConfig(ctx context.Context, account *citypes.Account, services []*citypes.StorableCloudIntegrationService) (*citypes.ProviderIntegrationConfig, error)
 }
 
 type Handler interface {

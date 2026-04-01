@@ -12,6 +12,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	pkgimpl "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -40,7 +41,8 @@ func NewModule(
 	licensing licensing.Licensing,
 	serviceAccount serviceaccount.Module,
 ) (cloudintegration.Module, error) {
-	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider()
+	defStore := pkgimpl.NewServiceDefinitionStore()
+	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
 	if err != nil {
 		return nil, err
 	}
@@ -215,7 +217,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 	}
 
 	// Delegate integration config building entirely to the provider module
-	integrationConfig, err := cloudProvider.BuildIntegrationConfig(accountDomain, storedServices)
+	integrationConfig, err := cloudProvider.BuildIntegrationConfig(ctx, accountDomain, storedServices)
 	if err != nil {
 		return nil, err
 	}
@@ -262,7 +264,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 		return nil, err
 	}
 
-	serviceDefinitions, err := cloudProvider.ListServiceDefinitions()
+	serviceDefinitions, err := cloudProvider.ListServiceDefinitions(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -280,12 +282,12 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 		}
 
 		for _, svc := range storedServices {
-			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(svc.Config)
+			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, svc.Config)
 			if err != nil {
 				return nil, err
 			}
 
-			if cloudProvider.IsServiceEnabled(serviceConfig) {
+			if cloudProvider.IsServiceEnabled(ctx, serviceConfig) {
 				enabledServiceIDs[svc.Type.StringValue()] = true
 			}
 		}
@@ -293,7 +295,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 
 	resp := make([]*cloudintegrationtypes.ServiceMetadata, 0, len(serviceDefinitions))
 	for _, serviceDefinition := range serviceDefinitions {
-		resp = append(resp, cloudintegrationtypes.NewServiceMetadata(serviceDefinition, enabledServiceIDs[serviceDefinition.ID]))
+		resp = append(resp, cloudintegrationtypes.NewServiceMetadata(*serviceDefinition, enabledServiceIDs[serviceDefinition.ID]))
 	}
 
 	return resp, nil
@@ -310,7 +312,7 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 		return nil, err
 	}
 
-	serviceDefinition, err := cloudProvider.GetServiceDefinition(serviceID)
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(ctx, serviceID)
 	if err != nil {
 		return nil, err
 	}
@@ -328,7 +330,7 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 			return nil, err
 		}
 		if storedService != nil {
-			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(storedService.Config)
+			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedService.Config)
 			if err != nil {
 				return nil, err
 			}
@@ -351,12 +353,12 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 		return err
 	}
 
-	serviceDefinition, err := cloudProvider.GetServiceDefinition(service.Type)
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(ctx, service.Type)
 	if err != nil {
 		return err
 	}
 
-	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(service.Config, serviceDefinition.SupportedSignals)
+	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(ctx, service.Config, serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}
@@ -375,12 +377,12 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 		return err
 	}
 
-	serviceDefinition, err := cloudProvider.GetServiceDefinition(integrationService.Type)
+	serviceDefinition, err := cloudProvider.GetServiceDefinition(ctx, integrationService.Type)
 	if err != nil {
 		return err
 	}
 
-	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(integrationService.Config, serviceDefinition.SupportedSignals)
+	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(ctx, integrationService.Config, serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}
@@ -411,12 +413,12 @@ func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]
 			}
 
 			for _, storedSvc := range storedServices {
-				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(storedSvc.Config)
-				if err != nil || !cloudProvider.IsMetricsEnabled(serviceConfig) {
+				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
+				if err != nil || !cloudProvider.IsMetricsEnabled(ctx, serviceConfig) {
 					continue
 				}
 
-				svcDef, err := cloudProvider.GetServiceDefinition(storedSvc.Type)
+				svcDef, err := cloudProvider.GetServiceDefinition(ctx, storedSvc.Type)
 				if err != nil || svcDef == nil {
 					continue
 				}

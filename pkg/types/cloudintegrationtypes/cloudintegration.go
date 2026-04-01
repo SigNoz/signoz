@@ -20,7 +20,8 @@ var (
 	ErrCodeCloudIntegrationRemoved              = errors.MustNewCode("cloud_integration_removed")
 	ErrCodeInvalidInput                         = errors.MustNewCode("cloud_integration_invalid_input")
 	ErrCodeCloudIntegrationServiceNotFound      = errors.MustNewCode("cloud_integration_service_not_found")
-	ErrCodeCloudIntegrationServiceAlreadyExists = errors.MustNewCode("cloud_integration_service_already_exists")
+	ErrCodeCloudIntegrationServiceAlreadyExists  = errors.MustNewCode("cloud_integration_service_already_exists")
+	ErrCodeServiceDefinitionNotFound             = errors.MustNewCode("service_definition_not_found")
 )
 
 // StorableCloudIntegration represents a cloud integration stored in the database.

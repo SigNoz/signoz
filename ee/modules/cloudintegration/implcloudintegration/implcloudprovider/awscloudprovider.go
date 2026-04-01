@@ -10,22 +10,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes/definitions"
 )
 
 type awscloudprovider struct {
-	serviceDefinitions definitions.ServiceDefinitionLoader
+	serviceDefinitions cloudintegrationtypes.ServiceDefinitionStore
 }
 
-func NewAWSCloudProvider() (cloudintegration.CloudProviderModule, error) {
-	loader, err := definitions.NewServiceDefinitionLoader(cloudintegrationtypes.CloudProviderTypeAWS)
-	if err != nil {
-		return nil, err
-	}
-	return &awscloudprovider{
-		serviceDefinitions: loader,
-	}, nil
+func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) (cloudintegration.CloudProviderModule, error) {
+	return &awscloudprovider{serviceDefinitions: defStore}, nil
 }
+
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, creds *cloudintegrationtypes.SignozCredentials, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	// TODO: get this from config
 	agentVersion := "v0.0.8"
@@ -56,15 +50,15 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, cre
 	}, nil
 }
 
-func (provider *awscloudprovider) ListServiceDefinitions() ([]cloudintegrationtypes.ServiceDefinition, error) {
-	return provider.serviceDefinitions.List()
+func (provider *awscloudprovider) ListServiceDefinitions(ctx context.Context) ([]*cloudintegrationtypes.ServiceDefinition, error) {
+	return provider.serviceDefinitions.List(ctx, cloudintegrationtypes.CloudProviderTypeAWS)
 }
 
-func (provider *awscloudprovider) GetServiceDefinition(serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
-	return provider.serviceDefinitions.Get(serviceID)
+func (provider *awscloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
+	return provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
 }
 
-func (provider *awscloudprovider) StorableConfigFromServiceConfig(cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
+func (provider *awscloudprovider) StorableConfigFromServiceConfig(ctx context.Context, cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
 	if cfg == nil || cfg.AWS == nil {
 		return "", nil
 	}
@@ -82,7 +76,7 @@ func (provider *awscloudprovider) StorableConfigFromServiceConfig(cfg *cloudinte
 	return string(b), nil
 }
 
-func (provider *awscloudprovider) ServiceConfigFromStorableServiceConfig(config string) (*cloudintegrationtypes.ServiceConfig, error) {
+func (provider *awscloudprovider) ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*cloudintegrationtypes.ServiceConfig, error) {
 	if config == "" {
 		return nil, errors.NewInternalf(errors.CodeInternal, "service config is empty")
 	}
@@ -95,7 +89,7 @@ func (provider *awscloudprovider) ServiceConfigFromStorableServiceConfig(config 
 	return &cloudintegrationtypes.ServiceConfig{AWS: &awsCfg}, nil
 }
 
-func (provider *awscloudprovider) IsServiceEnabled(config *cloudintegrationtypes.ServiceConfig) bool {
+func (provider *awscloudprovider) IsServiceEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
 	if config == nil || config.AWS == nil {
 		return false
 	}
@@ -104,24 +98,15 @@ func (provider *awscloudprovider) IsServiceEnabled(config *cloudintegrationtypes
 	return logsEnabled || metricsEnabled
 }
 
-func (provider *awscloudprovider) IsMetricsEnabled(config *cloudintegrationtypes.ServiceConfig) bool {
+func (provider *awscloudprovider) IsMetricsEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
 	if config == nil || config.AWS == nil {
 		return false
 	}
 	return awsMetricsEnabled(config.AWS)
 }
 
-// awsLogsEnabled returns true if the AWS service config has logs explicitly enabled.
-func awsLogsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
-	return cfg.Logs != nil && cfg.Logs.Enabled
-}
-
-// awsMetricsEnabled returns true if the AWS service config has metrics explicitly enabled.
-func awsMetricsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
-	return cfg.Metrics != nil && cfg.Metrics.Enabled
-}
-
 func (provider *awscloudprovider) BuildIntegrationConfig(
+	ctx context.Context,
 	account *cloudintegrationtypes.Account,
 	services []*cloudintegrationtypes.StorableCloudIntegrationService,
 ) (*cloudintegrationtypes.ProviderIntegrationConfig, error) {
@@ -135,12 +120,12 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 	var compiledS3Buckets map[string][]string
 
 	for _, storedSvc := range services {
-		svcCfg, err := provider.ServiceConfigFromStorableServiceConfig(storedSvc.Config)
+		svcCfg, err := provider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
 		if err != nil || svcCfg == nil || svcCfg.AWS == nil {
 			continue
 		}
 
-		svcDef, err := provider.GetServiceDefinition(storedSvc.Type)
+		svcDef, err := provider.GetServiceDefinition(ctx, storedSvc.Type)
 		if err != nil || svcDef == nil || svcDef.Strategy == nil || svcDef.Strategy.AWS == nil {
 			continue
 		}
@@ -186,4 +171,14 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 			Telemetry:      awsTelemetry,
 		},
 	}, nil
+}
+
+// awsLogsEnabled returns true if the AWS service config has logs explicitly enabled.
+func awsLogsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
+	return cfg.Logs != nil && cfg.Logs.Enabled
+}
+
+// awsMetricsEnabled returns true if the AWS service config has metrics explicitly enabled.
+func awsMetricsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
+	return cfg.Metrics != nil && cfg.Metrics.Enabled
 }

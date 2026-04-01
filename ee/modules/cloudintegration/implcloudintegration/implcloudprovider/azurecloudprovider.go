@@ -3,7 +3,6 @@ package implcloudprovider
 import (
 	"context"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 )
@@ -18,33 +17,34 @@ func (provider *azurecloudprovider) GetConnectionArtifact(ctx context.Context, c
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) ListServiceDefinitions() ([]cloudintegrationtypes.ServiceDefinition, error) {
+func (provider *azurecloudprovider) ListServiceDefinitions(ctx context.Context) ([]*cloudintegrationtypes.ServiceDefinition, error) {
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) GetServiceDefinition(serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
+func (provider *azurecloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) StorableConfigFromServiceConfig(cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
+func (provider *azurecloudprovider) StorableConfigFromServiceConfig(ctx context.Context, cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) ServiceConfigFromStorableServiceConfig(config string) (*cloudintegrationtypes.ServiceConfig, error) {
+func (provider *azurecloudprovider) ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*cloudintegrationtypes.ServiceConfig, error) {
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) IsServiceEnabled(config *cloudintegrationtypes.ServiceConfig) bool {
+func (provider *azurecloudprovider) IsServiceEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) IsMetricsEnabled(config *cloudintegrationtypes.ServiceConfig) bool {
+func (provider *azurecloudprovider) IsMetricsEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
 	panic("implement me")
 }
 
 func (provider *azurecloudprovider) BuildIntegrationConfig(
+	ctx context.Context,
 	account *cloudintegrationtypes.Account,
 	services []*cloudintegrationtypes.StorableCloudIntegrationService,
 ) (*cloudintegrationtypes.ProviderIntegrationConfig, error) {
-	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "azure cloud provider is not supported")
+	panic("implement me")
 }
