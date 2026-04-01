@@ -3,7 +3,6 @@ package rules
 import (
 	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 	"log/slog"
 	"math"
@@ -24,21 +23,16 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
+	querierV5 "github.com/SigNoz/signoz/pkg/querier"
+	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/app/querier"
 	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
+	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
 	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	querytemplate "github.com/SigNoz/signoz/pkg/query-service/utils/queryTemplate"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-
-	logsv3 "github.com/SigNoz/signoz/pkg/query-service/app/logs/v3"
-	tracesV4 "github.com/SigNoz/signoz/pkg/query-service/app/traces/v4"
-	"github.com/SigNoz/signoz/pkg/units"
-
-	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 )
@@ -283,7 +277,7 @@ func (r *ThresholdRule) prepareLinksToTraces(ctx context.Context, ts time.Time, 
 	return contextlinks.PrepareLinksToTraces(start, end, filterItems)
 }
 
-func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (*qbtypes.QueryRangeRequest, error) {
+func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) *qbtypes.QueryRangeRequest {
 	r.logger.InfoContext(
 		ctx, "prepare query range request v5", "ts", ts.UnixMilli(), "eval_window", r.evalWindow.Milliseconds(), "eval_delay", r.evalDelay.Milliseconds(),
 	)
@@ -302,16 +296,13 @@ func (r *ThresholdRule) prepareQueryRangeV5(ctx context.Context, ts time.Time) (
 	}
 	req.CompositeQuery.Queries = make([]qbtypes.QueryEnvelope, len(r.Condition().CompositeQuery.Queries))
 	copy(req.CompositeQuery.Queries, r.Condition().CompositeQuery.Queries)
-	return req, nil
+	return req
 }
 
 func (r *ThresholdRule) prepareLinksToLogsV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return ""
-	}
+	qr := r.prepareQueryRangeV5(ctx, ts)
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
@@ -348,10 +339,7 @@ func (r *ThresholdRule) prepareLinksToLogsV5(ctx context.Context, ts time.Time, 
 func (r *ThresholdRule) prepareLinksToTracesV5(ctx context.Context, ts time.Time, lbls labels.Labels) string {
 	selectedQuery := r.GetSelectedQuery()
 
-	qr, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return ""
-	}
+	qr := r.prepareQueryRangeV5(ctx, ts)
 	start := time.UnixMilli(int64(qr.Start))
 	end := time.UnixMilli(int64(qr.End))
 
@@ -500,10 +488,7 @@ func (r *ThresholdRule) buildAndRunQuery(ctx context.Context, orgID valuer.UUID,
 }
 
 func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID, ts time.Time) (ruletypes.Vector, error) {
-	params, err := r.prepareQueryRangeV5(ctx, ts)
-	if err != nil {
-		return nil, err
-	}
+	params := r.prepareQueryRangeV5(ctx, ts)
 
 	var results []*v3.Result
 
@@ -580,13 +565,8 @@ func (r *ThresholdRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUI
 }
 
 func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
-	prevState := r.State()
-
-	valueFormatter := units.FormatterFromUnit(r.Unit())
-
 	var res ruletypes.Vector
 	var err error
-
 	if r.version == "v5" {
 		r.logger.InfoContext(ctx, "running v5 query")
 		res, err = r.buildAndRunQueryV5(ctx, r.orgID, ts)
@@ -594,247 +574,35 @@ func (r *ThresholdRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		r.logger.InfoContext(ctx, "running v4 query")
 		res, err = r.buildAndRunQuery(ctx, r.orgID, ts)
 	}
-
 	if err != nil {
 		return 0, err
 	}
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
+	opts := EvalVectorOptions{
+		DeleteLabels: []string{labels.MetricNameLabel, labels.TemporalityLabel},
+		ExtraAnnotations: func(ctx context.Context, ts time.Time, smpl labels.Labels) []labels.Label {
+			host := r.hostFromSource()
+			if host == "" {
+				return nil
+			}
 
-	resultFPs := map[uint64]struct{}{}
-	alerts := make(map[uint64]*ruletypes.Alert, len(res))
-
-	ruleReceivers := r.Threshold.GetRuleReceivers()
-	ruleReceiverMap := make(map[string][]string)
-	for _, value := range ruleReceivers {
-		ruleReceiverMap[value.Name] = value.Channels
+			//// Links with timestamps should go in annotations since labels
+			//// is used alert grouping, and we want to group alerts with the same
+			//// label set, but different timestamps, together.
+			switch r.typ { // DIFF
+			case ruletypes.AlertTypeTraces:
+				if link := r.prepareLinksToTraces(ctx, ts, smpl); link != "" {
+					r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", host, link))
+					return []labels.Label{{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", host, link)}}
+				}
+			case ruletypes.AlertTypeLogs:
+				if link := r.prepareLinksToLogs(ctx, ts, smpl); link != "" {
+					r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", host, link))
+					return []labels.Label{{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", host, link)}}
+				}
+			}
+			return nil
+		},
 	}
-
-	for _, smpl := range res {
-		l := make(map[string]string, len(smpl.Metric))
-		for _, lbl := range smpl.Metric {
-			l[lbl.Name] = lbl.Value
-		}
-
-		value := valueFormatter.Format(smpl.V, r.Unit())
-		// todo(aniket): handle different threshold
-		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
-		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
-
-		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
-		// Inject some convenience variables that are easier to remember for users
-		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
-
-		// utility function to apply go template on labels and annotations
-		expand := func(text string) string {
-			tmpl := ruletypes.NewTemplateExpander(
-				ctx,
-				defs+text,
-				"__alert_"+r.Name(),
-				tmplData,
-				times.Time(timestamp.FromTime(ts)),
-				nil,
-			)
-			result, err := tmpl.Expand()
-			if err != nil {
-				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData)
-			}
-			return result
-		}
-
-		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
-		resultLabels := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
-
-		for name, value := range r.labels.Map() {
-			lb.Set(name, expand(value))
-		}
-
-		lb.Set(labels.AlertNameLabel, r.Name())
-		lb.Set(labels.AlertRuleIdLabel, r.ID())
-		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
-
-		annotations := make(labels.Labels, 0, len(r.annotations.Map()))
-		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
-		}
-		if smpl.IsMissing {
-			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
-			lb.Set(labels.NoDataLabel, "true")
-		}
-
-		// Links with timestamps should go in annotations since labels
-		// is used alert grouping, and we want to group alerts with the same
-		// label set, but different timestamps, together.
-		switch r.typ {
-		case ruletypes.AlertTypeTraces:
-			link := r.prepareLinksToTraces(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding traces link to annotations", "link", fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link))
-				annotations = append(annotations, labels.Label{Name: "related_traces", Value: fmt.Sprintf("%s/traces-explorer?%s", r.hostFromSource(), link)})
-			}
-		case ruletypes.AlertTypeLogs:
-			link := r.prepareLinksToLogs(ctx, ts, smpl.Metric)
-			if link != "" && r.hostFromSource() != "" {
-				r.logger.InfoContext(ctx, "adding logs link to annotations", "link", fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link))
-				annotations = append(annotations, labels.Label{Name: "related_logs", Value: fmt.Sprintf("%s/logs/logs-explorer?%s", r.hostFromSource(), link)})
-			}
-		}
-
-		lbs := lb.Labels()
-		h := lbs.Hash()
-		resultFPs[h] = struct{}{}
-
-		if _, ok := alerts[h]; ok {
-			return 0, fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
-		}
-
-		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             smpl.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
-			Missing:           smpl.IsMissing,
-			IsRecovering:      smpl.IsRecovering,
-		}
-	}
-
-	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
-
-	// alerts[h] is ready, add or update active list now
-	for h, a := range alerts {
-		// Check whether we already have alerting state for the identifying label set.
-		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
-
-			alert.Value = a.Value
-			alert.Annotations = a.Annotations
-			// Update the recovering and missing state of existing alert
-			alert.IsRecovering = a.IsRecovering
-			alert.Missing = a.Missing
-			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
-				alert.Receivers = ruleReceiverMap[v]
-			}
-			continue
-		}
-
-		r.Active[h] = a
-	}
-
-	itemsToAdd := []model.RuleStateHistory{}
-
-	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
-	for fp, a := range r.Active {
-		labelsJSON, err := json.Marshal(a.QueryResultLables)
-		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
-		}
-		if _, ok := resultFPs[fp]; !ok {
-			// If the alert was previously firing, keep it around for a given
-			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
-				delete(r.Active, fp)
-			}
-			if a.State != model.StateInactive {
-				r.logger.DebugContext(ctx, "converting firing alert to inActive", "name", r.Name())
-				a.State = model.StateInactive
-				a.ResolvedAt = ts
-				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-					RuleID:       r.ID(),
-					RuleName:     r.Name(),
-					State:        model.StateInactive,
-					StateChanged: true,
-					UnixMilli:    ts.UnixMilli(),
-					Labels:       model.LabelsString(labelsJSON),
-					Fingerprint:  a.QueryResultLables.Hash(),
-					Value:        a.Value,
-				})
-			}
-			continue
-		}
-
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
-			r.logger.DebugContext(ctx, "converting pending alert to firing", "name", r.Name())
-			a.State = model.StateFiring
-			a.FiredAt = ts
-			state := model.StateFiring
-			if a.Missing {
-				state = model.StateNoData
-			}
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-				RuleID:       r.ID(),
-				RuleName:     r.Name(),
-				State:        state,
-				StateChanged: true,
-				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
-				Value:        a.Value,
-			})
-		}
-
-		// We need to change firing alert to recovering if the returned sample meets recovery threshold
-		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
-		// We need to change recovering alerts to firing if the returned sample meets target threshold
-		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
-		// in any of the above case we need to update the status of alert
-		if changeAlertingToRecovering || changeRecoveringToFiring {
-			state := model.StateRecovering
-			if changeRecoveringToFiring {
-				state = model.StateFiring
-			}
-			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-				RuleID:       r.ID(),
-				RuleName:     r.Name(),
-				State:        state,
-				StateChanged: true,
-				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
-				Value:        a.Value,
-			})
-		}
-	}
-
-	currentState := r.State()
-
-	overallStateChanged := currentState != prevState
-	for idx, item := range itemsToAdd {
-		item.OverallStateChanged = overallStateChanged
-		item.OverallState = currentState
-		itemsToAdd[idx] = item
-	}
-
-	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
-
-	r.health = ruletypes.HealthGood
-	r.lastError = err
-
-	return len(r.Active), nil
-}
-
-func (r *ThresholdRule) String() string {
-	ar := ruletypes.PostableRule{
-		AlertName:         r.name,
-		RuleCondition:     r.ruleCondition,
-		EvalWindow:        r.evalWindow,
-		Labels:            r.labels.Map(),
-		Annotations:       r.annotations.Map(),
-		PreferredChannels: r.preferredChannels,
-	}
-
-	byt, err := json.Marshal(ar)
-	if err != nil {
-		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
-	}
-
-	return string(byt)
+	return r.EvalVector(ctx, ts, res, opts)
 }

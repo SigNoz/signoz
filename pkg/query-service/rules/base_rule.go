@@ -2,6 +2,7 @@ package rules
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"log/slog"
 	"sync"
@@ -198,6 +199,24 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	return baseRule, nil
+}
+
+func (r *BaseRule) String() string {
+	ar := ruletypes.PostableRule{
+		AlertName:         r.name,
+		RuleCondition:     r.ruleCondition,
+		EvalWindow:        r.evalWindow,
+		Labels:            r.labels.Map(),
+		Annotations:       r.annotations.Map(),
+		PreferredChannels: r.preferredChannels,
+	}
+
+	byt, err := json.Marshal(ar)
+	if err != nil {
+		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
+	}
+
+	return string(byt)
 }
 
 func (r *BaseRule) matchType() ruletypes.MatchType {

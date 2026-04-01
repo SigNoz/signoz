@@ -7,29 +7,21 @@ import (
 	"log/slog"
 	"math"
 	"strings"
-	"sync"
 	"time"
 
 	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/cache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/query-service/common"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
 	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
-	querierV2 "github.com/SigNoz/signoz/pkg/query-service/app/querier/v2"
 	"github.com/SigNoz/signoz/pkg/query-service/app/queryBuilder"
 	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
 	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
-
-	"github.com/SigNoz/signoz/pkg/units"
-
 	baserules "github.com/SigNoz/signoz/pkg/query-service/rules"
+	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 
 	querierV5 "github.com/SigNoz/signoz/pkg/querier"
 
@@ -44,16 +36,6 @@ const (
 
 type AnomalyRule struct {
 	*baserules.BaseRule
-
-	mtx sync.Mutex
-
-	reader interfaces.Reader
-
-	// querierV2 is used for alerts created after the introduction of new metrics query builder
-	querierV2 interfaces.Querier
-
-	// querierV5 is used for alerts migrated after the introduction of new query builder
-	querierV5 querierV5.Querier
 
 	provider   anomaly.Provider
 	providerV2 anomalyV2.Provider
@@ -103,14 +85,6 @@ func NewAnomalyRule(
 
 	logger.Info("using seasonality", "seasonality", t.seasonality.String())
 
-	querierOptsV2 := querierV2.QuerierOptions{
-		Reader:       reader,
-		Cache:        cache,
-		KeyGenerator: queryBuilder.NewKeyGenerator(),
-	}
-
-	t.querierV2 = querierV2.NewQuerier(querierOptsV2)
-	t.reader = reader
 	if t.seasonality == anomaly.SeasonalityHourly {
 		t.provider = anomaly.NewHourlyProvider(
 			anomaly.WithCache[*anomaly.HourlyProvider](cache),
@@ -148,7 +122,6 @@ func NewAnomalyRule(
 		)
 	}
 
-	t.querierV5 = querierV5
 	t.version = p.Version
 	t.logger = logger
 	return &t, nil
@@ -333,14 +306,8 @@ func (r *AnomalyRule) buildAndRunQueryV5(ctx context.Context, orgID valuer.UUID,
 }
 
 func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
-
-	prevState := r.State()
-
-	valueFormatter := units.FormatterFromUnit(r.Unit())
-
 	var res ruletypes.Vector
 	var err error
-
 	if r.version == "v5" {
 		r.logger.InfoContext(ctx, "running v5 query")
 		res, err = r.buildAndRunQueryV5(ctx, r.OrgID(), ts)
@@ -352,220 +319,8 @@ func (r *AnomalyRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		return 0, err
 	}
 
-	r.mtx.Lock()
-	defer r.mtx.Unlock()
-
-	resultFPs := map[uint64]struct{}{}
-	var alerts = make(map[uint64]*ruletypes.Alert, len(res))
-
-	ruleReceivers := r.Threshold.GetRuleReceivers()
-	ruleReceiverMap := make(map[string][]string)
-	for _, value := range ruleReceivers {
-		ruleReceiverMap[value.Name] = value.Channels
+	opts := baserules.EvalVectorOptions{
+		DeleteLabels: []string{labels.MetricNameLabel, labels.TemporalityLabel},
 	}
-
-	for _, smpl := range res {
-		l := make(map[string]string, len(smpl.Metric))
-		for _, lbl := range smpl.Metric {
-			l[lbl.Name] = lbl.Value
-		}
-		value := valueFormatter.Format(smpl.V, r.Unit())
-		threshold := valueFormatter.Format(smpl.Target, smpl.TargetUnit)
-		r.logger.DebugContext(ctx, "Alert template data for rule", "rule_name", r.Name(), "formatter", valueFormatter.Name(), "value", value, "threshold", threshold)
-
-		tmplData := ruletypes.AlertTemplateData(l, value, threshold)
-		// Inject some convenience variables that are easier to remember for users
-		// who are not used to Go's templating system.
-		defs := "{{$labels := .Labels}}{{$value := .Value}}{{$threshold := .Threshold}}"
-
-		// utility function to apply go template on labels and annotations
-		expand := func(text string) string {
-
-			tmpl := ruletypes.NewTemplateExpander(
-				ctx,
-				defs+text,
-				"__alert_"+r.Name(),
-				tmplData,
-				times.Time(timestamp.FromTime(ts)),
-				nil,
-			)
-			result, err := tmpl.Expand()
-			if err != nil {
-				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.ErrorContext(ctx, "Expanding alert template failed", errors.Attr(err), "data", tmplData, "rule_name", r.Name())
-			}
-			return result
-		}
-
-		lb := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel)
-		resultLabels := labels.NewBuilder(smpl.Metric).Del(labels.MetricNameLabel).Del(labels.TemporalityLabel).Labels()
-
-		for name, value := range r.Labels().Map() {
-			lb.Set(name, expand(value))
-		}
-
-		lb.Set(labels.AlertNameLabel, r.Name())
-		lb.Set(labels.AlertRuleIdLabel, r.ID())
-		lb.Set(labels.RuleSourceLabel, r.GeneratorURL())
-
-		annotations := make(labels.Labels, 0, len(r.Annotations().Map()))
-		for name, value := range r.Annotations().Map() {
-			annotations = append(annotations, labels.Label{Name: name, Value: expand(value)})
-		}
-		if smpl.IsMissing {
-			lb.Set(labels.AlertNameLabel, "[No data] "+r.Name())
-			lb.Set(labels.NoDataLabel, "true")
-		}
-
-		lbs := lb.Labels()
-		h := lbs.Hash()
-		resultFPs[h] = struct{}{}
-
-		if _, ok := alerts[h]; ok {
-			r.logger.ErrorContext(ctx, "the alert query returns duplicate records", "rule_id", r.ID(), "alert", alerts[h])
-			err = fmt.Errorf("duplicate alert found, vector contains metrics with the same labelset after applying alert labels")
-			return 0, err
-		}
-
-		alerts[h] = &ruletypes.Alert{
-			Labels:            lbs,
-			QueryResultLables: resultLabels,
-			Annotations:       annotations,
-			ActiveAt:          ts,
-			State:             model.StatePending,
-			Value:             smpl.V,
-			GeneratorURL:      r.GeneratorURL(),
-			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
-			Missing:           smpl.IsMissing,
-			IsRecovering:      smpl.IsRecovering,
-		}
-	}
-
-	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
-	// alerts[h] is ready, add or update active list now
-	for h, a := range alerts {
-		// Check whether we already have alerting state for the identifying label set.
-		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
-
-			alert.Value = a.Value
-			alert.Annotations = a.Annotations
-			// Update the recovering and missing state of existing alert
-			alert.IsRecovering = a.IsRecovering
-			alert.Missing = a.Missing
-			if v, ok := alert.Labels.Map()[ruletypes.LabelThresholdName]; ok {
-				alert.Receivers = ruleReceiverMap[v]
-			}
-			continue
-		}
-
-		r.Active[h] = a
-	}
-
-	itemsToAdd := []model.RuleStateHistory{}
-
-	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
-	for fp, a := range r.Active {
-		labelsJSON, err := json.Marshal(a.QueryResultLables)
-		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "labels", a.Labels)
-		}
-		if _, ok := resultFPs[fp]; !ok {
-			// If the alert was previously firing, keep it around for a given
-			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
-				delete(r.Active, fp)
-			}
-			if a.State != model.StateInactive {
-				a.State = model.StateInactive
-				a.ResolvedAt = ts
-				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-					RuleID:       r.ID(),
-					RuleName:     r.Name(),
-					State:        model.StateInactive,
-					StateChanged: true,
-					UnixMilli:    ts.UnixMilli(),
-					Labels:       model.LabelsString(labelsJSON),
-					Fingerprint:  a.QueryResultLables.Hash(),
-					Value:        a.Value,
-				})
-			}
-			continue
-		}
-
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.HoldDuration().Duration() {
-			a.State = model.StateFiring
-			a.FiredAt = ts
-			state := model.StateFiring
-			if a.Missing {
-				state = model.StateNoData
-			}
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-				RuleID:       r.ID(),
-				RuleName:     r.Name(),
-				State:        state,
-				StateChanged: true,
-				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
-				Value:        a.Value,
-			})
-		}
-
-		// We need to change firing alert to recovering if the returned sample meets recovery threshold
-		changeFiringToRecovering := a.State == model.StateFiring && a.IsRecovering
-		// We need to change recovering alerts to firing if the returned sample meets target threshold
-		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
-		// in any of the above case we need to update the status of alert
-		if changeFiringToRecovering || changeRecoveringToFiring {
-			state := model.StateRecovering
-			if changeRecoveringToFiring {
-				state = model.StateFiring
-			}
-			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
-				RuleID:       r.ID(),
-				RuleName:     r.Name(),
-				State:        state,
-				StateChanged: true,
-				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
-				Value:        a.Value,
-			})
-		}
-	}
-
-	currentState := r.State()
-
-	overallStateChanged := currentState != prevState
-	for idx, item := range itemsToAdd {
-		item.OverallStateChanged = overallStateChanged
-		item.OverallState = currentState
-		itemsToAdd[idx] = item
-	}
-
-	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
-
-	return len(r.Active), nil
-}
-
-func (r *AnomalyRule) String() string {
-
-	ar := ruletypes.PostableRule{
-		AlertName:         r.Name(),
-		RuleCondition:     r.Condition(),
-		EvalWindow:        r.EvalWindow(),
-		Labels:            r.Labels().Map(),
-		Annotations:       r.Annotations().Map(),
-		PreferredChannels: r.PreferredChannels(),
-	}
-
-	byt, err := json.Marshal(ar)
-	if err != nil {
-		return fmt.Sprintf("error marshaling alerting rule: %s", err.Error())
-	}
-
-	return string(byt)
+	return r.EvalVector(ctx, ts, res, opts)
 }
