@@ -32,6 +32,9 @@ type HavingExpressionListener interface {
 	// EnterInList is called when entering the inList production.
 	EnterInList(c *InListContext)
 
+	// EnterSignedNumber is called when entering the signedNumber production.
+	EnterSignedNumber(c *SignedNumberContext)
+
 	// EnterOperand is called when entering the operand production.
 	EnterOperand(c *OperandContext)
 
@@ -82,6 +85,9 @@ type HavingExpressionListener interface {
 
 	// ExitInList is called when exiting the inList production.
 	ExitInList(c *InListContext)
+
+	// ExitSignedNumber is called when exiting the signedNumber production.
+	ExitSignedNumber(c *SignedNumberContext)
 
 	// ExitOperand is called when exiting the operand production.
 	ExitOperand(c *OperandContext)

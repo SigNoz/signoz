@@ -69,6 +69,12 @@ func (s *BaseHavingExpressionListener) EnterInList(ctx *InListContext) {}
 // ExitInList is called when production inList is exited.
 func (s *BaseHavingExpressionListener) ExitInList(ctx *InListContext) {}
 
+// EnterSignedNumber is called when production signedNumber is entered.
+func (s *BaseHavingExpressionListener) EnterSignedNumber(ctx *SignedNumberContext) {}
+
+// ExitSignedNumber is called when production signedNumber is exited.
+func (s *BaseHavingExpressionListener) ExitSignedNumber(ctx *SignedNumberContext) {}
+
 // EnterOperand is called when production operand is entered.
 func (s *BaseHavingExpressionListener) EnterOperand(ctx *OperandContext) {}
 

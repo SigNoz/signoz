@@ -40,6 +40,10 @@ func (v *BaseHavingExpressionVisitor) VisitInList(ctx *InListContext) interface{
 	return v.VisitChildren(ctx)
 }
 
+func (v *BaseHavingExpressionVisitor) VisitSignedNumber(ctx *SignedNumberContext) interface{} {
+	return v.VisitChildren(ctx)
+}
+
 func (v *BaseHavingExpressionVisitor) VisitOperand(ctx *OperandContext) interface{} {
 	return v.VisitChildren(ctx)
 }

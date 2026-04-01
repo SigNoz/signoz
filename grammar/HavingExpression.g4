@@ -58,11 +58,19 @@ compOp
     ;
 
 /*
- * IN-list: a comma-separated list of numeric literals.
- * E.g.: (1, 2, 3), [100, 200, 500]
+ * IN-list: a comma-separated list of numeric literals, each optionally signed.
+ * E.g.: (1, 2, 3), [100, 200, 500], (-1, 0, 1)
  */
 inList
-    : NUMBER ( COMMA NUMBER )*
+    : signedNumber ( COMMA signedNumber )*
+    ;
+
+/*
+ * A signed number allows an optional leading +/- before a numeric literal.
+ * Used in IN-lists where a bare minus is unambiguous (no binary operand to the left).
+ */
+signedNumber
+    : (PLUS | MINUS)? NUMBER
     ;
 
 /*
@@ -86,13 +94,12 @@ term
 /*
  * Factors: atoms, parenthesized operands, or unary-signed sub-factors.
  * E.g.: (sum(a) + sum(b)) * 2 > 100, -count() > 0, -(avg(x) + 1) > 0
+ *       -10 (unary minus applied to the literal 10), count() - 10 > 0
  *
- * Note: the lexer's NUMBER rule includes an optional SIGN prefix, so a bare
- * negative literal like -10 is a single NUMBER token and is handled by atom,
- * not by the unary rule here. Unary sign applies when the operand following
- * the sign is a non-literal: a function call, an identifier, or a parenthesised
- * expression. As a result, `count()-10 > 0` is always rejected: after `count()`
- * the lexer produces NUMBER(-10), which is not a valid compOp or binary operator.
+ * Note: the NUMBER rule does NOT include a leading sign, so `-10` is always
+ * tokenised as MINUS followed by NUMBER(10). Unary minus in `factor` handles
+ * negative literals just as it handles negative function calls or identifiers,
+ * and the binary MINUS in `operand` handles `count()-10` naturally.
  */
 factor
     : (PLUS | MINUS) factor
@@ -215,11 +222,14 @@ BOOL
 
 fragment SIGN : [+-] ;
 
-// Numbers: optional sign, digits, optional decimal, optional scientific notation
-// E.g.: 100, -10, 0.5, 1.5e3, .75, -3.14
+// Numbers: digits, optional decimal, optional scientific notation.
+// No leading sign — a leading +/- is always a separate PLUS/MINUS token, which
+// lets the parser treat it as either a binary operator (count()-10) or unary
+// sign (-count(), -10). Signed exponents like 1e-3 remain valid.
+// E.g.: 100, 0.5, 1.5e3, .75
 NUMBER
-    : SIGN? DIGIT+ ('.' DIGIT*)? ([eE] SIGN? DIGIT+)?
-    | SIGN? '.' DIGIT+ ([eE] SIGN? DIGIT+)?
+    : DIGIT+ ('.' DIGIT*)? ([eE] SIGN? DIGIT+)?
+    | '.' DIGIT+ ([eE] SIGN? DIGIT+)?
     ;
 
 // Identifiers: start with a letter or underscore, followed by alphanumeric/underscores.

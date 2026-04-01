@@ -114,9 +114,9 @@ func (v *havingExpressionRewriteVisitor) visitComparison(ctx grammar.IComparison
 			return ""
 		}
 		lhs := v.visitOperand(ctx.Operand(0))
-		numbers := ctx.InList().AllNUMBER()
-		vals := make([]interface{}, len(numbers))
-		for i, n := range numbers {
+		signedNumbers := ctx.InList().AllSignedNumber()
+		vals := make([]interface{}, len(signedNumbers))
+		for i, n := range signedNumbers {
 			vals[i] = sqlbuilder.Raw(n.GetText())
 		}
 		if ctx.NOT() != nil {

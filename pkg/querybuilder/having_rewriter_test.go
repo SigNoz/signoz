@@ -337,14 +337,14 @@ func TestRewriteForLogsAndTraces_BooleanOperators(t *testing.T) {
 	})
 }
 
-// TestRewriteForLogsAndTraces_UnarySigns covers unary +/- applied to non-literal
-// operands (function calls, identifiers, parenthesised groups).
+// TestRewriteForLogsAndTraces_UnarySigns covers unary +/- applied to any operand:
+// function calls, identifiers, parenthesised groups, and numeric literals.
 //
-// Negative numeric literals (e.g. -10) are handled by the lexer's NUMBER rule
-// (SIGN? DIGIT+) and do not use the unary grammar rule. As a consequence,
-// `count()-10 > 0` is always a syntax error: after `count()` the lexer produces
-// NUMBER(-10) rather than a separate MINUS token, so the parser sees an unexpected
-// number where a comparison operator is expected.
+// The NUMBER lexer rule has no leading sign, so a bare `-10` is always tokenised as
+// MINUS followed by NUMBER(10). The unary-sign path in the `factor` rule handles it
+// identically to `-count()` or `-alias`. As a result, `count()-10 > 0` is valid and
+// equivalent to `count() - 10 > 0`: the MINUS is treated as a binary subtraction
+// operator between the function-call operand and the literal.
 func TestRewriteForLogsAndTraces_UnarySigns(t *testing.T) {
 	runLogsAndTracesTests(t, []logsAndTracesTestCase{
 		{
@@ -380,17 +380,21 @@ func TestRewriteForLogsAndTraces_UnarySigns(t *testing.T) {
 			},
 			wantExpression: "-(__result_0 + __result_1) > 0",
 		},
-		// count()-10 is rejected: the lexer produces NUMBER(-10) after RPAREN,
-		// which is not a valid comparison operator.
 		{
-			name:       "adjacent minus-literal without space is rejected",
+			name:       "adjacent minus-literal without space is accepted",
 			expression: "count()-10 > 0",
 			aggregations: []qbtypes.LogAggregation{
 				{Expression: "count()"},
 			},
-			wantErr:        true,
-			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:7 expecting one of {'*', '+', '-', (, ), IDENTIFIER, string} but got '-10'"},
+			wantExpression: "__result_0 - 10 > 0",
+		},
+		{
+			name:       "unary minus on indentifier",
+			expression: "count() < -0",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 < -0",
 		},
 	})
 }
@@ -508,7 +512,7 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:18 expecting one of {IDENTIFIER, number} but got ''2''"},
+			wantAdditional: []string{"line 1:18 expecting one of {'*', '+', '-', IDENTIFIER, number} but got ''2''"},
 		},
 		{
 			name:       "IN via alias",

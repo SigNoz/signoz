@@ -32,6 +32,9 @@ type HavingExpressionVisitor interface {
 	// Visit a parse tree produced by HavingExpressionParser#inList.
 	VisitInList(ctx *InListContext) interface{}
 
+	// Visit a parse tree produced by HavingExpressionParser#signedNumber.
+	VisitSignedNumber(ctx *SignedNumberContext) interface{}
+
 	// Visit a parse tree produced by HavingExpressionParser#operand.
 	VisitOperand(ctx *OperandContext) interface{}
 
