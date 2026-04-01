@@ -47,7 +47,7 @@ type GettableServicesMetadata struct {
 }
 
 // Service represents a cloud integration service with its definition,
-// cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled)
+// cloud integration service is non nil only when the service entry exists in DB with ANY config (enabled or disabled).
 type Service struct {
 	ServiceDefinition
 	CloudIntegrationService *CloudIntegrationService `json:"cloudIntegrationService" required:"true" nullable:"true"`

@@ -140,7 +140,7 @@ func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, account
 	return cloudintegrationtypes.NewAccountFromStorable(storableAccount)
 }
 
-// ListAccounts return only agent connected accounts
+// ListAccounts return only agent connected accounts.
 func (module *module) ListAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.Account, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {

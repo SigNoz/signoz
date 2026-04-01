@@ -79,12 +79,12 @@ func readServiceDefinitions(provider citypes.CloudProviderType) (map[citypes.Ser
 		if err != nil {
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't read service definition for %s/%s", provider.StringValue(), entry.Name())
 		}
-		serviceID, err := citypes.NewServiceID(provider, def.ServiceDefinitionMetadata.ID)
+		serviceID, err := citypes.NewServiceID(provider, def.ID)
 		if err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "invalid service id %q for provider %s", def.ServiceDefinitionMetadata.ID, provider.StringValue())
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "invalid service id %q for provider %s", def.ID, provider.StringValue())
 		}
 		if _, exists := services[serviceID]; exists {
-			return nil, errors.NewInternalf(errors.CodeInternal, "duplicate service definition id %q in %s", def.ServiceDefinitionMetadata.ID, svcDir)
+			return nil, errors.NewInternalf(errors.CodeInternal, "duplicate service definition id %q in %s", def.ID, svcDir)
 		}
 		services[serviceID] = *def
 	}

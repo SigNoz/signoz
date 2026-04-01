@@ -183,7 +183,7 @@ func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
 
 // ToJSON return JSON bytes for the provider's config
 // thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
-// NOTE: this entertains first non-null provider's config
+// NOTE: this entertains first non-null provider's config.
 func (config *AccountConfig) ToJSON() ([]byte, error) {
 	if config.AWS != nil {
 		return json.Marshal(config.AWS)
