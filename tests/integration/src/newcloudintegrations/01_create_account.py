@@ -23,13 +23,13 @@ def test_apply_license(
 def test_create_account(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    new_create_cloud_integration_account: Callable,
 ) -> None:
     """Test creating a new cloud integration account for AWS."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     cloud_provider = "aws"
 
-    data = create_cloud_integration_account(
+    data = new_create_cloud_integration_account(
         admin_token,
         cloud_provider,
         deployment_region="us-east-1",
