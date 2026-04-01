@@ -215,7 +215,7 @@ func (q *builderQuery[T]) Execute(ctx context.Context) (*qbtypes.Result, error) 
 	return result, nil
 }
 
-// executeWithContext executes the query with query window and step context for partial value detection
+// executeWithContext executes the query with query window and step context for partial value detection.
 func (q *builderQuery[T]) executeWithContext(ctx context.Context, query string, args []any) (*qbtypes.Result, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.TelemetrySignal: q.spec.Signal.StringValue(),

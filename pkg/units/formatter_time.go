@@ -39,7 +39,7 @@ func (f *durationFormatter) Format(value float64, unit string) string {
 	return fmt.Sprintf("%v", value)
 }
 
-// toNanoSeconds returns a easy to read string representation of the given value in nanoseconds
+// toNanoSeconds returns a easy to read string representation of the given value in nanoseconds.
 func toNanoSeconds(value float64) string {
 	absValue := math.Abs(value)
 
@@ -60,7 +60,7 @@ func toNanoSeconds(value float64) string {
 	}
 }
 
-// toMicroSeconds returns a easy to read string representation of the given value in microseconds
+// toMicroSeconds returns a easy to read string representation of the given value in microseconds.
 func toMicroSeconds(value float64) string {
 	absValue := math.Abs(value)
 	if absValue < 1000 {
@@ -72,7 +72,7 @@ func toMicroSeconds(value float64) string {
 	}
 }
 
-// toMilliSeconds returns a easy to read string representation of the given value in milliseconds
+// toMilliSeconds returns a easy to read string representation of the given value in milliseconds.
 func toMilliSeconds(value float64) string {
 
 	absValue := math.Abs(value)
@@ -92,7 +92,7 @@ func toMilliSeconds(value float64) string {
 	return toFixedScaled(value/31536000000, " year")
 }
 
-// toSeconds returns a easy to read string representation of the given value in seconds
+// toSeconds returns a easy to read string representation of the given value in seconds.
 func toSeconds(value float64) string {
 	absValue := math.Abs(value)
 
@@ -117,7 +117,7 @@ func toSeconds(value float64) string {
 	return toFixedScaled(value/3.15569e7, " year")
 }
 
-// toMinutes returns a easy to read string representation of the given value in minutes
+// toMinutes returns a easy to read string representation of the given value in minutes.
 func toMinutes(value float64) string {
 	absValue := math.Abs(value)
 
@@ -134,7 +134,7 @@ func toMinutes(value float64) string {
 	}
 }
 
-// toHours returns a easy to read string representation of the given value in hours
+// toHours returns a easy to read string representation of the given value in hours.
 func toHours(value float64) string {
 
 	absValue := math.Abs(value)
@@ -150,7 +150,7 @@ func toHours(value float64) string {
 	}
 }
 
-// toDays returns a easy to read string representation of the given value in days
+// toDays returns a easy to read string representation of the given value in days.
 func toDays(value float64) string {
 	absValue := math.Abs(value)
 
@@ -163,7 +163,7 @@ func toDays(value float64) string {
 	}
 }
 
-// toWeeks returns a easy to read string representation of the given value in weeks
+// toWeeks returns a easy to read string representation of the given value in weeks.
 func toWeeks(value float64) string {
 	absValue := math.Abs(value)
 

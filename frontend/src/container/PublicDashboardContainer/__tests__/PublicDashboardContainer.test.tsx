@@ -1,5 +1,6 @@
 import { Layout } from 'react-grid-layout';
 import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { StatusCodes } from 'http-status-codes';
 import {
@@ -153,7 +154,6 @@ afterEach(() => {
 // Test constants
 const MOCK_PUBLIC_DASHBOARD_ID = 'test-dashboard-id';
 const MOCK_PUBLIC_PATH = '/public/dashboard/test';
-const DEFAULT_TIME_RANGE = '30m';
 // Use title from mock data
 const TEST_DASHBOARD_TITLE = publicDashboardResponse.data.dashboard.data.title;
 // Use widget ID from mock data

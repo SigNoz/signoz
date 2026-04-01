@@ -49,6 +49,7 @@ func New(ctx context.Context, providerSettings factory.ProviderSettings, config 
 	connectionParams.Add("_pragma", fmt.Sprintf("busy_timeout(%d)", config.Sqlite.BusyTimeout.Milliseconds()))
 	connectionParams.Add("_pragma", fmt.Sprintf("journal_mode(%s)", config.Sqlite.Mode))
 	connectionParams.Add("_pragma", "foreign_keys(1)")
+	connectionParams.Set("_txlock", config.Sqlite.TransactionMode)
 	sqldb, err := sql.Open("sqlite", "file:"+config.Sqlite.Path+"?"+connectionParams.Encode())
 	if err != nil {
 		return nil, err

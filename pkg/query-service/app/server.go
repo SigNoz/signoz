@@ -24,6 +24,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/http/middleware"
 	"github.com/SigNoz/signoz/pkg/licensing/nooplicensing"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/query-service/agentConf"
@@ -110,6 +111,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		signoz.TelemetryMetadataStore,
 		signoz.Prometheus,
 		signoz.Modules.OrgGetter,
+		signoz.Modules.RuleStateHistory,
 		signoz.Querier,
 		signoz.Instrumentation.ToProviderSettings(),
 		signoz.QueryParser,
@@ -206,7 +208,7 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 		s.config.APIServer.Timeout.Default,
 		s.config.APIServer.Timeout.Max,
 	).Wrap)
-	r.Use(middleware.NewLogging(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes).Wrap)
+	r.Use(middleware.NewAudit(s.signoz.Instrumentation.Logger(), s.config.APIServer.Logging.ExcludedRoutes, nil).Wrap)
 	r.Use(middleware.NewComment().Wrap)
 
 	am := middleware.NewAuthZ(s.signoz.Instrumentation.Logger(), s.signoz.Modules.OrgGetter, s.signoz.Authz)
@@ -221,7 +223,6 @@ func (s *Server) createPublicServer(api *APIHandler, web web.Web) (*http.Server,
 	api.RegisterQueryRangeV4Routes(r, am)
 	api.RegisterMessagingQueuesRoutes(r, am)
 	api.RegisterThirdPartyApiRoutes(r, am)
-	api.MetricExplorerRoutes(r, am)
 	api.RegisterTraceFunnelsRoutes(r, am)
 
 	err := s.signoz.APIServer.AddToRouter(r)
@@ -331,6 +332,7 @@ func makeRulesManager(
 	metadataStore telemetrytypes.MetadataStore,
 	prometheus prometheus.Prometheus,
 	orgGetter organization.Getter,
+	ruleStateHistoryModule rulestatehistory.Module,
 	querier querier.Querier,
 	providerSettings factory.ProviderSettings,
 	queryParser queryparser.QueryParser,
@@ -339,21 +341,22 @@ func makeRulesManager(
 	maintenanceStore := sqlrulestore.NewMaintenanceStore(sqlstore)
 	// create manager opts
 	managerOpts := &rules.ManagerOptions{
-		TelemetryStore:   telemetryStore,
-		MetadataStore:    metadataStore,
-		Prometheus:       prometheus,
-		Context:          context.Background(),
-		Reader:           ch,
-		Querier:          querier,
-		Logger:           providerSettings.Logger,
-		Cache:            cache,
-		EvalDelay:        constants.GetEvalDelay(),
-		OrgGetter:        orgGetter,
-		Alertmanager:     alertmanager,
-		RuleStore:        ruleStore,
-		MaintenanceStore: maintenanceStore,
-		SqlStore:         sqlstore,
-		QueryParser:      queryParser,
+		TelemetryStore:         telemetryStore,
+		MetadataStore:          metadataStore,
+		Prometheus:             prometheus,
+		Context:                context.Background(),
+		Reader:                 ch,
+		Querier:                querier,
+		Logger:                 providerSettings.Logger,
+		Cache:                  cache,
+		EvalDelay:              constants.GetEvalDelay(),
+		OrgGetter:              orgGetter,
+		Alertmanager:           alertmanager,
+		RuleStore:              ruleStore,
+		MaintenanceStore:       maintenanceStore,
+		SqlStore:               sqlstore,
+		QueryParser:            queryParser,
+		RuleStateHistoryModule: ruleStateHistoryModule,
 	}
 
 	// create Manager

@@ -61,8 +61,10 @@ func (m *IdentN) Wrap(next http.Handler) http.Handler {
 		ctx = authtypes.NewContextWithClaims(ctx, claims)
 
 		comment := ctxtypes.CommentFromContext(ctx)
-		comment.Set("identn_provider", claims.IdentNProvider)
+		comment.Set("identn_provider", claims.IdentNProvider.StringValue())
 		comment.Set("user_id", claims.UserID)
+		comment.Set("service_account_id", claims.ServiceAccountID)
+		comment.Set("principal", claims.Principal.StringValue())
 		comment.Set("org_id", claims.OrgID)
 		ctx = ctxtypes.NewContextWithComment(ctx, comment)
 

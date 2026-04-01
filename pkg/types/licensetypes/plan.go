@@ -5,7 +5,7 @@ import (
 )
 
 var (
-	// Feature Key
+	// Feature Key.
 	SSO            = valuer.NewString("sso")
 	Onboarding     = valuer.NewString("onboarding")
 	ChatSupport    = valuer.NewString("chat_support")
@@ -15,10 +15,10 @@ var (
 	AnomalyDetection  = valuer.NewString("anomaly_detection")
 	DotMetricsEnabled = valuer.NewString("dot_metrics_enabled")
 
-	// License State
+	// License State.
 	LicenseStatusInvalid = valuer.NewString("invalid")
 
-	// Plan
+	// Plan.
 	PlanNameEnterprise = valuer.NewString("enterprise")
 	PlanNameBasic      = valuer.NewString("basic")
 )

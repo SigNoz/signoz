@@ -24,6 +24,8 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/quickfilter/implquickfilter"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport"
 	"github.com/SigNoz/signoz/pkg/modules/rawdataexport/implrawdataexport"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
+	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory/implrulestatehistory"
 	"github.com/SigNoz/signoz/pkg/modules/savedview"
 	"github.com/SigNoz/signoz/pkg/modules/savedview/implsavedview"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
@@ -59,6 +61,7 @@ type Handlers struct {
 	ServiceAccountHandler   serviceaccount.Handler
 	RegistryHandler         factory.Handler
 	CloudIntegrationHandler cloudintegration.Handler
+	RuleStateHistory        rulestatehistory.Handler
 }
 
 func NewHandlers(
@@ -78,7 +81,7 @@ func NewHandlers(
 	return Handlers{
 		SavedView:               implsavedview.NewHandler(modules.SavedView),
 		Apdex:                   implapdex.NewHandler(modules.Apdex),
-		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings),
+		Dashboard:               impldashboard.NewHandler(modules.Dashboard, providerSettings, authz),
 		QuickFilter:             implquickfilter.NewHandler(modules.QuickFilter),
 		TraceFunnel:             impltracefunnel.NewHandler(modules.TraceFunnel),
 		RawDataExport:           implrawdataexport.NewHandler(modules.RawDataExport),
@@ -95,5 +98,6 @@ func NewHandlers(
 		ServiceAccountHandler:   implserviceaccount.NewHandler(modules.ServiceAccount),
 		RegistryHandler:         registryHandler,
 		CloudIntegrationHandler: implcloudintegration.NewHandler(),
+		RuleStateHistory:        implrulestatehistory.NewHandler(modules.RuleStateHistory),
 	}
 }

@@ -72,10 +72,10 @@ func (s *Step) UnmarshalJSON(b []byte) error {
 }
 
 func (s Step) MarshalJSON() ([]byte, error) {
-	return json.Marshal(s.Duration.Seconds())
+	return json.Marshal(s.Seconds())
 }
 
-// Copy creates a copy of Step
+// Copy creates a copy of Step.
 func (s Step) Copy() Step {
 	return s
 }
@@ -186,7 +186,7 @@ func (f FilterOperator) IsStringSearchOperator() bool {
 	}
 }
 
-// IsArrayOperator returns true if the operator works with array values only
+// IsArrayOperator returns true if the operator works with array values only.
 func (f FilterOperator) IsArrayOperator() bool {
 	switch f {
 	case FilterOperatorIn, FilterOperatorNotIn,
@@ -251,7 +251,7 @@ func (ReduceTo) Enum() []any {
 
 // FunctionReduceTo applies the reduceTo operator to a time series and returns a new series with the reduced value
 // reduceTo can be one of: last, sum, avg, min, max, count, median
-// if reduceTo is not recognized, the function returns the original series
+// if reduceTo is not recognized, the function returns the original series.
 func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 	if len(result.Values) == 0 {
 		return result
@@ -297,7 +297,7 @@ func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 
 	case ReduceToMin:
 		// Find minimum value, use its timestamp
-		var min float64 = math.Inf(1)
+		var min = math.Inf(1)
 		var minTimestamp int64
 		for _, point := range result.Values {
 			if !math.IsNaN(point.Value) && point.Value < min {
@@ -315,7 +315,7 @@ func FunctionReduceTo(result *TimeSeries, reduceTo ReduceTo) *TimeSeries {
 
 	case ReduceToMax:
 		// Find maximum value, use its timestamp
-		var max float64 = math.Inf(-1)
+		var max = math.Inf(-1)
 		var maxTimestamp int64
 		for _, point := range result.Values {
 			if !math.IsNaN(point.Value) && point.Value > max {
@@ -418,7 +418,7 @@ type TraceAggregation struct {
 	Alias string `json:"alias,omitempty"`
 }
 
-// Copy creates a deep copy of TraceAggregation
+// Copy creates a deep copy of TraceAggregation.
 func (t TraceAggregation) Copy() TraceAggregation {
 	return t
 }
@@ -430,7 +430,7 @@ type LogAggregation struct {
 	Alias string `json:"alias,omitempty"`
 }
 
-// Copy creates a deep copy of LogAggregation
+// Copy creates a deep copy of LogAggregation.
 func (l LogAggregation) Copy() LogAggregation {
 	return l
 }
@@ -456,7 +456,7 @@ type MetricAggregation struct {
 	ReduceTo ReduceTo `json:"reduceTo,omitempty"`
 }
 
-// Copy creates a deep copy of MetricAggregation
+// Copy creates a deep copy of MetricAggregation.
 func (m MetricAggregation) Copy() MetricAggregation {
 	c := m
 	if m.TableHints != nil {
@@ -475,7 +475,7 @@ type Filter struct {
 	Expression string `json:"expression"`
 }
 
-// Copy creates a deep copy of Filter
+// Copy creates a deep copy of Filter.
 func (f *Filter) Copy() *Filter {
 	if f == nil {
 		return nil
@@ -489,7 +489,7 @@ type GroupByKey struct {
 	telemetrytypes.TelemetryFieldKey
 }
 
-// Copy creates a deep copy of GroupByKey
+// Copy creates a deep copy of GroupByKey.
 func (g GroupByKey) Copy() GroupByKey {
 	return g
 }
@@ -499,7 +499,7 @@ type Having struct {
 	Expression string `json:"expression"`
 }
 
-// Copy creates a deep copy of Having
+// Copy creates a deep copy of Having.
 func (h *Having) Copy() *Having {
 	if h == nil {
 		return nil
@@ -513,12 +513,12 @@ type OrderByKey struct {
 	telemetrytypes.TelemetryFieldKey
 }
 
-// Copy creates a deep copy of OrderByKey
+// Copy creates a deep copy of OrderByKey.
 func (o OrderByKey) Copy() OrderByKey {
 	return o
 }
 
-// key to order by
+// key to order by.
 type OrderBy struct {
 	// key to order by
 	Key OrderByKey `json:"key"`
@@ -526,7 +526,7 @@ type OrderBy struct {
 	Direction OrderDirection `json:"direction"`
 }
 
-// Copy creates a deep copy of OrderBy
+// Copy creates a deep copy of OrderBy.
 func (o OrderBy) Copy() OrderBy {
 	return OrderBy{
 		Key:       o.Key.Copy(),
@@ -534,7 +534,7 @@ func (o OrderBy) Copy() OrderBy {
 	}
 }
 
-// secondary aggregation to apply to the query
+// secondary aggregation to apply to the query.
 type SecondaryAggregation struct {
 	// stepInterval of the query
 	// if not set, it will use the step interval of the primary aggregation
@@ -553,7 +553,7 @@ type SecondaryAggregation struct {
 	LimitBy *LimitBy `json:"limitBy,omitempty"`
 }
 
-// Copy creates a deep copy of SecondaryAggregation
+// Copy creates a deep copy of SecondaryAggregation.
 func (s SecondaryAggregation) Copy() SecondaryAggregation {
 	c := s
 
@@ -585,7 +585,7 @@ type FunctionArg struct {
 	Value any `json:"value"`
 }
 
-// Copy creates a deep copy of FunctionArg
+// Copy creates a deep copy of FunctionArg.
 func (f FunctionArg) Copy() FunctionArg {
 	// value is an interface{}, we keep it as-is
 	// in practice, it's usually primitives (string, float64, etc)
@@ -600,7 +600,7 @@ type Function struct {
 	Args []FunctionArg `json:"args,omitempty"`
 }
 
-// Copy creates a deep copy of Function
+// Copy creates a deep copy of Function.
 func (f Function) Copy() Function {
 	c := f
 
@@ -614,7 +614,7 @@ func (f Function) Copy() Function {
 	return c
 }
 
-// Validate validates the name and args for the function
+// Validate validates the name and args for the function.
 func (f Function) Validate() error {
 	if err := f.Name.Validate(); err != nil {
 		return err
@@ -633,7 +633,7 @@ type LimitBy struct {
 	Value string `json:"value"`
 }
 
-// Copy creates a deep copy of LimitBy
+// Copy creates a deep copy of LimitBy.
 func (l *LimitBy) Copy() *LimitBy {
 	if l == nil {
 		return nil

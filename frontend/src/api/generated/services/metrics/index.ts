@@ -31,10 +31,13 @@ import type {
 	GetMetricHighlightsPathParameters,
 	GetMetricMetadata200,
 	GetMetricMetadataPathParameters,
+	GetMetricsOnboardingStatus200,
 	GetMetricsStats200,
 	GetMetricsTreemap200,
+	InspectMetrics200,
 	ListMetrics200,
 	ListMetricsParams,
+	MetricsexplorertypesInspectMetricsRequestDTO,
 	MetricsexplorertypesStatsRequestDTO,
 	MetricsexplorertypesTreemapRequestDTO,
 	MetricsexplorertypesUpdateMetricMetadataRequestDTO,
@@ -778,6 +781,176 @@ export const useUpdateMetricMetadata = <
 
 	return useMutation(mutationOptions);
 };
+/**
+ * Returns raw time series data points for a metric within a time range (max 30 minutes). Each series includes labels and timestamp/value pairs.
+ * @summary Inspect raw metric data points
+ */
+export const inspectMetrics = (
+	metricsexplorertypesInspectMetricsRequestDTO: BodyType<MetricsexplorertypesInspectMetricsRequestDTO>,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<InspectMetrics200>({
+		url: `/api/v2/metrics/inspect`,
+		method: 'POST',
+		headers: { 'Content-Type': 'application/json' },
+		data: metricsexplorertypesInspectMetricsRequestDTO,
+		signal,
+	});
+};
+
+export const getInspectMetricsMutationOptions = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof inspectMetrics>>,
+		TError,
+		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		TContext
+	>;
+}): UseMutationOptions<
+	Awaited<ReturnType<typeof inspectMetrics>>,
+	TError,
+	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	TContext
+> => {
+	const mutationKey = ['inspectMetrics'];
+	const { mutation: mutationOptions } = options
+		? options.mutation &&
+		  'mutationKey' in options.mutation &&
+		  options.mutation.mutationKey
+			? options
+			: { ...options, mutation: { ...options.mutation, mutationKey } }
+		: { mutation: { mutationKey } };
+
+	const mutationFn: MutationFunction<
+		Awaited<ReturnType<typeof inspectMetrics>>,
+		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> }
+	> = (props) => {
+		const { data } = props ?? {};
+
+		return inspectMetrics(data);
+	};
+
+	return { mutationFn, ...mutationOptions };
+};
+
+export type InspectMetricsMutationResult = NonNullable<
+	Awaited<ReturnType<typeof inspectMetrics>>
+>;
+export type InspectMetricsMutationBody = BodyType<MetricsexplorertypesInspectMetricsRequestDTO>;
+export type InspectMetricsMutationError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Inspect raw metric data points
+ */
+export const useInspectMetrics = <
+	TError = ErrorType<RenderErrorResponseDTO>,
+	TContext = unknown
+>(options?: {
+	mutation?: UseMutationOptions<
+		Awaited<ReturnType<typeof inspectMetrics>>,
+		TError,
+		{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+		TContext
+	>;
+}): UseMutationResult<
+	Awaited<ReturnType<typeof inspectMetrics>>,
+	TError,
+	{ data: BodyType<MetricsexplorertypesInspectMetricsRequestDTO> },
+	TContext
+> => {
+	const mutationOptions = getInspectMetricsMutationOptions(options);
+
+	return useMutation(mutationOptions);
+};
+/**
+ * Lightweight endpoint that checks if any non-SigNoz metrics have been ingested, used for onboarding status detection
+ * @summary Check if non-SigNoz metrics have been received
+ */
+export const getMetricsOnboardingStatus = (signal?: AbortSignal) => {
+	return GeneratedAPIInstance<GetMetricsOnboardingStatus200>({
+		url: `/api/v2/metrics/onboarding`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetMetricsOnboardingStatusQueryKey = () => {
+	return [`/api/v2/metrics/onboarding`] as const;
+};
+
+export const getGetMetricsOnboardingStatusQueryOptions = <
+	TData = Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
+		TError,
+		TData
+	>;
+}) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ?? getGetMetricsOnboardingStatusQueryKey();
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>
+	> = ({ signal }) => getMetricsOnboardingStatus(signal);
+
+	return { queryKey, queryFn, ...queryOptions } as UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetMetricsOnboardingStatusQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getMetricsOnboardingStatus>>
+>;
+export type GetMetricsOnboardingStatusQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Check if non-SigNoz metrics have been received
+ */
+
+export function useGetMetricsOnboardingStatus<
+	TData = Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(options?: {
+	query?: UseQueryOptions<
+		Awaited<ReturnType<typeof getMetricsOnboardingStatus>>,
+		TError,
+		TData
+	>;
+}): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetMetricsOnboardingStatusQueryOptions(options);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Check if non-SigNoz metrics have been received
+ */
+export const invalidateGetMetricsOnboardingStatus = async (
+	queryClient: QueryClient,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetMetricsOnboardingStatusQueryKey() },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint provides list of metrics with their number of samples and timeseries for the given time range
  * @summary Get metrics statistics

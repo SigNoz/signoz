@@ -19,7 +19,6 @@ import {
 	Github,
 	HardDrive,
 	Home,
-	Key,
 	Keyboard,
 	Layers2,
 	LayoutGrid,
@@ -365,13 +364,6 @@ export const settingsNavSections: SettingsNavSection[] = [
 				icon: <Bot size={16} />,
 				isEnabled: false,
 				itemKey: 'service-accounts',
-			},
-			{
-				key: ROUTES.API_KEYS,
-				label: 'API Keys',
-				icon: <Key size={16} />,
-				isEnabled: false,
-				itemKey: 'api-keys',
 			},
 			{
 				key: ROUTES.INGESTION_SETTINGS,

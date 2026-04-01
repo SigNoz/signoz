@@ -38,7 +38,6 @@ const ROUTES = {
 	SETTINGS: '/settings',
 	MY_SETTINGS: '/settings/my-settings',
 	ORG_SETTINGS: '/settings/org-settings',
-	API_KEYS: '/settings/api-keys',
 	INGESTION_SETTINGS: '/settings/ingestion-settings',
 	SOMETHING_WENT_WRONG: '/something-went-wrong',
 	UN_AUTHORIZED: '/un-authorized',

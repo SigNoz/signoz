@@ -1,6 +1,13 @@
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import type { Dayjs } from 'dayjs';
 import dayjs from 'dayjs';
+import APIError from 'types/api/error';
+
+export interface SaveError {
+	context: string;
+	apiError: APIError;
+	onRetry: () => Promise<void>;
+}
 
 export enum ServiceAccountDrawerTab {
 	Overview = 'overview',

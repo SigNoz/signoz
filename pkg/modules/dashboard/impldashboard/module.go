@@ -14,7 +14,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/dashboardtypes"
-	"github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -100,13 +99,13 @@ func (module *module) Update(ctx context.Context, orgID valuer.UUID, id valuer.U
 	return dashboard, nil
 }
 
-func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, role types.Role, lock bool) error {
+func (module *module) LockUnlock(ctx context.Context, orgID valuer.UUID, id valuer.UUID, updatedBy string, isAdmin bool, lock bool) error {
 	dashboard, err := module.Get(ctx, orgID, id)
 	if err != nil {
 		return err
 	}
 
-	err = dashboard.LockUnlock(lock, role, updatedBy)
+	err = dashboard.LockUnlock(lock, isAdmin, updatedBy)
 	if err != nil {
 		return err
 	}
@@ -211,7 +210,7 @@ func (module *module) MustGetManagedRoleTransactions() map[string][]*authtypes.T
 	return nil
 }
 
-// not supported
+// CreatePublic is not supported.
 func (module *module) CreatePublic(ctx context.Context, orgID valuer.UUID, publicDashboard *dashboardtypes.PublicDashboard) error {
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
@@ -224,7 +223,7 @@ func (module *module) GetDashboardByPublicID(_ context.Context, _ valuer.UUID) (
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*querybuildertypesv5.QueryRangeResponse, error) {
+func (module *module) GetPublicWidgetQueryRange(context.Context, valuer.UUID, uint64, uint64, uint64) (*qbtypes.QueryRangeResponse, error) {
 	return nil, errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
@@ -240,7 +239,7 @@ func (module *module) DeletePublic(_ context.Context, _ valuer.UUID, _ valuer.UU
 	return errors.Newf(errors.TypeUnsupported, dashboardtypes.ErrCodePublicDashboardUnsupported, "not implemented")
 }
 
-// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName
+// checkBuilderQueriesForMetricNames checks builder.queryData[] for aggregations[].metricName.
 func (module *module) checkBuilderQueriesForMetricNames(query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	builder, ok := query["builder"].(map[string]interface{})
 	if !ok {
@@ -287,7 +286,7 @@ func (module *module) checkBuilderQueriesForMetricNames(query map[string]interfa
 	}
 }
 
-// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings
+// checkClickHouseQueriesForMetricNames checks clickhouse_sql[] array for metric names in query strings.
 func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	clickhouseSQL, ok := query["clickhouse_sql"].([]interface{})
 	if !ok {
@@ -322,7 +321,7 @@ func (module *module) checkClickHouseQueriesForMetricNames(ctx context.Context, 
 	}
 }
 
-// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings
+// checkPromQLQueriesForMetricNames checks promql[] array for metric names in query strings.
 func (module *module) checkPromQLQueriesForMetricNames(ctx context.Context, query map[string]interface{}, metricNames []string, foundMetrics map[string]bool) {
 	promQL, ok := query["promql"].([]interface{})
 	if !ok {
