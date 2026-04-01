@@ -14,6 +14,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'hooks/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -26,10 +30,6 @@ import { useTimezone } from 'providers/Timezone';
 import { bindActionCreators, Dispatch } from 'redux';
 import { ThunkDispatch } from 'redux-thunk';
 import { GlobalTimeLoading, UpdateTimeInterval } from 'store/actions';
-import {
-	useGlobalTimeQueryInvalidate,
-	useIsGlobalTimeQueryRefreshing,
-} from 'store/globalTime/hooks';
 import { AppState } from 'store/reducers';
 import AppActions from 'types/actions';
 import { GlobalReducer } from 'types/reducer/globalTime';
