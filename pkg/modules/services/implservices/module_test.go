@@ -53,7 +53,7 @@ func TestBuildQueryRangeRequest(t *testing.T) {
 
 				// GroupBy should include service.name
 				if assert.Equal(t, 1, len(spec.GroupBy)) {
-					assert.Equal(t, "service.name", spec.GroupBy[0].TelemetryFieldKey.Name)
+					assert.Equal(t, "service.name", spec.GroupBy[0].Name)
 				}
 
 				// Aggregations should match expected expressions and aliases
@@ -373,8 +373,8 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 						assert.NotContains(t, expr, "isRoot = true OR isEntryPoint = true")
 					}
 					if assert.Equal(t, 1, len(spec.GroupBy)) {
-						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
-						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+						assert.Equal(t, "name", spec.GroupBy[0].Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].FieldContext)
 					}
 					if assert.Equal(t, 5, len(spec.Aggregations)) {
 						assert.Equal(t, "p50(duration_nano)", spec.Aggregations[0].Expression)
@@ -389,7 +389,7 @@ func TestBuildTopOpsQueryRangeRequest(t *testing.T) {
 						assert.Equal(t, "errorCount", spec.Aggregations[4].Alias)
 					}
 					if assert.Equal(t, 1, len(spec.Order)) {
-						assert.Equal(t, "p99", spec.Order[0].Key.TelemetryFieldKey.Name)
+						assert.Equal(t, "p99", spec.Order[0].Key.Name)
 						assert.Equal(t, qbtypes.OrderDirectionDesc, spec.Order[0].Direction)
 					}
 					assert.Equal(t, 50, spec.Limit)
@@ -576,8 +576,8 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 					}
 					// groupBy is name (span)
 					if assert.Equal(t, 1, len(spec.GroupBy)) {
-						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
-						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+						assert.Equal(t, "name", spec.GroupBy[0].Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].FieldContext)
 					}
 				}
 			},
@@ -608,8 +608,8 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 					assert.Contains(t, expr, "http.method IN $3")
 					assert.Contains(t, expr, "isRoot = true OR isEntryPoint = true")
 					if assert.Equal(t, 1, len(spec.GroupBy)) {
-						assert.Equal(t, "name", spec.GroupBy[0].TelemetryFieldKey.Name)
-						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].TelemetryFieldKey.FieldContext)
+						assert.Equal(t, "name", spec.GroupBy[0].Name)
+						assert.Equal(t, telemetrytypes.FieldContextSpan, spec.GroupBy[0].FieldContext)
 					}
 					if assert.Equal(t, 5, len(spec.Aggregations)) {
 						assert.Equal(t, "p50(duration_nano)", spec.Aggregations[0].Expression)
@@ -624,7 +624,7 @@ func TestBuildEntryPointOpsQueryRangeRequest(t *testing.T) {
 						assert.Equal(t, "errorCount", spec.Aggregations[4].Alias)
 					}
 					if assert.Equal(t, 1, len(spec.Order)) {
-						assert.Equal(t, "p99", spec.Order[0].Key.TelemetryFieldKey.Name)
+						assert.Equal(t, "p99", spec.Order[0].Key.Name)
 						assert.Equal(t, qbtypes.OrderDirectionDesc, spec.Order[0].Direction)
 					}
 					assert.Equal(t, 25, spec.Limit)

@@ -78,7 +78,7 @@ func (handler *handler) ExportRawData(rw http.ResponseWriter, r *http.Request) {
 	rw.Header().Set("X-Response-Complete", strconv.FormatBool(isComplete))
 }
 
-// validateSpecForExport validates query specs
+// validateSpecForExport validates query specs.
 func validateSpecForExport(req *qbtypes.QueryRangeRequest) error {
 
 	queries := req.CompositeQuery.Queries
@@ -256,7 +256,7 @@ func constructCSVHeaderFromQueryResponse(data map[string]any) []string {
 
 // sanitizeForCSV sanitizes a string for CSV by prefixing a single quote if the first non-whitespace rune is '=', '+', '-', or '@'.
 // Excel and sheets remove these leading single quote when displaying the cell content.
-// TODO: will revisit this in a future PR
+// TODO: will revisit this in a future PR.
 func sanitizeForCSV(s string) string {
 	// Find first non-whitespace rune
 	i := 0

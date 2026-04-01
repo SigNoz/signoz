@@ -13,7 +13,7 @@ var (
 	ErrCodeFeatureNotFound               = errors.MustNewCode("feature_not_found")
 )
 
-// A concrete type for a feature flag
+// A concrete type for a feature flag.
 type Feature struct {
 	// Name of the feature
 	Name Name `json:"name"`
@@ -29,7 +29,7 @@ type Feature struct {
 	Variants map[Name]FeatureVariant `json:"variants"`
 }
 
-// A concrete type for a feature flag variant
+// A concrete type for a feature flag variant.
 type FeatureVariant struct {
 	// Name of the variant
 	Variant Name `json:"variant"`
@@ -47,7 +47,7 @@ type GettableFeature struct {
 	ResolvedValue  any            `json:"resolvedValue"`
 }
 
-// This is the helper function to get the value of a variant of a feature
+// This is the helper function to get the value of a variant of a feature.
 func VariantValue[T any](feature *Feature, variant Name) (t T, detail openfeature.ProviderResolutionDetail, err error) {
 	value, ok := feature.Variants[variant]
 	if !ok {
@@ -79,7 +79,7 @@ func VariantValue[T any](feature *Feature, variant Name) (t T, detail openfeatur
 	return
 }
 
-// This is the helper function to get the variant by value for the given feature
+// This is the helper function to get the variant by value for the given feature.
 func VariantByValue[T comparable](feature *Feature, value T) (featureVariant *FeatureVariant, err error) {
 
 	// technically this method should not be called for object kind

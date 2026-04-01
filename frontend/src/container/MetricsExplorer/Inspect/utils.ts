@@ -1,7 +1,7 @@
 import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
+import { InspectMetricsSeries } from './types';
 import {
 	GraphPopoverData,
 	GraphPopoverOptions,
