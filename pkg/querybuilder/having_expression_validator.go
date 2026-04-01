@@ -392,6 +392,12 @@ func havingSuggestion(se *SyntaxErr, original string) string {
 			return trimmed + ")"
 		}
 
+		// Pattern 6: unclosed IN bracket list.
+		// e.g.  count() IN [1, 2, 3  →  count() IN [1, 2, 3]
+		if expectedContains(se, "]") && hasUnclosedBracket(trimmed) && len(trimmed) > 1 {
+			return trimmed + "]"
+		}
+
 		return ""
 	}
 
@@ -421,6 +427,19 @@ func hasUnclosedParen(s string) bool {
 		if c == '(' {
 			count++
 		} else if c == ')' {
+			count--
+		}
+	}
+	return count > 0
+}
+
+// hasUnclosedBracket reports whether s contains more '[' than ']'.
+func hasUnclosedBracket(s string) bool {
+	count := 0
+	for _, c := range s {
+		if c == '[' {
+			count++
+		} else if c == ']' {
 			count--
 		}
 	}

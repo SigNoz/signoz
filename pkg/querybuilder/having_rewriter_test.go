@@ -485,6 +485,22 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			wantExpression: "__result_0 NOT IN (1, 2, 3)",
 		},
 		{
+			name:       "IN with bracket list",
+			expression: "count() IN [1, 2, 3]",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 IN (1, 2, 3)",
+		},
+		{
+			name:       "NOT IN with bracket list",
+			expression: "count() NOT IN [1, 2, 3]",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantExpression: "__result_0 NOT IN (1, 2, 3)",
+		},
+		{
 			name:       "NOT IN with mixed list",
 			expression: "count() NOT IN (1,'2', 3)",
 			aggregations: []qbtypes.LogAggregation{
@@ -545,6 +561,26 @@ func TestRewriteForLogsAndTraces_InOperator(t *testing.T) {
 			wantErr:        true,
 			wantErrMsg:     "Invalid references in `Having` expression: [ghost]",
 			wantAdditional: []string{"Valid references are: [__result, __result0, count(), total]"},
+		},
+		{
+			name:       "IN with end bracked missing",
+			expression: "count() IN [1, 2, 3",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:19 expecting one of {]} but got EOF", "Suggestion: `count() IN [1, 2, 3]`"},
+		},
+		{
+			name:       "IN with end paran missing",
+			expression: "count() IN (1, 2, 3",
+			aggregations: []qbtypes.LogAggregation{
+				{Expression: "count()"},
+			},
+			wantErr:        true,
+			wantErrMsg:     "Syntax error in `Having` expression",
+			wantAdditional: []string{"line 1:19 expecting one of {)} but got EOF", "Suggestion: `count() IN (1, 2, 3)`"},
 		},
 	})
 }
@@ -714,7 +750,7 @@ func TestRewriteForLogsAndTraces_ErrorSyntax(t *testing.T) {
 			},
 			wantErr:        true,
 			wantErrMsg:     "Syntax error in `Having` expression",
-			wantAdditional: []string{"line 1:35 expecting one of {), ,} but got EOF", "Suggestion: `(total_logs > 100 AND count() < 500)`"},
+			wantAdditional: []string{"line 1:35 expecting one of {)} but got EOF", "Suggestion: `(total_logs > 100 AND count() < 500)`"},
 		},
 		{
 			name:       "unexpected closing parenthesis",

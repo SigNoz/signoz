@@ -39,10 +39,12 @@ primary
  * Comparison between two arithmetic operands, or an IN / NOT IN membership test.
  * E.g.: count() > 100, total_duration >= 500, __result_0 != 0
  *       count() IN (1, 2, 3), sum(bytes) NOT IN (0, -1)
+ *       count() IN [1, 2, 3], sum(bytes) NOT IN [0, -1]
  */
 comparison
     : operand compOp operand
     | operand NOT? IN LPAREN inList RPAREN
+    | operand NOT? IN LBRACK inList RBRACK
     ;
 
 compOp
@@ -57,7 +59,7 @@ compOp
 
 /*
  * IN-list: a comma-separated list of numeric literals.
- * E.g.: (1, 2, 3), (100, 200, 500)
+ * E.g.: (1, 2, 3), [100, 200, 500]
  */
 inList
     : NUMBER ( COMMA NUMBER )*
@@ -179,6 +181,8 @@ identifier
 // Punctuation
 LPAREN  : '(' ;
 RPAREN  : ')' ;
+LBRACK  : '[' ;
+RBRACK  : ']' ;
 COMMA   : ',' ;
 
 // Comparison operators
