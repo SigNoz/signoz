@@ -300,6 +300,41 @@ func (h *handler) GetMetricAttributes(rw http.ResponseWriter, req *http.Request)
 	render.Success(rw, http.StatusOK, out)
 }
 
+func (h *handler) InspectMetrics(rw http.ResponseWriter, req *http.Request) {
+	claims, err := authtypes.ClaimsFromContext(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	var in metricsexplorertypes.InspectMetricsRequest
+	if err := binding.JSON.BindBody(req.Body, &in); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	orgID := valuer.MustNewUUID(claims.OrgID)
+	out, err := h.module.InspectMetrics(req.Context(), orgID, &in)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, out)
+}
+
+func (h *handler) GetOnboardingStatus(rw http.ResponseWriter, req *http.Request) {
+	hasMetrics, err := h.module.HasNonSigNozMetrics(req.Context())
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, &metricsexplorertypes.MetricsOnboardingResponse{
+		HasMetrics: hasMetrics,
+	})
+}
+
 func (h *handler) checkMetricExists(ctx context.Context, orgID valuer.UUID, metricName string) error {
 	exists, err := h.module.CheckMetricExists(ctx, orgID, metricName)
 	if err != nil {

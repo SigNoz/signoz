@@ -1,3 +1,4 @@
+import { createElement } from 'react';
 import * as appContextHooks from 'providers/App/App';
 import * as timezoneHooks from 'providers/Timezone';
 import { LicenseEvent } from 'types/api/licensesV3/getActive';
@@ -45,14 +46,6 @@ const setupCommonMocks = (): void => {
 
 	jest.mock('react-router-dom-v5-compat', () => ({
 		...jest.requireActual('react-router-dom-v5-compat'),
-		useSearchParams: jest.fn().mockReturnValue([
-			{
-				get: jest.fn(),
-				entries: jest.fn(() => []),
-				set: jest.fn(),
-			},
-			jest.fn(),
-		]),
 		useNavigationType: (): any => 'PUSH',
 	}));
 
@@ -103,6 +96,15 @@ const setupCommonMocks = (): void => {
 			safeNavigate: jest.fn(),
 		}),
 	}));
+
+	// TODO: Remove this when https://github.com/SigNoz/engineering-pod/issues/4253
+	jest.mock('container/TopNav/DateTimeSelectionV2', () => {
+		return {
+			__esModule: true,
+			default: (): React.ReactElement =>
+				createElement('div', { 'data-testid': 'datetime-selection' }),
+		};
+	});
 };
 
 export default setupCommonMocks;

@@ -40,7 +40,7 @@ type WhereClauseRewriter struct {
 // In this case, the Severity text will appear in the `labels` if it were part of the group
 // by clause, in which case we replace it with the actual value for the notification
 // i.e Severity text = WARN
-// If the Severity text is not part of the group by clause, then we add it as it is
+// If the Severity text is not part of the group by clause, then we add it as it is.
 func PrepareFilterExpression(labels map[string]string, whereClause string, groupByItems []qbtypes.GroupByKey) string {
 	if whereClause == "" && len(labels) == 0 {
 		return ""
@@ -100,12 +100,12 @@ func PrepareFilterExpression(labels map[string]string, whereClause string, group
 	return rewrittenClause
 }
 
-// Visit implements the visitor for the query rule
+// Visit implements the visitor for the query rule.
 func (r *WhereClauseRewriter) Visit(tree antlr.ParseTree) interface{} {
 	return tree.Accept(r)
 }
 
-// VisitQuery visits the query node
+// VisitQuery visits the query node.
 func (r *WhereClauseRewriter) VisitQuery(ctx *parser.QueryContext) interface{} {
 	if ctx.Expression() != nil {
 		ctx.Expression().Accept(r)
@@ -113,7 +113,7 @@ func (r *WhereClauseRewriter) VisitQuery(ctx *parser.QueryContext) interface{} {
 	return nil
 }
 
-// VisitExpression visits the expression node
+// VisitExpression visits the expression node.
 func (r *WhereClauseRewriter) VisitExpression(ctx *parser.ExpressionContext) interface{} {
 	if ctx.OrExpression() != nil {
 		ctx.OrExpression().Accept(r)
@@ -121,7 +121,7 @@ func (r *WhereClauseRewriter) VisitExpression(ctx *parser.ExpressionContext) int
 	return nil
 }
 
-// VisitOrExpression visits OR expressions
+// VisitOrExpression visits OR expressions.
 func (r *WhereClauseRewriter) VisitOrExpression(ctx *parser.OrExpressionContext) interface{} {
 	for i, andExpr := range ctx.AllAndExpression() {
 		if i > 0 {
@@ -132,7 +132,7 @@ func (r *WhereClauseRewriter) VisitOrExpression(ctx *parser.OrExpressionContext)
 	return nil
 }
 
-// VisitAndExpression visits AND expressions
+// VisitAndExpression visits AND expressions.
 func (r *WhereClauseRewriter) VisitAndExpression(ctx *parser.AndExpressionContext) interface{} {
 	unaryExprs := ctx.AllUnaryExpression()
 	for i, unaryExpr := range unaryExprs {
@@ -150,7 +150,7 @@ func (r *WhereClauseRewriter) VisitAndExpression(ctx *parser.AndExpressionContex
 	return nil
 }
 
-// VisitUnaryExpression visits unary expressions (with optional NOT)
+// VisitUnaryExpression visits unary expressions (with optional NOT).
 func (r *WhereClauseRewriter) VisitUnaryExpression(ctx *parser.UnaryExpressionContext) interface{} {
 	if ctx.NOT() != nil {
 		r.rewritten.WriteString("NOT ")
@@ -161,7 +161,7 @@ func (r *WhereClauseRewriter) VisitUnaryExpression(ctx *parser.UnaryExpressionCo
 	return nil
 }
 
-// VisitPrimary visits primary expressions
+// VisitPrimary visits primary expressions.
 func (r *WhereClauseRewriter) VisitPrimary(ctx *parser.PrimaryContext) interface{} {
 	if ctx.LPAREN() != nil && ctx.RPAREN() != nil {
 		r.rewritten.WriteString("(")
@@ -183,7 +183,7 @@ func (r *WhereClauseRewriter) VisitPrimary(ctx *parser.PrimaryContext) interface
 	return nil
 }
 
-// VisitComparison visits comparison expressions
+// VisitComparison visits comparison expressions.
 func (r *WhereClauseRewriter) VisitComparison(ctx *parser.ComparisonContext) interface{} {
 	if ctx.Key() == nil {
 		return nil
@@ -304,7 +304,7 @@ func (r *WhereClauseRewriter) VisitComparison(ctx *parser.ComparisonContext) int
 	return nil
 }
 
-// VisitInClause visits IN clauses
+// VisitInClause visits IN clauses.
 func (r *WhereClauseRewriter) VisitInClause(ctx *parser.InClauseContext) interface{} {
 	r.rewritten.WriteString("IN ")
 	if ctx.LPAREN() != nil {
@@ -325,7 +325,7 @@ func (r *WhereClauseRewriter) VisitInClause(ctx *parser.InClauseContext) interfa
 	return nil
 }
 
-// VisitNotInClause visits NOT IN clauses
+// VisitNotInClause visits NOT IN clauses.
 func (r *WhereClauseRewriter) VisitNotInClause(ctx *parser.NotInClauseContext) interface{} {
 	r.rewritten.WriteString("NOT IN ")
 	if ctx.LPAREN() != nil {
@@ -346,7 +346,7 @@ func (r *WhereClauseRewriter) VisitNotInClause(ctx *parser.NotInClauseContext) i
 	return nil
 }
 
-// VisitValueList visits value lists
+// VisitValueList visits value lists.
 func (r *WhereClauseRewriter) VisitValueList(ctx *parser.ValueListContext) interface{} {
 	values := ctx.AllValue()
 	for i, val := range values {
@@ -358,13 +358,13 @@ func (r *WhereClauseRewriter) VisitValueList(ctx *parser.ValueListContext) inter
 	return nil
 }
 
-// VisitFullText visits full text expressions
+// VisitFullText visits full text expressions.
 func (r *WhereClauseRewriter) VisitFullText(ctx *parser.FullTextContext) interface{} {
 	r.rewritten.WriteString(ctx.GetText())
 	return nil
 }
 
-// VisitFunctionCall visits function calls
+// VisitFunctionCall visits function calls.
 func (r *WhereClauseRewriter) VisitFunctionCall(ctx *parser.FunctionCallContext) interface{} {
 	// Write function name
 	if ctx.HAS() != nil {
@@ -385,7 +385,7 @@ func (r *WhereClauseRewriter) VisitFunctionCall(ctx *parser.FunctionCallContext)
 	return nil
 }
 
-// VisitFunctionParamList visits function parameter lists
+// VisitFunctionParamList visits function parameter lists.
 func (r *WhereClauseRewriter) VisitFunctionParamList(ctx *parser.FunctionParamListContext) interface{} {
 	params := ctx.AllFunctionParam()
 	for i, param := range params {
@@ -397,7 +397,7 @@ func (r *WhereClauseRewriter) VisitFunctionParamList(ctx *parser.FunctionParamLi
 	return nil
 }
 
-// VisitFunctionParam visits function parameters
+// VisitFunctionParam visits function parameters.
 func (r *WhereClauseRewriter) VisitFunctionParam(ctx *parser.FunctionParamContext) interface{} {
 	if ctx.Key() != nil {
 		ctx.Key().Accept(r)
@@ -409,7 +409,7 @@ func (r *WhereClauseRewriter) VisitFunctionParam(ctx *parser.FunctionParamContex
 	return nil
 }
 
-// VisitArray visits array expressions
+// VisitArray visits array expressions.
 func (r *WhereClauseRewriter) VisitArray(ctx *parser.ArrayContext) interface{} {
 	r.rewritten.WriteString("[")
 	if ctx.ValueList() != nil {
@@ -419,13 +419,13 @@ func (r *WhereClauseRewriter) VisitArray(ctx *parser.ArrayContext) interface{} {
 	return nil
 }
 
-// VisitValue visits value expressions
+// VisitValue visits value expressions.
 func (r *WhereClauseRewriter) VisitValue(ctx *parser.ValueContext) interface{} {
 	r.rewritten.WriteString(ctx.GetText())
 	return nil
 }
 
-// VisitKey visits key expressions
+// VisitKey visits key expressions.
 func (r *WhereClauseRewriter) VisitKey(ctx *parser.KeyContext) interface{} {
 	r.keysSeen[ctx.GetText()] = struct{}{}
 	r.rewritten.WriteString(ctx.GetText())
@@ -438,7 +438,7 @@ func (r *WhereClauseRewriter) isKeyInWhereClause(key string) bool {
 }
 
 // escapeValueIfNeeded adds single quotes to string values and escapes single quotes within them
-// Numeric and boolean values are returned as-is
+// Numeric and boolean values are returned as-is.
 func escapeValueIfNeeded(value string) string {
 	// Check if it's a number
 	if _, err := fmt.Sscanf(value, "%f", new(float64)); err == nil {

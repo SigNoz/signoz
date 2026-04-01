@@ -38,7 +38,7 @@ const (
 	RuleDataKindJson RuleDataKind = "json"
 )
 
-// PostableRule is used to create alerting rule from HTTP api
+// PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
 	AlertName   string              `json:"alert,omitempty"`
 	AlertType   AlertType           `json:"alertType,omitempty"`
@@ -293,7 +293,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) { //nolint:staticcheck // QF1001: De Morgan form is less readable here
 			return false
 		}
 	}

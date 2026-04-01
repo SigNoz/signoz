@@ -18,7 +18,7 @@ var (
 	ExtractorTypePromQL        = ExtractorType{valuer.NewString("qfe_promql")}
 )
 
-// ColumnInfo represents a column in the query
+// ColumnInfo represents a column in the query.
 type ColumnInfo struct {
 	Name        string
 	Alias       string

@@ -14,6 +14,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	openfgav1 "github.com/openfga/api/proto/openfga/v1"
 	openfgapkgtransformer "github.com/openfga/language/pkg/go/transformer"
+	"github.com/openfga/openfga/pkg/storage"
 )
 
 type provider struct {
@@ -21,14 +22,14 @@ type provider struct {
 	store  authtypes.RoleStore
 }
 
-func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) factory.ProviderFactory[authz.AuthZ, authz.Config] {
+func NewProviderFactory(sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) factory.ProviderFactory[authz.AuthZ, authz.Config] {
 	return factory.NewProviderFactory(factory.MustNewName("openfga"), func(ctx context.Context, ps factory.ProviderSettings, config authz.Config) (authz.AuthZ, error) {
-		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema)
+		return newOpenfgaProvider(ctx, ps, config, sqlstore, openfgaSchema, openfgaDataStore)
 	})
 }
 
-func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile) (authz.AuthZ, error) {
-	server, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema)
+func newOpenfgaProvider(ctx context.Context, settings factory.ProviderSettings, config authz.Config, sqlstore sqlstore.SQLStore, openfgaSchema []openfgapkgtransformer.ModuleFile, openfgaDataStore storage.OpenFGADatastore) (authz.AuthZ, error) {
+	server, err := openfgaserver.NewOpenfgaServer(ctx, settings, config, sqlstore, openfgaSchema, openfgaDataStore)
 	if err != nil {
 		return nil, err
 	}
@@ -147,7 +148,12 @@ func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []
 		return err
 	}
 
-	return provider.Write(ctx, tuples, nil)
+	err = provider.Write(ctx, tuples, nil)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to grant roles: %v to subject: %s", names, subject)
+	}
+
+	return nil
 }
 
 func (provider *provider) ModifyGrant(ctx context.Context, orgID valuer.UUID, existingRoleNames []string, updatedRoleNames []string, subject string) error {
@@ -179,7 +185,13 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names [
 	if err != nil {
 		return err
 	}
-	return provider.Write(ctx, nil, tuples)
+
+	err = provider.Write(ctx, nil, tuples)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to revoke roles: %v to subject: %s", names, subject)
+	}
+
+	return nil
 }
 
 func (provider *provider) CreateManagedRoles(ctx context.Context, _ valuer.UUID, managedRoles []*authtypes.Role) error {

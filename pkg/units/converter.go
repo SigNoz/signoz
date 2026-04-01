@@ -1,15 +1,15 @@
 package units
 
-// Unit represents a unit of measurement
+// Unit represents a unit of measurement.
 type Unit string
 
-// Value represents a value with a unit of measurement
+// Value represents a value with a unit of measurement.
 type Value struct {
 	F float64
 	U Unit
 }
 
-// Converter converts values from one unit to another
+// Converter converts values from one unit to another.
 type Converter interface {
 	// Convert converts the given value to the given unit
 	Convert(v Value, to Unit) Value
@@ -18,7 +18,7 @@ type Converter interface {
 	Name() string
 }
 
-// noneConverter is a converter that does not convert
+// noneConverter is a converter that does not convert.
 type noneConverter struct{}
 
 func (*noneConverter) Name() string {
@@ -29,7 +29,7 @@ func (c *noneConverter) Convert(v Value, to Unit) Value {
 	return v
 }
 
-// Converters
+// Converters.
 var (
 	DurationConverter   = NewDurationConverter()
 	DataConverter       = NewDataConverter()
@@ -40,7 +40,7 @@ var (
 	NoneConverter       = &noneConverter{}
 )
 
-// ConverterFromUnit returns a converter for the given unit
+// ConverterFromUnit returns a converter for the given unit.
 func ConverterFromUnit(u Unit) Converter {
 	switch u {
 	case "ns", "us", "µs", "ms", "s", "m", "h", "d", "min", "w", "wk":

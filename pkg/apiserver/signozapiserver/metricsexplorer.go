@@ -183,5 +183,43 @@ func (provider *provider) addMetricsExplorerRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v2/metrics/inspect", handler.New(
+		provider.authZ.ViewAccess(provider.metricsExplorerHandler.InspectMetrics),
+		handler.OpenAPIDef{
+			ID:                  "InspectMetrics",
+			Tags:                []string{"metrics"},
+			Summary:             "Inspect raw metric data points",
+			Description:         "Returns raw time series data points for a metric within a time range (max 30 minutes). Each series includes labels and timestamp/value pairs.",
+			Request:             new(metricsexplorertypes.InspectMetricsRequest),
+			RequestContentType:  "application/json",
+			Response:            new(metricsexplorertypes.InspectMetricsResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusBadRequest, http.StatusUnauthorized, http.StatusInternalServerError},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v2/metrics/onboarding", handler.New(
+		provider.authZ.ViewAccess(provider.metricsExplorerHandler.GetOnboardingStatus),
+		handler.OpenAPIDef{
+			ID:                  "GetMetricsOnboardingStatus",
+			Tags:                []string{"metrics"},
+			Summary:             "Check if non-SigNoz metrics have been received",
+			Description:         "Lightweight endpoint that checks if any non-SigNoz metrics have been ingested, used for onboarding status detection",
+			Request:             nil,
+			RequestContentType:  "",
+			Response:            new(metricsexplorertypes.MetricsOnboardingResponse),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{http.StatusUnauthorized, http.StatusInternalServerError},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleViewer),
+		})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	return nil
 }

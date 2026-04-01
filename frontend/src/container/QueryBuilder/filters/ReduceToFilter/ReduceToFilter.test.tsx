@@ -1,5 +1,5 @@
 import { render, screen } from '@testing-library/react';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
 import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { ReduceOperators } from 'types/common/queryBuilder';
 
@@ -47,7 +47,7 @@ describe('ReduceToFilter', () => {
 							spaceAggregation: 'sum',
 						},
 					],
-					aggregateAttribute: { key: 'test', type: MetricType.SUM },
+					aggregateAttribute: { key: 'test', type: MetrictypesTypeDTO.sum },
 				})}
 				onChange={mockOnChange}
 			/>,
@@ -61,7 +61,7 @@ describe('ReduceToFilter', () => {
 			<ReduceToFilter
 				query={baseQuery({
 					reduceTo: ReduceOperators.MAX,
-					aggregateAttribute: { key: 'test', type: MetricType.GAUGE },
+					aggregateAttribute: { key: 'test', type: MetrictypesTypeDTO.gauge },
 				})}
 				onChange={mockOnChange}
 			/>,

@@ -162,7 +162,7 @@ type AWSLogsStrategy struct {
 
 // Dashboard represents a dashboard definition for cloud integration.
 // This is used to show available pre-made dashboards for a service,
-// hence has additional fields like id, title and description
+// hence has additional fields like id, title and description.
 type Dashboard struct {
 	ID          string                               `json:"id"`
 	Title       string                               `json:"title"`

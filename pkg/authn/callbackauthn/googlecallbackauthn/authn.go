@@ -210,7 +210,7 @@ func (a *AuthN) fetchGoogleWorkspaceGroups(ctx context.Context, userEmail string
 	return a.getGroups(ctx, adminService, userEmail, config.FetchTransitiveGroupMembership, checkedGroups)
 }
 
-// Recursive method
+// Recursive method.
 func (a *AuthN) getGroups(ctx context.Context, adminService *admin.Service, userEmail string, fetchTransitive bool, checkedGroups map[string]struct{}) ([]string, error) {
 	var userGroups []string
 	var pageToken string

@@ -1,4 +1,4 @@
-import { useEffect, useMemo } from 'react';
+import React, { useEffect, useMemo } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useLocation } from 'react-router-dom';
 import { Breadcrumb, Button, Divider } from 'antd';
@@ -11,6 +11,7 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import { CreateAlertProvider } from 'container/CreateAlertV2/context';
 import { getCreateAlertLocalStateFromAlertDef } from 'container/CreateAlertV2/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
 import history from 'lib/history';
 import { AlertTypes } from 'types/api/alerts/alertTypes';
@@ -18,6 +19,7 @@ import {
 	NEW_ALERT_SCHEMA_VERSION,
 	PostableAlertRuleV2,
 } from 'types/api/alerts/alertTypesV2';
+import { isModifierKeyPressed } from 'utils/app';
 
 import AlertHeader from './AlertHeader/AlertHeader';
 import AlertNotFound from './AlertNotFound';
@@ -55,14 +57,15 @@ function BreadCrumbItem({
 	isLast?: boolean;
 	route?: string;
 }): JSX.Element {
+	const { safeNavigate } = useSafeNavigate();
 	if (isLast) {
 		return <div className="breadcrumb-item breadcrumb-item--last">{title}</div>;
 	}
-	const handleNavigate = (): void => {
+	const handleNavigate = (e: React.MouseEvent): void => {
 		if (!route) {
 			return;
 		}
-		history.push(ROUTES.LIST_ALL_ALERT);
+		safeNavigate(ROUTES.LIST_ALL_ALERT, { newTab: isModifierKeyPressed(e) });
 	};
 
 	return (

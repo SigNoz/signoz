@@ -90,7 +90,7 @@ func New(
 	sqlstoreProviderFactories factory.NamedMap[factory.ProviderFactory[sqlstore.SQLStore, sqlstore.Config]],
 	telemetrystoreProviderFactories factory.NamedMap[factory.ProviderFactory[telemetrystore.TelemetryStore, telemetrystore.Config]],
 	authNsCallback func(ctx context.Context, providerSettings factory.ProviderSettings, store authtypes.AuthNStore, licensing licensing.Licensing) (map[authtypes.AuthNProvider]authn.AuthN, error),
-	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) factory.ProviderFactory[authz.AuthZ, authz.Config],
+	authzCallback func(context.Context, sqlstore.SQLStore, licensing.Licensing, dashboard.Module) (factory.ProviderFactory[authz.AuthZ, authz.Config], error),
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
@@ -316,7 +316,10 @@ func New(
 	dashboard := dashboardModuleCallback(sqlstore, providerSettings, analytics, orgGetter, queryParser, querier, licensing)
 
 	// Initialize authz
-	authzProviderFactory := authzCallback(ctx, sqlstore, licensing, dashboard)
+	authzProviderFactory, err := authzCallback(ctx, sqlstore, licensing, dashboard)
+	if err != nil {
+		return nil, err
+	}
 	authz, err := authzProviderFactory.New(ctx, providerSettings, authz.Config{})
 	if err != nil {
 		return nil, err
@@ -412,7 +415,7 @@ func New(
 	modules := NewModules(sqlstore, tokenizer, emailing, providerSettings, orgGetter, alertmanager, analytics, querier, telemetrystore, telemetryMetadataStore, authNs, authz, cache, queryParser, config, dashboard, userGetter, userRoleStore)
 
 	// Initialize identN resolver
-	identNFactories := NewIdentNProviderFactories(sqlstore, tokenizer, orgGetter, userGetter, config.User)
+	identNFactories := NewIdentNProviderFactories(tokenizer, modules.ServiceAccount, orgGetter, userGetter, config.User)
 	identNResolver, err := identn.NewIdentNResolver(ctx, providerSettings, config.IdentN, identNFactories)
 	if err != nil {
 		return nil, err

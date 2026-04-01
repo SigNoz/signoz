@@ -72,6 +72,7 @@ describe('HostsListTable', () => {
 		pageSize: 10,
 		setOrderBy: mockSetOrderBy,
 		setPageSize: mockSetPageSize,
+		orderBy: null,
 	};
 
 	it('renders loading state if isLoading is true and tableData is empty', () => {

@@ -398,7 +398,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
 }
 
-// buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern
+// buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.
 func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (string, error) {
 	plan := key.JSONPlan
 	if len(plan) == 0 {
@@ -454,7 +454,7 @@ func (m *fieldMapper) buildFieldForJSON(key *telemetrytypes.TelemetryFieldKey) (
 	return arrayConcatExpr, nil
 }
 
-// buildArrayConcat builds the arrayConcat pattern directly from the tree structure
+// buildArrayConcat builds the arrayConcat pattern directly from the tree structure.
 func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (string, error) {
 	if len(plan) == 0 {
 		return "", errors.Newf(errors.TypeInternal, CodeGroupByPlanEmpty, "group by plan is empty while building arrayConcat")
@@ -485,7 +485,7 @@ func (m *fieldMapper) buildArrayConcat(plan telemetrytypes.JSONAccessPlan) (stri
 	return arrayFlattenExpr, nil
 }
 
-// buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches
+// buildArrayMap builds the arrayMap expression for a specific branch, handling all sub-branches.
 func (m *fieldMapper) buildArrayMap(currentNode *telemetrytypes.JSONAccessNode, branchType telemetrytypes.JSONAccessBranchType) (string, error) {
 	if currentNode == nil {
 		return "", errors.Newf(errors.TypeInternal, CodeCurrentNodeNil, "current node is nil while building arrayMap")

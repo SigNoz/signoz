@@ -34,7 +34,6 @@ import (
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/query-service/app/cloudintegrations/services"
 	"github.com/SigNoz/signoz/pkg/query-service/app/integrations"
-	"github.com/SigNoz/signoz/pkg/query-service/app/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/signoz"
 	"github.com/SigNoz/signoz/pkg/valuer"
 
@@ -138,8 +137,6 @@ type APIHandler struct {
 	statefulsetsRepo *inframetrics.StatefulSetsRepo
 	jobsRepo         *inframetrics.JobsRepo
 
-	SummaryService *metricsexplorer.SummaryService
-
 	pvcsRepo *inframetrics.PvcsRepo
 
 	AlertmanagerAPI *alertmanager.API
@@ -209,7 +206,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 	statefulsetsRepo := inframetrics.NewStatefulSetsRepo(opts.Reader, querierv2)
 	jobsRepo := inframetrics.NewJobsRepo(opts.Reader, querierv2)
 	pvcsRepo := inframetrics.NewPvcsRepo(opts.Reader, querierv2)
-	summaryService := metricsexplorer.NewSummaryService(opts.Reader, opts.RuleManager, opts.Signoz.Modules.Dashboard)
 	//quickFilterModule := quickfilter.NewAPI(opts.QuickFilterModule)
 
 	aH := &APIHandler{
@@ -233,7 +229,6 @@ func NewAPIHandler(opts APIHandlerOpts, config signoz.Config) (*APIHandler, erro
 		statefulsetsRepo:              statefulsetsRepo,
 		jobsRepo:                      jobsRepo,
 		pvcsRepo:                      pvcsRepo,
-		SummaryService:                summaryService,
 		AlertmanagerAPI:               opts.AlertmanagerAPI,
 		LicensingAPI:                  opts.LicensingAPI,
 		Signoz:                        opts.Signoz,
@@ -582,32 +577,6 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/query_filter/analyze", am.ViewAccess(aH.QueryParserAPI.AnalyzeQueryFilter)).Methods(http.MethodPost)
 }
 
-func (ah *APIHandler) MetricExplorerRoutes(router *mux.Router, am *middleware.AuthZ) {
-	router.HandleFunc("/api/v1/metrics/filters/keys",
-		am.ViewAccess(ah.FilterKeysSuggestion)).
-		Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/metrics/filters/values",
-		am.ViewAccess(ah.FilterValuesSuggestion)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
-		am.ViewAccess(ah.GetMetricsDetails)).
-		Methods(http.MethodGet)
-	router.HandleFunc("/api/v1/metrics",
-		am.ViewAccess(ah.ListMetrics)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/treemap",
-		am.ViewAccess(ah.GetTreeMap)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/related",
-		am.ViewAccess(ah.GetRelatedMetrics)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/inspect",
-		am.ViewAccess(ah.GetInspectMetricsData)).
-		Methods(http.MethodPost)
-	router.HandleFunc("/api/v1/metrics/{metric_name}/metadata",
-		am.ViewAccess(ah.UpdateMetricsMetadata)).
-		Methods(http.MethodPost)
-}
 
 func Intersection(a, b []int) (c []int) {
 	m := make(map[int]bool)
@@ -1564,7 +1533,7 @@ func (aH *APIHandler) registerEvent(w http.ResponseWriter, r *http.Request) {
 	if errv2 == nil {
 		switch request.EventType {
 		case model.TrackEvent:
-			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, request.EventName, request.Attributes)
+			aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.IdentityID(), request.EventName, request.Attributes)
 		}
 		aH.WriteJSON(w, r, map[string]string{"data": "Event Processed Successfully"})
 	} else {
@@ -4667,7 +4636,7 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 
 	// Check if result is empty or has no data
 	if len(result) == 0 {
-		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+		aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Empty", properties)
 		return
 	}
 
@@ -4677,18 +4646,18 @@ func (aH *APIHandler) sendQueryResultEvents(r *http.Request, result []*v3.Result
 		if len(result[0].List) == 0 {
 			// Check if first result has no table data
 			if result[0].Table == nil {
-				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Empty", properties)
 				return
 			}
 
 			if len(result[0].Table.Rows) == 0 {
-				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Empty", properties)
+				aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Empty", properties)
 				return
 			}
 		}
 	}
 
-	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.UserID, "Telemetry Query Returned Results", properties)
+	aH.Signoz.Analytics.TrackUser(r.Context(), claims.OrgID, claims.IdentityID(), "Telemetry Query Returned Results", properties)
 
 }
 

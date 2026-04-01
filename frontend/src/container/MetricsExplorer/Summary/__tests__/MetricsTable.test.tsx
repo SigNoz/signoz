@@ -2,8 +2,8 @@
 import { Provider } from 'react-redux';
 import { MemoryRouter } from 'react-router-dom';
 import { fireEvent, render, screen } from '@testing-library/react';
+import * as metricsGeneratedAPI from 'api/generated/services/metrics';
 import { Filter } from 'api/v5/v5';
-import * as useGetMetricsListFilterValues from 'hooks/metricsExplorer/useGetMetricsListFilterValues';
 import * as useQueryBuilderOperationsHooks from 'hooks/queryBuilder/useQueryBuilderOperations';
 import store from 'store';
 import APIError from 'types/api/error';
@@ -53,21 +53,33 @@ describe('MetricsTable', () => {
 			} as any);
 	});
 
-	jest
-		.spyOn(useGetMetricsListFilterValues, 'useGetMetricsListFilterValues')
-		.mockReturnValue({
+	jest.spyOn(metricsGeneratedAPI, 'useListMetrics').mockReturnValue(({
+		data: {
 			data: {
-				statusCode: 200,
-				payload: {
-					status: 'success',
-					data: {
-						filterValues: ['metric1', 'metric2'],
+				metrics: [
+					{
+						metricName: 'metric1',
+						description: '',
+						type: '',
+						unit: '',
+						temporality: '',
+						isMonotonic: false,
 					},
-				},
+					{
+						metricName: 'metric2',
+						description: '',
+						type: '',
+						unit: '',
+						temporality: '',
+						isMonotonic: false,
+					},
+				],
 			},
-			isLoading: false,
-			isError: false,
-		} as any);
+			status: 'success',
+		},
+		isLoading: false,
+		isError: false,
+	} as unknown) as ReturnType<typeof metricsGeneratedAPI.useListMetrics>);
 
 	it('renders table with data correctly', () => {
 		render(
@@ -207,7 +219,11 @@ describe('MetricsTable', () => {
 		);
 
 		fireEvent.click(screen.getByText('Metric 1'));
-		expect(mockOpenMetricDetails).toHaveBeenCalledWith('metric1', 'list');
+		expect(mockOpenMetricDetails).toHaveBeenCalledWith(
+			'metric1',
+			'list',
+			expect.any(Object),
+		);
 	});
 
 	it('calls setOrderBy when column header is clicked', () => {
