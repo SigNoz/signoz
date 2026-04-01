@@ -2,7 +2,9 @@ package tracedetailtypes
 
 import (
 	"encoding/json"
+	"fmt"
 	"maps"
+	"strconv"
 	"time"
 
 	"github.com/SigNoz/signoz/pkg/types/cachetypes"
@@ -82,7 +84,7 @@ type Span struct {
 	ServiceName string `json:"-"`
 }
 
-// CopyWithoutChildren creates a shallow copy and reset computed tree fields
+// CopyWithoutChildren creates a shallow copy and reset computed tree fields.
 func (s *Span) CopyWithoutChildren(level uint64, hasSiblings bool) *Span {
 	cp := *s
 	cp.Level = level
@@ -93,8 +95,8 @@ func (s *Span) CopyWithoutChildren(level uint64, hasSiblings bool) *Span {
 	return &cp
 }
 
-// SpanItem is the ClickHouse scan struct for the v3 waterfall query.
-type SpanItem struct {
+// SpanModel is the ClickHouse scan struct for the v3 waterfall query.
+type SpanModel struct {
 	TimeUnixNano       time.Time          `ch:"timestamp"`
 	DurationNano       uint64             `ch:"duration_nano"`
 	SpanID             string             `ch:"span_id"`
@@ -125,6 +127,64 @@ type SpanItem struct {
 	ExternalHTTPMethod string             `ch:"external_http_method"`
 	ExternalHTTPURL    string             `ch:"external_http_url"`
 	ResponseStatusCode string             `ch:"response_status_code"`
+}
+
+// ToSpan converts a SpanModel (ClickHouse scan result) into a Span for the waterfall response.
+func (item *SpanModel) ToSpan() *Span {
+	// Merge attributes_number, attributes_bool and attributes_string
+	attributes := make(map[string]string)
+	maps.Copy(attributes, item.AttributesString)
+	for k, v := range item.AttributesBool {
+		attributes[k] = fmt.Sprintf("%v", v)
+	}
+	for k, v := range item.AttributesNumber {
+		attributes[k] = strconv.FormatFloat(v, 'f', -1, 64)
+	}
+
+	resources := make(map[string]string)
+	maps.Copy(resources, item.ResourcesString)
+
+	events := make([]Event, 0, len(item.Events))
+	for _, eventStr := range item.Events {
+		var event Event
+		if err := json.Unmarshal([]byte(eventStr), &event); err != nil {
+			continue
+		}
+		events = append(events, event)
+	}
+
+	return &Span{
+		Attributes:         attributes,
+		DBName:             item.DBName,
+		DBOperation:        item.DBOperation,
+		DurationNano:       item.DurationNano,
+		Events:             events,
+		ExternalHTTPMethod: item.ExternalHTTPMethod,
+		ExternalHTTPURL:    item.ExternalHTTPURL,
+		Flags:              item.Flags,
+		HasError:           item.HasError,
+		HTTPHost:           item.HTTPHost,
+		HTTPMethod:         item.HTTPMethod,
+		HTTPURL:            item.HTTPURL,
+		IsRemote:           item.IsRemote,
+		Kind:               int32(item.Kind),
+		KindString:         item.SpanKind,
+		Links:              item.References,
+		Name:               item.Name,
+		ParentSpanID:       item.ParentSpanID,
+		Resources:          resources,
+		ResponseStatusCode: item.ResponseStatusCode,
+		SpanID:             item.SpanID,
+		StatusCode:         item.StatusCode,
+		StatusCodeString:   item.StatusCodeString,
+		StatusMessage:      item.StatusMessage,
+		Timestamp:          item.TimeUnixNano.Format(time.RFC3339Nano),
+		TraceID:            item.TraceID,
+		TraceState:         item.TraceState,
+		Children:           make([]*Span, 0),
+		TimeUnixNano:       uint64(item.TimeUnixNano.UnixNano()),
+		ServiceName:        item.ServiceName,
+	}
 }
 
 // TraceSummary is the ClickHouse scan struct for the trace_summary query.
