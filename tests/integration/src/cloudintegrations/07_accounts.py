@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.newcloudintegrationutils import new_simulate_agent_checkin
+from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -56,18 +56,18 @@ def test_list_accounts_after_checkin(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """List accounts returns an account after it has checked in."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(
+    account = create_cloud_integration_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
     )
     account_id = account["id"]
     provider_account_id = str(uuid.uuid4())
 
-    checkin = new_simulate_agent_checkin(
+    checkin = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, account_id, provider_account_id
     )
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
@@ -105,12 +105,12 @@ def test_get_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Get a specific account by ID returns the account with correct fields."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(
+    account = create_cloud_integration_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1", "eu-west-1"]
     )
     account_id = account["id"]
@@ -161,12 +161,12 @@ def test_update_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Update account config and verify the change is persisted via GET."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(
+    account = create_cloud_integration_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
     )
     account_id = account["id"]
@@ -202,7 +202,7 @@ def test_update_account_after_checkin_preserves_connected_status(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Updating config after agent check-in must not remove the account from the connected list.
 
@@ -213,14 +213,14 @@ def test_update_account_after_checkin_preserves_connected_status(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # 1. Create account
-    account = new_create_cloud_integration_account(
+    account = create_cloud_integration_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
     )
     account_id = account["id"]
     provider_account_id = str(uuid.uuid4())
 
     # 2. Agent checks in — sets account_id and last_agent_report
-    checkin = new_simulate_agent_checkin(
+    checkin = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, account_id, provider_account_id
     )
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"
@@ -282,15 +282,15 @@ def test_disconnect_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Disconnect an account removes it from the connected list."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
-    checkin = new_simulate_agent_checkin(
+    checkin = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, account_id, str(uuid.uuid4())
     )
     assert checkin.status_code == HTTPStatus.OK, f"Check-in failed: {checkin.text}"

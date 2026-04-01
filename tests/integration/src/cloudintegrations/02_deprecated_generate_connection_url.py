@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.cloudintegrationsutils import deprecated_simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -150,7 +150,7 @@ def test_duplicate_cloud_account_checkins(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test that two accounts cannot check in with the same cloud_account_id."""
 
@@ -159,16 +159,16 @@ def test_duplicate_cloud_account_checkins(
     same_cloud_account_id = str(uuid.uuid4())
 
     # Create two separate cloud integration accounts via generate-connection-url
-    account1 = create_cloud_integration_account(admin_token, cloud_provider)
+    account1 = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account1_id = account1["account_id"]
 
-    account2 = create_cloud_integration_account(admin_token, cloud_provider)
+    account2 = deprecated_create_cloud_integration_account(admin_token, cloud_provider)
     account2_id = account2["account_id"]
 
     assert account1_id != account2_id, "Two accounts should have different internal IDs"
 
     #     First check-in succeeds: account1 claims cloud_account_id
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account1_id, same_cloud_account_id
     )
     assert (
@@ -176,7 +176,7 @@ def test_duplicate_cloud_account_checkins(
     ), f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
     #
     # Second check-in should fail: account2 tries to use the same cloud_account_id
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account2_id, same_cloud_account_id
     )
 

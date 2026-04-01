@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.cloudintegrationsutils import deprecated_simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -45,19 +45,21 @@ def test_list_connected_accounts_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test listing connected accounts after creating one."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -93,13 +95,15 @@ def test_get_account_status(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test getting the status of a specific account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     # Create a test account (no check-in needed for status check)
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     # Get account status
@@ -152,19 +156,21 @@ def test_update_account_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating account configuration."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -220,19 +226,21 @@ def test_disconnect_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test disconnecting an account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     # Simulate agent check-in to mark as connected
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (

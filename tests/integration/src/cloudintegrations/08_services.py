@@ -60,12 +60,12 @@ def test_list_services_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """List services filtered to a specific account — all disabled by default."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
     response = requests.get(
@@ -131,12 +131,12 @@ def test_get_service_details_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Get service details with account context — cloudIntegrationService is null before first UpdateService."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
     response = requests.get(
@@ -184,12 +184,12 @@ def test_update_service_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Enable a service and verify the config is persisted via GET."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
 
     put_response = requests.put(
@@ -235,12 +235,12 @@ def test_update_service_config_disable(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Enable then disable a service — config change is persisted."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
     account_id = account["id"]
     endpoint = signoz.self.host_configs["8080"].get(
         f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"

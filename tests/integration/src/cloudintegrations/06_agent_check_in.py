@@ -4,7 +4,7 @@ from typing import Callable
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD, add_license
-from fixtures.newcloudintegrationutils import new_simulate_agent_checkin
+from fixtures.cloudintegrationsutils import simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -26,18 +26,18 @@ def test_agent_check_in(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Test agent check-in with new camelCase fields returns 200 with expected response shape."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account = new_create_cloud_integration_account(
+    account = create_cloud_integration_account(
         admin_token, CLOUD_PROVIDER, regions=["us-east-1"]
     )
     account_id = account["id"]
     provider_account_id = str(uuid.uuid4())
 
-    response = new_simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz,
         admin_token,
         CLOUD_PROVIDER,
@@ -87,7 +87,7 @@ def test_agent_check_in_account_not_found(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     fake_id = str(uuid.uuid4())
 
-    response = new_simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, fake_id, str(uuid.uuid4())
     )
 
@@ -100,20 +100,20 @@ def test_duplicate_cloud_account_checkins(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    new_create_cloud_integration_account: Callable,
+    create_cloud_integration_account: Callable,
 ) -> None:
     """Test that two different accounts cannot check in with the same providerAccountId."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    account1 = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
-    account2 = new_create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account1 = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account2 = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
 
     assert account1["id"] != account2["id"], "Two accounts should have different IDs"
 
     same_provider_account_id = str(uuid.uuid4())
 
     # First check-in: account1 claims the provider account ID
-    response = new_simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, account1["id"], same_provider_account_id
     )
     assert (
@@ -121,7 +121,7 @@ def test_duplicate_cloud_account_checkins(
     ), f"Expected 200 for first check-in, got {response.status_code}: {response.text}"
 
     # Second check-in: account2 tries to claim the same provider account ID → 409
-    response = new_simulate_agent_checkin(
+    response = simulate_agent_checkin(
         signoz, admin_token, CLOUD_PROVIDER, account2["id"], same_provider_account_id
     )
     assert (

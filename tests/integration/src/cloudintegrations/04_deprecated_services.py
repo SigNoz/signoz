@@ -6,7 +6,7 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import simulate_agent_checkin
+from fixtures.cloudintegrationsutils import deprecated_simulate_agent_checkin
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -50,18 +50,20 @@ def test_list_services_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test listing services for a specific connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -144,18 +146,20 @@ def test_get_service_details_with_account(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test getting service details for a specific connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -248,18 +252,20 @@ def test_update_service_config(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating service configuration for a connected account."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -363,18 +369,20 @@ def test_update_service_config_invalid_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test updating config for a non-existent service should fail."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (
@@ -410,18 +418,20 @@ def test_update_service_config_disable_service(
     signoz: types.SigNoz,
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
-    create_cloud_integration_account: Callable,
+    deprecated_create_cloud_integration_account: Callable,
 ) -> None:
     """Test disabling a service by updating config with enabled=false."""
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Create a test account and do check-in
     cloud_provider = "aws"
-    account_data = create_cloud_integration_account(admin_token, cloud_provider)
+    account_data = deprecated_create_cloud_integration_account(
+        admin_token, cloud_provider
+    )
     account_id = account_data["account_id"]
 
     cloud_account_id = str(uuid.uuid4())
-    response = simulate_agent_checkin(
+    response = deprecated_simulate_agent_checkin(
         signoz, admin_token, cloud_provider, account_id, cloud_account_id
     )
     assert (

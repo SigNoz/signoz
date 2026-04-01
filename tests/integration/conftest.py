@@ -22,7 +22,6 @@ pytest_plugins = [
     "fixtures.notification_channel",
     "fixtures.alerts",
     "fixtures.cloudintegrations",
-    "fixtures.newcloudintegrations",
 ]
 
 
