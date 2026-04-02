@@ -273,9 +273,9 @@ export default function Home(): JSX.Element {
 				}}
 			>
 				<>
-					<strong>API Keys</strong> have been deprecated and replaced by{' '}
-					<strong>Service Accounts</strong>. Please migrate to Service Accounts for
-					programmatic API access.
+					<strong>API keys</strong> have been deprecated in favour of{' '}
+					<strong>Service accounts</strong>. The existing API Keys have been migrated
+					to service accounts.
 				</>
 			</PersistedAnnouncementBanner>
 
