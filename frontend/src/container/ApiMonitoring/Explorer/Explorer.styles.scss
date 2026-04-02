@@ -220,6 +220,21 @@
 }
 
 .lightMode {
+	.api-monitoring-page {
+		.api-quick-filter-left-section {
+			.api-quick-filters-header {
+				border-bottom: 1px solid var(--bg-slate-200);
+				border-right: 1px solid var(--bg-slate-200);
+			}
+		}
+
+		.api-module-right-section {
+			.toolbar {
+				border-bottom: 1px solid var(--bg-slate-200);
+			}
+		}
+	}
+
 	.no-filtered-domains-message-container {
 		.no-filtered-domains-message-content {
 			.no-filtered-domains-message {
@@ -271,6 +286,8 @@
 
 			.round-metric-tag {
 				color: var(--bg-vanilla-100);
+				border: 1px solid var(--bg-slate-200);
+				background: var(--bg-slate-100);
 			}
 		}
 	}
