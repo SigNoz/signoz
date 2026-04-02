@@ -198,7 +198,8 @@ export default function HostsListTable({
 		!isLoading &&
 		formattedHostMetricsData.length === 0 &&
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
-		!filters.items.length;
+		!filters.items.length &&
+		!endTimeBeforeRetention;
 
 	const showEndTimeBeforeRetentionMessage =
 		!isFetching &&
