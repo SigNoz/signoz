@@ -39,11 +39,8 @@ var logsV2Columns = map[string]*schema.Column{
 		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
 		ValueType: schema.ColumnTypeBool,
 	}},
-	"resources_string": {Name: "resources_string", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}},
 	"resource":      {Name: "resource", Type: schema.JSONColumnType{}},
+	"event_name":    {Name: "event_name", Type: schema.ColumnTypeString},
 	"scope_name":    {Name: "scope_name", Type: schema.ColumnTypeString},
 	"scope_version": {Name: "scope_version", Type: schema.ColumnTypeString},
 	"scope_string": {Name: "scope_string", Type: schema.MapColumnType{
@@ -61,7 +58,7 @@ func NewFieldMapper() qbtypes.FieldMapper {
 func (m *fieldMapper) getColumn(_ context.Context, key *telemetrytypes.TelemetryFieldKey) ([]*schema.Column, error) {
 	switch key.FieldContext {
 	case telemetrytypes.FieldContextResource:
-		return []*schema.Column{logsV2Columns["resources_string"], logsV2Columns["resource"]}, nil
+		return []*schema.Column{logsV2Columns["resource"]}, nil
 	case telemetrytypes.FieldContextScope:
 		switch key.Name {
 		case "name", "scope.name", "scope_name":

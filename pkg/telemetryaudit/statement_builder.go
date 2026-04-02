@@ -217,10 +217,10 @@ func (b *auditQueryStatementBuilder) buildListQuery(
 		sb.SelectMore(ScopeNameColumn)
 		sb.SelectMore(ScopeVersionColumn)
 		sb.SelectMore(BodyColumn)
+		sb.SelectMore(EventNameColumn)
 		sb.SelectMore(AttributesStringColumn)
 		sb.SelectMore(AttributesNumberColumn)
 		sb.SelectMore(AttributesBoolColumn)
-		sb.SelectMore(ResourcesStringColumn)
 		sb.SelectMore(ScopeStringColumn)
 	} else {
 		for index := range query.SelectFields {

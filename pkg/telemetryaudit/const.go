@@ -15,6 +15,7 @@ const (
 	TimestampColumn         = "timestamp"
 	ObservedTimestampColumn = "observed_timestamp"
 	BodyColumn              = "body"
+	EventNameColumn         = "event_name"
 	TraceIDColumn           = "trace_id"
 	SpanIDColumn            = "span_id"
 	TraceFlagsColumn        = "trace_flags"
@@ -27,7 +28,6 @@ const (
 	AttributesStringColumn = "attributes_string"
 	AttributesNumberColumn = "attributes_number"
 	AttributesBoolColumn   = "attributes_bool"
-	ResourcesStringColumn  = "resources_string"
 	ScopeStringColumn      = "scope_string"
 )
 
@@ -75,6 +75,12 @@ var (
 			Signal:        telemetrytypes.SignalLogs,
 			FieldContext:   telemetrytypes.FieldContextLog,
 			FieldDataType: telemetrytypes.FieldDataTypeNumber,
+		},
+		"event_name": {
+			Name:          "event_name",
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:   telemetrytypes.FieldContextLog,
+			FieldDataType: telemetrytypes.FieldDataTypeString,
 		},
 	}
 
