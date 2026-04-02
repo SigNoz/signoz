@@ -6,7 +6,7 @@ import { DrawerWrapper } from '@signozhq/drawer';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { Skeleton } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
@@ -131,7 +131,7 @@ function EditMemberDrawer({
 			onSuccess: (): void => {
 				toast.success(
 					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-					{ richColors: true },
+					{ richColors: true, position: 'top-right' },
 				);
 				setShowDeleteConfirm(false);
 				onComplete();
@@ -145,7 +145,10 @@ function EditMemberDrawer({
 				const prefix = isInvited
 					? 'Failed to revoke invite'
 					: 'Failed to delete member';
-				toast.error(`${prefix}: ${errMessage}`, { richColors: true });
+				toast.error(`${prefix}: ${errMessage}`, {
+					richColors: true,
+					position: 'top-right',
+				});
 			},
 		},
 	});
@@ -265,7 +268,10 @@ function EditMemberDrawer({
 			if (errors.length > 0) {
 				setSaveErrors(errors);
 			} else {
-				toast.success('Member details updated successfully', { richColors: true });
+				toast.success('Member details updated successfully', {
+					richColors: true,
+					position: 'top-right',
+				});
 				onComplete();
 			}
 
@@ -340,12 +346,15 @@ function EditMemberDrawer({
 			linkType === 'invite'
 				? 'Invite link copied to clipboard'
 				: 'Reset link copied to clipboard';
-		toast.success(message, { richColors: true });
+		toast.success(message, { richColors: true, position: 'top-right' });
 	}, [resetLink, copyToClipboard, linkType]);
 
 	useEffect(() => {
 		if (copyState.error) {
-			toast.error('Failed to copy link', { richColors: true });
+			toast.error('Failed to copy link', {
+				richColors: true,
+				position: 'top-right',
+			});
 		}
 	}, [copyState.error]);
 
@@ -409,23 +418,25 @@ function EditMemberDrawer({
 					Roles
 				</label>
 				{isSelf ? (
-					<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
-						<div className="edit-member-drawer__disabled-roles">
-							{localRoles.length > 0 ? (
-								localRoles.map((roleId) => {
-									const role = availableRoles.find((r) => r.id === roleId);
-									return (
-										<Badge key={roleId} color="vanilla">
-											{role?.name ?? roleId}
-										</Badge>
-									);
-								})
-							) : (
-								<span className="edit-member-drawer__email-text">—</span>
-							)}
+					<Tooltip title="You cannot modify your own role">
+						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
+							<div className="edit-member-drawer__disabled-roles">
+								{localRoles.length > 0 ? (
+									localRoles.map((roleId) => {
+										const role = availableRoles.find((r) => r.id === roleId);
+										return (
+											<Badge key={roleId} color="vanilla">
+												{role?.name ?? roleId}
+											</Badge>
+										);
+									})
+								) : (
+									<span className="edit-member-drawer__email-text">—</span>
+								)}
+							</div>
+							<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
 						</div>
-						<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
-					</div>
+					</Tooltip>
 				) : (
 					<RolesSelect
 						id="member-role"
@@ -565,7 +576,6 @@ function EditMemberDrawer({
 				hasCopied={hasCopiedResetLink}
 				onClose={(): void => {
 					setShowResetLinkDialog(false);
-					setLinkType(null);
 				}}
 				onCopy={handleCopyResetLink}
 			/>

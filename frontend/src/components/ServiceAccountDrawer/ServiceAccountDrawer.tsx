@@ -294,6 +294,7 @@ function ServiceAccountDrawer({
 			} else {
 				toast.success('Service account updated successfully', {
 					richColors: true,
+					position: 'top-right',
 				});
 				onSuccess({ closeDrawer: false });
 			}
