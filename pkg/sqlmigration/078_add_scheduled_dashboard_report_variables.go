@@ -5,7 +5,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/uptrace/bun"
-	"github.com/uptrace/bun/dialect"
 	"github.com/uptrace/bun/migrate"
 )
 
@@ -33,11 +32,7 @@ func (migration *addScheduledDashboardReportVariables) Register(migrations *migr
 }
 
 func (migration *addScheduledDashboardReportVariables) Up(ctx context.Context, db *bun.DB) error {
-	// Make sure we can safely migrate both SQLite and Postgres-like dialects.
 	stmt := `ALTER TABLE scheduled_reports ADD COLUMN variables TEXT NOT NULL DEFAULT '{}'`
-	if db.Dialect().Name() == dialect.SQLite {
-		stmt = `ALTER TABLE scheduled_reports ADD COLUMN variables TEXT NOT NULL DEFAULT '{}'`
-	}
 
 	tx, err := db.BeginTx(ctx, nil)
 	if err != nil {

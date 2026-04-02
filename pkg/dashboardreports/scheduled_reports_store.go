@@ -75,7 +75,7 @@ func (s *scheduledReportsStore) ListScheduledReports(
 	storables := make([]*dashboardreporttypes.StorableScheduledDashboardReport, 0)
 
 	q := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(&storables).
 		Where("org_id = ?", orgID)
@@ -104,7 +104,7 @@ func (s *scheduledReportsStore) GetScheduledReportByID(
 	storable := new(dashboardreporttypes.StorableScheduledDashboardReport)
 
 	err := s.sqlstore.
-		BunDB().
+		BunDBCtx(ctx).
 		NewSelect().
 		Model(storable).
 		Where("id = ?", id).
@@ -125,15 +125,23 @@ func (s *scheduledReportsStore) DeleteScheduledReport(
 	orgID string,
 	id valuer.UUID,
 ) error {
-	_, err := s.sqlstore.
-		BunDB().
+	res, err := s.sqlstore.
+		BunDBCtx(ctx).
 		NewDelete().
 		Model(new(dashboardreporttypes.StorableScheduledDashboardReport)).
 		Where("id = ?", id).
 		Where("org_id = ?", orgID).
 		Exec(ctx)
 	if err != nil {
-		return s.sqlstore.WrapNotFoundErrf(err, errors.CodeNotFound, "scheduled report with id %s doesn't exist", id)
+		return err
+	}
+
+	n, err := res.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if n == 0 {
+		return s.sqlstore.WrapNotFoundErrf(sql.ErrNoRows, errors.CodeNotFound, "scheduled report with id %s doesn't exist", id)
 	}
 
 	return nil

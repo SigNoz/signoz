@@ -79,6 +79,11 @@ func (aH *APIHandler) createScheduledReportSchedule(w http.ResponseWriter, r *ht
 		return
 	}
 
+	if postable.DashboardID.IsZero() {
+		render.Error(w, errors.New(errors.TypeInvalidInput, errors.CodeInvalidInput, "dashboardId must be set to a valid non-zero UUID"))
+		return
+	}
+
 	// Minimal validation: ensure recipients is a non-empty slice.
 	normalizedRecipients := make(dashboardreporttypes.DashboardReportRecipients, 0, len(postable.Recipients))
 	for _, recipient := range postable.Recipients {
