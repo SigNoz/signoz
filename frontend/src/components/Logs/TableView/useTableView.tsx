@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TableColumnsType as ColumnsType, Typography } from 'antd';
+import { TableColumnsType as ColumnsType } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
@@ -63,14 +63,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 							? defaultListViewPanelStyle
 							: getDefaultCellStyle(isDarkMode),
 					},
-					children: (
-						<Typography.Paragraph
-							ellipsis={{ rows: linesPerRow }}
-							className={cx('paragraph', fontSize)}
-						>
-							{field}
-						</Typography.Paragraph>
-					),
+					children: <p className={cx('paragraph', fontSize)}>{field}</p>,
 				}),
 			}));
 
@@ -123,9 +116,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								return {
 									children: (
 										<div className="table-timestamp">
-											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
-												{date}
-											</Typography.Paragraph>
+											<p className={cx('text', fontSize)}>{date}</p>
 										</div>
 									),
 								};

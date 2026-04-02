@@ -9,6 +9,7 @@ import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLine
 
 import { TableCellStyled } from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
+import { useRowHover } from '../RowHoverContext';
 import { TanStackTableRowData } from './types';
 
 type TanStackRowCellsProps = {
@@ -33,6 +34,7 @@ function TanStackRowCells({
 	isLogsExplorerPage,
 }: TanStackRowCellsProps): JSX.Element {
 	const { currentLog } = row.original;
+	const hasHovered = useRowHover();
 
 	const handleShowContext: MouseEventHandler<HTMLElement> = useCallback(
 		(event) => {
@@ -76,7 +78,7 @@ function TanStackRowCells({
 						onClick={handleShowLogDetails}
 					>
 						{flexRender(cell.column.columnDef.cell, cell.getContext())}
-						{isLastCell && isLogsExplorerPage && (
+						{isLastCell && isLogsExplorerPage && hasHovered && (
 							<LogLinesActionButtons
 								handleShowContext={handleShowContext}
 								onLogCopy={(event): void => onLogCopy(currentLog.id, event)}

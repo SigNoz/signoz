@@ -1,4 +1,4 @@
-import { ComponentProps, memo } from 'react';
+import { ComponentProps, memo, useCallback, useState } from 'react';
 import { TableComponents } from 'react-virtuoso';
 import {
 	getLogIndicatorType,
@@ -9,6 +9,7 @@ import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ILog } from 'types/api/logs/log';
 
 import { TableRowStyled } from '../InfinityTableView/styles';
+import RowHoverContext from '../RowHoverContext';
 import { TanStackTableRowData } from './types';
 
 export type TableRowContext = {
@@ -31,6 +32,7 @@ function TanStackCustomTableRow({
 }: TanStackCustomTableRowProps): JSX.Element {
 	const { isHighlighted } = useCopyLogLink(item.currentLog.id);
 	const isDarkMode = useIsDarkMode();
+	const [hasHovered, setHasHovered] = useState(false);
 	const rowId = String(item.currentLog.id ?? '');
 	const activeLog = context?.activeLog;
 	const activeContextLog = context?.activeContextLog;
@@ -40,19 +42,28 @@ function TanStackCustomTableRow({
 		? getLogIndicatorType(rowLog)
 		: getLogIndicatorTypeForTable(item.log);
 
+	const handleMouseEnter = useCallback(() => {
+		if (!hasHovered) {
+			setHasHovered(true);
+		}
+	}, [hasHovered]);
+
 	return (
-		<TableRowStyled
-			{...props}
-			$isDarkMode={isDarkMode}
-			$isActiveLog={
-				isHighlighted ||
-				rowId === String(activeLog?.id ?? '') ||
-				rowId === String(activeContextLog?.id ?? '')
-			}
-			$logType={logType}
-		>
-			{children}
-		</TableRowStyled>
+		<RowHoverContext.Provider value={hasHovered}>
+			<TableRowStyled
+				{...props}
+				$isDarkMode={isDarkMode}
+				$isActiveLog={
+					isHighlighted ||
+					rowId === String(activeLog?.id ?? '') ||
+					rowId === String(activeContextLog?.id ?? '')
+				}
+				$logType={logType}
+				onMouseEnter={handleMouseEnter}
+			>
+				{children}
+			</TableRowStyled>
+		</RowHoverContext.Provider>
 	);
 }
 

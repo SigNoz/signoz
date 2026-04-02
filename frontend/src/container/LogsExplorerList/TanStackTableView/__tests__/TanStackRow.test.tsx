@@ -1,4 +1,5 @@
 import { fireEvent, render, screen } from '@testing-library/react';
+import RowHoverContext from 'container/LogsExplorerList/RowHoverContext';
 import { FontSize } from 'container/OptionsMenu/types';
 
 import TanStackRowCells from '../TanStackRow';
@@ -108,23 +109,25 @@ describe('TanStackRowCells', () => {
 		expect(container.querySelector('td.state-indicator')).toBeInTheDocument();
 	});
 
-	it('renders row actions on logs explorer page', () => {
+	it('renders row actions on logs explorer page after hover', () => {
 		const row = buildMockRow([{ columnId: 'body' }]);
 
 		render(
-			<table>
-				<tbody>
-					<tr>
-						<TanStackRowCells
-							row={row}
-							fontSize={FontSize.SMALL}
-							isDarkMode={false}
-							onLogCopy={jest.fn()}
-							isLogsExplorerPage
-						/>
-					</tr>
-				</tbody>
-			</table>,
+			<RowHoverContext.Provider value>
+				<table>
+					<tbody>
+						<tr>
+							<TanStackRowCells
+								row={row}
+								fontSize={FontSize.SMALL}
+								isDarkMode={false}
+								onLogCopy={jest.fn()}
+								isLogsExplorerPage
+							/>
+						</tr>
+					</tbody>
+				</table>
+			</RowHoverContext.Provider>,
 		);
 
 		expect(screen.getByTestId('copy-btn')).toBeInTheDocument();
