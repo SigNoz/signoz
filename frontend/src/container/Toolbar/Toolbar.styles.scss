@@ -2,6 +2,10 @@
 	display: flex;
 	justify-content: space-between;
 	align-items: flex-end;
+	position: sticky;
+	top: 0;
+	z-index: 10;
+	background: var(--bg-ink-500);
 
 	border-top: 1px solid var(--bg-slate-400);
 	border-bottom: 1px solid var(--bg-slate-400);
@@ -29,7 +33,7 @@
 	}
 }
 
-@media screen and (width <= 1300px) {
+@media screen and (width <=1300px) {
 	.toolbar {
 		grid-template-columns: repeat(1, 1fr);
 
@@ -47,6 +51,7 @@
 
 .lightMode {
 	.toolbar {
+		background: var(--bg-vanilla-100);
 		border-top: 1px solid var(--bg-vanilla-300);
 		border-bottom: 1px solid var(--bg-vanilla-300);
 	}
