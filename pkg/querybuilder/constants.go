@@ -10,7 +10,7 @@ const (
 	ErrorConditionLiteral = "__skip_because_of_error__"
 
 	// BodySearchDefaultWarning is emitted when a full-text search or "body" searches are hit
-	// with New JSON Body enhancements
+	// with New JSON Body enhancements.
 	BodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
