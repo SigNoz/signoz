@@ -14,41 +14,6 @@ import (
 	"golang.org/x/exp/maps"
 )
 
-var logsV2Columns = map[string]*schema.Column{
-	"ts_bucket_start":      {Name: "ts_bucket_start", Type: schema.ColumnTypeUInt64},
-	"resource_fingerprint": {Name: "resource_fingerprint", Type: schema.ColumnTypeString},
-
-	"timestamp":          {Name: "timestamp", Type: schema.ColumnTypeUInt64},
-	"observed_timestamp": {Name: "observed_timestamp", Type: schema.ColumnTypeUInt64},
-	"id":                 {Name: "id", Type: schema.ColumnTypeString},
-	"trace_id":           {Name: "trace_id", Type: schema.ColumnTypeString},
-	"span_id":            {Name: "span_id", Type: schema.ColumnTypeString},
-	"trace_flags":        {Name: "trace_flags", Type: schema.ColumnTypeUInt32},
-	"severity_text": {Name: "severity_text", Type: schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString}},
-	"severity_number": {Name: "severity_number", Type: schema.ColumnTypeUInt8},
-	"body":              {Name: "body", Type: schema.ColumnTypeString},
-	"attributes_string": {Name: "attributes_string", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}},
-	"attributes_number": {Name: "attributes_number", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeFloat64,
-	}},
-	"attributes_bool": {Name: "attributes_bool", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeBool,
-	}},
-	"resource":      {Name: "resource", Type: schema.JSONColumnType{}},
-	"event_name":    {Name: "event_name", Type: schema.ColumnTypeString},
-	"scope_name":    {Name: "scope_name", Type: schema.ColumnTypeString},
-	"scope_version": {Name: "scope_version", Type: schema.ColumnTypeString},
-	"scope_string": {Name: "scope_string", Type: schema.MapColumnType{
-		KeyType:   schema.LowCardinalityColumnType{ElementType: schema.ColumnTypeString},
-		ValueType: schema.ColumnTypeString,
-	}},
-}
-
 type fieldMapper struct{}
 
 func NewFieldMapper() qbtypes.FieldMapper {

@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	"strconv"
 	"strings"
 	"time"
 
@@ -683,7 +684,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 
 	tablesToQuery := []struct {
 		fieldContext telemetrytypes.FieldContext
-		shouldQuery bool
+		shouldQuery  bool
 	}{
 		{telemetrytypes.FieldContextAttribute, queryAttributeTable},
 		{telemetrytypes.FieldContextResource, queryResourceTable},
@@ -703,12 +704,12 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 			tblName = t.auditDBName + "." + t.auditResourceKeysTblName
 		}
 
-		sb := sqlbuilder.Select(
-			"name AS tag_key",
-			fmt.Sprintf("'%s' AS tag_type", fieldContext.TagType()),
-			"lower(datatype) AS tag_data_type",
-			fmt.Sprintf(`%d AS priority`, getPriorityForContext(fieldContext)),
-		).From(tblName)
+		sb := sqlbuilder.NewSelectBuilder()
+		sb.Select(sb.As("name", "tag_key"))
+		sb.Select(sb.As(fieldContext.TagType(), "tag_type"))
+		sb.Select(sb.As("lower(datatype)", "tag_data_type"))
+		sb.Select(sb.As(strconv.FormatInt(int64(getPriorityForContext(fieldContext)), 10), "priority"))
+		sb.From(tblName)
 
 		var limit int
 		conds := []string{}
