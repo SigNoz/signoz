@@ -5,6 +5,7 @@ import (
 	"context"
 	"crypto/tls"
 	"crypto/x509"
+	"encoding/base64"
 	"fmt"
 	"log/slog"
 	"math/rand"
@@ -20,6 +21,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/emailing"
 	"github.com/SigNoz/signoz/pkg/errors"
 )
 
@@ -249,6 +251,188 @@ func (c *Client) Do(ctx context.Context, tos []*mail.Address, subject string, co
 
 	err = multipartWriter.Close()
 	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to close multipartWriter")
+	}
+
+	_, err = message.Write(multipartBuffer.Bytes())
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to write body buffer")
+	}
+
+	// Complete the message and await response.
+	if err = closeOnce(); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to deliver")
+	}
+
+	success = true
+	return nil
+}
+
+func (c *Client) DoWithAttachments(ctx context.Context, tos []*mail.Address, subject string, body []byte, attachments []emailing.Attachment) error {
+	var (
+		smtpClient *smtp.Client
+		conn       net.Conn
+		err        error
+		success    = false
+	)
+
+	// Dial the SMTP server.
+	conn, err = c.dial(ctx)
+	if err != nil {
+		return err
+	}
+
+	// Create a new SMTP client.
+	smtpClient, err = smtp.NewClient(conn, c.host)
+	if err != nil {
+		conn.Close()
+		return errors.Newf(errors.TypeInternal, errors.CodeInternal, "failed to create SMTP client: %s", err.Error())
+	}
+
+	// Try to clean up after ourselves but don't log anything if something has failed.
+	defer func() {
+		if err := smtpClient.Quit(); success && err != nil {
+			c.logger.WarnContext(ctx, "failed to close SMTP connection", errors.Attr(err))
+		}
+	}()
+
+	// Send the EHLO command.
+	if c.hello != "" {
+		err = smtpClient.Hello(c.hello)
+		if err != nil {
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to send EHLO command")
+		}
+	}
+
+	// If TLS is not enabled, check if the server supports STARTTLS.
+	if !c.tls.Enabled {
+		if ok, _ := smtpClient.Extension("STARTTLS"); ok {
+			if err := smtpClient.StartTLS(c.tlsConfig); err != nil {
+				return errors.WrapInternalf(err, errors.CodeInternal, "failed to send STARTTLS command")
+			}
+		}
+	}
+
+	// If the server supports the AUTH command,
+	if ok, mech := smtpClient.Extension("AUTH"); ok {
+		// If the username is set, find the appropriate authentication mechanism.
+		if c.auth.Username != "" {
+			auth, err := c.smtpAuth(ctx, mech)
+			if err != nil {
+				return errors.WrapInternalf(err, errors.CodeInternal, "failed to find auth mechanism")
+			}
+
+			// Send the AUTH command.
+			if err := smtpClient.Auth(auth); err != nil {
+				return errors.WrapInternalf(err, errors.CodeInternal, "failed to auth: %T", auth)
+			}
+		}
+	}
+
+	// Send the MAIL command.
+	if err = smtpClient.Mail(c.from.Address); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to send MAIL command")
+	}
+
+	// Send the RCPT command for each recipient.
+	for _, addr := range tos {
+		if err = smtpClient.Rcpt(addr.Address); err != nil {
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to send RCPT command")
+		}
+	}
+
+	// Send the email headers and body.
+	message, err := smtpClient.Data()
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to send DATA command")
+	}
+
+	closeOnce := sync.OnceValue(func() error {
+		return message.Close()
+	})
+
+	// Close the message when this method exits in order to not leak resources.
+	defer func() {
+		_ = closeOnce()
+	}()
+
+	buffer := &bytes.Buffer{}
+	for header, value := range c.headers {
+		fmt.Fprintf(buffer, "%s: %s\r\n", header, mime.QEncoding.Encode("utf-8", value))
+	}
+
+	at := strings.LastIndex(c.from.Address, "@")
+	if at >= 0 {
+		fmt.Fprintf(buffer, "Message-Id: %s\r\n", fmt.Sprintf("<%d.%d@%s>", time.Now().UnixNano(), rand.Uint64(), c.from.Address[at+1:]))
+	}
+
+	multipartBuffer := &bytes.Buffer{}
+	multipartWriter := multipart.NewWriter(multipartBuffer)
+
+	tosAsStrings := make([]string, len(tos))
+	for i, to := range tos {
+		tosAsStrings[i] = to.String()
+	}
+	fmt.Fprintf(buffer, "To: %s\r\n", strings.Join(tosAsStrings, ","))
+	fmt.Fprintf(buffer, "Subject: %s\r\n", subject)
+	fmt.Fprintf(buffer, "Date: %s\r\n", time.Now().Format(time.RFC1123Z))
+	fmt.Fprintf(buffer, "Content-Type: multipart/mixed; boundary=%s\r\n", multipartWriter.Boundary())
+	fmt.Fprintf(buffer, "MIME-Version: 1.0\r\n\r\n")
+
+	_, err = message.Write(buffer.Bytes())
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to write headers")
+	}
+
+	// Text part.
+	w, err := multipartWriter.CreatePart(textproto.MIMEHeader{
+		"Content-Transfer-Encoding": {"quoted-printable"},
+		"Content-Type":              {"text/plain; charset=UTF-8"},
+	})
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to create part for text body")
+	}
+
+	qw := quotedprintable.NewWriter(w)
+	_, err = qw.Write(body)
+	if err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to write text part")
+	}
+	if err := qw.Close(); err != nil {
+		return errors.WrapInternalf(err, errors.CodeInternal, "failed to close text part")
+	}
+
+	// Attachment parts.
+	for _, attachment := range attachments {
+		contentType := attachment.ContentType
+		if contentType == "" {
+			contentType = "application/octet-stream"
+		}
+
+		partHeader := textproto.MIMEHeader{
+			"Content-Transfer-Encoding": {"base64"},
+			"Content-Type":              {contentType},
+			"Content-Disposition": {
+				fmt.Sprintf(`attachment; filename="%s"`, attachment.Filename),
+			},
+		}
+
+		aw, err := multipartWriter.CreatePart(partHeader)
+		if err != nil {
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to create attachment part")
+		}
+
+		enc := base64.NewEncoder(base64.StdEncoding, aw)
+		_, err = enc.Write(attachment.Content)
+		if err != nil {
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to write attachment content")
+		}
+		if err := enc.Close(); err != nil {
+			return errors.WrapInternalf(err, errors.CodeInternal, "failed to finalize attachment content")
+		}
+	}
+
+	if err = multipartWriter.Close(); err != nil {
 		return errors.WrapInternalf(err, errors.CodeInternal, "failed to close multipartWriter")
 	}
 

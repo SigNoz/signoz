@@ -26,3 +26,8 @@ func (provider *Provider) SendHTML(ctx context.Context, to string, subject strin
 	provider.SentEmailCountByTemplateName[templateName]++
 	return nil
 }
+
+func (provider *Provider) SendPlainWithAttachments(ctx context.Context, to string, subject string, body string, attachments []emailing.Attachment) error {
+	provider.SentEmailCountByTo[to]++
+	return nil
+}

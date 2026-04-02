@@ -6,10 +6,12 @@ import (
 	"net"
 	"net/http"
 	"slices"
+	"time"
 
 	"github.com/SigNoz/signoz/pkg/cache/memorycache"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
+	dashboardreportsrunner "github.com/SigNoz/signoz/pkg/dashboardreports/runner"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/ruler/rulestore/sqlrulestore"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -56,6 +58,8 @@ type Server struct {
 	config      signoz.Config
 	signoz      *signoz.SigNoz
 	ruleManager *rules.Manager
+
+	dashboardReportsRunner *dashboardreportsrunner.Runner
 
 	// public http router
 	httpConn     net.Listener
@@ -149,6 +153,7 @@ func NewServer(config signoz.Config, signoz *signoz.SigNoz) (*Server, error) {
 		config:             config,
 		signoz:             signoz,
 		ruleManager:        rm,
+		dashboardReportsRunner: dashboardreportsrunner.NewRunner(signoz.SQLStore, 30*time.Second),
 		httpHostPort:       constants.HTTPHostPort,
 		unavailableChannel: make(chan healthcheck.Status),
 	}
@@ -271,6 +276,14 @@ func (s *Server) initListeners() error {
 
 // Start listening on http and private http port concurrently
 func (s *Server) Start(ctx context.Context) error {
+	if s.dashboardReportsRunner != nil {
+		go func() {
+			if err := s.dashboardReportsRunner.Start(ctx); err != nil && err != context.Canceled && err != context.DeadlineExceeded {
+				slog.Error("scheduled dashboard reports runner stopped unexpectedly", "err", err)
+			}
+		}()
+	}
+
 	s.ruleManager.Start(ctx)
 
 	err := s.initListeners()
@@ -315,6 +328,10 @@ func (s *Server) Stop(ctx context.Context) error {
 	}
 
 	s.opampServer.Stop()
+
+	if s.dashboardReportsRunner != nil {
+		s.dashboardReportsRunner.Stop()
+	}
 
 	if s.ruleManager != nil {
 		s.ruleManager.Stop(ctx)

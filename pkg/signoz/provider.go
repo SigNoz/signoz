@@ -196,6 +196,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 		sqlmigration.NewAddScheduledDashboardReportsFactory(),
 		sqlmigration.NewAddScheduledDashboardReportVariablesFactory(),
+		sqlmigration.NewAddScheduledDashboardReportRunsFactory(),
 	)
 }
 

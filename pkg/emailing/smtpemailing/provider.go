@@ -94,3 +94,12 @@ func (provider *provider) SendHTML(ctx context.Context, to string, subject strin
 
 	return provider.client.Do(ctx, toAddress, subject, client.ContentTypeHTML, content)
 }
+
+func (provider *provider) SendPlainWithAttachments(ctx context.Context, to string, subject string, body string, attachments []emailing.Attachment) error {
+	toAddress, err := mail.ParseAddressList(to)
+	if err != nil {
+		return err
+	}
+
+	return provider.client.DoWithAttachments(ctx, toAddress, subject, []byte(body), attachments)
+}
