@@ -18,7 +18,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrytraces"
 )
 
-// NewFactory creates a new factory for the signoz querier provider
+// NewFactory creates a new factory for the signoz querier provider.
 func NewFactory(
 	telemetryStore telemetrystore.TelemetryStore,
 	prometheus prometheus.Prometheus,

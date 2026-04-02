@@ -52,7 +52,7 @@ func NewLogQueryStatementBuilder(
 	}
 }
 
-// Build builds a SQL query for logs based on the given parameters
+// Build builds a SQL query for logs based on the given parameters.
 func (b *logQueryStatementBuilder) Build(
 	ctx context.Context,
 	start uint64,
@@ -234,7 +234,7 @@ func (b *logQueryStatementBuilder) adjustKey(key *telemetrytypes.TelemetryFieldK
 	return querybuilder.AdjustKey(key, keys, nil)
 }
 
-// buildListQuery builds a query for list panel type
+// buildListQuery builds a query for list panel type.
 func (b *logQueryStatementBuilder) buildListQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -373,10 +373,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
 	}
 
 	// Aggregations
@@ -427,7 +427,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -453,7 +456,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -487,7 +493,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 	return stmt, nil
 }
 
-// buildScalarQuery builds a query for scalar panel type
+// buildScalarQuery builds a query for scalar panel type.
 func (b *logQueryStatementBuilder) buildScalarQuery(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,
@@ -520,7 +526,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -560,7 +566,10 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		if err != nil {
+			return nil, err
+		}
 		sb.Having(rewrittenExpr)
 	}
 
@@ -603,7 +612,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	return stmt, nil
 }
 
-// buildFilterCondition builds SQL condition from filter expression
+// buildFilterCondition builds SQL condition from filter expression.
 func (b *logQueryStatementBuilder) addFilterCondition(
 	ctx context.Context,
 	sb *sqlbuilder.SelectBuilder,

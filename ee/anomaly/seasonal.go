@@ -18,12 +18,12 @@ var (
 	movingAvgWindowSize = 7
 )
 
-// BaseProvider is an interface that includes common methods for all provider types
+// BaseProvider is an interface that includes common methods for all provider types.
 type BaseProvider interface {
 	GetBaseSeasonalProvider() *BaseSeasonalProvider
 }
 
-// GenericProviderOption is a generic type for provider options
+// GenericProviderOption is a generic type for provider options.
 type GenericProviderOption[T BaseProvider] func(T)
 
 func WithQuerier[T BaseProvider](querier querier.Querier) GenericProviderOption[T] {
@@ -121,7 +121,7 @@ func (p *BaseSeasonalProvider) getResults(ctx context.Context, orgID valuer.UUID
 }
 
 // getMatchingSeries gets the matching series from the query result
-// for the given series
+// for the given series.
 func (p *BaseSeasonalProvider) getMatchingSeries(_ context.Context, queryResult *qbtypes.TimeSeriesData, series *qbtypes.TimeSeries) *qbtypes.TimeSeries {
 	if queryResult == nil || len(queryResult.Aggregations) == 0 || len(queryResult.Aggregations[0].Series) == 0 {
 		return nil
@@ -155,13 +155,14 @@ func (p *BaseSeasonalProvider) getStdDev(series *qbtypes.TimeSeries) float64 {
 	avg := p.getAvg(series)
 	var sum float64
 	for _, smpl := range series.Values {
-		sum += math.Pow(smpl.Value-avg, 2)
+		d := smpl.Value - avg
+		sum += d * d
 	}
 	return math.Sqrt(sum / float64(len(series.Values)))
 }
 
 // getMovingAvg gets the moving average for the given series
-// for the given window size and start index
+// for the given window size and start index.
 func (p *BaseSeasonalProvider) getMovingAvg(series *qbtypes.TimeSeries, movingAvgWindowSize, startIdx int) float64 {
 	if series == nil || len(series.Values) == 0 {
 		return 0
@@ -236,7 +237,7 @@ func (p *BaseSeasonalProvider) getPredictedSeries(
 // getBounds gets the upper and lower bounds for the given series
 // for the given z score threshold
 // moving avg of the previous period series + z score threshold * std dev of the series
-// moving avg of the previous period series - z score threshold * std dev of the series
+// moving avg of the previous period series - z score threshold * std dev of the series.
 func (p *BaseSeasonalProvider) getBounds(
 	series, predictedSeries, weekSeries *qbtypes.TimeSeries,
 	zScoreThreshold float64,
@@ -269,7 +270,7 @@ func (p *BaseSeasonalProvider) getBounds(
 
 // getExpectedValue gets the expected value for the given series
 // for the given index
-// prevSeriesAvg + currentSeasonSeriesAvg - mean of past season series, past2 season series and past3 season series
+// prevSeriesAvg + currentSeasonSeriesAvg - mean of past season series, past2 season series and past3 season series.
 func (p *BaseSeasonalProvider) getExpectedValue(
 	_, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries, idx int,
 ) float64 {
@@ -283,7 +284,7 @@ func (p *BaseSeasonalProvider) getExpectedValue(
 
 // getScore gets the anomaly score for the given series
 // for the given index
-// (value - expectedValue) / std dev of the series
+// (value - expectedValue) / std dev of the series.
 func (p *BaseSeasonalProvider) getScore(
 	series, prevSeries, weekSeries, weekPrevSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries, value float64, idx int,
 ) float64 {
@@ -296,7 +297,7 @@ func (p *BaseSeasonalProvider) getScore(
 
 // getAnomalyScores gets the anomaly scores for the given series
 // for the given index
-// (value - expectedValue) / std dev of the series
+// (value - expectedValue) / std dev of the series.
 func (p *BaseSeasonalProvider) getAnomalyScores(
 	series, prevSeries, currentSeasonSeries, pastSeasonSeries, past2SeasonSeries, past3SeasonSeries *qbtypes.TimeSeries,
 ) *qbtypes.TimeSeries {

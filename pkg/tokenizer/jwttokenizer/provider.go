@@ -78,7 +78,6 @@ func (provider *provider) Start(ctx context.Context) error {
 func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.Identity, meta map[string]string) (*authtypes.Token, error) {
 	accessTokenClaims := Claims{
 		UserID: identity.UserID.String(),
-		Role:   identity.Role,
 		Email:  identity.Email.String(),
 		OrgID:  identity.OrgID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -94,7 +93,6 @@ func (provider *provider) CreateToken(ctx context.Context, identity *authtypes.I
 
 	refreshTokenClaims := Claims{
 		UserID: identity.UserID.String(),
-		Role:   identity.Role,
 		Email:  identity.Email.String(),
 		OrgID:  identity.OrgID.String(),
 		RegisteredClaims: jwt.RegisteredClaims{
@@ -117,17 +115,7 @@ func (provider *provider) GetIdentity(ctx context.Context, accessToken string) (
 		return nil, err
 	}
 
-	// check claimed role
-	identity, err := provider.getOrSetIdentity(ctx, emptyOrgID, valuer.MustNewUUID(claims.UserID))
-	if err != nil {
-		return nil, err
-	}
-
-	if identity.Role != claims.Role {
-		return nil, errors.Newf(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "claim role mismatch")
-	}
-
-	return authtypes.NewIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), claims.Role, authtypes.IdentNProviderTokenizer), nil
+	return authtypes.NewPrincipalUserIdentity(valuer.MustNewUUID(claims.UserID), valuer.MustNewUUID(claims.OrgID), valuer.MustNewEmail(claims.Email), authtypes.IdentNProviderTokenizer), nil
 }
 
 func (provider *provider) DeleteToken(ctx context.Context, accessToken string) error {

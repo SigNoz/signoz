@@ -12,7 +12,7 @@
 or
 `docker build . -t tagname`
 
-**Tag to remote url- Introduce versinoing later on**
+**Tag to remote url- Introduce versioning later on**
 
 ```
 docker tag signoz/frontend:latest 7296823551/signoz:latest

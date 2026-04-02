@@ -189,7 +189,7 @@ func (provider *Provider) do(ctx context.Context, url *url.URL, method string, k
 	return nil, provider.errFromStatusCode(response.StatusCode, errorMessage)
 }
 
-// This can be taken down to the client package
+// This can be taken down to the client package.
 func (provider *Provider) errFromStatusCode(statusCode int, errorMessage string) error {
 	switch statusCode {
 	case http.StatusBadRequest:

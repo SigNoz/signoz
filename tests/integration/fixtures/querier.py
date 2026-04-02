@@ -247,6 +247,14 @@ def get_scalar_value(response_json: Dict, query_name: str) -> Optional[float]:
     return None
 
 
+def get_all_warnings(response_json: Dict) -> List[Dict]:
+    return response_json.get("data", {}).get("warning", {}).get("warnings", [])
+
+
+def get_error_message(response_json: Dict) -> str:
+    return response_json.get("error", {}).get("message", "")
+
+
 def compare_values(
     v1: float,
     v2: float,
@@ -517,6 +525,16 @@ def get_scalar_columns(response_json: Dict) -> List[Dict]:
     if not results:
         return []
     return results[0].get("columns", [])
+
+
+def get_column_data_from_response(response_json: Dict, column_name: str) -> List[Any]:
+    results = response_json.get("data", {}).get("data", {}).get("results", [])
+    if not results:
+        return []
+    rows = results[0].get("rows") or []
+    return [
+        row["data"][column_name] for row in rows if column_name in row.get("data", {})
+    ]
 
 
 def assert_scalar_result_order(

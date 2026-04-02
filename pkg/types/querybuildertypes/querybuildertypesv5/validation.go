@@ -10,7 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
-// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content
+// getQueryIdentifier returns a friendly identifier for a query based on its type and name/content.
 func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 	name := envelope.GetQueryName()
 
@@ -39,7 +39,7 @@ func getQueryIdentifier(envelope QueryEnvelope, index int) string {
 }
 
 const (
-	// Maximum limit for query results
+	// Maximum limit for query results.
 	MaxQueryLimit = 10000
 )
 
@@ -172,7 +172,7 @@ func (q *QueryBuilderQuery[T]) validateGroupBy(cfg validationConfig) error {
 		return nil
 	}
 	for idx, item := range q.GroupBy {
-		if item.TelemetryFieldKey.Name == "" {
+		if item.Name == "" {
 			return errors.NewInvalidInputf(
 				errors.CodeInvalidInput, "invalid empty key name for group by at index %d", idx,
 			)
@@ -264,6 +264,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 				}
 				aliases[v.Alias] = true
 			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
+			}
 		case LogAggregation:
 			if v.Expression == "" {
 				aggId := fmt.Sprintf("aggregation #%d", i+1)
@@ -285,6 +291,12 @@ func (q *QueryBuilderQuery[T]) validateAggregations(cfg validationConfig) error 
 					)
 				}
 				aliases[v.Alias] = true
+			}
+			if strings.Contains(strings.ToLower(v.Expression), " as ") {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"aliasing is not allowed in expression. Use `alias` field instead",
+				)
 			}
 		}
 	}
@@ -395,7 +407,7 @@ func (q *QueryBuilderQuery[T]) validateOrderByForAggregation() error {
 	validOrderKeys := make(map[string]bool)
 
 	for _, gb := range q.GroupBy {
-		validOrderKeys[gb.TelemetryFieldKey.Name] = true
+		validOrderKeys[gb.Name] = true
 	}
 
 	for i, agg := range q.Aggregations {
@@ -497,7 +509,7 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 	return nil
 }
 
-// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled
+// validateAllQueriesNotDisabled validates that at least one query in the composite query is enabled.
 func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	for _, envelope := range r.CompositeQuery.Queries {
 		if !envelope.IsDisabled() {
@@ -511,7 +523,7 @@ func (r *QueryRangeRequest) validateAllQueriesNotDisabled() error {
 	)
 }
 
-// Validate performs validation on CompositeQuery
+// Validate performs validation on CompositeQuery.
 func (c *CompositeQuery) Validate(opts ...ValidationOption) error {
 	if len(c.Queries) == 0 {
 		return errors.NewInvalidInputf(

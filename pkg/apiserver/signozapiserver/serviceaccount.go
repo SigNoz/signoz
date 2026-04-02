@@ -5,6 +5,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/http/handler"
 	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/gorilla/mux"
 )
@@ -44,6 +45,23 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.authZ.OpenAccess(provider.serviceAccountHandler.GetMe), handler.OpenAPIDef{
+		ID:                  "GetMyServiceAccount",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Gets my service account",
+		Description:         "This endpoint gets my service account",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new(serviceaccounttypes.ServiceAccountWithRoles),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     nil,
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/service_accounts/{id}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Get), handler.OpenAPIDef{
 		ID:                  "GetServiceAccount",
 		Tags:                []string{"serviceaccount"},
@@ -51,7 +69,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint gets an existing service account",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            new(serviceaccounttypes.ServiceAccount),
+		Response:            new(serviceaccounttypes.ServiceAccountWithRoles),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{http.StatusNotFound},
@@ -61,29 +79,80 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		return err
 	}
 
+	if err := router.Handle("/api/v1/service_accounts/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.GetRoles), handler.OpenAPIDef{
+		ID:                  "GetServiceAccountRoles",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Gets service account roles",
+		Description:         "This endpoint gets all the roles for the existing service account",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            new([]*authtypes.Role),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusOK,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/service_accounts/{id}/roles", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.SetRole), handler.OpenAPIDef{
+		ID:                  "CreateServiceAccountRole",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Create service account role",
+		Description:         "This endpoint assigns a role to a service account",
+		Request:             new(serviceaccounttypes.PostableServiceAccountRole),
+		RequestContentType:  "",
+		Response:            new(types.Identifiable),
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusCreated,
+		ErrorStatusCodes:    []int{http.StatusBadRequest},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodPost).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/service_accounts/{id}/roles/{rid}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.DeleteRole), handler.OpenAPIDef{
+		ID:                  "DeleteServiceAccountRole",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Delete service account role",
+		Description:         "This endpoint revokes a role from service account",
+		Request:             nil,
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{},
+		Deprecated:          false,
+		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+	})).Methods(http.MethodDelete).GetError(); err != nil {
+		return err
+	}
+
+	if err := router.Handle("/api/v1/service_accounts/me", handler.New(provider.authZ.OpenAccess(provider.serviceAccountHandler.UpdateMe), handler.OpenAPIDef{
+		ID:                  "UpdateMyServiceAccount",
+		Tags:                []string{"serviceaccount"},
+		Summary:             "Updates my service account",
+		Description:         "This endpoint gets my service account",
+		Request:             new(serviceaccounttypes.UpdatableServiceAccount),
+		RequestContentType:  "",
+		Response:            nil,
+		ResponseContentType: "application/json",
+		SuccessStatusCode:   http.StatusNoContent,
+		ErrorStatusCodes:    []int{http.StatusNotFound},
+		Deprecated:          false,
+		SecuritySchemes:     nil,
+	})).Methods(http.MethodPut).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/service_accounts/{id}", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.Update), handler.OpenAPIDef{
 		ID:                  "UpdateServiceAccount",
 		Tags:                []string{"serviceaccount"},
 		Summary:             "Updates a service account",
 		Description:         "This endpoint updates an existing service account",
 		Request:             new(serviceaccounttypes.UpdatableServiceAccount),
-		RequestContentType:  "",
-		Response:            nil,
-		ResponseContentType: "application/json",
-		SuccessStatusCode:   http.StatusNoContent,
-		ErrorStatusCodes:    []int{http.StatusNotFound, http.StatusBadRequest},
-		Deprecated:          false,
-		SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
-	})).Methods(http.MethodPut).GetError(); err != nil {
-		return err
-	}
-
-	if err := router.Handle("/api/v1/service_accounts/{id}/status", handler.New(provider.authZ.AdminAccess(provider.serviceAccountHandler.UpdateStatus), handler.OpenAPIDef{
-		ID:                  "UpdateServiceAccountStatus",
-		Tags:                []string{"serviceaccount"},
-		Summary:             "Updates a service account status",
-		Description:         "This endpoint updates an existing service account status",
-		Request:             new(serviceaccounttypes.UpdatableServiceAccountStatus),
 		RequestContentType:  "",
 		Response:            nil,
 		ResponseContentType: "application/json",
@@ -136,7 +205,7 @@ func (provider *provider) addServiceAccountRoutes(router *mux.Router) error {
 		Description:         "This endpoint lists the service account keys",
 		Request:             nil,
 		RequestContentType:  "",
-		Response:            make([]*serviceaccounttypes.FactorAPIKey, 0),
+		Response:            make([]*serviceaccounttypes.GettableFactorAPIKey, 0),
 		ResponseContentType: "application/json",
 		SuccessStatusCode:   http.StatusOK,
 		ErrorStatusCodes:    []int{},

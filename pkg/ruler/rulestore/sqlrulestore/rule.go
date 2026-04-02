@@ -139,8 +139,7 @@ func (r *rule) GetStoredRulesByMetricName(ctx context.Context, orgID string, met
 
 		// Check conditions: must be metric-based alert with valid composite query
 		if ruleData.AlertType != ruletypes.AlertTypeMetric ||
-			ruleData.RuleCondition == nil ||
-			ruleData.RuleCondition.CompositeQuery == nil {
+			ruleData.RuleCondition == nil {
 			continue
 		}
 

@@ -8,7 +8,6 @@ const mockActiveAccount: ServiceAccountRow = {
 	id: 'sa-1',
 	name: 'CI Bot',
 	email: 'ci-bot@signoz.io',
-	roles: ['signoz-admin'],
 	status: 'ACTIVE',
 	createdAt: '2026-01-01T00:00:00Z',
 	updatedAt: '2026-01-02T00:00:00Z',
@@ -18,7 +17,6 @@ const mockDisabledAccount: ServiceAccountRow = {
 	id: 'sa-2',
 	name: 'Legacy Bot',
 	email: 'legacy@signoz.io',
-	roles: ['signoz-viewer', 'signoz-editor', 'billing-manager'],
 	status: 'DISABLED',
 	createdAt: '2025-06-01T00:00:00Z',
 	updatedAt: '2025-12-01T00:00:00Z',
@@ -39,7 +37,6 @@ describe('ServiceAccountsTable', () => {
 
 		expect(screen.getByText('CI Bot')).toBeInTheDocument();
 		expect(screen.getByText('ci-bot@signoz.io')).toBeInTheDocument();
-		expect(screen.getByText('signoz-admin')).toBeInTheDocument();
 		expect(screen.getByText('ACTIVE')).toBeInTheDocument();
 	});
 
@@ -49,8 +46,6 @@ describe('ServiceAccountsTable', () => {
 		);
 
 		expect(screen.getByText('DISABLED')).toBeInTheDocument();
-		expect(screen.getByText('signoz-viewer')).toBeInTheDocument();
-		expect(screen.getByText('+2')).toBeInTheDocument();
 	});
 
 	it('calls onRowClick with the correct account when a row is clicked', async () => {
