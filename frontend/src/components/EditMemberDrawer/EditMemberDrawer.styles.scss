@@ -177,6 +177,10 @@
 		flex-shrink: 0;
 	}
 
+	&__tooltip-wrapper {
+		display: inline-flex;
+	}
+
 	&__footer-btn {
 		display: inline-flex;
 		align-items: center;

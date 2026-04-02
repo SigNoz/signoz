@@ -111,6 +111,19 @@ const activeMember = {
 	updatedAt: '1710000000000',
 };
 
+const selfMember = {
+	...activeMember,
+	id: 'some-user-id',
+};
+
+const rootMockFetchedUser = {
+	data: {
+		...mockFetchedUser.data,
+		id: 'root-user-1',
+		isRoot: true,
+	},
+};
+
 const invitedMember = {
 	id: 'abc123',
 	name: '',
@@ -504,6 +517,96 @@ describe('EditMemberDrawer', () => {
 					expect.anything(),
 				);
 			});
+		});
+	});
+
+	describe('self user (isSelf)', () => {
+		it('disables Delete button when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(
+				screen.getByRole('button', { name: /delete member/i }),
+			).toBeDisabled();
+		});
+
+		it('does not open delete confirm dialog when Delete is clicked while disabled (isSelf)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			await user.click(screen.getByRole('button', { name: /delete member/i }));
+
+			expect(
+				screen.queryByText(/are you sure you want to delete/i),
+			).not.toBeInTheDocument();
+		});
+
+		it('keeps name input enabled when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(screen.getByDisplayValue('Alice Smith')).not.toBeDisabled();
+		});
+
+		it('keeps Reset Link button enabled when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			).not.toBeDisabled();
+		});
+	});
+
+	describe('root user', () => {
+		beforeEach(() => {
+			(useGetUser as jest.Mock).mockReturnValue({
+				data: rootMockFetchedUser,
+				isLoading: false,
+				refetch: jest.fn(),
+			});
+		});
+
+		it('disables name input for root user', () => {
+			renderDrawer();
+			expect(screen.getByDisplayValue('Alice Smith')).toBeDisabled();
+		});
+
+		it('disables Delete button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /delete member/i }),
+			).toBeDisabled();
+		});
+
+		it('disables Reset Link button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			).toBeDisabled();
+		});
+
+		it('disables Save button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /save member details/i }),
+			).toBeDisabled();
+		});
+
+		it('does not open delete confirm dialog when Delete is clicked while disabled (root)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer();
+
+			await user.click(screen.getByRole('button', { name: /delete member/i }));
+
+			expect(
+				screen.queryByText(/are you sure you want to delete/i),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not call getResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer();
+
+			await user.click(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			);
+
+			expect(mockGetResetPasswordToken).not.toHaveBeenCalled();
 		});
 	});
 
