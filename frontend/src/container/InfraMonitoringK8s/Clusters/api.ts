@@ -1,11 +1,12 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sClustersListPayload {
 	filters: TagFilter;
@@ -18,7 +19,7 @@ export interface K8sClustersListPayload {
 	};
 }
 
-export interface K8sClustersData {
+export interface K8sClusterData {
 	clusterUID: string;
 	cpuUsage: number;
 	cpuAllocatable: number;
@@ -34,7 +35,7 @@ export interface K8sClustersListResponse {
 	status: string;
 	data: {
 		type: string;
-		records: K8sClustersData[];
+		records: K8sClusterData[];
 		groups: null;
 		total: number;
 		sentAnyHostMetricsData: boolean;
@@ -49,7 +50,7 @@ export const clustersMetaMap = [
 
 export function mapClustersMeta(
 	raw: Record<string, unknown>,
-): K8sClustersData['meta'] {
+): K8sClusterData['meta'] {
 	const out: Record<string, unknown> = { ...raw };
 	clustersMetaMap.forEach(({ dot, under }) => {
 		if (dot in raw) {
@@ -57,11 +58,11 @@ export function mapClustersMeta(
 			out[under] = typeof v === 'string' ? v : raw[under];
 		}
 	});
-	return out as K8sClustersData['meta'];
+	return out as K8sClusterData['meta'];
 }
 
 export const getK8sClustersList = async (
-	props: K8sClustersListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
@@ -73,7 +74,7 @@ export const getK8sClustersList = async (
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
+							items: props.filters?.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;
@@ -106,7 +107,6 @@ export const getK8sClustersList = async (
 		});
 		const payload: K8sClustersListResponse = response.data;
 
-		// one-liner meta mapping
 		payload.data.records = payload.data.records.map((record) => ({
 			...record,
 			meta: mapClustersMeta(record.meta as Record<string, unknown>),
