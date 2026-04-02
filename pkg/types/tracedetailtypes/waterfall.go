@@ -10,10 +10,9 @@ import (
 
 // WaterfallRequest is the request body for the v3 waterfall API.
 type WaterfallRequest struct {
-	SelectedSpanID              string   `json:"selectedSpanId"`
-	IsSelectedSpanIDUnCollapsed bool     `json:"isSelectedSpanIDUnCollapsed"`
-	UncollapsedSpans            []string `json:"uncollapsedSpans"`
-	Limit                       uint     `json:"limit"`
+	SelectedSpanID   string   `json:"selectedSpanId"`
+	UncollapsedSpans []string `json:"uncollapsedSpans"`
+	Limit            uint     `json:"limit"`
 }
 
 // WaterfallResponse is the response for the v3 waterfall API.
@@ -26,7 +25,7 @@ type WaterfallResponse struct {
 	TotalSpansCount               uint64            `json:"totalSpansCount"`
 	TotalErrorSpansCount          uint64            `json:"totalErrorSpansCount"`
 	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	Spans                         []*Span           `json:"spans"`
+	Spans                         []*WaterfallSpan  `json:"spans"`
 	HasMissingSpans               bool              `json:"hasMissingSpans"`
 	UncollapsedSpans              []string          `json:"uncollapsedSpans"`
 }
@@ -39,11 +38,11 @@ type Event struct {
 	IsError      bool           `json:"isError,omitempty"`
 }
 
-// Span represents the span in waterfall response,
+// WaterfallSpan represents the span in waterfall response,
 // this uses snake_case keys for response as a special case since these
 // keys can be directly used to query spans and client need to know the actual fields.
 // This pattern should not be copied elsewhere.
-type Span struct {
+type WaterfallSpan struct {
 	Attributes         map[string]any    `json:"attributes"`
 	DBName             string            `json:"db_name"`
 	DBOperation        string            `json:"db_operation"`
@@ -71,12 +70,12 @@ type Span struct {
 	Timestamp          string            `json:"timestamp"`
 	TraceID            string            `json:"trace_id"`
 	TraceState         string            `json:"trace_state"`
+
 	// Tree structure fields
-	Children         []*Span `json:"children"`
-	SubTreeNodeCount uint64  `json:"sub_tree_node_count"`
-	HasChildren      bool    `json:"has_children"`
-	HasSiblings      bool    `json:"has_siblings"`
-	Level            uint64  `json:"level"`
+	Children         []*WaterfallSpan `json:"-"`
+	SubTreeNodeCount uint64           `json:"sub_tree_node_count"`
+	HasChildren      bool             `json:"has_children"`
+	Level            uint64           `json:"level"`
 
 	// timeUnixNano is an internal field used for tree building and sorting.
 	// It is not serialized in the JSON response.
@@ -86,12 +85,11 @@ type Span struct {
 }
 
 // CopyWithoutChildren creates a shallow copy and reset computed tree fields.
-func (s *Span) CopyWithoutChildren(level uint64, hasSiblings bool) *Span {
+func (s *WaterfallSpan) CopyWithoutChildren(level uint64) *WaterfallSpan {
 	cp := *s
 	cp.Level = level
 	cp.HasChildren = len(s.Children) > 0
-	cp.HasSiblings = hasSiblings
-	cp.Children = make([]*Span, 0)
+	cp.Children = make([]*WaterfallSpan, 0)
 	cp.SubTreeNodeCount = 0
 	return &cp
 }
@@ -131,7 +129,7 @@ type SpanModel struct {
 }
 
 // ToSpan converts a SpanModel (ClickHouse scan result) into a Span for the waterfall response.
-func (item *SpanModel) ToSpan() *Span {
+func (item *SpanModel) ToSpan() *WaterfallSpan {
 	// Merge attributes_string, attributes_number, attributes_bool preserving native types
 	attributes := make(map[string]any, len(item.AttributesString)+len(item.AttributesNumber)+len(item.AttributesBool))
 	for k, v := range item.AttributesString {
@@ -156,7 +154,7 @@ func (item *SpanModel) ToSpan() *Span {
 		events = append(events, event)
 	}
 
-	return &Span{
+	return &WaterfallSpan{
 		Attributes:         attributes,
 		DBName:             item.DBName,
 		DBOperation:        item.DBOperation,
@@ -184,7 +182,7 @@ func (item *SpanModel) ToSpan() *Span {
 		Timestamp:          item.TimeUnixNano.Format(time.RFC3339Nano),
 		TraceID:            item.TraceID,
 		TraceState:         item.TraceState,
-		Children:           make([]*Span, 0),
+		Children:           make([]*WaterfallSpan, 0),
 		TimeUnixNano:       uint64(item.TimeUnixNano.UnixNano()),
 		ServiceName:        item.ServiceName,
 	}
@@ -207,25 +205,25 @@ type OtelSpanRef struct {
 
 // WaterfallCache holds pre-processed trace data for caching.
 type WaterfallCache struct {
-	StartTime                     uint64            `json:"startTime"`
-	EndTime                       uint64            `json:"endTime"`
-	DurationNano                  uint64            `json:"durationNano"`
-	TotalSpans                    uint64            `json:"totalSpans"`
-	TotalErrorSpans               uint64            `json:"totalErrorSpans"`
-	ServiceNameToTotalDurationMap map[string]uint64 `json:"serviceNameToTotalDurationMap"`
-	SpanIDToSpanNodeMap           map[string]*Span  `json:"spanIdToSpanNodeMap"`
-	TraceRoots                    []*Span           `json:"traceRoots"`
-	HasMissingSpans               bool              `json:"hasMissingSpans"`
+	StartTime                     uint64                    `json:"startTime"`
+	EndTime                       uint64                    `json:"endTime"`
+	DurationNano                  uint64                    `json:"durationNano"`
+	TotalSpans                    uint64                    `json:"totalSpans"`
+	TotalErrorSpans               uint64                    `json:"totalErrorSpans"`
+	ServiceNameToTotalDurationMap map[string]uint64         `json:"serviceNameToTotalDurationMap"`
+	SpanIDToSpanNodeMap           map[string]*WaterfallSpan `json:"spanIdToSpanNodeMap"`
+	TraceRoots                    []*WaterfallSpan          `json:"traceRoots"`
+	HasMissingSpans               bool                      `json:"hasMissingSpans"`
 }
 
 func (c *WaterfallCache) Clone() cachetypes.Cacheable {
 	copyOfServiceNameToTotalDurationMap := make(map[string]uint64)
 	maps.Copy(copyOfServiceNameToTotalDurationMap, c.ServiceNameToTotalDurationMap)
 
-	copyOfSpanIDToSpanNodeMap := make(map[string]*Span)
+	copyOfSpanIDToSpanNodeMap := make(map[string]*WaterfallSpan)
 	maps.Copy(copyOfSpanIDToSpanNodeMap, c.SpanIDToSpanNodeMap)
 
-	copyOfTraceRoots := make([]*Span, len(c.TraceRoots))
+	copyOfTraceRoots := make([]*WaterfallSpan, len(c.TraceRoots))
 	copy(copyOfTraceRoots, c.TraceRoots)
 	return &WaterfallCache{
 		StartTime:                     c.StartTime,
