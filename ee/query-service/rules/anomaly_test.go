@@ -2,21 +2,19 @@ package rules
 
 import (
 	"context"
-	"log/slog"
 	"testing"
 	"time"
 
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/SigNoz/signoz/ee/query-service/anomaly"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/telemetrystore"
-	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
+
+	"github.com/SigNoz/signoz/ee/anomaly"
 )
 
 // mockAnomalyProvider is a mock implementation of anomaly.Provider for testing.
@@ -24,13 +22,13 @@ import (
 // time periods (current, past period, current season, past season, past 2 seasons,
 // past 3 seasons), making it cumbersome to create mock data.
 type mockAnomalyProvider struct {
-	responses []*anomaly.GetAnomaliesResponse
+	responses []*anomaly.AnomaliesResponse
 	callCount int
 }
 
-func (m *mockAnomalyProvider) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *anomaly.GetAnomaliesRequest) (*anomaly.GetAnomaliesResponse, error) {
+func (m *mockAnomalyProvider) GetAnomalies(ctx context.Context, orgID valuer.UUID, req *anomaly.AnomaliesRequest) (*anomaly.AnomaliesResponse, error) {
 	if m.callCount >= len(m.responses) {
-		return &anomaly.GetAnomaliesResponse{Results: []*v3.Result{}}, nil
+		return &anomaly.AnomaliesResponse{Results: []*qbtypes.TimeSeriesData{}}, nil
 	}
 	resp := m.responses[m.callCount]
 	m.callCount++
@@ -49,45 +47,46 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Test anomaly no data",
 		AlertType: ruletypes.AlertTypeMetric,
-		RuleType:  RuleTypeAnomaly,
+		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: evalWindow,
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOp: ruletypes.ValueIsAbove,
-			MatchType: ruletypes.AtleastOnce,
-			Target:    &target,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						QueryName:   "A",
-						Expression:  "A",
-						DataSource:  v3.DataSourceMetrics,
-						Temporality: v3.Unspecified,
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalMetrics,
 					},
-				},
+				}},
 			},
 			SelectedQuery: "A",
 			Seasonality:   "daily",
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{{
-					Name:        "Test anomaly no data",
-					TargetValue: &target,
-					MatchType:   ruletypes.AtleastOnce,
-					CompareOp:   ruletypes.ValueIsAbove,
+					Name:            "Test anomaly no data",
+					TargetValue:     &target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
 				}},
 			},
 		},
 	}
 
-	responseNoData := &anomaly.GetAnomaliesResponse{
-		Results: []*v3.Result{
+	responseNoData := &anomaly.AnomaliesResponse{
+		Results: []*qbtypes.TimeSeriesData{
 			{
-				QueryName:     "A",
-				AnomalyScores: []*v3.Series{},
+				QueryName: "A",
+				Aggregations: []*qbtypes.AggregationBucket{{
+					AnomalyScores: []*qbtypes.TimeSeries{},
+				}},
 			},
 		},
 	}
@@ -115,23 +114,17 @@ func TestAnomalyRule_NoData_AlertOnAbsent(t *testing.T) {
 		t.Run(c.description, func(t *testing.T) {
 			postableRule.RuleCondition.AlertOnAbsent = c.alertOnAbsent
 
-			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, nil)
-			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, nil, "", time.Second, nil, nil, options)
-
 			rule, err := NewAnomalyRule(
 				"test-anomaly-rule",
 				valuer.GenerateUUID(),
 				&postableRule,
-				reader,
 				nil,
 				logger,
-				nil,
 			)
 			require.NoError(t, err)
 
 			rule.provider = &mockAnomalyProvider{
-				responses: []*anomaly.GetAnomaliesResponse{responseNoData},
+				responses: []*anomaly.AnomaliesResponse{responseNoData},
 			}
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
@@ -156,46 +149,47 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 	postableRule := ruletypes.PostableRule{
 		AlertName: "Test anomaly no data with AbsentFor",
 		AlertType: ruletypes.AlertTypeMetric,
-		RuleType:  RuleTypeAnomaly,
+		RuleType:  ruletypes.RuleTypeAnomaly,
 		Evaluation: &ruletypes.EvaluationEnvelope{Kind: ruletypes.RollingEvaluation, Spec: ruletypes.RollingWindow{
 			EvalWindow: evalWindow,
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOp:     ruletypes.ValueIsAbove,
-			MatchType:     ruletypes.AtleastOnce,
-			AlertOnAbsent: true,
-			Target:        &target,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypeBuilder,
-				BuilderQueries: map[string]*v3.BuilderQuery{
-					"A": {
-						QueryName:   "A",
-						Expression:  "A",
-						DataSource:  v3.DataSourceMetrics,
-						Temporality: v3.Unspecified,
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			AlertOnAbsent:   true,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypeBuilder,
+				Queries: []qbtypes.QueryEnvelope{{
+					Type: qbtypes.QueryTypeBuilder,
+					Spec: qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]{
+						Name:   "A",
+						Signal: telemetrytypes.SignalMetrics,
 					},
-				},
+				}},
 			},
 			SelectedQuery: "A",
 			Seasonality:   "daily",
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{{
-					Name:        "Test anomaly no data with AbsentFor",
-					TargetValue: &target,
-					MatchType:   ruletypes.AtleastOnce,
-					CompareOp:   ruletypes.ValueIsAbove,
+					Name:            "Test anomaly no data with AbsentFor",
+					TargetValue:     &target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
 				}},
 			},
 		},
 	}
 
-	responseNoData := &anomaly.GetAnomaliesResponse{
-		Results: []*v3.Result{
+	responseNoData := &anomaly.AnomaliesResponse{
+		Results: []*qbtypes.TimeSeriesData{
 			{
-				QueryName:     "A",
-				AnomalyScores: []*v3.Series{},
+				QueryName: "A",
+				Aggregations: []*qbtypes.AggregationBucket{{
+					AnomalyScores: []*qbtypes.TimeSeries{},
+				}},
 			},
 		},
 	}
@@ -229,32 +223,35 @@ func TestAnomalyRule_NoData_AbsentFor(t *testing.T) {
 			t1 := baseTime.Add(5 * time.Minute)
 			t2 := t1.Add(c.timeBetweenEvals)
 
-			responseWithData := &anomaly.GetAnomaliesResponse{
-				Results: []*v3.Result{
+			responseWithData := &anomaly.AnomaliesResponse{
+				Results: []*qbtypes.TimeSeriesData{
 					{
 						QueryName: "A",
-						AnomalyScores: []*v3.Series{
-							{
-								Labels: map[string]string{"test": "label"},
-								Points: []v3.Point{
-									{Timestamp: baseTime.UnixMilli(), Value: 1.0},
-									{Timestamp: baseTime.Add(time.Minute).UnixMilli(), Value: 1.5},
+						Aggregations: []*qbtypes.AggregationBucket{{
+							AnomalyScores: []*qbtypes.TimeSeries{
+								{
+									Labels: []*qbtypes.Label{
+										{
+											Key:   telemetrytypes.TelemetryFieldKey{Name: "Test"},
+											Value: "labels",
+										},
+									},
+									Values: []*qbtypes.TimeSeriesValue{
+										{Timestamp: baseTime.UnixMilli(), Value: 1.0},
+										{Timestamp: baseTime.Add(time.Minute).UnixMilli(), Value: 1.5},
+									},
 								},
 							},
-						},
+						}},
 					},
 				},
 			}
 
-			telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, nil)
-			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, nil, "", time.Second, nil, nil, options)
-
-			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, reader, nil, logger, nil)
+			rule, err := NewAnomalyRule("test-anomaly-rule", valuer.GenerateUUID(), &postableRule, nil, logger)
 			require.NoError(t, err)
 
 			rule.provider = &mockAnomalyProvider{
-				responses: []*anomaly.GetAnomaliesResponse{responseWithData, responseNoData},
+				responses: []*anomaly.AnomaliesResponse{responseWithData, responseNoData},
 			}
 
 			alertsFound1, err := rule.Eval(context.Background(), t1)

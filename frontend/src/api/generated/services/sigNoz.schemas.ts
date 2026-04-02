@@ -2710,14 +2710,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export enum RulestatehistorytypesAlertStateDTO {
-	inactive = 'inactive',
-	pending = 'pending',
-	recovering = 'recovering',
-	firing = 'firing',
-	nodata = 'nodata',
-	disabled = 'disabled',
-}
 export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type integer
@@ -2729,7 +2721,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	 * @nullable true
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
-	overallState: RulestatehistorytypesAlertStateDTO;
+	overallState: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2737,12 +2729,12 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
-	ruleID: string;
+	ruleId: string;
 	/**
 	 * @type string
 	 */
 	ruleName: string;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2840,9 +2832,17 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	 * @format int64
 	 */
 	start: number;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 }
 
+export enum RuletypesAlertStateDTO {
+	inactive = 'inactive',
+	pending = 'pending',
+	recovering = 'recovering',
+	firing = 'firing',
+	nodata = 'nodata',
+	disabled = 'disabled',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -4613,7 +4613,7 @@ export type GetRuleHistoryTimelineParams = {
 	/**
 	 * @description undefined
 	 */
-	state?: RulestatehistorytypesAlertStateDTO;
+	state?: RuletypesAlertStateDTO;
 	/**
 	 * @type string
 	 * @description undefined

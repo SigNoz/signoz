@@ -427,7 +427,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		if query.Having != nil && query.Having.Expression != "" {
 			// Rewrite having expression to use SQL column names
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -453,7 +456,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -560,7 +566,10 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
+		if err != nil {
+			return nil, err
+		}
 		sb.Having(rewrittenExpr)
 	}
 

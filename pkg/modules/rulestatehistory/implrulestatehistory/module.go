@@ -7,6 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
 
@@ -123,8 +124,8 @@ func (m *module) RecordRuleStateHistory(ctx context.Context, ruleID string, hand
 		for _, item := range lastSavedState {
 			currentState, ok := currentItemsByFingerprint[item.Fingerprint]
 			if !ok {
-				if item.State == rulestatehistorytypes.StateFiring || item.State == rulestatehistorytypes.StateNoData {
-					item.State = rulestatehistorytypes.StateInactive
+				if item.State == ruletypes.StateFiring || item.State == ruletypes.StateNoData {
+					item.State = ruletypes.StateInactive
 					item.StateChanged = true
 					item.UnixMilli = time.Now().UnixMilli()
 					revisedItemsToAdd[item.Fingerprint] = item
@@ -145,10 +146,10 @@ func (m *module) RecordRuleStateHistory(ctx context.Context, ruleID string, hand
 			}
 		}
 
-		newState := rulestatehistorytypes.StateInactive
+		newState := ruletypes.StateInactive
 		for _, item := range revisedItemsToAdd {
-			if item.State == rulestatehistorytypes.StateFiring || item.State == rulestatehistorytypes.StateNoData {
-				newState = rulestatehistorytypes.StateFiring
+			if item.State == ruletypes.StateFiring || item.State == ruletypes.StateNoData {
+				newState = ruletypes.StateFiring
 				break
 			}
 		}
