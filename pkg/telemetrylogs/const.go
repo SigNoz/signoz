@@ -42,9 +42,8 @@ const (
 
 	// messageSubColumn is the ClickHouse sub-column that body searches map to
 	// when BodyJSONQueryEnabled is true.
-	messageSubField          = "message"
-	messageSubColumn         = "body_v2.message"
-	bodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
+	messageSubField  = "message"
+	messageSubColumn = "body_v2.message"
 )
 
 var (

@@ -360,6 +360,10 @@ func (v *filterExpressionVisitor) VisitPrimary(ctx *grammar.PrimaryContext) any 
 			v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 			return ErrorConditionLiteral
 		}
+		if BodyJSONQueryEnabled && v.fullTextColumn.Name == "body" {
+			v.warnings = append(v.warnings, BodySearchDefaultWarning)
+		}
+
 		return cond
 	}
 
@@ -713,6 +717,10 @@ func (v *filterExpressionVisitor) VisitFullText(ctx *grammar.FullTextContext) an
 	if err != nil {
 		v.errors = append(v.errors, fmt.Sprintf("failed to build full text search condition: %s", err.Error()))
 		return ErrorConditionLiteral
+	}
+
+	if BodyJSONQueryEnabled && v.fullTextColumn.Name == "body" {
+		v.warnings = append(v.warnings, BodySearchDefaultWarning)
 	}
 
 	return cond

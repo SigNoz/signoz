@@ -8,6 +8,10 @@ const (
 	TrueConditionLiteral  = "true"
 	SkipConditionLiteral  = "__skip__"
 	ErrorConditionLiteral = "__skip_because_of_error__"
+
+	// BodySearchDefaultWarning is emitted when a full-text search or bare "body"
+	// key query implicitly targets body.message:string under the new JSON body model.
+	BodySearchDefaultWarning = "body searches default to `body.message:string`. Use `body.<key>` to search a different field inside body"
 )
 
 var (

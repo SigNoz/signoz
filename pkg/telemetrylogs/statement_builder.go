@@ -147,11 +147,11 @@ func getKeySelectors(query qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]) ([
 
 	// When the new JSON body experience is enabled, warn the user if they use the bare
 	// "body" key in the filter — queries on plain "body" default to body.message:string.
-	// TODO(Piyush): Setup better for coming FTS support.
+	// FTS expressions ('error') are handled in VisitFullText in the where-clause visitor.
 	if querybuilder.BodyJSONQueryEnabled {
 		for _, sel := range keySelectors {
 			if sel.Name == LogsV2BodyColumn {
-				warnings = append(warnings, bodySearchDefaultWarning)
+				warnings = append(warnings, querybuilder.BodySearchDefaultWarning)
 				break
 			}
 		}
