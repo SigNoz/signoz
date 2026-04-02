@@ -44,7 +44,10 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 
 	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
 
-	op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+	op, err := helpers.AggregationColumnForSamplesTable(start, end, mq)
+	if err != nil {
+		return "", err
+	}
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
@@ -104,16 +107,25 @@ func prepareQueryOptimized(start, end, step int64, mq *v3.BuilderQuery) (string,
 
 	switch mq.SpaceAggregation {
 	case v3.SpaceAggregationSum:
-		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		op, err := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		if err != nil {
+			return "", err
+		}
 		if mq.TimeAggregation == v3.TimeAggregationRate {
 			op = fmt.Sprintf("%s/%d", op, step)
 		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMin:
-		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		op, err := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		if err != nil {
+			return "", err
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationMax:
-		op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		op, err := helpers.AggregationColumnForSamplesTable(start, end, mq)
+		if err != nil {
+			return "", err
+		}
 		query = fmt.Sprintf(queryTmpl, selectLabels, step, op, timeSeriesSubQuery, groupBy, orderBy)
 	case v3.SpaceAggregationPercentile50,
 		v3.SpaceAggregationPercentile75,

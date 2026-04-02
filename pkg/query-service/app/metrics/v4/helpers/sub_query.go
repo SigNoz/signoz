@@ -117,7 +117,7 @@ func WhichSamplesTableToUse(start, end int64, mq *v3.BuilderQuery) string {
 	}
 }
 
-func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) string {
+func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) (string, error) {
 	tableName := WhichSamplesTableToUse(start, end, mq)
 	var aggregationColumn string
 	switch mq.Temporality {
@@ -247,7 +247,10 @@ func AggregationColumnForSamplesTable(start, end int64, mq *v3.BuilderQuery) str
 			}
 		}
 	}
-	return aggregationColumn
+	if aggregationColumn == "" {
+		return "", fmt.Errorf("unsupported combination of temporality (%s), time aggregation (%s), and table (%s)", mq.Temporality, mq.TimeAggregation, tableName)
+	}
+	return aggregationColumn, nil
 }
 
 // PrepareTimeseriesFilterQuery builds the sub-query to be used for filtering timeseries based on the search criteria

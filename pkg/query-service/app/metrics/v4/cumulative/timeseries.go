@@ -137,7 +137,10 @@ func prepareTimeAggregationSubQuery(start, end, step int64, mq *v3.BuilderQuery)
 	selectLabelsAny := helpers.SelectLabelsAny(mq.GroupBy)
 	selectLabels := helpers.SelectLabels(mq.GroupBy)
 
-	op := helpers.AggregationColumnForSamplesTable(start, end, mq)
+	op, err := helpers.AggregationColumnForSamplesTable(start, end, mq)
+	if err != nil {
+		return "", err
+	}
 
 	switch mq.TimeAggregation {
 	case v3.TimeAggregationAvg:
