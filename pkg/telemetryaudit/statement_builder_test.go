@@ -18,13 +18,7 @@ func auditResourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggreg
 	fm := resourcefilter.NewFieldMapper()
 	cb := resourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	keysMap := buildCompleteFieldKeyMap()
-	for _, keys := range keysMap {
-		for _, key := range keys {
-			key.Signal = telemetrytypes.SignalLogs
-		}
-	}
-	mockMetadataStore.KeysMap = keysMap
+	mockMetadataStore.KeysMap = auditFieldKeyMap()
 
 	return resourcefilter.NewLogResourceFilterStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
@@ -36,9 +30,42 @@ func auditResourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.LogAggreg
 	)
 }
 
+func auditFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
+	key := func(name string, ctx telemetrytypes.FieldContext, dt telemetrytypes.FieldDataType, materialized bool) *telemetrytypes.TelemetryFieldKey {
+		return &telemetrytypes.TelemetryFieldKey{
+			Name:          name,
+			Signal:        telemetrytypes.SignalLogs,
+			FieldContext:  ctx,
+			FieldDataType: dt,
+			Materialized:  materialized,
+		}
+	}
+
+	attr := telemetrytypes.FieldContextAttribute
+	res := telemetrytypes.FieldContextResource
+	str := telemetrytypes.FieldDataTypeString
+	i64 := telemetrytypes.FieldDataTypeInt64
+
+	return map[string][]*telemetrytypes.TelemetryFieldKey{
+		"service.name":                 {key("service.name", res, str, false)},
+		"signoz.audit.action":          {key("signoz.audit.action", attr, str, true)},
+		"signoz.audit.outcome":         {key("signoz.audit.outcome", attr, str, true)},
+		"signoz.audit.principal.email": {key("signoz.audit.principal.email", attr, str, true)},
+		"signoz.audit.principal.id":    {key("signoz.audit.principal.id", attr, str, true)},
+		"signoz.audit.principal.type":  {key("signoz.audit.principal.type", attr, str, true)},
+		"signoz.audit.resource.name":   {key("signoz.audit.resource.name", attr, str, true)},
+		"signoz.audit.resource.id":     {key("signoz.audit.resource.id", attr, str, true)},
+		"signoz.audit.action_category": {key("signoz.audit.action_category", attr, str, false)},
+		"signoz.audit.error.type":      {key("signoz.audit.error.type", attr, str, false)},
+		"signoz.audit.error.code":      {key("signoz.audit.error.code", attr, str, false)},
+		"http.request.method":          {key("http.request.method", attr, str, false)},
+		"http.response.status_code":    {key("http.response.status_code", attr, i64, false)},
+	}
+}
+
 func newTestAuditStatementBuilder() *auditQueryStatementBuilder {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
-	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
+	mockMetadataStore.KeysMap = auditFieldKeyMap()
 
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
