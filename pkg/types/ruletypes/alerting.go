@@ -158,10 +158,6 @@ func (rc *RuleCondition) SelectedQueryName() string {
 	return keys[len(keys)-1]
 }
 
-func (rc *RuleCondition) IsValid() bool {
-	return true
-}
-
 // ShouldEval checks if the further series should be evaluated at all for alerts.
 func (rc *RuleCondition) ShouldEval(series *qbtypes.TimeSeries) bool {
 	return !rc.RequireMinPoints || len(series.Values) >= rc.RequiredNumPoints

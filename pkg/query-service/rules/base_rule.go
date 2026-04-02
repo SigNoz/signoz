@@ -139,9 +139,6 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 }
 
 func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts ...RuleOption) (*BaseRule, error) {
-	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
-		return nil, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid rule condition")
-	}
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err

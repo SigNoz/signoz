@@ -336,7 +336,9 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 	if err != nil {
 		return err
 	}
-
+	if err := parsedRule.Validate(); err != nil {
+		return err
+	}
 	existingRule, err := m.ruleStore.GetStoredRule(ctx, id)
 	if err != nil {
 		return err
@@ -533,7 +535,9 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 	if err != nil {
 		return nil, err
 	}
-
+	if err := parsedRule.Validate(); err != nil {
+		return nil, err
+	}
 	now := time.Now()
 	storedRule := &ruletypes.Rule{
 		Identifiable: types.Identifiable{
@@ -920,7 +924,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 		m.logger.ErrorContext(ctx, "failed to unmarshal patched rule with given id", slog.String("rule.id", id.StringValue()), errors.Attr(err))
 		return nil, err
 	}
-
+	if err := storedRule.Validate(); err != nil {
+		return nil, err
+	}
 	// deploy or un-deploy task according to patched (new) rule state
 	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", slog.String("task.name", taskName), errors.Attr(err))
@@ -970,6 +976,9 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 	err := json.Unmarshal([]byte(ruleStr), &parsedRule)
 	if err != nil {
 		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
+	}
+	if err := parsedRule.Validate(); err != nil {
+		return 0, err
 	}
 	if !parsedRule.NotificationSettings.UsePolicy {
 		parsedRule.NotificationSettings.GroupBy = append(parsedRule.NotificationSettings.GroupBy, ruletypes.LabelThresholdName)
