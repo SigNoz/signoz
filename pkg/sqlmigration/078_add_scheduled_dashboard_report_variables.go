@@ -56,4 +56,3 @@ func (migration *addScheduledDashboardReportVariables) Up(ctx context.Context, d
 func (migration *addScheduledDashboardReportVariables) Down(context.Context, *bun.DB) error {
 	return nil
 }
-

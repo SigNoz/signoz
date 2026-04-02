@@ -146,4 +146,3 @@ func (s *scheduledReportsStore) DeleteScheduledReport(
 
 	return nil
 }
-

@@ -149,4 +149,3 @@ func (aH *APIHandler) deleteScheduledReportSchedule(w http.ResponseWriter, r *ht
 
 	aH.Respond(w, nil)
 }
-
