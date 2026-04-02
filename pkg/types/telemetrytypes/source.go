@@ -13,9 +13,9 @@ var (
 )
 
 // Enum returns the acceptable values for Source.
+// TODO: Add SourceAudit once the frontend is ready for consumption.
 func (Source) Enum() []any {
 	return []any{
-		SourceAudit,
 		SourceMeter,
 	}
 }
