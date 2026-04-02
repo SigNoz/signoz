@@ -70,7 +70,7 @@ function HostsList(): JSX.Element {
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
 
-	const selectedTime = useGlobalTimeStore((store) => store.selectedTime);
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
 	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
