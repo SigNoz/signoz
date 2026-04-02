@@ -534,6 +534,11 @@ func (aH *APIHandler) RegisterRoutes(router *mux.Router, am *middleware.AuthZ) {
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.editDowntimeSchedule)).Methods(http.MethodPut)
 	router.HandleFunc("/api/v1/downtime_schedules/{id}", am.EditAccess(aH.deleteDowntimeSchedule)).Methods(http.MethodDelete)
 
+	router.HandleFunc("/api/v1/reports/schedules", am.ViewAccess(aH.listScheduledReportSchedules)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/reports/schedules", am.EditAccess(aH.createScheduledReportSchedule)).Methods(http.MethodPost)
+	router.HandleFunc("/api/v1/reports/schedules/{id}", am.ViewAccess(aH.getScheduledReportSchedule)).Methods(http.MethodGet)
+	router.HandleFunc("/api/v1/reports/schedules/{id}", am.EditAccess(aH.deleteScheduledReportSchedule)).Methods(http.MethodDelete)
+
 	router.HandleFunc("/api/v1/dashboards", am.ViewAccess(aH.List)).Methods(http.MethodGet)
 	router.HandleFunc("/api/v1/dashboards", am.EditAccess(aH.Signoz.Handlers.Dashboard.Create)).Methods(http.MethodPost)
 	router.HandleFunc("/api/v1/dashboards/{id}", am.ViewAccess(aH.Get)).Methods(http.MethodGet)
