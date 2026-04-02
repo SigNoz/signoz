@@ -13,7 +13,7 @@ type addScheduledDashboardReportRuns struct{}
 
 func NewAddScheduledDashboardReportRunsFactory() factory.ProviderFactory[SQLMigration, Config] {
 	return factory.NewProviderFactory(
-		factory.MustNewName("add_scheduled_dashboard_report_runs"),
+		factory.MustNewName("add_sched_report_runs"),
 		func(ctx context.Context, providerSettings factory.ProviderSettings, config Config) (SQLMigration, error) {
 			return newAddScheduledDashboardReportRuns(ctx, providerSettings, config)
 		},
