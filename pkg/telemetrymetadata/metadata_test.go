@@ -314,6 +314,20 @@ func TestEnrichWithIntrinsicMetricKeys(t *testing.T) {
 		},
 	)
 	assert.NotContains(t, result, "metric_name")
+
+	result = enrichWithIntrinsicMetricKeys(
+		map[string][]*telemetrytypes.TelemetryFieldKey{},
+		[]*telemetrytypes.FieldKeySelector{
+			{
+				Signal: telemetrytypes.SignalMetrics,
+				MetricContext: &telemetrytypes.MetricContext{
+					MetricNamespace: "system.cpu",
+				},
+				SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			},
+		},
+	)
+	assert.NotContains(t, result, "metric_name")
 }
 
 func TestGetMetricFieldValuesIntrinsicMetricName(t *testing.T) {

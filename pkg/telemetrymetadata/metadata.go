@@ -651,7 +651,12 @@ func (t *telemetryMetaStore) getMetricsKeys(ctx context.Context, fieldKeySelecto
 		// }
 
 		if fieldKeySelector.MetricContext != nil {
-			fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricName)+"%"))
+			if fieldKeySelector.MetricContext.MetricName != "" {
+				fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
+			}
+			if fieldKeySelector.MetricContext.MetricNamespace != "" {
+				fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricNamespace)+"%"))
+			}
 		}
 
 		conds = append(conds, sb.And(fieldConds...))
@@ -739,7 +744,12 @@ func (t *telemetryMetaStore) getMeterSourceMetricKeys(ctx context.Context, field
 		fieldConds = append(fieldConds, sb.NotLike("attr_name", "\\_\\_%"))
 
 		if fieldKeySelector.MetricContext != nil {
-			fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricName)+"%"))
+			if fieldKeySelector.MetricContext.MetricName != "" {
+				fieldConds = append(fieldConds, sb.E("metric_name", fieldKeySelector.MetricContext.MetricName))
+			}
+			if fieldKeySelector.MetricContext.MetricNamespace != "" {
+				fieldConds = append(fieldConds, sb.Like("metric_name", escapeForLike(fieldKeySelector.MetricContext.MetricNamespace)+"%"))
+			}
 		}
 
 		conds = append(conds, sb.And(fieldConds...))
@@ -833,8 +843,8 @@ func enrichWithIntrinsicMetricKeys(keys map[string][]*telemetrytypes.TelemetryFi
 		if selector.Signal != telemetrytypes.SignalMetrics && selector.Signal != telemetrytypes.SignalUnspecified {
 			continue
 		}
-		// If a metricName is provided, don’t surface intrinsic metric keys
-		if selector.MetricContext != nil && selector.MetricContext.MetricName != "" {
+		// If metric filters are provided, do not surface intrinsic metric keys.
+		if selector.MetricContext != nil && (selector.MetricContext.MetricName != "" || selector.MetricContext.MetricNamespace != "") {
 			continue
 		}
 
@@ -1383,7 +1393,7 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 		sb.Where(sb.E("attr_datatype", fieldValueSelector.FieldDataType.TagDataType()))
 	}
 
-	if fieldValueSelector.MetricContext != nil {
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
 		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
 
