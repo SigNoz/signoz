@@ -54,6 +54,7 @@ type telemetryMetaStore struct {
 	logsV2TblName                  string
 	auditDBName                    string
 	auditV2TblName                 string
+	auditFieldsTblName             string
 	auditAttributeKeysTblName      string
 	auditResourceKeysTblName       string
 	relatedMetadataDBName          string
@@ -87,6 +88,7 @@ func NewTelemetryMetaStore(
 	logResourceKeysTblName string,
 	auditDBName string,
 	auditV2TblName string,
+	auditFieldsTblName string,
 	auditAttributeKeysTblName string,
 	auditResourceKeysTblName string,
 	relatedMetadataDBName string,
@@ -113,6 +115,7 @@ func NewTelemetryMetaStore(
 		logResourceKeysTblName:         logResourceKeysTblName,
 		auditDBName:                    auditDBName,
 		auditV2TblName:                 auditV2TblName,
+		auditFieldsTblName:             auditFieldsTblName,
 		auditAttributeKeysTblName:      auditAttributeKeysTblName,
 		auditResourceKeysTblName:       auditResourceKeysTblName,
 		relatedMetadataDBName:          relatedMetadataDBName,
@@ -1602,6 +1605,100 @@ func (t *telemetryMetaStore) getLogFieldValues(ctx context.Context, fieldValueSe
 	return values, complete, nil
 }
 
+func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
+	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
+		instrumentationtypes.TelemetrySignal:  telemetrytypes.SignalLogs.StringValue(),
+		instrumentationtypes.CodeNamespace:    "metadata",
+		instrumentationtypes.CodeFunctionName: "getAuditFieldValues",
+	})
+
+	if t.auditDBName == "" || t.auditFieldsTblName == "" {
+		return &telemetrytypes.TelemetryFieldValues{}, true, nil
+	}
+
+	limit := fieldValueSelector.Limit
+	if limit == 0 {
+		limit = 50
+	}
+
+	sb := sqlbuilder.Select("DISTINCT string_value, number_value").From(t.auditDBName + "." + t.auditFieldsTblName)
+
+	if fieldValueSelector.Name != "" {
+		sb.Where(sb.E("tag_key", fieldValueSelector.Name))
+	}
+
+	if fieldValueSelector.FieldContext != telemetrytypes.FieldContextUnspecified {
+		sb.Where(sb.E("tag_type", fieldValueSelector.FieldContext.TagType()))
+	}
+
+	if fieldValueSelector.FieldDataType != telemetrytypes.FieldDataTypeUnspecified {
+		sb.Where(sb.E("tag_data_type", fieldValueSelector.FieldDataType.TagDataType()))
+	}
+
+	if fieldValueSelector.Value != "" {
+		switch fieldValueSelector.FieldDataType {
+		case telemetrytypes.FieldDataTypeString:
+			sb.Where(sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
+		case telemetrytypes.FieldDataTypeNumber:
+			sb.Where(sb.IsNotNull("number_value"))
+			sb.Where(sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"))
+		case telemetrytypes.FieldDataTypeUnspecified:
+			sb.Where(sb.Or(
+				sb.ILike("string_value", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
+				sb.ILike("toString(number_value)", "%"+escapeForLike(fieldValueSelector.Value)+"%"),
+			))
+		}
+	}
+
+	sb.Limit(limit + 1)
+
+	query, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
+
+	rows, err := t.telemetrystore.ClickhouseDB().Query(ctx, query, args...)
+	if err != nil {
+		return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+	}
+	defer rows.Close()
+
+	values := &telemetrytypes.TelemetryFieldValues{}
+	seen := make(map[string]bool)
+	rowCount := 0
+	totalCount := 0
+
+	for rows.Next() {
+		rowCount++
+
+		var stringValue string
+		var numberValue float64
+		err = rows.Scan(&stringValue, &numberValue)
+		if err != nil {
+			return nil, false, errors.Wrap(err, errors.TypeInternal, errors.CodeInternal, ErrFailedToGetAuditKeys.Error())
+		}
+		if stringValue != "" && !seen[stringValue] {
+			if totalCount >= limit {
+				break
+			}
+			values.StringValues = append(values.StringValues, stringValue)
+			seen[stringValue] = true
+			totalCount++
+		}
+		if numberValue != 0 {
+			if totalCount >= limit {
+				break
+			}
+			if !seen[fmt.Sprintf("%f", numberValue)] {
+				values.NumberValues = append(values.NumberValues, numberValue)
+				seen[fmt.Sprintf("%f", numberValue)] = true
+				totalCount++
+			}
+		}
+	}
+
+	complete := rowCount <= limit
+
+	return values, complete, nil
+}
+
 // getMetricFieldValues returns field values and whether the result is complete.
 func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValueSelector *telemetrytypes.FieldValueSelector) (*telemetrytypes.TelemetryFieldValues, bool, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
@@ -1892,7 +1989,11 @@ func (t *telemetryMetaStore) GetAllValues(ctx context.Context, fieldValueSelecto
 	case telemetrytypes.SignalTraces:
 		values, complete, err = t.getSpanFieldValues(ctx, fieldValueSelector)
 	case telemetrytypes.SignalLogs:
-		values, complete, err = t.getLogFieldValues(ctx, fieldValueSelector)
+		if fieldValueSelector.Source == telemetrytypes.SourceAudit {
+			values, complete, err = t.getAuditFieldValues(ctx, fieldValueSelector)
+		} else {
+			values, complete, err = t.getLogFieldValues(ctx, fieldValueSelector)
+		}
 	case telemetrytypes.SignalMetrics:
 		if fieldValueSelector.Source == telemetrytypes.SourceMeter {
 			values, complete, err = t.getMeterSourceMetricFieldValues(ctx, fieldValueSelector)
