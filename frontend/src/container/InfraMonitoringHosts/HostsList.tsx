@@ -26,7 +26,10 @@ import { Filter } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 import { useGlobalTimeStore } from 'store/globalTime';
-import { getAutoRefreshQueryKey } from 'store/globalTime/utils';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from 'store/globalTime/utils';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import {
 	IBuilderQuery,
@@ -102,8 +105,8 @@ function HostsList(): JSX.Element {
 				offset: (currentPage - 1) * pageSize,
 				filters: filters ?? defaultFilters,
 				orderBy,
-				start: Math.floor(minTime / 1000000),
-				end: Math.floor(maxTime / 1000000),
+				start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+				end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
 			};
 
 			return getHostLists(payload, signal);
