@@ -552,7 +552,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -578,7 +581,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -684,7 +690,10 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" && !skipHaving {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		if err != nil {
+			return nil, err
+		}
 		sb.Having(rewrittenExpr)
 	}
 
