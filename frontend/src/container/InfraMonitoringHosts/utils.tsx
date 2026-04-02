@@ -112,7 +112,10 @@ export interface HostsListTableProps {
 
 export interface EmptyOrLoadingViewProps {
 	isError: boolean;
-	errorMessage: string;
+	data:
+		| ErrorResponse<string>
+		| SuccessResponse<HostListResponse, unknown>
+		| undefined;
 	showHostsEmptyState: boolean;
 	sentAnyHostMetricsData: boolean;
 	isSendingIncorrectK8SAgentMetrics: boolean;
