@@ -325,7 +325,7 @@ def insert_audit_logs(
         if len(tag_attributes) > 0:
             clickhouse.conn.insert(
                 database="signoz_audit",
-                table="distributed_tag_attributes_v2",
+                table="distributed_tag_attributes",
                 data=[ta.np_arr() for ta in tag_attributes],
             )
 
@@ -384,7 +384,7 @@ def insert_audit_logs(
     for table in [
         "logs",
         "logs_resource",
-        "tag_attributes_v2",
+        "tag_attributes",
         "logs_attribute_keys",
         "logs_resource_keys",
     ]:
