@@ -1396,6 +1396,9 @@ func (t *telemetryMetaStore) getMetricFieldValues(ctx context.Context, fieldValu
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
 		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
+		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
+	}
 
 	if fieldValueSelector.StartUnixMilli > 0 {
 		sb.Where(sb.GE("last_reported_unix_milli", fieldValueSelector.StartUnixMilli))
@@ -1477,6 +1480,9 @@ func (t *telemetryMetaStore) getIntrinsicMetricFieldValues(ctx context.Context, 
 	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
 		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
 	}
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
+		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
+	}
 
 	if fieldValueSelector.StartUnixMilli > 0 {
 		sb.Where(sb.GE("unix_milli", fieldValueSelector.StartUnixMilli))
@@ -1533,6 +1539,13 @@ func (t *telemetryMetaStore) getMeterSourceMetricFieldValues(ctx context.Context
 		sb.Where(sb.E("attr.1", fieldValueSelector.Name))
 	}
 	sb.Where(sb.NotLike("attr.1", "\\_\\_%"))
+
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricName != "" {
+		sb.Where(sb.E("metric_name", fieldValueSelector.MetricContext.MetricName))
+	}
+	if fieldValueSelector.MetricContext != nil && fieldValueSelector.MetricContext.MetricNamespace != "" {
+		sb.Where(sb.Like("metric_name", escapeForLike(fieldValueSelector.MetricContext.MetricNamespace)+"%"))
+	}
 
 	if fieldValueSelector.Value != "" {
 		if fieldValueSelector.SelectorMatchType == telemetrytypes.FieldSelectorMatchTypeExact {
