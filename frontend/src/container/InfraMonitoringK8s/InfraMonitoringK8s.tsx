@@ -403,11 +403,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 						)}
 
 						{selectedCategory === K8sCategories.NAMESPACES && (
-							<K8sNamespacesList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sNamespacesList controlListPrefix={showFiltersComp} />
 						)}
 
 						{selectedCategory === K8sCategories.STATEFULSETS && (

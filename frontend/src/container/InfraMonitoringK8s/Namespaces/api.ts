@@ -1,11 +1,12 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sNamespacesListPayload {
 	filters: TagFilter;
@@ -59,7 +60,7 @@ export function mapNamespacesMeta(
 }
 
 export const getK8sNamespacesList = async (
-	props: K8sNamespacesListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
@@ -71,7 +72,7 @@ export const getK8sNamespacesList = async (
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
+							items: props.filters?.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;
