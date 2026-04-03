@@ -16,6 +16,7 @@ const dotToUnder: Record<string, string> = {
 	'k8s.pod.name': 'k8s_pod_name',
 	'k8s.pod.uid': 'k8s_pod_uid',
 	'k8s.statefulset.name': 'k8s_statefulset_name',
+	'k8s.persistentvolumeclaim.name': 'k8s_persistentvolumeclaim_name',
 };
 
 export function getGroupedByMeta<T extends { meta: Record<string, string> }>(

@@ -107,6 +107,8 @@ export interface K8sBaseDetailsProps<T> {
 		dotMetricsEnabled: boolean,
 	) => GetQueryResultsProps[];
 	queryKeyPrefix: string;
+	/** When true, only metrics are shown and the Metrics/Logs/Traces/Events tab bar is hidden. */
+	hideDetailViewTabs?: boolean;
 }
 
 export function createFilterItem(
@@ -141,6 +143,7 @@ function K8sBaseDetails<T>({
 	entityWidgetInfo,
 	getEntityQueryPayload,
 	queryKeyPrefix,
+	hideDetailViewTabs = false,
 }: K8sBaseDetailsProps<T>): JSX.Element {
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
@@ -169,6 +172,8 @@ function K8sBaseDetails<T>({
 	);
 
 	const [selectedView, setSelectedView] = useInfraMonitoringView();
+	const effectiveView = hideDetailViewTabs ? VIEW_TYPES.METRICS : selectedView;
+
 	const [logFiltersParam, setLogFiltersParam] = useInfraMonitoringLogFilters();
 	const [
 		tracesFiltersParam,
@@ -182,6 +187,16 @@ function K8sBaseDetails<T>({
 
 	const [selectedItem, setSelectedItem] = useInfraMonitoringSelectedItem();
 	const urlQuery = useUrlQuery();
+
+	useEffect(() => {
+		if (
+			hideDetailViewTabs &&
+			selectedItem &&
+			selectedView !== VIEW_TYPES.METRICS
+		) {
+			setSelectedView(VIEW_TYPES.METRICS);
+		}
+	}, [hideDetailViewTabs, selectedItem, selectedView, setSelectedView]);
 
 	const entityQueryKey = useMemo(
 		() =>
@@ -222,7 +237,7 @@ function K8sBaseDetails<T>({
 
 	const initialFilters = useMemo(() => {
 		const filters =
-			selectedView === VIEW_TYPES.LOGS ? logFiltersParam : tracesFiltersParam;
+			effectiveView === VIEW_TYPES.LOGS ? logFiltersParam : tracesFiltersParam;
 		if (filters) {
 			return filters;
 		}
@@ -235,7 +250,7 @@ function K8sBaseDetails<T>({
 		};
 	}, [
 		entity,
-		selectedView,
+		effectiveView,
 		logFiltersParam,
 		tracesFiltersParam,
 		getInitialLogTracesFilters,
@@ -327,10 +342,10 @@ function K8sBaseDetails<T>({
 				page: InfraMonitoringEvents.DetailedPage,
 				category: eventCategory,
 				interval,
-				view: selectedView,
+				view: effectiveView,
 			});
 		},
-		[eventCategory, selectedView],
+		[eventCategory, effectiveView],
 	);
 
 	const handleChangeLogFilters = useCallback(
@@ -619,69 +634,71 @@ function K8sBaseDetails<T>({
 						</div>
 					</div>
 
-					<div className="views-tabs-container">
-						<Radio.Group
-							className="views-tabs"
-							onChange={handleTabChange}
-							value={selectedView}
-						>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.METRICS}
+					{!hideDetailViewTabs && (
+						<div className="views-tabs-container">
+							<Radio.Group
+								className="views-tabs"
+								onChange={handleTabChange}
+								value={selectedView}
 							>
-								<div className="view-title">
-									<BarChart2 size={14} />
-									Metrics
-								</div>
-							</Radio.Button>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.LOGS}
-							>
-								<div className="view-title">
-									<ScrollText size={14} />
-									Logs
-								</div>
-							</Radio.Button>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.TRACES}
-							>
-								<div className="view-title">
-									<DraftingCompass size={14} />
-									Traces
-								</div>
-							</Radio.Button>
-							<Radio.Button
-								className={
-									selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
-								}
-								value={VIEW_TYPES.EVENTS}
-							>
-								<div className="view-title">
-									<ChevronsLeftRight size={14} />
-									Events
-								</div>
-							</Radio.Button>
-						</Radio.Group>
+								<Radio.Button
+									className={
+										selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
+									}
+									value={VIEW_TYPES.METRICS}
+								>
+									<div className="view-title">
+										<BarChart2 size={14} />
+										Metrics
+									</div>
+								</Radio.Button>
+								<Radio.Button
+									className={
+										selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
+									}
+									value={VIEW_TYPES.LOGS}
+								>
+									<div className="view-title">
+										<ScrollText size={14} />
+										Logs
+									</div>
+								</Radio.Button>
+								<Radio.Button
+									className={
+										selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
+									}
+									value={VIEW_TYPES.TRACES}
+								>
+									<div className="view-title">
+										<DraftingCompass size={14} />
+										Traces
+									</div>
+								</Radio.Button>
+								<Radio.Button
+									className={
+										selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
+									}
+									value={VIEW_TYPES.EVENTS}
+								>
+									<div className="view-title">
+										<ChevronsLeftRight size={14} />
+										Events
+									</div>
+								</Radio.Button>
+							</Radio.Group>
 
-						{(selectedView === VIEW_TYPES.LOGS ||
-							selectedView === VIEW_TYPES.TRACES) && (
-							<Button
-								icon={<Compass size={18} />}
-								className="compass-button"
-								onClick={handleExplorePagesRedirect}
-							/>
-						)}
-					</div>
+							{(selectedView === VIEW_TYPES.LOGS ||
+								selectedView === VIEW_TYPES.TRACES) && (
+								<Button
+									icon={<Compass size={18} />}
+									className="compass-button"
+									onClick={handleExplorePagesRedirect}
+								/>
+							)}
+						</div>
+					)}
 
-					{selectedView === VIEW_TYPES.METRICS && (
+					{effectiveView === VIEW_TYPES.METRICS && (
 						<EntityMetrics<T>
 							entity={entity}
 							selectedInterval={selectedInterval}
@@ -694,7 +711,7 @@ function K8sBaseDetails<T>({
 							queryKey={`${queryKeyPrefix}Metrics`}
 						/>
 					)}
-					{selectedView === VIEW_TYPES.LOGS && (
+					{effectiveView === VIEW_TYPES.LOGS && (
 						<EntityLogs
 							timeRange={modalTimeRange}
 							isModalTimeSelection
@@ -707,7 +724,7 @@ function K8sBaseDetails<T>({
 							category={category}
 						/>
 					)}
-					{selectedView === VIEW_TYPES.TRACES && (
+					{effectiveView === VIEW_TYPES.TRACES && (
 						<EntityTraces
 							timeRange={modalTimeRange}
 							isModalTimeSelection
@@ -720,7 +737,7 @@ function K8sBaseDetails<T>({
 							queryKeyFilters={primaryFilterKeys}
 						/>
 					)}
-					{selectedView === VIEW_TYPES.EVENTS && (
+					{effectiveView === VIEW_TYPES.EVENTS && (
 						<EntityEvents
 							timeRange={modalTimeRange}
 							isModalTimeSelection
