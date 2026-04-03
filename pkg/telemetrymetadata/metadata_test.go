@@ -38,7 +38,7 @@ func newTestTelemetryMetaStoreTestHelper(store telemetrystore.TelemetryStore) te
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
 		telemetryaudit.DBName,
-		telemetryaudit.LogsV2TableName,
+		telemetryaudit.LogsTableName,
 		telemetryaudit.TagAttributesV2TableName,
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,

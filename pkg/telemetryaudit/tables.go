@@ -2,8 +2,8 @@ package telemetryaudit
 
 const (
 	DBName                        = "signoz_audit"
-	LogsV2TableName               = "distributed_logs_v2"
-	LogsV2LocalTableName          = "logs_v2"
+	LogsTableName                 = "distributed_logs"
+	LogsLocalTableName            = "logs"
 	TagAttributesV2TableName      = "distributed_tag_attributes_v2"
 	TagAttributesV2LocalTableName = "tag_attributes_v2"
 	LogAttributeKeysTblName       = "distributed_logs_attribute_keys"

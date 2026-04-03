@@ -39,7 +39,7 @@ func TestGetFirstSeenFromMetricMetadata(t *testing.T) {
 		telemetrylogs.LogAttributeKeysTblName,
 		telemetrylogs.LogResourceKeysTblName,
 		telemetryaudit.DBName,
-		telemetryaudit.LogsV2TableName,
+		telemetryaudit.LogsTableName,
 		telemetryaudit.TagAttributesV2TableName,
 		telemetryaudit.LogAttributeKeysTblName,
 		telemetryaudit.LogResourceKeysTblName,
