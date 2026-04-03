@@ -24,7 +24,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 		category        ActionCategory
 		claims          authtypes.Claims
 		resourceID      string
-		resourceName    string
+		resourceKind    string
 		errorType       string
 		errorCode       string
 		expectedOutcome Outcome
@@ -40,7 +40,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019a1234-abcd-7000-8000-567800000001", Email: "alice@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
-			resourceName:    "dashboard",
+			resourceKind:    "dashboard",
 			expectedOutcome: OutcomeSuccess,
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678-efgh-9012)",
 		},
@@ -54,7 +54,7 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 			category:        ActionCategoryConfigurationChange,
 			claims:          authtypes.Claims{UserID: "019aaaaa-bbbb-7000-8000-cccc00000002", Email: "viewer@acme.com", OrgID: "019a-0000-0000-0001", IdentNProvider: authtypes.IdentNProviderTokenizer},
 			resourceID:      "019b-5678-efgh-9012",
-			resourceName:    "dashboard",
+			resourceKind:    "dashboard",
 			errorType:       "forbidden",
 			errorCode:       "authz_forbidden",
 			expectedOutcome: OutcomeFailure,
@@ -76,14 +76,14 @@ func TestNewAuditEventFromHTTPRequest(t *testing.T) {
 				testCase.category,
 				testCase.claims,
 				testCase.resourceID,
-				testCase.resourceName,
+				testCase.resourceKind,
 				testCase.errorType,
 				testCase.errorCode,
 			)
 
 			assert.Equal(t, testCase.expectedOutcome, event.AuditAttributes.Outcome)
 			assert.Equal(t, testCase.expectedBody, event.Body)
-			assert.Equal(t, testCase.resourceName, event.ResourceAttributes.ResourceName)
+			assert.Equal(t, testCase.resourceKind, event.ResourceAttributes.ResourceKind)
 			assert.Equal(t, testCase.resourceID, event.ResourceAttributes.ResourceID)
 			assert.Equal(t, testCase.action, event.AuditAttributes.Action)
 			assert.Equal(t, testCase.category, event.AuditAttributes.ActionCategory)
