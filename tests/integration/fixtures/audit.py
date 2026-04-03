@@ -327,6 +327,15 @@ def insert_audit_logs(
                 database="signoz_audit",
                 table="distributed_tag_attributes",
                 data=[ta.np_arr() for ta in tag_attributes],
+                column_names=[
+                    "unix_milli",
+                    "tag_key",
+                    "tag_type",
+                    "tag_data_type",
+                    "string_value",
+                    "int64_value",
+                    "float64_value",
+                ],
             )
 
         attribute_keys: List[AuditResourceOrAttributeKeys] = []
@@ -338,6 +347,7 @@ def insert_audit_logs(
                 database="signoz_audit",
                 table="distributed_logs_attribute_keys",
                 data=[ak.np_arr() for ak in attribute_keys],
+                column_names=["name", "datatype"],
             )
 
         resource_keys: List[AuditResourceOrAttributeKeys] = []
@@ -349,6 +359,7 @@ def insert_audit_logs(
                 database="signoz_audit",
                 table="distributed_logs_resource_keys",
                 data=[rk.np_arr() for rk in resource_keys],
+                column_names=["name", "datatype"],
             )
 
         clickhouse.conn.insert(
