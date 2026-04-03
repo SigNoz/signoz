@@ -1,6 +1,6 @@
+import type { TypesUserDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { UserResponse } from 'types/api/user/getUser';
 
 import MembersSettings from '../MembersSettings';
 
@@ -11,47 +11,39 @@ jest.mock('@signozhq/sonner', () => ({
 	},
 }));
 
-const USERS_ENDPOINT = '*/api/v1/user';
+const USERS_ENDPOINT = '*/api/v2/users';
 
-const mockUsers: UserResponse[] = [
+const mockUsers: TypesUserDTO[] = [
 	{
 		id: 'user-1',
 		displayName: 'Alice Smith',
 		email: 'alice@signoz.io',
-		role: 'ADMIN',
 		status: 'active',
-		createdAt: '2024-01-01T00:00:00.000Z',
-		organization: 'TestOrg',
+		createdAt: new Date('2024-01-01T00:00:00.000Z'),
 		orgId: 'org-1',
 	},
 	{
 		id: 'user-2',
 		displayName: 'Bob Jones',
 		email: 'bob@signoz.io',
-		role: 'VIEWER',
 		status: 'active',
-		createdAt: '2024-01-02T00:00:00.000Z',
-		organization: 'TestOrg',
+		createdAt: new Date('2024-01-02T00:00:00.000Z'),
 		orgId: 'org-1',
 	},
 	{
 		id: 'inv-1',
 		displayName: '',
 		email: 'charlie@signoz.io',
-		role: 'EDITOR',
 		status: 'pending_invite',
-		createdAt: '2024-01-03T00:00:00.000Z',
-		organization: 'TestOrg',
+		createdAt: new Date('2024-01-03T00:00:00.000Z'),
 		orgId: 'org-1',
 	},
 	{
 		id: 'user-3',
 		displayName: 'Dave Deleted',
 		email: 'dave@signoz.io',
-		role: 'VIEWER',
 		status: 'deleted',
-		createdAt: '2024-01-04T00:00:00.000Z',
-		organization: 'TestOrg',
+		createdAt: new Date('2024-01-04T00:00:00.000Z'),
 		orgId: 'org-1',
 	},
 ];
@@ -106,7 +98,7 @@ describe('MembersSettings (integration)', () => {
 		await screen.findByText('Alice Smith');
 
 		await user.type(
-			screen.getByPlaceholderText(/Search by name, email, or role/i),
+			screen.getByPlaceholderText(/Search by name or email/i),
 			'bob',
 		);
 

@@ -1,9 +1,8 @@
 import { ReactChild, useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { matchPath, Redirect, useLocation } from 'react-router-dom';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import getAll from 'api/v1/user/get';
+import { useListUsers } from 'api/generated/services/users';
 import { FeatureKeys } from 'constants/features';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { ORG_PREFERENCES } from 'constants/orgPreferences';
@@ -12,12 +11,9 @@ import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import history from 'lib/history';
 import { isEmpty } from 'lodash-es';
 import { useAppContext } from 'providers/App/App';
-import { SuccessResponseV2 } from 'types/api';
-import APIError from 'types/api/error';
 import { LicensePlatform, LicenseState } from 'types/api/licensesV3/getActive';
 import { OrgPreference } from 'types/api/preferences/preference';
 import { Organization } from 'types/api/user/getOrganization';
-import { UserResponse } from 'types/api/user/getUser';
 import { USER_ROLES } from 'types/roles';
 import { routePermission } from 'utils/permission';
 
@@ -63,18 +59,10 @@ function PrivateRoute({ children }: PrivateRouteProps): JSX.Element {
 
 	const [orgData, setOrgData] = useState<Organization | undefined>(undefined);
 
-	const { data: usersData, isFetching: isFetchingUsers } = useQuery<
-		SuccessResponseV2<UserResponse[]> | undefined,
-		APIError
-	>({
-		queryFn: () => {
-			if (orgData && orgData.id !== undefined) {
-				return getAll();
-			}
-			return undefined;
+	const { data: usersData, isFetching: isFetchingUsers } = useListUsers({
+		query: {
+			enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 		},
-		queryKey: ['getOrgUser'],
-		enabled: !isEmpty(orgData) && user.role === 'ADMIN',
 	});
 
 	const checkFirstTimeUser = useCallback((): boolean => {
