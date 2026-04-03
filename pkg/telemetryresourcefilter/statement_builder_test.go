@@ -367,8 +367,6 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalTraces)
 
@@ -377,8 +375,6 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 		"signoz_traces",
 		"distributed_traces_v3_resource",
 		telemetrytypes.SignalTraces,
-		fm,
-		cb,
 		mockMetadataStore,
 		nil,
 		nil,
@@ -588,8 +584,6 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalLogs)
 
@@ -598,8 +592,6 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 		"signoz_logs",
 		"distributed_logs_v2_resource",
 		telemetrytypes.SignalLogs,
-		fm,
-		cb,
 		mockMetadataStore,
 		nil,
 		nil,
@@ -653,8 +645,6 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		},
 	}
 
-	fm := NewFieldMapper()
-	cb := NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalTraces)
 
@@ -663,8 +653,6 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 		"signoz_traces",
 		"distributed_traces_v3_resource",
 		telemetrytypes.SignalTraces,
-		fm,
-		cb,
 		mockMetadataStore,
 		nil,
 		nil,

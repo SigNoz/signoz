@@ -40,15 +40,11 @@ func NewLogQueryStatementBuilder(
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
 
-	resourceFilterFM := telemetryresourcefilter.NewFieldMapper()
-	resourceFilterCB := telemetryresourcefilter.NewConditionBuilder(resourceFilterFM)
 	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.LogAggregation](
 		settings,
 		DBName,
 		LogsResourceV2TableName,
 		telemetrytypes.SignalLogs,
-		resourceFilterFM,
-		resourceFilterCB,
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,

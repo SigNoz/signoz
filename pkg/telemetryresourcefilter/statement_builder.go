@@ -37,19 +37,19 @@ func New[T any](
 	dbName string,
 	tableName string,
 	signal telemetrytypes.Signal,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *resourceFilterStatementBuilder[T] {
 	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
 	return &resourceFilterStatementBuilder[T]{
 		logger:           set.Logger(),
 		dbName:           dbName,
 		tableName:        tableName,
-		fieldMapper:      fieldMapper,
-		conditionBuilder: conditionBuilder,
+		fieldMapper:      fm,
+		conditionBuilder: cb,
 		metadataStore:    metadataStore,
 		signal:           signal,
 		fullTextColumn:   fullTextColumn,

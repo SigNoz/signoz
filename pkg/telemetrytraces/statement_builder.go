@@ -44,15 +44,11 @@ func NewTraceQueryStatementBuilder(
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
 
-	resourceFilterFM := telemetryresourcefilter.NewFieldMapper()
-	resourceFilterCB := telemetryresourcefilter.NewConditionBuilder(resourceFilterFM)
 	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.TraceAggregation](
 		settings,
 		DBName,
 		TracesResourceV3TableName,
 		telemetrytypes.SignalTraces,
-		resourceFilterFM,
-		resourceFilterCB,
 		metadataStore,
 		nil,
 		nil,
