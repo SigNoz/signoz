@@ -59,9 +59,16 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: isListViewPanel
-							? defaultListViewPanelStyle
-							: getDefaultCellStyle(isDarkMode),
+						style: {
+							...(isListViewPanel
+								? defaultListViewPanelStyle
+								: getDefaultCellStyle(isDarkMode)),
+							display: '-webkit-box',
+							WebkitLineClamp: linesPerRow,
+							WebkitBoxOrient: 'vertical',
+							overflow: 'hidden',
+							wordBreak: 'break-all',
+						},
 					},
 					children: <p className={cx('paragraph', fontSize)}>{field}</p>,
 				}),
