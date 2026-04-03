@@ -76,11 +76,11 @@
 
 .tanstack-column-actions-content {
 	width: 140px;
-	padding: 6px;
+	padding: 0;
 	background: var(--l2-background);
 	border: 1px solid var(--l2-border);
-	border-radius: 8px;
-	box-shadow: 0 8px 20px var(--l2-border);
+	border-radius: 4px;
+	box-shadow: none;
 }
 
 .tanstack-remove-column-action {
@@ -88,10 +88,10 @@
 	align-items: center;
 	gap: 8px;
 	width: 100%;
-	min-height: 25px;
-	padding: 0 6px;
+	min-height: 32px;
+	padding: 0 8px;
 	border: none;
-	border-radius: 6px;
+	border-radius: 0;
 	background: transparent;
 	justify-content: flex-start;
 	cursor: pointer;
