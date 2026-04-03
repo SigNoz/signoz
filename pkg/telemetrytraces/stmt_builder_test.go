@@ -8,7 +8,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -16,12 +16,12 @@ import (
 )
 
 func resourceFilterStmtBuilder() qbtypes.StatementBuilder[qbtypes.TraceAggregation] {
-	fm := resourcefilter.NewFieldMapper()
-	cb := resourcefilter.NewConditionBuilder(fm)
+	fm := telemetryresourcefilter.NewFieldMapper()
+	cb := telemetryresourcefilter.NewConditionBuilder(fm)
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 
-	return resourcefilter.NewTraceResourceFilterStatementBuilder(
+	return telemetryresourcefilter.NewTraceResourceFilterStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		fm,
 		cb,

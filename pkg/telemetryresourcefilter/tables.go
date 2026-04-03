@@ -1,4 +1,4 @@
-package resourcefilter
+package telemetryresourcefilter
 
 const (
 	TracesDBName             = "signoz_traces"

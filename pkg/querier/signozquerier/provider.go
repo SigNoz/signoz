@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/querier"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrylogs"
 	"github.com/SigNoz/signoz/pkg/telemetrymetadata"
 	"github.com/SigNoz/signoz/pkg/telemetrymeter"
@@ -73,9 +73,9 @@ func newProvider(
 	traceFieldMapper := telemetrytraces.NewFieldMapper()
 	traceConditionBuilder := telemetrytraces.NewConditionBuilder(traceFieldMapper)
 
-	resourceFilterFieldMapper := resourcefilter.NewFieldMapper()
-	resourceFilterConditionBuilder := resourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+	resourceFilterFieldMapper := telemetryresourcefilter.NewFieldMapper()
+	resourceFilterConditionBuilder := telemetryresourcefilter.NewConditionBuilder(resourceFilterFieldMapper)
+	resourceFilterStmtBuilder := telemetryresourcefilter.NewTraceResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
 		resourceFilterConditionBuilder,
@@ -107,7 +107,7 @@ func newProvider(
 	// Create log statement builder
 	logFieldMapper := telemetrylogs.NewFieldMapper()
 	logConditionBuilder := telemetrylogs.NewConditionBuilder(logFieldMapper)
-	logResourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
+	logResourceFilterStmtBuilder := telemetryresourcefilter.NewLogResourceFilterStatementBuilder(
 		settings,
 		resourceFilterFieldMapper,
 		resourceFilterConditionBuilder,

@@ -7,7 +7,7 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -35,9 +35,9 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		Signal:        telemetrytypes.SignalTraces,
 	}}
 
-	resourceFilterFM := resourcefilter.NewFieldMapper()
-	resourceFilterCB := resourcefilter.NewConditionBuilder(resourceFilterFM)
-	resourceFilterStmtBuilder := resourcefilter.NewTraceResourceFilterStatementBuilder(
+	resourceFilterFM := telemetryresourcefilter.NewFieldMapper()
+	resourceFilterCB := telemetryresourcefilter.NewConditionBuilder(resourceFilterFM)
+	resourceFilterStmtBuilder := telemetryresourcefilter.NewTraceResourceFilterStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		resourceFilterFM,
 		resourceFilterCB,

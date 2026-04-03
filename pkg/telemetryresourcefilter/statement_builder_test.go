@@ -1,4 +1,4 @@
-package resourcefilter
+package telemetryresourcefilter
 
 import (
 	"context"
