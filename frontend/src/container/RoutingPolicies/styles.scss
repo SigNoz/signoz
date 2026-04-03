@@ -222,7 +222,7 @@
 			.ant-input {
 				width: 100%;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 			}
 
@@ -230,17 +230,17 @@
 				width: 100%;
 				.ant-select-selector {
 					border-radius: 2px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 				}
 
 				&.ant-select-focused .ant-select-selector {
-					border-color: var(--l2-border) !important;
+					border-color: var(--l1-border) !important;
 					box-shadow: none !important;
 				}
 
 				&:hover .ant-select-selector {
-					border-color: var(--l2-border) !important;
+					border-color: var(--l1-border) !important;
 				}
 			}
 		}
@@ -296,7 +296,7 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
@@ -366,7 +366,7 @@
 	.routing-policies-table {
 		.ant-table-tbody {
 			.policy-list-item {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background-color: var(--l1-background);
 
 				.policy-list-item-header {
@@ -393,7 +393,7 @@
 
 	.create-policy-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {
@@ -405,7 +405,7 @@
 
 			.ant-modal-body {
 				.ant-divider {
-					border: 0.5px solid var(--l3-border);
+					border: 0.5px solid var(--l1-border);
 				}
 			}
 		}
@@ -417,23 +417,23 @@
 				}
 
 				.ant-input {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-background);
 				}
 
 				.ant-select {
 					.ant-select-selector {
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						background: var(--l1-background);
 					}
 
 					&.ant-select-focused .ant-select-selector {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 						box-shadow: none !important;
 					}
 
 					&:hover .ant-select-selector {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 					}
 				}
 			}
@@ -442,7 +442,7 @@
 
 	.delete-policy-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {

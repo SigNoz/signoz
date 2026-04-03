@@ -2,7 +2,7 @@
 	display: flex;
 	flex-direction: column;
 	height: calc(100vh - 44px); //44px -> trace details top bar
-	border-left: 1px solid var(--l2-border);
+	border-left: 1px solid var(--l1-border);
 	overflow-y: auto !important;
 	&:not(&-docked) {
 		min-width: 450px;
@@ -18,7 +18,7 @@
 		justify-content: space-between;
 		height: 48px;
 		padding: 12px;
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 
 		.heading {
 			display: flex;
@@ -81,7 +81,7 @@
 					border: none;
 					box-shadow: none;
 					border-radius: 2px;
-					background: var(--l2-border);
+					background: var(--l1-border);
 					padding: 4px;
 					gap: 3px;
 					height: 24px;
@@ -129,7 +129,7 @@
 						padding-left: 8px;
 						padding-right: 8px;
 
-						border-left: 1px solid var(--l2-border);
+						border-left: 1px solid var(--l1-border);
 
 						cursor: pointer;
 
@@ -141,8 +141,8 @@
 
 					&.span-percentile-value-container-open {
 						.span-percentile-value {
-							border: 1px solid var(--l2-border);
-							background: var(--l2-border);
+							border: 1px solid var(--l1-border);
+							background: var(--l1-border);
 						}
 					}
 				}
@@ -216,7 +216,7 @@
 
 							.ant-select-selector {
 								border-radius: 50px;
-								border: 1px solid var(--border);
+								border: 1px solid var(--l1-border);
 								background: var(--l1-background);
 								color: var(--l2-foreground);
 								font-family: Inter;
@@ -313,7 +313,7 @@
 								flex: 1;
 								height: 0; /* line only */
 								margin: 0 8px;
-								border-top: 1px dashed var(--l3-border);
+								border-top: 1px dashed var(--l1-border);
 
 								/* Use border image to control dash length & spacing */
 								border-top-width: 1px;
@@ -383,12 +383,12 @@
 							box-shadow: none !important;
 							height: 36px;
 
-							border-bottom: 1px solid var(--l2-border) !important;
+							border-bottom: 1px solid var(--l1-border) !important;
 						}
 					}
 
 					border-radius: 4px;
-					border: 1px solid var(--border);
+					border: 1px solid var(--l1-border);
 					background: linear-gradient(139deg, var(--card) 0%, var(--card) 98.68%);
 					box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 					backdrop-filter: blur(20px);
@@ -464,7 +464,7 @@
 				width: fit-content;
 				max-width: 100%;
 				border-radius: 50px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-border);
 
 				.attribute-value {
@@ -486,7 +486,7 @@
 				align-items: center;
 				gap: 8px;
 				border-radius: 50px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-border);
 				width: fit-content;
 
@@ -528,7 +528,7 @@
 				.ant-btn.ant-btn-default {
 					padding: 0 15px;
 					&:not(:hover) {
-						border: 1px solid var(--l2-border);
+						border: 1px solid var(--l1-border);
 					}
 				}
 			}
@@ -548,7 +548,7 @@
 			}
 
 			.ant-tabs-nav::before {
-				border-bottom: 1px solid var(--l2-border) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
 			}
 
 			.ant-tabs-tab {
@@ -677,8 +677,8 @@
 			.dashed-line {
 				border-image: repeating-linear-gradient(
 						to right,
-						var(--l2-border) 0,
-						var(--l2-border) 10px,
+						var(--l1-border) 0,
+						var(--l1-border) 10px,
 						transparent 10px,
 						transparent 20px
 					)

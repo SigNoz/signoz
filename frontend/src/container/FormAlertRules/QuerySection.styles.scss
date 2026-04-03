@@ -23,7 +23,7 @@
 	}
 	.ant-tabs-tab-active {
 		.nav-btns {
-			background: var(--l2-border) !important;
+			background: var(--l1-border) !important;
 		}
 	}
 
@@ -35,10 +35,10 @@
 		border-bottom: none !important;
 	}
 	.ant-tabs-nav-list {
-		border: 1px solid var(--l3-border);
+		border: 1px solid var(--l1-border);
 	}
 	.ant-tabs-tab + .ant-tabs-tab {
-		border-left: 1px solid var(--l3-border) !important;
+		border-left: 1px solid var(--l1-border) !important;
 	}
 
 	.stage-run-query {

@@ -3,7 +3,7 @@ $font-family: 'Inter';
 $item-spacing: 8px;
 
 :root {
-	--border-color: var(--l2-border);
+	--border-color: var(--l1-border);
 }
 
 // Mixins
@@ -62,7 +62,7 @@ $item-spacing: 8px;
 		color: var(--l2-foreground);
 		letter-spacing: -0.04px;
 		border-radius: 2.286px;
-		border: 1.143px solid var(--l2-border);
+		border: 1.143px solid var(--l1-border);
 		border-bottom-width: 2.286px;
 		background: var(--l2-background);
 		padding: 0 1px;

@@ -6,7 +6,7 @@
 		display: flex;
 		align-items: center;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		box-shadow: none !important;
 		background: var(--l3-background);
 		display: flex;
@@ -39,12 +39,12 @@
 		display: flex;
 		flex-direction: row;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		margin-left: 8px;
 
 		.refresh-btn {
-			border-right: 1px solid var(--l2-border);
+			border-right: 1px solid var(--l1-border);
 		}
 		.ant-btn {
 			display: flex;
@@ -54,7 +54,7 @@
 			border: none;
 
 			&.active-tab {
-				background-color: var(--l2-border);
+				background-color: var(--l1-border);
 			}
 		}
 	}
@@ -71,7 +71,7 @@
 		justify-content: space-between;
 		align-items: center;
 		background: var(--l3-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		margin-right: 16px;
 	}
 }
@@ -80,7 +80,7 @@
 .header-section-popover-root {
 	.ant-popover-inner {
 		border-radius: 4px !important;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2) !important;
 		padding: 0px !important;
 		border-radius: 4px;
@@ -103,10 +103,10 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid var(--l2-border);
+		border-right: 1px solid var(--l1-border);
 
 		.data-time-live {
-			border-bottom: 1px solid var(--l2-border);
+			border-bottom: 1px solid var(--l1-border);
 			text-align: start;
 			padding: 13.5px 14px;
 			height: 44px;
@@ -116,7 +116,7 @@
 			font-weight: 400;
 			line-height: normal;
 			letter-spacing: 0.14px;
-			border-bottom: 1px solid var(--l2-border);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		.active {
@@ -178,7 +178,7 @@
 		display: flex;
 		width: 224px;
 		flex-direction: column;
-		border-right: 1px solid var(--l2-border);
+		border-right: 1px solid var(--l1-border);
 
 		.back-btn {
 			display: flex;
@@ -322,7 +322,7 @@
 				line-height: normal;
 				letter-spacing: 0.14px;
 				line-height: 19px;
-				border-bottom: 1px solid var(--l2-border);
+				border-bottom: 1px solid var(--l1-border);
 			}
 
 			.calendar-container-body {

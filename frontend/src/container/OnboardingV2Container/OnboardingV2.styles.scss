@@ -36,7 +36,7 @@
 			height: 30px;
 			border-radius: 50%;
 			background-color: var(--l2-background);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			color: #1e1e1e;
 			display: flex;
 			align-items: center;
@@ -236,7 +236,7 @@
 		height: 30px;
 		border-radius: 50%;
 		background-color: var(--l2-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		color: var(--l2-background);
 		display: flex;
 		align-items: center;
@@ -267,8 +267,8 @@
 		width: 1px;
 		background: linear-gradient(
 			to bottom,
-			var(--l2-border) 0%,
-			var(--l2-border) 50%,
+			var(--l1-border) 0%,
+			var(--l1-border) 50%,
 			transparent 50%,
 			transparent 100%
 		);
@@ -333,7 +333,7 @@
 	.invite-teammate-btn {
 		font-size: 11px;
 		padding: 6px 16px;
-		border: 1px solid var(--l2-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		color: var(--l2-foreground) !important;
 
 		&:focus-visible {
@@ -525,7 +525,7 @@
 
 	.ant-input {
 		background: var(--l2-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		height: 40px;
 	}
 }
@@ -674,7 +674,7 @@
 					height: 1px;
 					margin: 0 16px;
 					flex-grow: 1;
-					border-top: 2px dotted var(--l2-border);
+					border-top: 2px dotted var(--l1-border);
 				}
 
 				.onboarding-filters-item-count {
@@ -729,7 +729,7 @@
 			max-width: 90%;
 		}
 
-		// border-right: 1px solid var(--l2-border);
+		// border-right: 1px solid var(--l1-border);
 
 		.perlian-bg {
 			background: radial-gradient(circle, var(--l2-foreground) 10%, transparent 0);
@@ -1099,7 +1099,7 @@
 
 	.request-data-source-btn {
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 	}
 }
@@ -1284,7 +1284,7 @@
 
 			&:before {
 				background-color: var(--l1-background);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
 			}
 		}
@@ -1359,7 +1359,7 @@
 
 		&:before {
 			background-color: var(--bg-robin-100);
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l2-foreground);
 		}
 
@@ -1414,7 +1414,7 @@
 	.onboarding-v2 {
 		.get-help-btn,
 		.invite-teammate-btn {
-			border: 1px solid var(--l3-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			color: var(--l3-background) !important;
 
 			&:focus-visible {
@@ -1427,7 +1427,7 @@
 			}
 
 			&:hover {
-				border: 1px solid var(--l3-border) !important;
+				border: 1px solid var(--l1-border) !important;
 				color: var(--text-robin-500) !important;
 			}
 
@@ -1519,7 +1519,7 @@
 
 		.ant-input {
 			background: var(--l1-background);
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			height: 40px;
 		}
 	}
@@ -1579,7 +1579,7 @@
 				.ingestion-endpoint-section {
 					background: var(--l1-foreground);
 					box-shadow: 0px 4px 4px 0px rgba(255, 255, 255, 0.19) inset;
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 
 					.ingestion-endpoint-section-header {
 						background-color: var(--l1-foreground);
@@ -1615,7 +1615,7 @@
 
 	.onboarding-configure-container {
 		.configure-product-docs-section {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 
 			.loading-container {
 				.loading-text {

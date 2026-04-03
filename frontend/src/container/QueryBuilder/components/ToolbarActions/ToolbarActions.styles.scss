@@ -10,13 +10,13 @@
 		width: 40px;
 		height: 32px;
 		margin-right: 12px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 	}
 
 	.left-toolbar-query-actions {
 		display: flex;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-background);
 		flex-direction: row;
 		border-bottom: none;
@@ -36,8 +36,8 @@
 			padding: 9px;
 			box-shadow: none;
 			border-radius: 0px;
-			border-left: 1px solid var(--l2-border);
-			border-bottom: 1px solid var(--l2-border);
+			border-left: 1px solid var(--l1-border);
+			border-bottom: 1px solid var(--l1-border);
 
 			gap: 8px;
 

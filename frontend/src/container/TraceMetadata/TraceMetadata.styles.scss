@@ -19,7 +19,7 @@
 				padding: 6px 8px;
 				align-items: center;
 				gap: 4px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				border-radius: 4px;
 				box-shadow: none;
@@ -31,7 +31,7 @@
 				margin-left: 6px;
 				align-items: center;
 				gap: 4px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				border-radius: 4px 0px 0px 4px;
 				background: var(--l2-background);
 
@@ -64,7 +64,7 @@
 				font-weight: 400;
 				line-height: 18px; /* 128.571% */
 				letter-spacing: -0.07px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				border-left: unset;
 				border-radius: 0px 4px 4px 0px;
 			}
@@ -96,7 +96,7 @@
 					align-items: center;
 					gap: 8px;
 					border-radius: 50px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-border);
 				}
 			}

@@ -2,10 +2,10 @@
 	display: flex;
 	align-items: center;
 	gap: 12px;
-	color: var(--l2-border);
+	color: var(--l1-border);
 	.ant-divider-vertical {
 		height: 16px;
-		border-color: var(--l2-border);
+		border-color: var(--l1-border);
 		margin: 0;
 	}
 	.dropdown-icon {
@@ -34,7 +34,7 @@
 		&,
 		& span {
 			&:hover {
-				background: var(--l2-border);
+				background: var(--l1-border);
 				color: var(--bg-cherry-400);
 			}
 			color: var(--bg-cherry-400);

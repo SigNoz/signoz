@@ -166,7 +166,7 @@
 						width: 14px;
 						height: 14px;
 						border-radius: 50px;
-						background: var(--l3-border);
+						background: var(--l1-border);
 						display: flex;
 						justify-content: center;
 						align-items: center;
@@ -483,29 +483,29 @@
 
 		&.ant-radio-button-wrapper-checked {
 			color: var(--l1-foreground);
-			background: var(--l2-border);
-			border-color: var(--l2-border);
+			background: var(--l1-border);
+			border-color: var(--l1-border);
 
 			&:hover {
 				color: var(--l1-foreground);
-				background: var(--l2-border);
-				border-color: var(--l2-border);
+				background: var(--l1-border);
+				border-color: var(--l1-border);
 
 				&::before {
-					background-color: var(--l2-border);
+					background-color: var(--l1-border);
 				}
 			}
 
 			&:focus {
 				color: var(--l1-foreground);
-				background: var(--l2-border);
-				border-color: var(--l2-border);
+				background: var(--l1-border);
+				border-color: var(--l1-border);
 			}
 		}
 	}
 
 	.tab {
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 
 		flex: 1;
 
@@ -513,11 +513,11 @@
 		justify-content: center;
 
 		&::before {
-			background: var(--l2-border);
+			background: var(--l1-border);
 		}
 
 		&.selected {
-			background: var(--l2-border);
+			background: var(--l1-border);
 		}
 	}
 
@@ -566,7 +566,7 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
@@ -628,13 +628,13 @@
 
 .expires-at {
 	.ant-picker {
-		border-color: var(--l2-border) !important;
+		border-color: var(--l1-border) !important;
 	}
 }
 
 .expiration-selector {
 	.ant-select-selector {
-		border: 1px solid var(--l2-border) !important;
+		border: 1px solid var(--l1-border) !important;
 	}
 }
 
@@ -731,7 +731,7 @@
 			.ant-tabs-nav-list {
 				background: var(--card);
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
@@ -741,7 +741,7 @@
 					justify-content: center;
 					align-items: center;
 					margin: 0px;
-					border-right: 1px solid var(--border);
+					border-right: 1px solid var(--l1-border);
 
 					&.ant-tabs-tab-active {
 						border-bottom: 0px;
@@ -784,7 +784,7 @@
 				}
 
 				.column-render {
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-background);
 
 					.ant-collapse {
@@ -795,7 +795,7 @@
 						}
 
 						.ant-collapse-content {
-							border-top: 1px solid var(--l3-border);
+							border-top: 1px solid var(--l1-border);
 						}
 					}
 
@@ -826,7 +826,7 @@
 					}
 
 					.ingestion-key-details {
-						border-top: 1px solid var(--l2-border);
+						border-top: 1px solid var(--l1-border);
 
 						.ingestion-key-tag {
 							background: var(--l3-background);
@@ -853,7 +853,7 @@
 
 	.delete-ingestion-key-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 
 			.ant-modal-header {
@@ -892,21 +892,21 @@
 		}
 
 		.limits-data {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 		}
 	}
 
 	.ingestion-key-modal {
 		.ant-modal-content {
 			border-radius: 4px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 			box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 			padding: 0;
 
 			.ant-modal-header {
 				background: none;
-				border-bottom: 1px solid var(--l2-border);
+				border-bottom: 1px solid var(--l1-border);
 				padding: 16px;
 			}
 		}
@@ -917,12 +917,12 @@
 			&.ant-radio-button-wrapper-checked {
 				color: var(--l1-foreground);
 				background: var(--l3-background);
-				border-color: var(--l3-border);
+				border-color: var(--l1-border);
 
 				&:hover {
 					color: var(--l1-foreground);
 					background: var(--l3-background);
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 
 					&::before {
 						background-color: var(--l3-background);
@@ -932,13 +932,13 @@
 				&:focus {
 					color: var(--l1-foreground);
 					background: var(--l3-background);
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 				}
 			}
 		}
 
 		.tab {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 
 			&::before {
 				background: var(--l3-background);
@@ -955,13 +955,13 @@
 	}
 
 	.ingestion-key-expires-at {
-		border: 1px solid var(--l3-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-background);
 		box-shadow: 0px -4px 16px 2px rgba(0, 0, 0, 0.2);
 	}
 
 	.expires-at .ant-picker {
-		border-color: var(--l3-border) !important;
+		border-color: var(--l1-border) !important;
 	}
 }
 

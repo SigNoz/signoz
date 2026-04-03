@@ -42,7 +42,7 @@
 	input {
 		width: 100%;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 	}
 
@@ -61,7 +61,7 @@
 	.ant-select {
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 		}
 	}
@@ -381,7 +381,7 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
@@ -459,7 +459,7 @@
 			}
 
 			.schedule-created-at {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background-color: var(--l1-background);
 				.ant-typography {
 					color: var(--l3-foreground);
@@ -472,7 +472,7 @@
 	.planned-downtime-table {
 		.ant-table-tbody {
 			.collapse-list {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background-color: var(--l1-background);
 
 				.ant-collapse-content-box {
@@ -490,7 +490,7 @@
 
 	.delete-schedule-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {
@@ -525,7 +525,7 @@
 
 	.createDowntimeModal {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {
@@ -537,7 +537,7 @@
 
 			.ant-modal-body {
 				.ant-divider {
-					border: 0.5px solid var(--l3-border);
+					border: 0.5px solid var(--l1-border);
 				}
 			}
 		}
@@ -546,7 +546,7 @@
 	.createForm {
 		.ant-picker,
 		input {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 		}
 
@@ -556,7 +556,7 @@
 
 		.ant-select {
 			.ant-select-selector {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-background);
 			}
 		}

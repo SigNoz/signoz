@@ -21,7 +21,7 @@
 
 	.ant-divider {
 		margin: 8px 0 !important;
-		border: 0.5px solid var(--l2-border);
+		border: 0.5px solid var(--l1-border);
 	}
 
 	.explorer-columns-contents {
@@ -134,7 +134,7 @@
 			}
 
 			.attribute-columns::-webkit-scrollbar-thumb:hover {
-				background: var(--l2-border); /* Color of the thumb on hover */
+				background: var(--l1-border); /* Color of the thumb on hover */
 			}
 		}
 	}

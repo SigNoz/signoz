@@ -69,7 +69,7 @@
 			align-items: center;
 			padding: 12px;
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 		}
 
@@ -89,7 +89,7 @@
 				gap: 4px;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 			}
 		}
@@ -128,7 +128,7 @@
 				gap: 4px;
 				align-self: stretch;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 
 				.ant-input {
@@ -144,7 +144,7 @@
 					border-radius: 2px;
 
 					.ant-select-selector {
-						border: 1px solid var(--l2-border);
+						border: 1px solid var(--l1-border);
 						background: var(--l3-background);
 					}
 				}
@@ -164,7 +164,7 @@
 				align-items: center;
 				width: 50%;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
@@ -182,7 +182,7 @@
 				.input {
 					width: 50%;
 					border: none;
-					border-left: 1px solid var(--l2-border);
+					border-left: 1px solid var(--l1-border);
 				}
 			}
 		}
@@ -239,7 +239,7 @@
 		.panel-config {
 			.panel-type-select {
 				.ant-select-selector {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 				}
 
@@ -254,7 +254,7 @@
 				.y-axis-unit-selector-component {
 					.ant-select {
 						.ant-select-selector {
-							border: 1px solid var(--l3-border);
+							border: 1px solid var(--l1-border);
 							background: var(--l3-background);
 						}
 					}
@@ -262,7 +262,7 @@
 			}
 
 			.toggle-card {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 
 				.fill-gaps-text {
@@ -284,7 +284,7 @@
 				}
 
 				.input {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 
 					.ant-input {
@@ -294,14 +294,14 @@
 			}
 			.soft-min-max {
 				.container {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 
 					.text {
 						color: var(--l2-foreground);
 					}
 					.input {
-						border-left: 1px solid var(--l3-border);
+						border-left: 1px solid var(--l1-border);
 					}
 				}
 			}

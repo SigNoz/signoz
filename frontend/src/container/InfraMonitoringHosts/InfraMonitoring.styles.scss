@@ -21,7 +21,7 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--l2-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			background-color: var(--l3-background) !important;
 
 			input {
@@ -61,12 +61,12 @@
 		.hosts-quick-filters-container {
 			width: 280px;
 			min-width: 280px;
-			border-right: 1px solid var(--l2-border);
+			border-right: 1px solid var(--l1-border);
 			height: 100%;
 
 			.hosts-quick-filters-container-header {
 				padding: 8px;
-				border-bottom: 1px solid var(--l2-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				display: flex;
 				align-items: center;
@@ -353,11 +353,11 @@
 			color: var(--l1-foreground);
 		}
 		.hosts-list-controls {
-			border-top: 1px solid var(--l3-border);
-			border-bottom: 1px solid var(--l3-border);
+			border-top: 1px solid var(--l1-border);
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-select-selector {
-				border-color: var(--l3-border) !important;
+				border-color: var(--l1-border) !important;
 				background-color: var(--l1-background) !important;
 				color: var(--l2-foreground);
 			}

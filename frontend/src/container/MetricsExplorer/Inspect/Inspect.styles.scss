@@ -35,7 +35,7 @@
 			flex: 2;
 			gap: 16px;
 			padding-right: 24px;
-			border-right: 1px solid var(--l2-border);
+			border-right: 1px solid var(--l1-border);
 			width: 60%;
 
 			.inspect-metrics-graph-view {
@@ -232,7 +232,7 @@
 							.ant-select-selector {
 								background-color: var(--l1-background);
 								color: var(--l1-foreground);
-								border: 0.5px solid var(--l3-border) !important;
+								border: 0.5px solid var(--l1-border) !important;
 							}
 						}
 					}
@@ -252,7 +252,7 @@
 				flex-direction: column;
 				gap: 16px;
 				padding-bottom: 32px;
-				border-bottom: 1px solid var(--l2-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				.home-checklist-title {
 					display: flex;
@@ -415,7 +415,7 @@
 
 			.footer-divider {
 				flex: 1;
-				border-top: 1px dashed var(--l3-border);
+				border-top: 1px dashed var(--l1-border);
 				margin: 0 8px;
 			}
 		}
@@ -478,7 +478,7 @@
 	}
 
 	.labels-table {
-		border: 1px solid var(--l3-border);
+		border: 1px solid var(--l1-border);
 
 		.labels-key {
 			color: var(--l2-foreground);

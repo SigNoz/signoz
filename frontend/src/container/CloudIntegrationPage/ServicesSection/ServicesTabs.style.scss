@@ -35,7 +35,7 @@
 	padding: 16px 0;
 	.ant-select-selector {
 		background-color: var(--l3-background) !important;
-		border: 1px solid var(--l2-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		color: var(--l2-foreground) !important;
 		font-family: Inter;
 		font-size: 12px;
@@ -56,7 +56,7 @@
 	width: 100%;
 	cursor: pointer;
 	&:not(:last-child) {
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	&.active {
@@ -69,7 +69,7 @@
 		align-items: center;
 		justify-content: center;
 		background-color: var(--l3-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		.service-item__icon {
 			width: 24px;
@@ -95,7 +95,7 @@
 		justify-content: space-between;
 		align-items: center;
 		height: 48px;
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 
 		.service-details__details-title {
 			color: var(--l2-foreground);
@@ -145,8 +145,8 @@
 				box-shadow: none;
 				&--default {
 					color: var(--l2-foreground);
-					background: var(--l2-border);
-					border: 1px solid var(--l2-border);
+					background: var(--l1-border);
+					border: 1px solid var(--l1-border);
 				}
 				&--primary {
 					background-color: var(--primary-background);
@@ -196,14 +196,14 @@
 					}
 				}
 				&-active {
-					background: var(--l2-border);
+					background: var(--l1-border);
 				}
 			}
 			&-extra-content {
 				padding: 0 16px 16px;
 			}
 			&-nav-list {
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				border-radius: 2px;
 			}
@@ -235,7 +235,7 @@
 				gap: 8px;
 				.ant-table {
 					background: transparent;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 
 					.ant-table-thead {
 						> tr > th {
@@ -305,7 +305,7 @@
 	.services-filter {
 		.ant-select-selector {
 			background-color: var(--l1-background) !important;
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
 		}
 
@@ -316,7 +316,7 @@
 
 	.service-item {
 		&:not(:last-child) {
-			border-bottom: 1px solid var(--l3-border);
+			border-bottom: 1px solid var(--l1-border);
 		}
 
 		&.active {
@@ -325,7 +325,7 @@
 
 		&__icon-wrapper {
 			background-color: var(--l1-background);
-			border-color: var(--l3-border);
+			border-color: var(--l1-border);
 		}
 
 		&__title {
@@ -335,7 +335,7 @@
 
 	.service-details {
 		&__title-bar {
-			border-bottom: 1px solid var(--l3-border);
+			border-bottom: 1px solid var(--l1-border);
 
 			.service-details__details-title {
 				color: var(--l1-foreground);
@@ -344,7 +344,7 @@
 			.configure-button {
 				color: var(--l1-foreground);
 				background: var(--l1-background);
-				border-color: var(--l3-border);
+				border-color: var(--l1-border);
 
 				&:hover {
 					border-color: var(--l2-foreground);
@@ -394,7 +394,7 @@
 				}
 
 				&-nav-list {
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 					background: var(--l1-background);
 				}
 			}
@@ -410,7 +410,7 @@
 			&-data-collected {
 				&__table {
 					.ant-table {
-						border-color: var(--l3-border);
+						border-color: var(--l1-border);
 
 						.ant-table-thead {
 							> tr > th {

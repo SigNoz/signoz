@@ -29,7 +29,7 @@
 		}
 
 		.ant-tabs-nav::before {
-			border-bottom: 1px solid var(--l2-border) !important;
+			border-bottom: 1px solid var(--l1-border) !important;
 		}
 
 		.ant-tabs-nav-list {
@@ -110,7 +110,7 @@
 					border-radius: 2px 0px 0px 0px;
 					background: var(--l2-background);
 					border-radius: 2px 2px 0px 0px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 					height: 31px;
 				}
@@ -138,7 +138,7 @@
 				}
 
 				.ant-tabs-nav::before {
-					border-bottom: 1px solid var(--l2-border);
+					border-bottom: 1px solid var(--l1-border);
 				}
 
 				.ant-tabs-nav {
@@ -166,7 +166,7 @@
 			}
 
 			.ant-tabs-nav::before {
-				border-bottom: 1px solid var(--l3-border) !important;
+				border-bottom: 1px solid var(--l1-border) !important;
 			}
 		}
 		.old-switch {
@@ -185,7 +185,7 @@
 			.trace-visualisation-tabs {
 				.ant-tabs-tab {
 					background: var(--l3-background);
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 				}
 
 				.ant-tabs-tab-active {
@@ -202,7 +202,7 @@
 				}
 
 				.ant-tabs-nav::before {
-					border-bottom: 1px solid var(--l3-border);
+					border-bottom: 1px solid var(--l1-border);
 				}
 			}
 		}

@@ -1,7 +1,7 @@
 .format-options-popover {
 	.ant-popover-inner {
 		border-radius: 4px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
 			var(--l2-background) 0%,
@@ -210,8 +210,8 @@
 						width: auto;
 						border-right: none;
 						border-left: none;
-						border-top: 1px solid var(--l2-border);
-						border-bottom: 1px solid var(--l2-border);
+						border-top: 1px solid var(--l1-border);
+						border-bottom: 1px solid var(--l1-border);
 						text-align: center;
 						height: 26px;
 						border-radius: 0;
@@ -447,7 +447,7 @@
 
 					.column-divider {
 						margin: 12px 0;
-						border-top: 2px solid var(--l2-border);
+						border-top: 2px solid var(--l1-border);
 					}
 				}
 			}
@@ -468,7 +468,7 @@
 					margin-left: -5%;
 
 					border-radius: 4px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
 						color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -490,7 +490,7 @@
 .lightMode {
 	.format-options-popover {
 		.ant-popover-inner {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: linear-gradient(
 				139deg,
 				rgba(255, 255, 255, 0.8) 0%,
@@ -561,7 +561,7 @@
 
 				.item-content {
 					.column-divider {
-						border-top: 2px solid var(--l3-border);
+						border-top: 2px solid var(--l1-border);
 					}
 				}
 
@@ -575,7 +575,7 @@
 					}
 
 					.max-lines-per-row-input {
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 
 						.periscope-btn {
 							background: var(--l3-background);
@@ -610,7 +610,7 @@
 
 					.item-content {
 						.max-lines-per-row-input {
-							border: 1px solid var(--l3-border);
+							border: 1px solid var(--l1-border);
 
 							.periscope-btn {
 								background: var(--l3-background);
@@ -638,7 +638,7 @@
 					}
 
 					.selected-item-content-container {
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						background: linear-gradient(
 							139deg,
 							rgba(255, 255, 255, 0.8) 0%,

@@ -65,7 +65,7 @@
 		gap: 8px;
 		margin-top: 24px;
 		padding-top: 16px;
-		border-top: 1px solid var(--l2-border);
+		border-top: 1px solid var(--l1-border);
 	}
 }
 
@@ -74,7 +74,7 @@
 		.url-parameters-section {
 			.parameter-row {
 				.delete-parameter-btn {
-					color: var(--l2-border);
+					color: var(--l1-border);
 
 					&:hover {
 						color: var(--bg-cherry-500) !important;
@@ -86,7 +86,7 @@
 		}
 
 		.context-link-footer {
-			border-top-color: var(--l2-border);
+			border-top-color: var(--l1-border);
 		}
 	}
 }

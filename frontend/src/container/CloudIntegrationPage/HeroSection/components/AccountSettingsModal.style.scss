@@ -83,7 +83,7 @@
 		}
 		&-close-button {
 			border-radius: 2px;
-			background: var(--l2-border);
+			background: var(--l1-border);
 			border: none;
 		}
 		&-save-button {
@@ -117,7 +117,7 @@
 		}
 
 		&__body {
-			border-color: var(--l3-border);
+			border-color: var(--l1-border);
 
 			&-account-info {
 				&-connected-account-details {
@@ -160,11 +160,11 @@
 
 			&-close-button {
 				background: var(--l1-background);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 
 				&:hover {
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 					color: var(--l1-foreground);
 				}
 			}

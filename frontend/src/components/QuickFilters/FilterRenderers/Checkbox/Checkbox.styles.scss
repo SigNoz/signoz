@@ -3,7 +3,7 @@
 	flex-direction: column;
 	padding: 12px;
 	gap: 12px;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 	.filter-header-checkbox {
 		display: flex;
 		align-items: center;
@@ -47,7 +47,7 @@
 
 		.filter-separator {
 			height: 1px;
-			background-color: var(--l2-border);
+			background-color: var(--l1-border);
 			margin: 4px 0;
 		}
 

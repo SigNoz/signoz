@@ -9,7 +9,7 @@
 		.query-section-query-actions {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
@@ -29,8 +29,8 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--border);
-				border-bottom: 0.5px solid var(--border);
+				border-left: 0.5px solid var(--l1-border);
+				border-bottom: 0.5px solid var(--l1-border);
 				width: 120px;
 				height: 36px;
 
@@ -75,15 +75,15 @@
 
 		.ant-select {
 			.ant-select-selector {
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 
 				&:hover {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 				}
 
 				&:focus {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 				}
 			}
 		}
@@ -116,6 +116,6 @@
 	.alert-query-section-container {
 		margin: 0;
 		background-color: var(--l1-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 	}
 }

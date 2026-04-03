@@ -5,8 +5,8 @@
 
 	width: 100%;
 
-	border-bottom: 1px solid var(--l3-border);
-	border-top: 1px solid var(--l3-border);
+	border-bottom: 1px solid var(--l1-border);
+	border-top: 1px solid var(--l1-border);
 
 	font-family: Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto,
 		'Helvetica Neue', sans-serif;
@@ -72,8 +72,8 @@
 				width: 1px;
 				background: repeating-linear-gradient(
 					to bottom,
-					var(--l3-border),
-					var(--l3-border) 4px,
+					var(--l1-border),
+					var(--l1-border) 4px,
 					transparent 4px,
 					transparent 8px
 				);
@@ -93,7 +93,7 @@
 					top: 12px;
 					width: 6px;
 					height: 6px;
-					border-left: 6px dotted var(--l3-border);
+					border-left: 6px dotted var(--l1-border);
 				}
 
 				/* Horizontal line pointing from vertical to the item */
@@ -106,8 +106,8 @@
 					height: 1px;
 					background: repeating-linear-gradient(
 						to right,
-						var(--l3-border),
-						var(--l3-border) 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -149,7 +149,7 @@
 		width: 44px;
 		padding: 8px;
 
-		border-left: 1px solid var(--l3-border);
+		border-left: 1px solid var(--l1-border);
 
 		.query-name {
 			display: flex;
@@ -233,7 +233,7 @@
 						top: 12px;
 						width: 6px;
 						height: 6px;
-						border-left: 6px dotted var(--l3-border);
+						border-left: 6px dotted var(--l1-border);
 					}
 
 					/* Horizontal line pointing from vertical to the item */
@@ -246,8 +246,8 @@
 						height: 1px;
 						background: repeating-linear-gradient(
 							to right,
-							var(--l3-border),
-							var(--l3-border) 4px,
+							var(--l1-border),
+							var(--l1-border) 4px,
 							transparent 4px,
 							transparent 8px
 						);
@@ -315,8 +315,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						var(--l3-border),
-						var(--l3-border) 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -387,8 +387,8 @@
 					width: 1px;
 					background: repeating-linear-gradient(
 						to bottom,
-						var(--l3-border),
-						var(--l3-border) 4px,
+						var(--l1-border),
+						var(--l1-border) 4px,
 						transparent 4px,
 						transparent 8px
 					);
@@ -404,7 +404,7 @@
 				min-width: 120px;
 
 				border-radius: 2px;
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
@@ -449,7 +449,7 @@
 
 		.ant-select-selector {
 			border-radius: 2px;
-			border: 1px solid var(--l3-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			background: var(--l1-background) !important;
 			height: 34px !important;
 			box-sizing: border-box !important;

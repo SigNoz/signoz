@@ -150,7 +150,7 @@
 }
 
 .date-time-popover__footer {
-	border-top: 1px solid var(--l2-border);
+	border-top: 1px solid var(--l1-border);
 	padding: 8px 14px;
 	.timezone-container {
 		display: flex;
@@ -314,7 +314,7 @@
 	.custom-time-picker {
 		.timeSelection-input {
 			&:hover {
-				border-color: var(--l2-border) !important;
+				border-color: var(--l1-border) !important;
 			}
 		}
 	}

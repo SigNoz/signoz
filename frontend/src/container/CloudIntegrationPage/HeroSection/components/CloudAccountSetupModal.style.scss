@@ -10,7 +10,7 @@
 			font-family: 'Geist Mono';
 		}
 		&__close-button {
-			background: var(--l2-border);
+			background: var(--l1-border);
 			border-radius: 2px;
 			color: var(--l1-foreground);
 			font-family: 'Inter';
@@ -155,11 +155,11 @@
 
 			&__close-button {
 				background: var(--l1-background);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 
 				&:hover {
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 					color: var(--l1-foreground);
 				}
 			}

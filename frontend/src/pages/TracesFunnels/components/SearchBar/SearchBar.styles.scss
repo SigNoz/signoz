@@ -51,7 +51,7 @@
 		width: 66px;
 		padding: 6px;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l2-background);
 		color: var(--l2-foreground);
 		font-size: 12px;
@@ -69,7 +69,7 @@
 			padding: 0px;
 			align-items: center;
 			border-radius: 4px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: linear-gradient(
 				139deg,
 				color-mix(in srgb, var(--card) 80%, transparent) 0%,

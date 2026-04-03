@@ -474,7 +474,7 @@ body {
 
 	border-radius: 4px;
 	padding: 16px;
-	border: 1px solid var(--border);
+	border: 1px solid var(--l1-border);
 	background: linear-gradient(
 		139deg,
 		color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -564,7 +564,7 @@ body {
 	#overlay {
 		color: var(--l1-foreground);
 		background: var(--l1-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 	}
 
 	.ant-tooltip {
@@ -577,7 +577,7 @@ body {
 	}
 
 	.ant-dropdown-menu {
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-background);
 		box-shadow: 4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 	}
@@ -741,7 +741,7 @@ notifications	-  2050
 .lightMode .legend-tooltip {
 	background: var(--card);
 	color: var(--l1-foreground);
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 	box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
@@ -789,7 +789,7 @@ notifications	-  2050
 }
 
 .border {
-	border: 1px solid var(--l3-border);
+	border: 1px solid var(--l1-border);
 }
 
 .bg-border {

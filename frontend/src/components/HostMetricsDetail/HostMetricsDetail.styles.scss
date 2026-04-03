@@ -38,7 +38,7 @@
 		align-items: center;
 		justify-content: center;
 		padding-top: var(--padding-1);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
@@ -111,7 +111,7 @@
 
 		.action-btn {
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			display: flex;
@@ -140,22 +140,22 @@
 			}
 
 			.tab {
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				width: 114px;
 			}
 
 			.tab::before {
-				background: var(--l2-border);
+				background: var(--l1-border);
 			}
 
 			.selected_view {
 				background: var(--l3-background);
 				color: var(--l1-foreground);
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 			}
 
 			.selected_view::before {
-				background: var(--l2-border);
+				background: var(--l1-border);
 			}
 		}
 
@@ -164,7 +164,7 @@
 			height: 30px;
 
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		}

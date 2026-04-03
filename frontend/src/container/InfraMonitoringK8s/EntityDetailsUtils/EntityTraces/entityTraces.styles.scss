@@ -17,7 +17,7 @@
 
 			.ant-select-selector {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border) !important;
+				border: 1px solid var(--l1-border) !important;
 				background-color: var(--l3-background) !important;
 
 				input {
@@ -148,11 +148,11 @@
 .lightMode {
 	.entity-metric-traces-header {
 		.filter-section {
-			border-top: 1px solid var(--l3-border);
-			border-bottom: 1px solid var(--l3-border);
+			border-top: 1px solid var(--l1-border);
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-select-selector {
-				border-color: var(--l3-border) !important;
+				border-color: var(--l1-border) !important;
 				color: var(--l2-foreground);
 			}
 		}
@@ -161,7 +161,7 @@
 	.entity-metric-traces-table {
 		.ant-table {
 			border-radius: 3px;
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 
 			.ant-table-thead > tr > th {
 				background: var(--l1-foreground);

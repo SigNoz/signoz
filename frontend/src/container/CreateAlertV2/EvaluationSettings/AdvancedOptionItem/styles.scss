@@ -32,7 +32,7 @@
 
 			.ant-input {
 				background-color: var(--l2-background);
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 				height: 32px;
 
@@ -41,11 +41,11 @@
 				}
 
 				&:hover {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 				}
 
 				&:focus {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 					box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 				}
 			}
@@ -53,16 +53,16 @@
 			.ant-select {
 				.ant-select-selector {
 					background-color: var(--l2-background);
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					color: var(--l1-foreground);
 					height: 32px;
 
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 
@@ -94,15 +94,15 @@
 
 			.ant-input {
 				background-color: var(--l2-background);
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 
 				&:hover {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 				}
 
 				&:focus {
-					border-color: var(--l2-border);
+					border-color: var(--l1-border);
 					box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 				}
 			}
@@ -112,14 +112,14 @@
 					background-color: var(--l2-background);
 					color: var(--l1-foreground);
 					height: 32px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					.ant-select-selection-placeholder {
@@ -142,7 +142,7 @@
 			align-items: center;
 			gap: 8px;
 			background-color: var(--l3-background);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l2-foreground);
 			border-radius: 4px;
 		}

@@ -3,7 +3,7 @@
 	justify-content: space-between;
 	align-items: center;
 	padding: 8px 18px;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 
 	&__navigation {
 		display: flex;
@@ -30,7 +30,7 @@
 		justify-content: center;
 		padding: 6px;
 		gap: 6px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		border-radius: 2px;
 		font-size: 12px;

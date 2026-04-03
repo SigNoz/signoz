@@ -77,7 +77,7 @@
 			.scroll-btn {
 				all: unset;
 				padding: 4px 12px 4px 10px;
-				background-color: var(--l2-border);
+				background-color: var(--l1-border);
 				border-radius: 20px;
 				cursor: pointer;
 				display: flex;
@@ -87,7 +87,7 @@
 				transition: background-color 0.1s;
 
 				&:hover {
-					background-color: var(--l3-border);
+					background-color: var(--l1-border);
 				}
 
 				&:active {

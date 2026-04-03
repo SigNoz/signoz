@@ -13,7 +13,7 @@
 	flex-direction: column;
 	height: 100%;
 	width: 100%;
-	border-right: 1px solid var(--l3-border);
+	border-right: 1px solid var(--l1-border);
 	color: var(--l1-foreground);
 
 	.header {
@@ -21,7 +21,7 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 10.5px;
-		border-bottom: 1px solid var(--l3-border);
+		border-bottom: 1px solid var(--l1-border);
 
 		.left-actions {
 			display: flex;

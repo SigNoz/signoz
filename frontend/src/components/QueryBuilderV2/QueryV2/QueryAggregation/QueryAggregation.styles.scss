@@ -49,14 +49,14 @@
 
 					.cm-content {
 						border-radius: 2px;
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						border-top-right-radius: 0px;
 						border-bottom-right-radius: 0px;
 						padding: 0px !important;
 						background-color: var(--l1-background) !important;
 
 						&:focus-within {
-							border-color: var(--l2-border);
+							border-color: var(--l1-border);
 						}
 					}
 
@@ -72,7 +72,7 @@
 						right: 0px !important;
 
 						border-radius: 4px;
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						background: linear-gradient(
 							139deg,
 							color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -198,7 +198,7 @@
 			}
 			.close-btn {
 				border-radius: 0px 2px 2px 0px;
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-background);
 				height: 38px;
 				width: 38px;
@@ -214,7 +214,7 @@
 			height: 36px;
 			line-height: 36px;
 			border-radius: 2px;
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
 			font-family: 'Space Mono', monospace !important;
@@ -254,7 +254,7 @@
 					.cm-editor {
 						.cm-tooltip-autocomplete {
 							background: var(--l1-background) !important;
-							border: 1px solid var(--l3-border) !important;
+							border: 1px solid var(--l1-border) !important;
 							box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
 							backdrop-filter: none;
 
@@ -300,7 +300,7 @@
 .query-aggregation-error-popover {
 	.ant-popover-inner {
 		background-color: var(--l1-border);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		box-shadow: 0px 4px 12px rgba(0, 0, 0, 0.1);
 	}

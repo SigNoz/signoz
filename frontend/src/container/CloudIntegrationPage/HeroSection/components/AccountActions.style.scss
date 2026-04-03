@@ -48,7 +48,7 @@
 			border: 1px solid var(--l3-background);
 			color: var(--l1-foreground);
 			border-radius: 2px;
-			background: var(--l2-border);
+			background: var(--l1-border);
 			box-shadow: none;
 		}
 	}
@@ -66,7 +66,7 @@
 	-webkit-backdrop-filter: blur(20px);
 	backdrop-filter: blur(20px);
 	.ant-select-selector {
-		border-color: var(--l2-border) !important;
+		border-color: var(--l1-border) !important;
 		background: var(--l3-background) !important;
 		padding: 6px 8px !important;
 	}
@@ -104,12 +104,12 @@
 		}
 
 		&.secondary {
-			border-color: var(--l3-border);
+			border-color: var(--l1-border);
 			color: var(--l1-foreground);
 			background: var(--l1-background);
 
 			&:hover {
-				border-color: var(--l3-border);
+				border-color: var(--l1-border);
 				color: var(--l1-foreground);
 			}
 		}
@@ -119,7 +119,7 @@
 		background: var(--l1-background);
 		.ant-select-selector {
 			background: var(--l1-background) !important;
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 		.ant-select-item-option-active {
 			background: var(--l3-background) !important;
@@ -131,7 +131,7 @@
 
 		&:hover {
 			.ant-select-selector {
-				border-color: var(--l3-border) !important;
+				border-color: var(--l1-border) !important;
 			}
 		}
 	}

@@ -8,7 +8,7 @@
 		align-items: center;
 		justify-content: center;
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
@@ -60,7 +60,7 @@
 		align-items: center;
 		justify-content: center;
 		padding-top: var(--padding-1);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
@@ -73,7 +73,7 @@
 		width: fit-content;
 
 		border-radius: 50px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-border);
 		text-transform: lowercase;
 	}
@@ -163,7 +163,7 @@
 		display: flex;
 		justify-content: space-between;
 		align-items: center;
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 
 		.views-tabs {
 			color: var(--l2-foreground);
@@ -181,22 +181,22 @@
 			.tab {
 				padding: 0 32px;
 				background: var(--l3-background);
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				width: auto;
 			}
 
 			.tab::before {
-				background: var(--l2-border);
+				background: var(--l1-border);
 			}
 
 			.selected_view {
 				background: none;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				border-bottom: none;
 			}
 
 			.selected_view::before {
-				background: var(--l2-border);
+				background: var(--l1-border);
 			}
 		}
 	}
@@ -221,7 +221,7 @@
 			flex-shrink: 0;
 
 			border-radius: 2px 0px 0px 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			border-right: none;
 			background: var(--l3-background);
 
@@ -239,7 +239,7 @@
 			.ant-select-selector {
 				font-size: 14px;
 				border-radius: 2px 0px 0px 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 			}
 		}
@@ -433,12 +433,12 @@
 		.endpoint-meta-data-pill {
 			display: flex;
 			border-radius: 4px;
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			overflow: hidden;
 			box-sizing: content-box;
 			.endpoint-meta-data-label {
 				padding: 6px 8px;
-				border-right: 1px solid var(--l3-border);
+				border-right: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 				font-size: 14px;
 				line-height: 18px; /* 128.571% */
@@ -450,7 +450,7 @@
 			.endpoint-meta-data-value {
 				padding: 6px 8px;
 				color: var(--l2-foreground);
-				background: var(--l2-border);
+				background: var(--l1-border);
 				font-size: 14px;
 				line-height: 18px;
 				letter-spacing: -0.07px;
@@ -657,7 +657,7 @@
 		.refresh-cta {
 			display: inline-flex;
 			border-radius: 2px;
-			background: var(--l2-border);
+			background: var(--l1-border);
 			border: none;
 			align-items: center;
 			width: fit-content;
@@ -716,7 +716,7 @@
 		}
 
 		.tab {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			width: 114px;
 			z-index: 1;
 		}
@@ -730,9 +730,9 @@
 		}
 
 		.selected_view {
-			background: var(--l2-border);
+			background: var(--l1-border);
 			color: var(--l1-foreground);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			z-index: 2;
 		}
 
@@ -911,7 +911,7 @@
 				}
 
 				.top-services-item-progress-bar {
-					background-color: var(--l2-border);
+					background-color: var(--l1-border);
 					border-radius: 2px;
 					height: 100%;
 					position: absolute;
@@ -1030,7 +1030,7 @@
 
 .lightMode {
 	.domain-navigate-cta {
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		color: var(--l2-foreground);
 	}
 
@@ -1049,7 +1049,7 @@
 		.group-by-label,
 		.ant-select-selector,
 		.ant-drawer-header {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 		.views-tabs .tab::before {
 			background: var(--l3-background);
@@ -1066,7 +1066,7 @@
 		}
 
 		.radio-button {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l2-foreground);
 		}
 
@@ -1081,7 +1081,7 @@
 
 			.selected_view::before {
 				background: var(--l3-background);
-				border-left: 1px solid var(--l3-border);
+				border-left: 1px solid var(--l1-border);
 			}
 		}
 	}
@@ -1149,7 +1149,7 @@
 	}
 
 	.top-services-content {
-		border-color: var(--l3-border);
+		border-color: var(--l1-border);
 	}
 	.dependent-services-container {
 		border: none;
@@ -1180,7 +1180,7 @@
 
 				.top-services-item-progress-bar {
 					background-color: var(--l2-background);
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 				}
 			}
 		}
@@ -1214,7 +1214,7 @@
 		.error-state-content-wrapper {
 			.refresh-cta {
 				color: var(--l2-foreground);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 			}
 		}
 	}
@@ -1234,6 +1234,6 @@
 	}
 	// Add border-bottom to table cells when pagination is not present
 	.ant-spin-container:not(:has(.ant-pagination)) .ant-table-cell {
-		border-bottom: 1px solid var(--l3-border) !important;
+		border-bottom: 1px solid var(--l1-border) !important;
 	}
 }

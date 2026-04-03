@@ -100,7 +100,7 @@
 	}
 
 	&:hover {
-		background-color: var(--l2-border);
+		background-color: var(--l1-border);
 
 		.context-link-actions {
 			opacity: 1;
@@ -127,11 +127,11 @@
 		}
 
 		.context-link-url {
-			color: var(--l2-border);
+			color: var(--l1-border);
 		}
 
 		.drag-handle-icon {
-			color: var(--l2-border);
+			color: var(--l1-border);
 		}
 
 		.delete-context-link-btn {

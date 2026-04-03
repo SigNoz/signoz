@@ -99,7 +99,7 @@
 			align-items: stretch;
 			gap: 24px;
 			border-radius: 4px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--bg-neutral-dark-950);
 
 			.ant-form-item {
@@ -119,7 +119,7 @@
 				width: 100%;
 				height: 80px;
 				resize: none;
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				color: var(--l1-foreground);
 				border-radius: 2px;
@@ -165,7 +165,7 @@
 
 					height: 32px;
 					background: var(--l3-background);
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					color: var(--l2-foreground);
 				}
 
@@ -174,7 +174,7 @@
 					height: 32px;
 					min-width: 80px;
 					background: var(--l3-background);
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					border-left: 0px;
 					color: var(--l2-foreground);
 				}
@@ -208,7 +208,7 @@
 			gap: 8px;
 			border-radius: 2px;
 			background: transparent;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l2-foreground);
 			font-family: Inter, sans-serif;
 			font-size: 11px;
@@ -381,7 +381,7 @@
 			line-height: 1;
 			letter-spacing: -0.065px;
 			height: 32px;
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			color: var(--l1-foreground);
 			box-sizing: border-box;
@@ -411,7 +411,7 @@
 		.grid-button,
 		.tool-button {
 			border-radius: 4px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			padding: 12px;
 			color: var(--l2-foreground);
@@ -500,7 +500,7 @@
 
 				button[role='radio'] {
 					&[data-state='unchecked'] {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 						border-width: 1px !important;
 					}
 				}
@@ -537,7 +537,7 @@
 
 				button[role='radio'] {
 					&[data-state='unchecked'] {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 						border-width: 1px !important;
 					}
 				}
@@ -574,7 +574,7 @@
 					padding: 6px 8px;
 					gap: 4px;
 					border-radius: 2px;
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 					color: var(--l1-foreground);
 					font-family: Inter, sans-serif;
@@ -637,7 +637,7 @@
 			align-items: center;
 			justify-content: space-between;
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			color: var(--l2-foreground);
 			box-shadow: none;
@@ -684,7 +684,7 @@
 			align-items: center;
 			justify-content: center;
 
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			border-top-left-radius: 0px;
 			border-bottom-left-radius: 0px;
 			background-color: var(--l3-background);
@@ -710,7 +710,7 @@
 		.input-field {
 			flex: 0;
 			padding: 12px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			color: var(--l1-foreground);
 			border-radius: 4px;

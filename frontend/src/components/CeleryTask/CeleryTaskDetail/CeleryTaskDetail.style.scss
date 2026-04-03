@@ -1,7 +1,7 @@
 .celery-task-detail-drawer {
 	.ant-drawer-wrapper-body {
 		background: var(--l1-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 	}
 
 	.ant-drawer-body {
@@ -21,7 +21,7 @@
 	}
 
 	.ant-drawer-header {
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 		.ant-drawer-header-title {
 			.ant-drawer-close {
 				position: absolute;
@@ -60,7 +60,7 @@
 	}
 
 	.ant-drawer-footer {
-		border-top: 1px solid var(--l2-border);
+		border-top: 1px solid var(--l1-border);
 
 		.footer-text {
 			color: var(--l2-foreground);

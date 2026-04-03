@@ -65,7 +65,7 @@
 		gap: 4px;
 		align-items: center;
 		color: var(--l1-foreground);
-		border: 1px solid var(--l3-border);
+		border: 1px solid var(--l1-border);
 		margin-right: 16px;
 	}
 }
@@ -86,7 +86,7 @@
 		border-radius: 4px;
 
 		&:hover {
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 			color: var(--l1-foreground);
 		}
 	}

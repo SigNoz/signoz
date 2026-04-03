@@ -112,7 +112,7 @@
 	height: 32px !important;
 	border-radius: 2px;
 	background: var(--l3-background);
-	border: 1px solid var(--l3-border);
+	border: 1px solid var(--l1-border);
 	color: var(--l1-foreground);
 	font-family: Inter, sans-serif;
 	font-size: 13px;
@@ -127,7 +127,7 @@
 	}
 
 	&:hover {
-		border-color: var(--l3-border);
+		border-color: var(--l1-border);
 	}
 
 	&:focus {
@@ -143,7 +143,7 @@
 		height: 32px !important;
 		border-radius: 2px !important;
 		background: var(--l3-background) !important;
-		border: 1px solid var(--l3-border) !important;
+		border: 1px solid var(--l1-border) !important;
 		color: var(--l1-foreground) !important;
 		font-family: Inter, sans-serif !important;
 		font-size: 13px !important;
@@ -255,7 +255,7 @@
 	justify-content: center;
 	gap: 6px;
 	border-radius: 2px;
-	border: 1px dashed var(--l2-border) !important;
+	border: 1px dashed var(--l1-border) !important;
 	background: transparent !important;
 	color: var(--l2-foreground);
 	font-family: Inter, sans-serif;
@@ -278,7 +278,7 @@
 
 	button,
 	& {
-		border: 1px dashed var(--l2-border) !important;
+		border: 1px dashed var(--l1-border) !important;
 		background: transparent !important;
 	}
 
@@ -350,7 +350,7 @@
 	.partially-sent-invites-container {
 		margin-top: 16px;
 		padding: 8px;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		background-color: var(--card);
 
 		display: flex;
@@ -380,12 +380,12 @@
 
 	.team-member-email-input {
 		background: var(--l2-background) !important;
-		border-color: var(--l3-border) !important;
+		border-color: var(--l1-border) !important;
 		color: var(--l1-foreground) !important;
 
 		input {
 			background: var(--l2-background) !important;
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
 
 			&::placeholder {
@@ -402,7 +402,7 @@
 		}
 
 		&:hover {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&:focus {
@@ -413,7 +413,7 @@
 	.team-member-role-select {
 		.ant-select-selector {
 			background: var(--l3-background) !important;
-			border: 1px solid var(--l3-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
 
 			.ant-select-selection-placeholder {
@@ -462,7 +462,7 @@
 	}
 
 	.add-another-member-button {
-		border: 1px dashed var(--l2-border) !important;
+		border: 1px dashed var(--l1-border) !important;
 		background: transparent !important;
 		color: var(--l3-foreground);
 
@@ -499,7 +499,7 @@
 		}
 
 		.partially-sent-invites-container {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background-color: var(--l1-foreground);
 
 			.partially-sent-invites-message {

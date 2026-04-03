@@ -31,13 +31,13 @@
 	}
 
 	.tab {
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-background);
 		&:hover {
 			color: var(--l1-foreground);
 		}
 		&::before {
-			background: var(--l2-border);
+			background: var(--l1-border);
 		}
 	}
 
@@ -46,11 +46,11 @@
 		&:hover {
 			background: var(--l3-background);
 			color: var(--l1-foreground);
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 		}
 		&::before {
 			background: var(--l3-background);
-			border-left: 1px solid var(--l3-border);
+			border-left: 1px solid var(--l1-border);
 		}
 	}
 
@@ -58,14 +58,14 @@
 		.tab,
 		.selected_view {
 			background: var(--l2-background) !important;
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
 		}
 
 		.tab:hover,
 		.selected_view:hover {
 			background: var(--l2-background) !important;
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 			color: var(--l1-foreground) !important;
 		}
 	}

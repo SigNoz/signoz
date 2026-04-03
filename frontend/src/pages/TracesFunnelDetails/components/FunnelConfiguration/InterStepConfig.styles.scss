@@ -13,7 +13,7 @@
 		transform: translateY(-50%);
 		width: 12px;
 		height: 12px;
-		background-color: var(--l2-border);
+		background-color: var(--l1-border);
 		border-radius: 50%;
 		z-index: 1;
 	}
@@ -28,7 +28,7 @@
 		width: 100%;
 		.ant-divider {
 			margin: 0;
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 		}
 	}
 	&__latency-options {

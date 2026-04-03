@@ -1,7 +1,7 @@
 .flamegraph {
 	display: flex;
 	height: 30vh;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 
 	.flamegraph-chart {
 		padding: 15px;
@@ -15,7 +15,7 @@
 	.flamegraph-stats {
 		display: flex;
 		flex-direction: column;
-		border-right: 1px solid var(--l2-border);
+		border-right: 1px solid var(--l1-border);
 		overflow-y: auto;
 		overflow-x: hidden;
 		padding: 16px 20px;
@@ -27,8 +27,8 @@
 			justify-content: center;
 			align-items: center;
 			border-radius: 2px 0px 0px 2px;
-			border: 1px solid var(--l2-border);
-			background: var(--l2-border);
+			border: 1px solid var(--l1-border);
+			background: var(--l1-border);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			margin-bottom: 16px;
 			color: var(--l1-foreground);

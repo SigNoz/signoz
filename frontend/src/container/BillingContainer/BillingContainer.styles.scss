@@ -18,19 +18,19 @@
 
 		.ant-table-cell {
 			background-color: var(--l1-background);
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 		}
 
 		.ant-table-tbody {
 			td {
-				border-color: var(--l2-border);
+				border-color: var(--l1-border);
 			}
 		}
 	}
 
 	.upgrade-plan-benefits {
 		margin: 0px 8px;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		border-radius: 5px;
 		padding: 0 48px;
 		.plan-benefits {

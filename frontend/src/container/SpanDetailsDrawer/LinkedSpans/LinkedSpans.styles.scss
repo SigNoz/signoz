@@ -35,7 +35,7 @@
 			max-width: 100%;
 			gap: 8px;
 			border-radius: 50px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-border);
 
 			.item-value {
@@ -59,7 +59,7 @@
 			}
 
 			.value-wrapper {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 
 				.item-value {

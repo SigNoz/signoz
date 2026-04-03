@@ -11,7 +11,7 @@
 		.alert-condition-tabs {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 			flex-direction: row;
 			border-bottom: none;
@@ -26,8 +26,8 @@
 				padding: 9px;
 				box-shadow: none;
 				border-radius: 0px;
-				border-left: 0.5px solid var(--l2-border);
-				border-bottom: 0.5px solid var(--l2-border);
+				border-left: 0.5px solid var(--l1-border);
+				border-bottom: 0.5px solid var(--l1-border);
 				width: 120px;
 				height: 36px;
 
@@ -66,7 +66,7 @@
 	padding: 24px;
 	padding-right: 72px;
 	background-color: var(--l1-background);
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 	width: 100%;
 
 	.alert-condition-sentences {
@@ -94,16 +94,16 @@
 
 				.ant-select-selector {
 					background-color: var(--l2-background);
-					border: 1px solid var(--border);
+					border: 1px solid var(--l1-border);
 					color: var(--muted-foreground);
 					font-family: 'Space Mono';
 
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 				}
@@ -152,7 +152,7 @@
 
 					.ant-input {
 						background-color: var(--card);
-						border: 1px solid var(--border);
+						border: 1px solid var(--l1-border);
 						color: var(--l1-foreground);
 						height: 32px;
 
@@ -161,11 +161,11 @@
 						}
 
 						&:hover {
-							border-color: var(--l2-border);
+							border-color: var(--l1-border);
 						}
 
 						&:focus {
-							border-color: var(--l2-border);
+							border-color: var(--l1-border);
 							box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 						}
 					}
@@ -173,16 +173,16 @@
 					.ant-select {
 						.ant-select-selector {
 							background-color: var(--card);
-							border: 1px solid var(--border);
+							border: 1px solid var(--l1-border);
 							color: var(--l1-foreground);
 							height: 32px;
 
 							&:hover {
-								border-color: var(--l2-border);
+								border-color: var(--l1-border);
 							}
 
 							&:focus {
-								border-color: var(--l2-border);
+								border-color: var(--l1-border);
 								box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 							}
 
@@ -202,7 +202,7 @@
 
 					.icon-btn {
 						color: var(--muted-foreground);
-						border: 1px solid var(--border);
+						border: 1px solid var(--l1-border);
 						border-radius: 4px;
 						display: flex;
 						align-items: center;
@@ -227,7 +227,7 @@
 					cursor: default;
 					color: var(--muted-foreground);
 					background-color: var(--card) !important;
-					border: 1px solid var(--border);
+					border: 1px solid var(--l1-border);
 					border-radius: 4px;
 					display: flex;
 					align-items: center;
@@ -236,7 +236,7 @@
 
 				.ant-input {
 					background-color: var(--card);
-					border: 1px solid var(--border);
+					border: 1px solid var(--l1-border);
 					color: var(--l1-foreground);
 					height: 32px;
 
@@ -245,11 +245,11 @@
 					}
 
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 						box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 					}
 				}
@@ -258,7 +258,7 @@
 
 		.add-threshold-btn {
 			margin-top: 8px;
-			border: 1px dashed var(--border);
+			border: 1px dashed var(--l1-border);
 			color: var(--l2-foreground);
 			background-color: transparent;
 			border-radius: 4px;
@@ -269,7 +269,7 @@
 			justify-content: center;
 
 			&:hover {
-				border-color: var(--l2-border);
+				border-color: var(--l1-border);
 				color: var(--l1-foreground);
 			}
 
@@ -340,7 +340,7 @@
 		width: auto;
 		justify-content: space-between;
 		background-color: var(--l2-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 
 		.evaluate-alert-conditions-button-left {
 			color: var(--l2-foreground);
@@ -358,7 +358,7 @@
 			.evaluate-alert-conditions-button-right-text {
 				font-size: 12px;
 				font-weight: 500;
-				background-color: var(--l2-border);
+				background-color: var(--l1-border);
 				padding: 1px 4px;
 			}
 		}

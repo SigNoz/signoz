@@ -59,7 +59,7 @@
 
 			.action-btn {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-border);
 				color: var(--l2-foreground);
 				padding: 4px 8px;
@@ -88,12 +88,12 @@
 
 			.action-section {
 				.action-btn {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 					color: var(--l2-background);
 
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 						background: var(--l2-background);
 						color: var(--l1-background);
 					}

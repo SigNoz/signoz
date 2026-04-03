@@ -82,7 +82,7 @@
 		align-items: center;
 		border-radius: 2px;
 		margin-bottom: 31px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		box-shadow: none;
 
@@ -124,7 +124,7 @@
 			min-width: 120px;
 			color: var(--accent-primary);
 			background-color: var(--l2-background);
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 		}
 	}
 }
@@ -155,13 +155,13 @@
 	&.selected {
 		color: var(--accent-primary);
 		background-color: var(--l2-background);
-		border-color: var(--l2-border);
+		border-color: var(--l1-border);
 	}
 
 	&:hover {
 		color: var(--accent-primary);
 		background-color: var(--l2-background);
-		border-color: var(--l2-border);
+		border-color: var(--l1-border);
 	}
 
 	.environment-name {
@@ -248,7 +248,7 @@
 		}
 
 		.invite-user-btn {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-foreground);
 
 			.ant-typography {

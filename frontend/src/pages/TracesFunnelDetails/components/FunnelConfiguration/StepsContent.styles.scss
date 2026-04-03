@@ -21,7 +21,7 @@
 				align-items: center;
 				gap: 6px;
 				border-radius: 3px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				color: var(--l2-foreground);
 				font-family: Inter;
@@ -39,7 +39,7 @@
 
 	&__add-btn {
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l2-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 		padding: 6px 12px;
@@ -70,7 +70,7 @@
 		align-items: center;
 		justify-content: center;
 		border: none;
-		background-color: var(--l2-border) !important;
+		background-color: var(--l1-border) !important;
 
 		& > .ant-steps-icon {
 			font-size: 13px;
@@ -91,7 +91,7 @@
 		padding: 20px 0 0 !important;
 
 		&::after {
-			background-color: var(--l2-border) !important;
+			background-color: var(--l1-border) !important;
 		}
 	}
 
@@ -125,7 +125,7 @@
 
 		.ant-steps-item-tail {
 			&::after {
-				background-color: var(--l3-border) !important;
+				background-color: var(--l1-border) !important;
 			}
 		}
 

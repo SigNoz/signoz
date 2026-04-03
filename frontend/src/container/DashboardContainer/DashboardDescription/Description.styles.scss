@@ -64,7 +64,7 @@
 				padding: 6px;
 				justify-content: center;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				color: var(--l2-foreground);
 				font-family: Inter;
@@ -86,7 +86,7 @@
 				padding: 6px;
 				justify-content: center;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				color: var(--l2-foreground);
 				font-family: Inter;
@@ -172,7 +172,7 @@
 	.ant-popover-inner {
 		padding: 0px;
 		border-radius: 4px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
 			color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -190,7 +190,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: start;
-			border-bottom: 1px solid var(--border);
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-btn {
 				display: flex;
@@ -215,7 +215,7 @@
 			display: flex;
 			flex-direction: column;
 			align-items: start;
-			border-bottom: 1px solid var(--border);
+			border-bottom: 1px solid var(--l1-border);
 
 			.ant-btn {
 				display: flex;
@@ -313,7 +313,7 @@
 					gap: 4px;
 					align-self: stretch;
 					border-radius: 0px 2px 2px 0px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 				}
 			}
@@ -415,7 +415,7 @@
 					gap: 4px;
 					align-self: stretch;
 					border-radius: 0px 2px 2px 0px;
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 				}
 			}
@@ -477,13 +477,13 @@
 
 			.right-section {
 				.icons {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-background);
 					color: var(--l1-foreground);
 				}
 
 				.configure-button {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-background);
 					color: var(--l1-foreground);
 				}
@@ -496,7 +496,7 @@
 	}
 	.dashboard-settings {
 		.ant-popover-inner {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background) !important;
 		}
 
@@ -505,14 +505,14 @@
 			flex-direction: column;
 
 			.section-1 {
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-btn {
 					color: var(--l1-foreground);
 				}
 			}
 			.section-2 {
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-btn {
 					color: var(--l1-foreground);
@@ -523,12 +523,12 @@
 
 	.rename-dashboard {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 
 			.ant-modal-header {
 				background: var(--l1-background);
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-modal-title {
 					color: var(--l1-foreground);
@@ -542,7 +542,7 @@
 					}
 
 					.dashboard-name-input {
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						background: var(--l1-background);
 					}
 				}
@@ -560,12 +560,12 @@
 
 	.section-naming {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 
 			.ant-modal-header {
 				background: var(--l1-background);
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 
 				.ant-modal-title {
 					color: var(--l1-foreground);
@@ -579,7 +579,7 @@
 					}
 
 					.section-name-input {
-						border: 1px solid var(--l3-border);
+						border: 1px solid var(--l1-border);
 						background: var(--l1-background);
 					}
 				}

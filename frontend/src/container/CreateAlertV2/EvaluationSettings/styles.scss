@@ -19,7 +19,7 @@
 		.evaluate-alert-conditions-separator {
 			flex: 1;
 			height: 1px;
-			border-top: 1px dashed var(--l2-border);
+			border-top: 1px dashed var(--l1-border);
 		}
 
 		.ant-btn {
@@ -27,7 +27,7 @@
 			align-items: center;
 			justify-content: space-between;
 			background-color: var(--l2-background);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 
 			.evaluate-alert-conditions-button-left {
 				color: var(--l2-foreground);
@@ -80,7 +80,7 @@
 
 .ant-popover-content {
 	background-color: var(--card);
-	border: 1px solid var(--border);
+	border: 1px solid var(--l1-border);
 	border-radius: 4px;
 	padding: 0;
 	margin: 10px;
@@ -100,7 +100,7 @@
 					display: flex;
 					flex-direction: column;
 					gap: 8px;
-					border-right: 1px solid var(--l2-border);
+					border-right: 1px solid var(--l1-border);
 					padding: 12px 16px;
 					min-width: 250px;
 					min-height: 300px;
@@ -167,13 +167,13 @@
 				justify-content: flex-end;
 				gap: 8px;
 				background-color: var(--l2-background);
-				border-top: 1px solid var(--l2-border);
+				border-top: 1px solid var(--l1-border);
 				padding: 16px;
 			}
 
 			.ant-btn {
 				background-color: var(--l3-background);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
 				font-size: 14px;
 			}
@@ -212,11 +212,11 @@
 
 				.ant-select-selector {
 					&:hover {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 
 					&:focus {
-						border-color: var(--l2-border);
+						border-color: var(--l1-border);
 					}
 				}
 			}
@@ -232,33 +232,33 @@
 	.ant-select {
 		width: 60%;
 		background-color: var(--l2-background);
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		color: var(--l1-foreground);
 		height: 32px;
 
 		.ant-select-selector {
 			background-color: var(--l2-background);
-			border: 1px solid var(--border);
+			border: 1px solid var(--l1-border);
 			color: var(--l1-foreground);
 			height: 32px;
 
 			&:hover {
-				border-color: var(--l2-border);
+				border-color: var(--l1-border);
 			}
 
 			&:focus {
-				border-color: var(--l2-border);
+				border-color: var(--l1-border);
 			}
 		}
 
 		&:hover {
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 		}
 	}
 
 	.select-group .ant-input:not(.time-input-field) {
 		background-color: var(--l2-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		color: var(--l1-foreground);
 		height: 32px;
 		width: 60%;

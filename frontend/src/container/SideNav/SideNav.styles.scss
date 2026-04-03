@@ -186,7 +186,7 @@
 			height: 32px;
 
 			border-radius: 3px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background-hover);
 
 			box-shadow: none !important;
@@ -1216,7 +1216,7 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				width: 32px;
 				height: 32px;
@@ -1288,7 +1288,7 @@
 .lightMode {
 	.sideNav {
 		background: var(--l1-background);
-		border-right: 1px solid var(--l3-border);
+		border-right: 1px solid var(--l1-border);
 
 		.brand {
 			.brand-logo {
@@ -1315,7 +1315,7 @@
 
 		.get-started-nav-items {
 			.get-started-btn {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				color: var(--l1-foreground);
 
@@ -1330,7 +1330,7 @@
 				// Hover state (light mode)
 				&:hover:not(:disabled) {
 					background: var(--l3-background);
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 
 					color: var(--l1-foreground);
 
@@ -1373,7 +1373,7 @@
 			}
 
 			.secondary-nav-items {
-				border-top: 1px solid var(--l3-border);
+				border-top: 1px solid var(--l1-border);
 
 				background: linear-gradient(
 					180deg,
@@ -1448,12 +1448,12 @@
 
 	.reorder-shortcut-nav-items-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-background);
 
 			.ant-modal-header {
 				background: var(--l1-background);
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 			}
 
 			.ant-modal-body {
@@ -1462,10 +1462,10 @@
 				}
 
 				.reorder-shortcut-nav-items-container {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 
 					.reorder-shortcut-nav-item {
-						border-bottom: 1px solid var(--l3-border);
+						border-bottom: 1px solid var(--l1-border);
 
 						.reorder-shortcut-nav-item-icon {
 							color: var(--l1-foreground);
@@ -1478,7 +1478,7 @@
 				}
 
 				.ant-color-picker-trigger {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l1-background);
 				}
 			}
@@ -1490,7 +1490,7 @@
 
 					&.secondary-btn {
 						background-color: var(--l3-background) !important;
-						border: 1px solid var(--l3-border) !important;
+						border: 1px solid var(--l1-border) !important;
 
 						color: var(--l1-foreground) !important;
 					}

@@ -24,30 +24,30 @@
 		}
 
 		.tab {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			border-left: none;
 			min-width: 120px;
 			height: 36px;
 			line-height: 36px;
 
 			&:first-child {
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 			}
 		}
 
 		.tab::before {
-			background: var(--l2-border);
+			background: var(--l1-border);
 		}
 
 		.selected-view {
 			color: var(--text-robin-500);
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 
 			display: none;
 		}
 
 		.selected-view::before {
-			background: var(--l2-border);
+			background: var(--l1-border);
 		}
 	}
 
@@ -56,7 +56,7 @@
 		height: 30px;
 
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 	}
@@ -98,14 +98,14 @@
 
 				.cm-content {
 					border-radius: 2px;
-					border: 1px solid var(--border);
+					border: 1px solid var(--l1-border);
 					border-top-right-radius: 0px;
 					border-bottom-right-radius: 0px;
 					padding: 0px !important;
 					background-color: var(--card) !important;
 
 					&:focus-within {
-						border-color: var(--l3-border);
+						border-color: var(--l1-border);
 					}
 				}
 
@@ -121,7 +121,7 @@
 					right: 0px !important;
 
 					border-radius: 4px;
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: linear-gradient(
 						139deg,
 						color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -249,7 +249,7 @@
 
 		.close-btn {
 			border-radius: 0px 2px 2px 0px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			height: 38px;
 			width: 38px;
@@ -293,11 +293,11 @@
 			}
 
 			.tab {
-				border: 1px solid var(--l3-border) !important;
+				border: 1px solid var(--l1-border) !important;
 				background: var(--l1-background) !important;
 
 				&:first-child {
-					border-left: 1px solid var(--l3-border) !important;
+					border-left: 1px solid var(--l1-border) !important;
 				}
 			}
 
@@ -307,7 +307,7 @@
 
 			.selected-view {
 				color: var(--primary-background) !important;
-				border: 1px solid var(--l3-border) !important;
+				border: 1px solid var(--l1-border) !important;
 			}
 
 			.selected-view::before {
@@ -316,7 +316,7 @@
 		}
 
 		.compass-button {
-			border: 1px solid var(--l3-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			background: var(--l1-background) !important;
 		}
 	}
@@ -326,21 +326,21 @@
 			.having-filter-select-editor {
 				.cm-editor {
 					&:focus-within {
-						border-color: var(--l3-border) !important;
+						border-color: var(--l1-border) !important;
 					}
 
 					.cm-content {
-						border: 1px solid var(--l3-border) !important;
+						border: 1px solid var(--l1-border) !important;
 						background: var(--l1-background) !important;
 
 						&:focus-within {
-							border-color: var(--l3-border) !important;
+							border-color: var(--l1-border) !important;
 						}
 					}
 
 					.cm-tooltip-autocomplete {
 						background: var(--l1-background) !important;
-						border: 1px solid var(--l3-border) !important;
+						border: 1px solid var(--l1-border) !important;
 						color: var(--l1-foreground) !important;
 						box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1) !important;
 
@@ -383,7 +383,7 @@
 			}
 
 			.close-btn {
-				border: 1px solid var(--l3-border) !important;
+				border: 1px solid var(--l1-border) !important;
 				background: var(--l1-background) !important;
 			}
 		}

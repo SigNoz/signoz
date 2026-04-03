@@ -179,7 +179,7 @@
 						width: 14px;
 						height: 14px;
 						border-radius: 50px;
-						background: var(--l3-border);
+						background: var(--l1-border);
 						display: flex;
 						justify-content: center;
 						align-items: center;
@@ -204,7 +204,7 @@
 							width: 14px;
 							height: 14px;
 							border-radius: 50px;
-							background: var(--l3-border);
+							background: var(--l1-border);
 							display: flex;
 							justify-content: center;
 							align-items: center;
@@ -287,7 +287,7 @@
 							width: 14px;
 							height: 14px;
 							border-radius: 50px;
-							background: var(--l3-border);
+							background: var(--l1-border);
 							display: flex;
 							justify-content: center;
 							align-items: center;
@@ -653,7 +653,7 @@
 			.ant-color-picker-trigger {
 				padding: 6px;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				width: 32px;
 				height: 32px;
@@ -717,7 +717,7 @@
 		height: auto;
 		flex-shrink: 0;
 		border-radius: 4px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
 			color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -755,7 +755,7 @@
 			.section-2 {
 				display: flex;
 				flex-direction: column;
-				border-top: 1px solid var(--l2-border);
+				border-top: 1px solid var(--l1-border);
 
 				.ant-typography {
 					display: flex;
@@ -781,7 +781,7 @@
 		padding: 0px;
 		align-items: center;
 		border-radius: 4px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
 			color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -835,7 +835,7 @@
 		align-items: center;
 		border-radius: 4px;
 		padding: 0px;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		background: linear-gradient(
 			139deg,
 			color-mix(in srgb, var(--card) 80%, transparent) 0%,
@@ -1049,7 +1049,7 @@
 					}
 
 					.connection-line {
-						border: 1px dashed var(--l2-border);
+						border: 1px dashed var(--l1-border);
 						min-width: 20px;
 						height: 0px;
 						flex-grow: 1;
@@ -1073,7 +1073,7 @@
 				flex-shrink: 0;
 				border-radius: 2px;
 				border: 1px solid var(--l1-border);
-				background: var(--border);
+				background: var(--l1-border);
 			}
 		}
 	}
@@ -1101,7 +1101,7 @@
 				}
 
 				.dashboard-list-item {
-					border: 1px solid var(--l2-border);
+					border: 1px solid var(--l1-border);
 					background: var(--card);
 
 					.dashboard-title {
@@ -1183,7 +1183,7 @@
 		}
 
 		.all-dashboards-header {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 
 			.typography {
@@ -1220,7 +1220,7 @@
 
 	.delete-view-modal {
 		.ant-modal-content {
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {
@@ -1255,7 +1255,7 @@
 
 	.dashboard-actions {
 		.ant-popover-inner {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.dashboard-action-content {
@@ -1266,7 +1266,7 @@
 				}
 
 				.section-2 {
-					border-top: 1px solid var(--l3-border);
+					border-top: 1px solid var(--l1-border);
 				}
 			}
 		}
@@ -1274,7 +1274,7 @@
 
 	.sort-dashboards {
 		.ant-popover-inner {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.sort-content {
@@ -1291,7 +1291,7 @@
 
 	.configure-group {
 		.ant-popover-inner {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 			.configure-content {
 				.configure-btn {
@@ -1303,18 +1303,18 @@
 
 	.configure-metadata-root {
 		.ant-modal-content {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--card);
 
 			.ant-modal-header {
 				background: var(--card);
-				border-bottom: 1px solid var(--l3-border);
+				border-bottom: 1px solid var(--l1-border);
 			}
 
 			.ant-modal-body {
 				.configure-content {
 					.configure-preview {
-						border: 0.915px solid var(--l3-border);
+						border: 0.915px solid var(--l1-border);
 						background: var(--l2-background);
 
 						.header {
@@ -1362,7 +1362,7 @@
 
 					.metadata-action {
 						.connection-line {
-							border: 1px dashed var(--l3-border);
+							border: 1px dashed var(--l1-border);
 						}
 					}
 				}
@@ -1370,7 +1370,7 @@
 
 			.ant-modal-footer {
 				.save-changes {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l2-background);
 				}
 			}

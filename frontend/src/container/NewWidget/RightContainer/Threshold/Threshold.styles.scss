@@ -38,11 +38,11 @@
 				align-items: center;
 				gap: 10px;
 				flex-shrink: 0;
-				background: var(--l2-border);
+				background: var(--l1-border);
 			}
 
 			.ant-btn + .ant-btn {
-				border-left: 1px solid var(--l3-border);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.edit-btn {
@@ -57,7 +57,7 @@
 		.time-series-alerts {
 			display: flex;
 			border-radius: 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			width: 100%;
@@ -81,7 +81,7 @@
 				width: 80%;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 				color: var(--l1-foreground);
@@ -139,7 +139,7 @@
 		.threshold-units-selector {
 			display: flex;
 			border-radius: 2px 2px 0px 0px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 			height: 32px;
@@ -161,7 +161,7 @@
 			.unit-selection {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
@@ -188,7 +188,7 @@
 			.unit-selection-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 				color: var(--l2-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
@@ -203,7 +203,7 @@
 			display: flex;
 			align-items: center;
 			border-radius: 0px 0px 2px 2px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			border-top: none;
 			background: var(--l2-background);
 			box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
@@ -230,7 +230,7 @@
 			.color-format {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
@@ -254,7 +254,7 @@
 			.color-format-prev {
 				width: 50%;
 				border: none;
-				border-left: 1px solid var(--l2-border);
+				border-left: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 				font-family: 'Space Mono';
 				font-size: 12px;
@@ -281,7 +281,7 @@
 				gap: 6px;
 				flex: 1 0 0;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-border);
 				box-shadow: none;
 			}
@@ -326,7 +326,7 @@
 	}
 	.threshold-container {
 		.threshold-card-container {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l1-foreground);
 
 			.edit-action-btns {
@@ -340,7 +340,7 @@
 			}
 
 			.time-series-alerts {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l1-foreground);
 
 				.label {
@@ -348,10 +348,10 @@
 				}
 
 				.label-input {
-					border-left: 1px solid var(--l3-border);
+					border-left: 1px solid var(--l1-border);
 					background: var(--l3-background);
 					color: var(--l3-background);
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					box-shadow: none;
 				}
 			}
@@ -369,12 +369,12 @@
 				}
 				.typography-preview {
 					color: var(--l2-background);
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background-color: var(--l3-background) !important;
 				}
 			}
 			.threshold-units-selector {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 
 				.unit-input {
@@ -400,14 +400,14 @@
 			}
 
 			.thresholds-color-selector {
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				border-top: 1px solid var(--l1-foreground);
 				background: var(--l3-background);
 
 				.color-selector {
 					color: var(--l3-background);
 					background: var(--l3-background);
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					border-top: 1px solid var(--l1-foreground);
 				}
 				.color-format {
@@ -428,7 +428,7 @@
 
 			.threshold-action-button {
 				.discard-btn {
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					background: var(--l3-background);
 				}
 

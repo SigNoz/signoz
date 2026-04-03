@@ -21,7 +21,7 @@
 		padding: 0px 8px;
 
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 
 		display: flex;
@@ -36,7 +36,7 @@
 		font-family: 'Space Mono', monospace !important;
 
 		border-radius: 2px 0px 0px 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 
 		border-right: none;
 		border-left: none;
@@ -61,7 +61,7 @@
 
 	.close-btn {
 		border-radius: 0px 2px 2px 0px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 		height: 38px;
 		width: 38px;
@@ -70,7 +70,7 @@
 	&.labelAfter {
 		.input {
 			border-radius: 0px 2px 2px 0px;
-			border: 1px solid var(--l2-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 			border-top-right-radius: 0px;
 			border-bottom-right-radius: 0px;

@@ -251,7 +251,7 @@
 			}
 
 			&-footer {
-				border-top-color: var(--l3-border);
+				border-top-color: var(--l1-border);
 				background: var(--l1-foreground);
 				.add-span-to-funnel-modal__discard-button {
 					background: var(--l2-background);
@@ -264,7 +264,7 @@
 	.add-span-to-funnel-modal {
 		&__search-input {
 			background: var(--l1-foreground);
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			color: var(--l1-background);
 
 			input {

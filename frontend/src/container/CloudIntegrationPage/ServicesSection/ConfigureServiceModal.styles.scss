@@ -46,7 +46,7 @@
 .lightMode {
 	.configure-service-modal {
 		&__body {
-			border-color: var(--l3-border);
+			border-color: var(--l1-border);
 
 			&-regions-switch-switch {
 				&-label {
@@ -62,11 +62,11 @@
 		.ant-btn {
 			&.ant-btn-default {
 				background: var(--l1-background);
-				border: 1px solid var(--l3-border);
+				border: 1px solid var(--l1-border);
 				color: var(--l1-foreground);
 
 				&:hover {
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 					color: var(--l1-foreground);
 				}
 			}

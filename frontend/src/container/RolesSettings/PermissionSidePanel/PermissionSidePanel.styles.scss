@@ -15,7 +15,7 @@
 	display: flex;
 	flex-direction: column;
 	background: var(--l2-background);
-	border-left: 1px solid var(--l2-border);
+	border-left: 1px solid var(--l1-border);
 	box-shadow: -4px 10px 16px 2px rgba(0, 0, 0, 0.2);
 
 	&__header {
@@ -26,7 +26,7 @@
 		height: 48px;
 		padding: 0 16px;
 		background: var(--l2-background);
-		border-bottom: 1px solid var(--l2-border);
+		border-bottom: 1px solid var(--l1-border);
 	}
 
 	&__close {
@@ -45,7 +45,7 @@
 		display: block;
 		width: 1px;
 		height: 16px;
-		background: var(--l2-border);
+		background: var(--l1-border);
 		flex-shrink: 0;
 	}
 
@@ -67,7 +67,7 @@
 	&__resource-list {
 		display: flex;
 		flex-direction: column;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		border-radius: 4px;
 		overflow: hidden;
 	}
@@ -81,7 +81,7 @@
 		padding: 0 16px;
 		gap: 12px;
 		background: var(--l2-background);
-		border-top: 1px solid var(--l2-border);
+		border-top: 1px solid var(--l1-border);
 	}
 
 	&__unsaved {
@@ -121,7 +121,7 @@
 .psp-resource {
 	display: flex;
 	flex-direction: column;
-	border-bottom: 1px solid var(--l2-border);
+	border-bottom: 1px solid var(--l1-border);
 
 	&:last-child {
 		border-bottom: none;
@@ -276,7 +276,7 @@
 
 		.ant-select-dropdown {
 			background: var(--l2-background);
-			border: 1px solid var(--border);
+			border: 1px solid var(--l1-border);
 			border-radius: 2px;
 			padding: 4px 0;
 		}

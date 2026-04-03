@@ -34,7 +34,7 @@
 			}
 
 			&::-webkit-scrollbar-thumb {
-				background: var(--l2-border);
+				background: var(--l1-border);
 				border-radius: 0.5px;
 			}
 
@@ -44,7 +44,7 @@
 
 			/* Firefox scrollbar styling */
 			scrollbar-width: thin;
-			scrollbar-color: var(--l2-border) transparent;
+			scrollbar-color: var(--l1-border) transparent;
 		}
 
 		.legend-item-wrapper {
@@ -83,7 +83,7 @@
 			border: 1px solid transparent;
 
 			&:hover {
-				background-color: var(--l2-border);
+				background-color: var(--l1-border);
 				border-color: var(--l1-border);
 				transform: translateY(-1px);
 			}
@@ -161,7 +161,7 @@
 			.legend-item {
 				&:hover {
 					background-color: var(--l3-background);
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 				}
 			}
 		}

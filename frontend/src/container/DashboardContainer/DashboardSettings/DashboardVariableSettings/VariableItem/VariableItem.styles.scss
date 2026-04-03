@@ -58,7 +58,7 @@
 
 			.name-input {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				padding: 6px 6px 6px 8px;
 			}
@@ -78,7 +78,7 @@
 
 			.description-input {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				padding: 6px 6px 6px 8px;
 			}
@@ -110,7 +110,7 @@
 				height: 32px;
 				flex-shrink: 0;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l2-background);
 				box-shadow: 0px 0px 8px 0px rgba(0, 0, 0, 0.1);
 
@@ -130,10 +130,10 @@
 				}
 
 				.variable-type-btn + .variable-type-btn {
-					border-left: 1px solid var(--l2-border);
+					border-left: 1px solid var(--l1-border);
 				}
 				.selected {
-					background: var(--l2-border);
+					background: var(--l1-border);
 				}
 			}
 		}
@@ -164,7 +164,7 @@
 
 			.sort-input {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 
 				.ant-select-selector {
 					width: 192px;
@@ -260,7 +260,7 @@
 				gap: 4px;
 				flex: 1 0 0;
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
+				border: 1px solid var(--l1-border);
 				background: var(--l3-background);
 				width: 342px;
 			}
@@ -366,7 +366,7 @@
 					letter-spacing: -0.07px;
 					align-items: center;
 					border-radius: 2px;
-					border: 1px solid var(--l3-border);
+					border: 1px solid var(--l1-border);
 					margin-inline-end: 0px;
 				}
 			}
@@ -383,7 +383,7 @@
 		display: flex;
 		align-items: center;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-border);
 		height: 34px;
 		padding: 4px 8px 4px 10px;

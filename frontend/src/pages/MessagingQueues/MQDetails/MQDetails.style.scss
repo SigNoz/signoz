@@ -36,11 +36,11 @@
 		cursor: pointer;
 
 		.ant-radio-button-wrapper {
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 			color: var(--l2-foreground);
 		}
 		.ant-radio-button-wrapper-checked {
-			background: var(--l2-border);
+			background: var(--l1-border);
 			color: var(--l1-foreground);
 		}
 		.ant-radio-button-wrapper::before {
@@ -87,8 +87,8 @@
 
 			.traceid-text {
 				border-radius: 2px;
-				border: 1px solid var(--l2-border);
-				background: var(--l2-border);
+				border: 1px solid var(--l1-border);
+				background: var(--l1-border);
 				padding: 2px;
 				cursor: pointer;
 			}

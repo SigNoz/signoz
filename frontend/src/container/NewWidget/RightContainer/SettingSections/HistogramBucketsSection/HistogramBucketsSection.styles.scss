@@ -12,7 +12,7 @@
 		gap: 4px;
 		align-self: stretch;
 		border-radius: 2px;
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		background: var(--l3-background);
 
 		.ant-input {
@@ -44,7 +44,7 @@
 		}
 
 		.histogram-settings__bucket-input {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 
 			.ant-input {

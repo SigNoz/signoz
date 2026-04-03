@@ -7,7 +7,7 @@
 		width: 40px;
 		height: 32px;
 		background-color: var(--l2-background);
-		border: 1px solid var(--l2-border);
+		border: 1px solid var(--l1-border);
 		color: var(--l1-foreground);
 		font-family: 'Space Mono', monospace;
 		font-size: 14px;
@@ -21,11 +21,11 @@
 		}
 
 		&:hover {
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 		}
 
 		&:focus {
-			border-color: var(--l2-border);
+			border-color: var(--l1-border);
 			box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.1);
 			outline: none;
 		}
@@ -36,7 +36,7 @@
 			cursor: not-allowed;
 
 			&:hover {
-				border-color: var(--border);
+				border-color: var(--l1-border);
 			}
 		}
 	}

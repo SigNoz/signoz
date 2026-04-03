@@ -179,7 +179,7 @@
 								padding: 4px 4px;
 								gap: 4px;
 								border-radius: 2px;
-								border: 1px solid var(--l2-border);
+								border: 1px solid var(--l1-border);
 								background: var(--l1-border);
 								box-shadow: none;
 								height: 20px;
@@ -349,11 +349,11 @@
 		}
 
 		.div-td + .div-td {
-			border-left: 1px solid var(--l2-border);
+			border-left: 1px solid var(--l1-border);
 		}
 
 		.div-th + .div-th {
-			border-left: 1px solid var(--l2-border);
+			border-left: 1px solid var(--l1-border);
 		}
 
 		.div-tr .div-th:nth-child(2) {
@@ -405,7 +405,7 @@
 		align-items: center;
 		gap: 8px;
 		border-radius: 2px;
-		border: 1px solid var(--border);
+		border: 1px solid var(--l1-border);
 		background: var(--l1-border);
 		box-shadow: none;
 	}
@@ -449,11 +449,11 @@
 			}
 
 			.div-td + .div-td {
-				border-left: 1px solid var(--l3-border);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.div-th + .div-th {
-				border-left: 1px solid var(--l3-border);
+				border-left: 1px solid var(--l1-border);
 			}
 
 			.div-thead {
@@ -463,7 +463,7 @@
 	}
 	.span-dets {
 		.related-logs {
-			border: 1px solid var(--l3-border);
+			border: 1px solid var(--l1-border);
 			background: var(--l3-background);
 		}
 	}

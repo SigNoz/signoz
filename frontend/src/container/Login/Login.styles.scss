@@ -52,7 +52,7 @@
 .login-form-card {
 	width: 100%;
 	background: var(--bg-neutral-dark-950);
-	border: 1px solid var(--l2-border);
+	border: 1px solid var(--l1-border);
 	border-radius: 4px;
 	padding: 24px;
 	display: flex;
@@ -179,12 +179,12 @@
 
 			&__docs-button {
 				color: var(--l1-foreground);
-				border-color: var(--l3-border);
+				border-color: var(--l1-border);
 				background: transparent;
 
 				&:hover {
 					color: var(--l2-foreground);
-					border-color: var(--l3-border);
+					border-color: var(--l1-border);
 					background: transparent;
 				}
 			}
@@ -236,7 +236,7 @@
 .login-form-input {
 	height: 32px;
 	background: var(--l3-background);
-	border: 1px solid var(--l3-border);
+	border: 1px solid var(--l1-border);
 	border-radius: 2px;
 	padding: 6px 8px;
 	font-family: Inter, sans-serif;
@@ -251,7 +251,7 @@
 	}
 
 	&:hover {
-		border-color: var(--l3-border);
+		border-color: var(--l1-border);
 	}
 
 	&:focus {
@@ -277,7 +277,7 @@
 			line-height: 1 !important;
 			letter-spacing: -0.065px !important;
 			background: var(--l3-background) !important;
-			border: 1px solid var(--l3-border) !important;
+			border: 1px solid var(--l1-border) !important;
 			display: flex !important;
 			align-items: center !important;
 		}
@@ -309,7 +309,7 @@
 		}
 
 		&:hover .ant-select-selector {
-			border-color: var(--l3-border) !important;
+			border-color: var(--l1-border) !important;
 		}
 
 		&.ant-select-focused .ant-select-selector {

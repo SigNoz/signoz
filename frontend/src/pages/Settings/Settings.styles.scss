@@ -102,7 +102,7 @@
 .lightMode {
 	.settings-page {
 		.settings-page-header {
-			border-bottom: 1px solid var(--l3-border);
+			border-bottom: 1px solid var(--l1-border);
 			background: var(--card);
 			backdrop-filter: blur(20px);
 
@@ -110,13 +110,13 @@
 				color: var(--l1-foreground);
 
 				background: var(--card);
-				border-right: 1px solid var(--l3-border);
+				border-right: 1px solid var(--l1-border);
 			}
 		}
 
 		.settings-page-content-container {
 			.settings-page-sidenav {
-				border-right: 1px solid var(--l3-border);
+				border-right: 1px solid var(--l1-border);
 				background: var(--l1-background);
 
 				.nav-item {
