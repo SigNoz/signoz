@@ -115,8 +115,9 @@ function MetricsTable({
 						onChange: onPaginationChange,
 						total: totalCount,
 					}}
-					onRow={(record): { onClick: () => void; className: string } => ({
-						onClick: (): void => openMetricDetails(record.key, 'list'),
+					onRow={(record): Record<string, unknown> => ({
+						onClick: (event: React.MouseEvent): void =>
+							openMetricDetails(record.key, 'list', event),
 						className: 'clickable-row',
 					})}
 				/>

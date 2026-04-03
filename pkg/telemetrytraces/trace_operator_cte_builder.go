@@ -109,7 +109,7 @@ func (b *traceOperatorCTEBuilder) build(ctx context.Context, requestType qbtypes
 	}, nil
 }
 
-// Will be used in Indirect descendant Query, will not be used in any other query
+// Will be used in Indirect descendant Query, will not be used in any other query.
 func (b *traceOperatorCTEBuilder) buildAllSpansCTE(ctx context.Context) {
 	sb := sqlbuilder.NewSelectBuilder()
 	sb.Select("*")
@@ -513,7 +513,7 @@ func (b *traceOperatorCTEBuilder) getKeySelectors() []*telemetrytypes.FieldKeySe
 	}
 
 	for _, gb := range b.operator.GroupBy {
-		selectors := querybuilder.QueryStringToKeysSelectors(gb.TelemetryFieldKey.Name)
+		selectors := querybuilder.QueryStringToKeysSelectors(gb.Name)
 		keySelectors = append(keySelectors, selectors...)
 	}
 
@@ -565,11 +565,11 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"failed to map group by field '%s': %v",
-				gb.TelemetryFieldKey.Name,
+				gb.Name,
 				err,
 			)
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -605,7 +605,7 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
+			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
 		}
 		sb.GroupBy(groupByKeys...)
 	}
@@ -624,7 +624,10 @@ func (b *traceOperatorCTEBuilder) buildTimeSeriesQuery(ctx context.Context, sele
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -678,11 +681,11 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"failed to map group by field '%s': %v",
-				gb.TelemetryFieldKey.Name,
+				gb.Name,
 				err,
 			)
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -735,12 +738,15 @@ func (b *traceOperatorCTEBuilder) buildTraceQuery(ctx context.Context, selectFro
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
+			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
 		}
 		sb.GroupBy(groupByKeys...)
 	}
 
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	orderApplied := false
 	for _, orderBy := range b.operator.Order {
@@ -821,11 +827,11 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 			return nil, errors.NewInvalidInputf(
 				errors.CodeInvalidInput,
 				"failed to map group by field '%s': %v",
-				gb.TelemetryFieldKey.Name,
+				gb.Name,
 				err,
 			)
 		}
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.TelemetryFieldKey.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -860,7 +866,7 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	if len(b.operator.GroupBy) > 0 {
 		groupByKeys := make([]string, len(b.operator.GroupBy))
 		for i, gb := range b.operator.GroupBy {
-			groupByKeys[i] = fmt.Sprintf("`%s`", gb.TelemetryFieldKey.Name)
+			groupByKeys[i] = fmt.Sprintf("`%s`", gb.Name)
 		}
 		sb.GroupBy(groupByKeys...)
 	}
@@ -883,7 +889,10 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	combinedArgs := append(allGroupByArgs, allAggChArgs...)
 
 	// Add HAVING clause if specified
-	b.addHavingClause(sb)
+	err = b.addHavingClause(sb)
+	if err != nil {
+		return nil, err
+	}
 
 	sql, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse, combinedArgs...)
 	return &qbtypes.Statement{
@@ -892,12 +901,16 @@ func (b *traceOperatorCTEBuilder) buildScalarQuery(ctx context.Context, selectFr
 	}, nil
 }
 
-func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) {
+func (b *traceOperatorCTEBuilder) addHavingClause(sb *sqlbuilder.SelectBuilder) error {
 	if b.operator.Having != nil && b.operator.Having.Expression != "" {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForTraces(b.operator.Having.Expression, b.operator.Aggregations)
+		if err != nil {
+			return err
+		}
 		sb.Having(rewrittenExpr)
 	}
+	return nil
 }
 
 func (b *traceOperatorCTEBuilder) addCTE(name, sql string, args []any, dependsOn []string) {

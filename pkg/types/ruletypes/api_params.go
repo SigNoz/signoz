@@ -10,11 +10,7 @@ import (
 
 	"github.com/prometheus/alertmanager/config"
 
-	signozError "github.com/SigNoz/signoz/pkg/errors"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -38,9 +34,9 @@ const (
 	RuleDataKindJson RuleDataKind = "json"
 )
 
-// PostableRule is used to create alerting rule from HTTP api
+// PostableRule is used to create alerting rule from HTTP api.
 type PostableRule struct {
-	AlertName   string              `json:"alert,omitempty"`
+	AlertName   string              `json:"alert"`
 	AlertType   AlertType           `json:"alertType,omitempty"`
 	Description string              `json:"description,omitempty"`
 	RuleType    RuleType            `json:"ruleType,omitempty"`
@@ -77,17 +73,17 @@ type NotificationSettings struct {
 type Renotify struct {
 	Enabled          bool                `json:"enabled"`
 	ReNotifyInterval valuer.TextDuration `json:"interval,omitzero"`
-	AlertStates      []model.AlertState  `json:"alertStates,omitempty"`
+	AlertStates      []AlertState        `json:"alertStates,omitempty"`
 }
 
 func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanagertypes.NotificationConfig {
 	var renotifyInterval time.Duration
 	var noDataRenotifyInterval time.Duration
 	if ns.Renotify.Enabled {
-		if slices.Contains(ns.Renotify.AlertStates, model.StateNoData) {
+		if slices.Contains(ns.Renotify.AlertStates, StateNoData) {
 			noDataRenotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
-		if slices.Contains(ns.Renotify.AlertStates, model.StateFiring) {
+		if slices.Contains(ns.Renotify.AlertStates, StateFiring) {
 			renotifyInterval = ns.Renotify.ReNotifyInterval.Duration()
 		}
 	} else {
@@ -97,7 +93,7 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }
 
-func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.PostableRoutePolicy, error) {
+func (r *PostableRule) GetRuleRouteRequest(ruleID string) ([]*alertmanagertypes.PostableRoutePolicy, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -105,20 +101,20 @@ func (r *PostableRule) GetRuleRouteRequest(ruleId string) ([]*alertmanagertypes.
 	receivers := threshold.GetRuleReceivers()
 	routeRequests := make([]*alertmanagertypes.PostableRoutePolicy, 0)
 	for _, receiver := range receivers {
-		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleId, ruleId)
+		expression := fmt.Sprintf(`%s == "%s" && %s == "%s"`, LabelThresholdName, receiver.Name, LabelRuleID, ruleID)
 		routeRequests = append(routeRequests, &alertmanagertypes.PostableRoutePolicy{
 			Expression:     expression,
 			ExpressionKind: alertmanagertypes.RuleBasedExpression,
 			Channels:       receiver.Channels,
-			Name:           ruleId,
-			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleId),
+			Name:           ruleID,
+			Description:    fmt.Sprintf("Auto-generated route for rule %s", ruleID),
 			Tags:           []string{"auto-generated", "rule-based"},
 		})
 	}
 	return routeRequests, nil
 }
 
-func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, error) {
+func (r *PostableRule) GetInhibitRules(ruleID string) ([]config.InhibitRule, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -139,8 +135,8 @@ func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, err
 					Value: receivers[i].Name,
 				},
 				{
-					Name:  LabelRuleId,
-					Value: ruleId,
+					Name:  LabelRuleID,
+					Value: ruleID,
 				},
 			},
 			TargetMatchers: config.Matchers{
@@ -149,8 +145,8 @@ func (r *PostableRule) GetInhibitRules(ruleId string) ([]config.InhibitRule, err
 					Value: receivers[i+1].Name,
 				},
 				{
-					Name:  LabelRuleId,
-					Value: ruleId,
+					Name:  LabelRuleID,
+					Value: ruleID,
 				},
 			},
 			Equal: groups,
@@ -174,8 +170,8 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 
 	// Validate states after unmarshaling
 	for _, state := range ns.Renotify.AlertStates {
-		if state != model.StateFiring && state != model.StateNoData {
-			return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid alert state: %s", state)
+		if state != StateFiring && state != StateNoData {
+			return errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid alert state: %s", state)
 
 		}
 	}
@@ -185,7 +181,6 @@ func (ns *NotificationSettings) UnmarshalJSON(data []byte) error {
 // processRuleDefaults applies the default values
 // for the rule options that are blank or unset.
 func (r *PostableRule) processRuleDefaults() {
-
 	if r.SchemaVersion == "" {
 		r.SchemaVersion = DefaultSchemaVersion
 	}
@@ -200,21 +195,14 @@ func (r *PostableRule) processRuleDefaults() {
 
 	if r.RuleCondition != nil {
 		switch r.RuleCondition.CompositeQuery.QueryType {
-		case v3.QueryTypeBuilder:
-			if r.RuleType == "" {
+		case QueryTypeBuilder:
+			if r.RuleType.IsZero() {
 				r.RuleType = RuleTypeThreshold
 			}
-		case v3.QueryTypePromQL:
+		case QueryTypePromQL:
 			r.RuleType = RuleTypeProm
 		}
 
-		for qLabel, q := range r.RuleCondition.CompositeQuery.BuilderQueries {
-			if q.AggregateAttribute.Key != "" && q.Expression == "" {
-				q.Expression = qLabel
-			}
-		}
-
-		//added alerts v2 fields
 		if r.SchemaVersion == DefaultSchemaVersion {
 			thresholdName := CriticalThresholdName
 			if r.Labels != nil {
@@ -225,7 +213,7 @@ func (r *PostableRule) processRuleDefaults() {
 
 			// For anomaly detection with ValueIsBelow, negate the target
 			targetValue := r.RuleCondition.Target
-			if r.RuleType == RuleTypeAnomaly && r.RuleCondition.CompareOp == ValueIsBelow && targetValue != nil {
+			if r.RuleType == RuleTypeAnomaly && r.RuleCondition.CompareOperator == ValueIsBelow && targetValue != nil {
 				negated := -1 * *targetValue
 				targetValue = &negated
 			}
@@ -233,12 +221,12 @@ func (r *PostableRule) processRuleDefaults() {
 			thresholdData := RuleThresholdData{
 				Kind: BasicThresholdKind,
 				Spec: BasicRuleThresholds{{
-					Name:        thresholdName,
-					TargetUnit:  r.RuleCondition.TargetUnit,
-					TargetValue: targetValue,
-					MatchType:   r.RuleCondition.MatchType,
-					CompareOp:   r.RuleCondition.CompareOp,
-					Channels:    r.PreferredChannels,
+					Name:            thresholdName,
+					TargetUnit:      r.RuleCondition.TargetUnit,
+					TargetValue:     targetValue,
+					MatchType:       r.RuleCondition.MatchType,
+					CompareOperator: r.RuleCondition.CompareOperator,
+					Channels:        r.PreferredChannels,
 				}},
 			}
 			r.RuleCondition.Thresholds = &thresholdData
@@ -247,11 +235,11 @@ func (r *PostableRule) processRuleDefaults() {
 				Renotify: Renotify{
 					Enabled:          true,
 					ReNotifyInterval: valuer.MustParseTextDuration("4h"),
-					AlertStates:      []model.AlertState{model.StateFiring},
+					AlertStates:      []AlertState{StateFiring},
 				},
 			}
 			if r.RuleCondition.AlertOnAbsent {
-				r.NotificationSettings.Renotify.AlertStates = append(r.NotificationSettings.Renotify.AlertStates, model.StateNoData)
+				r.NotificationSettings.Renotify.AlertStates = append(r.NotificationSettings.Renotify.AlertStates, StateNoData)
 			}
 		}
 	}
@@ -282,7 +270,7 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	type Alias PostableRule
 	aux := (*Alias)(r)
 	if err := json.Unmarshal(bytes, aux); err != nil {
-		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "failed to parse json: %v", err)
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 	}
 	r.processRuleDefaults()
 	return r.validate()
@@ -293,7 +281,7 @@ func isValidLabelName(ln string) bool {
 		return false
 	}
 	for i, b := range ln {
-		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) {
+		if !((b >= 'a' && b <= 'z') || (b >= 'A' && b <= 'Z') || b == '_' || b == '.' || (b >= '0' && b <= '9' && i > 0)) { //nolint:staticcheck // QF1001: De Morgan form is less readable here
 			return false
 		}
 	}
@@ -304,83 +292,36 @@ func isValidLabelValue(v string) bool {
 	return utf8.ValidString(v)
 }
 
-func isAllQueriesDisabled(compositeQuery *v3.CompositeQuery) bool {
-	if compositeQuery == nil {
-		return false
-	}
-	if compositeQuery.BuilderQueries == nil && compositeQuery.PromQueries == nil && compositeQuery.ClickHouseQueries == nil {
-		return false
-	}
-	switch compositeQuery.QueryType {
-	case v3.QueryTypeBuilder:
-		if len(compositeQuery.BuilderQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.BuilderQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	case v3.QueryTypePromQL:
-		if len(compositeQuery.PromQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.PromQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	case v3.QueryTypeClickHouseSQL:
-		if len(compositeQuery.ClickHouseQueries) == 0 {
-			return false
-		}
-		for _, query := range compositeQuery.ClickHouseQueries {
-			if !query.Disabled {
-				return false
-			}
-		}
-	}
-	return true
-}
-
 func (r *PostableRule) validate() error {
 
 	var errs []error
 
 	if r.RuleCondition == nil {
-		// will get panic if we try to access CompositeQuery, so return here
-		return signozError.NewInvalidInputf(signozError.CodeInvalidInput, "rule condition is required")
-	}
-	if r.RuleCondition.CompositeQuery == nil {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "composite query is required"))
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "rule condition is required")
 	}
 
 	if r.Version != "v5" {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "only version v5 is supported, got %q", r.Version))
-	}
-
-	if isAllQueriesDisabled(r.RuleCondition.CompositeQuery) {
-		errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "all queries are disabled in rule condition"))
+		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "only version v5 is supported, got %q", r.Version))
 	}
 
 	for k, v := range r.Labels {
 		if !isValidLabelName(k) {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid label name: %s", k))
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid label name: %s", k))
 		}
 
 		if !isValidLabelValue(v) {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid label value: %s", v))
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid label value: %s", v))
 		}
 	}
 
 	for k := range r.Annotations {
 		if !isValidLabelName(k) {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "invalid annotation name: %s", k))
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid annotation name: %s", k))
 		}
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return signozError.Join(errs...)
+	return errors.Join(errs...)
 }
 
 func testTemplateParsing(rl *PostableRule) (errs []error) {
@@ -398,7 +339,6 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 			defs+text,
 			"__alert_"+rl.AlertName,
 			tmplData,
-			times.Time(timestamp.FromTime(time.Now())),
 			nil,
 		)
 		return tmpl.ParseTest()
@@ -408,7 +348,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	for _, val := range rl.Labels {
 		err := parseTest(val)
 		if err != nil {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "template parsing error: %s", err.Error()))
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "template parsing error: %s", err.Error()))
 		}
 	}
 
@@ -416,7 +356,7 @@ func testTemplateParsing(rl *PostableRule) (errs []error) {
 	for _, val := range rl.Annotations {
 		err := parseTest(val)
 		if err != nil {
-			errs = append(errs, signozError.NewInvalidInputf(signozError.CodeInvalidInput, "template parsing error: %s", err.Error()))
+			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "template parsing error: %s", err.Error()))
 		}
 	}
 
@@ -430,8 +370,8 @@ type GettableRules struct {
 
 // GettableRule has info for an alerting rules.
 type GettableRule struct {
-	Id    string           `json:"id"`
-	State model.AlertState `json:"state"`
+	Id    string     `json:"id"`
+	State AlertState `json:"state"`
 	PostableRule
 	CreatedAt *time.Time `json:"createAt"`
 	CreatedBy *string    `json:"createBy"`

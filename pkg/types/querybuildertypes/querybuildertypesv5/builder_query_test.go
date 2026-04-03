@@ -602,7 +602,7 @@ func TestQueryBuilderQuery_UnmarshalJSON(t *testing.T) {
 		assert.Equal(t, telemetrytypes.SignalTraces, query.Signal)
 		assert.Equal(t, int64(300000), query.StepInterval.Milliseconds())
 		// Source is set in the JSON, so it should be "traces", not SourceUnspecified
-		assert.Equal(t, "traces", query.Source.String.StringValue())
+		assert.Equal(t, "traces", query.Source.StringValue())
 		assert.True(t, query.Disabled)
 		assert.Equal(t, query.Aggregations[0].Expression, "count()")
 		assert.Equal(t, query.Aggregations[0].Alias, "span.count")

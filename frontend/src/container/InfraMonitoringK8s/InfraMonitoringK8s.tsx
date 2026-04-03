@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import { useSearchParams } from 'react-router-dom-v5-compat';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import * as Sentry from '@sentry/react';
 import type { CollapseProps } from 'antd';
@@ -37,11 +36,16 @@ import {
 	GetPodsQuickFiltersConfig,
 	GetStatefulsetsQuickFiltersConfig,
 	GetVolumesQuickFiltersConfig,
-	INFRA_MONITORING_K8S_PARAMS_KEYS,
 	K8sCategories,
 } from './constants';
 import K8sDaemonSetsList from './DaemonSets/K8sDaemonSetsList';
 import K8sDeploymentsList from './Deployments/K8sDeploymentsList';
+import {
+	useInfraMonitoringCategory,
+	useInfraMonitoringFilters,
+	useInfraMonitoringGroupBy,
+	useInfraMonitoringOrderBy,
+} from './hooks';
 import K8sJobsList from './Jobs/K8sJobsList';
 import K8sNamespacesList from './Namespaces/K8sNamespacesList';
 import K8sNodesList from './Nodes/K8sNodesList';
@@ -54,14 +58,11 @@ import './InfraMonitoringK8s.styles.scss';
 export default function InfraMonitoringK8s(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 
-	const [searchParams, setSearchParams] = useSearchParams();
-	const [selectedCategory, setSelectedCategory] = useState(() => {
-		const category = searchParams.get(INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY);
-		if (category) {
-			return category as keyof typeof K8sCategories;
-		}
-		return K8sCategories.PODS;
-	});
+	const [selectedCategory, setSelectedCategory] = useInfraMonitoringCategory();
+	const [, setFilters] = useInfraMonitoringFilters();
+	const [, setGroupBy] = useInfraMonitoringGroupBy();
+	const [, setOrderBy] = useInfraMonitoringOrderBy();
+
 	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
 
 	const { currentQuery } = useQueryBuilder();
@@ -86,12 +87,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
 		setQuickFiltersLastUpdated(Date.now());
-		setSearchParams({
-			...Object.fromEntries(searchParams.entries()),
-			[INFRA_MONITORING_K8S_PARAMS_KEYS.FILTERS]: JSON.stringify(
-				query.builder.queryData[0].filters,
-			),
-		});
+		setFilters(JSON.stringify(query.builder.queryData[0].filters));
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
 			entity: InfraMonitoringEvents.K8sEntity,
@@ -317,10 +313,10 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const handleCategoryChange = (key: string | string[]): void => {
 		if (Array.isArray(key) && key.length > 0) {
 			setSelectedCategory(key[0] as string);
-			setSearchParams({
-				[INFRA_MONITORING_K8S_PARAMS_KEYS.CATEGORY]: key[0] as string,
-			});
 			// Reset filters
+			setFilters(null);
+			setOrderBy(null);
+			setGroupBy(null);
 			handleChangeQueryData('filters', { items: [], op: 'and' });
 		}
 	};

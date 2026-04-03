@@ -159,3 +159,37 @@ def test_generate_connection_params(
     assert (
         data["signoz_api_url"] == "https://test-deployment.test.signoz.cloud"
     ), "signoz_api_url should be https://test-deployment.test.signoz.cloud"
+
+    # Verify the integration service account was created with viewer role, not admin.
+    # This guards against a privilege-escalation regression where the SA was
+    # previously created with admin access.
+    sa_list = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v1/service_accounts"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert sa_list.status_code == HTTPStatus.OK
+
+    integration_sa = next(
+        (sa for sa in sa_list.json()["data"] if sa["name"] == "integration"),
+        None,
+    )
+    assert integration_sa is not None, "Integration service account should exist"
+
+    # Fetch roles via the dedicated roles endpoint
+    roles_resp = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/service_accounts/{integration_sa['id']}/roles"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert roles_resp.status_code == HTTPStatus.OK, roles_resp.text
+    role_names = [role["name"] for role in roles_resp.json()["data"]]
+
+    assert (
+        "signoz-viewer" in role_names
+    ), f"Integration SA should have VIEWER role, got {role_names}"
+    assert (
+        "signoz-admin" not in role_names
+    ), f"Integration SA must NOT have ADMIN role, got {role_names}"

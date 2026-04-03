@@ -13,7 +13,7 @@ type JSONDataType struct {
 	IndexSupported bool
 }
 
-// Override StringValue to return the correct case
+// Override StringValue to return the correct case.
 func (jdt JSONDataType) StringValue() string {
 	return jdt.str
 }

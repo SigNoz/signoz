@@ -7,6 +7,7 @@ import { Button, Select, Typography } from 'antd';
 import createPublicDashboardAPI from 'api/dashboard/public/createPublicDashboard';
 import revokePublicDashboardAccessAPI from 'api/dashboard/public/revokePublicDashboardAccess';
 import updatePublicDashboardAPI from 'api/dashboard/public/updatePublicDashboard';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import { useGetPublicDashboardMeta } from 'hooks/dashboard/useGetPublicDashboardMeta';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { Copy, ExternalLink, Globe, Info, Loader2, Trash } from 'lucide-react';
@@ -56,7 +57,7 @@ function PublicDashboardSetting(): JSX.Element {
 		PublicDashboardMetaProps | undefined
 	>(undefined);
 	const [timeRangeEnabled, setTimeRangeEnabled] = useState(true);
-	const [defaultTimeRange, setDefaultTimeRange] = useState('30m');
+	const [defaultTimeRange, setDefaultTimeRange] = useState(DEFAULT_TIME_RANGE);
 	const [, setCopyPublicDashboardURL] = useCopyToClipboard();
 
 	const { selectedDashboard } = useDashboardStore();
@@ -99,7 +100,7 @@ function PublicDashboardSetting(): JSX.Element {
 			console.error('Error getting public dashboard', errorPublicDashboard);
 			setPublicDashboardData(undefined);
 			setTimeRangeEnabled(true);
-			setDefaultTimeRange('30m');
+			setDefaultTimeRange(DEFAULT_TIME_RANGE);
 		}
 	}, [publicDashboardResponse, errorPublicDashboard]);
 
@@ -109,7 +110,7 @@ function PublicDashboardSetting(): JSX.Element {
 				publicDashboardResponse?.data?.timeRangeEnabled || false,
 			);
 			setDefaultTimeRange(
-				publicDashboardResponse?.data?.defaultTimeRange || '30m',
+				publicDashboardResponse?.data?.defaultTimeRange || DEFAULT_TIME_RANGE,
 			);
 		}
 	}, [publicDashboardResponse]);

@@ -6,6 +6,7 @@ import { PANEL_GROUP_TYPES, PANEL_TYPES } from 'constants/queryBuilder';
 import { themeColors } from 'constants/theme';
 import { Card, CardContainer } from 'container/GridCardLayout/styles';
 import DateTimeSelectionV2 from 'container/TopNav/DateTimeSelectionV2';
+import { DEFAULT_TIME_RANGE } from 'container/TopNav/DateTimeSelectionV2/constants';
 import {
 	CustomTimeType,
 	Time,
@@ -80,7 +81,7 @@ function PublicDashboardContainer({
 	const { widgets } = dashboard?.data || {};
 
 	const [selectedTimeRangeLabel, setSelectedTimeRangeLabel] = useState<string>(
-		publicDashboard?.defaultTimeRange || '30m',
+		publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 	);
 
 	const [selectedTimeRange, setSelectedTimeRange] = useState<{
@@ -88,7 +89,7 @@ function PublicDashboardContainer({
 		endTime: number;
 	}>(
 		getStartTimeAndEndTimeFromTimeRange(
-			publicDashboard?.defaultTimeRange || '30m',
+			publicDashboard?.defaultTimeRange || DEFAULT_TIME_RANGE,
 		),
 	);
 

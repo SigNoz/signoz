@@ -11,7 +11,7 @@ import {
 } from 'api/generated/services/serviceaccount';
 import type {
 	RenderErrorResponseDTO,
-	ServiceaccounttypesFactorAPIKeyDTO,
+	ServiceaccounttypesGettableFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
@@ -27,7 +27,7 @@ import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
 import './EditKeyModal.styles.scss';
 
 export interface EditKeyModalProps {
-	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null;
+	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null;
 }
 
 function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {

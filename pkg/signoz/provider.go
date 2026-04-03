@@ -31,6 +31,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/modules/organization/implorganization"
 	"github.com/SigNoz/signoz/pkg/modules/preference/implpreference"
 	"github.com/SigNoz/signoz/pkg/modules/promote/implpromote"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/session/implsession"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/modules/user/impluser"
@@ -190,6 +191,9 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewUpdatePlannedMaintenanceRuleFactory(sqlstore, sqlschema),
 		sqlmigration.NewAddUserRoleFactory(sqlstore, sqlschema),
 		sqlmigration.NewDropUserRoleColumnFactory(sqlstore, sqlschema),
+		sqlmigration.NewAddServiceAccountFactory(sqlstore, sqlschema),
+		sqlmigration.NewDeprecateAPIKeyFactory(sqlstore, sqlschema),
+		sqlmigration.NewServiceAccountAuthzactory(sqlstore),
 	)
 }
 
@@ -280,6 +284,7 @@ func NewAPIServerProviderFactories(orgGetter organization.Getter, authz authz.Au
 			handlers.ServiceAccountHandler,
 			handlers.RegistryHandler,
 			handlers.CloudIntegrationHandler,
+			handlers.RuleStateHistory,
 		),
 	)
 }
@@ -292,11 +297,11 @@ func NewTokenizerProviderFactories(cache cache.Cache, sqlstore sqlstore.SQLStore
 	)
 }
 
-func NewIdentNProviderFactories(sqlstore sqlstore.SQLStore, tokenizer tokenizer.Tokenizer, orgGetter organization.Getter, userGetter user.Getter, userConfig user.Config) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
+func NewIdentNProviderFactories(tokenizer tokenizer.Tokenizer, serviceAccount serviceaccount.Module, orgGetter organization.Getter, userGetter user.Getter, userConfig user.Config) factory.NamedMap[factory.ProviderFactory[identn.IdentN, identn.Config]] {
 	return factory.MustNewNamedMap(
 		impersonationidentn.NewFactory(orgGetter, userGetter, userConfig),
 		tokenizeridentn.NewFactory(tokenizer),
-		apikeyidentn.NewFactory(sqlstore),
+		apikeyidentn.NewFactory(serviceAccount),
 	)
 }
 

@@ -68,8 +68,8 @@
     "@signozhq/toggle-group": "0.0.1",
     "@signozhq/tooltip": "0.0.2",
     "@signozhq/ui": "0.0.5",
-    "@tanstack/react-table": "8.20.6",
-    "@tanstack/react-virtual": "3.11.2",
+    "@tanstack/react-table": "8.21.3",
+    "@tanstack/react-virtual": "3.13.22",
     "@uiw/codemirror-theme-copilot": "4.23.11",
     "@uiw/codemirror-theme-github": "4.24.1",
     "@uiw/react-codemirror": "4.23.10",
@@ -164,6 +164,7 @@
     "vite-plugin-html": "3.2.2",
     "web-vitals": "^0.2.4",
     "xstate": "^4.31.0",
+    "zod": "4.3.6",
     "zustand": "5.0.11"
   },
   "browserslist": {

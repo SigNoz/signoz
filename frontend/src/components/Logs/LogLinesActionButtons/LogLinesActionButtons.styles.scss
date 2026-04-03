@@ -27,3 +27,14 @@
 		border-color: var(--l1-border) !important;
 	}
 }
+
+// In table/column view, keep action buttons visible at the viewport's right edge
+.log-line-action-buttons.table-view-log-actions {
+	position: absolute;
+	top: 50%;
+	right: 8px;
+	left: auto;
+	transform: translateY(-50%);
+	margin: 0;
+	z-index: 5;
+}

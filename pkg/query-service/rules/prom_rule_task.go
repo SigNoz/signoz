@@ -2,7 +2,6 @@ package rules
 
 import (
 	"context"
-	"fmt"
 	"sort"
 	"sync"
 	"time"
@@ -187,7 +186,7 @@ func (g *PromRuleTask) PromRules() []*PromRule {
 		}
 	}
 	sort.Slice(alerts, func(i, j int) bool {
-		return alerts[i].State() > alerts[j].State() ||
+		return alerts[i].State().Severity() > alerts[j].State().Severity() ||
 			(alerts[i].State() == alerts[j].State() &&
 				alerts[i].Name() < alerts[j].Name())
 	})
@@ -268,7 +267,7 @@ func (g *PromRuleTask) CopyState(fromTask Task) error {
 
 	from, ok := fromTask.(*PromRuleTask)
 	if !ok {
-		return fmt.Errorf("you can only copy rule groups with same type")
+		return errors.NewInternalf(errors.CodeInternal, "you can only copy rule groups with same type")
 	}
 
 	g.evaluationTime = from.evaluationTime
@@ -343,7 +342,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 
 		shouldSkip := false
 		for _, m := range maintenance {
-			g.logger.InfoContext(ctx, "checking if rule should be skipped", "rule", rule.ID(), "maintenance", m)
+			g.logger.InfoContext(ctx, "checking if rule should be skipped", slog.String("rule.id", rule.ID()), slog.Any("maintenance", m))
 			if m.ShouldSkip(rule.ID(), ts) {
 				shouldSkip = true
 				break
@@ -351,7 +350,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 		}
 
 		if shouldSkip {
-			g.logger.InfoContext(ctx, "rule should be skipped", "rule", rule.ID())
+			g.logger.InfoContext(ctx, "rule should be skipped", slog.String("rule.id", rule.ID()))
 			continue
 		}
 
@@ -383,7 +382,7 @@ func (g *PromRuleTask) Eval(ctx context.Context, ts time.Time) {
 				rule.SetHealth(ruletypes.HealthBad)
 				rule.SetLastError(err)
 
-				g.logger.WarnContext(ctx, "evaluating rule failed", "rule_id", rule.ID(), errors.Attr(err))
+				g.logger.WarnContext(ctx, "evaluating rule failed", slog.String("rule.id", rule.ID()), errors.Attr(err))
 
 				// Canceled queries are intentional termination of queries. This normally
 				// happens on shutdown and thus we skip logging of any errors here.

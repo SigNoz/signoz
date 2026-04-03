@@ -35,7 +35,7 @@ type TerminalConfig struct {
 }
 
 // Node is now a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types
+// that precomputes all possible branches and their types.
 type JSONAccessNode struct {
 	// Node information
 	Name       string
@@ -104,7 +104,7 @@ type planBuilder struct {
 	typeCache  map[string][]JSONDataType
 }
 
-// buildPlan recursively builds the path plan tree
+// buildPlan recursively builds the path plan tree.
 func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChild bool) (*JSONAccessNode, error) {
 	if index >= len(pb.paths) {
 		return nil, errors.NewInvalidInputf(CodePlanIndexOutOfBounds, "index is out of bounds")
@@ -179,7 +179,7 @@ func (pb *planBuilder) buildPlan(index int, parent *JSONAccessNode, isDynArrChil
 }
 
 // buildJSONAccessPlan builds a tree structure representing the complete JSON path traversal
-// that precomputes all possible branches and their types
+// that precomputes all possible branches and their types.
 func (key *TelemetryFieldKey) SetJSONAccessPlan(columnInfo JSONColumnMetadata, typeCache map[string][]JSONDataType,
 ) error {
 	// if path is empty, return nil

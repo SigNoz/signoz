@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import { TableColumnsType as ColumnsType, Typography } from 'antd';
+import { TableColumnsType as ColumnsType } from 'antd';
 import cx from 'classnames';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { getSanitizedLogBody } from 'container/LogDetailedView/utils';
@@ -43,7 +43,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 	const bodyColumnStyle = useMemo(
 		() => ({
 			...defaultTableStyle,
-			...(fields.length > 2 ? { width: '50rem' } : {}),
+			...(fields.length > 2 ? { width: 'auto' } : {}),
 		}),
 		[fields.length],
 	);
@@ -59,18 +59,18 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 				key: name,
 				render: (field): ColumnTypeRender<Record<string, unknown>> => ({
 					props: {
-						style: isListViewPanel
-							? defaultListViewPanelStyle
-							: getDefaultCellStyle(isDarkMode),
+						style: {
+							...(isListViewPanel
+								? defaultListViewPanelStyle
+								: getDefaultCellStyle(isDarkMode)),
+							display: '-webkit-box',
+							WebkitLineClamp: linesPerRow,
+							WebkitBoxOrient: 'vertical',
+							overflow: 'hidden',
+							wordBreak: 'break-all',
+						},
 					},
-					children: (
-						<Typography.Paragraph
-							ellipsis={{ rows: linesPerRow }}
-							className={cx('paragraph', fontSize)}
-						>
-							{field}
-						</Typography.Paragraph>
-					),
+					children: <p className={cx('paragraph', fontSize)}>{field}</p>,
 				}),
 			}));
 
@@ -123,9 +123,7 @@ export const useTableView = (props: UseTableViewProps): UseTableViewResult => {
 								return {
 									children: (
 										<div className="table-timestamp">
-											<Typography.Paragraph ellipsis className={cx('text', fontSize)}>
-												{date}
-											</Typography.Paragraph>
+											<p className={cx('text', fontSize)}>{date}</p>
 										</div>
 									),
 								};

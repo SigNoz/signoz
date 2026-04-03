@@ -18,6 +18,19 @@
 }
 
 .live-logs-list {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+
+	.ant-card,
+	.ant-card-body {
+		display: flex;
+		flex: 1;
+		min-height: 0;
+		flex-direction: column;
+	}
+
 	.live-logs-list-loading {
 		padding: 16px;
 		text-align: center;

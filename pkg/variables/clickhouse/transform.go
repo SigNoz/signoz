@@ -9,7 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/variables"
 )
 
-// VariableValue represents a variable's assigned value
+// VariableValue represents a variable's assigned value.
 type VariableValue struct {
 	Name        string
 	Values      []string
@@ -17,14 +17,14 @@ type VariableValue struct {
 	FieldType   string // "scalar", "array", "map", etc.
 }
 
-// QueryTransformer handles the transformation of queries based on variable values
+// QueryTransformer handles the transformation of queries based on variable values.
 type QueryTransformer struct {
 	processor   *QueryProcessor
 	variables   map[string]VariableValue
 	originalSQL string
 }
 
-// NewQueryTransformer creates a new transformer with the given SQL and variables
+// NewQueryTransformer creates a new transformer with the given SQL and variables.
 func NewQueryTransformer(sql string, vars []VariableValue) *QueryTransformer {
 	varMap := make(map[string]VariableValue)
 	for _, v := range vars {
@@ -45,10 +45,10 @@ func NewQueryTransformer(sql string, vars []VariableValue) *QueryTransformer {
 	// for each variable, replace the `{{variable_name}}`, [[variable_name]], {{ .variable_name }}, {{.variable_name}}
 	// with $variable_name
 	for name := range varMap {
-		sql = strings.Replace(sql, fmt.Sprintf("{{%s}}", name), fmt.Sprintf("$%s", name), -1)
-		sql = strings.Replace(sql, fmt.Sprintf("[[%s]]", name), fmt.Sprintf("$%s", name), -1)
-		sql = strings.Replace(sql, fmt.Sprintf("{{ .%s }}", name), fmt.Sprintf("$%s", name), -1)
-		sql = strings.Replace(sql, fmt.Sprintf("{{.%s}}", name), fmt.Sprintf("$%s", name), -1)
+		sql = strings.ReplaceAll(sql, fmt.Sprintf("{{%s}}", name), fmt.Sprintf("$%s", name))
+		sql = strings.ReplaceAll(sql, fmt.Sprintf("[[%s]]", name), fmt.Sprintf("$%s", name))
+		sql = strings.ReplaceAll(sql, fmt.Sprintf("{{ .%s }}", name), fmt.Sprintf("$%s", name))
+		sql = strings.ReplaceAll(sql, fmt.Sprintf("{{.%s}}", name), fmt.Sprintf("$%s", name))
 	}
 
 	return &QueryTransformer{
@@ -58,12 +58,12 @@ func NewQueryTransformer(sql string, vars []VariableValue) *QueryTransformer {
 	}
 }
 
-// Transform processes the query and returns a transformed version
+// Transform processes the query and returns a transformed version.
 func (t *QueryTransformer) Transform() (string, error) {
 	return t.processor.ProcessQuery(t.originalSQL, t.transformFilter)
 }
 
-// transformFilter is the callback function that decides what to do with each filter
+// transformFilter is the callback function that decides what to do with each filter.
 func (t *QueryTransformer) transformFilter(variableName string, expr parser.Expr) FilterAction {
 	// Check if we have info about this variable
 	varInfo, exists := t.variables[variableName]

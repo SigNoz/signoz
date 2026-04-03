@@ -1,6 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 // eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useSelector } from 'react-redux'; // old code, TODO: fix this correctly
 import { useCopyToClipboard, useLocation } from 'react-use';
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
@@ -49,6 +49,7 @@ import { AppState } from 'store/reducers';
 import { Query, TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import { GlobalReducer } from 'types/reducer/globalTime';
+import { isModifierKeyPressed } from 'utils/app';
 
 import { RESOURCE_KEYS, VIEW_TYPES, VIEWS } from './constants';
 import { LogDetailInnerProps, LogDetailProps } from './LogDetail.interfaces';
@@ -221,7 +222,7 @@ function LogDetailInner({
 	};
 
 	// Go to logs explorer page with the log data
-	const handleOpenInExplorer = (): void => {
+	const handleOpenInExplorer = (e?: React.MouseEvent): void => {
 		const queryParams = {
 			[QueryParams.activeLogId]: `"${log?.id}"`,
 			[QueryParams.startTime]: minTime?.toString() || '',
@@ -234,7 +235,9 @@ function LogDetailInner({
 				),
 			),
 		};
-		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`);
+		safeNavigate(`${ROUTES.LOGS_EXPLORER}?${createQueryParams(queryParams)}`, {
+			newTab: !!e && isModifierKeyPressed(e),
+		});
 	};
 
 	const handleQueryExpressionChange = useCallback(

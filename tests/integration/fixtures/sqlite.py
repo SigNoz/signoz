@@ -28,6 +28,7 @@ def sqlite(
             result = conn.execute(sql.text("SELECT 1"))
             assert result.fetchone()[0] == 1
 
+        mode = pytestconfig.getoption("--sqlite-mode")
         return types.TestContainerSQL(
             container=types.TestContainerDocker(
                 id="",
@@ -38,6 +39,7 @@ def sqlite(
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
                 "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
+                "SIGNOZ_SQLSTORE_SQLITE_MODE": mode,
             },
         )
 

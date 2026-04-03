@@ -1,10 +1,18 @@
-import { InspectMetricsSeries } from 'api/metricsExplorer/getInspectMetricsDetails';
-import { MetricType } from 'api/metricsExplorer/getMetricsList';
-import {
-	IBuilderQuery,
-	TagFilter,
-} from 'types/api/queryBuilder/queryBuilderData';
+import { MetrictypesTypeDTO } from 'api/generated/services/sigNoz.schemas';
+import { IBuilderQuery } from 'types/api/queryBuilder/queryBuilderData';
 import { AlignedData } from 'uplot';
+
+export interface InspectMetricsTimestampValue {
+	timestamp: number;
+	value: string;
+}
+
+export interface InspectMetricsSeries {
+	title?: string;
+	strokeColor?: string;
+	labels: Record<string, string>;
+	values: InspectMetricsTimestampValue[];
+}
 
 export type InspectProps = {
 	metricName: string;
@@ -14,7 +22,6 @@ export type InspectProps = {
 
 export interface UseInspectMetricsReturnData {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
-	inspectMetricsStatusCode: number;
 	isInspectMetricsLoading: boolean;
 	isInspectMetricsError: boolean;
 	formattedInspectMetricsTimeSeries: AlignedData;
@@ -33,7 +40,7 @@ export interface GraphViewProps {
 	inspectMetricsTimeSeries: InspectMetricsSeries[];
 	metricUnit: string | undefined;
 	metricName: string | null;
-	metricType?: MetricType | undefined;
+	metricType?: MetrictypesTypeDTO | undefined;
 	formattedInspectMetricsTimeSeries: AlignedData;
 	resetInspection: () => void;
 	spaceAggregationSeriesMap: Map<string, InspectMetricsSeries[]>;
@@ -106,7 +113,7 @@ export interface MetricInspectionOptions {
 	timeAggregationInterval: number | undefined;
 	spaceAggregationOption: SpaceAggregationOptions | undefined;
 	spaceAggregationLabels: string[];
-	filters: TagFilter;
+	filterExpression: string;
 }
 
 export interface MetricInspectionState {
@@ -119,7 +126,7 @@ export type MetricInspectionAction =
 	| { type: 'SET_TIME_AGGREGATION_INTERVAL'; payload: number }
 	| { type: 'SET_SPACE_AGGREGATION_OPTION'; payload: SpaceAggregationOptions }
 	| { type: 'SET_SPACE_AGGREGATION_LABELS'; payload: string[] }
-	| { type: 'SET_FILTERS'; payload: TagFilter }
+	| { type: 'SET_FILTERS'; payload: string }
 	| { type: 'RESET_INSPECTION' }
 	| { type: 'APPLY_METRIC_INSPECTION_OPTIONS' };
 

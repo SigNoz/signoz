@@ -1,5 +1,5 @@
 import { toast } from '@signozhq/sonner';
-import { ServiceaccounttypesFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
+import { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
@@ -14,13 +14,12 @@ const mockToast = jest.mocked(toast);
 
 const SA_KEY_ENDPOINT = '*/api/v1/service_accounts/sa-1/keys/:fid';
 
-const keys: ServiceaccounttypesFactorAPIKeyDTO[] = [
+const keys: ServiceaccounttypesGettableFactorAPIKeyDTO[] = [
 	{
 		id: 'key-1',
 		name: 'Production Key',
 		expiresAt: 0,
 		lastObservedAt: null as any,
-		key: 'snz_prod_123',
 		serviceAccountId: 'sa-1',
 	},
 	{
@@ -28,7 +27,6 @@ const keys: ServiceaccounttypesFactorAPIKeyDTO[] = [
 		name: 'Staging Key',
 		expiresAt: 1924905600, // 2030-12-31
 		lastObservedAt: new Date('2026-03-10T10:00:00Z'),
-		key: 'snz_stag_456',
 		serviceAccountId: 'sa-1',
 	},
 ];

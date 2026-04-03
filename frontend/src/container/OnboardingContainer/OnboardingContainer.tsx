@@ -1,4 +1,6 @@
-import { useCallback, useEffect, useState } from 'react';
+/* eslint-disable jsx-a11y/no-static-element-interactions */
+/* eslint-disable jsx-a11y/click-events-have-key-events */
+import React, { useCallback, useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { useQuery } from 'react-query';
 import { useEffectOnce } from 'react-use';
@@ -12,9 +14,11 @@ import ROUTES from 'constants/routes';
 import FullScreenHeader from 'container/FullScreenHeader/FullScreenHeader';
 import InviteUserModal from 'container/OrganizationSettings/InviteUserModal/InviteUserModal';
 import { InviteMemberFormValues } from 'container/OrganizationSettings/utils';
+import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import history from 'lib/history';
 import { UserPlus } from 'lucide-react';
 import { useAppContext } from 'providers/App/App';
+import { isModifierKeyPressed } from 'utils/app';
 
 import ModuleStepsContainer from './common/ModuleStepsContainer/ModuleStepsContainer';
 import { stepsMap } from './constants/stepsConfig';
@@ -105,6 +109,7 @@ export default function Onboarding(): JSX.Element {
 	const [current, setCurrent] = useState(0);
 	const { location } = history;
 	const { t } = useTranslation(['onboarding']);
+	const { safeNavigate } = useSafeNavigate();
 
 	const { featureFlags } = useAppContext();
 	const isOnboardingV3Enabled = featureFlags?.find(
@@ -250,9 +255,11 @@ export default function Onboarding(): JSX.Element {
 		}
 	};
 
-	const handleNext = (): void => {
+	const handleNext = (e?: React.MouseEvent): void => {
 		if (activeStep <= 3) {
-			history.push(moduleRouteMap[selectedModule.id as ModulesMap]);
+			safeNavigate(moduleRouteMap[selectedModule.id as ModulesMap], {
+				newTab: !!e && isModifierKeyPressed(e),
+			});
 		}
 	};
 
@@ -315,9 +322,9 @@ export default function Onboarding(): JSX.Element {
 			{activeStep === 1 && (
 				<div className="onboarding-page">
 					<div
-						onClick={(): void => {
+						onClick={(e): void => {
 							logEvent('Onboarding V2: Skip Button Clicked', {});
-							history.push(ROUTES.APPLICATION);
+							safeNavigate(ROUTES.APPLICATION, { newTab: isModifierKeyPressed(e) });
 						}}
 						className="skip-to-console"
 					>
@@ -353,7 +360,11 @@ export default function Onboarding(): JSX.Element {
 						</div>
 					</div>
 					<div className="continue-to-next-step">
-						<Button type="primary" icon={<ArrowRightOutlined />} onClick={handleNext}>
+						<Button
+							type="primary"
+							icon={<ArrowRightOutlined />}
+							onClick={(e): void => handleNext(e)}
+						>
 							{t('get_started')}
 						</Button>
 					</div>
@@ -384,17 +395,16 @@ export default function Onboarding(): JSX.Element {
 			{activeStep > 1 && (
 				<div className="stepsContainer">
 					<ModuleStepsContainer
-						onReselectModule={(): void => {
+						onReselectModule={(e?: React.MouseEvent): void => {
 							setCurrent(current - 1);
 							setActiveStep(activeStep - 1);
 							setSelectedModule(useCases.APM);
 							resetProgress();
 
-							if (isOnboardingV3Enabled) {
-								history.push(ROUTES.GET_STARTED_WITH_CLOUD);
-							} else {
-								history.push(ROUTES.GET_STARTED);
-							}
+							const path = isOnboardingV3Enabled
+								? ROUTES.GET_STARTED_WITH_CLOUD
+								: ROUTES.GET_STARTED;
+							safeNavigate(path, { newTab: !!e && isModifierKeyPressed(e) });
 						}}
 						selectedModule={selectedModule}
 						selectedModuleSteps={selectedModuleSteps}

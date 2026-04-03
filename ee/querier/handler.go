@@ -65,7 +65,7 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 	}
 
 	if anomalyQuery, ok := queryRangeRequest.IsAnomalyRequest(); ok {
-		anomalies, err := h.handleAnomalyQuery(ctx, orgID, anomalyQuery, queryRangeRequest)
+		anomalies, err := h.handleAnomalyQuery(ctx, orgID, anomalyQuery, &queryRangeRequest)
 		if err != nil {
 			render.Error(rw, errors.NewInternalf(errors.CodeInternal, "failed to get anomalies: %v", err))
 			return
@@ -79,7 +79,7 @@ func (h *handler) QueryRange(rw http.ResponseWriter, req *http.Request) {
 		// Build step intervals from the anomaly query
 		stepIntervals := make(map[string]uint64)
 		if anomalyQuery.StepInterval.Duration > 0 {
-			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Duration.Seconds())
+			stepIntervals[anomalyQuery.Name] = uint64(anomalyQuery.StepInterval.Seconds())
 		}
 
 		finalResp := &qbtypes.QueryRangeResponse{
@@ -149,7 +149,7 @@ func (h *handler) createAnomalyProvider(seasonality anomalyV2.Seasonality) anoma
 	}
 }
 
-func (h *handler) handleAnomalyQuery(ctx context.Context, orgID valuer.UUID, anomalyQuery *qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], queryRangeRequest qbtypes.QueryRangeRequest) (*anomalyV2.AnomaliesResponse, error) {
+func (h *handler) handleAnomalyQuery(ctx context.Context, orgID valuer.UUID, anomalyQuery *qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation], queryRangeRequest *qbtypes.QueryRangeRequest) (*anomalyV2.AnomaliesResponse, error) {
 	seasonality := extractSeasonality(anomalyQuery)
 	provider := h.createAnomalyProvider(seasonality)
 

@@ -8,44 +8,24 @@ import (
 	"strings"
 	"time"
 
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
-// this file contains common structs and methods used by
-// rule engine
-
 const (
-	// how long before re-sending the alert
+	// how long before re-sending the alert.
 	ResolvedRetention = 15 * time.Minute
 	TestAlertPostFix  = "_TEST_ALERT"
-)
-
-type RuleType string
-
-const (
-	RuleTypeThreshold = "threshold_rule"
-	RuleTypeProm      = "promql_rule"
-	RuleTypeAnomaly   = "anomaly_rule"
-)
-
-type RuleHealth string
-
-const (
-	HealthUnknown RuleHealth = "unknown"
-	HealthGood    RuleHealth = "ok"
-	HealthBad     RuleHealth = "err"
+	AlertTimeFormat   = "2006-01-02 15:04:05"
 )
 
 type Alert struct {
-	State model.AlertState
+	State AlertState
 
-	Labels      labels.BaseLabels
-	Annotations labels.BaseLabels
+	Labels      Labels
+	Annotations Labels
 
-	QueryResultLables labels.BaseLabels
+	QueryResultLabels Labels
 
 	GeneratorURL string
 
@@ -63,8 +43,13 @@ type Alert struct {
 	IsRecovering bool
 }
 
+type NamedAlert struct {
+	Name string
+	*Alert
+}
+
 func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {
-	if a.State == model.StatePending {
+	if a.State == StatePending {
 		return false
 	}
 
@@ -76,153 +61,118 @@ func (a *Alert) NeedsSending(ts time.Time, resendDelay time.Duration) bool {
 	return a.LastSentAt.Add(resendDelay).Before(ts)
 }
 
-type NamedAlert struct {
-	Name string
-	*Alert
+type PanelType struct {
+	valuer.String
 }
 
-type CompareOp string
-
-const (
-	CompareOpNone      CompareOp = "0"
-	ValueIsAbove       CompareOp = "1"
-	ValueIsBelow       CompareOp = "2"
-	ValueIsEq          CompareOp = "3"
-	ValueIsNotEq       CompareOp = "4"
-	ValueAboveOrEq     CompareOp = "5"
-	ValueBelowOrEq     CompareOp = "6"
-	ValueOutsideBounds CompareOp = "7"
+var (
+	PanelTypeValue = PanelType{valuer.NewString("value")}
+	PanelTypeTable = PanelType{valuer.NewString("table")}
+	PanelTypeGraph = PanelType{valuer.NewString("graph")}
 )
 
-type MatchType string
+// Note: this is used to represent the state of the alert query
+// i.e the active tab which should be used to represent the selection
 
-const (
-	MatchTypeNone MatchType = "0"
-	AtleastOnce   MatchType = "1"
-	AllTheTimes   MatchType = "2"
-	OnAverage     MatchType = "3"
-	InTotal       MatchType = "4"
-	Last          MatchType = "5"
+type QueryType struct {
+	valuer.String
+}
+
+var (
+	QueryTypeBuilder       = QueryType{String: valuer.NewString("builder")}
+	QueryTypeClickHouseSQL = QueryType{valuer.NewString("clickhouse_sql")}
+	QueryTypePromQL        = QueryType{valuer.NewString("promql")}
 )
+
+type AlertCompositeQuery struct {
+	Queries []qbtypes.QueryEnvelope `json:"queries"`
+
+	PanelType PanelType `json:"panelType"`
+	QueryType QueryType `json:"queryType"`
+	// Unit for the time series data shown in the graph
+	// This is used to format the value and threshold
+	Unit string `json:"unit,omitempty"`
+}
 
 type RuleCondition struct {
-	CompositeQuery    *v3.CompositeQuery `json:"compositeQuery,omitempty"`
-	CompareOp         CompareOp          `json:"op,omitempty"`
-	Target            *float64           `json:"target,omitempty"`
-	AlertOnAbsent     bool               `json:"alertOnAbsent,omitempty"`
-	AbsentFor         uint64             `json:"absentFor,omitempty"`
-	MatchType         MatchType          `json:"matchType,omitempty"`
-	TargetUnit        string             `json:"targetUnit,omitempty"`
-	Algorithm         string             `json:"algorithm,omitempty"`
-	Seasonality       string             `json:"seasonality,omitempty"`
-	SelectedQuery     string             `json:"selectedQueryName,omitempty"`
-	RequireMinPoints  bool               `json:"requireMinPoints,omitempty"`
-	RequiredNumPoints int                `json:"requiredNumPoints,omitempty"`
-	Thresholds        *RuleThresholdData `json:"thresholds,omitempty"`
+	CompositeQuery    *AlertCompositeQuery `json:"compositeQuery"`
+	CompareOperator   CompareOperator      `json:"op"`
+	Target            *float64             `json:"target,omitempty"`
+	AlertOnAbsent     bool                 `json:"alertOnAbsent,omitempty"`
+	AbsentFor         uint64               `json:"absentFor,omitempty"`
+	MatchType         MatchType            `json:"matchType"`
+	TargetUnit        string               `json:"targetUnit,omitempty"`
+	Algorithm         string               `json:"algorithm,omitempty"`
+	Seasonality       string               `json:"seasonality,omitempty"`
+	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
+	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
+	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
+	Thresholds        *RuleThresholdData   `json:"thresholds,omitempty"`
 }
 
-func (rc *RuleCondition) GetSelectedQueryName() string {
-	if rc != nil {
-		if rc.SelectedQuery != "" {
-			return rc.SelectedQuery
-		}
+func (rc *RuleCondition) SelectedQueryName() string {
 
-		queryNames := map[string]struct{}{}
+	queryNames := map[string]struct{}{}
 
-		if rc.CompositeQuery != nil {
-			if rc.QueryType() == v3.QueryTypeBuilder {
-				for name := range rc.CompositeQuery.BuilderQueries {
-					queryNames[name] = struct{}{}
-				}
-
-				for _, query := range rc.CompositeQuery.Queries {
-					switch spec := query.Spec.(type) {
-					case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
-						queryNames[spec.Name] = struct{}{}
-					case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
-						queryNames[spec.Name] = struct{}{}
-					case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
-						queryNames[spec.Name] = struct{}{}
-					case qbtypes.QueryBuilderFormula:
-						queryNames[spec.Name] = struct{}{}
-					}
-				}
-			} else if rc.QueryType() == v3.QueryTypeClickHouseSQL {
-				for name := range rc.CompositeQuery.ClickHouseQueries {
-					queryNames[name] = struct{}{}
-				}
-
-				for _, query := range rc.CompositeQuery.Queries {
-					switch spec := query.Spec.(type) {
-					case qbtypes.ClickHouseQuery:
-						queryNames[spec.Name] = struct{}{}
-					}
-				}
+	for _, query := range rc.CompositeQuery.Queries {
+		switch spec := query.Spec.(type) {
+		case qbtypes.QueryBuilderQuery[qbtypes.TraceAggregation]:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
+			}
+		case qbtypes.QueryBuilderQuery[qbtypes.MetricAggregation]:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
+			}
+		case qbtypes.QueryBuilderFormula:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
+			}
+		case qbtypes.ClickHouseQuery:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
+			}
+		case qbtypes.PromQuery:
+			if !spec.Disabled {
+				queryNames[spec.Name] = struct{}{}
 			}
 		}
-
-		// The following logic exists for backward compatibility
-		// If there is no selected query, then
-		// - check if F1 is present, if yes, return F1
-		// - else return the query with max ascii value
-		// this logic is not really correct. we should be considering
-		// whether the query is enabled or not. but this is a temporary
-		// fix to support backward compatibility
-		if _, ok := queryNames["F1"]; ok {
-			return "F1"
-		}
-		keys := make([]string, 0, len(queryNames))
-		for k := range queryNames {
-			keys = append(keys, k)
-		}
-		sort.Strings(keys)
-		return keys[len(keys)-1]
 	}
-	// This should never happen
-	return ""
+
+	// The following logic exists for backward compatibility
+	// If there is no selected query, then
+	// - check if F1 is present, if yes, return F1
+	// - else return the query with max ascii value
+	if _, ok := queryNames["F1"]; ok {
+		return "F1"
+	}
+	keys := make([]string, 0, len(queryNames))
+	for k := range queryNames {
+		keys = append(keys, k)
+	}
+	sort.Strings(keys)
+	return keys[len(keys)-1]
 }
 
 func (rc *RuleCondition) IsValid() bool {
-
-	if rc.CompositeQuery == nil {
-		return false
-	}
-
-	if rc.QueryType() == v3.QueryTypeBuilder {
-		if rc.Thresholds == nil {
-			return false
-		}
-	}
-	if rc.QueryType() == v3.QueryTypePromQL {
-
-		if len(rc.CompositeQuery.PromQueries) == 0 && len(rc.CompositeQuery.Queries) == 0 {
-			return false
-		}
-	}
 	return true
 }
 
 // ShouldEval checks if the further series should be evaluated at all for alerts.
-func (rc *RuleCondition) ShouldEval(series *v3.Series) bool {
-	if rc == nil {
-		return true
-	}
-	return !rc.RequireMinPoints || len(series.Points) >= rc.RequiredNumPoints
+func (rc *RuleCondition) ShouldEval(series *qbtypes.TimeSeries) bool {
+	return !rc.RequireMinPoints || len(series.Values) >= rc.RequiredNumPoints
 }
 
-// QueryType is a shorthand method to get query type
-func (rc *RuleCondition) QueryType() v3.QueryType {
-	if rc.CompositeQuery != nil {
-		return rc.CompositeQuery.QueryType
-	}
-	return v3.QueryTypeUnknown
+// QueryType is a shorthand method to get query type.
+func (rc *RuleCondition) QueryType() QueryType {
+	return rc.CompositeQuery.QueryType
 }
 
-// String is useful in printing rule condition in logs
 func (rc *RuleCondition) String() string {
-	if rc == nil {
-		return ""
-	}
 	data, _ := json.Marshal(*rc)
 	return string(data)
 }
@@ -230,7 +180,7 @@ func (rc *RuleCondition) String() string {
 // PrepareRuleGeneratorURL creates an appropriate url for the rule. The URL is
 // sent in Slack messages as well as to other systems and allows backtracking
 // to the rule definition from the third party systems.
-func PrepareRuleGeneratorURL(ruleId string, source string) string {
+func PrepareRuleGeneratorURL(ruleID string, source string) string {
 	if source == "" {
 		return source
 	}
@@ -246,7 +196,7 @@ func PrepareRuleGeneratorURL(ruleId string, source string) string {
 
 	hasNew := strings.LastIndex(source, "new")
 	if hasNew > -1 {
-		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", source[0:hasNew], ruleId)
+		ruleURL := fmt.Sprintf("%sedit?ruleId=%s", source[0:hasNew], ruleID)
 		return ruleURL
 	}
 
@@ -255,7 +205,7 @@ func PrepareRuleGeneratorURL(ruleId string, source string) string {
 	// mainly to keep the URL short and lower the alert body contents
 	// The generator URL with /alerts/edit?ruleId= is enough
 	if parsedSource.Port() != "" {
-		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleId)
+		return fmt.Sprintf("%s://%s:%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), parsedSource.Port(), ruleID)
 	}
-	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleId)
+	return fmt.Sprintf("%s://%s/alerts/edit?ruleId=%s", parsedSource.Scheme, parsedSource.Hostname(), ruleID)
 }
