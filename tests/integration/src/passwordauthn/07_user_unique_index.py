@@ -86,7 +86,7 @@ def test_unique_index_allows_multiple_deleted_rows(
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
             sql.text(
-                "SELECT id FROM users" " WHERE email = :email AND status = 'deleted'"
+                "SELECT id FROM users WHERE email = :email AND status = 'deleted'"
             ),
             {"email": UNIQUE_INDEX_USER_EMAIL},
         )
