@@ -35,7 +35,7 @@ export const getFiltersFromResources = (
 	resources: ILog['resources_string'],
 ): TagFilterItem[] =>
 	Object.keys(resources ?? {}).map((key: string) => {
-		const resourceValue = resources[key] as string;
+		const resourceValue = (resources ?? {})[key] as string;
 		return {
 			id: uuid(),
 			key: {
