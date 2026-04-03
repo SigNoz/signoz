@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -35,15 +34,6 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		Signal:        telemetrytypes.SignalTraces,
 	}}
 
-	resourceFilterFM := telemetryresourcefilter.NewFieldMapper()
-	resourceFilterCB := telemetryresourcefilter.NewConditionBuilder(resourceFilterFM)
-	resourceFilterStmtBuilder := telemetryresourcefilter.NewTraceResourceFilterStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		resourceFilterFM,
-		resourceFilterCB,
-		mockMetadataStore,
-	)
-
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
 	statementBuilder := NewTraceQueryStatementBuilder(
@@ -51,7 +41,6 @@ func TestTraceTimeRangeOptimization(t *testing.T) {
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil, // telemetryStore is nil - optimization won't happen but code path is tested
 	)

@@ -372,11 +372,16 @@ func TestResourceFilterStatementBuilder_Traces(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalTraces)
 
-	builder := NewTraceResourceFilterStatementBuilder(
+	builder := New[qbtypes.TraceAggregation](
 		instrumentationtest.New().ToProviderSettings(),
+		"signoz_traces",
+		"distributed_traces_v3_resource",
+		telemetrytypes.SignalTraces,
 		fm,
 		cb,
 		mockMetadataStore,
+		nil,
+		nil,
 	)
 
 	for _, c := range cases {
@@ -588,8 +593,11 @@ func TestResourceFilterStatementBuilder_Logs(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalLogs)
 
-	builder := NewLogResourceFilterStatementBuilder(
+	builder := New[qbtypes.LogAggregation](
 		instrumentationtest.New().ToProviderSettings(),
+		"signoz_logs",
+		"distributed_logs_v2_resource",
+		telemetrytypes.SignalLogs,
 		fm,
 		cb,
 		mockMetadataStore,
@@ -650,11 +658,16 @@ func TestResourceFilterStatementBuilder_Variables(t *testing.T) {
 	mockMetadataStore := telemetrytypestest.NewMockMetadataStore()
 	mockMetadataStore.KeysMap = buildTestFieldKeyMap(telemetrytypes.SignalTraces)
 
-	builder := NewTraceResourceFilterStatementBuilder(
+	builder := New[qbtypes.TraceAggregation](
 		instrumentationtest.New().ToProviderSettings(),
+		"signoz_traces",
+		"distributed_traces_v3_resource",
+		telemetrytypes.SignalTraces,
 		fm,
 		cb,
 		mockMetadataStore,
+		nil,
+		nil,
 	)
 
 	for _, c := range cases {

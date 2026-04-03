@@ -9,6 +9,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/huandu/go-sqlbuilder"
@@ -33,12 +34,25 @@ func NewLogQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.LogAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
 ) *logQueryStatementBuilder {
 	logsSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrylogs")
+
+	resourceFilterFM := telemetryresourcefilter.NewFieldMapper()
+	resourceFilterCB := telemetryresourcefilter.NewConditionBuilder(resourceFilterFM)
+	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.LogAggregation](
+		settings,
+		DBName,
+		LogsResourceV2TableName,
+		telemetrytypes.SignalLogs,
+		resourceFilterFM,
+		resourceFilterCB,
+		metadataStore,
+		fullTextColumn,
+		jsonKeyToKey,
+	)
 
 	return &logQueryStatementBuilder{
 		logger:                    logsSettings.Logger(),
