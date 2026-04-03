@@ -866,16 +866,17 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 	if err != nil {
 		return err
 	}
-	for _, userRole := range existingUserRoles {
-		if userRole.Role != nil && userRole.Role.Name == roleName {
-			return nil // role already assigned no-op
-		}
+
+	existingRoles := make([]string, len(existingUserRoles))
+	for idx, role := range existingUserRoles {
+		existingRoles[idx] = role.Role.Name
 	}
 
 	// grant via authz (idempotent)
-	if err := module.authz.Grant(
+	if err := module.authz.ModifyGrant(
 		ctx,
 		orgID,
+		existingRoles,
 		[]string{roleName},
 		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
@@ -884,7 +885,20 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 
 	// create user_role entry
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err = module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID)
+		if err != nil {
+			return err
+		}
+
+		err := module.userRoleStore.CreateUserRoles(ctx, userRoles)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
