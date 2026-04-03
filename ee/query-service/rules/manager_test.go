@@ -114,11 +114,8 @@ func TestManager_TestNotification_SendUnmatched_ThresholdRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {
@@ -268,11 +265,8 @@ func TestManager_TestNotification_SendUnmatched_PromRule(t *testing.T) {
 				},
 			})
 
-			count, apiErr := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
-			if apiErr != nil {
-				t.Logf("TestNotification error: %v, type: %s", apiErr.Err, apiErr.Typ)
-			}
-			require.Nil(t, apiErr)
+			count, err := mgr.TestNotification(context.Background(), orgID, string(ruleBytes))
+			require.Nil(t, err)
 			assert.Equal(t, tc.ExpectAlerts, count)
 
 			if tc.ExpectAlerts > 0 {

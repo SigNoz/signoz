@@ -25,32 +25,6 @@ export function NameEmailCell({
 	);
 }
 
-export function RolesCell({ roles }: { roles: string[] }): JSX.Element {
-	if (!roles || roles.length === 0) {
-		return <span className="sa-dash">—</span>;
-	}
-	const first = roles[0];
-	const overflow = roles.length - 1;
-	const tooltipContent = roles.slice(1).join(', ');
-
-	return (
-		<div className="sa-roles-cell">
-			<Badge color="vanilla">{first}</Badge>
-			{overflow > 0 && (
-				<Tooltip
-					title={tooltipContent}
-					overlayClassName="sa-tooltip"
-					overlayStyle={{ maxWidth: '600px' }}
-				>
-					<Badge color="vanilla" variant="outline" className="sa-status-badge">
-						+{overflow}
-					</Badge>
-				</Tooltip>
-			)}
-		</div>
-	);
-}
-
 export function StatusBadge({ status }: { status: string }): JSX.Element {
 	if (status?.toUpperCase() === 'ACTIVE') {
 		return (
@@ -59,9 +33,16 @@ export function StatusBadge({ status }: { status: string }): JSX.Element {
 			</Badge>
 		);
 	}
+	if (status?.toUpperCase() === 'DELETED') {
+		return (
+			<Badge color="cherry" variant="outline">
+				DELETED
+			</Badge>
+		);
+	}
 	return (
 		<Badge color="vanilla" variant="outline" className="sa-status-badge">
-			DISABLED
+			{status ? status.toUpperCase() : 'UNKNOWN'}
 		</Badge>
 	);
 }
@@ -97,13 +78,6 @@ export const columns: ColumnsType<ServiceAccountRow> = [
 		render: (_, record): JSX.Element => (
 			<NameEmailCell name={record.name} email={record.email} />
 		),
-	},
-	{
-		title: 'Roles',
-		dataIndex: 'roles',
-		key: 'roles',
-		width: 420,
-		render: (roles: string[]): JSX.Element => <RolesCell roles={roles} />,
 	},
 	{
 		title: 'Status',

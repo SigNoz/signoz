@@ -34,7 +34,7 @@ export function useRoles(): {
 export function getRoleOptions(roles: AuthtypesRoleDTO[]): RoleOption[] {
 	return roles.map((role) => ({
 		label: role.name ?? '',
-		value: role.name ?? '',
+		value: role.id ?? '',
 	}));
 }
 

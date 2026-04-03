@@ -1,18 +1,10 @@
 import { useCallback, useEffect, useMemo } from 'react';
-import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
-import {
-	getGetServiceAccountQueryKey,
-	useListServiceAccounts,
-} from 'api/generated/services/serviceaccount';
-import type {
-	GetServiceAccount200,
-	ListServiceAccounts200,
-} from 'api/generated/services/sigNoz.schemas';
+import { useListServiceAccounts } from 'api/generated/services/serviceaccount';
 import CreateServiceAccountModal from 'components/CreateServiceAccountModal/CreateServiceAccountModal';
 import ErrorInPlace from 'components/ErrorInPlace/ErrorInPlace';
 import ServiceAccountDrawer from 'components/ServiceAccountDrawer/ServiceAccountDrawer';
@@ -59,29 +51,13 @@ function ServiceAccountsSettings(): JSX.Element {
 		parseAsBoolean.withDefault(false),
 	);
 
-	const queryClient = useQueryClient();
-
-	const seedAccountCache = useCallback(
-		(data: ListServiceAccounts200) => {
-			data.data.forEach((account) => {
-				queryClient.setQueryData<GetServiceAccount200>(
-					getGetServiceAccountQueryKey({ id: account.id }),
-					(old) => old ?? { data: account, status: data.status },
-				);
-			});
-		},
-		[queryClient],
-	);
-
 	const {
 		data: serviceAccountsData,
 		isLoading,
 		isError,
 		error,
 		refetch: handleCreateSuccess,
-	} = useListServiceAccounts({
-		query: { onSuccess: seedAccountCache },
-	});
+	} = useListServiceAccounts();
 
 	const allAccounts = useMemo(
 		(): ServiceAccountRow[] =>
@@ -97,10 +73,10 @@ function ServiceAccountsSettings(): JSX.Element {
 		[allAccounts],
 	);
 
-	const disabledCount = useMemo(
+	const deletedCount = useMemo(
 		() =>
 			allAccounts.filter(
-				(a) => a.status?.toUpperCase() !== ServiceAccountStatus.Active,
+				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Deleted,
 			).length,
 		[allAccounts],
 	);
@@ -112,9 +88,9 @@ function ServiceAccountsSettings(): JSX.Element {
 			result = result.filter(
 				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Active,
 			);
-		} else if (filterMode === FilterMode.Disabled) {
+		} else if (filterMode === FilterMode.Deleted) {
 			result = result.filter(
-				(a) => a.status?.toUpperCase() !== ServiceAccountStatus.Active,
+				(a) => a.status?.toUpperCase() === ServiceAccountStatus.Deleted,
 			);
 		}
 
@@ -122,9 +98,7 @@ function ServiceAccountsSettings(): JSX.Element {
 			const q = searchQuery.trim().toLowerCase();
 			result = result.filter(
 				(a) =>
-					a.name?.toLowerCase().includes(q) ||
-					a.email?.toLowerCase().includes(q) ||
-					a.roles?.some((role: string) => role.toLowerCase().includes(q)),
+					a.name?.toLowerCase().includes(q) || a.email?.toLowerCase().includes(q),
 			);
 		}
 
@@ -174,15 +148,15 @@ function ServiceAccountsSettings(): JSX.Element {
 			},
 		},
 		{
-			key: FilterMode.Disabled,
+			key: FilterMode.Deleted,
 			label: (
 				<div className="sa-settings-filter-option">
-					<span>Disabled ⎯ {disabledCount}</span>
-					{filterMode === FilterMode.Disabled && <Check size={14} />}
+					<span>Deleted ⎯ {deletedCount}</span>
+					{filterMode === FilterMode.Deleted && <Check size={14} />}
 				</div>
 			),
 			onClick: (): void => {
-				setFilterMode(FilterMode.Disabled);
+				setFilterMode(FilterMode.Deleted);
 				setPage(1);
 			},
 		},
@@ -192,8 +166,8 @@ function ServiceAccountsSettings(): JSX.Element {
 		switch (filterMode) {
 			case FilterMode.Active:
 				return `Active ⎯ ${activeCount}`;
-			case FilterMode.Disabled:
-				return `Disabled ⎯ ${disabledCount}`;
+			case FilterMode.Deleted:
+				return `Deleted ⎯ ${deletedCount}`;
 			default:
 				return `All accounts ⎯ ${totalCount}`;
 		}
@@ -224,15 +198,14 @@ function ServiceAccountsSettings(): JSX.Element {
 					<h1 className="sa-settings__title">Service Accounts</h1>
 					<p className="sa-settings__subtitle">
 						Overview of service accounts added to this workspace.{' '}
-						{/* Todo: to add doc links */}
-						{/* <a
-							href="https://signoz.io/docs/service-accounts"
+						<a
+							href="https://signoz.io/docs/manage/administrator-guide/iam/service-accounts"
 							target="_blank"
 							rel="noopener noreferrer"
 							className="sa-settings__learn-more"
 						>
 							Learn more
-						</a> */}
+						</a>
 					</p>
 				</div>
 

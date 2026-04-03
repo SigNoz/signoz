@@ -354,3 +354,13 @@ identn:
   impersonation:
     # toggle impersonation identN, when enabled, all requests will impersonate the root user
     enabled: false
+
+##################### Service Account #####################
+serviceaccount:
+  email:
+    # email domain for the service account principal
+    domain: signozserviceaccount.com
+
+  analytics:
+    # toggle service account analytics
+    enabled: true

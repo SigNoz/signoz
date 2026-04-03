@@ -1,7 +1,6 @@
 import { RouteTabProps } from 'components/RouteTab/types';
 import ROUTES from 'constants/routes';
 import AlertChannels from 'container/AllAlertChannels';
-import APIKeys from 'container/APIKeys/APIKeys';
 import BillingContainer from 'container/BillingContainer/BillingContainer';
 import CreateAlertChannels from 'container/CreateAlertChannels';
 import { ChannelType } from 'container/CreateAlertChannels/config';
@@ -22,7 +21,6 @@ import {
 	Cpu,
 	CreditCard,
 	Keyboard,
-	KeySquare,
 	Pencil,
 	Plus,
 	Shield,
@@ -111,19 +109,6 @@ export const generalSettingsCloud = (t: TFunction): RouteTabProps['routes'] => [
 		),
 		route: ROUTES.SETTINGS,
 		key: ROUTES.SETTINGS,
-	},
-];
-
-export const apiKeys = (t: TFunction): RouteTabProps['routes'] => [
-	{
-		Component: APIKeys,
-		name: (
-			<div className="periscope-tab">
-				<KeySquare size={16} /> {t('routes:api_keys').toString()}
-			</div>
-		),
-		route: ROUTES.API_KEYS,
-		key: ROUTES.API_KEYS,
 	},
 ];
 

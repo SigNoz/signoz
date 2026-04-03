@@ -10,33 +10,29 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/identn"
-	"github.com/SigNoz/signoz/pkg/sqlstore"
-	"github.com/SigNoz/signoz/pkg/types"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 )
 
-// todo: will move this in types layer with service account integration
-type apiKeyTokenKey struct{}
-
 type provider struct {
-	store    sqlstore.SQLStore
-	config   identn.Config
-	settings factory.ScopedProviderSettings
-	sfGroup  *singleflight.Group
+	serviceAccount serviceaccount.Module
+	config         identn.Config
+	settings       factory.ScopedProviderSettings
+	sfGroup        *singleflight.Group
 }
 
-func NewFactory(store sqlstore.SQLStore) factory.ProviderFactory[identn.IdentN, identn.Config] {
+func NewFactory(serviceAccount serviceaccount.Module) factory.ProviderFactory[identn.IdentN, identn.Config] {
 	return factory.NewProviderFactory(factory.MustNewName(authtypes.IdentNProviderAPIKey.StringValue()), func(ctx context.Context, providerSettings factory.ProviderSettings, config identn.Config) (identn.IdentN, error) {
-		return New(providerSettings, store, config)
+		return New(serviceAccount, config, providerSettings)
 	})
 }
 
-func New(providerSettings factory.ProviderSettings, store sqlstore.SQLStore, config identn.Config) (identn.IdentN, error) {
+func New(serviceAccount serviceaccount.Module, config identn.Config, providerSettings factory.ProviderSettings) (identn.IdentN, error) {
 	return &provider{
-		store:    store,
-		config:   config,
-		settings: factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
-		sfGroup:  &singleflight.Group{},
+		serviceAccount: serviceAccount,
+		config:         config,
+		settings:       factory.NewScopedProviderSettings(providerSettings, "github.com/SigNoz/signoz/pkg/identn/apikeyidentn"),
+		sfGroup:        &singleflight.Group{},
 	}, nil
 }
 
@@ -54,75 +50,44 @@ func (provider *provider) Test(req *http.Request) bool {
 }
 
 func (provider *provider) Pre(req *http.Request) *http.Request {
-	token := provider.extractToken(req)
-	if token == "" {
+	apiKey := provider.extractToken(req)
+	if apiKey == "" {
 		return req
 	}
 
-	ctx := context.WithValue(req.Context(), apiKeyTokenKey{}, token)
+	ctx := authtypes.NewContextWithAPIKey(req.Context(), apiKey)
 	return req.WithContext(ctx)
 }
 
 func (provider *provider) GetIdentity(req *http.Request) (*authtypes.Identity, error) {
 	ctx := req.Context()
-	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
-	if !ok || apiKeyToken == "" {
-		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "missing api key")
-	}
-
-	var apiKey types.StorableAPIKey
-	err := provider.
-		store.
-		BunDB().
-		NewSelect().
-		Model(&apiKey).
-		Where("token = ?", apiKeyToken).
-		Scan(ctx)
+	apiKey, err := authtypes.APIKeyFromContext(ctx)
 	if err != nil {
 		return nil, err
 	}
 
-	if apiKey.ExpiresAt.Before(time.Now()) && !apiKey.ExpiresAt.Equal(types.NEVER_EXPIRES) {
-		return nil, errors.New(errors.TypeUnauthenticated, errors.CodeUnauthenticated, "api key has expired")
-	}
-
-	var user types.User
-	err = provider.
-		store.
-		BunDB().
-		NewSelect().
-		Model(&user).
-		Where("id = ?", apiKey.UserID).
-		Scan(ctx)
+	identity, err := provider.serviceAccount.GetIdentity(ctx, apiKey)
 	if err != nil {
 		return nil, err
 	}
 
-	identity := authtypes.NewIdentity(user.ID, user.OrgID, user.Email, apiKey.Role, provider.Name())
 	return identity, nil
 }
 
 func (provider *provider) Post(ctx context.Context, _ *http.Request, _ authtypes.Claims) {
-	apiKeyToken, ok := ctx.Value(apiKeyTokenKey{}).(string)
-	if !ok || apiKeyToken == "" {
+	apiKey, err := authtypes.APIKeyFromContext(ctx)
+	if err != nil {
 		return
 	}
 
-	_, _, _ = provider.sfGroup.Do(apiKeyToken, func() (any, error) {
-		_, err := provider.
-			store.
-			BunDB().
-			NewUpdate().
-			Model(new(types.StorableAPIKey)).
-			Set("last_used = ?", time.Now()).
-			Where("token = ?", apiKeyToken).
-			Where("revoked = false").
-			Exec(ctx)
-		if err != nil {
-			provider.settings.Logger().ErrorContext(ctx, "failed to update last used of api key", errors.Attr(err))
+	_, _, _ = provider.sfGroup.Do(apiKey, func() (any, error) {
+		if err := provider.serviceAccount.SetLastObservedAt(ctx, apiKey, time.Now()); err != nil {
+			provider.settings.Logger().ErrorContext(ctx, "failed to set last observed at", errors.Attr(err))
+			return false, err
 		}
 		return true, nil
 	})
+
 }
 
 func (provider *provider) extractToken(req *http.Request) string {
