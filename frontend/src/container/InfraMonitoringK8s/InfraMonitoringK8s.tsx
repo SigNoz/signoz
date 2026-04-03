@@ -64,8 +64,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 	const [, setGroupBy] = useInfraMonitoringGroupBy();
 	const [, setOrderBy] = useInfraMonitoringOrderBy();
 
-	const [quickFiltersLastUpdated, setQuickFiltersLastUpdated] = useState(-1);
-
 	const { currentQuery } = useQueryBuilder();
 
 	const handleFilterVisibilityChange = useCallback((): void => {
@@ -87,7 +85,6 @@ export default function InfraMonitoringK8s(): JSX.Element {
 		// update the current query with the new filters
 		// in infra monitoring k8s, we are using only one query, hence updating the 0th index of queryData
 		handleChangeQueryData('filters', query.builder.queryData[0].filters);
-		setQuickFiltersLastUpdated(Date.now());
 		setFilters(JSON.stringify(query.builder.queryData[0].filters));
 
 		logEvent(InfraMonitoringEvents.FilterApplied, {
