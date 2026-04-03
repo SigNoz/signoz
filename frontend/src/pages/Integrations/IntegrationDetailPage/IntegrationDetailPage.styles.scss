@@ -152,7 +152,7 @@
 				padding: 6px;
 				border-radius: 2px;
 				border: 1px solid var(--l3-border);
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				color: var(--l1-foreground);
 				font-family: Inter;
 				font-size: 12px;
@@ -191,30 +191,34 @@
 
 		.testingConnection {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
-			color: var(--bg-amber-400);
+			border: 1px solid
+				color-mix(in srgb, var(--warning-background) 10%, transparent);
+			background: color-mix(in srgb, var(--warning-background) 10%, transparent);
+			color: var(--warning-foreground);
 		}
 
 		.connected {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-			color: var(--bg-forest-400);
+			border: 1px solid
+				color-mix(in srgb, var(--success-background) 10%, transparent);
+			background: color-mix(in srgb, var(--success-background) 10%, transparent);
+			color: var(--success-foreground);
 		}
 
 		.connectionFailed {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-			background: color-mix(in srgb, var(--bg-sakura-500) 6%, transparent);
-			color: var(--bg-cherry-500);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 6%, transparent);
+			color: var(--danger-foreground);
 		}
 
 		.noDataSinceLong {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-			color: var(--bg-robin-400);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+			color: var(--primary-foreground);
 		}
 	}
 
@@ -421,7 +425,7 @@
 					line-height: 10px; /* 83.333% */
 					letter-spacing: 0.12px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					display: flex;
 					height: 34px;
 					padding: 6px;
@@ -509,30 +513,34 @@
 		}
 		.testingConnection {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
-			color: var(--bg-amber-400);
+			border: 1px solid
+				color-mix(in srgb, var(--warning-background) 10%, transparent);
+			background: color-mix(in srgb, var(--warning-background) 10%, transparent);
+			color: var(--warning-foreground);
 		}
 
 		.connected {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
-			color: var(--bg-forest-400);
+			border: 1px solid
+				color-mix(in srgb, var(--success-background) 10%, transparent);
+			background: color-mix(in srgb, var(--success-background) 10%, transparent);
+			color: var(--success-foreground);
 		}
 
 		.connectionFailed {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-			background: color-mix(in srgb, var(--bg-sakura-500) 6%, transparent);
-			color: var(--bg-cherry-500);
+			border: 1px solid
+				color-mix(in srgb, var(--danger-background) 20%, transparent);
+			background: color-mix(in srgb, var(--danger-background) 6%, transparent);
+			color: var(--danger-foreground);
 		}
 
 		.noDataSinceLong {
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-			color: var(--bg-robin-400);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+			color: var(--primary-foreground);
 		}
 	}
 }

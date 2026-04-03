@@ -338,7 +338,7 @@
 		}
 
 		.ant-pagination-item-active {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 			> a {
 				color: var(--foreground) !important;
 				font-size: var(--font-size-sm);
@@ -505,7 +505,7 @@
 				justify-content: center;
 				gap: 5.937px;
 				border-radius: 1.484px;
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				color: var(--l1-foreground);
 
 				.ant-btn-icon {

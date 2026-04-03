@@ -18,7 +18,7 @@
 		display: flex;
 		align-items: center;
 		gap: 8px;
-		color: var(--l2-foreground);
+		color: var(--l1-foreground);
 		font-family: 'Space Mono';
 		font-size: 13px;
 		font-weight: 400;
@@ -49,20 +49,5 @@
 		padding-bottom: 24px;
 		max-height: 1000px;
 		opacity: 1;
-	}
-}
-
-.lightMode {
-	.settings-section-header {
-		.chevron-icon {
-			color: var(--l2-background);
-		}
-		.settings-section-title {
-			color: var(--l2-background);
-		}
-	}
-
-	.settings-section {
-		border-top: 1px solid var(--l3-border);
 	}
 }

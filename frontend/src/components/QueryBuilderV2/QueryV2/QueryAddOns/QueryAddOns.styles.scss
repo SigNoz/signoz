@@ -89,7 +89,7 @@
 				position: relative !important;
 
 				&:focus-within {
-					border-color: var(--bg-robin-500);
+					border-color: var(--primary-background);
 				}
 
 				&.cm-focused {
@@ -224,7 +224,7 @@
 					}
 
 					.cm-function {
-						color: var(--bg-robin-500) !important;
+						color: var(--primary-background) !important;
 					}
 
 					.chip-decorator {
@@ -306,7 +306,7 @@
 			}
 
 			.selected-view {
-				color: var(--bg-robin-500) !important;
+				color: var(--primary-background) !important;
 				border: 1px solid var(--l3-border) !important;
 			}
 

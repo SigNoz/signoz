@@ -201,7 +201,7 @@
 				border-radius: 4px;
 
 				&-active {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					border-color: var(--bg-robin-500);
 
 					a {
@@ -239,7 +239,7 @@
 		.ant-pagination {
 			.ant-pagination-item {
 				&-active {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					border-color: var(--bg-robin-500);
 
 					a {

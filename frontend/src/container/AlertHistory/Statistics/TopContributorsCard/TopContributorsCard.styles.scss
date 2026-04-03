@@ -62,13 +62,13 @@
 			}
 		}
 		.total-contribution {
-			color: var(--text-robin-500);
+			color: var(--primary-foreground);
 			font-family: 'Geist Mono';
 			font-size: 12px;
 			font-weight: 500;
 			letter-spacing: -0.06px;
 			padding: 4px 8px;
-			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 			border-radius: 50px;
 			width: max-content;
 		}

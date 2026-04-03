@@ -401,7 +401,6 @@
 
 			.ant-select-selector {
 				border-color: var(--l3-border) !important;
-				background-color: var(--l1-foreground) !important;
 				color: var(--l2-foreground);
 			}
 		}
@@ -559,18 +558,5 @@
 		display: flex;
 		align-items: center;
 		gap: 16px;
-	}
-}
-
-.lightMode {
-	.filter-section {
-		border-top: 1px solid var(--l3-border);
-		border-bottom: 1px solid var(--l3-border);
-
-		.ant-select-selector {
-			border-color: var(--l3-border) !important;
-			background-color: var(--l1-foreground) !important;
-			color: var(--l2-foreground);
-		}
 	}
 }

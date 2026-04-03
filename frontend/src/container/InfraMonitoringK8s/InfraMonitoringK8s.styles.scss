@@ -108,7 +108,7 @@
 
 			&:hover {
 				background: transparent;
-				color: var(--bg-robin-500) !important;
+				color: var(--accent-primary) !important;
 				font-weight: 500;
 			}
 		}
@@ -213,7 +213,7 @@
 				}
 
 				&::-webkit-scrollbar-thumb {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 				}
 
 				&::-webkit-scrollbar-thumb:hover {
@@ -454,7 +454,7 @@
 				border-radius: 4px;
 
 				&-active {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					border-color: var(--bg-robin-500);
 
 					a {
@@ -690,7 +690,7 @@
 
 			.ant-pagination-item {
 				&-active {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 					border-color: var(--bg-robin-500);
 
 					a {
@@ -789,7 +789,7 @@
 					border: none;
 
 					&.pinned svg {
-						fill: var(--bg-robin-500);
+						fill: var(--accent-primary);
 					}
 				}
 			}

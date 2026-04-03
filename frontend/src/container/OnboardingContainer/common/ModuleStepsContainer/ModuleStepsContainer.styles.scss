@@ -122,8 +122,7 @@
 			min-height: 30px;
 			border-radius: 3px;
 			min-width: 120px;
-			// text-transform: capitalize;
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			background-color: var(--l2-background);
 			border-color: var(--l2-border);
 		}
@@ -154,13 +153,13 @@
 	cursor: pointer;
 
 	&.selected {
-		color: var(--bg-robin-500);
+		color: var(--accent-primary);
 		background-color: var(--l2-background);
 		border-color: var(--l2-border);
 	}
 
 	&:hover {
-		color: var(--bg-robin-500);
+		color: var(--accent-primary);
 		background-color: var(--l2-background);
 		border-color: var(--l2-border);
 	}
@@ -185,12 +184,12 @@
 	.entity-value {
 		background-color: color-mix(
 			in srgb,
-			var(--bg-robin-500) 10%,
+			var(--primary-background) 10%,
 			transparent
 		) !important;
 		border-color: color-mix(
 			in srgb,
-			var(--bg-robin-500) 10%,
+			var(--primary-background) 10%,
 			transparent
 		) !important;
 	}
@@ -198,29 +197,29 @@
 	.environment,
 	.supported-language {
 		&.selected {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			background-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 10%,
+				var(--primary-background) 10%,
 				transparent
 			) !important;
 			border-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 10%,
+				var(--primary-background) 10%,
 				transparent
 			) !important;
 		}
 
 		&:hover {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			background-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 10%,
+				var(--primary-background) 10%,
 				transparent
 			) !important;
 			border-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 10%,
+				var(--primary-background) 10%,
 				transparent
 			) !important;
 		}

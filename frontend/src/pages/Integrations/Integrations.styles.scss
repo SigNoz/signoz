@@ -199,8 +199,9 @@
 	align-items: center;
 
 	border-radius: 4px;
-	border: 0.5px solid color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
-	background: color-mix(in srgb, var(--bg-robin-600) 10%, transparent);
+	border: 0.5px solid
+		color-mix(in srgb, var(--primary-background) 20%, transparent);
+	background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 	padding: 12px;
 	margin: 24px 0;
 	margin-bottom: 80px;

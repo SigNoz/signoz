@@ -656,15 +656,13 @@ function CustomTimePicker({
 						zoomOutDisabled ? 'Zoom out time range is limited to 1 month' : 'Zoom out'
 					}
 				>
-					<span>
-						<Button
-							className="zoom-out-btn"
-							onClick={handleZoomOut}
-							disabled={zoomOutDisabled}
-							data-testid="zoom-out-btn"
-							prefixIcon={<ZoomOut size={14} />}
-						/>
-					</span>
+					<Button
+						className="zoom-out-btn"
+						onClick={handleZoomOut}
+						disabled={zoomOutDisabled}
+						data-testid="zoom-out-btn"
+						prefixIcon={<ZoomOut size={14} />}
+					/>
 				</Tooltip>
 			)}
 		</div>

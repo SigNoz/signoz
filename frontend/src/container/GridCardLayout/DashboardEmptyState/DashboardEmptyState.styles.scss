@@ -45,7 +45,8 @@
 			display: flex;
 			flex-direction: column;
 
-			.actions-1 {
+			.actions-1,
+			.actions-2 {
 				display: flex;
 				width: 560px;
 				padding: 12px;
@@ -64,9 +65,9 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--l2-border);
-					background: var(--l3-background);
-					color: var(--l2-foreground);
+					border: 1px solid var(--secondary-border);
+					background: var(--secondary-background);
+					color: var(--secondary-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -85,10 +86,6 @@
 						gap: 8px;
 						align-items: center;
 
-						.icons {
-							color: white;
-						}
-
 						.configure {
 							color: var(--l1-foreground);
 							font-family: Inter;
@@ -99,6 +96,7 @@
 							letter-spacing: -0.07px;
 						}
 					}
+
 					.configure-info {
 						color: var(--l2-foreground);
 						font-family: Inter;
@@ -120,10 +118,10 @@
 					align-items: center;
 					flex-shrink: 0;
 					border-radius: 2px;
-					border: 1px solid var(--l2-border);
-					background: var(--l3-background);
+					border: 1px solid var(---border);
+					background: var(--primary-background);
 					box-shadow: none;
-					color: var(--l2-foreground);
+					color: var(--primary-foreground);
 					font-family: Inter;
 					font-size: 12px;
 					font-style: normal;
@@ -169,6 +167,10 @@
 					}
 				}
 			}
+
+			.actions-2 {
+				border-top: none;
+			}
 		}
 	}
 }
@@ -187,56 +189,6 @@
 
 				.welcome-info {
 					color: var(--l1-foreground);
-				}
-			}
-
-			.actions {
-				.actions-1 {
-					border: 1px solid var(--l3-border);
-					background: var(--l1-background);
-
-					.configure-button {
-						border: 1px solid var(--l3-border);
-						background: var(--l3-background);
-						color: var(--l1-foreground);
-					}
-
-					.actions-configure {
-						.actions-configure-text {
-							.icons {
-								color: var(--l1-foreground);
-							}
-
-							.configure {
-								color: var(--l1-foreground);
-							}
-						}
-						.configure-info {
-							color: var(--l1-foreground);
-						}
-					}
-
-					.add-panel-btn {
-						border: 1px solid var(--l3-border);
-						background: var(--l3-background);
-						color: var(--l1-foreground);
-					}
-
-					.actions-add-panel {
-						.actions-panel-text {
-							.icons {
-								color: var(--l1-foreground);
-							}
-
-							.panel {
-								color: var(--l1-foreground);
-							}
-						}
-
-						.panel-info {
-							color: var(--l1-foreground);
-						}
-					}
 				}
 			}
 		}

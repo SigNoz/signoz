@@ -152,7 +152,7 @@
 
 			&.version-update-notification {
 				.license-type {
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 				}
 			}
 		}
@@ -569,9 +569,9 @@
 
 	.sidenav-new-tag {
 		border-radius: 12px;
-		background: var(--bg-robin-500);
+		background: var(--primary-background);
 
-		color: var(--l1-foreground);
+		color: var(--primary-foreground);
 		font-variant-numeric: lining-nums tabular-nums slashed-zero;
 		font-feature-settings: 'case' on, 'cpsp' on, 'dlig' on, 'salt' on;
 		font-family: Inter;
@@ -1246,8 +1246,8 @@
 				display: flex;
 				align-items: center;
 				border-radius: 2px;
-				background: var(--bg-robin-500) !important;
-				color: var(--l1-foreground) !important;
+				background: var(--primary-background) !important;
+				color: var(--primary-foreground) !important;
 				font-family: Inter;
 				font-size: 12px;
 				font-style: normal;
@@ -1255,10 +1255,10 @@
 				line-height: 24px;
 
 				&.secondary-btn {
-					background-color: var(--l1-background) !important;
-					border: 1px solid var(--l1-border) !important;
+					background-color: var(--secondary-background) !important;
+					border: 1px solid var(--secondary-border) !important;
 
-					color: var(--l2-foreground) !important;
+					color: var(--secondary-foreground) !important;
 
 					/* button/ small  */
 					font-family: Inter;
@@ -1485,8 +1485,8 @@
 
 			.ant-modal-footer {
 				> button {
-					background: var(--bg-robin-500) !important;
-					color: var(--l1-background) !important;
+					background: var(--primary-background) !important;
+					color: var(--primary-foreground) !important;
 
 					&.secondary-btn {
 						background-color: var(--l3-background) !important;

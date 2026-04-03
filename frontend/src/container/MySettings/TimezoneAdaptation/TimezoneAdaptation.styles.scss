@@ -33,8 +33,9 @@
 		align-items: center;
 		justify-content: space-between;
 		padding: 7.5px 12px;
-		background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-		border: 1px solid color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+		background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--primary-background) 10%, transparent);
 		border-radius: 4px;
 	}
 

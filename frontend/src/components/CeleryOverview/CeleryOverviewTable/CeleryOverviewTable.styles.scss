@@ -100,11 +100,11 @@
 				border-radius: 4px;
 
 				&-active {
-					background: var(--bg-robin-500);
-					border-color: var(--bg-robin-500);
+					background: var(--primary-background);
+					border-color: var(--primary-background);
 
 					a {
-						color: var(--l1-background) !important;
+						color: var(--primary-foreground) !important;
 					}
 				}
 			}

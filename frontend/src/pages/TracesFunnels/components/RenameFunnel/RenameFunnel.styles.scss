@@ -22,9 +22,9 @@
 		.funnel-modal__ok-btn {
 			width: 138px;
 			justify-content: center;
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 			margin: 0 !important;
-			color: var(--l1-foreground);
+			color: var(--primary-foreground);
 			font-weight: 500;
 			&:disabled {
 				opacity: 0.5;
@@ -54,8 +54,6 @@
 	}
 
 	&__input {
-		background: var(--l3-background);
-		border: 1px solid var(--l2-border);
 		border-radius: 2px;
 		padding: 6px 8px;
 		color: var(--l2-foreground);
@@ -75,37 +73,5 @@
 		font-weight: 400;
 		line-height: 16px;
 		margin-top: 4px;
-	}
-}
-
-// Light mode styles
-.lightMode {
-	.funnel-modal-content {
-		&__label {
-			color: var(--l1-background);
-		}
-
-		&__input {
-			background: var(--l1-foreground);
-			border-color: var(--l3-border);
-			color: var(--l1-background);
-
-			&:hover,
-			&:focus {
-				border-color: var(--bg-robin-500);
-			}
-
-			&--error {
-				border-color: var(--bg-cherry-500);
-			}
-		}
-
-		&__error {
-			color: var(--bg-cherry-500);
-		}
-	}
-	.funnel-modal__cancel-btn {
-		background-color: var(--l3-background) !important;
-		color: var(--l1-foreground) !important;
 	}
 }

@@ -88,8 +88,8 @@
 		}
 		&-save-button {
 			&:disabled {
-				background: var(--bg-robin-500);
-				color: var(--l1-foreground);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 				opacity: 0.6;
 				border: none;
 			}
@@ -171,12 +171,12 @@
 
 			&-save-button {
 				// Keep primary button same as dark mode
-				background: var(--bg-robin-500);
-				color: var(--l1-background);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 
 				&:disabled {
-					background: var(--bg-robin-500);
-					color: var(--l1-background);
+					background: var(--primary-background);
+					color: var(--primary-foreground);
 					opacity: 0.6;
 				}
 

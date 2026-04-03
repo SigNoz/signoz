@@ -104,7 +104,8 @@
 				padding: 5.937px 11.875px;
 				justify-content: center;
 				align-items: center;
-				color: var(--l1-foreground);
+				color: var(--primary-foreground);
+				background: var(--primary-background);
 				font-family: Inter;
 				font-size: 11.875px;
 				font-style: normal;
@@ -350,7 +351,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -452,7 +453,7 @@
 					align-items: center;
 					gap: 4px;
 					border-radius: 2px;
-					background: var(--bg-robin-500);
+					background: var(--primary-background);
 
 					.ant-btn-icon {
 						margin-inline-end: 0px;
@@ -480,13 +481,10 @@
 					background: var(--l1-background);
 					color: var(--l1-foreground);
 				}
+
 				.configure-button {
 					border: 1px solid var(--l3-border);
 					background: var(--l1-background);
-					color: var(--l1-foreground);
-				}
-
-				.add-panel-btn {
 					color: var(--l1-foreground);
 				}
 			}

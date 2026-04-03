@@ -247,9 +247,10 @@
 		}
 
 		.ant-pagination-item-active {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
+
 			> a {
-				color: var(--l1-background) !important;
+				color: var(--primary-foreground) !important;
 				font-size: var(--font-size-sm);
 				font-style: normal;
 				font-weight: var(--font-weight-medium);

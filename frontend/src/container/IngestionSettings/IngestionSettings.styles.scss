@@ -261,7 +261,7 @@
 		}
 
 		.ant-pagination-item-active {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 
 			> a {
 				color: var(--foreground) !important;
@@ -339,7 +339,7 @@
 					font-weight: 500;
 					text-transform: uppercase;
 
-					color: var(--bg-robin-500);
+					color: var(--accent-primary);
 				}
 
 				.signal-limit-values {
@@ -1080,11 +1080,11 @@
 
 .lightMode {
 	.ingestion-setup-details-links {
-		background: color-mix(in srgb, var(--bg-robin-400) 10%, transparent);
-		color: var(--bg-robin-500);
+		background: color-mix(in srgb, var(--primary-background) 10%, transparent);
+		color: var(--accent-primary);
 
 		.learn-more {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 		}
 	}
 

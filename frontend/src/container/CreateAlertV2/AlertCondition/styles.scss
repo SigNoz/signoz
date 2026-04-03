@@ -285,8 +285,12 @@
 		justify-content: space-between;
 		gap: 8px;
 		margin-top: 16px;
-		background-color: color-mix(in srgb, var(--bg-robin-600) 10%, transparent);
-		border: 1px solid var(--bg-robin-500);
+		background-color: color-mix(
+			in srgb,
+			var(--primary-background) 10%,
+			transparent
+		);
+		border: 1px solid var(--primary-background);
 		padding: 8px 16px;
 
 		.routing-policies-info-banner-right {
@@ -295,7 +299,7 @@
 			gap: 8px;
 
 			.view-routing-policies-button {
-				color: var(--bg-robin-500);
+				color: var(--accent-primary);
 				font-size: 12px;
 				font-weight: 500;
 				display: flex;
@@ -305,7 +309,7 @@
 		}
 
 		.ant-typography {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 		}
 	}
 }
@@ -390,7 +394,7 @@
 
 	.tooltip-link {
 		.tooltip-link-text {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			font-size: 11px;
 			text-decoration: none;
 

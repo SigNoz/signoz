@@ -34,7 +34,7 @@
 
 			.clear-all {
 				font-size: 12px;
-				color: var(--bg-robin-500);
+				color: var(--accent-primary);
 				cursor: pointer;
 			}
 		}
@@ -134,7 +134,7 @@
 		justify-content: center;
 
 		.show-more-text {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			cursor: pointer;
 		}
 	}

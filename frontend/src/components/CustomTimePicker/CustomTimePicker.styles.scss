@@ -9,16 +9,17 @@
 		align-items: center;
 		justify-content: center;
 		flex-shrink: 0;
-		color: var(--foreground);
-		border: 1px solid var(--border);
+		color: var(--secondary-foreground);
+		background-color: var(--secondary-background);
+		border: 1px solid var(--secondary-border);
 		border-radius: 2px;
 		box-shadow: none;
 		padding: 10px;
 		height: 33px;
 
 		&:hover:not(:disabled) {
-			color: var(--l1-foreground);
-			background: var(--primary);
+			color: var(--primary-foreground);
+			background: var(--primary-background);
 		}
 
 		&:disabled {
@@ -29,7 +30,7 @@
 
 	.timeSelection-input {
 		&:hover {
-			border-color: #1d212d !important;
+			border-color: var(--l1-border) !important;
 		}
 	}
 
@@ -268,7 +269,8 @@
 
 @keyframes ripple {
 	0% {
-		box-shadow: 0 0 0 0 color-mix(in srgb, var(--bg-amber-400) 40%, transparent);
+		box-shadow: 0 0 0 0
+			color-mix(in srgb, var(--warning-background) 40%, transparent);
 	}
 	60% {
 		box-shadow: 0 0 0 6px transparent;

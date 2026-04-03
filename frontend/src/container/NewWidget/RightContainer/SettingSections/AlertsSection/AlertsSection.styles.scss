@@ -13,19 +13,22 @@
 		gap: 8px;
 
 		.alerts-section__bell-icon {
-			color: var(--l2-foreground);
+			color: var(--l1-foreground);
 		}
 
 		.alerts-section__text {
-			color: var(--l2-foreground);
-			font-size: 14px;
+			color: var(--l1-foreground);
+			font-family: 'Space Mono';
+			font-size: 13px;
 			font-style: normal;
 			font-weight: 400;
-			line-height: 20px; /* 142.857% */
-			letter-spacing: 0.14px;
+			line-height: 18px; /* 138.462% */
+			letter-spacing: 0.52px;
+			text-transform: uppercase;
 		}
 	}
+
 	.alerts-section__plus-icon {
-		color: var(--l2-foreground);
+		color: var(--l1-foreground);
 	}
 }

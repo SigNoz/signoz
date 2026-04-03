@@ -20,6 +20,7 @@
 			font-weight: 400;
 			line-height: 18px;
 			font-family: Inter;
+
 			.ant-typography {
 				background-color: transparent;
 				color: var(--l1-foreground);
@@ -64,26 +65,5 @@
 		justify-content: end;
 		padding: 0 8px;
 		margin: 12px 0 2px;
-	}
-}
-
-.lightMode {
-	.logs-table {
-		.resize-table {
-			.ant-table-wrapper .ant-table-tbody > tr > td {
-				background-color: var(--l1-foreground);
-				.ant-typography {
-					color: var(--l1-foreground);
-				}
-			}
-			.ant-table-wrapper .ant-table-thead > tr > th {
-				background-color: var(--l1-foreground);
-				color: var(--l1-foreground);
-			}
-
-			.ant-table-wrapper .ant-table-header {
-				border-bottom: 0.5px solid var(--l3-border);
-			}
-		}
 	}
 }

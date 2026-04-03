@@ -331,7 +331,11 @@
 
 						.current-span-percentile-row {
 							border-radius: 2px;
-							background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+							background: color-mix(
+								in srgb,
+								var(--primary-background) 20%,
+								transparent
+							);
 
 							.span-percentile-values-table-data-row-key {
 								color: var(--text-robin-300);
@@ -423,7 +427,7 @@
 
 						.resource-attributes-select-item-checkbox {
 							.ant-checkbox-disabled {
-								background-color: var(--bg-robin-500);
+								background-color: var(--primary-background);
 								color: var(--l1-foreground);
 							}
 

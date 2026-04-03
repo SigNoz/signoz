@@ -9,9 +9,9 @@ $custom-border-color: #2c3044;
 
 	&.ant-select-focused {
 		.ant-select-selector {
-			border-color: var(--bg-robin-500);
+			border-color: var(--primary-background);
 			box-shadow: 0 0 0 2px
-				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 	}
 
@@ -107,9 +107,9 @@ $custom-border-color: #2c3044;
 
 	&.ant-select-focused {
 		.ant-select-selector {
-			border-color: var(--bg-robin-500);
+			border-color: var(--primary-background);
 			box-shadow: 0 0 0 2px
-				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 	}
 
@@ -128,25 +128,26 @@ $custom-border-color: #2c3044;
 
 		// Style for active tag (keyboard navigation)
 		&-active {
-			border-color: var(--bg-robin-500) !important;
+			border-color: var(--primary-background) !important;
 			background-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 15%,
+				var(--primary-background) 15%,
 				transparent
 			) !important;
-			outline: 2px solid color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+			outline: 2px solid
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		// Style for selected tags (via keyboard or mouse selection)
 		&-selected {
-			border-color: var(--bg-robin-500) !important;
+			border-color: var(--primary-background) !important;
 			background-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 15%,
+				var(--primary-background) 15%,
 				transparent
 			) !important;
 			box-shadow: 0 0 0 2px
-				color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+				color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		.ant-select-selection-item-content {
@@ -196,7 +197,7 @@ $custom-border-color: #2c3044;
 		&-option-selected {
 			background-color: color-mix(
 				in srgb,
-				var(--bg-robin-500) 15%,
+				var(--primary-background) 15%,
 				transparent
 			) !important;
 		}
@@ -281,13 +282,21 @@ $custom-border-color: #2c3044;
 		}
 
 		&.selected {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
 			font-weight: 500;
 		}
 
 		&.active {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent);
-			border-color: var(--bg-robin-500);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
+			border-color: var(--primary-background);
 		}
 
 		.option-content {
@@ -450,8 +459,12 @@ $custom-border-color: #2c3044;
 		color: var(--l2-foreground);
 
 		&.active {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent);
-			border-color: var(--bg-robin-500);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
+			border-color: var(--primary-background);
 		}
 
 		&:hover {
@@ -459,7 +472,11 @@ $custom-border-color: #2c3044;
 		}
 
 		&.selected {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 15%, transparent);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 15%,
+				transparent
+			);
 			font-weight: 500;
 		}
 
@@ -570,7 +587,11 @@ $custom-border-color: #2c3044;
 
 // Custom styles for highlight text
 .highlight-text {
-	background-color: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+	background-color: color-mix(
+		in srgb,
+		var(--primary-background) 20%,
+		transparent
+	);
 	padding: 0 1px;
 	border-radius: 2px;
 	font-weight: 500;
@@ -768,12 +789,12 @@ $custom-border-color: #2c3044;
 			}
 
 			&-active {
-				border-color: var(--bg-robin-500) !important;
+				border-color: var(--primary-background) !important;
 				background-color: var(--l3-background) !important;
 			}
 
 			&-selected {
-				border-color: #1890ff !important;
+				border-color: var(--primary-background) !important;
 				background-color: var(--l3-background) !important;
 			}
 		}
@@ -782,23 +803,23 @@ $custom-border-color: #2c3044;
 	.custom-select-dropdown-container,
 	.custom-multiselect-dropdown-container {
 		background-color: var(--l1-background);
-		border: 1px solid #f0f0f0;
+		border: 1px solid var(--l3-border);
 		box-shadow: 0 3px 6px -4px rgba(0, 0, 0, 0.12),
 			0 6px 16px 0 rgba(0, 0, 0, 0.08), 0 9px 28px 8px rgba(0, 0, 0, 0.05);
 
 		.empty-message {
-			color: rgba(0, 0, 0, 0.45);
+			color: var(--l2-foreground);
 		}
 
 		.ant-select-item {
-			color: rgba(0, 0, 0, 0.85);
+			color: var(--l1-foreground);
 
 			&-option-active {
-				background-color: #f5f5f5 !important;
+				background-color: var(--l3-background) !important;
 			}
 
 			&-option-selected {
-				background-color: var(--l3-background) !important;
+				background-color: var(--l2-background) !important;
 			}
 		}
 	}

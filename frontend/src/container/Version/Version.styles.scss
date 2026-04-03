@@ -47,7 +47,11 @@
 
 		.version-page-stale-version-container {
 			padding: 16px;
-			background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 10%,
+				transparent
+			);
 			border-radius: 4px;
 
 			.version-page-stale-version-container-title {

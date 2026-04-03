@@ -50,9 +50,10 @@
 				align-items: center;
 				gap: 10px;
 				border-radius: 2px;
-				border: 1px solid color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
-				background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-				color: var(--bg-robin-500);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 20%, transparent);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 				font-family: 'Geist Mono';
 				font-size: 14px;
 				font-style: normal;
@@ -60,6 +61,7 @@
 				line-height: 18px;
 				text-transform: uppercase;
 			}
+
 			.select-box {
 				display: flex;
 				padding: 2px 5px;

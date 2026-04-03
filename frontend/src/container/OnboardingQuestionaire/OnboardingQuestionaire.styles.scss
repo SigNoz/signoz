@@ -236,7 +236,7 @@
 			justify-content: center;
 			gap: 8px;
 			border-radius: 2px;
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			border: none;
 			color: var(--bg-neutral-dark-50);
 			font-family: Inter, sans-serif;
@@ -431,8 +431,9 @@
 		.radio-button:hover,
 		.grid-button:hover,
 		.tool-button:hover {
-			border: 1px solid color-mix(in srgb, var(--bg-robin-500) 40%, transparent);
-			background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 40%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 		}
 
 		.two-column-grid {
@@ -618,8 +619,8 @@
 					}
 
 					&.ant-checkbox-checked .ant-checkbox-inner {
-						background-color: var(--bg-robin-500);
-						border-color: var(--bg-robin-500);
+						background-color: var(--primary-background);
+						border-color: var(--primary-background);
 					}
 				}
 
@@ -650,8 +651,9 @@
 			box-sizing: border-box;
 
 			&:hover {
-				border: 1px solid color-mix(in srgb, var(--bg-robin-500) 40%, transparent);
-				background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 40%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 			}
 
 			&:focus-visible {
@@ -659,8 +661,9 @@
 			}
 
 			&.active {
-				border: 1px solid color-mix(in srgb, var(--bg-robin-500) 40%, transparent);
-				background: color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 40%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 20%, transparent);
 			}
 		}
 

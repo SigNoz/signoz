@@ -43,11 +43,11 @@ function GanttChart(props: GanttChartProps): JSX.Element {
 			>
 				{isExpandAll ? (
 					<MinusSquareOutlined
-						style={{ fontSize: '16px', color: 'var(--bg-robin-500)' }}
+						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
 					/>
 				) : (
 					<PlusSquareOutlined
-						style={{ fontSize: '16px', color: 'var(--bg-robin-500)' }}
+						style={{ fontSize: '16px', color: 'var(--accent-primary)' }}
 					/>
 				)}
 			</CollapseButton>

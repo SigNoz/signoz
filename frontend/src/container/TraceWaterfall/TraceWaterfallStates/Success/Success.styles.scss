@@ -219,12 +219,12 @@
 							}
 
 							.success {
-								border: 1px solid var(--bg-robin-500);
-								background: var(--bg-robin-500);
+								border: 1px solid var(--primary-background);
+								background: var(--primary-background);
 							}
 
 							.error {
-								border: 1px solid var(--bg-cherry-500);
+								border: 1px solid var(--danger-background);
 								background: var(--bg-cherry-500);
 							}
 						}
@@ -289,7 +289,7 @@
 					transform: translate(-50%, -50%) rotate(45deg);
 					width: 6px;
 					height: 6px;
-					background-color: var(--bg-robin-500);
+					background-color: var(--primary-background);
 					border: 1px solid var(--bg-robin-600);
 					cursor: pointer;
 					z-index: 1;
@@ -418,13 +418,14 @@
 				.span-overview {
 					.span-overview-content {
 						background-color: var(--l2-background);
+
 						.first-row {
 							.collapse-uncollapse-button {
-								border: 1px solid var(--l2-foreground);
-								background: var(--l2-foreground);
+								border: 1px solid var(--l3-background);
+								background: var(--l3-background);
 
 								.children-count {
-									color: var(--l1-background);
+									color: var(--l2-foreground);
 								}
 							}
 

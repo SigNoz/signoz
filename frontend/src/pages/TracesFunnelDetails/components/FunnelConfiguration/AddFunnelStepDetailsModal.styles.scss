@@ -19,7 +19,7 @@
 		display: flex;
 		align-items: center;
 		gap: 6px;
-		background: var(--bg-robin-500);
+		background: var(--primary-background);
 		border: none;
 
 		&[disabled] {
@@ -100,7 +100,7 @@
 		}
 
 		&__ok-btn {
-			background: var(--bg-robin-500) !important;
+			background: var(--primary-background) !important;
 		}
 
 		&__cancel-btn {

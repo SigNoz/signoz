@@ -38,8 +38,9 @@
 
 	&.secondary {
 		border-radius: 3px;
-		border: 1px solid var(--l2-border);
-		background: var(--l3-background);
+		border: 1px solid var(--secondary-border);
+		background: var(--secondary-background);
+		color: var(--secondary-foreground);
 	}
 
 	&:disabled {
@@ -78,24 +79,26 @@
 	}
 
 	&.success {
-		color: var(--bg-forest-400) !important;
+		color: var(--success-foreground) !important;
 		border-radius: 2px;
-		border: 1px solid color-mix(in srgb, var(--bg-forest-500) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--success-background) 10%, transparent);
 		background: color-mix(
 			in srgb,
-			var(--bg-forest-500) 10%,
+			var(--success-background) 10%,
 			transparent
 		) !important;
 		box-shadow: none !important;
 	}
 
 	&.warning {
-		color: var(--bg-amber-500) !important;
+		color: var(--warning-foreground) !important;
 		border-radius: 2px;
-		border: 1px solid color-mix(in srgb, var(--bg-amber-400) 10%, transparent);
+		border: 1px solid
+			color-mix(in srgb, var(--warning-background) 10%, transparent);
 		background: color-mix(
 			in srgb,
-			var(--bg-amber-400) 10%,
+			var(--warning-background) 10%,
 			transparent
 		) !important;
 		box-shadow: none !important;
@@ -103,14 +106,14 @@
 
 	&.danger {
 		border-radius: 2px;
-		color: var(--l1-foreground) !important;
-		background: var(--bg-cherry-500) !important;
+		color: var(--danger-foreground) !important;
+		background: var(--danger-background) !important;
 		text-align: center;
 		font-variant-numeric: slashed-zero;
 		box-shadow: none !important;
 
 		&:hover {
-			border: 1px solid var(--bg-cherry-600) !important;
+			border: 1px solid var(--danger-background) !important;
 		}
 	}
 }
@@ -199,45 +202,5 @@
 		background: var(--l3-background);
 		height: 38px;
 		width: 38px;
-	}
-}
-
-.lightMode {
-	.periscope-btn {
-		border-color: var(--l3-border);
-		background: var(--l1-background);
-		color: var(--l2-foreground);
-
-		&.secondary {
-			background: var(--l1-background);
-			border-color: var(--l3-border);
-		}
-
-		&.text {
-			color: var(--l2-foreground) !important;
-
-			&:hover {
-				color: var(--l1-foreground) !important;
-			}
-		}
-	}
-
-	.periscope-input-with-label {
-		.label {
-			color: var(--l1-foreground) !important;
-
-			border: 1px solid var(--l3-border) !important;
-			background: var(--l1-background) !important;
-		}
-
-		.input {
-			border: 1px solid var(--l3-border) !important;
-			background: var(--l1-background) !important;
-		}
-
-		.close-btn {
-			border: 1px solid var(--l3-border) !important;
-			background: var(--l1-background) !important;
-		}
 	}
 }

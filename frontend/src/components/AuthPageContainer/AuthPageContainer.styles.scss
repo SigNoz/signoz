@@ -65,7 +65,7 @@
 	border-radius: 956px;
 	background: radial-gradient(
 		ellipse at center -500px,
-		color-mix(in srgb, var(--bg-robin-500) 30%, transparent) 0%,
+		color-mix(in srgb, var(--primary-background) 30%, transparent) 0%,
 		transparent 70%
 	);
 	opacity: 0.3;
@@ -157,7 +157,7 @@
 	.auth-page-gradient {
 		background: radial-gradient(
 			ellipse at center top,
-			color-mix(in srgb, var(--bg-robin-500) 12%, transparent) 0%,
+			color-mix(in srgb, var(--primary-background) 12%, transparent) 0%,
 			transparent 60%
 		);
 		opacity: 0.8;

@@ -44,7 +44,7 @@
 					}
 
 					&:focus-within {
-						border-color: var(--bg-robin-500);
+						border-color: var(--primary-background);
 					}
 
 					.cm-content {
@@ -153,7 +153,7 @@
 						}
 
 						.cm-function {
-							color: var(--bg-robin-500) !important;
+							color: var(--primary-background) !important;
 						}
 
 						.chip-decorator {
@@ -280,7 +280,7 @@
 							}
 
 							.cm-function {
-								color: var(--bg-robin-500) !important;
+								color: var(--primary-background) !important;
 							}
 						}
 					}

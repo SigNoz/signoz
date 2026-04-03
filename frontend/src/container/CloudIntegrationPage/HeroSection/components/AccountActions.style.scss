@@ -37,9 +37,9 @@
 		padding: 8px 17px;
 
 		&.primary {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			border: none;
-			color: var(--l1-foreground);
+			color: var(--primary-foreground);
 		}
 
 		&.secondary {
@@ -99,8 +99,8 @@
 .lightMode {
 	.hero-section__action-button {
 		&.primary {
-			background: var(--bg-robin-500);
-			color: var(--l1-background);
+			background: var(--primary-background);
+			color: var(--primary-foreground);
 		}
 
 		&.secondary {
@@ -140,7 +140,7 @@
 		color: var(--l1-foreground);
 
 		&__selected {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 		}
 	}
 }

@@ -40,7 +40,7 @@
 
 	.absolute-relative-time-error {
 		font-size: 12px;
-		color: var(--bg-amber-600);
+		color: var(--accent-amber);
 	}
 
 	.share-link {
@@ -108,15 +108,15 @@
 			}
 
 			.feedback-tab {
-				background-color: var(--bg-sakura-500);
+				background-color: var(--danger-background);
 			}
 
 			.bug-tab {
-				background-color: var(--bg-amber-500);
+				background-color: var(--warning-background);
 			}
 
 			.feature-tab {
-				background-color: var(--bg-robin-500);
+				background-color: var(--primary-background);
 			}
 		}
 

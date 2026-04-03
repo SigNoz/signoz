@@ -116,7 +116,7 @@
 		box-shadow: 0px 4px 4px 0px rgba(0, 0, 0, 0.19);
 
 		&:hover {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
 		}
 
@@ -125,7 +125,7 @@
 		}
 
 		&--selected {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			border-color: var(--bg-robin-500);
 			color: var(--l1-foreground);
 			box-shadow: 0 4px 10px rgba(58, 134, 255, 0.4);
@@ -246,9 +246,13 @@
 
 	&.answered {
 		&:before {
-			background-color: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			background-color: color-mix(
+				in srgb,
+				var(--primary-background) 10%,
+				transparent
+			);
 			content: '✓';
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			font-size: 16px;
 			font-weight: 300;
 		}
@@ -295,7 +299,7 @@
 		border-color: var(--bg-robin-500);
 	}
 	100% {
-		background-color: var(--bg-robin-500);
+		background-color: var(--primary-background);
 		border-color: var(--bg-robin-500);
 	}
 }
@@ -347,7 +351,7 @@
 		}
 
 		&.primary {
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
 			color: var(--l2-foreground) !important;
 			border: none !important;
 
@@ -412,7 +416,7 @@
 	margin-bottom: 8px !important;
 
 	&:hover {
-		color: var(--bg-robin-500) !important;
+		color: var(--accent-primary) !important;
 	}
 }
 
@@ -596,12 +600,12 @@
 		transition: color 0.2s ease;
 
 		&:hover {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 			text-decoration: underline;
 		}
 
 		.lightMode & {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 		}
 	}
 
@@ -813,10 +817,10 @@
 			align-self: stretch;
 
 			border-radius: 6px;
-			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 
 			.ant-typography {
-				color: var(--bg-robin-500);
+				color: var(--accent-primary);
 			}
 		}
 
@@ -861,7 +865,7 @@
 							margin: 4px;
 
 							&:hover {
-								color: var(--bg-robin-500);
+								color: var(--accent-primary);
 							}
 						}
 					}
@@ -919,7 +923,7 @@
 				align-self: stretch;
 
 				border-radius: 6px;
-				background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 
 				.ingestion-key-details-section-text {
 					&.ant-typography {
@@ -1251,10 +1255,10 @@
 
 .lightMode {
 	.ingestion-setup-details-links {
-		color: var(--bg-robin-500);
+		color: var(--accent-primary);
 
 		.learn-more {
-			color: var(--bg-robin-500);
+			color: var(--accent-primary);
 		}
 	}
 }
@@ -1301,7 +1305,7 @@
 			box-shadow: 0px 4px 4px 0px rgba(255, 255, 255, 0.19);
 
 			&:hover {
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				box-shadow: 0 4px 8px rgba(58, 134, 255, 0.2);
 			}
 
@@ -1310,7 +1314,7 @@
 			}
 
 			&--selected {
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				border-color: var(--bg-robin-500);
 				color: var(--l2-foreground);
 				box-shadow: 0 4px 10px rgba(58, 134, 255, 0.4);
@@ -1361,7 +1365,7 @@
 
 		&.answered {
 			&:before {
-				background-color: var(--bg-robin-500);
+				background-color: var(--primary-background);
 				color: var(--l1-foreground);
 			}
 		}
@@ -1402,7 +1406,7 @@
 			border-color: var(--bg-robin-500);
 		}
 		100% {
-			background-color: var(--bg-robin-500);
+			background-color: var(--primary-background);
 			border-color: var(--bg-robin-500);
 		}
 	}
@@ -1428,7 +1432,7 @@
 			}
 
 			&.primary {
-				background: var(--bg-robin-500);
+				background: var(--primary-background);
 				color: var(--l2-foreground) !important;
 				border: none !important;
 
@@ -1458,7 +1462,7 @@
 		color: var(--l2-foreground) !important;
 
 		&.selected {
-			color: var(--bg-robin-500) !important;
+			color: var(--accent-primary) !important;
 		}
 	}
 
@@ -1567,7 +1571,7 @@
 				background: rgba(255, 255, 255, 0.1);
 
 				.ant-typography {
-					color: var(--bg-robin-500);
+					color: var(--accent-primary);
 				}
 			}
 

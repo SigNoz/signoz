@@ -764,3 +764,34 @@ notifications	-  2050
 .cursor-pointer {
 	cursor: pointer;
 }
+
+.ant-modal {
+	.ant-modal-content {
+		background: var(--l1-background);
+		border: 1px solid var(--l1-border);
+		padding: 0;
+	}
+
+	.ant-modal-header {
+		background: var(--l1-background);
+		border-bottom: 1px solid var(--l1-border);
+		padding: 12px;
+	}
+
+	.ant-modal-body {
+		padding: 12px;
+	}
+
+	.ant-modal-footer {
+		padding: 12px;
+		border-top: 1px solid var(--l1-border);
+	}
+}
+
+.border {
+	border: 1px solid var(--l3-border);
+}
+
+.bg-border {
+	background: color-mix(in srgb, var(--l3-background) 20%, transparent);
+}

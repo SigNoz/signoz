@@ -42,11 +42,12 @@
 			gap: 8px;
 
 			&.active-tab {
-				background-color: var(--bg-robin-500);
-				border-bottom: 1px solid var(--bg-robin-500);
+				background-color: var(--primary-background);
+				border-bottom: 1px solid var(--primary-background);
+				color: var(--primary-foreground);
 
 				&:hover {
-					background-color: var(--bg-robin-500) !important;
+					background-color: var(--primary-background) !important;
 				}
 			}
 

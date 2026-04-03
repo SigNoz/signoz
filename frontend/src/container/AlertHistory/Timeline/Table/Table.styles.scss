@@ -71,9 +71,10 @@
 			justify-content: center;
 			padding: 1px 8px;
 			border-radius: 2px;
-			background: var(--bg-robin-500);
+			background: var(--primary-background);
+
 			& > a {
-				color: var(--foreground);
+				color: var(--primary-foreground);
 				line-height: 20px;
 				font-weight: 500;
 			}

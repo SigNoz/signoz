@@ -1,8 +1,8 @@
 .cloud-account-setup-modal {
 	.account-setup-modal-footer {
 		&__confirm-button {
-			background: var(--bg-robin-500);
-			color: var(--l1-foreground);
+			background: var(--primary-background);
+			color: var(--primary-foreground);
 			font-size: 12px;
 			font-weight: 500;
 		}
@@ -37,16 +37,21 @@
 				line-height: 22px; /* 157.143% */
 				letter-spacing: -0.07px;
 			}
+
 			&.ant-alert-error {
-				color: var(--bg-sakura-400);
-				border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
-				background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
+				color: var(--danger-foreground);
+				border: 1px solid
+					color-mix(in srgb, var(--danger-background) 10%, transparent);
+				background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 			}
+
 			&.ant-alert-warning {
-				color: var(--bg-amber-400);
-				border: 1px solid color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
-				background: color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
+				color: var(--warning-foreground);
+				border: 1px solid
+					color-mix(in srgb, var(--warning-background) 10%, transparent);
+				background: color-mix(in srgb, var(--warning-background) 10%, transparent);
 			}
+
 			&-message {
 				display: flex;
 				align-items: center;
@@ -116,13 +121,14 @@
 			line-height: 22px;
 			letter-spacing: -0.06px;
 			border-radius: 4px;
-			border: 1px solid color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
-			background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+			border: 1px solid
+				color-mix(in srgb, var(--primary-background) 10%, transparent);
+			background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 		}
 		&__submit-button {
 			border-radius: 2px;
-			background: var(--bg-robin-500);
-			color: var(--l1-foreground);
+			background: var(--primary-background);
+			color: var(--primary-foreground);
 			font-size: 14px;
 			font-weight: 500;
 			line-height: 20px;
@@ -143,8 +149,8 @@
 	.cloud-account-setup-modal {
 		.account-setup-modal-footer {
 			&__confirm-button {
-				background: var(--bg-robin-500);
-				color: var(--l1-background);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 			}
 
 			&__close-button {
@@ -187,27 +193,30 @@
 			}
 
 			&__note {
-				color: var(--bg-robin-500);
-				border: 1px solid color-mix(in srgb, var(--bg-robin-500) 20%, transparent);
-				background: color-mix(in srgb, var(--bg-robin-500) 10%, transparent);
+				color: var(--primary-foreground);
+				border: 1px solid
+					color-mix(in srgb, var(--primary-background) 20%, transparent);
+				background: color-mix(in srgb, var(--primary-background) 10%, transparent);
 			}
 
 			&__submit-button {
-				background: var(--bg-robin-500);
-				color: var(--l1-background);
+				background: var(--primary-background);
+				color: var(--primary-foreground);
 			}
 
 			&__alert {
 				&.ant-alert-error {
-					color: var(--bg-cherry-500);
-					border: 1px solid color-mix(in srgb, var(--bg-sakura-500) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-sakura-500) 10%, transparent);
+					color: var(--danger-foreground);
+					border: 1px solid
+						color-mix(in srgb, var(--danger-background) 20%, transparent);
+					background: color-mix(in srgb, var(--danger-background) 10%, transparent);
 				}
 
 				&.ant-alert-warning {
-					color: var(--bg-amber-500);
-					border: 1px solid color-mix(in srgb, var(--bg-amber-500) 20%, transparent);
-					background: color-mix(in srgb, var(--bg-amber-500) 10%, transparent);
+					color: var(--warning-foreground);
+					border: 1px solid
+						color-mix(in srgb, var(--warning-background) 20%, transparent);
+					background: color-mix(in srgb, var(--warning-background) 10%, transparent);
 				}
 
 				&-message {
