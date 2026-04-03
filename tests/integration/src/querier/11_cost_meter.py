@@ -110,7 +110,7 @@ def test_list_meter_metric_names(
     ), f"Expected {metric_name} in metric names, got: {metric_names}"
 
 
-# Verify /api/v2/metrics with source=meter filters label values by metricNamespace
+# Verify /api/v1/fields/values with source=meter filters label values by metricNamespace
 # prefix. Inserts meter-source metrics under ns.a and ns.b, then asserts a specific
 # prefix returns only matching values while a common prefix returns both.
 def test_metric_namespace_meter_values_filtering(
