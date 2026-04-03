@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log/slog"
+	gomaps "maps"
 	"slices"
 	"strconv"
 	"strings"
@@ -282,6 +283,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	queries := make(map[string]qbtypes.Query)
 	steps := make(map[string]qbtypes.Step)
 	missingMetrics := []string{}
+	missingMetricQueries := []string{}
 
 	for _, query := range req.CompositeQuery.Queries {
 		var queryName string
@@ -374,6 +376,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					}
 					q.logger.DebugContext(ctx, "fetched metric temporalities and types", slog.Any("metric_temporality", metricTemporality), slog.Any("metric_types", metricTypes))
 				}
+				presentAggregations := []qbtypes.MetricAggregation{}
 				for i := range spec.Aggregations {
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Temporality == metrictypes.Unknown {
 						if temp, ok := metricTemporality[spec.Aggregations[i].MetricName]; ok && temp != metrictypes.Unknown {
@@ -384,13 +387,18 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
 						continue
 					}
-
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
 					}
+					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 				}
+				if len(presentAggregations) == 0 {
+					missingMetricQueries = append(missingMetricQueries, spec.Name)
+					continue
+				}
+				spec.Aggregations = presentAggregations
 				spec.ShiftBy = extractShiftFromBuilderQuery(spec)
 				timeRange := adjustTimeRangeForShift(spec, qbtypes.TimeRange{From: req.Start, To: req.End}, req.RequestType)
 				var bq *builderQuery[qbtypes.MetricAggregation]
@@ -409,25 +417,50 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 			}
 		}
 	}
+	nonExistentMetrics := []string{}
+	var dormantMetricsWarningMsg string
 	if len(missingMetrics) > 0 {
 		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
+		for _, missingMetricName := range missingMetrics {
+			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
+				continue
+			}
+			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
+		}
+		if len(nonExistentMetrics) == 1 {
+			return nil, errors.NewNotFoundf(errors.CodeNotFound, "could not find the metric %s", nonExistentMetrics[0])
+		} else if len(nonExistentMetrics) > 1 {
+			return nil, errors.NewNotFoundf(errors.CodeNotFound, "the following metrics were not found: %s", strings.Join(nonExistentMetrics, ", "))
+		}
 		lastSeenStr := func(name string) string {
 			if ts, ok := lastSeenInfo[name]; ok && ts > 0 {
 				ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
 				return fmt.Sprintf("%s (last seen %s)", name, ago)
 			}
-			return name
+			return name // this case won't come cuz lastSeenStr is never called for metrics in nonExistentMetrics
 		}
 		if len(missingMetrics) == 1 {
-			return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
+		} else {
+			parts := make([]string, len(missingMetrics))
+			for i, m := range missingMetrics {
+				parts[i] = lastSeenStr(m)
+			}
+			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
 		}
-		parts := make([]string, len(missingMetrics))
-		for i, m := range missingMetrics {
-			parts[i] = lastSeenStr(m)
-		}
-		return nil, errors.NewNotFoundf(errors.CodeNotFound, "no data found for the following metrics in the query time range: %s", strings.Join(parts, ", "))
 	}
-	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event)
+	preseededResults := make(map[string]any)
+	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
+		switch req.RequestType {
+		case qbtypes.RequestTypeTimeSeries:
+			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
+		case qbtypes.RequestTypeScalar:
+			preseededResults[name] = &qbtypes.ScalarData{QueryName: name}
+		case qbtypes.RequestTypeRaw:
+			preseededResults[name] = &qbtypes.RawData{QueryName: name}
+		}
+	}
+	qbResp, qbErr := q.run(ctx, orgID, queries, req, steps, event, preseededResults)
 	if qbResp != nil {
 		qbResp.QBEvent = event
 		if len(intervalWarnings) != 0 && req.RequestType == qbtypes.RequestTypeTimeSeries {
@@ -439,6 +472,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 					qbResp.Warning.Warnings[idx] = qbtypes.QueryWarnDataAdditional{Message: intervalWarnings[idx]}
 				}
 			}
+		}
+		if dormantMetricsWarningMsg != "" {
+			if qbResp.Warning == nil {
+				qbResp.Warning = &qbtypes.QueryWarnData{}
+			}
+			qbResp.Warning.Warnings = append(qbResp.Warning.Warnings, qbtypes.QueryWarnDataAdditional{
+				Message: dormantMetricsWarningMsg,
+			})
 		}
 	}
 	return qbResp, qbErr
@@ -516,7 +557,7 @@ func (q *querier) QueryRawStream(ctx context.Context, orgID valuer.UUID, req *qb
 			})
 			queries[spec.Name] = bq
 
-			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event)
+			qbResp, qbErr := q.run(ctx, orgID, queries, req, nil, event, nil)
 			if qbErr != nil {
 				client.Error <- qbErr
 				return
@@ -545,6 +586,7 @@ func (q *querier) run(
 	req *qbtypes.QueryRangeRequest,
 	steps map[string]qbtypes.Step,
 	qbEvent *qbtypes.QBEvent,
+	preseededResults map[string]any,
 ) (*qbtypes.QueryRangeResponse, error) {
 	ctx = ctxtypes.NewContextWithCommentVals(ctx, map[string]string{
 		instrumentationtypes.PanelType: qbEvent.PanelType,
@@ -630,6 +672,7 @@ func (q *querier) run(
 		}
 	}
 
+	gomaps.Copy(results, preseededResults)
 	processedResults, err := q.postProcessResults(ctx, results, req)
 	if err != nil {
 		return nil, err

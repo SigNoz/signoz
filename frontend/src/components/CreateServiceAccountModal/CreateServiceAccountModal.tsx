@@ -12,17 +12,13 @@ import {
 } from 'api/generated/services/serviceaccount';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
-import RolesSelect, { useRoles } from 'components/RolesSelect';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
-import { EMAIL_REGEX } from 'utils/app';
 
 import './CreateServiceAccountModal.styles.scss';
 
 interface FormValues {
 	name: string;
-	email: string;
-	roles: string[];
 }
 
 function CreateServiceAccountModal(): JSX.Element {
@@ -41,8 +37,6 @@ function CreateServiceAccountModal(): JSX.Element {
 		mode: 'onChange',
 		defaultValues: {
 			name: '',
-			email: '',
-			roles: [],
 		},
 	});
 
@@ -70,13 +64,6 @@ function CreateServiceAccountModal(): JSX.Element {
 			},
 		},
 	});
-	const {
-		roles,
-		isLoading: rolesLoading,
-		isError: rolesError,
-		error: rolesErrorObj,
-		refetch: refetchRoles,
-	} = useRoles();
 
 	function handleClose(): void {
 		reset();
@@ -87,8 +74,6 @@ function CreateServiceAccountModal(): JSX.Element {
 		createServiceAccount({
 			data: {
 				name: values.name.trim(),
-				email: values.email.trim(),
-				roles: values.roles,
 			},
 		});
 	}
@@ -132,68 +117,6 @@ function CreateServiceAccountModal(): JSX.Element {
 						/>
 						{errors.name && (
 							<p className="create-sa-form__error">{errors.name.message}</p>
-						)}
-					</div>
-
-					<div className="create-sa-form__item">
-						<label htmlFor="sa-email">Email Address</label>
-						<Controller
-							name="email"
-							control={control}
-							rules={{
-								required: 'Email Address is required',
-								pattern: {
-									value: EMAIL_REGEX,
-									message: 'Please enter a valid email address',
-								},
-							}}
-							render={({ field }): JSX.Element => (
-								<Input
-									id="sa-email"
-									type="email"
-									placeholder="email@example.com"
-									className="create-sa-form__input"
-									value={field.value}
-									onChange={field.onChange}
-									onBlur={field.onBlur}
-								/>
-							)}
-						/>
-						{errors.email && (
-							<p className="create-sa-form__error">{errors.email.message}</p>
-						)}
-					</div>
-					<p className="create-sa-form__helper">
-						Used only for notifications about this service account. It is not used for
-						authentication.
-					</p>
-
-					<div className="create-sa-form__item">
-						<label htmlFor="sa-roles">Roles</label>
-						<Controller
-							name="roles"
-							control={control}
-							rules={{
-								validate: (value): string | true =>
-									value.length > 0 || 'At least one role is required',
-							}}
-							render={({ field }): JSX.Element => (
-								<RolesSelect
-									id="sa-roles"
-									mode="multiple"
-									roles={roles}
-									loading={rolesLoading}
-									isError={rolesError}
-									error={rolesErrorObj}
-									onRefetch={refetchRoles}
-									placeholder="Select roles"
-									value={field.value}
-									onChange={field.onChange}
-								/>
-							)}
-						/>
-						{errors.roles && (
-							<p className="create-sa-form__error">{errors.roles.message}</p>
 						)}
 					</div>
 				</form>

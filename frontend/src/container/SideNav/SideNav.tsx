@@ -692,11 +692,17 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 		registerShortcut(GlobalShortcuts.NavigateToSettingsBilling, () =>
 			onClickHandler(ROUTES.BILLING, null),
 		);
-		registerShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys, () =>
-			onClickHandler(ROUTES.API_KEYS, null),
-		);
 		registerShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels, () =>
 			onClickHandler(ROUTES.ALL_CHANNELS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts, () =>
+			onClickHandler(ROUTES.SERVICE_ACCOUNTS_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsRoles, () =>
+			onClickHandler(ROUTES.ROLES_SETTINGS, null),
+		);
+		registerShortcut(GlobalShortcuts.NavigateToSettingsMembers, () =>
+			onClickHandler(ROUTES.MEMBERS_SETTINGS, null),
 		);
 		registerShortcut(GlobalShortcuts.NavigateToLogsPipelines, () =>
 			onClickHandler(ROUTES.LOGS_PIPELINES, null),
@@ -720,8 +726,10 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 			deregisterShortcut(GlobalShortcuts.NavigateToSettings);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsIngestion);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsBilling);
-			deregisterShortcut(GlobalShortcuts.NavigateToSettingsAPIKeys);
 			deregisterShortcut(GlobalShortcuts.NavigateToSettingsNotificationChannels);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsServiceAccounts);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsRoles);
+			deregisterShortcut(GlobalShortcuts.NavigateToSettingsMembers);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogsPipelines);
 			deregisterShortcut(GlobalShortcuts.NavigateToLogsViews);
 			deregisterShortcut(GlobalShortcuts.NavigateToTracesViews);

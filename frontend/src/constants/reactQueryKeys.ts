@@ -1,4 +1,11 @@
 export const REACT_QUERY_KEY = {
+	/**
+	 * For any query that should support AutoRefresh and min/max time is from DateTimeSelectionV2
+	 * You can prefix the query with this KEY, it will allow the queries to be automatically refreshed
+	 * when the user clicks in the refresh button, or alert the user when the data is being refreshed.
+	 */
+	AUTO_REFRESH_QUERY: 'AUTO_REFRESH_QUERY',
+
 	GET_PUBLIC_DASHBOARD: 'GET_PUBLIC_DASHBOARD',
 	GET_PUBLIC_DASHBOARD_META: 'GET_PUBLIC_DASHBOARD_META',
 	GET_PUBLIC_DASHBOARD_WIDGET_DATA: 'GET_PUBLIC_DASHBOARD_WIDGET_DATA',

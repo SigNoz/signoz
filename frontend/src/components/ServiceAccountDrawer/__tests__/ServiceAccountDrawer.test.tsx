@@ -23,7 +23,9 @@ jest.mock('@signozhq/sonner', () => ({
 const ROLES_ENDPOINT = '*/api/v1/roles';
 const SA_KEYS_ENDPOINT = '*/api/v1/service_accounts/:id/keys';
 const SA_ENDPOINT = '*/api/v1/service_accounts/sa-1';
-const SA_STATUS_ENDPOINT = '*/api/v1/service_accounts/sa-1/status';
+const SA_DELETE_ENDPOINT = '*/api/v1/service_accounts/sa-1';
+const SA_ROLES_ENDPOINT = '*/api/v1/service_accounts/:id/roles';
+const SA_ROLE_DELETE_ENDPOINT = '*/api/v1/service_accounts/:id/roles/:rid';
 
 const activeAccountResponse = {
 	id: 'sa-1',
@@ -35,10 +37,10 @@ const activeAccountResponse = {
 	updatedAt: '2026-01-02T00:00:00Z',
 };
 
-const disabledAccountResponse = {
+const deletedAccountResponse = {
 	...activeAccountResponse,
 	id: 'sa-2',
-	status: 'DISABLED',
+	status: 'DELETED',
 };
 
 function renderDrawer(
@@ -67,7 +69,23 @@ describe('ServiceAccountDrawer', () => {
 			rest.put(SA_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
-			rest.put(SA_STATUS_ENDPOINT, (_, res, ctx) =>
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: listRolesSuccessResponse.data.filter(
+							(r) => r.name === 'signoz-admin',
+						),
+					}),
+				),
+			),
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
 			),
 		);
@@ -115,8 +133,6 @@ describe('ServiceAccountDrawer', () => {
 			expect(updateSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					name: 'CI Bot Updated',
-					email: 'ci-bot@signoz.io',
-					roles: ['signoz-admin'],
 				}),
 			);
 			expect(onSuccess).toHaveBeenCalledWith({ closeDrawer: false });
@@ -125,11 +141,16 @@ describe('ServiceAccountDrawer', () => {
 
 	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
 		const updateSpy = jest.fn();
+		const roleSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
 			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
 				updateSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
+				roleSpy(await req.json());
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -146,21 +167,22 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(updateSpy).toHaveBeenCalledWith(
+			expect(updateSpy).not.toHaveBeenCalled();
+			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
-					roles: expect.arrayContaining(['signoz-admin', 'signoz-viewer']),
+					id: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
 		});
 	});
 
-	it('"Disable Service Account" opens confirm dialog; confirming sends correct status payload', async () => {
-		const statusSpy = jest.fn();
+	it('"Delete Service Account" opens confirm dialog; confirming sends delete request', async () => {
+		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_STATUS_ENDPOINT, async (req, res, ctx) => {
-				statusSpy(await req.json());
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -170,19 +192,19 @@ describe('ServiceAccountDrawer', () => {
 		await screen.findByDisplayValue('CI Bot');
 
 		await user.click(
-			screen.getByRole('button', { name: /Disable Service Account/i }),
+			screen.getByRole('button', { name: /Delete Service Account/i }),
 		);
 
 		const dialog = await screen.findByRole('dialog', {
-			name: /Disable service account CI Bot/i,
+			name: /Delete service account CI Bot/i,
 		});
 		expect(dialog).toBeInTheDocument();
 
-		const confirmBtns = screen.getAllByRole('button', { name: /^Disable$/i });
+		const confirmBtns = screen.getAllByRole('button', { name: /^Delete$/i });
 		await user.click(confirmBtns[confirmBtns.length - 1]);
 
 		await waitFor(() => {
-			expect(statusSpy).toHaveBeenCalledWith({ status: 'DISABLED' });
+			expect(deleteSpy).toHaveBeenCalled();
 		});
 
 		await waitFor(() => {
@@ -190,12 +212,15 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('disabled account shows read-only name, no Save button, no Disable button', async () => {
+	it('deleted account shows read-only name, no Save button, no Delete button', async () => {
 		server.use(
 			rest.get('*/api/v1/service_accounts/sa-2', (_, res, ctx) =>
-				res(ctx.status(200), ctx.json({ data: disabledAccountResponse })),
+				res(ctx.status(200), ctx.json({ data: deletedAccountResponse })),
 			),
 			rest.get('*/api/v1/service_accounts/sa-2/keys', (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get('*/api/v1/service_accounts/sa-2/roles', (_, res, ctx) =>
 				res(ctx.status(200), ctx.json({ data: [] })),
 			),
 		);
@@ -208,7 +233,7 @@ describe('ServiceAccountDrawer', () => {
 			screen.queryByRole('button', { name: /Save Changes/i }),
 		).not.toBeInTheDocument();
 		expect(
-			screen.queryByRole('button', { name: /Disable Service Account/i }),
+			screen.queryByRole('button', { name: /Delete Service Account/i }),
 		).not.toBeInTheDocument();
 		expect(screen.queryByDisplayValue('CI Bot')).not.toBeInTheDocument();
 	});
@@ -246,5 +271,171 @@ describe('ServiceAccountDrawer', () => {
 				/An unexpected error occurred while fetching service account details/i,
 			),
 		).toBeInTheDocument();
+	});
+});
+
+describe('ServiceAccountDrawer – save-error UX', () => {
+	beforeEach(() => {
+		jest.clearAllMocks();
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+			rest.get(SA_KEYS_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: [] })),
+			),
+			rest.get(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: activeAccountResponse })),
+			),
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.get(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: listRolesSuccessResponse.data.filter(
+							(r) => r.name === 'signoz-admin',
+						),
+					}),
+				),
+			),
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
+	});
+
+	it('name update failure shows SaveErrorItem with "Name update" context', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'name update failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		const nameInput = await screen.findByDisplayValue('CI Bot');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'New Name');
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		expect(
+			await screen.findByText(/Name update.*name update failed/i, undefined, {
+				timeout: 5000,
+			}),
+		).toBeInTheDocument();
+	});
+
+	it('role update failure shows SaveErrorItem with the role name context', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'role assign failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		// Add the signoz-viewer role (which is not currently assigned)
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		expect(
+			await screen.findByText(
+				/Role 'signoz-viewer'.*role assign failed/i,
+				undefined,
+				{
+					timeout: 5000,
+				},
+			),
+		).toBeInTheDocument();
+	});
+
+	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		// First: PUT always fails so the error appears
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(
+					ctx.status(500),
+					ctx.json({
+						error: {
+							code: 'INTERNAL_ERROR',
+							message: 'name update failed',
+						},
+					}),
+				),
+			),
+		);
+
+		renderDrawer();
+
+		const nameInput = await screen.findByDisplayValue('CI Bot');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'Retry Test');
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await screen.findByText(/Name update.*name update failed/i, undefined, {
+			timeout: 5000,
+		});
+
+		server.use(
+			rest.put(SA_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ status: 'success', data: {} })),
+			),
+		);
+
+		const retryBtn = screen.getByRole('button', { name: /Retry/i });
+		await user.click(retryBtn);
+
+		// Error item should be removed after successful retry
+		await waitFor(() => {
+			expect(
+				screen.queryByText(/Name update.*name update failed/i),
+			).not.toBeInTheDocument();
+		});
 	});
 });

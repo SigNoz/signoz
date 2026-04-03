@@ -53,7 +53,6 @@ describe('SettingsPage nav sections', () => {
 			'billing',
 			'roles',
 			'members',
-			'api-keys',
 			'sso',
 			'integrations',
 			'ingestion',
@@ -82,12 +81,9 @@ describe('SettingsPage nav sections', () => {
 			expect(screen.getByTestId(id)).toBeInTheDocument();
 		});
 
-		it.each(['billing', 'roles', 'api-keys'])(
-			'does not render "%s" element',
-			(id) => {
-				expect(screen.queryByTestId(id)).not.toBeInTheDocument();
-			},
-		);
+		it.each(['billing', 'roles'])('does not render "%s" element', (id) => {
+			expect(screen.queryByTestId(id)).not.toBeInTheDocument();
+		});
 	});
 
 	describe('Self-hosted Admin', () => {
@@ -99,7 +95,7 @@ describe('SettingsPage nav sections', () => {
 			});
 		});
 
-		it.each(['roles', 'members', 'api-keys', 'integrations', 'sso', 'ingestion'])(
+		it.each(['roles', 'members', 'integrations', 'sso', 'ingestion'])(
 			'renders "%s" element',
 			(id) => {
 				expect(screen.getByTestId(id)).toBeInTheDocument();

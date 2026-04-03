@@ -34,7 +34,7 @@ type Setter interface {
 	// Initiate forgot password flow for a user
 	ForgotPassword(ctx context.Context, orgID valuer.UUID, email valuer.Email, frontendBaseURL string) error
 
-	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser, updatedBy string) (*types.DeprecatedUser, error)
+	UpdateUserDeprecated(ctx context.Context, orgID valuer.UUID, id string, user *types.DeprecatedUser) (*types.DeprecatedUser, error)
 	UpdateUser(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, updatable *types.UpdatableUser) (*types.User, error)
 
 	// UpdateAnyUser updates a user and persists the changes to the database along with the analytics and identity deletion.
@@ -43,14 +43,7 @@ type Setter interface {
 	DeleteUser(ctx context.Context, orgID valuer.UUID, id string, deletedBy string) error
 
 	// invite
-	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, userID valuer.UUID, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
-
-	// API KEY
-	CreateAPIKey(ctx context.Context, apiKey *types.StorableAPIKey) error
-	UpdateAPIKey(ctx context.Context, id valuer.UUID, apiKey *types.StorableAPIKey, updaterID valuer.UUID) error
-	ListAPIKeys(ctx context.Context, orgID valuer.UUID) ([]*types.StorableAPIKeyUser, error)
-	RevokeAPIKey(ctx context.Context, id, removedByUserID valuer.UUID) error
-	GetAPIKey(ctx context.Context, orgID valuer.UUID, id valuer.UUID) (*types.StorableAPIKeyUser, error)
+	CreateBulkInvite(ctx context.Context, orgID valuer.UUID, identityID valuer.UUID, identityEmail valuer.Email, bulkInvites *types.PostableBulkInviteRequest) ([]*types.Invite, error)
 
 	// Roles
 	UpdateUserRoles(ctx context.Context, orgID, userID valuer.UUID, finalRoleNames []string) error
@@ -123,10 +116,4 @@ type Handler interface {
 	ResetPassword(http.ResponseWriter, *http.Request)
 	ChangePassword(http.ResponseWriter, *http.Request)
 	ForgotPassword(http.ResponseWriter, *http.Request)
-
-	// API KEY
-	CreateAPIKey(http.ResponseWriter, *http.Request)
-	ListAPIKeys(http.ResponseWriter, *http.Request)
-	UpdateAPIKey(http.ResponseWriter, *http.Request)
-	RevokeAPIKey(http.ResponseWriter, *http.Request)
 }
