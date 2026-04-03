@@ -77,16 +77,14 @@ func NewAuditEventFromHTTPRequest(
 	}
 }
 
-// resourceKey is used to group audit events by their target resource.
-type resourceKey struct {
-	kind string
-	id   string
-}
-
 func NewPLogsFromAuditEvents(events []AuditEvent, name string, version string, scope string) plog.Logs {
 	logs := plog.NewLogs()
 
 	// Group events by target resource so each ResourceLogs has uniform resource attributes.
+	type resourceKey struct {
+		kind string
+		id   string
+	}
 	groups := make(map[resourceKey][]int)
 	order := make([]resourceKey, 0)
 	for i, event := range events {
