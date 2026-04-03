@@ -38,6 +38,8 @@ def sqlite(
             env={
                 "SIGNOZ_SQLSTORE_PROVIDER": "sqlite",
                 "SIGNOZ_SQLSTORE_SQLITE_PATH": str(path),
+                "SIGNOZ_SQLSTORE_SQLITE_MODE": "wal",
+                "SIGNOZ_SQLSTORE_SQLITE_TRANSACTION__MODE": "immediate"
             },
         )
 
