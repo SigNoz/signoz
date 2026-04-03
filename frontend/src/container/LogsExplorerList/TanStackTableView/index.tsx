@@ -35,7 +35,7 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
-import { getInfinityDefaultStyles } from '../InfinityTableView/config';
+import { infinityDefaultStyles } from '../InfinityTableView/config';
 import { TanStackTableStyled } from '../InfinityTableView/styles';
 import { InfinityTableProps } from '../InfinityTableView/types';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
@@ -364,7 +364,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 				<TableVirtuoso
 					className="logs-table-virtuoso-scroll"
 					ref={virtuosoRef}
-					style={getInfinityDefaultStyles(tableViewProps.fontSize)}
+					style={infinityDefaultStyles}
 					data={tableData}
 					totalCount={tableRows.length}
 					increaseViewportBy={{ top: 500, bottom: 500 }}
