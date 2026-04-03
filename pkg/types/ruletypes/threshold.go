@@ -346,7 +346,7 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 				}
 				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
 			case ValueIsNotEq:
-				// use any non-inf or nan value from the series
+				// use any non-inf and non-nan value from the series
 				for _, smpl := range series.Values {
 					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
 						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}

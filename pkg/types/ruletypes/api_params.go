@@ -370,13 +370,9 @@ func (r *PostableRule) Validate() error {
 		}
 	}
 
-	if r.RuleType == RuleTypeAnomaly && r.RuleCondition.Seasonality != "" {
-		switch r.RuleCondition.Seasonality {
-		case "hourly", "daily", "weekly":
-		default:
-			errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput,
-				`condition.seasonality: unsupported value %q; must be one of "hourly", "daily", "weekly"`,
-				r.RuleCondition.Seasonality))
+	if r.RuleType == RuleTypeAnomaly && !r.RuleCondition.Seasonality.IsZero() {
+		if err := r.RuleCondition.Seasonality.Validate(); err != nil {
+			errs = append(errs, err)
 		}
 	}
 

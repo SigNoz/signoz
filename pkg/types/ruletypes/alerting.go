@@ -103,7 +103,7 @@ type RuleCondition struct {
 	MatchType         MatchType            `json:"matchType"`
 	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
-	Seasonality       string               `json:"seasonality,omitempty"`
+	Seasonality       Seasonality          `json:"seasonality,omitzero"`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
