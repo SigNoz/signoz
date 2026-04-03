@@ -427,19 +427,11 @@ export default function InfraMonitoringK8s(): JSX.Element {
 						)}
 
 						{selectedCategory === K8sCategories.DAEMONSETS && (
-							<K8sDaemonSetsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sDaemonSetsList controlListPrefix={showFiltersComp} />
 						)}
 
 						{selectedCategory === K8sCategories.VOLUMES && (
-							<K8sVolumesList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sVolumesList controlListPrefix={showFiltersComp} />
 						)}
 					</div>
 				</div>
