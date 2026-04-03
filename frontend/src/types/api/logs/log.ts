@@ -9,7 +9,7 @@ export interface ILog {
 	severityText: string;
 	severityNumber: number;
 	body: string;
-	resources_string: Record<string, never>;
+	resources_string: Record<string, never> | undefined;
 	scope_string: Record<string, never>;
 	attributesString: Record<string, never>;
 	attributes_string: Record<string, never>;
