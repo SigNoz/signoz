@@ -225,7 +225,7 @@ def test_audit_list_all(
 
     response = _query_audit_raw(signoz, token, _build_audit_query())
 
-    assert response.status_code == HTTPStatus.OK, f"Expected 200, got {response.status_code}: {response.text}"
+    assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
 
     results = response.json()["data"]["data"]["results"]
