@@ -197,13 +197,16 @@ function InviteMembersModal({
 					})),
 				});
 			}
-			toast.success('Invites sent successfully', { richColors: true });
+			toast.success('Invites sent successfully', {
+				richColors: true,
+				position: 'top-right',
+			});
 			resetAndClose();
 			onComplete?.();
 		} catch (err) {
 			const apiErr = err as APIError;
 			const errorMessage = apiErr?.getErrorMessage?.() ?? 'An error occurred';
-			toast.error(errorMessage, { richColors: true });
+			toast.error(errorMessage, { richColors: true, position: 'top-right' });
 		} finally {
 			setIsSubmitting(false);
 		}
