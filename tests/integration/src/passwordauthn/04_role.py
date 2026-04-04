@@ -4,7 +4,12 @@ from typing import Callable
 import requests
 
 from fixtures import types
-from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD,USER_EDITOR_EMAIL,USER_EDITOR_PASSWORD
+from fixtures.auth import (
+    USER_ADMIN_EMAIL,
+    USER_ADMIN_PASSWORD,
+    USER_EDITOR_EMAIL,
+    USER_EDITOR_PASSWORD,
+)
 from fixtures.authutils import (
     change_user_role,
     invite_and_activate_user,
@@ -355,7 +360,6 @@ def test_editor_cannot_manage_roles(
         name="viewer roleauth",
     )
 
-    
     editor_token = get_token(USER_EDITOR_EMAIL, USER_EDITOR_PASSWORD)
 
     # GET roles — forbidden

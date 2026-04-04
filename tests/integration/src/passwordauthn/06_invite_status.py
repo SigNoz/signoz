@@ -122,7 +122,7 @@ def test_bulk_invite(
     assert response.status_code == HTTPStatus.CREATED
 
 
-def test_delete_user_verify_v2(
+def test_delete_user(
     signoz: SigNoz,
     get_token: Callable[[str, str], str],
 ):
