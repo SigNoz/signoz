@@ -18,23 +18,11 @@ from fixtures.audit import AuditLog
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
 from fixtures.querier import (
     BuilderQuery,
-    OrderBy,
-    TelemetryFieldKey,
     build_logs_aggregation,
+    build_order_by,
     build_scalar_query,
     make_query_request,
 )
-
-DEFAULT_ORDER = [
-    OrderBy(
-        key=TelemetryFieldKey(name="timestamp", field_data_type="", field_context=""),
-        direction="desc",
-    ),
-    OrderBy(
-        key=TelemetryFieldKey(name="id", field_data_type="", field_context=""),
-        direction="desc",
-    ),
-]
 
 
 def _insert_standard_audit_events(
@@ -179,7 +167,10 @@ def test_audit_list_all(
         end_ms=int(now.timestamp() * 1000),
         queries=[
             BuilderQuery(
-                signal="logs", source="audit", limit=100, order=DEFAULT_ORDER
+                signal="logs",
+                source="audit",
+                limit=100,
+                order=[build_order_by("timestamp"), build_order_by("id")],
             ).to_dict()
         ],
         request_type="raw",
@@ -260,7 +251,7 @@ def test_audit_filter(
                 source="audit",
                 limit=100,
                 filter_expression=filter_expression,
-                order=DEFAULT_ORDER,
+                order=[build_order_by("timestamp"), build_order_by("id")],
             ).to_dict()
         ],
         request_type="raw",
@@ -330,7 +321,13 @@ def test_audit_does_not_leak_into_logs(
         token,
         start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
         end_ms=int(now.timestamp() * 1000),
-        queries=[BuilderQuery(signal="logs", limit=100, order=DEFAULT_ORDER).to_dict()],
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                limit=100,
+                order=[build_order_by("timestamp"), build_order_by("id")],
+            ).to_dict()
+        ],
         request_type="raw",
     )
 

@@ -58,7 +58,9 @@ class BuilderQuery:
         if self.select_fields:
             spec["selectFields"] = [f.to_dict() for f in self.select_fields]
         if self.order:
-            spec["order"] = [o.to_dict() for o in self.order]
+            spec["order"] = [
+                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
+            ]
         return {"type": "builder_query", "spec": spec}
 
 
@@ -79,7 +81,9 @@ class TraceOperatorQuery:
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.order:
-            spec["order"] = [o.to_dict() for o in self.order]
+            spec["order"] = [
+                o.to_dict() if hasattr(o, "to_dict") else o for o in self.order
+            ]
         return {"type": "builder_trace_operator", "spec": spec}
 
 
