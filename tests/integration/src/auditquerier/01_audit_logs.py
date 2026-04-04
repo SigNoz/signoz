@@ -1,12 +1,3 @@
-"""Integration tests for audit log querying via /api/v5/query_range.
-
-Tests verify that audit events inserted directly into signoz_audit ClickHouse
-tables can be queried back through the standard query_range API with
-signal=logs, source=audit.
-
-Each test maps to a real user query pattern from the audit logs design doc.
-"""
-
 from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
