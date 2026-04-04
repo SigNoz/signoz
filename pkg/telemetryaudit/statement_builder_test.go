@@ -36,8 +36,8 @@ func auditFieldKeyMap() map[string][]*telemetrytypes.TelemetryFieldKey {
 		"signoz.audit.principal.email": {key("signoz.audit.principal.email", attr, str, true)},
 		"signoz.audit.principal.id":    {key("signoz.audit.principal.id", attr, str, true)},
 		"signoz.audit.principal.type":  {key("signoz.audit.principal.type", attr, str, true)},
-		"signoz.audit.resource.name":   {key("signoz.audit.resource.name", attr, str, true)},
-		"signoz.audit.resource.id":     {key("signoz.audit.resource.id", attr, str, true)},
+		"signoz.audit.resource.kind":   {key("signoz.audit.resource.kind", res, str, false)},
+		"signoz.audit.resource.id":     {key("signoz.audit.resource.id", res, str, false)},
 		"signoz.audit.action_category": {key("signoz.audit.action_category", attr, str, false)},
 		"signoz.audit.error.type":      {key("signoz.audit.error.type", attr, str, false)},
 		"signoz.audit.error.code":      {key("signoz.audit.error.code", attr, str, false)},
@@ -112,36 +112,36 @@ func TestStatementBuilder(t *testing.T) {
 		},
 		// List: change history of a specific dashboard (two materialized column AND)
 		{
-			name:        "ListByResourceNameAndID",
+			name:        "ListByResourceKindAndID",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.resource.name = 'dashboard' AND signoz.audit.resource.id = '019b-5678-efgh-9012'",
+					Expression: "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = '019b-5678-efgh-9012'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((`attribute_string_signoz$$audit$$resource$$name` = ? AND `attribute_string_signoz$$audit$$resource$$name_exists` = ?) AND (`attribute_string_signoz$$audit$$resource$$id` = ? AND `attribute_string_signoz$$audit$$resource$$id_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "dashboard", true, "019b-5678-efgh-9012", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE ((simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND (simpleJSONExtractString(labels, 'signoz.audit.resource.id') = ? AND labels LIKE ? AND labels LIKE ?)) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND true AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", "019b-5678-efgh-9012", "%signoz.audit.resource.id%", "%signoz.audit.resource.id\":\"019b-5678-efgh-9012%", uint64(1747945619), uint64(1747983448), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
-		// List: all dashboard deletions (compliance — resource.name + action AND)
+		// List: all dashboard deletions (compliance — resource.kind + action AND)
 		{
-			name:        "ListByResourceNameAndAction",
+			name:        "ListByResourceKindAndAction",
 			requestType: qbtypes.RequestTypeRaw,
 			query: qbtypes.QueryBuilderQuery[qbtypes.LogAggregation]{
 				Signal: telemetrytypes.SignalLogs,
 				Source: telemetrytypes.SourceAudit,
 				Filter: &qbtypes.Filter{
-					Expression: "signoz.audit.resource.name = 'dashboard' AND signoz.audit.action = 'delete'",
+					Expression: "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
 				},
 				Limit: 100,
 			},
 			expected: qbtypes.Statement{
-				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE true AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND ((`attribute_string_signoz$$audit$$resource$$name` = ? AND `attribute_string_signoz$$audit$$resource$$name_exists` = ?) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists` = ?)) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
-				Args:  []any{uint64(1747945619), uint64(1747983448), "dashboard", true, "delete", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
+				Query: "WITH __resource_filter AS (SELECT fingerprint FROM signoz_audit.distributed_logs_resource WHERE (simpleJSONExtractString(labels, 'signoz.audit.resource.kind') = ? AND labels LIKE ? AND labels LIKE ?) AND seen_at_ts_bucket_start >= ? AND seen_at_ts_bucket_start <= ?) SELECT timestamp, id, trace_id, span_id, trace_flags, severity_text, severity_number, scope_name, scope_version, body, event_name, attributes_string, attributes_number, attributes_bool, scope_string FROM signoz_audit.distributed_logs WHERE resource_fingerprint GLOBAL IN (SELECT fingerprint FROM __resource_filter) AND (`attribute_string_signoz$$audit$$action` = ? AND `attribute_string_signoz$$audit$$action_exists` = ?) AND timestamp >= ? AND ts_bucket_start >= ? AND timestamp < ? AND ts_bucket_start <= ? LIMIT ?",
+				Args:  []any{"dashboard", "%signoz.audit.resource.kind%", "%signoz.audit.resource.kind\":\"dashboard%", uint64(1747945619), uint64(1747983448), "delete", true, "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 100},
 			},
 		},
 		// List: all actions by service accounts (materialized principal.type)

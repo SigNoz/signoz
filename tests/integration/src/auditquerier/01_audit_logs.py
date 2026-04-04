@@ -110,7 +110,12 @@ def _insert_standard_audit_events(
             # Success: admin creates a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=5),
-                resources={"service.name": "signoz", "service.version": "0.90.0"},
+                resources={
+                    "service.name": "signoz",
+                    "service.version": "0.90.0",
+                    "signoz.audit.resource.kind": "dashboard",
+                    "signoz.audit.resource.id": "dash-001",
+                },
                 attributes={
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
@@ -119,8 +124,6 @@ def _insert_standard_audit_events(
                     "signoz.audit.action": "create",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "success",
-                    "signoz.audit.resource.name": "dashboard",
-                    "signoz.audit.resource.id": "dash-001",
                 },
                 body="alice@acme.com (user-001) created dashboard (dash-001)",
                 event_name="dashboard.created",
@@ -130,7 +133,12 @@ def _insert_standard_audit_events(
             # Success: admin updates a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=4),
-                resources={"service.name": "signoz", "service.version": "0.90.0"},
+                resources={
+                    "service.name": "signoz",
+                    "service.version": "0.90.0",
+                    "signoz.audit.resource.kind": "dashboard",
+                    "signoz.audit.resource.id": "dash-001",
+                },
                 attributes={
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
@@ -139,8 +147,6 @@ def _insert_standard_audit_events(
                     "signoz.audit.action": "update",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "success",
-                    "signoz.audit.resource.name": "dashboard",
-                    "signoz.audit.resource.id": "dash-001",
                 },
                 body="alice@acme.com (user-001) updated dashboard (dash-001)",
                 event_name="dashboard.updated",
@@ -150,7 +156,12 @@ def _insert_standard_audit_events(
             # Failure: viewer tries to delete a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=3),
-                resources={"service.name": "signoz", "service.version": "0.90.0"},
+                resources={
+                    "service.name": "signoz",
+                    "service.version": "0.90.0",
+                    "signoz.audit.resource.kind": "dashboard",
+                    "signoz.audit.resource.id": "dash-001",
+                },
                 attributes={
                     "signoz.audit.principal.id": "user-002",
                     "signoz.audit.principal.email": "viewer@acme.com",
@@ -159,8 +170,6 @@ def _insert_standard_audit_events(
                     "signoz.audit.action": "delete",
                     "signoz.audit.action_category": "configuration_change",
                     "signoz.audit.outcome": "failure",
-                    "signoz.audit.resource.name": "dashboard",
-                    "signoz.audit.resource.id": "dash-001",
                     "signoz.audit.error.type": "forbidden",
                     "signoz.audit.error.code": "authz_forbidden",
                 },
@@ -172,7 +181,12 @@ def _insert_standard_audit_events(
             # Success: service account creates an API key
             AuditLog(
                 timestamp=now - timedelta(seconds=2),
-                resources={"service.name": "signoz", "service.version": "0.90.0"},
+                resources={
+                    "service.name": "signoz",
+                    "service.version": "0.90.0",
+                    "signoz.audit.resource.kind": "serviceaccount",
+                    "signoz.audit.resource.id": "sa-001",
+                },
                 attributes={
                     "signoz.audit.principal.id": "sa-001",
                     "signoz.audit.principal.email": "",
@@ -181,8 +195,6 @@ def _insert_standard_audit_events(
                     "signoz.audit.action": "create",
                     "signoz.audit.action_category": "access_control",
                     "signoz.audit.outcome": "success",
-                    "signoz.audit.resource.name": "serviceaccount",
-                    "signoz.audit.resource.id": "sa-001",
                 },
                 body="sa-001 created serviceaccount (sa-001)",
                 event_name="serviceaccount.apikey.created",
@@ -192,7 +204,12 @@ def _insert_standard_audit_events(
             # Success: admin logs in
             AuditLog(
                 timestamp=now - timedelta(seconds=1),
-                resources={"service.name": "signoz", "service.version": "0.90.0"},
+                resources={
+                    "service.name": "signoz",
+                    "service.version": "0.90.0",
+                    "signoz.audit.resource.kind": "session",
+                    "signoz.audit.resource.id": "*",
+                },
                 attributes={
                     "signoz.audit.principal.id": "user-001",
                     "signoz.audit.principal.email": "alice@acme.com",
@@ -201,8 +218,6 @@ def _insert_standard_audit_events(
                     "signoz.audit.action": "login",
                     "signoz.audit.action_category": "access_control",
                     "signoz.audit.outcome": "success",
-                    "signoz.audit.resource.name": "session",
-                    "signoz.audit.resource.id": "*",
                 },
                 body="alice@acme.com (user-001) login session (*)",
                 event_name="session.login",
@@ -300,7 +315,7 @@ def test_audit_filter_by_resource(
     get_token: Callable[[str, str], str],
     insert_audit_logs: Callable[[List[AuditLog]], None],
 ) -> None:
-    """Q3: Show me the change history of a specific dashboard — filter on resource.name + resource.id."""
+    """Q3: Show me the change history of a specific dashboard — filter on resource.kind + resource.id (resource attributes)."""
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
@@ -308,7 +323,7 @@ def test_audit_filter_by_resource(
         signoz,
         token,
         _build_audit_query(
-            filter_expression="signoz.audit.resource.name = 'dashboard' AND signoz.audit.resource.id = 'dash-001'"
+            filter_expression="signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = 'dash-001'"
         ),
     )
 
