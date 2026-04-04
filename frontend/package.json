@@ -65,7 +65,6 @@
     "@signozhq/switch": "0.0.2",
     "@signozhq/table": "0.3.7",
     "@signozhq/toggle-group": "0.0.1",
-    "@signozhq/tooltip": "0.0.2",
     "@signozhq/ui": "0.0.5",
     "@tanstack/react-table": "8.21.3",
     "@tanstack/react-virtual": "3.13.22",

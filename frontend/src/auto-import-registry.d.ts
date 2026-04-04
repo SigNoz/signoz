@@ -10,7 +10,6 @@
 // PR for reference: https://github.com/SigNoz/signoz/pull/9694
 // -------------------------------------------------------------------------
 
-import '@signozhq/badge';
 import '@signozhq/button';
 import '@signozhq/calendar';
 import '@signozhq/callout';
@@ -29,5 +28,4 @@ import '@signozhq/sonner';
 import '@signozhq/switch';
 import '@signozhq/table';
 import '@signozhq/toggle-group';
-import '@signozhq/tooltip';
 import '@signozhq/ui';
