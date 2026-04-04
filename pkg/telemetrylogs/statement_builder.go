@@ -45,6 +45,7 @@ func NewLogQueryStatementBuilder(
 		DBName,
 		LogsResourceV2TableName,
 		telemetrytypes.SignalLogs,
+		telemetrytypes.SourceUnspecified,
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,

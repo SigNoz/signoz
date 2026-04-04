@@ -44,6 +44,7 @@ func NewAuditQueryStatementBuilder(
 		DBName,
 		LogsResourceTableName,
 		telemetrytypes.SignalLogs,
+		telemetrytypes.SourceAudit,
 		metadataStore,
 		fullTextColumn,
 		jsonKeyToKey,

@@ -334,9 +334,9 @@ def test_audit_scalar_count_failures(
     results = response.json()["data"]["data"]["results"]
     assert len(results) == 1
 
-    rows = results[0].get("rows", [])
-    assert len(rows) == 1
-    assert rows[0]["data"]["A"] == 1
+    scalar_data = results[0].get("data", [])
+    assert len(scalar_data) == 1
+    assert scalar_data[0][0] == 1
 
 
 def test_audit_does_not_leak_into_logs(
