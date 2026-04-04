@@ -14,10 +14,11 @@ func ApplyHavingClause(result []*v3.Result, queryRangeParams *v3.QueryRangeParam
 		builderQueries := queryRangeParams.CompositeQuery.BuilderQueries
 
 		// apply having clause for metrics and formula
-		if builderQueries != nil &&
-			(builderQueries[result.QueryName].DataSource == v3.DataSourceMetrics ||
-				builderQueries[result.QueryName].QueryName != builderQueries[result.QueryName].Expression) {
-			havingClause := builderQueries[result.QueryName].Having
+		builderQuery := builderQueries[result.QueryName]
+		if builderQuery != nil &&
+			(builderQuery.DataSource == v3.DataSourceMetrics ||
+				builderQuery.QueryName != builderQuery.Expression) {
+			havingClause := builderQuery.Having
 
 			for i := 0; i < len(result.Series); i++ {
 				for j := 0; j < len(result.Series[i].Points); j++ {

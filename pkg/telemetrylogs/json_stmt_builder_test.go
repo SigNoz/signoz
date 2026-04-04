@@ -7,7 +7,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
-	"github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes/telemetrytypestest"
@@ -833,25 +832,13 @@ func buildJSONTestStatementBuilder(t *testing.T) *logQueryStatementBuilder {
 	fm := NewFieldMapper()
 	cb := NewConditionBuilder(fm)
 
-	resourceFilterFM := resourcefilter.NewFieldMapper()
-	resourceFilterCB := resourcefilter.NewConditionBuilder(resourceFilterFM)
-
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
-	resourceFilterStmtBuilder := resourcefilter.NewLogResourceFilterStatementBuilder(
-		instrumentationtest.New().ToProviderSettings(),
-		resourceFilterFM,
-		resourceFilterCB,
-		mockMetadataStore,
-		DefaultFullTextColumn,
-		GetBodyJSONKey,
-	)
 
 	statementBuilder := NewLogQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		DefaultFullTextColumn,
 		GetBodyJSONKey,
