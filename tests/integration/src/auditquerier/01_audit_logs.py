@@ -37,53 +37,11 @@ DEFAULT_ORDER = [
 ]
 
 
-def _query_audit_raw(
-    signoz: types.SigNoz,
-    token: str,
-    filter_expression: str = "",
-    limit: int = 100,
-    source: str = "audit",
-):
+def _time_window() -> tuple:
     now = datetime.now(tz=timezone.utc)
-    query = BuilderQuery(
-        signal="logs",
-        source=source,
-        limit=limit,
-        filter_expression=filter_expression,
-        order=DEFAULT_ORDER,
-    )
-    return make_query_request(
-        signoz,
-        token,
-        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
-        end_ms=int(now.timestamp() * 1000),
-        queries=[query.to_dict()],
-        request_type="raw",
-    )
-
-
-def _query_audit_scalar(
-    signoz: types.SigNoz,
-    token: str,
-    aggregation: str = "count()",
-    filter_expression: str = "",
-):
-    now = datetime.now(tz=timezone.utc)
-    query = build_scalar_query(
-        name="A",
-        signal="logs",
-        source="audit",
-        aggregations=[build_logs_aggregation(aggregation)],
-        filter_expression=filter_expression,
-    )
-    return make_query_request(
-        signoz,
-        token,
-        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
-        end_ms=int(now.timestamp() * 1000),
-        queries=[query],
-        request_type="scalar",
-    )
+    start_ms = int((now - timedelta(seconds=30)).timestamp() * 1000)
+    end_ms = int(now.timestamp() * 1000)
+    return start_ms, end_ms
 
 
 def _insert_standard_audit_events(
@@ -94,7 +52,6 @@ def _insert_standard_audit_events(
 
     insert_audit_logs(
         [
-            # Success: admin creates a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=5),
                 resources={
@@ -117,7 +74,6 @@ def _insert_standard_audit_events(
                 severity_text="INFO",
                 scope_name="signoz.audit",
             ),
-            # Success: admin updates a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=4),
                 resources={
@@ -140,7 +96,6 @@ def _insert_standard_audit_events(
                 severity_text="INFO",
                 scope_name="signoz.audit",
             ),
-            # Failure: viewer tries to delete a dashboard
             AuditLog(
                 timestamp=now - timedelta(seconds=3),
                 resources={
@@ -165,7 +120,6 @@ def _insert_standard_audit_events(
                 severity_text="ERROR",
                 scope_name="signoz.audit",
             ),
-            # Success: service account creates an API key
             AuditLog(
                 timestamp=now - timedelta(seconds=2),
                 resources={
@@ -188,7 +142,6 @@ def _insert_standard_audit_events(
                 severity_text="INFO",
                 scope_name="signoz.audit",
             ),
-            # Success: admin logs in
             AuditLog(
                 timestamp=now - timedelta(seconds=1),
                 resources={
@@ -225,7 +178,19 @@ def test_audit_list_all(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _query_audit_raw(signoz, token)
+    start_ms, end_ms = _time_window()
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[
+            BuilderQuery(
+                signal="logs", source="audit", limit=100, order=DEFAULT_ORDER
+            ).to_dict()
+        ],
+        request_type="raw",
+    )
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
@@ -236,9 +201,7 @@ def test_audit_list_all(
     rows = results[0]["rows"]
     assert len(rows) == 5
 
-    # Most recent first (session.login)
     assert rows[0]["data"]["event_name"] == "session.login"
-    # Oldest last (dashboard.created)
     assert rows[4]["data"]["event_name"] == "dashboard.created"
 
 
@@ -292,7 +255,23 @@ def test_audit_filter(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _query_audit_raw(signoz, token, filter_expression=filter_expression)
+    start_ms, end_ms = _time_window()
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[
+            BuilderQuery(
+                signal="logs",
+                source="audit",
+                limit=100,
+                filter_expression=filter_expression,
+                order=DEFAULT_ORDER,
+            ).to_dict()
+        ],
+        request_type="raw",
+    )
 
     assert response.status_code == HTTPStatus.OK
 
@@ -313,8 +292,22 @@ def test_audit_scalar_count_failures(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _query_audit_scalar(
-        signoz, token, filter_expression="signoz.audit.outcome = 'failure'"
+    start_ms, end_ms = _time_window()
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[
+            build_scalar_query(
+                name="A",
+                signal="logs",
+                source="audit",
+                aggregations=[build_logs_aggregation("count()")],
+                filter_expression="signoz.audit.outcome = 'failure'",
+            )
+        ],
+        request_type="scalar",
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -338,14 +331,20 @@ def test_audit_does_not_leak_into_logs(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Query regular logs (no source=audit) — should NOT see audit events
-    response = _query_audit_raw(signoz, token, source="")
+    start_ms, end_ms = _time_window()
+    response = make_query_request(
+        signoz,
+        token,
+        start_ms=start_ms,
+        end_ms=end_ms,
+        queries=[BuilderQuery(signal="logs", limit=100, order=DEFAULT_ORDER).to_dict()],
+        request_type="raw",
+    )
 
     assert response.status_code == HTTPStatus.OK
 
     rows = response.json()["data"]["data"]["results"][0].get("rows") or []
 
-    # None of the audit events should appear in regular log queries
     audit_bodies = [
         row["data"]["body"]
         for row in rows
