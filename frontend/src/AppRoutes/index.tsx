@@ -18,7 +18,7 @@ import AppLayout from 'container/AppLayout';
 import Hex from 'crypto-js/enc-hex';
 import HmacSHA256 from 'crypto-js/hmac-sha256';
 import { KeyboardHotkeysProvider } from 'hooks/hotkeys/useKeyboardHotkeys';
-import { useThemeConfig } from 'hooks/useDarkMode';
+import { useIsDarkMode, useThemeConfig } from 'hooks/useDarkMode';
 import { useGetTenantLicense } from 'hooks/useGetTenantLicense';
 import { NotificationProvider } from 'hooks/useNotifications';
 import { ResourceProvider } from 'hooks/useResourceAttribute';
@@ -211,6 +211,12 @@ function App(): JSX.Element {
 		activeLicense,
 		activeLicenseFetchError,
 	]);
+
+	const isDarkMode = useIsDarkMode();
+
+	useEffect(() => {
+		window.Pylon?.('setTheme', isDarkMode ? 'dark' : 'light');
+	}, [isDarkMode]);
 
 	useEffect(() => {
 		if (

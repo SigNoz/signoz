@@ -124,8 +124,12 @@ func (q *querier) postProcessResults(ctx context.Context, results map[string]any
 				continue
 			}
 
+			stepInterval, err := req.StepIntervalForQuery(name)
+			if err != nil {
+				return nil, err
+			}
 			funcs := []qbtypes.Function{{Name: qbtypes.FunctionNameFillZero}}
-			funcs = q.prepareFillZeroArgsWithStep(funcs, req, req.StepIntervalForQuery(name))
+			funcs = q.prepareFillZeroArgsWithStep(funcs, req, stepInterval)
 			// empty time series if it doesn't exist
 			tsData, ok := typedResults[name].Value.(*qbtypes.TimeSeriesData)
 			if !ok {
