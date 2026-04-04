@@ -1,10 +1,10 @@
 import type { Control, UseFormRegister } from 'react-hook-form';
 import { Controller } from 'react-hook-form';
-import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
 import { LockKeyhole, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { Badge } from '@signozhq/ui';
 import { DatePicker } from 'antd';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { popupContainer } from 'utils/selectPopupContainer';
