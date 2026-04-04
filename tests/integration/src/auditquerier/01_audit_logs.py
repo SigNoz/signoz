@@ -205,33 +205,33 @@ def test_audit_list_all(
             "signoz.audit.principal.id = 'user-001'",
             3,
             {"session.login", "dashboard.updated", "dashboard.created"},
-            id="FilterByPrincipalID",
+            id="filter_by_principal_id",
         ),
         pytest.param(
             "signoz.audit.outcome = 'failure'",
             1,
             {"dashboard.deleted"},
-            id="FilterByOutcomeFailure",
+            id="filter_by_outcome_failure",
         ),
         pytest.param(
             "signoz.audit.resource.kind = 'dashboard'"
             " AND signoz.audit.resource.id = 'dash-001'",
             3,
             {"dashboard.deleted", "dashboard.updated", "dashboard.created"},
-            id="FilterByResourceKindAndID",
+            id="filter_by_resource_kind_and_id",
         ),
         pytest.param(
             "signoz.audit.principal.type = 'service_account'",
             1,
             {"serviceaccount.apikey.created"},
-            id="FilterByPrincipalType",
+            id="filter_by_principal_type",
         ),
         pytest.param(
             "signoz.audit.resource.kind = 'dashboard'"
             " AND signoz.audit.action = 'delete'",
             1,
             {"dashboard.deleted"},
-            id="FilterByResourceKindAndAction",
+            id="filter_by_resource_kind_and_action",
         ),
     ],
 )
