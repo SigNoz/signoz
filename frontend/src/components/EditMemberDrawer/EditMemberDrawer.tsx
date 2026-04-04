@@ -4,7 +4,7 @@ import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { Badge } from '@signozhq/ui';
 import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';

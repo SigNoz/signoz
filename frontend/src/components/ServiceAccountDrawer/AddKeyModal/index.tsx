@@ -3,7 +3,7 @@ import { useForm } from 'react-hook-form';
 import { useQueryClient } from 'react-query';
 import { useCopyToClipboard } from 'react-use';
 import { DialogWrapper } from '@signozhq/dialog';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	invalidateListServiceAccountKeys,

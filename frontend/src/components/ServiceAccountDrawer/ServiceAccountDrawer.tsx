@@ -3,8 +3,8 @@ import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
 import { Key, LayoutGrid, Plus, Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
 import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
+import { toast } from '@signozhq/ui';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {

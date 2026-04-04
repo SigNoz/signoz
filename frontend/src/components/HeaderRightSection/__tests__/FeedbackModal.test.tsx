@@ -1,6 +1,6 @@
 // Mock dependencies before imports
 import { useLocation } from 'react-router-dom';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import logEvent from 'api/common/logEvent';

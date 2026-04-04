@@ -1,5 +1,5 @@
 import type { ReactNode } from 'react';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getResetPasswordToken,

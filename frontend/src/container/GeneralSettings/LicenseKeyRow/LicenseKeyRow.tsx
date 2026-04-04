@@ -1,7 +1,7 @@
 import { useCopyToClipboard } from 'react-use';
 import { Button } from '@signozhq/button';
 import { Copy, KeyRound } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { useAppContext } from 'providers/App/App';
 import { getMaskedKey } from 'utils/maskedKey';
 
