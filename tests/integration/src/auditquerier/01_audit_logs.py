@@ -37,13 +37,6 @@ DEFAULT_ORDER = [
 ]
 
 
-def _time_window() -> tuple:
-    now = datetime.now(tz=timezone.utc)
-    start_ms = int((now - timedelta(seconds=30)).timestamp() * 1000)
-    end_ms = int(now.timestamp() * 1000)
-    return start_ms, end_ms
-
-
 def _insert_standard_audit_events(
     insert_audit_logs: Callable[[List[AuditLog]], None],
 ) -> None:
@@ -178,12 +171,12 @@ def test_audit_list_all(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    start_ms, end_ms = _time_window()
+    now = datetime.now(tz=timezone.utc)
     response = make_query_request(
         signoz,
         token,
-        start_ms=start_ms,
-        end_ms=end_ms,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         queries=[
             BuilderQuery(
                 signal="logs", source="audit", limit=100, order=DEFAULT_ORDER
@@ -255,12 +248,12 @@ def test_audit_filter(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    start_ms, end_ms = _time_window()
+    now = datetime.now(tz=timezone.utc)
     response = make_query_request(
         signoz,
         token,
-        start_ms=start_ms,
-        end_ms=end_ms,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         queries=[
             BuilderQuery(
                 signal="logs",
@@ -292,12 +285,12 @@ def test_audit_scalar_count_failures(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    start_ms, end_ms = _time_window()
+    now = datetime.now(tz=timezone.utc)
     response = make_query_request(
         signoz,
         token,
-        start_ms=start_ms,
-        end_ms=end_ms,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         queries=[
             build_scalar_query(
                 name="A",
@@ -331,12 +324,12 @@ def test_audit_does_not_leak_into_logs(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    start_ms, end_ms = _time_window()
+    now = datetime.now(tz=timezone.utc)
     response = make_query_request(
         signoz,
         token,
-        start_ms=start_ms,
-        end_ms=end_ms,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
         queries=[BuilderQuery(signal="logs", limit=100, order=DEFAULT_ORDER).to_dict()],
         request_type="raw",
     )
