@@ -3,6 +3,7 @@ from http import HTTPStatus
 import requests
 
 from fixtures import types
+from fixtures.authutils import assert_user_has_role
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -32,7 +33,7 @@ def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
     Listing users is an admin-only endpoint.
     """
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user"),
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
         timeout=2,
     )
 
@@ -46,4 +47,11 @@ def test_impersonated_user_is_admin(signoz: types.SigNoz) -> None:
         None,
     )
     assert root_user is not None
-    assert root_user["role"] == "ADMIN"
+
+    # Verify root user has admin role via v2 detail endpoint
+    root_detail = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{root_user['id']}"),
+        timeout=2,
+    )
+    assert root_detail.status_code == HTTPStatus.OK
+    assert_user_has_role(root_detail.json()["data"], "signoz-admin")

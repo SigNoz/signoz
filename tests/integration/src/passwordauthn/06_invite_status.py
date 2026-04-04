@@ -4,6 +4,7 @@ from typing import Callable
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
+from fixtures.authutils import invite_and_activate_user
 from fixtures.types import SigNoz
 
 
@@ -119,3 +120,66 @@ def test_bulk_invite(
         timeout=5,
     )
     assert response.status_code == HTTPStatus.CREATED
+
+
+def test_delete_user_verify_v2(
+    signoz: SigNoz,
+    get_token: Callable[[str, str], str],
+):
+    """
+    Verify that after soft-deleting a user:
+    1. GET /api/v2/users shows the user with status == "deleted"
+    2. GET /api/v2/users/{id} returns the user with empty userRoles (roles revoked)
+    """
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    user_id = invite_and_activate_user(
+        signoz,
+        admin_token,
+        email="delete-verify-v2@integration.test",
+        role="EDITOR",
+        password="password123Z$",
+        name="delete verify v2",
+    )
+
+    # verify user is active via v2
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["status"] == "active"
+    assert len(data["userRoles"]) == 1
+
+    # delete the user
+    response = requests.delete(
+        signoz.self.host_configs["8080"].get(f"/api/v1/user/{user_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.NO_CONTENT
+
+    # verify status is deleted in the users list
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    users = response.json()["data"]
+    deleted_user = next((u for u in users if u["id"] == user_id), None)
+    assert deleted_user is not None
+    assert deleted_user["status"] == "deleted"
+
+    # verify roles are revoked
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(f"/api/v2/users/{user_id}"),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=5,
+    )
+    assert response.status_code == HTTPStatus.OK
+    data = response.json()["data"]
+    assert data["status"] == "deleted"
+    assert len(data["userRoles"]) == 1
