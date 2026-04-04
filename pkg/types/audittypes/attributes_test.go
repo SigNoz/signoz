@@ -63,7 +63,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) deleted dashboard",
@@ -81,7 +81,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "abd",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "019a1234-abcd-7000-8000-567800000001 deleted dashboard (abd)",
@@ -99,7 +99,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "abd",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "deleted dashboard (abd)",
@@ -117,7 +117,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "alice@acme.com (019a1234-abcd-7000-8000-567800000001) created dashboard (019b-5678)",
@@ -131,7 +131,7 @@ func TestNewBody(t *testing.T) {
 			},
 			principalAttributes: PrincipalAttributes{},
 			resourceAttributes: ResourceAttributes{
-				ResourceName: "alert-rule",
+				ResourceKind: "alert-rule",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "updated alert-rule",
@@ -149,7 +149,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "forbidden",
@@ -168,7 +168,7 @@ func TestNewBody(t *testing.T) {
 				PrincipalEmail: valuer.MustNewEmail("test@acme.com"),
 			},
 			resourceAttributes: ResourceAttributes{
-				ResourceName: "user",
+				ResourceKind: "user",
 			},
 			errorAttributes: ErrorAttributes{
 				ErrorType: "not-found",
@@ -187,7 +187,7 @@ func TestNewBody(t *testing.T) {
 			},
 			resourceAttributes: ResourceAttributes{
 				ResourceID:   "019b-5678",
-				ResourceName: "dashboard",
+				ResourceKind: "dashboard",
 			},
 			errorAttributes: ErrorAttributes{},
 			expectedBody:    "test@acme.com (019a1234-abcd-7000-8000-567800000001) failed to create dashboard (019b-5678)",

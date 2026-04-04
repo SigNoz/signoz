@@ -4,11 +4,19 @@ import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
-	useUpdateUserDeprecated,
+	useGetUser,
+	useRemoveUserRoleByUserIDAndRoleID,
+	useSetRoleByUserID,
+	useUpdateMyUserV2,
+	useUpdateUser,
 } from 'api/generated/services/users';
 import { MemberStatus } from 'container/MembersSettings/utils';
+import {
+	listRolesSuccessResponse,
+	managedRoles,
+} from 'mocks-server/__mockdata__/roles';
+import { rest, server } from 'mocks-server/server';
 import { render, screen, userEvent, waitFor } from 'tests/test-utils';
-import { ROLES } from 'types/roles';
 
 import EditMemberDrawer, { EditMemberDrawerProps } from '../EditMemberDrawer';
 
@@ -44,7 +52,11 @@ jest.mock('@signozhq/dialog', () => ({
 
 jest.mock('api/generated/services/users', () => ({
 	useDeleteUser: jest.fn(),
-	useUpdateUserDeprecated: jest.fn(),
+	useGetUser: jest.fn(),
+	useUpdateUser: jest.fn(),
+	useUpdateMyUserV2: jest.fn(),
+	useSetRoleByUserID: jest.fn(),
+	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
 	getResetPasswordToken: jest.fn(),
 }));
 
@@ -69,25 +81,53 @@ jest.mock('react-use', () => ({
 	],
 }));
 
-const mockUpdateMutate = jest.fn();
+const ROLES_ENDPOINT = '*/api/v1/roles';
+
 const mockDeleteMutate = jest.fn();
 const mockGetResetPasswordToken = jest.mocked(getResetPasswordToken);
+
+const mockFetchedUser = {
+	data: {
+		id: 'user-1',
+		displayName: 'Alice Smith',
+		email: 'alice@signoz.io',
+		status: 'active',
+		userRoles: [
+			{
+				id: 'ur-1',
+				roleId: managedRoles[0].id,
+				role: managedRoles[0], // signoz-admin
+			},
+		],
+	},
+};
 
 const activeMember = {
 	id: 'user-1',
 	name: 'Alice Smith',
 	email: 'alice@signoz.io',
-	role: 'ADMIN' as ROLES,
 	status: MemberStatus.Active,
 	joinedOn: '1700000000000',
 	updatedAt: '1710000000000',
+};
+
+const selfMember = {
+	...activeMember,
+	id: 'some-user-id',
+};
+
+const rootMockFetchedUser = {
+	data: {
+		...mockFetchedUser.data,
+		id: 'root-user-1',
+		isRoot: true,
+	},
 };
 
 const invitedMember = {
 	id: 'abc123',
 	name: '',
 	email: 'bob@signoz.io',
-	role: 'VIEWER' as ROLES,
 	status: MemberStatus.Invited,
 	joinedOn: '1700000000000',
 };
@@ -109,14 +149,40 @@ function renderDrawer(
 describe('EditMemberDrawer', () => {
 	beforeEach(() => {
 		jest.clearAllMocks();
-		(useUpdateUserDeprecated as jest.Mock).mockReturnValue({
-			mutate: mockUpdateMutate,
+		server.use(
+			rest.get(ROLES_ENDPOINT, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json(listRolesSuccessResponse)),
+			),
+		);
+		(useGetUser as jest.Mock).mockReturnValue({
+			data: mockFetchedUser,
+			isLoading: false,
+			refetch: jest.fn(),
+		});
+		(useUpdateUser as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+			isLoading: false,
+		});
+		(useUpdateMyUserV2 as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+			isLoading: false,
+		});
+		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
+			isLoading: false,
+		});
+		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+			mutateAsync: jest.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
 			mutate: mockDeleteMutate,
 			isLoading: false,
 		});
+	});
+
+	afterEach(() => {
+		server.resetHandlers();
 	});
 
 	it('renders active member details and disables Save when form is not dirty', () => {
@@ -130,16 +196,15 @@ describe('EditMemberDrawer', () => {
 		).toBeDisabled();
 	});
 
-	it('enables Save after editing name and calls update API on confirm', async () => {
+	it('enables Save after editing name and calls updateUser on confirm', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockMutateAsync = jest.fn().mockResolvedValue({});
 
-		(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
-			mutate: mockUpdateMutate.mockImplementation(() => {
-				options?.mutation?.onSuccess?.();
-			}),
+		(useUpdateUser as jest.Mock).mockReturnValue({
+			mutateAsync: mockMutateAsync,
 			isLoading: false,
-		}));
+		});
 
 		renderDrawer({ onComplete });
 
@@ -153,12 +218,92 @@ describe('EditMemberDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdateMutate).toHaveBeenCalledWith(
-				expect.objectContaining({
-					pathParams: { id: 'user-1' },
-					data: expect.objectContaining({ displayName: 'Alice Updated' }),
-				}),
-			);
+			expect(mockMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
+				data: { displayName: 'Alice Updated' },
+			});
+			expect(onComplete).toHaveBeenCalled();
+		});
+	});
+
+	it('does not close the drawer after a successful save', async () => {
+		const onClose = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+
+		renderDrawer({ onClose });
+
+		const nameInput = screen.getByDisplayValue('Alice Smith');
+		await user.clear(nameInput);
+		await user.type(nameInput, 'Alice Updated');
+
+		const saveBtn = screen.getByRole('button', { name: /save member details/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await waitFor(() => {
+			expect(
+				screen.getByRole('button', { name: /save member details/i }),
+			).toBeInTheDocument();
+		});
+		expect(onClose).not.toHaveBeenCalled();
+	});
+
+	it('calls setRole when a new role is added', async () => {
+		const onComplete = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockSet = jest.fn().mockResolvedValue({});
+
+		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+			mutateAsync: mockSet,
+			isLoading: false,
+		});
+
+		renderDrawer({ onComplete });
+
+		// Open the roles dropdown and select signoz-editor
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-editor'));
+
+		const saveBtn = screen.getByRole('button', { name: /save member details/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await waitFor(() => {
+			expect(mockSet).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
+				data: { name: 'signoz-editor' },
+			});
+			expect(onComplete).toHaveBeenCalled();
+		});
+	});
+
+	it('calls removeRole when an existing role is removed', async () => {
+		const onComplete = jest.fn();
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockRemove = jest.fn().mockResolvedValue({});
+
+		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
+			mutateAsync: mockRemove,
+			isLoading: false,
+		});
+
+		renderDrawer({ onComplete });
+
+		// Wait for the signoz-admin tag to appear, then click its remove button
+		const adminTag = await screen.findByTitle('signoz-admin');
+		const removeBtn = adminTag.querySelector(
+			'.ant-select-selection-item-remove',
+		) as Element;
+		await user.click(removeBtn);
+
+		const saveBtn = screen.getByRole('button', { name: /save member details/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		await waitFor(() => {
+			expect(mockRemove).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
+			});
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
@@ -239,16 +384,33 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('calls update API when saving changes for an invited member', async () => {
+	it('calls updateUser when saving name change for an invited member', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		const mockMutateAsync = jest.fn().mockResolvedValue({});
 
-		(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
-			mutate: mockUpdateMutate.mockImplementation(() => {
-				options?.mutation?.onSuccess?.();
-			}),
+		(useGetUser as jest.Mock).mockReturnValue({
+			data: {
+				data: {
+					...mockFetchedUser.data,
+					id: 'abc123',
+					displayName: 'Bob',
+					userRoles: [
+						{
+							id: 'ur-2',
+							roleId: managedRoles[2].id,
+							role: managedRoles[2], // signoz-viewer
+						},
+					],
+				},
+			},
 			isLoading: false,
-		}));
+			refetch: jest.fn(),
+		});
+		(useUpdateUser as jest.Mock).mockReturnValue({
+			mutateAsync: mockMutateAsync,
+			isLoading: false,
+		});
 
 		renderDrawer({ member: { ...invitedMember, name: 'Bob' }, onComplete });
 
@@ -261,12 +423,10 @@ describe('EditMemberDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockUpdateMutate).toHaveBeenCalledWith(
-				expect.objectContaining({
-					pathParams: { id: 'abc123' },
-					data: expect.objectContaining({ displayName: 'Bob Updated' }),
-				}),
-			);
+			expect(mockMutateAsync).toHaveBeenCalledWith({
+				pathParams: { id: 'abc123' },
+				data: { displayName: 'Bob Updated' },
+			});
 			expect(onComplete).toHaveBeenCalled();
 		});
 	});
@@ -280,16 +440,13 @@ describe('EditMemberDrawer', () => {
 			} as ReturnType<typeof convertToApiError>);
 		});
 
-		it('shows API error message when updateUser fails', async () => {
+		it('shows SaveErrorItem when updateUser fails for name change', async () => {
 			const user = userEvent.setup({ pointerEventsCheck: 0 });
-			const mockToast = jest.mocked(toast);
 
-			(useUpdateUserDeprecated as jest.Mock).mockImplementation((options) => ({
-				mutate: mockUpdateMutate.mockImplementation(() => {
-					options?.mutation?.onError?.({});
-				}),
+			(useUpdateUser as jest.Mock).mockReturnValue({
+				mutateAsync: jest.fn().mockRejectedValue(new Error('server error')),
 				isLoading: false,
-			}));
+			});
 
 			renderDrawer();
 
@@ -302,10 +459,9 @@ describe('EditMemberDrawer', () => {
 			await user.click(saveBtn);
 
 			await waitFor(() => {
-				expect(mockToast.error).toHaveBeenCalledWith(
-					'Failed to update member details: Something went wrong on server',
-					expect.anything(),
-				);
+				expect(
+					screen.getByText('Name update: Something went wrong on server'),
+				).toBeInTheDocument();
 			});
 		});
 
@@ -361,6 +517,96 @@ describe('EditMemberDrawer', () => {
 					expect.anything(),
 				);
 			});
+		});
+	});
+
+	describe('self user (isSelf)', () => {
+		it('disables Delete button when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(
+				screen.getByRole('button', { name: /delete member/i }),
+			).toBeDisabled();
+		});
+
+		it('does not open delete confirm dialog when Delete is clicked while disabled (isSelf)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer({ member: selfMember });
+
+			await user.click(screen.getByRole('button', { name: /delete member/i }));
+
+			expect(
+				screen.queryByText(/are you sure you want to delete/i),
+			).not.toBeInTheDocument();
+		});
+
+		it('keeps name input enabled when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(screen.getByDisplayValue('Alice Smith')).not.toBeDisabled();
+		});
+
+		it('keeps Reset Link button enabled when viewing own profile', () => {
+			renderDrawer({ member: selfMember });
+			expect(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			).not.toBeDisabled();
+		});
+	});
+
+	describe('root user', () => {
+		beforeEach(() => {
+			(useGetUser as jest.Mock).mockReturnValue({
+				data: rootMockFetchedUser,
+				isLoading: false,
+				refetch: jest.fn(),
+			});
+		});
+
+		it('disables name input for root user', () => {
+			renderDrawer();
+			expect(screen.getByDisplayValue('Alice Smith')).toBeDisabled();
+		});
+
+		it('disables Delete button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /delete member/i }),
+			).toBeDisabled();
+		});
+
+		it('disables Reset Link button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			).toBeDisabled();
+		});
+
+		it('disables Save button for root user', () => {
+			renderDrawer();
+			expect(
+				screen.getByRole('button', { name: /save member details/i }),
+			).toBeDisabled();
+		});
+
+		it('does not open delete confirm dialog when Delete is clicked while disabled (root)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer();
+
+			await user.click(screen.getByRole('button', { name: /delete member/i }));
+
+			expect(
+				screen.queryByText(/are you sure you want to delete/i),
+			).not.toBeInTheDocument();
+		});
+
+		it('does not call getResetPasswordToken when Reset Link is clicked while disabled (root)', async () => {
+			const user = userEvent.setup({ pointerEventsCheck: 0 });
+			renderDrawer();
+
+			await user.click(
+				screen.getByRole('button', { name: /generate password reset link/i }),
+			);
+
+			expect(mockGetResetPasswordToken).not.toHaveBeenCalled();
 		});
 	});
 

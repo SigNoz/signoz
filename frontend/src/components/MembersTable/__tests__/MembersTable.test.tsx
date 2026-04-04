@@ -1,6 +1,5 @@
 import { MemberStatus } from 'container/MembersSettings/utils';
 import { render, screen, userEvent } from 'tests/test-utils';
-import { ROLES } from 'types/roles';
 
 import MembersTable, { MemberRow } from '../MembersTable';
 
@@ -9,7 +8,6 @@ const mockActiveMembers: MemberRow[] = [
 		id: 'user-1',
 		name: 'Alice Smith',
 		email: 'alice@signoz.io',
-		role: 'ADMIN' as ROLES,
 		status: MemberStatus.Active,
 		joinedOn: '1700000000000',
 	},
@@ -17,7 +15,6 @@ const mockActiveMembers: MemberRow[] = [
 		id: 'user-2',
 		name: 'Bob Jones',
 		email: 'bob@signoz.io',
-		role: 'VIEWER' as ROLES,
 		status: MemberStatus.Active,
 		joinedOn: null,
 	},
@@ -27,7 +24,6 @@ const mockInvitedMember: MemberRow = {
 	id: 'inv-abc',
 	name: '',
 	email: 'charlie@signoz.io',
-	role: 'EDITOR' as ROLES,
 	status: MemberStatus.Invited,
 	joinedOn: null,
 };
@@ -47,12 +43,11 @@ describe('MembersTable', () => {
 		jest.clearAllMocks();
 	});
 
-	it('renders member rows with name, email, role badge, and ACTIVE status', () => {
+	it('renders member rows with name, email, and ACTIVE status', () => {
 		render(<MembersTable {...defaultProps} data={mockActiveMembers} />);
 
 		expect(screen.getByText('Alice Smith')).toBeInTheDocument();
 		expect(screen.getByText('alice@signoz.io')).toBeInTheDocument();
-		expect(screen.getByText('Admin')).toBeInTheDocument();
 		expect(screen.getAllByText('ACTIVE')).toHaveLength(2);
 	});
 
@@ -67,7 +62,6 @@ describe('MembersTable', () => {
 
 		expect(screen.getByText('INVITED')).toBeInTheDocument();
 		expect(screen.getByText('charlie@signoz.io')).toBeInTheDocument();
-		expect(screen.getByText('Editor')).toBeInTheDocument();
 	});
 
 	it('calls onRowClick with the member data when a row is clicked', async () => {
@@ -99,7 +93,6 @@ describe('MembersTable', () => {
 			id: 'user-del',
 			name: 'Dave Deleted',
 			email: 'dave@signoz.io',
-			role: 'VIEWER' as ROLES,
 			status: MemberStatus.Deleted,
 			joinedOn: null,
 		};

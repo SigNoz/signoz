@@ -1,0 +1,55 @@
+.tanstack-table-view-wrapper {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+	min-height: 0;
+}
+
+.tanstack-fixed-col {
+	width: 32px;
+	min-width: 32px;
+	max-width: 32px;
+}
+
+.tanstack-filler-col {
+	width: 100%;
+	min-width: 0;
+}
+
+.tanstack-actions-col {
+	width: 0;
+	min-width: 0;
+	max-width: 0;
+}
+
+.tanstack-load-more-container {
+	width: 100%;
+	min-height: 56px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 8px 0 12px;
+	flex-shrink: 0;
+}
+
+.tanstack-table-virtuoso {
+	width: 100%;
+	overflow-x: scroll;
+}
+
+.tanstack-fontSize-small {
+	font-size: 11px;
+}
+
+.tanstack-fontSize-medium {
+	font-size: 13px;
+}
+
+.tanstack-fontSize-large {
+	font-size: 14px;
+}
+
+.tanstack-table-foot-loader-cell {
+	text-align: center;
+	padding: 8px 0;
+}

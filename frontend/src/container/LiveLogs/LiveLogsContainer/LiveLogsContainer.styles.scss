@@ -1,8 +1,27 @@
+.live-logs-container {
+	display: flex;
+	flex: 1;
+	min-height: 0;
+}
+
+.live-logs-content {
+	display: flex;
+	flex: 1;
+	flex-direction: column;
+	min-height: 0;
+}
+
 .live-logs-chart-container {
 	height: 200px;
 	min-height: 200px;
 	border-left: none;
 	border-right: none;
+}
+
+.live-logs-list-container {
+	display: flex;
+	flex: 1;
+	min-height: 0;
 }
 
 .live-logs-settings-panel {
