@@ -24,7 +24,6 @@ import '@signozhq/input';
 import '@signozhq/popover';
 import '@signozhq/radio-group';
 import '@signozhq/resizable';
-import '@signozhq/switch';
 import '@signozhq/table';
 import '@signozhq/toggle-group';
 import '@signozhq/ui';
