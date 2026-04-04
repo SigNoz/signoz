@@ -102,7 +102,7 @@ def test_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> N
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     invited_user = response.json()["data"]
     assert invited_user["email"] == USER_EDITOR_EMAIL
@@ -153,7 +153,7 @@ def test_revoke_invite(
         timeout=2,
         headers={"Authorization": f"Bearer {admin_token}"},
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
     invited_user = response.json()["data"]
     reset_token = invited_user["token"]
 
@@ -202,7 +202,7 @@ def test_provision_user(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     # Step 2: List users to find the invited user's ID (mirrors zeus GET /api/v1/user)
     response = requests.get(

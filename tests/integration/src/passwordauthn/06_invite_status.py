@@ -38,7 +38,7 @@ def test_reinvite_deleted_user(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
     invited_user = response.json()["data"]
     reset_token = invited_user["token"]
 
@@ -69,7 +69,7 @@ def test_reinvite_deleted_user(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
     reinvited_user = response.json()["data"]
     assert reinvited_user["role"] == "VIEWER"
     assert reinvited_user["id"] != invited_user["id"]  # confirms a new user was created
@@ -119,7 +119,7 @@ def test_bulk_invite(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=5,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
 
 def test_delete_user(

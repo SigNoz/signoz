@@ -33,7 +33,7 @@ def test_change_role(
         headers={"Authorization": f"Bearer {admin_token}"},
     )
 
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
 
     invited_user = response.json()["data"]
     reset_token = invited_user["token"]
