@@ -137,7 +137,6 @@ def test_saml_authn(
     found_user = find_user_with_roles_by_email(
         signoz, admin_token, "viewer@saml.integration.test"
     )
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -173,7 +172,6 @@ def test_idp_initiated_saml_authn(
     found_user = find_user_with_roles_by_email(
         signoz, admin_token, "viewer.idp.initiated@saml.integration.test"
     )
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -243,7 +241,6 @@ def test_saml_role_mapping_single_group_admin(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -269,7 +266,6 @@ def test_saml_role_mapping_single_group_editor(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -299,7 +295,6 @@ def test_saml_role_mapping_multiple_groups_highest_wins(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -326,7 +321,6 @@ def test_saml_role_mapping_explicit_viewer_group(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -352,7 +346,6 @@ def test_saml_role_mapping_unmapped_group_uses_default(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -429,7 +422,6 @@ def test_saml_role_mapping_role_claim_takes_precedence(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -459,7 +451,6 @@ def test_saml_role_mapping_invalid_role_claim_fallback(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -489,7 +480,6 @@ def test_saml_role_mapping_case_insensitive(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -514,7 +504,6 @@ def test_saml_name_mapping(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert (
         found_user["displayName"] == "Jane"
     )  # We are only mapping the first name here
@@ -542,7 +531,6 @@ def test_saml_empty_name_fallback(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -584,7 +572,6 @@ def test_saml_sso_login_activates_pending_invite_user(
 
     # User should be active with VIEWER role from SSO
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
-    assert found_user is not None
     assert found_user["status"] == "active"
     assert_user_has_role(found_user, "signoz-viewer")
 

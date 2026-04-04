@@ -1,7 +1,7 @@
 """Reusable helpers for user API tests."""
 
 from http import HTTPStatus
-from typing import Dict, Optional
+from typing import Dict
 
 import requests
 
@@ -10,7 +10,7 @@ from fixtures import types
 USERS_BASE = "/api/v2/users"
 
 
-def invite_and_activate_user(
+def create_active_user(
     signoz: types.SigNoz,
     admin_token: str,
     email: str,
@@ -38,27 +38,25 @@ def invite_and_activate_user(
     return invited_user["id"]
 
 
-def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> Optional[Dict]:
-    """Find a user by email from the user list. Returns user dict or None."""
+def find_user_by_email(signoz: types.SigNoz, token: str, email: str) -> Dict:
+    """Find a user by email from the user list. Raises AssertionError if not found."""
     response = requests.get(
         signoz.self.host_configs["8080"].get(USERS_BASE),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )
     assert response.status_code == HTTPStatus.OK, response.text
-    return next((u for u in response.json()["data"] if u["email"] == email), None)
+    user = next((u for u in response.json()["data"] if u["email"] == email), None)
+    assert user is not None, f"User with email '{email}' not found"
+    return user
 
 
-def find_user_with_roles_by_email(
-    signoz: types.SigNoz, token: str, email: str
-) -> Optional[Dict]:
+def find_user_with_roles_by_email(signoz: types.SigNoz, token: str, email: str) -> Dict:
     """Find a user by email and return UserWithRoles (user fields + userRoles).
 
-    Returns None if the user is not found.
+    Raises AssertionError if the user is not found.
     """
     user = find_user_by_email(signoz, token, email)
-    if user is None:
-        return None
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"{USERS_BASE}/{user['id']}"),
         headers={"Authorization": f"Bearer {token}"},

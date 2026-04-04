@@ -41,7 +41,6 @@ def test_change_password(
 
     # Get the user id via v2
     found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
-    assert found_user is not None
 
     # Try logging in with the password
     token = get_token(PASSWORD_USER_EMAIL, PASSWORD_USER_PASSWORD)
@@ -91,7 +90,6 @@ def test_reset_password(
 
     # Get the user id via v2
     found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
-    assert found_user is not None
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(
@@ -134,7 +132,6 @@ def test_reset_password_with_no_password(
 
     # Get the user id via v2
     found_user = find_user_by_email(signoz, admin_token, PASSWORD_USER_EMAIL)
-    assert found_user is not None
 
     with signoz.sqlstore.conn.connect() as conn:
         result = conn.execute(
@@ -267,7 +264,6 @@ def test_forgot_password_creates_reset_token(
 
     # Verify reset password token was created by querying the database
     found_user = find_user_by_email(signoz, admin_token, forgot_email)
-    assert found_user is not None
 
     reset_token = None
     # Query the database directly to get the reset password token
@@ -325,7 +321,6 @@ def test_reset_password_with_expired_token(
 
     # Get user ID via v2
     found_user = find_user_by_email(signoz, admin_token, forgot_email)
-    assert found_user is not None
 
     # Get org ID
     response = requests.get(

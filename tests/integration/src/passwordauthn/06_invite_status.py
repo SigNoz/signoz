@@ -4,7 +4,7 @@ from typing import Callable
 import requests
 
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.authutils import invite_and_activate_user
+from fixtures.authutils import create_active_user
 from fixtures.types import SigNoz
 
 
@@ -133,7 +133,7 @@ def test_delete_user(
     """
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    user_id = invite_and_activate_user(
+    user_id = create_active_user(
         signoz,
         admin_token,
         email="delete-verify-v2@integration.test",

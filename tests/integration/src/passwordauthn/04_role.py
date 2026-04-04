@@ -12,7 +12,7 @@ from fixtures.auth import (
 )
 from fixtures.authutils import (
     change_user_role,
-    invite_and_activate_user,
+    create_active_user,
 )
 
 ROLECHANGE_USER_EMAIL = "admin+rolechange@integration.test"
@@ -351,7 +351,7 @@ def test_editor_cannot_manage_roles(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # create a viewer user to be the target
-    viewer_id = invite_and_activate_user(
+    viewer_id = create_active_user(
         signoz,
         admin_token,
         email="viewer+roleauth@integration.test",

@@ -118,7 +118,6 @@ def test_oidc_authn(
     found_user = find_user_with_roles_by_email(
         signoz, admin_token, "viewer@oidc.integration.test"
     )
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -195,7 +194,6 @@ def test_oidc_role_mapping_single_group_admin(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -221,7 +219,6 @@ def test_oidc_role_mapping_single_group_editor(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -251,7 +248,6 @@ def test_oidc_role_mapping_multiple_groups_highest_wins(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -278,7 +274,6 @@ def test_oidc_role_mapping_explicit_viewer_group(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -304,7 +299,6 @@ def test_oidc_role_mapping_unmapped_group_uses_default(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
 
 
@@ -384,7 +378,6 @@ def test_oidc_role_mapping_role_claim_takes_precedence(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -416,7 +409,6 @@ def test_oidc_role_mapping_invalid_role_claim_fallback(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -446,7 +438,6 @@ def test_oidc_role_mapping_case_insensitive(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
 
 
@@ -472,7 +463,6 @@ def test_oidc_name_mapping(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
-    assert found_user is not None
     # Keycloak concatenates firstName + lastName into "name" claim
     assert found_user["displayName"] == "John Doe"
     assert_user_has_role(found_user, "signoz-viewer")  # Default role
@@ -501,7 +491,6 @@ def test_oidc_empty_name_uses_fallback(
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
 
     # User should still be created even with empty name
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-viewer")
     # Note: displayName may be empty - this is a known limitation
 
@@ -544,6 +533,5 @@ def test_oidc_sso_login_activates_pending_invite_user(
 
     # User should be active with VIEWER role from SSO, not ADMIN from invite
     found_user = find_user_with_roles_by_email(signoz, admin_token, email)
-    assert found_user is not None
     assert found_user["status"] == "active"
     assert_user_has_role(found_user, "signoz-viewer")

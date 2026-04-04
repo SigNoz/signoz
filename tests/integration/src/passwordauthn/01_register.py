@@ -88,7 +88,6 @@ def test_register(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
 
     # Verify admin user exists via v2
     found_user = find_user_with_roles_by_email(signoz, admin_token, USER_ADMIN_EMAIL)
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-admin")
 
 
@@ -110,7 +109,6 @@ def test_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> N
 
     # Verify the user appears in the users list but as pending_invite status
     found_user = find_user_with_roles_by_email(signoz, admin_token, USER_EDITOR_EMAIL)
-    assert found_user is not None
     assert found_user["status"] == "pending_invite"
     assert_user_has_role(found_user, "signoz-editor")
 
@@ -134,7 +132,6 @@ def test_invite(signoz: types.SigNoz, get_token: Callable[[str, str], str]) -> N
         signoz, admin_token_fresh, USER_EDITOR_EMAIL
     )
 
-    assert found_user is not None
     assert_user_has_role(found_user, "signoz-editor")
     assert found_user["displayName"] == USER_EDITOR_NAME
     assert found_user["email"] == USER_EDITOR_EMAIL
@@ -244,7 +241,6 @@ def test_provision_user(
     provisioned_user = find_user_with_roles_by_email(
         signoz, admin_token, provisioned_email
     )
-    assert provisioned_user is not None
     assert provisioned_user["status"] == "active"
     assert provisioned_user["displayName"] == provisioned_name
     assert_user_has_role(provisioned_user, "signoz-admin")

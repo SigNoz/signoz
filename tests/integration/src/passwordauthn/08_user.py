@@ -43,7 +43,6 @@ def test_get_user(signoz: types.SigNoz, get_token: Callable[[str, str], str]) ->
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     editor_user = find_user_by_email(signoz, admin_token, USER_EDITOR_EMAIL)
-    assert editor_user is not None
 
     response = requests.get(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_user['id']}"),
@@ -84,7 +83,6 @@ def test_update_user(
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     editor_user = find_user_by_email(signoz, admin_token, USER_EDITOR_EMAIL)
-    assert editor_user is not None
 
     response = requests.put(
         signoz.self.host_configs["8080"].get(f"/api/v2/users/{editor_user['id']}"),
