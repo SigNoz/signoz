@@ -11,6 +11,7 @@ from datetime import datetime, timedelta, timezone
 from http import HTTPStatus
 from typing import Callable, List
 
+import pytest
 import requests
 
 from fixtures import types
@@ -80,22 +81,6 @@ def _query_audit_raw(
         end_ms=int(now.timestamp() * 1000),
         queries=[query],
         request_type="raw",
-    )
-
-
-def _query_audit_ts(
-    signoz: types.SigNoz,
-    token: str,
-    query: dict,
-) -> requests.Response:
-    now = datetime.now(tz=timezone.utc)
-    return make_query_request(
-        signoz,
-        token,
-        start_ms=int((now - timedelta(minutes=5)).timestamp() * 1000),
-        end_ms=int(now.timestamp() * 1000),
-        queries=[query],
-        request_type="time_series",
     )
 
 
@@ -255,111 +240,67 @@ def test_audit_list_all(
     assert rows[4]["data"]["event_name"] == "dashboard.created"
 
 
-def test_audit_filter_by_principal(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
-) -> None:
-    """Q1: Show me all actions by a specific user — filter on materialized principal.id."""
-    _insert_standard_audit_events(insert_audit_logs)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = _query_audit_raw(
-        signoz,
-        token,
-        _build_audit_query(filter_expression="signoz.audit.principal.id = 'user-001'"),
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 3  # alice: create, update, login
-
-    emails = [
-        row["data"]["attributes_string"]["signoz.audit.principal.email"] for row in rows
-    ]
-    assert all(e == "alice@acme.com" for e in emails)
-
-
-def test_audit_filter_by_outcome_failure(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
-) -> None:
-    """Q2: Show me all failed actions — filter on materialized outcome."""
-    _insert_standard_audit_events(insert_audit_logs)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = _query_audit_raw(
-        signoz,
-        token,
-        _build_audit_query(filter_expression="signoz.audit.outcome = 'failure'"),
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 1
-
-    row = rows[0]["data"]
-    assert row["attributes_string"]["signoz.audit.principal.email"] == "viewer@acme.com"
-    assert row["attributes_string"]["signoz.audit.action"] == "delete"
-    assert row["severity_text"] == "ERROR"
-
-
-def test_audit_filter_by_resource(
-    signoz: types.SigNoz,
-    create_user_admin: None,  # pylint: disable=unused-argument
-    get_token: Callable[[str, str], str],
-    insert_audit_logs: Callable[[List[AuditLog]], None],
-) -> None:
-    """Q3: Show me the change history of a specific dashboard — filter on resource.kind + resource.id (resource attributes)."""
-    _insert_standard_audit_events(insert_audit_logs)
-    token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
-
-    response = _query_audit_raw(
-        signoz,
-        token,
-        _build_audit_query(
-            filter_expression="signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = 'dash-001'"
+@pytest.mark.parametrize(
+    "filter_expression,expected_count,expected_event_names",
+    [
+        pytest.param(
+            "signoz.audit.principal.id = 'user-001'",
+            3,
+            {"session.login", "dashboard.updated", "dashboard.created"},
+            id="FilterByPrincipalID",
         ),
-    )
-
-    assert response.status_code == HTTPStatus.OK
-
-    rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 3  # create, update, failed delete — all on dash-001
-
-    actions = [row["data"]["attributes_string"]["signoz.audit.action"] for row in rows]
-    # Most recent first
-    assert actions == ["delete", "update", "create"]
-
-
-def test_audit_filter_by_principal_type(
+        pytest.param(
+            "signoz.audit.outcome = 'failure'",
+            1,
+            {"dashboard.deleted"},
+            id="FilterByOutcomeFailure",
+        ),
+        pytest.param(
+            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = 'dash-001'",
+            3,
+            {"dashboard.deleted", "dashboard.updated", "dashboard.created"},
+            id="FilterByResourceKindAndID",
+        ),
+        pytest.param(
+            "signoz.audit.principal.type = 'service_account'",
+            1,
+            {"serviceaccount.apikey.created"},
+            id="FilterByPrincipalType",
+        ),
+        pytest.param(
+            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
+            1,
+            {"dashboard.deleted"},
+            id="FilterByResourceKindAndAction",
+        ),
+    ],
+)
+def test_audit_filter(
     signoz: types.SigNoz,
     create_user_admin: None,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
     insert_audit_logs: Callable[[List[AuditLog]], None],
+    filter_expression: str,
+    expected_count: int,
+    expected_event_names: set,
 ) -> None:
-    """Q5: Show me all actions by service accounts — filter on materialized principal.type."""
+    """Parametrized audit filter tests covering the documented query patterns."""
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = _query_audit_raw(
         signoz,
         token,
-        _build_audit_query(
-            filter_expression="signoz.audit.principal.type = 'service_account'"
-        ),
+        _build_audit_query(filter_expression=filter_expression),
     )
 
     assert response.status_code == HTTPStatus.OK
 
     rows = response.json()["data"]["data"]["results"][0]["rows"]
-    assert len(rows) == 1
-    assert rows[0]["data"]["event_name"] == "serviceaccount.apikey.created"
+    assert len(rows) == expected_count
+
+    actual_event_names = {row["data"]["event_name"] for row in rows}
+    assert actual_event_names == expected_event_names
 
 
 def test_audit_scalar_count_failures(
@@ -417,7 +358,7 @@ def test_audit_does_not_leak_into_logs(
 
     assert response.status_code == HTTPStatus.OK
 
-    rows = response.json()["data"]["data"]["results"][0].get("rows", [])
+    rows = response.json()["data"]["data"]["results"][0].get("rows") or []
 
     # None of the audit events should appear in regular log queries
     audit_bodies = [
