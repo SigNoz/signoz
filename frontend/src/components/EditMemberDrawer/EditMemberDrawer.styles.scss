@@ -45,8 +45,8 @@
 		display: flex;
 		align-items: center;
 		justify-content: space-between;
-		height: 32px;
-		padding: 0 var(--padding-2);
+		min-height: 32px;
+		padding: var(--padding-1) var(--padding-2);
 		border-radius: 2px;
 		background: var(--l2-background);
 		border: 1px solid var(--border);
@@ -55,6 +55,13 @@
 			cursor: not-allowed;
 			opacity: 0.8;
 		}
+	}
+
+	&__disabled-roles {
+		display: flex;
+		flex-wrap: wrap;
+		gap: var(--spacing-2);
+		flex: 1;
 	}
 
 	&__email-text {
@@ -78,21 +85,23 @@
 
 	&__role-select {
 		width: 100%;
-		height: 32px;
 
 		.ant-select-selector {
 			background-color: var(--l2-background) !important;
 			border-color: var(--border) !important;
 			border-radius: 2px;
-			padding: 0 var(--padding-2) !important;
+			padding: var(--padding-1) var(--padding-2) !important;
 			display: flex;
 			align-items: center;
+			flex-wrap: wrap;
+			min-height: 32px;
+			height: auto !important;
 		}
 
 		.ant-select-selection-item {
 			font-size: var(--font-size-sm);
 			color: var(--l1-foreground);
-			line-height: 32px;
+			line-height: 22px;
 			letter-spacing: -0.07px;
 		}
 
@@ -166,6 +175,10 @@
 		height: 21px;
 		background: var(--border);
 		flex-shrink: 0;
+	}
+
+	&__tooltip-wrapper {
+		display: inline-flex;
 	}
 
 	&__footer-btn {
