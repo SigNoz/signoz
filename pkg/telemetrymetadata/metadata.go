@@ -616,10 +616,6 @@ func (t *telemetryMetaStore) auditTblStatementToFieldKeys(ctx context.Context) (
 		instrumentationtypes.CodeFunctionName: "auditTblStatementToFieldKeys",
 	})
 
-	if t.auditDBName == "" || t.auditV2TblName == "" {
-		return nil, nil
-	}
-
 	query := fmt.Sprintf("SHOW CREATE TABLE %s.%s", t.auditDBName, t.auditV2TblName)
 	statements := []telemetrytypes.ShowCreateTableStatement{}
 	err := t.telemetrystore.ClickhouseDB().Select(ctx, &statements, query)
@@ -647,10 +643,6 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 	})
 
 	if len(fieldKeySelectors) == 0 {
-		return nil, true, nil
-	}
-
-	if t.auditDBName == "" {
 		return nil, true, nil
 	}
 
@@ -1611,10 +1603,6 @@ func (t *telemetryMetaStore) getAuditFieldValues(ctx context.Context, fieldValue
 		instrumentationtypes.CodeNamespace:    "metadata",
 		instrumentationtypes.CodeFunctionName: "getAuditFieldValues",
 	})
-
-	if t.auditDBName == "" || t.auditFieldsTblName == "" {
-		return &telemetrytypes.TelemetryFieldValues{}, true, nil
-	}
 
 	limit := fieldValueSelector.Limit
 	if limit == 0 {
