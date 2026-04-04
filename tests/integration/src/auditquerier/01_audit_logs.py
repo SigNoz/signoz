@@ -12,75 +12,77 @@ from http import HTTPStatus
 from typing import Callable, List
 
 import pytest
-import requests
 
 from fixtures import types
 from fixtures.audit import AuditLog
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.querier import make_query_request
+from fixtures.querier import (
+    BuilderQuery,
+    OrderBy,
+    TelemetryFieldKey,
+    build_logs_aggregation,
+    build_scalar_query,
+    make_query_request,
+)
 
-
-def _build_audit_query(
-    *,
-    filter_expression: str = "",
-    limit: int = 100,
-    source: str = "audit",
-) -> dict:
-    spec = {
-        "name": "A",
-        "signal": "logs",
-        "source": source,
-        "disabled": False,
-        "limit": limit,
-        "offset": 0,
-        "order": [
-            {"key": {"name": "timestamp"}, "direction": "desc"},
-            {"key": {"name": "id"}, "direction": "desc"},
-        ],
-        "aggregations": [{"expression": "count()"}],
-    }
-    if filter_expression:
-        spec["filter"] = {"expression": filter_expression}
-    return {"type": "builder_query", "spec": spec}
-
-
-def _build_audit_ts_query(
-    *,
-    aggregation: str = "count()",
-    filter_expression: str = "",
-    group_by: str = "",
-    step_interval: int = 60,
-    limit: int = 0,
-) -> dict:
-    spec = {
-        "name": "A",
-        "signal": "logs",
-        "source": "audit",
-        "stepInterval": step_interval,
-        "aggregations": [{"expression": aggregation}],
-    }
-    if filter_expression:
-        spec["filter"] = {"expression": filter_expression}
-    if group_by:
-        spec["groupBy"] = [{"name": group_by}]
-    if limit:
-        spec["limit"] = limit
-    return {"type": "builder_query", "spec": spec}
+DEFAULT_ORDER = [
+    OrderBy(
+        key=TelemetryFieldKey(name="timestamp", field_data_type="", field_context=""),
+        direction="desc",
+    ),
+    OrderBy(
+        key=TelemetryFieldKey(name="id", field_data_type="", field_context=""),
+        direction="desc",
+    ),
+]
 
 
 def _query_audit_raw(
     signoz: types.SigNoz,
     token: str,
-    query: dict,
-) -> requests.Response:
+    filter_expression: str = "",
+    limit: int = 100,
+    source: str = "audit",
+):
     now = datetime.now(tz=timezone.utc)
+    query = BuilderQuery(
+        signal="logs",
+        source=source,
+        limit=limit,
+        filter_expression=filter_expression,
+        order=DEFAULT_ORDER,
+    )
+    return make_query_request(
+        signoz,
+        token,
+        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
+        end_ms=int(now.timestamp() * 1000),
+        queries=[query.to_dict()],
+        request_type="raw",
+    )
+
+
+def _query_audit_scalar(
+    signoz: types.SigNoz,
+    token: str,
+    aggregation: str = "count()",
+    filter_expression: str = "",
+):
+    now = datetime.now(tz=timezone.utc)
+    query = build_scalar_query(
+        name="A",
+        signal="logs",
+        source="audit",
+        aggregations=[build_logs_aggregation(aggregation)],
+        filter_expression=filter_expression,
+    )
     return make_query_request(
         signoz,
         token,
         start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
         end_ms=int(now.timestamp() * 1000),
         queries=[query],
-        request_type="raw",
+        request_type="scalar",
     )
 
 
@@ -223,7 +225,7 @@ def test_audit_list_all(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _query_audit_raw(signoz, token, _build_audit_query())
+    response = _query_audit_raw(signoz, token)
 
     assert response.status_code == HTTPStatus.OK
     assert response.json()["status"] == "success"
@@ -256,7 +258,8 @@ def test_audit_list_all(
             id="FilterByOutcomeFailure",
         ),
         pytest.param(
-            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.resource.id = 'dash-001'",
+            "signoz.audit.resource.kind = 'dashboard'"
+            " AND signoz.audit.resource.id = 'dash-001'",
             3,
             {"dashboard.deleted", "dashboard.updated", "dashboard.created"},
             id="FilterByResourceKindAndID",
@@ -268,7 +271,8 @@ def test_audit_list_all(
             id="FilterByPrincipalType",
         ),
         pytest.param(
-            "signoz.audit.resource.kind = 'dashboard' AND signoz.audit.action = 'delete'",
+            "signoz.audit.resource.kind = 'dashboard'"
+            " AND signoz.audit.action = 'delete'",
             1,
             {"dashboard.deleted"},
             id="FilterByResourceKindAndAction",
@@ -288,11 +292,7 @@ def test_audit_filter(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    response = _query_audit_raw(
-        signoz,
-        token,
-        _build_audit_query(filter_expression=filter_expression),
-    )
+    response = _query_audit_raw(signoz, token, filter_expression=filter_expression)
 
     assert response.status_code == HTTPStatus.OK
 
@@ -313,19 +313,8 @@ def test_audit_scalar_count_failures(
     _insert_standard_audit_events(insert_audit_logs)
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    now = datetime.now(tz=timezone.utc)
-    response = make_query_request(
-        signoz,
-        token,
-        start_ms=int((now - timedelta(seconds=30)).timestamp() * 1000),
-        end_ms=int(now.timestamp() * 1000),
-        queries=[
-            _build_audit_ts_query(
-                aggregation="count()",
-                filter_expression="signoz.audit.outcome = 'failure'",
-            )
-        ],
-        request_type="scalar",
+    response = _query_audit_scalar(
+        signoz, token, filter_expression="signoz.audit.outcome = 'failure'"
     )
 
     assert response.status_code == HTTPStatus.OK
@@ -350,11 +339,7 @@ def test_audit_does_not_leak_into_logs(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     # Query regular logs (no source=audit) — should NOT see audit events
-    response = _query_audit_raw(
-        signoz,
-        token,
-        _build_audit_query(source=""),
-    )
+    response = _query_audit_raw(signoz, token, source="")
 
     assert response.status_code == HTTPStatus.OK
 

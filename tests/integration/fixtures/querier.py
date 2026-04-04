@@ -38,6 +38,7 @@ class OrderBy:
 class BuilderQuery:
     signal: str
     name: str = "A"
+    source: Optional[str] = None
     limit: Optional[int] = None
     filter_expression: Optional[str] = None
     select_fields: Optional[List[TelemetryFieldKey]] = None
@@ -48,6 +49,8 @@ class BuilderQuery:
             "signal": self.signal,
             "name": self.name,
         }
+        if self.source:
+            spec["source"] = self.source
         if self.limit is not None:
             spec["limit"] = self.limit
         if self.filter_expression:
@@ -442,6 +445,7 @@ def build_scalar_query(
     signal: str,
     aggregations: List[Dict],
     *,
+    source: Optional[str] = None,
     group_by: Optional[List[Dict]] = None,
     order: Optional[List[Dict]] = None,
     limit: Optional[int] = None,
@@ -457,6 +461,9 @@ def build_scalar_query(
         "disabled": disabled,
         "aggregations": aggregations,
     }
+
+    if source:
+        spec["source"] = source
 
     if group_by:
         spec["groupBy"] = group_by
