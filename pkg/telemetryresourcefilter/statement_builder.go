@@ -1,11 +1,10 @@
-package resourcefilter
+package telemetryresourcefilter
 
 import (
 	"context"
 	"fmt"
 	"log/slog"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -13,30 +12,11 @@ import (
 	"github.com/huandu/go-sqlbuilder"
 )
 
-var (
-	ErrUnsupportedSignal = errors.NewInvalidInputf(errors.CodeInvalidInput, "unsupported signal type")
-)
-
-// Configuration for different signal types.
-type signalConfig struct {
-	dbName    string
-	tableName string
-}
-
-var signalConfigs = map[telemetrytypes.Signal]signalConfig{
-	telemetrytypes.SignalTraces: {
-		dbName:    TracesDBName,
-		tableName: TraceResourceV3TableName,
-	},
-	telemetrytypes.SignalLogs: {
-		dbName:    LogsDBName,
-		tableName: LogsResourceV2TableName,
-	},
-}
-
-// Generic resource filter statement builder.
+// resourceFilterStatementBuilder builds resource fingerprint filter CTEs.
 type resourceFilterStatementBuilder[T any] struct {
 	logger           *slog.Logger
+	dbName           string
+	tableName        string
 	fieldMapper      qbtypes.FieldMapper
 	conditionBuilder qbtypes.ConditionBuilder
 	metadataStore    telemetrytypes.MetadataStore
@@ -52,38 +32,26 @@ var (
 	_ qbtypes.StatementBuilder[qbtypes.LogAggregation]   = (*resourceFilterStatementBuilder[qbtypes.LogAggregation])(nil)
 )
 
-// NewTraceResourceFilterStatementBuilder creates a new trace resource filter statement builder.
-func NewTraceResourceFilterStatementBuilder(
+func New[T any](
 	settings factory.ProviderSettings,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
-	metadataStore telemetrytypes.MetadataStore,
-) *resourceFilterStatementBuilder[qbtypes.TraceAggregation] {
-	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter")
-	return &resourceFilterStatementBuilder[qbtypes.TraceAggregation]{
-		logger:           set.Logger(),
-		fieldMapper:      fieldMapper,
-		conditionBuilder: conditionBuilder,
-		metadataStore:    metadataStore,
-		signal:           telemetrytypes.SignalTraces,
-	}
-}
-
-func NewLogResourceFilterStatementBuilder(
-	settings factory.ProviderSettings,
-	fieldMapper qbtypes.FieldMapper,
-	conditionBuilder qbtypes.ConditionBuilder,
+	dbName string,
+	tableName string,
+	signal telemetrytypes.Signal,
 	metadataStore telemetrytypes.MetadataStore,
 	fullTextColumn *telemetrytypes.TelemetryFieldKey,
 	jsonKeyToKey qbtypes.JsonKeyToFieldFunc,
-) *resourceFilterStatementBuilder[qbtypes.LogAggregation] {
-	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/querybuilder/resourcefilter")
-	return &resourceFilterStatementBuilder[qbtypes.LogAggregation]{
+) *resourceFilterStatementBuilder[T] {
+	set := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetryresourcefilter")
+	fm := NewFieldMapper()
+	cb := NewConditionBuilder(fm)
+	return &resourceFilterStatementBuilder[T]{
 		logger:           set.Logger(),
-		fieldMapper:      fieldMapper,
-		conditionBuilder: conditionBuilder,
+		dbName:           dbName,
+		tableName:        tableName,
+		fieldMapper:      fm,
+		conditionBuilder: cb,
 		metadataStore:    metadataStore,
-		signal:           telemetrytypes.SignalLogs,
+		signal:           signal,
 		fullTextColumn:   fullTextColumn,
 		jsonKeyToKey:     jsonKeyToKey,
 	}
@@ -120,14 +88,9 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 	query qbtypes.QueryBuilderQuery[T],
 	variables map[string]qbtypes.VariableItem,
 ) (*qbtypes.Statement, error) {
-	config, exists := signalConfigs[b.signal]
-	if !exists {
-		return nil, errors.WrapInvalidInputf(ErrUnsupportedSignal, errors.CodeInvalidInput, "unsupported signal: %s", b.signal)
-	}
-
 	q := sqlbuilder.NewSelectBuilder()
 	q.Select("fingerprint")
-	q.From(fmt.Sprintf("%s.%s", config.dbName, config.tableName))
+	q.From(fmt.Sprintf("%s.%s", b.dbName, b.tableName))
 
 	keySelectors := b.getKeySelectors(query)
 	keys, _, err := b.metadataStore.GetKeysMulti(ctx, keySelectors)

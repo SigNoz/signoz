@@ -1,8 +1,10 @@
-import { useState } from 'react';
 import { useTranslation } from 'react-i18next';
+import { toast } from '@signozhq/sonner';
 import { Button, Form, Input } from 'antd';
-import editOrg from 'api/organization/editOrg';
-import { useNotifications } from 'hooks/useNotifications';
+import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
+import { useUpdateMyOrganization } from 'api/generated/services/orgs';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
@@ -14,42 +16,34 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { org, updateOrg } = useAppContext();
 	const { displayName } = (org || [])[index];
-	const [isLoading, setIsLoading] = useState<boolean>(false);
-	const { notifications } = useNotifications();
+
+	const {
+		mutateAsync: updateMyOrganization,
+		isLoading,
+	} = useUpdateMyOrganization({
+		mutation: {
+			onSuccess: (_, { data }) => {
+				toast.success(t('success', { ns: 'common' }), {
+					richColors: true,
+					position: 'top-right',
+				});
+				updateOrg(orgId, data.displayName ?? '');
+			},
+			onError: (error) => {
+				const apiError = convertToApiError(
+					error as AxiosError<RenderErrorResponseDTO>,
+				);
+				toast.error(
+					apiError?.getErrorMessage() ?? t('something_went_wrong', { ns: 'common' }),
+					{ richColors: true, position: 'top-right' },
+				);
+			},
+		},
+	});
 
 	const onSubmit = async (values: FormValues): Promise<void> => {
-		try {
-			setIsLoading(true);
-			const { displayName } = values;
-			const { statusCode, error } = await editOrg({
-				displayName,
-				orgId,
-			});
-			if (statusCode === 204) {
-				notifications.success({
-					message: t('success', {
-						ns: 'common',
-					}),
-				});
-				updateOrg(orgId, displayName);
-			} else {
-				notifications.error({
-					message:
-						error ||
-						t('something_went_wrong', {
-							ns: 'common',
-						}),
-				});
-			}
-			setIsLoading(false);
-		} catch (error) {
-			setIsLoading(false);
-			notifications.error({
-				message: t('something_went_wrong', {
-					ns: 'common',
-				}),
-			});
-		}
+		const { displayName } = values;
+		await updateMyOrganization({ data: { id: orgId, displayName } });
 	};
 
 	if (!org) {
