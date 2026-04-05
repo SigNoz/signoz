@@ -392,7 +392,7 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 	}
 
 	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
-		err = module.store.DeleteServiceAccountRole(ctx, serviceAccount.ID, serviceAccount.ServiceAccountRoles[0].RoleID)
+		err = module.store.DeleteServiceAccountRoles(ctx, serviceAccount.ID)
 		if err != nil {
 			return err
 		}
