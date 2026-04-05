@@ -30,6 +30,7 @@ function SelectDropdownRender({
 				onKeyDown={handleKeyDown}
 				onBlur={handleAddCustomValue}
 				className="select-dropdown-render"
+				autoComplete="off"
 			/>
 		</>
 	);

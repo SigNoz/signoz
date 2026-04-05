@@ -603,6 +603,7 @@ function CustomTimePicker({
 							inputStatus === CustomTimePickerInputStatus.ERROR ? 'error' : '',
 						)}
 						type="text"
+						autoComplete="off"
 						status={
 							inputValue && inputStatus === CustomTimePickerInputStatus.ERROR
 								? 'error'
