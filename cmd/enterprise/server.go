@@ -30,6 +30,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
@@ -140,8 +141,8 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			communityHandler := querier.NewHandler(ps, q, a)
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
-		func(store cloudintegrationtypes.Store, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module) (cloudintegration.Module, error) {
-			return implcloudintegration.NewModule(store, config.Global, zeus, gateway, licensing, serviceAccount)
+		func(store cloudintegrationtypes.Store, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module) (cloudintegration.Module, error) {
+			return implcloudintegration.NewModule(store, global, zeus, gateway, licensing, serviceAccount)
 		},
 	)
 	if err != nil {

@@ -28,14 +28,14 @@ type module struct {
 	gateway           gateway.Gateway
 	zeus              zeus.Zeus
 	licensing         licensing.Licensing
-	globalConfig      global.Config
+	global            global.Global
 	serviceAccount    serviceaccount.Module
 	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule
 }
 
 func NewModule(
 	store cloudintegrationtypes.Store,
-	globalConfig global.Config,
+	global global.Global,
 	zeus zeus.Zeus,
 	gateway gateway.Gateway,
 	licensing licensing.Licensing,
@@ -54,12 +54,55 @@ func NewModule(
 
 	return &module{
 		store:             store,
-		globalConfig:      globalConfig,
+		global:            global,
 		zeus:              zeus,
 		gateway:           gateway,
 		licensing:         licensing,
 		serviceAccount:    serviceAccount,
 		cloudProvidersMap: cloudProvidersMap,
+	}, nil
+}
+
+// GetConnectionCredentials returns credentials required to generate connection artifact. eg. apiKey, ingestionKey etc.
+// It will return creds it can deduce and return empty value for others.
+func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.SignozCredentials, error) {
+	// get license to get the deployment details
+	license, err := module.licensing.GetActive(ctx, orgID)
+	if err != nil {
+		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
+	}
+
+	var ingestionURL string
+
+	globalConfig := module.global.GetConfig(ctx)
+	if globalConfig != nil {
+		ingestionURL = globalConfig.IngestionURL
+	}
+
+	// get deployment details from zeus, ignore error
+	respBytes, _ := module.zeus.GetDeployment(ctx, license.Key)
+
+	var signozAPIURL string
+
+	if len(respBytes) > 0 {
+		// parse deployment details, ignore error, if client is asking api url every time check for possible error
+		deployment, _ := zeustypes.NewGettableDeployment(respBytes)
+		if deployment != nil {
+			signozAPIURL = deployment.SignozAPIUrl
+		}
+	}
+
+	// ignore error
+	apiKey, _ := module.getOrCreateAPIKey(ctx, orgID, provider)
+
+	// ignore error
+	ingestionKey, _ := module.getOrCreateIngestionKey(ctx, orgID, provider)
+
+	return &cloudintegrationtypes.SignozCredentials{
+		SigNozAPIURL: signozAPIURL,
+		SigNozAPIKey: apiKey,
+		IngestionURL: ingestionURL,
+		IngestionKey: ingestionKey,
 	}, nil
 }
 
@@ -78,52 +121,12 @@ func (module *module) CreateAccount(ctx context.Context, account *cloudintegrati
 }
 
 func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	// TODO: evaluate if this check is really required and remove if the deployment promises to always have this configured.
-	if module.globalConfig.IngestionURL == nil {
-		return nil, errors.New(errors.TypeInternal, errors.CodeInternal, "ingestion URL is not configured")
-	}
-
-	// get license to get the deployment details
-	license, err := module.licensing.GetActive(ctx, account.OrgID)
+	cloudProviderModule, err := module.getCloudProvider(account.Provider)
 	if err != nil {
 		return nil, err
 	}
 
-	// get deployment details from zeus
-	respBytes, err := module.zeus.GetDeployment(ctx, license.Key)
-	if err != nil {
-		return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't get deployment")
-	}
-
-	// parse deployment details
-	deployment, err := zeustypes.NewGettableDeployment(respBytes)
-	if err != nil {
-		return nil, err
-	}
-
-	apiKey, err := module.getOrCreateAPIKey(ctx, account.OrgID, account.Provider)
-	if err != nil {
-		return nil, err
-	}
-
-	ingestionKey, err := module.getOrCreateIngestionKey(ctx, account.OrgID, account.Provider)
-	if err != nil {
-		return nil, err
-	}
-
-	creds := &cloudintegrationtypes.SignozCredentials{
-		SigNozAPIURL: deployment.SignozAPIUrl,
-		SigNozAPIKey: apiKey,
-		IngestionURL: module.globalConfig.IngestionURL.String(),
-		IngestionKey: ingestionKey,
-	}
-
-	cloudProviderModule, err := module.GetCloudProvider(account.Provider)
-	if err != nil {
-		return nil, err
-	}
-
-	return cloudProviderModule.GetConnectionArtifact(ctx, creds, account, req)
+	return cloudProviderModule.GetConnectionArtifact(ctx, account, req)
 }
 
 func (module *module) GetAccount(ctx context.Context, orgID valuer.UUID, accountID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.Account, error) {
@@ -206,7 +209,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, err
 	}
 
-	cloudProvider, err := module.GetCloudProvider(provider)
+	cloudProvider, err := module.getCloudProvider(provider)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +262,7 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	cloudProvider, err := module.GetCloudProvider(provider)
+	cloudProvider, err := module.getCloudProvider(provider)
 	if err != nil {
 		return nil, err
 	}
@@ -307,7 +310,7 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 		return nil, errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	cloudProvider, err := module.GetCloudProvider(provider)
+	cloudProvider, err := module.getCloudProvider(provider)
 	if err != nil {
 		return nil, err
 	}
@@ -348,7 +351,7 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	cloudProvider, err := module.GetCloudProvider(provider)
+	cloudProvider, err := module.getCloudProvider(provider)
 	if err != nil {
 		return err
 	}
@@ -372,7 +375,7 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 		return errors.New(errors.TypeLicenseUnavailable, errors.CodeLicenseUnavailable, "a valid license is not available").WithAdditional("this feature requires a valid license").WithAdditional(err.Error())
 	}
 
-	cloudProvider, err := module.GetCloudProvider(provider)
+	cloudProvider, err := module.getCloudProvider(provider)
 	if err != nil {
 		return err
 	}
@@ -390,57 +393,6 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(integrationService, configJSON)
 
 	return module.store.UpdateService(ctx, storableService)
-}
-
-// TODO: use the function in dashboard APIs during removal of older cloud integration code.
-func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
-	var allDashboards []*dashboardtypes.Dashboard
-
-	for provider := range module.cloudProvidersMap {
-		cloudProvider, err := module.GetCloudProvider(provider)
-		if err != nil {
-			return nil, err
-		}
-
-		connectedAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
-		if err != nil {
-			return nil, err
-		}
-
-		for _, storableAccount := range connectedAccounts {
-			storedServices, err := module.store.ListServices(ctx, storableAccount.ID)
-			if err != nil {
-				return nil, err
-			}
-
-			for _, storedSvc := range storedServices {
-				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
-				if err != nil || !cloudProvider.IsMetricsEnabled(ctx, serviceConfig) {
-					continue
-				}
-
-				svcDef, err := cloudProvider.GetServiceDefinition(ctx, storedSvc.Type)
-				if err != nil || svcDef == nil {
-					continue
-				}
-
-				dashboards := cloudintegrationtypes.GetDashboardsFromAssets(
-					storedSvc.Type.StringValue(),
-					orgID,
-					provider,
-					storableAccount.CreatedAt,
-					svcDef.Assets,
-				)
-				allDashboards = append(allDashboards, dashboards...)
-			}
-		}
-	}
-
-	sort.Slice(allDashboards, func(i, j int) bool {
-		return allDashboards[i].ID < allDashboards[j].ID
-	})
-
-	return allDashboards, nil
 }
 
 // TODO: use the function in dashboard APIs during removal of older cloud integration code.
@@ -479,7 +431,7 @@ func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]
 	return module.listDashboards(ctx, orgID)
 }
 
-func (module *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
+func (module *module) getCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
 	if cloudProviderModule, ok := module.cloudProvidersMap[provider]; ok {
 		return cloudProviderModule, nil
 	}
@@ -530,4 +482,55 @@ func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, 
 		return "", err
 	}
 	return factorAPIKey.Key, nil
+}
+
+// TODO: use the function in dashboard APIs during removal of older cloud integration code.
+func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
+	var allDashboards []*dashboardtypes.Dashboard
+
+	for provider := range module.cloudProvidersMap {
+		cloudProvider, err := module.getCloudProvider(provider)
+		if err != nil {
+			return nil, err
+		}
+
+		connectedAccounts, err := module.store.ListConnectedAccounts(ctx, orgID, provider)
+		if err != nil {
+			return nil, err
+		}
+
+		for _, storableAccount := range connectedAccounts {
+			storedServices, err := module.store.ListServices(ctx, storableAccount.ID)
+			if err != nil {
+				return nil, err
+			}
+
+			for _, storedSvc := range storedServices {
+				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
+				if err != nil || !cloudProvider.IsMetricsEnabled(ctx, serviceConfig) {
+					continue
+				}
+
+				svcDef, err := cloudProvider.GetServiceDefinition(ctx, storedSvc.Type)
+				if err != nil || svcDef == nil {
+					continue
+				}
+
+				dashboards := cloudintegrationtypes.GetDashboardsFromAssets(
+					storedSvc.Type.StringValue(),
+					orgID,
+					provider,
+					storableAccount.CreatedAt,
+					svcDef.Assets,
+				)
+				allDashboards = append(allDashboards, dashboards...)
+			}
+		}
+	}
+
+	sort.Slice(allDashboards, func(i, j int) bool {
+		return allDashboards[i].ID < allDashboards[j].ID
+	})
+
+	return allDashboards, nil
 }

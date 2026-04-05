@@ -10,6 +10,26 @@ import (
 )
 
 func (provider *provider) addCloudIntegrationRoutes(router *mux.Router) error {
+	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/credentials", handler.New(
+		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.GetConnectionCredentials),
+		handler.OpenAPIDef{
+			ID:                  "GetConnectionCredentials",
+			Tags:                []string{"cloudintegration"},
+			Summary:             "Get connection credentials",
+			Description:         "This endpoint retrieves the connection credentials required for integration",
+			Request:             nil,
+			RequestContentType:  "application/json",
+			Response:            new(citypes.SignozCredentials),
+			ResponseContentType: "application/json",
+			SuccessStatusCode:   http.StatusOK,
+			ErrorStatusCodes:    []int{},
+			Deprecated:          false,
+			SecuritySchemes:     newSecuritySchemes(types.RoleAdmin),
+		},
+	)).Methods(http.MethodGet).GetError(); err != nil {
+		return err
+	}
+
 	if err := router.Handle("/api/v1/cloud_integrations/{cloud_provider}/accounts", handler.New(
 		provider.authZ.AdminAccess(provider.cloudIntegrationHandler.CreateAccount),
 		handler.OpenAPIDef{

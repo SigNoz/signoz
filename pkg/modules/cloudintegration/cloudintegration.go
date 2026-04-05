@@ -10,6 +10,8 @@ import (
 )
 
 type Module interface {
+	GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider citypes.CloudProviderType) (*citypes.SignozCredentials, error)
+
 	CreateAccount(ctx context.Context, account *citypes.Account) error
 
 	// GetAccount returns cloud integration account
@@ -53,13 +55,10 @@ type Module interface {
 	// ListDashboards returns list of dashboards across all connected cloud integration accounts
 	// for enabled services in the org. This list gets added to dashboard list page
 	ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error)
-
-	// GetCloudProvider returns cloud provider specific module
-	GetCloudProvider(provider citypes.CloudProviderType) (CloudProviderModule, error)
 }
 
 type CloudProviderModule interface {
-	GetConnectionArtifact(ctx context.Context, creds *citypes.SignozCredentials, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
+	GetConnectionArtifact(ctx context.Context, account *citypes.Account, req *citypes.ConnectionArtifactRequest) (*citypes.ConnectionArtifact, error)
 
 	// ListServiceDefinitions returns all service definitions for this cloud provider.
 	ListServiceDefinitions(ctx context.Context) ([]*citypes.ServiceDefinition, error)
@@ -89,6 +88,7 @@ type CloudProviderModule interface {
 }
 
 type Handler interface {
+	GetConnectionCredentials(http.ResponseWriter, *http.Request)
 	CreateAccount(http.ResponseWriter, *http.Request)
 	ListAccounts(http.ResponseWriter, *http.Request)
 	GetAccount(http.ResponseWriter, *http.Request)

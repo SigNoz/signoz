@@ -119,12 +119,12 @@ func (account *Account) Update(config *AccountConfig) error {
 func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*AccountConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
-		if artifact.Aws == nil {
+		if artifact.Config.Aws == nil {
 			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
 		}
 		return &AccountConfig{
 			AWS: &AWSAccountConfig{
-				Regions: artifact.Aws.Regions,
+				Regions: artifact.Config.Aws.Regions,
 			},
 		}, nil
 	}
@@ -133,17 +133,23 @@ func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *
 }
 
 func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*ConnectionArtifactRequest, error) {
+	req := &ConnectionArtifactRequest{
+		Credentials: artifact.Credentials,
+	}
+
 	switch provider {
 	case CloudProviderTypeAWS:
-		if artifact.Aws == nil {
+		if artifact.Config.Aws == nil {
 			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
 		}
-		return &ConnectionArtifactRequest{
+		req.Config = &ConnectionArtifactRequestConfig{
 			Aws: &AWSConnectionArtifactRequest{
-				DeploymentRegion: artifact.Aws.DeploymentRegion,
-				Regions:          artifact.Aws.Regions,
+				DeploymentRegion: artifact.Config.Aws.DeploymentRegion,
+				Regions:          artifact.Config.Aws.Regions,
 			},
-		}, nil
+		}
+
+		return req, nil
 	}
 
 	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())

@@ -20,15 +20,15 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 	return &awscloudprovider{serviceDefinitions: defStore}, nil
 }
 
-func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, creds *cloudintegrationtypes.SignozCredentials, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	// TODO: get this from config
 	agentVersion := "v0.0.8"
 
-	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", req.Aws.DeploymentRegion)
+	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", req.Config.Aws.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
 	q := u.Query()
-	q.Set("region", req.Aws.DeploymentRegion)
+	q.Set("region", req.Config.Aws.DeploymentRegion)
 	u.Fragment = "/stacks/quickcreate"
 
 	u.RawQuery = q.Encode()
@@ -37,11 +37,11 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, cre
 	q.Set("stackName", "signoz-integration")
 	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", agentVersion))
 	q.Set("param_SigNozIntegrationAgentVersion", agentVersion)
-	q.Set("param_SigNozApiUrl", creds.SigNozAPIURL)
-	q.Set("param_SigNozApiKey", creds.SigNozAPIKey)
+	q.Set("param_SigNozApiUrl", req.Credentials.SigNozAPIURL)
+	q.Set("param_SigNozApiKey", req.Credentials.SigNozAPIKey)
 	q.Set("param_SigNozAccountId", account.ID.StringValue())
-	q.Set("param_IngestionUrl", creds.IngestionURL)
-	q.Set("param_IngestionKey", creds.IngestionKey)
+	q.Set("param_IngestionUrl", req.Credentials.IngestionURL)
+	q.Set("param_IngestionKey", req.Credentials.IngestionKey)
 
 	return &cloudintegrationtypes.ConnectionArtifact{
 		Aws: &cloudintegrationtypes.AWSConnectionArtifact{

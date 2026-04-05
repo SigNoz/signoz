@@ -16,6 +16,10 @@ func NewModule() cloudintegration.Module {
 	return &module{}
 }
 
+func (module *module) GetConnectionCredentials(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) (*cloudintegrationtypes.SignozCredentials, error) {
+	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get connection credentials is not supported")
+}
+
 func (module *module) CreateAccount(ctx context.Context, account *cloudintegrationtypes.Account) error {
 	return errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "create account is not supported")
 }
@@ -66,8 +70,4 @@ func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, i
 
 func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "list dashboards is not supported")
-}
-
-func (module *module) GetCloudProvider(provider cloudintegrationtypes.CloudProviderType) (cloudintegration.CloudProviderModule, error) {
-	return nil, errors.New(errors.TypeUnsupported, cloudintegrationtypes.ErrCodeUnsupported, "get cloud provider is not supported")
 }

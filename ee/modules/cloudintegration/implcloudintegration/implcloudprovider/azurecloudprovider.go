@@ -13,7 +13,7 @@ func NewAzureCloudProvider() cloudintegration.CloudProviderModule {
 	return &azurecloudprovider{}
 }
 
-func (provider *azurecloudprovider) GetConnectionArtifact(ctx context.Context, creds *cloudintegrationtypes.SignozCredentials, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
+func (provider *azurecloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
 	panic("implement me")
 }
 

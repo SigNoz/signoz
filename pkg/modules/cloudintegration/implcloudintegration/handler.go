@@ -24,6 +24,32 @@ func NewHandler(module cloudintegration.Module) cloudintegration.Handler {
 	}
 }
 
+func (handler *handler) GetConnectionCredentials(rw http.ResponseWriter, r *http.Request) {
+	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
+	defer cancel()
+
+	claims, err := authtypes.ClaimsFromContext(ctx)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	providerString := mux.Vars(r)["cloud_provider"]
+	provider, err := cloudintegrationtypes.NewCloudProvider(providerString)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	creds, err := handler.module.GetConnectionCredentials(ctx, valuer.MustNewUUID(claims.OrgID), provider)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	render.Success(rw, http.StatusOK, creds)
+}
+
 func (handler *handler) CreateAccount(rw http.ResponseWriter, r *http.Request) {
 	ctx, cancel := context.WithTimeout(r.Context(), 10*time.Second)
 	defer cancel()

@@ -17,6 +17,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/flagger"
 	"github.com/SigNoz/signoz/pkg/gateway"
+	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/licensing"
@@ -99,7 +100,7 @@ func New(
 	dashboardModuleCallback func(sqlstore.SQLStore, factory.ProviderSettings, analytics.Analytics, organization.Getter, queryparser.QueryParser, querier.Querier, licensing.Licensing) dashboard.Module,
 	gatewayProviderFactory func(licensing.Licensing) factory.ProviderFactory[gateway.Gateway, gateway.Config],
 	querierHandlerCallback func(factory.ProviderSettings, querier.Querier, analytics.Analytics) querier.Handler,
-	cloudIntegrationCallback func(cloudintegrationtypes.Store, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module) (cloudintegration.Module, error),
+	cloudIntegrationCallback func(cloudintegrationtypes.Store, global.Global, zeus.Zeus, gateway.Gateway, licensing.Licensing, serviceaccount.Module) (cloudintegration.Module, error),
 ) (*SigNoz, error) {
 	// Initialize instrumentation
 	instrumentation, err := instrumentation.New(ctx, config.Instrumentation, version.Info, "signoz")
@@ -420,7 +421,7 @@ func New(
 	serviceAccount := implserviceaccount.NewModule(implserviceaccount.NewStore(sqlstore), authz, cache, analytics, providerSettings, config.ServiceAccount)
 
 	cloudIntegrationStore := pkgimplcloudintegration.NewStore(sqlstore)
-	cloudIntegrationModule, err := cloudIntegrationCallback(cloudIntegrationStore, zeus, gateway, licensing, serviceAccount)
+	cloudIntegrationModule, err := cloudIntegrationCallback(cloudIntegrationStore, global, zeus, gateway, licensing, serviceAccount)
 	if err != nil {
 		return nil, err
 	}

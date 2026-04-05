@@ -7,8 +7,19 @@ import (
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
 
+type SignozCredentials struct {
+	SigNozAPIURL string `json:"sigNozApiURL" required:"true"`
+	SigNozAPIKey string `json:"sigNozApiKey" required:"true"` // PAT
+	IngestionURL string `json:"ingestionUrl" required:"true"`
+	IngestionKey string `json:"ingestionKey" required:"true"`
+}
+
 type ConnectionArtifactRequest struct {
-	// required till new providers are added
+	Config      *ConnectionArtifactRequestConfig `json:"config" required:"true"`
+	Credentials *SignozCredentials               `json:"credentials" required:"true"`
+}
+
+type ConnectionArtifactRequestConfig struct {
 	Aws *AWSConnectionArtifactRequest `json:"aws" required:"true" nullable:"false"`
 }
 
@@ -81,13 +92,6 @@ type AWSIntegrationConfig struct {
 	Telemetry      *AWSCollectionStrategy `json:"telemetry" required:"true" nullable:"false"`
 }
 
-type SignozCredentials struct {
-	SigNozAPIURL string
-	SigNozAPIKey string // PAT
-	IngestionURL string
-	IngestionKey string
-}
-
 // NewGettableAgentCheckInResponse constructs a backward-compatible response from an AgentCheckInResponse.
 // It populates the old snake_case fields (account_id, cloud_account_id, integration_config, removed_at)
 // from the new camelCase fields so older agents continue to work unchanged.
@@ -111,14 +115,40 @@ func NewGettableAgentCheckInResponse(provider CloudProviderType, resp *AgentChec
 // Validate checks that the connection artifact request has a valid provider-specific block
 // with non-empty, valid regions and a valid deployment region.
 func (req *ConnectionArtifactRequest) Validate(provider CloudProviderType) error {
+	if req.Config == nil || req.Credentials == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"config and credentials are required")
+	}
+
+	if req.Credentials.SigNozAPIURL == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"sigNozApiURL can not be empty")
+	}
+
+	if req.Credentials.SigNozAPIKey == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"sigNozApiKey can not be empty")
+	}
+
+	if req.Credentials.IngestionURL == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"ingestionUrl can not be empty")
+	}
+
+	if req.Credentials.IngestionKey == "" {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"ingestionKey can not be empty")
+	}
+
 	switch provider {
 	case CloudProviderTypeAWS:
-		if req.Aws == nil {
+		if req.Config.Aws == nil {
 			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
 				"aws configuration is required")
 		}
-		return req.Aws.Validate()
+		return req.Config.Aws.Validate()
 	}
+
 	return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
 		"invalid cloud provider: %s", provider)
 }
