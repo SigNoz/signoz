@@ -163,6 +163,114 @@ func TestParseIntoRule(t *testing.T) {
 	}
 }
 
+func TestParseIntoRuleLegacyBuilderQueriesPopulatesV5Queries(t *testing.T) {
+	content := []byte(`{
+		"alert": "LegacyBuilderQueries",
+		"alertType": "LOGS_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "builder",
+				"panelType": "graph",
+				"builderQueries": {
+					"A": {
+						"queryName": "A",
+						"stepInterval": 60,
+						"dataSource": "logs",
+						"aggregateOperator": "count",
+						"aggregateAttribute": {"key": "", "dataType": "", "type": "", "isColumn": false},
+						"filters": {"op": "AND", "items": []},
+						"expression": "A",
+						"disabled": false
+					}
+				}
+			},
+			"target": 1,
+			"matchType": "4",
+			"op": "1"
+		}
+	}`)
+
+	rule := PostableRule{}
+	err := json.Unmarshal(content, &rule)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, rule.RuleCondition) || !assert.NotNil(t, rule.RuleCondition.CompositeQuery) {
+		return
+	}
+	if !assert.Len(t, rule.RuleCondition.CompositeQuery.Queries, 1) {
+		return
+	}
+
+	query := rule.RuleCondition.CompositeQuery.Queries[0]
+	assert.Equal(t, qbtypes.QueryTypeBuilder, query.Type)
+
+	spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
+	if !assert.True(t, ok) {
+		return
+	}
+
+	assert.Equal(t, "A", spec.Name)
+	assert.Equal(t, telemetrytypes.SignalLogs, spec.Signal)
+	if assert.NotEmpty(t, spec.Aggregations) {
+		assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	}
+}
+
+func TestParseIntoRuleLegacyBuilderQueryDataPopulatesV5Queries(t *testing.T) {
+	content := []byte(`{
+		"alert": "LegacyBuilderQueryData",
+		"alertType": "LOGS_BASED_ALERT",
+		"ruleType": "threshold_rule",
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "builder",
+				"panelType": "graph",
+				"builder": {
+					"queryData": [{
+						"queryName": "A",
+						"stepInterval": 60,
+						"dataSource": "logs",
+						"aggregateOperator": "count",
+						"aggregateAttribute": {"key": "", "dataType": "", "type": "", "isColumn": false},
+						"filters": {"op": "AND", "items": []},
+						"expression": "A",
+						"disabled": false
+					}]
+				}
+			},
+			"target": 1,
+			"matchType": "4",
+			"op": "1"
+		}
+	}`)
+
+	rule := PostableRule{}
+	err := json.Unmarshal(content, &rule)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, rule.RuleCondition) || !assert.NotNil(t, rule.RuleCondition.CompositeQuery) {
+		return
+	}
+	if !assert.Len(t, rule.RuleCondition.CompositeQuery.Queries, 1) {
+		return
+	}
+
+	query := rule.RuleCondition.CompositeQuery.Queries[0]
+	assert.Equal(t, qbtypes.QueryTypeBuilder, query.Type)
+
+	spec, ok := query.Spec.(qbtypes.QueryBuilderQuery[qbtypes.LogAggregation])
+	if !assert.True(t, ok) {
+		return
+	}
+
+	assert.Equal(t, "A", spec.Name)
+	assert.Equal(t, telemetrytypes.SignalLogs, spec.Signal)
+	if assert.NotEmpty(t, spec.Aggregations) {
+		assert.Equal(t, "count()", spec.Aggregations[0].Expression)
+	}
+}
+
 func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 	tests := []struct {
 		name        string

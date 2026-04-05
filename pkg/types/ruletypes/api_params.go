@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"fmt"
+	"log/slog"
 	"slices"
 	"time"
 	"unicode/utf8"
@@ -11,6 +12,7 @@ import (
 	"github.com/prometheus/alertmanager/config"
 
 	"github.com/SigNoz/signoz/pkg/errors"
+	"github.com/SigNoz/signoz/pkg/transition"
 	"github.com/SigNoz/signoz/pkg/types/alertmanagertypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -245,6 +247,153 @@ func (r *PostableRule) processRuleDefaults() {
 	}
 }
 
+func hasV5Queries(compositeQuery map[string]any) bool {
+	queries, ok := compositeQuery["queries"].([]any)
+	return ok && len(queries) > 0
+}
+
+func hasLegacyQueryMaps(compositeQuery map[string]any) bool {
+	for _, key := range []string{"builderQueries", "promQueries", "chQueries"} {
+		queryMap, ok := compositeQuery[key].(map[string]any)
+		if ok && len(queryMap) > 0 {
+			return true
+		}
+	}
+	return false
+}
+
+func getLegacyQueryName(query map[string]any) string {
+	if queryName, ok := query["queryName"].(string); ok && queryName != "" {
+		return queryName
+	}
+	if queryName, ok := query["name"].(string); ok && queryName != "" {
+		return queryName
+	}
+	return ""
+}
+
+func appendLegacyBuilderQueries(dst map[string]any, payload any) bool {
+	queries, ok := payload.([]any)
+	if !ok || len(queries) == 0 {
+		return false
+	}
+
+	updated := false
+	for idx, entry := range queries {
+		queryMap, ok := entry.(map[string]any)
+		if !ok {
+			continue
+		}
+
+		name := getLegacyQueryName(queryMap)
+		if name == "" {
+			name = fmt.Sprintf("Q%d", idx+1)
+		}
+
+		if _, exists := dst[name]; exists {
+			baseName := name
+			for suffix := 1; ; suffix++ {
+				candidate := fmt.Sprintf("%s_%d", baseName, suffix)
+				if _, duplicate := dst[candidate]; !duplicate {
+					name = candidate
+					break
+				}
+			}
+		}
+
+		dst[name] = queryMap
+		updated = true
+	}
+
+	return updated
+}
+
+func flattenBuilderCompositeQuery(compositeQuery map[string]any) bool {
+	builder, ok := compositeQuery["builder"].(map[string]any)
+	if !ok {
+		return false
+	}
+
+	builderQueries, _ := compositeQuery["builderQueries"].(map[string]any)
+	if builderQueries == nil {
+		builderQueries = map[string]any{}
+	}
+
+	updated := false
+	if appendLegacyBuilderQueries(builderQueries, builder["queryData"]) {
+		updated = true
+	}
+	if appendLegacyBuilderQueries(builderQueries, builder["queryFormulas"]) {
+		updated = true
+	}
+
+	if len(builderQueries) > 0 {
+		compositeQuery["builderQueries"] = builderQueries
+		updated = true
+	}
+
+	delete(compositeQuery, "builder")
+	return updated
+}
+
+func normalizeLegacyRulePayload(data []byte) ([]byte, error) {
+	var payload map[string]any
+	if err := json.Unmarshal(data, &payload); err != nil {
+		return nil, err
+	}
+
+	condition, ok := payload["condition"].(map[string]any)
+	if !ok {
+		return data, nil
+	}
+
+	compositeQuery, ok := condition["compositeQuery"].(map[string]any)
+	if !ok {
+		return data, nil
+	}
+
+	if hasV5Queries(compositeQuery) {
+		return data, nil
+	}
+
+	updated := flattenBuilderCompositeQuery(compositeQuery)
+	if !hasLegacyQueryMaps(compositeQuery) {
+		if !updated {
+			return data, nil
+		}
+		normalized, err := json.Marshal(payload)
+		if err != nil {
+			return nil, err
+		}
+		return normalized, nil
+	}
+
+	originalVersion, hasVersion := payload["version"]
+	originalVersionString, _ := originalVersion.(string)
+	if originalVersionString == "v5" {
+		payload["version"] = "v4"
+	}
+
+	migrator := transition.NewAlertMigrateV5(slog.Default(), nil, nil)
+	migrated := migrator.Migrate(context.Background(), payload)
+
+	if hasVersion {
+		payload["version"] = originalVersion
+	} else {
+		delete(payload, "version")
+	}
+
+	if !updated && !migrated {
+		return data, nil
+	}
+
+	normalized, err := json.Marshal(payload)
+	if err != nil {
+		return nil, err
+	}
+	return normalized, nil
+}
+
 func (r *PostableRule) MarshalJSON() ([]byte, error) {
 	type Alias PostableRule
 
@@ -267,9 +416,14 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 }
 
 func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
+	normalizedBytes, err := normalizeLegacyRulePayload(bytes)
+	if err != nil {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
+	}
+
 	type Alias PostableRule
 	aux := (*Alias)(r)
-	if err := json.Unmarshal(bytes, aux); err != nil {
+	if err := json.Unmarshal(normalizedBytes, aux); err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 	}
 	r.processRuleDefaults()
