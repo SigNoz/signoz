@@ -138,9 +138,9 @@ def test_assign_role_replaces_access(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.FORBIDDEN, (
-        f"Expected 403 for viewer on admin endpoint, got {resp.status_code}: {resp.text}"
-    )
+    assert (
+        resp.status_code == HTTPStatus.FORBIDDEN
+    ), f"Expected 403 for viewer on admin endpoint, got {resp.status_code}: {resp.text}"
 
     # assign admin role (replaces viewer)
     admin_role_id = find_role_by_name(signoz, token, "signoz-admin")
@@ -160,9 +160,9 @@ def test_assign_role_replaces_access(
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
-    assert resp.status_code == HTTPStatus.OK, (
-        f"Expected 200 for admin on admin endpoint, got {resp.status_code}: {resp.text}"
-    )
+    assert (
+        resp.status_code == HTTPStatus.OK
+    ), f"Expected 200 for admin on admin endpoint, got {resp.status_code}: {resp.text}"
 
     # verify only admin role is present
     roles_resp = requests.get(
