@@ -1,9 +1,11 @@
 package ruletypes
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"fmt"
+	"io"
 	"log/slog"
 	"slices"
 	"time"
@@ -374,7 +376,7 @@ func normalizeLegacyRulePayload(data []byte) ([]byte, error) {
 		payload["version"] = "v4"
 	}
 
-	migrator := transition.NewAlertMigrateV5(slog.Default(), nil, nil)
+	migrator := transition.NewAlertMigrateV5(slog.New(slog.NewTextHandler(io.Discard, nil)), nil, nil)
 	migrated := migrator.Migrate(context.Background(), payload)
 
 	if hasVersion {
@@ -415,8 +417,8 @@ func (r *PostableRule) MarshalJSON() ([]byte, error) {
 	}
 }
 
-func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
-	normalizedBytes, err := normalizeLegacyRulePayload(bytes)
+func (r *PostableRule) UnmarshalJSON(data []byte) error {
+	normalizedBytes, err := normalizeLegacyRulePayload(data)
 	if err != nil {
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 	}
@@ -424,6 +426,12 @@ func (r *PostableRule) UnmarshalJSON(bytes []byte) error {
 	type Alias PostableRule
 	aux := (*Alias)(r)
 	if err := json.Unmarshal(normalizedBytes, aux); err != nil {
+		if !bytes.Equal(normalizedBytes, data) {
+			if fallbackErr := json.Unmarshal(data, aux); fallbackErr == nil {
+				r.processRuleDefaults()
+				return r.validate()
+			}
+		}
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 	}
 	r.processRuleDefaults()
