@@ -271,6 +271,187 @@ func TestParseIntoRuleLegacyBuilderQueryDataPopulatesV5Queries(t *testing.T) {
 	}
 }
 
+func TestFlattenBuilderCompositeQuerySkipsNonBuilderQueryType(t *testing.T) {
+	compositeQuery := map[string]any{
+		"queryType": QueryTypePromQL.StringValue(),
+		"builder": map[string]any{
+			"queryData": []any{
+				map[string]any{
+					"queryName":         "A",
+					"expression":        "A",
+					"dataSource":        "logs",
+					"aggregateOperator": "count",
+					"disabled":          false,
+				},
+			},
+		},
+	}
+
+	updated := flattenBuilderCompositeQuery(compositeQuery)
+
+	assert.False(t, updated)
+	_, hasBuilder := compositeQuery["builder"]
+	assert.True(t, hasBuilder)
+	_, hasBuilderQueries := compositeQuery["builderQueries"]
+	assert.False(t, hasBuilderQueries)
+}
+
+func TestNormalizeLegacyRulePayloadDoesNotDropBuilderQueryDataForNonBuilderType(t *testing.T) {
+	content := []byte(`{
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "promql",
+				"builder": {
+					"queryData": [{
+						"queryName": "A",
+						"stepInterval": 60,
+						"dataSource": "logs",
+						"aggregateOperator": "count",
+						"aggregateAttribute": {"key": "", "dataType": "", "type": "", "isColumn": false},
+						"filters": {"op": "AND", "items": []},
+						"expression": "A",
+						"disabled": false
+					}]
+				}
+			}
+		}
+	}`)
+
+	normalized, err := normalizeLegacyRulePayload(content)
+	assert.NoError(t, err)
+
+	var payload map[string]any
+	err = json.Unmarshal(normalized, &payload)
+	assert.NoError(t, err)
+
+	condition, ok := payload["condition"].(map[string]any)
+	if !assert.True(t, ok) {
+		return
+	}
+	compositeQuery, ok := condition["compositeQuery"].(map[string]any)
+	if !assert.True(t, ok) {
+		return
+	}
+
+	_, hasBuilder := compositeQuery["builder"]
+	assert.True(t, hasBuilder)
+	_, hasQueries := compositeQuery["queries"]
+	assert.False(t, hasQueries)
+}
+
+func TestParseIntoRuleFallbackUnmarshalDoesNotRetainNormalizedState(t *testing.T) {
+	content := []byte(`{
+		"alert": "FallbackNoResidualState",
+		"ruleType": "threshold_rule",
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "builder",
+				"builderQueries": {
+					"A": {
+						"expression": "A",
+						"disabled": false,
+						"aggregateAttribute": {
+							"key": "test_metric"
+						}
+					}
+				}
+			},
+			"target": 1,
+			"matchType": "1",
+			"op": "1"
+		}
+	}`)
+
+	rule := PostableRule{}
+	err := json.Unmarshal(content, &rule)
+	assert.NoError(t, err)
+	if !assert.NotNil(t, rule.RuleCondition) || !assert.NotNil(t, rule.RuleCondition.CompositeQuery) {
+		return
+	}
+	assert.Empty(t, rule.RuleCondition.CompositeQuery.Queries)
+}
+
+func TestNormalizeLegacyRulePayloadDuplicateBuilderQueryNamesRemainBuilderQueries(t *testing.T) {
+	content := []byte(`{
+		"version": "v5",
+		"condition": {
+			"compositeQuery": {
+				"queryType": "builder",
+				"panelType": "graph",
+				"builder": {
+					"queryData": [
+						{
+							"queryName": "A",
+							"stepInterval": 60,
+							"dataSource": "logs",
+							"aggregateOperator": "count",
+							"aggregateAttribute": {"key": "", "dataType": "", "type": "", "isColumn": false},
+							"filters": {"op": "AND", "items": []},
+							"expression": "A",
+							"disabled": false
+						},
+						{
+							"queryName": "A",
+							"stepInterval": 60,
+							"dataSource": "logs",
+							"aggregateOperator": "count",
+							"aggregateAttribute": {"key": "", "dataType": "", "type": "", "isColumn": false},
+							"filters": {"op": "AND", "items": []},
+							"expression": "A",
+							"disabled": false
+						}
+					]
+				}
+			}
+		}
+	}`)
+
+	normalized, err := normalizeLegacyRulePayload(content)
+	assert.NoError(t, err)
+
+	var payload map[string]any
+	err = json.Unmarshal(normalized, &payload)
+	assert.NoError(t, err)
+
+	condition, ok := payload["condition"].(map[string]any)
+	if !assert.True(t, ok) {
+		return
+	}
+	compositeQuery, ok := condition["compositeQuery"].(map[string]any)
+	if !assert.True(t, ok) {
+		return
+	}
+	queries, ok := compositeQuery["queries"].([]any)
+	if !assert.True(t, ok) {
+		return
+	}
+	if !assert.Len(t, queries, 2) {
+		return
+	}
+
+	queryNames := make([]string, 0, len(queries))
+	for _, query := range queries {
+		queryMap, ok := query.(map[string]any)
+		if !assert.True(t, ok) {
+			return
+		}
+		assert.Equal(t, "builder_query", queryMap["type"])
+		spec, ok := queryMap["spec"].(map[string]any)
+		if !assert.True(t, ok) {
+			return
+		}
+		queryName, ok := spec["name"].(string)
+		if !assert.True(t, ok) {
+			return
+		}
+		queryNames = append(queryNames, queryName)
+	}
+
+	assert.ElementsMatch(t, []string{"A", "A_1"}, queryNames)
+}
+
 func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 	tests := []struct {
 		name        string

@@ -287,9 +287,11 @@ func appendLegacyBuilderQueries(dst map[string]any, payload any) bool {
 			continue
 		}
 
-		name := getLegacyQueryName(queryMap)
+		originalName := getLegacyQueryName(queryMap)
+		name := originalName
 		if name == "" {
 			name = fmt.Sprintf("Q%d", idx+1)
+			originalName = name
 		}
 
 		if _, exists := dst[name]; exists {
@@ -303,6 +305,20 @@ func appendLegacyBuilderQueries(dst map[string]any, payload any) bool {
 			}
 		}
 
+		if name != originalName {
+			if queryName, ok := queryMap["queryName"].(string); ok && queryName == originalName {
+				queryMap["queryName"] = name
+			}
+			if queryName, ok := queryMap["name"].(string); ok && queryName == originalName {
+				queryMap["name"] = name
+			}
+			// WrapInV5Envelope uses name != expression to detect formulas.
+			// Keep expression aligned for renamed builder queries.
+			if expression, ok := queryMap["expression"].(string); ok && expression == originalName {
+				queryMap["expression"] = name
+			}
+		}
+
 		dst[name] = queryMap
 		updated = true
 	}
@@ -311,6 +327,11 @@ func appendLegacyBuilderQueries(dst map[string]any, payload any) bool {
 }
 
 func flattenBuilderCompositeQuery(compositeQuery map[string]any) bool {
+	queryType, _ := compositeQuery["queryType"].(string)
+	if queryType != QueryTypeBuilder.StringValue() {
+		return false
+	}
+
 	builder, ok := compositeQuery["builder"].(map[string]any)
 	if !ok {
 		return false
@@ -424,16 +445,19 @@ func (r *PostableRule) UnmarshalJSON(data []byte) error {
 	}
 
 	type Alias PostableRule
-	aux := (*Alias)(r)
-	if err := json.Unmarshal(normalizedBytes, aux); err != nil {
+	var parsed Alias
+	if err := json.Unmarshal(normalizedBytes, &parsed); err != nil {
 		if !bytes.Equal(normalizedBytes, data) {
-			if fallbackErr := json.Unmarshal(data, aux); fallbackErr == nil {
+			var fallback Alias
+			if fallbackErr := json.Unmarshal(data, &fallback); fallbackErr == nil {
+				*r = PostableRule(fallback)
 				r.processRuleDefaults()
 				return r.validate()
 			}
 		}
 		return errors.NewInvalidInputf(errors.CodeInvalidInput, "failed to parse json: %v", err)
 	}
+	*r = PostableRule(parsed)
 	r.processRuleDefaults()
 	return r.validate()
 }
