@@ -83,37 +83,6 @@
 		opacity: 0.6;
 	}
 
-	&__role-select {
-		width: 100%;
-
-		.ant-select-selector {
-			background-color: var(--l2-background) !important;
-			border-color: var(--border) !important;
-			border-radius: 2px;
-			padding: var(--padding-1) var(--padding-2) !important;
-			display: flex;
-			align-items: center;
-			flex-wrap: wrap;
-			min-height: 32px;
-			height: auto !important;
-		}
-
-		.ant-select-selection-item {
-			font-size: var(--font-size-sm);
-			color: var(--l1-foreground);
-			line-height: 22px;
-			letter-spacing: -0.07px;
-		}
-
-		.ant-select-arrow {
-			color: var(--foreground);
-		}
-
-		&:not(.ant-select-disabled):hover .ant-select-selector {
-			border-color: var(--foreground);
-		}
-	}
-
 	&__meta {
 		display: flex;
 		flex-direction: column;

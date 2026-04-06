@@ -139,18 +139,18 @@ describe('ServiceAccountDrawer', () => {
 		});
 	});
 
-	it('changing roles enables Save; clicking Save sends updated roles in payload', async () => {
-		const updateSpy = jest.fn();
+	it('changing roles enables Save; clicking Save sends role add request without delete', async () => {
 		const roleSpy = jest.fn();
+		const deleteSpy = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
-			rest.put(SA_ENDPOINT, async (req, res, ctx) => {
-				updateSpy(await req.json());
-				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
-			}),
 			rest.post(SA_ROLES_ENDPOINT, async (req, res, ctx) => {
 				roleSpy(await req.json());
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+			rest.delete(SA_ROLE_DELETE_ENDPOINT, (_, res, ctx) => {
+				deleteSpy();
 				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
 			}),
 		);
@@ -167,12 +167,12 @@ describe('ServiceAccountDrawer', () => {
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(updateSpy).not.toHaveBeenCalled();
 			expect(roleSpy).toHaveBeenCalledWith(
 				expect.objectContaining({
 					id: '019c24aa-2248-7585-a129-4188b3473c27',
 				}),
 			);
+			expect(deleteSpy).not.toHaveBeenCalled();
 		});
 	});
 
@@ -350,7 +350,7 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		).toBeInTheDocument();
 	});
 
-	it('role update failure shows SaveErrorItem with the role name context', async () => {
+	it('role add failure shows SaveErrorItem with the role name context', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
 		server.use(
