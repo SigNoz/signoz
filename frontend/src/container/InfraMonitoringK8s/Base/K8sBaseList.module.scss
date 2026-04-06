@@ -101,6 +101,16 @@
 		:global(.ant-empty-normal) {
 			visibility: hidden;
 		}
+
+		:global(.ant-table-cell) {
+			min-width: 180px !important;
+			max-width: 180px !important;
+		}
+
+		:global(.ant-table-cell:first-of-type) {
+			min-width: 250px !important;
+			max-width: 250px !important;
+		}
 	}
 
 	:global(.ant-pagination) {
