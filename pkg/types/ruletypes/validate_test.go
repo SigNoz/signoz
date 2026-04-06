@@ -89,8 +89,8 @@ func validV1Promql() string {
 // patchJSON takes base JSON and overlays fields from patch JSON.
 func patchJSON(base, patch string) string {
 	var baseMap, patchMap map[string]json.RawMessage
-	json.Unmarshal([]byte(base), &baseMap)
-	json.Unmarshal([]byte(patch), &patchMap)
+	_ = json.Unmarshal([]byte(base), &baseMap)
+	_ = json.Unmarshal([]byte(patch), &patchMap)
 	for k, v := range patchMap {
 		baseMap[k] = v
 	}
@@ -101,7 +101,7 @@ func patchJSON(base, patch string) string {
 // removeField removes a top-level field from JSON.
 func removeField(j, field string) string {
 	var m map[string]json.RawMessage
-	json.Unmarshal([]byte(j), &m)
+	_ = json.Unmarshal([]byte(j), &m)
 	delete(m, field)
 	out, _ := json.Marshal(m)
 	return string(out)
@@ -531,7 +531,7 @@ func TestValidate_V1_ConditionFields(t *testing.T) {
 			errSubstr: "condition.target",
 		},
 
-		// comparision operation can't be empty or invalid
+		// comparison operation can't be empty or invalid
 		{
 			name: "missing op",
 			json: `{
