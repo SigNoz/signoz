@@ -197,10 +197,27 @@ function K8sExpandedRow<T>({
 		refetchInterval: isRefreshEnabled ? refreshInterval : false,
 	});
 
-	const formattedData = useMemo(
-		() => data?.data?.map((item) => renderRowData(item, groupBy)),
-		[data?.data, renderRowData, groupBy],
-	);
+	const formattedData = useMemo(() => {
+		if (!data?.data) {
+			return undefined;
+		}
+
+		const rows = data.data.map((item) => renderRowData(item, groupBy));
+
+		// Without handling duplicated keys, the table became unpredictable/unstable
+		const keyCount = new Map<string, number>();
+		return rows.map(
+			(row): K8sRenderedRowData => {
+				const count = keyCount.get(row.key) || 0;
+				keyCount.set(row.key, count + 1);
+
+				if (count > 0) {
+					return { ...row, key: `${row.key}-${count}` };
+				}
+				return row;
+			},
+		);
+	}, [data?.data, renderRowData, groupBy]);
 
 	const openRecordInNewTab = (rowRecord: K8sRenderedRowData): void => {
 		const newParams = new URLSearchParams(document.location.search);
@@ -360,10 +377,28 @@ export function K8sBaseList<T>({
 	const pageData = data?.data;
 	const totalCount = data?.total || 0;
 
-	const formattedItemsData = useMemo(
-		() => pageData?.map((item) => renderRowData(item, groupBy)),
-		[pageData, renderRowData, groupBy],
-	);
+	const formattedItemsData = useMemo(() => {
+		if (!pageData) {
+			return undefined;
+		}
+
+		const rows = pageData.map((item) => renderRowData(item, groupBy));
+
+		// Without handling duplicated keys, the table became unpredictable/unstable
+		const keyCount = new Map<string, number>();
+		return rows.map(
+			// eslint-disable-next-line sonarjs/no-identical-functions
+			(row): K8sRenderedRowData => {
+				const count = keyCount.get(row.key) || 0;
+				keyCount.set(row.key, count + 1);
+
+				if (count > 0) {
+					return { ...row, key: `${row.key}-${count}` };
+				}
+				return row;
+			},
+		);
+	}, [pageData, renderRowData, groupBy]);
 
 	const handleTableChange: TableProps<K8sRenderedRowData>['onChange'] = useCallback(
 		(
