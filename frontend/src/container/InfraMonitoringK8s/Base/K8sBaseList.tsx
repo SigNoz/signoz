@@ -101,6 +101,8 @@ export type K8sExpandedRowProps<T> = {
 	renderRowData: K8sBaseListProps<T>['renderRowData'];
 };
 
+export const MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY = 10;
+
 function K8sExpandedRow<T>({
 	record,
 	entity,
@@ -183,7 +185,7 @@ function K8sExpandedRow<T>({
 
 			return fetchListData(
 				{
-					limit: 10,
+					limit: MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY,
 					offset: 0,
 					filters: createFiltersForRecord(),
 					start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
@@ -276,7 +278,7 @@ function K8sExpandedRow<T>({
 						})}
 					/>
 
-					{data?.total && data?.total > 10 && (
+					{data?.total && data?.total > MAX_ITEMS_TO_FETCH_WHEN_GROUP_BY && (
 						<div className={styles.expandedTableFooter}>
 							<Button
 								type="default"
