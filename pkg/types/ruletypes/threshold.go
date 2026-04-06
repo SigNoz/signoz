@@ -113,6 +113,9 @@ func (r BasicRuleThresholds) GetRuleReceivers() []RuleReceivers {
 }
 
 func (r BasicRuleThresholds) Validate() error {
+	if len(r) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: must have at least one threshold")
+	}
 	var errs []error
 	for _, basicThreshold := range r {
 		if err := basicThreshold.Validate(); err != nil {

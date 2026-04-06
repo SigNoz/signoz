@@ -95,6 +95,28 @@ func (ns *NotificationSettings) GetAlertManagerNotificationConfig() alertmanager
 	return alertmanagertypes.NewNotificationConfig(ns.GroupBy, renotifyInterval, noDataRenotifyInterval, ns.UsePolicy)
 }
 
+// Channels returns all unique channel names referenced by the rule's thresholds.
+func (r *PostableRule) Channels() []string {
+	if r.RuleCondition == nil || r.RuleCondition.Thresholds == nil {
+		return nil
+	}
+	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
+	if err != nil {
+		return nil
+	}
+	seen := make(map[string]struct{})
+	var channels []string
+	for _, receiver := range threshold.GetRuleReceivers() {
+		for _, ch := range receiver.Channels {
+			if _, ok := seen[ch]; !ok {
+				seen[ch] = struct{}{}
+				channels = append(channels, ch)
+			}
+		}
+	}
+	return channels
+}
+
 func (r *PostableRule) GetRuleRouteRequest(ruleID string) ([]*alertmanagertypes.PostableRoutePolicy, error) {
 	threshold, err := r.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
@@ -332,7 +354,12 @@ func (r *PostableRule) validate() error {
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return errors.Join(errs...)
+
+	joined := errors.Join(errs...)
+	if joined != nil {
+		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	}
+	return nil
 }
 
 // Validate enforces all validation rules. For now, this is invoked on the write path
@@ -427,7 +454,12 @@ func (r *PostableRule) Validate() error {
 	}
 
 	errs = append(errs, testTemplateParsing(r)...)
-	return errors.Join(errs...)
+
+	joined := errors.Join(errs...)
+	if joined != nil {
+		return errors.WrapInvalidInputf(joined, errors.CodeInvalidInput, "validation failed")
+	}
+	return nil
 }
 
 func (r *PostableRule) validateSchemaVersion() []error {

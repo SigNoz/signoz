@@ -320,6 +320,38 @@ func (m *Manager) Stop(_ context.Context) {
 	m.logger.Info("rule manager stopped")
 }
 
+// validateChannels checks that every channel referenced by the rule
+// exists as a notification channel for the given org.
+func (m *Manager) validateChannels(ctx context.Context, orgID string, rule *ruletypes.PostableRule) error {
+	channels := rule.Channels()
+	if len(channels) == 0 {
+		return nil
+	}
+
+	orgChannels, err := m.alertmanager.ListChannels(ctx, orgID)
+	if err != nil {
+		return err
+	}
+
+	known := make(map[string]struct{}, len(orgChannels))
+	for _, ch := range orgChannels {
+		known[ch.Name] = struct{}{}
+	}
+
+	var unknown []string
+	for _, name := range channels {
+		if _, ok := known[name]; !ok {
+			unknown = append(unknown, name)
+		}
+	}
+
+	if len(unknown) > 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channels: the following channels do not exist: %v", unknown)
+	}
+	return nil
+}
+
 // EditRule writes the rule definition to the
 // datastore and also updates the rule executor
 func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) error {
@@ -337,6 +369,9 @@ func (m *Manager) EditRule(ctx context.Context, ruleStr string, id valuer.UUID) 
 		return err
 	}
 	if err := parsedRule.Validate(); err != nil {
+		return err
+	}
+	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
 		return err
 	}
 	existingRule, err := m.ruleStore.GetStoredRule(ctx, id)
@@ -536,6 +571,9 @@ func (m *Manager) CreateRule(ctx context.Context, ruleStr string) (*ruletypes.Ge
 		return nil, err
 	}
 	if err := parsedRule.Validate(); err != nil {
+		return nil, err
+	}
+	if err := m.validateChannels(ctx, claims.OrgID, &parsedRule); err != nil {
 		return nil, err
 	}
 	now := time.Now()
@@ -927,6 +965,9 @@ func (m *Manager) PatchRule(ctx context.Context, ruleStr string, id valuer.UUID)
 	if err := storedRule.Validate(); err != nil {
 		return nil, err
 	}
+	if err := m.validateChannels(ctx, claims.OrgID, &storedRule); err != nil {
+		return nil, err
+	}
 	// deploy or un-deploy task according to patched (new) rule state
 	if err := m.syncRuleStateWithTask(ctx, orgID, taskName, &storedRule); err != nil {
 		m.logger.ErrorContext(ctx, "failed to sync stored rule state with the task", slog.String("task.name", taskName), errors.Attr(err))
@@ -978,6 +1019,9 @@ func (m *Manager) TestNotification(ctx context.Context, orgID valuer.UUID, ruleS
 		return 0, errors.WrapInvalidInputf(err, errors.CodeInvalidInput, "failed to unmarshal rule")
 	}
 	if err := parsedRule.Validate(); err != nil {
+		return 0, err
+	}
+	if err := m.validateChannels(ctx, orgID.StringValue(), &parsedRule); err != nil {
 		return 0, err
 	}
 	if !parsedRule.NotificationSettings.UsePolicy {
