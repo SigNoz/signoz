@@ -40,7 +40,7 @@ func NewThresholdRule(
 	logger *slog.Logger,
 	opts ...RuleOption,
 ) (*ThresholdRule, error) {
-	logger.Info("creating new ThresholdRule", "id", id)
+	logger.Info("creating new ThresholdRule", slog.String("rule.id", id))
 
 	opts = append(opts, WithLogger(logger))
 
