@@ -7,6 +7,8 @@ import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schem
 import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
@@ -14,6 +16,7 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 	const orgName = Form.useWatch('displayName', form);
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
+	const { showErrorModal } = useErrorModal();
 	const { org, updateOrg } = useAppContext();
 	const { displayName } = (org || [])[index];
 
@@ -30,12 +33,8 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 				updateOrg(orgId, data.displayName ?? '');
 			},
 			onError: (error) => {
-				const apiError = convertToApiError(
-					error as AxiosError<RenderErrorResponseDTO>,
-				);
-				toast.error(
-					apiError?.getErrorMessage() ?? t('something_went_wrong', { ns: 'common' }),
-					{ richColors: true, position: 'top-right' },
+				showErrorModal(
+					convertToApiError(error as AxiosError<RenderErrorResponseDTO>) as APIError,
 				);
 			},
 		},

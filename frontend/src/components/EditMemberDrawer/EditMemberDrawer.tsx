@@ -28,6 +28,7 @@ import {
 	useMemberRoleManager,
 } from 'hooks/member/useMemberRoleManager';
 import { useAppContext } from 'providers/App/App';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
 import APIError from 'types/api/error';
 import { toAPIError } from 'utils/errorUtils';
@@ -92,6 +93,8 @@ function EditMemberDrawer({
 	const isInvited = member?.status === MemberStatus.Invited;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
 
+	const { showErrorModal } = useErrorModal();
+
 	const {
 		data: fetchedUser,
 		isLoading: isFetchingUser,
@@ -153,17 +156,10 @@ function EditMemberDrawer({
 				onClose();
 			},
 			onError: (err): void => {
-				const errMessage =
-					convertToApiError(
-						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'An error occurred';
-				const prefix = isInvited
-					? 'Failed to revoke invite'
-					: 'Failed to delete member';
-				toast.error(`${prefix}: ${errMessage}`, {
-					richColors: true,
-					position: 'top-right',
-				});
+				const errMessage = convertToApiError(
+					err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+				);
+				showErrorModal(errMessage as APIError);
 			},
 		},
 	});
@@ -344,15 +340,15 @@ function EditMemberDrawer({
 					position: 'top-right',
 				});
 			}
-		} catch {
-			toast.error('Failed to generate password reset link', {
-				richColors: true,
-				position: 'top-right',
-			});
+		} catch (err) {
+			const errMsg = convertToApiError(
+				err as AxiosError<RenderErrorResponseDTO, unknown> | null,
+			);
+			showErrorModal(errMsg as APIError);
 		} finally {
 			setIsGeneratingLink(false);
 		}
-	}, [member, isInvited, onClose]);
+	}, [member, isInvited, onClose, showErrorModal]);
 
 	const [copyState, copyToClipboard] = useCopyToClipboard();
 	const handleCopyResetLink = useCallback((): void => {
