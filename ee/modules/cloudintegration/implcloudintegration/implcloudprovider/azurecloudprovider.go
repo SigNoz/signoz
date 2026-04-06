@@ -25,22 +25,6 @@ func (provider *azurecloudprovider) GetServiceDefinition(ctx context.Context, se
 	panic("implement me")
 }
 
-func (provider *azurecloudprovider) StorableConfigFromServiceConfig(ctx context.Context, cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
-	panic("implement me")
-}
-
-func (provider *azurecloudprovider) ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*cloudintegrationtypes.ServiceConfig, error) {
-	panic("implement me")
-}
-
-func (provider *azurecloudprovider) IsServiceEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
-	panic("implement me")
-}
-
-func (provider *azurecloudprovider) IsMetricsEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
-	panic("implement me")
-}
-
 func (provider *azurecloudprovider) BuildIntegrationConfig(
 	ctx context.Context,
 	account *cloudintegrationtypes.Account,

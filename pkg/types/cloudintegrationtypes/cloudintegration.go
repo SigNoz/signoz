@@ -58,6 +58,26 @@ type StorableCloudIntegrationService struct {
 	CloudIntegrationID valuer.UUID `bun:"cloud_integration_id,type:text"`
 }
 
+// Following Service config types are only internally used to store service config in DB and use JSON snake case keys for backward compatibility.
+
+type StorableServiceConfig struct {
+	AWS *StorableAWSServiceConfig
+}
+
+type StorableAWSServiceConfig struct {
+	Logs    *StorableAWSLogsServiceConfig    `json:"logs,omitempty"`
+	Metrics *StorableAWSMetricsServiceConfig `json:"metrics,omitempty"`
+}
+
+type StorableAWSLogsServiceConfig struct {
+	Enabled   bool                `json:"enabled"`
+	S3Buckets map[string][]string `json:"s3_buckets,omitempty"` // region -> list of buckets in that region
+}
+
+type StorableAWSMetricsServiceConfig struct {
+	Enabled bool `json:"enabled"`
+}
+
 // Scan scans value from DB.
 func (r *StorableAgentReport) Scan(src any) error {
 	var data []byte
@@ -119,5 +139,61 @@ func NewStorableCloudIntegrationService(svc *CloudIntegrationService, configJSON
 		Type:               svc.Type,
 		Config:             configJSON,
 		CloudIntegrationID: svc.CloudIntegrationID,
+	}
+}
+
+func newStorableServiceConfig(provider CloudProviderType, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
+	switch provider {
+	case CloudProviderTypeAWS:
+		storableAWSServiceConfig := new(StorableAWSServiceConfig)
+
+		if supportedSignals.Logs {
+			if serviceConfig.AWS.Logs != nil {
+				storableAWSServiceConfig.Logs = &StorableAWSLogsServiceConfig{
+					Enabled:   serviceConfig.AWS.Logs.Enabled,
+					S3Buckets: serviceConfig.AWS.Logs.S3Buckets,
+				}
+			}
+		}
+
+		if supportedSignals.Metrics {
+			if serviceConfig.AWS.Metrics != nil {
+				storableAWSServiceConfig.Metrics = &StorableAWSMetricsServiceConfig{
+					Enabled: serviceConfig.AWS.Metrics.Enabled,
+				}
+			}
+		}
+
+		return &StorableServiceConfig{AWS: storableAWSServiceConfig}
+	default:
+		return nil
+	}
+}
+
+func (config *StorableServiceConfig) toJSON(provider CloudProviderType) ([]byte, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		jsonBytes, err := json.Marshal(config.AWS)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize AWS service config to JSON")
+		}
+
+		return jsonBytes, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
+
+func newStorableServiceConfigFromJSON(provider CloudProviderType, jsonStr string) (*StorableServiceConfig, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		awsConfig := new(StorableAWSServiceConfig)
+		err := json.Unmarshal([]byte(jsonStr), awsConfig)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't parse AWS service config JSON")
+		}
+		return &StorableServiceConfig{AWS: awsConfig}, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }

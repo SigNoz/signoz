@@ -66,22 +66,6 @@ type CloudProviderModule interface {
 	// GetServiceDefinition returns the service definition for the given service ID.
 	GetServiceDefinition(ctx context.Context, serviceID citypes.ServiceID) (*citypes.ServiceDefinition, error)
 
-	// IsServiceEnabled returns true if the service has at least one signal (logs or metrics) enabled.
-	IsServiceEnabled(ctx context.Context, config *citypes.ServiceConfig) bool
-
-	// IsMetricsEnabled returns true if the service config has metrics explicitly enabled.
-	// Used to gate dashboard availability — dashboards are only shown when metrics are enabled.
-	IsMetricsEnabled(ctx context.Context, config *citypes.ServiceConfig) bool
-
-	// ServiceConfigFromStorableServiceConfig converts a stored service's provider-specific JSON config
-	// into a *ServiceConfig wrapper.
-	ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*citypes.ServiceConfig, error)
-
-	// StorableConfigFromServiceConfig serializes a ServiceConfig into the raw provider-specific
-	// JSON string suitable for storing in StorableCloudIntegrationService.Config.
-	// It strips any signal config (logs/metrics) that the service's SupportedSignals declares unsupported.
-	StorableConfigFromServiceConfig(ctx context.Context, cfg *citypes.ServiceConfig, supported citypes.SupportedSignals) (string, error)
-
 	// BuildIntegrationConfig compiles the provider-specific integration config from the account
 	// and list of configured services. This is the config returned to the agent on check-in.
 	BuildIntegrationConfig(ctx context.Context, account *citypes.Account, services []*citypes.StorableCloudIntegrationService) (*citypes.ProviderIntegrationConfig, error)

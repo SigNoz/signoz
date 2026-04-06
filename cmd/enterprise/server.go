@@ -17,6 +17,7 @@ import (
 	enterpriselicensing "github.com/SigNoz/signoz/ee/licensing"
 	"github.com/SigNoz/signoz/ee/licensing/httplicensing"
 	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration"
+	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/ee/modules/dashboard/impldashboard"
 	eequerier "github.com/SigNoz/signoz/ee/querier"
 	enterpriseapp "github.com/SigNoz/signoz/ee/query-service/app"
@@ -33,6 +34,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
+	pkgcloudintegration "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/dashboard"
 	pkgimpldashboard "github.com/SigNoz/signoz/pkg/modules/dashboard/impldashboard"
 	"github.com/SigNoz/signoz/pkg/modules/organization"
@@ -142,7 +144,18 @@ func runServer(ctx context.Context, config signoz.Config, logger *slog.Logger) e
 			return eequerier.NewHandler(ps, q, communityHandler)
 		},
 		func(store cloudintegrationtypes.Store, global global.Global, zeus zeus.Zeus, gateway gateway.Gateway, licensing licensing.Licensing, serviceAccount serviceaccount.Module, config cloudintegration.Config) (cloudintegration.Module, error) {
-			return implcloudintegration.NewModule(store, global, zeus, gateway, licensing, serviceAccount, config)
+			defStore := pkgcloudintegration.NewServiceDefinitionStore()
+			awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
+			if err != nil {
+				return nil, err
+			}
+			azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
+			cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
+				cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
+				cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
+			}
+
+			return implcloudintegration.NewModule(store, global, zeus, gateway, licensing, serviceAccount, cloudProvidersMap, config)
 		},
 	)
 	if err != nil {

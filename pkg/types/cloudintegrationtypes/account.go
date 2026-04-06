@@ -155,6 +155,17 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 }
 
+// ToJSON return JSON bytes for the provider's config
+// thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
+// NOTE: this entertains first non-null provider's config.
+func (config *AccountConfig) ToJSON() ([]byte, error) {
+	if config.AWS != nil {
+		return json.Marshal(config.AWS)
+	}
+
+	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
+}
+
 func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
 	if updatable.Config == nil {
 		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
@@ -185,15 +196,4 @@ func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
 	}
 
 	return nil
-}
-
-// ToJSON return JSON bytes for the provider's config
-// thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
-// NOTE: this entertains first non-null provider's config.
-func (config *AccountConfig) ToJSON() ([]byte, error) {
-	if config.AWS != nil {
-		return json.Marshal(config.AWS)
-	}
-
-	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
 }

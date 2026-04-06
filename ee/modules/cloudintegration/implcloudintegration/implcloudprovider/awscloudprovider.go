@@ -2,12 +2,10 @@ package implcloudprovider
 
 import (
 	"context"
-	"encoding/json"
 	"fmt"
 	"net/url"
 	"sort"
 
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 )
@@ -52,54 +50,17 @@ func (provider *awscloudprovider) ListServiceDefinitions(ctx context.Context) ([
 }
 
 func (provider *awscloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
-	return provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
-}
-
-func (provider *awscloudprovider) StorableConfigFromServiceConfig(ctx context.Context, cfg *cloudintegrationtypes.ServiceConfig, supported cloudintegrationtypes.SupportedSignals) (string, error) {
-	if cfg == nil || cfg.AWS == nil {
-		return "", nil
-	}
-	// Strip signal configs the service does not support before storing.
-	if !supported.Logs {
-		cfg.AWS.Logs = nil
-	}
-	if !supported.Metrics {
-		cfg.AWS.Metrics = nil
-	}
-	b, err := json.Marshal(cfg.AWS)
+		serviceDef, err := provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
 	if err != nil {
-		return "", err
-	}
-	return string(b), nil
-}
-
-func (provider *awscloudprovider) ServiceConfigFromStorableServiceConfig(ctx context.Context, config string) (*cloudintegrationtypes.ServiceConfig, error) {
-	if config == "" {
-		return nil, errors.NewInternalf(errors.CodeInternal, "service config is empty")
-	}
-
-	var awsCfg cloudintegrationtypes.AWSServiceConfig
-	if err := json.Unmarshal([]byte(config), &awsCfg); err != nil {
 		return nil, err
 	}
 
-	return &cloudintegrationtypes.ServiceConfig{AWS: &awsCfg}, nil
-}
-
-func (provider *awscloudprovider) IsServiceEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
-	if config == nil || config.AWS == nil {
-		return false
+	// override cloud integration dashboard id
+	for index, dashboard := range serviceDef.Assets.Dashboards {
+		serviceDef.Assets.Dashboards[index].ID = cloudintegrationtypes.GetCloudIntegrationDashboardID(cloudintegrationtypes.CloudProviderTypeAWS, serviceID.StringValue(), dashboard.ID)
 	}
-	logsEnabled := config.AWS.Logs != nil && config.AWS.Logs.Enabled
-	metricsEnabled := config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
-	return logsEnabled || metricsEnabled
-}
 
-func (provider *awscloudprovider) IsMetricsEnabled(ctx context.Context, config *cloudintegrationtypes.ServiceConfig) bool {
-	if config == nil || config.AWS == nil {
-		return false
-	}
-	return awsMetricsEnabled(config.AWS)
+	return serviceDef, nil
 }
 
 func (provider *awscloudprovider) BuildIntegrationConfig(
@@ -117,7 +78,7 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 	var compiledS3Buckets map[string][]string
 
 	for _, storedSvc := range services {
-		svcCfg, err := provider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
+		svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(cloudintegrationtypes.CloudProviderTypeAWS, storedSvc.Config)
 		if err != nil || svcCfg == nil || svcCfg.AWS == nil {
 			continue
 		}
@@ -131,17 +92,17 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 
 		// S3Sync: logs come directly from configured S3 buckets, not CloudWatch subscriptions
 		if storedSvc.Type == cloudintegrationtypes.AWSServiceS3Sync {
-			if awsLogsEnabled(svcCfg.AWS) && svcCfg.AWS.Logs.S3Buckets != nil {
+			if svcCfg.AWS.Logs != nil && svcCfg.AWS.Logs.Enabled && svcCfg.AWS.Logs.S3Buckets != nil {
 				compiledS3Buckets = svcCfg.AWS.Logs.S3Buckets
 			}
 			continue
 		}
 
-		if awsLogsEnabled(svcCfg.AWS) && strategy.Logs != nil {
+		if svcCfg.AWS.Logs != nil && svcCfg.AWS.Logs.Enabled && strategy.Logs != nil {
 			compiledLogs.Subscriptions = append(compiledLogs.Subscriptions, strategy.Logs.Subscriptions...)
 		}
 
-		if awsMetricsEnabled(svcCfg.AWS) && strategy.Metrics != nil {
+		if svcCfg.AWS.Metrics != nil && svcCfg.AWS.Metrics.Enabled && strategy.Metrics != nil {
 			compiledMetrics.StreamFilters = append(compiledMetrics.StreamFilters, strategy.Metrics.StreamFilters...)
 		}
 	}
@@ -168,14 +129,4 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 			Telemetry:      awsTelemetry,
 		},
 	}, nil
-}
-
-// awsLogsEnabled returns true if the AWS service config has logs explicitly enabled.
-func awsLogsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
-	return cfg.Logs != nil && cfg.Logs.Enabled
-}
-
-// awsMetricsEnabled returns true if the AWS service config has metrics explicitly enabled.
-func awsMetricsEnabled(cfg *cloudintegrationtypes.AWSServiceConfig) bool {
-	return cfg.Metrics != nil && cfg.Metrics.Enabled
 }

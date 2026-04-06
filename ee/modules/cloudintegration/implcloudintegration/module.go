@@ -6,13 +6,11 @@ import (
 	"sort"
 	"time"
 
-	"github.com/SigNoz/signoz/ee/modules/cloudintegration/implcloudintegration/implcloudprovider"
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/gateway"
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/licensing"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
-	pkgimpl "github.com/SigNoz/signoz/pkg/modules/cloudintegration/implcloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
@@ -41,19 +39,9 @@ func NewModule(
 	gateway gateway.Gateway,
 	licensing licensing.Licensing,
 	serviceAccount serviceaccount.Module,
+	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule,
 	config cloudintegration.Config,
 ) (cloudintegration.Module, error) {
-	defStore := pkgimpl.NewServiceDefinitionStore()
-	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
-	if err != nil {
-		return nil, err
-	}
-	azureCloudProviderModule := implcloudprovider.NewAzureCloudProvider()
-	cloudProvidersMap := map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule{
-		cloudintegrationtypes.CloudProviderTypeAWS:   awsCloudProviderModule,
-		cloudintegrationtypes.CloudProviderTypeAzure: azureCloudProviderModule,
-	}
-
 	return &module{
 		store:             store,
 		global:            global,
@@ -290,12 +278,12 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 		}
 
 		for _, svc := range storedServices {
-			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, svc.Config)
+			serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, svc.Config)
 			if err != nil {
 				return nil, err
 			}
 
-			if cloudProvider.IsServiceEnabled(ctx, serviceConfig) {
+			if cloudintegrationtypes.IsServiceEnabled(provider, serviceConfig) {
 				enabledServiceIDs[svc.Type.StringValue()] = true
 			}
 		}
@@ -338,7 +326,7 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 			return nil, err
 		}
 		if storedService != nil {
-			serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedService.Config)
+			serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedService.Config)
 			if err != nil {
 				return nil, err
 			}
@@ -366,12 +354,12 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 		return err
 	}
 
-	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(ctx, service.Config, serviceDefinition.SupportedSignals)
+	configJSON, err := service.Config.ToJSON(provider, &serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}
 
-	return module.store.CreateService(ctx, cloudintegrationtypes.NewStorableCloudIntegrationService(service, configJSON))
+	return module.store.CreateService(ctx, cloudintegrationtypes.NewStorableCloudIntegrationService(service, string(configJSON)))
 }
 
 func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, integrationService *cloudintegrationtypes.CloudIntegrationService, provider cloudintegrationtypes.CloudProviderType) error {
@@ -390,12 +378,12 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 		return err
 	}
 
-	configJSON, err := cloudProvider.StorableConfigFromServiceConfig(ctx, integrationService.Config, serviceDefinition.SupportedSignals)
+	configJSON, err := integrationService.Config.ToJSON(provider, &serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}
 
-	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(integrationService, configJSON)
+	storableService := cloudintegrationtypes.NewStorableCloudIntegrationService(integrationService, string(configJSON))
 
 	return module.store.UpdateService(ctx, storableService)
 }
@@ -426,7 +414,6 @@ func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, i
 	return nil, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration dashboard not found")
 }
 
-// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) ListDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -511,8 +498,8 @@ func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]
 			}
 
 			for _, storedSvc := range storedServices {
-				serviceConfig, err := cloudProvider.ServiceConfigFromStorableServiceConfig(ctx, storedSvc.Config)
-				if err != nil || !cloudProvider.IsMetricsEnabled(ctx, serviceConfig) {
+				serviceConfig, err := cloudintegrationtypes.NewServiceConfigFromJSON(provider, storedSvc.Config)
+				if err != nil || !cloudintegrationtypes.IsMetricsEnabled(provider, serviceConfig) {
 					continue
 				}
 

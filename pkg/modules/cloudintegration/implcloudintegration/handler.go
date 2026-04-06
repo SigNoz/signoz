@@ -371,6 +371,11 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	if err := req.Validate(provider, serviceID); err != nil {
+		render.Error(rw, err)
+		return
+	}
+
 	cloudIntegrationID, err := valuer.NewUUID(mux.Vars(r)["id"])
 	if err != nil {
 		render.Error(rw, err)
