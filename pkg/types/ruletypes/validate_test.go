@@ -1152,7 +1152,7 @@ func TestValidate_ReadPathVsWritePath(t *testing.T) {
 func TestValidate_ProcessRuleDefaults(t *testing.T) {
 	t.Run("v1 defaults schemaVersion when omitted", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV1Builder()), &rule)
 		if rule.SchemaVersion != DefaultSchemaVersion {
 			t.Errorf("expected schemaVersion %q, got %q", DefaultSchemaVersion, rule.SchemaVersion)
 		}
@@ -1161,7 +1161,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 	t.Run("v1 explicit schemaVersion v1 same behavior", func(t *testing.T) {
 		j := patchJSON(validV1Builder(), `{"schemaVersion": "v1"}`)
 		var rule PostableRule
-		json.Unmarshal([]byte(j), &rule)
+		_ = json.Unmarshal([]byte(j), &rule)
 		if rule.SchemaVersion != DefaultSchemaVersion {
 			t.Errorf("expected schemaVersion %q, got %q", DefaultSchemaVersion, rule.SchemaVersion)
 		}
@@ -1175,7 +1175,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 		j := removeField(validV1Builder(), "evalWindow")
 		j = removeField(j, "frequency")
 		var rule PostableRule
-		json.Unmarshal([]byte(j), &rule)
+		_ = json.Unmarshal([]byte(j), &rule)
 		if rule.EvalWindow.Duration().String() != "5m0s" {
 			t.Errorf("expected default evalWindow 5m, got %v", rule.EvalWindow)
 		}
@@ -1186,7 +1186,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v2alpha1 does NOT default evalWindow and frequency", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV2Alpha1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV2Alpha1Builder()), &rule)
 		if !rule.EvalWindow.IsZero() {
 			t.Errorf("expected evalWindow to be zero for v2alpha1, got %v", rule.EvalWindow)
 		}
@@ -1197,7 +1197,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v1 auto-populates thresholds from condition fields", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV1Builder()), &rule)
 		if rule.RuleCondition.Thresholds == nil {
 			t.Fatal("expected thresholds to be populated")
 		}
@@ -1208,7 +1208,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v1 auto-populates evaluation as rolling", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV1Builder()), &rule)
 		if rule.Evaluation == nil {
 			t.Fatal("expected evaluation to be populated")
 		}
@@ -1219,7 +1219,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v1 auto-populates notificationSettings", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV1Builder()), &rule)
 		if rule.NotificationSettings == nil {
 			t.Fatal("expected notificationSettings to be populated")
 		}
@@ -1230,7 +1230,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v1 auto-detects ruleType from builder queryType", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &rule)
+		_ = json.Unmarshal([]byte(validV1Builder()), &rule)
 		if rule.RuleType != RuleTypeThreshold {
 			t.Errorf("expected threshold_rule, got %v", rule.RuleType)
 		}
@@ -1238,7 +1238,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 
 	t.Run("v1 auto-detects ruleType from promql queryType", func(t *testing.T) {
 		var rule PostableRule
-		json.Unmarshal([]byte(validV1Promql()), &rule)
+		_ = json.Unmarshal([]byte(validV1Promql()), &rule)
 		if rule.RuleType != RuleTypeProm {
 			t.Errorf("expected promql_rule, got %v", rule.RuleType)
 		}
@@ -1249,7 +1249,7 @@ func TestValidate_ProcessRuleDefaults(t *testing.T) {
 func TestValidate_MarshalRoundTrip(t *testing.T) {
 	t.Run("v1 round-trip strips computed fields and re-derives", func(t *testing.T) {
 		var original PostableRule
-		json.Unmarshal([]byte(validV1Builder()), &original)
+		_ = json.Unmarshal([]byte(validV1Builder()), &original)
 
 		// Marshal strips thresholds/evaluation/notificationSettings/schemaVersion
 		marshaled, err := json.Marshal(&original)
@@ -1259,7 +1259,7 @@ func TestValidate_MarshalRoundTrip(t *testing.T) {
 
 		// Verify stripped fields are absent from marshaled JSON
 		var raw map[string]json.RawMessage
-		json.Unmarshal(marshaled, &raw)
+		_ = json.Unmarshal(marshaled, &raw)
 		if _, ok := raw["schemaVersion"]; ok {
 			t.Error("expected schemaVersion to be stripped from v1 marshal output")
 		}
@@ -1288,7 +1288,7 @@ func TestValidate_MarshalRoundTrip(t *testing.T) {
 
 	t.Run("v2alpha1 round-trip preserves all fields", func(t *testing.T) {
 		var original PostableRule
-		json.Unmarshal([]byte(validV2Alpha1Builder()), &original)
+		_ = json.Unmarshal([]byte(validV2Alpha1Builder()), &original)
 
 		marshaled, err := json.Marshal(&original)
 		if err != nil {
@@ -1296,7 +1296,7 @@ func TestValidate_MarshalRoundTrip(t *testing.T) {
 		}
 
 		var raw map[string]json.RawMessage
-		json.Unmarshal(marshaled, &raw)
+		_ = json.Unmarshal(marshaled, &raw)
 		if _, ok := raw["schemaVersion"]; !ok {
 			t.Error("expected schemaVersion to be preserved in v2alpha1 marshal output")
 		}
