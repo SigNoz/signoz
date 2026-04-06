@@ -28,7 +28,7 @@ func newTestEvent(resource string, action audittypes.Action) audittypes.AuditEve
 			Outcome: audittypes.OutcomeSuccess,
 		},
 		ResourceAttributes: audittypes.ResourceAttributes{
-			ResourceName: resource,
+			ResourceKind: resource,
 		},
 	}
 }

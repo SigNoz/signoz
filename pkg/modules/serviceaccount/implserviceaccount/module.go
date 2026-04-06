@@ -144,12 +144,12 @@ func (module *module) DeleteRole(ctx context.Context, orgID valuer.UUID, id valu
 		return err
 	}
 
-	err = module.store.DeleteServiceAccountRole(ctx, serviceAccount.ID, roleID)
+	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Revoke(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.store.DeleteServiceAccountRole(ctx, serviceAccount.ID, roleID)
 	if err != nil {
 		return err
 	}
@@ -386,12 +386,12 @@ func (module *module) setRole(ctx context.Context, orgID valuer.UUID, id valuer.
 		return err
 	}
 
-	err = module.store.CreateServiceAccountRole(ctx, serviceAccountRole)
+	err = module.authz.Grant(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
 	if err != nil {
 		return err
 	}
 
-	err = module.authz.Grant(ctx, orgID, []string{role.Name}, authtypes.MustNewSubject(authtypes.TypeableServiceAccount, id.String(), orgID, nil))
+	err = module.store.CreateServiceAccountRole(ctx, serviceAccountRole)
 	if err != nil {
 		return err
 	}

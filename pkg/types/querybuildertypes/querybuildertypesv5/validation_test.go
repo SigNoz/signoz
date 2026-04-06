@@ -518,7 +518,7 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 				},
 			},
 			wantErr: true,
-			errMsg:  "expression is required",
+			errMsg:  "expression cannot be blank",
 		},
 		{
 			name: "promql with empty query should return error",
@@ -665,6 +665,57 @@ func TestQueryRangeRequest_ValidateCompositeQuery(t *testing.T) {
 			},
 			wantErr: false,
 		},
+		{
+			name: "raw request with metric query should return error",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeRaw,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[MetricAggregation]{
+								Name:         "A",
+								Disabled:     true,
+								Signal:       telemetrytypes.SignalMetrics,
+								Aggregations: []MetricAggregation{},
+							},
+						},
+						{
+							Type: QueryTypeFormula,
+							Spec: QueryBuilderFormula{
+								Name:       "F1",
+								Expression: "A",
+							},
+						},
+					},
+				},
+			},
+			wantErr: true,
+			errMsg:  "raw request type is not supported for metric queries",
+		},
+		{
+			name: "raw request with log query without aggregations should pass",
+			request: QueryRangeRequest{
+				Start:       1640995200000,
+				End:         1640998800000,
+				RequestType: RequestTypeRaw,
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[LogAggregation]{
+								Name:         "A",
+								Signal:       telemetrytypes.SignalLogs,
+								Aggregations: []LogAggregation{},
+							},
+						},
+					},
+				},
+			},
+			wantErr: false,
+		},
 	}
 
 	for _, tt := range tests {
@@ -733,7 +784,7 @@ func TestValidateQueryEnvelope(t *testing.T) {
 			},
 			requestType: RequestTypeTimeSeries,
 			wantErr:     true,
-			errMsg:      "expression is required",
+			errMsg:      "expression cannot be blank",
 		},
 		{
 			name: "valid join spec",

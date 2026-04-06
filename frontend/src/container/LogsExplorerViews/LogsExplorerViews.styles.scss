@@ -1,6 +1,7 @@
 .logs-explorer-views-container {
 	margin-bottom: 24px;
 	flex: 1;
+	min-height: 0;
 	display: flex;
 	flex-direction: column;
 
@@ -9,6 +10,7 @@
 		display: flex;
 		flex-direction: column;
 		flex: 1;
+		min-height: 0;
 		padding-bottom: 10px;
 
 		.views-tabs-container {
@@ -195,6 +197,7 @@
 
 		.logs-explorer-views-type-content {
 			flex: 1;
+			min-height: 0;
 			display: flex;
 			flex-direction: column;
 
@@ -210,12 +213,32 @@
 				}
 			}
 
+			.table-view-container {
+				flex: 1;
+				min-height: 0;
+				overflow-y: visible;
+			}
+
 			.time-series-view-container {
+				flex: 1;
+				display: flex;
+				flex-direction: column;
+				min-height: 0;
+				overflow-y: visible;
+
 				.time-series-view-container-header {
 					display: flex;
 					justify-content: flex-start;
 					align-items: center;
 					padding: 12px;
+					flex-shrink: 0;
+				}
+
+				.time-series-view {
+					flex-shrink: 0;
+					height: 65vh;
+					min-height: 450px;
+					padding-bottom: 140px;
 				}
 			}
 		}

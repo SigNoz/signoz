@@ -125,7 +125,7 @@ func (middleware *Audit) emitAuditEvent(req *http.Request, writer responseCaptur
 		def.Category,
 		claims,
 		resourceIDFromRequest(req, def.ResourceIDParam),
-		def.ResourceName,
+		def.ResourceKind,
 		errorType,
 		errorCode,
 	)

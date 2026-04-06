@@ -5,7 +5,7 @@
 		"tags": [
 			"quickstart"
 		],
-		"module": "apm",
+		"module": "home",
 		"relatedSearchKeywords": [
 			"apm",
 			"application performance monitoring",
@@ -21,6 +21,28 @@
 		],
 		"imgUrl": "/Logos/quickstart.svg",
 		"link": "/docs/cloud/quickstart/"
+	},
+	{
+		"dataSource": "signoz-mcp-server",
+		"label": "SigNoz MCP Server",
+		"tags": [
+			"quickstart"
+		],
+		"module": "home",
+		"relatedSearchKeywords": [
+			"agent",
+			"ai",
+			"mcp",
+			"mcp server",
+			"model context protocol",
+			"quickstart",
+			"signoz",
+			"signoz mcp",
+			"signoz mcp server",
+			"setup"
+		],
+		"imgUrl": "/Logos/signoz-brand-logo.svg",
+		"link": "/docs/ai/signoz-mcp-server/"
 	},
 	{
 		"dataSource": "migrate-from-datadog",
@@ -1524,18 +1546,24 @@
 		"link": "/docs/userguide/collect_docker_logs/"
 	},
 	{
-		"dataSource": "vercel-logs",
-		"label": "Vercel logs",
+		"dataSource": "vercel",
+		"label": "Vercel",
 		"imgUrl": "/Logos/vercel.svg",
 		"tags": [
+			"apm/traces",
 			"logs"
 		],
-		"module": "logs",
+		"module": "home",
 		"relatedSearchKeywords": [
 			"collect vercel logs",
 			"logging",
 			"logs",
+			"opentelemetry drains",
+			"trace drain",
+			"traces",
+			"tracing",
 			"vercel",
+			"vercel drains",
 			"vercel functions logs",
 			"vercel log forwarding",
 			"vercel log monitoring",
@@ -1545,10 +1573,12 @@
 			"vercel observability",
 			"vercel opentelemetry integration",
 			"vercel to otel",
+			"vercel trace drain",
+			"vercel traces",
 			"vercel-logs"
 		],
 		"id": "vercel-logs",
-		"link": "/docs/userguide/vercel_logs_to_signoz/"
+		"link": "/docs/userguide/vercel-to-signoz/"
 	},
 	{
 		"dataSource": "heroku-logs",
@@ -4030,6 +4060,57 @@
 		"link": "/docs/pydantic-ai-observability/"
 	},
 	{
+		"dataSource": "qwen-observability",
+		"label": "Qwen",
+		"imgUrl": "/Logos/qwen.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"alibaba cloud",
+			"dashscope",
+			"llm",
+			"llm monitoring",
+			"monitoring",
+			"observability",
+			"otel qwen",
+			"qwen",
+			"qwen logs",
+			"qwen metrics",
+			"qwen monitoring",
+			"qwen observability",
+			"qwen response time",
+			"qwen traces"
+		],
+		"id": "qwen-observability",
+		"link": "/docs/qwen-observability/"
+	},
+	{
+		"dataSource": "n8n-cloud",
+		"label": "n8n Cloud",
+		"imgUrl": "/Logos/n8n.svg",
+		"tags": [
+			"LLM Monitoring"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"llm monitoring",
+			"monitoring",
+			"n8n",
+			"n8n cloud",
+			"n8n monitoring",
+			"n8n observability",
+			"n8n traces",
+			"observability",
+			"otel n8n",
+			"workflow monitoring",
+			"workflow traces"
+		],
+		"id": "n8n-cloud",
+		"link": "/docs/n8n-monitoring/"
+	},
+	{
 		"dataSource": "mastra-monitoring",
 		"label": "Mastra",
 		"imgUrl": "/Logos/mastra.svg",
@@ -5157,6 +5238,31 @@
 		],
 		"id": "microsoft-sql-server",
 		"link": "/docs/integrations/sql-server/"
+	},
+	{
+		"dataSource": "hasura",
+		"label": "Hasura",
+		"imgUrl": "/Logos/hasura.svg",
+		"tags": [
+			"database"
+		],
+		"module": "apm",
+		"relatedSearchKeywords": [
+			"database",
+			"graphql",
+			"graphql engine",
+			"hasura",
+			"hasura graphql",
+			"hasura logs",
+			"hasura metrics",
+			"hasura monitoring",
+			"hasura observability",
+			"hasura traces",
+			"opentelemetry hasura",
+			"telemetry"
+		],
+		"id": "hasura",
+		"link": "/docs/integrations/opentelemetry-hasura/"
 	},
 	{
 		"dataSource": "supabase",

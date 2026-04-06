@@ -25,9 +25,9 @@ import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
 import NoLogs from '../NoLogs/NoLogs';
-import InfinityTableView from './InfinityTableView';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
+import TanStackTableView from './TanStackTableView';
 import {
 	convertKeysToColumnFields,
 	getEmptyLogsListConfig,
@@ -61,7 +61,7 @@ function LogsExplorerList({
 		handleCloseLogDetail,
 	} = useLogDetailHandlers();
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator:
@@ -155,9 +155,10 @@ function LogsExplorerList({
 
 		if (options.format === 'table') {
 			return (
-				<InfinityTableView
+				<TanStackTableView
 					ref={ref}
 					isLoading={isLoading}
+					isFetching={isFetching}
 					tableViewProps={{
 						logs,
 						fields: selectedFields,
@@ -172,6 +173,7 @@ function LogsExplorerList({
 					onSetActiveLog={handleSetActiveLog}
 					onClearActiveLog={handleCloseLogDetail}
 					activeLog={activeLog}
+					onRemoveColumn={config.addColumn?.onRemove}
 				/>
 			);
 		}
@@ -216,11 +218,13 @@ function LogsExplorerList({
 		logs,
 		onEndReached,
 		getItemContent,
+		isFetching,
 		selectedFields,
 		handleChangeSelectedView,
 		handleSetActiveLog,
 		handleCloseLogDetail,
 		activeLog,
+		config.addColumn?.onRemove,
 	]);
 
 	const isTraceToLogsNavigation = useMemo(() => {

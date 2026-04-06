@@ -197,6 +197,7 @@ func NewSQLMigrationProviderFactories(
 		sqlmigration.NewAddScheduledDashboardReportsFactory(),
 		sqlmigration.NewAddScheduledDashboardReportVariablesFactory(),
 		sqlmigration.NewAddScheduledDashboardReportRunsFactory(),
+		sqlmigration.NewDropUserDeletedAtFactory(sqlstore, sqlschema),
 	)
 }
 
