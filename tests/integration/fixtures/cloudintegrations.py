@@ -8,7 +8,6 @@ import requests
 
 from fixtures import types
 from fixtures.auth import USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD
-from fixtures.cloudintegrationsutils import setup_create_account_mocks
 from fixtures.logger import setup_logger
 
 logger = setup_logger(__name__)
@@ -88,8 +87,6 @@ def create_cloud_integration_account(
 ) -> Callable[[str, str], dict]:
     created_accounts: list[tuple[str, str]] = []
 
-    make_http_mocks = request.getfixturevalue("make_http_mocks")
-
     def _create(
         admin_token: str,
         cloud_provider: str = "aws",
@@ -99,15 +96,21 @@ def create_cloud_integration_account(
         if regions is None:
             regions = ["us-east-1"]
 
-        setup_create_account_mocks(signoz, make_http_mocks)
-
         endpoint = f"/api/v1/cloud_integrations/{cloud_provider}/accounts"
 
         request_payload = {
-            cloud_provider: {
-                "deploymentRegion": deployment_region,
-                "regions": regions,
-            }
+            "config": {
+                cloud_provider: {
+                    "deploymentRegion": deployment_region,
+                    "regions": regions,
+                }
+            },
+            "credentials": {
+                "sigNozApiURL": "https://test-deployment.test.signoz.cloud",
+                "sigNozApiKey": "test-api-key-789",
+                "ingestionUrl": "https://ingest.test.signoz.cloud",
+                "ingestionKey": "test-ingestion-key-123456",
+            },
         }
 
         response = requests.post(

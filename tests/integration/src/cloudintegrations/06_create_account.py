@@ -70,7 +70,15 @@ def test_create_account_unsupported_provider(
     response = requests.post(
         signoz.self.host_configs["8080"].get(endpoint),
         headers={"Authorization": f"Bearer {admin_token}"},
-        json={"gcp": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}},
+        json={
+            "config": {"gcp": {"deploymentRegion": "us-central1", "regions": ["us-central1"]}},
+            "credentials": {
+                "sigNozApiURL": "https://test.signoz.cloud",
+                "sigNozApiKey": "test-key",
+                "ingestionUrl": "https://ingest.test.signoz.cloud",
+                "ingestionKey": "test-ingestion-key",
+            },
+        },
         timeout=10,
     )
 
