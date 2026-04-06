@@ -61,7 +61,7 @@ type WaterfallSpan struct {
 	Links              string            `json:"links"`
 	Name               string            `json:"name"`
 	ParentSpanID       string            `json:"parent_span_id"`
-	Resources          map[string]string `json:"resources"`
+	Resource           map[string]string `json:"resource"`
 	ResponseStatusCode string            `json:"response_status_code"`
 	SpanID             string            `json:"span_id"`
 	StatusCode         int32             `json:"status_code"`
@@ -173,7 +173,7 @@ func (item *SpanModel) ToSpan() *WaterfallSpan {
 		Links:              item.References,
 		Name:               item.Name,
 		ParentSpanID:       item.ParentSpanID,
-		Resources:          resources,
+		Resource:           resources,
 		ResponseStatusCode: item.ResponseStatusCode,
 		SpanID:             item.SpanID,
 		StatusCode:         item.StatusCode,
