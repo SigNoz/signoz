@@ -71,7 +71,7 @@ export function getGroupByEl<T extends { meta: Record<string, string> }>(
 
 		// Choose mapped key if present, otherwise use rawKey
 		const metaKey = (dotToUnder[rawKey] ?? rawKey) as keyof typeof itemData.meta;
-		const value = itemData.meta[metaKey] || itemData.meta[rawKey] || '-';
+		const value = itemData.meta[metaKey] || itemData.meta[rawKey] || '<no-value>';
 
 		groupByValues.push(value);
 	});
