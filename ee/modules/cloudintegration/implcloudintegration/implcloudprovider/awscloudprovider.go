@@ -21,9 +21,6 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 }
 
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	// TODO: get this from config
-	agentVersion := "v0.0.8"
-
 	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", req.Config.Aws.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
@@ -35,8 +32,8 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, acc
 
 	q = u.Query()
 	q.Set("stackName", "signoz-integration")
-	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", agentVersion))
-	q.Set("param_SigNozIntegrationAgentVersion", agentVersion)
+	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", req.Config.AgentVersion))
+	q.Set("param_SigNozIntegrationAgentVersion", req.Config.AgentVersion)
 	q.Set("param_SigNozApiUrl", req.Credentials.SigNozAPIURL)
 	q.Set("param_SigNozApiKey", req.Credentials.SigNozAPIKey)
 	q.Set("param_SigNozAccountId", account.ID.StringValue())

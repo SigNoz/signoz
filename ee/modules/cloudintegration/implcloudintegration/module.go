@@ -31,6 +31,7 @@ type module struct {
 	global            global.Global
 	serviceAccount    serviceaccount.Module
 	cloudProvidersMap map[cloudintegrationtypes.CloudProviderType]cloudintegration.CloudProviderModule
+	config            cloudintegration.Config
 }
 
 func NewModule(
@@ -40,6 +41,7 @@ func NewModule(
 	gateway gateway.Gateway,
 	licensing licensing.Licensing,
 	serviceAccount serviceaccount.Module,
+	config cloudintegration.Config,
 ) (cloudintegration.Module, error) {
 	defStore := pkgimpl.NewServiceDefinitionStore()
 	awsCloudProviderModule, err := implcloudprovider.NewAWSCloudProvider(defStore)
@@ -60,6 +62,7 @@ func NewModule(
 		licensing:         licensing,
 		serviceAccount:    serviceAccount,
 		cloudProvidersMap: cloudProvidersMap,
+		config:            config,
 	}, nil
 }
 
@@ -125,6 +128,8 @@ func (module *module) GetConnectionArtifact(ctx context.Context, account *cloudi
 	if err != nil {
 		return nil, err
 	}
+
+	req.Config.AddAgentVersion(module.config.Agent.Version)
 
 	return cloudProviderModule.GetConnectionArtifact(ctx, account, req)
 }

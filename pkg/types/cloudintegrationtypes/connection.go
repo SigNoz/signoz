@@ -20,7 +20,9 @@ type ConnectionArtifactRequest struct {
 }
 
 type ConnectionArtifactRequestConfig struct {
-	Aws *AWSConnectionArtifactRequest `json:"aws" required:"true" nullable:"false"`
+	// as agent version is common for all providers, we can keep it at top level of this struct
+	AgentVersion string
+	Aws          *AWSConnectionArtifactRequest `json:"aws" required:"true" nullable:"false"`
 }
 
 type AWSConnectionArtifactRequest struct {
@@ -193,4 +195,8 @@ func (req *PostableAgentCheckInRequest) Validate() error {
 			"request must provide either old fields (account_id, cloud_account_id) or new fields (cloudIntegrationId, providerAccountId)")
 	}
 	return nil
+}
+
+func (config *ConnectionArtifactRequestConfig) AddAgentVersion(agentVersion string) {
+	config.AgentVersion = agentVersion
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/global"
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
+	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
 	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user"
@@ -123,6 +124,9 @@ type Config struct {
 
 	// ServiceAccount config
 	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
+
+	// CloudIntegration config
+	CloudIntegration cloudintegration.Config `mapstructure:"cloudintegration"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -153,6 +157,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
 		serviceaccount.NewConfigFactory(),
+		cloudintegration.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)
