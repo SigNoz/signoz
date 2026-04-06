@@ -56,7 +56,6 @@ jobs:
           - postgres
           - sqlite
         sqlite-mode:
-          - delete
           - wal
         clickhouse-version:
           - 25.5.6
@@ -65,9 +64,6 @@ jobs:
           - v0.142.0
         postgres-version:
           - 15
-        exclude:
-          - sqlstore-provider: postgres
-            sqlite-mode: wal
     if: |
       ((github.event_name == 'pull_request' && ! github.event.pull_request.head.repo.fork && github.event.pull_request.user.login != 'dependabot[bot]' && ! contains(github.event.pull_request.labels.*.name, 'safe-to-test')) ||
       (github.event_name == 'pull_request_target' && contains(github.event.pull_request.labels.*.name, 'safe-to-test'))) && contains(github.event.pull_request.labels.*.name, 'safe-to-integrate')
