@@ -328,7 +328,12 @@ func (d *Dispatcher) processAlert(alert *types.Alert, route *dispatch.Route) {
 	go ag.run(func(ctx context.Context, alerts ...*types.Alert) bool {
 		_, _, err := d.stage.Exec(ctx, d.logger, alerts...)
 		if err != nil {
-			logger := d.logger.With(slog.Int("num_alerts", len(alerts)), errors.Attr(err))
+			receiverName, _ := notify.ReceiverName(ctx)
+			logger := d.logger.With(
+				slog.String("receiver", receiverName),
+				slog.Int("num_alerts", len(alerts)),
+				errors.Attr(err),
+			)
 			if errors.Is(ctx.Err(), context.Canceled) {
 				// It is expected for the context to be canceled on
 				// configuration reload or shutdown. In this case, the
