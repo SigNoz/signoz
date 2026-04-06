@@ -72,8 +72,7 @@ export function buildTooltipContent({
 	decimalPrecision?: PrecisionOption;
 	isStackedBarChart?: boolean;
 }): TooltipContentItem[] {
-	const active: TooltipContentItem[] = [];
-	const rest: TooltipContentItem[] = [];
+	const items: TooltipContentItem[] = [];
 
 	for (let index = 1; index < series.length; index += 1) {
 		const s = series[index];
@@ -98,21 +97,17 @@ export function buildTooltipContent({
 		const isActive = index === activeSeriesIndex;
 
 		if (Number.isFinite(baseValue) && baseValue !== null) {
-			const item: TooltipContentItem = {
+			items.push({
 				label: String(s.label ?? ''),
 				value: baseValue,
 				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
 				color: resolveSeriesColor(s.stroke, uPlotInstance, index),
 				isActive,
-			};
-
-			if (isActive) {
-				active.push(item);
-			} else {
-				rest.push(item);
-			}
+			});
 		}
 	}
 
-	return [...active, ...rest];
+	// Return items in series-index order (stable) — never re-sort by active state,
+	// so the list position of each series stays fixed as the user moves the cursor.
+	return items;
 }
