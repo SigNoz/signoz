@@ -284,8 +284,8 @@ function K8sBaseDetails<T>({
 			const { minTime, maxTime } = getMinMaxTime();
 
 			setModalTimeRange({
-				startTime: minTime / TimeRangeOffset,
-				endTime: maxTime / TimeRangeOffset,
+				startTime: Math.floor(minTime / TimeRangeOffset),
+				endTime: Math.floor(maxTime / TimeRangeOffset),
 			});
 		}
 	}, [getMinMaxTime, selectedTime]);
