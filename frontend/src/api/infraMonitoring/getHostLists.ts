@@ -13,7 +13,9 @@ export interface HostListPayload {
 	orderBy?: {
 		columnName: string;
 		order: 'asc' | 'desc';
-	};
+	} | null;
+	start?: number;
+	end?: number;
 }
 
 export interface TimeSeriesValue {
