@@ -27,7 +27,7 @@ def test_duplicate_user_invite_rejected(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert response.status_code == HTTPStatus.CREATED
+    assert response.status_code == HTTPStatus.CREATED, response.text
     invited_user = response.json()["data"]
     reset_token = invited_user["token"]
 

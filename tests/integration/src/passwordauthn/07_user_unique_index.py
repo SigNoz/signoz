@@ -50,7 +50,7 @@ def test_unique_index_allows_multiple_deleted_rows(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert resp.status_code == HTTPStatus.CREATED
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
     first_user_id = resp.json()["data"]["id"]
 
     resp = requests.delete(
@@ -71,7 +71,7 @@ def test_unique_index_allows_multiple_deleted_rows(
         headers={"Authorization": f"Bearer {admin_token}"},
         timeout=2,
     )
-    assert resp.status_code == HTTPStatus.CREATED
+    assert resp.status_code == HTTPStatus.CREATED, resp.text
     second_user_id = resp.json()["data"]["id"]
     assert second_user_id != first_user_id
 
