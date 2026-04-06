@@ -681,7 +681,11 @@ function NewWidget({
 				clickhouseQueryCount: currentQuery.clickhouse_sql.length,
 				clickhouseQueries: currentQuery.clickhouse_sql.map((q) => ({
 					name: q.name,
-					query: q.query,
+					query: (q.query ?? '')
+						.replace(/--[^\n]*/g, '') // strip line comments
+						.replace(/\/\*[\s\S]*?\*\//g, '') // strip block comments
+						.replace(/'(?:[^'\\]|\\.|'')*'/g, "'?'") // replace single-quoted strings (handles \' and '' escapes)
+						.replace(/\b\d+(?:\.\d+)?(?:[eE][+-]?\d+)?\b/g, '?'), // replace numeric literals (int, float, scientific)
 					disabled: q.disabled,
 				})),
 			}),
