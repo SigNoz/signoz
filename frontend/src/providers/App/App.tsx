@@ -134,6 +134,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				createdAt: toISOString(userData.data.createdAt) ?? prev.createdAt,
 				updatedAt: toISOString(userData.data.updatedAt) ?? prev.updatedAt,
 			}));
+
+			// todo: we need to update the org name as well, we should have the [admin only role restriction on the get org api call] - BE input needed
 			setOrg((prev): any => {
 				if (!prev) {
 					return [

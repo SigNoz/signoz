@@ -330,6 +330,7 @@ function InviteMembersModal({
 						size="sm"
 						onClick={handleSubmit}
 						disabled={isSubmitDisabled}
+						loading={isSubmitting}
 					>
 						{isSubmitting ? 'Inviting...' : 'Invite Team Members'}
 					</Button>

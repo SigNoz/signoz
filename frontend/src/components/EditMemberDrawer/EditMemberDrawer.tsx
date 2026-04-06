@@ -91,6 +91,7 @@ function EditMemberDrawer({
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
+	const isDeleted = member?.status === MemberStatus.Deleted;
 	const isSelf = !!member?.id && member.id === currentUser?.id;
 
 	const { showErrorModal } = useErrorModal();
@@ -415,7 +416,7 @@ function EditMemberDrawer({
 						}}
 						className="edit-member-drawer__input"
 						placeholder="Enter name"
-						disabled={isRootUser}
+						disabled={isRootUser || isDeleted}
 					/>
 				</Tooltip>
 			</div>
@@ -436,9 +437,15 @@ function EditMemberDrawer({
 				<label className="edit-member-drawer__label" htmlFor="member-role">
 					Roles
 				</label>
-				{isSelf || isRootUser ? (
+				{isSelf || isRootUser || isDeleted ? (
 					<Tooltip
-						title={isRootUser ? ROOT_USER_TOOLTIP : 'You cannot modify your own role'}
+						title={
+							isRootUser
+								? ROOT_USER_TOOLTIP
+								: isDeleted
+								? undefined
+								: 'You cannot modify your own role'
+						}
 					>
 						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
 							<div className="edit-member-drawer__disabled-roles">
@@ -463,7 +470,7 @@ function EditMemberDrawer({
 						onRefetch={refetchRoles}
 						value={localRole}
 						onChange={(role): void => {
-							setLocalRole(role);
+							setLocalRole(role ?? '');
 							setSaveErrors((prev) =>
 								prev.filter(
 									(err) =>
@@ -472,6 +479,7 @@ function EditMemberDrawer({
 							);
 						}}
 						placeholder="Select role"
+						allowClear={false}
 					/>
 				)}
 			</div>
@@ -482,6 +490,10 @@ function EditMemberDrawer({
 					{member?.status === MemberStatus.Active ? (
 						<Badge color="forest" variant="outline">
 							ACTIVE
+						</Badge>
+					) : member?.status === MemberStatus.Deleted ? (
+						<Badge color="cherry" variant="outline">
+							DELETED
 						</Badge>
 					) : (
 						<Badge color="amber" variant="outline">
@@ -521,55 +533,57 @@ function EditMemberDrawer({
 		<div className="edit-member-drawer__layout">
 			<div className="edit-member-drawer__body">{drawerBody}</div>
 
-			<div className="edit-member-drawer__footer">
-				<div className="edit-member-drawer__footer-left">
-					<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
-						<span className="edit-member-drawer__tooltip-wrapper">
-							<Button
-								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-								onClick={(): void => setShowDeleteConfirm(true)}
-								disabled={isRootUser || isSelf}
-							>
-								<Trash2 size={12} />
-								{isInvited ? 'Revoke Invite' : 'Delete Member'}
-							</Button>
-						</span>
-					</Tooltip>
+			{!isDeleted && (
+				<div className="edit-member-drawer__footer">
+					<div className="edit-member-drawer__footer-left">
+						<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
+							<span className="edit-member-drawer__tooltip-wrapper">
+								<Button
+									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
+									onClick={(): void => setShowDeleteConfirm(true)}
+									disabled={isRootUser || isSelf}
+								>
+									<Trash2 size={12} />
+									{isInvited ? 'Revoke Invite' : 'Delete Member'}
+								</Button>
+							</span>
+						</Tooltip>
 
-					<div className="edit-member-drawer__footer-divider" />
-					<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
-						<span className="edit-member-drawer__tooltip-wrapper">
-							<Button
-								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-								onClick={handleGenerateResetLink}
-								disabled={isGeneratingLink || isRootUser}
-							>
-								<RefreshCw size={12} />
-								{isGeneratingLink && 'Generating...'}
-								{!isGeneratingLink && isInvited && 'Copy Invite Link'}
-								{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
-							</Button>
-						</span>
-					</Tooltip>
+						<div className="edit-member-drawer__footer-divider" />
+						<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+							<span className="edit-member-drawer__tooltip-wrapper">
+								<Button
+									className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+									onClick={handleGenerateResetLink}
+									disabled={isGeneratingLink || isRootUser}
+								>
+									<RefreshCw size={12} />
+									{isGeneratingLink && 'Generating...'}
+									{!isGeneratingLink && isInvited && 'Copy Invite Link'}
+									{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
+								</Button>
+							</span>
+						</Tooltip>
+					</div>
+
+					<div className="edit-member-drawer__footer-right">
+						<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
+							<X size={14} />
+							Cancel
+						</Button>
+
+						<Button
+							variant="solid"
+							color="primary"
+							size="sm"
+							disabled={!isDirty || isSaving || isRootUser}
+							onClick={handleSave}
+						>
+							{isSaving ? 'Saving...' : 'Save Member Details'}
+						</Button>
+					</div>
 				</div>
-
-				<div className="edit-member-drawer__footer-right">
-					<Button variant="solid" color="secondary" size="sm" onClick={handleClose}>
-						<X size={14} />
-						Cancel
-					</Button>
-
-					<Button
-						variant="solid"
-						color="primary"
-						size="sm"
-						disabled={!isDirty || isSaving || isRootUser}
-						onClick={handleSave}
-					>
-						{isSaving ? 'Saving...' : 'Save Member Details'}
-					</Button>
-				</div>
-			</div>
+			)}
 		</div>
 	);
 

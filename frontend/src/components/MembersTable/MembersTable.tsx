@@ -210,7 +210,7 @@ function MembersTable({
 					index % 2 === 0 ? 'members-table-row--tinted' : ''
 				}
 				onRow={(record): React.HTMLAttributes<HTMLElement> => {
-					const isClickable = onRowClick && record.status !== MemberStatus.Deleted;
+					const isClickable = !!onRowClick;
 					return {
 						onClick: (): void => {
 							if (isClickable) {

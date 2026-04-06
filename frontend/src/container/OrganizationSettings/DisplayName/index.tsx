@@ -1,14 +1,19 @@
+import { useEffect } from 'react';
 import { useTranslation } from 'react-i18next';
 import { toast } from '@signozhq/sonner';
 import { Button, Form, Input } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { useUpdateMyOrganization } from 'api/generated/services/orgs';
+import {
+	useGetMyOrganization,
+	useUpdateMyOrganization,
+} from 'api/generated/services/orgs';
 import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { useAppContext } from 'providers/App/App';
 import { IUser } from 'providers/App/types';
 import { useErrorModal } from 'providers/ErrorModalProvider';
 import APIError from 'types/api/error';
+import { USER_ROLES } from 'types/roles';
 import { requireErrorMessage } from 'utils/form/requireErrorMessage';
 
 function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
@@ -17,8 +22,24 @@ function DisplayName({ index, id: orgId }: DisplayNameProps): JSX.Element {
 
 	const { t } = useTranslation(['organizationsettings', 'common']);
 	const { showErrorModal } = useErrorModal();
-	const { org, updateOrg } = useAppContext();
-	const { displayName } = (org || [])[index];
+	const { org, updateOrg, user } = useAppContext();
+	const currentOrg = (org || [])[index];
+	const isAdmin = user.role === USER_ROLES.ADMIN;
+
+	const { data: orgData } = useGetMyOrganization({
+		query: {
+			enabled: isAdmin && !currentOrg?.displayName,
+		},
+	});
+
+	const displayName =
+		currentOrg?.displayName ?? orgData?.data?.displayName ?? '';
+
+	useEffect(() => {
+		if (displayName && !form.getFieldValue('displayName')) {
+			form.setFieldsValue({ displayName });
+		}
+	}, [displayName, form]);
 
 	const {
 		mutateAsync: updateMyOrganization,
