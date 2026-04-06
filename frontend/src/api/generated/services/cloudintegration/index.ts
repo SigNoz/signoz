@@ -33,6 +33,8 @@ import type {
 	DisconnectAccountPathParameters,
 	GetAccount200,
 	GetAccountPathParameters,
+	GetConnectionCredentials200,
+	GetConnectionCredentialsPathParameters,
 	GetService200,
 	GetServicePathParameters,
 	ListAccounts200,
@@ -824,6 +826,114 @@ export const useAgentCheckIn = <
 
 	return useMutation(mutationOptions);
 };
+/**
+ * This endpoint retrieves the connection credentials required for integration
+ * @summary Get connection credentials
+ */
+export const getConnectionCredentials = (
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	signal?: AbortSignal,
+) => {
+	return GeneratedAPIInstance<GetConnectionCredentials200>({
+		url: `/api/v1/cloud_integrations/${cloudProvider}/credentials`,
+		method: 'GET',
+		signal,
+	});
+};
+
+export const getGetConnectionCredentialsQueryKey = ({
+	cloudProvider,
+}: GetConnectionCredentialsPathParameters) => {
+	return [`/api/v1/cloud_integrations/${cloudProvider}/credentials`] as const;
+};
+
+export const getGetConnectionCredentialsQueryOptions = <
+	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getConnectionCredentials>>,
+			TError,
+			TData
+		>;
+	},
+) => {
+	const { query: queryOptions } = options ?? {};
+
+	const queryKey =
+		queryOptions?.queryKey ??
+		getGetConnectionCredentialsQueryKey({ cloudProvider });
+
+	const queryFn: QueryFunction<
+		Awaited<ReturnType<typeof getConnectionCredentials>>
+	> = ({ signal }) => getConnectionCredentials({ cloudProvider }, signal);
+
+	return {
+		queryKey,
+		queryFn,
+		enabled: !!cloudProvider,
+		...queryOptions,
+	} as UseQueryOptions<
+		Awaited<ReturnType<typeof getConnectionCredentials>>,
+		TError,
+		TData
+	> & { queryKey: QueryKey };
+};
+
+export type GetConnectionCredentialsQueryResult = NonNullable<
+	Awaited<ReturnType<typeof getConnectionCredentials>>
+>;
+export type GetConnectionCredentialsQueryError = ErrorType<RenderErrorResponseDTO>;
+
+/**
+ * @summary Get connection credentials
+ */
+
+export function useGetConnectionCredentials<
+	TData = Awaited<ReturnType<typeof getConnectionCredentials>>,
+	TError = ErrorType<RenderErrorResponseDTO>
+>(
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: {
+		query?: UseQueryOptions<
+			Awaited<ReturnType<typeof getConnectionCredentials>>,
+			TError,
+			TData
+		>;
+	},
+): UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+	const queryOptions = getGetConnectionCredentialsQueryOptions(
+		{ cloudProvider },
+		options,
+	);
+
+	const query = useQuery(queryOptions) as UseQueryResult<TData, TError> & {
+		queryKey: QueryKey;
+	};
+
+	query.queryKey = queryOptions.queryKey;
+
+	return query;
+}
+
+/**
+ * @summary Get connection credentials
+ */
+export const invalidateGetConnectionCredentials = async (
+	queryClient: QueryClient,
+	{ cloudProvider }: GetConnectionCredentialsPathParameters,
+	options?: InvalidateOptions,
+): Promise<QueryClient> => {
+	await queryClient.invalidateQueries(
+		{ queryKey: getGetConnectionCredentialsQueryKey({ cloudProvider }) },
+		options,
+	);
+
+	return queryClient;
+};
+
 /**
  * This endpoint lists the services metadata for the specified cloud provider
  * @summary List services metadata

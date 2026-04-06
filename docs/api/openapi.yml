@@ -633,6 +633,16 @@ components:
       type: object
     CloudintegrationtypesConnectionArtifactRequest:
       properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequestConfig'
+        credentials:
+          $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+      required:
+      - config
+      - credentials
+      type: object
+    CloudintegrationtypesConnectionArtifactRequestConfig:
+      properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
       required:
@@ -871,6 +881,22 @@ components:
       - title
       - icon
       - enabled
+      type: object
+    CloudintegrationtypesSignozCredentials:
+      properties:
+        ingestionKey:
+          type: string
+        ingestionUrl:
+          type: string
+        sigNozApiKey:
+          type: string
+        sigNozApiURL:
+          type: string
+      required:
+      - sigNozApiURL
+      - sigNozApiKey
+      - ingestionUrl
+      - ingestionKey
       type: object
     CloudintegrationtypesSupportedSignals:
       properties:
@@ -3600,6 +3626,59 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/credentials:
+    get:
+      deprecated: false
+      description: This endpoint retrieves the connection credentials required for
+        integration
+      operationId: GetConnectionCredentials
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get connection credentials
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/services:
