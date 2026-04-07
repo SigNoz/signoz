@@ -167,10 +167,10 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 	}
 
 	// The visitor returns exactly SkipConditionLiteral (never a substring) when
-	// there are no evaluable conditions; replace it with the no-op SQL literal.
-	// TODO(nitya): In this case we can choose to ignore resource_filter_cte
+	// there are no evaluable conditions. Return nil so callers can skip the
+	// entire CTE/subquery rather than emitting WHERE clause that select all the rows
 	if cond == "" || cond == SkipConditionLiteral {
-		cond = TrueConditionLiteral
+		return nil, nil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)
