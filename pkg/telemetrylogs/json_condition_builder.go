@@ -96,7 +96,7 @@ func applyNotCondition(operator qbtypes.FilterOperator) (bool, qbtypes.FilterOpe
 	return false, operator
 }
 
-// buildAccessNodeBranches builds conditions for each branch of the access node
+// buildAccessNodeBranches builds conditions for each branch of the access node.
 func (c *jsonConditionBuilder) buildAccessNodeBranches(current *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if current == nil {
 		return "", errors.NewInternalf(CodeArrayNavigationFailed, "navigation failed, current node is nil")
@@ -136,7 +136,7 @@ func (c *jsonConditionBuilder) buildAccessNodeBranches(current *telemetrytypes.J
 	return sb.Or(branches...), nil
 }
 
-// buildTerminalCondition creates the innermost condition
+// buildTerminalCondition creates the innermost condition.
 func (c *jsonConditionBuilder) buildTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	if node.TerminalConfig.ElemType.IsArray {
 		// Note: here applyNotCondition will return true only if; top level path is an array; and operator is a negative operator
@@ -232,7 +232,7 @@ func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetryty
 		}
 	}
 
-	var formattedValue any = value
+	var formattedValue = value
 	if operator.IsStringSearchOperator() {
 		formattedValue = querybuilder.FormatValueForContains(value)
 	}
