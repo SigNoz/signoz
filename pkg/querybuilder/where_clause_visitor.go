@@ -166,8 +166,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 		return nil, combinedErrors.WithAdditional(visitor.errors...).WithUrl(url)
 	}
 
-	// The visitor returns exactly SkipConditionLiteral (never a substring) when
-	// there are no evaluable conditions. Return nil so callers can skip the
+	// Return nil so callers can skip the
 	// entire CTE/subquery rather than emitting WHERE clause that select all the rows
 	if cond == "" || cond == SkipConditionLiteral {
 		return nil, nil
