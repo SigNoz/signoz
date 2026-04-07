@@ -22,7 +22,7 @@ import {
 	k8sJobsColumns,
 	k8sJobsColumnsConfig,
 	k8sJobsRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sJobsList({
 	controlListPrefix,

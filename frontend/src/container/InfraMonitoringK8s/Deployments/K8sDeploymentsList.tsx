@@ -22,7 +22,7 @@ import {
 	k8sDeploymentsColumns,
 	k8sDeploymentsColumnsConfig,
 	k8sDeploymentsRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sDeploymentsList({
 	controlListPrefix,

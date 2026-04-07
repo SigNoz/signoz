@@ -22,7 +22,7 @@ import {
 	k8sVolumesColumns,
 	k8sVolumesColumnsConfig,
 	k8sVolumesRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sVolumesList({
 	controlListPrefix,

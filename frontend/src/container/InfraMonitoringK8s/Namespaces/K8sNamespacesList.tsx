@@ -22,7 +22,7 @@ import {
 	k8sNamespacesColumns,
 	k8sNamespacesColumnsConfig,
 	k8sNamespacesRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sNamespacesList({
 	controlListPrefix,

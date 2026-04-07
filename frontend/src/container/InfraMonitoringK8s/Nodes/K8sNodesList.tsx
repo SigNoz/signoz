@@ -22,7 +22,7 @@ import {
 	k8sNodesColumns,
 	k8sNodesColumnsConfig,
 	k8sNodesRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sNodesList({
 	controlListPrefix,

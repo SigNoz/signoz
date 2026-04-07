@@ -22,7 +22,7 @@ import {
 	k8sClustersColumns,
 	k8sClustersColumnsConfig,
 	k8sClustersRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sClustersList({
 	controlListPrefix,

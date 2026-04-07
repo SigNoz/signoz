@@ -22,7 +22,7 @@ import {
 	k8sPodColumns,
 	k8sPodColumnsConfig,
 	k8sPodRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sPodsList({
 	controlListPrefix,

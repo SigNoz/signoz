@@ -22,7 +22,7 @@ import {
 	k8sDaemonSetsColumns,
 	k8sDaemonSetsColumnsConfig,
 	k8sDaemonSetsRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sDaemonSetsList({
 	controlListPrefix,

@@ -22,7 +22,7 @@ import {
 	k8sStatefulSetsColumns,
 	k8sStatefulSetsColumnsConfig,
 	k8sStatefulSetsRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sStatefulSetsList({
 	controlListPrefix,
