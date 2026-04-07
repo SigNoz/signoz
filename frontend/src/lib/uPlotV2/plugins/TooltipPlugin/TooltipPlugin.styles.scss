@@ -6,7 +6,7 @@
 	white-space: pre;
 	border-radius: 4px;
 	position: fixed;
-	overflow: hidden;
+	overflow: auto;
 	transform: translate(-1000px, -1000px); // hide the tooltip initially
 	opacity: 0;
 	pointer-events: none;

@@ -13,7 +13,7 @@ import Styles from './Tooltip.module.scss';
 
 // Fallback per-item height used for the initial size estimate before
 // Virtuoso reports the real total height via totalListHeightChanged.
-const ITEM_HEIGHT = 38;
+const TOOLTIP_ITEM_HEIGHT = 38;
 const LIST_MAX_HEIGHT = 300;
 
 export default function Tooltip({
@@ -38,11 +38,11 @@ export default function Tooltip({
 		if (cursorIdx == null) {
 			return null;
 		}
-		const ts = uPlotInstance.data[0]?.[cursorIdx];
-		if (ts == null) {
+		const timestamp = uPlotInstance.data[0]?.[cursorIdx];
+		if (timestamp == null) {
 			return null;
 		}
-		return dayjs(ts * 1000)
+		return dayjs(timestamp * 1000)
 			.tz(resolvedTimezone)
 			.format(DATE_TIME_FORMATS.MONTH_DATETIME_SECONDS);
 	}, [
@@ -60,10 +60,11 @@ export default function Tooltip({
 	// Use the measured height from Virtuoso when available; fall back to a
 	// per-item estimate on the first render.  Math.ceil prevents a 1 px
 	// subpixel rounding gap from triggering a spurious scrollbar.
-	const virtuosoHeight =
-		totalListHeight > 0
+	const virtuosoHeight = useMemo(() => {
+		return totalListHeight > 0
 			? Math.ceil(Math.min(totalListHeight, LIST_MAX_HEIGHT))
-			: Math.min(tooltipContent.length * ITEM_HEIGHT, LIST_MAX_HEIGHT);
+			: Math.min(tooltipContent.length * TOOLTIP_ITEM_HEIGHT, LIST_MAX_HEIGHT);
+	}, [totalListHeight, tooltipContent.length]);
 
 	const showHeader = showTooltipHeader || activeItem != null;
 	// With a single series the active item is fully represented in the header —
