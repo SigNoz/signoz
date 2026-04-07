@@ -1,0 +1,41 @@
+.hostsEmptyStateContainer {
+	padding: 16px;
+	height: 40vh;
+	flex: 1;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+}
+
+.hostsEmptyStateContainerContent {
+	padding: 16px;
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	width: fit-content;
+}
+
+.eyesEmoji {
+	height: 32px;
+	width: 32px;
+}
+
+.noHostsMessage {
+	margin-bottom: 16px;
+}
+
+.noHostsMessageTitle {
+	margin-top: 8px;
+	margin-bottom: 4px;
+	font-size: 16px;
+	font-weight: 600;
+	line-height: 1.5;
+}
+
+.messageBody {
+	margin: 0;
+	font-size: 14px;
+	line-height: 1.5715;
+}

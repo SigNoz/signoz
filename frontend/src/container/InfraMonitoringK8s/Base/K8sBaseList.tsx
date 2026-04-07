@@ -423,6 +423,7 @@ export function K8sBaseList<T>({
 					showSizeChanger: true,
 					hideOnSinglePage: false,
 					onChange: onPaginationChange,
+					className: styles.paginationDock,
 				}}
 				loading={{
 					spinning: showTableLoadingState,

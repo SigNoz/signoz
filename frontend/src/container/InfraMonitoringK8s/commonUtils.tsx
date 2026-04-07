@@ -14,6 +14,8 @@ import {
 
 import { getInvalidValueTooltipText, InfraMonitoringEntity } from './constants';
 
+import styles from './commonUtils.module.scss';
+
 /**
  * Converts size in bytes to a human-readable string with appropriate units
  */
@@ -111,7 +113,7 @@ export function EntityProgressBar({
 	const percentage = Number((value * 100).toFixed(1));
 
 	return (
-		<div className="entity-progress-bar">
+		<div className={styles.entityProgressBar}>
 			<Progress
 				percent={percentage}
 				strokeLinecap="butt"
@@ -122,7 +124,7 @@ export function EntityProgressBar({
 						? getStrokeColorForLimitUtilization(value)
 						: getStrokeColorForRequestUtilization(value)
 				}
-				className="progress-bar"
+				className={styles.progressBar}
 				showInfo={false}
 			/>
 			<Typography.Text style={{ fontSize: '10px' }}>{percentage}%</Typography.Text>
@@ -170,7 +172,7 @@ export function EventContents({
 			dataSource={tableData}
 			pagination={false}
 			showHeader={false}
-			className="event-content-container"
+			className={styles.eventContentContainer}
 		/>
 	);
 }

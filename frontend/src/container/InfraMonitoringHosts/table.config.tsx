@@ -1,6 +1,5 @@
 import React from 'react';
 import { InfoCircleOutlined } from '@ant-design/icons';
-import { Color } from '@signozhq/design-tokens';
 import { Progress, TableColumnType as ColumnType, Tag, Tooltip } from 'antd';
 import { HostData } from 'api/infraMonitoring/getHostLists';
 import { K8sRenderedRowData } from 'container/InfraMonitoringK8s/Base/types';
@@ -15,6 +14,7 @@ import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
+import { getMemoryProgressColor, getProgressColor } from './constants';
 import { HostnameCell } from './utils';
 
 import styles from './table.module.scss';
@@ -168,26 +168,6 @@ function hostRowSource(host: HostData): { meta: Record<string, string> } {
 	};
 }
 
-function progressStrokeColor(percent: number): string {
-	if (percent >= 90) {
-		return Color.BG_SAKURA_500;
-	}
-	if (percent >= 60) {
-		return Color.BG_AMBER_500;
-	}
-	return Color.BG_FOREST_500;
-}
-
-function memoryProgressStrokeColor(percent: number): string {
-	if (percent >= 90) {
-		return Color.BG_CHERRY_500;
-	}
-	if (percent >= 60) {
-		return Color.BG_AMBER_500;
-	}
-	return Color.BG_FOREST_500;
-}
-
 export const hostRenderRowData = (
 	host: HostData,
 	groupBy: BaseAutocompleteData[],
@@ -226,7 +206,7 @@ export const hostRenderRowData = (
 						percent={cpuPercent}
 						strokeLinecap="butt"
 						size="small"
-						strokeColor={progressStrokeColor(cpuPercent)}
+						strokeColor={getProgressColor(cpuPercent)}
 						className={styles.progressBar}
 					/>
 				</ValidateColumnValueWrapper>
@@ -242,7 +222,7 @@ export const hostRenderRowData = (
 						percent={memoryPercent}
 						strokeLinecap="butt"
 						size="small"
-						strokeColor={memoryProgressStrokeColor(memoryPercent)}
+						strokeColor={getMemoryProgressColor(memoryPercent)}
 						className={styles.progressBar}
 					/>
 				</ValidateColumnValueWrapper>

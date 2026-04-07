@@ -7,8 +7,6 @@ import { DataSource } from 'types/common/queryBuilder';
 
 import Hosts from './Hosts';
 
-import './InfraMonitoring.styles.scss';
-
 function InfraMonitoringHosts(): JSX.Element {
 	const {
 		updateAllQueriesOperators,
@@ -63,11 +61,7 @@ function InfraMonitoringHosts(): JSX.Element {
 
 	return (
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
-			<div className="infra-monitoring-container">
-				<div className="hosts-list-container">
-					<Hosts />
-				</div>
-			</div>
+			<Hosts />
 		</Sentry.ErrorBoundary>
 	);
 }

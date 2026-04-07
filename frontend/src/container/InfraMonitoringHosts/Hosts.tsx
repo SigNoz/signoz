@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
@@ -10,14 +10,10 @@ import K8sBaseDetails from 'container/InfraMonitoringK8s/Base/K8sBaseDetails';
 import { K8sBaseList } from 'container/InfraMonitoringK8s/Base/K8sBaseList';
 import { K8sBaseFilters } from 'container/InfraMonitoringK8s/Base/types';
 import { InfraMonitoringEntity } from 'container/InfraMonitoringK8s/constants';
-import {
-	useInfraMonitoringCurrentPage,
-	useInfraMonitoringSelectedItem,
-} from 'container/InfraMonitoringK8s/hooks';
+import { useInfraMonitoringCurrentPage } from 'container/InfraMonitoringK8s/hooks';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Filter } from 'lucide-react';
-import { parseAsString, useQueryState } from 'nuqs';
 import { useAppContext } from 'providers/App/App';
 import { Query } from 'types/api/queryBuilder/queryBuilderData';
 
@@ -32,7 +28,7 @@ import {
 	hostInitialLogTracesFilter,
 	hostRenderEmptyState,
 	hostWidgetInfo,
-} from './hostsData.utils';
+} from './constants';
 import {
 	hostColumns,
 	hostColumnsConfig,
@@ -40,23 +36,11 @@ import {
 } from './table.config';
 import { getHostsQuickFiltersConfig } from './utils';
 
-import './InfraMonitoring.styles.scss';
+import styles from './InfraMonitoringHosts.module.scss';
 
 function Hosts(): JSX.Element {
 	const [showFilters, setShowFilters] = useState(true);
 	const [, setCurrentPage] = useInfraMonitoringCurrentPage();
-	const [, setSelectedItem] = useInfraMonitoringSelectedItem();
-	const [legacyHostName, setLegacyHostName] = useQueryState(
-		'hostName',
-		parseAsString,
-	);
-
-	useEffect(() => {
-		if (legacyHostName) {
-			void setSelectedItem(legacyHostName);
-			void setLegacyHostName(null);
-		}
-	}, [legacyHostName, setLegacyHostName, setSelectedItem]);
 
 	const { featureFlags } = useAppContext();
 	const dotMetricsEnabled =
@@ -121,7 +105,7 @@ function Hosts(): JSX.Element {
 	);
 
 	const controlListPrefix = !showFilters ? (
-		<div className="quick-filters-toggle-container">
+		<div className={styles.quickFiltersToggleContainer}>
 			<Button
 				className="periscope-btn ghost"
 				type="text"
@@ -134,38 +118,44 @@ function Hosts(): JSX.Element {
 	) : undefined;
 
 	return (
-		<div className="hosts-list">
-			<div className="hosts-list-content">
-				{showFilters && (
-					<div className="hosts-quick-filters-container">
-						<div className="hosts-quick-filters-container-header">
-							<Typography.Text>Filters</Typography.Text>
-							<Tooltip title="Collapse Filters">
-								<VerticalAlignTopOutlined
-									rotate={270}
-									onClick={handleFilterVisibilityChange}
-								/>
-							</Tooltip>
+		<>
+			<div className={styles.infraMonitoringContainer}>
+				<div className={styles.infraContentRow}>
+					{showFilters && (
+						<div className={styles.quickFiltersContainer}>
+							<div className={styles.quickFiltersContainerHeader}>
+								<Typography.Text>Filters</Typography.Text>
+								<Tooltip title="Collapse Filters">
+									<VerticalAlignTopOutlined
+										rotate={270}
+										onClick={handleFilterVisibilityChange}
+									/>
+								</Tooltip>
+							</div>
+							<QuickFilters
+								source={QuickFiltersSource.INFRA_MONITORING}
+								config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
+								handleFilterVisibilityChange={handleFilterVisibilityChange}
+								onFilterChange={handleQuickFiltersChange}
+							/>
 						</div>
-						<QuickFilters
-							source={QuickFiltersSource.INFRA_MONITORING}
-							config={getHostsQuickFiltersConfig(dotMetricsEnabled)}
-							handleFilterVisibilityChange={handleFilterVisibilityChange}
-							onFilterChange={handleQuickFiltersChange}
+					)}
+					<div
+						className={`${styles.listContainer}${
+							showFilters ? ` ${styles.listContainerFiltersVisible}` : ''
+						}`}
+					>
+						<K8sBaseList
+							controlListPrefix={controlListPrefix}
+							entity={InfraMonitoringEntity.HOSTS}
+							tableColumnsDefinitions={hostColumns}
+							tableColumns={hostColumnsConfig}
+							fetchListData={fetchListData}
+							renderRowData={hostRenderRowData}
+							renderEmptyState={hostRenderEmptyState}
+							eventCategory={InfraMonitoringEvents.HostEntity}
 						/>
 					</div>
-				)}
-				<div className="hosts-list-table-container">
-					<K8sBaseList
-						controlListPrefix={controlListPrefix}
-						entity={InfraMonitoringEntity.HOSTS}
-						tableColumnsDefinitions={hostColumns}
-						tableColumns={hostColumnsConfig}
-						fetchListData={fetchListData}
-						renderRowData={hostRenderRowData}
-						renderEmptyState={hostRenderEmptyState}
-						eventCategory={InfraMonitoringEvents.HostEntity}
-					/>
 				</div>
 			</div>
 			<K8sBaseDetails
@@ -187,7 +177,7 @@ function Hosts(): JSX.Element {
 					showProcesses: true,
 				}}
 			/>
-		</div>
+		</>
 	);
 }
 

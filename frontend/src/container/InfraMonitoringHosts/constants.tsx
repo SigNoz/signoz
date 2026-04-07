@@ -26,9 +26,10 @@ import {
 import HostsEmptyOrIncorrectMetrics from './HostsEmptyOrIncorrectMetrics';
 import { getHostListsQuery } from './utils';
 
-import './InfraMonitoring.styles.scss';
+import hostsEmptyStateStyles from './HostsEmptyOrIncorrectMetrics.module.scss';
+import infraHostsStyles from './InfraMonitoringHosts.module.scss';
 
-function getProgressColor(percent: number): string {
+export function getProgressColor(percent: number): string {
 	if (percent >= 90) {
 		return Color.BG_SAKURA_500;
 	}
@@ -38,7 +39,7 @@ function getProgressColor(percent: number): string {
 	return Color.BG_FOREST_500;
 }
 
-function getMemoryProgressColor(percent: number): string {
+export function getMemoryProgressColor(percent: number): string {
 	if (percent >= 90) {
 		return Color.BG_CHERRY_500;
 	}
@@ -54,7 +55,9 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		getValue: (h): string => (h.active ? 'ACTIVE' : 'INACTIVE'),
 		render: (value, h): React.ReactNode => (
 			<Tag
-				className={`infra-monitoring-tags ${h.active ? 'active' : 'inactive'}`}
+				className={`${infraHostsStyles.infraMonitoringTags} ${
+					h.active ? infraHostsStyles.tagsActive : infraHostsStyles.tagsInactive
+				}`}
 				bordered
 			>
 				{value}
@@ -66,7 +69,7 @@ export const hostDetailsMetadataConfig: K8sDetailsMetadataConfig<HostData>[] = [
 		getValue: (h): string => h.os || '-',
 		render: (value): React.ReactNode =>
 			value !== '-' ? (
-				<Tag className="infra-monitoring-tags" bordered>
+				<Tag className={infraHostsStyles.infraMonitoringTags} bordered>
 					{value}
 				</Tag>
 			) : (
@@ -191,17 +194,21 @@ export async function fetchHostEntityData(
 
 function EndTimeBeforeRetentionMessage(): JSX.Element {
 	return (
-		<div className="hosts-empty-state-container">
-			<div className="hosts-empty-state-container-content">
-				<img className="eyes-emoji" src="/Images/eyesEmoji.svg" alt="eyes emoji" />
-				<div className="no-hosts-message">
-					<Typography.Title level={5} className="no-hosts-message-title">
+		<div className={hostsEmptyStateStyles.hostsEmptyStateContainer}>
+			<div className={hostsEmptyStateStyles.hostsEmptyStateContainerContent}>
+				<img
+					className={hostsEmptyStateStyles.eyesEmoji}
+					src="/Images/eyesEmoji.svg"
+					alt="eyes emoji"
+				/>
+				<div className={hostsEmptyStateStyles.noHostsMessage}>
+					<h5 className={hostsEmptyStateStyles.noHostsMessageTitle}>
 						Queried time range is before earliest host metrics
-					</Typography.Title>
-					<Typography.Text className="no-hosts-message-text">
+					</h5>
+					<p className={hostsEmptyStateStyles.messageBody}>
 						Your requested end time is earlier than the earliest detected time of host
 						metrics data, please adjust your end time.
-					</Typography.Text>
+					</p>
 				</div>
 			</div>
 		</div>
