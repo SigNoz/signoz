@@ -437,6 +437,7 @@ func New(
 		tokenizer,
 		config,
 		modules.AuthDomain,
+		modules.ServiceAccount,
 	}
 
 	// Initialize stats reporter from the available stats reporter provider factories

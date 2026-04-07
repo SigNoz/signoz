@@ -24,6 +24,10 @@ USER_EDITOR_NAME = "editor"
 USER_EDITOR_EMAIL = "editor@integration.test"
 USER_EDITOR_PASSWORD = "password123Z$"
 
+USER_VIEWER_NAME = "viewer"
+USER_VIEWER_EMAIL = "viewer@integration.test"
+USER_VIEWER_PASSWORD = "password123Z$"
+
 
 @pytest.fixture(name="create_user_admin", scope="package")
 def create_user_admin(

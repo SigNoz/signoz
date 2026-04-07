@@ -496,6 +496,19 @@ func (r *QueryRangeRequest) Validate(opts ...ValidationOption) error {
 		)
 	}
 
+	// raw/trace request types don't support metric queries;
+	// metrics are always aggregated and there is no raw form.
+	if r.RequestType == RequestTypeRaw || r.RequestType == RequestTypeRawStream || r.RequestType == RequestTypeTrace {
+		for _, envelope := range r.CompositeQuery.Queries {
+			if envelope.GetSignal() == telemetrytypes.SignalMetrics {
+				return errors.NewInvalidInputf(
+					errors.CodeInvalidInput,
+					"raw request type is not supported for metric queries",
+				)
+			}
+		}
+	}
+
 	// Validate composite query
 	if err := r.CompositeQuery.Validate(opts...); err != nil {
 		return err
@@ -584,13 +597,7 @@ func validateQueryEnvelope(envelope QueryEnvelope, opts ...ValidationOption) err
 				"invalid formula spec",
 			)
 		}
-		if spec.Expression == "" {
-			return errors.NewInvalidInputf(
-				errors.CodeInvalidInput,
-				"formula expression is required",
-			)
-		}
-		return nil
+		return spec.Validate()
 	case QueryTypeJoin:
 		_, ok := envelope.Spec.(QueryBuilderJoin)
 		if !ok {

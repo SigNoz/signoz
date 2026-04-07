@@ -158,10 +158,10 @@ function RolesSelect(props: RolesSelectProps): JSX.Element {
 	return (
 		<Select
 			id={id}
-			value={value}
+			value={value || undefined}
 			onChange={onChange}
 			placeholder={placeholder}
-			className={cx('roles-select', className)}
+			className={cx('roles-single-select', className)}
 			loading={loading}
 			notFoundContent={notFoundContent}
 			options={options}

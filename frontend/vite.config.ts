@@ -97,6 +97,9 @@ export default defineConfig(
 						javascriptEnabled: true,
 					},
 				},
+				modules: {
+					localsConvention: 'camelCaseOnly',
+				},
 			},
 			define: {
 				// TODO: Remove this in favor of import.meta.env

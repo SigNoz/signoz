@@ -13,10 +13,10 @@
 		align-self: stretch;
 		border-radius: 2px;
 		border: 1px solid var(--l1-border);
-		background: var(--l3-background);
+		background: var(--l2-background);
 
 		.ant-input {
-			background: var(--l3-background);
+			background: var(--l2-background);
 		}
 	}
 
@@ -45,10 +45,10 @@
 
 		.histogram-settings__bucket-input {
 			border: 1px solid var(--l1-border);
-			background: var(--l3-background);
+			background: var(--l2-background);
 
 			.ant-input {
-				background: var(--l3-background);
+				background: var(--l2-background);
 			}
 		}
 	}
