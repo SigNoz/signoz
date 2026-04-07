@@ -3,7 +3,6 @@ import { useQueryClient } from 'react-query';
 import {
 	getGetServiceAccountRolesQueryKey,
 	useCreateServiceAccountRole,
-	useDeleteServiceAccountRole,
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
@@ -36,7 +35,6 @@ export function useServiceAccountRoleManager(
 
 	// the retry for these mutations is safe due to being idempotent on backend
 	const { mutateAsync: createRole } = useCreateServiceAccountRole();
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole();
 
 	const invalidateRoles = useCallback(
 		() =>
@@ -62,20 +60,12 @@ export function useServiceAccountRoleManager(
 				(r) => r.id && desiredRoleIds.has(r.id) && !currentRoleIds.has(r.id),
 			);
 
-			const removedRoles = currentRoles.filter(
-				(r) => r.id && !desiredRoleIds.has(r.id),
-			);
-
+			// TODO: re-enable deletes once BE for this is streamlined
 			const allOperations = [
 				...addedRoles.map((role) => ({
 					role,
 					run: (): ReturnType<typeof createRole> =>
 						createRole({ pathParams: { id: accountId }, data: { id: role.id } }),
-				})),
-				...removedRoles.map((role) => ({
-					role,
-					run: (): ReturnType<typeof deleteRole> =>
-						deleteRole({ pathParams: { id: accountId, rid: role.id } }),
 				})),
 			];
 
@@ -102,7 +92,7 @@ export function useServiceAccountRoleManager(
 
 			return failures;
 		},
-		[accountId, currentRoles, createRole, deleteRole, invalidateRoles],
+		[accountId, currentRoles, createRole, invalidateRoles],
 	);
 
 	return {

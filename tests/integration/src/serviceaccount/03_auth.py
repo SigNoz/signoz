@@ -38,12 +38,12 @@ def test_service_account_key_forbidden_on_user_me(
     create_user_admin: types.Operation,  # pylint: disable=unused-argument
     get_token: Callable[[str, str], str],
 ):
-    """Service account key must not access /api/v1/user/me — it's user-only."""
+    """Service account key must not access /api/v2/users/me — it's user-only."""
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
     _, api_key = create_service_account_with_key(signoz, token, "sa-user-me-test")
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"SIGNOZ-API-KEY": api_key},
         timeout=5,
     )
@@ -51,7 +51,7 @@ def test_service_account_key_forbidden_on_user_me(
     ## This shouldn't be allowed on api key identn, will be updated once we fix that.
     assert (
         response.status_code == HTTPStatus.NOT_FOUND
-    ), f"Expected 404 for service account on /user/me, got {response.status_code}: {response.text}"
+    ), f"Expected 404 for service account on /users/me, got {response.status_code}: {response.text}"
 
 
 def test_service_account_key_forbidden_on_user_preferences(
@@ -311,7 +311,7 @@ def test_user_token_still_works_on_user_me(
     token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
     response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {token}"},
         timeout=5,
     )

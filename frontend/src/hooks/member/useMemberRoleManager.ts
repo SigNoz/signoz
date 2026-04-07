@@ -1,10 +1,6 @@
 import { useCallback, useMemo } from 'react';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
-import {
-	useGetUser,
-	useRemoveUserRoleByUserIDAndRoleID,
-	useSetRoleByUserID,
-} from 'api/generated/services/users';
+import { useGetUser, useSetRoleByUserID } from 'api/generated/services/users';
 
 export interface MemberRoleUpdateFailure {
 	roleName: string;
@@ -43,7 +39,6 @@ export function useMemberRoleManager(
 	);
 
 	const { mutateAsync: setRole } = useSetRoleByUserID();
-	const { mutateAsync: removeRole } = useRemoveUserRoleByUserIDAndRoleID();
 
 	const applyDiff = useCallback(
 		async (
@@ -53,25 +48,12 @@ export function useMemberRoleManager(
 			const currentRoleIdSet = new Set(fetchedRoleIds);
 			const desiredRoleIdSet = new Set(localRoleIds.filter(Boolean));
 
-			const toRemove = currentUserRoles.filter((ur) => {
-				const id = ur.role?.id ?? ur.roleId;
-				return id && !desiredRoleIdSet.has(id);
-			});
 			const toAdd = availableRoles.filter(
 				(r) => r.id && desiredRoleIdSet.has(r.id) && !currentRoleIdSet.has(r.id),
 			);
 
+			/// TODO: re-enable deletes once BE for this is streamlined
 			const allOps = [
-				...toRemove.map((ur) => ({
-					roleName: ur.role?.name ?? 'unknown',
-					run: (): ReturnType<typeof removeRole> =>
-						removeRole({
-							pathParams: {
-								id: userId,
-								roleId: ur.role?.id ?? ur.roleId ?? '',
-							},
-						}),
-				})),
 				...toAdd.map((role) => ({
 					roleName: role.name ?? 'unknown',
 					run: (): ReturnType<typeof setRole> =>
@@ -94,7 +76,7 @@ export function useMemberRoleManager(
 
 			return failures;
 		},
-		[userId, fetchedRoleIds, currentUserRoles, setRole, removeRole],
+		[userId, fetchedRoleIds, setRole],
 	);
 
 	return { fetchedRoleIds, isLoading, applyDiff };

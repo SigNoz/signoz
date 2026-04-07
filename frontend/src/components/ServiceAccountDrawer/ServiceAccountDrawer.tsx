@@ -80,7 +80,7 @@ function ServiceAccountDrawer({
 		parseAsBoolean.withDefault(false),
 	);
 	const [localName, setLocalName] = useState('');
-	const [localRoles, setLocalRoles] = useState<string[]>([]);
+	const [localRole, setLocalRole] = useState('');
 	const [isSaving, setIsSaving] = useState(false);
 	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
 
@@ -116,7 +116,7 @@ function ServiceAccountDrawer({
 	}, [account?.id, account?.name, setKeysPage]);
 
 	useEffect(() => {
-		setLocalRoles(currentRoles.map((r) => r.id).filter(Boolean) as string[]);
+		setLocalRole(currentRoles[0]?.id ?? '');
 	}, [currentRoles]);
 
 	const isDeleted =
@@ -125,8 +125,7 @@ function ServiceAccountDrawer({
 	const isDirty =
 		account !== null &&
 		(localName !== (account.name ?? '') ||
-			JSON.stringify([...localRoles].sort()) !==
-				JSON.stringify([...currentRoles.map((r) => r.id).filter(Boolean)].sort()));
+			localRole !== (currentRoles[0]?.id ?? ''));
 
 	const {
 		roles: availableRoles,
@@ -216,7 +215,10 @@ function ServiceAccountDrawer({
 
 	const retryRolesUpdate = useCallback(async (): Promise<void> => {
 		try {
-			const failures = await applyDiff(localRoles, availableRoles);
+			const failures = await applyDiff(
+				[localRole].filter(Boolean),
+				availableRoles,
+			);
 			if (failures.length === 0) {
 				setSaveErrors((prev) => prev.filter((e) => e.context !== 'Roles update'));
 			} else {
@@ -240,7 +242,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [localRoles, availableRoles, applyDiff, toSaveApiError, makeRoleRetry]);
+	}, [localRole, availableRoles, applyDiff, toSaveApiError, makeRoleRetry]);
 
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
@@ -259,7 +261,7 @@ function ServiceAccountDrawer({
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
 				namePromise,
-				applyDiff(localRoles, availableRoles),
+				applyDiff([localRole].filter(Boolean), availableRoles),
 			]);
 
 			const errors: SaveError[] = [];
@@ -308,7 +310,7 @@ function ServiceAccountDrawer({
 		account,
 		isDirty,
 		localName,
-		localRoles,
+		localRole,
 		availableRoles,
 		updateMutateAsync,
 		applyDiff,
@@ -410,8 +412,8 @@ function ServiceAccountDrawer({
 								account={account}
 								localName={localName}
 								onNameChange={handleNameChange}
-								localRoles={localRoles}
-								onRolesChange={setLocalRoles}
+								localRole={localRole}
+								onRoleChange={setLocalRole}
 								isDisabled={isDeleted}
 								availableRoles={availableRoles}
 								rolesLoading={rolesLoading}

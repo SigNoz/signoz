@@ -5,7 +5,6 @@ import {
 	getResetPasswordToken,
 	useDeleteUser,
 	useGetUser,
-	useRemoveUserRoleByUserIDAndRoleID,
 	useSetRoleByUserID,
 	useUpdateMyUserV2,
 	useUpdateUser,
@@ -56,7 +55,6 @@ jest.mock('api/generated/services/users', () => ({
 	useUpdateUser: jest.fn(),
 	useUpdateMyUserV2: jest.fn(),
 	useSetRoleByUserID: jest.fn(),
-	useRemoveUserRoleByUserIDAndRoleID: jest.fn(),
 	getResetPasswordToken: jest.fn(),
 }));
 
@@ -171,10 +169,6 @@ describe('EditMemberDrawer', () => {
 			mutateAsync: jest.fn().mockResolvedValue({}),
 			isLoading: false,
 		});
-		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
-			mutateAsync: jest.fn().mockResolvedValue({}),
-			isLoading: false,
-		});
 		(useDeleteUser as jest.Mock).mockReturnValue({
 			mutate: mockDeleteMutate,
 			isLoading: false,
@@ -248,7 +242,7 @@ describe('EditMemberDrawer', () => {
 		expect(onClose).not.toHaveBeenCalled();
 	});
 
-	it('calls setRole when a new role is added', async () => {
+	it('selecting a different role calls setRole with the new role name', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 		const mockSet = jest.fn().mockResolvedValue({});
@@ -277,32 +271,30 @@ describe('EditMemberDrawer', () => {
 		});
 	});
 
-	it('calls removeRole when an existing role is removed', async () => {
+	it('does not call removeRole when the role is changed', async () => {
 		const onComplete = jest.fn();
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
-		const mockRemove = jest.fn().mockResolvedValue({});
+		const mockSet = jest.fn().mockResolvedValue({});
 
-		(useRemoveUserRoleByUserIDAndRoleID as jest.Mock).mockReturnValue({
-			mutateAsync: mockRemove,
+		(useSetRoleByUserID as jest.Mock).mockReturnValue({
+			mutateAsync: mockSet,
 			isLoading: false,
 		});
 
 		renderDrawer({ onComplete });
 
-		// Wait for the signoz-admin tag to appear, then click its remove button
-		const adminTag = await screen.findByTitle('signoz-admin');
-		const removeBtn = adminTag.querySelector(
-			'.ant-select-selection-item-remove',
-		) as Element;
-		await user.click(removeBtn);
+		// Switch from signoz-admin to signoz-viewer using single-select
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
 
 		const saveBtn = screen.getByRole('button', { name: /save member details/i });
 		await waitFor(() => expect(saveBtn).not.toBeDisabled());
 		await user.click(saveBtn);
 
 		await waitFor(() => {
-			expect(mockRemove).toHaveBeenCalledWith({
-				pathParams: { id: 'user-1', roleId: managedRoles[0].id },
+			expect(mockSet).toHaveBeenCalledWith({
+				pathParams: { id: 'user-1' },
+				data: { name: 'signoz-viewer' },
 			});
 			expect(onComplete).toHaveBeenCalled();
 		});

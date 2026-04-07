@@ -189,7 +189,7 @@ describe('Tooltip utils', () => {
 			];
 		}
 
-		it('builds tooltip content with active series first', () => {
+		it('builds tooltip content in series-index order with isActive flag set correctly', () => {
 			const data: AlignedData = [[0], [10], [20], [30]];
 			const series = createSeriesConfig();
 			const dataIndexes = [null, 0, 0, 0];
@@ -206,20 +206,20 @@ describe('Tooltip utils', () => {
 			});
 
 			expect(result).toHaveLength(2);
-			// Active (series index 2) should come first
+			// Series are returned in series-index order (A=index 1 before B=index 2)
 			expect(result[0]).toMatchObject<Partial<TooltipContentItem>>({
-				label: 'B',
-				value: 20,
-				tooltipValue: 'formatted-20',
-				color: 'color-2',
-				isActive: true,
-			});
-			expect(result[1]).toMatchObject<Partial<TooltipContentItem>>({
 				label: 'A',
 				value: 10,
 				tooltipValue: 'formatted-10',
 				color: '#ff0000',
 				isActive: false,
+			});
+			expect(result[1]).toMatchObject<Partial<TooltipContentItem>>({
+				label: 'B',
+				value: 20,
+				tooltipValue: 'formatted-20',
+				color: 'color-2',
+				isActive: true,
 			});
 		});
 
@@ -272,6 +272,32 @@ describe('Tooltip utils', () => {
 			// baseValue for series 1 at index 0 should be 60 - 30 (next visible) = 30
 			expect(result[0].value).toBe(30);
 			expect(result[1].value).toBe(30);
+		});
+
+		it('returns items in series-index order', () => {
+			// Series values in non-sorted order: 3, 1, 4, 2
+			const data: AlignedData = [[0], [3], [1], [4], [2]];
+			const series: Series[] = [
+				{ label: 'x', show: true } as Series,
+				{ label: 'C', show: true, stroke: '#aaaaaa' } as Series,
+				{ label: 'A', show: true, stroke: '#bbbbbb' } as Series,
+				{ label: 'D', show: true, stroke: '#cccccc' } as Series,
+				{ label: 'B', show: true, stroke: '#dddddd' } as Series,
+			];
+			const dataIndexes = [null, 0, 0, 0, 0];
+			const u = createUPlotInstance();
+
+			const result = buildTooltipContent({
+				data,
+				series,
+				dataIndexes,
+				activeSeriesIndex: null,
+				uPlotInstance: u,
+				yAxisUnit,
+				decimalPrecision,
+			});
+
+			expect(result.map((item) => item.value)).toEqual([3, 1, 4, 2]);
 		});
 	});
 });

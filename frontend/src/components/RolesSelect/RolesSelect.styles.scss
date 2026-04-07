@@ -88,3 +88,13 @@
 		color: var(--destructive);
 	}
 }
+
+.roles-single-select {
+	.ant-select-selector {
+		min-height: 32px;
+		background-color: var(--l2-background) !important;
+		border: 1px solid var(--border) !important;
+		border-radius: 2px;
+		padding: 2px var(--padding-2) !important;
+	}
+}

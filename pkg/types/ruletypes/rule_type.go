@@ -31,6 +31,6 @@ func (r RuleType) Validate() error {
 		RuleTypeAnomaly:
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown rule type, known values are")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "ruleType: unsupported value %q; must be one of threshold_rule, promql_rule, anomaly_rule", r.StringValue())
 	}
 }
