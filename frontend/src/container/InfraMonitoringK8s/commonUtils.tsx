@@ -101,9 +101,6 @@ export function getStrokeColorForLimitUtilization(value: number): string {
 	return Color.BG_SAKURA_500;
 }
 
-export const getProgressBarText = (percent: number): React.ReactNode =>
-	`${percent}%`;
-
 export function EntityProgressBar({
 	value,
 	type,
