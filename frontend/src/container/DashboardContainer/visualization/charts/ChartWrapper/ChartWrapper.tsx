@@ -13,7 +13,7 @@ import uPlot from 'uplot';
 
 import { ChartProps } from '../types';
 
-const TOOLTIP_WIDTH_PADDING = 60;
+const TOOLTIP_WIDTH_PADDING = 120;
 const TOOLTIP_MIN_WIDTH = 200;
 
 export default function ChartWrapper({
