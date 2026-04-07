@@ -93,7 +93,9 @@ export function K8sExpandedRow<T>({
 		[tableColumns, columnsHidden, hiddenColumnIdsForNested],
 	);
 
-	const createFiltersForRecord = useCallback((): IBuilderQuery['filters'] => {
+	const createFiltersForRecord = useCallback((): NonNullable<
+		IBuilderQuery['filters']
+	> => {
 		const baseFilters: IBuilderQuery['filters'] = {
 			items: [...queryFilters.items],
 			op: 'and',

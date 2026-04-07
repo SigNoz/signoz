@@ -76,7 +76,7 @@ export const getK8sNodesList = async (
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters?.items.reduce<typeof props.filters.items>(
+							items: props.filters.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;

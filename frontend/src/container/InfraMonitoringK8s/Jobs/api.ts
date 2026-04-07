@@ -62,38 +62,37 @@ export const getK8sJobsList = async (
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sJobsListResponse> | ErrorResponse> => {
 	try {
-		const requestProps =
-			dotMetricsEnabled && Array.isArray(props.filters?.items)
-				? {
-						...props,
-						filters: {
-							...props.filters,
-							items: props.filters?.items.reduce<typeof props.filters.items>(
-								(acc, item) => {
-									if (item.value === undefined) {
-										return acc;
-									}
-									if (
-										item.key &&
-										typeof item.key === 'object' &&
-										'key' in item.key &&
-										typeof item.key.key === 'string'
-									) {
-										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-										acc.push({
-											...item,
-											key: { ...item.key, key: mappedKey },
-										});
-									} else {
-										acc.push(item);
-									}
+		const requestProps = dotMetricsEnabled
+			? {
+					...props,
+					filters: {
+						...props.filters,
+						items: props.filters?.items.reduce<typeof props.filters.items>(
+							(acc, item) => {
+								if (item.value === undefined) {
 									return acc;
-								},
-								[] as typeof props.filters.items,
-							),
-						},
-				  }
-				: props;
+								}
+								if (
+									item.key &&
+									typeof item.key === 'object' &&
+									'key' in item.key &&
+									typeof item.key.key === 'string'
+								) {
+									const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+									acc.push({
+										...item,
+										key: { ...item.key, key: mappedKey },
+									});
+								} else {
+									acc.push(item);
+								}
+								return acc;
+							},
+							[] as typeof props.filters.items,
+						),
+					},
+			  }
+			: props;
 
 		const response = await axios.post('/jobs/list', requestProps, {
 			signal,

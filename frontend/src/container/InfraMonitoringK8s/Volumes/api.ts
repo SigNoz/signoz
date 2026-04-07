@@ -82,15 +82,13 @@ export const getK8sVolumesList = async (
 			...(orderBy != null ? { orderBy } : {}),
 		};
 
-		const requestProps =
-			dotMetricsEnabled && Array.isArray(basePayload.filters?.items)
-				? {
-						...basePayload,
-						filters: {
-							...basePayload.filters,
-							items: basePayload.filters.items.reduce<
-								typeof basePayload.filters.items
-							>((acc, item) => {
+		const requestProps = dotMetricsEnabled
+			? {
+					...basePayload,
+					filters: {
+						...basePayload.filters,
+						items: basePayload.filters.items.reduce<typeof basePayload.filters.items>(
+							(acc, item) => {
 								if (item.value === undefined) {
 									return acc;
 								}
@@ -106,10 +104,12 @@ export const getK8sVolumesList = async (
 									acc.push(item);
 								}
 								return acc;
-							}, [] as typeof basePayload.filters.items),
-						},
-				  }
-				: basePayload;
+							},
+							[] as typeof basePayload.filters.items,
+						),
+					},
+			  }
+			: basePayload;
 
 		const response = await axios.post('/pvcs/list', requestProps, {
 			signal,

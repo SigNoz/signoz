@@ -4,7 +4,7 @@ import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { OrderBySchemaType } from '../schemas';
 
 export type K8sBaseFilters = {
-	filters?: TagFilter;
+	filters: TagFilter;
 	groupBy?: BaseAutocompleteData[];
 	offset?: number;
 	limit?: number;

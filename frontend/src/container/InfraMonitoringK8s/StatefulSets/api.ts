@@ -73,32 +73,31 @@ export const getK8sStatefulSetsList = async (
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse> => {
 	try {
-		const requestProps =
-			dotMetricsEnabled && props.filters && Array.isArray(props.filters.items)
-				? {
-						...props,
-						filters: {
-							...props.filters,
-							items: props.filters.items.reduce<TagFilter['items']>((acc, item) => {
-								if (item.value === undefined) {
-									return acc;
-								}
-								if (
-									item.key &&
-									typeof item.key === 'object' &&
-									'key' in item.key &&
-									typeof item.key.key === 'string'
-								) {
-									const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-									acc.push({ ...item, key: { ...item.key, key: mappedKey } });
-								} else {
-									acc.push(item);
-								}
+		const requestProps = dotMetricsEnabled
+			? {
+					...props,
+					filters: {
+						...props.filters,
+						items: props.filters.items.reduce<TagFilter['items']>((acc, item) => {
+							if (item.value === undefined) {
 								return acc;
-							}, [] as TagFilter['items']),
-						},
-				  }
-				: props;
+							}
+							if (
+								item.key &&
+								typeof item.key === 'object' &&
+								'key' in item.key &&
+								typeof item.key.key === 'string'
+							) {
+								const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+								acc.push({ ...item, key: { ...item.key, key: mappedKey } });
+							} else {
+								acc.push(item);
+							}
+							return acc;
+						}, [] as TagFilter['items']),
+					},
+			  }
+			: props;
 
 		const response = await axios.post('/statefulsets/list', requestProps, {
 			signal,
