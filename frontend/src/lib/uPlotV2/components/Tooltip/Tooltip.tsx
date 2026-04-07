@@ -135,7 +135,7 @@ function TooltipItem({
 		<div
 			className="uplot-tooltip-item"
 			style={{
-				opacity: isItemActive ? 1 : 0.8,
+				opacity: isItemActive ? 1 : 0.7,
 				fontWeight: isItemActive ? 700 : 400,
 			}}
 			data-testid={containerTestId}
