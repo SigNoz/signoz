@@ -1,10 +1,10 @@
-.uplotTooltipItem {
+.uplot-tooltip-item {
 	display: flex;
 	align-items: center;
 	gap: 8px;
 	padding: 4px 0;
 
-	.uplotTooltipItemMarker {
+	.uplot-tooltip-item-Marker {
 		border-radius: 50%;
 		border-style: solid;
 		border-width: 2px;
@@ -13,19 +13,19 @@
 		flex-shrink: 0;
 	}
 
-	.uplotTooltipItemContent {
+	.uplot-tooltip-item-content {
 		width: 100%;
 		display: flex;
 		align-items: center;
 		gap: 8px;
 		justify-content: space-between;
 
-		.uplotTooltipItemLabel {
+		.uplot-tooltip-item-label {
 			white-space: normal;
 			overflow-wrap: anywhere;
 		}
 
-		&Separator {
+		&-separator {
 			flex: 1;
 			border-width: 0.5px;
 			border-style: dashed;
