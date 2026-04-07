@@ -2,7 +2,7 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { K8sRenderedRowData } from '../Base/K8sBaseList';
+import { K8sRenderedRowData } from '../Base/types';
 import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
 import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
 import {

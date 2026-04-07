@@ -6,7 +6,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { K8sBaseFilters } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 
 export interface K8sNodesListPayload {
 	filters: TagFilter;

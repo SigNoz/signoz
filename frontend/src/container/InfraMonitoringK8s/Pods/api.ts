@@ -4,7 +4,7 @@ import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import { K8sBaseFilters } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 
 export const podsMetaMap = [
 	{ dot: 'k8s.cronjob.name', under: 'k8s_cronjob_name' },
