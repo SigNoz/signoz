@@ -1,41 +1,52 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-// eslint-disable-next-line no-restricted-imports
-import { useSelector } from 'react-redux';
+import { useQuery } from 'react-query';
 import { VerticalAlignTopOutlined } from '@ant-design/icons';
 import { Button, Tooltip, Typography } from 'antd';
 import logEvent from 'api/common/logEvent';
-import { HostListPayload } from 'api/infraMonitoring/getHostLists';
+import {
+	getHostLists,
+	HostListPayload,
+	HostListResponse,
+} from 'api/infraMonitoring/getHostLists';
 import HostMetricDetail from 'components/HostMetricsDetail';
 import QuickFilters from 'components/QuickFilters/QuickFilters';
 import { QuickFiltersSource } from 'components/QuickFilters/types';
 import { InfraMonitoringEvents } from 'constants/events';
+import { FeatureKeys } from 'constants/features';
+import { REACT_QUERY_KEY } from 'constants/reactQueryKeys';
 import {
 	useInfraMonitoringCurrentPage,
 	useInfraMonitoringFiltersHosts,
 	useInfraMonitoringOrderByHosts,
 } from 'container/InfraMonitoringK8s/hooks';
 import { usePageSize } from 'container/InfraMonitoringK8s/utils';
-import { useGetHostList } from 'hooks/infraMonitoring/useGetHostList';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useQueryOperations } from 'hooks/queryBuilder/useQueryBuilderOperations';
 import { Filter } from 'lucide-react';
 import { parseAsString, useQueryState } from 'nuqs';
-import { AppState } from 'store/reducers';
-import { IBuilderQuery, Query } from 'types/api/queryBuilder/queryBuilderData';
-import { GlobalReducer } from 'types/reducer/globalTime';
+import { useAppContext } from 'providers/App/App';
+import { useGlobalTimeStore } from 'store/globalTime';
+import {
+	getAutoRefreshQueryKey,
+	NANO_SECOND_MULTIPLIER,
+} from 'store/globalTime/utils';
+import { ErrorResponse, SuccessResponse } from 'types/api';
+import {
+	IBuilderQuery,
+	Query,
+	TagFilter,
+} from 'types/api/queryBuilder/queryBuilderData';
 
-import { FeatureKeys } from '../../constants/features';
-import { useAppContext } from '../../providers/App/App';
 import HostsListControls from './HostsListControls';
 import HostsListTable from './HostsListTable';
 import { getHostListsQuery, GetHostsQuickFiltersConfig } from './utils';
 
 import './InfraMonitoring.styles.scss';
-function HostsList(): JSX.Element {
-	const { maxTime, minTime } = useSelector<AppState, GlobalReducer>(
-		(state) => state.globalTime,
-	);
 
+const defaultFilters: TagFilter = { items: [], op: 'and' };
+const baseQuery = getHostListsQuery();
+
+function HostsList(): JSX.Element {
 	const [currentPage, setCurrentPage] = useInfraMonitoringCurrentPage();
 	const [filters, setFilters] = useInfraMonitoringFiltersHosts();
 	const [orderBy, setOrderBy] = useInfraMonitoringOrderByHosts();
@@ -62,56 +73,48 @@ function HostsList(): JSX.Element {
 
 	const { pageSize, setPageSize } = usePageSize('hosts');
 
-	const query = useMemo(() => {
-		const baseQuery = getHostListsQuery();
-		return {
-			...baseQuery,
-			limit: pageSize,
-			offset: (currentPage - 1) * pageSize,
-			filters,
-			start: Math.floor(minTime / 1000000),
-			end: Math.floor(maxTime / 1000000),
-			orderBy,
-		};
-	}, [pageSize, currentPage, filters, minTime, maxTime, orderBy]);
+	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
+	const isRefreshEnabled = useGlobalTimeStore((s) => s.isRefreshEnabled);
+	const refreshInterval = useGlobalTimeStore((s) => s.refreshInterval);
+	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
 
-	const queryKey = useMemo(() => {
-		if (selectedHostName) {
-			return [
-				'hostList',
+	const queryKey = useMemo(
+		() =>
+			getAutoRefreshQueryKey(
+				selectedTime,
+				REACT_QUERY_KEY.GET_HOST_LIST,
 				String(pageSize),
 				String(currentPage),
 				JSON.stringify(filters),
 				JSON.stringify(orderBy),
-			];
-		}
-		return [
-			'hostList',
-			String(pageSize),
-			String(currentPage),
-			JSON.stringify(filters),
-			JSON.stringify(orderBy),
-			String(minTime),
-			String(maxTime),
-		];
-	}, [
-		pageSize,
-		currentPage,
-		filters,
-		orderBy,
-		selectedHostName,
-		minTime,
-		maxTime,
-	]);
-
-	const { data, isFetching, isLoading, isError } = useGetHostList(
-		query as HostListPayload,
-		{
-			queryKey,
-			enabled: !!query,
-			keepPreviousData: true,
-		},
+			),
+		[pageSize, currentPage, filters, orderBy, selectedTime],
 	);
+
+	const { data, isFetching, isLoading, isError } = useQuery<
+		SuccessResponse<HostListResponse> | ErrorResponse,
+		Error
+	>({
+		queryKey,
+		queryFn: ({ signal }) => {
+			const { minTime, maxTime } = getMinMaxTime();
+
+			const payload: HostListPayload = {
+				...baseQuery,
+				limit: pageSize,
+				offset: (currentPage - 1) * pageSize,
+				filters: filters ?? defaultFilters,
+				orderBy,
+				start: Math.floor(minTime / NANO_SECOND_MULTIPLIER),
+				end: Math.floor(maxTime / NANO_SECOND_MULTIPLIER),
+			};
+
+			return getHostLists(payload, signal);
+		},
+		enabled: true,
+		keepPreviousData: true,
+		refetchInterval: isRefreshEnabled ? refreshInterval : false,
+	});
 
 	const hostMetricsData = useMemo(() => data?.payload?.data?.records || [], [
 		data,
@@ -227,7 +230,7 @@ function HostsList(): JSX.Element {
 						isError={isError}
 						tableData={data}
 						hostMetricsData={hostMetricsData}
-						filters={filters || { items: [], op: 'AND' }}
+						filters={filters ?? defaultFilters}
 						currentPage={currentPage}
 						setCurrentPage={setCurrentPage}
 						onHostClick={handleHostClick}

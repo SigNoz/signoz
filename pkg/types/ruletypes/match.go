@@ -11,7 +11,7 @@ type MatchType struct {
 
 var (
 	AtleastOnce        = MatchType{valuer.NewString("1")}
-	AtleastOnceLiteral = MatchType{valuer.NewString("atleast_once")}
+	AtleastOnceLiteral = MatchType{valuer.NewString("at_least_once")}
 
 	AllTheTimes        = MatchType{valuer.NewString("2")}
 	AllTheTimesLiteral = MatchType{valuer.NewString("all_the_times")}
@@ -38,6 +38,24 @@ func (MatchType) Enum() []any {
 	}
 }
 
+// Normalize returns the canonical (numeric) form of the match type.
+func (m MatchType) Normalize() MatchType {
+	switch m {
+	case AtleastOnce, AtleastOnceLiteral:
+		return AtleastOnce
+	case AllTheTimes, AllTheTimesLiteral:
+		return AllTheTimes
+	case OnAverage, OnAverageLiteral, OnAverageShort:
+		return OnAverage
+	case InTotal, InTotalLiteral, InTotalShort:
+		return InTotal
+	case Last, LastLiteral:
+		return Last
+	default:
+		return m
+	}
+}
+
 func (m MatchType) Validate() error {
 	switch m {
 	case
@@ -55,6 +73,6 @@ func (m MatchType) Validate() error {
 		LastLiteral:
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown match type operator, known values are")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.matchType: unsupported value %q; must be one of at_least_once, all_the_times, on_average, in_total, last", m.StringValue())
 	}
 }

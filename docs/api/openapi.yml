@@ -327,27 +327,6 @@ components:
           nullable: true
           type: array
       type: object
-    AuthtypesStorableRole:
-      properties:
-        createdAt:
-          format: date-time
-          type: string
-        description:
-          type: string
-        id:
-          type: string
-        name:
-          type: string
-        orgId:
-          type: string
-        type:
-          type: string
-        updatedAt:
-          format: date-time
-          type: string
-      required:
-      - id
-      type: object
     AuthtypesTransaction:
       properties:
         object:
@@ -371,7 +350,7 @@ components:
         id:
           type: string
         role:
-          $ref: '#/components/schemas/AuthtypesStorableRole'
+          $ref: '#/components/schemas/AuthtypesRole'
         roleId:
           type: string
         updatedAt:
@@ -381,6 +360,11 @@ components:
           type: string
       required:
       - id
+      - userId
+      - roleId
+      - createdAt
+      - updatedAt
+      - role
       type: object
     AuthtypesUserWithRoles:
       properties:

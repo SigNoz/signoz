@@ -50,14 +50,15 @@ def test_root_user_signoz_admin_assignment(
 ):
     admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
 
-    # Get the user from the /user/me endpoint and extract the id
-    user_response = requests.get(
-        signoz.self.host_configs["8080"].get("/api/v1/user/me"),
+    # Get the user from the v2 /users/me endpoint and extract the id
+    response = requests.get(
+        signoz.self.host_configs["8080"].get("/api/v2/users/me"),
         headers={"Authorization": f"Bearer {admin_token}"},
-        timeout=2,
+        timeout=5,
     )
-    assert user_response.status_code == HTTPStatus.OK
-    user_id = user_response.json()["data"]["id"]
+    assert response.status_code == HTTPStatus.OK
+    user_data = response.json()["data"]
+    user_id = user_data["id"]
 
     response = requests.get(
         signoz.self.host_configs["8080"].get("/api/v1/roles"),

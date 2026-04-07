@@ -53,7 +53,7 @@ func newConfig() factory.Config {
 		},
 		Sqlite: SqliteConfig{
 			Path:            "/var/lib/signoz/signoz.db",
-			Mode:            "delete",
+			Mode:            "wal",
 			BusyTimeout:     10000 * time.Millisecond, // increasing the defaults from https://github.com/mattn/go-sqlite3/blob/master/sqlite3.go#L1098 because of transpilation from C to GO
 			TransactionMode: "deferred",
 		},

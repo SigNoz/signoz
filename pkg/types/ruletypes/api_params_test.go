@@ -34,15 +34,15 @@ func TestParseIntoRule(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"expression": "A",
-								"disabled": false,
-								"aggregateAttribute": {
-									"key": "test_metric"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						}
+						}]
 					},
 					"target": 10.0,
 					"matchType": "1",
@@ -77,14 +77,15 @@ func TestParseIntoRule(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"disabled": false,
-								"aggregateAttribute": {
-									"key": "test_metric"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						}
+						}]
 					},
 					"target": 5.0,
 					"matchType": "1",
@@ -112,12 +113,14 @@ func TestParseIntoRule(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "promql",
-						"promQueries": {
-							"A": {
+						"queries": [{
+							"type": "promql",
+							"spec": {
+								"name": "A",
 								"query": "rate(http_requests_total[5m])",
 								"disabled": false
 							}
-						}
+						}]
 					},
 					"target": 10.0,
 					"matchType": "1",
@@ -165,12 +168,13 @@ func TestParseIntoRule(t *testing.T) {
 
 func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 	tests := []struct {
-		name        string
-		initRule    PostableRule
-		content     []byte
-		kind        RuleDataKind
-		expectError bool
-		validate    func(*testing.T, *PostableRule)
+		name                string
+		initRule            PostableRule
+		content             []byte
+		kind                RuleDataKind
+		expectError         bool // unmarshal error (read path)
+		expectValidateError bool // Validate() error (write path only)
+		validate            func(*testing.T, *PostableRule)
 	}{
 		{
 			name:     "schema v1 - threshold name from severity label",
@@ -182,13 +186,15 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"aggregateAttribute": {
-									"key": "cpu_usage"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "cpu_usage", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						},
+						}],
 						"unit": "percent"
 					},
 					"target": 85.0,
@@ -271,13 +277,15 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"aggregateAttribute": {
-									"key": "memory_usage"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "memory_usage", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						}
+						}]
 					},
 					"target": 90.0,
 					"matchType": "1",
@@ -312,13 +320,15 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"aggregateAttribute": {
-									"key": "cpu_usage"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "cpu_usage", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						},
+						}],
 						"unit": "percent"
 					},
 					"target": 80.0,
@@ -394,49 +404,253 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 			},
 		},
 		{
-			name:     "schema v2 - does not populate thresholds and evaluation",
+			name:     "schema v2alpha1 - uses explicit thresholds and evaluation",
 			initRule: PostableRule{},
 			content: []byte(`{
-				"alert": "V2Test",
-				"schemaVersion": "v2",
+				"alert": "V2Alpha1Test",
+				"schemaVersion": "v2alpha1",
 				"version": "v5",
+				"ruleType": "threshold_rule",
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"aggregateAttribute": {
-									"key": "test_metric"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						}
+						}]
+					},
+					"thresholds": {
+						"kind": "basic",
+						"spec": [{
+							"name": "critical",
+							"target": 100.0,
+							"matchType": "1",
+							"op": "1"
+						}]
+					}
+				},
+				"evaluation": {
+					"kind": "rolling",
+					"spec": {
+						"evalWindow": "5m",
+						"frequency": "1m"
+					}
+				},
+				"notificationSettings": {
+					"renotify": {
+						"enabled": true,
+						"interval": "4h",
+						"alertStates": ["firing"]
+					}
+				}
+			}`),
+			kind:        RuleDataKindJson,
+			expectError: false,
+			validate: func(t *testing.T, rule *PostableRule) {
+				if rule.SchemaVersion != SchemaVersionV2Alpha1 {
+					t.Errorf("Expected schemaVersion %q, got %q", SchemaVersionV2Alpha1, rule.SchemaVersion)
+				}
+
+				if rule.RuleCondition.Thresholds == nil {
+					t.Error("Expected Thresholds to be present for v2alpha1")
+				}
+				if rule.Evaluation == nil {
+					t.Error("Expected Evaluation to be present for v2alpha1")
+				}
+				if rule.NotificationSettings == nil {
+					t.Error("Expected NotificationSettings to be present for v2alpha1")
+				}
+				if rule.RuleType != RuleTypeThreshold {
+					t.Error("Expected RuleType to be auto-detected")
+				}
+			},
+		},
+		{
+			name:     "schema v2alpha1 - rejects v1-only fields with suggestions",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "MixedFieldsTest",
+				"schemaVersion": "v2alpha1",
+				"version": "v5",
+				"ruleType": "threshold_rule",
+				"preferredChannels": ["slack"],
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
 					},
 					"target": 100.0,
 					"matchType": "1",
 					"op": "1"
 				}
 			}`),
-			kind:        RuleDataKindJson,
-			expectError: false,
-			validate: func(t *testing.T, rule *PostableRule) {
-				if rule.SchemaVersion != "v2" {
-					t.Errorf("Expected schemaVersion 'v2', got '%s'", rule.SchemaVersion)
+			kind:                RuleDataKindJson,
+			expectValidateError: true,
+		},
+		{
+			name:     "schema v2alpha1 - requires evaluation",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "MissingEvalTest",
+				"schemaVersion": "v2alpha1",
+				"version": "v5",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"thresholds": {
+						"kind": "basic",
+						"spec": [{
+							"name": "critical",
+							"target": 100.0,
+							"matchType": "1",
+							"op": "1"
+						}]
+					}
+				},
+				"notificationSettings": {
+					"renotify": {
+						"enabled": true,
+						"interval": "4h",
+						"alertStates": ["firing"]
+					}
 				}
-
-				if rule.RuleCondition.Thresholds != nil {
-					t.Error("Expected Thresholds to be nil for v2")
+			}`),
+			kind:                RuleDataKindJson,
+			expectValidateError: true,
+		},
+		{
+			name:     "schema v2alpha1 - requires notificationSettings",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "MissingNotifTest",
+				"schemaVersion": "v2alpha1",
+				"version": "v5",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"thresholds": {
+						"kind": "basic",
+						"spec": [{
+							"name": "critical",
+							"target": 100.0,
+							"matchType": "1",
+							"op": "1"
+						}]
+					}
+				},
+				"evaluation": {
+					"kind": "rolling",
+					"spec": {
+						"evalWindow": "5m",
+						"frequency": "1m"
+					}
 				}
-				if rule.Evaluation != nil {
-					t.Error("Expected Evaluation to be nil for v2")
+			}`),
+			kind:                RuleDataKindJson,
+			expectValidateError: true,
+		},
+		{
+			name:     "schema v2alpha1 - requires thresholds for non-promql rules",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "MissingThresholdsTest",
+				"schemaVersion": "v2alpha1",
+				"version": "v5",
+				"ruleType": "threshold_rule",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					}
+				},
+				"evaluation": {
+					"kind": "rolling",
+					"spec": {
+						"evalWindow": "5m",
+						"frequency": "1m"
+					}
+				},
+				"notificationSettings": {
+					"renotify": {
+						"enabled": true,
+						"interval": "4h",
+						"alertStates": ["firing"]
+					}
 				}
-
-				if rule.EvalWindow.Duration() != 5*time.Minute {
-					t.Error("Expected default EvalWindow to be applied")
+			}`),
+			kind:                RuleDataKindJson,
+			expectValidateError: true,
+		},
+		{
+			name:     "unsupported schema version",
+			initRule: PostableRule{},
+			content: []byte(`{
+				"alert": "BadSchemaTest",
+				"schemaVersion": "v3",
+				"version": "v5",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
+							}
+						}]
+					},
+					"target": 100.0,
+					"matchType": "1",
+					"op": "1"
 				}
-				if rule.RuleType != RuleTypeThreshold {
-					t.Error("Expected RuleType to be auto-detected")
-				}
-			},
+			}`),
+			kind:                RuleDataKindJson,
+			expectValidateError: true,
 		},
 		{
 			name:     "default schema version - defaults to v1 behavior",
@@ -447,13 +661,15 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 				"condition": {
 					"compositeQuery": {
 						"queryType": "builder",
-						"builderQueries": {
-							"A": {
-								"aggregateAttribute": {
-									"key": "test_metric"
-								}
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "p50"}],
+								"stepInterval": "5m"
 							}
-						}
+						}]
 					},
 					"target": 75.0,
 					"matchType": "1",
@@ -480,13 +696,23 @@ func TestParseIntoRuleSchemaVersioning(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			rule := tt.initRule
 			err := json.Unmarshal(tt.content, &rule)
-			if tt.expectError && err == nil {
-				t.Errorf("Expected error but got none")
+			if tt.expectError {
+				if err == nil {
+					t.Errorf("Expected unmarshal error but got none")
+				}
+				return
 			}
-			if !tt.expectError && err != nil {
-				t.Errorf("Unexpected error: %v", err)
+			if err != nil {
+				t.Errorf("Unexpected unmarshal error: %v", err)
+				return
 			}
-			if tt.validate != nil && err == nil {
+			if tt.expectValidateError {
+				if err := rule.Validate(); err == nil {
+					t.Errorf("Expected Validate() error but got none")
+				}
+				return
+			}
+			if tt.validate != nil {
 				tt.validate(t, &rule)
 			}
 		})
@@ -500,15 +726,15 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 		"condition": {
 			"compositeQuery": {
 				"queryType": "builder",
-				"builderQueries": {
-					"A": {
-						"expression": "A",
-						"disabled": false,
-						"aggregateAttribute": {
-							"key": "response_time"
-						}
+				"queries": [{
+					"type": "builder_query",
+					"spec": {
+						"name": "A",
+						"signal": "metrics",
+						"aggregations": [{"metricName": "response_time", "spaceAggregation": "p50"}],
+						"stepInterval": "5m"
 					}
-				}
+				}]
 			},
 			"target": 100.0,
 			"matchType": "1",
@@ -571,7 +797,7 @@ func TestParseIntoRuleThresholdGeneration(t *testing.T) {
 
 func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 	content := []byte(`{
-		"schemaVersion": "v2",
+		"schemaVersion": "v2alpha1",
 		"alert": "MultiThresholdAlert",
 		"ruleType": "threshold_rule",
 		"version": "v5",
@@ -579,19 +805,16 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 			"compositeQuery": {
 				"queryType": "builder",
 				"unit": "%",
-				"builderQueries": {
-					"A": {
-						"expression": "A",
-						"disabled": false,
-						"aggregateAttribute": {
-							"key": "cpu_usage"
-						}
+				"queries": [{
+					"type": "builder_query",
+					"spec": {
+						"name": "A",
+						"signal": "metrics",
+						"aggregations": [{"metricName": "cpu_usage", "spaceAggregation": "p50"}],
+						"stepInterval": "5m"
 					}
-				}
+				}]
 			},
-			"target": 90.0,
-			"matchType": "1",
-			"op": "1",
 			"selectedQuery": "A",
 			"thresholds": {
 				"kind": "basic",
@@ -615,6 +838,20 @@ func TestParseIntoRuleMultipleThresholds(t *testing.T) {
 						"selectedQuery": "A"
 					}
 				]
+			}
+		},
+		"evaluation": {
+			"kind": "rolling",
+			"spec": {
+				"evalWindow": "5m",
+				"frequency": "1m"
+			}
+		},
+		"notificationSettings": {
+			"renotify": {
+				"enabled": true,
+				"interval": "4h",
+				"alertStates": ["firing"]
 			}
 		}
 	}`)

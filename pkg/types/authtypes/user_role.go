@@ -19,13 +19,13 @@ type UserRole struct {
 	bun.BaseModel `bun:"table:user_role,alias:user_role"`
 
 	ID        valuer.UUID `bun:"id,pk,type:text" json:"id" required:"true"`
-	UserID    valuer.UUID `bun:"user_id" json:"userId"`
-	RoleID    valuer.UUID `bun:"role_id" json:"roleId"`
-	CreatedAt time.Time   `bun:"created_at" json:"createdAt"`
-	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt"`
+	UserID    valuer.UUID `bun:"user_id" json:"userId" required:"true"`
+	RoleID    valuer.UUID `bun:"role_id" json:"roleId" required:"true"`
+	CreatedAt time.Time   `bun:"created_at" json:"createdAt" required:"true"`
+	UpdatedAt time.Time   `bun:"updated_at" json:"updatedAt" required:"true"`
 
 	// read only fields
-	Role *StorableRole `bun:"rel:belongs-to,join:role_id=id" json:"role"`
+	Role *Role `bun:"rel:belongs-to,join:role_id=id" json:"role" required:"true"`
 }
 
 func newUserRole(userID valuer.UUID, roleID valuer.UUID) *UserRole {

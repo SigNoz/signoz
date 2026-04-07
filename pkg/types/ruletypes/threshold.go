@@ -113,6 +113,9 @@ func (r BasicRuleThresholds) GetRuleReceivers() []RuleReceivers {
 }
 
 func (r BasicRuleThresholds) Validate() error {
+	if len(r) == 0 {
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.thresholds.spec: must have at least one threshold")
+	}
 	var errs []error
 	for _, basicThreshold := range r {
 		if err := basicThreshold.Validate(); err != nil {
@@ -189,7 +192,7 @@ func sortThresholds(thresholds []BasicRuleThreshold) {
 		targetI := thresholds[i].target(thresholds[i].TargetUnit) //for sorting we dont need rule unit
 		targetJ := thresholds[j].target(thresholds[j].TargetUnit)
 
-		switch thresholds[i].CompareOperator {
+		switch thresholds[i].CompareOperator.Normalize() {
 		case ValueIsAbove, ValueAboveOrEq, ValueOutsideBounds:
 			// For "above" operations, sort descending (higher values first)
 			return targetI > targetJ
@@ -234,16 +237,11 @@ func (b BasicRuleThreshold) Validate() error {
 		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "target value cannot be nil"))
 	}
 
-	switch b.CompareOperator {
-	case ValueIsAbove, ValueIsBelow, ValueIsEq, ValueIsNotEq, ValueAboveOrEq, ValueBelowOrEq, ValueOutsideBounds:
-	default:
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid compare operation: %s", b.CompareOperator.StringValue()))
+	if err := b.CompareOperator.Validate(); err != nil {
+		errs = append(errs, err)
 	}
-
-	switch b.MatchType {
-	case AtleastOnce, AllTheTimes, OnAverage, InTotal, Last:
-	default:
-		errs = append(errs, errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid match type: %s", b.MatchType.StringValue()))
+	if err := b.MatchType.Validate(); err != nil {
+		errs = append(errs, err)
 	}
 
 	return errors.Join(errs...)
@@ -268,6 +266,33 @@ func PrepareSampleLabelsForRule(seriesLabels []*qbtypes.Label, thresholdName str
 	return lb.Labels()
 }
 
+// matchesCompareOp checks if a value matches the compare operator against target.
+func matchesCompareOp(op CompareOperator, value, target float64) bool {
+	switch op {
+	case ValueIsAbove:
+		return value > target
+	case ValueIsBelow:
+		return value < target
+	case ValueIsEq:
+		return value == target
+	case ValueIsNotEq:
+		return value != target
+	case ValueAboveOrEq:
+		return value >= target
+	case ValueBelowOrEq:
+		return value <= target
+	case ValueOutsideBounds:
+		return math.Abs(value) >= target
+	default:
+		return false
+	}
+}
+
+// negatesCompareOp checks if a value does NOT match the compare operator against target.
+func negatesCompareOp(op CompareOperator, value, target float64) bool {
+	return !matchesCompareOp(op, value, target)
+}
+
 func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, target float64) (Sample, bool) {
 	var shouldAlert bool
 	var alertSmpl Sample
@@ -278,63 +303,35 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 		return alertSmpl, false
 	}
 
-	switch b.MatchType {
+	// Normalize to canonical forms so evaluation uses simple == checks
+	op := b.CompareOperator.Normalize()
+	matchType := b.MatchType.Normalize()
+
+	switch matchType {
 	case AtleastOnce:
 		// If any sample matches the condition, the rule is firing.
-		if b.CompareOperator == ValueIsAbove {
-			for _, smpl := range series.Values {
-				if smpl.Value > target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if b.CompareOperator == ValueIsBelow {
-			for _, smpl := range series.Values {
-				if smpl.Value < target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if b.CompareOperator == ValueIsEq {
-			for _, smpl := range series.Values {
-				if smpl.Value == target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if b.CompareOperator == ValueIsNotEq {
-			for _, smpl := range series.Values {
-				if smpl.Value != target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
-			}
-		} else if b.CompareOperator == ValueOutsideBounds {
-			for _, smpl := range series.Values {
-				if math.Abs(smpl.Value) >= target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = true
-					break
-				}
+		for _, smpl := range series.Values {
+			if matchesCompareOp(op, smpl.Value, target) {
+				alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+				shouldAlert = true
+				break
 			}
 		}
 	case AllTheTimes:
 		// If all samples match the condition, the rule is firing.
 		shouldAlert = true
 		alertSmpl = Sample{Point: Point{V: target}, Metric: lbls}
-		if b.CompareOperator == ValueIsAbove {
-			for _, smpl := range series.Values {
-				if smpl.Value <= target {
-					shouldAlert = false
-					break
-				}
+		for _, smpl := range series.Values {
+			if negatesCompareOp(op, smpl.Value, target) {
+				alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
+				shouldAlert = false
+				break
 			}
-			// use min value from the series
-			if shouldAlert {
+		}
+		if shouldAlert {
+			switch op {
+			case ValueIsAbove, ValueAboveOrEq, ValueOutsideBounds:
+				// use min value from the series
 				var minValue = math.Inf(1)
 				for _, smpl := range series.Values {
 					if smpl.Value < minValue {
@@ -342,15 +339,8 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 					}
 				}
 				alertSmpl = Sample{Point: Point{V: minValue}, Metric: lbls}
-			}
-		} else if b.CompareOperator == ValueIsBelow {
-			for _, smpl := range series.Values {
-				if smpl.Value >= target {
-					shouldAlert = false
-					break
-				}
-			}
-			if shouldAlert {
+			case ValueIsBelow, ValueBelowOrEq:
+				// use max value from the series
 				var maxValue = math.Inf(-1)
 				for _, smpl := range series.Values {
 					if smpl.Value > maxValue {
@@ -358,36 +348,13 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 					}
 				}
 				alertSmpl = Sample{Point: Point{V: maxValue}, Metric: lbls}
-			}
-		} else if b.CompareOperator == ValueIsEq {
-			for _, smpl := range series.Values {
-				if smpl.Value != target {
-					shouldAlert = false
-					break
-				}
-			}
-		} else if b.CompareOperator == ValueIsNotEq {
-			for _, smpl := range series.Values {
-				if smpl.Value == target {
-					shouldAlert = false
-					break
-				}
-			}
-			// use any non-inf or nan value from the series
-			if shouldAlert {
+			case ValueIsNotEq:
+				// use any non-inf and non-nan value from the series
 				for _, smpl := range series.Values {
 					if !math.IsInf(smpl.Value, 0) && !math.IsNaN(smpl.Value) {
 						alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
 						break
 					}
-				}
-			}
-		} else if b.CompareOperator == ValueOutsideBounds {
-			for _, smpl := range series.Values {
-				if math.Abs(smpl.Value) < target {
-					alertSmpl = Sample{Point: Point{V: smpl.Value}, Metric: lbls}
-					shouldAlert = false
-					break
 				}
 			}
 		}
@@ -403,32 +370,10 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 		}
 		avg := sum / count
 		alertSmpl = Sample{Point: Point{V: avg}, Metric: lbls}
-		switch b.CompareOperator {
-		case ValueIsAbove:
-			if avg > target {
-				shouldAlert = true
-			}
-		case ValueIsBelow:
-			if avg < target {
-				shouldAlert = true
-			}
-		case ValueIsEq:
-			if avg == target {
-				shouldAlert = true
-			}
-		case ValueIsNotEq:
-			if avg != target {
-				shouldAlert = true
-			}
-		case ValueOutsideBounds:
-			if math.Abs(avg) >= target {
-				shouldAlert = true
-			}
-		}
+		shouldAlert = matchesCompareOp(op, avg, target)
 	case InTotal:
 		// If the sum of all samples matches the condition, the rule is firing.
 		var sum float64
-
 		for _, smpl := range series.Values {
 			if math.IsNaN(smpl.Value) || math.IsInf(smpl.Value, 0) {
 				continue
@@ -436,50 +381,12 @@ func (b BasicRuleThreshold) shouldAlertWithTarget(series *qbtypes.TimeSeries, ta
 			sum += smpl.Value
 		}
 		alertSmpl = Sample{Point: Point{V: sum}, Metric: lbls}
-		switch b.CompareOperator {
-		case ValueIsAbove:
-			if sum > target {
-				shouldAlert = true
-			}
-		case ValueIsBelow:
-			if sum < target {
-				shouldAlert = true
-			}
-		case ValueIsEq:
-			if sum == target {
-				shouldAlert = true
-			}
-		case ValueIsNotEq:
-			if sum != target {
-				shouldAlert = true
-			}
-		case ValueOutsideBounds:
-			if math.Abs(sum) >= target {
-				shouldAlert = true
-			}
-		}
+		shouldAlert = matchesCompareOp(op, sum, target)
 	case Last:
 		// If the last sample matches the condition, the rule is firing.
-		shouldAlert = false
-		alertSmpl = Sample{Point: Point{V: series.Values[len(series.Values)-1].Value}, Metric: lbls}
-		switch b.CompareOperator {
-		case ValueIsAbove:
-			if series.Values[len(series.Values)-1].Value > target {
-				shouldAlert = true
-			}
-		case ValueIsBelow:
-			if series.Values[len(series.Values)-1].Value < target {
-				shouldAlert = true
-			}
-		case ValueIsEq:
-			if series.Values[len(series.Values)-1].Value == target {
-				shouldAlert = true
-			}
-		case ValueIsNotEq:
-			if series.Values[len(series.Values)-1].Value != target {
-				shouldAlert = true
-			}
-		}
+		lastValue := series.Values[len(series.Values)-1].Value
+		alertSmpl = Sample{Point: Point{V: lastValue}, Metric: lbls}
+		shouldAlert = matchesCompareOp(op, lastValue, target)
 	}
 	return alertSmpl, shouldAlert
 }

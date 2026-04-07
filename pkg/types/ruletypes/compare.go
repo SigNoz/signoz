@@ -54,6 +54,29 @@ func (CompareOperator) Enum() []any {
 	}
 }
 
+// Normalize returns the canonical (numeric) form of the operator.
+// This ensures evaluation logic can use simple == checks against the canonical values.
+func (c CompareOperator) Normalize() CompareOperator {
+	switch c {
+	case ValueIsAbove, ValueIsAboveLiteral, ValueIsAboveSymbol:
+		return ValueIsAbove
+	case ValueIsBelow, ValueIsBelowLiteral, ValueIsBelowSymbol:
+		return ValueIsBelow
+	case ValueIsEq, ValueIsEqLiteral, ValueIsEqLiteralShort, ValueIsEqSymbol:
+		return ValueIsEq
+	case ValueIsNotEq, ValueIsNotEqLiteral, ValueIsNotEqLiteralShort, ValueIsNotEqSymbol:
+		return ValueIsNotEq
+	case ValueAboveOrEq, ValueAboveOrEqLiteral, ValueAboveOrEqLiteralShort, ValueAboveOrEqSymbol:
+		return ValueAboveOrEq
+	case ValueBelowOrEq, ValueBelowOrEqLiteral, ValueBelowOrEqLiteralShort, ValueBelowOrEqSymbol:
+		return ValueBelowOrEq
+	case ValueOutsideBounds, ValueOutsideBoundsLiteral:
+		return ValueOutsideBounds
+	default:
+		return c
+	}
+}
+
 func (c CompareOperator) Validate() error {
 	switch c {
 	case ValueIsAbove,
@@ -70,10 +93,18 @@ func (c CompareOperator) Validate() error {
 		ValueIsNotEqLiteral,
 		ValueIsNotEqLiteralShort,
 		ValueIsNotEqSymbol,
+		ValueAboveOrEq,
+		ValueAboveOrEqLiteral,
+		ValueAboveOrEqLiteralShort,
+		ValueAboveOrEqSymbol,
+		ValueBelowOrEq,
+		ValueBelowOrEqLiteral,
+		ValueBelowOrEqLiteralShort,
+		ValueBelowOrEqSymbol,
 		ValueOutsideBounds,
 		ValueOutsideBoundsLiteral:
 		return nil
 	default:
-		return errors.NewInvalidInputf(errors.CodeInvalidInput, "unknown comparison operator, known values are: ")
+		return errors.NewInvalidInputf(errors.CodeInvalidInput, "condition.op: unsupported value %q; must be one of above, below, equal, not_equal, above_or_equal, below_or_equal, outside_bounds", c.StringValue())
 	}
 }
