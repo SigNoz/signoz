@@ -368,7 +368,7 @@ func (r *BaseRule) SendAlerts(ctx context.Context, ts time.Time, resendDelay tim
 			alerts = append(alerts, &anew)
 		}
 	})
-	notifyFunc(ctx, orgID, "", alerts...)
+	notifyFunc(ctx, orgID, alerts...)
 }
 
 func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
