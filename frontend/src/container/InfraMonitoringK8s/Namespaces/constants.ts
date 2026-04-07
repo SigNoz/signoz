@@ -1,10 +1,66 @@
-import { K8sNamespacesData } from 'api/infraMonitoring/getK8sNamespacesList';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import {
+	TagFilter,
+	TagFilterItem,
+} from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
+
+import {
+	createFilterItem,
+	K8sDetailsMetadataConfig,
+} from '../Base/K8sBaseDetails';
+import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import { K8sNamespacesData } from './api';
+
+export const k8sNamespaceGetSelectedItemFilters = (
+	selectedItemId: string,
+): TagFilter => ({
+	op: 'AND',
+	items: [
+		{
+			id: 'k8s_namespace_name',
+			key: {
+				key: 'k8s_namespace_name',
+				type: null,
+			},
+			op: '=',
+			value: selectedItemId,
+		},
+	],
+});
+
+export const k8sNamespaceDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sNamespacesData>[] = [
+	{ label: 'Namespace Name', getValue: (p): string => p.namespaceName },
+	{
+		label: 'Cluster Name',
+		getValue: (p): string => p.meta.k8s_cluster_name,
+	},
+];
+
+export const k8sNamespaceInitialFilters = [
+	QUERY_KEYS.K8S_NAMESPACE_NAME,
+	QUERY_KEYS.K8S_CLUSTER_NAME,
+];
+
+export const k8sNamespaceInitialEventsFilter = (
+	item: K8sNamespacesData,
+): TagFilterItem[] => [
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Namespace'),
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.namespaceName),
+];
+
+export const k8sNamespaceInitialLogTracesFilter = (
+	item: K8sNamespacesData,
+): TagFilterItem[] => [
+	createFilterItem(QUERY_KEYS.K8S_NAMESPACE_NAME, item.namespaceName),
+];
+
+export const k8sNamespaceGetEntityName = (item: K8sNamespacesData): string =>
+	item.namespaceName;
 
 export const namespaceWidgetInfo = [
 	{
