@@ -20,6 +20,7 @@ var (
 	ErrCodeAPIKeyAlreadyExists = errors.MustNewCode("api_key_already_exists")
 	ErrCodeAPIKeytNotFound     = errors.MustNewCode("api_key_not_found")
 	ErrCodeAPIKeyExpired       = errors.MustNewCode("api_key_expired")
+	errInvalidAPIKeyName       = errors.New(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must be 1–80 characters long and contain only lowercase letters (a-z) and hyphens (-)")
 )
 
 type FactorAPIKey struct {
@@ -112,7 +113,7 @@ func (key *PostableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := factorAPIKeyNameRegex.MatchString(temp.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must conform to the regex: %s", factorAPIKeyNameRegex.String())
+		return errInvalidAPIKeyName
 	}
 
 	if temp.ExpiresAt != 0 && time.Now().After(time.Unix(int64(temp.ExpiresAt), 0)) {
@@ -132,7 +133,7 @@ func (key *UpdatableFactorAPIKey) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := factorAPIKeyNameRegex.MatchString(temp.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeAPIKeyInvalidInput, "name must conform to the regex: %s", factorAPIKeyNameRegex.String())
+		return errInvalidAPIKeyName
 	}
 
 	if temp.ExpiresAt != 0 && time.Now().After(time.Unix(int64(temp.ExpiresAt), 0)) {
