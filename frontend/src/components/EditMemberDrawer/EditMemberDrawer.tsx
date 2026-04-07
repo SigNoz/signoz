@@ -2,37 +2,64 @@ import { useCallback, useEffect, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
-import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { DrawerWrapper } from '@signozhq/drawer';
-import {
-	Check,
-	ChevronDown,
-	Copy,
-	LockKeyhole,
-	RefreshCw,
-	Trash2,
-	X,
-} from '@signozhq/icons';
+import { LockKeyhole, RefreshCw, Trash2, X } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import { toast } from '@signozhq/sonner';
-import { Select } from 'antd';
+import { Skeleton, Tooltip } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
-import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
+import type { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import {
 	getResetPasswordToken,
 	useDeleteUser,
-	useUpdateUserDeprecated,
+	useGetUser,
+	useUpdateMyUserV2,
+	useUpdateUser,
 } from 'api/generated/services/users';
 import { AxiosError } from 'axios';
 import { MemberRow } from 'components/MembersTable/MembersTable';
+import RolesSelect, { useRoles } from 'components/RolesSelect';
+import SaveErrorItem from 'components/ServiceAccountDrawer/SaveErrorItem';
+import type { SaveError } from 'components/ServiceAccountDrawer/utils';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
-import { capitalize } from 'lodash-es';
+import {
+	MemberRoleUpdateFailure,
+	useMemberRoleManager,
+} from 'hooks/member/useMemberRoleManager';
+import { useAppContext } from 'providers/App/App';
 import { useTimezone } from 'providers/Timezone';
-import { ROLES } from 'types/roles';
-import { popupContainer } from 'utils/selectPopupContainer';
+import APIError from 'types/api/error';
+import { toAPIError } from 'utils/errorUtils';
+
+import DeleteMemberDialog from './DeleteMemberDialog';
+import ResetLinkDialog from './ResetLinkDialog';
 
 import './EditMemberDrawer.styles.scss';
+
+const ROOT_USER_TOOLTIP = 'This operation is not supported for the root user';
+const SELF_DELETE_TOOLTIP =
+	'You cannot perform this action on your own account';
+
+function getDeleteTooltip(
+	isRootUser: boolean,
+	isSelf: boolean,
+): string | undefined {
+	if (isRootUser) {
+		return ROOT_USER_TOOLTIP;
+	}
+	if (isSelf) {
+		return SELF_DELETE_TOOLTIP;
+	}
+	return undefined;
+}
+
+function toSaveApiError(err: unknown): APIError {
+	return (
+		convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
+		toAPIError(err as AxiosError<RenderErrorResponseDTO>)
+	);
+}
 
 export interface EditMemberDrawerProps {
 	member: MemberRow | null;
@@ -49,9 +76,12 @@ function EditMemberDrawer({
 	onComplete,
 }: EditMemberDrawerProps): JSX.Element {
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { user: currentUser } = useAppContext();
 
-	const [displayName, setDisplayName] = useState('');
-	const [selectedRole, setSelectedRole] = useState<ROLES>('VIEWER');
+	const [localDisplayName, setLocalDisplayName] = useState('');
+	const [localRole, setLocalRole] = useState('');
+	const [isSaving, setIsSaving] = useState(false);
+	const [saveErrors, setSaveErrors] = useState<SaveError[]>([]);
 	const [isGeneratingLink, setIsGeneratingLink] = useState(false);
 	const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 	const [resetLink, setResetLink] = useState<string | null>(null);
@@ -60,32 +90,63 @@ function EditMemberDrawer({
 	const [linkType, setLinkType] = useState<'invite' | 'reset' | null>(null);
 
 	const isInvited = member?.status === MemberStatus.Invited;
+	const isSelf = !!member?.id && member.id === currentUser?.id;
 
-	const { mutate: updateUser, isLoading: isSaving } = useUpdateUserDeprecated({
-		mutation: {
-			onSuccess: (): void => {
-				toast.success('Member details updated successfully', { richColors: true });
-				onComplete();
-				onClose();
-			},
-			onError: (err): void => {
-				const errMessage =
-					convertToApiError(
-						err as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'An error occurred';
-				toast.error(`Failed to update member details: ${errMessage}`, {
-					richColors: true,
-				});
-			},
-		},
-	});
+	const {
+		data: fetchedUser,
+		isLoading: isFetchingUser,
+		refetch: refetchUser,
+	} = useGetUser(
+		{ id: member?.id ?? '' },
+		{ query: { enabled: open && !!member?.id } },
+	);
+
+	const isRootUser = !!fetchedUser?.data?.isRoot;
+
+	const {
+		roles: availableRoles,
+		isLoading: rolesLoading,
+		isError: rolesError,
+		error: rolesErrorObj,
+		refetch: refetchRoles,
+	} = useRoles();
+
+	const { fetchedRoleIds, applyDiff } = useMemberRoleManager(
+		member?.id ?? '',
+		open && !!member?.id,
+	);
+
+	const fetchedDisplayName =
+		fetchedUser?.data?.displayName ?? member?.name ?? '';
+	const fetchedUserId = fetchedUser?.data?.id;
+	const fetchedUserDisplayName = fetchedUser?.data?.displayName;
+
+	useEffect(() => {
+		if (fetchedUserId) {
+			setLocalDisplayName(fetchedUserDisplayName ?? member?.name ?? '');
+		}
+		setSaveErrors([]);
+	}, [fetchedUserId, fetchedUserDisplayName, member?.name]);
+
+	useEffect(() => {
+		setLocalRole(fetchedRoleIds[0] ?? '');
+	}, [fetchedRoleIds]);
+
+	const isDirty =
+		member !== null &&
+		fetchedUser != null &&
+		(localDisplayName !== fetchedDisplayName ||
+			localRole !== (fetchedRoleIds[0] ?? ''));
+
+	const { mutateAsync: updateMyUser } = useUpdateMyUserV2();
+	const { mutateAsync: updateUser } = useUpdateUser();
 
 	const { mutate: deleteUser, isLoading: isDeleting } = useDeleteUser({
 		mutation: {
 			onSuccess: (): void => {
 				toast.success(
 					isInvited ? 'Invite revoked successfully' : 'Member deleted successfully',
-					{ richColors: true },
+					{ richColors: true, position: 'top-right' },
 				);
 				setShowDeleteConfirm(false);
 				onComplete();
@@ -99,53 +160,168 @@ function EditMemberDrawer({
 				const prefix = isInvited
 					? 'Failed to revoke invite'
 					: 'Failed to delete member';
-				toast.error(`${prefix}: ${errMessage}`, { richColors: true });
+				toast.error(`${prefix}: ${errMessage}`, {
+					richColors: true,
+					position: 'top-right',
+				});
 			},
 		},
 	});
 
-	useEffect(() => {
-		if (member) {
-			setDisplayName(member.name ?? '');
-			setSelectedRole(member.role);
-		}
-	}, [member]);
-
-	const isDirty =
-		member !== null &&
-		(displayName !== (member.name ?? '') || selectedRole !== member.role);
-
-	const formatTimestamp = useCallback(
-		(ts: string | null | undefined): string => {
-			if (!ts) {
-				return '—';
+	const makeRoleRetry = useCallback(
+		(
+			context: string,
+			rawRetry: () => Promise<void>,
+		) => async (): Promise<void> => {
+			try {
+				await rawRetry();
+				setSaveErrors((prev) => prev.filter((e) => e.context !== context));
+				refetchUser();
+			} catch (err) {
+				setSaveErrors((prev) =>
+					prev.map((e) =>
+						e.context === context ? { ...e, apiError: toSaveApiError(err) } : e,
+					),
+				);
 			}
-			const d = new Date(ts);
-			if (Number.isNaN(d.getTime())) {
-				return '—';
-			}
-			return formatTimezoneAdjustedTimestamp(ts, DATE_TIME_FORMATS.DASH_DATETIME);
 		},
-		[formatTimezoneAdjustedTimestamp],
+		[refetchUser],
 	);
 
-	const handleSave = useCallback((): void => {
+	const retryNameUpdate = useCallback(async (): Promise<void> => {
+		if (!member) {
+			return;
+		}
+		try {
+			if (isSelf) {
+				await updateMyUser({ data: { displayName: localDisplayName } });
+			} else {
+				await updateUser({
+					pathParams: { id: member.id },
+					data: { displayName: localDisplayName },
+				});
+			}
+			setSaveErrors((prev) => prev.filter((e) => e.context !== 'Name update'));
+			refetchUser();
+		} catch (err) {
+			setSaveErrors((prev) =>
+				prev.map((e) =>
+					e.context === 'Name update' ? { ...e, apiError: toSaveApiError(err) } : e,
+				),
+			);
+		}
+	}, [member, isSelf, localDisplayName, updateMyUser, updateUser, refetchUser]);
+
+	const handleSave = useCallback(async (): Promise<void> => {
 		if (!member || !isDirty) {
 			return;
 		}
-		updateUser({
-			pathParams: { id: member.id },
-			data: { id: member.id, displayName, role: selectedRole },
-		});
-	}, [member, isDirty, displayName, selectedRole, updateUser]);
+		setSaveErrors([]);
+		setIsSaving(true);
+		try {
+			const nameChanged = localDisplayName !== fetchedDisplayName;
+			const rolesChanged = localRole !== (fetchedRoleIds[0] ?? '');
+
+			const namePromise = nameChanged
+				? isSelf
+					? updateMyUser({ data: { displayName: localDisplayName } })
+					: updateUser({
+							pathParams: { id: member.id },
+							data: { displayName: localDisplayName },
+					  })
+				: Promise.resolve();
+
+			const [nameResult, rolesResult] = await Promise.allSettled([
+				namePromise,
+				rolesChanged
+					? applyDiff([localRole].filter(Boolean), availableRoles)
+					: Promise.resolve([]),
+			]);
+
+			const errors: SaveError[] = [];
+
+			if (nameResult.status === 'rejected') {
+				errors.push({
+					context: 'Name update',
+					apiError: toSaveApiError(nameResult.reason),
+					onRetry: retryNameUpdate,
+				});
+			}
+
+			if (rolesResult.status === 'rejected') {
+				errors.push({
+					context: 'Roles update',
+					apiError: toSaveApiError(rolesResult.reason),
+					onRetry: async (): Promise<void> => {
+						const failures = await applyDiff(
+							[localRole].filter(Boolean),
+							availableRoles,
+						);
+						setSaveErrors((prev) => {
+							const rest = prev.filter((e) => e.context !== 'Roles update');
+							return [
+								...rest,
+								...failures.map((f: MemberRoleUpdateFailure) => {
+									const ctx = `Role '${f.roleName}'`;
+									return {
+										context: ctx,
+										apiError: toSaveApiError(f.error),
+										onRetry: makeRoleRetry(ctx, f.onRetry),
+									};
+								}),
+							];
+						});
+						refetchUser();
+					},
+				});
+			} else {
+				for (const failure of rolesResult.value ?? []) {
+					const context = `Role '${failure.roleName}'`;
+					errors.push({
+						context,
+						apiError: toSaveApiError(failure.error),
+						onRetry: makeRoleRetry(context, failure.onRetry),
+					});
+				}
+			}
+
+			if (errors.length > 0) {
+				setSaveErrors(errors);
+			} else {
+				toast.success('Member details updated successfully', {
+					richColors: true,
+					position: 'top-right',
+				});
+				onComplete();
+			}
+
+			refetchUser();
+		} finally {
+			setIsSaving(false);
+		}
+	}, [
+		member,
+		isDirty,
+		isSelf,
+		localDisplayName,
+		localRole,
+		fetchedDisplayName,
+		fetchedRoleIds,
+		updateMyUser,
+		updateUser,
+		applyDiff,
+		availableRoles,
+		refetchUser,
+		retryNameUpdate,
+		makeRoleRetry,
+		onComplete,
+	]);
 
 	const handleDelete = useCallback((): void => {
 		if (!member) {
 			return;
 		}
-		deleteUser({
-			pathParams: { id: member.id },
-		});
+		deleteUser({ pathParams: { id: member.id } });
 	}, [member, deleteUser]);
 
 	const handleGenerateResetLink = useCallback(async (): Promise<void> => {
@@ -176,29 +352,28 @@ function EditMemberDrawer({
 		} finally {
 			setIsGeneratingLink(false);
 		}
-	}, [member, isInvited, setLinkType, onClose]);
+	}, [member, isInvited, onClose]);
 
 	const [copyState, copyToClipboard] = useCopyToClipboard();
-	const handleCopyResetLink = useCallback(async (): Promise<void> => {
+	const handleCopyResetLink = useCallback((): void => {
 		if (!resetLink) {
 			return;
 		}
 		copyToClipboard(resetLink);
-
 		setHasCopiedResetLink(true);
 		setTimeout(() => setHasCopiedResetLink(false), 2000);
-		toast.success(
+		const message =
 			linkType === 'invite'
 				? 'Invite link copied to clipboard'
-				: 'Reset link copied to clipboard',
-			{ richColors: true },
-		);
+				: 'Reset link copied to clipboard';
+		toast.success(message, { richColors: true, position: 'top-right' });
 	}, [resetLink, copyToClipboard, linkType]);
 
 	useEffect(() => {
 		if (copyState.error) {
 			toast.error('Failed to copy link', {
 				richColors: true,
+				position: 'top-right',
 			});
 		}
 	}, [copyState.error]);
@@ -210,102 +385,176 @@ function EditMemberDrawer({
 
 	const joinedOnLabel = isInvited ? 'Invited On' : 'Joined On';
 
-	const drawerContent = (
-		<div className="edit-member-drawer__layout">
-			<div className="edit-member-drawer__body">
-				<div className="edit-member-drawer__field">
-					<label className="edit-member-drawer__label" htmlFor="member-name">
-						Name
-					</label>
+	const formatTimestamp = useCallback(
+		(ts: string | null | undefined): string => {
+			if (!ts) {
+				return '—';
+			}
+			const d = new Date(ts);
+			if (Number.isNaN(d.getTime())) {
+				return '—';
+			}
+			return formatTimezoneAdjustedTimestamp(ts, DATE_TIME_FORMATS.DASH_DATETIME);
+		},
+		[formatTimezoneAdjustedTimestamp],
+	);
+
+	const drawerBody = isFetchingUser ? (
+		<Skeleton active paragraph={{ rows: 6 }} />
+	) : (
+		<>
+			<div className="edit-member-drawer__field">
+				<label className="edit-member-drawer__label" htmlFor="member-name">
+					Name
+				</label>
+				<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
 					<Input
 						id="member-name"
-						value={displayName}
-						onChange={(e): void => setDisplayName(e.target.value)}
+						value={localDisplayName}
+						onChange={(e): void => {
+							setLocalDisplayName(e.target.value);
+							setSaveErrors((prev) =>
+								prev.filter((err) => err.context !== 'Name update'),
+							);
+						}}
 						className="edit-member-drawer__input"
 						placeholder="Enter name"
+						disabled={isRootUser}
 					/>
-				</div>
+				</Tooltip>
+			</div>
 
-				<div className="edit-member-drawer__field">
-					<label className="edit-member-drawer__label" htmlFor="member-email">
-						Email Address
-					</label>
-					<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
-						<span className="edit-member-drawer__email-text">
-							{member?.email || '—'}
-						</span>
-						<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
-					</div>
-				</div>
-
-				<div className="edit-member-drawer__field">
-					<label className="edit-member-drawer__label" htmlFor="member-role">
-						Roles
-					</label>
-					<Select
-						id="member-role"
-						value={selectedRole}
-						onChange={(role): void => setSelectedRole(role as ROLES)}
-						className="edit-member-drawer__role-select"
-						suffixIcon={<ChevronDown size={14} />}
-						getPopupContainer={popupContainer}
-					>
-						<Select.Option value="ADMIN">{capitalize('ADMIN')}</Select.Option>
-						<Select.Option value="EDITOR">{capitalize('EDITOR')}</Select.Option>
-						<Select.Option value="VIEWER">{capitalize('VIEWER')}</Select.Option>
-					</Select>
-				</div>
-
-				<div className="edit-member-drawer__meta">
-					<div className="edit-member-drawer__meta-item">
-						<span className="edit-member-drawer__meta-label">Status</span>
-						{member?.status === MemberStatus.Active ? (
-							<Badge color="forest" variant="outline">
-								ACTIVE
-							</Badge>
-						) : (
-							<Badge color="amber" variant="outline">
-								INVITED
-							</Badge>
-						)}
-					</div>
-
-					<div className="edit-member-drawer__meta-item">
-						<span className="edit-member-drawer__meta-label">{joinedOnLabel}</span>
-						<Badge color="vanilla">{formatTimestamp(member?.joinedOn)}</Badge>
-					</div>
-					{!isInvited && (
-						<div className="edit-member-drawer__meta-item">
-							<span className="edit-member-drawer__meta-label">Last Modified</span>
-							<Badge color="vanilla">{formatTimestamp(member?.updatedAt)}</Badge>
-						</div>
-					)}
+			<div className="edit-member-drawer__field">
+				<label className="edit-member-drawer__label" htmlFor="member-email">
+					Email Address
+				</label>
+				<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
+					<span className="edit-member-drawer__email-text">
+						{member?.email || '—'}
+					</span>
+					<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
 				</div>
 			</div>
 
+			<div className="edit-member-drawer__field">
+				<label className="edit-member-drawer__label" htmlFor="member-role">
+					Roles
+				</label>
+				{isSelf || isRootUser ? (
+					<Tooltip
+						title={isRootUser ? ROOT_USER_TOOLTIP : 'You cannot modify your own role'}
+					>
+						<div className="edit-member-drawer__input-wrapper edit-member-drawer__input-wrapper--disabled">
+							<div className="edit-member-drawer__disabled-roles">
+								{localRole ? (
+									<Badge color="vanilla">
+										{availableRoles.find((r) => r.id === localRole)?.name ?? localRole}
+									</Badge>
+								) : (
+									<span className="edit-member-drawer__email-text">—</span>
+								)}
+							</div>
+							<LockKeyhole size={16} className="edit-member-drawer__lock-icon" />
+						</div>
+					</Tooltip>
+				) : (
+					<RolesSelect
+						id="member-role"
+						roles={availableRoles}
+						loading={rolesLoading}
+						isError={rolesError}
+						error={rolesErrorObj}
+						onRefetch={refetchRoles}
+						value={localRole}
+						onChange={(role): void => {
+							setLocalRole(role);
+							setSaveErrors((prev) =>
+								prev.filter(
+									(err) =>
+										err.context !== 'Roles update' && !err.context.startsWith("Role '"),
+								),
+							);
+						}}
+						placeholder="Select role"
+					/>
+				)}
+			</div>
+
+			<div className="edit-member-drawer__meta">
+				<div className="edit-member-drawer__meta-item">
+					<span className="edit-member-drawer__meta-label">Status</span>
+					{member?.status === MemberStatus.Active ? (
+						<Badge color="forest" variant="outline">
+							ACTIVE
+						</Badge>
+					) : (
+						<Badge color="amber" variant="outline">
+							INVITED
+						</Badge>
+					)}
+				</div>
+
+				<div className="edit-member-drawer__meta-item">
+					<span className="edit-member-drawer__meta-label">{joinedOnLabel}</span>
+					<Badge color="vanilla">{formatTimestamp(member?.joinedOn)}</Badge>
+				</div>
+				{!isInvited && (
+					<div className="edit-member-drawer__meta-item">
+						<span className="edit-member-drawer__meta-label">Last Modified</span>
+						<Badge color="vanilla">{formatTimestamp(member?.updatedAt)}</Badge>
+					</div>
+				)}
+			</div>
+
+			{saveErrors.length > 0 && (
+				<div className="edit-member-drawer__save-errors">
+					{saveErrors.map((e) => (
+						<SaveErrorItem
+							key={e.context}
+							context={e.context}
+							apiError={e.apiError}
+							onRetry={e.onRetry}
+						/>
+					))}
+				</div>
+			)}
+		</>
+	);
+
+	const drawerContent = (
+		<div className="edit-member-drawer__layout">
+			<div className="edit-member-drawer__body">{drawerBody}</div>
+
 			<div className="edit-member-drawer__footer">
 				<div className="edit-member-drawer__footer-left">
-					<Button
-						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
-						onClick={(): void => setShowDeleteConfirm(true)}
-					>
-						<Trash2 size={12} />
-						{isInvited ? 'Revoke Invite' : 'Delete Member'}
-					</Button>
+					<Tooltip title={getDeleteTooltip(isRootUser, isSelf)}>
+						<span className="edit-member-drawer__tooltip-wrapper">
+							<Button
+								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--danger"
+								onClick={(): void => setShowDeleteConfirm(true)}
+								disabled={isRootUser || isSelf}
+							>
+								<Trash2 size={12} />
+								{isInvited ? 'Revoke Invite' : 'Delete Member'}
+							</Button>
+						</span>
+					</Tooltip>
 
 					<div className="edit-member-drawer__footer-divider" />
-					<Button
-						className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
-						onClick={handleGenerateResetLink}
-						disabled={isGeneratingLink}
-					>
-						<RefreshCw size={12} />
-						{isGeneratingLink
-							? 'Generating...'
-							: isInvited
-							? 'Copy Invite Link'
-							: 'Generate Password Reset Link'}
-					</Button>
+					<Tooltip title={isRootUser ? ROOT_USER_TOOLTIP : undefined}>
+						<span className="edit-member-drawer__tooltip-wrapper">
+							<Button
+								className="edit-member-drawer__footer-btn edit-member-drawer__footer-btn--warning"
+								onClick={handleGenerateResetLink}
+								disabled={isGeneratingLink || isRootUser}
+							>
+								<RefreshCw size={12} />
+								{isGeneratingLink && 'Generating...'}
+								{!isGeneratingLink && isInvited && 'Copy Invite Link'}
+								{!isGeneratingLink && !isInvited && 'Generate Password Reset Link'}
+							</Button>
+						</span>
+					</Tooltip>
 				</div>
 
 				<div className="edit-member-drawer__footer-right">
@@ -318,7 +567,7 @@ function EditMemberDrawer({
 						variant="solid"
 						color="primary"
 						size="sm"
-						disabled={!isDirty || isSaving}
+						disabled={!isDirty || isSaving || isRootUser}
 						onClick={handleSave}
 					>
 						{isSaving ? 'Saving...' : 'Save Member Details'}
@@ -327,22 +576,6 @@ function EditMemberDrawer({
 			</div>
 		</div>
 	);
-
-	const deleteDialogTitle = isInvited ? 'Revoke Invite' : 'Delete Member';
-	const deleteDialogBody = isInvited ? (
-		<>
-			Are you sure you want to revoke the invite for{' '}
-			<strong>{member?.email}</strong>? They will no longer be able to join the
-			workspace using this invite.
-		</>
-	) : (
-		<>
-			Are you sure you want to delete{' '}
-			<strong>{member?.name || member?.email}</strong>? This will remove their
-			access to the workspace.
-		</>
-	);
-	const deleteConfirmLabel = isInvited ? 'Revoke Invite' : 'Delete Member';
 
 	return (
 		<>
@@ -363,82 +596,25 @@ function EditMemberDrawer({
 				className="edit-member-drawer"
 			/>
 
-			<DialogWrapper
+			<ResetLinkDialog
 				open={showResetLinkDialog}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setShowResetLinkDialog(false);
-						setLinkType(null);
-					}
+				linkType={linkType}
+				resetLink={resetLink}
+				hasCopied={hasCopiedResetLink}
+				onClose={(): void => {
+					setShowResetLinkDialog(false);
 				}}
-				title={linkType === 'invite' ? 'Invite Link' : 'Password Reset Link'}
-				showCloseButton
-				width="base"
-				className="reset-link-dialog"
-			>
-				<div className="reset-link-dialog__content">
-					<p className="reset-link-dialog__description">
-						{linkType === 'invite'
-							? 'Share this one-time link with the team member to complete their account setup.'
-							: 'This creates a one-time link the team member can use to set a new password for their SigNoz account.'}
-					</p>
-					<div className="reset-link-dialog__link-row">
-						<div className="reset-link-dialog__link-text-wrap">
-							<span className="reset-link-dialog__link-text">{resetLink}</span>
-						</div>
-						<Button
-							variant="outlined"
-							color="secondary"
-							size="sm"
-							onClick={handleCopyResetLink}
-							prefixIcon={
-								hasCopiedResetLink ? <Check size={12} /> : <Copy size={12} />
-							}
-							className="reset-link-dialog__copy-btn"
-						>
-							{hasCopiedResetLink ? 'Copied!' : 'Copy'}
-						</Button>
-					</div>
-				</div>
-			</DialogWrapper>
+				onCopy={handleCopyResetLink}
+			/>
 
-			<DialogWrapper
+			<DeleteMemberDialog
 				open={showDeleteConfirm}
-				onOpenChange={(isOpen): void => {
-					if (!isOpen) {
-						setShowDeleteConfirm(false);
-					}
-				}}
-				title={deleteDialogTitle}
-				width="narrow"
-				className="alert-dialog delete-dialog"
-				showCloseButton={false}
-				disableOutsideClick={false}
-			>
-				<p className="delete-dialog__body">{deleteDialogBody}</p>
-
-				<DialogFooter className="delete-dialog__footer">
-					<Button
-						variant="solid"
-						color="secondary"
-						size="sm"
-						onClick={(): void => setShowDeleteConfirm(false)}
-					>
-						<X size={12} />
-						Cancel
-					</Button>
-					<Button
-						variant="solid"
-						color="destructive"
-						size="sm"
-						disabled={isDeleting}
-						onClick={handleDelete}
-					>
-						<Trash2 size={12} />
-						{isDeleting ? 'Processing...' : deleteConfirmLabel}
-					</Button>
-				</DialogFooter>
-			</DialogWrapper>
+				isInvited={isInvited}
+				member={member}
+				isDeleting={isDeleting}
+				onClose={(): void => setShowDeleteConfirm(false)}
+				onConfirm={handleDelete}
+			/>
 		</>
 	);
 }

@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/statsreporter"
 	"github.com/SigNoz/signoz/pkg/types/authtypes"
 	"github.com/SigNoz/signoz/pkg/types/serviceaccounttypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
@@ -66,6 +67,8 @@ type Module interface {
 	GetIdentity(context.Context, string) (*authtypes.Identity, error)
 
 	Config() Config
+
+	statsreporter.StatsCollector
 }
 
 type Handler interface {

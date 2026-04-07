@@ -10,6 +10,7 @@ import {
 } from 'antd';
 import type { SorterResult } from 'antd/es/table/interface';
 import logEvent from 'api/common/logEvent';
+import ErrorContent from 'components/ErrorModal/components/ErrorContent';
 import { InfraMonitoringEvents } from 'constants/events';
 import { isModifierKeyPressed } from 'utils/app';
 import { openInNewTab } from 'utils/navigation';
@@ -26,9 +27,40 @@ import {
 function EmptyOrLoadingView(
 	viewState: EmptyOrLoadingViewProps,
 ): React.ReactNode {
-	const { isError, errorMessage } = viewState;
-	if (isError) {
-		return <Typography>{errorMessage || 'Something went wrong'}</Typography>;
+	if (viewState.showTableLoadingState) {
+		return (
+			<div className="hosts-list-loading-state">
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+				<Skeleton.Input
+					className="hosts-list-loading-state-item"
+					size="large"
+					block
+					active
+				/>
+			</div>
+		);
+	}
+	const { isError, data } = viewState;
+	if (isError || data?.error || (data?.statusCode || 0) >= 300) {
+		return (
+			<ErrorContent
+				error={{
+					code: data?.statusCode || 500,
+					message: data?.error || 'Something went wrong',
+				}}
+			/>
+		);
 	}
 	if (viewState.showHostsEmptyState) {
 		return (
@@ -73,30 +105,6 @@ function EmptyOrLoadingView(
 						time range or filters.
 					</Typography.Text>
 				</div>
-			</div>
-		);
-	}
-	if (viewState.showTableLoadingState) {
-		return (
-			<div className="hosts-list-loading-state">
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
-				<Skeleton.Input
-					className="hosts-list-loading-state-item"
-					size="large"
-					block
-					active
-				/>
 			</div>
 		);
 	}
@@ -190,7 +198,8 @@ export default function HostsListTable({
 		!isLoading &&
 		formattedHostMetricsData.length === 0 &&
 		(!sentAnyHostMetricsData || isSendingIncorrectK8SAgentMetrics) &&
-		!filters.items.length;
+		!filters.items.length &&
+		!endTimeBeforeRetention;
 
 	const showEndTimeBeforeRetentionMessage =
 		!isFetching &&
@@ -211,7 +220,7 @@ export default function HostsListTable({
 
 	const emptyOrLoadingView = EmptyOrLoadingView({
 		isError,
-		errorMessage: data?.error ?? '',
+		data,
 		showHostsEmptyState,
 		sentAnyHostMetricsData,
 		isSendingIncorrectK8SAgentMetrics,

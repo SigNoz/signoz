@@ -11,6 +11,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
+	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	sqlbuilder "github.com/huandu/go-sqlbuilder"
 )
@@ -300,7 +301,7 @@ func (s *store) ReadRuleStateHistoryTopContributorsByRuleID(ctx context.Context,
 	sb.From(historyTable())
 	sb.Where(sb.E("rule_id", ruleID))
 	sb.Where(sb.E("state_changed", true))
-	sb.Where(sb.E("state", rulestatehistorytypes.StateFiring.StringValue()))
+	sb.Where(sb.E("state", ruletypes.StateFiring.StringValue()))
 	sb.Where(sb.GE("unix_milli", query.Start))
 	sb.Where(sb.LT("unix_milli", query.End))
 
@@ -341,7 +342,7 @@ WHERE rule_id = %s
   AND unix_milli < %s
 GROUP BY unix_milli`,
 		innerSB.Var(query.Start),
-		innerSB.Var(rulestatehistorytypes.StateInactive.StringValue()),
+		innerSB.Var(ruletypes.StateInactive.StringValue()),
 		historyTable(),
 		innerSB.Var(ruleID),
 		innerSB.Var(query.Start),
@@ -411,7 +412,7 @@ func (s *store) GetTotalTriggers(ctx context.Context, ruleID string, query *rule
 	sb.From(historyTable())
 	sb.Where(sb.E("rule_id", ruleID))
 	sb.Where(sb.E("state_changed", true))
-	sb.Where(sb.E("state", rulestatehistorytypes.StateFiring.StringValue()))
+	sb.Where(sb.E("state", ruletypes.StateFiring.StringValue()))
 	sb.Where(sb.GE("unix_milli", query.Start))
 	sb.Where(sb.LT("unix_milli", query.End))
 	selectQuery, args := sb.BuildWithFlavor(sqlbuilder.ClickHouse)
@@ -432,7 +433,7 @@ func (s *store) GetTriggersByInterval(ctx context.Context, ruleID string, query 
 	sb.From(historyTable())
 	sb.Where(sb.E("rule_id", ruleID))
 	sb.Where(sb.E("state_changed", true))
-	sb.Where(sb.E("state", rulestatehistorytypes.StateFiring.StringValue()))
+	sb.Where(sb.E("state", ruletypes.StateFiring.StringValue()))
 	sb.Where(sb.GE("unix_milli", query.Start))
 	sb.Where(sb.LT("unix_milli", query.End))
 	sb.GroupBy("ts")
@@ -528,7 +529,7 @@ func (s *store) buildMatchedEventsCTE(ruleID string, query *rulestatehistorytype
 	firingSB := sqlbuilder.NewSelectBuilder()
 	firingSB.Select("rule_id", "unix_milli AS firing_time")
 	firingSB.From(historyTable())
-	firingSB.Where(firingSB.E("overall_state", rulestatehistorytypes.StateFiring.StringValue()))
+	firingSB.Where(firingSB.E("overall_state", ruletypes.StateFiring.StringValue()))
 	firingSB.Where(firingSB.E("overall_state_changed", true))
 	firingSB.Where(firingSB.E("rule_id", ruleID))
 	firingSB.Where(firingSB.GE("unix_milli", query.Start))
@@ -537,7 +538,7 @@ func (s *store) buildMatchedEventsCTE(ruleID string, query *rulestatehistorytype
 	resolutionSB := sqlbuilder.NewSelectBuilder()
 	resolutionSB.Select("rule_id", "unix_milli AS resolution_time")
 	resolutionSB.From(historyTable())
-	resolutionSB.Where(resolutionSB.E("overall_state", rulestatehistorytypes.StateInactive.StringValue()))
+	resolutionSB.Where(resolutionSB.E("overall_state", ruletypes.StateInactive.StringValue()))
 	resolutionSB.Where(resolutionSB.E("overall_state_changed", true))
 	resolutionSB.Where(resolutionSB.E("rule_id", ruleID))
 	resolutionSB.Where(resolutionSB.GE("unix_milli", query.Start))

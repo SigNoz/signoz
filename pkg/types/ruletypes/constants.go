@@ -8,5 +8,5 @@ const (
 	LabelThresholdName    = "threshold.name"
 	LabelSeverityName     = "severity"
 	LabelLastSeen         = "lastSeen"
-	LabelRuleId           = "ruleId"
+	LabelRuleID           = "ruleId"
 )

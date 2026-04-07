@@ -136,4 +136,5 @@ type RouteStore interface {
 	GetAllByKind(ctx context.Context, orgID string, kind ExpressionKind) ([]*RoutePolicy, error)
 	GetAllByName(ctx context.Context, orgID string, name string) ([]*RoutePolicy, error)
 	DeleteRouteByName(ctx context.Context, orgID string, name string) error
+	GetAll(ctx context.Context, orgID string) ([]*RoutePolicy, error)
 }

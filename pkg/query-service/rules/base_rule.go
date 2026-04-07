@@ -9,12 +9,6 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/modules/rulestatehistory"
-	"github.com/SigNoz/signoz/pkg/query-service/constants"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/queryparser"
 	"github.com/SigNoz/signoz/pkg/sqlstore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
@@ -51,8 +45,8 @@ type BaseRule struct {
 
 	// holds the static set of labels and annotations for the rule
 	// these are the same for all alerts created for this rule
-	labels      qslabels.BaseLabels
-	annotations qslabels.BaseLabels
+	labels      ruletypes.Labels
+	annotations ruletypes.Labels
 	// preferredChannels is the list of channels to send the alert to
 	// if the rule is triggered
 	preferredChannels []string
@@ -71,8 +65,6 @@ type BaseRule struct {
 	// This is used for missing data alerts.
 	lastTimestampWithDatapoints time.Time
 
-	reader interfaces.Reader
-
 	logger *slog.Logger
 
 	// sendUnmatched sends observed metric values even if they don't match the
@@ -81,12 +73,6 @@ type BaseRule struct {
 
 	// sendAlways will send alert irrespective of resendDelay or other params
 	sendAlways bool
-
-	// TemporalityMap is a map of metric name to temporality to avoid fetching
-	// temporality for the same metric multiple times.
-	// Querying the v4 table on low cardinal temporality column should be fast,
-	// but we can still avoid the query if we have the data in memory.
-	TemporalityMap map[string]map[v3.Temporality]bool
 
 	sqlstore sqlstore.SQLStore
 
@@ -152,10 +138,7 @@ func WithRuleStateHistoryModule(module rulestatehistory.Module) RuleOption {
 	}
 }
 
-func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader interfaces.Reader, opts ...RuleOption) (*BaseRule, error) {
-	if p.RuleCondition == nil || !p.RuleCondition.IsValid() {
-		return nil, fmt.Errorf("invalid rule condition")
-	}
+func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, opts ...RuleOption) (*BaseRule, error) {
 	threshold, err := p.RuleCondition.Thresholds.GetRuleThreshold()
 	if err != nil {
 		return nil, err
@@ -173,13 +156,11 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 		typ:               p.AlertType,
 		ruleCondition:     p.RuleCondition,
 		evalWindow:        p.EvalWindow,
-		labels:            qslabels.FromMap(p.Labels),
-		annotations:       qslabels.FromMap(p.Annotations),
+		labels:            ruletypes.FromMap(p.Labels),
+		annotations:       ruletypes.FromMap(p.Annotations),
 		preferredChannels: p.PreferredChannels,
 		health:            ruletypes.HealthUnknown,
 		Active:            map[uint64]*ruletypes.Alert{},
-		reader:            reader,
-		TemporalityMap:    make(map[string]map[v3.Temporality]bool),
 		Threshold:         threshold,
 		evaluation:        evaluation,
 	}
@@ -198,20 +179,6 @@ func NewBaseRule(id string, orgID valuer.UUID, p *ruletypes.PostableRule, reader
 	}
 
 	return baseRule, nil
-}
-
-func (r *BaseRule) matchType() ruletypes.MatchType {
-	if r.ruleCondition == nil {
-		return ruletypes.AtleastOnce
-	}
-	return r.ruleCondition.MatchType
-}
-
-func (r *BaseRule) compareOp() ruletypes.CompareOp {
-	if r.ruleCondition == nil {
-		return ruletypes.ValueIsEq
-	}
-	return r.ruleCondition.CompareOp
 }
 
 func (r *BaseRule) currentAlerts() []*ruletypes.Alert {
@@ -245,10 +212,10 @@ func (r *BaseRule) ActiveAlertsLabelFP() map[uint64]struct{} {
 
 	activeAlerts := make(map[uint64]struct{}, len(r.Active))
 	for _, alert := range r.Active {
-		if alert == nil || alert.QueryResultLables == nil {
+		if alert == nil || alert.QueryResultLabels == nil {
 			continue
 		}
-		activeAlerts[alert.QueryResultLables.Hash()] = struct{}{}
+		activeAlerts[alert.QueryResultLabels.Hash()] = struct{}{}
 	}
 	return activeAlerts
 }
@@ -269,19 +236,24 @@ func (r *BaseRule) ID() string                          { return r.id }
 func (r *BaseRule) OrgID() valuer.UUID                  { return r.orgID }
 func (r *BaseRule) Name() string                        { return r.name }
 func (r *BaseRule) Condition() *ruletypes.RuleCondition { return r.ruleCondition }
-func (r *BaseRule) Labels() qslabels.BaseLabels         { return r.labels }
-func (r *BaseRule) Annotations() qslabels.BaseLabels    { return r.annotations }
+func (r *BaseRule) Labels() ruletypes.Labels            { return r.labels }
+func (r *BaseRule) Annotations() ruletypes.Labels       { return r.annotations }
 func (r *BaseRule) PreferredChannels() []string         { return r.preferredChannels }
 
 func (r *BaseRule) GeneratorURL() string {
 	return ruletypes.PrepareRuleGeneratorURL(r.ID(), r.source)
 }
 
-func (r *BaseRule) Unit() string {
-	if r.ruleCondition != nil && r.ruleCondition.CompositeQuery != nil {
-		return r.ruleCondition.CompositeQuery.Unit
+func (r *BaseRule) SelectedQuery(ctx context.Context) string {
+	if r.ruleCondition.SelectedQuery != "" {
+		return r.ruleCondition.SelectedQuery
 	}
-	return ""
+	r.logger.WarnContext(ctx, "missing selected query", slog.String("rule.id", r.ID()))
+	return r.ruleCondition.SelectedQueryName()
+}
+
+func (r *BaseRule) Unit() string {
+	return r.ruleCondition.CompositeQuery.Unit
 }
 
 func (r *BaseRule) Timestamps(ts time.Time) (time.Time, time.Time) {
@@ -348,10 +320,10 @@ func (r *BaseRule) GetEvaluationTimestamp() time.Time {
 	return r.evaluationTimestamp
 }
 
-func (r *BaseRule) State() model.AlertState {
-	maxState := model.StateInactive
+func (r *BaseRule) State() ruletypes.AlertState {
+	maxState := ruletypes.StateInactive
 	for _, a := range r.Active {
-		if a.State > maxState {
+		if a.State.Severity() > maxState.Severity() {
 			maxState = a.State
 		}
 	}
@@ -408,111 +380,17 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	}
 }
 
-func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState model.AlertState, itemsToAdd []model.RuleStateHistory) error {
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState ruletypes.AlertState, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
 	if r.ruleStateHistoryModule == nil {
 		return nil
 	}
 
-	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, toRuleStateHistoryTypes(itemsToAdd)); err != nil {
-		r.logger.ErrorContext(ctx, "error while recording rule state history", errors.Attr(err), slog.Any("itemsToAdd", itemsToAdd))
+	if err := r.ruleStateHistoryModule.RecordRuleStateHistory(ctx, r.ID(), r.handledRestart, itemsToAdd); err != nil {
+		r.logger.ErrorContext(ctx, "error while recording rule state history", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("items_to_add", itemsToAdd))
 		return err
 	}
 	r.handledRestart = true
 
-	return nil
-}
-
-// TODO(srikanthccv): remove these when v3 is cleaned up
-func toRuleStateHistoryTypes(entries []model.RuleStateHistory) []rulestatehistorytypes.RuleStateHistory {
-	converted := make([]rulestatehistorytypes.RuleStateHistory, 0, len(entries))
-	for _, entry := range entries {
-		converted = append(converted, rulestatehistorytypes.RuleStateHistory{
-			RuleID:              entry.RuleID,
-			RuleName:            entry.RuleName,
-			OverallState:        toRuleStateHistoryAlertState(entry.OverallState),
-			OverallStateChanged: entry.OverallStateChanged,
-			State:               toRuleStateHistoryAlertState(entry.State),
-			StateChanged:        entry.StateChanged,
-			UnixMilli:           entry.UnixMilli,
-			Labels:              rulestatehistorytypes.LabelsString(entry.Labels),
-			Fingerprint:         entry.Fingerprint,
-			Value:               entry.Value,
-		})
-	}
-	return converted
-}
-
-func toRuleStateHistoryAlertState(state model.AlertState) rulestatehistorytypes.AlertState {
-	switch state {
-	case model.StateInactive:
-		return rulestatehistorytypes.StateInactive
-	case model.StatePending:
-		return rulestatehistorytypes.StatePending
-	case model.StateRecovering:
-		return rulestatehistorytypes.StateRecovering
-	case model.StateFiring:
-		return rulestatehistorytypes.StateFiring
-	case model.StateNoData:
-		return rulestatehistorytypes.StateNoData
-	case model.StateDisabled:
-		return rulestatehistorytypes.StateDisabled
-	default:
-		return rulestatehistorytypes.StateInactive
-	}
-}
-
-func (r *BaseRule) PopulateTemporality(ctx context.Context, orgID valuer.UUID, qp *v3.QueryRangeParamsV3) error {
-	missingTemporality := make([]string, 0)
-	metricNameToTemporality := make(map[string]map[v3.Temporality]bool)
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for _, query := range qp.CompositeQuery.BuilderQueries {
-			// if there is no temporality specified in the query but we have it in the map
-			// then use the value from the map
-			if query.Temporality == "" && r.TemporalityMap[query.AggregateAttribute.Key] != nil {
-				// We prefer delta if it is available
-				if r.TemporalityMap[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if r.TemporalityMap[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-			}
-			// we don't have temporality for this metric
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				missingTemporality = append(missingTemporality, query.AggregateAttribute.Key)
-			}
-			if _, ok := metricNameToTemporality[query.AggregateAttribute.Key]; !ok {
-				metricNameToTemporality[query.AggregateAttribute.Key] = make(map[v3.Temporality]bool)
-			}
-		}
-	}
-
-	var nameToTemporality map[string]map[v3.Temporality]bool
-	var err error
-
-	if len(missingTemporality) > 0 {
-		nameToTemporality, err = r.reader.FetchTemporality(ctx, orgID, missingTemporality)
-		if err != nil {
-			return err
-		}
-	}
-
-	if qp.CompositeQuery != nil && len(qp.CompositeQuery.BuilderQueries) > 0 {
-		for name := range qp.CompositeQuery.BuilderQueries {
-			query := qp.CompositeQuery.BuilderQueries[name]
-			if query.DataSource == v3.DataSourceMetrics && query.Temporality == "" {
-				if nameToTemporality[query.AggregateAttribute.Key][v3.Delta] {
-					query.Temporality = v3.Delta
-				} else if nameToTemporality[query.AggregateAttribute.Key][v3.Cumulative] {
-					query.Temporality = v3.Cumulative
-				} else {
-					query.Temporality = v3.Unspecified
-				}
-				r.TemporalityMap[query.AggregateAttribute.Key] = nameToTemporality[query.AggregateAttribute.Key]
-			}
-		}
-	}
 	return nil
 }
 
@@ -523,7 +401,7 @@ func (r *BaseRule) ShouldSkipNewGroups() bool {
 
 // isFilterNewSeriesSupported checks if the query is supported for new series filtering
 func (r *BaseRule) isFilterNewSeriesSupported() bool {
-	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypeBuilder {
+	if r.ruleCondition.CompositeQuery.QueryType == ruletypes.QueryTypeBuilder {
 		for _, query := range r.ruleCondition.CompositeQuery.Queries {
 			if query.Type != qbtypes.QueryTypeBuilder {
 				continue
@@ -592,7 +470,7 @@ func (r *BaseRule) extractMetricAndGroupBys(ctx context.Context) (map[string][]s
 
 // FilterNewSeries filters out items that are too new based on metadata first_seen timestamps.
 // Returns the filtered series (old ones) excluding new series that are still within the grace period.
-func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*v3.Series) ([]*v3.Series, error) {
+func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*qbtypes.TimeSeries) ([]*qbtypes.TimeSeries, error) {
 	// Extract metric names and groupBy keys
 	metricToGroupedFields, err := r.extractMetricAndGroupBys(ctx)
 	if err != nil {
@@ -609,14 +487,22 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	seriesIdxToLookupKeys := make(map[int][]telemetrytypes.MetricMetadataLookupKey) // series index -> lookup keys
 
 	for i := 0; i < len(series); i++ {
-		metricLabelMap := series[i].Labels
+
+		valueForKey := func(key string) (string, bool) {
+			for _, item := range series[i].Labels {
+				if item.Key.Name == key {
+					return fmt.Sprint(item.Value), true
+				}
+			}
+			return "", false
+		}
 
 		// Collect groupBy attribute-value pairs for this series
 		seriesKeys := make([]telemetrytypes.MetricMetadataLookupKey, 0)
 
 		for metricName, groupedFields := range metricToGroupedFields {
 			for _, groupByKey := range groupedFields {
-				if attrValue, ok := metricLabelMap[groupByKey]; ok {
+				if attrValue, ok := valueForKey(groupByKey); ok {
 					lookupKey := telemetrytypes.MetricMetadataLookupKey{
 						MetricName:     metricName,
 						AttributeName:  groupByKey,
@@ -656,7 +542,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 	}
 
 	// Filter series based on first_seen + delay
-	filteredSeries := make([]*v3.Series, 0, len(series))
+	filteredSeries := make([]*qbtypes.TimeSeries, 0, len(series))
 	evalTimeMs := ts.UnixMilli()
 	newGroupEvalDelayMs := r.newGroupEvalDelay.Milliseconds()
 
@@ -694,7 +580,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 		// Check if first_seen + delay has passed
 		if maxFirstSeen+newGroupEvalDelayMs > evalTimeMs {
 			// Still within grace period, skip this series
-			r.logger.InfoContext(ctx, "Skipping new series", "rule_name", r.Name(), "series_idx", i, "max_first_seen", maxFirstSeen, "eval_time_ms", evalTimeMs, "delay_ms", newGroupEvalDelayMs, "labels", series[i].Labels)
+			r.logger.InfoContext(ctx, "skipping new series", slog.String("rule.id", r.ID()), slog.Int("series.index", i), slog.Int64("series.max_first_seen", maxFirstSeen), slog.Int64("eval.time_ms", evalTimeMs), slog.Int64("eval.delay_ms", newGroupEvalDelayMs), slog.Any("series.labels", series[i].Labels))
 			continue
 		}
 
@@ -704,7 +590,7 @@ func (r *BaseRule) FilterNewSeries(ctx context.Context, ts time.Time, series []*
 
 	skippedCount := len(series) - len(filteredSeries)
 	if skippedCount > 0 {
-		r.logger.InfoContext(ctx, "Filtered new series", "rule_name", r.Name(), "skipped_count", skippedCount, "total_count", len(series), "delay_ms", newGroupEvalDelayMs)
+		r.logger.InfoContext(ctx, "filtered new series", slog.String("rule.id", r.ID()), slog.Int("series.skipped_count", skippedCount), slog.Int("series.total_count", len(series)), slog.Int64("eval.delay_ms", newGroupEvalDelayMs))
 	}
 
 	return filteredSeries, nil
@@ -725,10 +611,10 @@ func (r *BaseRule) HandleMissingDataAlert(ctx context.Context, ts time.Time, has
 		return nil
 	}
 
-	r.logger.InfoContext(ctx, "no data found for rule condition", "rule_id", r.ID())
-	lbls := labels.NewBuilder(labels.Labels{})
+	r.logger.InfoContext(ctx, "no data found for rule condition", slog.String("rule.id", r.ID()))
+	lbls := ruletypes.NewBuilder()
 	if !r.lastTimestampWithDatapoints.IsZero() {
-		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(constants.AlertTimeFormat))
+		lbls.Set(ruletypes.LabelLastSeen, r.lastTimestampWithDatapoints.Format(ruletypes.AlertTimeFormat))
 	}
 	return &ruletypes.Sample{Metric: lbls.Labels(), IsMissing: true}
 }

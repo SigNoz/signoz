@@ -8,8 +8,8 @@ import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
-import InfinityTableView from 'container/LogsExplorerList/InfinityTableView';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
+import TanStackTableView from 'container/LogsExplorerList/TanStackTableView';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
@@ -50,7 +50,7 @@ function LiveLogsList({
 		[logs],
 	);
 
-	const { options } = useOptionsMenu({
+	const { options, config } = useOptionsMenu({
 		storageKey: LOCALSTORAGE.LOGS_LIST_OPTIONS,
 		dataSource: DataSource.LOGS,
 		aggregateOperator: StringOperators.NOOP,
@@ -158,7 +158,7 @@ function LiveLogsList({
 			{formattedLogs.length !== 0 && (
 				<InfinityWrapperStyled>
 					{options.format === OptionFormatTypes.TABLE ? (
-						<InfinityTableView
+						<TanStackTableView
 							ref={ref}
 							isLoading={false}
 							tableViewProps={{
@@ -174,6 +174,7 @@ function LiveLogsList({
 							onSetActiveLog={handleSetActiveLog}
 							onClearActiveLog={handleCloseLogDetail}
 							activeLog={activeLog}
+							onRemoveColumn={config.addColumn?.onRemove}
 						/>
 					) : (
 						<Card style={{ width: '100%' }} bodyStyle={CARD_BODY_STYLE}>

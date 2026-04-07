@@ -170,6 +170,21 @@ func (store *store) CreateServiceAccountRole(ctx context.Context, serviceAccount
 	return nil
 }
 
+func (store *store) DeleteServiceAccountRoles(ctx context.Context, serviceAccountID valuer.UUID) error {
+	_, err := store.
+		sqlstore.
+		BunDBCtx(ctx).
+		NewDelete().
+		Model(new(serviceaccounttypes.ServiceAccountRole)).
+		Where("service_account_id = ?", serviceAccountID).
+		Exec(ctx)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 func (store *store) DeleteServiceAccountRole(ctx context.Context, serviceAccountID valuer.UUID, roleID valuer.UUID) error {
 	_, err := store.
 		sqlstore.

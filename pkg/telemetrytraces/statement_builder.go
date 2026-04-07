@@ -10,6 +10,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
 	"github.com/SigNoz/signoz/pkg/querybuilder"
+	"github.com/SigNoz/signoz/pkg/telemetryresourcefilter"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
@@ -38,11 +39,21 @@ func NewTraceQueryStatementBuilder(
 	metadataStore telemetrytypes.MetadataStore,
 	fieldMapper qbtypes.FieldMapper,
 	conditionBuilder qbtypes.ConditionBuilder,
-	resourceFilterStmtBuilder qbtypes.StatementBuilder[qbtypes.TraceAggregation],
 	aggExprRewriter qbtypes.AggExprRewriter,
 	telemetryStore telemetrystore.TelemetryStore,
 ) *traceQueryStatementBuilder {
 	tracesSettings := factory.NewScopedProviderSettings(settings, "github.com/SigNoz/signoz/pkg/telemetrytraces")
+
+	resourceFilterStmtBuilder := telemetryresourcefilter.New[qbtypes.TraceAggregation](
+		settings,
+		DBName,
+		TracesResourceV3TableName,
+		telemetrytypes.SignalTraces,
+		metadataStore,
+		nil,
+		nil,
+	)
+
 	return &traceQueryStatementBuilder{
 		logger:                    tracesSettings.Logger(),
 		metadataStore:             metadataStore,
@@ -552,7 +563,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -578,7 +592,10 @@ func (b *traceQueryStatementBuilder) buildTimeSeriesQuery(
 		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
-			rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+			if err != nil {
+				return nil, err
+			}
 			sb.Having(rewrittenExpr)
 		}
 
@@ -684,7 +701,10 @@ func (b *traceQueryStatementBuilder) buildScalarQuery(
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" && !skipHaving {
 		rewriter := querybuilder.NewHavingExpressionRewriter()
-		rewrittenExpr := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		rewrittenExpr, err := rewriter.RewriteForTraces(query.Having.Expression, query.Aggregations)
+		if err != nil {
+			return nil, err
+		}
 		sb.Having(rewrittenExpr)
 	}
 

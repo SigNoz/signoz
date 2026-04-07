@@ -12,14 +12,10 @@ import (
 
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/prometheus"
-	"github.com/SigNoz/signoz/pkg/query-service/interfaces"
-	"github.com/SigNoz/signoz/pkg/query-service/model"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/times"
-	"github.com/SigNoz/signoz/pkg/query-service/utils/timestamp"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
+	"github.com/SigNoz/signoz/pkg/types/rulestatehistorytypes"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
+	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 	"github.com/SigNoz/signoz/pkg/units"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -37,13 +33,12 @@ func NewPromRule(
 	orgID valuer.UUID,
 	postableRule *ruletypes.PostableRule,
 	logger *slog.Logger,
-	reader interfaces.Reader,
 	prometheus prometheus.Prometheus,
 	opts ...RuleOption,
 ) (*PromRule, error) {
 	opts = append(opts, WithLogger(logger))
 
-	baseRule, err := NewBaseRule(id, orgID, postableRule, reader, opts...)
+	baseRule, err := NewBaseRule(id, orgID, postableRule, opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -55,12 +50,12 @@ func NewPromRule(
 	}
 	p.logger = logger
 
-	query, err := p.getPqlQuery()
+	query, err := p.getPqlQuery(context.Background())
 	if err != nil {
 		// can not generate a valid prom QL query
 		return nil, err
 	}
-	logger.Info("creating new prom rule", "rule_name", p.name, "query", query)
+	logger.Info("creating new prom rule", slog.String("rule.id", id), slog.String("rule.query", query))
 	return &p, nil
 }
 
@@ -68,76 +63,41 @@ func (r *PromRule) Type() ruletypes.RuleType {
 	return ruletypes.RuleTypeProm
 }
 
-func (r *PromRule) GetSelectedQuery() string {
-	if r.ruleCondition != nil {
-		// If the user has explicitly set the selected query, we return that.
-		if r.ruleCondition.SelectedQuery != "" {
-			return r.ruleCondition.SelectedQuery
-		}
-		// Historically, we used to have only one query in the alerts for promql.
-		// So, if there is only one query, we return that.
-		// This is to maintain backward compatibility.
-		// For new rules, we will have to explicitly set the selected query.
-		return "A"
-	}
-	// This should never happen.
-	return ""
-}
-
-func (r *PromRule) getPqlQuery() (string, error) {
-	if r.version == "v5" {
-		if len(r.ruleCondition.CompositeQuery.Queries) > 0 {
-			selectedQuery := r.GetSelectedQuery()
-			for _, item := range r.ruleCondition.CompositeQuery.Queries {
-				switch item.Type {
-				case qbtypes.QueryTypePromQL:
-					promQuery, ok := item.Spec.(qbtypes.PromQuery)
-					if !ok {
-						return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", item.Spec)
-					}
-					if promQuery.Name == selectedQuery {
-						return promQuery.Query, nil
-					}
-				}
+func (r *PromRule) getPqlQuery(ctx context.Context) (string, error) {
+	selectedQuery := r.SelectedQuery(ctx)
+	for _, item := range r.ruleCondition.CompositeQuery.Queries {
+		switch item.Type {
+		case qbtypes.QueryTypePromQL:
+			promQuery, ok := item.Spec.(qbtypes.PromQuery)
+			if !ok {
+				return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql query spec %T", item.Spec)
 			}
-		}
-		return "", fmt.Errorf("invalid promql rule setup")
-	}
-
-	if r.ruleCondition.CompositeQuery.QueryType == v3.QueryTypePromQL {
-		if len(r.ruleCondition.CompositeQuery.PromQueries) > 0 {
-			selectedQuery := r.GetSelectedQuery()
-			if promQuery, ok := r.ruleCondition.CompositeQuery.PromQueries[selectedQuery]; ok {
-				query := promQuery.Query
-				if query == "" {
-					return query, fmt.Errorf("a promquery needs to be set for this rule to function")
-				}
-				return query, nil
+			if promQuery.Name == selectedQuery {
+				return promQuery.Query, nil
 			}
 		}
 	}
-
-	return "", fmt.Errorf("invalid promql rule query")
+	return "", errors.NewInvalidInputf(errors.CodeInvalidInput, "invalid promql rule setup")
 }
 
-func (r *PromRule) matrixToV3Series(res promql.Matrix) []*v3.Series {
-	v3Series := make([]*v3.Series, 0, len(res))
+func (r *PromRule) matrixToCommonSeries(res promql.Matrix) []*qbtypes.TimeSeries {
+	seriesSlice := make([]*qbtypes.TimeSeries, 0, len(res))
 	for _, series := range res {
 		commonSeries := toCommonSeries(series)
-		v3Series = append(v3Series, &commonSeries)
+		seriesSlice = append(seriesSlice, commonSeries)
 	}
-	return v3Series
+	return seriesSlice
 }
 
 func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletypes.Vector, error) {
 	start, end := r.Timestamps(ts)
 	interval := 60 * time.Second // TODO(srikanthccv): this should be configurable
 
-	q, err := r.getPqlQuery()
+	q, err := r.getPqlQuery(ctx)
 	if err != nil {
 		return nil, err
 	}
-	r.logger.InfoContext(ctx, "evaluating promql query", "rule_name", r.Name(), "query", q)
+	r.logger.InfoContext(ctx, "evaluating promql query", slog.String("rule.id", r.ID()), slog.String("rule.query", q))
 	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(ruletypes.HealthBad)
@@ -145,7 +105,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		return nil, err
 	}
 
-	matrixToProcess := r.matrixToV3Series(res)
+	matrixToProcess := r.matrixToCommonSeries(res)
 
 	hasData := len(matrixToProcess) > 0
 	if missingDataAlert := r.HandleMissingDataAlert(ctx, ts, hasData); missingDataAlert != nil {
@@ -157,7 +117,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "Error filtering new series, ", errors.Attr(filterErr), "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "error filtering new series", slog.String("rule.id", r.ID()), errors.Attr(filterErr))
 		} else {
 			matrixToProcess = filteredSeries
 		}
@@ -169,11 +129,11 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
 				ctx, "not enough data points to evaluate series, skipping",
-				"rule_id", r.ID(), "num_points", len(series.Points), "required_points", r.Condition().RequiredNumPoints,
+				"rule.id", r.ID(), "num_points", len(series.Values), "required_points", r.Condition().RequiredNumPoints,
 			)
 			continue
 		}
-		resultSeries, err := r.Threshold.Eval(*series, r.Unit(), ruletypes.EvalData{
+		resultSeries, err := r.Threshold.Eval(series, r.Unit(), ruletypes.EvalData{
 			ActiveAlerts:  r.ActiveAlertsLabelFP(),
 			SendUnmatched: r.ShouldSendUnmatched(),
 		})
@@ -213,7 +173,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		for _, lbl := range result.Metric {
 			l[lbl.Name] = lbl.Value
 		}
-		r.logger.DebugContext(ctx, "alerting for series", "rule_name", r.Name(), "series", result)
+		r.logger.DebugContext(ctx, "alerting for series", slog.String("rule.id", r.ID()), slog.Any("series", result))
 
 		threshold := valueFormatter.Format(result.Target, result.TargetUnit)
 
@@ -228,35 +188,34 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				defs+text,
 				"__alert_"+r.Name(),
 				tmplData,
-				times.Time(timestamp.FromTime(ts)),
 				nil,
 			)
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.WarnContext(ctx, "Expanding alert template failed", "rule_name", r.Name(), errors.Attr(err), "data", tmplData)
+				r.logger.WarnContext(ctx, "expanding alert template failed", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("alert.template_data", tmplData))
 			}
 			return result
 		}
 
-		lb := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel)
-		resultLabels := qslabels.NewBuilder(result.Metric).Del(qslabels.MetricNameLabel).Labels()
+		lb := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel)
+		resultLabels := ruletypes.NewBuilder(result.Metric...).Del(ruletypes.MetricNameLabel).Labels()
 
 		for name, value := range r.labels.Map() {
 			lb.Set(name, expand(value))
 		}
 
-		lb.Set(qslabels.AlertNameLabel, r.Name())
-		lb.Set(qslabels.AlertRuleIdLabel, r.ID())
-		lb.Set(qslabels.RuleSourceLabel, r.GeneratorURL())
+		lb.Set(ruletypes.AlertNameLabel, r.Name())
+		lb.Set(ruletypes.AlertRuleIDLabel, r.ID())
+		lb.Set(ruletypes.RuleSourceLabel, r.GeneratorURL())
 
-		annotations := make(qslabels.Labels, 0, len(r.annotations.Map()))
+		annotations := make(ruletypes.Labels, 0, len(r.annotations.Map()))
 		for name, value := range r.annotations.Map() {
-			annotations = append(annotations, qslabels.Label{Name: name, Value: expand(value)})
+			annotations = append(annotations, ruletypes.Label{Name: name, Value: expand(value)})
 		}
 		if result.IsMissing {
-			lb.Set(qslabels.AlertNameLabel, "[No data] "+r.Name())
-			lb.Set(qslabels.NoDataLabel, "true")
+			lb.Set(ruletypes.AlertNameLabel, "[No data] "+r.Name())
+			lb.Set(ruletypes.NoDataLabel, "true")
 		}
 
 		lbs := lb.Labels()
@@ -264,7 +223,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		resultFPs[h] = struct{}{}
 
 		if _, ok := alerts[h]; ok {
-			err = fmt.Errorf("vector contains metrics with the same labelset after applying alert labels")
+			err = errors.NewInternalf(errors.CodeInternal, "vector contains metrics with the same labelset after applying alert labels")
 			// We have already acquired the lock above hence using SetHealth and
 			// SetLastError will deadlock.
 			r.health = ruletypes.HealthBad
@@ -273,10 +232,10 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 		alerts[h] = &ruletypes.Alert{
 			Labels:            lbs,
-			QueryResultLables: resultLabels,
+			QueryResultLabels: resultLabels,
 			Annotations:       annotations,
 			ActiveAt:          ts,
-			State:             model.StatePending,
+			State:             ruletypes.StatePending,
 			Value:             result.V,
 			GeneratorURL:      r.GeneratorURL(),
 			Receivers:         ruleReceiverMap[lbs.Map()[ruletypes.LabelThresholdName]],
@@ -285,12 +244,12 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 	}
 
-	r.logger.InfoContext(ctx, "number of alerts found", "rule_name", r.Name(), "alerts_count", len(alerts))
+	r.logger.InfoContext(ctx, "number of alerts found", slog.String("rule.id", r.ID()), slog.Int("alert.count", len(alerts)))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
 		// Update the last value and annotations if so, create a new alert entry otherwise.
-		if alert, ok := r.Active[h]; ok && alert.State != model.StateInactive {
+		if alert, ok := r.Active[h]; ok && alert.State != ruletypes.StateInactive {
 			alert.Value = a.Value
 			alert.Annotations = a.Annotations
 			// Update the recovering and missing state of existing alert
@@ -306,75 +265,75 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 
 	}
 
-	itemsToAdd := []model.RuleStateHistory{}
+	itemsToAdd := []rulestatehistorytypes.RuleStateHistory{}
 
 	// Check if any pending alerts should be removed or fire now. Write out alert timeseries.
 	for fp, a := range r.Active {
-		labelsJSON, err := json.Marshal(a.QueryResultLables)
+		labelsJSON, err := json.Marshal(a.QueryResultLabels)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err), "rule_name", r.Name())
+			r.logger.ErrorContext(ctx, "error marshaling labels", slog.String("rule.id", r.ID()), errors.Attr(err))
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
 			// retention time so it is reported as resolved to the AlertManager.
-			if a.State == model.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
+			if a.State == ruletypes.StatePending || (!a.ResolvedAt.IsZero() && ts.Sub(a.ResolvedAt) > ruletypes.ResolvedRetention) {
 				delete(r.Active, fp)
 			}
-			if a.State != model.StateInactive {
-				a.State = model.StateInactive
+			if a.State != ruletypes.StateInactive {
+				a.State = ruletypes.StateInactive
 				a.ResolvedAt = ts
-				itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+				itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 					RuleID:       r.ID(),
 					RuleName:     r.Name(),
-					State:        model.StateInactive,
+					State:        ruletypes.StateInactive,
 					StateChanged: true,
 					UnixMilli:    ts.UnixMilli(),
-					Labels:       model.LabelsString(labelsJSON),
-					Fingerprint:  a.QueryResultLables.Hash(),
+					Labels:       rulestatehistorytypes.LabelsString(labelsJSON),
+					Fingerprint:  a.QueryResultLabels.Hash(),
 				})
 			}
 			continue
 		}
 
-		if a.State == model.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
-			a.State = model.StateFiring
+		if a.State == ruletypes.StatePending && ts.Sub(a.ActiveAt) >= r.holdDuration.Duration() {
+			a.State = ruletypes.StateFiring
 			a.FiredAt = ts
-			state := model.StateFiring
+			state := ruletypes.StateFiring
 			if a.Missing {
-				state = model.StateNoData
+				state = ruletypes.StateNoData
 			}
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+			itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
+				Labels:       rulestatehistorytypes.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLabels.Hash(),
 				Value:        a.Value,
 			})
 		}
 
 		// We need to change firing alert to recovering if the returned sample meets recovery threshold
-		changeAlertingToRecovering := a.State == model.StateFiring && a.IsRecovering
+		changeAlertingToRecovering := a.State == ruletypes.StateFiring && a.IsRecovering
 		// We need to change recovering alerts to firing if the returned sample meets target threshold
-		changeRecoveringToFiring := a.State == model.StateRecovering && !a.IsRecovering && !a.Missing
+		changeRecoveringToFiring := a.State == ruletypes.StateRecovering && !a.IsRecovering && !a.Missing
 		// in any of the above case we need to update the status of alert
 		if changeAlertingToRecovering || changeRecoveringToFiring {
-			state := model.StateRecovering
+			state := ruletypes.StateRecovering
 			if changeRecoveringToFiring {
-				state = model.StateFiring
+				state = ruletypes.StateFiring
 			}
 			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", "name", r.Name(), "state", state)
-			itemsToAdd = append(itemsToAdd, model.RuleStateHistory{
+			r.logger.DebugContext(ctx, "converting alert state", slog.String("rule.id", r.ID()), slog.Any("alert.state", state))
+			itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
 				State:        state,
 				StateChanged: true,
 				UnixMilli:    ts.UnixMilli(),
-				Labels:       model.LabelsString(labelsJSON),
-				Fingerprint:  a.QueryResultLables.Hash(),
+				Labels:       rulestatehistorytypes.LabelsString(labelsJSON),
+				Fingerprint:  a.QueryResultLabels.Hash(),
 				Value:        a.Value,
 			})
 		}
@@ -452,26 +411,25 @@ func (r *PromRule) RunAlertQuery(ctx context.Context, qs string, start, end time
 	case promql.Matrix:
 		return res.Value.(promql.Matrix), nil
 	default:
-		return nil, fmt.Errorf("rule result is not a vector or scalar")
+		return nil, errors.NewInternalf(errors.CodeInternal, "rule result is not a vector or scalar")
 	}
 }
 
-func toCommonSeries(series promql.Series) v3.Series {
-	commonSeries := v3.Series{
-		Labels:      make(map[string]string),
-		LabelsArray: make([]map[string]string, 0),
-		Points:      make([]v3.Point, 0),
+func toCommonSeries(series promql.Series) *qbtypes.TimeSeries {
+	commonSeries := &qbtypes.TimeSeries{
+		Labels: make([]*qbtypes.Label, 0),
+		Values: make([]*qbtypes.TimeSeriesValue, 0),
 	}
 
 	series.Metric.Range(func(lbl labels.Label) {
-		commonSeries.Labels[lbl.Name] = lbl.Value
-		commonSeries.LabelsArray = append(commonSeries.LabelsArray, map[string]string{
-			lbl.Name: lbl.Value,
+		commonSeries.Labels = append(commonSeries.Labels, &qbtypes.Label{
+			Key:   telemetrytypes.TelemetryFieldKey{Name: lbl.Name},
+			Value: lbl.Value,
 		})
 	})
 
 	for _, f := range series.Floats {
-		commonSeries.Points = append(commonSeries.Points, v3.Point{
+		commonSeries.Values = append(commonSeries.Values, &qbtypes.TimeSeriesValue{
 			Timestamp: f.T,
 			Value:     f.F,
 		})

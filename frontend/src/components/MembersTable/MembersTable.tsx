@@ -4,9 +4,7 @@ import { Table, Tooltip } from 'antd';
 import type { ColumnsType, SorterResult } from 'antd/es/table/interface';
 import { DATE_TIME_FORMATS } from 'constants/dateTimeFormats';
 import { MemberStatus } from 'container/MembersSettings/utils';
-import { capitalize } from 'lodash-es';
 import { useTimezone } from 'providers/Timezone';
-import { ROLES } from 'types/roles';
 
 import './MembersTable.styles.scss';
 
@@ -14,7 +12,6 @@ export interface MemberRow {
 	id: string;
 	name?: string;
 	email: string;
-	role: ROLES;
 	status: MemberStatus;
 	joinedOn: string | null;
 	updatedAt?: string | null;
@@ -141,17 +138,6 @@ function MembersTable({
 				<NameEmailCell name={record.name} email={record.email} />
 			),
 		},
-		{
-			title: 'Roles',
-			dataIndex: 'role',
-			key: 'role',
-			width: 180,
-			sorter: (a, b): number => a.role.localeCompare(b.role),
-			render: (role: ROLES): JSX.Element => (
-				<Badge color="vanilla">{capitalize(role)}</Badge>
-			),
-		},
-
 		{
 			title: 'Status',
 			dataIndex: 'status',

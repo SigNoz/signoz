@@ -392,13 +392,11 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -409,7 +407,6 @@ func TestTraceOperatorStatementBuilder(t *testing.T) {
 		fm,
 		cb,
 		traceStmtBuilder,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 	)
 
@@ -508,13 +505,11 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 	mockMetadataStore.KeysMap = buildCompleteFieldKeyMap()
 	aggExprRewriter := querybuilder.NewAggExprRewriter(instrumentationtest.New().ToProviderSettings(), nil, fm, cb, nil)
 
-	resourceFilterStmtBuilder := resourceFilterStmtBuilder()
 	traceStmtBuilder := NewTraceQueryStatementBuilder(
 		instrumentationtest.New().ToProviderSettings(),
 		mockMetadataStore,
 		fm,
 		cb,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 		nil,
 	)
@@ -525,7 +520,6 @@ func TestTraceOperatorStatementBuilderErrors(t *testing.T) {
 		fm,
 		cb,
 		traceStmtBuilder,
-		resourceFilterStmtBuilder,
 		aggExprRewriter,
 	)
 

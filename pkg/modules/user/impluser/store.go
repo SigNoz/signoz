@@ -279,7 +279,6 @@ func (store *store) SoftDeleteUser(ctx context.Context, orgID string, id string)
 	_, err = tx.NewUpdate().
 		Model(new(types.User)).
 		Set("status = ?", types.UserStatusDeleted).
-		Set("deleted_at = ?", now).
 		Set("updated_at = ?", now).
 		Where("org_id = ?", orgID).
 		Where("id = ?", id).

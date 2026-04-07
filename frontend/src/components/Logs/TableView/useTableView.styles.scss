@@ -33,7 +33,7 @@
 	display: flex;
 	align-items: center;
 
-	.ant-typography {
+	p {
 		margin-bottom: 0;
 	}
 }
@@ -45,6 +45,7 @@
 }
 
 .paragraph {
+	margin: 0;
 	padding: 0px !important;
 	&.small {
 		font-size: 11px !important;

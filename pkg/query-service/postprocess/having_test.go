@@ -312,6 +312,72 @@ func TestApplyHavingCaluse(t *testing.T) {
 				},
 			},
 		},
+		{
+			name: "query not in builder queries should not panic",
+			results: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{
+								{Value: 1.0},
+								{Value: 2.0},
+							},
+						},
+					},
+				},
+			},
+			params: &v3.QueryRangeParamsV3{
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: map[string]*v3.BuilderQuery{},
+				},
+			},
+			want: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{
+								{Value: 1.0},
+								{Value: 2.0},
+							},
+						},
+					},
+				},
+			},
+		},
+		{
+			name: "nil builder queries should not panic",
+			results: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{
+								{Value: 1.0},
+							},
+						},
+					},
+				},
+			},
+			params: &v3.QueryRangeParamsV3{
+				CompositeQuery: &v3.CompositeQuery{
+					BuilderQueries: nil,
+				},
+			},
+			want: []*v3.Result{
+				{
+					QueryName: "A",
+					Series: []*v3.Series{
+						{
+							Points: []v3.Point{
+								{Value: 1.0},
+							},
+						},
+					},
+				},
+			},
+		},
 	}
 
 	for _, tc := range testCases {

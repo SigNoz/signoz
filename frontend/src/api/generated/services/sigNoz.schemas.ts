@@ -425,39 +425,6 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
-export interface AuthtypesStorableRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -475,25 +442,25 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt: Date;
 	/**
 	 * @type string
 	 */
 	id: string;
-	role?: AuthtypesStorableRoleDTO;
+	role: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
-	roleId?: string;
+	roleId: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt: Date;
 	/**
 	 * @type string
 	 */
-	userId?: string;
+	userId: string;
 }
 
 export interface AuthtypesUserWithRolesDTO {
@@ -2710,14 +2677,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export enum RulestatehistorytypesAlertStateDTO {
-	inactive = 'inactive',
-	pending = 'pending',
-	recovering = 'recovering',
-	firing = 'firing',
-	nodata = 'nodata',
-	disabled = 'disabled',
-}
 export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type integer
@@ -2729,7 +2688,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	 * @nullable true
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
-	overallState: RulestatehistorytypesAlertStateDTO;
+	overallState: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2737,12 +2696,12 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
-	ruleID: string;
+	ruleId: string;
 	/**
 	 * @type string
 	 */
 	ruleName: string;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2840,9 +2799,17 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	 * @format int64
 	 */
 	start: number;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 }
 
+export enum RuletypesAlertStateDTO {
+	inactive = 'inactive',
+	pending = 'pending',
+	recovering = 'recovering',
+	firing = 'firing',
+	nodata = 'nodata',
+	disabled = 'disabled',
+}
 export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
@@ -4613,7 +4580,7 @@ export type GetRuleHistoryTimelineParams = {
 	/**
 	 * @description undefined
 	 */
-	state?: RulestatehistorytypesAlertStateDTO;
+	state?: RuletypesAlertStateDTO;
 	/**
 	 * @type string
 	 * @description undefined
