@@ -818,9 +818,9 @@ func (v *filterExpressionVisitor) VisitFunctionCall(ctx *grammar.FunctionCallCon
 			case "has":
 				cond = fmt.Sprintf("has(%s, %s)", fieldName, v.builder.Var(value[0]))
 			case "hasAny":
-				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value))
+				cond = fmt.Sprintf("hasAny(%s, %s)", fieldName, v.builder.Var(value[0]))
 			case "hasAll":
-				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value))
+				cond = fmt.Sprintf("hasAll(%s, %s)", fieldName, v.builder.Var(value[0]))
 			}
 			conds = append(conds, cond)
 		}
