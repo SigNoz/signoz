@@ -52,6 +52,7 @@ jobs:
           - ingestionkeys
           - rootuser
           - serviceaccount
+          - querier_json_body
         sqlstore-provider:
           - postgres
           - sqlite
