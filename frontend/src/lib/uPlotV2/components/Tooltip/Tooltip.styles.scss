@@ -41,8 +41,6 @@
 			font-weight: 500;
 		}
 
-		// Pinned active-series row has tighter left padding since it sits
-		// directly under the timestamp header with no marker indent.
 		.uplot-tooltip-item {
 			padding: 4px 8px 4px 0;
 		}
@@ -72,43 +70,6 @@
 		&::-webkit-scrollbar-thumb {
 			background: var(--bg-slate-100);
 			border-radius: 0.5rem;
-		}
-	}
-
-	.uplot-tooltip-item {
-		display: flex;
-		align-items: center;
-		gap: 8px;
-		padding: 4px 8px 4px 16px;
-
-		.uplot-tooltip-item-marker {
-			border-radius: 50%;
-			border-style: solid;
-			border-width: 2px;
-			width: 12px;
-			height: 12px;
-			flex-shrink: 0;
-		}
-
-		.uplot-tooltip-item-content {
-			width: 100%;
-			display: flex;
-			align-items: center;
-			gap: 8px;
-			justify-content: space-between;
-
-			.uplot-tooltip-item-label {
-				white-space: normal;
-				overflow-wrap: anywhere;
-			}
-
-			&-separator {
-				flex: 1;
-				border-width: 0.5px;
-				border-style: dashed;
-				min-width: 24px;
-				opacity: 0.5;
-			}
 		}
 	}
 }
