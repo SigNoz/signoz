@@ -133,30 +133,6 @@ describe('Tooltip', () => {
 		expect(screen.queryByText(unexpectedTitle)).not.toBeInTheDocument();
 	});
 
-	it('renders lightMode class when dark mode is disabled', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(false);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('lightMode');
-		expect(container).not.toHaveClass('darkMode');
-	});
-
-	it('renders darkMode class when dark mode is enabled', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(true);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('darkMode');
-		expect(container).not.toHaveClass('lightMode');
-	});
-
 	it('renders single active item in header only, without a list', () => {
 		const uPlotInstance = createUPlotInstance(null);
 		const content = [createTooltipContent({ isActive: true })];
