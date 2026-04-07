@@ -90,7 +90,7 @@ func (n *JSONAccessNode) FieldPath() string {
 	return n.Parent.Alias() + "." + key
 }
 
-// Returns true if the current node is a non-nested path
+// Returns true if the current node is a non-nested path.
 func (n *JSONAccessNode) IsNonNestedPath() bool {
 	return !strings.Contains(n.FieldPath(), ArraySep)
 }
