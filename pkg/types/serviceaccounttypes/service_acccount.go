@@ -23,6 +23,7 @@ var (
 	ErrCodeServiceAccountNotFound             = errors.MustNewCode("service_account_not_found")
 	ErrCodeServiceAccountRoleAlreadyExists    = errors.MustNewCode("service_account_role_already_exists")
 	ErrCodeServiceAccountOperationUnsupported = errors.MustNewCode("service_account_operation_unsupported")
+	errInvalidServiceAccountName              = errors.New(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must be 1–50 characters long and contain only lowercase letters (a-z) and hyphens (-)")
 )
 
 var (
@@ -214,7 +215,7 @@ func (serviceAccount *PostableServiceAccount) UnmarshalJSON(data []byte) error {
 	}
 
 	if match := serviceAccountNameRegex.MatchString(temp.Name); !match {
-		return errors.Newf(errors.TypeInvalidInput, ErrCodeServiceAccountInvalidInput, "name must conform to the regex: %s", serviceAccountNameRegex.String())
+		return errInvalidServiceAccountName
 	}
 
 	*serviceAccount = PostableServiceAccount(temp)
