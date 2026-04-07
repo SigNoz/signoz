@@ -573,10 +573,7 @@ def test_logs_list_query_timestamp_expectations(
             # Values: x[0].trace_id="1", x[1].trace_id="", x[2].trace_id="", x[3].trace_id=""
             # Order: trace_id DESC → x[0]("1") first, then x[2](""), x[1](""), x[3]("") in storage order
             # Behaviour:
-            # AdjustKeys logic adjusts key "attribute.timestamp" to "timestamp"
-            # AdjustKeys logic adjusts key "log.timestamp" to "timestamp"
-            # AdjustKeys logic removes duplicate key "timestamp", only 1 select field is left
-            # Select and OrderBy both timestamp are mapped to top level field by field mapper
+            # AdjustKeys no-op
         ),
         pytest.param(
             BuilderQuery(
@@ -598,10 +595,7 @@ def test_logs_list_query_timestamp_expectations(
             # Values: x[0]="", x[1]="2", x[2]="", x[3]="" (only x[1] has attribute.trace_id set)
             # Order: attribute.trace_id DESC → x[1]("2") first, then x[2](""), x[0](""), x[3]("") in storage order
             # Behaviour:
-            # AdjustKeys logic adjusts key "attribute.timestamp" to "timestamp"
-            # AdjustKeys logic adjusts key "log.timestamp" to "timestamp"
-            # AdjustKeys logic removes duplicate key "timestamp", only 1 select field is left
-            # Select and OrderBy both timestamp are mapped to top level field by field mapper
+            # AdjustKeys no-op
         ),
         pytest.param(
             BuilderQuery(
