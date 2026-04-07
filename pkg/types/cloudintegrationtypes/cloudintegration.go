@@ -142,7 +142,7 @@ func NewStorableCloudIntegrationService(svc *CloudIntegrationService, configJSON
 	}
 }
 
-// following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct
+// following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct.
 func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
 	switch provider {
 	case CloudProviderTypeAWS:

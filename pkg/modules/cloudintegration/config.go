@@ -1,9 +1,7 @@
 package cloudintegration
 
 import (
-	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/factory"
-	"github.com/SigNoz/signoz/pkg/types/cloudintegrationtypes"
 )
 
 type Config struct {
@@ -22,15 +20,13 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Agent: AgentConfig{
-			Version: "",
+			// Agent version is required to deploy the Cloud Integration Agent
+			// Which is required only for Cloud And Self-hosted enterprises for now.
+			Version: "", // TODO: should we set default version here?
 		},
 	}
 }
 
 func (c Config) Validate() error {
-	if c.Agent.Version == "" {
-		return errors.New(errors.TypeInvalidInput, cloudintegrationtypes.ErrCodeCloudIntegrationInvalidConfig, "agent version cannot be empty")
-	}
-
 	return nil
 }
