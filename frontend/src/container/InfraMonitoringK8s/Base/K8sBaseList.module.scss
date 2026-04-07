@@ -2,7 +2,7 @@
 	cursor: pointer;
 }
 
-.k8sListTable {
+.k8SListTable {
 	:global(.ant-table) {
 		:global(.ant-table-thead > tr > th) {
 			padding: 12px;
@@ -20,7 +20,7 @@
 			line-height: 18px;
 			letter-spacing: 0.44px;
 			text-transform: uppercase;
-			background: var(--bg-ink-500) !important;
+			background: var(--l1-background) !important;
 
 			&::before {
 				background: transparent !important;
@@ -32,7 +32,7 @@
 			font-size: 13px;
 			line-height: 20px;
 			color: var(--l1-foreground);
-			background: var(--bg-ink-500);
+			background: var(--l1-background);
 			border-bottom: none;
 
 			&:before,
@@ -58,11 +58,15 @@
 		}
 
 		:global(.ant-table-tbody > tr:hover > td) {
-			background: var(--bg-ink-500);
+			background: var(--l1-background-hover);
 		}
 
 		:global(.ant-table-tbody > tr:not(.ant-table-expanded-row):hover > td) {
-			background: var(--l2-background);
+			background: var(--l1-background-hover) !important;
+		}
+
+		:global(.ant-table-tbody > tr.ant-table-expanded-row:hover > td) {
+			background: var(--l1-background);
 		}
 
 		:global(.ant-table-tbody > tr > td) {
@@ -95,7 +99,7 @@
 		bottom: 0;
 		right: 0;
 		padding: 16px;
-		background-color: var(--bg-ink-500);
+		background-color: var(--l1-background);
 		margin: 0 !important;
 		padding-right: 72px;
 

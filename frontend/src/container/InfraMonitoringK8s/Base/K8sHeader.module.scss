@@ -1,4 +1,4 @@
-.k8sListControls {
+.k8SListControls {
 	padding: var(--spacing-4);
 	display: flex;
 	justify-content: space-between;
@@ -20,21 +20,21 @@
 	}
 }
 
-.k8sListControlsLeft {
+.k8SListControlsLeft {
 	flex: 1;
 	display: flex;
 	align-items: center;
 	flex-wrap: wrap;
 	gap: var(--spacing-4);
 
-	.k8sQbSearchContainer {
+	.k8SQbSearchContainer {
 		flex: 1;
 		min-width: 240px;
 		max-width: 60%;
 	}
 }
 
-.k8sAttributeSearchContainer {
+.k8SAttributeSearchContainer {
 	flex: 1;
 	min-width: 240px;
 	max-width: 40%;
@@ -71,7 +71,7 @@
 	}
 }
 
-.k8sListControlsRight {
+.k8SListControlsRight {
 	min-width: 240px;
 
 	display: flex;

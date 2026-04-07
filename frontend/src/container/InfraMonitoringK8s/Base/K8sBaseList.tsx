@@ -367,7 +367,7 @@ export function K8sBaseList<T>({
 			)}
 
 			<Table
-				className={styles.k8sListTable}
+				className={styles.k8SListTable}
 				dataSource={showTableLoadingState ? [] : formattedItemsData}
 				columns={columns}
 				pagination={{

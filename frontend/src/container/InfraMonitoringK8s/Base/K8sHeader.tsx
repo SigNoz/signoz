@@ -163,11 +163,11 @@ function K8sHeader({
 	}, []);
 
 	return (
-		<div className={styles.k8sListControls}>
-			<div className={styles.k8sListControlsLeft}>
+		<div className={styles.k8SListControls}>
+			<div className={styles.k8SListControlsLeft}>
 				{controlListPrefix}
 
-				<div className={styles.k8sQbSearchContainer}>
+				<div className={styles.k8SQbSearchContainer}>
 					<QueryBuilderSearch
 						query={query as IBuilderQuery}
 						onChange={handleChangeTagFilters}
@@ -177,7 +177,7 @@ function K8sHeader({
 					/>
 				</div>
 
-				<div className={styles.k8sAttributeSearchContainer}>
+				<div className={styles.k8SAttributeSearchContainer}>
 					<div className={styles.groupByLabel}> Group by </div>
 					<Select
 						className={styles.groupBySelect}
@@ -194,7 +194,7 @@ function K8sHeader({
 				</div>
 			</div>
 
-			<div className={styles.k8sListControlsRight}>
+			<div className={styles.k8SListControlsRight}>
 				<DateTimeSelectionV2
 					showAutoRefresh={showAutoRefresh}
 					showRefreshText={false}
