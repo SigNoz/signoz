@@ -354,7 +354,7 @@ func (module *module) CreateService(ctx context.Context, orgID valuer.UUID, serv
 		return err
 	}
 
-	configJSON, err := service.Config.ToJSON(provider, &serviceDefinition.SupportedSignals)
+	configJSON, err := service.Config.ToJSON(provider, service.Type, &serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}
@@ -378,7 +378,7 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 		return err
 	}
 
-	configJSON, err := integrationService.Config.ToJSON(provider, &serviceDefinition.SupportedSignals)
+	configJSON, err := integrationService.Config.ToJSON(provider, integrationService.Type, &serviceDefinition.SupportedSignals)
 	if err != nil {
 		return err
 	}

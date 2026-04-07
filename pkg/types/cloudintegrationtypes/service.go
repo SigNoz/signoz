@@ -237,9 +237,6 @@ func NewService(def ServiceDefinition, storableService *CloudIntegrationService)
 func IsServiceEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
-		if config == nil || config.AWS == nil {
-			return false
-		}
 		logsEnabled := config.AWS.Logs != nil && config.AWS.Logs.Enabled
 		metricsEnabled := config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
 		return logsEnabled || metricsEnabled
@@ -253,10 +250,17 @@ func IsServiceEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 func IsMetricsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 	switch provider {
 	case CloudProviderTypeAWS:
-		if config == nil || config.AWS == nil {
-			return false
-		}
 		return config.AWS.Metrics != nil && config.AWS.Metrics.Enabled
+	default:
+		return false
+	}
+}
+
+// IsLogsEnabled returns true if logs are explicitly enabled for the given cloud provider.
+func IsLogsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
+	switch provider {
+	case CloudProviderTypeAWS:
+		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
 	default:
 		return false
 	}
@@ -291,19 +295,19 @@ func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*S
 	}
 }
 
-func (serviceConfig *ServiceConfig) ToJSON(provider CloudProviderType, supportedSignals *SupportedSignals) ([]byte, error) {
-	storableServiceConfig := newStorableServiceConfig(provider, serviceConfig, supportedSignals)
+func (serviceConfig *ServiceConfig) ToJSON(provider CloudProviderType, serviceID ServiceID, supportedSignals *SupportedSignals) ([]byte, error) {
+	storableServiceConfig := newStorableServiceConfig(provider, serviceID, serviceConfig, supportedSignals)
 	return storableServiceConfig.toJSON(provider)
 }
 
-func (updatableService *UpdatableService) Validate(provider CloudProviderType, serviceId ServiceID) error {
+func (updatableService *UpdatableService) Validate(provider CloudProviderType, serviceID ServiceID) error {
 	switch provider {
 	case CloudProviderTypeAWS:
 		if updatableService.Config.AWS == nil {
 			return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS config is required for AWS service")
 		}
 
-		if serviceId == AWSServiceS3Sync {
+		if serviceID == AWSServiceS3Sync {
 			if updatableService.Config.AWS.Logs == nil || updatableService.Config.AWS.Logs.S3Buckets == nil {
 				return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "AWS S3 Sync service requires S3 bucket configuration for logs")
 			}

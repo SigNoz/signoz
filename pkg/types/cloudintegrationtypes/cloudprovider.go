@@ -20,6 +20,10 @@ var (
 
 	AWSIntegrationUserEmail   = valuer.MustNewEmail("aws-integration@signoz.io")
 	AzureIntegrationUserEmail = valuer.MustNewEmail("azure-integration@signoz.io")
+
+	CloudFormationQuickCreateBaseURL  = valuer.NewString("https://%s.console.aws.amazon.com/cloudformation/home")
+	AgentCloudFormationTemplateS3Path = valuer.NewString("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json")
+	AgentCloudFormationBaseStackName  = valuer.NewString("signoz-integration")
 )
 
 // CloudIntegrationUserEmails is the list of valid emails for Cloud One Click integrations.

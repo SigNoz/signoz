@@ -643,7 +643,7 @@ export interface CloudintegrationtypesAWSServiceLogsConfigDTO {
 	/**
 	 * @type object
 	 */
-	s3_buckets?: CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets;
+	s3Buckets?: CloudintegrationtypesAWSServiceLogsConfigDTOS3Buckets;
 }
 
 export interface CloudintegrationtypesAWSServiceMetricsConfigDTO {

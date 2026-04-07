@@ -19,7 +19,7 @@ func NewAWSCloudProvider(defStore cloudintegrationtypes.ServiceDefinitionStore) 
 }
 
 func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, account *cloudintegrationtypes.Account, req *cloudintegrationtypes.ConnectionArtifactRequest) (*cloudintegrationtypes.ConnectionArtifact, error) {
-	baseURL := fmt.Sprintf("https://%s.console.aws.amazon.com/cloudformation/home", req.Config.Aws.DeploymentRegion)
+	baseURL := fmt.Sprintf(cloudintegrationtypes.CloudFormationQuickCreateBaseURL.StringValue(), req.Config.Aws.DeploymentRegion)
 	u, _ := url.Parse(baseURL)
 
 	q := u.Query()
@@ -29,8 +29,8 @@ func (provider *awscloudprovider) GetConnectionArtifact(ctx context.Context, acc
 	u.RawQuery = q.Encode()
 
 	q = u.Query()
-	q.Set("stackName", "signoz-integration")
-	q.Set("templateURL", fmt.Sprintf("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json", req.Config.AgentVersion))
+	q.Set("stackName", cloudintegrationtypes.AgentCloudFormationBaseStackName.StringValue())
+	q.Set("templateURL", fmt.Sprintf(cloudintegrationtypes.AgentCloudFormationTemplateS3Path.StringValue(), req.Config.AgentVersion))
 	q.Set("param_SigNozIntegrationAgentVersion", req.Config.AgentVersion)
 	q.Set("param_SigNozApiUrl", req.Credentials.SigNozAPIURL)
 	q.Set("param_SigNozApiKey", req.Credentials.SigNozAPIKey)
@@ -50,7 +50,7 @@ func (provider *awscloudprovider) ListServiceDefinitions(ctx context.Context) ([
 }
 
 func (provider *awscloudprovider) GetServiceDefinition(ctx context.Context, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.ServiceDefinition, error) {
-		serviceDef, err := provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
+	serviceDef, err := provider.serviceDefinitions.Get(ctx, cloudintegrationtypes.CloudProviderTypeAWS, serviceID)
 	if err != nil {
 		return nil, err
 	}
@@ -73,36 +73,40 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		return services[i].Type.StringValue() < services[j].Type.StringValue()
 	})
 
-	compiledMetrics := &cloudintegrationtypes.AWSMetricsStrategy{}
-	compiledLogs := &cloudintegrationtypes.AWSLogsStrategy{}
+	compiledMetrics := new(cloudintegrationtypes.AWSMetricsStrategy)
+	compiledLogs := new(cloudintegrationtypes.AWSLogsStrategy)
 	var compiledS3Buckets map[string][]string
 
 	for _, storedSvc := range services {
 		svcCfg, err := cloudintegrationtypes.NewServiceConfigFromJSON(cloudintegrationtypes.CloudProviderTypeAWS, storedSvc.Config)
-		if err != nil || svcCfg == nil || svcCfg.AWS == nil {
-			continue
+		if err != nil {
+			return nil, err
 		}
 
 		svcDef, err := provider.GetServiceDefinition(ctx, storedSvc.Type)
-		if err != nil || svcDef == nil || svcDef.Strategy == nil || svcDef.Strategy.AWS == nil {
-			continue
+		if err != nil {
+			return nil, err
 		}
 
 		strategy := svcDef.Strategy.AWS
+		logsEnabled := cloudintegrationtypes.IsLogsEnabled(cloudintegrationtypes.CloudProviderTypeAWS, svcCfg)
 
 		// S3Sync: logs come directly from configured S3 buckets, not CloudWatch subscriptions
 		if storedSvc.Type == cloudintegrationtypes.AWSServiceS3Sync {
-			if svcCfg.AWS.Logs != nil && svcCfg.AWS.Logs.Enabled && svcCfg.AWS.Logs.S3Buckets != nil {
+			if logsEnabled && svcCfg.AWS.Logs.S3Buckets != nil {
 				compiledS3Buckets = svcCfg.AWS.Logs.S3Buckets
 			}
+			// no need to go ahead as the code block specifically checks for the S3Sync service
 			continue
 		}
 
-		if svcCfg.AWS.Logs != nil && svcCfg.AWS.Logs.Enabled && strategy.Logs != nil {
+		if logsEnabled && strategy.Logs != nil {
 			compiledLogs.Subscriptions = append(compiledLogs.Subscriptions, strategy.Logs.Subscriptions...)
 		}
 
-		if svcCfg.AWS.Metrics != nil && svcCfg.AWS.Metrics.Enabled && strategy.Metrics != nil {
+		metricsEnabled := cloudintegrationtypes.IsMetricsEnabled(cloudintegrationtypes.CloudProviderTypeAWS, svcCfg)
+
+		if metricsEnabled && strategy.Metrics != nil {
 			compiledMetrics.StreamFilters = append(compiledMetrics.StreamFilters, strategy.Metrics.StreamFilters...)
 		}
 	}
@@ -118,14 +122,9 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		awsTelemetry.S3Buckets = compiledS3Buckets
 	}
 
-	enabledRegions := []string{}
-	if account.Config != nil && account.Config.AWS != nil && account.Config.AWS.Regions != nil {
-		enabledRegions = account.Config.AWS.Regions
-	}
-
 	return &cloudintegrationtypes.ProviderIntegrationConfig{
 		AWS: &cloudintegrationtypes.AWSIntegrationConfig{
-			EnabledRegions: enabledRegions,
+			EnabledRegions: account.Config.AWS.Regions,
 			Telemetry:      awsTelemetry,
 		},
 	}, nil

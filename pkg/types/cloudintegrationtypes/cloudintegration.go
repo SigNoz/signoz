@@ -142,25 +142,25 @@ func NewStorableCloudIntegrationService(svc *CloudIntegrationService, configJSON
 	}
 }
 
-func newStorableServiceConfig(provider CloudProviderType, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
+// following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct
+func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
 	switch provider {
 	case CloudProviderTypeAWS:
 		storableAWSServiceConfig := new(StorableAWSServiceConfig)
 
 		if supportedSignals.Logs {
-			if serviceConfig.AWS.Logs != nil {
-				storableAWSServiceConfig.Logs = &StorableAWSLogsServiceConfig{
-					Enabled:   serviceConfig.AWS.Logs.Enabled,
-					S3Buckets: serviceConfig.AWS.Logs.S3Buckets,
-				}
+			storableAWSServiceConfig.Logs = &StorableAWSLogsServiceConfig{
+				Enabled: serviceConfig.AWS.Logs.Enabled,
+			}
+
+			if serviceID == AWSServiceS3Sync {
+				storableAWSServiceConfig.Logs.S3Buckets = serviceConfig.AWS.Logs.S3Buckets
 			}
 		}
 
 		if supportedSignals.Metrics {
-			if serviceConfig.AWS.Metrics != nil {
-				storableAWSServiceConfig.Metrics = &StorableAWSMetricsServiceConfig{
-					Enabled: serviceConfig.AWS.Metrics.Enabled,
-				}
+			storableAWSServiceConfig.Metrics = &StorableAWSMetricsServiceConfig{
+				Enabled: serviceConfig.AWS.Metrics.Enabled,
 			}
 		}
 

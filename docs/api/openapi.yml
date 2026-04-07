@@ -502,7 +502,7 @@ components:
       properties:
         enabled:
           type: boolean
-        s3_buckets:
+        s3Buckets:
           additionalProperties:
             items:
               type: string
