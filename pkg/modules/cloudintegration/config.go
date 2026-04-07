@@ -20,9 +20,9 @@ func NewConfigFactory() factory.ConfigFactory {
 func newConfig() factory.Config {
 	return &Config{
 		Agent: AgentConfig{
-			// Agent version is required to deploy the Cloud Integration Agent
-			// Which is required only for Cloud And Self-hosted enterprises for now.
-			Version: "", // TODO: should we set default version here?
+			// we will maintain the latest version of cloud integration agent from here,
+			// till we automate it externally or figure out a way to validate it.
+			Version: "v0.0.8",
 		},
 	}
 }

@@ -174,11 +174,8 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return nil, err
 	}
 
-	account.AccountID = &req.ProviderAccountID
-	account.LastAgentReport = &cloudintegrationtypes.StorableAgentReport{
-		TimestampMillis: time.Now().UnixMilli(),
-		Data:            req.Data,
-	}
+	// update account with cloud provider account id and agent report (heartbeat)
+	account.Update(&req.ProviderAccountID, cloudintegrationtypes.NewAgentReport(req.Data))
 
 	err = module.store.UpdateAccount(ctx, account)
 	if err != nil {
@@ -191,13 +188,13 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 		return &cloudintegrationtypes.AgentCheckInResponse{
 			CloudIntegrationID: account.ID.StringValue(),
 			ProviderAccountID:  req.ProviderAccountID,
-			IntegrationConfig:  &cloudintegrationtypes.ProviderIntegrationConfig{},
+			IntegrationConfig:  new(cloudintegrationtypes.ProviderIntegrationConfig),
 			RemovedAt:          account.RemovedAt,
 		}, nil
 	}
 
 	// Get account as domain object for config access (enabled regions, etc.)
-	accountDomain, err := cloudintegrationtypes.NewAccountFromStorable(account)
+	domainAccount, err := cloudintegrationtypes.NewAccountFromStorable(account)
 	if err != nil {
 		return nil, err
 	}
@@ -213,7 +210,7 @@ func (module *module) AgentCheckIn(ctx context.Context, orgID valuer.UUID, provi
 	}
 
 	// Delegate integration config building entirely to the provider module
-	integrationConfig, err := cloudProvider.BuildIntegrationConfig(ctx, accountDomain, storedServices)
+	integrationConfig, err := cloudProvider.BuildIntegrationConfig(ctx, domainAccount, storedServices)
 	if err != nil {
 		return nil, err
 	}
@@ -267,11 +264,6 @@ func (module *module) ListServicesMetadata(ctx context.Context, orgID valuer.UUI
 
 	enabledServiceIDs := map[string]bool{}
 	if integrationID != nil {
-		_, err := module.store.GetAccountByID(ctx, orgID, *integrationID, provider)
-		if err != nil {
-			return nil, err
-		}
-
 		storedServices, err := module.store.ListServices(ctx, *integrationID)
 		if err != nil {
 			return nil, err
@@ -316,11 +308,6 @@ func (module *module) GetService(ctx context.Context, orgID valuer.UUID, integra
 	var integrationService *cloudintegrationtypes.CloudIntegrationService
 
 	if integrationID != nil {
-		_, err := module.store.GetAccountByID(ctx, orgID, *integrationID, provider)
-		if err != nil {
-			return nil, err
-		}
-
 		storedService, err := module.store.GetServiceByServiceID(ctx, *integrationID, serviceID)
 		if err != nil && !errors.Ast(err, errors.TypeNotFound) {
 			return nil, err
@@ -388,7 +375,6 @@ func (module *module) UpdateService(ctx context.Context, orgID valuer.UUID, inte
 	return module.store.UpdateService(ctx, storableService)
 }
 
-// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) GetDashboardByID(ctx context.Context, orgID valuer.UUID, id string) (*dashboardtypes.Dashboard, error) {
 	_, err := module.licensing.GetActive(ctx, orgID)
 	if err != nil {
@@ -476,7 +462,6 @@ func (module *module) getOrCreateAPIKey(ctx context.Context, orgID valuer.UUID, 
 	return factorAPIKey.Key, nil
 }
 
-// TODO: use the function in dashboard APIs during removal of older cloud integration code.
 func (module *module) listDashboards(ctx context.Context, orgID valuer.UUID) ([]*dashboardtypes.Dashboard, error) {
 	var allDashboards []*dashboardtypes.Dashboard
 

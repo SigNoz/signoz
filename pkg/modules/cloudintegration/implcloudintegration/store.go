@@ -34,6 +34,25 @@ func (store *store) GetAccountByID(ctx context.Context, orgID, id valuer.UUID, p
 	return account, nil
 }
 
+func (store *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, providerAccountID string) (*cloudintegrationtypes.StorableCloudIntegration, error) {
+	account := new(cloudintegrationtypes.StorableCloudIntegration)
+	err := store.
+		store.
+		BunDBCtx(ctx).
+		NewSelect().
+		Model(account).
+		Where("org_id = ?", orgID).
+		Where("provider = ?", provider).
+		Where("account_id = ?", providerAccountID).
+		Where("last_agent_report IS NOT NULL").
+		Where("removed_at IS NULL").
+		Scan(ctx)
+	if err != nil {
+		return nil, store.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "connected account with provider account id %s not found", providerAccountID)
+	}
+	return account, nil
+}
+
 func (store *store) ListConnectedAccounts(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType) ([]*cloudintegrationtypes.StorableCloudIntegration, error) {
 	var accounts []*cloudintegrationtypes.StorableCloudIntegration
 	err := store.
@@ -94,25 +113,6 @@ func (store *store) RemoveAccount(ctx context.Context, orgID, id valuer.UUID, pr
 		Where("provider = ?", provider).
 		Exec(ctx)
 	return err
-}
-
-func (store *store) GetConnectedAccount(ctx context.Context, orgID valuer.UUID, provider cloudintegrationtypes.CloudProviderType, providerAccountID string) (*cloudintegrationtypes.StorableCloudIntegration, error) {
-	account := new(cloudintegrationtypes.StorableCloudIntegration)
-	err := store.
-		store.
-		BunDBCtx(ctx).
-		NewSelect().
-		Model(account).
-		Where("org_id = ?", orgID).
-		Where("provider = ?", provider).
-		Where("account_id = ?", providerAccountID).
-		Where("last_agent_report IS NOT NULL").
-		Where("removed_at IS NULL").
-		Scan(ctx)
-	if err != nil {
-		return nil, store.store.WrapNotFoundErrf(err, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "connected account with provider account id %s not found", providerAccountID)
-	}
-	return account, nil
 }
 
 func (store *store) GetServiceByServiceID(ctx context.Context, cloudIntegrationID valuer.UUID, serviceID cloudintegrationtypes.ServiceID) (*cloudintegrationtypes.StorableCloudIntegrationService, error) {

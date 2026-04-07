@@ -364,3 +364,10 @@ serviceaccount:
   analytics:
     # toggle service account analytics
     enabled: true
+
+##################### Cloud Integration #####################
+cloudintegration:
+  # cloud integration agent configuration
+  agent:
+    # The version of the cloud integration agent.
+    version: v0.0.8

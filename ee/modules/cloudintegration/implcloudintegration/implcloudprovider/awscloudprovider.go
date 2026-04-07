@@ -111,7 +111,8 @@ func (provider *awscloudprovider) BuildIntegrationConfig(
 		}
 	}
 
-	awsTelemetry := &cloudintegrationtypes.AWSCollectionStrategy{}
+	awsTelemetry := new(cloudintegrationtypes.AWSCollectionStrategy)
+
 	if len(compiledMetrics.StreamFilters) > 0 {
 		awsTelemetry.Metrics = compiledMetrics
 	}

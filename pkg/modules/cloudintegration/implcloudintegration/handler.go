@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/http/binding"
 	"github.com/SigNoz/signoz/pkg/http/render"
 	"github.com/SigNoz/signoz/pkg/modules/cloudintegration"
@@ -287,7 +288,23 @@ func (handler *handler) ListServicesMetadata(rw http.ResponseWriter, r *http.Req
 		integrationID = &id
 	}
 
-	services, err := handler.module.ListServicesMetadata(ctx, valuer.MustNewUUID(claims.OrgID), provider, integrationID)
+	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	// check if integration account exists and is not removed.
+	if integrationID != nil {
+		account, err := handler.module.GetAccount(ctx, orgID, *integrationID, provider)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		if account.IsRemoved() {
+			render.Error(rw, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration account is removed"))
+			return
+		}
+	}
+
+	services, err := handler.module.ListServicesMetadata(ctx, orgID, provider, integrationID)
 	if err != nil {
 		render.Error(rw, err)
 		return
@@ -330,6 +347,20 @@ func (handler *handler) GetService(rw http.ResponseWriter, r *http.Request) {
 			return
 		}
 		integrationID = &id
+	}
+
+	// check if integration account exists and is not removed.
+	if integrationID != nil {
+		account, err := handler.module.GetAccount(ctx, valuer.MustNewUUID(claims.OrgID), *integrationID, provider)
+		if err != nil {
+			render.Error(rw, err)
+			return
+		}
+
+		if account.IsRemoved() {
+			render.Error(rw, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration account is removed"))
+			return
+		}
 	}
 
 	svc, err := handler.module.GetService(ctx, valuer.MustNewUUID(claims.OrgID), integrationID, serviceID, provider)
@@ -383,6 +414,18 @@ func (handler *handler) UpdateService(rw http.ResponseWriter, r *http.Request) {
 	}
 
 	orgID := valuer.MustNewUUID(claims.OrgID)
+
+	// check if integration account exists and is not removed.
+	account, err := handler.module.GetAccount(ctx, orgID, cloudIntegrationID, provider)
+	if err != nil {
+		render.Error(rw, err)
+		return
+	}
+
+	if account.IsRemoved() {
+		render.Error(rw, errors.New(errors.TypeNotFound, cloudintegrationtypes.ErrCodeCloudIntegrationNotFound, "cloud integration account is removed"))
+		return
+	}
 
 	svc, err := handler.module.GetService(ctx, orgID, &cloudIntegrationID, serviceID, provider)
 	if err != nil {

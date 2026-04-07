@@ -142,6 +142,16 @@ func NewStorableCloudIntegrationService(svc *CloudIntegrationService, configJSON
 	}
 }
 
+func (account *StorableCloudIntegration) Update(providerAccountID *string, agentReport *AgentReport) {
+	account.AccountID = providerAccountID
+	if agentReport != nil {
+		account.LastAgentReport = &StorableAgentReport{
+			TimestampMillis: agentReport.TimestampMillis,
+			Data:            agentReport.Data,
+		}
+	}
+}
+
 // following StorableServiceConfig related functions are helper functions to convert between JSON string and ServiceConfig domain struct.
 func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, serviceConfig *ServiceConfig, supportedSignals *SupportedSignals) *StorableServiceConfig {
 	switch provider {
@@ -170,20 +180,6 @@ func newStorableServiceConfig(provider CloudProviderType, serviceID ServiceID, s
 	}
 }
 
-func (config *StorableServiceConfig) toJSON(provider CloudProviderType) ([]byte, error) {
-	switch provider {
-	case CloudProviderTypeAWS:
-		jsonBytes, err := json.Marshal(config.AWS)
-		if err != nil {
-			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize AWS service config to JSON")
-		}
-
-		return jsonBytes, nil
-	default:
-		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
-	}
-}
-
 func newStorableServiceConfigFromJSON(provider CloudProviderType, jsonStr string) (*StorableServiceConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
@@ -193,6 +189,20 @@ func newStorableServiceConfigFromJSON(provider CloudProviderType, jsonStr string
 			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't parse AWS service config JSON")
 		}
 		return &StorableServiceConfig{AWS: awsConfig}, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
+
+func (config *StorableServiceConfig) toJSON(provider CloudProviderType) ([]byte, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		jsonBytes, err := json.Marshal(config.AWS)
+		if err != nil {
+			return nil, errors.WrapInternalf(err, errors.CodeInternal, "couldn't serialize AWS service config to JSON")
+		}
+
+		return jsonBytes, nil
 	default:
 		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}

@@ -65,6 +65,8 @@ func (s *definitionStore) List(ctx context.Context, provider citypes.CloudProvid
 	return result, nil
 }
 
+// following are helper functions for reading and hydrating service definitions,
+// not keeping this in types as this is an implementation detail of the definition store.
 func readServiceDefinition(svcDir string) (*citypes.ServiceDefinition, error) {
 	integrationJSONPath := path.Join(svcDir, "integration.json")
 	raw, err := definitionFiles.ReadFile(integrationJSONPath)

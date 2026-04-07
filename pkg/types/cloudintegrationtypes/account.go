@@ -116,6 +116,10 @@ func (account *Account) Update(config *AccountConfig) error {
 	return nil
 }
 
+func (account *Account) IsRemoved() bool {
+	return account.RemovedAt != nil
+}
+
 func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*AccountConfig, error) {
 	switch provider {
 	case CloudProviderTypeAWS:
@@ -153,6 +157,13 @@ func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact
 	}
 
 	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+}
+
+func NewAgentReport(data map[string]any) *AgentReport {
+	return &AgentReport{
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            data,
+	}
 }
 
 // ToJSON return JSON bytes for the provider's config

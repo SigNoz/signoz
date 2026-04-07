@@ -333,3 +333,113 @@ def test_list_services_unsupported_provider(
     assert (
         response.status_code == HTTPStatus.BAD_REQUEST
     ), f"Expected 400, got {response.status_code}"
+
+
+def test_list_services_account_removed(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """List services with a cloud_integration_id for a deleted account returns 404."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    delete_response = requests.delete(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert (
+        delete_response.status_code == HTTPStatus.NO_CONTENT
+    ), f"Expected 204 on delete, got {delete_response.status_code}"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"Expected 404, got {response.status_code}"
+
+
+def test_get_service_details_account_removed(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """Get service details with a cloud_integration_id for a deleted account returns 404."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    delete_response = requests.delete(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert (
+        delete_response.status_code == HTTPStatus.NO_CONTENT
+    ), f"Expected 204 on delete, got {delete_response.status_code}"
+
+    response = requests.get(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/services/{SERVICE_ID}"
+            f"?cloud_integration_id={account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"Expected 404, got {response.status_code}"
+
+
+def test_update_service_account_removed(
+    signoz: types.SigNoz,
+    create_user_admin: types.Operation,  # pylint: disable=unused-argument
+    get_token: Callable[[str, str], str],
+    create_cloud_integration_account: Callable,
+) -> None:
+    """PUT service config for a deleted account returns 404."""
+    admin_token = get_token(USER_ADMIN_EMAIL, USER_ADMIN_PASSWORD)
+
+    account = create_cloud_integration_account(admin_token, CLOUD_PROVIDER)
+    account_id = account["id"]
+
+    delete_response = requests.delete(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        timeout=10,
+    )
+    assert (
+        delete_response.status_code == HTTPStatus.NO_CONTENT
+    ), f"Expected 204 on delete, got {delete_response.status_code}"
+
+    response = requests.put(
+        signoz.self.host_configs["8080"].get(
+            f"/api/v1/cloud_integrations/{CLOUD_PROVIDER}/accounts/{account_id}/services/{SERVICE_ID}"
+        ),
+        headers={"Authorization": f"Bearer {admin_token}"},
+        json={"config": {"aws": {"metrics": {"enabled": True}}}},
+        timeout=10,
+    )
+
+    assert (
+        response.status_code == HTTPStatus.NOT_FOUND
+    ), f"Expected 404, got {response.status_code}"

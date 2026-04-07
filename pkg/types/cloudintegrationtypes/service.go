@@ -57,12 +57,6 @@ type UpdatableService struct {
 	Config *ServiceConfig `json:"config" required:"true" nullable:"false"`
 }
 
-// Update sets the service config.
-func (service *CloudIntegrationService) Update(config *ServiceConfig) {
-	service.Config = config
-	service.UpdatedAt = time.Now()
-}
-
 type ServiceDefinition struct {
 	ServiceDefinitionMetadata
 	Overview         string              `json:"overview" required:"true"` // markdown
@@ -232,6 +226,41 @@ func NewService(def ServiceDefinition, storableService *CloudIntegrationService)
 	}
 }
 
+func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*ServiceConfig, error) {
+	storableServiceConfig, err := newStorableServiceConfigFromJSON(provider, jsonString)
+	if err != nil {
+		return nil, err
+	}
+
+	switch provider {
+	case CloudProviderTypeAWS:
+		awsServiceConfig := new(AWSServiceConfig)
+
+		if storableServiceConfig.AWS.Logs != nil {
+			awsServiceConfig.Logs = &AWSServiceLogsConfig{
+				Enabled:   storableServiceConfig.AWS.Logs.Enabled,
+				S3Buckets: storableServiceConfig.AWS.Logs.S3Buckets,
+			}
+		}
+
+		if storableServiceConfig.AWS.Metrics != nil {
+			awsServiceConfig.Metrics = &AWSServiceMetricsConfig{
+				Enabled: storableServiceConfig.AWS.Metrics.Enabled,
+			}
+		}
+
+		return &ServiceConfig{AWS: awsServiceConfig}, nil
+	default:
+		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
+
+// Update sets the service config.
+func (service *CloudIntegrationService) Update(config *ServiceConfig) {
+	service.Config = config
+	service.UpdatedAt = time.Now()
+}
+
 // IsServiceEnabled returns true if the service has at least one signal (logs or metrics) enabled
 // for the given cloud provider.
 func IsServiceEnabled(provider CloudProviderType, config *ServiceConfig) bool {
@@ -263,35 +292,6 @@ func IsLogsEnabled(provider CloudProviderType, config *ServiceConfig) bool {
 		return config.AWS.Logs != nil && config.AWS.Logs.Enabled
 	default:
 		return false
-	}
-}
-
-func NewServiceConfigFromJSON(provider CloudProviderType, jsonString string) (*ServiceConfig, error) {
-	storableServiceConfig, err := newStorableServiceConfigFromJSON(provider, jsonString)
-	if err != nil {
-		return nil, err
-	}
-
-	switch provider {
-	case CloudProviderTypeAWS:
-		awsServiceConfig := new(AWSServiceConfig)
-
-		if storableServiceConfig.AWS.Logs != nil {
-			awsServiceConfig.Logs = &AWSServiceLogsConfig{
-				Enabled:   storableServiceConfig.AWS.Logs.Enabled,
-				S3Buckets: storableServiceConfig.AWS.Logs.S3Buckets,
-			}
-		}
-
-		if storableServiceConfig.AWS.Metrics != nil {
-			awsServiceConfig.Metrics = &AWSServiceMetricsConfig{
-				Enabled: storableServiceConfig.AWS.Metrics.Enabled,
-			}
-		}
-
-		return &ServiceConfig{AWS: awsServiceConfig}, nil
-	default:
-		return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
 	}
 }
 

@@ -60,14 +60,3 @@ func GetCloudProviderEmail(provider CloudProviderType) (valuer.Email, error) {
 func NewIngestionKeyName(provider CloudProviderType) string {
 	return fmt.Sprintf("%s-integration", provider.StringValue())
 }
-
-func NewIntegrationUserDisplayName(provider CloudProviderType) string {
-	return fmt.Sprintf("%s-integration", provider.StringValue())
-}
-
-// NewAPIKeyName returns API key name for cloud integration provider
-// TODO: figure out way to migrate API keys to have similar naming convention as ingestion key
-// ie. "{cloud-provider}-integration", and then remove this function.
-func NewAPIKeyName(provider CloudProviderType) string {
-	return fmt.Sprintf("%s integration", provider.StringValue())
-}
