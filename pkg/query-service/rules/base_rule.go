@@ -380,7 +380,7 @@ func (r *BaseRule) ForEachActiveAlert(f func(*ruletypes.Alert)) {
 	}
 }
 
-func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, prevState, currentState ruletypes.AlertState, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
+func (r *BaseRule) RecordRuleStateHistory(ctx context.Context, itemsToAdd []rulestatehistorytypes.RuleStateHistory) error {
 	if r.ruleStateHistoryModule == nil {
 		return nil
 	}

@@ -350,7 +350,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		itemsToAdd[idx] = item
 	}
 
-	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
+	_ = r.RecordRuleStateHistory(ctx, itemsToAdd)
 
 	return len(r.Active), nil
 }
