@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import type { ServiceaccounttypesGettableFactorAPIKeyDTO } from 'api/generated/services/sigNoz.schemas';
 import { rest, server } from 'mocks-server/server';
 import { NuqsTestingAdapter } from 'nuqs/adapters/testing';

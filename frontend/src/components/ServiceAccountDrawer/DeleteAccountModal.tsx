@@ -2,7 +2,7 @@ import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DialogFooter, DialogWrapper } from '@signozhq/dialog';
 import { Trash2, X } from '@signozhq/icons';
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
 	getGetServiceAccountQueryKey,

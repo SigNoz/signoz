@@ -1,4 +1,4 @@
-import { toast } from '@signozhq/sonner';
+import { toast } from '@signozhq/ui';
 import inviteUsers from 'api/v1/invite/bulk/create';
 import sendInvite from 'api/v1/invite/create';
 import { StatusCodes } from 'http-status-codes';
