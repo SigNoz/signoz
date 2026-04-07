@@ -38,16 +38,16 @@ export function getTooltipBaseValue({
 	// When series are hidden, we must use the next *visible* series, not index+1,
 	// since hidden series keep raw values and would produce negative/wrong results.
 	if (isStackedBarChart && baseValue !== null && series) {
-		let nextVisibleIdx = -1;
-		for (let j = index + 1; j < series.length; j++) {
-			if (series[j]?.show) {
-				nextVisibleIdx = j;
+		let nextVisibleSeriesIdx = -1;
+		for (let seriesIdx = index + 1; seriesIdx < series.length; seriesIdx++) {
+			if (series[seriesIdx]?.show) {
+				nextVisibleSeriesIdx = seriesIdx;
 				break;
 			}
 		}
-		if (nextVisibleIdx >= 1) {
-			const nextValue = data[nextVisibleIdx][dataIndex] ?? 0;
-			baseValue = baseValue - nextValue;
+		if (nextVisibleSeriesIdx >= 1) {
+			const nextStackedValue = data[nextVisibleSeriesIdx][dataIndex] ?? 0;
+			baseValue = baseValue - nextStackedValue;
 		}
 	}
 	return baseValue;
@@ -74,13 +74,13 @@ export function buildTooltipContent({
 }): TooltipContentItem[] {
 	const items: TooltipContentItem[] = [];
 
-	for (let index = 1; index < series.length; index += 1) {
-		const s = series[index];
-		if (!s?.show) {
+	for (let seriesIndex = 1; seriesIndex < series.length; seriesIndex += 1) {
+		const seriesItem = series[seriesIndex];
+		if (!seriesItem?.show) {
 			continue;
 		}
 
-		const dataIndex = dataIndexes[index];
+		const dataIndex = dataIndexes[seriesIndex];
 		// Skip series with no data at the current cursor position
 		if (dataIndex === null) {
 			continue;
@@ -88,26 +88,22 @@ export function buildTooltipContent({
 
 		const baseValue = getTooltipBaseValue({
 			data,
-			index,
+			index: seriesIndex,
 			dataIndex,
 			isStackedBarChart,
 			series,
 		});
 
-		const isActive = index === activeSeriesIndex;
-
 		if (Number.isFinite(baseValue) && baseValue !== null) {
 			items.push({
-				label: String(s.label ?? ''),
+				label: String(seriesItem.label ?? ''),
 				value: baseValue,
 				tooltipValue: getToolTipValue(baseValue, yAxisUnit, decimalPrecision),
-				color: resolveSeriesColor(s.stroke, uPlotInstance, index),
-				isActive,
+				color: resolveSeriesColor(seriesItem.stroke, uPlotInstance, seriesIndex),
+				isActive: seriesIndex === activeSeriesIndex,
 			});
 		}
 	}
 
-	// Return items in series-index order (stable) — never re-sort by active state,
-	// so the list position of each series stays fixed as the user moves the cursor.
-	return items;
+	return items.sort((a, b) => b.value - a.value);
 }
