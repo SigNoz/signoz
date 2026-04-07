@@ -419,12 +419,10 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 	}
 	nonExistentMetrics := []string{}
 	var dormantMetricsWarningMsg string
-	// question: should we maintain a list of all internal metrics, cuz what if a user defines a metric with these prefixes?
-	isInternalMetric := func(n string) bool { return strings.HasPrefix(n, "signoz.") || strings.HasPrefix(n, "signoz_") }
 	if len(missingMetrics) > 0 {
 		lastSeenInfo, _ := q.metadataStore.FetchLastSeenInfoMulti(ctx, missingMetrics...)
 		for _, missingMetricName := range missingMetrics {
-			if ts, ok := lastSeenInfo[missingMetricName]; (ok && ts > 0) || isInternalMetric(missingMetricName) {
+			if ts, ok := lastSeenInfo[missingMetricName]; ok && ts > 0 {
 				continue
 			}
 			nonExistentMetrics = append(nonExistentMetrics, missingMetricName)
@@ -439,7 +437,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 				ago := humanize.RelTime(time.UnixMilli(ts), time.Now(), "ago", "from now")
 				return fmt.Sprintf("%s (last seen %s)", name, ago)
 			}
-			return name // this case will come only for internal metrics
+			return name // this case won't come cuz lastSeenStr is never called for metrics in nonExistentMetrics
 		}
 		if len(missingMetrics) == 1 {
 			dormantMetricsWarningMsg = fmt.Sprintf("no data found for the metric %s in the query time range", lastSeenStr(missingMetrics[0]))
@@ -452,7 +450,7 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 		}
 	}
 	preseededResults := make(map[string]any)
-	for _, name := range missingMetricQueries {
+	for _, name := range missingMetricQueries { // at this point missing metrics will not have any non existent metrics, only normal ones
 		switch req.RequestType {
 		case qbtypes.RequestTypeTimeSeries:
 			preseededResults[name] = &qbtypes.TimeSeriesData{QueryName: name}
