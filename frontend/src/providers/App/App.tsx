@@ -12,7 +12,6 @@ import {
 import { useQuery } from 'react-query';
 import getLocalStorageApi from 'api/browser/localstorage/get';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import { useGetMyOrganization } from 'api/generated/services/orgs';
 import { useGetMyUser } from 'api/generated/services/users';
 import listOrgPreferences from 'api/v1/org/preferences/list';
 import listUserPreferences from 'api/v1/user/preferences/list';
@@ -86,14 +85,6 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 	});
 
 	const {
-		data: orgData,
-		isFetching: isFetchingOrgData,
-		error: orgFetchDataError,
-	} = useGetMyOrganization({
-		query: { enabled: isLoggedIn },
-	});
-
-	const {
 		permissions: permissionsResult,
 		isFetching: isFetchingPermissions,
 		error: errorOnPermissions,
@@ -102,10 +93,8 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 		enabled: isLoggedIn,
 	});
 
-	const isFetchingUser =
-		isFetchingUserData || isFetchingOrgData || isFetchingPermissions;
-	const userFetchError =
-		userFetchDataError || orgFetchDataError || errorOnPermissions;
+	const isFetchingUser = isFetchingUserData || isFetchingPermissions;
+	const userFetchError = userFetchDataError || errorOnPermissions;
 
 	const userRole = useMemo(() => {
 		if (permissionsResult?.[IsAdminPermission]?.isGranted) {
@@ -145,39 +134,40 @@ export function AppProvider({ children }: PropsWithChildren): JSX.Element {
 				createdAt: toISOString(userData.data.createdAt) ?? prev.createdAt,
 				updatedAt: toISOString(userData.data.updatedAt) ?? prev.updatedAt,
 			}));
-		}
-	}, [userData, isFetchingUserData]);
 
-	useEffect(() => {
-		if (!isFetchingOrgData && orgData?.data) {
-			const { id: orgId, displayName: orgDisplayName } = orgData.data;
-			setOrg((prev) => {
+			// todo: we need to update the org name as well, we should have the [admin only role restriction on the get org api call] - BE input needed
+			setOrg((prev): any => {
 				if (!prev) {
-					return [{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' }];
+					return [
+						{
+							createdAt: 0,
+							id: userData.data.orgId,
+						},
+					];
 				}
-				const orgIndex = prev.findIndex((e) => e.id === orgId);
+				const orgIndex = prev.findIndex((e) => e.id === userData.data.orgId);
 
 				if (orgIndex === -1) {
 					return [
 						...prev,
-						{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' },
+						{
+							createdAt: 0,
+							id: userData.data.orgId,
+						},
 					];
 				}
 
-				const updatedOrg: Organization[] = [
+				return [
 					...prev.slice(0, orgIndex),
-					{ createdAt: 0, id: orgId, displayName: orgDisplayName ?? '' },
+					{
+						createdAt: 0,
+						id: userData.data.orgId,
+					},
 					...prev.slice(orgIndex + 1),
 				];
-				return updatedOrg;
 			});
-
-			setDefaultUser((prev) => ({
-				...prev,
-				organization: orgDisplayName ?? prev.organization,
-			}));
 		}
-	}, [orgData, isFetchingOrgData]);
+	}, [userData, isFetchingUserData]);
 
 	// fetcher for licenses v3
 	const {
