@@ -21,6 +21,7 @@ import (
 
 const (
 	batchCheckItemErrorMessage = "::AUTHZ-CHECK-ERROR::"
+	writeErrorMessage          = "::AUTHZ-WRITE-ERROR::"
 )
 
 var (
@@ -247,8 +248,12 @@ func (server *Server) Write(ctx context.Context, additions []*openfgav1.TupleKey
 			}
 		}(),
 	})
+	if err != nil {
+		server.settings.Logger().ErrorContext(ctx, writeErrorMessage, errors.Attr(err))
+		return err
+	}
 
-	return err
+	return nil
 }
 
 func (server *Server) ListObjects(ctx context.Context, subject string, relation authtypes.Relation, typeable authtypes.Typeable) ([]*authtypes.Object, error) {
