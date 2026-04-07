@@ -1,4 +1,4 @@
-import {
+import React, {
 	MouseEvent,
 	useCallback,
 	useEffect,
@@ -46,6 +46,8 @@ import {
 	ChevronDown,
 	ChevronsDown,
 	ChevronUp,
+	ChevronLeft,
+	ChevronRight,
 	Cog,
 	Ellipsis,
 	GitCommitVertical,
@@ -120,8 +122,16 @@ function SortableFilter({ item }: { item: SidebarItem }): JSX.Element {
 	);
 }
 
+interface SideNavProps {
+	isPinned: boolean;
+	handleTogglePinned: () => void;
+}
+
 // eslint-disable-next-line sonarjs/cognitive-complexity
-function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
+function SideNav({
+	isPinned,
+	handleTogglePinned,
+}: SideNavProps): React.JSX.Element {
 	const { openCmdK } = useCmdK();
 	const { pathname, search } = useLocation();
 	const { currentVersion, latestVersion, isCurrentVersionError } = useSelector<
@@ -1201,6 +1211,14 @@ function SideNav({ isPinned }: { isPinned: boolean }): JSX.Element {
 										</div>
 									</div>
 								</Dropdown>
+							</div>
+
+							<div
+								className="collapse-expand-handlers"
+								onClick={handleTogglePinned}
+								data-testid="sidebar-resize-button"
+							>
+								{isPinned ? <ChevronLeft size={16} /> : <ChevronRight size={16} />}
 							</div>
 						</div>
 					</div>

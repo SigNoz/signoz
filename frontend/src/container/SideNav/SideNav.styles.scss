@@ -471,9 +471,23 @@
 					right: -9px;
 					cursor: pointer;
 
-					display: none;
+					display: flex;
+					align-items: center;
+					justify-content: center;
 
-					transition: display 0.3s;
+					width: 18px;
+					height: 18px;
+					border-radius: 50%;
+					background: var(--bg-slate-400, #1d212d);
+					border: 1px solid var(--bg-slate-300, #242834);
+					z-index: 10;
+
+					transition: all 0.2s ease;
+
+					&:hover {
+						background: var(--bg-slate-300, #242834);
+						transform: scale(1.1);
+					}
 
 					svg {
 						fill: var(--bg-vanilla-400);
