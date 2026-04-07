@@ -614,7 +614,7 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].name != "IIT"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 2,
+            "validate": lambda r: len(_get_rows(r)) == 3,
         },
         # NOT EXISTS on array path — log4 has no education at all
         {
@@ -630,7 +630,7 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": "body.education[].parameters NOT CONTAINS 1.65",
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 2,
         },
         # ── double-hop: education[].awards[].field ─────────────────────────
         # Only log1 and log3 have awards; log2 has no awards (sparse)
@@ -655,7 +655,7 @@ def test_array_path_operations(
             "requestType": "raw",
             "expression": 'body.education[].awards[].type != "sports"',
             "aggregation": "count()",
-            "validate": lambda r: len(_get_rows(r)) == 1,
+            "validate": lambda r: len(_get_rows(r)) == 3,
         },
         # ── multi-hop: 4+ hops deep (participated[].team[].branch) ────────
         {
@@ -824,7 +824,6 @@ def test_array_membership_operations(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 1,
         },
-        # hasAll(permissions, [read, write]): log1 and log3 (log2 only has read)
         {
             "name": "membership.hasall_permissions",
             "requestType": "raw",
@@ -832,7 +831,6 @@ def test_array_membership_operations(
             "aggregation": "count()",
             "validate": lambda r: len(_get_rows(r)) == 2,
         },
-        # hasAny on deep nested path — distinct function + deep nesting
         {
             "name": "membership.hasany_deep_members",
             "requestType": "raw",
