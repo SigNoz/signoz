@@ -8,7 +8,7 @@
 	line-height: 18px;
 	letter-spacing: -0.005em;
 	text-align: left;
-	min-height: 500px;
+	min-height: 0;
 
 	.logs-list-table-view-container {
 		.data-table-container {
@@ -24,11 +24,11 @@
 						color: white !important;
 
 						.cursor-col-resize {
-							width: 3px !important;
+							width: 24px !important;
 							cursor: col-resize !important;
-							opacity: 0.5 !important;
-							background-color: var(--bg-ink-500) !important;
-							border: 1px solid var(--bg-ink-500) !important;
+							opacity: 1 !important;
+							background-color: transparent !important;
+							border: none !important;
 
 							&:hover {
 								opacity: 1 !important;
@@ -85,7 +85,7 @@
 			}
 
 			thead {
-				z-index: 0 !important;
+				z-index: 2 !important;
 			}
 
 			.log-state-indicator {

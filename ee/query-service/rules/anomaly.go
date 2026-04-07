@@ -5,7 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"log/slog"
-	"strings"
 	"sync"
 	"time"
 
@@ -64,12 +63,12 @@ func NewAnomalyRule(
 		BaseRule: baseRule,
 	}
 
-	switch strings.ToLower(p.RuleCondition.Seasonality) {
-	case "hourly":
+	switch p.RuleCondition.Seasonality {
+	case ruletypes.SeasonalityHourly:
 		t.seasonality = anomaly.SeasonalityHourly
-	case "daily":
+	case ruletypes.SeasonalityDaily:
 		t.seasonality = anomaly.SeasonalityDaily
-	case "weekly":
+	case ruletypes.SeasonalityWeekly:
 		t.seasonality = anomaly.SeasonalityWeekly
 	default:
 		t.seasonality = anomaly.SeasonalityDaily

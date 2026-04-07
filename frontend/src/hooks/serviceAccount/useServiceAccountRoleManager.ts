@@ -3,10 +3,15 @@ import { useQueryClient } from 'react-query';
 import {
 	getGetServiceAccountRolesQueryKey,
 	useCreateServiceAccountRole,
-	useDeleteServiceAccountRole,
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { retryOn429 } from 'utils/errorUtils';
+
+const enum PromiseStatus {
+	Fulfilled = 'fulfilled',
+	Rejected = 'rejected',
+}
 
 export interface RoleUpdateFailure {
 	roleName: string;
@@ -35,8 +40,9 @@ export function useServiceAccountRoleManager(
 	]);
 
 	// the retry for these mutations is safe due to being idempotent on backend
-	const { mutateAsync: createRole } = useCreateServiceAccountRole();
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole();
+	const { mutateAsync: createRole } = useCreateServiceAccountRole({
+		mutation: { retry: retryOn429 },
+	});
 
 	const invalidateRoles = useCallback(
 		() =>
@@ -62,20 +68,12 @@ export function useServiceAccountRoleManager(
 				(r) => r.id && desiredRoleIds.has(r.id) && !currentRoleIds.has(r.id),
 			);
 
-			const removedRoles = currentRoles.filter(
-				(r) => r.id && !desiredRoleIds.has(r.id),
-			);
-
+			// TODO: re-enable deletes once BE for this is streamlined
 			const allOperations = [
 				...addedRoles.map((role) => ({
 					role,
 					run: (): ReturnType<typeof createRole> =>
 						createRole({ pathParams: { id: accountId }, data: { id: role.id } }),
-				})),
-				...removedRoles.map((role) => ({
-					role,
-					run: (): ReturnType<typeof deleteRole> =>
-						deleteRole({ pathParams: { id: accountId, rid: role.id } }),
 				})),
 			];
 
@@ -83,11 +81,16 @@ export function useServiceAccountRoleManager(
 				allOperations.map((op) => op.run()),
 			);
 
-			await invalidateRoles();
+			const successCount = results.filter(
+				(r) => r.status === PromiseStatus.Fulfilled,
+			).length;
+			if (successCount > 0) {
+				await invalidateRoles();
+			}
 
 			const failures: RoleUpdateFailure[] = [];
 			results.forEach((result, index) => {
-				if (result.status === 'rejected') {
+				if (result.status === PromiseStatus.Rejected) {
 					const { role, run } = allOperations[index];
 					failures.push({
 						roleName: role.name ?? 'unknown',
@@ -102,7 +105,7 @@ export function useServiceAccountRoleManager(
 
 			return failures;
 		},
-		[accountId, currentRoles, createRole, deleteRole, invalidateRoles],
+		[accountId, currentRoles, createRole, invalidateRoles],
 	);
 
 	return {

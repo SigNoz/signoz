@@ -425,39 +425,6 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
-export interface AuthtypesStorableRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -475,25 +442,25 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt: Date;
 	/**
 	 * @type string
 	 */
 	id: string;
-	role?: AuthtypesStorableRoleDTO;
+	role: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
-	roleId?: string;
+	roleId: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt: Date;
 	/**
 	 * @type string
 	 */
-	userId?: string;
+	userId: string;
 }
 
 export interface AuthtypesUserWithRolesDTO {

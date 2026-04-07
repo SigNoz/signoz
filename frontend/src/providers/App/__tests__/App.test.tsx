@@ -2,7 +2,7 @@ import { ReactElement } from 'react';
 import { QueryClient, QueryClientProvider } from 'react-query';
 import { renderHook, waitFor } from '@testing-library/react';
 import setLocalStorageApi from 'api/browser/localstorage/set';
-import {
+import type {
 	AuthtypesGettableTransactionDTO,
 	AuthtypesTransactionDTO,
 } from 'api/generated/services/sigNoz.schemas';
@@ -15,6 +15,8 @@ import { USER_ROLES } from 'types/roles';
 import { AppProvider, useAppContext } from '../App';
 
 const AUTHZ_CHECK_URL = 'http://localhost/api/v1/authz/check';
+const MY_USER_URL = 'http://localhost/api/v2/users/me';
+const MY_ORG_URL = 'http://localhost/api/v2/orgs/me';
 
 jest.mock('constants/env', () => ({
 	ENVIRONMENT: { baseURL: 'http://localhost', wsURL: '' },
@@ -224,6 +226,90 @@ describe('AppProvider user.role from permissions', () => {
 				{ timeout: 2000 },
 			);
 		});
+	});
+});
+
+describe('AppProvider user and org data from v2 APIs', () => {
+	beforeEach(() => {
+		queryClient.clear();
+		setLocalStorageApi(LOCALSTORAGE.IS_LOGGED_IN, 'true');
+	});
+
+	it('populates user fields from GET /api/v2/users/me', async () => {
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({
+						data: {
+							id: 'u-123',
+							displayName: 'Test User',
+							email: 'test@signoz.io',
+							orgId: 'org-abc',
+							isRoot: false,
+							status: 'active',
+						},
+					}),
+				),
+			),
+			rest.get(MY_ORG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'org-abc', displayName: 'My Org' } }),
+				),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.user.id).toBe('u-123');
+				expect(result.current.user.displayName).toBe('Test User');
+				expect(result.current.user.email).toBe('test@signoz.io');
+				expect(result.current.user.orgId).toBe('org-abc');
+			},
+			{ timeout: 2000 },
+		);
+	});
+
+	it('sets isFetchingUser false once both user and org calls complete', async () => {
+		server.use(
+			rest.get(MY_USER_URL, (_, res, ctx) =>
+				res(ctx.status(200), ctx.json({ data: { id: 'u-1', email: 'a@b.com' } })),
+			),
+			rest.get(MY_ORG_URL, (_, res, ctx) =>
+				res(
+					ctx.status(200),
+					ctx.json({ data: { id: 'org-1', displayName: 'Org' } }),
+				),
+			),
+			rest.post(AUTHZ_CHECK_URL, async (req, res, ctx) => {
+				const payload = await req.json();
+				return res(
+					ctx.status(200),
+					ctx.json(authzMockResponse(payload, [false, false, false])),
+				);
+			}),
+		);
+
+		const wrapper = createWrapper();
+		const { result } = renderHook(() => useAppContext(), { wrapper });
+
+		await waitFor(
+			() => {
+				expect(result.current.isFetchingUser).toBe(false);
+			},
+			{ timeout: 2000 },
+		);
 	});
 });
 

@@ -193,6 +193,7 @@ uv run pytest --basetemp=./tmp/ -vv --reuse src/passwordauthn/01_register.py::te
 Tests can be configured using pytest options:
 
 - `--sqlstore-provider` - Choose database provider (default: postgres)
+- `--sqlite-mode` - SQLite journal mode: `delete` or `wal` (default: delete). Only relevant when `--sqlstore-provider=sqlite`.
 - `--postgres-version` - PostgreSQL version (default: 15)
 - `--clickhouse-version` - ClickHouse version (default: 25.5.6)
 - `--zookeeper-version` - Zookeeper version (default: 3.7.1)
@@ -201,7 +202,6 @@ Example:
 ```bash
 uv run pytest --basetemp=./tmp/ -vv --reuse --sqlstore-provider=postgres --postgres-version=14 src/auth/
 ```
-
 
 ## What should I remember?
 
@@ -213,3 +213,4 @@ uv run pytest --basetemp=./tmp/ -vv --reuse --sqlstore-provider=postgres --postg
 - **Use descriptive test names** that clearly indicate what is being tested
 - **Leverage fixtures** for common setup and authentication
 - **Test both success and failure scenarios** to ensure robust functionality
+- **`--sqlite-mode=wal` does not work on macOS.** The integration test environment runs SigNoz inside a Linux container with the SQLite database file mounted from the macOS host. WAL mode requires shared memory between connections, and connections crossing the VM boundary (macOS host ↔ Linux container) cannot share the WAL index, resulting in `SQLITE_IOERR_SHORT_READ`. WAL mode is tested in CI on Linux only.

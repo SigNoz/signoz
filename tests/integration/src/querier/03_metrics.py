@@ -12,10 +12,10 @@ from fixtures.querier import (
     assert_minutely_bucket_values,
     build_builder_query,
     find_named_result,
-    index_series_by_label,
-    make_query_request,
     get_all_warnings,
     get_error_message,
+    index_series_by_label,
+    make_query_request,
 )
 from fixtures.utils import get_testdata_file_path
 

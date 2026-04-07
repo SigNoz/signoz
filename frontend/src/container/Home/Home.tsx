@@ -264,20 +264,22 @@ export default function Home(): JSX.Element {
 
 	return (
 		<div className="home-container">
-			<PersistedAnnouncementBanner
-				type="info"
-				storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
-				action={{
-					label: 'Go to Service Accounts',
-					onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
-				}}
-			>
-				<>
-					<strong>API keys</strong> have been deprecated in favour of{' '}
-					<strong>Service accounts</strong>. The existing API Keys have been migrated
-					to service accounts.
-				</>
-			</PersistedAnnouncementBanner>
+			{user?.role === USER_ROLES.ADMIN && (
+				<PersistedAnnouncementBanner
+					type="info"
+					storageKey={LOCALSTORAGE.DISMISSED_API_KEYS_DEPRECATION_BANNER}
+					action={{
+						label: 'Go to Service Accounts',
+						onClick: (): void => history.push(ROUTES.SERVICE_ACCOUNTS_SETTINGS),
+					}}
+				>
+					<>
+						<strong>API keys</strong> have been deprecated in favour of{' '}
+						<strong>Service accounts</strong>. The existing API Keys have been
+						migrated to service accounts.
+					</>
+				</PersistedAnnouncementBanner>
+			)}
 
 			<div className="sticky-header">
 				<Header

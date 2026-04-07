@@ -383,6 +383,11 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return errors.New(errors.TypeForbidden, errors.CodeForbidden, "cannot self delete")
 	}
 
+	err = user.UpdateStatus(types.UserStatusDeleted)
+	if err != nil {
+		return err
+	}
+
 	userRoles, err := module.getter.GetRolesByUserID(ctx, user.ID)
 	if err != nil {
 		return err
@@ -406,6 +411,8 @@ func (module *setter) DeleteUser(ctx context.Context, orgID valuer.UUID, id stri
 		return err
 	}
 
+	traitsOrProperties := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Deleted", map[string]any{
 		"deleted_by": deletedBy,
 	})
@@ -568,8 +575,13 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 
 	roleNames := roleNamesFromUserRoles(userRoles)
 
+	isPendingInviteUser := user.Status == types.UserStatusPendingInvite
 	// since grant is idempotent, multiple calls won't cause issues in case of retries
-	if user.Status == types.UserStatusPendingInvite {
+	if isPendingInviteUser {
+		if err := user.UpdateStatus(types.UserStatusActive); err != nil {
+			return err
+		}
+
 		if err = module.authz.Grant(
 			ctx,
 			user.OrgID,
@@ -580,15 +592,14 @@ func (module *setter) UpdatePasswordByResetPasswordToken(ctx context.Context, to
 		}
 
 		traitsOrProperties := types.NewTraitsFromUser(user)
+		module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 		module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 	}
 
 	return module.store.RunInTx(ctx, func(ctx context.Context) error {
-		if user.Status == types.UserStatusPendingInvite {
-			if err := user.UpdateStatus(types.UserStatusActive); err != nil {
-				return err
-			}
-			if err := module.store.UpdateUser(ctx, user.OrgID, user); err != nil {
+		if isPendingInviteUser {
+			err := module.store.UpdateUser(ctx, user.OrgID, user)
+			if err != nil {
 				return err
 			}
 		}
@@ -817,6 +828,7 @@ func (module *setter) activatePendingUser(ctx context.Context, user *types.User,
 	}
 
 	traitsOrProperties := types.NewTraitsFromUser(user)
+	module.analytics.IdentifyUser(ctx, user.OrgID.String(), user.ID.String(), traitsOrProperties)
 	module.analytics.TrackUser(ctx, user.OrgID.String(), user.ID.String(), "User Activated", traitsOrProperties)
 
 	return nil
@@ -866,16 +878,17 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 	if err != nil {
 		return err
 	}
-	for _, userRole := range existingUserRoles {
-		if userRole.Role != nil && userRole.Role.Name == roleName {
-			return nil // role already assigned no-op
-		}
+
+	existingRoles := make([]string, len(existingUserRoles))
+	for idx, role := range existingUserRoles {
+		existingRoles[idx] = role.Role.Name
 	}
 
 	// grant via authz (idempotent)
-	if err := module.authz.Grant(
+	if err := module.authz.ModifyGrant(
 		ctx,
 		orgID,
+		existingRoles,
 		[]string{roleName},
 		authtypes.MustNewSubject(authtypes.TypeableUser, existingUser.ID.StringValue(), existingUser.OrgID, nil),
 	); err != nil {
@@ -884,7 +897,20 @@ func (module *setter) AddUserRole(ctx context.Context, orgID, userID valuer.UUID
 
 	// create user_role entry
 	userRoles := authtypes.NewUserRoles(userID, foundRoles)
-	if err := module.userRoleStore.CreateUserRoles(ctx, userRoles); err != nil {
+	err = module.store.RunInTx(ctx, func(ctx context.Context) error {
+		err = module.userRoleStore.DeleteUserRoles(ctx, existingUser.ID)
+		if err != nil {
+			return err
+		}
+
+		err := module.userRoleStore.CreateUserRoles(ctx, userRoles)
+		if err != nil {
+			return err
+		}
+
+		return nil
+	})
+	if err != nil {
 		return err
 	}
 
