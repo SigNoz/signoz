@@ -310,8 +310,7 @@ func (g *RuleTask) Eval(ctx context.Context, ts time.Time) {
 	defer func() {
 		if r := recover(); r != nil {
 			g.logger.ErrorContext(
-				ctx, "panic during threshold rule evaluation",
-				slog.Any("panic", r),
+				ctx, "panic during rule evaluation", slog.Any("panic", r),
 				slog.String("stack", string(debug.Stack())),
 			)
 		}
