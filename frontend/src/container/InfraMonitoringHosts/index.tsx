@@ -5,7 +5,7 @@ import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import ErrorBoundaryFallback from 'pages/ErrorBoundaryFallback/ErrorBoundaryFallback';
 import { DataSource } from 'types/common/queryBuilder';
 
-import HostsList from './HostsList';
+import Hosts from './Hosts';
 
 import './InfraMonitoring.styles.scss';
 
@@ -65,7 +65,7 @@ function InfraMonitoringHosts(): JSX.Element {
 		<Sentry.ErrorBoundary fallback={<ErrorBoundaryFallback />}>
 			<div className="infra-monitoring-container">
 				<div className="hosts-list-container">
-					<HostsList />
+					<Hosts />
 				</div>
 			</div>
 		</Sentry.ErrorBoundary>

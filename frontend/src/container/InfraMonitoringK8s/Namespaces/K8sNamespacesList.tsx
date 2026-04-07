@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sNamespacesList, K8sNamespacesData } from './api';
 import {
 	getNamespaceMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sNamespacesList({
 		<>
 			<K8sBaseList<K8sNamespacesData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.NAMESPACES}
+				entity={InfraMonitoringEntity.NAMESPACES}
 				tableColumnsDefinitions={k8sNamespacesColumns}
 				tableColumns={k8sNamespacesColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sNamespacesList({
 			/>
 
 			<K8sBaseDetails<K8sNamespacesData>
-				category={K8sCategory.NAMESPACES}
+				category={InfraMonitoringEntity.NAMESPACES}
 				eventCategory={InfraMonitoringEvents.Namespace}
 				getSelectedItemFilters={k8sNamespaceGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

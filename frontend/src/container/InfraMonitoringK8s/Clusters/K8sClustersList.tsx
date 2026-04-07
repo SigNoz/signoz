@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sClustersList, K8sClusterData } from './api';
 import {
 	clusterWidgetInfo,
@@ -89,7 +89,7 @@ function K8sClustersList({
 		<>
 			<K8sBaseList<K8sClusterData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.CLUSTERS}
+				entity={InfraMonitoringEntity.CLUSTERS}
 				tableColumnsDefinitions={k8sClustersColumns}
 				tableColumns={k8sClustersColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sClustersList({
 			/>
 
 			<K8sBaseDetails<K8sClusterData>
-				category={K8sCategory.CLUSTERS}
+				category={InfraMonitoringEntity.CLUSTERS}
 				eventCategory={InfraMonitoringEvents.Cluster}
 				getSelectedItemFilters={k8sClusterGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

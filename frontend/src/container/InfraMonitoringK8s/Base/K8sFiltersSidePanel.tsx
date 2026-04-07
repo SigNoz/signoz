@@ -1,6 +1,6 @@
 import { Button, DrawerWrapper } from '@signozhq/ui';
 
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import {
 	useInfraMonitoringTableColumnsForPage,
 	useInfraMonitoringTableColumnsStore,
@@ -15,7 +15,7 @@ function K8sFiltersSidePanel({
 }: {
 	open: boolean;
 	onClose: () => void;
-	entity: K8sCategory;
+	entity: InfraMonitoringEntity;
 }): JSX.Element {
 	const addColumn = useInfraMonitoringTableColumnsStore(
 		(state) => state.addColumn,

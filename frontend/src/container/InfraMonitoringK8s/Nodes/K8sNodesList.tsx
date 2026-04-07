@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sNodesList, K8sNodeData } from './api';
 import {
 	getNodeMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sNodesList({
 		<>
 			<K8sBaseList<K8sNodeData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.NODES}
+				entity={InfraMonitoringEntity.NODES}
 				tableColumnsDefinitions={k8sNodesColumns}
 				tableColumns={k8sNodesColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sNodesList({
 			/>
 
 			<K8sBaseDetails<K8sNodeData>
-				category={K8sCategory.NODES}
+				category={InfraMonitoringEntity.NODES}
 				eventCategory={InfraMonitoringEvents.Node}
 				getSelectedItemFilters={k8sNodeGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

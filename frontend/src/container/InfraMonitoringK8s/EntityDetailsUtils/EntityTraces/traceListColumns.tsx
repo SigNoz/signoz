@@ -18,7 +18,7 @@ const keyToLabelMap: Record<string, string> = {
 	responseStatusCode: 'Status Code',
 };
 
-export const getListColumns = (
+export const getTraceListColumns = (
 	selectedColumns: BaseAutocompleteData[],
 ): ColumnsType<RowData> => {
 	const columns: ColumnsType<RowData> =

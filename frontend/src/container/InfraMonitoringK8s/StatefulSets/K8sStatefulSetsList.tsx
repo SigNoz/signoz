@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sStatefulSetsList, K8sStatefulSetsData } from './api';
 import {
 	getStatefulSetMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sStatefulSetsList({
 		<>
 			<K8sBaseList<K8sStatefulSetsData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.STATEFULSETS}
+				entity={InfraMonitoringEntity.STATEFULSETS}
 				tableColumnsDefinitions={k8sStatefulSetsColumns}
 				tableColumns={k8sStatefulSetsColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sStatefulSetsList({
 			/>
 
 			<K8sBaseDetails<K8sStatefulSetsData>
-				category={K8sCategory.STATEFULSETS}
+				category={InfraMonitoringEntity.STATEFULSETS}
 				eventCategory={InfraMonitoringEvents.StatefulSet}
 				getSelectedItemFilters={k8sStatefulSetGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

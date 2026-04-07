@@ -11,7 +11,7 @@ import {
 	formatBytes,
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sPodsData } from './api';
 
 import styles from './table.module.scss';
@@ -262,7 +262,7 @@ export const k8sPodRenderRowData = (
 	cpu_request: (
 		<ValidateColumnValueWrapper
 			value={pod.podCPURequest}
-			entity={K8sCategory.PODS}
+			entity={InfraMonitoringEntity.PODS}
 			attribute="CPU Request"
 		>
 			<div className={styles.progressBar}>
@@ -273,7 +273,7 @@ export const k8sPodRenderRowData = (
 	cpu_limit: (
 		<ValidateColumnValueWrapper
 			value={pod.podCPULimit}
-			entity={K8sCategory.PODS}
+			entity={InfraMonitoringEntity.PODS}
 			attribute="CPU Limit"
 		>
 			<div className={styles.progressBar}>
@@ -289,7 +289,7 @@ export const k8sPodRenderRowData = (
 	memory_request: (
 		<ValidateColumnValueWrapper
 			value={pod.podMemoryRequest}
-			entity={K8sCategory.PODS}
+			entity={InfraMonitoringEntity.PODS}
 			attribute="Memory Request"
 		>
 			<div className={styles.progressBar}>
@@ -300,7 +300,7 @@ export const k8sPodRenderRowData = (
 	memory_limit: (
 		<ValidateColumnValueWrapper
 			value={pod.podMemoryLimit}
-			entity={K8sCategory.PODS}
+			entity={InfraMonitoringEntity.PODS}
 			attribute="Memory Limit"
 		>
 			<div className={styles.progressBar}>

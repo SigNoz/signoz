@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sDaemonSetsList, K8sDaemonSetsData } from './api';
 import {
 	daemonSetWidgetInfo,
@@ -89,7 +89,7 @@ function K8sDaemonSetsList({
 		<>
 			<K8sBaseList<K8sDaemonSetsData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.DAEMONSETS}
+				entity={InfraMonitoringEntity.DAEMONSETS}
 				tableColumnsDefinitions={k8sDaemonSetsColumns}
 				tableColumns={k8sDaemonSetsColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sDaemonSetsList({
 			/>
 
 			<K8sBaseDetails<K8sDaemonSetsData>
-				category={K8sCategory.DAEMONSETS}
+				category={InfraMonitoringEntity.DAEMONSETS}
 				eventCategory={InfraMonitoringEvents.DaemonSet}
 				getSelectedItemFilters={k8sDaemonSetGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}

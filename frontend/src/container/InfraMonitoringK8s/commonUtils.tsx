@@ -12,7 +12,7 @@ import {
 	TagFilterItem,
 } from 'types/api/queryBuilder/queryBuilderData';
 
-import { getInvalidValueTooltipText, K8sCategory } from './constants';
+import { getInvalidValueTooltipText, InfraMonitoringEntity } from './constants';
 
 /**
  * Converts size in bytes to a human-readable string with appropriate units
@@ -40,7 +40,7 @@ export function ValidateColumnValueWrapper({
 }: {
 	children: React.ReactNode;
 	value: number;
-	entity?: K8sCategory;
+	entity?: InfraMonitoringEntity;
 	attribute?: string;
 }): JSX.Element {
 	if (value === -1) {

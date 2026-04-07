@@ -1,11 +1,16 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import React, {
+	useCallback,
+	useEffect,
+	useMemo,
+	useRef,
+	useState,
+} from 'react';
 import { useQuery } from 'react-query';
 // eslint-disable-next-line no-restricted-imports
 import { Color, Spacing } from '@signozhq/design-tokens';
 import { Button, Divider, Drawer, Radio, Tooltip, Typography } from 'antd';
 import type { RadioChangeEvent } from 'antd/lib';
 import logEvent from 'api/common/logEvent';
-import { VIEW_TYPES, VIEWS } from 'components/HostMetricsDetail/constants';
 import { InfraMonitoringEvents } from 'constants/events';
 import { QueryParams } from 'constants/query';
 import {
@@ -26,6 +31,7 @@ import {
 	ChevronsLeftRight,
 	Compass,
 	DraftingCompass,
+	Package2,
 	ScrollText,
 	X,
 } from 'lucide-react';
@@ -51,10 +57,12 @@ import {
 } from '../../../store/globalTime/utils';
 import { DEFAULT_TIME_RANGE } from '../../TopNav/DateTimeSelectionV2/constants';
 import { filterDuplicateFilters } from '../commonUtils';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity, VIEW_TYPES, VIEWS } from '../constants';
+import EntityContainers from '../EntityDetailsUtils/EntityContainers';
 import EntityEvents from '../EntityDetailsUtils/EntityEvents';
 import EntityLogs from '../EntityDetailsUtils/EntityLogs';
 import EntityMetrics from '../EntityDetailsUtils/EntityMetrics';
+import EntityProcesses from '../EntityDetailsUtils/EntityProcesses';
 import EntityTraces from '../EntityDetailsUtils/EntityTraces';
 import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
 import {
@@ -72,7 +80,8 @@ const TimeRangeOffset = 1000000000;
 
 export interface K8sDetailsMetadataConfig<T> {
 	label: string;
-	getValue: (entity: T) => string;
+	getValue: (entity: T) => string | number;
+	render?: (value: string | number, entity: T) => React.ReactNode;
 }
 
 export interface K8sDetailsFilters {
@@ -82,7 +91,7 @@ export interface K8sDetailsFilters {
 }
 
 export interface K8sBaseDetailsProps<T> {
-	category: K8sCategory;
+	category: InfraMonitoringEntity;
 	eventCategory: string;
 	// Data fetching configuration
 	getSelectedItemFilters: (selectedItem: string) => TagFilter;
@@ -109,6 +118,28 @@ export interface K8sBaseDetailsProps<T> {
 	queryKeyPrefix: string;
 	/** When true, only metrics are shown and the Metrics/Logs/Traces/Events tab bar is hidden. */
 	hideDetailViewTabs?: boolean;
+	tabsConfig?: {
+		showMetrics?: boolean;
+		showLogs?: boolean;
+		showTraces?: boolean;
+		showEvents?: boolean;
+		showContainers?: boolean;
+		showProcesses?: boolean;
+	};
+	customTabs?: Array<{
+		key: string;
+		label: string;
+		icon: React.ReactNode;
+		render: (props: {
+			entity: T;
+			timeRange: { startTime: number; endTime: number };
+			selectedInterval: Time;
+			handleTimeChange: (
+				interval: Time | CustomTimeType,
+				dateTimeRange?: [number, number],
+			) => void;
+		}) => React.ReactNode;
+	}>;
 }
 
 export function createFilterItem(
@@ -144,7 +175,22 @@ function K8sBaseDetails<T>({
 	getEntityQueryPayload,
 	queryKeyPrefix,
 	hideDetailViewTabs = false,
+	tabsConfig,
+	customTabs,
 }: K8sBaseDetailsProps<T>): JSX.Element {
+	const tabVisibility = useMemo(
+		() => ({
+			showMetrics: true,
+			showLogs: true,
+			showTraces: true,
+			showEvents: true,
+			showContainers: false,
+			showProcesses: false,
+			...tabsConfig,
+		}),
+		[tabsConfig],
+	);
+
 	const selectedTime = useGlobalTimeStore((s) => s.selectedTime);
 	const getMinMaxTime = useGlobalTimeStore((s) => s.getMinMaxTime);
 
@@ -621,12 +667,17 @@ function K8sBaseDetails<T>({
 							<div className="values-row">
 								{metadataConfig.map((config) => {
 									const value = config.getValue(entity);
+									const displayValue = String(value);
 									return (
 										<Typography.Text
 											key={config.label}
 											className="entity-details-metadata-value"
 										>
-											<Tooltip title={value}>{value}</Tooltip>
+											{config.render ? (
+												config.render(value, entity)
+											) : (
+												<Tooltip title={displayValue}>{displayValue}</Tooltip>
+											)}
 										</Typography.Text>
 									);
 								})}
@@ -641,50 +692,96 @@ function K8sBaseDetails<T>({
 								onChange={handleTabChange}
 								value={selectedView}
 							>
-								<Radio.Button
-									className={
-										selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
-									}
-									value={VIEW_TYPES.METRICS}
-								>
-									<div className="view-title">
-										<BarChart2 size={14} />
-										Metrics
-									</div>
-								</Radio.Button>
-								<Radio.Button
-									className={
-										selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
-									}
-									value={VIEW_TYPES.LOGS}
-								>
-									<div className="view-title">
-										<ScrollText size={14} />
-										Logs
-									</div>
-								</Radio.Button>
-								<Radio.Button
-									className={
-										selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
-									}
-									value={VIEW_TYPES.TRACES}
-								>
-									<div className="view-title">
-										<DraftingCompass size={14} />
-										Traces
-									</div>
-								</Radio.Button>
-								<Radio.Button
-									className={
-										selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
-									}
-									value={VIEW_TYPES.EVENTS}
-								>
-									<div className="view-title">
-										<ChevronsLeftRight size={14} />
-										Events
-									</div>
-								</Radio.Button>
+								{tabVisibility.showMetrics && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.METRICS ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.METRICS}
+									>
+										<div className="view-title">
+											<BarChart2 size={14} />
+											Metrics
+										</div>
+									</Radio.Button>
+								)}
+								{tabVisibility.showLogs && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.LOGS ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.LOGS}
+									>
+										<div className="view-title">
+											<ScrollText size={14} />
+											Logs
+										</div>
+									</Radio.Button>
+								)}
+								{tabVisibility.showTraces && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.TRACES ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.TRACES}
+									>
+										<div className="view-title">
+											<DraftingCompass size={14} />
+											Traces
+										</div>
+									</Radio.Button>
+								)}
+								{tabVisibility.showEvents && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.EVENTS ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.EVENTS}
+									>
+										<div className="view-title">
+											<ChevronsLeftRight size={14} />
+											Events
+										</div>
+									</Radio.Button>
+								)}
+								{tabVisibility.showContainers && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.CONTAINERS ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.CONTAINERS}
+									>
+										<div className="view-title">
+											<Package2 size={14} />
+											Containers
+										</div>
+									</Radio.Button>
+								)}
+								{tabVisibility.showProcesses && (
+									<Radio.Button
+										className={
+											selectedView === VIEW_TYPES.PROCESSES ? 'selected_view tab' : 'tab'
+										}
+										value={VIEW_TYPES.PROCESSES}
+									>
+										<div className="view-title">
+											<ChevronsLeftRight size={14} />
+											Processes
+										</div>
+									</Radio.Button>
+								)}
+								{customTabs?.map((tab) => (
+									<Radio.Button
+										key={tab.key}
+										className={selectedView === tab.key ? 'selected_view tab' : 'tab'}
+										value={tab.key}
+									>
+										<div className="view-title">
+											{tab.icon}
+											{tab.label}
+										</div>
+									</Radio.Button>
+								))}
 							</Radio.Group>
 
 							{(selectedView === VIEW_TYPES.LOGS ||
@@ -737,7 +834,7 @@ function K8sBaseDetails<T>({
 							queryKeyFilters={primaryFilterKeys}
 						/>
 					)}
-					{effectiveView === VIEW_TYPES.EVENTS && (
+					{effectiveView === VIEW_TYPES.EVENTS && tabVisibility.showEvents && (
 						<EntityEvents
 							timeRange={modalTimeRange}
 							isModalTimeSelection
@@ -748,6 +845,23 @@ function K8sBaseDetails<T>({
 							category={category}
 							queryKey={`${queryKeyPrefix}Events`}
 						/>
+					)}
+					{effectiveView === VIEW_TYPES.CONTAINERS &&
+						tabVisibility.showContainers && <EntityContainers />}
+					{effectiveView === VIEW_TYPES.PROCESSES && tabVisibility.showProcesses && (
+						<EntityProcesses />
+					)}
+					{customTabs?.map((tab) =>
+						selectedView === tab.key ? (
+							<React.Fragment key={tab.key}>
+								{tab.render({
+									entity,
+									timeRange: modalTimeRange,
+									selectedInterval,
+									handleTimeChange,
+								})}
+							</React.Fragment>
+						) : null,
 					)}
 				</>
 			)}

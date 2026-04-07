@@ -10,7 +10,7 @@ import {
 	formatBytes,
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { K8sJobsData } from './api';
 
 import styles from './table.module.scss';
@@ -253,7 +253,7 @@ export const k8sJobsRenderRowData = (
 	cpu_request: (
 		<ValidateColumnValueWrapper
 			value={job.cpuRequest}
-			entity={K8sCategory.JOBS}
+			entity={InfraMonitoringEntity.JOBS}
 			attribute="CPU Request"
 		>
 			<div className={styles.progressBar}>
@@ -264,7 +264,7 @@ export const k8sJobsRenderRowData = (
 	cpu_limit: (
 		<ValidateColumnValueWrapper
 			value={job.cpuLimit}
-			entity={K8sCategory.JOBS}
+			entity={InfraMonitoringEntity.JOBS}
 			attribute="CPU Limit"
 		>
 			<div className={styles.progressBar}>
@@ -280,7 +280,7 @@ export const k8sJobsRenderRowData = (
 	memory_request: (
 		<ValidateColumnValueWrapper
 			value={job.memoryRequest}
-			entity={K8sCategory.JOBS}
+			entity={InfraMonitoringEntity.JOBS}
 			attribute="Memory Request"
 		>
 			<div className={styles.progressBar}>
@@ -291,7 +291,7 @@ export const k8sJobsRenderRowData = (
 	memory_limit: (
 		<ValidateColumnValueWrapper
 			value={job.memoryLimit}
-			entity={K8sCategory.JOBS}
+			entity={InfraMonitoringEntity.JOBS}
 			attribute="Memory Limit"
 		>
 			<div className={styles.progressBar}>

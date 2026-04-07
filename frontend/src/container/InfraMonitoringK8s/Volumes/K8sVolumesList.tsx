@@ -6,7 +6,7 @@ import { useAppContext } from 'providers/App/App';
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
 import { K8sBaseList } from '../Base/K8sBaseList';
 import { K8sBaseFilters } from '../Base/types';
-import { K8sCategory } from '../constants';
+import { InfraMonitoringEntity } from '../constants';
 import { getK8sVolumesList, K8sVolumesData } from './api';
 import {
 	getVolumeMetricsQueryPayload,
@@ -89,7 +89,7 @@ function K8sVolumesList({
 		<>
 			<K8sBaseList<K8sVolumesData>
 				controlListPrefix={controlListPrefix}
-				entity={K8sCategory.VOLUMES}
+				entity={InfraMonitoringEntity.VOLUMES}
 				tableColumnsDefinitions={k8sVolumesColumns}
 				tableColumns={k8sVolumesColumnsConfig}
 				fetchListData={fetchListData}
@@ -98,7 +98,7 @@ function K8sVolumesList({
 			/>
 
 			<K8sBaseDetails<K8sVolumesData>
-				category={K8sCategory.VOLUMES}
+				category={InfraMonitoringEntity.VOLUMES}
 				eventCategory={InfraMonitoringEvents.Volume}
 				getSelectedItemFilters={k8sVolumeGetSelectedItemFilters}
 				fetchEntityData={fetchEntityData}
