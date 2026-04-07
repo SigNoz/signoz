@@ -199,7 +199,7 @@ func (c *jsonConditionBuilder) terminalIndexedCondition(node *telemetrytypes.JSO
 }
 
 // buildPrimitiveTerminalCondition builds the condition if the terminal node is a primitive type
-// it handles the data type collisions and utilizes indexes for the condition if available
+// it handles the data type collisions and utilizes indexes for the condition if available.
 func (c *jsonConditionBuilder) buildPrimitiveTerminalCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	fieldPath := node.FieldPath()
 	conditions := []string{}
@@ -300,7 +300,7 @@ func (c *jsonConditionBuilder) buildTerminalArrayCondition(node *telemetrytypes.
 }
 
 // buildArrayMembershipCondition builds condition of the part where Arrays becomes primitive typed Arrays
-// e.g. [300, 404, 500], and value operations will work on the array elements
+// e.g. [300, 404, 500], and value operations will work on the array elements.
 func (c *jsonConditionBuilder) buildArrayMembershipCondition(node *telemetrytypes.JSONAccessNode, operator qbtypes.FilterOperator, value any, sb *sqlbuilder.SelectBuilder) (string, error) {
 	arrayPath := node.FieldPath()
 	// create typed array out of a dynamic array
