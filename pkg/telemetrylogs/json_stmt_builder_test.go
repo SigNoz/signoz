@@ -546,10 +546,11 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 		},
 		{
 			name:   "Array simple path NotEqual",
-			filter: "body.education[].name != 'IIT'",
+			filter: "body.education[].type != '10001'",
 			expected: TestExpected{
-				WhereClause: "(NOT arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`name`, 'String') = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))')))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), "IIT", "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				WhereClause: "((NOT arrayExists(`body_v2.education`-> toFloat64OrNull(dynamicElement(`body_v2.education`.`type`, 'String')) = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))) AND (NOT arrayExists(`body_v2.education`-> dynamicElement(`body_v2.education`.`type`, 'Int64') = ?, dynamicElement(body_v2.`education`, 'Array(JSON(max_dynamic_types=16, max_dynamic_paths=0))'))))",
+				Args:        []any{uint64(1747945619), uint64(1747983448), int64(10001), int64(10001), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Warnings:    []string{"Key `education[].type` is ambiguous, found 2 different combinations of field context / data type: [name=education[].type,context=body,datatype=string,jsondatatype=String name=education[].type,context=body,datatype=int64,jsondatatype=Int64]."},
 			},
 		},
 		{
@@ -773,7 +774,7 @@ func TestJSONStmtBuilder_ArrayPaths(t *testing.T) {
 			filter: "ids != '1'",
 			expected: TestExpected{
 				WhereClause: "(NOT arrayExists(x -> accurateCastOrNull(x, 'Float64') = ?, arrayFilter(x->(dynamicType(x) IN ('String', 'Int64', 'Float64', 'Bool')), dynamicElement(body_v2.`ids`, 'Array(Dynamic)'))))",
-				Args:        []any{uint64(1747945619), uint64(1747983448), float64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
+				Args:        []any{uint64(1747945619), uint64(1747983448), int64(1), "1747947419000000000", uint64(1747945619), "1747983448000000000", uint64(1747983448), 10},
 			},
 		},
 		{

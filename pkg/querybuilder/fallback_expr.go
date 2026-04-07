@@ -211,6 +211,8 @@ func DataTypeCollisionHandledFieldName(key *telemetrytypes.TelemetryFieldKey, va
 		case float64:
 			// try to convert the string value to to number
 			tblFieldName = castFloat(tblFieldName)
+		case int, int8, int16, int32, int64, uint, uint8, uint16, uint32, uint64:
+			tblFieldName = castFloat(tblFieldName)
 		case []any:
 			if allFloats(v) {
 				tblFieldName = castFloat(tblFieldName)
