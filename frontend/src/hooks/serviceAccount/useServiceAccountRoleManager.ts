@@ -73,7 +73,10 @@ export function useServiceAccountRoleManager(
 				allOperations.map((op) => op.run()),
 			);
 
-			await invalidateRoles();
+			const successCount = results.filter((r) => r.status === 'fulfilled').length;
+			if (successCount > 0) {
+				await invalidateRoles();
+			}
 
 			const failures: RoleUpdateFailure[] = [];
 			results.forEach((result, index) => {

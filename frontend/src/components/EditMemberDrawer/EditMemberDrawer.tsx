@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { useCopyToClipboard } from 'react-use';
 import { Badge } from '@signozhq/badge';
 import { Button } from '@signozhq/button';
@@ -115,26 +115,39 @@ function EditMemberDrawer({
 		refetch: refetchRoles,
 	} = useRoles();
 
-	const { fetchedRoleIds, applyDiff } = useMemberRoleManager(
-		member?.id ?? '',
-		open && !!member?.id,
-	);
+	const {
+		fetchedRoleIds,
+		isLoading: isMemberRolesLoading,
+		applyDiff,
+	} = useMemberRoleManager(member?.id ?? '', open && !!member?.id);
 
 	const fetchedDisplayName =
 		fetchedUser?.data?.displayName ?? member?.name ?? '';
 	const fetchedUserId = fetchedUser?.data?.id;
 	const fetchedUserDisplayName = fetchedUser?.data?.displayName;
 
+	const roleSessionRef = useRef<string | null>(null);
+
 	useEffect(() => {
 		if (fetchedUserId) {
 			setLocalDisplayName(fetchedUserDisplayName ?? member?.name ?? '');
 		}
-		setSaveErrors([]);
 	}, [fetchedUserId, fetchedUserDisplayName, member?.name]);
 
 	useEffect(() => {
-		setLocalRole(fetchedRoleIds[0] ?? '');
-	}, [fetchedRoleIds]);
+		if (fetchedUserId) {
+			setSaveErrors([]);
+		}
+	}, [fetchedUserId]);
+
+	useEffect(() => {
+		if (!member?.id) {
+			roleSessionRef.current = null;
+		} else if (member.id !== roleSessionRef.current && !isMemberRolesLoading) {
+			setLocalRole(fetchedRoleIds[0] ?? '');
+			roleSessionRef.current = member.id;
+		}
+	}, [member?.id, fetchedRoleIds, isMemberRolesLoading]);
 
 	const isDirty =
 		member !== null &&

@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
@@ -115,21 +115,35 @@ function ServiceAccountDrawer({
 		[accountData],
 	);
 
-	const { currentRoles, applyDiff } = useServiceAccountRoleManager(
-		selectedAccountId ?? '',
-	);
+	const {
+		currentRoles,
+		isLoading: isRolesLoading,
+		applyDiff,
+	} = useServiceAccountRoleManager(selectedAccountId ?? '');
+
+	const roleSessionRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (account?.id) {
 			setLocalName(account?.name ?? '');
 			setKeysPage(1);
 		}
-		setSaveErrors([]);
 	}, [account?.id, account?.name, setKeysPage]);
 
 	useEffect(() => {
-		setLocalRole(currentRoles[0]?.id ?? '');
-	}, [currentRoles]);
+		if (account?.id) {
+			setSaveErrors([]);
+		}
+	}, [account?.id]);
+
+	useEffect(() => {
+		if (!account?.id) {
+			roleSessionRef.current = null;
+		} else if (account.id !== roleSessionRef.current && !isRolesLoading) {
+			setLocalRole(currentRoles[0]?.id ?? '');
+			roleSessionRef.current = account.id;
+		}
+	}, [account?.id, currentRoles, isRolesLoading]);
 
 	const isDeleted =
 		account?.status?.toUpperCase() === ServiceAccountStatus.Deleted;
