@@ -1,6 +1,12 @@
 import { toast } from '@signozhq/sonner';
 import { rest, server } from 'mocks-server/server';
-import { render, screen, userEvent, waitFor } from 'tests/test-utils';
+import {
+	fireEvent,
+	render,
+	screen,
+	userEvent,
+	waitFor,
+} from 'tests/test-utils';
 
 import DisplayName from '../index';
 
@@ -62,8 +68,8 @@ describe('DisplayName', () => {
 		const input = await screen.findByRole('textbox');
 		await user.clear(input);
 
-		// Submit button is disabled when empty, so trigger validation via Enter
-		await user.type(input, '{enter}');
+		const form = input.closest('form') as HTMLFormElement;
+		fireEvent.submit(form);
 
 		await waitFor(() => {
 			expect(screen.getByText(/missing display name/i)).toBeInTheDocument();

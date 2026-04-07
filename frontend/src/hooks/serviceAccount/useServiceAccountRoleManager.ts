@@ -6,6 +6,7 @@ import {
 	useGetServiceAccountRoles,
 } from 'api/generated/services/serviceaccount';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
+import { retryOn429 } from 'utils/errorUtils';
 
 const enum PromiseStatus {
 	Fulfilled = 'fulfilled',
@@ -39,7 +40,9 @@ export function useServiceAccountRoleManager(
 	]);
 
 	// the retry for these mutations is safe due to being idempotent on backend
-	const { mutateAsync: createRole } = useCreateServiceAccountRole();
+	const { mutateAsync: createRole } = useCreateServiceAccountRole({
+		mutation: { retry: retryOn429 },
+	});
 
 	const invalidateRoles = useCallback(
 		() =>

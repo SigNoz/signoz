@@ -37,7 +37,7 @@ import {
 	useQueryState,
 } from 'nuqs';
 import APIError from 'types/api/error';
-import { toAPIError } from 'utils/errorUtils';
+import { retryOn429, toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
@@ -179,7 +179,11 @@ function ServiceAccountDrawer({
 
 	// the retry for this mutation is safe due to the api being idempotent on backend
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
-	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole();
+	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
+		mutation: {
+			retry: retryOn429,
+		},
+	});
 
 	const executeRolesOperation = useCallback(
 		async (accountId: string): Promise<RoleUpdateFailure[]> => {
