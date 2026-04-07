@@ -1,11 +1,12 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sStatefulSetsListPayload {
 	filters: TagFilter;
@@ -66,39 +67,35 @@ export function mapStatefulSetsMeta(
 }
 
 export const getK8sStatefulSetsList = async (
-	props: K8sStatefulSetsListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sStatefulSetsListResponse> | ErrorResponse> => {
 	try {
-		// Prepare filters
 		const requestProps =
-			dotMetricsEnabled && Array.isArray(props.filters?.items)
+			dotMetricsEnabled && props.filters && Array.isArray(props.filters.items)
 				? {
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
-								(acc, item) => {
-									if (item.value === undefined) {
-										return acc;
-									}
-									if (
-										item.key &&
-										typeof item.key === 'object' &&
-										'key' in item.key &&
-										typeof item.key.key === 'string'
-									) {
-										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-										acc.push({ ...item, key: { ...item.key, key: mappedKey } });
-									} else {
-										acc.push(item);
-									}
+							items: props.filters.items.reduce<TagFilter['items']>((acc, item) => {
+								if (item.value === undefined) {
 									return acc;
-								},
-								[] as typeof props.filters.items,
-							),
+								}
+								if (
+									item.key &&
+									typeof item.key === 'object' &&
+									'key' in item.key &&
+									typeof item.key.key === 'string'
+								) {
+									const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+									acc.push({ ...item, key: { ...item.key, key: mappedKey } });
+								} else {
+									acc.push(item);
+								}
+								return acc;
+							}, [] as TagFilter['items']),
 						},
 				  }
 				: props;
@@ -109,7 +106,6 @@ export const getK8sStatefulSetsList = async (
 		});
 		const payload: K8sStatefulSetsListResponse = response.data;
 
-		// apply our helper
 		payload.data.records = payload.data.records.map((record) => ({
 			...record,
 			meta: mapStatefulSetsMeta(record.meta as Record<string, unknown>),
