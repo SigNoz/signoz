@@ -29,6 +29,7 @@ export const QUERY_KEYS = {
 	K8S_STATEFUL_SET_NAME: 'k8s.statefulset.name',
 	K8S_JOB_NAME: 'k8s.job.name',
 	K8S_DAEMON_SET_NAME: 'k8s.daemonset.name',
+	K8S_PERSISTENT_VOLUME_CLAIM_NAME: 'k8s.persistentvolumeclaim.name',
 };
 
 /**

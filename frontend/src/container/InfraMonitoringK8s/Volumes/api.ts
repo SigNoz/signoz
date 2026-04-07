@@ -1,22 +1,10 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
-
-export interface K8sVolumesListPayload {
-	filters: TagFilter;
-	groupBy?: BaseAutocompleteData[];
-	offset?: number;
-	limit?: number;
-	orderBy?: {
-		columnName: string;
-		order: 'asc' | 'desc';
-	};
-}
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sVolumesData {
 	persistentVolumeClaimName: string;
@@ -68,10 +56,8 @@ export const volumesMetaMap: Array<{
 export function mapVolumesMeta(
 	rawMeta: Record<string, unknown>,
 ): K8sVolumesData['meta'] {
-	// start with everything that was already there
 	const out: Record<string, unknown> = { ...rawMeta };
 
-	// for each dot→under rule, if the raw has the dot, overwrite the underscore
 	volumesMetaMap.forEach(({ dot, under }) => {
 		if (dot in rawMeta) {
 			const val = rawMeta[dot];
@@ -83,42 +69,47 @@ export function mapVolumesMeta(
 }
 
 export const getK8sVolumesList = async (
-	props: K8sVolumesListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sVolumesListResponse> | ErrorResponse> => {
 	try {
-		// Prepare filters
+		const { orderBy, ...rest } = props;
+		const basePayload = {
+			...rest,
+			filters: props.filters ?? { items: [], op: 'and' },
+			...(orderBy != null ? { orderBy } : {}),
+		};
+
 		const requestProps =
-			dotMetricsEnabled && Array.isArray(props.filters?.items)
+			dotMetricsEnabled && Array.isArray(basePayload.filters?.items)
 				? {
-						...props,
+						...basePayload,
 						filters: {
-							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
-								(acc, item) => {
-									if (item.value === undefined) {
-										return acc;
-									}
-									if (
-										item.key &&
-										typeof item.key === 'object' &&
-										'key' in item.key &&
-										typeof item.key.key === 'string'
-									) {
-										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-										acc.push({ ...item, key: { ...item.key, key: mappedKey } });
-									} else {
-										acc.push(item);
-									}
+							...basePayload.filters,
+							items: basePayload.filters.items.reduce<
+								typeof basePayload.filters.items
+							>((acc, item) => {
+								if (item.value === undefined) {
 									return acc;
-								},
-								[] as typeof props.filters.items,
-							),
+								}
+								if (
+									item.key &&
+									typeof item.key === 'object' &&
+									'key' in item.key &&
+									typeof item.key.key === 'string'
+								) {
+									const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+									acc.push({ ...item, key: { ...item.key, key: mappedKey } });
+								} else {
+									acc.push(item);
+								}
+								return acc;
+							}, [] as typeof basePayload.filters.items),
 						},
 				  }
-				: props;
+				: basePayload;
 
 		const response = await axios.post('/pvcs/list', requestProps, {
 			signal,
