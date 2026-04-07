@@ -383,11 +383,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 						)}
 
 						{selectedCategory === K8sCategories.CLUSTERS && (
-							<K8sClustersList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sClustersList controlListPrefix={showFiltersComp} />
 						)}
 
 						{selectedCategory === K8sCategories.DEPLOYMENTS && (

@@ -1,10 +1,56 @@
-import { K8sClustersData } from 'api/infraMonitoring/getK8sClustersList';
 import { PANEL_TYPES } from 'constants/queryBuilder';
 import { GetQueryResultsProps } from 'lib/dashboard/getQueryResults';
 import { DataTypes } from 'types/api/queryBuilder/queryAutocompleteResponse';
+import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 import { EQueryType } from 'types/common/dashboard';
 import { DataSource, ReduceOperators } from 'types/common/queryBuilder';
 import { v4 } from 'uuid';
+
+import {
+	createFilterItem,
+	K8sDetailsMetadataConfig,
+} from '../Base/K8sBaseDetails';
+import { QUERY_KEYS } from '../EntityDetailsUtils/utils';
+import { K8sClusterData } from './api';
+
+export const k8sClusterGetSelectedItemFilters = (
+	selectedItemId: string,
+): TagFilter => ({
+	op: 'AND',
+	items: [
+		{
+			id: 'k8s_cluster_name',
+			key: {
+				key: 'k8s_cluster_name',
+				type: null,
+			},
+			op: '=',
+			value: selectedItemId,
+		},
+	],
+});
+
+export const k8sClusterDetailsMetadataConfig: K8sDetailsMetadataConfig<K8sClusterData>[] = [
+	{ label: 'Cluster Name', getValue: (p): string => p.meta.k8s_cluster_name },
+];
+
+export const k8sClusterInitialFilters = [QUERY_KEYS.K8S_CLUSTER_NAME];
+
+export const k8sClusterInitialEventsFilter = (
+	item: K8sClusterData,
+): ReturnType<typeof createFilterItem>[] => [
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_KIND, 'Cluster'),
+	createFilterItem(QUERY_KEYS.K8S_OBJECT_NAME, item.meta.k8s_cluster_name),
+];
+
+export const k8sClusterInitialLogTracesFilter = (
+	item: K8sClusterData,
+): ReturnType<typeof createFilterItem>[] => [
+	createFilterItem(QUERY_KEYS.K8S_CLUSTER_NAME, item.meta.k8s_cluster_name),
+];
+
+export const k8sClusterGetEntityName = (item: K8sClusterData): string =>
+	item.meta.k8s_cluster_name;
 
 export const clusterWidgetInfo = [
 	{
@@ -42,7 +88,7 @@ export const clusterWidgetInfo = [
 ];
 
 export const getClusterMetricsQueryPayload = (
-	cluster: K8sClustersData,
+	cluster: K8sClusterData,
 	start: number,
 	end: number,
 	dotMetricsEnabled: boolean,
