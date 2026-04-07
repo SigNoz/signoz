@@ -360,7 +360,11 @@ function DateTimeSelection({
 	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
 		invalidateQueries();
-		onSelectHandler(selectedTime);
+		onSelectHandler(
+			isModalTimeSelection && modalSelectedInterval
+				? modalSelectedInterval
+				: selectedTime,
+		);
 		onLastRefreshHandler();
 	};
 	const handleReset = useCallback(() => {

@@ -169,6 +169,21 @@ func (provider *provider) DeleteChannelByID(ctx context.Context, orgID string, c
 		return err
 	}
 
+	// Check if channel is referenced by any route policy (rule-based or policy-based)
+	policies, err := provider.notificationManager.GetRoutePoliciesByChannel(ctx, orgID, channel.Name)
+	if err != nil {
+		return err
+	}
+	if len(policies) > 0 {
+		names := make([]string, 0, len(policies))
+		for _, p := range policies {
+			names = append(names, p.Name)
+		}
+		return errors.NewInvalidInputf(errors.CodeInvalidInput,
+			"channel %q cannot be deleted because it is used by the following routing policies: %v",
+			channel.Name, names)
+	}
+
 	config, err := provider.configStore.Get(ctx, orgID)
 	if err != nil {
 		return err

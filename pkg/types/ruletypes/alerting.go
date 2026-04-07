@@ -103,7 +103,7 @@ type RuleCondition struct {
 	MatchType         MatchType            `json:"matchType"`
 	TargetUnit        string               `json:"targetUnit,omitempty"`
 	Algorithm         string               `json:"algorithm,omitempty"`
-	Seasonality       string               `json:"seasonality,omitempty"`
+	Seasonality       Seasonality          `json:"seasonality,omitzero"`
 	SelectedQuery     string               `json:"selectedQueryName,omitempty"`
 	RequireMinPoints  bool                 `json:"requireMinPoints,omitempty"`
 	RequiredNumPoints int                  `json:"requiredNumPoints,omitempty"`
@@ -156,10 +156,6 @@ func (rc *RuleCondition) SelectedQueryName() string {
 	}
 	sort.Strings(keys)
 	return keys[len(keys)-1]
-}
-
-func (rc *RuleCondition) IsValid() bool {
-	return true
 }
 
 // ShouldEval checks if the further series should be evaluated at all for alerts.
