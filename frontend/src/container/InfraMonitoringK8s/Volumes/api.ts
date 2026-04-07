@@ -37,6 +37,7 @@ export interface K8sVolumesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const volumesMetaMap: Array<{
 	dot: keyof Record<string, unknown>;
 	under: keyof K8sVolumesData['meta'];

@@ -38,6 +38,7 @@ export interface K8sJobsListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const jobsMetaMap = [
 	{ dot: 'k8s.cluster.name', under: 'k8s_cluster_name' },
 	{ dot: 'k8s.job.name', under: 'k8s_job_name' },

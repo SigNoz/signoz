@@ -44,6 +44,7 @@ export interface K8sNodesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const nodesMetaMap = [
 	{ dot: 'k8s.node.name', under: 'k8s_node_name' },
 	{ dot: 'k8s.node.uid', under: 'k8s_node_uid' },

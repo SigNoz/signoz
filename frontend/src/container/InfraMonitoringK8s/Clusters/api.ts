@@ -43,6 +43,7 @@ export interface K8sClustersListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const clustersMetaMap = [
 	{ dot: 'k8s.cluster.name', under: 'k8s_cluster_name' },
 	{ dot: 'k8s.cluster.uid', under: 'k8s_cluster_uid' },

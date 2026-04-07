@@ -6,6 +6,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 
 import { K8sBaseFilters } from '../Base/types';
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const podsMetaMap = [
 	{ dot: 'k8s.cronjob.name', under: 'k8s_cronjob_name' },
 	{ dot: 'k8s.daemonset.name', under: 'k8s_daemonset_name' },
@@ -85,7 +86,6 @@ export interface K8sPodsListResponse {
 	};
 }
 
-// TODO: Remove this method once we move this to OpenAPI
 export const getK8sPodsList = async (
 	props: K8sBaseFilters,
 	signal?: AbortSignal,

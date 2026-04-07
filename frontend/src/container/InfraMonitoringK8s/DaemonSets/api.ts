@@ -36,6 +36,7 @@ export interface K8sDaemonSetsListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const daemonSetsMetaMap = [
 	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },
 	{ dot: 'k8s.daemonset.name', under: 'k8s_daemonset_name' },

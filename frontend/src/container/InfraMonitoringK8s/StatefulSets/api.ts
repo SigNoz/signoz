@@ -48,6 +48,7 @@ export interface K8sStatefulSetsListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const statefulSetsMetaMap = [
 	{ dot: 'k8s.statefulset.name', under: 'k8s_statefulset_name' },
 	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },

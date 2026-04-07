@@ -41,6 +41,7 @@ export interface K8sNamespacesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const namespacesMetaMap = [
 	{ dot: 'k8s.cluster.name', under: 'k8s_cluster_name' },
 	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },
