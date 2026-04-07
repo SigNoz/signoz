@@ -169,7 +169,7 @@ func PrepareWhereClause(query string, opts FilterExprVisitorOpts) (*PreparedWher
 	// Return nil so callers can skip the
 	// entire CTE/subquery rather than emitting WHERE clause that select all the rows
 	if cond == "" || cond == SkipConditionLiteral {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	whereClause := sqlbuilder.NewWhereClause().AddWhereExpr(visitor.builder.Args, cond)

@@ -103,7 +103,7 @@ func (b *resourceFilterStatementBuilder[T]) Build(
 		return nil, err
 	}
 	if isNoOp {
-		return nil, nil
+		return nil, nil //nolint:nilnil
 	}
 
 	stmt, args := q.BuildWithFlavor(sqlbuilder.ClickHouse)
