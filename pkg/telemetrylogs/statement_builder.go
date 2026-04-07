@@ -266,33 +266,35 @@ func (b *logQueryStatementBuilder) buildListQuery(
 		cteArgs = append(cteArgs, args)
 	}
 
-	// Select timestamp and id by default
-	sb.Select(LogsV2TimestampColumn)
-	sb.SelectMore(LogsV2IDColumn)
 	if len(query.SelectFields) == 0 {
-		// Select all default columns
-		sb.SelectMore(LogsV2TraceIDColumn)
-		sb.SelectMore(LogsV2SpanIDColumn)
-		sb.SelectMore(LogsV2TraceFlagsColumn)
-		sb.SelectMore(LogsV2SeverityTextColumn)
-		sb.SelectMore(LogsV2SeverityNumberColumn)
-		sb.SelectMore(LogsV2ScopeNameColumn)
-		sb.SelectMore(LogsV2ScopeVersionColumn)
-		sb.SelectMore(bodyAliasExpression())
-		sb.SelectMore(LogsV2AttributesStringColumn)
-		sb.SelectMore(LogsV2AttributesNumberColumn)
-		sb.SelectMore(LogsV2AttributesBoolColumn)
-		sb.SelectMore(LogsV2ResourcesStringColumn)
-		sb.SelectMore(LogsV2ScopeStringColumn)
-
-	} else {
-		// Select specified columns
-		for index := range query.SelectFields {
-			if query.SelectFields[index].Name == LogsV2TimestampColumn || query.SelectFields[index].Name == LogsV2IDColumn {
-				continue
+		// Select default fields
+		for index := range LogsV2DefaultSelectFields {
+			colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &LogsV2DefaultSelectFields[index], keys)
+			if err != nil {
+				return nil, err
 			}
-
-			// get column expression for the field - use array index directly to avoid pointer to loop variable
+			sb.SelectMore(colExpr)
+		}
+		// Select all columns by default with dummy canonical aliases
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2TraceIDColumn, LogsV2TraceIDColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2SpanIDColumn, LogsV2SpanIDColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2TraceFlagsColumn, LogsV2TraceFlagsColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2SeverityTextColumn, LogsV2SeverityTextColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2SeverityNumberColumn, LogsV2SeverityNumberColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2ScopeNameColumn, LogsV2ScopeNameColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2ScopeVersionColumn, LogsV2ScopeVersionColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2BodyColumn, LogsV2BodyColumn))
+		if querybuilder.BodyJSONQueryEnabled {
+			sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2BodyV2Column, LogsV2BodyV2Column))
+		}
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2AttributesStringColumn, LogsV2AttributesStringColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2AttributesNumberColumn, LogsV2AttributesNumberColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2AttributesBoolColumn, LogsV2AttributesBoolColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2ResourcesStringColumn, LogsV2ResourcesStringColumn))
+		sb.SelectMore(fmt.Sprintf("`%s` AS `;%s;`", LogsV2ScopeStringColumn, LogsV2ScopeStringColumn))
+	} else {
+		querybuilder.MaybeAddDefaultSelectFields(&query, LogsV2DefaultSelectFields)
+		for index := range query.SelectFields {
 			colExpr, err := b.fm.ColumnExpressionFor(ctx, start, end, &query.SelectFields[index], keys)
 			if err != nil {
 				return nil, err
@@ -383,10 +385,10 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.CanonicalName())
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
-		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.Name))
+		fieldNames = append(fieldNames, fmt.Sprintf("`%s`", gb.CanonicalName()))
 	}
 
 	// Aggregations
@@ -463,7 +465,9 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 
 	} else {
 		sb.GroupBy("ts")
-		sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+		for _, gb := range query.GroupBy {
+			sb.GroupBy(fmt.Sprintf("`%s`", gb.CanonicalName()))
+		}
 		if query.Having != nil && query.Having.Expression != "" {
 			rewriter := querybuilder.NewHavingExpressionRewriter()
 			rewrittenExpr, err := rewriter.RewriteForLogs(query.Having.Expression, query.Aggregations)
@@ -477,7 +481,7 @@ func (b *logQueryStatementBuilder) buildTimeSeriesQuery(
 			for _, orderBy := range query.Order {
 				_, ok := aggOrderBy(orderBy, query)
 				if !ok {
-					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+					sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.CanonicalName(), orderBy.Direction.StringValue()))
 				}
 			}
 			sb.OrderBy("ts desc")
@@ -536,7 +540,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 			return nil, err
 		}
 
-		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.Name)
+		colExpr := fmt.Sprintf("toString(%s) AS `%s`", expr, gb.CanonicalName())
 		allGroupByArgs = append(allGroupByArgs, args...)
 		sb.SelectMore(colExpr)
 	}
@@ -571,7 +575,9 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 	}
 
 	// Group by dimensions
-	sb.GroupBy(querybuilder.GroupByKeys(query.GroupBy)...)
+	for _, gb := range query.GroupBy {
+		sb.GroupBy(fmt.Sprintf("`%s`", gb.CanonicalName()))
+	}
 
 	// Add having clause if needed
 	if query.Having != nil && query.Having.Expression != "" {
@@ -589,7 +595,7 @@ func (b *logQueryStatementBuilder) buildScalarQuery(
 		if ok {
 			sb.OrderBy(fmt.Sprintf("__result_%d %s", idx, orderBy.Direction.StringValue()))
 		} else {
-			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.Name, orderBy.Direction.StringValue()))
+			sb.OrderBy(fmt.Sprintf("`%s` %s", orderBy.Key.CanonicalName(), orderBy.Direction.StringValue()))
 		}
 	}
 

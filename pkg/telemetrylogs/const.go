@@ -1,10 +1,7 @@
 package telemetrylogs
 
 import (
-	"fmt"
-
 	"github.com/SigNoz/signoz-otel-collector/constants"
-	"github.com/SigNoz/signoz/pkg/querybuilder"
 	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/telemetrytypes"
 )
@@ -35,6 +32,7 @@ const (
 	LogsV2AttributesNumberColumn = "attributes_number"
 	LogsV2AttributesBoolColumn   = "attributes_bool"
 	LogsV2ResourcesStringColumn  = "resources_string"
+	LogsV2ResourceColumn         = "resource"
 	LogsV2ScopeStringColumn      = "scope_string"
 
 	BodyV2ColumnPrefix       = constants.BodyV2ColumnPrefix
@@ -128,10 +126,15 @@ var (
 	}
 )
 
-func bodyAliasExpression() string {
-	if !querybuilder.BodyJSONQueryEnabled {
-		return LogsV2BodyColumn
-	}
-
-	return fmt.Sprintf("%s as body", LogsV2BodyV2Column)
+var LogsV2DefaultSelectFields = []telemetrytypes.TelemetryFieldKey{
+	{
+		Name:          LogsV2IDColumn,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeString,
+	},
+	{
+		Name:          LogsV2TimestampColumn,
+		FieldContext:  telemetrytypes.FieldContextLog,
+		FieldDataType: telemetrytypes.FieldDataTypeNumber,
+	},
 }

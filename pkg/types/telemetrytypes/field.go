@@ -112,6 +112,10 @@ func (f TelemetryFieldKey) Text() string {
 	return TelemetryFieldKeyToText(&f)
 }
 
+func (f TelemetryFieldKey) CanonicalName() string {
+	return TelemetryFieldKeyToCanonicalName(&f)
+}
+
 // OverrideMetadataFrom copies the resolved metadata fields from src into f.
 // This is used when adjusting user-provided keys to match known field definitions.
 func (f *TelemetryFieldKey) OverrideMetadataFrom(src *TelemetryFieldKey) {
@@ -238,6 +242,34 @@ func TelemetryFieldKeyToText(key *TelemetryFieldKey) string {
 		sb.WriteString(key.FieldDataType.StringValue())
 	}
 	return sb.String()
+}
+
+func TelemetryFieldKeyToCanonicalName(key *TelemetryFieldKey) string {
+	return fmt.Sprintf("%s;%s;%s", key.FieldContext.StringValue(), key.Name, key.FieldDataType.StringValue())
+}
+
+func GetFieldKeyFromCanonicalName(canonicalName string) TelemetryFieldKey {
+	parts := strings.Split(canonicalName, ";")
+
+	switch len(parts) {
+	case 3:
+		return TelemetryFieldKey{
+			FieldContext:  FieldContext{valuer.NewString(parts[0])},
+			Name:          parts[1],
+			FieldDataType: FieldDataType{valuer.NewString(parts[2])},
+		}
+	case 2:
+		return TelemetryFieldKey{
+			FieldContext:  FieldContext{valuer.NewString(parts[0])},
+			Name:          parts[1],
+			FieldDataType: FieldDataTypeUnspecified,
+		}
+	default:
+		return TelemetryFieldKey{
+			Name: canonicalName,
+		}
+	}
+
 }
 
 func FieldKeyToMaterializedColumnName(key *TelemetryFieldKey) string {

@@ -395,7 +395,7 @@ func (m *fieldMapper) ColumnExpressionFor(
 		}
 	}
 
-	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.Name), nil
+	return fmt.Sprintf("%s AS `%s`", sqlbuilder.Escape(fieldExpression), field.CanonicalName()), nil
 }
 
 // buildFieldForJSON builds the field expression for body JSON fields using arrayConcat pattern.

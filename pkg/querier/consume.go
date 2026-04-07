@@ -121,7 +121,9 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 		)
 
 		for idx, ptr := range slots {
-			name := colNames[idx]
+			key := telemetrytypes.GetFieldKeyFromCanonicalName(colNames[idx])
+			// Remove the data type and field context to make it generic
+			key = telemetrytypes.TelemetryFieldKey{Name: key.Name}
 
 			switch v := ptr.(type) {
 			case *time.Time:
@@ -129,20 +131,20 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 
 			case *float64, *float32, *int64, *int32, *uint64, *uint32:
 				val := numericAsFloat(reflect.ValueOf(ptr).Elem().Interface())
-				if m := aggRe.FindStringSubmatch(name); m != nil {
+				if m := aggRe.FindStringSubmatch(key.Name); m != nil {
 					id, _ := strconv.Atoi(m[1])
 					aggValues[id] = val
 				} else if numericColsCount == 1 { // classic single-value query
 					fallbackValue = val
 					fallbackSeen = true
-				} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
+				} else if slices.Contains(legacyReservedColumnTargetAliases, key.Name) {
 					fallbackValue = val
 					fallbackSeen = true
 				} else {
 					// numeric label
 					lblVals = append(lblVals, fmt.Sprint(val))
 					lblObjs = append(lblObjs, &qbtypes.Label{
-						Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+						Key:   key,
 						Value: val,
 					})
 				}
@@ -151,20 +153,20 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				tempVal := reflect.ValueOf(ptr)
 				if tempVal.IsValid() && !tempVal.IsNil() && !tempVal.Elem().IsNil() {
 					val := numericAsFloat(tempVal.Elem().Elem().Interface())
-					if m := aggRe.FindStringSubmatch(name); m != nil {
+					if m := aggRe.FindStringSubmatch(key.Name); m != nil {
 						id, _ := strconv.Atoi(m[1])
 						aggValues[id] = val
 					} else if numericColsCount == 1 { // classic single-value query
 						fallbackValue = val
 						fallbackSeen = true
-					} else if slices.Contains(legacyReservedColumnTargetAliases, name) {
+					} else if slices.Contains(legacyReservedColumnTargetAliases, key.Name) {
 						fallbackValue = val
 						fallbackSeen = true
 					} else {
 						// numeric label
 						lblVals = append(lblVals, fmt.Sprint(val))
 						lblObjs = append(lblObjs, &qbtypes.Label{
-							Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+							Key:   key,
 							Value: val,
 						})
 					}
@@ -173,7 +175,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 			case *string:
 				lblVals = append(lblVals, *v)
 				lblObjs = append(lblObjs, &qbtypes.Label{
-					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Key:   key,
 					Value: *v,
 				})
 
@@ -185,7 +187,7 @@ func readAsTimeSeries(rows driver.Rows, queryWindow *qbtypes.TimeRange, step qbt
 				}
 				lblVals = append(lblVals, *val)
 				lblObjs = append(lblObjs, &qbtypes.Label{
-					Key:   telemetrytypes.TelemetryFieldKey{Name: name},
+					Key:   key,
 					Value: *val,
 				})
 
@@ -285,12 +287,16 @@ func readAsScalar(rows driver.Rows, queryName string) (*qbtypes.ScalarData, erro
 
 	var aggIndex int64
 	for i, name := range colNames {
+		key := telemetrytypes.GetFieldKeyFromCanonicalName(name)
+		// Remove the data type and field context to make it generic
+		key = telemetrytypes.TelemetryFieldKey{Name: key.Name}
+
 		colType := qbtypes.ColumnTypeGroup
-		if aggRe.MatchString(name) {
+		if aggRe.MatchString(key.Name) {
 			colType = qbtypes.ColumnTypeAggregation
 		}
 		cd[i] = &qbtypes.ColumnDescriptor{
-			TelemetryFieldKey: telemetrytypes.TelemetryFieldKey{Name: name},
+			TelemetryFieldKey: key,
 			QueryName:         queryName,
 			AggregationIndex:  aggIndex,
 			Type:              colType,
@@ -353,31 +359,60 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 	colTypes := rows.ColumnTypes()
 	colCnt := len(colNames)
 
-	// Helper that decides scan target per column based on DB type
-	makeScanTarget := func(i int) any {
-		dbt := strings.ToUpper(colTypes[i].DatabaseTypeName())
-		if strings.HasPrefix(dbt, "JSON") {
-			// Since the driver fails to decode JSON/Dynamic into native Go values, we read it as raw bytes
-			// TODO: check in future if fixed in the driver
-			var v []byte
-			return &v
+	// Compute output names with collision detection — if two columns resolve to
+	// the same simple name, the later one falls back to key.Text().
+	seen := make(map[string]bool, colCnt)
+	outputNames := make([]string, colCnt)
+	for i, colName := range colNames {
+		key := telemetrytypes.GetFieldKeyFromCanonicalName(colName)
+		name := key.Name
+		if seen[name] {
+			name = key.Text()
 		}
-		return reflect.New(colTypes[i].ScanType()).Interface()
+		seen[name] = true
+		outputNames[i] = name
 	}
 
-	// Build a template slice of correctly-typed pointers once
-	scanTpl := make([]any, colCnt)
-	for i := range colTypes {
-		scanTpl[i] = makeScanTarget(i)
+	// Detect which column carries the row timestamp.
+	// Prefer the canonical timestamp field; fall back to legacy columns.
+	tsIdx := -1
+	for i, colName := range colNames {
+		if colName == "log;timestamp;number" || colName == "span;timestamp;number" {
+			tsIdx = i
+			break
+		}
+	}
+	if tsIdx == -1 {
+		for i, colName := range colNames {
+			if colName == "timestamp" || colName == "timestamp_datetime" {
+				tsIdx = i
+				break
+			}
+		}
 	}
 
+	// Pre-compute per-column JSON flags.
+	isJSON := make([]bool, colCnt)
+	for i, colType := range colTypes {
+		dbt := strings.ToUpper(colType.DatabaseTypeName())
+		// Since the driver fails to decode JSON/Dynamic into native Go values, we read it as raw bytes
+		// TODO: check in future if fixed in the driver
+		isJSON[i] = strings.HasPrefix(dbt, "JSON")
+	}
+
+	scan := make([]any, colCnt)
 	var outRows []*qbtypes.RawRow
 
 	for rows.Next() {
-		// fresh copy of the scan slice (otherwise the driver reuses pointers)
-		scan := make([]any, colCnt)
-		for i := range scanTpl {
-			scan[i] = makeScanTarget(i)
+		// Allocate fresh scan targets each row so the driver does not overwrite
+		// values from the previous row.
+		for i, colType := range colTypes {
+			if isJSON[i] {
+				var v []byte
+				scan[i] = &v
+			} else {
+				scan[i] = reflect.New(colType.ScanType()).Interface()
+			}
 		}
 
 		if err := rows.Scan(scan...); err != nil {
@@ -389,36 +424,28 @@ func readAsRaw(rows driver.Rows, queryName string) (*qbtypes.RawData, error) {
 		}
 
 		for i, cellPtr := range scan {
-			name := colNames[i]
+			if isJSON[i] {
+				b := *cellPtr.(*[]byte)
+				rr.Data[outputNames[i]] = string(b)
+				continue
+			}
 
-			// de-reference the typed pointer to any
 			val := reflect.ValueOf(cellPtr).Elem().Interface()
-			// Post-process JSON columns: normalize into String value
-			if strings.HasPrefix(strings.ToUpper(colTypes[i].DatabaseTypeName()), "JSON") {
-				switch x := val.(type) {
-				case []byte:
-					val = string(x)
-				default:
-					// already a structured type (map[string]any, []any, etc.)
-				}
-			}
 
-			// special-case: timestamp column
-			if name == "timestamp" || name == "timestamp_datetime" {
-				switch t := val.(type) {
+			if i == tsIdx {
+				switch tv := val.(type) {
 				case time.Time:
-					rr.Timestamp = t
-				case uint64: // epoch-ns stored as integer
-					rr.Timestamp = time.Unix(0, int64(t))
+					rr.Timestamp = tv
+				case uint64:
+					rr.Timestamp = time.Unix(0, int64(tv))
 				case int64:
-					rr.Timestamp = time.Unix(0, t)
-				default:
-					// leave zero time if unrecognised
+					rr.Timestamp = time.Unix(0, tv)
 				}
 			}
 
-			rr.Data[name] = val
+			rr.Data[outputNames[i]] = val
 		}
+
 		outRows = append(outRows, &rr)
 	}
 	if err := rows.Err(); err != nil {

@@ -60,7 +60,12 @@ func CollisionHandledFinalExpr(
 	}
 
 	fieldExpression, fieldForErr := fm.FieldFor(ctx, startNs, endNs, field)
-	if errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
+	if fieldForErr != nil {
+		if !errors.Is(fieldForErr, qbtypes.ErrColumnNotFound) {
+			// fm.FieldFor returned an error
+			return "", nil, fieldForErr
+		}
+
 		// the key didn't have the right context to be added to the query
 		// we try to use the context we know of
 		keysForField := keys[field.Name]

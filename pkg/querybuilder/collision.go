@@ -298,3 +298,42 @@ func AdjustKeysForAliasExpressions[T any](query *qbtypes.QueryBuilderQuery[T], r
 	}
 	return actions
 }
+
+// maybeAddDefaultSelectFields prepends default fields (id, timestamp) to query.SelectFields
+// if they are not already covered by an existing entry.
+// A select field covers a default field when the names match and the select field's
+// context is either unspecified or equal to the default field's context.
+// 3 cases:
+// 1. log.timestamp:number in select fields; we skip
+// 2. timestamp is present in select fields; we skip
+// 3. attribute.timestamp in select fields; we add it.
+func MaybeAddDefaultSelectFields[T any](
+	query *qbtypes.QueryBuilderQuery[T],
+	defaultSelectFields []telemetrytypes.TelemetryFieldKey,
+) {
+	var toAdd []telemetrytypes.TelemetryFieldKey
+	for i := range defaultSelectFields {
+		if !isDefaultSelectFieldCovered(&defaultSelectFields[i], query.SelectFields) {
+			toAdd = append(toAdd, defaultSelectFields[i])
+		}
+	}
+	if len(toAdd) > 0 {
+		query.SelectFields = append(toAdd, query.SelectFields...)
+	}
+}
+
+// isDefaultSelectFieldCovered returns true if any entry in selectFields covers the
+// given default field. A field covers a default when the names match and the field's
+// context is either unspecified or equal to the default's context.
+func isDefaultSelectFieldCovered(defaultField *telemetrytypes.TelemetryFieldKey, selectFields []telemetrytypes.TelemetryFieldKey) bool {
+	for i := range selectFields {
+		if selectFields[i].Name != defaultField.Name {
+			continue
+		}
+		if selectFields[i].FieldContext == telemetrytypes.FieldContextUnspecified ||
+			selectFields[i].FieldContext == defaultField.FieldContext {
+			return true
+		}
+	}
+	return false
+}
