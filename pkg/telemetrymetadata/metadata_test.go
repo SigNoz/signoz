@@ -503,3 +503,71 @@ func TestGetMeterSourceMetricFieldValuesAppliesMetricNamespace(t *testing.T) {
 	assert.ElementsMatch(t, []string{"frontend"}, values.StringValues)
 	require.NoError(t, mock.ExpectationsWereMet())
 }
+
+func TestGetMetricsKeysAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+
+	rows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "name", Type: "String"},
+		{Name: "field_context", Type: "String"},
+		{Name: "field_data_type", Type: "String"},
+		{Name: "priority", Type: "UInt8"},
+	}, [][]any{{"service.name", "resource", "String", 1}})
+
+	mock.ExpectQuery(`(?s)SELECT.*distributed_metadata.*metric_name LIKE.*`).
+		WithArgs("%service%", "\\_\\_%", "system.cpu%", 11).
+		WillReturnRows(rows)
+
+	keys, complete, err := metadata.(*telemetryMetaStore).getMetricsKeys(context.Background(), []*telemetrytypes.FieldKeySelector{
+		{
+			Signal:            telemetrytypes.SignalMetrics,
+			Name:              "service",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Len(t, keys, 1)
+	assert.Equal(t, "service.name", keys[0].Name)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
+
+func TestGetMeterSourceMetricKeysAppliesMetricNamespace(t *testing.T) {
+	mockTelemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &regexMatcher{})
+	mock := mockTelemetryStore.Mock()
+
+	metadata := newTestTelemetryMetaStoreTestHelper(mockTelemetryStore)
+
+	rows := cmock.NewRows([]cmock.ColumnType{
+		{Name: "attr_name", Type: "String"},
+	}, [][]any{{"service.name"}})
+
+	mock.ExpectQuery(`SELECT.*distributed_samples_agg_1d.*metric_name LIKE.*`).
+		WithArgs("%service%", "\\_\\_%", "system.cpu%", 10).
+		WillReturnRows(rows)
+
+	keys, complete, err := metadata.(*telemetryMetaStore).getMeterSourceMetricKeys(context.Background(), []*telemetrytypes.FieldKeySelector{
+		{
+			Signal:            telemetrytypes.SignalMetrics,
+			Source:            telemetrytypes.SourceMeter,
+			Name:              "service",
+			Limit:             10,
+			SelectorMatchType: telemetrytypes.FieldSelectorMatchTypeFuzzy,
+			MetricContext: &telemetrytypes.MetricContext{
+				MetricNamespace: "system.cpu",
+			},
+		},
+	})
+	require.NoError(t, err)
+	assert.True(t, complete)
+	assert.Len(t, keys, 1)
+	assert.Equal(t, "service.name", keys[0].Name)
+	require.NoError(t, mock.ExpectationsWereMet())
+}
