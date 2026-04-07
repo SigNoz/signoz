@@ -128,9 +128,8 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
 				ctx, "not enough data points to evaluate series, skipping",
-				slog.String("rule.id", r.ID()),
-				slog.Int("num_points", len(series.Values)),
-				slog.Int("required_points", r.Condition().RequiredNumPoints),
+				slog.Int("series.num_points", len(series.Values)),
+				slog.Int("series.required_points", r.Condition().RequiredNumPoints),
 			)
 			continue
 		}
