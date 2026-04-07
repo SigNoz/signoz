@@ -1,6 +1,8 @@
 package cloudintegrationtypes
 
 import (
+	"fmt"
+
 	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -14,10 +16,14 @@ var (
 	CloudProviderTypeAzure = CloudProviderType{valuer.NewString("azure")}
 
 	// errors.
-	ErrCodeCloudProviderInvalidInput = errors.MustNewCode("invalid_cloud_provider")
+	ErrCodeCloudProviderInvalidInput = errors.MustNewCode("cloud_integration_invalid_cloud_provider")
 
 	AWSIntegrationUserEmail   = valuer.MustNewEmail("aws-integration@signoz.io")
 	AzureIntegrationUserEmail = valuer.MustNewEmail("azure-integration@signoz.io")
+
+	CloudFormationQuickCreateBaseURL  = valuer.NewString("https://%s.console.aws.amazon.com/cloudformation/home")
+	AgentCloudFormationTemplateS3Path = valuer.NewString("https://signoz-integrations.s3.us-east-1.amazonaws.com/aws-quickcreate-template-%s.json")
+	AgentCloudFormationBaseStackName  = valuer.NewString("signoz-integration")
 )
 
 // CloudIntegrationUserEmails is the list of valid emails for Cloud One Click integrations.
@@ -38,4 +44,19 @@ func NewCloudProvider(provider string) (CloudProviderType, error) {
 	default:
 		return CloudProviderType{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider)
 	}
+}
+
+func GetCloudProviderEmail(provider CloudProviderType) (valuer.Email, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		return AWSIntegrationUserEmail, nil
+	case CloudProviderTypeAzure:
+		return AzureIntegrationUserEmail, nil
+	default:
+		return valuer.Email{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+	}
+}
+
+func NewIngestionKeyName(provider CloudProviderType) string {
+	return fmt.Sprintf("%s-integration", provider.StringValue())
 }

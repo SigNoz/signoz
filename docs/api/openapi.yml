@@ -405,11 +405,11 @@ components:
       type: object
     CloudintegrationtypesAWSCollectionStrategy:
       properties:
-        aws_logs:
+        logs:
           $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
-        aws_metrics:
+        metrics:
           $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
-        s3_buckets:
+        s3Buckets:
           additionalProperties:
             items:
               type: string
@@ -449,12 +449,12 @@ components:
       type: object
     CloudintegrationtypesAWSLogsStrategy:
       properties:
-        cloudwatch_logs_subscriptions:
+        cloudwatchLogsSubscriptions:
           items:
             properties:
-              filter_pattern:
+              filterPattern:
                 type: string
-              log_group_name_prefix:
+              logGroupNamePrefix:
                 type: string
             type: object
           nullable: true
@@ -462,7 +462,7 @@ components:
       type: object
     CloudintegrationtypesAWSMetricsStrategy:
       properties:
-        cloudwatch_metric_stream_filters:
+        cloudwatchMetricStreamFilters:
           items:
             properties:
               MetricNames:
@@ -486,7 +486,7 @@ components:
       properties:
         enabled:
           type: boolean
-        s3_buckets:
+        s3Buckets:
           additionalProperties:
             items:
               type: string
@@ -561,6 +561,26 @@ components:
           nullable: true
           type: array
       type: object
+    CloudintegrationtypesCloudIntegrationService:
+      nullable: true
+      properties:
+        cloudIntegrationId:
+          type: string
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
+        createdAt:
+          format: date-time
+          type: string
+        id:
+          type: string
+        type:
+          $ref: '#/components/schemas/CloudintegrationtypesServiceID'
+        updatedAt:
+          format: date-time
+          type: string
+      required:
+      - id
+      type: object
     CloudintegrationtypesCollectedLogAttribute:
       properties:
         name:
@@ -596,6 +616,16 @@ components:
       - aws
       type: object
     CloudintegrationtypesConnectionArtifactRequest:
+      properties:
+        config:
+          $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifactRequestConfig'
+        credentials:
+          $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+      required:
+      - config
+      - credentials
+      type: object
+    CloudintegrationtypesConnectionArtifactRequestConfig:
       properties:
         aws:
           $ref: '#/components/schemas/CloudintegrationtypesAWSConnectionArtifactRequest'
@@ -694,10 +724,53 @@ components:
             type: string
           type: array
         telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSCollectionStrategy'
       required:
       - enabled_regions
       - telemetry
+      type: object
+    CloudintegrationtypesOldAWSCollectionStrategy:
+      properties:
+        aws_logs:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSLogsStrategy'
+        aws_metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesOldAWSMetricsStrategy'
+        provider:
+          type: string
+        s3_buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
+      type: object
+    CloudintegrationtypesOldAWSLogsStrategy:
+      properties:
+        cloudwatch_logs_subscriptions:
+          items:
+            properties:
+              filter_pattern:
+                type: string
+              log_group_name_prefix:
+                type: string
+            type: object
+          nullable: true
+          type: array
+      type: object
+    CloudintegrationtypesOldAWSMetricsStrategy:
+      properties:
+        cloudwatch_metric_stream_filters:
+          items:
+            properties:
+              MetricNames:
+                items:
+                  type: string
+                type: array
+              Namespace:
+                type: string
+            type: object
+          nullable: true
+          type: array
       type: object
     CloudintegrationtypesPostableAgentCheckInRequest:
       properties:
@@ -727,6 +800,8 @@ components:
       properties:
         assets:
           $ref: '#/components/schemas/CloudintegrationtypesAssets'
+        cloudIntegrationService:
+          $ref: '#/components/schemas/CloudintegrationtypesCloudIntegrationService'
         dataCollected:
           $ref: '#/components/schemas/CloudintegrationtypesDataCollected'
         icon:
@@ -735,9 +810,7 @@ components:
           type: string
         overview:
           type: string
-        serviceConfig:
-          $ref: '#/components/schemas/CloudintegrationtypesServiceConfig'
-        supported_signals:
+        supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
         telemetryCollectionStrategy:
           $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
@@ -749,9 +822,10 @@ components:
       - icon
       - overview
       - assets
-      - supported_signals
+      - supportedSignals
       - dataCollected
       - telemetryCollectionStrategy
+      - cloudIntegrationService
       type: object
     CloudintegrationtypesServiceConfig:
       properties:
@@ -760,6 +834,22 @@ components:
       required:
       - aws
       type: object
+    CloudintegrationtypesServiceID:
+      enum:
+      - alb
+      - api-gateway
+      - dynamodb
+      - ec2
+      - ecs
+      - eks
+      - elasticache
+      - lambda
+      - msk
+      - rds
+      - s3sync
+      - sns
+      - sqs
+      type: string
     CloudintegrationtypesServiceMetadata:
       properties:
         enabled:
@@ -775,6 +865,22 @@ components:
       - title
       - icon
       - enabled
+      type: object
+    CloudintegrationtypesSignozCredentials:
+      properties:
+        ingestionKey:
+          type: string
+        ingestionUrl:
+          type: string
+        sigNozApiKey:
+          type: string
+        sigNozApiURL:
+          type: string
+      required:
+      - sigNozApiURL
+      - sigNozApiKey
+      - ingestionUrl
+      - ingestionKey
       type: object
     CloudintegrationtypesSupportedSignals:
       properties:
@@ -3394,6 +3500,61 @@ paths:
       summary: Update account
       tags:
       - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/accounts/{id}/services/{service_id}:
+    put:
+      deprecated: false
+      description: This endpoint updates a service for the specified cloud provider
+      operationId: UpdateService
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: id
+        required: true
+        schema:
+          type: string
+      - in: path
+        name: service_id
+        required: true
+        schema:
+          type: string
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
+      responses:
+        "204":
+          description: No Content
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Update service
+      tags:
+      - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/accounts/check_in:
     post:
       deprecated: false
@@ -3449,6 +3610,59 @@ paths:
       - tokenizer:
         - VIEWER
       summary: Agent check-in
+      tags:
+      - cloudintegration
+  /api/v1/cloud_integrations/{cloud_provider}/credentials:
+    get:
+      deprecated: false
+      description: This endpoint retrieves the connection credentials required for
+        integration
+      operationId: GetConnectionCredentials
+      parameters:
+      - in: path
+        name: cloud_provider
+        required: true
+        schema:
+          type: string
+      responses:
+        "200":
+          content:
+            application/json:
+              schema:
+                properties:
+                  data:
+                    $ref: '#/components/schemas/CloudintegrationtypesSignozCredentials'
+                  status:
+                    type: string
+                required:
+                - status
+                - data
+                type: object
+          description: OK
+        "401":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Unauthorized
+        "403":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Forbidden
+        "500":
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RenderErrorResponse'
+          description: Internal Server Error
+      security:
+      - api_key:
+        - ADMIN
+      - tokenizer:
+        - ADMIN
+      summary: Get connection credentials
       tags:
       - cloudintegration
   /api/v1/cloud_integrations/{cloud_provider}/services:
@@ -3559,55 +3773,6 @@ paths:
       - tokenizer:
         - ADMIN
       summary: Get service
-      tags:
-      - cloudintegration
-    put:
-      deprecated: false
-      description: This endpoint updates a service for the specified cloud provider
-      operationId: UpdateService
-      parameters:
-      - in: path
-        name: cloud_provider
-        required: true
-        schema:
-          type: string
-      - in: path
-        name: service_id
-        required: true
-        schema:
-          type: string
-      requestBody:
-        content:
-          application/json:
-            schema:
-              $ref: '#/components/schemas/CloudintegrationtypesUpdatableService'
-      responses:
-        "204":
-          description: No Content
-        "401":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Unauthorized
-        "403":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Forbidden
-        "500":
-          content:
-            application/json:
-              schema:
-                $ref: '#/components/schemas/RenderErrorResponse'
-          description: Internal Server Error
-      security:
-      - api_key:
-        - ADMIN
-      - tokenizer:
-        - ADMIN
-      summary: Update service
       tags:
       - cloudintegration
   /api/v1/complete/google:

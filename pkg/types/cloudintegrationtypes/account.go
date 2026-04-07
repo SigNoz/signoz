@@ -1,8 +1,10 @@
 package cloudintegrationtypes
 
 import (
+	"encoding/json"
 	"time"
 
+	"github.com/SigNoz/signoz/pkg/errors"
 	"github.com/SigNoz/signoz/pkg/types"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -33,12 +35,176 @@ type GettableAccounts struct {
 	Accounts []*Account `json:"accounts" required:"true" nullable:"false"`
 }
 
-type GettableAccount = Account
-
 type UpdatableAccount struct {
 	Config *AccountConfig `json:"config" required:"true" nullable:"false"`
 }
 
 type AWSAccountConfig struct {
 	Regions []string `json:"regions" required:"true" nullable:"false"`
+}
+
+func NewAccount(orgID valuer.UUID, provider CloudProviderType, config *AccountConfig) *Account {
+	return &Account{
+		Identifiable: types.Identifiable{
+			ID: valuer.GenerateUUID(),
+		},
+		TimeAuditable: types.TimeAuditable{
+			CreatedAt: time.Now(),
+			UpdatedAt: time.Now(),
+		},
+		OrgID:    orgID,
+		Provider: provider,
+		Config:   config,
+	}
+}
+
+func NewAccountFromStorable(storableAccount *StorableCloudIntegration) (*Account, error) {
+	// config can not be empty
+	if storableAccount.Config == "" {
+		return nil, errors.NewInternalf(errors.CodeInternal, "config is empty for account with id: %s", storableAccount.ID)
+	}
+
+	account := &Account{
+		Identifiable:      storableAccount.Identifiable,
+		TimeAuditable:     storableAccount.TimeAuditable,
+		ProviderAccountID: storableAccount.AccountID,
+		Provider:          storableAccount.Provider,
+		RemovedAt:         storableAccount.RemovedAt,
+		OrgID:             storableAccount.OrgID,
+		Config:            new(AccountConfig),
+	}
+
+	switch storableAccount.Provider {
+	case CloudProviderTypeAWS:
+		awsConfig := new(AWSAccountConfig)
+		err := json.Unmarshal([]byte(storableAccount.Config), awsConfig)
+		if err != nil {
+			return nil, err
+		}
+		account.Config.AWS = awsConfig
+	}
+
+	if storableAccount.LastAgentReport != nil {
+		account.AgentReport = &AgentReport{
+			TimestampMillis: storableAccount.LastAgentReport.TimestampMillis,
+			Data:            storableAccount.LastAgentReport.Data,
+		}
+	}
+
+	return account, nil
+}
+
+func NewAccountsFromStorables(storableAccounts []*StorableCloudIntegration) ([]*Account, error) {
+	accounts := make([]*Account, 0, len(storableAccounts))
+	for _, storableAccount := range storableAccounts {
+		account, err := NewAccountFromStorable(storableAccount)
+		if err != nil {
+			return nil, err
+		}
+		accounts = append(accounts, account)
+	}
+
+	return accounts, nil
+}
+
+func (account *Account) Update(config *AccountConfig) error {
+	if account.RemovedAt != nil {
+		return errors.New(errors.TypeUnsupported, ErrCodeCloudIntegrationRemoved, "this operation is not supported for a removed cloud integration account")
+	}
+	account.Config = config
+	account.UpdatedAt = time.Now()
+	return nil
+}
+
+func (account *Account) IsRemoved() bool {
+	return account.RemovedAt != nil
+}
+
+func NewAccountConfigFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*AccountConfig, error) {
+	switch provider {
+	case CloudProviderTypeAWS:
+		if artifact.Config.Aws == nil {
+			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
+		}
+		return &AccountConfig{
+			AWS: &AWSAccountConfig{
+				Regions: artifact.Config.Aws.Regions,
+			},
+		}, nil
+	}
+
+	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+}
+
+func NewArtifactRequestFromPostableArtifact(provider CloudProviderType, artifact *PostableConnectionArtifact) (*ConnectionArtifactRequest, error) {
+	req := &ConnectionArtifactRequest{
+		Credentials: artifact.Credentials,
+	}
+
+	switch provider {
+	case CloudProviderTypeAWS:
+		if artifact.Config.Aws == nil {
+			return nil, errors.NewInternalf(errors.CodeInternal, "AWS artifact is nil")
+		}
+		req.Config = &ConnectionArtifactRequestConfig{
+			Aws: &AWSConnectionArtifactRequest{
+				DeploymentRegion: artifact.Config.Aws.DeploymentRegion,
+				Regions:          artifact.Config.Aws.Regions,
+			},
+		}
+
+		return req, nil
+	}
+
+	return nil, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
+}
+
+func NewAgentReport(data map[string]any) *AgentReport {
+	return &AgentReport{
+		TimestampMillis: time.Now().UnixMilli(),
+		Data:            data,
+	}
+}
+
+// ToJSON return JSON bytes for the provider's config
+// thats why not naming it MarshalJSON(), as it will interfere with default JSON marshalling of AccountConfig struct.
+// NOTE: this entertains first non-null provider's config.
+func (config *AccountConfig) ToJSON() ([]byte, error) {
+	if config.AWS != nil {
+		return json.Marshal(config.AWS)
+	}
+
+	return nil, errors.NewInternalf(errors.CodeInternal, "no provider account config found")
+}
+
+func (updatable *UpdatableAccount) Validate(provider CloudProviderType) error {
+	if updatable.Config == nil {
+		return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+			"config is required")
+	}
+
+	switch provider {
+	case CloudProviderTypeAWS:
+		if updatable.Config.AWS == nil {
+			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+				"aws configuration is required")
+		}
+
+		if len(updatable.Config.AWS.Regions) == 0 {
+			return errors.New(errors.TypeInvalidInput, ErrCodeInvalidInput,
+				"at least one region is required")
+		}
+
+		for _, region := range updatable.Config.AWS.Regions {
+			if _, ok := ValidAWSRegions[region]; !ok {
+				return errors.Newf(errors.TypeInvalidInput, ErrCodeInvalidCloudRegion,
+					"invalid AWS region: %s", region)
+			}
+		}
+	default:
+		return errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput,
+			"invalid cloud provider: %s", provider.StringValue())
+	}
+
+	return nil
 }
