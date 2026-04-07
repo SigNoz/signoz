@@ -105,5 +105,5 @@ export function buildTooltipContent({
 		}
 	}
 
-	return items.sort((a, b) => b.value - a.value);
+	return items;
 }

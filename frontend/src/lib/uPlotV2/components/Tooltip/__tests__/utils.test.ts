@@ -206,20 +206,20 @@ describe('Tooltip utils', () => {
 			});
 
 			expect(result).toHaveLength(2);
-			// Series are returned sorted descending by value (B=20 before A=10)
+			// Series are returned in series-index order (A=index 1 before B=index 2)
 			expect(result[0]).toMatchObject<Partial<TooltipContentItem>>({
-				label: 'B',
-				value: 20,
-				tooltipValue: 'formatted-20',
-				color: 'color-2',
-				isActive: true,
-			});
-			expect(result[1]).toMatchObject<Partial<TooltipContentItem>>({
 				label: 'A',
 				value: 10,
 				tooltipValue: 'formatted-10',
 				color: '#ff0000',
 				isActive: false,
+			});
+			expect(result[1]).toMatchObject<Partial<TooltipContentItem>>({
+				label: 'B',
+				value: 20,
+				tooltipValue: 'formatted-20',
+				color: 'color-2',
+				isActive: true,
 			});
 		});
 
@@ -274,7 +274,7 @@ describe('Tooltip utils', () => {
 			expect(result[1].value).toBe(30);
 		});
 
-		it('returns items sorted descending by value regardless of series order', () => {
+		it('returns items in series-index order', () => {
 			// Series values in non-sorted order: 3, 1, 4, 2
 			const data: AlignedData = [[0], [3], [1], [4], [2]];
 			const series: Series[] = [
@@ -297,7 +297,7 @@ describe('Tooltip utils', () => {
 				decimalPrecision,
 			});
 
-			expect(result.map((item) => item.value)).toEqual([4, 3, 2, 1]);
+			expect(result.map((item) => item.value)).toEqual([3, 1, 4, 2]);
 		});
 	});
 });
