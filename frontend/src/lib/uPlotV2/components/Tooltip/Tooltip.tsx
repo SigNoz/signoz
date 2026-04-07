@@ -9,7 +9,7 @@ import { useTimezone } from 'providers/Timezone';
 import { TooltipProps } from '../types';
 import TooltipItem from './components/TooltipItem/TooltipItem';
 
-import './Tooltip.styles.scss';
+import Styles from './Tooltip.module.scss';
 
 // Fallback per-item height used for the initial size estimate before
 // Virtuoso reports the real total height via totalListHeightChanged.
@@ -73,16 +73,16 @@ export default function Tooltip({
 
 	return (
 		<div
-			className={cx(
-				'uplot-tooltip-container',
-				isDarkMode ? 'darkMode' : 'lightMode',
-			)}
+			className={cx(Styles.uplotTooltipContainer, !isDarkMode && Styles.lightMode)}
 			data-testid="uplot-tooltip-container"
 		>
 			{showHeader && (
-				<div className="uplot-tooltip-header-container">
+				<div className={Styles.uplotTooltipHeaderContainer}>
 					{showTooltipHeader && headerTitle && (
-						<div className="uplot-tooltip-header" data-testid="uplot-tooltip-header">
+						<div
+							className={Styles.uplotTooltipHeader}
+							data-testid="uplot-tooltip-header"
+						>
 							<span>{headerTitle}</span>
 						</div>
 					)}
@@ -99,11 +99,11 @@ export default function Tooltip({
 				</div>
 			)}
 
-			{showDivider && <span className="uplot-tooltip-divider" />}
+			{showDivider && <span className={Styles.uplotTooltipDivider} />}
 
 			{showList && (
 				<Virtuoso
-					className="uplot-tooltip-list"
+					className={Styles.uplotTooltipList}
 					data-testid="uplot-tooltip-list"
 					data={tooltipContent}
 					style={{ height: virtuosoHeight, width: '100%' }}

@@ -1,6 +1,6 @@
 import { TooltipContentItem } from '../../../types';
 
-import './TooltipItem.styles.scss';
+import Styles from './TooltipItem.module.scss';
 
 interface TooltipItemProps {
 	item: TooltipContentItem;
@@ -19,7 +19,7 @@ export default function TooltipItem({
 }: TooltipItemProps): JSX.Element {
 	return (
 		<div
-			className="uplot-tooltip-item"
+			className={Styles.uplotTooltipItem}
 			style={{
 				opacity: isItemActive ? 1 : 0.7,
 				fontWeight: isItemActive ? 700 : 400,
@@ -27,22 +27,22 @@ export default function TooltipItem({
 			data-testid={containerTestId}
 		>
 			<div
-				className="uplot-tooltip-item-marker"
+				className={Styles.uplotTooltipItemMarker}
 				style={{ borderColor: item.color }}
 				data-is-legend-marker={true}
 				data-testid={markerTestId}
 			/>
 			<div
-				className="uplot-tooltip-item-content"
+				className={Styles.uplotTooltipItemContent}
 				style={{ color: item.color }}
 				data-testid={contentTestId}
 			>
-				<span className="uplot-tooltip-item-label">{item.label}</span>
+				<span className={Styles.uplotTooltipItemLabel}>{item.label}</span>
 				<span
-					className="uplot-tooltip-item-content-separator"
+					className={Styles.uplotTooltipItemContentSeparator}
 					style={{ borderColor: item.color }}
 				/>
-				<span className="uplot-tooltip-item-value">{item.tooltipValue}</span>
+				<span>{item.tooltipValue}</span>
 			</div>
 		</div>
 	);

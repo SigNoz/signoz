@@ -1,4 +1,4 @@
-.uplot-tooltip-container {
+.uplotTooltipContainer {
 	font-family: 'Inter';
 	font-size: 12px;
 	background: var(--bg-ink-300);
@@ -15,19 +15,19 @@
 		color: var(--bg-ink-500);
 		border: 1px solid var(--bg-vanilla-300);
 
-		.uplot-tooltip-list {
+		.uplotTooltipList {
 			&::-webkit-scrollbar-thumb {
 				background: var(--bg-vanilla-400);
 			}
 		}
 
-		.uplot-tooltip-divider {
+		.uplotTooltipDivider {
 			background-color: var(--bg-vanilla-300);
 		}
 	}
 
-	.uplot-tooltip-header-container {
-		padding: 1rem 0.5rem 0 1rem;
+	.uplotTooltipHeaderContainer {
+		padding: 1rem 1rem 0 1rem;
 		display: flex;
 		flex-direction: column;
 		gap: 8px;
@@ -36,27 +36,24 @@
 			padding-bottom: 1rem;
 		}
 
-		.uplot-tooltip-header {
+		.uplotTooltipHeader {
 			font-size: 13px;
 			font-weight: 500;
 		}
-
-		.uplot-tooltip-item {
-			padding: 4px 8px 4px 0;
-		}
 	}
 
-	.uplot-tooltip-divider {
+	.uplotTooltipDivider {
 		width: 100%;
 		height: 1px;
 		background-color: var(--bg-ink-100);
 	}
 
-	.uplot-tooltip-list {
+	.uplotTooltipList {
 		// Virtuoso absolutely positions its item rows; left: 0 prevents accidental
 		// horizontal offset when the scroller has padding or transform applied.
 		div[data-viewport-type='element'] {
 			left: 0;
+			padding: 4px 8px 4px 16px;
 		}
 
 		&::-webkit-scrollbar {
