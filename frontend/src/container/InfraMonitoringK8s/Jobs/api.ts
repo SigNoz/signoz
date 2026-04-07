@@ -1,22 +1,10 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
-
-export interface K8sJobsListPayload {
-	filters: TagFilter;
-	groupBy?: BaseAutocompleteData[];
-	offset?: number;
-	limit?: number;
-	orderBy?: {
-		columnName: string;
-		order: 'asc' | 'desc';
-	};
-}
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sJobsData {
 	jobName: string;
@@ -68,7 +56,7 @@ export function mapJobsMeta(raw: Record<string, unknown>): K8sJobsData['meta'] {
 }
 
 export const getK8sJobsList = async (
-	props: K8sJobsListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
@@ -80,7 +68,7 @@ export const getK8sJobsList = async (
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
+							items: props.filters?.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;
@@ -113,7 +101,6 @@ export const getK8sJobsList = async (
 		});
 		const payload: K8sJobsListResponse = response.data;
 
-		// one-liner meta mapping
 		payload.data.records = payload.data.records.map((record) => ({
 			...record,
 			meta: mapJobsMeta(record.meta as Record<string, unknown>),

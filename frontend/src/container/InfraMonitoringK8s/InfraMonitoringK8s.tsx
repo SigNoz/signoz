@@ -403,11 +403,7 @@ export default function InfraMonitoringK8s(): JSX.Element {
 						)}
 
 						{selectedCategory === K8sCategories.JOBS && (
-							<K8sJobsList
-								isFiltersVisible={showFilters}
-								handleFilterVisibilityChange={handleFilterVisibilityChange}
-								quickFiltersLastUpdated={quickFiltersLastUpdated}
-							/>
+							<K8sJobsList controlListPrefix={showFiltersComp} />
 						)}
 
 						{selectedCategory === K8sCategories.DAEMONSETS && (
