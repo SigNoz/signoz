@@ -4,7 +4,7 @@ import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
 
-import { K8sBaseFilters } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 
 export interface K8sVolumesData {
 	persistentVolumeClaimName: string;
@@ -37,6 +37,7 @@ export interface K8sVolumesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const volumesMetaMap: Array<{
 	dot: keyof Record<string, unknown>;
 	under: keyof K8sVolumesData['meta'];
@@ -82,15 +83,13 @@ export const getK8sVolumesList = async (
 			...(orderBy != null ? { orderBy } : {}),
 		};
 
-		const requestProps =
-			dotMetricsEnabled && Array.isArray(basePayload.filters?.items)
-				? {
-						...basePayload,
-						filters: {
-							...basePayload.filters,
-							items: basePayload.filters.items.reduce<
-								typeof basePayload.filters.items
-							>((acc, item) => {
+		const requestProps = dotMetricsEnabled
+			? {
+					...basePayload,
+					filters: {
+						...basePayload.filters,
+						items: basePayload.filters.items.reduce<typeof basePayload.filters.items>(
+							(acc, item) => {
 								if (item.value === undefined) {
 									return acc;
 								}
@@ -106,10 +105,12 @@ export const getK8sVolumesList = async (
 									acc.push(item);
 								}
 								return acc;
-							}, [] as typeof basePayload.filters.items),
-						},
-				  }
-				: basePayload;
+							},
+							[] as typeof basePayload.filters.items,
+						),
+					},
+			  }
+			: basePayload;
 
 		const response = await axios.post('/pvcs/list', requestProps, {
 			signal,

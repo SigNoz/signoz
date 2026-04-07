@@ -2,34 +2,43 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { K8sRenderedRowData } from '../Base/K8sBaseList';
+import { K8sRenderedRowData } from '../Base/types';
 import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
 import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
 import { formatBytes, ValidateColumnValueWrapper } from '../commonUtils';
-import { K8sClusterData, K8sClustersListPayload } from './api';
+import { K8sNodeData, K8sNodesListPayload } from './api';
 
 import styles from './table.module.scss';
 
-export interface K8sClustersRowData {
+export interface K8sNodesRowData {
 	key: string;
 	itemKey: string;
-	clusterUID: string;
-	clusterName: React.ReactNode;
+	nodeUID: string;
+	nodeName: React.ReactNode;
+	clusterName: string;
 	cpu: React.ReactNode;
 	cpu_allocatable: React.ReactNode;
 	memory: React.ReactNode;
 	memory_allocatable: React.ReactNode;
-	groupedByMeta?: Record<string, string>;
+	groupedByMeta?: any;
 }
 
-export const k8sClustersColumns: IEntityColumn[] = [
+export const k8sNodesColumns: IEntityColumn[] = [
 	{
-		label: 'Cluster Group',
-		value: 'clusterGroup',
-		id: 'clusterGroup',
+		label: 'Node Group',
+		value: 'nodeGroup',
+		id: 'nodeGroup',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'hidden-on-collapse',
+	},
+	{
+		label: 'Node Name',
+		value: 'nodeName',
+		id: 'nodeName',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behavior: 'hidden-on-expand',
 	},
 	{
 		label: 'Cluster Name',
@@ -37,7 +46,7 @@ export const k8sClustersColumns: IEntityColumn[] = [
 		id: 'clusterName',
 		canBeHidden: false,
 		defaultVisibility: true,
-		behavior: 'hidden-on-expand',
+		behavior: 'always-visible',
 	},
 	{
 		label: 'CPU Usage (cores)',
@@ -73,7 +82,7 @@ export const k8sClustersColumns: IEntityColumn[] = [
 	},
 ];
 
-export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
+export const getK8sNodesListQuery = (): K8sNodesListPayload => ({
 	filters: {
 		items: [],
 		op: 'and',
@@ -81,26 +90,35 @@ export const getK8sClustersListQuery = (): K8sClustersListPayload => ({
 	orderBy: { columnName: 'cpu', order: 'desc' },
 });
 
-export const k8sClustersColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sNodesColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	{
 		title: (
 			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> CLUSTER GROUP
+				<Group size={14} /> NODE GROUP
 			</div>
 		),
-		dataIndex: 'clusterGroup',
-		key: 'clusterGroup',
+		dataIndex: 'nodeGroup',
+		key: 'nodeGroup',
 		ellipsis: true,
 		width: 150,
 		align: 'left',
 		sorter: false,
 	},
 	{
+		title: <div>Node Name</div>,
+		dataIndex: 'nodeName',
+		key: 'nodeName',
+		ellipsis: true,
+		width: 80,
+		sorter: false,
+		align: 'left',
+	},
+	{
 		title: <div>Cluster Name</div>,
 		dataIndex: 'clusterName',
 		key: 'clusterName',
 		ellipsis: true,
-		width: 150,
+		width: 80,
 		sorter: false,
 		align: 'left',
 	},
@@ -138,46 +156,44 @@ export const k8sClustersColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	},
 ];
 
-export const k8sClustersRenderRowData = (
-	cluster: K8sClusterData,
+export const k8sNodesRenderRowData = (
+	node: K8sNodeData,
 	groupBy: BaseAutocompleteData[],
 ): K8sRenderedRowData => ({
 	key: getRowKey(
-		cluster,
-		() =>
-			cluster.clusterUID ||
-			cluster.meta.k8s_cluster_uid ||
-			cluster.meta.k8s_cluster_name,
+		node,
+		() => node.nodeUID || node.meta.k8s_node_uid || node.meta.k8s_node_name,
 		groupBy,
 	),
-	itemKey: cluster.meta.k8s_cluster_name,
-	clusterUID: cluster.clusterUID || cluster.meta.k8s_cluster_uid,
-	clusterName: (
-		<Tooltip title={cluster.meta.k8s_cluster_name}>
-			{cluster.meta.k8s_cluster_name || ''}
+	itemKey: node.meta.k8s_node_name,
+	nodeUID: node.nodeUID || node.meta.k8s_node_uid,
+	nodeName: (
+		<Tooltip title={node.meta.k8s_node_name}>
+			{node.meta.k8s_node_name || ''}
 		</Tooltip>
 	),
+	clusterName: node.meta.k8s_cluster_name,
 	cpu: (
-		<ValidateColumnValueWrapper value={cluster.cpuUsage}>
-			{cluster.cpuUsage}
+		<ValidateColumnValueWrapper value={node.nodeCPUUsage}>
+			{node.nodeCPUUsage}
 		</ValidateColumnValueWrapper>
 	),
 	memory: (
-		<ValidateColumnValueWrapper value={cluster.memoryUsage}>
-			{formatBytes(cluster.memoryUsage)}
+		<ValidateColumnValueWrapper value={node.nodeMemoryUsage}>
+			{formatBytes(node.nodeMemoryUsage)}
 		</ValidateColumnValueWrapper>
 	),
 	cpu_allocatable: (
-		<ValidateColumnValueWrapper value={cluster.cpuAllocatable}>
-			{cluster.cpuAllocatable}
+		<ValidateColumnValueWrapper value={node.nodeCPUAllocatable}>
+			{node.nodeCPUAllocatable}
 		</ValidateColumnValueWrapper>
 	),
 	memory_allocatable: (
-		<ValidateColumnValueWrapper value={cluster.memoryAllocatable}>
-			{formatBytes(cluster.memoryAllocatable)}
+		<ValidateColumnValueWrapper value={node.nodeMemoryAllocatable}>
+			{formatBytes(node.nodeMemoryAllocatable)}
 		</ValidateColumnValueWrapper>
 	),
-	clusterGroup: getGroupByEl(cluster, groupBy),
-	...cluster.meta,
-	groupedByMeta: getGroupedByMeta(cluster, groupBy),
+	nodeGroup: getGroupByEl(node, groupBy),
+	...node.meta,
+	groupedByMeta: getGroupedByMeta(node, groupBy),
 });

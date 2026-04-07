@@ -6,7 +6,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { K8sBaseFilters } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 
 export interface K8sNamespacesListPayload {
 	filters: TagFilter;
@@ -41,6 +41,7 @@ export interface K8sNamespacesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const namespacesMetaMap = [
 	{ dot: 'k8s.cluster.name', under: 'k8s_cluster_name' },
 	{ dot: 'k8s.namespace.name', under: 'k8s_namespace_name' },
@@ -66,38 +67,37 @@ export const getK8sNamespacesList = async (
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sNamespacesListResponse> | ErrorResponse> => {
 	try {
-		const requestProps =
-			dotMetricsEnabled && Array.isArray(props.filters?.items)
-				? {
-						...props,
-						filters: {
-							...props.filters,
-							items: props.filters?.items.reduce<typeof props.filters.items>(
-								(acc, item) => {
-									if (item.value === undefined) {
-										return acc;
-									}
-									if (
-										item.key &&
-										typeof item.key === 'object' &&
-										'key' in item.key &&
-										typeof item.key.key === 'string'
-									) {
-										const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
-										acc.push({
-											...item,
-											key: { ...item.key, key: mappedKey },
-										});
-									} else {
-										acc.push(item);
-									}
+		const requestProps = dotMetricsEnabled
+			? {
+					...props,
+					filters: {
+						...props.filters,
+						items: props.filters?.items.reduce<typeof props.filters.items>(
+							(acc, item) => {
+								if (item.value === undefined) {
 									return acc;
-								},
-								[] as typeof props.filters.items,
-							),
-						},
-				  }
-				: props;
+								}
+								if (
+									item.key &&
+									typeof item.key === 'object' &&
+									'key' in item.key &&
+									typeof item.key.key === 'string'
+								) {
+									const mappedKey = UnderscoreToDotMap[item.key.key] ?? item.key.key;
+									acc.push({
+										...item,
+										key: { ...item.key, key: mappedKey },
+									});
+								} else {
+									acc.push(item);
+								}
+								return acc;
+							},
+							[] as typeof props.filters.items,
+						),
+					},
+			  }
+			: props;
 
 		const response = await axios.post('/namespaces/list', requestProps, {
 			signal,

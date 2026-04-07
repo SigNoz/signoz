@@ -2,7 +2,7 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { K8sRenderedRowData } from '../Base/K8sBaseList';
+import { K8sRenderedRowData } from '../Base/types';
 import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
 import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
 import {
@@ -10,23 +10,24 @@ import {
 	formatBytes,
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
-import { K8sDeploymentsData } from './api';
+import { K8sCategory } from '../constants';
+import { K8sJobsData } from './api';
 
 import styles from './table.module.scss';
 
-export const k8sDeploymentsColumns: IEntityColumn[] = [
+export const k8sJobsColumns: IEntityColumn[] = [
 	{
-		label: 'Deployment Group',
-		value: 'deploymentGroup',
-		id: 'deploymentGroup',
+		label: 'Job Group',
+		value: 'jobGroup',
+		id: 'jobGroup',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'hidden-on-collapse',
 	},
 	{
-		label: 'Deployment Name',
-		value: 'deploymentName',
-		id: 'deploymentName',
+		label: 'Job Name',
+		value: 'jobName',
+		id: 'jobName',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'hidden-on-expand',
@@ -40,17 +41,33 @@ export const k8sDeploymentsColumns: IEntityColumn[] = [
 		behavior: 'always-visible',
 	},
 	{
-		label: 'Available',
-		value: 'available_pods',
-		id: 'available_pods',
+		label: 'Successful',
+		value: 'successful_pods',
+		id: 'successful_pods',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'always-visible',
 	},
 	{
-		label: 'Desired',
-		value: 'desired_pods',
-		id: 'desired_pods',
+		label: 'Failed',
+		value: 'failed_pods',
+		id: 'failed_pods',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behavior: 'always-visible',
+	},
+	{
+		label: 'Desired Successful',
+		value: 'desired_successful_pods',
+		id: 'desired_successful_pods',
+		canBeHidden: false,
+		defaultVisibility: true,
+		behavior: 'always-visible',
+	},
+	{
+		label: 'Active',
+		value: 'active_pods',
+		id: 'active_pods',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'always-visible',
@@ -105,26 +122,26 @@ export const k8sDeploymentsColumns: IEntityColumn[] = [
 	},
 ];
 
-export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sJobsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	{
 		title: (
 			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> DEPLOYMENT GROUP
+				<Group size={14} /> JOB GROUP
 			</div>
 		),
-		dataIndex: 'deploymentGroup',
-		key: 'deploymentGroup',
+		dataIndex: 'jobGroup',
+		key: 'jobGroup',
 		ellipsis: true,
 		width: 150,
 		align: 'left',
 		sorter: false,
 	},
 	{
-		title: <div>Deployment Name</div>,
-		dataIndex: 'deploymentName',
-		key: 'deploymentName',
+		title: <div>Job Name</div>,
+		dataIndex: 'jobName',
+		key: 'jobName',
 		ellipsis: true,
-		width: 150,
+		width: 80,
 		sorter: false,
 		align: 'left',
 	},
@@ -133,31 +150,46 @@ export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		dataIndex: 'namespaceName',
 		key: 'namespaceName',
 		ellipsis: true,
-		width: 150,
-		sorter: false,
-		align: 'left',
-	},
-	{
-		title: <div>Available</div>,
-		dataIndex: 'available_pods',
-		key: 'available_pods',
-		width: 100,
-		sorter: false,
-		align: 'left',
-	},
-	{
-		title: <div>Desired</div>,
-		dataIndex: 'desired_pods',
-		key: 'desired_pods',
 		width: 80,
 		sorter: false,
+		align: 'left',
+	},
+	{
+		title: <div>Successful</div>,
+		dataIndex: 'successful_pods',
+		key: 'successful_pods',
+		ellipsis: true,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div>Failed</div>,
+		dataIndex: 'failed_pods',
+		key: 'failed_pods',
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div>Desired Successful</div>,
+		dataIndex: 'desired_successful_pods',
+		key: 'desired_successful_pods',
+		ellipsis: true,
+		sorter: true,
+		align: 'left',
+	},
+	{
+		title: <div>Active</div>,
+		dataIndex: 'active_pods',
+		key: 'active_pods',
+		sorter: true,
 		align: 'left',
 	},
 	{
 		title: <div>CPU Req Usage (%)</div>,
 		dataIndex: 'cpu_request',
 		key: 'cpu_request',
-		width: 170,
+		width: 180,
+		ellipsis: true,
 		sorter: true,
 		align: 'left',
 	},
@@ -165,7 +197,7 @@ export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		title: <div>CPU Limit Usage (%)</div>,
 		dataIndex: 'cpu_limit',
 		key: 'cpu_limit',
-		width: 170,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
@@ -181,7 +213,7 @@ export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		title: <div>Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
-		width: 170,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
@@ -189,7 +221,7 @@ export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		title: <div>Mem Limit Usage (%)</div>,
 		dataIndex: 'memory_limit',
 		key: 'memory_limit',
-		width: 170,
+		width: 120,
 		sorter: true,
 		align: 'left',
 	},
@@ -198,72 +230,101 @@ export const k8sDeploymentsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		dataIndex: 'memory',
 		key: 'memory',
 		width: 120,
+		ellipsis: true,
 		sorter: true,
 		align: 'left',
 	},
 ];
 
-export const k8sDeploymentsRenderRowData = (
-	deployment: K8sDeploymentsData,
+export const k8sJobsRenderRowData = (
+	job: K8sJobsData,
 	groupBy: BaseAutocompleteData[],
 ): K8sRenderedRowData => ({
-	key: getRowKey(deployment, () => deployment.meta.k8s_deployment_name, groupBy),
-	itemKey: deployment.meta.k8s_deployment_name,
-	deploymentName: (
-		<Tooltip title={deployment.meta.k8s_deployment_name}>
-			{deployment.meta.k8s_deployment_name || ''}
+	key: getRowKey(job, () => job.jobName || job.meta.k8s_job_name || '', groupBy),
+	itemKey: job.meta.k8s_job_name,
+	jobName: (
+		<Tooltip title={job.meta.k8s_job_name}>{job.meta.k8s_job_name || ''}</Tooltip>
+	),
+	namespaceName: (
+		<Tooltip title={job.meta.k8s_namespace_name}>
+			{job.meta.k8s_namespace_name || ''}
 		</Tooltip>
 	),
-	namespaceName: deployment.meta.k8s_namespace_name,
-	available_pods: (
-		<ValidateColumnValueWrapper value={deployment.availablePods}>
-			{deployment.availablePods}
-		</ValidateColumnValueWrapper>
-	),
-	desired_pods: (
-		<ValidateColumnValueWrapper value={deployment.desiredPods}>
-			{deployment.desiredPods}
-		</ValidateColumnValueWrapper>
-	),
-	cpu: (
-		<ValidateColumnValueWrapper value={deployment.cpuUsage}>
-			{deployment.cpuUsage}
-		</ValidateColumnValueWrapper>
-	),
 	cpu_request: (
-		<ValidateColumnValueWrapper value={deployment.cpuRequest}>
+		<ValidateColumnValueWrapper
+			value={job.cpuRequest}
+			entity={K8sCategory.JOBS}
+			attribute="CPU Request"
+		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={deployment.cpuRequest} type="request" />
+				<EntityProgressBar value={job.cpuRequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	cpu_limit: (
-		<ValidateColumnValueWrapper value={deployment.cpuLimit}>
+		<ValidateColumnValueWrapper
+			value={job.cpuLimit}
+			entity={K8sCategory.JOBS}
+			attribute="CPU Limit"
+		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={deployment.cpuLimit} type="limit" />
+				<EntityProgressBar value={job.cpuLimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
-	memory: (
-		<ValidateColumnValueWrapper value={deployment.memoryUsage}>
-			{formatBytes(deployment.memoryUsage)}
+	cpu: (
+		<ValidateColumnValueWrapper value={job.cpuUsage}>
+			{job.cpuUsage}
 		</ValidateColumnValueWrapper>
 	),
 	memory_request: (
-		<ValidateColumnValueWrapper value={deployment.memoryRequest}>
+		<ValidateColumnValueWrapper
+			value={job.memoryRequest}
+			entity={K8sCategory.JOBS}
+			attribute="Memory Request"
+		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={deployment.memoryRequest} type="request" />
+				<EntityProgressBar value={job.memoryRequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	memory_limit: (
-		<ValidateColumnValueWrapper value={deployment.memoryLimit}>
+		<ValidateColumnValueWrapper
+			value={job.memoryLimit}
+			entity={K8sCategory.JOBS}
+			attribute="Memory Limit"
+		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={deployment.memoryLimit} type="limit" />
+				<EntityProgressBar value={job.memoryLimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
-	deploymentGroup: getGroupByEl(deployment, groupBy),
-	...deployment.meta,
-	groupedByMeta: getGroupedByMeta(deployment, groupBy),
+	memory: (
+		<ValidateColumnValueWrapper value={job.memoryUsage}>
+			{formatBytes(job.memoryUsage)}
+		</ValidateColumnValueWrapper>
+	),
+	successful_pods: (
+		<ValidateColumnValueWrapper value={job.successfulPods}>
+			{job.successfulPods}
+		</ValidateColumnValueWrapper>
+	),
+	desired_successful_pods: (
+		<ValidateColumnValueWrapper value={job.desiredSuccessfulPods}>
+			{job.desiredSuccessfulPods}
+		</ValidateColumnValueWrapper>
+	),
+	failed_pods: (
+		<ValidateColumnValueWrapper value={job.failedPods}>
+			{job.failedPods}
+		</ValidateColumnValueWrapper>
+	),
+	active_pods: (
+		<ValidateColumnValueWrapper value={job.activePods}>
+			{job.activePods}
+		</ValidateColumnValueWrapper>
+	),
+	jobGroup: getGroupByEl(job, groupBy),
+	...job.meta,
+	groupedByMeta: getGroupedByMeta(job, groupBy),
 });

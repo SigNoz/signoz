@@ -4,7 +4,8 @@ import { FeatureKeys } from 'constants/features';
 import { useAppContext } from 'providers/App/App';
 
 import K8sBaseDetails, { K8sDetailsFilters } from '../Base/K8sBaseDetails';
-import { K8sBaseFilters, K8sBaseList } from '../Base/K8sBaseList';
+import { K8sBaseList } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 import { K8sCategory } from '../constants';
 import { getK8sDaemonSetsList, K8sDaemonSetsData } from './api';
 import {
@@ -21,7 +22,7 @@ import {
 	k8sDaemonSetsColumns,
 	k8sDaemonSetsColumnsConfig,
 	k8sDaemonSetsRenderRowData,
-} from './table';
+} from './table.config';
 
 function K8sDaemonSetsList({
 	controlListPrefix,

@@ -6,7 +6,7 @@ import { ErrorResponse, SuccessResponse } from 'types/api';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { K8sBaseFilters } from '../Base/K8sBaseList';
+import { K8sBaseFilters } from '../Base/types';
 
 export interface K8sNodesListPayload {
 	filters: TagFilter;
@@ -44,6 +44,7 @@ export interface K8sNodesListResponse {
 	};
 }
 
+// TODO(H4ad): Erase this whole file when migrating to openapi
 export const nodesMetaMap = [
 	{ dot: 'k8s.node.name', under: 'k8s_node_name' },
 	{ dot: 'k8s.node.uid', under: 'k8s_node_uid' },
@@ -76,7 +77,7 @@ export const getK8sNodesList = async (
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters?.items.reduce<typeof props.filters.items>(
+							items: props.filters.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;

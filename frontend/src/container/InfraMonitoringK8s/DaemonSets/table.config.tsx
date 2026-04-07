@@ -2,7 +2,7 @@ import { TableColumnType as ColumnType, Tooltip } from 'antd';
 import { Group } from 'lucide-react';
 import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
 
-import { K8sRenderedRowData } from '../Base/K8sBaseList';
+import { K8sRenderedRowData } from '../Base/types';
 import { IEntityColumn } from '../Base/useInfraMonitoringTableColumnsStore';
 import { getGroupByEl, getGroupedByMeta, getRowKey } from '../Base/utils';
 import {
@@ -11,23 +11,23 @@ import {
 	ValidateColumnValueWrapper,
 } from '../commonUtils';
 import { K8sCategory } from '../constants';
-import { K8sJobsData } from './api';
+import { K8sDaemonSetsData } from './api';
 
 import styles from './table.module.scss';
 
-export const k8sJobsColumns: IEntityColumn[] = [
+export const k8sDaemonSetsColumns: IEntityColumn[] = [
 	{
-		label: 'Job Group',
-		value: 'jobGroup',
-		id: 'jobGroup',
+		label: 'DaemonSet Group',
+		value: 'daemonSetGroup',
+		id: 'daemonSetGroup',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'hidden-on-collapse',
 	},
 	{
-		label: 'Job Name',
-		value: 'jobName',
-		id: 'jobName',
+		label: 'DaemonSet Name',
+		value: 'daemonsetName',
+		id: 'daemonsetName',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'hidden-on-expand',
@@ -41,33 +41,17 @@ export const k8sJobsColumns: IEntityColumn[] = [
 		behavior: 'always-visible',
 	},
 	{
-		label: 'Successful',
-		value: 'successful_pods',
-		id: 'successful_pods',
+		label: 'Available',
+		value: 'available_nodes',
+		id: 'available_nodes',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'always-visible',
 	},
 	{
-		label: 'Failed',
-		value: 'failed_pods',
-		id: 'failed_pods',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Desired Successful',
-		value: 'desired_successful_pods',
-		id: 'desired_successful_pods',
-		canBeHidden: false,
-		defaultVisibility: true,
-		behavior: 'always-visible',
-	},
-	{
-		label: 'Active',
-		value: 'active_pods',
-		id: 'active_pods',
+		label: 'Desired',
+		value: 'desired_nodes',
+		id: 'desired_nodes',
 		canBeHidden: false,
 		defaultVisibility: true,
 		behavior: 'always-visible',
@@ -122,26 +106,26 @@ export const k8sJobsColumns: IEntityColumn[] = [
 	},
 ];
 
-export const k8sJobsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
+export const k8sDaemonSetsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	{
 		title: (
 			<div className={styles.entityGroupHeader}>
-				<Group size={14} /> JOB GROUP
+				<Group size={14} /> DAEMONSET GROUP
 			</div>
 		),
-		dataIndex: 'jobGroup',
-		key: 'jobGroup',
+		dataIndex: 'daemonSetGroup',
+		key: 'daemonSetGroup',
 		ellipsis: true,
 		width: 150,
 		align: 'left',
 		sorter: false,
 	},
 	{
-		title: <div>Job Name</div>,
-		dataIndex: 'jobName',
-		key: 'jobName',
+		title: <div>DaemonSet Name</div>,
+		dataIndex: 'daemonsetName',
+		key: 'daemonsetName',
 		ellipsis: true,
-		width: 80,
+		width: 150,
 		sorter: false,
 		align: 'left',
 	},
@@ -155,32 +139,19 @@ export const k8sJobsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		align: 'left',
 	},
 	{
-		title: <div>Successful</div>,
-		dataIndex: 'successful_pods',
-		key: 'successful_pods',
+		title: <div>Available</div>,
+		dataIndex: 'available_nodes',
+		key: 'available_nodes',
+		width: 50,
 		ellipsis: true,
 		sorter: true,
 		align: 'left',
 	},
 	{
-		title: <div>Failed</div>,
-		dataIndex: 'failed_pods',
-		key: 'failed_pods',
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Desired Successful</div>,
-		dataIndex: 'desired_successful_pods',
-		key: 'desired_successful_pods',
-		ellipsis: true,
-		sorter: true,
-		align: 'left',
-	},
-	{
-		title: <div>Active</div>,
-		dataIndex: 'active_pods',
-		key: 'active_pods',
+		title: <div>Desired</div>,
+		dataIndex: 'desired_nodes',
+		key: 'desired_nodes',
+		width: 50,
 		sorter: true,
 		align: 'left',
 	},
@@ -213,7 +184,7 @@ export const k8sJobsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 		title: <div>Mem Req Usage (%)</div>,
 		dataIndex: 'memory_request',
 		key: 'memory_request',
-		width: 120,
+		width: 170,
 		sorter: true,
 		align: 'left',
 	},
@@ -236,95 +207,91 @@ export const k8sJobsColumnsConfig: ColumnType<K8sRenderedRowData>[] = [
 	},
 ];
 
-export const k8sJobsRenderRowData = (
-	job: K8sJobsData,
+export const k8sDaemonSetsRenderRowData = (
+	entity: K8sDaemonSetsData,
 	groupBy: BaseAutocompleteData[],
 ): K8sRenderedRowData => ({
-	key: getRowKey(job, () => job.jobName || job.meta.k8s_job_name || '', groupBy),
-	itemKey: job.meta.k8s_job_name,
-	jobName: (
-		<Tooltip title={job.meta.k8s_job_name}>{job.meta.k8s_job_name || ''}</Tooltip>
+	key: getRowKey(
+		entity,
+		() => entity.daemonSetName || entity.meta.k8s_daemonset_name || '',
+		groupBy,
+	),
+	itemKey: entity.meta.k8s_daemonset_name,
+	daemonsetName: (
+		<Tooltip title={entity.meta.k8s_daemonset_name}>
+			{entity.meta.k8s_daemonset_name || ''}
+		</Tooltip>
 	),
 	namespaceName: (
-		<Tooltip title={job.meta.k8s_namespace_name}>
-			{job.meta.k8s_namespace_name || ''}
+		<Tooltip title={entity.meta.k8s_namespace_name}>
+			{entity.meta.k8s_namespace_name || ''}
 		</Tooltip>
 	),
 	cpu_request: (
 		<ValidateColumnValueWrapper
-			value={job.cpuRequest}
-			entity={K8sCategory.JOBS}
+			value={entity.cpuRequest}
+			entity={K8sCategory.DAEMONSETS}
 			attribute="CPU Request"
 		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={job.cpuRequest} type="request" />
+				<EntityProgressBar value={entity.cpuRequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	cpu_limit: (
 		<ValidateColumnValueWrapper
-			value={job.cpuLimit}
-			entity={K8sCategory.JOBS}
+			value={entity.cpuLimit}
+			entity={K8sCategory.DAEMONSETS}
 			attribute="CPU Limit"
 		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={job.cpuLimit} type="limit" />
+				<EntityProgressBar value={entity.cpuLimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	cpu: (
-		<ValidateColumnValueWrapper value={job.cpuUsage}>
-			{job.cpuUsage}
+		<ValidateColumnValueWrapper value={entity.cpuUsage}>
+			{entity.cpuUsage}
 		</ValidateColumnValueWrapper>
 	),
 	memory_request: (
 		<ValidateColumnValueWrapper
-			value={job.memoryRequest}
-			entity={K8sCategory.JOBS}
+			value={entity.memoryRequest}
+			entity={K8sCategory.DAEMONSETS}
 			attribute="Memory Request"
 		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={job.memoryRequest} type="request" />
+				<EntityProgressBar value={entity.memoryRequest} type="request" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	memory_limit: (
 		<ValidateColumnValueWrapper
-			value={job.memoryLimit}
-			entity={K8sCategory.JOBS}
+			value={entity.memoryLimit}
+			entity={K8sCategory.DAEMONSETS}
 			attribute="Memory Limit"
 		>
 			<div className={styles.progressBar}>
-				<EntityProgressBar value={job.memoryLimit} type="limit" />
+				<EntityProgressBar value={entity.memoryLimit} type="limit" />
 			</div>
 		</ValidateColumnValueWrapper>
 	),
 	memory: (
-		<ValidateColumnValueWrapper value={job.memoryUsage}>
-			{formatBytes(job.memoryUsage)}
+		<ValidateColumnValueWrapper value={entity.memoryUsage}>
+			{formatBytes(entity.memoryUsage)}
 		</ValidateColumnValueWrapper>
 	),
-	successful_pods: (
-		<ValidateColumnValueWrapper value={job.successfulPods}>
-			{job.successfulPods}
+	available_nodes: (
+		<ValidateColumnValueWrapper value={entity.availableNodes}>
+			{entity.availableNodes}
 		</ValidateColumnValueWrapper>
 	),
-	desired_successful_pods: (
-		<ValidateColumnValueWrapper value={job.desiredSuccessfulPods}>
-			{job.desiredSuccessfulPods}
+	desired_nodes: (
+		<ValidateColumnValueWrapper value={entity.desiredNodes}>
+			{entity.desiredNodes}
 		</ValidateColumnValueWrapper>
 	),
-	failed_pods: (
-		<ValidateColumnValueWrapper value={job.failedPods}>
-			{job.failedPods}
-		</ValidateColumnValueWrapper>
-	),
-	active_pods: (
-		<ValidateColumnValueWrapper value={job.activePods}>
-			{job.activePods}
-		</ValidateColumnValueWrapper>
-	),
-	jobGroup: getGroupByEl(job, groupBy),
-	...job.meta,
-	groupedByMeta: getGroupedByMeta(job, groupBy),
+	daemonSetGroup: getGroupByEl(entity, groupBy),
+	...entity.meta,
+	groupedByMeta: getGroupedByMeta(entity, groupBy),
 });
