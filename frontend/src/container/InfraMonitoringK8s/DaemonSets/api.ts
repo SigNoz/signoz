@@ -1,22 +1,10 @@
 import axios from 'api';
 import { ErrorResponseHandler } from 'api/ErrorResponseHandler';
+import { UnderscoreToDotMap } from 'api/utils';
 import { AxiosError } from 'axios';
 import { ErrorResponse, SuccessResponse } from 'types/api';
-import { BaseAutocompleteData } from 'types/api/queryBuilder/queryAutocompleteResponse';
-import { TagFilter } from 'types/api/queryBuilder/queryBuilderData';
 
-import { UnderscoreToDotMap } from '../utils';
-
-export interface K8sDaemonSetsListPayload {
-	filters: TagFilter;
-	groupBy?: BaseAutocompleteData[];
-	offset?: number;
-	limit?: number;
-	orderBy?: {
-		columnName: string;
-		order: 'asc' | 'desc';
-	};
-}
+import { K8sBaseFilters } from '../Base/K8sBaseList';
 
 export interface K8sDaemonSetsData {
 	daemonSetName: string;
@@ -68,20 +56,19 @@ export function mapDaemonSetsMeta(
 }
 
 export const getK8sDaemonSetsList = async (
-	props: K8sDaemonSetsListPayload,
+	props: K8sBaseFilters,
 	signal?: AbortSignal,
 	headers?: Record<string, string>,
 	dotMetricsEnabled = false,
 ): Promise<SuccessResponse<K8sDaemonSetsListResponse> | ErrorResponse> => {
 	try {
-		// filter prep (unchanged)…
 		const requestProps =
 			dotMetricsEnabled && Array.isArray(props.filters?.items)
 				? {
 						...props,
 						filters: {
 							...props.filters,
-							items: props.filters.items.reduce<typeof props.filters.items>(
+							items: props.filters?.items.reduce<typeof props.filters.items>(
 								(acc, item) => {
 									if (item.value === undefined) {
 										return acc;
@@ -114,7 +101,6 @@ export const getK8sDaemonSetsList = async (
 		});
 		const payload: K8sDaemonSetsListResponse = response.data;
 
-		// single-line meta mapping
 		payload.data.records = payload.data.records.map((record) => ({
 			...record,
 			meta: mapDaemonSetsMeta(record.meta as Record<string, unknown>),
