@@ -1,6 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import type { AuthtypesRoleDTO } from 'api/generated/services/sigNoz.schemas';
 import { useGetUser, useSetRoleByUserID } from 'api/generated/services/users';
+import { retryOn429 } from 'utils/errorUtils';
 
 export interface MemberRoleUpdateFailure {
 	roleName: string;
@@ -38,7 +39,9 @@ export function useMemberRoleManager(
 		[currentUserRoles],
 	);
 
-	const { mutateAsync: setRole } = useSetRoleByUserID();
+	const { mutateAsync: setRole } = useSetRoleByUserID({
+		mutation: { retry: retryOn429 },
+	});
 
 	const applyDiff = useCallback(
 		async (

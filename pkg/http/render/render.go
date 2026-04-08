@@ -77,6 +77,8 @@ func ErrorTypeFromStatusCode(statusCode int) string {
 		return errors.TypeTimeout.String()
 	case http.StatusUnavailableForLegalReasons:
 		return errors.TypeLicenseUnavailable.String()
+	case http.StatusTooManyRequests:
+		return errors.TypeTooManyRequests.String()
 	default:
 		return errors.TypeInternal.String()
 	}
@@ -108,6 +110,8 @@ func Error(rw http.ResponseWriter, cause error) {
 		httpCode = http.StatusInternalServerError
 	case errors.TypeLicenseUnavailable:
 		httpCode = http.StatusUnavailableForLegalReasons
+	case errors.TypeTooManyRequests:
+		httpCode = http.StatusTooManyRequests
 	}
 
 	body, err := json.Marshal(&ErrorResponse{Status: StatusError.s, Error: errors.AsJSON(cause)})

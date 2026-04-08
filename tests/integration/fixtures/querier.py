@@ -14,8 +14,8 @@ QUERY_TIMEOUT = 30  # seconds
 @dataclass
 class TelemetryFieldKey:
     name: str
-    field_data_type: str
-    field_context: str
+    field_data_type: Optional[str] = None
+    field_context: Optional[str] = None
 
     def to_dict(self) -> Dict:
         return {

@@ -150,7 +150,7 @@ func (provider *provider) Grant(ctx context.Context, orgID valuer.UUID, names []
 
 	err = provider.Write(ctx, tuples, nil)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "failed to grant roles: %v to subject: %s", names, subject)
+		return errors.WithAdditionalf(err, "failed to grant roles: %v to subject: %s", names, subject)
 	}
 
 	return nil
@@ -188,7 +188,7 @@ func (provider *provider) Revoke(ctx context.Context, orgID valuer.UUID, names [
 
 	err = provider.Write(ctx, nil, tuples)
 	if err != nil {
-		return errors.WrapInternalf(err, errors.CodeInternal, "failed to revoke roles: %v to subject: %s", names, subject)
+		return errors.WithAdditionalf(err, "failed to revoke roles: %v to subject: %s", names, subject)
 	}
 
 	return nil
