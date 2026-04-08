@@ -148,36 +148,36 @@ type OldAWSLogsStrategy struct {
 
 // AWSTelemetryCollectionStrategy represents signal collection strategy for AWS services.
 type AWSTelemetryCollectionStrategy struct {
-	Metrics   *AWSMetricsCollectionStrategy `json:"metrics,omitempty"`
-	Logs      *AWSLogsCollectionStrategy    `json:"logs,omitempty"`
-	S3Buckets map[string][]string           `json:"s3Buckets,omitempty"` // Only available in S3 Sync Service Type in AWS
+	Metrics   *AWSMetricsCollectionStrategy `json:"metrics,omitempty" required:"false" nullable:"false"`
+	Logs      *AWSLogsCollectionStrategy    `json:"logs,omitempty" required:"false" nullable:"false"`
+	S3Buckets map[string][]string           `json:"s3Buckets,omitempty" required:"false"` // Only available in S3 Sync Service Type in AWS
 }
 
 // AWSMetricsCollectionStrategy represents metrics collection strategy for AWS services.
 type AWSMetricsCollectionStrategy struct {
 	// to be used as https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-resource-cloudwatch-metricstream.html#cfn-cloudwatch-metricstream-includefilters
-	StreamFilters []*AWSCloudWatchMetricStreamFilter `json:"streamFilters"`
+	StreamFilters []*AWSCloudWatchMetricStreamFilter `json:"streamFilters" required:"true" nullable:"false"`
 }
 
 type AWSCloudWatchMetricStreamFilter struct {
 	// https://docs.aws.amazon.com/AWSCloudFormation/latest/UserGuide/aws-properties-cloudwatch-metricstream-metricstreamfilter.html
-	Namespace   string   `json:"namespace"`
-	MetricNames []string `json:"metricNames,omitempty"`
+	Namespace   string   `json:"namespace" required:"true"`
+	MetricNames []string `json:"metricNames,omitempty" required:"false" nullable:"false"`
 }
 
 // AWSLogsCollectionStrategy represents logs collection strategy for AWS services.
 type AWSLogsCollectionStrategy struct {
-	Subscriptions []*AWSCloudWatchLogsSubscription `json:"subscriptions"`
+	Subscriptions []*AWSCloudWatchLogsSubscription `json:"subscriptions" required:"true" nullable:"false"`
 }
 
 type AWSCloudWatchLogsSubscription struct {
 	// subscribe to all logs groups with specified prefix.
 	// eg: `/aws/rds/`
-	LogGroupNamePrefix string `json:"logGroupNamePrefix"`
+	LogGroupNamePrefix string `json:"logGroupNamePrefix" required:"true"`
 
 	// https://docs.aws.amazon.com/AmazonCloudWatch/latest/logs/FilterAndPatternSyntax.html
 	// "" implies no filtering is required
-	FilterPattern string `json:"filterPattern"`
+	FilterPattern string `json:"filterPattern" required:"true"`
 }
 
 // Dashboard represents a dashboard definition for cloud integration.

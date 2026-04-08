@@ -403,25 +403,33 @@ components:
       required:
       - regions
       type: object
-    CloudintegrationtypesAWSCollectionStrategy:
+    CloudintegrationtypesAWSCloudWatchLogsSubscription:
       properties:
-        logs:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsStrategy'
-        metrics:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsStrategy'
-        s3Buckets:
-          additionalProperties:
-            items:
-              type: string
-            type: array
-          type: object
+        filterPattern:
+          type: string
+        logGroupNamePrefix:
+          type: string
+      required:
+      - logGroupNamePrefix
+      - filterPattern
+      type: object
+    CloudintegrationtypesAWSCloudWatchMetricStreamFilter:
+      properties:
+        metricNames:
+          items:
+            type: string
+          type: array
+        namespace:
+          type: string
+      required:
+      - namespace
       type: object
     CloudintegrationtypesAWSConnectionArtifact:
       properties:
-        connectionURL:
+        connectionUrl:
           type: string
       required:
-      - connectionURL
+      - connectionUrl
       type: object
     CloudintegrationtypesAWSConnectionArtifactRequest:
       properties:
@@ -441,39 +449,29 @@ components:
           items:
             type: string
           type: array
-        telemetry:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
+        telemetryCollectionStrategy:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
       required:
       - enabledRegions
-      - telemetry
+      - telemetryCollectionStrategy
       type: object
-    CloudintegrationtypesAWSLogsStrategy:
+    CloudintegrationtypesAWSLogsCollectionStrategy:
       properties:
-        cloudwatchLogsSubscriptions:
+        subscriptions:
           items:
-            properties:
-              filterPattern:
-                type: string
-              logGroupNamePrefix:
-                type: string
-            type: object
-          nullable: true
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchLogsSubscription'
           type: array
+      required:
+      - subscriptions
       type: object
-    CloudintegrationtypesAWSMetricsStrategy:
+    CloudintegrationtypesAWSMetricsCollectionStrategy:
       properties:
-        cloudwatchMetricStreamFilters:
+        streamFilters:
           items:
-            properties:
-              MetricNames:
-                items:
-                  type: string
-                type: array
-              Namespace:
-                type: string
-            type: object
-          nullable: true
+            $ref: '#/components/schemas/CloudintegrationtypesAWSCloudWatchMetricStreamFilter'
           type: array
+      required:
+      - streamFilters
       type: object
     CloudintegrationtypesAWSServiceConfig:
       properties:
@@ -497,6 +495,19 @@ components:
       properties:
         enabled:
           type: boolean
+      type: object
+    CloudintegrationtypesAWSTelemetryCollectionStrategy:
+      properties:
+        logs:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSLogsCollectionStrategy'
+        metrics:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSMetricsCollectionStrategy'
+        s3Buckets:
+          additionalProperties:
+            items:
+              type: string
+            type: array
+          type: object
       type: object
     CloudintegrationtypesAccount:
       properties:
@@ -601,13 +612,6 @@ components:
         unit:
           type: string
       type: object
-    CloudintegrationtypesCollectionStrategy:
-      properties:
-        aws:
-          $ref: '#/components/schemas/CloudintegrationtypesAWSCollectionStrategy'
-      required:
-      - aws
-      type: object
     CloudintegrationtypesConnectionArtifact:
       properties:
         aws:
@@ -672,7 +676,7 @@ components:
           nullable: true
           type: array
       type: object
-    CloudintegrationtypesGettableAccountWithArtifact:
+    CloudintegrationtypesGettableAccountWithConnectionArtifact:
       properties:
         connectionArtifact:
           $ref: '#/components/schemas/CloudintegrationtypesConnectionArtifact'
@@ -829,7 +833,7 @@ components:
         supportedSignals:
           $ref: '#/components/schemas/CloudintegrationtypesSupportedSignals'
         telemetryCollectionStrategy:
-          $ref: '#/components/schemas/CloudintegrationtypesCollectionStrategy'
+          $ref: '#/components/schemas/CloudintegrationtypesTelemetryCollectionStrategy'
         title:
           type: string
       required:
@@ -888,6 +892,13 @@ components:
           type: boolean
         metrics:
           type: boolean
+      type: object
+    CloudintegrationtypesTelemetryCollectionStrategy:
+      properties:
+        aws:
+          $ref: '#/components/schemas/CloudintegrationtypesAWSTelemetryCollectionStrategy'
+      required:
+      - aws
       type: object
     CloudintegrationtypesUpdatableAccount:
       properties:
@@ -3304,7 +3315,7 @@ paths:
               schema:
                 properties:
                   data:
-                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithArtifact'
+                    $ref: '#/components/schemas/CloudintegrationtypesGettableAccountWithConnectionArtifact'
                   status:
                     type: string
                 required:

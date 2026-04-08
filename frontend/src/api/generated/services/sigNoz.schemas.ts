@@ -512,24 +512,33 @@ export interface CloudintegrationtypesAWSAccountConfigDTO {
 	regions: string[];
 }
 
-export type CloudintegrationtypesAWSCollectionStrategyDTOS3Buckets = {
-	[key: string]: string[];
-};
-
-export interface CloudintegrationtypesAWSCollectionStrategyDTO {
-	logs?: CloudintegrationtypesAWSLogsStrategyDTO;
-	metrics?: CloudintegrationtypesAWSMetricsStrategyDTO;
+export interface CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO {
 	/**
-	 * @type object
+	 * @type string
 	 */
-	s3Buckets?: CloudintegrationtypesAWSCollectionStrategyDTOS3Buckets;
+	filterPattern: string;
+	/**
+	 * @type string
+	 */
+	logGroupNamePrefix: string;
+}
+
+export interface CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO {
+	/**
+	 * @type array
+	 */
+	metricNames?: string[];
+	/**
+	 * @type string
+	 */
+	namespace: string;
 }
 
 export interface CloudintegrationtypesAWSConnectionArtifactDTO {
 	/**
 	 * @type string
 	 */
-	connectionURL: string;
+	connectionUrl: string;
 }
 
 export interface CloudintegrationtypesAWSConnectionArtifactRequestDTO {
@@ -548,49 +557,21 @@ export interface CloudintegrationtypesAWSIntegrationConfigDTO {
 	 * @type array
 	 */
 	enabledRegions: string[];
-	telemetry: CloudintegrationtypesAWSCollectionStrategyDTO;
+	telemetryCollectionStrategy: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
 }
 
-export type CloudintegrationtypesAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem = {
-	/**
-	 * @type string
-	 */
-	filterPattern?: string;
-	/**
-	 * @type string
-	 */
-	logGroupNamePrefix?: string;
-};
-
-export interface CloudintegrationtypesAWSLogsStrategyDTO {
+export interface CloudintegrationtypesAWSLogsCollectionStrategyDTO {
 	/**
 	 * @type array
-	 * @nullable true
 	 */
-	cloudwatchLogsSubscriptions?:
-		| CloudintegrationtypesAWSLogsStrategyDTOCloudwatchLogsSubscriptionsItem[]
-		| null;
+	subscriptions: CloudintegrationtypesAWSCloudWatchLogsSubscriptionDTO[];
 }
 
-export type CloudintegrationtypesAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem = {
+export interface CloudintegrationtypesAWSMetricsCollectionStrategyDTO {
 	/**
 	 * @type array
 	 */
-	MetricNames?: string[];
-	/**
-	 * @type string
-	 */
-	Namespace?: string;
-};
-
-export interface CloudintegrationtypesAWSMetricsStrategyDTO {
-	/**
-	 * @type array
-	 * @nullable true
-	 */
-	cloudwatchMetricStreamFilters?:
-		| CloudintegrationtypesAWSMetricsStrategyDTOCloudwatchMetricStreamFiltersItem[]
-		| null;
+	streamFilters: CloudintegrationtypesAWSCloudWatchMetricStreamFilterDTO[];
 }
 
 export interface CloudintegrationtypesAWSServiceConfigDTO {
@@ -618,6 +599,19 @@ export interface CloudintegrationtypesAWSServiceMetricsConfigDTO {
 	 * @type boolean
 	 */
 	enabled?: boolean;
+}
+
+export type CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets = {
+	[key: string]: string[];
+};
+
+export interface CloudintegrationtypesAWSTelemetryCollectionStrategyDTO {
+	logs?: CloudintegrationtypesAWSLogsCollectionStrategyDTO;
+	metrics?: CloudintegrationtypesAWSMetricsCollectionStrategyDTO;
+	/**
+	 * @type object
+	 */
+	s3Buckets?: CloudintegrationtypesAWSTelemetryCollectionStrategyDTOS3Buckets;
 }
 
 export interface CloudintegrationtypesAccountDTO {
@@ -753,10 +747,6 @@ export interface CloudintegrationtypesCollectedMetricDTO {
 	unit?: string;
 }
 
-export interface CloudintegrationtypesCollectionStrategyDTO {
-	aws: CloudintegrationtypesAWSCollectionStrategyDTO;
-}
-
 export interface CloudintegrationtypesConnectionArtifactDTO {
 	aws: CloudintegrationtypesAWSConnectionArtifactDTO;
 }
@@ -818,7 +808,7 @@ export interface CloudintegrationtypesDataCollectedDTO {
 	metrics?: CloudintegrationtypesCollectedMetricDTO[] | null;
 }
 
-export interface CloudintegrationtypesGettableAccountWithArtifactDTO {
+export interface CloudintegrationtypesGettableAccountWithConnectionArtifactDTO {
 	connectionArtifact: CloudintegrationtypesConnectionArtifactDTO;
 	/**
 	 * @type string
@@ -995,7 +985,7 @@ export interface CloudintegrationtypesServiceDTO {
 	 */
 	overview: string;
 	supportedSignals: CloudintegrationtypesSupportedSignalsDTO;
-	telemetryCollectionStrategy: CloudintegrationtypesCollectionStrategyDTO;
+	telemetryCollectionStrategy: CloudintegrationtypesTelemetryCollectionStrategyDTO;
 	/**
 	 * @type string
 	 */
@@ -1049,6 +1039,10 @@ export interface CloudintegrationtypesSupportedSignalsDTO {
 	 * @type boolean
 	 */
 	metrics?: boolean;
+}
+
+export interface CloudintegrationtypesTelemetryCollectionStrategyDTO {
+	aws: CloudintegrationtypesAWSTelemetryCollectionStrategyDTO;
 }
 
 export interface CloudintegrationtypesUpdatableAccountDTO {
@@ -3596,7 +3590,7 @@ export type CreateAccountPathParameters = {
 	cloudProvider: string;
 };
 export type CreateAccount200 = {
-	data: CloudintegrationtypesGettableAccountWithArtifactDTO;
+	data: CloudintegrationtypesGettableAccountWithConnectionArtifactDTO;
 	/**
 	 * @type string
 	 */
