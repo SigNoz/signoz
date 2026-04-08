@@ -48,14 +48,13 @@ func NewPromRule(
 		version:    postableRule.Version,
 		prometheus: prometheus,
 	}
-	p.logger = logger
 
 	query, err := p.getPqlQuery(context.Background())
 	if err != nil {
 		// can not generate a valid prom QL query
 		return nil, err
 	}
-	logger.Info("creating new prom rule", slog.String("rule.id", id), slog.String("rule.query", query))
+	p.logger.Info("creating new prom rule", slog.String("rule.query", query))
 	return &p, nil
 }
 
@@ -97,7 +96,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 	if err != nil {
 		return nil, err
 	}
-	r.logger.InfoContext(ctx, "evaluating promql query", slog.String("rule.id", r.ID()), slog.String("rule.query", q))
+	r.logger.InfoContext(ctx, "evaluating promql query", slog.String("rule.query", q))
 	res, err := r.RunAlertQuery(ctx, q, start, end, interval)
 	if err != nil {
 		r.SetHealth(ruletypes.HealthBad)
@@ -117,7 +116,7 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		filteredSeries, filterErr := r.BaseRule.FilterNewSeries(ctx, ts, matrixToProcess)
 		// In case of error we log the error and continue with the original series
 		if filterErr != nil {
-			r.logger.ErrorContext(ctx, "error filtering new series", slog.String("rule.id", r.ID()), errors.Attr(filterErr))
+			r.logger.ErrorContext(ctx, "error filtering new series", errors.Attr(filterErr))
 		} else {
 			matrixToProcess = filteredSeries
 		}
@@ -129,7 +128,8 @@ func (r *PromRule) buildAndRunQuery(ctx context.Context, ts time.Time) (ruletype
 		if !r.Condition().ShouldEval(series) {
 			r.logger.InfoContext(
 				ctx, "not enough data points to evaluate series, skipping",
-				"rule.id", r.ID(), "num_points", len(series.Values), "required_points", r.Condition().RequiredNumPoints,
+				slog.Int("series.num_points", len(series.Values)),
+				slog.Int("series.required_points", r.Condition().RequiredNumPoints),
 			)
 			continue
 		}
@@ -173,7 +173,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		for _, lbl := range result.Metric {
 			l[lbl.Name] = lbl.Value
 		}
-		r.logger.DebugContext(ctx, "alerting for series", slog.String("rule.id", r.ID()), slog.Any("series", result))
+		r.logger.DebugContext(ctx, "alerting for series", slog.Any("series", result))
 
 		threshold := valueFormatter.Format(result.Target, result.TargetUnit)
 
@@ -193,7 +193,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 			result, err := tmpl.Expand()
 			if err != nil {
 				result = fmt.Sprintf("<error expanding template: %s>", err)
-				r.logger.WarnContext(ctx, "expanding alert template failed", slog.String("rule.id", r.ID()), errors.Attr(err), slog.Any("alert.template_data", tmplData))
+				r.logger.WarnContext(ctx, "expanding alert template failed", errors.Attr(err), slog.Any("alert.template_data", tmplData))
 			}
 			return result
 		}
@@ -244,7 +244,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		}
 	}
 
-	r.logger.InfoContext(ctx, "number of alerts found", slog.String("rule.id", r.ID()), slog.Int("alert.count", len(alerts)))
+	r.logger.InfoContext(ctx, "number of alerts found", slog.Int("alert.count", len(alerts)))
 	// alerts[h] is ready, add or update active list now
 	for h, a := range alerts {
 		// Check whether we already have alerting state for the identifying label set.
@@ -271,7 +271,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 	for fp, a := range r.Active {
 		labelsJSON, err := json.Marshal(a.QueryResultLabels)
 		if err != nil {
-			r.logger.ErrorContext(ctx, "error marshaling labels", slog.String("rule.id", r.ID()), errors.Attr(err))
+			r.logger.ErrorContext(ctx, "error marshaling labels", errors.Attr(err))
 		}
 		if _, ok := resultFPs[fp]; !ok {
 			// If the alert was previously firing, keep it around for a given
@@ -325,7 +325,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 				state = ruletypes.StateFiring
 			}
 			a.State = state
-			r.logger.DebugContext(ctx, "converting alert state", slog.String("rule.id", r.ID()), slog.Any("alert.state", state))
+			r.logger.DebugContext(ctx, "converting alert state", slog.Any("alert.state", state))
 			itemsToAdd = append(itemsToAdd, rulestatehistorytypes.RuleStateHistory{
 				RuleID:       r.ID(),
 				RuleName:     r.Name(),
@@ -350,7 +350,7 @@ func (r *PromRule) Eval(ctx context.Context, ts time.Time) (int, error) {
 		itemsToAdd[idx] = item
 	}
 
-	r.RecordRuleStateHistory(ctx, prevState, currentState, itemsToAdd)
+	_ = r.RecordRuleStateHistory(ctx, itemsToAdd)
 
 	return len(r.Active), nil
 }
