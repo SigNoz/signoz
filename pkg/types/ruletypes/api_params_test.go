@@ -2,6 +2,7 @@ package ruletypes
 
 import (
 	"encoding/json"
+	"strings"
 	"testing"
 	"time"
 
@@ -1327,3 +1328,165 @@ func TestAnomalyNegationEval(t *testing.T) {
 		})
 	}
 }
+
+// TestAlertWithQueryFormulas tests that queryFormulas are properly
+// persisted in AlertCompositeQuery during JSON marshaling/unmarshaling
+func TestAlertWithQueryFormulas(t *testing.T) {
+	tests := []struct {
+		name              string
+		ruleJSON          []byte
+		expectFormulas    bool
+		expectedFormCount int
+		validateFormula   func(*testing.T, []qbtypes.QueryBuilderFormula)
+	}{
+		{
+			name: "alert with queryFormulas should unmarshal correctly",
+			ruleJSON: []byte(`{
+				"alert": "TestFormulaAlert",
+				"alertType": "METRIC_BASED_ALERT",
+				"description": "Test alert with formula",
+				"ruleType": "threshold_rule",
+				"evalWindow": "3m",
+				"frequency": "1m",
+				"version": "v5",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"panelType": "graph",
+						"unit": "{node}",
+						"queries": [
+							{
+								"type": "builder_query",
+								"spec": {
+									"name": "A",
+									"signal": "metrics",
+									"aggregations": [{"metricName": "k8s.daemonset.desired_scheduled_nodes", "spaceAggregation": "sum"}],
+									"stepInterval": "60s"
+								}
+							},
+							{
+								"type": "builder_query",
+								"spec": {
+									"name": "B",
+									"signal": "metrics",
+									"aggregations": [{"metricName": "k8s.daemonset.current_scheduled_nodes", "spaceAggregation": "sum"}],
+									"stepInterval": "60s"
+								}
+							}
+						],
+						"queryFormulas": [
+							{
+								"name": "F1",
+								"expression": "A - B",
+								"disabled": false
+							}
+						]
+					},
+					"op": "1",
+					"matchType": "1",
+					"target": 1,
+					"targetUnit": "none",
+					"selectedQueryName": "F1"
+				},
+				"labels": {"severity": "warning"},
+				"annotations": {"description": "Daemonset missing nodes"},
+				"disabled": false
+			}`),
+			expectFormulas:    true,
+			expectedFormCount: 1,
+			validateFormula: func(t *testing.T, formulas []qbtypes.QueryBuilderFormula) {
+				if len(formulas) != 1 {
+					t.Errorf("Expected 1 formula, got %d", len(formulas))
+					return
+				}
+				formula := formulas[0]
+				if formula.Name != "F1" {
+					t.Errorf("Expected formula name 'F1', got '%s'", formula.Name)
+				}
+				if formula.Expression != "A - B" {
+					t.Errorf("Expected expression 'A - B', got '%s'", formula.Expression)
+				}
+				if formula.Disabled {
+					t.Error("Expected formula to be enabled (disabled=false)")
+				}
+			},
+		},
+		{
+			name: "alert without queryFormulas should unmarshal correctly",
+			ruleJSON: []byte(`{
+				"alert": "TestSimpleAlert",
+				"alertType": "METRIC_BASED_ALERT",
+				"description": "Test simple alert",
+				"ruleType": "threshold_rule",
+				"evalWindow": "3m",
+				"frequency": "1m",
+				"version": "v5",
+				"condition": {
+					"compositeQuery": {
+						"queryType": "builder",
+						"panelType": "graph",
+						"queries": [{
+							"type": "builder_query",
+							"spec": {
+								"name": "A",
+								"signal": "metrics",
+								"aggregations": [{"metricName": "test_metric", "spaceAggregation": "sum"}],
+								"stepInterval": "60s"
+							}
+						}]
+					},
+					"op": "1",
+					"matchType": "1",
+					"target": 10,
+					"targetUnit": "none",
+					"selectedQueryName": "A"
+				},
+				"labels": {"severity": "warning"},
+				"annotations": {"description": "Test"},
+				"disabled": false
+			}`),
+			expectFormulas:    false,
+			expectedFormCount: 0,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			rule := PostableRule{}
+			err := json.Unmarshal(tt.ruleJSON, &rule)
+			if err != nil {
+				t.Fatalf("Failed to unmarshal rule: %v", err)
+			}
+
+			if rule.RuleCondition == nil || rule.RuleCondition.CompositeQuery == nil {
+				t.Fatal("RuleCondition or CompositeQuery is nil")
+			}
+
+			compositeQuery := rule.RuleCondition.CompositeQuery
+			formulas := compositeQuery.QueryFormulas
+
+			if tt.expectFormulas && len(formulas) != tt.expectedFormCount {
+				t.Errorf("Expected %d formulas, got %d", tt.expectedFormCount, len(formulas))
+			} else if !tt.expectFormulas && len(formulas) > 0 {
+				t.Errorf("Expected no formulas, but got %d", len(formulas))
+			}
+
+			if tt.validateFormula != nil && len(formulas) > 0 {
+				tt.validateFormula(t, formulas)
+			}
+
+			// Test marshaling back to JSON
+			data, err := json.MarshalIndent(rule, "", "  ")
+			if err != nil {
+				t.Fatalf("Failed to marshal rule back to JSON: %v", err)
+			}
+
+			// Verify the JSON contains queryFormulas if expected
+			jsonStr := string(data)
+			if tt.expectFormulas && !strings.Contains(jsonStr, "queryFormulas") {
+				t.Error("Marshaled JSON should contain 'queryFormulas' field")
+			}
+		})
+	}
+}
+
