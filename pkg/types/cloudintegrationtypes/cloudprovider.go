@@ -46,17 +46,6 @@ func NewCloudProvider(provider string) (CloudProviderType, error) {
 	}
 }
 
-func GetCloudProviderEmail(provider CloudProviderType) (valuer.Email, error) {
-	switch provider {
-	case CloudProviderTypeAWS:
-		return AWSIntegrationUserEmail, nil
-	case CloudProviderTypeAzure:
-		return AzureIntegrationUserEmail, nil
-	default:
-		return valuer.Email{}, errors.NewInvalidInputf(ErrCodeCloudProviderInvalidInput, "invalid cloud provider: %s", provider.StringValue())
-	}
-}
-
 func NewIngestionKeyName(provider CloudProviderType) string {
 	return fmt.Sprintf("%s-integration", provider.StringValue())
 }
