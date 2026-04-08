@@ -86,10 +86,7 @@ var (
 
 type AlertCompositeQuery struct {
 	Queries []qbtypes.QueryEnvelope `json:"queries"`
-	// QueryFormulas are used to create composite alerts with formula expressions
-	// e.g., [{"name": "F1", "expression": "A - B"}]
 	QueryFormulas []qbtypes.QueryBuilderFormula `json:"queryFormulas,omitempty"`
-
 	PanelType PanelType `json:"panelType"`
 	QueryType QueryType `json:"queryType"`
 	// Unit for the time series data shown in the graph
