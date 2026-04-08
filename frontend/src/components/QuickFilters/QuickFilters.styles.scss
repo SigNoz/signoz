@@ -1,20 +1,34 @@
 .quick-filters-container {
 	display: flex;
+	flex-direction: row;
 	height: 100%;
+	min-height: 0;
 	position: relative;
 
 	.quick-filters-settings-container {
+		flex: 0 0 0;
+		width: 0;
+		min-width: 0;
+		overflow: visible;
 		position: relative;
+		align-self: stretch;
 	}
 }
 
 .quick-filters {
 	display: flex;
 	flex-direction: column;
+	flex: 1 1 auto;
+	min-width: 0;
 	height: 100%;
-	width: 100%;
+	min-height: 0;
 	border-right: 1px solid var(--bg-slate-400);
 	color: var(--bg-vanilla-100);
+
+	.overlay-scrollbar {
+		flex: 1;
+		min-height: 0;
+	}
 
 	.header {
 		display: flex;

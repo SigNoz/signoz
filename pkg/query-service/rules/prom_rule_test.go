@@ -3,7 +3,6 @@ package rules
 import (
 	"context"
 	"strings"
-	"log/slog"
 	"testing"
 	"time"
 
@@ -16,11 +15,9 @@ import (
 	"github.com/SigNoz/signoz/pkg/instrumentation/instrumentationtest"
 	"github.com/SigNoz/signoz/pkg/prometheus"
 	"github.com/SigNoz/signoz/pkg/prometheus/prometheustest"
-	"github.com/SigNoz/signoz/pkg/query-service/app/clickhouseReader"
-	v3 "github.com/SigNoz/signoz/pkg/query-service/model/v3"
-	qslabels "github.com/SigNoz/signoz/pkg/query-service/utils/labels"
 	"github.com/SigNoz/signoz/pkg/telemetrystore"
 	"github.com/SigNoz/signoz/pkg/telemetrystore/telemetrystoretest"
+	qbtypes "github.com/SigNoz/signoz/pkg/types/querybuildertypes/querybuildertypesv5"
 	"github.com/SigNoz/signoz/pkg/types/ruletypes"
 	"github.com/SigNoz/signoz/pkg/valuer"
 )
@@ -46,11 +43,14 @@ func TestPromRuleEval(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {
-						Query: "dummy_query", // This is not used in the test
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Query: "dummy_query", // This is not used in the test
+						},
 					},
 				},
 			},
@@ -60,10 +60,10 @@ func TestPromRuleEval(t *testing.T) {
 	cases := []struct {
 		values               pql.Series
 		expectAlert          bool
-		compareOp            string
-		matchType            string
+		compareOperator      ruletypes.CompareOperator
+		matchType            ruletypes.MatchType
 		target               float64
-		expectedAlertSample  v3.Point
+		expectedAlertSample  qbtypes.TimeSeriesValue
 		expectedVectorValues []float64 // Expected values in result vector
 	}{
 		// Test cases for Equals Always
@@ -78,10 +78,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          true,
-			compareOp:            "3", // Equals
-			matchType:            "2", // Always
+			compareOperator:      ruletypes.ValueIsEq,
+			matchType:            ruletypes.AllTheTimes,
 			target:               0.0,
-			expectedAlertSample:  v3.Point{Value: 0.0},
+			expectedAlertSample:  qbtypes.TimeSeriesValue{Value: 0.0},
 			expectedVectorValues: []float64{0.0},
 		},
 		{
@@ -95,8 +95,8 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          false,
-			compareOp:            "3", // Equals
-			matchType:            "2", // Always
+			compareOperator:      ruletypes.ValueIsEq,
+			matchType:            ruletypes.AllTheTimes,
 			target:               0.0,
 			expectedVectorValues: []float64{},
 		},
@@ -111,8 +111,8 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          false,
-			compareOp:            "3", // Equals
-			matchType:            "2", // Always
+			compareOperator:      ruletypes.ValueIsEq,
+			matchType:            ruletypes.AllTheTimes,
 			target:               0.0,
 			expectedVectorValues: []float64{},
 		},
@@ -126,10 +126,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsEq,
+			matchType:       ruletypes.AllTheTimes,
+			target:          0.0,
 		},
 		// Test cases for Equals Once
 		{
@@ -143,10 +143,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          true,
-			compareOp:            "3", // Equals
-			matchType:            "1", // Once
+			compareOperator:      ruletypes.ValueIsEq,
+			matchType:            ruletypes.AtleastOnce,
 			target:               0.0,
-			expectedAlertSample:  v3.Point{Value: 0.0},
+			expectedAlertSample:  qbtypes.TimeSeriesValue{Value: 0.0},
 			expectedVectorValues: []float64{0.0},
 		},
 		{
@@ -160,10 +160,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
+			compareOperator:     ruletypes.ValueIsEq,
+			matchType:           ruletypes.AtleastOnce,
 			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -176,10 +176,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "1", // Once
+			compareOperator:     ruletypes.ValueIsEq,
+			matchType:           ruletypes.AtleastOnce,
 			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 0.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 0.0},
 		},
 		{
 			values: pql.Series{
@@ -192,8 +192,8 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          false,
-			compareOp:            "3", // Equals
-			matchType:            "1", // Once
+			compareOperator:      ruletypes.ValueIsEq,
+			matchType:            ruletypes.AtleastOnce,
 			target:               0.0,
 			expectedVectorValues: []float64{},
 		},
@@ -209,10 +209,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          true,
-			compareOp:            "1", // Greater Than
-			matchType:            "2", // Always
+			compareOperator:      ruletypes.ValueIsAbove,
+			matchType:            ruletypes.AllTheTimes,
 			target:               1.5,
-			expectedAlertSample:  v3.Point{Value: 2.0},
+			expectedAlertSample:  qbtypes.TimeSeriesValue{Value: 2.0},
 			expectedVectorValues: []float64{2.0},
 		},
 		{
@@ -226,10 +226,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "1", // Above
-			matchType:           "2", // Always
+			compareOperator:     ruletypes.ValueIsAbove,
+			matchType:           ruletypes.AllTheTimes,
 			target:              2.0,
-			expectedAlertSample: v3.Point{Value: 3.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 3.0},
 		},
 		{
 			values: pql.Series{
@@ -242,10 +242,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "2", // Below
-			matchType:           "2", // Always
+			compareOperator:     ruletypes.ValueIsBelow,
+			matchType:           ruletypes.AllTheTimes,
 			target:              13.0,
-			expectedAlertSample: v3.Point{Value: 12.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 12.0},
 		},
 		{
 			values: pql.Series{
@@ -257,10 +257,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "2", // Always
-			target:      4.5,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AllTheTimes,
+			target:          4.5,
 		},
 		// Test cases for Greater Than Once
 		{
@@ -274,10 +274,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:          true,
-			compareOp:            "1", // Greater Than
-			matchType:            "1", // Once
+			compareOperator:      ruletypes.ValueIsAbove,
+			matchType:            ruletypes.AtleastOnce,
 			target:               4.5,
-			expectedAlertSample:  v3.Point{Value: 10.0},
+			expectedAlertSample:  qbtypes.TimeSeriesValue{Value: 10.0},
 			expectedVectorValues: []float64{10.0},
 		},
 		{
@@ -290,10 +290,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 4.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "1", // Once
-			target:      4.5,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          4.5,
 		},
 		// Test cases for Not Equals Always
 		{
@@ -306,10 +306,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.AllTheTimes,
+			target:          0.0,
 		},
 		{
 			values: pql.Series{
@@ -321,10 +321,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.AllTheTimes,
+			target:          0.0,
 		},
 		{
 			values: pql.Series{
@@ -337,10 +337,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "2", // Always
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.AllTheTimes,
 			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 1.0},
 		},
 		{
 			values: pql.Series{
@@ -352,10 +352,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 1.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "2", // Always
-			target:      0.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.AllTheTimes,
+			target:          0.0,
 		},
 		// Test cases for Not Equals Once
 		{
@@ -369,10 +369,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.AtleastOnce,
 			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 1.0},
 		},
 		{
 			values: pql.Series{
@@ -384,10 +384,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 0.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "1", // Once
-			target:      0.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.AtleastOnce,
+			target:          0.0,
 		},
 		{
 			values: pql.Series{
@@ -396,30 +396,30 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 0.0},
 					{F: 1.0},
 					{F: 0.0},
-					{F: 1.0},
-				},
-			},
-			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
-			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
-		},
-		{
-			values: pql.Series{
-				Floats: []pql.FPoint{
-					{F: 1.0},
-					{F: 1.0},
-					{F: 1.0},
-					{F: 1.0},
 					{F: 1.0},
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "1", // Once
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.AtleastOnce,
 			target:              0.0,
-			expectedAlertSample: v3.Point{Value: 1.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 1.0},
+		},
+		{
+			values: pql.Series{
+				Floats: []pql.FPoint{
+					{F: 1.0},
+					{F: 1.0},
+					{F: 1.0},
+					{F: 1.0},
+					{F: 1.0},
+				},
+			},
+			expectAlert:         true,
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.AtleastOnce,
+			target:              0.0,
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 1.0},
 		},
 		// Test cases for Less Than Always
 		{
@@ -433,10 +433,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "2", // Always
+			compareOperator:     ruletypes.ValueIsBelow,
+			matchType:           ruletypes.AllTheTimes,
 			target:              4,
-			expectedAlertSample: v3.Point{Value: 1.5},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 1.5},
 		},
 		{
 			values: pql.Series{
@@ -448,10 +448,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 4.5},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "2", // Always
-			target:      4,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsBelow,
+			matchType:       ruletypes.AllTheTimes,
+			target:          4,
 		},
 		// Test cases for Less Than Once
 		{
@@ -465,10 +465,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "1", // Once
+			compareOperator:     ruletypes.ValueIsBelow,
+			matchType:           ruletypes.AtleastOnce,
 			target:              4,
-			expectedAlertSample: v3.Point{Value: 2.5},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 2.5},
 		},
 		{
 			values: pql.Series{
@@ -480,10 +480,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 4.5},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "1", // Once
-			target:      4,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsBelow,
+			matchType:       ruletypes.AtleastOnce,
+			target:          4,
 		},
 		// Test cases for OnAverage
 		{
@@ -497,10 +497,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "3", // OnAverage
+			compareOperator:     ruletypes.ValueIsEq,
+			matchType:           ruletypes.OnAverage,
 			target:              6.0,
-			expectedAlertSample: v3.Point{Value: 6.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -512,10 +512,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "3", // OnAverage
-			target:      4.5,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsEq,
+			matchType:       ruletypes.OnAverage,
+			target:          4.5,
 		},
 		{
 			values: pql.Series{
@@ -528,10 +528,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "3", // OnAverage
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.OnAverage,
 			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 6.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -543,10 +543,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "3", // OnAverage
-			target:      6.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.OnAverage,
+			target:          6.0,
 		},
 		{
 			values: pql.Series{
@@ -559,10 +559,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "3", // OnAverage
+			compareOperator:     ruletypes.ValueIsAbove,
+			matchType:           ruletypes.OnAverage,
 			target:              4.5,
-			expectedAlertSample: v3.Point{Value: 6.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 6.0},
 		},
 		{
 			values: pql.Series{
@@ -575,10 +575,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "3", // OnAverage
+			compareOperator:     ruletypes.ValueIsBelow,
+			matchType:           ruletypes.OnAverage,
 			target:              12.0,
-			expectedAlertSample: v3.Point{Value: 6.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 6.0},
 		},
 		// Test cases for InTotal
 		{
@@ -592,10 +592,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "3", // Equals
-			matchType:           "4", // InTotal
+			compareOperator:     ruletypes.ValueIsEq,
+			matchType:           ruletypes.InTotal,
 			target:              30.0,
-			expectedAlertSample: v3.Point{Value: 30.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 30.0},
 		},
 		{
 			values: pql.Series{
@@ -607,10 +607,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 2.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "3", // Equals
-			matchType:   "4", // InTotal
-			target:      20.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsEq,
+			matchType:       ruletypes.InTotal,
+			target:          20.0,
 		},
 		{
 			values: pql.Series{
@@ -619,10 +619,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "4", // Not Equals
-			matchType:           "4", // InTotal
+			compareOperator:     ruletypes.ValueIsNotEq,
+			matchType:           ruletypes.InTotal,
 			target:              9.0,
-			expectedAlertSample: v3.Point{Value: 10.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 10.0},
 		},
 		{
 			values: pql.Series{
@@ -630,10 +630,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "4", // Not Equals
-			matchType:   "4", // InTotal
-			target:      10.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsNotEq,
+			matchType:       ruletypes.InTotal,
+			target:          10.0,
 		},
 		{
 			values: pql.Series{
@@ -643,10 +643,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "1", // Greater Than
-			matchType:           "4", // InTotal
+			compareOperator:     ruletypes.ValueIsAbove,
+			matchType:           ruletypes.InTotal,
 			target:              10.0,
-			expectedAlertSample: v3.Point{Value: 20.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 20.0},
 		},
 		{
 			values: pql.Series{
@@ -655,10 +655,10 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "1", // Greater Than
-			matchType:   "4", // InTotal
-			target:      20.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.InTotal,
+			target:          20.0,
 		},
 		{
 			values: pql.Series{
@@ -668,10 +668,10 @@ func TestPromRuleEval(t *testing.T) {
 				},
 			},
 			expectAlert:         true,
-			compareOp:           "2", // Less Than
-			matchType:           "4", // InTotal
+			compareOperator:     ruletypes.ValueIsBelow,
+			matchType:           ruletypes.InTotal,
 			target:              30.0,
-			expectedAlertSample: v3.Point{Value: 20.0},
+			expectedAlertSample: qbtypes.TimeSeriesValue{Value: 20.0},
 		},
 		{
 			values: pql.Series{
@@ -680,31 +680,31 @@ func TestPromRuleEval(t *testing.T) {
 					{F: 10.0},
 				},
 			},
-			expectAlert: false,
-			compareOp:   "2", // Less Than
-			matchType:   "4", // InTotal
-			target:      20.0,
+			expectAlert:     false,
+			compareOperator: ruletypes.ValueIsBelow,
+			matchType:       ruletypes.InTotal,
+			target:          20.0,
 		},
 	}
 
 	logger := instrumentationtest.New().Logger()
 
 	for idx, c := range cases {
-		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOperator = c.compareOperator
+		postableRule.RuleCondition.MatchType = c.matchType
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.Thresholds = &ruletypes.RuleThresholdData{
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					TargetValue: &c.target,
-					MatchType:   ruletypes.MatchType(c.matchType),
-					CompareOp:   ruletypes.CompareOp(c.compareOp),
+					TargetValue:     &c.target,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
 				},
 			},
 		}
 
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil, nil)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, nil)
 		if err != nil {
 			assert.NoError(t, err)
 		}
@@ -753,11 +753,14 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {
-						Query: "test_metric",
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Query: "test_metric",
+						},
 					},
 				},
 			},
@@ -792,11 +795,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			timestamp time.Time
 			value     float64
 		}
-		expectAlerts int
-		compareOp    string
-		matchType    string
-		target       float64
-		summaryAny   []string
+		expectAlerts    int
+		compareOperator ruletypes.CompareOperator
+		matchType       ruletypes.MatchType
+		target          float64
+		summaryAny      []string
 	}{
 		{
 			targetUnit: "s",
@@ -811,10 +814,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 seconds
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 0.06 seconds
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       1,   // 1 second
+			expectAlerts:    0,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          1, // 1 second
 		},
 		{
 			targetUnit: "ms",
@@ -829,10 +832,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 299.31 ms
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 ms
 			},
-			expectAlerts: 1,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 ms
+			expectAlerts:    1,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          200, // 200 ms
 			summaryAny: []string{
 				"observed metric value is 299 ms",
 				"the observed metric value is 573 ms",
@@ -853,10 +856,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 GB
+			expectAlerts:    0,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          200, // 200 GB
 		},
 		{
 			targetUnit: "decgbytes",
@@ -871,10 +874,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 GB
+			expectAlerts:    0,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          200, // 200 GB
 		},
 		{
 			targetUnit: "h",
@@ -888,10 +891,10 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 				{baseTime.Add(2 * time.Minute), 30}, // 30 minutes
 				{baseTime.Add(3 * time.Minute), 29}, // 29 minutes
 			},
-			expectAlerts: 0,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       1,   // 1 hour
+			expectAlerts:    0,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          1, // 1 hour
 		},
 	}
 
@@ -903,15 +906,15 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 		// single fingerprint with labels JSON
 		fingerprint := uint64(12345)
 		labelsJSON := `{"__name__":"test_metric"}`
-		fingerprintData := [][]interface{}{
+		fingerprintData := [][]any{
 			{fingerprint, labelsJSON},
 		}
 		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
 
 		// create samples data from test case values
-		samplesData := make([][]interface{}, len(c.values))
+		samplesData := make([][]any, len(c.values))
 		for i, v := range c.values {
-			samplesData[i] = []interface{}{
+			samplesData[i] = []any{
 				"test_metric",
 				fingerprint,
 				v.timestamp.UnixMilli(),
@@ -942,7 +945,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
-		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
+		postableRule.RuleCondition.CompareOperator = c.compareOperator
 		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
@@ -951,11 +954,11 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:        postableRule.AlertName,
-					TargetValue: &c.target,
-					TargetUnit:  c.targetUnit,
-					MatchType:   ruletypes.MatchType(c.matchType),
-					CompareOp:   ruletypes.CompareOp(c.compareOp),
+					Name:            postableRule.AlertName,
+					TargetValue:     &c.target,
+					TargetUnit:      c.targetUnit,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
 				},
 			},
 		}
@@ -964,9 +967,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -998,8 +999,7 @@ func TestPromRuleUnitCombinations(t *testing.T) {
 	}
 }
 
-// TODO(abhishekhugetech): enable this
-func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T) {
+func TestPromRuleNoData(t *testing.T) {
 	baseTime := time.Unix(1700000000, 0)
 	evalTime := baseTime.Add(5 * time.Minute)
 
@@ -1012,11 +1012,14 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {
-						Query: "test_metric",
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Query: "test_metric",
+						},
 					},
 				},
 			},
@@ -1052,7 +1055,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		telemetryStore := telemetrystoretest.New(telemetrystore.Config{}, &queryMatcherAny{})
 
 		// no data
-		fingerprintData := [][]interface{}{}
+		fingerprintData := [][]any{}
 		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
 
 		// no rows == no data
@@ -1068,10 +1071,10 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:        postableRule.AlertName,
-					TargetValue: &target,
-					MatchType:   ruletypes.AtleastOnce,
-					CompareOp:   ruletypes.ValueIsEq,
+					Name:            postableRule.AlertName,
+					TargetValue:     &target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsEq,
 				},
 			},
 		}
@@ -1080,9 +1083,7 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -1099,9 +1100,9 @@ func _Enable_this_after_9146_issue_fix_is_merged_TestPromRuleNoData(t *testing.T
 		assert.Equal(t, 1, alertsFound, "case %d", idx)
 		for _, item := range rule.Active {
 			if c.expectNoData {
-				assert.True(t, strings.Contains(item.Labels.Get(qslabels.AlertNameLabel), "[No data]"), "case %d", idx)
+				assert.True(t, strings.Contains(item.Labels.Get(ruletypes.AlertNameLabel), "[No data]"), "case %d", idx)
 			} else {
-				assert.False(t, strings.Contains(item.Labels.Get(qslabels.AlertNameLabel), "[No data]"), "case %d", idx)
+				assert.False(t, strings.Contains(item.Labels.Get(ruletypes.AlertNameLabel), "[No data]"), "case %d", idx)
 			}
 		}
 
@@ -1123,11 +1124,14 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {
-						Query: "test_metric",
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{
+							Query: "test_metric",
+						},
 					},
 				},
 			},
@@ -1160,12 +1164,12 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			timestamp time.Time
 			value     float64
 		}
-		expectAlerts int
-		compareOp    string
-		matchType    string
-		target       float64
-		secondTarget float64
-		summaryAny   []string
+		expectAlerts    int
+		compareOperator ruletypes.CompareOperator
+		matchType       ruletypes.MatchType
+		target          float64
+		secondTarget    float64
+		summaryAny      []string
 	}{
 		{
 			targetUnit: "s",
@@ -1180,11 +1184,11 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 seconds
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 0.06 seconds
 			},
-			expectAlerts: 1,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       1,   // 1 second
-			secondTarget: .5,
+			expectAlerts:    1,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          1, // 1 second
+			secondTarget:    .5,
 			summaryAny: []string{
 				"observed metric value is 573 ms",
 				"observed metric value is 572 ms",
@@ -1203,11 +1207,11 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 299.31 ms
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 ms
 			},
-			expectAlerts: 2,   // One alert per threshold that fires
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 ms
-			secondTarget: 500,
+			expectAlerts:    2, // One alert per threshold that fires
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          200, // 200 ms
+			secondTarget:    500,
 			summaryAny: []string{
 				"observed metric value is 299 ms",
 				"the observed metric value is 573 ms",
@@ -1228,11 +1232,11 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 				{baseTime.Add(3 * time.Minute), 299316000},         // 0.3 GB
 				{baseTime.Add(4 * time.Minute), 66640400.00000001}, // 66.64 MB
 			},
-			expectAlerts: 1,
-			compareOp:    "1", // Above
-			matchType:    "1", // Once
-			target:       200, // 200 GB
-			secondTarget: 2,   // 2GB
+			expectAlerts:    1,
+			compareOperator: ruletypes.ValueIsAbove,
+			matchType:       ruletypes.AtleastOnce,
+			target:          200, // 200 GB
+			secondTarget:    2,   // 2GB
 			summaryAny: []string{
 				"observed metric value is 2.7 GiB",
 				"the observed metric value is 0.3 GB",
@@ -1247,14 +1251,14 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 		fingerprint := uint64(12345)
 		labelsJSON := `{"__name__":"test_metric"}`
-		fingerprintData := [][]interface{}{
+		fingerprintData := [][]any{
 			{fingerprint, labelsJSON},
 		}
 		fingerprintRows := cmock.NewRows(fingerprintCols, fingerprintData)
 
-		samplesData := make([][]interface{}, len(c.values))
+		samplesData := make([][]any, len(c.values))
 		for i, v := range c.values {
-			samplesData[i] = []interface{}{
+			samplesData[i] = []any{
 				"test_metric",
 				fingerprint,
 				v.timestamp.UnixMilli(),
@@ -1283,8 +1287,8 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 
 		promProvider := prometheustest.New(context.Background(), instrumentationtest.New().ToProviderSettings(), prometheus.Config{Timeout: 2 * time.Minute}, telemetryStore)
 
-		postableRule.RuleCondition.CompareOp = ruletypes.CompareOp(c.compareOp)
-		postableRule.RuleCondition.MatchType = ruletypes.MatchType(c.matchType)
+		postableRule.RuleCondition.CompareOperator = c.compareOperator
+		postableRule.RuleCondition.MatchType = c.matchType
 		postableRule.RuleCondition.Target = &c.target
 		postableRule.RuleCondition.CompositeQuery.Unit = c.yAxisUnit
 		postableRule.RuleCondition.TargetUnit = c.targetUnit
@@ -1292,18 +1296,18 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:        "first_threshold",
-					TargetValue: &c.target,
-					TargetUnit:  c.targetUnit,
-					MatchType:   ruletypes.MatchType(c.matchType),
-					CompareOp:   ruletypes.CompareOp(c.compareOp),
+					Name:            "first_threshold",
+					TargetValue:     &c.target,
+					TargetUnit:      c.targetUnit,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
 				},
 				{
-					Name:        "second_threshold",
-					TargetValue: &c.secondTarget,
-					TargetUnit:  c.targetUnit,
-					MatchType:   ruletypes.MatchType(c.matchType),
-					CompareOp:   ruletypes.CompareOp(c.compareOp),
+					Name:            "second_threshold",
+					TargetValue:     &c.secondTarget,
+					TargetUnit:      c.targetUnit,
+					MatchType:       c.matchType,
+					CompareOperator: c.compareOperator,
 				},
 			},
 		}
@@ -1312,9 +1316,7 @@ func TestMultipleThresholdPromRule(t *testing.T) {
 			"summary":     "The rule threshold is set to {{$threshold}}, and the observed metric value is {{$value}}",
 		}
 
-		options := clickhouseReader.NewOptions("", "", "archiveNamespace")
-		reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+		rule, err := NewPromRule("69", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 		if err != nil {
 			assert.NoError(t, err)
 			promProvider.Close()
@@ -1358,12 +1360,15 @@ func TestPromRule_NoData(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOp: ruletypes.ValueIsAbove,
-			MatchType: ruletypes.AtleastOnce,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {Query: "test_metric"},
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{Query: "test_metric"},
+					},
 				},
 			},
 			Thresholds: &ruletypes.RuleThresholdData{
@@ -1448,9 +1453,7 @@ func TestPromRule_NoData(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 			require.NoError(t, err)
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)
@@ -1481,23 +1484,26 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOp:     ruletypes.ValueIsAbove,
-			MatchType:     ruletypes.AtleastOnce,
-			AlertOnAbsent: true,
-			Target:        &target,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {Query: "test_metric"},
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			AlertOnAbsent:   true,
+			Target:          &target,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{Query: "test_metric"},
+					},
 				},
 			},
 			Thresholds: &ruletypes.RuleThresholdData{
 				Kind: ruletypes.BasicThresholdKind,
 				Spec: ruletypes.BasicRuleThresholds{{
-					Name:        "Test no data with AbsentFor",
-					TargetValue: &target,
-					MatchType:   ruletypes.AtleastOnce,
-					CompareOp:   ruletypes.ValueIsAbove,
+					Name:            "Test no data with AbsentFor",
+					TargetValue:     &target,
+					MatchType:       ruletypes.AtleastOnce,
+					CompareOperator: ruletypes.ValueIsAbove,
 				}},
 			},
 		},
@@ -1597,9 +1603,7 @@ func TestPromRule_NoData_AbsentFor(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 			require.NoError(t, err)
 
 			// First eval with data - should NOT alert, but populates lastTimestampWithDatapoints
@@ -1632,12 +1636,15 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			Frequency:  valuer.MustParseTextDuration("1m"),
 		}},
 		RuleCondition: &ruletypes.RuleCondition{
-			CompareOp: ruletypes.ValueIsAbove,
-			MatchType: ruletypes.AtleastOnce,
-			CompositeQuery: &v3.CompositeQuery{
-				QueryType: v3.QueryTypePromQL,
-				PromQueries: map[string]*v3.PromQuery{
-					"A": {Query: "test_metric"},
+			CompareOperator: ruletypes.ValueIsAbove,
+			MatchType:       ruletypes.AtleastOnce,
+			CompositeQuery: &ruletypes.AlertCompositeQuery{
+				QueryType: ruletypes.QueryTypePromQL,
+				Queries: []qbtypes.QueryEnvelope{
+					{
+						Type: qbtypes.QueryTypePromQL,
+						Spec: qbtypes.PromQuery{Query: "test_metric"},
+					},
 				},
 			},
 		},
@@ -1727,10 +1734,10 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 			Kind: ruletypes.BasicThresholdKind,
 			Spec: ruletypes.BasicRuleThresholds{
 				{
-					Name:        postableRule.AlertName,
-					TargetValue: rc.Target,
-					MatchType:   rc.MatchType,
-					CompareOp:   rc.CompareOp,
+					Name:            postableRule.AlertName,
+					TargetValue:     rc.Target,
+					MatchType:       rc.MatchType,
+					CompareOperator: rc.CompareOperator,
 				},
 			},
 		}
@@ -1755,9 +1762,7 @@ func TestPromRuleEval_RequireMinPoints(t *testing.T) {
 				_ = promProvider.Close()
 			}()
 
-			options := clickhouseReader.NewOptions("primaryNamespace")
-			reader := clickhouseReader.NewReader(slog.Default(), nil, telemetryStore, promProvider, "", time.Second, nil, nil, options)
-			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, reader, promProvider)
+			rule, err := NewPromRule("some-id", valuer.GenerateUUID(), &postableRule, logger, promProvider)
 			require.NoError(t, err)
 
 			alertsFound, err := rule.Eval(context.Background(), evalTime)

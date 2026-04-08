@@ -91,6 +91,16 @@ func (f QueryBuilderFormula) Validate() error {
 		)
 	}
 
+	// Validate expression is parseable
+	if _, err := govaluate.NewEvaluableExpressionWithFunctions(f.Expression, EvalFuncs()); err != nil {
+		return errors.NewInvalidInputf(
+			errors.CodeInvalidInput,
+			"failed to parse expression for formula query %q: %s",
+			f.Name,
+			err.Error(),
+		)
+	}
+
 	// Validate functions if present
 	for i, fn := range f.Functions {
 		if err := fn.Validate(); err != nil {

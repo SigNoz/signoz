@@ -1798,3 +1798,108 @@ func TestQueryRangeRequest_GetQueriesSupportingZeroDefault(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryRangeRequest_StepIntervalForQuery(t *testing.T) {
+	tests := []struct {
+		name      string
+		request   QueryRangeRequest
+		queryName string
+		wantStep  int64
+		wantErr   bool
+	}{
+		{
+			name: "trace operator returns its step interval",
+			request: QueryRangeRequest{
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:         "A",
+								Signal:       telemetrytypes.SignalTraces,
+								StepInterval: Step{Duration: 60 * time.Second},
+								Aggregations: []TraceAggregation{{Expression: "count()"}},
+							},
+						},
+						{
+							Type: QueryTypeTraceOperator,
+							Spec: QueryBuilderTraceOperator{
+								Name:         "Trace Operator",
+								StepInterval: Step{Duration: 120 * time.Second},
+								Expression:   "A",
+							},
+						},
+					},
+				},
+			},
+			queryName: "Trace Operator",
+			wantStep:  120000,
+		},
+		{
+			name: "formula computes LCM of referenced query steps",
+			request: QueryRangeRequest{
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:         "A",
+								Signal:       telemetrytypes.SignalTraces,
+								StepInterval: Step{Duration: 60 * time.Second},
+								Aggregations: []TraceAggregation{{Expression: "count()"}},
+							},
+						},
+						{
+							Type: QueryTypeBuilder,
+							Spec: QueryBuilderQuery[TraceAggregation]{
+								Name:         "B",
+								Signal:       telemetrytypes.SignalTraces,
+								StepInterval: Step{Duration: 90 * time.Second},
+								Aggregations: []TraceAggregation{{Expression: "count()"}},
+							},
+						},
+						{
+							Type: QueryTypeFormula,
+							Spec: QueryBuilderFormula{
+								Name:       "F1",
+								Expression: "A + B",
+							},
+						},
+					},
+				},
+			},
+			queryName: "F1",
+			wantStep:  180000, // LCM of 60s and 90s = 180s
+		},
+		{
+			name: "invalid formula expression returns error",
+			request: QueryRangeRequest{
+				CompositeQuery: CompositeQuery{
+					Queries: []QueryEnvelope{
+						{
+							Type: QueryTypeFormula,
+							Spec: QueryBuilderFormula{
+								Name:       "F1",
+								Expression: "A +",
+							},
+						},
+					},
+				},
+			},
+			queryName: "F1",
+			wantErr:   true,
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := tt.request.StepIntervalForQuery(tt.queryName)
+			if tt.wantErr {
+				require.Error(t, err)
+				return
+			}
+			require.NoError(t, err)
+			assert.Equal(t, tt.wantStep, got)
+		})
+	}
+}

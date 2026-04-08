@@ -1,17 +1,15 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
-import { useQuery } from 'react-query';
 import { useHistory } from 'react-router-dom';
 import { Button } from '@signozhq/button';
 import { Check, ChevronDown, Plus } from '@signozhq/icons';
 import { Input } from '@signozhq/input';
 import type { MenuProps } from 'antd';
 import { Dropdown } from 'antd';
-import getAll from 'api/v1/user/get';
+import { useListUsers } from 'api/generated/services/users';
 import EditMemberDrawer from 'components/EditMemberDrawer/EditMemberDrawer';
 import InviteMembersModal from 'components/InviteMembersModal/InviteMembersModal';
 import MembersTable, { MemberRow } from 'components/MembersTable/MembersTable';
 import useUrlQuery from 'hooks/useUrlQuery';
-import { useAppContext } from 'providers/App/App';
 import { toISOString } from 'utils/app';
 
 import { FilterMode, MemberStatus, toMemberStatus } from './utils';
@@ -21,7 +19,6 @@ import './MembersSettings.styles.scss';
 const PAGE_SIZE = 20;
 
 function MembersSettings(): JSX.Element {
-	const { org } = useAppContext();
 	const history = useHistory();
 	const urlQuery = useUrlQuery();
 
@@ -34,18 +31,14 @@ function MembersSettings(): JSX.Element {
 	const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
 	const [selectedMember, setSelectedMember] = useState<MemberRow | null>(null);
 
-	const { data: usersData, isLoading, refetch: refetchUsers } = useQuery({
-		queryFn: getAll,
-		queryKey: ['getOrgUser', org?.[0]?.id],
-	});
+	const { data: usersData, isLoading, refetch: refetchUsers } = useListUsers();
 
 	const allMembers = useMemo(
 		(): MemberRow[] =>
 			(usersData?.data ?? []).map((user) => ({
 				id: user.id,
 				name: user.displayName,
-				email: user.email,
-				role: user.role,
+				email: user.email ?? '',
 				status: toMemberStatus(user.status ?? ''),
 				joinedOn: toISOString(user.createdAt),
 				updatedAt: toISOString(user?.updatedAt),
@@ -58,15 +51,15 @@ function MembersSettings(): JSX.Element {
 
 		if (filterMode === FilterMode.Invited) {
 			result = result.filter((m) => m.status === MemberStatus.Invited);
+		} else if (filterMode === FilterMode.Deleted) {
+			result = result.filter((m) => m.status === MemberStatus.Deleted);
 		}
 
 		if (searchQuery.trim()) {
 			const q = searchQuery.toLowerCase();
 			result = result.filter(
 				(m) =>
-					m?.name?.toLowerCase().includes(q) ||
-					m.email.toLowerCase().includes(q) ||
-					m.role.toLowerCase().includes(q),
+					m?.name?.toLowerCase().includes(q) || m.email.toLowerCase().includes(q),
 			);
 		}
 
@@ -98,6 +91,9 @@ function MembersSettings(): JSX.Element {
 	const pendingCount = allMembers.filter(
 		(m) => m.status === MemberStatus.Invited,
 	).length;
+	const deletedCount = allMembers.filter(
+		(m) => m.status === MemberStatus.Deleted,
+	).length;
 	const totalCount = allMembers.length;
 
 	const filterMenuItems: MenuProps['items'] = [
@@ -127,12 +123,27 @@ function MembersSettings(): JSX.Element {
 				setPage(1);
 			},
 		},
+		{
+			key: FilterMode.Deleted,
+			label: (
+				<div className="members-filter-option">
+					<span>Deleted ⎯ {deletedCount}</span>
+					{filterMode === FilterMode.Deleted && <Check size={14} />}
+				</div>
+			),
+			onClick: (): void => {
+				setFilterMode(FilterMode.Deleted);
+				setPage(1);
+			},
+		},
 	];
 
 	const filterLabel =
 		filterMode === FilterMode.All
 			? `All members ⎯ ${totalCount}`
-			: `Pending invites ⎯ ${pendingCount}`;
+			: filterMode === FilterMode.Invited
+			? `Pending invites ⎯ ${pendingCount}`
+			: `Deleted ⎯ ${deletedCount}`;
 
 	const handleInviteComplete = useCallback((): void => {
 		refetchUsers();
@@ -148,7 +159,6 @@ function MembersSettings(): JSX.Element {
 
 	const handleMemberEditComplete = useCallback((): void => {
 		refetchUsers();
-		setSelectedMember(null);
 	}, [refetchUsers]);
 
 	return (
@@ -181,7 +191,7 @@ function MembersSettings(): JSX.Element {
 					<div className="members-settings__search">
 						<Input
 							type="search"
-							placeholder="Search by name, email, or role..."
+							placeholder="Search by name or email..."
 							value={searchQuery}
 							onChange={(e): void => {
 								setSearchQuery(e.target.value);

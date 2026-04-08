@@ -22,6 +22,7 @@ import (
 	"github.com/SigNoz/signoz/pkg/identn"
 	"github.com/SigNoz/signoz/pkg/instrumentation"
 	"github.com/SigNoz/signoz/pkg/modules/metricsexplorer"
+	"github.com/SigNoz/signoz/pkg/modules/serviceaccount"
 	"github.com/SigNoz/signoz/pkg/modules/user"
 	"github.com/SigNoz/signoz/pkg/pprof"
 	"github.com/SigNoz/signoz/pkg/prometheus"
@@ -119,6 +120,9 @@ type Config struct {
 
 	// IdentN config
 	IdentN identn.Config `mapstructure:"identn"`
+
+	// ServiceAccount config
+	ServiceAccount serviceaccount.Config `mapstructure:"serviceaccount"`
 }
 
 func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.ResolverConfig) (Config, error) {
@@ -148,6 +152,7 @@ func NewConfig(ctx context.Context, logger *slog.Logger, resolverConfig config.R
 		flagger.NewConfigFactory(),
 		user.NewConfigFactory(),
 		identn.NewConfigFactory(),
+		serviceaccount.NewConfigFactory(),
 	}
 
 	conf, err := config.New(ctx, resolverConfig, configFactories)

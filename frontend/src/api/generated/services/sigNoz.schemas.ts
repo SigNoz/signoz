@@ -425,39 +425,6 @@ export interface AuthtypesSessionContextDTO {
 	orgs?: AuthtypesOrgSessionContextDTO[] | null;
 }
 
-export interface AuthtypesStorableRoleDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	description?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	orgId?: string;
-	/**
-	 * @type string
-	 */
-	type?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-}
-
 export interface AuthtypesTransactionDTO {
 	object: AuthtypesObjectDTO;
 	/**
@@ -475,25 +442,25 @@ export interface AuthtypesUserRoleDTO {
 	 * @type string
 	 * @format date-time
 	 */
-	createdAt?: Date;
+	createdAt: Date;
 	/**
 	 * @type string
 	 */
 	id: string;
-	role?: AuthtypesStorableRoleDTO;
+	role: AuthtypesRoleDTO;
 	/**
 	 * @type string
 	 */
-	roleId?: string;
+	roleId: string;
 	/**
 	 * @type string
 	 * @format date-time
 	 */
-	updatedAt?: Date;
+	updatedAt: Date;
 	/**
 	 * @type string
 	 */
-	userId?: string;
+	userId: string;
 }
 
 export interface AuthtypesUserWithRolesDTO {
@@ -2710,14 +2677,6 @@ export interface RenderErrorResponseDTO {
 	status: string;
 }
 
-export enum RulestatehistorytypesAlertStateDTO {
-	inactive = 'inactive',
-	pending = 'pending',
-	recovering = 'recovering',
-	firing = 'firing',
-	nodata = 'nodata',
-	disabled = 'disabled',
-}
 export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type integer
@@ -2729,7 +2688,7 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	 * @nullable true
 	 */
 	labels: Querybuildertypesv5LabelDTO[] | null;
-	overallState: RulestatehistorytypesAlertStateDTO;
+	overallState: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2737,12 +2696,12 @@ export interface RulestatehistorytypesGettableRuleStateHistoryDTO {
 	/**
 	 * @type string
 	 */
-	ruleID: string;
+	ruleId: string;
 	/**
 	 * @type string
 	 */
 	ruleName: string;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 	/**
 	 * @type boolean
 	 */
@@ -2840,10 +2799,18 @@ export interface RulestatehistorytypesGettableRuleStateWindowDTO {
 	 * @format int64
 	 */
 	start: number;
-	state: RulestatehistorytypesAlertStateDTO;
+	state: RuletypesAlertStateDTO;
 }
 
-export interface ServiceaccounttypesFactorAPIKeyDTO {
+export enum RuletypesAlertStateDTO {
+	inactive = 'inactive',
+	pending = 'pending',
+	recovering = 'recovering',
+	firing = 'firing',
+	nodata = 'nodata',
+	disabled = 'disabled',
+}
+export interface ServiceaccounttypesGettableFactorAPIKeyDTO {
 	/**
 	 * @type string
 	 * @format date-time
@@ -2858,10 +2825,6 @@ export interface ServiceaccounttypesFactorAPIKeyDTO {
 	 * @type string
 	 */
 	id: string;
-	/**
-	 * @type string
-	 */
-	key: string;
 	/**
 	 * @type string
 	 * @format date-time
@@ -2909,15 +2872,14 @@ export interface ServiceaccounttypesPostableServiceAccountDTO {
 	/**
 	 * @type string
 	 */
-	email: string;
+	name: string;
+}
+
+export interface ServiceaccounttypesPostableServiceAccountRoleDTO {
 	/**
 	 * @type string
 	 */
-	name: string;
-	/**
-	 * @type array
-	 */
-	roles: string[];
+	id: string;
 }
 
 export interface ServiceaccounttypesServiceAccountDTO {
@@ -2928,9 +2890,63 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	createdAt?: Date;
 	/**
 	 * @type string
+	 */
+	email: string;
+	/**
+	 * @type string
+	 */
+	id: string;
+	/**
+	 * @type string
+	 */
+	name: string;
+	/**
+	 * @type string
+	 */
+	orgId: string;
+	/**
+	 * @type string
+	 */
+	status: string;
+	/**
+	 * @type string
 	 * @format date-time
 	 */
-	deletedAt: Date;
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesServiceAccountRoleDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
+	/**
+	 * @type string
+	 */
+	id: string;
+	role: AuthtypesRoleDTO;
+	/**
+	 * @type string
+	 */
+	roleId: string;
+	/**
+	 * @type string
+	 */
+	serviceAccountId: string;
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	updatedAt?: Date;
+}
+
+export interface ServiceaccounttypesServiceAccountWithRolesDTO {
+	/**
+	 * @type string
+	 * @format date-time
+	 */
+	createdAt?: Date;
 	/**
 	 * @type string
 	 */
@@ -2949,8 +2965,9 @@ export interface ServiceaccounttypesServiceAccountDTO {
 	orgId: string;
 	/**
 	 * @type array
+	 * @nullable true
 	 */
-	roles: string[];
+	serviceAccountRoles: ServiceaccounttypesServiceAccountRoleDTO[] | null;
 	/**
 	 * @type string
 	 */
@@ -2972,28 +2989,6 @@ export interface ServiceaccounttypesUpdatableFactorAPIKeyDTO {
 	 * @type string
 	 */
 	name: string;
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountDTO {
-	/**
-	 * @type string
-	 */
-	email: string;
-	/**
-	 * @type string
-	 */
-	name: string;
-	/**
-	 * @type array
-	 */
-	roles: string[];
-}
-
-export interface ServiceaccounttypesUpdatableServiceAccountStatusDTO {
-	/**
-	 * @type string
-	 */
-	status: string;
 }
 
 export enum TelemetrytypesFieldContextDTO {
@@ -3139,63 +3134,6 @@ export interface TypesDeprecatedUserDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesGettableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	createdByUser?: TypesUserDTO;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresAt?: number;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	lastUsed?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	updatedByUser?: TypesUserDTO;
-	/**
-	 * @type string
-	 */
-	userId?: string;
-}
-
 export interface TypesIdentifiableDTO {
 	/**
 	 * @type string
@@ -3278,22 +3216,6 @@ export interface TypesOrganizationDTO {
 	updatedAt?: Date;
 }
 
-export interface TypesPostableAPIKeyDTO {
-	/**
-	 * @type integer
-	 * @format int64
-	 */
-	expiresInDays?: number;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type string
-	 */
-	role?: string;
-}
-
 export interface TypesPostableBulkInviteRequestDTO {
 	/**
 	 * @type array
@@ -3371,51 +3293,6 @@ export interface TypesResetPasswordTokenDTO {
 	 * @type string
 	 */
 	token?: string;
-}
-
-export interface TypesStorableAPIKeyDTO {
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	createdAt?: Date;
-	/**
-	 * @type string
-	 */
-	createdBy?: string;
-	/**
-	 * @type string
-	 */
-	id: string;
-	/**
-	 * @type string
-	 */
-	name?: string;
-	/**
-	 * @type boolean
-	 */
-	revoked?: boolean;
-	/**
-	 * @type string
-	 */
-	role?: string;
-	/**
-	 * @type string
-	 */
-	token?: string;
-	/**
-	 * @type string
-	 * @format date-time
-	 */
-	updatedAt?: Date;
-	/**
-	 * @type string
-	 */
-	updatedBy?: string;
-	/**
-	 * @type string
-	 */
-	userId?: string;
 }
 
 export interface TypesUpdatableUserDTO {
@@ -3956,31 +3833,6 @@ export type GetOrgPreference200 = {
 export type UpdateOrgPreferencePathParameters = {
 	name: string;
 };
-export type ListAPIKeys200 = {
-	/**
-	 * @type array
-	 */
-	data: TypesGettableAPIKeyDTO[];
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type CreateAPIKey201 = {
-	data: TypesGettableAPIKeyDTO;
-	/**
-	 * @type string
-	 */
-	status: string;
-};
-
-export type RevokeAPIKeyPathParameters = {
-	id: string;
-};
-export type UpdateAPIKeyPathParameters = {
-	id: string;
-};
 export type GetPublicDashboardDataPathParameters = {
 	id: string;
 };
@@ -4085,7 +3937,7 @@ export type GetServiceAccountPathParameters = {
 	id: string;
 };
 export type GetServiceAccount200 = {
-	data: ServiceaccounttypesServiceAccountDTO;
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
 	/**
 	 * @type string
 	 */
@@ -4102,7 +3954,7 @@ export type ListServiceAccountKeys200 = {
 	/**
 	 * @type array
 	 */
-	data: ServiceaccounttypesFactorAPIKeyDTO[];
+	data: ServiceaccounttypesGettableFactorAPIKeyDTO[];
 	/**
 	 * @type string
 	 */
@@ -4128,9 +3980,44 @@ export type UpdateServiceAccountKeyPathParameters = {
 	id: string;
 	fid: string;
 };
-export type UpdateServiceAccountStatusPathParameters = {
+export type GetServiceAccountRolesPathParameters = {
 	id: string;
 };
+export type GetServiceAccountRoles200 = {
+	/**
+	 * @type array
+	 * @nullable true
+	 */
+	data: AuthtypesRoleDTO[] | null;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type CreateServiceAccountRolePathParameters = {
+	id: string;
+};
+export type CreateServiceAccountRole201 = {
+	data: TypesIdentifiableDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
+export type DeleteServiceAccountRolePathParameters = {
+	id: string;
+	rid: string;
+};
+export type GetMyServiceAccount200 = {
+	data: ServiceaccounttypesServiceAccountWithRolesDTO;
+	/**
+	 * @type string
+	 */
+	status: string;
+};
+
 export type ListUsersDeprecated200 = {
 	/**
 	 * @type array
@@ -4693,7 +4580,7 @@ export type GetRuleHistoryTimelineParams = {
 	/**
 	 * @description undefined
 	 */
-	state?: RulestatehistorytypesAlertStateDTO;
+	state?: RuletypesAlertStateDTO;
 	/**
 	 * @type string
 	 * @description undefined

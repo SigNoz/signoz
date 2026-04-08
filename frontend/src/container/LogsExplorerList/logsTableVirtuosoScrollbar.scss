@@ -1,0 +1,38 @@
+.logs-table-virtuoso-scroll {
+	scrollbar-width: thin;
+	scrollbar-color: var(--bg-slate-300) transparent;
+
+	&::-webkit-scrollbar {
+		width: 4px;
+		height: 4px;
+	}
+
+	&::-webkit-scrollbar-corner {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-track {
+		background: transparent;
+	}
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-slate-300);
+		border-radius: 9999px;
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--bg-slate-200);
+	}
+}
+
+.lightMode .logs-table-virtuoso-scroll {
+	scrollbar-color: var(--bg-vanilla-300) transparent;
+
+	&::-webkit-scrollbar-thumb {
+		background: var(--bg-vanilla-300);
+	}
+
+	&::-webkit-scrollbar-thumb:hover {
+		background: var(--bg-vanilla-100);
+	}
+}

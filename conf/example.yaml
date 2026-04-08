@@ -86,7 +86,7 @@ sqlstore:
     # The path to the SQLite database file.
     path: /var/lib/signoz/signoz.db
     # The journal mode for the sqlite database. Supported values: delete, wal.
-    mode: delete
+    mode: wal
     # The timeout for the sqlite database to wait for a lock.
     busy_timeout: 10s
     # The default transaction locking behavior. Supported values: deferred, immediate, exclusive.
@@ -354,3 +354,13 @@ identn:
   impersonation:
     # toggle impersonation identN, when enabled, all requests will impersonate the root user
     enabled: false
+
+##################### Service Account #####################
+serviceaccount:
+  email:
+    # email domain for the service account principal
+    domain: signozserviceaccount.com
+
+  analytics:
+    # toggle service account analytics
+    enabled: true

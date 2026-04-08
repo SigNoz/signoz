@@ -14,6 +14,10 @@ import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
 import NewExplorerCTA from 'container/NewExplorerCTA';
 import dayjs, { Dayjs } from 'dayjs';
+import {
+	useGlobalTimeQueryInvalidate,
+	useIsGlobalTimeQueryRefreshing,
+} from 'hooks/globalTime';
 import { useQueryBuilder } from 'hooks/queryBuilder/useQueryBuilder';
 import { useSafeNavigate } from 'hooks/useSafeNavigate';
 import useUrlQuery from 'hooks/useUrlQuery';
@@ -352,8 +356,15 @@ function DateTimeSelection({
 		],
 	);
 
+	const isRefreshingQueries = useIsGlobalTimeQueryRefreshing();
+	const invalidateQueries = useGlobalTimeQueryInvalidate();
 	const onRefreshHandler = (): void => {
-		onSelectHandler(selectedTime);
+		invalidateQueries();
+		onSelectHandler(
+			isModalTimeSelection && modalSelectedInterval
+				? modalSelectedInterval
+				: selectedTime,
+		);
 		onLastRefreshHandler();
 	};
 	const handleReset = useCallback(() => {
@@ -732,7 +743,11 @@ function DateTimeSelection({
 					{showAutoRefresh && selectedTime !== 'custom' && (
 						<div className="refresh-actions">
 							<FormItem hidden={refreshButtonHidden} className="refresh-btn">
-								<Button icon={<SyncOutlined />} onClick={onRefreshHandler} />
+								<Button
+									icon={<SyncOutlined />}
+									loading={!!isRefreshingQueries}
+									onClick={onRefreshHandler}
+								/>
 							</FormItem>
 
 							<FormItem>

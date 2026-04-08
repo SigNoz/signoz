@@ -133,46 +133,30 @@ describe('Tooltip', () => {
 		expect(screen.queryByText(unexpectedTitle)).not.toBeInTheDocument();
 	});
 
-	it('renders lightMode class when dark mode is disabled', () => {
+	it('renders single active item in header only, without a list', () => {
 		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(false);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('lightMode');
-		expect(container).not.toHaveClass('darkMode');
-	});
-
-	it('renders darkMode class when dark mode is enabled', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		mockUseIsDarkMode.mockReturnValue(true);
-
-		renderTooltip({ uPlotInstance });
-
-		const container = screen.getByTestId('uplot-tooltip-container');
-
-		expect(container).toHaveClass('darkMode');
-		expect(container).not.toHaveClass('lightMode');
-	});
-
-	it('renders tooltip items when content is provided', () => {
-		const uPlotInstance = createUPlotInstance(null);
-		const content = [createTooltipContent()];
+		const content = [createTooltipContent({ isActive: true })];
 
 		renderTooltip({ uPlotInstance, content });
 
-		const list = screen.queryByTestId('uplot-tooltip-list');
+		// Active item is shown in the header, not duplicated in a list
+		expect(screen.queryByTestId('uplot-tooltip-list')).toBeNull();
+		expect(screen.getByTestId('uplot-tooltip-pinned')).toBeInTheDocument();
+		const pinnedContent = screen.getByTestId('uplot-tooltip-pinned-content');
+		expect(pinnedContent).toHaveTextContent('Series A');
+		expect(pinnedContent).toHaveTextContent('10');
+	});
 
-		expect(list).not.toBeNull();
+	it('renders list when multiple series are present', () => {
+		const uPlotInstance = createUPlotInstance(null);
+		const content = [
+			createTooltipContent({ isActive: true }),
+			createTooltipContent({ label: 'Series B', isActive: false }),
+		];
 
-		const marker = screen.getByTestId('uplot-tooltip-item-marker');
-		const itemContent = screen.getByTestId('uplot-tooltip-item-content');
+		renderTooltip({ uPlotInstance, content });
 
-		expect(marker).toHaveStyle({ borderColor: '#ff0000' });
-		expect(itemContent).toHaveStyle({ color: '#ff0000', fontWeight: '700' });
-		expect(itemContent).toHaveTextContent('Series A: 10');
+		expect(screen.getByTestId('uplot-tooltip-list')).toBeInTheDocument();
 	});
 
 	it('does not render tooltip list when content is empty', () => {
@@ -192,7 +176,7 @@ describe('Tooltip', () => {
 		renderTooltip({ uPlotInstance, content });
 
 		const list = screen.getByTestId('uplot-tooltip-list');
-		expect(list).toHaveStyle({ height: '210px' });
+		expect(list).toHaveStyle({ height: '200px' });
 	});
 
 	it('sets tooltip list height based on content length when Virtuoso reports 0 height', () => {

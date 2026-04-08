@@ -11,13 +11,15 @@ import {
 } from 'api/generated/services/serviceaccount';
 import type {
 	RenderErrorResponseDTO,
-	ServiceaccounttypesFactorAPIKeyDTO,
+	ServiceaccounttypesGettableFactorAPIKeyDTO,
 } from 'api/generated/services/sigNoz.schemas';
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import dayjs from 'dayjs';
 import { parseAsString, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
 import { useTimezone } from 'providers/Timezone';
+import APIError from 'types/api/error';
 
 import { RevokeKeyContent } from '../RevokeKeyModal';
 import EditKeyForm from './EditKeyForm';
@@ -27,7 +29,7 @@ import { DEFAULT_FORM_VALUES, ExpiryMode } from './types';
 import './EditKeyModal.styles.scss';
 
 export interface EditKeyModalProps {
-	keyItem: ServiceaccounttypesFactorAPIKeyDTO | null;
+	keyItem: ServiceaccounttypesGettableFactorAPIKeyDTO | null;
 }
 
 function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
@@ -41,6 +43,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 	const open = !!editKeyId && !!selectedAccountId;
 
 	const { formatTimezoneAdjustedTimestamp } = useTimezone();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [isRevokeConfirmOpen, setIsRevokeConfirmOpen] = useState(false);
 
 	const {
@@ -78,11 +81,11 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 				}
 			},
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to update key';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
@@ -102,12 +105,13 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 					});
 				}
 			},
+			// eslint-disable-next-line sonarjs/no-identical-functions
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to revoke key';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
@@ -160,7 +164,7 @@ function EditKeyModal({ keyItem }: EditKeyModalProps): JSX.Element {
 				isRevokeConfirmOpen ? 'alert-dialog delete-dialog' : 'edit-key-modal'
 			}
 			showCloseButton={!isRevokeConfirmOpen}
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			{isRevokeConfirmOpen ? (
 				<RevokeKeyContent

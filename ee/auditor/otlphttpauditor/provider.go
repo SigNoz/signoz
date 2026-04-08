@@ -76,12 +76,12 @@ func (provider *provider) Start(ctx context.Context) error {
 }
 
 func (provider *provider) Audit(ctx context.Context, event audittypes.AuditEvent) {
-	if event.PrincipalOrgID.IsZero() {
+	if event.PrincipalAttributes.PrincipalOrgID.IsZero() {
 		provider.settings.Logger().WarnContext(ctx, "audit event dropped as org_id is zero")
 		return
 	}
 
-	if _, err := provider.licensing.GetActive(ctx, event.PrincipalOrgID); err != nil {
+	if _, err := provider.licensing.GetActive(ctx, event.PrincipalAttributes.PrincipalOrgID); err != nil {
 		return
 	}
 

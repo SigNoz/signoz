@@ -1,6 +1,7 @@
 import { ErrorResponseHandlerForGeneratedAPIs } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import { RenderErrorResponseDTO } from 'api/generated/services/sigNoz.schemas';
 import { ErrorType } from 'api/generatedAPIInstance';
+import { AxiosError } from 'axios';
 import APIError from 'types/api/error';
 
 /**
@@ -66,3 +67,10 @@ export function handleApiError(
 		showErrorFunction(apiError as APIError);
 	}
 }
+
+export const retryOn429 = (failureCount: number, error: unknown): boolean => {
+	if (error instanceof AxiosError && error.response?.status === 429) {
+		return failureCount < 2;
+	}
+	return false;
+};
