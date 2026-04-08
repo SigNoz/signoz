@@ -383,14 +383,14 @@ func (q *querier) QueryRange(ctx context.Context, orgID valuer.UUID, req *qbtype
 							spec.Aggregations[i].Temporality = temp
 						}
 					}
-					if spec.Aggregations[i].Temporality == metrictypes.Unknown {
-						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
-						continue
-					}
 					if spec.Aggregations[i].MetricName != "" && spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
 						if foundMetricType, ok := metricTypes[spec.Aggregations[i].MetricName]; ok && foundMetricType != metrictypes.UnspecifiedType {
 							spec.Aggregations[i].Type = foundMetricType
 						}
+					}
+					if spec.Aggregations[i].Type == metrictypes.UnspecifiedType {
+						missingMetrics = append(missingMetrics, spec.Aggregations[i].MetricName)
+						continue
 					}
 					presentAggregations = append(presentAggregations, spec.Aggregations[i])
 				}
