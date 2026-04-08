@@ -1,29 +1,29 @@
 import { fireEvent, render, screen } from '@testing-library/react';
-import RowHoverContext from 'container/LogsExplorerList/RowHoverContext';
-import { FontSize } from 'container/OptionsMenu/types';
 
+import { FontSize } from '../../../container/OptionsMenu/types';
+import RowHoverContext from '../RowHoverContext';
 import TanStackRowCells from '../TanStackRow';
 import type { TanStackTableRowData } from '../types';
 
-jest.mock('../../InfinityTableView/styles', () => ({
-	TableCellStyled: 'td',
-}));
-
 jest.mock(
-	'components/Logs/LogLinesActionButtons/LogLinesActionButtons',
+	'../../../container/LogsExplorerList/InfinityTableView/styles',
 	() => ({
-		__esModule: true,
-		default: ({
-			onLogCopy,
-		}: {
-			onLogCopy: (e: React.MouseEvent) => void;
-		}): JSX.Element => (
-			<button type="button" data-testid="copy-btn" onClick={onLogCopy}>
-				copy
-			</button>
-		),
+		TableCellStyled: 'td',
 	}),
 );
+
+jest.mock('../../Logs/LogLinesActionButtons/LogLinesActionButtons', () => ({
+	__esModule: true,
+	default: ({
+		onLogCopy,
+	}: {
+		onLogCopy: (e: React.MouseEvent) => void;
+	}): JSX.Element => (
+		<button type="button" data-testid="copy-btn" onClick={onLogCopy}>
+			copy
+		</button>
+	),
+}));
 
 const flexRenderMock = jest.fn((def: unknown, _ctx?: unknown) =>
 	typeof def === 'function' ? def({}) : def,

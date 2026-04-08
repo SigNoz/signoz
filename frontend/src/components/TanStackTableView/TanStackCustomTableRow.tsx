@@ -1,16 +1,26 @@
-import { ComponentProps, memo, useCallback, useState } from 'react';
-import { TableComponents } from 'react-virtuoso';
 import {
-	getLogIndicatorType,
-	getLogIndicatorTypeForTable,
-} from 'components/Logs/LogStateIndicator/utils';
+	ComponentProps,
+	CSSProperties,
+	memo,
+	useCallback,
+	useMemo,
+	useState,
+} from 'react';
+import { TableComponents } from 'react-virtuoso';
+import cx from 'classnames';
 import { useCopyLogLink } from 'hooks/logs/useCopyLogLink';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import { ILog } from 'types/api/logs/log';
 
-import { TableRowStyled } from '../InfinityTableView/styles';
-import RowHoverContext from '../RowHoverContext';
+import {
+	getLogIndicatorType,
+	getLogIndicatorTypeForTable,
+} from '../Logs/LogStateIndicator/utils';
+import { getRowBackgroundColor } from './getRowBackgroundColor';
+import RowHoverContext from './RowHoverContext';
 import { TanStackTableRowData } from './types';
+
+import tableStyles from './TanStackTable.module.scss';
 
 export type TableRowContext = {
 	activeLog?: ILog | null;
@@ -48,21 +58,37 @@ function TanStackCustomTableRow({
 		}
 	}, [hasHovered]);
 
+	const isActiveLog =
+		isHighlighted ||
+		rowId === String(activeLog?.id ?? '') ||
+		rowId === String(activeContextLog?.id ?? '');
+
+	const rowClassName = useMemo(
+		() => cx(tableStyles.tableRow, isActiveLog && tableStyles.tableRowActive),
+		[isActiveLog],
+	);
+
+	const rowStyle = useMemo(
+		(): CSSProperties =>
+			({
+				'--row-active-bg': getRowBackgroundColor(isDarkMode, logType),
+				'--row-hover-bg': getRowBackgroundColor(isDarkMode, logType),
+			} as CSSProperties),
+		[isDarkMode, logType],
+	);
+
 	return (
 		<RowHoverContext.Provider value={hasHovered}>
-			<TableRowStyled
+			<tr
 				{...props}
-				$isDarkMode={isDarkMode}
-				$isActiveLog={
-					isHighlighted ||
-					rowId === String(activeLog?.id ?? '') ||
-					rowId === String(activeContextLog?.id ?? '')
-				}
-				$logType={logType}
+				className={rowClassName}
+				style={rowStyle}
+				data-dark-mode={isDarkMode}
+				data-log-type={logType}
 				onMouseEnter={handleMouseEnter}
 			>
 				{children}
-			</TableRowStyled>
+			</tr>
 		</RowHoverContext.Provider>
 	);
 }

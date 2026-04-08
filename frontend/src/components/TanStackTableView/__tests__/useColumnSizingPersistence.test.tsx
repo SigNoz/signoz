@@ -1,18 +1,18 @@
 import { act, renderHook } from '@testing-library/react';
-import { LOCALSTORAGE } from 'constants/localStorage';
 
+import { LOCALSTORAGE } from '../../../constants/localStorage';
 import type { OrderedColumn } from '../types';
 import { useColumnSizingPersistence } from '../useColumnSizingPersistence';
 
 const mockGet = jest.fn();
 const mockSet = jest.fn();
 
-jest.mock('api/browser/localstorage/get', () => ({
+jest.mock('../../../api/browser/localstorage/get', () => ({
 	__esModule: true,
 	default: (key: string): string | null => mockGet(key),
 }));
 
-jest.mock('api/browser/localstorage/set', () => ({
+jest.mock('../../../api/browser/localstorage/set', () => ({
 	__esModule: true,
 	default: (key: string, value: string): void => {
 		mockSet(key, value);

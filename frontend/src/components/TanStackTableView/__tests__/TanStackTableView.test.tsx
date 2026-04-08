@@ -1,8 +1,8 @@
 import { forwardRef } from 'react';
 import { render, screen } from '@testing-library/react';
-import { FontSize } from 'container/OptionsMenu/types';
 
-import type { InfinityTableProps } from '../../InfinityTableView/types';
+import type { InfinityTableProps } from '../../../container/LogsExplorerList/InfinityTableView/types';
+import { FontSize } from '../../../container/OptionsMenu/types';
 import TanStackTableView from '../index';
 
 jest.mock('react-virtuoso', () => ({
@@ -22,7 +22,7 @@ jest.mock('react-virtuoso', () => ({
 	}),
 }));
 
-jest.mock('components/Logs/TableView/useTableView', () => ({
+jest.mock('../../Logs/TableView/useTableView', () => ({
 	useTableView: (): {
 		dataSource: Record<string, string>[];
 		columns: unknown[];
@@ -35,7 +35,7 @@ jest.mock('components/Logs/TableView/useTableView', () => ({
 	}),
 }));
 
-jest.mock('hooks/useDragColumns', () => ({
+jest.mock('../../../hooks/useDragColumns', () => ({
 	__esModule: true,
 	default: (): {
 		draggedColumns: unknown[];
@@ -46,15 +46,15 @@ jest.mock('hooks/useDragColumns', () => ({
 	}),
 }));
 
-jest.mock('hooks/logs/useActiveLog', () => ({
+jest.mock('../../../hooks/logs/useActiveLog', () => ({
 	useActiveLog: (): { activeLog: null } => ({ activeLog: null }),
 }));
 
-jest.mock('hooks/logs/useCopyLogLink', () => ({
+jest.mock('../../../hooks/logs/useCopyLogLink', () => ({
 	useCopyLogLink: (): { activeLogId: null } => ({ activeLogId: null }),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+jest.mock('../../../hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
@@ -70,7 +70,7 @@ jest.mock('@signozhq/sonner', () => ({
 	toast: { success: jest.fn() },
 }));
 
-jest.mock('components/Spinner', () => ({
+jest.mock('../../Spinner', () => ({
 	__esModule: true,
 	default: ({ tip }: { tip: string }): JSX.Element => (
 		<div data-testid="spinner">{tip}</div>

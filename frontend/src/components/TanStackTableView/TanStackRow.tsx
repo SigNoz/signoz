@@ -4,19 +4,20 @@ import {
 	useCallback,
 } from 'react';
 import { flexRender, Row as TanStackRowModel } from '@tanstack/react-table';
-import { VIEW_TYPES } from 'components/LogDetail/constants';
-import LogLinesActionButtons from 'components/Logs/LogLinesActionButtons/LogLinesActionButtons';
+import cx from 'classnames';
 
-import { TableCellStyled } from '../InfinityTableView/styles';
-import { InfinityTableProps } from '../InfinityTableView/types';
-import { useRowHover } from '../RowHoverContext';
-import { TanStackTableRowData } from './types';
+import { VIEW_TYPES } from '../LogDetail/constants';
+import LogLinesActionButtons from '../Logs/LogLinesActionButtons/LogLinesActionButtons';
+import { useRowHover } from './RowHoverContext';
+import { TanStackTableProps, TanStackTableRowData } from './types';
+
+import tableStyles from './TanStackTable.module.scss';
 
 type TanStackRowCellsProps = {
 	row: TanStackRowModel<TanStackTableRowData>;
-	fontSize: InfinityTableProps['tableViewProps']['fontSize'];
-	onSetActiveLog?: InfinityTableProps['onSetActiveLog'];
-	onClearActiveLog?: InfinityTableProps['onClearActiveLog'];
+	fontSize: TanStackTableProps['tableViewProps']['fontSize'];
+	onSetActiveLog?: TanStackTableProps['onSetActiveLog'];
+	onClearActiveLog?: TanStackTableProps['onClearActiveLog'];
 	isActiveLog?: boolean;
 	isDarkMode: boolean;
 	onLogCopy: (logId: string, event: ReactMouseEvent<HTMLElement>) => void;
@@ -60,6 +61,7 @@ function TanStackRowCells({
 
 	const visibleCells = row.getVisibleCells();
 	const lastCellIndex = visibleCells.length - 1;
+	const hasSingleColumn = visibleCells.length <= 2;
 
 	return (
 		<>
@@ -67,14 +69,14 @@ function TanStackRowCells({
 				const columnKey = cell.column.id;
 				const isLastCell = index === lastCellIndex;
 				return (
-					<TableCellStyled
-						$isDragColumn={false}
-						$isLogIndicator={columnKey === 'state-indicator'}
-						$hasSingleColumn={visibleCells.length <= 2}
-						$isDarkMode={isDarkMode}
+					<td
 						key={cell.id}
-						fontSize={fontSize}
-						className={columnKey}
+						className={cx(tableStyles.tableCell, columnKey)}
+						data-dark-mode={isDarkMode}
+						data-log-indicator={columnKey === 'state-indicator' || undefined}
+						data-timestamp={columnKey === 'timestamp' || undefined}
+						data-single-column={hasSingleColumn || undefined}
+						data-font-size={fontSize}
 						onClick={handleShowLogDetails}
 					>
 						{flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -82,10 +84,10 @@ function TanStackRowCells({
 							<LogLinesActionButtons
 								handleShowContext={handleShowContext}
 								onLogCopy={(event): void => onLogCopy(currentLog.id, event)}
-								customClassName="table-view-log-actions"
+								customClassName={tableStyles.tableViewLogActions}
 							/>
 						)}
-					</TableCellStyled>
+					</td>
 				);
 			})}
 		</>

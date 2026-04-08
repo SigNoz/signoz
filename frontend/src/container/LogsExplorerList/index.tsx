@@ -9,6 +9,7 @@ import ListLogView from 'components/Logs/ListLogView';
 import RawLogView from 'components/Logs/RawLogView';
 import OverlayScrollbar from 'components/OverlayScrollbar/OverlayScrollbar';
 import Spinner from 'components/Spinner';
+import TanStackTableView from 'components/TanStackTableView';
 import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import EmptyLogsSearch from 'container/EmptyLogsSearch/EmptyLogsSearch';
@@ -27,7 +28,6 @@ import { DataSource, StringOperators } from 'types/common/queryBuilder';
 import NoLogs from '../NoLogs/NoLogs';
 import { LogsExplorerListProps } from './LogsExplorerList.interfaces';
 import { InfinityWrapperStyled } from './styles';
-import TanStackTableView from './TanStackTableView';
 import {
 	convertKeysToColumnFields,
 	getEmptyLogsListConfig,

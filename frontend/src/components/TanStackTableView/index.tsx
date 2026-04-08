@@ -25,9 +25,6 @@ import {
 	useReactTable,
 } from '@tanstack/react-table';
 import { VIEW_TYPES } from 'components/LogDetail/constants';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
-import { useTableView } from 'components/Logs/TableView/useTableView';
-import Spinner from 'components/Spinner';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { QueryParams } from 'constants/query';
 import ROUTES from 'constants/routes';
@@ -35,13 +32,13 @@ import { useActiveLog } from 'hooks/logs/useActiveLog';
 import { useIsDarkMode } from 'hooks/useDarkMode';
 import useDragColumns from 'hooks/useDragColumns';
 
-import { infinityDefaultStyles } from '../InfinityTableView/config';
-import { TanStackTableStyled } from '../InfinityTableView/styles';
-import { InfinityTableProps } from '../InfinityTableView/types';
+import { ColumnTypeRender } from '../Logs/TableView/types';
+import { useTableView } from '../Logs/TableView/useTableView';
+import Spinner from '../Spinner';
 import TanStackCustomTableRow from './TanStackCustomTableRow';
 import TanStackHeaderRow from './TanStackHeaderRow';
 import TanStackRowCells from './TanStackRow';
-import { TableRecord, TanStackTableRowData } from './types';
+import { TableRecord, TanStackTableProps, TanStackTableRowData } from './types';
 import { useColumnSizingPersistence } from './useColumnSizingPersistence';
 import { useOrderedColumns } from './useOrderedColumns';
 import {
@@ -50,15 +47,15 @@ import {
 	resolveColumnTypeRender,
 } from './utils';
 
-import '../logsTableVirtuosoScrollbar.scss';
-import './styles/TanStackTableView.styles.scss';
+import tableStyles from './TanStackTable.module.scss';
+import viewStyles from './TanStackTableView.module.scss';
 
 const COLUMN_DND_AUTO_SCROLL = {
 	layoutShiftCompensation: false as const,
 	threshold: { x: 0.2, y: 0 },
 };
 
-const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
+const TanStackTableView = forwardRef<TableVirtuosoHandle, TanStackTableProps>(
 	function TanStackTableView(
 		{
 			isLoading,
@@ -69,7 +66,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 			onSetActiveLog,
 			onClearActiveLog,
 			activeLog,
-		}: InfinityTableProps,
+		}: TanStackTableProps,
 		forwardedRef,
 	): JSX.Element {
 		const { pathname } = useLocation();
@@ -360,11 +357,10 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 		}
 
 		return (
-			<div className="tanstack-table-view-wrapper">
+			<div className={viewStyles.tanstackTableViewWrapper}>
 				<TableVirtuoso
-					className="logs-table-virtuoso-scroll"
+					className={viewStyles.tanstackTableVirtuosoScroll}
 					ref={virtuosoRef}
-					style={infinityDefaultStyles}
 					data={tableData}
 					totalCount={tableRows.length}
 					increaseViewportBy={{ top: 500, bottom: 500 }}
@@ -376,7 +372,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 					itemContent={itemContent}
 					components={{
 						Table: ({ style, children }): JSX.Element => (
-							<TanStackTableStyled style={style}>
+							<table className={tableStyles.tanStackTable} style={style}>
 								<colgroup>
 									{orderedColumns.map((column, colIndex) => {
 										const columnId = getColumnId(column);
@@ -387,7 +383,9 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 										const computedWidth = table.getColumn(columnId)?.getSize();
 										const effectiveWidth = persistedWidth ?? computedWidth;
 										if (isFixedColumn) {
-											return <col key={columnId} className="tanstack-fixed-col" />;
+											return (
+												<col key={columnId} className={viewStyles.tanstackFixedCol} />
+											);
 										}
 										// Last data column should stretch to fill remaining space
 										const isLastColumn = colIndex === orderedColumns.length - 1;
@@ -412,7 +410,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 									})}
 								</colgroup>
 								{children}
-							</TanStackTableStyled>
+							</table>
 						),
 						TableRow: TanStackCustomTableRow,
 					}}
@@ -421,7 +419,7 @@ const TanStackTableView = forwardRef<TableVirtuosoHandle, InfinityTableProps>(
 						: {})}
 				/>
 				{loadMoreState.active && (
-					<div className="tanstack-load-more-container">
+					<div className={viewStyles.tanstackLoadMoreContainer}>
 						<Spinner height="20px" tip="Getting Logs" />
 					</div>
 				)}

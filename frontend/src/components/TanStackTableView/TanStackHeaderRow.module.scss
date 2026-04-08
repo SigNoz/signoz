@@ -1,4 +1,4 @@
-.tanstack-header-cell {
+.tanstackHeaderCell {
 	position: sticky;
 	top: 0;
 	z-index: 2;
@@ -10,16 +10,16 @@
 	);
 	transition: var(--tanstack-header-transition, none);
 
-	&.is-dragging {
+	&.isDragging {
 		opacity: 0.85;
 	}
 
-	&.is-resizing {
+	&.isResizing {
 		background: var(--l2-background-hover);
 	}
 }
 
-.tanstack-header-content {
+.tanstackHeaderContent {
 	display: flex;
 	align-items: center;
 	height: 100%;
@@ -28,20 +28,20 @@
 	cursor: default;
 	max-width: 100%;
 
-	&.has-resize-control {
+	&.hasResizeControl {
 		max-width: calc(100% - 5px);
 	}
 
-	&.has-action-control {
+	&.hasActionControl {
 		max-width: calc(100% - 5px);
 	}
 
-	&.has-resize-control.has-action-control {
+	&.hasResizeControl.hasActionControl {
 		max-width: calc(100% - 10px);
 	}
 }
 
-.tanstack-grip-slot {
+.tanstackGripSlot {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -51,7 +51,7 @@
 	flex-shrink: 0;
 }
 
-.tanstack-grip-activator {
+.tanstackGripActivator {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -63,7 +63,7 @@
 	touch-action: none;
 }
 
-.tanstack-header-action-trigger {
+.tanstackHeaderActionTrigger {
 	display: inline-flex;
 	align-items: center;
 	justify-content: center;
@@ -74,7 +74,7 @@
 	color: var(--l2-foreground);
 }
 
-.tanstack-column-actions-content {
+.tanstackColumnActionsContent {
 	width: 140px;
 	padding: 0;
 	background: var(--l2-background);
@@ -83,7 +83,7 @@
 	box-shadow: none;
 }
 
-.tanstack-remove-column-action {
+.tanstackRemoveColumnAction {
 	display: flex;
 	align-items: center;
 	gap: 8px;
@@ -105,19 +105,19 @@
 		background: var(--l2-background-hover);
 		color: var(--l2-foreground);
 
-		.tanstack-remove-column-action-icon {
+		.tanstackRemoveColumnActionIcon {
 			color: var(--l2-foreground);
 		}
 	}
 }
 
-.tanstack-remove-column-action-icon {
+.tanstackRemoveColumnActionIcon {
 	font-size: 11px;
 	color: var(--l2-foreground);
 	opacity: 0.95;
 }
 
-.tanstack-header-cell .cursor-col-resize {
+.tanstackHeaderCell .cursorColResize {
 	position: absolute;
 	top: 0;
 	right: 0;
@@ -129,11 +129,11 @@
 	background: transparent;
 }
 
-.tanstack-header-cell.is-resizing .cursor-col-resize {
+.tanstackHeaderCell.isResizing .cursorColResize {
 	background: var(--bg-robin-300);
 }
 
-.tanstack-resize-handle-line {
+.tanstackResizeHandleLine {
 	position: absolute;
 	top: 0;
 	bottom: 0;
@@ -146,7 +146,7 @@
 	transition: background 120ms ease, width 120ms ease;
 }
 
-.tanstack-header-cell.is-resizing .tanstack-resize-handle-line {
+.tanstackHeaderCell.isResizing .tanstackResizeHandleLine {
 	width: 2px;
 	background: var(--bg-robin-500);
 	transition: none;

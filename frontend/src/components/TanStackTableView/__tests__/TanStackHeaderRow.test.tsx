@@ -1,13 +1,16 @@
 import type { Header } from '@tanstack/react-table';
 import { render, screen } from '@testing-library/react';
-import { FontSize } from 'container/OptionsMenu/types';
 
+import { FontSize } from '../../../container/OptionsMenu/types';
 import TanStackHeaderRow from '../TanStackHeaderRow';
 import type { OrderedColumn, TanStackTableRowData } from '../types';
 
-jest.mock('../../InfinityTableView/styles', () => ({
-	TableHeaderCellStyled: 'th',
-}));
+jest.mock(
+	'../../../container/LogsExplorerList/InfinityTableView/styles',
+	() => ({
+		TableHeaderCellStyled: 'th',
+	}),
+);
 
 const mockUseSortable = jest.fn((_args?: unknown) => ({
 	attributes: {},

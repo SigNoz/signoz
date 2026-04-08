@@ -9,7 +9,6 @@ import { CARD_BODY_STYLE } from 'constants/card';
 import { LOCALSTORAGE } from 'constants/localStorage';
 import { OptionFormatTypes } from 'constants/optionsFormatTypes';
 import { InfinityWrapperStyled } from 'container/LogsExplorerList/styles';
-import TanStackTableView from 'container/LogsExplorerList/TanStackTableView';
 import { convertKeysToColumnFields } from 'container/LogsExplorerList/utils';
 import { useOptionsMenu } from 'container/OptionsMenu';
 import { defaultLogsSelectedColumns } from 'container/OptionsMenu/constants';
@@ -21,6 +20,7 @@ import { useEventSource } from 'providers/EventSource';
 import { ILog } from 'types/api/logs/log';
 import { DataSource, StringOperators } from 'types/common/queryBuilder';
 
+import TanStackTableView from '../../../components/TanStackTableView';
 import { LiveLogsListProps } from './types';
 
 import './LiveLogsList.styles.scss';

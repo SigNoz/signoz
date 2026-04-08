@@ -5,19 +5,22 @@ import TanStackCustomTableRow, {
 } from '../TanStackCustomTableRow';
 import type { TanStackTableRowData } from '../types';
 
-jest.mock('../../InfinityTableView/styles', () => ({
-	TableRowStyled: 'tr',
-}));
+jest.mock(
+	'../../../container/LogsExplorerList/InfinityTableView/styles',
+	() => ({
+		TableRowStyled: 'tr',
+	}),
+);
 
-jest.mock('hooks/logs/useCopyLogLink', () => ({
+jest.mock('../../../hooks/logs/useCopyLogLink', () => ({
 	useCopyLogLink: (): { isHighlighted: boolean } => ({ isHighlighted: false }),
 }));
 
-jest.mock('hooks/useDarkMode', () => ({
+jest.mock('../../../hooks/useDarkMode', () => ({
 	useIsDarkMode: (): boolean => false,
 }));
 
-jest.mock('components/Logs/LogStateIndicator/utils', () => ({
+jest.mock('../../Logs/LogStateIndicator/utils', () => ({
 	getLogIndicatorType: (): string => 'info',
 	getLogIndicatorTypeForTable: (): string => 'info',
 }));

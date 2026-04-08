@@ -1,6 +1,6 @@
 import { cloneElement, isValidElement, ReactElement } from 'react';
-import { ColumnTypeRender } from 'components/Logs/TableView/types';
 
+import { ColumnTypeRender } from '../Logs/TableView/types';
 import { OrderedColumn } from './types';
 
 export const getColumnId = (column: OrderedColumn): string =>

@@ -5,7 +5,7 @@ import { useOrderedColumns } from '../useOrderedColumns';
 
 const mockGetDraggedColumns = jest.fn();
 
-jest.mock('hooks/useDragColumns/utils', () => ({
+jest.mock('../../../hooks/useDragColumns/utils', () => ({
 	getDraggedColumns: <T,>(current: unknown[], dragged: unknown[]): T[] =>
 		mockGetDraggedColumns(current, dragged) as T[],
 }));
