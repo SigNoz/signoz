@@ -53,7 +53,7 @@ type telemetryMetaStore struct {
 	logResourceKeysTblName         string
 	logsV2TblName                  string
 	auditDBName                    string
-	auditLogsTblName                 string
+	auditLogsTblName               string
 	auditFieldsTblName             string
 	auditAttributeKeysTblName      string
 	auditResourceKeysTblName       string
@@ -114,7 +114,7 @@ func NewTelemetryMetaStore(
 		logAttributeKeysTblName:        logAttributeKeysTblName,
 		logResourceKeysTblName:         logResourceKeysTblName,
 		auditDBName:                    auditDBName,
-		auditLogsTblName:                 auditLogsTblName,
+		auditLogsTblName:               auditLogsTblName,
 		auditFieldsTblName:             auditFieldsTblName,
 		auditAttributeKeysTblName:      auditAttributeKeysTblName,
 		auditResourceKeysTblName:       auditResourceKeysTblName,
@@ -676,7 +676,7 @@ func (t *telemetryMetaStore) getAuditKeys(ctx context.Context, fieldKeySelectors
 	tablesToQuery := []struct {
 		fieldContext telemetrytypes.FieldContext
 		shouldQuery  bool
-		tblName     string
+		tblName      string
 	}{
 		{telemetrytypes.FieldContextAttribute, queryAttributeTable, t.auditDBName + "." + t.auditAttributeKeysTblName},
 		{telemetrytypes.FieldContextResource, queryResourceTable, t.auditDBName + "." + t.auditResourceKeysTblName},
