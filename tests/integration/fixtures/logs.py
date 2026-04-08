@@ -485,33 +485,51 @@ def insert_logs(
                 data=[resource_key.np_arr() for resource_key in resource_keys],
             )
 
+        # All columns in insertion order (must match Logs.np_arr() order)
+        all_column_names = [
+            "ts_bucket_start",
+            "resource_fingerprint",
+            "timestamp",
+            "observed_timestamp",
+            "id",
+            "trace_id",
+            "span_id",
+            "trace_flags",
+            "severity_text",
+            "severity_number",
+            "body",
+            "body_v2",
+            "body_promoted",
+            "attributes_string",
+            "attributes_number",
+            "attributes_bool",
+            "resources_string",
+            "scope_name",
+            "scope_version",
+            "scope_string",
+            "resource",
+        ]
+
+        # Check if body_v2 column exists (only present when ENABLE_LOGS_MIGRATIONS_V2 migration has run)
+        result = clickhouse.conn.query(
+            "SELECT count() FROM system.columns WHERE database = 'signoz_logs' AND table = 'logs_v2' AND name = 'body_v2'"
+        )
+        has_json_body = result.result_rows[0][0] > 0
+
+        if has_json_body:
+            column_names = all_column_names
+            data = [log.np_arr() for log in logs]
+        else:
+            json_body_cols = {"body_v2", "body_promoted"}
+            keep_indices = [i for i, c in enumerate(all_column_names) if c not in json_body_cols]
+            column_names = [all_column_names[i] for i in keep_indices]
+            data = [log.np_arr()[keep_indices] for log in logs]
+
         clickhouse.conn.insert(
             database="signoz_logs",
             table="distributed_logs_v2",
-            data=[log.np_arr() for log in logs],
-            column_names=[
-                "ts_bucket_start",
-                "resource_fingerprint",
-                "timestamp",
-                "observed_timestamp",
-                "id",
-                "trace_id",
-                "span_id",
-                "trace_flags",
-                "severity_text",
-                "severity_number",
-                "body",
-                "body_v2",
-                "body_promoted",
-                "attributes_string",
-                "attributes_number",
-                "attributes_bool",
-                "resources_string",
-                "scope_name",
-                "scope_version",
-                "scope_string",
-                "resource",
-            ],
+            data=data,
+            column_names=column_names,
         )
 
     yield _insert_logs
