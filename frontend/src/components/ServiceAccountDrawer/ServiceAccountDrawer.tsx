@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useQueryClient } from 'react-query';
 import { Button } from '@signozhq/button';
 import { DrawerWrapper } from '@signozhq/drawer';
@@ -8,7 +8,9 @@ import { ToggleGroup, ToggleGroupItem } from '@signozhq/toggle-group';
 import { Pagination, Skeleton } from 'antd';
 import { convertToApiError } from 'api/ErrorResponseHandlerForGeneratedAPIs';
 import {
+	getGetServiceAccountRolesQueryKey,
 	getListServiceAccountsQueryKey,
+	useDeleteServiceAccountRole,
 	useGetServiceAccount,
 	useListServiceAccountKeys,
 	useUpdateServiceAccount,
@@ -23,7 +25,10 @@ import {
 	ServiceAccountStatus,
 	toServiceAccountRow,
 } from 'container/ServiceAccountsSettings/utils';
-import { useServiceAccountRoleManager } from 'hooks/serviceAccount/useServiceAccountRoleManager';
+import {
+	RoleUpdateFailure,
+	useServiceAccountRoleManager,
+} from 'hooks/serviceAccount/useServiceAccountRoleManager';
 import {
 	parseAsBoolean,
 	parseAsInteger,
@@ -32,7 +37,7 @@ import {
 	useQueryState,
 } from 'nuqs';
 import APIError from 'types/api/error';
-import { toAPIError } from 'utils/errorUtils';
+import { retryOn429, toAPIError } from 'utils/errorUtils';
 
 import AddKeyModal from './AddKeyModal';
 import DeleteAccountModal from './DeleteAccountModal';
@@ -48,6 +53,13 @@ export interface ServiceAccountDrawerProps {
 }
 
 const PAGE_SIZE = 15;
+
+function toSaveApiError(err: unknown): APIError {
+	return (
+		convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
+		toAPIError(err as AxiosError<RenderErrorResponseDTO>)
+	);
+}
 
 // eslint-disable-next-line sonarjs/cognitive-complexity
 function ServiceAccountDrawer({
@@ -103,21 +115,35 @@ function ServiceAccountDrawer({
 		[accountData],
 	);
 
-	const { currentRoles, applyDiff } = useServiceAccountRoleManager(
-		selectedAccountId ?? '',
-	);
+	const {
+		currentRoles,
+		isLoading: isRolesLoading,
+		applyDiff,
+	} = useServiceAccountRoleManager(selectedAccountId ?? '');
+
+	const roleSessionRef = useRef<string | null>(null);
 
 	useEffect(() => {
 		if (account?.id) {
 			setLocalName(account?.name ?? '');
 			setKeysPage(1);
 		}
-		setSaveErrors([]);
 	}, [account?.id, account?.name, setKeysPage]);
 
 	useEffect(() => {
-		setLocalRole(currentRoles[0]?.id ?? '');
-	}, [currentRoles]);
+		if (account?.id) {
+			setSaveErrors([]);
+		}
+	}, [account?.id]);
+
+	useEffect(() => {
+		if (!account?.id) {
+			roleSessionRef.current = null;
+		} else if (account.id !== roleSessionRef.current && !isRolesLoading) {
+			setLocalRole(currentRoles[0]?.id ?? '');
+			roleSessionRef.current = account.id;
+		}
+	}, [account?.id, currentRoles, isRolesLoading]);
 
 	const isDeleted =
 		account?.status?.toUpperCase() === ServiceAccountStatus.Deleted;
@@ -153,12 +179,26 @@ function ServiceAccountDrawer({
 
 	// the retry for this mutation is safe due to the api being idempotent on backend
 	const { mutateAsync: updateMutateAsync } = useUpdateServiceAccount();
+	const { mutateAsync: deleteRole } = useDeleteServiceAccountRole({
+		mutation: {
+			retry: retryOn429,
+		},
+	});
 
-	const toSaveApiError = useCallback(
-		(err: unknown): APIError =>
-			convertToApiError(err as AxiosError<RenderErrorResponseDTO>) ??
-			toAPIError(err as AxiosError<RenderErrorResponseDTO>),
-		[],
+	const executeRolesOperation = useCallback(
+		async (accountId: string): Promise<RoleUpdateFailure[]> => {
+			if (localRole === '' && currentRoles[0]?.id) {
+				await deleteRole({
+					pathParams: { id: accountId, rid: currentRoles[0].id },
+				});
+				await queryClient.invalidateQueries(
+					getGetServiceAccountRolesQueryKey({ id: accountId }),
+				);
+				return [];
+			}
+			return applyDiff([localRole].filter(Boolean), availableRoles);
+		},
+		[localRole, currentRoles, availableRoles, applyDiff, deleteRole, queryClient],
 	);
 
 	const retryNameUpdate = useCallback(async (): Promise<void> => {
@@ -180,14 +220,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [
-		account,
-		localName,
-		updateMutateAsync,
-		refetchAccount,
-		queryClient,
-		toSaveApiError,
-	]);
+	}, [account, localName, updateMutateAsync, refetchAccount, queryClient]);
 
 	const handleNameChange = useCallback((name: string): void => {
 		setLocalName(name);
@@ -210,29 +243,39 @@ function ServiceAccountDrawer({
 				);
 			}
 		},
-		[toSaveApiError],
+		[],
+	);
+
+	const clearRoleErrors = useCallback((): void => {
+		setSaveErrors((prev) =>
+			prev.filter(
+				(e) => e.context !== 'Roles update' && !e.context.startsWith("Role '"),
+			),
+		);
+	}, []);
+
+	const failuresToSaveErrors = useCallback(
+		(failures: RoleUpdateFailure[]): SaveError[] =>
+			failures.map((f) => {
+				const ctx = `Role '${f.roleName}'`;
+				return {
+					context: ctx,
+					apiError: toSaveApiError(f.error),
+					onRetry: makeRoleRetry(ctx, f.onRetry),
+				};
+			}),
+		[makeRoleRetry],
 	);
 
 	const retryRolesUpdate = useCallback(async (): Promise<void> => {
 		try {
-			const failures = await applyDiff(
-				[localRole].filter(Boolean),
-				availableRoles,
-			);
+			const failures = await executeRolesOperation(selectedAccountId ?? '');
 			if (failures.length === 0) {
 				setSaveErrors((prev) => prev.filter((e) => e.context !== 'Roles update'));
 			} else {
 				setSaveErrors((prev) => {
 					const rest = prev.filter((e) => e.context !== 'Roles update');
-					const roleErrors = failures.map((f) => {
-						const ctx = `Role '${f.roleName}'`;
-						return {
-							context: ctx,
-							apiError: toSaveApiError(f.error),
-							onRetry: makeRoleRetry(ctx, f.onRetry),
-						};
-					});
-					return [...rest, ...roleErrors];
+					return [...rest, ...failuresToSaveErrors(failures)];
 				});
 			}
 		} catch (err) {
@@ -242,7 +285,7 @@ function ServiceAccountDrawer({
 				),
 			);
 		}
-	}, [localRole, availableRoles, applyDiff, toSaveApiError, makeRoleRetry]);
+	}, [selectedAccountId, executeRolesOperation, failuresToSaveErrors]);
 
 	const handleSave = useCallback(async (): Promise<void> => {
 		if (!account || !isDirty) {
@@ -261,7 +304,7 @@ function ServiceAccountDrawer({
 
 			const [nameResult, rolesResult] = await Promise.allSettled([
 				namePromise,
-				applyDiff([localRole].filter(Boolean), availableRoles),
+				executeRolesOperation(account.id),
 			]);
 
 			const errors: SaveError[] = [];
@@ -281,14 +324,7 @@ function ServiceAccountDrawer({
 					onRetry: retryRolesUpdate,
 				});
 			} else {
-				for (const failure of rolesResult.value) {
-					const context = `Role '${failure.roleName}'`;
-					errors.push({
-						context,
-						apiError: toSaveApiError(failure.error),
-						onRetry: makeRoleRetry(context, failure.onRetry),
-					});
-				}
+				errors.push(...failuresToSaveErrors(rolesResult.value));
 			}
 
 			if (errors.length > 0) {
@@ -310,17 +346,14 @@ function ServiceAccountDrawer({
 		account,
 		isDirty,
 		localName,
-		localRole,
-		availableRoles,
 		updateMutateAsync,
-		applyDiff,
+		executeRolesOperation,
 		refetchAccount,
 		onSuccess,
 		queryClient,
-		toSaveApiError,
 		retryNameUpdate,
-		makeRoleRetry,
 		retryRolesUpdate,
+		failuresToSaveErrors,
 	]);
 
 	const handleClose = useCallback((): void => {
@@ -413,7 +446,10 @@ function ServiceAccountDrawer({
 								localName={localName}
 								onNameChange={handleNameChange}
 								localRole={localRole}
-								onRoleChange={setLocalRole}
+								onRoleChange={(role): void => {
+									setLocalRole(role ?? '');
+									clearRoleErrors();
+								}}
 								isDisabled={isDeleted}
 								availableRoles={availableRoles}
 								rolesLoading={rolesLoading}

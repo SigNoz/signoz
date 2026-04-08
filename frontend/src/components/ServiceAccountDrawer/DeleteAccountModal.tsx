@@ -16,9 +16,12 @@ import type {
 import { AxiosError } from 'axios';
 import { SA_QUERY_PARAMS } from 'container/ServiceAccountsSettings/constants';
 import { parseAsBoolean, useQueryState } from 'nuqs';
+import { useErrorModal } from 'providers/ErrorModalProvider';
+import APIError from 'types/api/error';
 
 function DeleteAccountModal(): JSX.Element {
 	const queryClient = useQueryClient();
+	const { showErrorModal, isErrorModalVisible } = useErrorModal();
 	const [accountId, setAccountId] = useQueryState(SA_QUERY_PARAMS.ACCOUNT);
 	const [isDeleteOpen, setIsDeleteOpen] = useQueryState(
 		SA_QUERY_PARAMS.DELETE_SA,
@@ -45,11 +48,11 @@ function DeleteAccountModal(): JSX.Element {
 				await invalidateListServiceAccounts(queryClient);
 			},
 			onError: (error) => {
-				const errMessage =
+				showErrorModal(
 					convertToApiError(
 						error as AxiosError<RenderErrorResponseDTO, unknown> | null,
-					)?.getErrorMessage() || 'Failed to delete service account';
-				toast.error(errMessage, { richColors: true });
+					) as APIError,
+				);
 			},
 		},
 	});
@@ -79,7 +82,7 @@ function DeleteAccountModal(): JSX.Element {
 			width="narrow"
 			className="alert-dialog sa-delete-dialog"
 			showCloseButton={false}
-			disableOutsideClick={false}
+			disableOutsideClick={isErrorModalVisible}
 		>
 			<p className="sa-delete-dialog__body">
 				Are you sure you want to delete <strong>{accountName}</strong>? This action

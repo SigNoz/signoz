@@ -390,6 +390,42 @@ describe('ServiceAccountDrawer – save-error UX', () => {
 		).toBeInTheDocument();
 	});
 
+	it('role add retries on 429 then succeeds without showing an error', async () => {
+		const user = userEvent.setup({ pointerEventsCheck: 0 });
+		let roleAddCallCount = 0;
+
+		// First call → 429, second call → 200
+		server.use(
+			rest.post(SA_ROLES_ENDPOINT, (_, res, ctx) => {
+				roleAddCallCount += 1;
+				if (roleAddCallCount === 1) {
+					return res(ctx.status(429), ctx.json({ message: 'Too Many Requests' }));
+				}
+				return res(ctx.status(200), ctx.json({ status: 'success', data: {} }));
+			}),
+		);
+
+		renderDrawer();
+
+		await screen.findByDisplayValue('CI Bot');
+
+		await user.click(screen.getByLabelText('Roles'));
+		await user.click(await screen.findByTitle('signoz-viewer'));
+
+		const saveBtn = screen.getByRole('button', { name: /Save Changes/i });
+		await waitFor(() => expect(saveBtn).not.toBeDisabled());
+		await user.click(saveBtn);
+
+		// Retried after 429 — at least 2 calls, no error shown
+		await waitFor(
+			() => {
+				expect(roleAddCallCount).toBeGreaterThanOrEqual(2);
+			},
+			{ timeout: 5000 },
+		);
+		expect(screen.queryByText(/role assign failed/i)).not.toBeInTheDocument();
+	});
+
 	it('clicking Retry on a name-update error re-triggers the request; on success the error item is removed', async () => {
 		const user = userEvent.setup({ pointerEventsCheck: 0 });
 
